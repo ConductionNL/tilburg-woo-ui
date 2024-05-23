@@ -1,0 +1,33 @@
+$max: 200;
+$step: 5;
+$i: -200;
+
+@while $i < $max {
+  .h-margin-#{$i} {
+    margin: $i * 1px !important;
+  }
+  .h-margin-top-#{$i} {
+    margin-top: $i * 1px !important;
+  }
+  .h-margin-bottom-#{$i} {
+    margin-bottom: $i * 1px !important;
+  }
+  .h-margin-left-#{$i} {
+    margin-left: $i * 1px !important;
+  }
+  .h-margin-right-#{$i} {
+    margin-right: $i * 1px !important;
+  }
+
+  .h-margin-x-#{$i} {
+    margin-left: $i * 1px !important;
+    margin-right: $i * 1px !important;
+  }
+
+  .h-margin-y-#{$i} {
+    margin-bottom: $i * 1px !important;
+    margin-top: $i * 1px !important;
+  }
+
+  $i: $i + $step;
+}

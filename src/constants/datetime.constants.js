@@ -1,0 +1,21 @@
+import { AcLockObject } from '@utils/ac-lock-object';
+
+export const DATETIME_FORMATS = AcLockObject({
+	DATE: 'DD-MM-YYYY',
+	DATE_UNICODE: 'dd-MM-yyyy',
+	DAY: 'DD',
+	DAY_MONTH_YEAR: 'DD MMMM YYYY',
+	DAY_MONTH_YEAR_WITH_TIME: 'DD MMMM YYYY, HH:mm',
+	FULL_DAY: 'dddd DD MMMM',
+	MONTH: 'MMMM',
+	RAW_DATE: 'YYYY-MM-DD',
+	TIME: 'HH:mm',
+	TIMESTAMP: 'X',
+	WEEKDAY: 'dddd',
+	YEAR: 'YYYY',
+	DATETIME_WITH_YEAR: 'MMMM Do YYYY, HH:mm',
+	DATETIME_WITH_YEAR_AND_SECONDS: 'DD MMMM YYYY, HH:mm:ss',
+	DATETIME_WITH_YEAR_AND_TIME: 'DD MMMM YYYY, HH:mm',
+	FULL_DAY_WITH_YEAR: 'dddd DD MMMM YYYY',
+	FULL_DAY_WITH_YEAR_AND_TIME: 'dddd DD MMMM YYYY, HH:mm',
+});

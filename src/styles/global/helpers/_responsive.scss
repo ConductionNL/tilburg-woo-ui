@@ -1,0 +1,136 @@
+.h {
+  &-visible {
+    &-xxs,
+    &-xs,
+    &-sm,
+    &-md,
+    &-lg,
+    &-xl {
+      &--inline,
+      &--inline-block,
+      &--block {
+        display: none !important;
+      }
+    }
+
+    &-xxs {
+      @include respond-max($screen-xxs-max) {
+        &--inline {
+          display: inline !important;
+        }
+        &--inline-block {
+          display: inline-block !important;
+        }
+        &--block {
+          display: block !important;
+        }
+      }
+    }
+    &-xs {
+      @include respond-minmax($screen-xs-min, $screen-xs-max) {
+        &--inline {
+          display: inline !important;
+        }
+        &--inline-block {
+          display: inline-block !important;
+        }
+        &--block {
+          display: block !important;
+        }
+      }
+    }
+    &-sm {
+      @include respond-minmax($screen-sm-min, $screen-sm-max) {
+        &--inline {
+          display: inline !important;
+        }
+        &--inline-block {
+          display: inline-block !important;
+        }
+        &--block {
+          display: block !important;
+        }
+      }
+    }
+    &-md {
+      @include respond-minmax($screen-md-min, $screen-md-max) {
+        &--inline {
+          display: inline !important;
+        }
+        &--inline-block {
+          display: inline-block !important;
+        }
+        &--block {
+          display: block !important;
+        }
+      }
+    }
+    &-lg {
+      @include respond-minmax($screen-lg-min, $screen-lg-max) {
+        &--inline {
+          display: inline !important;
+        }
+        &--inline-block {
+          display: inline-block !important;
+        }
+        &--block {
+          display: block !important;
+        }
+      }
+    }
+    &-xl {
+      @include respond-min($screen-xl-min) {
+        &--inline {
+          display: inline !important;
+        }
+        &--inline-block {
+          display: inline-block !important;
+        }
+        &--block {
+          display: block !important;
+        }
+      }
+    }
+  }
+  &-hidden {
+    &-xxs {
+      @include respond-max($screen-xxs-max) {
+        display: none !important;
+      }
+    }
+    &-xs {
+      @include respond-minmax($screen-xs-min, $screen-xs-max) {
+        display: none !important;
+      }
+    }
+    &-sm {
+      @include respond-minmax($screen-sm-min, $screen-sm-max) {
+        display: none !important;
+      }
+    }
+    &-md {
+      @include respond-minmax($screen-md-min, $screen-md-max) {
+        display: none !important;
+      }
+    }
+    &-lg {
+      @include respond-minmax($screen-lg-min, $screen-lg-max) {
+        display: none !important;
+      }
+    }
+    &-xl {
+      @include respond-min($screen-xl-min) {
+        display: none !important;
+      }
+    }
+    &-all {
+      display: none !important;
+    }
+  }
+}
+
+.h-hidden--no-touch {
+  .no-touchevents & {
+    display: none;
+  }
+}

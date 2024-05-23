@@ -1,0 +1,27 @@
+$time: 250ms;
+
+// 	'ease-out'
+$ease-out: ease-out;
+
+// 	'ease-in-out'
+$in-out: ease-in-out;
+
+$linear-out: cubic-bezier(0, 0, 0.2, 1);
+
+// 'ease-out' the fancy way
+$out: cubic-bezier(0.17, 0.67, 0.35, 0.99);
+
+// 	'swift-out' (*material design easing)
+$swift: cubic-bezier(0.55, 0, 0.1, 1);
+
+//	'ease-out-fancy' (*customized)
+$fancy: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+// 	'ease-pretty' (*customized)
+$pretty: cubic-bezier(0.165, 0.84, 0.44, 1);
+
+// 'ease-in-out-elastic' (*customized)
+$elastic: cubic-bezier(0.27, -0.27, 0.32, 1.175);
+
+//	'default'
+$easing-base: $swift;

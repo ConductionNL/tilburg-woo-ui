@@ -1,0 +1,5 @@
+{
+	"name": "Open Tilburg",
+	"displayName": "Open Tilburg",
+	"entryPoint": "./src/index.web.js"
+}

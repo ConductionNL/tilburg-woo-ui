@@ -1,0 +1,87 @@
+/* Fade animation */
+.fade-appear,
+.fade-enter {
+	opacity: 0;
+	z-index: 1;
+}
+.fade-appear-active,
+.fade-enter.fade-enter-active {
+	opacity: 1;
+	transition: opacity 450ms 250ms;
+}
+.fade-exit {
+	opacity: 1;
+}
+.fade-exit.fade-exit-active {
+	opacity: 0;
+	transition: opacity $time;
+}
+
+/* Fade & Wait animation */
+/* Fade & Wait animation */
+.fade-wait-leave {
+	opacity: 1;
+}
+.fade-wait-leave.fade-wait-leave-active {
+	opacity: 0;
+	transition: opacity 400ms;
+}
+
+.fade-wait-enter {
+	opacity: 0;
+}
+.fade-wait-enter.fade-wait-enter-active {
+	opacity: 1;
+	/* Delay the enter animation until the leave completes */
+	transition: opacity 400ms 600ms;
+}
+
+.fade-wait-height {
+	transition: none;
+}
+
+/* Cross-Fade animation */
+.cross-fade-leave {
+	opacity: 1;
+}
+.cross-fade-leave.cross-fade-leave-active {
+	opacity: 0;
+	transition: opacity 0.5s ease-in;
+}
+
+.cross-fade-enter {
+	opacity: 0;
+}
+.cross-fade-enter.cross-fade-enter-active {
+	opacity: 1;
+	transition: opacity 0.5s ease-in;
+}
+
+.cross-fade-height {
+	transition: height 0.25s ease-in-out;
+}
+
+.page-enter,
+.page-leave {
+	position: absolute;
+	-webkit-transition: transform 250ms ease-in-out, opacity 250ms ease-in-out;
+	transition: transform 250ms ease-in-out, opacity 250ms ease-in-out;
+}
+
+.page-enter {
+	left: 100vw;
+}
+
+.page-enter.page-enter-active {
+	-webkit-transform: translate3d(-100vw, 0, 0);
+	transform: translate3d(-100vw, 0, 0);
+}
+
+.page-leave {
+	left: 0;
+}
+
+.page-leave.page-leave-active {
+	-webkit-transform: translate3d(-100vw, 0, 0);
+	transform: translate3d(-100vw, 0, 0);
+}

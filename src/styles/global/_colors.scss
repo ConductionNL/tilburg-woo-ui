@@ -1,0 +1,85 @@
+/* ------------------------------------------- */
+/**
+*	9 Shades of Grey
+*/
+
+$color-white: #ffffff;
+$color-eggwhite: #f3f4f7;
+$color-dusty: #f3f4f7;
+$color-offwhite: #f3f4f7;
+$color-light: #d4d9e3;
+$color-subtle: #adb5c5;
+$color-medium: #7f8995;
+$color-dark: #243036;
+$color-pitch: #000000;
+$color-black: #000000;
+
+/* ------------------------------------------- */
+/**
+*	Colors
+*/
+
+$color-red: #dd5e52;
+$color-red-light: #f0d5d2;
+$color-red-dark: #ac4338;
+
+$color-indigo: #6870e4;
+$color-indigo-light: #f3f4ff;
+$color-indigo-dark: #5a63c1;
+
+$color-green: #16837c;
+$color-green-light: #1dab9e;
+
+$color-yellow: #ffc107;
+$color-yellow-light: #ffffcc;
+
+$color-blue: #1a87cc; // rgb(255, 0, 31)
+$color-blue-light: #d2eeff; // rgb(255, 0, 31)
+
+$color-orange: #f29800;
+$color-orange-light: #f6ba6e;
+
+$color-file-doc: #17549c;
+$color-file-pdf: #d0021b;
+$color-file-ppt: #e23405;
+$color-file-sheet: #08743b;
+$color-file-svg: #f29800;
+$color-file-image: #6870e4;
+
+/* ------------------------------------------- */
+/**
+*	Colors => Aliases
+*/
+
+$color-grey: $color-light;
+$color-grey-2: $color-subtle;
+$color-grey-3: $color-medium;
+$color-grey-4: $color-dark;
+$color-grey-5: $color-pitch;
+
+$color-primary: $color-pitch;
+$color-secondary: $color-red;
+
+$color-alpha: $color-red;
+$color-alpha-light: $color-red-light;
+$color-alpha-dark: $color-red-dark;
+
+$color-omega: $color-indigo;
+$color-omega-light: $color-indigo-light;
+$color-omega-dark: $color-indigo-dark;
+
+$color-beta: $color-green;
+
+$color-success: $color-green;
+$color-success-light: $color-green-light;
+
+$color-error: $color-red;
+$color-error-light: $color-red-light;
+
+$color-info: $color-blue;
+$color-info-light: $color-blue-light;
+
+$color-warning: $color-yellow;
+$color-warning-light: $color-yellow-light;
+
+$color-neutral: $color-dark;

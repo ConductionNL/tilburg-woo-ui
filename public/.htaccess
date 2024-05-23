@@ -1,0 +1,218 @@
+# htaccess::options
+Options +FollowSymlinks
+Options -Indexes
+Options -MultiViews
+
+# Removes the server version from the handshake
+ServerSignature Off
+
+DirectoryIndex index.html
+FileETag none
+AddCharset UTF-8 .css
+AddDefaultCharset UTF-8
+DefaultLanguage nl-NL
+
+# Security Headers
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header always append X-Frame-Options DENY
+    Header set X-Content-Type-Options nosniff
+    Header set Referrer-Policy strict-origin
+    Header edit Set-Cookie ^(.*)$ $1;HttpOnly;Secure;SameSite=Lax
+    Header set X-Permitted-Cross-Domain-Policies "none"
+
+    Header always unset X-Powered-By
+    Header always unset server
+    Header unset X-Powered-By
+    Header unset server
+
+    Header set Feature-Policy "accelerometer 'none'; ambient-light-sensor 'self'; autoplay 'self'; camera 'none'; cookie 'self'; document-write 'self'; fullscreen 'self'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'self'; picture-in-picture 'self'; speaker 'self'; sync-script 'self'; sync-xhr 'self'; unsized-media 'self'; usb 'none'; vertical-scroll 'self'; vibrate 'none'; vr 'none'"
+    Header set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), publickey-credentials-get=(), usb=()"
+
+
+    # HSTS (ngx_http_headers_module is required) (31536000 seconds, 1 year)
+    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS
+
+    # Set the correct domains here
+	Header set Content-Security-Policy "default-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl; style-src 'self' 'unsafe-inline' *.open-tilburg.nl *.tilburg.nl *.acato.nl; script-src 'self'; font-src 'self'; img-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl data:; connect-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl *.rollbar.com; frame-ancestors 'self'; frame-src 'self'; block-all-mixed-content; upgrade-insecure-requests; form-action 'self';"
+
+    <FilesMatch "\.(js|css|xml|php|html|gif|jpe?g|png|svg|gz)$">
+        Header append Vary: "Accept-Encoding, gzip, User-Agent"
+    </FilesMatch>
+</IfModule>
+
+# Generic Caching
+<IfModule mod_headers.c>
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</IfModule>
+
+# HTML Caching
+<FilesMatch "\.(html)$">
+    <IfModule mod_expires.c>
+        ExpiresActive Off
+    </IfModule>
+
+    <IfModule mod_headers.c>
+        FileETag None
+        Header unset ETag
+        Header unset Pragma
+        Header unset Cache-Control
+        Header unset Last-Modified
+        Header set Pragma "no-cache"
+        Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+        Header set Expires "Thu, 1 Jan 1970 00:00:00 GMT"
+    </IfModule>
+</FilesMatch>
+
+# MIME TYPES
+<IfModule mod_mime.c>
+
+    # DEFAULTS
+    DefaultLanguage en
+    AddLanguage en-US .html .css .js
+    AddCharset utf-8 .html .css .js .xml .json .rss .atom
+
+    # JAVASCRIPT
+    AddType application/javascript js jsonp
+    AddType application/json json
+
+    # FONTS
+    AddType font/opentype otf
+    AddType application/font-woff woff
+    AddType application/x-font-woff woff
+    AddType application/vnd.ms-fontobject eot
+    AddType application/x-font-ttf ttc ttf
+    AddType image/svg+xml svg svgz
+    AddEncoding gzip svgz
+
+    # AUDIO
+    AddType audio/mp4 m4a f4a f4b
+    AddType audio/ogg oga ogg
+
+    # VIDEO
+    AddType video/mp4 mp4 m4v f4v f4p
+    AddType video/ogg ogv
+    AddType video/webm webm
+    AddType video/x-flv flv
+
+    # OTHERS
+    AddType application/octet-stream safariextz
+    AddType application/x-chrome-extension crx
+    AddType application/x-opera-extension oex
+    AddType application/x-shockwave-flash swf
+    AddType application/x-web-app-manifest+json webapp
+    AddType application/x-xpinstall xpi
+    AddType application/xml atom rdf rss xml
+    AddType application/vnd.openxmlformats .docx .pptx .xlsx .xltx . xltm .dotx .potx .ppsx
+    AddType text/cache-manifest appcache manifest
+    AddType text/vtt vtt
+    AddType text/x-component htc
+    AddType text/x-vcard vcf
+    AddType image/webp webp
+    AddType image/x-icon ico
+</IfModule>
+
+<Ifmodule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access 1 month"
+
+    # -> images
+    ExpiresByType image/\* "access 1 month"
+    ExpiresByType image/webp "access 1 month"
+    ExpiresByType image/gif "access 1 month"
+    ExpiresByType image/png "access 1 month"
+    ExpiresByType image/jpeg "access 1 month"
+    ExpiresByType image/svg "access 1 month"
+    ExpiresByType image/svg+xml "access 1 month"
+    ExpiresByType image/x-icon "access 1 year"
+
+    # -> fonts
+    ExpiresByType application/vnd.ms-fontobject "access 1 year"
+    ExpiresByType application/x-font-ttf "access 1 year"
+    ExpiresByType application/x-font-woff "access 1 year"
+    ExpiresByType application/font-woff2 "access 1 year"
+
+    # -> generics
+    ExpiresByType text/css "access 1 month"
+    ExpiresByType text/javascript "access 1 month"
+    ExpiresByType text/plain "access 1 month"
+    ExpiresByType text/x-javascript "access 1 month"
+
+    # -> fallbacks
+    ExpiresByType application/pdf "access 1 month"
+    ExpiresByType application/x-javascript "access 1 month"
+    ExpiresByType application/x-shockwave-flash "access 1 year"
+
+    # -> media
+    ExpiresByType video/ogg "access plus 1 month"
+    ExpiresByType audio/ogg "access plus 1 month"
+    ExpiresByType video/mp4 "access plus 1 month"
+    ExpiresByType video/webm "access plus 1 month"
+</Ifmodule>
+
+# 1 year cache for font files
+<FilesMatch "\.(ttf|woff|woff2|eot|svg)$">
+    Header set Cache-Control "max-age=31536000, public, must-revalidate"
+</FilesMatch>
+
+# 4 weeks cache for image files
+<FilesMatch "\.(ico|pdf|flv|jpg|jpeg|webp|png|gif|js|css)$">
+    Header set Cache-Control "max-age=2419200, public, must-revalidate"
+</FilesMatch>
+
+# GZIP Compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/css text/x-component application/x-javascript application/javascript text/javascript text/x-js text/html text/richtext image/svg+xml text/plain text/xsd text/xsl text/xml image/bmp application/java application/msword application/vnd.ms-fontobject application/x-msdownload image/x-icon image/webp application/json application/vnd.ms-access application/vnd.ms-project application/x-font-otf application/vnd.ms-opentype application/vnd.oasis.opendocument.database application/vnd.oasis.opendocument.chart application/vnd.oasis.opendocument.formula application/vnd.oasis.opendocument.graphics application/vnd.oasis.opendocument.presentation application/vnd.oasis.opendocument.spreadsheet application/vnd.oasis.opendocument.text audio/ogg application/pdf application/vnd.ms-powerpoint image/svg+xml application/x-shockwave-flash image/tiff application/x-font-ttf application/vnd.ms-opentype audio/wav application/vnd.ms-write application/font-woff application/x-font-woff application/font-woff2 application/vnd.ms-excel
+
+  <IfModule mod_mime.c>
+    # DEFLATE by extension
+    AddOutputFilter DEFLATE js css htm html xml
+  </IfModule>
+</IfModule>
+
+<Limit GET>
+    Order allow,deny
+    Allow from all
+</Limit>
+
+<Limit DELETE HEAD PATCH POST PUT>
+    Order deny,allow
+    Deny from all
+</Limit>
+
+<Files .htaccess>
+    Order allow,deny
+    deny from all
+</Files>
+
+# Use if PHP version is > 7
+<IfModule mod_php.c>
+    php_value zlib.output_compression 16386
+
+    php_value upload_max_filesize 4M
+    php_value post_max_size 4M
+    php_value max_execution_time 100
+    php_value max_input_time 100
+
+    php_value session.cookie_httponly 1
+    php_value session.cookie_secure 1
+</IfModule>
+
+<IfModule mod_speling.c>
+    CheckSpelling On
+</IfModule>
+
+SetEnvIf host ^(?!localhost).\*$ ENFORCEHTTPS
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
+    RewriteRule ^ - [L]
+
+    RewriteRule ^ /index.html [L]
+</IfModule>

@@ -1,0 +1,6 @@
+[
+	{
+		nl: 'Terug naar inloggen',
+		en: 'Return to login',
+	},
+]

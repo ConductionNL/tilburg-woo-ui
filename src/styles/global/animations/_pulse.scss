@@ -1,0 +1,16 @@
+@mixin pulseBackgroundAnimation($duration, $fromColor, $toColor) {
+  $animation-name: unique-id() !global;
+  @keyframes #{$animation-name} {
+    0% {
+      background-color: $fromColor;
+    }
+    35% {
+      background-color: $toColor;
+    }
+    100% {
+      background-color: $fromColor;
+    }
+  }
+  animation-duration: $duration;
+  animation-name: $animation-name;
+}

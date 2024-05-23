@@ -1,0 +1,61 @@
+$header-size: 7.2rem;
+$action-drawer-size: 8rem;
+
+html,
+body {
+	position: relative;
+	min-height: 100%;
+	margin: 0;
+	padding: 0;
+	background: $color-white;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+
+	@include font-body();
+	font-size: 10px; //1rem = 10px;
+	color: $color-pitch;
+
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+body {
+	width: 100%;
+
+	@include font-size(1.6rem);
+	@include font-weight-regular();
+
+	* {
+		-moz-osx-font-smoothing: grayscale;
+		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
+	}
+
+	form {
+		flex: 1;
+	}
+
+	main[role='main'] {
+		min-height: var(--window-size);
+	}
+
+	// yet another react lightbox css variables overrides
+	--yarl__portal_zindex: 100000;
+	--yarl__color_backdrop: rgba(0, 0, 0, 0.666);
+}
+
+$header-size: 8rem;
+$footer-size: 19rem;
+$grid-gutter-size: 1.6rem;
+
+:root {
+	--window-size: 100vh;
+	--header-size: 8rem;
+	--footer-size: 19rem;
+	--conversations-sidebar-size: 100vh;
+
+	@include respond-max($screen-xs-max) {
+		--conversations-sidebar-size: calc(100vh - 10rem);
+	}
+}

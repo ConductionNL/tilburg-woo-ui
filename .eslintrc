@@ -1,0 +1,17 @@
+{
+  "extends": ["plugin:react-app/recommended"],
+  "rules": {
+    "react-app/jsx-a11y/href-no-hash": "off"
+  },
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "module",
+    "allowImportExportEverywhere": true,
+    "autoFixOnSave": true,
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
+}

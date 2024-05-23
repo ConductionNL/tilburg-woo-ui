@@ -1,0 +1,6 @@
+.h-z-index {
+	&--on-top {
+		z-index: 1000;
+		position: relative;
+	}
+}

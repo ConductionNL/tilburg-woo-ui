@@ -1,0 +1,33 @@
+.h-flex-h-align {
+  &-start {
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  &-center {
+    display: flex;
+    justify-content: center;
+  }
+
+  &-end {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.h-flex-v-align {
+  &-start {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  &-center {
+    display: flex;
+    align-items: center;
+  }
+
+  &-end {
+    display: flex;
+    align-items: flex-end;
+  }
+}

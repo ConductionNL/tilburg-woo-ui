@@ -1,0 +1,119 @@
+image: node:18.16.0
+
+pipelines:
+  pull-requests:
+    hotfix/*:
+      - step:
+          name: Install
+          caches:
+            - nodecustom
+            - yarn
+          script:
+            - unset CI
+            - yarn set version 3.2.4
+            - yarn
+          artifacts:
+            - node_modules/**
+      - step:
+          name: Build
+          deployment: staging
+          script:
+            - unset CI
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
+            - yarn set version 3.2.4
+            - yarn build:web
+          artifacts:
+            - public_html/**
+      - step:
+          name: Deploy to staging
+          image: acatonl/php-deployer-pipeline:8.1
+          script:
+            - deployer.phar deploy staging
+  branches:
+    develop:
+      - step:
+          name: Install
+          caches:
+            - nodecustom
+            - yarn
+          script:
+            - unset CI
+            - yarn set version 3.2.4
+            - yarn
+          artifacts:
+            - node_modules/**
+      - step:
+          name: Build
+          deployment: develop
+          script:
+            - unset CI
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
+            - yarn set version 3.2.4
+            - yarn build:web
+          artifacts:
+            - public_html/**
+      - step:
+          name: Deploy to development
+          image: acatonl/php-deployer-pipeline:8.1
+          script:
+            - deployer.phar deploy develop
+    release/*:
+      - step:
+          name: Install
+          caches:
+            - nodecustom
+            - yarn
+          script:
+            - unset CI
+            - yarn set version 3.2.4
+            - yarn
+          artifacts:
+            - node_modules/**
+      - step:
+          name: Build
+          deployment: staging
+          script:
+            - unset CI
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
+            - yarn set version 3.2.4
+            - yarn build:web
+          artifacts:
+            - public_html/**
+      - step:
+          name: Deploy to staging
+          image: acatonl/php-deployer-pipeline:8.1
+          script:
+            - deployer.phar deploy staging
+  custom: # Pipelines that are triggered manually
+    production:
+      - step:
+          name: Install
+          caches:
+            - nodecustom
+            - yarn
+          script:
+            - unset CI
+            - yarn set version 3.2.4
+            - yarn
+          artifacts:
+            - node_modules/**
+      - step:
+          name: Build
+          deployment: production
+          script:
+            - unset CI
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
+            - yarn set version 3.2.4
+            - yarn build:web
+          artifacts:
+            - public_html/**
+      - step:
+          name: Deploy to production
+          image: acatonl/php-deployer-pipeline:8.1
+          script:
+            - deployer.phar deploy production
+
+definitions:
+  caches:
+    nodecustom: ./node_modules
+    yarn: /usr/local/share/.cache/yarn

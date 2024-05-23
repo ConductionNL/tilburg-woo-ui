@@ -1,0 +1,26 @@
+@mixin font-smoothing() {
+	font-smooth: always;
+	-moz-osx-font-smoothing: grayscale;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+@mixin disable-appearance($value: none) {
+	-webkit-appearance: $value;
+	-moz-appearance: $value;
+	appearance: $value;
+}
+
+@mixin prevent-selection() {
+	-ms-user-select: none;
+	user-select: none;
+}
+
+@mixin prevent-highlight($color: rgba(0, 0, 0, 0)) {
+	outline: none;
+	outline: 0;
+	outline-color: $color;
+	-webkit-tap-highlight-color: $color;
+	-webkit-tap-highlight-color: transparent;
+	@include prevent-selection();
+}

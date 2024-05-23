@@ -32,7 +32,6 @@ $ yarn
 $ yarn dev:web
 ```
 
-
 ```bash
 # build for production with minification & compressions (gzip, brotli)
 $ yarn build:web

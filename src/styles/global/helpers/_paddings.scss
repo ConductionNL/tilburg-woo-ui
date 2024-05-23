@@ -1,0 +1,33 @@
+$max: 160;
+$step: 5;
+$i: 0;
+
+@while $i < $max {
+  .h-padding-#{$i} {
+    padding: $i * 1px !important;
+  }
+  .h-padding-top-#{$i} {
+    padding-top: $i * 1px !important;
+  }
+  .h-padding-bottom-#{$i} {
+    padding-bottom: $i * 1px !important;
+  }
+  .h-padding-left-#{$i} {
+    padding-left: $i * 1px !important;
+  }
+  .h-padding-right-#{$i} {
+    padding-right: $i * 1px !important;
+  }
+
+  .h-padding-x-#{$i} {
+    padding-left: $i * 1px !important;
+    padding-right: $i * 1px !important;
+  }
+
+  .h-padding-y-#{$i} {
+    padding-bottom: $i * 1px !important;
+    padding-top: $i * 1px !important;
+  }
+
+  $i: $i + $step;
+}

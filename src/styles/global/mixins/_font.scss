@@ -1,0 +1,74 @@
+@mixin font-size($size) {
+  font-size: $size;
+
+  // @if $size < 1.4 {
+  //   @include respond-max($screen-xxs-max) {
+  //     @include font-size(1.4rem);
+  //   }
+  // }
+}
+
+@mixin font-smoothing() {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+@mixin font-weight-light() {
+  font-weight: 300;
+}
+@mixin font-weight-regular() {
+  font-weight: 400;
+}
+@mixin font-weight-medium() {
+  font-weight: 500;
+}
+@mixin font-weight-semibold() {
+  font-weight: 600;
+}
+@mixin font-weight-bold() {
+  font-weight: 700;
+}
+@mixin font-weight-extrabold() {
+  font-weight: 800;
+}
+
+@mixin hyphens() {
+  -ms-word-break: break-all;
+  word-break: break-all;
+
+  // Non standard for webkit
+  word-break: break-word;
+
+  -webkit-hyphens: auto;
+  -moz-hyphens: auto;
+  hyphens: auto;
+}
+
+@mixin line-clamp($lines, $line-height: 1.5) {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical; /* number of lines to show */
+  -webkit-line-clamp: $lines;
+  line-clamp: $lines;
+  text-overflow: ellipsis;
+
+  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  position: relative;
+
+  line-height: $line-height;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 !important;
+
+  -webkit-line-clamp: $lines;
+  height: (1em * $line-height * $lines);
+}
+
+@mixin text-overflow() {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

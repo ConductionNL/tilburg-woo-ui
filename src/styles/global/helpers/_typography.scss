@@ -1,0 +1,124 @@
+.h-text {
+	&--bold,
+	&--strong {
+		font-weight: 700;
+	}
+
+	&--semibold {
+		font-weight: 600;
+	}
+
+	&--regular {
+		font-weight: 500;
+	}
+
+	&--italic {
+		font-style: italic;
+	}
+
+	&--underlined {
+		text-decoration: underline;
+	}
+
+	&--color-black {
+		color: $color-black;
+	}
+
+	&--color-pitch {
+		color: $color-pitch;
+	}
+
+	&--color-primary {
+		color: $color-primary;
+	}
+
+	&--color-medium {
+		color: $color-medium;
+	}
+
+	&--color-subtle {
+		color: $color-subtle;
+	}
+
+	&--color-light {
+		color: $color-light;
+	}
+
+	&--color-white {
+		color: $color-white;
+	}
+
+	&--color-alpha {
+		color: $color-alpha;
+	}
+
+	&--color-omega {
+		color: $color-omega;
+	}
+
+	&--align-left {
+		text-align: left !important;
+	}
+
+	&--align-center {
+		text-align: center !important;
+	}
+
+	&--align-right {
+		text-align: right !important;
+	}
+
+	&--tt-uppercase {
+		text-transform: uppercase;
+	}
+
+	&--tt-lowercase {
+		text-transform: lowercase;
+	}
+
+	&--tt-capitalize {
+		text-transform: capitalize;
+	}
+
+	&--size-tiny {
+		@include font-size(0.9rem);
+	}
+
+	&--size-small {
+		@include font-size(1.1rem);
+	}
+
+	&--size-normal {
+		@include font-size(1.8rem);
+	}
+
+	&--size-medium {
+		@include font-size(2.4rem);
+	}
+
+	&--size-big {
+		@include font-size(3.4rem);
+		line-height: 1;
+	}
+
+	&--size-bigger {
+		@include font-size(4.2rem);
+		line-height: 1;
+	}
+
+	&--size-huge {
+		@include font-size(6.66rem);
+		line-height: 1;
+	}
+
+	&--bullet {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 3.6rem;
+		height: 3.6rem;
+		margin: 0 0.8rem 0 0;
+		border-radius: 50%;
+		border: 0.2rem solid $color-white;
+	}
+}
