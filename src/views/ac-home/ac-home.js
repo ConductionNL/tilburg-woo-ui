@@ -1,14 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
-import {
-	useLocation,
-	useNavigate,
-	useParams,
-	generatePath,
-	Link,
-} from 'react-router-dom';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Fade } from 'react-awesome-reveal';
 import loadable from '@loadable/component';
 import clsx from 'clsx';
 
