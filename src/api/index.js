@@ -6,10 +6,6 @@ import { AcTokenRefresher } from './interceptors.api';
 
 // Imports => API
 import AuthAPI from '@api/auth.api';
-import FilesAPI from '@api/files.api';
-import ConversationsAPI from '@api/conversations.api';
-import NewsAPI from '@api/news.api';
-import ProfileAPI from '@api/profile.api';
 
 const onUploadProgress = (event) => {
 	console.group('[Axios] => fn.onUploadProgress');
