@@ -1,0 +1,32 @@
+.tilburg-header {
+  .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__navigation-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    inline-size: 100dvw;
+    background-color: var(--tilburg-color-blue-300);
+  }
+
+  &__logo {
+    a {
+      display: flex;
+      align-items: center;
+      gap: var(--tilburg-space-column-pig);
+      color: var(--tilburg-color-white);
+      font-size: var(--tilburg-typography-font-size-xl);
+      font-weight: var(--tilburg-typography-font-weight-bold);
+      text-decoration: none;
+    }
+  }
+
+  &__navigation-secondary {
+    padding-block: var(--tilburg-space-block-mouse);
+    background-color: var(--tilburg-color-gray-50);
+  }
+}

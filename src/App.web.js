@@ -1,12 +1,9 @@
 // Imports => React
-import React, { useEffect, useState, useMemo, useRef, memo } from 'react';
-import loadable from '@loadable/component';
+
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { TransitionGroup, CSSTransition } from 'react-transition-group';
-import ReactCSSTransitionReplace from 'react-css-transition-replace';
-import clsx from 'clsx';
+
 
 // Imports => SCSS
 import '@styles/index.scss';
@@ -16,22 +13,15 @@ import config from '@config';
 
 // Imports => Constants
 import {
-	DASHBOARD_ROUTES,
 	DEFAULT_ROUTE,
-	ICONS,
-	KEYS,
-	PERMISSIONS,
-	ROLES,
-	ROUTES,
-	THEMES,
-	TITLES,
 } from '@constants';
 
 // Imports => Utilities
-import { AcIsSet, AcSetDocumentTitle } from '@utils';
+import { AcHome } from '@views'
+import loadable from '@loadable/component'
 
 // Imports => Molecules
-// const AcFooter = loadable(() => import('@components/ac-footer/ac-footer.web'));
+const TilburgHeader = loadable(() => import('@components/tilburg-header/tilburg-header'));
 
 // Imports => Atoms
 
@@ -45,7 +35,21 @@ const _CLASSES = {
 };
 
 const App = ({ store }) => {
-	return <div />;
+	return (
+		<div class="tilburg-theme">
+			<TilburgHeader />
+
+			<Routes>
+				<Route
+					key={`default-route-${DEFAULT_ROUTE.id}`}
+					path={'*'}
+					element={
+						<AcHome />
+					}
+				/>
+			</Routes>
+		</div>
+	);
 };
 
 export default withStore(observer(App));

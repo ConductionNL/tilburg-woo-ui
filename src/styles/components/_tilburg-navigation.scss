@@ -1,0 +1,43 @@
+.tilburg-navigation {
+  margin-inline-end: var(--tilburg-space-column-dog);
+
+  ul {
+    display: flex;
+    gap: var(--tilburg-space-column-ant);
+    list-style-type: none;
+  }
+
+  li {
+    display: flex;
+
+    &:first-of-type {
+      a {
+        border-top-left-radius: var(--tilburg-border-radius-md);
+        border-bottom-left-radius: var(--tilburg-border-radius-md);
+      }
+    }
+
+    &:last-of-type {
+      a {
+        border-top-right-radius: var(--tilburg-border-radius-md);
+        border-bottom-right-radius: var(--tilburg-border-radius-md);
+      }
+    }
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: var(--tilburg-space-column-snail);
+    padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
+    color: var(--tilburg-color-white);
+    background-color: var(--tilburg-color-blue-400);
+    font-weight: var(--tilburg-typography-font-weight-bold);
+    text-decoration: none;
+    transition: background-color 0.2s cubic-bezier(0.4 0 0.2 / 1);
+
+    &:where(:hover, :focus-visible) {
+      background-color: var(--tilburg-color-blue-500);
+    }
+  }
+}

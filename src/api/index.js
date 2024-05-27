@@ -96,10 +96,6 @@ export class API {
 		window.addEventListener('cancelRequests', cancelRequests, false);
 
 		this.auth = new AuthAPI({ Store, Client });
-		this.files = new FilesAPI({ Store, Client, DownloadClient });
-		this.conversations = new ConversationsAPI({ Store, Client, UploadClient });
-		this.news = new NewsAPI({ Store, Client });
-		this.profile = new ProfileAPI({ Store, Client });
 	}
 }
 
