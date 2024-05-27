@@ -22,6 +22,7 @@ import loadable from '@loadable/component'
 
 // Imports => Molecules
 const TilburgHeader = loadable(() => import('@components/tilburg-header/tilburg-header'));
+const TilburgFooter = loadable(() => import('@components/tilburg-footer/tilburg-footer'));
 
 // Imports => Atoms
 
@@ -39,15 +40,19 @@ const App = ({ store }) => {
 		<div class="tilburg-theme">
 			<TilburgHeader />
 
-			<Routes>
-				<Route
-					key={`default-route-${DEFAULT_ROUTE.id}`}
-					path={'*'}
-					element={
-						<AcHome />
-					}
-				/>
-			</Routes>
+			<main id="main">
+				<Routes>
+					<Route
+						key={`default-route-${DEFAULT_ROUTE.id}`}
+						path={'*'}
+						element={
+							<AcHome />
+						}
+					/>
+				</Routes>
+			</main>
+
+			<TilburgFooter />
 		</div>
 	);
 };

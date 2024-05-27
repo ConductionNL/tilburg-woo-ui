@@ -29,4 +29,9 @@
     padding-block: var(--tilburg-space-block-mouse);
     background-color: var(--tilburg-color-gray-50);
   }
+
+  // remove margin from unnecessary p tag wrapper
+  p:has([class*='skip-link']) {
+    margin: 0;
+  }
 }

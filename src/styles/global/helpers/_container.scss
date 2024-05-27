@@ -1,0 +1,18 @@
+.container {
+  margin: 0 auto;
+  padding: 0 calc(2rem / 2);
+  max-width: 100%;
+
+  @include respond-min($screen-sm) {
+    padding: 0 2rem;
+  }
+
+  @include respond-min($screen-lg) {
+    padding: 0 calc(2rem / 2);
+    max-width: 1200px;
+  }
+
+  &.stretch {
+    max-width: 100%;
+  }
+}
