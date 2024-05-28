@@ -8,6 +8,7 @@ const CONTACT = loadable(() => import('-!svg-react-loader!@assets/images/contact
 const EXTERNAL_LINK = loadable(() => import('-!svg-react-loader!@assets/images/external-link.svg'));
 const INFO = loadable(() => import('-!svg-react-loader!@assets/images/info.svg'));
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
+const LIST_BLUE = loadable(() => import('-!svg-react-loader!@assets/images/list-blue.svg'));
 const LOGO = loadable(() => import('-!svg-react-loader!@assets/images/logo.svg'));
 const MENU = loadable(() => import('-!svg-react-loader!@assets/images/menu.svg'));
 const SEARCH = loadable(() => import('-!svg-react-loader!@assets/images/search.svg'));
@@ -23,6 +24,7 @@ export const VISUALS = {
     MENU,
     SEARCH,
     ARROW_RIGHT,
+    LIST_BLUE,
 };
 
 export default {};

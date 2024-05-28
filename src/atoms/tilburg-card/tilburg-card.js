@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 
 
-const TilburgCard = ({blue = false, padding = 'default', children}) => {
+const TilburgCard = ({blue = false, padding = 'default', children, image}) => {
     const _CLASSES = clsx(
         'tilburg-card',
         blue && 'tilburg-card--blue',
@@ -10,7 +10,12 @@ const TilburgCard = ({blue = false, padding = 'default', children}) => {
 
     return (
         <div className={_CLASSES}>
-            {children}
+            {image &&
+                <img src={image} alt="" />
+            }
+            <div class="tilburg-card__content">
+                {children}
+            </div>
         </div>
     )
 }

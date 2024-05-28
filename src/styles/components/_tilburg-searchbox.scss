@@ -16,8 +16,12 @@
 
   &--home {
     flex-direction: column;
-    gap: var(--tilburg-space-block-rabbit);
     align-items: flex-start;
+    gap: var(--tilburg-space-block-rabbit);
+
+    .utrecht-textbox {
+      max-inline-size: unset;
+    }
 
     .tilburg-searchbox__search {
       flex-direction: row;
@@ -25,10 +29,16 @@
     }
 
     @include respond-max($screen-sm) {
+      gap: var(--tilburg-space-block-mouse);
+
       .tilburg-searchbox__search {
-        width: 100%;
+        inline-size: 100%;
         flex-direction: column;
-        gap: var(--tilburg-space-block-snail);
+        gap: var(--tilburg-space-block-mouse);
+      }
+
+      .utrecht-heading-2 {
+        font-size: var(--tilburg-typography-font-size-xl);
       }
     }
   }
@@ -36,6 +46,7 @@
   &__search {
     display: flex;
     gap: var(--tilburg-space-block-mouse);
+    inline-size: 100%;
 
     button {
       flex-shrink: 0;

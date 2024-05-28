@@ -12,7 +12,7 @@ export const TilburgSearchbox = ({small = false, home = false, label}) => {
     )
 
     const renderHeading = useMemo(() => {
-        return label && <Heading level={1}>{label}</Heading>
+        return label && <Heading level={2}>{label}</Heading>
     }, [label])
 
     return (
