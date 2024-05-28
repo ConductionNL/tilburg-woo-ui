@@ -1,8 +1,15 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
 .tilburg-header {
   .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
+
+    //@include respond-min($screen-sm) {
+    //  padding: 0 2rem;
+    //}
   }
 
   &__navigation-main {
