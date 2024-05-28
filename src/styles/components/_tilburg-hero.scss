@@ -1,9 +1,14 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
 .tilburg-hero {
   //background: url('../../assets/images/placeholder.jpeg') no-repeat center center;
   background-color: var(--tilburg-color-blue-500);
   padding-block: var(--tilburg-space-row-elephant);
 
   .tilburg-card {
-
+    @include respond-max($screen-sm) {
+      gap: var(--tilburg-space-block-mouse);
+    }
   }
 }

@@ -19,6 +19,8 @@ const TilburgHero	 = loadable(() => import('@components/tilburg-hero/tilburg-her
 const TilburgSearchbox = loadable(() => import('@components/tilburg-searchbox/tilburg-searchbox'));
 const TilburgFaq = loadable(() => import('@components/tilburg-faq/tilburg-faq'));
 const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
+const TilburgCardIntro = loadable(() => import('@molecules/tilburg-card-intro/tilburg-card-intro'));
+const TilburgSearchResult = loadable(() => import('@molecules/tilburg-search-result/tilburg-search-result'));
 
 // Imports => Atoms
 
@@ -47,22 +49,17 @@ const AcHome = ({ store: { conversations, news, profile } }) => {
 
 			<TilburgContainer>
 				<Heading level={1}>Gemeente Tilburg</Heading>
-			</TilburgContainer>
-
-			<TilburgContainer>
 				<TilburgSearchbox />
-			</TilburgContainer>
-
-			<TilburgContainer>
 				<TilburgSearchbox small />
+				<TilburgFaq faqItems={faqItems} />
+
+				<TilburgCardIntro />
+
+				<TilburgSearchResult />
 			</TilburgContainer>
 
-			<TilburgContainer>
-				<TilburgFaq faqItems={faqItems} />
-			</TilburgContainer>
 		</>
 	);
-
 };
 
 export default withStore(observer(AcHome));

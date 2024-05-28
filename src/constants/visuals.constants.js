@@ -11,6 +11,8 @@ const MENU = loadable(() => import('-!svg-react-loader!@assets/images/menu.svg')
 // const SEARCH = loadable(() => import('-!svg-react-loader!@assets/images/search.svg'));
 const SEARCH = loadable(() => import('-!svg-react-loader!@assets/images/search.svg'));
 const ARROW_RIGHT = loadable(() => import('-!svg-react-loader!@assets/images/arrow-right.svg'));
+const LIST_BLUE = loadable(() => import('-!svg-react-loader!@assets/images/list-blue.svg'));
+
 export const VISUALS = {
     CHEVRON_RIGHT,
     CONTACT,
@@ -21,6 +23,7 @@ export const VISUALS = {
     MENU,
     SEARCH,
     ARROW_RIGHT,
+    LIST_BLUE,
 };
 
 export default {};
