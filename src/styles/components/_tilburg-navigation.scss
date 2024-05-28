@@ -1,5 +1,8 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
 .tilburg-navigation {
-  margin-inline-end: var(--tilburg-space-column-dog);
+  margin-inline-end: var(--tilburg-space-column-rat);
 
   ul {
     display: flex;
@@ -25,7 +28,8 @@
     }
   }
 
-  a {
+  a,
+  button {
     display: flex;
     align-items: center;
     gap: var(--tilburg-space-column-snail);
@@ -39,5 +43,76 @@
     &:where(:hover, :focus-visible) {
       background-color: var(--tilburg-color-blue-500);
     }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  button {
+    display: none;
+    border: none;
+    border-radius: var(--tilburg-border-radius-md);
+
+    @include respond-max($screen-md) {
+      display: flex;
+    }
+
+    &[aria-expanded='true'] {
+      @include respond-max($screen-md) {
+        + nav {
+          visibility: visible;
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  nav {
+    @include respond-max($screen-md) {
+      position: absolute;
+      display: flex;
+      inset-inline: 0;
+      inset-block-start: var(--navigation-bar-height);
+      block-size: calc(100dvh - var(--navigation-bar-height));
+      padding-block-end: var(--tilburg-space-block-rat);
+      background-color: var(--tilburg-color-blue-400);
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      visibility: hidden;
+      opacity: 0;
+      z-index: 99;
+
+      ul {
+        flex-direction: column;
+        inline-size: 100%;
+
+        li {
+          &:first-of-type a,
+          &:last-of-type a {
+            border-radius: 0;
+          }
+
+          a {
+            position: relative;
+            gap: var(--tilburg-space-column-rat);
+            inline-size: 100%;
+            padding-inline: var(--tilburg-space-block-rabbit);
+            padding-block: var(--tilburg-space-row-cat);
+            font-size: var(--tilburg-typography-font-size-lg);
+
+
+            &:after {
+              content: '';
+              position: absolute;
+              inset-inline: var(--tilburg-space-block-rat);
+              inset-block-end: -2px;
+              block-size: 2px;
+              background-color: var(--tilburg-color-blue-300);
+            }
+          }
+        }
+      }
+    }
   }
 }
+

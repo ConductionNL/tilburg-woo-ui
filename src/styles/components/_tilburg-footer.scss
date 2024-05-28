@@ -7,7 +7,7 @@
   background-color: var(--tilburg-color-blue-400);
 
   @include respond-max($screen-sm) {
-    padding-block: var(--tilburg-space-row-mouse);
+    padding-block: var(--tilburg-space-row-cat);
   }
 
   .container {
@@ -18,6 +18,10 @@
     @include respond-max($screen-sm) {
       grid-template-columns: 1fr;
     }
+  }
+
+  h3 {
+    margin-block-end: var(--tilburg-space-block-snail);
   }
 
   ul {
@@ -32,7 +36,7 @@
       }
 
       &:not(:last-child) {
-        margin-block-end: var(--tilburg-space-block-mouse);
+        margin-block-end: var(--tilburg-space-block-snail);
       }
 
       &:has(svg) {
@@ -66,7 +70,7 @@
       display: flex;
       flex-direction: column;
       gap: var(--tilburg-space-column-rat);
-      max-inline-size: 35ch;
+      max-inline-size: 30ch;
 
       span:first-of-type {
         font-size: var(--tilburg-typography-font-size-xl);

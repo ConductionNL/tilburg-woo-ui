@@ -2,14 +2,19 @@
 @use '../global/mixins/respond' as *;
 
 .tilburg-header {
+  --navigation-bar-height: 96px;
+
+  position: relative;
+
+  @include respond-max($screen-md) {
+    --navigation-bar-height: 72px;
+  }
+
   .container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    //@include respond-min($screen-sm) {
-    //  padding: 0 2rem;
-    //}
+    gap: var(--tilburg-space-column-mouse);
   }
 
   &__navigation-main {
@@ -17,6 +22,7 @@
     justify-content: space-between;
     align-items: center;
     inline-size: 100dvw;
+    block-size: var(--navigation-bar-height);
     background-color: var(--tilburg-color-blue-300);
   }
 
@@ -29,16 +35,38 @@
       font-size: var(--tilburg-typography-font-size-xl);
       font-weight: var(--tilburg-typography-font-weight-bold);
       text-decoration: none;
+
+      @include respond-max($screen-md) {
+        gap: var(--tilburg-space-column-rabbit);
+      }
+    }
+
+    svg {
+      flex-shrink: 0;
+      inline-size: var(--navigation-bar-height);
+      block-size: var(--navigation-bar-height);
     }
   }
 
   &__navigation-secondary {
     padding-block: var(--tilburg-space-block-mouse);
     background-color: var(--tilburg-color-gray-50);
+
+    @include respond-max($screen-md) {
+      .container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
   }
 
   // remove margin from unnecessary p tag wrapper
   p:has([class*='skip-link']) {
     margin: 0;
+  }
+
+  // remove padding from first breadcrumb item to align with container
+  ol .utrecht-breadcrumb-nav__item:first-of-type a {
+    padding-inline-start: 0;
   }
 }

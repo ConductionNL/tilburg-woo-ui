@@ -16,7 +16,7 @@ const TilburgHeader = () => {
     return (
         <header className="tilburg-header">
             <SkipLink href="#main">
-                Skip to main content
+                Direct naar de inhoud
             </SkipLink>
             <div className="tilburg-header__navigation-main">
                 <div className="tilburg-header__logo">
