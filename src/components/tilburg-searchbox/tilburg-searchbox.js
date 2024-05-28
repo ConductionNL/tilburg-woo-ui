@@ -1,19 +1,32 @@
-import React from 'react'
-import { Heading, Textbox, PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module'
+import { useMemo } from 'react'
 import clsx from 'clsx'
+import { Textbox, PrimaryActionButton, Heading } from '@utrecht/component-library-react/dist/css-module'
+import { VISUALS } from '@constants'
 
-export const TilburgSearchbox = () => {
+export const TilburgSearchbox = ({small = false, home = false, label}) => {
 
-    const _CLASSES = clsx('ac-searchbox')
+    const _CLASSES = clsx(
+        'tilburg-searchbox',
+        small && 'tilburg-searchbox--small',
+        home && 'tilburg-searchbox--home'
+    )
+
+    const renderHeading = useMemo(() => {
+        return label && <Heading level={1}>{label}</Heading>
+    }, [label])
 
     return (
-        <section className={_CLASSES}>
-            <Heading level={2}>Zoeken</Heading>
-            <Textbox placeholder="Vul je zoekterm in" />
-            <PrimaryActionButton onClick={() => console.log('test')}>
-                Click me
-            </PrimaryActionButton>
-        </section>
+        <div className={_CLASSES}>
+            {renderHeading}
+
+            <div class="tilburg-searchbox__search">
+                <Textbox placeholder="Vul je zoekterm in" />
+                <PrimaryActionButton onClick={() => console.log('test')}>
+                    <VISUALS.SEARCH />
+                    Zoeken
+                </PrimaryActionButton>
+            </div>
+        </div>
     )
 }
 

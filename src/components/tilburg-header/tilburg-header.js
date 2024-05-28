@@ -9,9 +9,10 @@ import {
 
 import ReadspeakerPlaceholder from '../../assets/images/readspeaker-placeholder.png';
 
-const TilburgHeader = () => {
-    const TilburgNavigation = loadable(() => import('@components/tilburg-navigation/tilburg-navigation'));
+const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
+const TilburgNavigation = loadable(() => import('@components/tilburg-navigation/tilburg-navigation'));
 
+const TilburgHeader = () => {
     return (
         <header className="tilburg-header">
             <SkipLink href="#main">
@@ -27,7 +28,7 @@ const TilburgHeader = () => {
                 <TilburgNavigation />
             </div>
             <div className="tilburg-header__navigation-secondary">
-                <div className="container">
+                <TilburgContainer>
                     <BreadcrumbNav>
                         <BreadcrumbNavLink href="/" rel="home" index={0}>
                             Home
@@ -46,7 +47,7 @@ const TilburgHeader = () => {
                         </BreadcrumbNavLink>
                     </BreadcrumbNav>
                     <img src={ReadspeakerPlaceholder} alt=""/>
-                </div>
+                </TilburgContainer>
             </div>
         </header>
     );

@@ -1,10 +1,13 @@
 import {VISUALS} from '@constants'
+import loadable from '@loadable/component'
+
+const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 
 const TilburgFooter = () => {
     return (
         <footer className="tilburg-footer">
             <h2 className="sr-only">Footer</h2>
-            <div className="container">
+            <TilburgContainer>
                 <nav className="tilburg-footer__links" aria-label="Footer menu 1">
                     <h3>Deze website</h3>
                     <ul>
@@ -65,7 +68,7 @@ const TilburgFooter = () => {
                         <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
                     </span>
                 </div>
-            </div>
+            </TilburgContainer>
         </footer>
     );
 }

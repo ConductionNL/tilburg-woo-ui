@@ -6,21 +6,21 @@
 }
 
 @mixin font-heading() {
-	font-family: 'Catamaran', arial, sans-serif;
+	font-family: 'TradeGothicCondensed18', arial, sans-serif;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
 }
 
 @mixin font-title() {
-	font-family: 'Open Sans', arial, sans-serif;
+	font-family: 'Roboto', arial, sans-serif;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;
 }
 
 @mixin font-body() {
-	font-family: 'Mada', arial, sans-serif;
+	font-family: 'Roboto', arial, sans-serif;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: optimizeLegibility;

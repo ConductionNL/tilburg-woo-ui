@@ -9,7 +9,8 @@ const INFO = loadable(() => import('-!svg-react-loader!@assets/images/info.svg')
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
 const MENU = loadable(() => import('-!svg-react-loader!@assets/images/menu.svg'));
 // const SEARCH = loadable(() => import('-!svg-react-loader!@assets/images/search.svg'));
-
+const SEARCH = loadable(() => import('-!svg-react-loader!@assets/images/search.svg'));
+const ARROW_RIGHT = loadable(() => import('-!svg-react-loader!@assets/images/arrow-right.svg'));
 export const VISUALS = {
     CHEVRON_RIGHT,
     CONTACT,
@@ -18,7 +19,8 @@ export const VISUALS = {
     LIST,
     LOGO,
     MENU,
-    // SEARCH,
+    SEARCH,
+    ARROW_RIGHT,
 };
 
 export default {};

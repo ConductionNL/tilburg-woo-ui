@@ -15,8 +15,10 @@ import { KEYS, ROUTES, TITLES } from '@constants';
 import { Heading } from '@utrecht/component-library-react/dist/css-module'
 
 // Imports => Components
+const TilburgHero = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
 const TilburgSearchbox = loadable(() => import('@components/tilburg-searchbox/tilburg-searchbox'));
 const TilburgFaq = loadable(() => import('@components/tilburg-faq/tilburg-faq'));
+const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 
 // Imports => Atoms
 
@@ -41,9 +43,23 @@ const faqItems = [
 const AcHome = ({ store: { conversations, news, profile } }) => {
 	return (
 		<>
-			<Heading level={1}>Gemeente Tilburg</Heading>
-			<TilburgSearchbox />
-			<TilburgFaq faqItems={faqItems} />
+			<TilburgHero />
+
+			<TilburgContainer>
+				<Heading level={1}>Gemeente Tilburg</Heading>
+			</TilburgContainer>
+
+			<TilburgContainer>
+				<TilburgSearchbox />
+			</TilburgContainer>
+
+			<TilburgContainer>
+				<TilburgSearchbox small />
+			</TilburgContainer>
+
+			<TilburgContainer>
+				<TilburgFaq faqItems={faqItems} />
+			</TilburgContainer>
 		</>
 	);
 

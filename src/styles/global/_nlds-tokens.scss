@@ -78,8 +78,6 @@
   --tilburg-box-shadow-lg: [object Object];
   --tilburg-box-shadow-md: [object Object];
   --tilburg-box-shadow-sm: [object Object];
-  --tilburg-typography-font-family-secondary: Roboto;
-  --tilburg-typography-font-family-primary: TradeGothicCondensed18;
   --tilburg-typography-font-weight-bold: Bold;
   --tilburg-typography-font-weight-normal: Regular;
   --tilburg-typography-line-height-lg: 200%;
@@ -738,4 +736,6 @@
   --utrecht-checkbox-checked-active-background-color: var(--tilburg-form-control-active-accent-color);
   --utrecht-checkbox-checked-hover-background-color: var(--tilburg-form-control-hover-accent-color);
   --utrecht-checkbox-checked-background-color: var(--tilburg-form-control-accent-color);
+  --tilburg-typography-font-family-secondary: Roboto;
+  --tilburg-typography-font-family-primary: TradeGothicCondensed18;
 }
