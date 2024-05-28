@@ -1,24 +1,38 @@
 .tilburg-card {
-  border-radius: var(--tilburg-border-radius-md);
   display: flex;
-
-  inline-size: min(100%, 744px);
-  //inline-size: 744px;
-
   flex-direction: column;
-  gap: var(--tilburg-space-block-rabbit);
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tilburg-space-block-snail);
+  }
+
+  border-radius: var(--tilburg-border-radius-md);
+  border: var(--tilburg-border-width-sm) solid var(--tilburg-color-gray-200);
+
+  img {
+    aspect-ratio: 16/9;
+    border-top-left-radius: var(--tilburg-border-radius-md);
+    border-top-right-radius: var(--tilburg-border-radius-md);
+  }
 
   &--blue {
     background-color: var(--tilburg-color-blue-100);
+    border: 0;
   }
 
   &--padding {
     &-default {
-      padding: var(--tilburg-space-block-rabbit);
+      .tilburg-card__content {
+        padding: var(--tilburg-space-block-rabbit);
+      }
     }
 
     &-lg {
-      padding: var(--tilburg-space-block-dog);
+      .tilburg-card__content {
+        padding: var(--tilburg-space-block-dog);
+      }
     }
   }
 }

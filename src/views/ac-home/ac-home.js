@@ -13,6 +13,7 @@ import { KEYS, ROUTES, TITLES } from '@constants';
 
 // Imports => NLDS components
 import { Heading } from '@utrecht/component-library-react/dist/css-module'
+import TilburgCardCategory from '@molecules/tilburg-card-category/tilburg-card-category'
 
 // Imports => Components
 const TilburgHero	 = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
@@ -56,6 +57,8 @@ const AcHome = ({ store: { conversations, news, profile } }) => {
 				<TilburgCardIntro />
 
 				<TilburgSearchResult />
+
+				<TilburgCardCategory />
 			</TilburgContainer>
 
 		</>

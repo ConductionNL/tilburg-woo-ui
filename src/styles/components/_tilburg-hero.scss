@@ -7,8 +7,16 @@
   padding-block: var(--tilburg-space-row-elephant);
 
   .tilburg-card {
-    @include respond-max($screen-sm) {
-      gap: var(--tilburg-space-block-mouse);
+    inline-size: min(100%, 744px);
+
+    &__content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--tilburg-space-block-rabbit);
+
+      @include respond-max($screen-sm) {
+        gap: var(--tilburg-space-block-mouse);
+      }
     }
   }
 }
