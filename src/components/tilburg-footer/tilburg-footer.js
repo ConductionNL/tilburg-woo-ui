@@ -32,28 +32,28 @@ const TilburgFooter = () => {
                     <h3>Snel naar</h3>
                     <ul>
                         <li>
-                            <a href="/">
+                            <a href="/" target="_blank">
                                 www.tilburg.nl
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
                                 <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                         <li>
-                            <a href="/">
+                            <a href="/" target="_blank">
                                 Privacy
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
                                 <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                         <li>
-                            <a href="/">
+                            <a href="/" target="_blank">
                                 Proclaimer
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
                                 <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                         <li>
-                            <a href="/">
+                            <a href="/" target="_blank">
                                 Cookies
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
                                 <VISUALS.EXTERNAL_LINK />

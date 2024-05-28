@@ -2,7 +2,7 @@
 
 .container {
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 var(--tilburg-space-column-rat);
   max-width: 100%;
 
   @include respond-min($screen-lg) {
