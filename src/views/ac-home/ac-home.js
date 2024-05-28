@@ -15,7 +15,7 @@ import { KEYS, ROUTES, TITLES } from '@constants';
 import { Heading } from '@utrecht/component-library-react/dist/css-module'
 
 // Imports => Components
-const TilburgHero = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
+const TilburgHero	 = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
 const TilburgSearchbox = loadable(() => import('@components/tilburg-searchbox/tilburg-searchbox'));
 const TilburgFaq = loadable(() => import('@components/tilburg-faq/tilburg-faq'));
 const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));

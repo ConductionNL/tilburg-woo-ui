@@ -1,3 +1,6 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
 .tilburg-searchbox {
   display: flex;
   align-items: center;
@@ -19,6 +22,14 @@
     .tilburg-searchbox__search {
       flex-direction: row;
       gap: var(--tilburg-space-block-mouse);
+    }
+
+    @include respond-max($screen-sm) {
+      .tilburg-searchbox__search {
+        width: 100%;
+        flex-direction: column;
+        gap: var(--tilburg-space-block-snail);
+      }
     }
   }
 

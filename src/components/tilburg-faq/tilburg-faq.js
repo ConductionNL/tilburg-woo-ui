@@ -1,9 +1,6 @@
 import { Heading } from '@utrecht/component-library-react/dist/css-module'
 import { AccordionProvider } from '@utrecht/component-library-react'
 import clsx from 'clsx'
-import loadable from '@loadable/component'
-
-const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 
 export const TilburgFaq = ({faqItems = []}) => {
 

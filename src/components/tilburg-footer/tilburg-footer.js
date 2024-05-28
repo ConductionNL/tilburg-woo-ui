@@ -1,4 +1,4 @@
-import {VISUALS} from '@constants'
+import { VISUALS } from '@constants'
 import loadable from '@loadable/component'
 
 const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
@@ -35,34 +35,34 @@ const TilburgFooter = () => {
                             <a href="/">
                                 www.tilburg.nl
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
-                                <VISUALS.EXTERNAL_LINK/>
+                                <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                         <li>
                             <a href="/">
                                 Privacy
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
-                                <VISUALS.EXTERNAL_LINK/>
+                                <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                         <li>
                             <a href="/">
                                 Proclaimer
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
-                                <VISUALS.EXTERNAL_LINK/>
+                                <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                         <li>
                             <a href="/">
                                 Cookies
                                 <span class="sr-only">Opent in een nieuw tabblad</span>
-                                <VISUALS.EXTERNAL_LINK/>
+                                <VISUALS.EXTERNAL_LINK />
                             </a>
                         </li>
                     </ul>
                 </nav>
                 <div class="tilburg-footer__logo">
-                    <VISUALS.LOGO/>
+                    <VISUALS.LOGO />
                     <span>
                         <span>Open Tilburg</span>
                         <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
