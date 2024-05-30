@@ -18,7 +18,6 @@ const AcContent = ({ store: { pages } }) => {
 
     return (
         <>
-            Test
             <TilburgBlockHandler contents={get_single?.contents} />
         </>
     )

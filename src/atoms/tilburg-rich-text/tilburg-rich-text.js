@@ -1,14 +1,17 @@
 // Imports => Utilities
 import {AcSanitizeHtml} from "@src/utilities";
+import clsx from 'clsx';
 
 const TilburgRichText = ({ content, children }) => {
+
+    const _CLASSES = clsx('tilburg-rich-text')
 
     if (!content) {
         return null
     }
 
     return (
-        <div>
+        <div className={_CLASSES}>
             {AcSanitizeHtml(content)}
         </div>
     )
