@@ -7,6 +7,7 @@ import { AcTokenRefresher } from './interceptors.api';
 // Imports => API
 import AuthAPI from '@api/auth.api';
 import FaqsAPI from "@api/faqs.api";
+import PagesAPI from "@api/pages.api";
 
 const onUploadProgress = (event) => {
 	console.group('[Axios] => fn.onUploadProgress');
@@ -98,6 +99,7 @@ export class API {
 
 		this.auth = new AuthAPI({ Store, Client });
 		this.faqs = new FaqsAPI({ Store, Client });
+		this.pages = new PagesAPI({ Store, Client });
 	}
 }
 

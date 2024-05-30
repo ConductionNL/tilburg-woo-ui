@@ -1,7 +1,9 @@
 import React from 'react';
 import {useLocation} from 'react-router-dom';
 import loadable from '@loadable/component';
-import {VISUALS} from '@constants';
+import { Link } from 'react-router-dom';
+
+import { VISUALS } from '@constants'
 import {
     BreadcrumbNav,
     BreadcrumbNavLink,
@@ -30,10 +32,10 @@ const TilburgHeader = () => {
                             Open Tilburg
                         </div>
                     ) : (
-                        <a href="/" title="Logo Tilburg - Ga naar de beginpagina">
+                        <Link to="/" title="Logo Tilburg - Ga naar de beginpagina">
                             <VISUALS.LOGO/>
                             Open Tilburg
-                        </a>
+                        </Link>
                     )}
                 </div>
                 <TilburgNavigation/>

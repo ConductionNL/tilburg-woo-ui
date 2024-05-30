@@ -1,7 +1,8 @@
 // Imports => MOBX
 import {observable, computed, makeObservable, action} from 'mobx';
-import DOMPurify from 'dompurify';
-import parse from 'html-react-parser';
+
+// Imports => Utilities
+import {AcSanitizeHtml} from "@src/utilities";
 
 let app = {};
 
@@ -29,12 +30,12 @@ export class FaqsStore {
     get all_faqs() {
         return this.items.map((item) => ({
             label: item.question,
-            body: parse(DOMPurify.sanitize(item.answer)),
+            body: AcSanitizeHtml(item.answer),
         }))
     }
 
     @action
-    getAll = async () => {
+    fetchFaqs = async () => {
         this.loading.status = true
 
         app.store.api.faqs.list()
