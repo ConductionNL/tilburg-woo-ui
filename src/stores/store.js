@@ -10,6 +10,7 @@ import API from '@api';
 import AuthStore from '@stores/auth.store';
 import ToastersStore from '@stores/toasters.store';
 import FaqsStore from "@stores/faqs.store";
+import PagesStore from "@stores/pages.store";
 
 class Store {
 	constructor(config) {
@@ -21,6 +22,7 @@ class Store {
 
 		this.auth = new AuthStore(this);
 		this.faqs = new FaqsStore(this);
+		this.pages = new PagesStore(this);
 		this.toasters = new ToastersStore(this);
 
 		window.addEventListener(

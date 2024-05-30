@@ -1,5 +1,6 @@
-import React from "react";
-import {LABELS, VISUALS} from "@constants";
+import React from 'react';
+import { LABELS, VISUALS } from '@constants';
+import { Link } from 'react-router-dom';
 
 const TilburgNavigation = () => {
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -11,28 +12,28 @@ const TilburgNavigation = () => {
                 aria-expanded={isMenuOpen}
                 aria-haspopup="true"
             >
-                {isMenuOpen ? <VISUALS.CLOSE/> : <VISUALS.MENU/>}
+                {isMenuOpen ? <VISUALS.CLOSE /> : <VISUALS.MENU />}
                 {isMenuOpen ? LABELS.CLOSE : LABELS.MENU}
             </button>
             <nav aria-label="Hoofd">
                 <ul>
                     <li>
-                        <a href="/">
-                            <VISUALS.INFO/>
+                        <Link to="/">
+                            <VISUALS.INFO />
                             Over Open Tilburg
-                        </a>
+                        </Link>
                     </li>
                     <li>
-                        <a href="/about">
-                            <VISUALS.LIST/>
+                        <Link to="/about">
+                            <VISUALS.LIST />
                             Onderwerpen
-                        </a>
+                        </Link>
                     </li>
                     <li>
-                        <a href="/contact">
-                            <VISUALS.CONTACT/>
+                        <Link to="/contact">
+                            <VISUALS.CONTACT />
                             Contact
-                        </a>
+                        </Link>
                     </li>
                 </ul>
             </nav>

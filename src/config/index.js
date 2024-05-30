@@ -56,6 +56,18 @@ export default {
 			Accept: 'application/json',
 		},
 	},
+	pages: {
+		baseURL: `${_api_}`,
+		timeout: 1000 * 60,
+		maxContentLength: 10000,
+		responseType: 'json',
+		responseEncoding: 'utf8',
+		credentials: false,
+		headers: {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+		},
+	},
 	upload: {
 		baseURL: `${_api_}`,
 		timeout: 1000 * 60,

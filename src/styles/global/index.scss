@@ -11,10 +11,11 @@
 @import './helpers';
 @import './icons';
 
+// NLDS styles
+@import './nlds';
+
 // Variables & Definitions
 @import 'general';
 @import 'page';
 @import 'route';
-@import 'nlds-tokens';
-@import './nlds-overrides';
 

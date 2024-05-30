@@ -1,12 +1,15 @@
-import { Link } from '@utrecht/component-library-react/dist/css-module'
+import { Link as UtrechtLink } from '@utrecht/component-library-react/dist/css-module'
+import { Link } from 'react-router-dom'
 import { VISUALS } from '@constants'
 
 
 const TilburgLink = ({label, href, ...restProps}) => {
     return (
-        <Link href={href} {...restProps}>
-            {label}
-            <VISUALS.ARROW_RIGHT />
+        <Link to={href}>
+            <UtrechtLink {...restProps}>
+                {label}
+                <VISUALS.ARROW_RIGHT />
+            </UtrechtLink>
         </Link>
     )
 }

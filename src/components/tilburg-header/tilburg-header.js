@@ -1,4 +1,6 @@
 import loadable from '@loadable/component'
+import { Link } from 'react-router-dom';
+
 import { VISUALS } from '@constants'
 import {
     BreadcrumbNav,
@@ -20,10 +22,10 @@ const TilburgHeader = () => {
             </SkipLink>
             <div className="tilburg-header__navigation-main">
                 <div className="tilburg-header__logo">
-                    <a href="/">
+                    <Link to="/">
                         <VISUALS.LOGO />
                         Open Tilburg
-                    </a>
+                    </Link>
                 </div>
                 <TilburgNavigation />
             </div>

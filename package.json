@@ -52,6 +52,7 @@
     "@loadable/component": "^5.15.3",
     "@lottiefiles/react-lottie-player": "^3.5.3",
     "@utrecht/component-library-react": "^3.0.1-alpha.41",
+    "@utrecht/components": "^3.0.1-alpha.42",
     "axios": "^1.6.7",
     "blazy": "^1.8.2",
     "clsx": "^1.2.1",
