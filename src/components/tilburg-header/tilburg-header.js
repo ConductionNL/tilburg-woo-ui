@@ -1,5 +1,7 @@
-import loadable from '@loadable/component'
-import { VISUALS } from '@constants'
+import React from 'react';
+import {useLocation} from 'react-router-dom';
+import loadable from '@loadable/component';
+import {VISUALS} from '@constants';
 import {
     BreadcrumbNav,
     BreadcrumbNavLink,
@@ -7,12 +9,13 @@ import {
     SkipLink
 } from '@utrecht/component-library-react/dist/css-module';
 
-import ReadspeakerPlaceholder from '../../assets/images/readspeaker-placeholder.png';
-
 const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 const TilburgNavigation = loadable(() => import('@components/tilburg-navigation/tilburg-navigation'));
 
 const TilburgHeader = () => {
+    const location = useLocation();
+    const isHomePage = location.pathname === '/';
+
     return (
         <header className="tilburg-header">
             <SkipLink href="#main">
@@ -20,37 +23,46 @@ const TilburgHeader = () => {
             </SkipLink>
             <div className="tilburg-header__navigation-main">
                 <div className="tilburg-header__logo">
-                    <a href="/">
-                        <VISUALS.LOGO />
-                        Open Tilburg
-                    </a>
+                    {isHomePage ? (
+                        <div>
+                            <VISUALS.LOGO/>
+                            <span className="sr-only">Logo</span>
+                            Open Tilburg
+                        </div>
+                    ) : (
+                        <a href="/" title="Logo Tilburg - Ga naar de beginpagina">
+                            <VISUALS.LOGO/>
+                            Open Tilburg
+                        </a>
+                    )}
                 </div>
-                <TilburgNavigation />
+                <TilburgNavigation/>
             </div>
             <div className="tilburg-header__navigation-secondary">
                 <TilburgContainer>
-                    <BreadcrumbNav>
-                        <BreadcrumbNavLink href="/" rel="home" index={0}>
-                            Home
-                        </BreadcrumbNavLink>
-                        <BreadcrumbNavSeparator>
-                            <VISUALS.CHEVRON_RIGHT />
-                        </BreadcrumbNavSeparator>
-                        <BreadcrumbNavLink href="/a/" index={1}>
-                            Uitgebreid zoeken
-                        </BreadcrumbNavLink>
-                        <BreadcrumbNavSeparator>
-                            <VISUALS.CHEVRON_RIGHT />
-                        </BreadcrumbNavSeparator>
-                        <BreadcrumbNavLink disabled current>
-                            Label
-                        </BreadcrumbNavLink>
-                    </BreadcrumbNav>
-                    <img src={ReadspeakerPlaceholder} alt=""/>
+                    {!isHomePage && (
+                        <BreadcrumbNav>
+                            <BreadcrumbNavLink href="/" rel="home" index={0}>
+                                Home
+                            </BreadcrumbNavLink>
+                            <BreadcrumbNavSeparator>
+                                <VISUALS.CHEVRON_RIGHT/>
+                            </BreadcrumbNavSeparator>
+                            <BreadcrumbNavLink href="/a/" index={1}>
+                                Uitgebreid zoeken
+                            </BreadcrumbNavLink>
+                            <BreadcrumbNavSeparator>
+                                <VISUALS.CHEVRON_RIGHT/>
+                            </BreadcrumbNavSeparator>
+                            <BreadcrumbNavLink disabled current>
+                                Label
+                            </BreadcrumbNavLink>
+                        </BreadcrumbNav>
+                    )}
                 </TilburgContainer>
             </div>
         </header>
     );
 }
 
-export default TilburgHeader
+export default TilburgHeader;
