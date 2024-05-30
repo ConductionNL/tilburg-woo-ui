@@ -44,24 +44,17 @@ export default {
 			},
 		],
 	},
-	download: {
+	faqs: {
 		baseURL: `${_api_}`,
 		timeout: 1000 * 60,
 		maxContentLength: 10000,
-		responseType: 'blob',
+		responseType: 'json',
 		responseEncoding: 'utf8',
-		credentials: true,
+		credentials: false,
 		headers: {
 			'Content-Type': 'application/json',
-			Accept: 'application/pdf',
+			Accept: 'application/json',
 		},
-		transformRequest: [
-			(data, headers) => {
-				const token = AcGetAccessToken();
-				if (token) headers['authorization'] = `Bearer ${token}`;
-				return JSON.stringify(data);
-			},
-		],
 	},
 	upload: {
 		baseURL: `${_api_}`,

@@ -9,6 +9,7 @@ import API from '@api';
 
 import AuthStore from '@stores/auth.store';
 import ToastersStore from '@stores/toasters.store';
+import FaqsStore from "@stores/faqs.store";
 
 class Store {
 	constructor(config) {
@@ -19,6 +20,7 @@ class Store {
 		this.api = new API(config, this);
 
 		this.auth = new AuthStore(this);
+		this.faqs = new FaqsStore(this);
 		this.toasters = new ToastersStore(this);
 
 		window.addEventListener(

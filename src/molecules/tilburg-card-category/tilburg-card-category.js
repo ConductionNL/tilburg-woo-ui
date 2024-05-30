@@ -1,11 +1,13 @@
-import { Heading, Paragraph } from '@utrecht/component-library-react/dist/css-module'
 import loadable from '@loadable/component'
+
+import { Heading, Paragraph } from '@utrecht/component-library-react/dist/css-module'
+
 const TilburgLink = loadable(() => import('@molecules/tilburg-link/tilburg-link'));
 const TilburgCard = loadable(() => import('@atoms/tilburg-card/tilburg-card'));
 
-const image = 'https://www.nintendo.com/eu/media/images/10_share_images/portals_3/2x1_SuperMarioHub_image1600w.jpg'
+const image = 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Skyline_of_Tilburg.jpg/1200px-Skyline_of_Tilburg.jpg'
 
-const TilburgCardCategory = () => {
+const TilburgCardCategory = ({title, children, linkUrl, linkTitle}) => {
 
     return (
         <TilburgCard image={image}>

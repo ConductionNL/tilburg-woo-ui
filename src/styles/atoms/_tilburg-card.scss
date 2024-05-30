@@ -15,6 +15,7 @@
     aspect-ratio: 16/9;
     border-top-left-radius: var(--tilburg-border-radius-md);
     border-top-right-radius: var(--tilburg-border-radius-md);
+    object-fit: cover;
   }
 
   &--blue {

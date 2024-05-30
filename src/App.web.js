@@ -46,7 +46,7 @@ const App = ({ store }) => {
 						key={`default-route-${DEFAULT_ROUTE.id}`}
 						path={'*'}
 						element={
-							<AcHome />
+							<AcHome store={store} />
 						}
 					/>
 				</Routes>

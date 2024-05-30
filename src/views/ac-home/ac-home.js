@@ -1,7 +1,7 @@
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import loadable from '@loadable/component';
-import clsx from 'clsx';
+import { useEffect } from 'react';
 
 // Imports => Config
 import config from '@config';
@@ -14,6 +14,7 @@ import { KEYS, ROUTES, TITLES } from '@constants';
 // Imports => NLDS components
 import { Heading } from '@utrecht/component-library-react/dist/css-module'
 import TilburgCardCategory from '@molecules/tilburg-card-category/tilburg-card-category'
+import {Paragraph} from "@utrecht/component-library-react";
 
 // Imports => Components
 const TilburgHero	 = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
@@ -29,30 +30,28 @@ const _CLASSES = {
 	MAIN: 'ac-page ac-home',
 };
 
-const faqItems = [
-	{
-		label: "Question 1",
-		body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec purus non nunc lacinia gravida"
-	},
-	{
-		label: "Question 2",
-		body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec purus non nunc lacinia gravida"
-	},
-	{
-		label: "Question 3",
-		body: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla nec purus non nunc lacinia gravida"
-	},
-]
-const AcHome = ({ store: { conversations, news, profile } }) => {
+const AcHome = ({ store: { faqs } }) => {
+
+	const { getAll, all_faqs } = faqs
+
+	useEffect(() => {
+		getAll()
+	}, []);
+
 	return (
 		<>
 			<TilburgHero />
 
 			<TilburgContainer>
 				<Heading level={1}>Gemeente Tilburg</Heading>
-				<TilburgSearchbox />
-				<TilburgSearchbox small />
-				<TilburgFaq faqItems={faqItems} />
+				<Paragraph>
+					Lorem ipsum dolor sit amet, consectetur adipisicing elit.
+					Explicabo facilis mollitia quam recusandae.
+					Aut autem deleniti dicta dolorem doloremque ea labore magnam obcaecati officia placeat
+					provident quidem quisquam, rerum vel.
+				</Paragraph>
+
+				<TilburgFaq faqItems={all_faqs} />
 
 				<TilburgCardIntro />
 
