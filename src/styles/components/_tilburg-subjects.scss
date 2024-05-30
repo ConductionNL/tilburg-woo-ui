@@ -1,0 +1,12 @@
+.tilburg-subjects {
+  .container {
+    display: grid;
+    gap: var(--tilburg-space-column-pig);
+  }
+
+  &__content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--tilburg-space-column-rabbit);
+  }
+}

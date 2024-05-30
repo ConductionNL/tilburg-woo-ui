@@ -1,15 +1,20 @@
-import { Link as UtrechtLink } from '@utrecht/component-library-react/dist/css-module'
-import { Link } from 'react-router-dom'
-import { VISUALS } from '@constants'
+import clsx from "clsx";
+import {Link} from 'react-router-dom'
 
 
-const TilburgLink = ({label, href, ...restProps}) => {
+const TilburgLink = ({href, type = 'link', children, ...restProps}) => {
+
+    let _CLASSES
+
+    if (type === 'button') {
+        _CLASSES = clsx('utrecht-button')
+    } else if (type === 'link') {
+        _CLASSES = clsx('utrecht-link utrecht-link--html-a')
+    }
+
     return (
-        <Link to={href}>
-            <UtrechtLink {...restProps}>
-                {label}
-                <VISUALS.ARROW_RIGHT />
-            </UtrechtLink>
+        <Link to={href} className={_CLASSES} {...restProps}>
+            {children}
         </Link>
     )
 }

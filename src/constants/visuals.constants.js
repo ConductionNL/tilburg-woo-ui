@@ -11,20 +11,22 @@ const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg')
 const LIST_BLUE = loadable(() => import('-!svg-react-loader!@assets/images/list-blue.svg'));
 const LOGO = loadable(() => import('-!svg-react-loader!@assets/images/logo.svg'));
 const MENU = loadable(() => import('-!svg-react-loader!@assets/images/menu.svg'));
+const QUESTION_MARK = loadable(() => import('-!svg-react-loader!@assets/images/question-mark.svg'));
 const SEARCH = loadable(() => import('-!svg-react-loader!@assets/images/search.svg'));
 
 export const VISUALS = {
+    ARROW_RIGHT,
     CHEVRON_RIGHT,
     CLOSE,
     CONTACT,
     EXTERNAL_LINK,
     INFO,
     LIST,
+    LIST_BLUE,
     LOGO,
     MENU,
+    QUESTION_MARK,
     SEARCH,
-    ARROW_RIGHT,
-    LIST_BLUE,
 };
 
 export default {};

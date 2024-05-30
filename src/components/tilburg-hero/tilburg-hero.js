@@ -1,10 +1,8 @@
 import clsx from 'clsx'
-
-import HeroImage from  '../../assets/images/placeholder.jpeg'
-import { Link } from '@utrecht/component-library-react/dist/css-module'
 import { VISUALS } from '@constants'
 import loadable from '@loadable/component'
 
+const TilburgLink = loadable(() => import('@molecules/tilburg-link/tilburg-link'));
 const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 const TilburgCard = loadable(() => import('@atoms/tilburg-card/tilburg-card'));
 const TilburgSearchbox = loadable(() => import('@components/tilburg-searchbox/tilburg-searchbox'));
@@ -17,10 +15,10 @@ const TilburgHero = () => {
             <TilburgContainer>
                 <TilburgCard blue padding="lg">
                     <TilburgSearchbox home label="Waar ben je naar op zoek?" />
-                    <Link href="/test">
+                    <TilburgLink href="/test">
                         Uitgebreid zoeken
                         <VISUALS.ARROW_RIGHT />
-                    </Link>
+                    </TilburgLink>
                 </TilburgCard>
             </TilburgContainer>
         </section>
