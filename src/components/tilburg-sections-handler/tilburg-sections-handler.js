@@ -1,19 +1,23 @@
-import {useEffect} from "react";
+import { useEffect } from 'react';
 
-import loadable from "@loadable/component";
+import loadable from '@loadable/component';
 
 // Imports => Atoms
 const TilburgImage = loadable(() => import('@atoms/tilburg-image/tilburg-image'));
 const TilburgRichText = loadable(() => import('@atoms/tilburg-rich-text/tilburg-rich-text'));
+const TilburgDataList = loadable(() => import('@atoms/tilburg-data-list/tilburg-data-list'));
+
+// Imports => Molecules
 const TilburgCta = loadable(() => import('@molecules/tilburg-cta/tilburg-cta'));
 
 const BLOCK_TYPES = {
     'RichText': TilburgRichText,
     'Image': TilburgImage,
-    'Cta': TilburgCta
+    'Cta': TilburgCta,
+    'DataList': TilburgDataList,
 }
 
-const TilburgBlockHandler = ({contents = []}) => {
+const TilburgSectionsHandler = ({ contents = [] }) => {
 
     useEffect(() => {
         console.log(contents)
@@ -22,7 +26,8 @@ const TilburgBlockHandler = ({contents = []}) => {
     return (
         <>
             {contents.map((content, index) => {
-                const BlockComponent = BLOCK_TYPES[content.type]
+                const BlockComponent = BLOCK_TYPES[content.type];
+                console.log(content.type)
                 if (!BlockComponent) {
                     return null
                 }
@@ -33,4 +38,4 @@ const TilburgBlockHandler = ({contents = []}) => {
     )
 }
 
-export default TilburgBlockHandler
+export default TilburgSectionsHandler
