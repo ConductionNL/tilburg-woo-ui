@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
+import loadable from '@loadable/component';
 
-import TilburgBlockHandler from '@components/tilburg-block-handler/tilburg-block-handler';
+const TilburgSectionsHandler = loadable(() => import('@components/tilburg-sections-handler/tilburg-sections-handler'));
+const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 
 const AcContent = ({ store: { pages } }) => {
 
@@ -13,13 +14,12 @@ const AcContent = ({ store: { pages } }) => {
 
     useEffect(() => {
         fetchPage(slug)
-        console.log('slug:' + slug)
     }, []);
 
     return (
-        <>
-            <TilburgBlockHandler contents={get_single?.contents} />
-        </>
+        <TilburgContainer>
+            <TilburgSectionsHandler contents={get_single?.contents} />
+        </TilburgContainer>
     )
 }
 

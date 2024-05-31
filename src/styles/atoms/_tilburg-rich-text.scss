@@ -1,6 +1,7 @@
 @import '@utrecht/components/paragraph/css';
 @import '@utrecht/components/ordered-list/css';
 @import '@utrecht/components/unordered-list/css';
+@import '@utrecht/components/heading-1/css';
 @import '@utrecht/components/heading-2/css';
 @import '@utrecht/components/heading-3/css';
 @import '@utrecht/components/heading-4/css';
@@ -28,6 +29,10 @@
     li {
       @extend .utrecht-unordered-list__item !optional;
     }
+  }
+
+  h1 {
+    @extend .utrecht-heading-1 !optional;
   }
 
   h2 {
