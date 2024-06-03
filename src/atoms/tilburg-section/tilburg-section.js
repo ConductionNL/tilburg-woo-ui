@@ -1,10 +1,11 @@
 import clsx from "clsx";
 
-const TilburgSection = ({ spacing = false, className, children }) => {
+const TilburgSection = ({ spacing, compact, className, children }) => {
 
     const _CLASSES = clsx(
         'tilburg-section',
-        { 'spacing': spacing },
+        spacing && 'tilburg-section--spacing',
+        compact && 'tilburg-section--spacing-compact',
         className
     );
 

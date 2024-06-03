@@ -3,6 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
+import loadable from '@loadable/component'
 
 
 // Imports => SCSS
@@ -18,7 +19,6 @@ import {
 
 // Imports => Utilities
 import { AcHome } from '@views'
-import loadable from '@loadable/component'
 import AcContent from '@views/ac-content/ac-content';
 
 // Imports => Molecules
@@ -46,12 +46,19 @@ const App = ({ store }) => {
 
     useEffect(() => {
         console.log(all_pages)
+        all_pages?.map((page) => {
+            console.log(page.slug)
+        })
     }, [all_pages]);
 
     const getView = (page) => {
         return page.slug === 'home'
             ? <AcHome store={store} />
             : <AcContent store={store} />
+    }
+
+    if (all_pages.length <= 0) {
+        return null
     }
 
     return (
