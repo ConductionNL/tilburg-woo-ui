@@ -1,4 +1,4 @@
-image: node:18.16.0
+image: node:18.17.0
 
 pipelines:
   pull-requests:
@@ -10,7 +10,7 @@ pipelines:
             - yarn
           script:
             - unset CI
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn
           artifacts:
             - node_modules/**
@@ -20,7 +20,7 @@ pipelines:
           script:
             - unset CI
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn build:web
           artifacts:
             - public_html/**
@@ -38,7 +38,7 @@ pipelines:
             - yarn
           script:
             - unset CI
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn
           artifacts:
             - node_modules/**
@@ -48,7 +48,7 @@ pipelines:
           script:
             - unset CI
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn build:web
           artifacts:
             - public_html/**
@@ -65,7 +65,7 @@ pipelines:
             - yarn
           script:
             - unset CI
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn
           artifacts:
             - node_modules/**
@@ -75,7 +75,7 @@ pipelines:
           script:
             - unset CI
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn build:web
           artifacts:
             - public_html/**
@@ -93,7 +93,7 @@ pipelines:
             - yarn
           script:
             - unset CI
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn
           artifacts:
             - node_modules/**
@@ -103,7 +103,7 @@ pipelines:
           script:
             - unset CI
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
-            - yarn set version 3.2.4
+            - yarn set version 4.1.1
             - yarn build:web
           artifacts:
             - public_html/**
