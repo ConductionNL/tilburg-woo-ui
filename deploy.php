@@ -41,12 +41,12 @@ set('rsync_dest', '{{release_path}}');
 // ACATO-dev-2
 host('develop')
     ->set('hostname', '31.7.5.79')
-    ->set('deploy_path', '~/ui.tilburg.dev.acato.nl');
+    ->set('deploy_path', '~/ui.open.tilburg.dev.acato.nl');
 
 // ACATO-dev-2
 host('staging')
     ->set('hostname', '31.7.5.79')
-    ->set('deploy_path', '~/ui.tilburg.staging.acato.nl');
+    ->set('deploy_path', '~/ui.open.tilburg.staging.acato.nl');
 
 // ACATO-prod-2
 host('production')
