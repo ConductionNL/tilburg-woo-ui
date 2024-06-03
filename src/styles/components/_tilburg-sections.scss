@@ -1,10 +1,10 @@
 .tilburg-sections {
 
-  .tilburg-rich-text {
+  >.tilburg-rich-text {
     margin-block: var(--tilburg-space-block-mouse);
   }
 
-  .tilburg-card {
+  >.tilburg-card {
     margin-block: 56px;
   }
 }
