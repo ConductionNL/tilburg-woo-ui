@@ -1,0 +1,7 @@
+.utrecht-table{
+  &__cell {
+    &:first-child {
+      padding-left: 0;
+    }
+  }
+}

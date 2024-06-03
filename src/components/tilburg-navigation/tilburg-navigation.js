@@ -18,13 +18,13 @@ const TilburgNavigation = () => {
             <nav aria-label="Hoofd">
                 <ul>
                     <li>
-                        <Link to="/">
+                        <Link to="/over-ons">
                             <VISUALS.INFO />
                             Over Open Tilburg
                         </Link>
                     </li>
                     <li>
-                        <Link to="/about">
+                        <Link>
                             <VISUALS.LIST />
                             Onderwerpen
                         </Link>

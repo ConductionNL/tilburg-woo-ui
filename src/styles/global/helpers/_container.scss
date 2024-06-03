@@ -16,4 +16,8 @@
   &.default-space {
 
   }
+
+  &--compact {
+    max-width: 744px;
+  }
 }

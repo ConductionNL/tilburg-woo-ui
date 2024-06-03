@@ -46,9 +46,6 @@ const App = ({ store }) => {
 
     useEffect(() => {
         console.log(all_pages)
-        all_pages?.map((page) => {
-            console.log(page.slug)
-        })
     }, [all_pages]);
 
     const getView = (page) => {

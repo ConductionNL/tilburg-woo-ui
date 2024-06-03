@@ -4,13 +4,10 @@ import {Link} from 'react-router-dom'
 
 const TilburgLink = ({href, type = 'link', children, ...restProps}) => {
 
-    let _CLASSES
-
-    if (type === 'button') {
-        _CLASSES = clsx('utrecht-button')
-    } else if (type === 'link') {
-        _CLASSES = clsx('utrecht-link utrecht-link--html-a')
-    }
+    const _CLASSES = clsx(
+        type === 'link' && 'utrecht-link utrecht-link--html-a',
+        type === 'button' && 'utrecht-button'
+    )
 
     return (
         <Link to={href} className={_CLASSES} {...restProps}>

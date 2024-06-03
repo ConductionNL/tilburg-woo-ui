@@ -6,6 +6,8 @@ const CHEVRON_RIGHT = loadable(() => import('-!svg-react-loader!@assets/images/c
 const CLOSE = loadable(() => import('-!svg-react-loader!@assets/images/close.svg'));
 const CONTACT = loadable(() => import('-!svg-react-loader!@assets/images/contact.svg'));
 const EXTERNAL_LINK = loadable(() => import('-!svg-react-loader!@assets/images/external-link.svg'));
+const EXTERNAL_LINK_BLUE = loadable(() => import('-!svg-react-loader!@assets/images/external-link-blue.svg'));
+const EXTERNAL_LINK_PINK = loadable(() => import('-!svg-react-loader!@assets/images/external-link-pink.svg'));
 const INFO = loadable(() => import('-!svg-react-loader!@assets/images/info.svg'));
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
 const LIST_BLUE = loadable(() => import('-!svg-react-loader!@assets/images/list-blue.svg'));
@@ -20,6 +22,8 @@ export const VISUALS = {
     CLOSE,
     CONTACT,
     EXTERNAL_LINK,
+    EXTERNAL_LINK_BLUE,
+    EXTERNAL_LINK_PINK,
     INFO,
     LIST,
     LIST_BLUE,

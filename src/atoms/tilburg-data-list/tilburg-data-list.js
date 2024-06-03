@@ -5,12 +5,16 @@ import {
     TableRow,
     TableCell,
 } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@constants';
 
 const TilburgDataList = ({rows = []}) => {
 
     const renderDataListValue = (row) => {
         return row.url ?
-            <Link href={row.url} target="_blank" rel="noreferrer">{row.label}</Link> :
+            <Link href={row.url} target="_blank" rel="noreferrer">
+                {row.label}
+                <VISUALS.EXTERNAL_LINK_PINK />
+            </Link> :
             row.label
     }
 

@@ -1,8 +1,8 @@
 import clsx from 'clsx'
 
-const TilburgContainer = ({ children }) => {
+const TilburgContainer = ({ children, compact }) => {
 
-    const _CLASSES = clsx('container')
+    const _CLASSES = clsx('container', compact && 'container--compact');
 
     return (
         <div className={_CLASSES}>

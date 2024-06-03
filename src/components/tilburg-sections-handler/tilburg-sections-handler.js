@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import loadable from '@loadable/component';
-import TilburgSection from '@atoms/tilburg-section/tilburg-section';
+import clsx from 'clsx';
 
 // Imports => Atoms
 const TilburgImage = loadable(() => import('@atoms/tilburg-image/tilburg-image'));
@@ -11,35 +11,37 @@ const TilburgDataList = loadable(() => import('@atoms/tilburg-data-list/tilburg-
 // Imports => Molecules
 const TilburgCta = loadable(() => import('@molecules/tilburg-cta/tilburg-cta'));
 
+const TilburgFaq = loadable(() => import('@components/tilburg-faq/tilburg-faq'));
+
 const BLOCK_TYPES = {
     'RichText': TilburgRichText,
-    'Image': TilburgImage,
+    // 'Image': TilburgImage,
     'Cta': TilburgCta,
     'DataList': TilburgDataList,
+    'Faq': TilburgFaq,
 }
 
 const TilburgSectionsHandler = ({ contents = [] }) => {
+
+    const _CLASSES = clsx('tilburg-sections')
 
     useEffect(() => {
         console.log(contents)
     }, [contents]);
 
     return (
-        <>
+        <div class={_CLASSES}>
             {contents.map((content, index) => {
                 const BlockComponent = BLOCK_TYPES[content.type];
-                console.log(content.type)
                 if (!BlockComponent) {
                     return null
                 }
 
                 return (
-                    <TilburgSection compact>
-                        <BlockComponent key={index} {...content.data} />
-                    </TilburgSection>
+                    <BlockComponent key={index} {...content.data}  />
                 )
             })}
-        </>
+        </div>
     )
 }
 
