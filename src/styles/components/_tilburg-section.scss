@@ -2,12 +2,19 @@
 @use '../global/mixins/respond' as *;
 
 .tilburg-section {
-  &.spacing {
+  &--spacing {
     padding-block: var(--tilburg-space-block-pig);
 
     @include respond-max($screen-sm) {
       padding-block: var(--tilburg-space-block-cat);
     }
 
+    &-compact {
+        padding-block: var(--tilburg-space-block-mouse);
+
+        @include respond-max($screen-sm) {
+            padding-block: var(--tilburg-space-block-snail);
+        }
+    }
   }
 }

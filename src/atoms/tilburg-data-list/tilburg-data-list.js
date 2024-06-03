@@ -1,4 +1,10 @@
 import { DataList, DataListItem, DataListKey, DataListValue, Link } from '@utrecht/component-library-react/dist/css-module';
+import {
+    Table,
+    TableBody,
+    TableRow,
+    TableCell,
+} from '@utrecht/component-library-react/dist/css-module';
 
 const TilburgDataList = ({rows = []}) => {
 
@@ -9,14 +15,18 @@ const TilburgDataList = ({rows = []}) => {
     }
 
     return (
-        <DataList >
-            {rows.map((row, index) =>
-                <DataListItem key={index}>
-                    <DataListKey>{row.text}</DataListKey>
-                    <DataListValue>{renderDataListValue(row)}</DataListValue>
-                </DataListItem>
-            )}
-        </DataList>
+        <>
+            <Table>
+                <TableBody>
+                    {rows.map((row, index) =>
+                        <TableRow key={index}>
+                            <TableCell><b>{row.text}</b></TableCell>
+                            <TableCell>{renderDataListValue(row)}</TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
+        </>
     )
 }
 

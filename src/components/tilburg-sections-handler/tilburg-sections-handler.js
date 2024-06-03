@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 
 import loadable from '@loadable/component';
+import TilburgSection from '@atoms/tilburg-section/tilburg-section';
 
 // Imports => Atoms
 const TilburgImage = loadable(() => import('@atoms/tilburg-image/tilburg-image'));
@@ -32,7 +33,11 @@ const TilburgSectionsHandler = ({ contents = [] }) => {
                     return null
                 }
 
-                return <BlockComponent key={index} {...content.data} />
+                return (
+                    <TilburgSection compact>
+                        <BlockComponent key={index} {...content.data} />
+                    </TilburgSection>
+                )
             })}
         </>
     )
