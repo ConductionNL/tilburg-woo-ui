@@ -5,7 +5,7 @@ import { Heading, Paragraph } from '@utrecht/component-library-react/dist/css-mo
 const TilburgLink = loadable(() => import('@molecules/tilburg-link/tilburg-link'));
 const TilburgCard = loadable(() => import('@atoms/tilburg-card/tilburg-card'));
 
-const image = 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Skyline_of_Tilburg.jpg/1200px-Skyline_of_Tilburg.jpg'
+const image = '/card-placeholder.png'
 
 const TilburgCardCategory = ({title, children, linkUrl, linkTitle}) => {
 

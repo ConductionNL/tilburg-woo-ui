@@ -13,8 +13,9 @@ const TilburgSubjects = () => {
             <TilburgContainer>
                 <div class="tilburg-subjects__heading">
                     <Heading>Zoeken op onderwerp</Heading>
-                    <Paragraph>Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de gemeente
-                        Tilburg.</Paragraph>
+                    <Paragraph>
+                        Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de gemeente Tilburg.
+                    </Paragraph>
                 </div>
                 <div class="tilburg-subjects__content">
                     <TilburgCardCategory/>

@@ -15,10 +15,7 @@ const TilburgIntro = () => {
                 </div>
                 <div className="tilburg-intro__content">
                     <Paragraph>
-                        Bij gemeente Tilburg willen we transparant zijn. Alles wat we bespreken willen we openbaar en
-                        inzichtelijk maken voor iedereen. Op deze website kun je alle openbare documentatie en
-                        publicaties
-                        van de gemeente terugvinden.
+                        Bij gemeente Tilburg willen we transparant zijn. Alles wat we bespreken willen we openbaar en inzichtelijk maken voor iedereen. Op deze website kun je alle openbare documentatie en publicaties van de gemeente terugvinden.
                     </Paragraph>
                     <TilburgLink to="/">
                         <VISUALS.QUESTION_MARK/>
