@@ -24,7 +24,7 @@ const TilburgNavigation = () => {
                         </Link>
                     </li>
                     <li>
-                        <Link>
+                        <Link to="/toegankelijkheid">
                             <VISUALS.LIST />
                             Onderwerpen
                         </Link>
