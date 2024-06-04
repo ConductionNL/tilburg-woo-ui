@@ -2,7 +2,9 @@
 @use '../global/mixins/respond' as *;
 
 .tilburg-hero {
-  //background: url('/home-hero-background.png') no-repeat center center;
+  // background: url('/home-hero-background.png') ;
+  background-repeat: no-repeat;
+  background-position: center center;
   background-color: var(--tilburg-color-blue-500);
   padding-block: var(--tilburg-space-row-elephant);
 
