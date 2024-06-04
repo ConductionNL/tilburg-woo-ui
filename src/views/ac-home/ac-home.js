@@ -1,14 +1,9 @@
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import loadable from '@loadable/component';
 
+import { TilburgAbout, TilburgHero, TilburgIntro, TilburgSubjects } from '@components';
 
-const TilburgIntro = loadable(() => import('@components/tilburg-intro/tilburg-intro'));
-const TilburgHero = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
-const TilburgSubjects = loadable(() => import('@components/tilburg-subjects/tilburg-subjects'));
-const TilburgAbout = loadable(() => import('@components/tilburg-about/tilburg-about'));
-
-const AcHome = ({ store: { faqs } }) => {
+const AcHome = ({ store }) => {
     return (
         <>
             <TilburgIntro />
@@ -16,7 +11,7 @@ const AcHome = ({ store: { faqs } }) => {
             <TilburgSubjects />
             <TilburgAbout />
 
-            <br/>
+            <br />
 
         </>
     );

@@ -2,16 +2,12 @@ import { useEffect } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
-import loadable from '@loadable/component';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
-// Imports => Components
-const TilburgLoader = loadable(() => import('@components/tilburg-loader/tilburg-loader'));
-const TilburgSectionsHandler = loadable(() => import('@components/tilburg-sections-handler/tilburg-sections-handler'));
+import { TilburgContainer } from '@atoms';
+import { TilburgLoader, TilburgSectionsHandler } from '@components';
 
-// Imports => Atoms
-const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 
 const AcContent = ({ store: { pages } }) => {
 

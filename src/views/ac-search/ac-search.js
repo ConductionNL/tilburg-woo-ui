@@ -1,15 +1,14 @@
-import TilburgContainer from '@atoms/tilburg-container/tilburg-container';
-import TilburgSearchbox from '@components/tilburg-searchbox/tilburg-searchbox';
-import TilburgSearchResult from '@molecules/tilburg-search-result/tilburg-search-result';
-import clsx from 'clsx';
-import TilburgFlex from '@atoms/tilburg-flex/tilburg-flex';
+import { TilburgContainer, TilburgFlex } from '@atoms';
+import { TilburgSearchResult } from '@molecules';
+import { TilburgSearchbox } from '@components';
+import { LABELS } from '@constants';
 
 const AcSearch = ({ store }) => {
 
     return (
         <>
             <TilburgContainer>
-                <TilburgSearchbox label="Zoeken" spacing />
+                <TilburgSearchbox label={LABELS.SEARCH} spacing />
             </TilburgContainer>
 
             <TilburgContainer>
