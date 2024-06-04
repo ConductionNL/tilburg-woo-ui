@@ -11,7 +11,7 @@ const TilburgHero = () => {
 
     const _CLASSES = clsx('tilburg-hero')
     return (
-        <section className={_CLASSES}>
+        <section className={_CLASSES} style="background-image: url('/home-hero-background.png');">
             <TilburgContainer>
                 <TilburgCard blue padding="lg">
                     <TilburgSearchbox home label="Waar ben je naar op zoek?" />
