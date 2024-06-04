@@ -8,7 +8,7 @@ const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg
 
 const TilburgIntro = () => {
     return (
-        <TilburgSection className="tilburg-intro" spacing={true}>
+        <TilburgSection className="tilburg-intro" spacing>
             <TilburgContainer>
                 <div className="tilburg-intro__heading">
                     <Heading level={1}>Alle documenten van de gemeente Tilburg openbaar beschikbaar</Heading>

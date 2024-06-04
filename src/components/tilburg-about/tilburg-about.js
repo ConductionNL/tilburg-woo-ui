@@ -8,7 +8,7 @@ const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg
 
 const TilburgAbout = () => {
     return (
-        <TilburgSection className="tilburg-about" spacing={true}>
+        <TilburgSection className="tilburg-about" spacing>
             <TilburgContainer>
                 <div className="tilburg-about__heading">
                     <Heading level={2}>Over Open Tilburg</Heading>

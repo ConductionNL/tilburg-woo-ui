@@ -9,7 +9,7 @@ const TilburgLink = loadable(() => import('@molecules/tilburg-link/tilburg-link'
 
 const TilburgSubjects = () => {
     return (
-        <TilburgSection className="tilburg-subjects" spacing={true}>
+        <TilburgSection className="tilburg-subjects" spacing>
             <TilburgContainer>
                 <div class="tilburg-subjects__heading">
                     <Heading>Zoeken op onderwerp</Heading>

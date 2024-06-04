@@ -7,7 +7,7 @@ const TilburgSearchResult = loadable(() => import('@molecules/tilburg-search-res
 
 const TilburgFeatured = () => {
     return (
-        <TilburgSection className="tilburg-featured" spacing={true}>
+        <TilburgSection className="tilburg-featured" spacing>
             <TilburgContainer>
                 <div class="tilburg-featured__heading">
                     <Heading>Uitgelicht</Heading>

@@ -19,5 +19,7 @@
 
   &--compact {
     max-width: 744px;
+    padding-top: var(--tilburg-space-block-rat);
+    padding-bottom: var(--tilburg-space-block-rat);
   }
 }

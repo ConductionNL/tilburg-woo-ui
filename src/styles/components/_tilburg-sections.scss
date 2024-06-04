@@ -1,10 +1,12 @@
 .tilburg-sections {
 
-  >.tilburg-rich-text {
-    margin-block: var(--tilburg-space-block-mouse);
+  >.tilburg-rich-text,
+  >.utrecht-accordion,
+  >.utrecht-table {
+    margin-block: var(--tilburg-space-block-rabbit);
   }
 
   >.tilburg-card {
-    margin-block: 56px;
+    margin-block: var(--tilburg-space-block-dog);
   }
 }

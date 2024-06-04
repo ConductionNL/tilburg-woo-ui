@@ -6,9 +6,11 @@ import loadable from '@loadable/component';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
+// Imports => Components
 const TilburgLoader = loadable(() => import('@components/tilburg-loader/tilburg-loader'));
-
 const TilburgSectionsHandler = loadable(() => import('@components/tilburg-sections-handler/tilburg-sections-handler'));
+
+// Imports => Atoms
 const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
 
 const AcContent = ({ store: { pages } }) => {
