@@ -1,20 +1,24 @@
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { TilburgAbout, TilburgHero, TilburgIntro, TilburgSubjects } from '@components';
+import {
+  TilburgAbout,
+  TilburgHero,
+  TilburgIntro,
+  TilburgSubjects,
+} from '@components';
 
 const AcHome = ({ store }) => {
-    return (
-        <>
-            <TilburgIntro />
-            <TilburgHero />
-            <TilburgSubjects />
-            <TilburgAbout />
+  return (
+    <>
+      <TilburgIntro />
+      <TilburgHero />
+      <TilburgSubjects />
+      <TilburgAbout />
 
-            <br />
-
-        </>
-    );
+      <br />
+    </>
+  );
 };
 
 export default withStore(observer(AcHome));

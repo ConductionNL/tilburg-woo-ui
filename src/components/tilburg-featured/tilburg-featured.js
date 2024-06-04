@@ -1,25 +1,23 @@
-import {Heading, Paragraph} from "@utrecht/component-library-react/dist/css-module";
-import loadable from "@loadable/component";
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
-const TilburgSection = loadable(() => import('@atoms/tilburg-section/tilburg-section'));
-const TilburgContainer = loadable(() => import('@atoms/tilburg-container/tilburg-container'));
-const TilburgSearchResult = loadable(() => import('@molecules/tilburg-search-result/tilburg-search-result'));
+import { TilburgSection, TilburgContainer } from '@atoms';
+import { TilburgSearchResult } from '@molecules';
 
 const TilburgFeatured = () => {
-    return (
-        <TilburgSection className="tilburg-featured" spacing>
-            <TilburgContainer>
-                <div class="tilburg-featured__heading">
-                    <Heading>Uitgelicht</Heading>
-                </div>
-                <div class="tilburg-featured__content">
-                    <TilburgSearchResult />
-                    <TilburgSearchResult />
-                    <TilburgSearchResult />
-                </div>
-            </TilburgContainer>
-        </TilburgSection>
-    );
-}
+  return (
+    <TilburgSection className='tilburg-featured' spacing>
+      <TilburgContainer>
+        <div class='tilburg-featured__heading'>
+          <Heading>Uitgelicht</Heading>
+        </div>
+        <div class='tilburg-featured__content'>
+          <TilburgSearchResult />
+          <TilburgSearchResult />
+          <TilburgSearchResult />
+        </div>
+      </TilburgContainer>
+    </TilburgSection>
+  );
+};
 
 export default TilburgFeatured;

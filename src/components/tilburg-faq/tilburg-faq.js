@@ -1,17 +1,16 @@
-import { AccordionProvider } from '@utrecht/component-library-react'
+import { AccordionProvider } from '@utrecht/component-library-react';
 import { useMemo } from 'react';
 import { AcSanitizeHtml } from '@utils';
 
-export const TilburgFaq = ({faqs = []}) => {
+export const TilburgFaq = ({ faqs = [] }) => {
+  const getFaqs = useMemo(() => {
+    return faqs.map((faq) => ({
+      label: faq.question,
+      body: AcSanitizeHtml(faq.answer),
+    }));
+  });
 
-    const getFaqs = useMemo(() => {
-        return faqs.map(faq => ({
-            label: faq.question,
-            body: AcSanitizeHtml(faq.answer)
-        }))
-    })
-
-    return <AccordionProvider sections={getFaqs} />
-}
+  return <AccordionProvider sections={getFaqs} />;
+};
 
 export default TilburgFaq;

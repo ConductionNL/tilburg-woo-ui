@@ -9,64 +9,64 @@ import API from '@api';
 
 import AuthStore from '@stores/auth.store';
 import ToastersStore from '@stores/toasters.store';
-import FaqsStore from "@stores/faqs.store";
-import PagesStore from "@stores/pages.store";
+import FaqsStore from '@stores/faqs.store';
+import PagesStore from '@stores/pages.store';
 
 class Store {
-	constructor(config) {
-		makeObservable(this);
+  constructor(config) {
+    makeObservable(this);
 
-		this.config = config;
+    this.config = config;
 
-		this.api = new API(config, this);
+    this.api = new API(config, this);
 
-		this.auth = new AuthStore(this);
-		this.faqs = new FaqsStore(this);
-		this.pages = new PagesStore(this);
-		this.toasters = new ToastersStore(this);
+    this.auth = new AuthStore(this);
+    this.faqs = new FaqsStore(this);
+    this.pages = new PagesStore(this);
+    this.toasters = new ToastersStore(this);
 
-		window.addEventListener(
-			'swFreshContentReady',
-			this.handleSWFreshContentReady,
-			true
-		);
-		window.addEventListener('swCacheReady', this.handleSWCacheReady, true);
-	}
+    window.addEventListener(
+      'swFreshContentReady',
+      this.handleSWFreshContentReady,
+      true
+    );
+    window.addEventListener('swCacheReady', this.handleSWCacheReady, true);
+  }
 
-	@action
-	resetStores = () => {
-		return new Promise((resolve) => {
-			resolve();
-		});
-	};
+  @action
+  resetStores = () => {
+    return new Promise((resolve) => {
+      resolve();
+    });
+  };
 
-	@observable
-	swUpdated = false;
+  @observable
+  swUpdated = false;
 
-	@observable
-	freshContentReady = false;
+  @observable
+  freshContentReady = false;
 
-	@computed
-	get freshContentIsAvailable() {
-		return this.freshContentReady;
-	}
+  @computed
+  get freshContentIsAvailable() {
+    return this.freshContentReady;
+  }
 
-	@action
-	handleSWFreshContentReady = (event) => {
-		runInAction(() => {
-			this.freshContentReady = true;
-		});
-	};
+  @action
+  handleSWFreshContentReady = (event) => {
+    runInAction(() => {
+      this.freshContentReady = true;
+    });
+  };
 
-	@action
-	handleSWCacheReady = (event) => {
-		this.toasters.add({
-			variant: 'info',
-			title: 'Cache is gereed',
-			description:
-				'Assets en resources zijn in de cache opgeslagen voor offline gebruik.',
-		});
-	};
+  @action
+  handleSWCacheReady = (event) => {
+    this.toasters.add({
+      variant: 'info',
+      title: 'Cache is gereed',
+      description:
+        'Assets en resources zijn in de cache opgeslagen voor offline gebruik.',
+    });
+  };
 }
 
 export default Store;

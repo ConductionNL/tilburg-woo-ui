@@ -1,11 +1,11 @@
 // Imports => MOBX
 import {
-	makeObservable,
-	observable,
-	computed,
-	action,
-	toJS,
-	runInAction,
+  makeObservable,
+  observable,
+  computed,
+  action,
+  toJS,
+  runInAction,
 } from 'mobx';
 
 // Imports => Constants
@@ -17,134 +17,134 @@ import { AcUUID, AcIsSet, AcIsUndefined, AcSaveState } from '@utils';
 let app = {};
 
 export class ToastersStore {
-	constructor(store) {
-		makeObservable(this);
+  constructor(store) {
+    makeObservable(this);
 
-		app.store = store;
-	}
+    app.store = store;
+  }
 
-	@observable
-	collection = [];
+  @observable
+  collection = [];
 
-	@computed
-	get queue() {
-		return toJS(this.collection || []);
-	}
+  @computed
+  get queue() {
+    return toJS(this.collection || []);
+  }
 
-	@action
-	add = (options) => {
-		return new Promise((resolve) => {
-			/*
-				New Toaster config:
-				options: {
-					variant: <string>,
-					title: <string>,
-					description: <string>,
-					delay: <int>,
-				}
-			*/
+  @action
+  add = (options) => {
+    return new Promise((resolve) => {
+      /*
+                New Toaster config:
+                options: {
+                    variant: <string>,
+                    title: <string>,
+                    description: <string>,
+                    delay: <int>,
+                }
+            */
 
-			const time = new Date().getTime();
-			const delay = options.delay ? options.delay : 1000 * 5;
-			const expires = time + delay;
+      const time = new Date().getTime();
+      const delay = options.delay ? options.delay : 1000 * 5;
+      const expires = time + delay;
 
-			const toast = {
-				...options,
-				id: AcUUID(),
-				delay,
-				time,
-				expires,
-			};
+      const toast = {
+        ...options,
+        id: AcUUID(),
+        delay,
+        time,
+        expires,
+      };
 
-			// this.clear_queue();
+      // this.clear_queue();
 
-			const collection = this.queue !== null ? this.queue : [];
-			collection.push(toast);
-			this.collection = collection;
+      const collection = this.queue !== null ? this.queue : [];
+      collection.push(toast);
+      this.collection = collection;
 
-			resolve(toast);
-			return toast;
-		});
-	};
+      resolve(toast);
+      return toast;
+    });
+  };
 
-	@action
-	update = (id, options) => {
-		const collection = this.queue.slice();
-		const len = collection.length;
-		let n = 0;
-		let result = collection;
-		let found = null;
-		let index = null;
+  @action
+  update = (id, options) => {
+    const collection = this.queue.slice();
+    const len = collection.length;
+    let n = 0;
+    let result = collection;
+    let found = null;
+    let index = null;
 
-		for (n; n < len; n++) {
-			const item = collection[n];
+    for (n; n < len; n++) {
+      const item = collection[n];
 
-			if (item.id === id) {
-				found = item;
-				index = n;
-				break;
-			}
-		}
+      if (item.id === id) {
+        found = item;
+        index = n;
+        break;
+      }
+    }
 
-		if (found) {
-			const time = new Date().getTime();
-			const delay = options.delay ? options.delay : 1000 * 5;
-			const expires = time + delay;
+    if (found) {
+      const time = new Date().getTime();
+      const delay = options.delay ? options.delay : 1000 * 5;
+      const expires = time + delay;
 
-			found = {
-				...found,
-				...options,
-				delay,
-				time,
-				expires,
-			};
+      found = {
+        ...found,
+        ...options,
+        delay,
+        time,
+        expires,
+      };
 
-			collection[index] = found;
+      collection[index] = found;
 
-			runInAction(() => {
-				this.set(KEYS.COLLECTION, collection);
-			});
-		}
-	};
+      runInAction(() => {
+        this.set(KEYS.COLLECTION, collection);
+      });
+    }
+  };
 
-	@action
-	clear_queue = () => {
-		runInAction(() => {
-			return this.set(KEYS.COLLECTION, []);
-		});
-	};
+  @action
+  clear_queue = () => {
+    runInAction(() => {
+      return this.set(KEYS.COLLECTION, []);
+    });
+  };
 
-	@action
-	remove = (id) => {
-		const collection = this.queue !== null ? this.queue : [];
-		let new_collection = [];
+  @action
+  remove = (id) => {
+    const collection = this.queue !== null ? this.queue : [];
+    let new_collection = [];
 
-		if (!AcIsSet(id)) {
-			new_collection = collection.shift();
-		} else {
-			new_collection = collection.filter((item) => {
-				return item.id !== id;
-			});
-		}
+    if (!AcIsSet(id)) {
+      new_collection = collection.shift();
+    } else {
+      new_collection = collection.filter((item) => {
+        return item.id !== id;
+      });
+    }
 
-		runInAction(() => {
-			this.set(KEYS.COLLECTION, new_collection);
-		});
-	};
+    runInAction(() => {
+      this.set(KEYS.COLLECTION, new_collection);
+    });
+  };
 
-	@action
-	set = (target, value) => {
-		if (!AcIsSet(target)) return;
-		if (AcIsUndefined(this[target])) return;
-		if (AcIsUndefined(value)) return;
+  @action
+  set = (target, value) => {
+    if (!AcIsSet(target)) return;
+    if (AcIsUndefined(this[target])) return;
+    if (AcIsUndefined(value)) return;
 
-		return new Promise((resolve) => {
-			runInAction(() => {
-				this[target] = value;
-				resolve();
-			});
-		});
-	};
+    return new Promise((resolve) => {
+      runInAction(() => {
+        this[target] = value;
+        resolve();
+      });
+    });
+  };
 }
 
 export default ToastersStore;
