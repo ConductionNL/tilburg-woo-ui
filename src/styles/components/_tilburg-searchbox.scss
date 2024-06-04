@@ -6,6 +6,10 @@
   align-items: center;
   gap: var(--tilburg-space-block-cat);
 
+  &--spacing {
+    margin-block: var(--tilburg-space-block-rat);
+  }
+
   &--small {
     display: block;
 

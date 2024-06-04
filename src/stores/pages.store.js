@@ -1,7 +1,5 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
-import DOMPurify from 'dompurify';
-import parse from 'html-react-parser';
 
 let app = {};
 

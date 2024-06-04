@@ -7,10 +7,11 @@ import { AcUUID } from '@utils/ac-uuid';
 import { AcLockObject } from '@utils/ac-lock-object';
 
 // Imports => Views
-import { AcHome } from '@views';
+import { AcHome, AcSearch } from '@views';
 
 export const PATHS = AcLockObject({
 	HOME: '/',
+	SEARCH: '/search',
 });
 
 export const ROUTES = {
@@ -20,12 +21,17 @@ export const ROUTES = {
 		label: TITLES.HOME,
 		path: PATHS.HOME,
 		component: AcHome,
-		title: 'Jouw overzicht',
+		title: 'Open Tilburg',
 		icon: ICONS.HOME,
-		$ref: null,
-		roles: null,
-		forbidden: true,
 	},
+	SEARCH: {
+		id: AcUUID(),
+		name: 'Search',
+		label: TITLES.SEARCH,
+		path: PATHS.SEARCH,
+		component: AcSearch,
+		title: 'Open Tilburg | Zoeken',
+	}
 };
 
 export const NAVIGATION_ITEMS = [ROUTES.HOME];

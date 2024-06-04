@@ -1,10 +1,11 @@
 import clsx from 'clsx'
 
-const TilburgCard = ({blue, padding = 'default', children, image}) => {
+const TilburgCard = ({ blue, searchResult, padding = 'default', children, image }) => {
     const _CLASSES = clsx(
         'tilburg-card',
         blue && 'tilburg-card--blue',
-        padding && `tilburg-card--padding-${padding}`
+        searchResult && 'tilburg-card--search-result',
+        padding && `tilburg-card--padding-${padding}`,
     )
 
     return (

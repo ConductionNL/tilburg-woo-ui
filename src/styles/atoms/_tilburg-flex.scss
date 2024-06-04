@@ -1,0 +1,37 @@
+.tilburg-flex {
+  display: flex;
+
+  &--align-items {
+    &-center {
+      align-items: center;
+    }
+  }
+
+  &--justify-content {
+    &-center {
+      justify-content: center;
+    }
+
+    &-between {
+      justify-content: space-between;
+    }
+  }
+
+  &--column {
+    flex-direction: column;
+  }
+
+  &--spacing {
+    &-sm {
+      gap: var(--tilburg-space-block-mouse);
+    }
+
+    &-md {
+      gap: var(--tilburg-space-block-rabbit);
+    }
+
+    &-lg {
+      gap: var(--tilburg-space-block-cat);
+    }
+  }
+}

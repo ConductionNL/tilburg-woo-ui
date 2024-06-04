@@ -1,4 +1,6 @@
 export const LABELS = {
-    MENU: 'Menu',
     CLOSE: 'Sluit',
+    MENU: 'Menu',
+    ENTER_QUERY: 'Vul je zoekterm in',
+    SEARCH: 'Zoeken'
 }

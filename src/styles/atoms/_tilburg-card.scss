@@ -24,6 +24,18 @@
   }
 
   &--padding {
+    &-sm {
+      .tilburg-card__content {
+        padding: var(--tilburg-space-block-mouse);
+      }
+    }
+
+    &-md {
+      .tilburg-card__content {
+        padding: var(--tilburg-space-block-rabbit);
+      }
+    }
+
     &-default {
       .tilburg-card__content {
         padding: var(--tilburg-space-block-cat);

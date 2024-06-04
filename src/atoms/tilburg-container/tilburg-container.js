@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 
-const TilburgContainer = ({ children, compact }) => {
+const TilburgContainer = ({ children, compact, flex, flexDirection }) => {
 
     const _CLASSES = clsx('container', compact && 'container--compact');
 

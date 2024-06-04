@@ -12,78 +12,88 @@ import '@styles/index.scss';
 import config from '@config';
 
 // Imports => Constants
-import { DEFAULT_ROUTE } from '@constants';
+import { DEFAULT_ROUTE, ROUTES } from '@constants';
 
 // Imports => Utilities
-import { AcHome } from '@views';
+import { AcHome, AcSearch } from '@views';
 import AcContent from '@views/ac-content/ac-content';
 
 // Imports => Molecules
 const TilburgHeader = loadable(() =>
-  import('@components/tilburg-header/tilburg-header')
+    import('@components/tilburg-header/tilburg-header'),
 );
 const TilburgFooter = loadable(() =>
-  import('@components/tilburg-footer/tilburg-footer')
+    import('@components/tilburg-footer/tilburg-footer'),
 );
 
 // Imports => Atoms
 
 const _CLASSES = {
-  ROOT: 'ac-root',
-  MAIN: 'ac-app',
-  ROUTE: {
-    SECTION: 'ac-route__section',
-    HIDDEN: 'ac-route__section--hidden',
-  },
+    ROOT: 'ac-root',
+    MAIN: 'ac-app',
+    ROUTE: {
+        SECTION: 'ac-route__section',
+        HIDDEN: 'ac-route__section--hidden',
+    },
 };
 
 const App = ({ store }) => {
-  const { fetchPages, all_pages } = store.pages;
+    const { fetchPages, all_pages } = store.pages;
 
-  useEffect(() => {
-    fetchPages();
-  }, []);
+    useEffect(() => {
+        fetchPages();
+    }, []);
 
-  useEffect(() => {
-    console.log(all_pages);
-  }, [all_pages]);
+    useEffect(() => {
+        console.log(all_pages);
+    }, [all_pages]);
 
-  const getView = (page) => {
-    return page.slug === 'home' ? (
-      <AcHome store={store} />
-    ) : (
-      <AcContent store={store} />
-    );
-  };
+    const getView = (page) => {
+        return page.slug === 'home' ? (
+            <AcHome store={store} />
+        ) : (
+            <AcContent store={store} />
+        );
+    };
 
-  if (!all_pages?.length) {
-    return null;
-  }
+    if (!all_pages?.length) {
+        return null;
+    }
 
-  return (
-    <div class='tilburg-theme'>
-      <TilburgHeader />
+    return (
+        <div class="tilburg-theme">
+            <TilburgHeader />
 
-      <main id='main'>
-        <Routes>
-          {all_pages?.map((page) => (
-            <Route
-              key={`route-${page.id}`}
-              path={page.slug}
-              element={getView(page)}
-            />
-          ))}
-          <Route
-            key={`default-route-${DEFAULT_ROUTE.id}`}
-            path={'*'}
-            element={<AcHome store={store} />}
-          />
-        </Routes>
-      </main>
+            <main id="main">
+                <Routes>
+                    {all_pages?.map((page) => (
+                        <Route
+                            key={`route-${page.id}`}
+                            path={page.slug}
+                            element={getView(page)}
+                        />
+                    ))}
 
-      <TilburgFooter />
-    </div>
-  );
+                    {Object.values(ROUTES).map(route =>
+                        <Route
+                            key={`default-route-${route.id}`}
+                            path={route.path}
+                            element={<route.component store={store} />}
+                        />,
+                    )}
+
+                    <Route
+                        key={`default-route-${DEFAULT_ROUTE.id}`}
+                        path={'*'}
+                        element={<AcHome store={store} />}
+                    />
+                </Routes>
+            </main>
+
+            <TilburgFooter />
+        </div>
+    )
+        ;
 };
 
 export default withStore(observer(App));
