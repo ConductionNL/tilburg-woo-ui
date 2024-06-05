@@ -1,4 +1,6 @@
 import {
+  FormField,
+  FormLabel,
   Heading,
   Select,
   SelectOption,
@@ -6,40 +8,48 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { TilburgCheckbox } from '@molecules';
 import { TilburgFlex } from '@atoms';
-import { Separator } from '@utrecht/component-library-react';
+import { VISUALS } from '@constants';
 
 const TilburgSearchFilters = () => {
   return (
-    <TilburgFlex spacing={'xs'} column>
+    <TilburgFlex spacing={'sm'} column>
       <Heading level={2}>Filters</Heading>
-
-      <Heading level={3}>Publicatiedatum</Heading>
-      <Select>
-        <SelectOption>Selecteer jaartallen</SelectOption>
-        <SelectOption>2024</SelectOption>
-        <SelectOption>2023</SelectOption>
-      </Select>
-
-      <Heading level={4}>Van (begindatum)</Heading>
-      <Textbox />
-
-      <Heading level={4}>Tot (einddatum)</Heading>
-      <Textbox />
-
-      <Separator />
-
-      <Heading level={4}>Categorieën</Heading>
+      <FormField type='select'>
+        <FormLabel>
+          <Heading level={3}>Publicatiedatum</Heading>
+        </FormLabel>
+        <Select>
+          <SelectOption>Selecteer jaartallen</SelectOption>
+          <SelectOption>2024</SelectOption>
+          <SelectOption>2023</SelectOption>
+        </Select>
+      </FormField>
+      <FormField type='text'>
+        <FormLabel>
+          <Heading level={4}>Van (begindatum)</Heading>
+        </FormLabel>
+        <Textbox />
+      </FormField>
+      <FormField type='text'>
+        <FormLabel>
+          <Heading level={4}>Tot (einddatum)</Heading>
+        </FormLabel>
+        <Textbox />
+      </FormField>
+      <hr />
       <TilburgFlex spacing='xs' column>
+        <TilburgFlex justifyContent={'between'} alignItems={'center'}>
+          <Heading level={4}>Categorieën</Heading>
+          <VISUALS.QUESTION_MARK />
+        </TilburgFlex>
         <TilburgCheckbox label='Convenant' />
         <TilburgCheckbox label='Bestuursstuk' />
         <TilburgCheckbox label='Woo-verzoek' />
         <TilburgCheckbox label='Raadstuk' />
       </TilburgFlex>
-
-      <Separator />
-
-      <Heading level={4}>Onderwerpen</Heading>
+      <hr />
       <TilburgFlex spacing='xs' column>
+        <Heading level={4}>Onderwerpen</Heading>
         <TilburgCheckbox label='Campus Wijkevoort' />
         <TilburgCheckbox label='Evenementen in Tilburg' />
         <TilburgCheckbox label='Duurzaamheid' />
