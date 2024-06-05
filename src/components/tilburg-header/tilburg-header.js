@@ -2,17 +2,13 @@ import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 import { VISUALS } from '@constants';
-import {
-  BreadcrumbNav,
-  BreadcrumbNavLink,
-  BreadcrumbNavSeparator,
-  SkipLink,
-} from '@utrecht/component-library-react/dist/css-module';
+import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
 
 import { TilburgNavigation } from '@components';
+import { TilburgBreadcrumbs } from '@molecules';
 import { TilburgContainer } from '@atoms';
 
-const TilburgHeader = () => {
+const TilburgHeader = ({ store }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
@@ -38,25 +34,7 @@ const TilburgHeader = () => {
       </div>
       <div className='tilburg-header__navigation-secondary'>
         <TilburgContainer>
-          {!isHomePage && (
-            <BreadcrumbNav>
-              <BreadcrumbNavLink href='/' rel='home' index={0}>
-                Home
-              </BreadcrumbNavLink>
-              <BreadcrumbNavSeparator>
-                <VISUALS.CHEVRON_RIGHT />
-              </BreadcrumbNavSeparator>
-              <BreadcrumbNavLink href='/a/' index={1}>
-                Uitgebreid zoeken
-              </BreadcrumbNavLink>
-              <BreadcrumbNavSeparator>
-                <VISUALS.CHEVRON_RIGHT />
-              </BreadcrumbNavSeparator>
-              <BreadcrumbNavLink disabled current>
-                Label
-              </BreadcrumbNavLink>
-            </BreadcrumbNav>
-          )}
+          {!isHomePage && <TilburgBreadcrumbs store={store} />}
         </TilburgContainer>
       </div>
     </header>

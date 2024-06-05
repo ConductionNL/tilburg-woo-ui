@@ -26,6 +26,7 @@ export const TilburgSearchbox = ({
 
   const submitCallback = (e) => {
     console.log(e);
+    e.preventDefault();
   };
 
   return (
