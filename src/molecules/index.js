@@ -14,7 +14,12 @@ const TilburgSearchResult = loadable(() =>
 const TilburgBreadcrumbs = loadable(() =>
   import('@molecules/tilburg-breadcrumbs/tilburg-breadcrumbs')
 );
-
+const TilburgSearchFilters = loadable(() =>
+  import('@molecules/tilburg-search-filters/tilburg-search-filters')
+);
+const TilburgCheckbox = loadable(() =>
+  import('@molecules/tilburg-checkbox/tilburg-checkbox')
+);
 export {
   TilburgBreadcrumbs,
   TilburgCardCategory,
@@ -22,4 +27,6 @@ export {
   TilburgCta,
   TilburgLink,
   TilburgSearchResult,
+  TilburgSearchFilters,
+  TilburgCheckbox,
 };

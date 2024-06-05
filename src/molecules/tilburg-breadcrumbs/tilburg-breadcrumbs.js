@@ -1,15 +1,26 @@
-import { useEffect } from 'react';
+import { useMemo } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useLocation } from 'react-router-dom';
+
+import { withStore } from '@stores';
+import { ROUTES, VISUALS } from '@constants';
+
 import {
   BreadcrumbNav,
   BreadcrumbNavLink,
   BreadcrumbNavSeparator,
 } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@constants';
-import { withStore } from '@stores';
-import { observer } from 'mobx-react-lite';
 
 const TilburgBreadcrumbs = ({ store: { pages } }) => {
-  const { get_single } = pages;
+  const { get_single, is_loading } = pages;
+  const location = useLocation();
+
+  const getCurrentPageTitle = useMemo(
+    () =>
+      get_single.name ||
+      Object.values(ROUTES).find((route) => route.path === location.pathname)?.label,
+    [is_loading]
+  );
 
   return (
     <BreadcrumbNav>
@@ -20,7 +31,7 @@ const TilburgBreadcrumbs = ({ store: { pages } }) => {
         <VISUALS.CHEVRON_RIGHT />
       </BreadcrumbNavSeparator>
       <BreadcrumbNavLink disabled current>
-        {get_single.name}
+        {getCurrentPageTitle}
       </BreadcrumbNavLink>
     </BreadcrumbNav>
   );

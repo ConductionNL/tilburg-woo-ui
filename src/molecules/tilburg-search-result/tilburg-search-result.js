@@ -18,7 +18,6 @@ const TilburgSearchResult = () => {
           <VISUALS.ELLIPSE />
           <Paragraph small>Raadstuk</Paragraph>
         </TilburgFlex>
-
         <VISUALS.ARROW_RIGHT />
       </TilburgFlex>
     </TilburgCard>

@@ -1,5 +1,5 @@
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
-import { TilburgSearchResult } from '@molecules';
+import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgSearchbox } from '@components';
 import { LABELS } from '@constants';
 import {
@@ -19,12 +19,13 @@ const AcSearch = ({ store }) => {
         </TilburgCard>
       </TilburgContainer>
 
-      <TilburgContainer spacing='md'>
-        <div style={{ display: 'flex' }}>
-          <div style={{ display: 'flex', width: '264px' }}>
-            <Heading level={2}>Filters</Heading>
+      <TilburgContainer spacing='sm'>
+        <TilburgFlex spacing={'md'}>
+          {/*TODO: Fix width? */}
+          <div style={{ width: '264px' }}>
+            <TilburgSearchFilters />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+          <TilburgFlex column grow spacing={'xs'}>
             <TilburgFlex justifyContent='between'>
               <Heading level={2}>5.761 zoekresultaten</Heading>
               <TilburgFlex alignItems='center' spacing='xs'>
@@ -47,8 +48,8 @@ const AcSearch = ({ store }) => {
               <TilburgSearchResult />
               <TilburgSearchResult />
             </TilburgFlex>
-          </div>
-        </div>
+          </TilburgFlex>
+        </TilburgFlex>
       </TilburgContainer>
     </>
   );
