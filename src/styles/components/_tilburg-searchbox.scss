@@ -2,6 +2,7 @@
 @use '../global/mixins/respond' as *;
 
 .tilburg-searchbox {
+  background: var(--tilburg-color-blue-100);
   display: flex;
   align-items: center;
   gap: var(--tilburg-space-block-cat);

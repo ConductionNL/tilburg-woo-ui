@@ -17,9 +17,29 @@
 
   }
 
-  &--compact {
-    max-width: 744px;
-    padding-top: var(--tilburg-space-block-rat);
-    padding-bottom: var(--tilburg-space-block-rat);
+  &--spacing {
+    &-xs {
+      margin-top: var(--tilburg-space-block-snail);
+      margin-bottom: var(--tilburg-space-block-snail);
+    }
+
+    &-sm {
+      margin-top: var(--tilburg-space-block-mouse);
+      margin-bottom: var(--tilburg-space-block-mouse);
+    }
+
+    &-md {
+      margin-top: var(--tilburg-space-block-rat);
+      margin-bottom: var(--tilburg-space-block-rat);
+    }
+
+    &-lg {
+      margin-top: var(--tilburg-space-block-cat);
+      margin-bottom: var(--tilburg-space-block-cat);
+    }
+
+    &-xl {
+      margin-top: var(--tilburg-space-block-dog);
+    }
   }
 }

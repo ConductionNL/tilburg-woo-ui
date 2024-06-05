@@ -11,9 +11,11 @@ const TilburgSearchResult = () => {
       </Paragraph>
 
       <TilburgFlex justifyContent='between'>
-        <TilburgFlex alignItems='center'>
+        <TilburgFlex alignItems='center' spacing='sm'>
           <StatusBadge>Wonen</StatusBadge>
+          <VISUALS.ELLIPSE />
           <Paragraph small>12 maart 2024</Paragraph>
+          <VISUALS.ELLIPSE />
           <Paragraph small>Raadstuk</Paragraph>
         </TilburgFlex>
 

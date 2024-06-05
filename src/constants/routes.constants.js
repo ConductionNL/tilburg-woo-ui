@@ -10,28 +10,28 @@ import { AcLockObject } from '@utils/ac-lock-object';
 import { AcHome, AcSearch } from '@views';
 
 export const PATHS = AcLockObject({
-	HOME: '/',
-	SEARCH: '/search',
+  HOME: '/',
+  SEARCH: '/zoeken',
 });
 
 export const ROUTES = {
-	HOME: {
-		id: AcUUID(),
-		name: 'Home',
-		label: TITLES.HOME,
-		path: PATHS.HOME,
-		component: AcHome,
-		title: 'Open Tilburg',
-		icon: ICONS.HOME,
-	},
-	SEARCH: {
-		id: AcUUID(),
-		name: 'Search',
-		label: TITLES.SEARCH,
-		path: PATHS.SEARCH,
-		component: AcSearch,
-		title: 'Open Tilburg | Zoeken',
-	}
+  HOME: {
+    id: AcUUID(),
+    name: 'Home',
+    label: TITLES.HOME,
+    path: PATHS.HOME,
+    component: AcHome,
+    title: 'Open Tilburg',
+    icon: ICONS.HOME,
+  },
+  SEARCH: {
+    id: AcUUID(),
+    name: 'Search',
+    label: TITLES.SEARCH,
+    path: PATHS.SEARCH,
+    component: AcSearch,
+    title: 'Open Tilburg | Zoeken',
+  },
 };
 
 export const NAVIGATION_ITEMS = [ROUTES.HOME];

@@ -22,6 +22,10 @@
   }
 
   &--spacing {
+    &-xs {
+      gap: var(--tilburg-space-block-ant);
+    }
+
     &-sm {
       gap: var(--tilburg-space-block-mouse);
     }
