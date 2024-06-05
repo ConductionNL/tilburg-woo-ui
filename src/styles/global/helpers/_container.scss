@@ -5,6 +5,11 @@
   padding: 0 var(--tilburg-space-column-rat);
   max-width: 100%;
 
+  &--compact {
+    width: 744px;
+    margin-block: var(--tilburg-space-row-tiger);
+  }
+
   @include respond-min($screen-lg) {
     max-width: 1200px;
   }
