@@ -14,7 +14,7 @@ const TilburgHero = () => {
       <TilburgContainer>
         <TilburgCard blue padding='lg'>
           <TilburgSearchbox home label='Waar ben je naar op zoek?' />
-          <TilburgLink href='/test'>
+          <TilburgLink href='/zoeken'>
             Uitgebreid zoeken
             <VISUALS.ARROW_RIGHT />
           </TilburgLink>
