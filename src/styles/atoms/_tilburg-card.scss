@@ -1,15 +1,15 @@
 .tilburg-card {
+  position: relative;
   display: flex;
   flex-direction: column;
+  border-radius: var(--tilburg-border-radius-md);
+  border: var(--tilburg-border-width-sm) solid var(--tilburg-color-gray-200);
 
   &__content {
     display: flex;
     flex-direction: column;
     gap: var(--tilburg-space-block-snail);
   }
-
-  border-radius: var(--tilburg-border-radius-md);
-  border: var(--tilburg-border-width-sm) solid var(--tilburg-color-gray-200);
 
   img {
     aspect-ratio: 16/9;
@@ -21,6 +21,37 @@
   &--blue {
     background-color: var(--tilburg-color-blue-100);
     border: 0;
+  }
+
+  &--category {
+    a {
+      &:after {
+        content: '';
+        position: absolute;
+        display: block;
+        inset: 0;
+        inline-size: 100%;
+        block-size: 100%;
+        border-radius: var(--tilburg-border-radius-md);
+        border: 2px solid transparent;
+        z-index: 1;
+        transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      svg {
+        transition: translate 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      &:where(:hover, :focus-visible) {
+        &:after {
+          border-color: var(--tilburg-color-pink-300);
+        }
+
+        svg {
+          translate: var(--tilburg-space-block-beetle) 0;
+        }
+      }
+    }
   }
 
   &--padding {

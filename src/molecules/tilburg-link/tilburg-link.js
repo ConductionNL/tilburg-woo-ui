@@ -8,7 +8,7 @@ const TilburgLink = ({ href, type = 'link', children, ...restProps }) => {
   );
 
   return (
-    <Link to={href} className={_CLASSES} {...restProps}>
+    <Link to={href} reloadDocument className={_CLASSES} {...restProps}>
       {children}
     </Link>
   );

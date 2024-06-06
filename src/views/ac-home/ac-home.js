@@ -15,8 +15,6 @@ const AcHome = ({ store }) => {
       <TilburgHero />
       <TilburgSubjects />
       <TilburgAbout />
-
-      <br />
     </>
   );
 };

@@ -2,6 +2,7 @@ import clsx from 'clsx';
 
 const TilburgCard = ({
   blue,
+  category,
   searchResult,
   padding = 'default',
   children,
@@ -10,6 +11,7 @@ const TilburgCard = ({
   const _CLASSES = clsx(
     'tilburg-card',
     blue && 'tilburg-card--blue',
+    category && 'tilburg-card--category',
     searchResult && 'tilburg-card--search-result',
     padding && `tilburg-card--padding-${padding}`
   );

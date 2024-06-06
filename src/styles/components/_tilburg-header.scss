@@ -31,12 +31,14 @@
       align-items: center;
       gap: var(--tilburg-space-column-pig);
       color: var(--tilburg-color-white);
-      font-size: var(--tilburg-typography-font-size-xl);
+      font-size: var(--tilburg-typography-font-size-2xl);
       font-weight: var(--tilburg-typography-font-weight-bold);
       text-decoration: none;
+      text-transform: uppercase;
 
       @include respond-max($screen-md) {
         gap: var(--tilburg-space-column-rabbit);
+        font-size: var(--tilburg-typography-font-size-xl);
       }
     }
 

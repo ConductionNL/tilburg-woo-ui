@@ -1,13 +1,13 @@
 import clsx from 'clsx';
 import { VISUALS } from '@constants';
-import { TilburgCard, TilburgContainer } from '@atoms';
+import { TilburgCard, TilburgContainer, TilburgSection } from '@atoms';
 import { TilburgSearchbox } from '@components';
 import { TilburgLink } from '@molecules';
 
 const TilburgHero = () => {
   const _CLASSES = clsx('tilburg-hero');
   return (
-    <section
+    <TilburgSection
       className={_CLASSES}
       style="background-image: url('/home-hero-background.png');"
     >
@@ -20,7 +20,7 @@ const TilburgHero = () => {
           </TilburgLink>
         </TilburgCard>
       </TilburgContainer>
-    </section>
+    </TilburgSection>
   );
 };
 
