@@ -7,6 +7,7 @@ const TilburgFlex = ({
   justifyContent,
   alignItems,
   grow,
+  className,
 }) => {
   const _CLASSES = clsx(
     'tilburg-flex',
@@ -14,7 +15,8 @@ const TilburgFlex = ({
     spacing && `tilburg-flex--spacing-${spacing}`,
     grow && 'tilburg-flex--grow',
     justifyContent && `tilburg-flex--justify-content-${justifyContent}`,
-    alignItems && `tilburg-flex--align-items-${alignItems}`
+    alignItems && `tilburg-flex--align-items-${alignItems}`,
+    className
   );
 
   return <div className={_CLASSES}>{children}</div>;

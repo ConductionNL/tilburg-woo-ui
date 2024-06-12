@@ -1,15 +1,15 @@
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { TilburgCard, TilburgFlex } from '@atoms';
+import { TilburgLink } from '@molecules';
 
 const TilburgSearchResult = () => {
   return (
-    <TilburgCard padding='md'>
+    <TilburgCard searchResult padding='md'>
       <Heading level={3}>Collegenota Vlaggen Dwaalgebied</Heading>
       <Paragraph>
         Besluit over vergunninen en gebruik van vlakken in het Dwaarlgebied.
       </Paragraph>
-
       <TilburgFlex justifyContent='between'>
         <TilburgFlex alignItems='center' spacing='sm'>
           <StatusBadge>Wonen</StatusBadge>
@@ -18,7 +18,10 @@ const TilburgSearchResult = () => {
           <VISUALS.ELLIPSE />
           <Paragraph small>Raadstuk</Paragraph>
         </TilburgFlex>
-        <VISUALS.ARROW_RIGHT />
+        <TilburgLink to='/'>
+          <span class='sr-only'>Lees meer over Collegenota Vlaggen Dwaalgebied</span>
+          <VISUALS.ARROW_RIGHT />
+        </TilburgLink>
       </TilburgFlex>
     </TilburgCard>
   );

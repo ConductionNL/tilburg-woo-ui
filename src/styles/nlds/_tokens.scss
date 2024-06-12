@@ -60,6 +60,7 @@
   --utrecht-data-list-item-value-padding-inline-end: 0px;
   --utrecht-data-list-item-value-row-padding-inline-start: 0px;
   --utrecht-data-list-item-value-row-padding-inline-end: 0px;
+  --utrecht-form-label-checkbox-font-weight: var(--tilburg-typography-font-weight-normal);
   --utrecht-checkbox-indeterminate-hover-border-color: transparent;
   --utrecht-checkbox-indeterminate-active-border-color: transparent;
   --utrecht-checkbox-indeterminate-disabled-border-color: transparent;
@@ -109,12 +110,12 @@
   --tilburg-focus-outline-style: dotted;
   --tilburg-focus-outline-offset: 0;
   --tilburg-box-shadow-lg: [object Object];
-  --tilburg-box-shadow-md: [object Object];
+  --tilburg-box-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --tilburg-box-shadow-sm: [object Object];
-  --tilburg-typography-font-family-secondary: Roboto;
+  --tilburg-typography-font-family-secondary: 'Roboto', sans-serif;
   --tilburg-typography-font-family-primary: TradeGothicCondensed18;
-  --tilburg-typography-font-weight-bold: Bold;
-  --tilburg-typography-font-weight-normal: Regular;
+  --tilburg-typography-font-weight-bold: 700;
+  --tilburg-typography-font-weight-normal: 400;
   --tilburg-typography-line-height-lg: 200%;
   --tilburg-typography-line-height-md: 150%;
   --tilburg-typography-line-height-sm: 125%;
@@ -422,9 +423,9 @@
   --utrecht-feedback-danger-fill-color: var(--tilburg-color-red-300);
   --utrecht-feedback-danger-fill-border-color: var(--tilburg-color-red-300);
   --utrecht-feedback-danger-fill-background-color: var(--tilburg-color-red-100);
-  --utrecht-feedback-neutral-fill-color: var(--tilburg-color-blue-400);
-  --utrecht-feedback-neutral-fill-border-color: var(--tilburg-color-blue-400);
-  --utrecht-feedback-neutral-fill-background-color: var(--tilburg-color-blue-100);
+  --utrecht-feedback-neutral-fill-color: var(--tilburg-color-gray-900);
+  --utrecht-feedback-neutral-fill-border-color: var(--tilburg-color-gray-400);
+  --utrecht-feedback-neutral-fill-background-color: var(--tilburg-color-gray-100);
   --utrecht-document-line-height: var(--tilburg-typography-line-height-md);
   --utrecht-document-strong-font-weight: var(--tilburg-typography-font-weight-bold);
   --utrecht-document-font-weight: var(--tilburg-typography-font-weight-normal);

@@ -41,5 +41,13 @@
     &-lg {
       gap: var(--tilburg-space-block-cat);
     }
+
+    &-xl {
+      gap: var(--tilburg-space-block-dog);
+    }
+
+    &-xxl {
+      gap: var(--tilburg-space-block-pig);
+    }
   }
 }

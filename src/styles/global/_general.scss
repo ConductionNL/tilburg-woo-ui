@@ -8,7 +8,7 @@ body {
 	margin: 0;
 	padding: 0;
 	background: $color-white;
-	overflow: auto;
+	//overflow: auto;
 	-webkit-overflow-scrolling: touch;
 
 	@include font-body();

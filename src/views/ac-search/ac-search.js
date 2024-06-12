@@ -13,29 +13,16 @@ import {
 const AcSearch = ({ store }) => {
   return (
     <>
-      <TilburgContainer spacing='md'>
+      <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox label={LABELS.SEARCH} />
         </TilburgCard>
       </TilburgContainer>
 
       <TilburgContainer spacing='sm'>
-        <TilburgFlex spacing={'md'}>
-          {/*TODO: Fix width? */}
-          <div style={{ width: '264px' }}>
-            <TilburgSearchFilters />
-          </div>
-          <TilburgFlex column grow spacing={'xs'}>
-            <TilburgFlex justifyContent='between'>
-              <Heading level={2}>5.761 zoekresultaten</Heading>
-              <TilburgFlex alignItems='center' spacing='xs'>
-                <Paragraph>Sorteer</Paragraph>
-                <Select>
-                  <SelectOption>Meest relevant</SelectOption>
-                  <SelectOption>Best bekeken</SelectOption>
-                </Select>
-              </TilburgFlex>
-            </TilburgFlex>
+        <TilburgFlex spacing='xl'>
+          <TilburgSearchFilters />
+          <TilburgFlex column grow spacing='xs'>
             <Heading level={4}>Gekozen filters</Heading>
             <TilburgFlex spacing='xs'>
               <StatusBadge onClick={() => console.log('test')}>Wonen</StatusBadge>
@@ -47,6 +34,12 @@ const AcSearch = ({ store }) => {
               <TilburgSearchResult />
               <TilburgSearchResult />
               <TilburgSearchResult />
+              <TilburgSearchResult />
+              <TilburgSearchResult />
+              <TilburgSearchResult />
+              <strong style='padding-block: 3rem; color: var(--tilburg-color-pink-300);'>
+                // PAGINATION PLACEHOLDER //
+              </strong>
             </TilburgFlex>
           </TilburgFlex>
         </TilburgFlex>

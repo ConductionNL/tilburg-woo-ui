@@ -20,6 +20,9 @@ const TilburgIntro = loadable(() =>
 const TilburgLoader = loadable(() =>
   import('@components/tilburg-loader/tilburg-loader')
 );
+const TilburgModal = loadable(() =>
+  import('@components/tilburg-modal/tilburg-modal')
+);
 const TilburgNavigation = loadable(() =>
   import('@components/tilburg-navigation/tilburg-navigation')
 );
@@ -42,6 +45,7 @@ export {
   TilburgHero,
   TilburgIntro,
   TilburgLoader,
+  TilburgModal,
   TilburgNavigation,
   TilburgSearchbox,
   TilburgSectionsHandler,
