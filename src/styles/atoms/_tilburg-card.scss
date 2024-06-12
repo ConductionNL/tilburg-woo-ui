@@ -2,6 +2,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  background-color: var(--tilburg-color-white);
   border-radius: var(--tilburg-border-radius-md);
   border: var(--tilburg-border-width-sm) solid var(--tilburg-color-gray-200);
 
@@ -23,7 +24,8 @@
     border: 0;
   }
 
-  &--category {
+  &--category,
+  &--search-result {
     a {
       &:after {
         content: '';
@@ -49,6 +51,16 @@
 
         svg {
           translate: var(--tilburg-space-block-beetle) 0;
+        }
+      }
+    }
+  }
+
+  &--search-result {
+    a {
+      &:where(:hover, :focus-visible) {
+        &:after {
+          box-shadow: var(--tilburg-box-shadow-md);
         }
       }
     }
