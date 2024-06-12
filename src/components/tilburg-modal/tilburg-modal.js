@@ -34,7 +34,7 @@ const TilburgModal = React.forwardRef(({ id, title, onClose, children }, ref) =>
         <div className='tilburg-modal__header'>
           <TilburgFlex justifyContent='between' alignItems='center'>
             <Heading level={2}>{title}</Heading>
-            <TilburgButton onClick={onClose}>
+            <TilburgButton animate onClick={onClose}>
               <VISUALS.CLOSE />
               Sluiten
             </TilburgButton>

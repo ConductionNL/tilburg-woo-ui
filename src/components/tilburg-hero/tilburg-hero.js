@@ -6,6 +6,7 @@ import { TilburgLink } from '@molecules';
 
 const TilburgHero = () => {
   const _CLASSES = clsx('tilburg-hero');
+
   return (
     <TilburgSection
       className={_CLASSES}

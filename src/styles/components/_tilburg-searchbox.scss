@@ -48,6 +48,21 @@
     }
   }
 
+  &--search {
+    h2 {
+      margin-inline-end: calc(var(--tilburg-space-column-elephant) + var(--tilburg-space-block-cat));
+    }
+
+    @include respond-max($screen-md) {
+      flex-direction: column;
+      align-items: flex-start;
+
+      h2 {
+        margin-inline-end: 0;
+      }
+    }
+  }
+
   &__search {
     display: flex;
     gap: var(--tilburg-space-block-mouse);
@@ -55,6 +70,14 @@
 
     button {
       flex-shrink: 0;
+    }
+  }
+
+  &__actions {
+    display: none;
+
+    @include respond-max($screen-md) {
+      display: block;
     }
   }
 }

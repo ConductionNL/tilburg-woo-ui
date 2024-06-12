@@ -3,14 +3,14 @@ import { VISUALS } from '@constants';
 import { TilburgCard, TilburgFlex } from '@atoms';
 import { TilburgLink } from '@molecules';
 
-const TilburgSearchResult = () => {
+const TilburgSearchResult = ({ skeleton }) => {
   return (
-    <TilburgCard searchResult padding='md'>
+    <TilburgCard searchResult padding='md' skeleton={skeleton}>
       <Heading level={3}>Collegenota Vlaggen Dwaalgebied</Heading>
       <Paragraph>
         Besluit over vergunninen en gebruik van vlakken in het Dwaarlgebied.
       </Paragraph>
-      <TilburgFlex justifyContent='between'>
+      <TilburgFlex justifyContent='between' className='meta'>
         <TilburgFlex alignItems='center' spacing='sm'>
           <StatusBadge>Wonen</StatusBadge>
           <VISUALS.ELLIPSE />

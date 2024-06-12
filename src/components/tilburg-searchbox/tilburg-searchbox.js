@@ -1,22 +1,25 @@
 import { useMemo } from 'react';
 import clsx from 'clsx';
 import {
+  Heading,
   Textbox,
   PrimaryActionButton,
-  Heading,
+  SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
 
 export const TilburgSearchbox = ({
-  small,
   home,
+  search,
+  small,
   label,
   spacing,
   onSearchCallback,
 }) => {
   const _CLASSES = clsx('tilburg-searchbox', {
-    'tilburg-searchbox--small': small,
     'tilburg-searchbox--home': home,
+    'tilburg-searchbox--search': search,
+    'tilburg-searchbox--small': small,
     'tilburg-searchbox--spacing': spacing,
   });
 
@@ -40,6 +43,15 @@ export const TilburgSearchbox = ({
           {LABELS.SEARCH}
         </PrimaryActionButton>
       </div>
+
+      {search && (
+        <div class='tilburg-searchbox__actions'>
+          <SecondaryActionButton>
+            <VISUALS.FILTER />
+            {LABELS.FILTER}
+          </SecondaryActionButton>
+        </div>
+      )}
     </form>
   );
 };

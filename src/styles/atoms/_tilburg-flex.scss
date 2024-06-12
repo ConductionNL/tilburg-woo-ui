@@ -14,7 +14,12 @@
 
     &-between {
       justify-content: space-between;
+      inline-size: 100%;
     }
+  }
+
+  &--wrap {
+    flex-wrap: wrap;
   }
 
   &--grow {
@@ -48,6 +53,32 @@
 
     &-xxl {
       gap: var(--tilburg-space-block-pig);
+    }
+  }
+
+  &--margin {
+    &-xs {
+      margin-block: var(--tilburg-space-block-ant);
+    }
+
+    &-sm {
+      margin-block: var(--tilburg-space-block-mouse);
+    }
+
+    &-md {
+      margin-block: var(--tilburg-space-block-rabbit);
+    }
+
+    &-lg {
+      margin-block: var(--tilburg-space-block-cat);
+    }
+
+    &-xl {
+      margin-block: var(--tilburg-space-block-dog);
+    }
+
+    &-xxl {
+      margin-block: var(--tilburg-space-block-pig);
     }
   }
 }

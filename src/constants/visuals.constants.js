@@ -8,6 +8,9 @@ const CHEVRON_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/chevron-right.svg')
 );
 const CLOSE = loadable(() => import('-!svg-react-loader!@assets/images/close.svg'));
+const CLOSE_SMALL = loadable(() =>
+  import('-!svg-react-loader!@assets/images/close-small.svg')
+);
 const CONTACT = loadable(() =>
   import('-!svg-react-loader!@assets/images/contact.svg')
 );
@@ -22,6 +25,9 @@ const EXTERNAL_LINK_BLUE = loadable(() =>
 );
 const EXTERNAL_LINK_PINK = loadable(() =>
   import('-!svg-react-loader!@assets/images/external-link-pink.svg')
+);
+const FILTER = loadable(() =>
+  import('-!svg-react-loader!@assets/images/filter.svg')
 );
 const INFO = loadable(() => import('-!svg-react-loader!@assets/images/info.svg'));
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
@@ -41,11 +47,13 @@ export const VISUALS = {
   ARROW_RIGHT,
   CHEVRON_RIGHT,
   CLOSE,
+  CLOSE_SMALL,
   CONTACT,
   ELLIPSE,
   EXTERNAL_LINK,
   EXTERNAL_LINK_BLUE,
   EXTERNAL_LINK_PINK,
+  FILTER,
   INFO,
   LIST,
   LIST_BLUE,
