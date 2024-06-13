@@ -53,7 +53,13 @@ export const TilburgSearchbox = ({
 
       {searchpage && (
         <div class='tilburg-searchbox__actions'>
-          <SecondaryActionButton onClick={handleMobileFilters}>
+          <SecondaryActionButton
+            id='filters-toggle'
+            onClick={handleMobileFilters}
+            aria-expanded='false'
+            aria-haspopup='true'
+            aria-controls='filters'
+          >
             <VISUALS.FILTER />
             {LABELS.FILTER}
           </SecondaryActionButton>
