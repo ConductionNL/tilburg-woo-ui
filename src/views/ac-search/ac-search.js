@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import {
   TilburgButton,
@@ -12,21 +12,42 @@ import {
   StatusBadge,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcSearch = ({ store }) => {
-  const [isLoading, setIsLoading] = React.useState(true);
+const AcSearch = ({ store: { documents } }) => {
+  const [isLoading, setIsLoading] = useState(true);
 
   const SEARCH_RESULTS = 7;
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 9000000);
+    }, 3000);
 
     return () => clearTimeout(timer); // Clear timeout if the component unmounts
   }, []);
 
+  useEffect(() => {
+    documents.fetchDocuments();
+  }, []);
+
+  const renderDocuments = useMemo(() => {
+    if (documents.is_loading) {
+      return Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
+        <TilburgSearchResult key={index} skeleton />
+      ));
+    }
+
+    if (documents.all_documents.length < 1) {
+      return 'No results';
+    }
+
+    return documents?.all_documents?.map((_, index) => (
+      <TilburgSearchResult key={index} />
+    ));
+  });
+
   return (
     <>
+      {JSON.stringify(documents)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox searchpage label={LABELS.SEARCH} />
@@ -55,13 +76,7 @@ const AcSearch = ({ store }) => {
               <TilburgButton>Wis alle filters</TilburgButton>
             </TilburgFlex>
             <TilburgFlex column spacing='sm' margin='sm'>
-              {isLoading
-                ? Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
-                    <TilburgSearchResult key={index} skeleton />
-                  ))
-                : Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
-                    <TilburgSearchResult key={index} />
-                  ))}
+              {renderDocuments}
               <strong style='padding-block: 3rem; color: var(--tilburg-color-pink-300);'>
                 // PAGINATION PLACEHOLDER (TODO) //
               </strong>

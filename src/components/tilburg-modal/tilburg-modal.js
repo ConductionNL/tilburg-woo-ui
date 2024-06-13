@@ -4,6 +4,7 @@ import FocusTrap from 'focus-trap-react';
 import { VISUALS } from '@constants';
 import TilburgFlex from '@atoms/tilburg-flex/tilburg-flex';
 import TilburgButton from '@molecules/tilburg-button/tilburg-button';
+import clsx from 'clsx';
 
 const TilburgModal = React.forwardRef(({ id, title, onClose, children }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,9 +29,11 @@ const TilburgModal = React.forwardRef(({ id, title, onClose, children }, ref) =>
     };
   }, [ref, onClose]);
 
+  const _CLASSES = clsx('tilburg-modal', isOpen && 'open');
+
   return (
     <FocusTrap active={isOpen}>
-      <dialog id={id} className={`tilburg-modal ${isOpen ? 'open' : ''}`} ref={ref}>
+      <dialog id={id} className={_CLASSES} ref={ref}>
         <div className='tilburg-modal__header'>
           <TilburgFlex justifyContent='between' alignItems='center'>
             <Heading level={2}>{title}</Heading>

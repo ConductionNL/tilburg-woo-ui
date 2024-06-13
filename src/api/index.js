@@ -6,6 +6,7 @@ import { AcTokenRefresher } from './interceptors.api';
 
 // Imports => API
 import AuthAPI from '@api/auth.api';
+import DocumentsAPI from '@api/documents.api';
 import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
 
@@ -83,6 +84,11 @@ export class API {
     });
     addInterceptors(Client);
 
+    const DocumentsClient = axios.create({
+      ...config.documents,
+    });
+    addInterceptors(DocumentsClient);
+
     const DownloadClient = axios.create({
       ...config.download,
       onDownloadProgress,
@@ -98,6 +104,7 @@ export class API {
     window.addEventListener('cancelRequests', cancelRequests, false);
 
     this.auth = new AuthAPI({ Store, Client });
+    this.documents = new DocumentsAPI({ Store, Client: DocumentsClient });
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
   }
