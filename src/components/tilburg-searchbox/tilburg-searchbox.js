@@ -14,7 +14,8 @@ export const TilburgSearchbox = ({
   small,
   label,
   spacing,
-  onSearchCallback,
+  mobileFiltersOpen,
+  toggleMobileFilters,
 }) => {
   const _CLASSES = clsx('tilburg-searchbox', {
     'tilburg-searchbox--home': homepage,
@@ -34,6 +35,8 @@ export const TilburgSearchbox = ({
 
   const handleMobileFilters = () => {
     console.log('handleMobileFilters');
+    toggleMobileFilters();
+    console.log(mobileFiltersOpen);
   };
 
   return (

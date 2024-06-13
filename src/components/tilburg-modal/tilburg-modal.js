@@ -32,7 +32,13 @@ const TilburgModal = React.forwardRef(({ id, title, onClose, children }, ref) =>
   const _CLASSES = clsx('tilburg-modal', isOpen && 'open');
 
   return (
-    <FocusTrap active={isOpen}>
+    <FocusTrap
+      active={isOpen}
+      focusTrapOptions={{
+        clickOutsideDeactivates: true,
+        escapeDeactivates: true,
+      }}
+    >
       <dialog id={id} className={_CLASSES} ref={ref}>
         <div className='tilburg-modal__header'>
           <TilburgFlex justifyContent='between' alignItems='center'>

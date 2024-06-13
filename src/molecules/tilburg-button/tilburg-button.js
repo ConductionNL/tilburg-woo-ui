@@ -5,13 +5,15 @@ const TilburgButton = ({
   style = 'link',
   animate,
   children,
+  className,
   ...restProps
 }) => {
   const _CLASSES = clsx(
     style === 'link' && 'utrecht-link utrecht-link--html-a',
     style === 'button' && 'utrecht-button utrecht-button--primary-action',
     animate && 'tilburg-button--animate',
-    'tilburg-button'
+    'tilburg-button',
+    className
   );
 
   return (

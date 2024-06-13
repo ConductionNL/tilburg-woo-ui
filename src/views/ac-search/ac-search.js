@@ -13,17 +13,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcSearch = ({ store: { documents } }) => {
-  const [isLoading, setIsLoading] = useState(true);
-
   const SEARCH_RESULTS = 7;
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 3000);
-
-    return () => clearTimeout(timer); // Clear timeout if the component unmounts
-  }, []);
 
   useEffect(() => {
     documents.fetchDocuments();
@@ -43,19 +33,27 @@ const AcSearch = ({ store: { documents } }) => {
     return documents?.all_documents?.map((_, index) => (
       <TilburgSearchResult key={index} />
     ));
-  });
+  }, [documents.is_loading, documents.all_documents]);
 
   return (
     <>
       {JSON.stringify(documents)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
-          <TilburgSearchbox searchpage label={LABELS.SEARCH} />
+          <TilburgSearchbox
+            mobileFiltersOpen={documents.mobileFiltersOpen}
+            toggleMobileFilters={documents.toggleMobileFilters}
+            searchpage
+            label={LABELS.SEARCH}
+          />
         </TilburgCard>
       </TilburgContainer>
       <TilburgContainer spacing='sm'>
         <TilburgFlex spacing='xl'>
-          <TilburgSearchFilters />
+          <TilburgSearchFilters
+            mobileFiltersOpen={documents.mobileFiltersOpen}
+            toggleMobileFilters={documents.toggleMobileFilters}
+          />
           <TilburgFlex column grow spacing='xs'>
             <Heading level={4}>Gekozen filters</Heading>
             <TilburgFlex spacing='sm' justifyContent='between' wrap>

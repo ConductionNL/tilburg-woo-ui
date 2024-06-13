@@ -3,12 +3,14 @@
 
   @include respond-max($screen-md) {
     position: fixed;
-    //display: none;
+    display: none;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    //backdrop-filter: blur(5px);
-    overscroll-behavior-y: contain;
     z-index: 10;
+
+    &.open {
+      display: block;
+    }
   }
 
   :is(h3, h4) {
@@ -16,11 +18,42 @@
   }
 
   &__wrapper {
-    inline-size: min(90%, var(--mobile-width));
-    padding: var(--tilburg-space-block-beetle);
-    background-color: var(--tilburg-color-white);
-    box-shadow: var(--tilburg-box-shadow-lg);
-    overflow-y: scroll;
+    @include respond-max($screen-md) {
+      inline-size: min(90%, var(--mobile-width));
+      min-block-size: 100dvh;
+      padding: var(--tilburg-space-block-mouse);
+      background-color: var(--tilburg-color-white);
+      box-shadow: var(--tilburg-box-shadow-lg);
+      overflow-x: clip;
+      overflow-y: scroll;
+      overscroll-behavior-y: contain;
+
+      > div:first-of-type {
+        position: relative;
+        padding-block-end: var(--tilburg-space-row-mouse);
+
+        &:after {
+          content: '';
+          position: absolute;
+          inset-block-end: 0;
+          inset-inline-start: calc(var(--tilburg-space-row-mouse) * -2);
+          inset-inline-end: 0;
+          inline-size: calc(100% + 4 * var(--tilburg-space-row-mouse));
+          block-size: 1px;
+          background-color: var(--tilburg-color-gray-300);
+        }
+      }
+    }
+  }
+
+  &__header {
+    button {
+      display: none;
+
+      @include respond-max($screen-md) {
+        display: flex;
+      }
+    }
   }
 
   &__date {
@@ -45,7 +78,24 @@
     }
   }
 
-  &__subject {
+  &__subjects {
+    @include respond-max($screen-md) {
+      padding-block-end: var(--tilburg-space-row-elephant);
+    }
+  }
 
+  &__button {
+    display: none;
+
+    @include respond-max($screen-md) {
+      position: absolute;
+      display: block;
+      inset-block-end: 0;
+      inset-inline-start: 0;
+      inline-size: min(90%, var(--mobile-width));
+      padding: var(--tilburg-space-row-mouse);
+      background-color: var(--tilburg-color-white);
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    }
   }
 }
