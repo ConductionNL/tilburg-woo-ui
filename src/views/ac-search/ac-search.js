@@ -20,7 +20,7 @@ const AcSearch = ({ store }) => {
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 9000);
+    }, 9000000);
 
     return () => clearTimeout(timer); // Clear timeout if the component unmounts
   }, []);
@@ -29,7 +29,7 @@ const AcSearch = ({ store }) => {
     <>
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
-          <TilburgSearchbox search label={LABELS.SEARCH} />
+          <TilburgSearchbox searchpage label={LABELS.SEARCH} />
         </TilburgCard>
       </TilburgContainer>
       <TilburgContainer spacing='sm'>

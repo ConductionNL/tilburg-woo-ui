@@ -1,10 +1,26 @@
 .tilburg-search-filters {
+  --mobile-width: 350px;
+
   @include respond-max($screen-md) {
-    display: none;
+    position: fixed;
+    //display: none;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    //backdrop-filter: blur(5px);
+    overscroll-behavior-y: contain;
+    z-index: 10;
   }
 
   :is(h3, h4) {
     margin-block-end: var(--tilburg-space-block-beetle);
+  }
+
+  &__wrapper {
+    inline-size: min(90%, var(--mobile-width));
+    padding: var(--tilburg-space-block-beetle);
+    background-color: var(--tilburg-color-white);
+    box-shadow: var(--tilburg-box-shadow-lg);
+    overflow-y: scroll;
   }
 
   &__date {

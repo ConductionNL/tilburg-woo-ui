@@ -9,16 +9,16 @@ import {
 import { LABELS, VISUALS } from '@constants';
 
 export const TilburgSearchbox = ({
-  home,
-  search,
+  homepage,
+  searchpage,
   small,
   label,
   spacing,
   onSearchCallback,
 }) => {
   const _CLASSES = clsx('tilburg-searchbox', {
-    'tilburg-searchbox--home': home,
-    'tilburg-searchbox--search': search,
+    'tilburg-searchbox--home': homepage,
+    'tilburg-searchbox--search': searchpage,
     'tilburg-searchbox--small': small,
     'tilburg-searchbox--spacing': spacing,
   });
@@ -30,6 +30,10 @@ export const TilburgSearchbox = ({
   const submitCallback = (e) => {
     console.log(e);
     e.preventDefault();
+  };
+
+  const handleMobileFilters = () => {
+    console.log('handleMobileFilters');
   };
 
   return (
@@ -44,9 +48,9 @@ export const TilburgSearchbox = ({
         </PrimaryActionButton>
       </div>
 
-      {search && (
+      {searchpage && (
         <div class='tilburg-searchbox__actions'>
-          <SecondaryActionButton>
+          <SecondaryActionButton onClick={handleMobileFilters}>
             <VISUALS.FILTER />
             {LABELS.FILTER}
           </SecondaryActionButton>
