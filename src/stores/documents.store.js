@@ -18,7 +18,7 @@ export class DocumentsStore {
 
   @observable
   query = {
-    search: 'rookvrij',
+    search: '',
     'organisatie.oin': '00000001001172773000',
   };
 

@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useNavigate } from 'react-router-dom';
+
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import {
   TilburgButton,
@@ -12,10 +15,11 @@ import {
   StatusBadge,
 } from '@utrecht/component-library-react/dist/css-module';
 import { withStore } from '@stores';
-import { observer } from 'mobx-react-lite';
+
+const SEARCH_RESULTS = 7;
 
 const AcSearch = ({ store: { documents } }) => {
-  const SEARCH_RESULTS = 7;
+  const navigate = useNavigate();
 
   useEffect(() => {
     documents.fetchDocuments();
@@ -37,15 +41,20 @@ const AcSearch = ({ store: { documents } }) => {
     ));
   }, [documents.is_loading, documents.all_documents]);
 
+  const onSearchSubmit = (query) => {
+    documents.setSearchQuery(query);
+    navigate(`/zoeken/${query}`);
+  };
+
   return (
     <>
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox
+            page='search'
             mobileFiltersOpen={documents.mobileFiltersOpen}
             toggleMobileFilters={documents.toggleMobileFilters}
-            onSubmitCallback={documents.setSearchQuery}
-            page='search'
+            onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
           />
         </TilburgCard>
@@ -57,7 +66,7 @@ const AcSearch = ({ store: { documents } }) => {
             toggleMobileFilters={documents.toggleMobileFilters}
           />
           <TilburgFlex column grow spacing='xs'>
-            <Heading level={4}>Gekozen filters</Heading>
+            <Heading level={4}>{LABELS.CHOSEN_FILTERS}</Heading>
             <TilburgFlex spacing='sm' justifyContent='between' wrap>
               <TilburgFlex spacing='xs' wrap>
                 <TilburgButton onClick={() => console.log('cleared')}>

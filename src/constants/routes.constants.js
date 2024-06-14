@@ -11,7 +11,7 @@ import { AcHome, AcSearch } from '@views';
 
 export const PATHS = AcLockObject({
   HOME: '/',
-  SEARCH: '/zoeken',
+  SEARCH: '/zoeken/:query?',
 });
 
 export const ROUTES = {

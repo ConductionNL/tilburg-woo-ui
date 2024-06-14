@@ -3,9 +3,15 @@ import { VISUALS } from '@constants';
 import { TilburgCard, TilburgContainer, TilburgSection } from '@atoms';
 import { TilburgSearchbox } from '@components';
 import { TilburgLink } from '@molecules';
+import { useNavigate } from 'react-router';
 
 const TilburgHero = () => {
   const _CLASSES = clsx('tilburg-hero');
+  const navigate = useNavigate();
+
+  const submitSearch = (query) => {
+    navigate(`/zoeken/${query}`);
+  };
 
   return (
     <TilburgSection
@@ -14,7 +20,11 @@ const TilburgHero = () => {
     >
       <TilburgContainer>
         <TilburgCard blue padding='lg'>
-          <TilburgSearchbox page='home' label='Waar ben je naar op zoek?' />
+          <TilburgSearchbox
+            onSubmitCallback={submitSearch}
+            page='home'
+            label='Waar ben je naar op zoek?'
+          />
           <TilburgLink href='/zoeken'>
             Uitgebreid zoeken
             <VISUALS.ARROW_RIGHT />

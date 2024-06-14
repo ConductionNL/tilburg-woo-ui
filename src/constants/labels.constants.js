@@ -4,4 +4,6 @@ export const LABELS = {
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
+
+  CHOSEN_FILTERS: 'Gekozen filters',
 };
