@@ -8,7 +8,7 @@ export class DocumentsAPI {
   }
 
   search(params) {
-    return this.Client.get(`${ENDPOINTS.DOCUMENTS.SEARCH(params)}${params}`).then(
+    return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH(params)).then(
       (response) => response.data
     );
   }

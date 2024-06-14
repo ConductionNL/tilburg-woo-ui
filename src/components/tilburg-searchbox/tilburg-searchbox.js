@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import {
   Heading,
@@ -9,49 +9,57 @@ import {
 import { LABELS, VISUALS } from '@constants';
 
 export const TilburgSearchbox = ({
-  homepage,
-  searchpage,
+  page,
   small,
   label,
   spacing,
-  mobileFiltersOpen,
   toggleMobileFilters,
+  onSubmitCallback,
+  onChangeCallback,
 }) => {
-  const _CLASSES = clsx('tilburg-searchbox', {
-    'tilburg-searchbox--home': homepage,
-    'tilburg-searchbox--search': searchpage,
-    'tilburg-searchbox--small': small,
-    'tilburg-searchbox--spacing': spacing,
-  });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const renderHeading = useMemo(() => {
     return label && <Heading level={2}>{label}</Heading>;
   }, [label]);
 
   const submitCallback = (e) => {
-    console.log(e);
     e.preventDefault();
+
+    if (!(onSubmitCallback instanceof Function)) {
+      return;
+    }
+
+    onSubmitCallback(searchQuery);
+  };
+
+  const changeCallback = (e) => {
+    setSearchQuery(e.target.value);
+    // onChangeCallback(e.target.value);
   };
 
   const handleMobileFilters = () => {
-    console.log('handleMobileFilters');
     toggleMobileFilters();
-    console.log(mobileFiltersOpen);
   };
+
+  const _CLASSES = clsx('tilburg-searchbox', page && `tilburg-searchbox--${page}`, {
+    'tilburg-searchbox--small': small,
+    'tilburg-searchbox--spacing': spacing,
+  });
 
   return (
     <form className={_CLASSES} onSubmit={submitCallback}>
       {renderHeading}
 
       <div class='tilburg-searchbox__search'>
-        <Textbox placeholder={LABELS.ENTER_QUERY} />
+        <Textbox placeholder={LABELS.ENTER_QUERY} onChange={changeCallback} />
         <PrimaryActionButton type='submit'>
           <VISUALS.SEARCH />
           {LABELS.SEARCH}
         </PrimaryActionButton>
       </div>
 
-      {searchpage && (
+      {page === 'search' && (
         <div class='tilburg-searchbox__actions'>
           <SecondaryActionButton
             id='filters-toggle'

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import {
   TilburgButton,
@@ -11,18 +11,20 @@ import {
   Heading,
   StatusBadge,
 } from '@utrecht/component-library-react/dist/css-module';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
 
 const AcSearch = ({ store: { documents } }) => {
   const SEARCH_RESULTS = 7;
 
   useEffect(() => {
     documents.fetchDocuments();
-  }, []);
+  }, [documents.query.search]);
 
   const renderDocuments = useMemo(() => {
     if (documents.is_loading) {
       return Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
-        <TilburgSearchResult key={index} skeleton />
+        <TilburgSearchResult skeleton key={index} />
       ));
     }
 
@@ -30,20 +32,20 @@ const AcSearch = ({ store: { documents } }) => {
       return 'No results';
     }
 
-    return documents?.all_documents?.map((_, index) => (
-      <TilburgSearchResult key={index} />
+    return documents?.all_documents?.map((document, index) => (
+      <TilburgSearchResult {...document} key={index} />
     ));
   }, [documents.is_loading, documents.all_documents]);
 
   return (
     <>
-      {JSON.stringify(documents)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox
             mobileFiltersOpen={documents.mobileFiltersOpen}
             toggleMobileFilters={documents.toggleMobileFilters}
-            searchpage
+            onSubmitCallback={documents.setSearchQuery}
+            page='search'
             label={LABELS.SEARCH}
           />
         </TilburgCard>
@@ -86,4 +88,4 @@ const AcSearch = ({ store: { documents } }) => {
   );
 };
 
-export default AcSearch;
+export default withStore(observer(AcSearch));

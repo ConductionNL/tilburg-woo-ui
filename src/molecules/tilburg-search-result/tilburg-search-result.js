@@ -3,23 +3,21 @@ import { VISUALS } from '@constants';
 import { TilburgCard, TilburgFlex } from '@atoms';
 import { TilburgLink } from '@molecules';
 
-const TilburgSearchResult = ({ skeleton }) => {
+const TilburgSearchResult = ({ skeleton, title, content, date, category }) => {
   return (
     <TilburgCard searchResult padding='md' skeleton={skeleton}>
-      <Heading level={3}>Collegenota Vlaggen Dwaalgebied</Heading>
-      <Paragraph>
-        Besluit over vergunninen en gebruik van vlakken in het Dwaarlgebied.
-      </Paragraph>
+      <Heading level={3}>{title}</Heading>
+      <Paragraph>{content}</Paragraph>
       <TilburgFlex justifyContent='between' className='meta'>
         <TilburgFlex alignItems='center' spacing='sm'>
           <StatusBadge>Wonen</StatusBadge>
           <VISUALS.ELLIPSE />
-          <Paragraph small>12 maart 2024</Paragraph>
+          <Paragraph small>{date}</Paragraph>
           <VISUALS.ELLIPSE />
-          <Paragraph small>Raadstuk</Paragraph>
+          <Paragraph small>{category}</Paragraph>
         </TilburgFlex>
         <TilburgLink to='/'>
-          <span class='sr-only'>Lees meer over Collegenota Vlaggen Dwaalgebied</span>
+          <span class='sr-only'>Lees meer over {title}</span>
           <VISUALS.ARROW_RIGHT />
         </TilburgLink>
       </TilburgFlex>

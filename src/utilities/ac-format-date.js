@@ -30,9 +30,7 @@ export const AcFormatDate = (
   }
 
   // Format input
-  const output = from ? dayjs(input, from).format(to) : dayjs(input).format(to);
-
-  return output;
+  return from ? dayjs(input, from).format(to) : dayjs(input).format(to);
 };
 
 export const AcGetTimeDifference = (

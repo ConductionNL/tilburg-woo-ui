@@ -4,6 +4,9 @@ import { AcGetAccessToken, AcLockObject } from '@utils';
 // Get ENV variables
 const _api_ = process.env.API_URL;
 const _api_commonground_ = process.env.API_URL_COMMONGROUND;
+
+const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
+
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;
 const _provider_ = process.env.PROVIDER;
@@ -55,6 +58,7 @@ export default {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      Authorization: `${_api_commonground_token_}`,
     },
   },
   faqs: {
