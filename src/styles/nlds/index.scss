@@ -1,8 +1,11 @@
 // General tokens.
 @use "tokens";
+@use "tokens-custom";
 
 // Extends.
 @use "extends";
 
 // Overrides.
 @use "./overrides";
+
+@import '@amsterdam/design-system-css/dist/pagination/pagination.css';

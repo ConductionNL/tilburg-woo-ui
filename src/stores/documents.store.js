@@ -122,6 +122,7 @@ export class DocumentsStore {
       .then((response) => {
         this.items = response.results;
         this.pagination = response;
+        delete this.pagination.results;
       })
       .catch((e) => console.error(e))
       .finally(() => {
@@ -138,7 +139,7 @@ export class DocumentsStore {
         new URLSearchParams(AcBuildURLSearchParams(this.categoriesQuery)).toString()
       )
       .then((response) => {
-        this.categories = response.categorie.sort();
+        this.categories = response.categorie;
       })
       .catch((e) => console.error(e))
       .finally(() => {

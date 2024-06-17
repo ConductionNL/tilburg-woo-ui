@@ -1,0 +1,28 @@
+.ams-pagination {
+
+  &__list {
+    justify-content: start;
+
+    li {
+      display: flex;
+
+      &[aria-hidden="true"] {
+        padding-block: var(--tilburg-space-text-snail);
+      }
+
+      .ams-pagination__button {
+        align-self: center;
+        border-radius: var(--tilburg-border-radius-md);
+        padding-block: var(--tilburg-space-text-snail);
+
+        &--current {
+          background: var(--tilburg-color-blue-100);
+        }
+      }
+    }
+  }
+
+  .ams-icon {
+    fill: var(--tilburg-interaction-color);
+  }
+}

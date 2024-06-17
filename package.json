@@ -48,6 +48,8 @@
     "analyze:bundle": "source-map-explorer 'public_html/static/js/*.js'"
   },
   "dependencies": {
+    "@amsterdam/design-system-css": "^0.9.0",
+    "@amsterdam/design-system-react": "^0.9.0",
     "@emotion/react": "^11.11.1",
     "@loadable/component": "^5.15.3",
     "@lottiefiles/react-lottie-player": "^3.5.3",

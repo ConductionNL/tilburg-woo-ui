@@ -9,13 +9,14 @@ import { LABELS, VISUALS } from '@constants';
 import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { withStore } from '@stores';
 import { toJS } from 'mobx';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const SEARCH_RESULTS = 7;
 
 const AcSearch = ({ store: { documents } }) => {
   const navigate = useNavigate();
 
-  const { searchQuery } = documents;
+  const { searchQuery, pagination } = documents;
 
   useEffect(() => {
     documents.fetchDocuments();
@@ -59,6 +60,7 @@ const AcSearch = ({ store: { documents } }) => {
   return (
     <>
       {JSON.stringify(documents.searchQuery.categorie)}
+      {JSON.stringify(pagination)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox
@@ -79,9 +81,14 @@ const AcSearch = ({ store: { documents } }) => {
           <TilburgFlex column grow spacing='xs'>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}
-              <strong style='padding-block: 3rem; color: var(--tilburg-color-pink-300);'>
-                // PAGINATION PLACEHOLDER (TODO) //
-              </strong>
+              <Pagination
+                totalPages={30 || pagination?.pages}
+                // page={pagination?.page}
+                onPageChange={(page) => console.log(page)}
+                nextLabel=''
+                previousLabel=''
+                maxVisiblePages={7}
+              />
             </TilburgFlex>
           </TilburgFlex>
         </TilburgFlex>
