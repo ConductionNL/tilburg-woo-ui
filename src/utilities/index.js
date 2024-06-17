@@ -98,3 +98,4 @@ export { AcMutationObserver } from './ac-mutation-observer';
 export { AcCreateUser, User } from './ac-get-permissions';
 export { AcMatchSubString } from './ac-match-substring';
 export { AcSanitizeHtml } from './ac-sanitize-html';
+export { AcBuildURLSearchParams } from './ac-build-url-search-params';

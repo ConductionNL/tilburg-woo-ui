@@ -1,10 +1,12 @@
 import React from 'react';
 import FocusTrap from 'focus-trap-react';
 import clsx from 'clsx';
+import { observer } from 'mobx-react-lite';
 
 import { TilburgFlex } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
 import { TilburgModal } from '@components';
+import { withStore } from '@stores';
 import {
   TilburgButton,
   TilburgCheckbox,
@@ -18,8 +20,14 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const TilburgSearchFilters = ({ mobileFiltersOpen, toggleMobileFilters }) => {
+const TilburgSearchFilters = ({
+  store: { documents },
+  mobileFiltersOpen,
+  toggleMobileFilters,
+}) => {
   const modalRef = React.useRef(null);
+
+  const { all_categories, toggleSearchArrayValue, category_checked } = documents;
 
   const handleCloseFilters = () => {
     toggleMobileFilters();
@@ -122,10 +130,16 @@ const TilburgSearchFilters = ({ mobileFiltersOpen, toggleMobileFilters }) => {
             </TilburgButton>
             {renderModal}
           </TilburgFlex>
-          <TilburgCheckbox label='Convenant' />
-          <TilburgCheckbox label='Bestuursstuk' />
-          <TilburgCheckbox label='Woo-verzoek' />
-          <TilburgCheckbox label='Raadstuk' />
+          {all_categories.map((category, index) => (
+            <TilburgCheckbox
+              key={index}
+              label={category._id}
+              count={category.count}
+              value={category._id}
+              checked={category_checked(category._id)}
+              onChange={() => toggleSearchArrayValue('categorie', category._id)}
+            />
+          ))}
         </TilburgFlex>
         <TilburgFlex
           column
@@ -147,4 +161,4 @@ const TilburgSearchFilters = ({ mobileFiltersOpen, toggleMobileFilters }) => {
   );
 };
 
-export default TilburgSearchFilters;
+export default withStore(observer(TilburgSearchFilters));

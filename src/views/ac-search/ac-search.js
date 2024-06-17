@@ -3,28 +3,27 @@ import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
 
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
-import {
-  TilburgButton,
-  TilburgSearchFilters,
-  TilburgSearchResult,
-} from '@molecules';
+import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgSearchbox } from '@components';
 import { LABELS, VISUALS } from '@constants';
-import {
-  Heading,
-  StatusBadge,
-  Alert,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { withStore } from '@stores';
+import { toJS } from 'mobx';
 
 const SEARCH_RESULTS = 7;
 
 const AcSearch = ({ store: { documents } }) => {
   const navigate = useNavigate();
 
+  const { searchQuery } = documents;
+
   useEffect(() => {
     documents.fetchDocuments();
-  }, [documents.query.search]);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    documents.fetchCategories();
+  }, []);
 
   const renderDocuments = useMemo(() => {
     if (documents.is_loading) {
@@ -59,6 +58,7 @@ const AcSearch = ({ store: { documents } }) => {
 
   return (
     <>
+      {JSON.stringify(documents.searchQuery.categorie)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox

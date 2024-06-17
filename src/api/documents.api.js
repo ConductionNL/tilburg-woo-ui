@@ -12,6 +12,13 @@ export class DocumentsAPI {
       (response) => response.data
     );
   }
+  searchAggregations(params) {
+    return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH(params), {
+      headers: {
+        Accept: 'application/json+aggregations',
+      },
+    }).then((response) => response.data);
+  }
 }
 
 export default DocumentsAPI;
