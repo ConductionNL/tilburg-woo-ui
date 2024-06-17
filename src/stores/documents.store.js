@@ -37,9 +37,9 @@ export class DocumentsStore {
   @observable
   query = {
     search: '',
-    _limit: 1,
-    'order[id]': 'desc',
     categorie: [],
+    _limit: 1,
+    _page: 1,
   };
 
   @observable
@@ -87,6 +87,11 @@ export class DocumentsStore {
   @action
   setSearchQuery = (searchQuery) => {
     this.query.search = searchQuery;
+  };
+
+  @action
+  setPage = (page) => {
+    this.query._page = page;
   };
 
   @action
