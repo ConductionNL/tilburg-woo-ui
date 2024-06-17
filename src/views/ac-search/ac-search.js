@@ -10,8 +10,6 @@ import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module
 import { withStore } from '@stores';
 import { Pagination } from '@amsterdam/design-system-react';
 
-const SEARCH_RESULTS = 3;
-
 const AcSearch = ({ store: { documents } }) => {
   const navigate = useNavigate();
 
@@ -27,7 +25,7 @@ const AcSearch = ({ store: { documents } }) => {
 
   const renderDocuments = useMemo(() => {
     if (documents.is_loading) {
-      return Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
+      return Array.from({ length: pagination?.limit }).map((_, index) => (
         <TilburgSearchResult skeleton key={index} />
       ));
     }
@@ -78,15 +76,16 @@ const AcSearch = ({ store: { documents } }) => {
           <TilburgFlex column grow spacing='xs'>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}
-              <Pagination
-                totalPages={pagination?.pages}
-                page={pagination?.page}
-                onPageChange={setPage}
-                nextLabel=''
-                previousLabel=''
-                maxVisiblePages={7}
-              />
-              {JSON.stringify(pagination)}
+              {pagination && (
+                <Pagination
+                  totalPages={pagination?.pages}
+                  page={pagination?.page}
+                  onPageChange={setPage}
+                  nextLabel=''
+                  previousLabel=''
+                  maxVisiblePages={7}
+                />
+              )}
             </TilburgFlex>
           </TilburgFlex>
         </TilburgFlex>
