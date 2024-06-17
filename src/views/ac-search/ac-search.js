@@ -8,15 +8,12 @@ import { TilburgSearchbox } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { withStore } from '@stores';
-import { toJS } from 'mobx';
 import { Pagination } from '@amsterdam/design-system-react';
-
-const SEARCH_RESULTS = 7;
 
 const AcSearch = ({ store: { documents } }) => {
   const navigate = useNavigate();
 
-  const { searchQuery, pagination } = documents;
+  const { searchQuery, pagination, setPage } = documents;
 
   useEffect(() => {
     documents.fetchDocuments();
@@ -28,12 +25,12 @@ const AcSearch = ({ store: { documents } }) => {
 
   const renderDocuments = useMemo(() => {
     if (documents.is_loading) {
-      return Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
+      return Array.from({ length: pagination?.limit }).map((_, index) => (
         <TilburgSearchResult skeleton key={index} />
       ));
     }
 
-    if (documents.all_documents.length < 1) {
+    if (documents.all_documents?.length < 1) {
       return (
         <Alert type='info'>
           <TilburgFlex spacing='sm'>
@@ -59,8 +56,6 @@ const AcSearch = ({ store: { documents } }) => {
 
   return (
     <>
-      {JSON.stringify(documents.searchQuery.categorie)}
-      {JSON.stringify(pagination)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
           <TilburgSearchbox
@@ -81,14 +76,16 @@ const AcSearch = ({ store: { documents } }) => {
           <TilburgFlex column grow spacing='xs'>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}
-              <Pagination
-                totalPages={30 || pagination?.pages}
-                // page={pagination?.page}
-                onPageChange={(page) => console.log(page)}
-                nextLabel=''
-                previousLabel=''
-                maxVisiblePages={7}
-              />
+              {pagination && (
+                <Pagination
+                  totalPages={pagination?.pages}
+                  page={pagination?.page}
+                  onPageChange={setPage}
+                  nextLabel=''
+                  previousLabel=''
+                  maxVisiblePages={7}
+                />
+              )}
             </TilburgFlex>
           </TilburgFlex>
         </TilburgFlex>
