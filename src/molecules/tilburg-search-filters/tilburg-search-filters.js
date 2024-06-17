@@ -99,7 +99,11 @@ const TilburgSearchFilters = ({ mobileFiltersOpen, toggleMobileFilters }) => {
           </TilburgButton>
         </TilburgFlex>
         <TilburgFlex column spacing='sm' className='tilburg-search-filters__date'>
-          <TilburgSelect label='Publicatiedatum' />
+          <TilburgSelect
+            label='Publicatiedatum'
+            defaultOption='Selecteer jaartallen'
+            options={['2023', '2024']}
+          />
           <TilburgFormField label='Van (begindatum)' />
           <TilburgFormField label='Tot (einddatum)' />
         </TilburgFlex>

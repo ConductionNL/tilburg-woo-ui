@@ -47,4 +47,30 @@
       margin-top: var(--tilburg-space-block-dog);
     }
   }
+
+  &--margin {
+    &-xs {
+      margin-block: var(--tilburg-space-block-ant);
+    }
+
+    &-sm {
+      margin-block: var(--tilburg-space-block-mouse);
+    }
+
+    &-md {
+      margin-block: var(--tilburg-space-block-rabbit);
+    }
+
+    &-lg {
+      margin-block: var(--tilburg-space-block-cat);
+    }
+
+    &-xl {
+      margin-block: var(--tilburg-space-block-dog);
+    }
+
+    &-xxl {
+      margin-block: var(--tilburg-space-block-pig);
+    }
+  }
 }

@@ -30,6 +30,9 @@ const FILTER = loadable(() =>
   import('-!svg-react-loader!@assets/images/filter.svg')
 );
 const INFO = loadable(() => import('-!svg-react-loader!@assets/images/info.svg'));
+const INFO_BLUE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/info-blue.svg')
+);
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
 const LIST_BLUE = loadable(() =>
   import('-!svg-react-loader!@assets/images/list-blue.svg')
@@ -55,6 +58,7 @@ export const VISUALS = {
   EXTERNAL_LINK_PINK,
   FILTER,
   INFO,
+  INFO_BLUE,
   LIST,
   LIST_BLUE,
   LOGO,

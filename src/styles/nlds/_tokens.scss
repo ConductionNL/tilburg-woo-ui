@@ -292,6 +292,7 @@
   --utrecht-skip-link-padding-inline-end: var(--tilburg-space-inline-mouse);
   --utrecht-skip-link-padding-block-start: var(--tilburg-space-block-snail);
   --utrecht-skip-link-padding-block-end: var(--tilburg-space-block-snail);
+  --utrecht-select-background-image: url("data:image/svg+xml,%3Csvg width='14' height='8' viewBox='0 0 14 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M0.292893 0.292893C0.683417 -0.0976311 1.31658 -0.0976311 1.70711 0.292893L7 5.58579L12.2929 0.292893C12.6834 -0.0976311 13.3166 -0.0976311 13.7071 0.292893C14.0976 0.683417 14.0976 1.31658 13.7071 1.70711L7.70711 7.70711C7.31658 8.09763 6.68342 8.09763 6.29289 7.70711L0.292893 1.70711C-0.0976311 1.31658 -0.0976311 0.683417 0.292893 0.292893Z' fill='%23001737'/%3E%3C/svg%3E");
   --utrecht-select-border-radius: var(--tilburg-border-radius-md);
   --utrecht-select-padding-inline-start: var(--tilburg-space-inline-snail);
   --utrecht-select-padding-inline-end: var(--tilburg-space-inline-snail);
@@ -398,6 +399,12 @@
   --utrecht-alert-column-gap: var(--tilburg-space-column-snail);
   --utrecht-alert-heading-font-size: var(--tilburg-typography-font-size-xl);
   --utrecht-alert-heading-line-height: var(--tilburg-typography-line-height-sm);
+  --utrecht-alert-icon-info-color: var(--tilburg-color-blue-500);
+  --utrecht-alert-info-background-color: var(--tilburg-color-blue-100);
+  --utrecht-alert-info-border-color: var(--tilburg-color-blue-300);
+  --utrecht-alert-info-border-width: var(--tilburg-border-width-md);
+  --utrecht-alert-info-color: var(--tilburg-color-blue-500);
+  --utrecht-alert-border-radius: var(--tilburg-border-radius-md);
   --utrecht-accordion-button-border-width: var(--tilburg-border-width-sm);
   --utrecht-accordion-button-active-background-color: var(--tilburg-color-gray-200);
   --utrecht-accordion-button-background-color: var(--tilburg-color-gray-50);
@@ -445,7 +452,7 @@
   --tilburg-line-border-width: var(--tilburg-border-width-sm);
   --tilburg-line-border-color: var(--tilburg-color-gray-200);
   --tilburg-interaction-hover-color: var(--tilburg-color-pink-400);
-  --tilburg-interaction-active-color: var(--tilburg-color-pink-200);
+  --tilburg-interaction-active-color: var(--tilburg-color-pink-300);
   --tilburg-interaction-color: var(--tilburg-color-pink-300);
   --tilburg-icon-toptask-size: var(--tilburg-size-icon-4xl);
   --tilburg-icon-functional-size: var(--tilburg-size-icon-md);
@@ -481,7 +488,7 @@
   --tilburg-focus-outline-width: var(--tilburg-border-width-md);
   --tilburg-focus-inverse-outline-color: var(--tilburg-color-white);
   --tilburg-focus-outline-color: var(--tilburg-color-extra-purple);
-  --tilburg-focus-color: var(--tilburg-color-black);
+  --tilburg-focus-color: var(--tilburg-color-pink-300);
   --tilburg-focus-background-color: var(--tilburg-color-pink-200);
   --tilburg-feedback-warning-color: var(--tilburg-color-orange-300);
   --tilburg-feedback-warning-border-color: var(--tilburg-color-orange-300);
@@ -641,7 +648,7 @@
   --utrecht-link-visited-color: var(--tilburg-interaction-color);
   --utrecht-link-hover-color: var(--tilburg-interaction-hover-color);
   --utrecht-link-focus-color: var(--tilburg-focus-color);
-  --utrecht-link-focus-background-color: var(--tilburg-focus-background-color);
+  --utrecht-link-focus-background-color: transparent;
   --utrecht-link-active-color: var(--tilburg-interaction-active-color);
   --utrecht-link-text-decoration-color: var(--tilburg-interaction-color);
   --utrecht-link-color: var(--tilburg-interaction-color);

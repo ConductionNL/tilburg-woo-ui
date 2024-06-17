@@ -103,6 +103,7 @@
       > p,
       > div {
         position: relative;
+        min-block-size: 2.5rem;
         overflow: hidden;
 
         &:before,
