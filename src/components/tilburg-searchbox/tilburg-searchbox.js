@@ -7,6 +7,8 @@ import {
   SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
+import { observer } from 'mobx-react-lite';
+import { withStore } from '@stores';
 
 export const TilburgSearchbox = ({
   page,
@@ -15,9 +17,11 @@ export const TilburgSearchbox = ({
   spacing,
   toggleMobileFilters,
   onSubmitCallback,
-  onChangeCallback,
+  store: { documents },
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { mobileFiltersOpen } = documents;
 
   const renderHeading = useMemo(() => {
     return label && <Heading level={2}>{label}</Heading>;
@@ -48,23 +52,25 @@ export const TilburgSearchbox = ({
   });
 
   return (
-    <form className={_CLASSES} onSubmit={submitCallback}>
-      {renderHeading}
+    <>
+      <form className={_CLASSES} onSubmit={submitCallback}>
+        {renderHeading}
 
-      <div class='tilburg-searchbox__search'>
-        <Textbox placeholder={LABELS.ENTER_QUERY} onChange={changeCallback} />
-        <PrimaryActionButton type='submit'>
-          <VISUALS.SEARCH />
-          {LABELS.SEARCH}
-        </PrimaryActionButton>
-      </div>
+        <div className='tilburg-searchbox__search'>
+          <Textbox placeholder={LABELS.ENTER_QUERY} onChange={changeCallback} />
+          <PrimaryActionButton type='submit'>
+            <VISUALS.SEARCH />
+            {LABELS.SEARCH}
+          </PrimaryActionButton>
+        </div>
+      </form>
 
       {page === 'search' && (
-        <div class='tilburg-searchbox__actions'>
+        <div className='tilburg-searchbox__actions'>
           <SecondaryActionButton
             id='filters-toggle'
             onClick={handleMobileFilters}
-            aria-expanded='false'
+            aria-expanded={mobileFiltersOpen}
             aria-haspopup='true'
             aria-controls='filters'
           >
@@ -73,8 +79,8 @@ export const TilburgSearchbox = ({
           </SecondaryActionButton>
         </div>
       )}
-    </form>
+    </>
   );
 };
 
-export default TilburgSearchbox;
+export default withStore(observer(TilburgSearchbox));

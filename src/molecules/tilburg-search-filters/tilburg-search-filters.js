@@ -1,5 +1,5 @@
 import React from 'react';
-import FocusTrap from 'focus-trap-react';
+import FocusLock from 'react-focus-lock';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 
@@ -26,12 +26,50 @@ const TilburgSearchFilters = ({
   toggleMobileFilters,
 }) => {
   const modalRef = React.useRef(null);
+  const overlayRef = React.useRef(null);
+  const wrapperRef = React.useRef(null);
 
   const { all_categories, toggleSearchArrayValue, category_checked } = documents;
 
   const handleCloseFilters = () => {
     toggleMobileFilters();
   };
+
+  React.useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        handleCloseFilters();
+      }
+    };
+
+    console.log(wrapperRef.current);
+
+    if (mobileFiltersOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileFiltersOpen]);
+
+  React.useEffect(() => {
+    const handleBackdropClick = (event) => {
+      if (event.target === overlayRef.current) {
+        handleCloseFilters();
+      } else {
+        console.log(event.target, overlayRef.current);
+      }
+    };
+
+    if (mobileFiltersOpen) {
+      document.addEventListener('click', handleBackdropClick);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleBackdropClick);
+    };
+  }, [mobileFiltersOpen]);
 
   const handleOpenModal = () => {
     if (modalRef.current) {
@@ -87,77 +125,90 @@ const TilburgSearchFilters = ({
   });
 
   return (
-    <TilburgFlex
-      id='filters'
-      column
-      spacing='sm'
-      className={_CLASSES}
-      aria-labbeledby='filters-toggle'
-    >
-      <TilburgFlex column spacing='sm' className='tilburg-search-filters__wrapper'>
+    <FocusLock disabled={!mobileFiltersOpen} returnFocus={true}>
+      <TilburgFlex
+        id='filters'
+        column
+        spacing='sm'
+        className={_CLASSES}
+        aria-labbeledby='filters-toggle'
+        ref={overlayRef}
+      >
         <TilburgFlex
-          justifyContent='between'
-          alignItems='center'
-          className='tilburg-search-filters__header'
+          column
+          spacing='sm'
+          className='tilburg-search-filters__wrapper'
+          ref={wrapperRef}
         >
-          <Heading level={2}>Filters</Heading>
-          <TilburgButton animate onClick={handleCloseFilters}>
-            <VISUALS.CLOSE />
-            {LABELS.CLOSE}
+          <TilburgFlex
+            justifyContent='between'
+            alignItems='center'
+            className='tilburg-search-filters__header'
+          >
+            <Heading level={2}>Filters</Heading>
+            <TilburgButton animate onClick={handleCloseFilters}>
+              <VISUALS.CLOSE />
+              {LABELS.CLOSE}
+            </TilburgButton>
+          </TilburgFlex>
+          <TilburgFlex column spacing='sm' className='tilburg-search-filters__date'>
+            <TilburgSelect
+              label='Publicatiedatum'
+              defaultOption='Selecteer jaartallen'
+              options={['2023', '2024']}
+            />
+            <TilburgFormField label='Van (begindatum)' />
+            <TilburgFormField label='Tot (einddatum)' />
+          </TilburgFlex>
+          <TilburgFlex
+            column
+            spacing='xs'
+            className='tilburg-search-filters__category'
+          >
+            <TilburgFlex justifyContent={'between'} alignItems={'center'}>
+              <Heading level={4}>{LABELS.CATEGORIES}</Heading>
+              <TilburgButton
+                onClick={handleOpenModal}
+                sr='Bekijk de verschillende categorieën'
+              >
+                <VISUALS.QUESTION_MARK />
+              </TilburgButton>
+              {renderModal}
+            </TilburgFlex>
+            {all_categories.map((category, index) => (
+              <TilburgCheckbox
+                key={index}
+                label={category._id}
+                count={category.count}
+                value={category._id}
+                checked={category_checked(category._id)}
+                onChange={() => toggleSearchArrayValue('categorie', category._id)}
+              />
+            ))}
+          </TilburgFlex>
+          <TilburgFlex
+            column
+            spacing='xs'
+            className='tilburg-search-filters__subjects'
+          >
+            <Heading level={4}>Onderwerpen</Heading>
+            <TilburgCheckbox label='Campus Wijkevoort' />
+            <TilburgCheckbox label='Evenementen in Tilburg' />
+            <TilburgCheckbox label='Duurzaamheid' />
+          </TilburgFlex>
+        </TilburgFlex>
+        <div
+          style='position: absolute; background: red; inset: 0; z-index: 1;'
+          aria-hidden='true'
+          onClick={handleCloseFilters}
+        ></div>
+        <TilburgFlex className='tilburg-search-filters__button'>
+          <TilburgButton style='button' onClick={handleCloseFilters}>
+            Bekijk 5.724 resultaten
           </TilburgButton>
         </TilburgFlex>
-        <TilburgFlex column spacing='sm' className='tilburg-search-filters__date'>
-          <TilburgSelect
-            label='Publicatiedatum'
-            defaultOption='Selecteer jaartallen'
-            options={['2023', '2024']}
-          />
-          <TilburgFormField label='Van (begindatum)' />
-          <TilburgFormField label='Tot (einddatum)' />
-        </TilburgFlex>
-        <TilburgFlex
-          column
-          spacing='xs'
-          className='tilburg-search-filters__category'
-        >
-          <TilburgFlex justifyContent={'between'} alignItems={'center'}>
-            <Heading level={4}>{LABELS.CATEGORIES}</Heading>
-            <TilburgButton
-              onClick={handleOpenModal}
-              sr='Bekijk de verschillende categorieën'
-            >
-              <VISUALS.QUESTION_MARK />
-            </TilburgButton>
-            {renderModal}
-          </TilburgFlex>
-          {all_categories.map((category, index) => (
-            <TilburgCheckbox
-              key={index}
-              label={category._id}
-              count={category.count}
-              value={category._id}
-              checked={category_checked(category._id)}
-              onChange={() => toggleSearchArrayValue('categorie', category._id)}
-            />
-          ))}
-        </TilburgFlex>
-        <TilburgFlex
-          column
-          spacing='xs'
-          className='tilburg-search-filters__subjects'
-        >
-          <Heading level={4}>Onderwerpen</Heading>
-          <TilburgCheckbox label='Campus Wijkevoort' />
-          <TilburgCheckbox label='Evenementen in Tilburg' />
-          <TilburgCheckbox label='Duurzaamheid' />
-        </TilburgFlex>
       </TilburgFlex>
-      <TilburgFlex className='tilburg-search-filters__button'>
-        <TilburgButton style='button' onClick={handleCloseFilters}>
-          Bekijk 5.724 resultaten
-        </TilburgButton>
-      </TilburgFlex>
-    </TilburgFlex>
+    </FocusLock>
   );
 };
 

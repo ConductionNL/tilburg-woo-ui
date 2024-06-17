@@ -78,6 +78,10 @@
 
     @include respond-max($screen-md) {
       display: block;
+
+      button {
+        inline-size: 100%;
+      }
     }
   }
 }

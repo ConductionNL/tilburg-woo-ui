@@ -73,7 +73,7 @@ const AcSearch = ({ store: { documents } }) => {
         </TilburgCard>
       </TilburgContainer>
       <TilburgContainer spacing='sm' margin='xl'>
-        <TilburgFlex spacing='xl'>
+        <TilburgFlex spacing='xl' className='tilburg-search-results'>
           <TilburgSearchFilters
             mobileFiltersOpen={documents.mobileFiltersOpen}
             toggleMobileFilters={documents.toggleMobileFilters}
