@@ -6,9 +6,12 @@ const TilburgCardCategory = loadable(() =>
 const TilburgCardIntro = loadable(() =>
   import('@molecules/tilburg-card-intro/tilburg-card-intro')
 );
-const TilburgCta = loadable(() => import('@molecules/tilburg-cta/tilburg-cta'));
 const TilburgButton = loadable(() =>
   import('@molecules/tilburg-button/tilburg-button')
+);
+const TilburgCta = loadable(() => import('@molecules/tilburg-cta/tilburg-cta'));
+const TilburgFormField = loadable(() =>
+  import('@molecules/tilburg-form-field/tilburg-form-field')
 );
 const TilburgLink = loadable(() => import('@molecules/tilburg-link/tilburg-link'));
 const TilburgSearchResult = loadable(() =>
@@ -23,6 +26,11 @@ const TilburgSearchFilters = loadable(() =>
 const TilburgCheckbox = loadable(() =>
   import('@molecules/tilburg-checkbox/tilburg-checkbox')
 );
+
+const TilburgSelect = loadable(() =>
+  import('@molecules/tilburg-select/tilburg-select')
+);
+
 export {
   TilburgBreadcrumbs,
   TilburgCardCategory,
@@ -33,4 +41,6 @@ export {
   TilburgSearchResult,
   TilburgSearchFilters,
   TilburgCheckbox,
+  TilburgSelect,
+  TilburgFormField,
 };

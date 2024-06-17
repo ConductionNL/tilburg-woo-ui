@@ -18,7 +18,9 @@ const TilburgBreadcrumbs = ({ store: { pages } }) => {
   const getCurrentPageTitle = useMemo(
     () =>
       get_single.name ||
-      Object.values(ROUTES).find((route) => route.path === location.pathname)?.label,
+      Object.values(ROUTES).find((route) => route.path === location.pathname)
+        ?.label ||
+      'Zoeken',
     [is_loading]
   );
 

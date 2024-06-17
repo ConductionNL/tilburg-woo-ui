@@ -6,6 +6,7 @@ const TilburgButton = ({
   animate,
   children,
   className,
+  sr,
   ...restProps
 }) => {
   const _CLASSES = clsx(
@@ -19,6 +20,8 @@ const TilburgButton = ({
   return (
     <button className={_CLASSES} {...restProps}>
       {children}
+
+      {sr && <span className='sr-only'>{sr}</span>}
     </button>
   );
 };
