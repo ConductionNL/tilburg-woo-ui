@@ -197,11 +197,13 @@ const TilburgSearchFilters = ({
             <TilburgCheckbox label='Duurzaamheid' />
           </TilburgFlex>
         </TilburgFlex>
-        {/*<div*/}
-        {/*  style='position: absolute; background: red; inset: 0; z-index: 1;'*/}
-        {/*  aria-hidden='true'*/}
-        {/*  onClick={handleCloseFilters}*/}
-        {/*></div>*/}
+        {mobileFiltersOpen && (
+          <div
+            style='position: absolute; inset: 0; z-index: 1;'
+            aria-hidden='true'
+            onClick={handleCloseFilters}
+          />
+        )}
         <TilburgFlex className='tilburg-search-filters__button'>
           <TilburgButton style='button' onClick={handleCloseFilters}>
             Bekijk 5.724 resultaten

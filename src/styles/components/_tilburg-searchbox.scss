@@ -79,8 +79,13 @@
     @include respond-max($screen-md) {
       display: block;
 
+      // custom overrides in favor of design rather then NLDS
       button {
         inline-size: 100%;
+        max-inline-size: 100%;
+        color: var(--tilburg-color-blue-400);
+        background-color: transparent;
+        border-color: var(--tilburg-color-blue-400);
       }
     }
   }
