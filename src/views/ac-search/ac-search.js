@@ -10,6 +10,7 @@ import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module
 import { withStore } from '@stores';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Paragraph } from '@utrecht/component-library-react';
+import { AcBuildURLSearchParams } from '@utils';
 
 const AcSearch = ({ store: { documents } }) => {
   const navigate = useNavigate();
@@ -43,11 +44,23 @@ const AcSearch = ({ store: { documents } }) => {
       return;
     }
     fetchDocuments();
+    navigate(getNavigateUrl({}));
   }, [searchQuery]);
+
+  const getNavigateUrl = ({ query, page }) => {
+    const params = AcBuildURLSearchParams({
+      page: page || searchQuery._page,
+      categorie: searchQuery.categorie,
+    });
+    return `/zoeken/${query !== undefined ? query : searchQuery.search}?${params}`;
+  };
 
   const onPaginationChange = (page) => {
     setPage(page);
-    navigate(`/zoeken/${searchQuery.search}?page=${page}`);
+  };
+
+  const onSearchSubmit = (query) => {
+    setSearchQuery(query);
   };
 
   const renderDocuments = useMemo(() => {
@@ -77,11 +90,6 @@ const AcSearch = ({ store: { documents } }) => {
       <TilburgSearchResult {...document} key={index} />
     ));
   }, [is_loading, all_documents]);
-
-  const onSearchSubmit = (query) => {
-    setSearchQuery(query);
-    navigate(`/zoeken/${query}?page=${searchQuery._page}`);
-  };
 
   return (
     <>

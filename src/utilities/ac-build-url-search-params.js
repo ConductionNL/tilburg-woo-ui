@@ -11,7 +11,7 @@ export const AcBuildURLSearchParams = (data) => {
       return;
     }
 
-    params.append(key, value.toString());
+    params.append(key, window.encodeURI(value.toString()));
   });
 
   return params.toString();

@@ -42,8 +42,6 @@ const TilburgSearchFilters = ({
       }
     };
 
-    console.log(wrapperRef.current);
-
     if (mobileFiltersOpen) {
       document.addEventListener('keydown', handleKeyDown);
     }
@@ -57,8 +55,6 @@ const TilburgSearchFilters = ({
     const handleBackdropClick = (event) => {
       if (event.target === overlayRef.current) {
         handleCloseFilters();
-      } else {
-        console.log(event.target, overlayRef.current);
       }
     };
 
@@ -175,7 +171,7 @@ const TilburgSearchFilters = ({
               </TilburgButton>
               {renderModal}
             </TilburgFlex>
-            {all_categories.map((category, index) => (
+            {all_categories?.map((category, index) => (
               <TilburgCheckbox
                 key={index}
                 label={category._id}

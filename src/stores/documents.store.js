@@ -116,8 +116,6 @@ export class DocumentsStore {
       this.query._page = 1;
     }
 
-    console.log(this.query);
-
     this.query[key] = [...this.query[key], value];
   };
 
