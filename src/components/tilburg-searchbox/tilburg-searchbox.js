@@ -15,15 +15,13 @@ export const TilburgSearchbox = ({
   small,
   label,
   spacing,
-  toggleMobileFilters,
   onSubmitCallback,
-  onChangeCallback,
   defaultValue,
   store: { documents },
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { mobileFiltersOpen } = documents;
+  const { mobileFiltersOpen, toggleMobileFilters } = documents;
 
   const renderHeading = useMemo(() => {
     return label && <Heading level={2}>{label}</Heading>;

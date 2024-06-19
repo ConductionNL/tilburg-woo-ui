@@ -13,9 +13,9 @@ import { Paragraph } from '@utrecht/component-library-react';
 import { AcBuildURLSearchParams } from '@utils';
 
 const AcSearch = ({ store: { documents } }) => {
-  const navigate = useNavigate();
   const { query } = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const {
     searchQuery,
@@ -27,12 +27,14 @@ const AcSearch = ({ store: { documents } }) => {
     fetchDocuments,
     is_loading,
     all_documents,
-    mobileFiltersOpen,
-    toggleMobileFilters,
   } = documents;
 
   useEffect(() => {
-    updateQuery({ _page: searchParams.get('page') || 1, search: query || '' });
+    updateQuery({
+      _page: searchParams.get('page') || 1,
+      search: query || '',
+      categorie: searchParams.getAll('categorie[]'),
+    });
   }, []);
 
   useEffect(() => {
@@ -44,15 +46,15 @@ const AcSearch = ({ store: { documents } }) => {
       return;
     }
     fetchDocuments();
-    navigate(getNavigateUrl({}));
+    navigate(getNavigateUrl(), { replace: true });
   }, [searchQuery]);
 
-  const getNavigateUrl = ({ query, page }) => {
+  const getNavigateUrl = () => {
     const params = AcBuildURLSearchParams({
-      page: page || searchQuery._page,
+      page: searchQuery._page,
       categorie: searchQuery.categorie,
     });
-    return `/zoeken/${query !== undefined ? query : searchQuery.search}?${params}`;
+    return `/zoeken/${searchQuery.search}?${params}`;
   };
 
   const onPaginationChange = (page) => {
@@ -97,8 +99,6 @@ const AcSearch = ({ store: { documents } }) => {
         <TilburgCard blue padding='md'>
           <TilburgSearchbox
             page='search'
-            mobileFiltersOpen={mobileFiltersOpen}
-            toggleMobileFilters={toggleMobileFilters}
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
             defaultValue={searchQuery.search}
@@ -107,10 +107,7 @@ const AcSearch = ({ store: { documents } }) => {
       </TilburgContainer>
       <TilburgContainer spacing='sm' margin='xl'>
         <TilburgFlex spacing='xl' className='tilburg-search-results'>
-          <TilburgSearchFilters
-            mobileFiltersOpen={mobileFiltersOpen}
-            toggleMobileFilters={toggleMobileFilters}
-          />
+          <TilburgSearchFilters />
           <TilburgFlex column grow spacing='xs'>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}

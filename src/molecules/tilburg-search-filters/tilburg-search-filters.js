@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import FocusLock from 'react-focus-lock';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
@@ -20,16 +20,18 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const TilburgSearchFilters = ({
-  store: { documents },
-  mobileFiltersOpen,
-  toggleMobileFilters,
-}) => {
+const TilburgSearchFilters = ({ store: { documents } }) => {
   const modalRef = React.useRef(null);
   const overlayRef = React.useRef(null);
   const wrapperRef = React.useRef(null);
 
-  const { all_categories, toggleSearchArrayValue, category_checked } = documents;
+  const {
+    all_categories,
+    toggleSearchArrayValue,
+    category_checked,
+    toggleMobileFilters,
+    mobileFiltersOpen,
+  } = documents;
 
   const handleCloseFilters = () => {
     toggleMobileFilters();
@@ -84,7 +86,7 @@ const TilburgSearchFilters = ({
       ref={modalRef}
       id='categories-modal'
       title='Categorieën'
-      onClose={handleCloseModal}
+      onClose={toggleMobileFilters}
     >
       <TilburgFlex column spacing='sm'>
         <Paragraph>
