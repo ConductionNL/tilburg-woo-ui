@@ -36,9 +36,8 @@ export class DocumentsStore {
 
   @observable
   query = {
-    search: '',
     categorie: [],
-    _limit: 1,
+    _limit: 2,
     _page: 1,
   };
 
@@ -85,6 +84,11 @@ export class DocumentsStore {
   }
 
   @action
+  updateQuery = (query) => {
+    this.query = { ...this.query, ...query };
+  };
+
+  @action
   setSearchQuery = (searchQuery) => {
     this.query.search = searchQuery;
   };
@@ -107,6 +111,12 @@ export class DocumentsStore {
       this.query[key] = this.query[key].filter((cat) => cat !== value);
       return;
     }
+
+    if (key === 'categorie') {
+      this.query._page = 1;
+    }
+
+    console.log(this.query);
 
     this.query[key] = [...this.query[key], value];
   };

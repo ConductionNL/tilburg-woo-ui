@@ -17,6 +17,8 @@ export const TilburgSearchbox = ({
   spacing,
   toggleMobileFilters,
   onSubmitCallback,
+  onChangeCallback,
+  defaultValue,
   store: { documents },
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +59,11 @@ export const TilburgSearchbox = ({
         {renderHeading}
 
         <div className='tilburg-searchbox__search'>
-          <Textbox placeholder={LABELS.ENTER_QUERY} onChange={changeCallback} />
+          <Textbox
+            placeholder={LABELS.ENTER_QUERY}
+            onChange={changeCallback}
+            defaultValue={defaultValue}
+          />
           <PrimaryActionButton type='submit'>
             <VISUALS.SEARCH />
             {LABELS.SEARCH}
