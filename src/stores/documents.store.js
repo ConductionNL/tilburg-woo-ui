@@ -39,6 +39,7 @@ export class DocumentsStore {
     categorie: [],
     _limit: 2,
     _page: 1,
+    // 'date[after]': '2024-01-01',
   };
 
   @observable
