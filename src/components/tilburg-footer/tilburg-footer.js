@@ -19,7 +19,7 @@ const TilburgFooter = () => {
               <a href='/'>Toegankelijkheid</a>
             </li>
             <li>
-              <a href='/'>Uitgebreid zoeken</a>
+              <a href='/zoeken'>Uitgebreid zoeken</a>
             </li>
             <li>
               <a href='/'>Onderwerpen</a>

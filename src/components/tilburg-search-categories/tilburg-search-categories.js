@@ -1,22 +1,21 @@
 import React, { useRef } from 'react';
+import { observer } from 'mobx-react-lite';
 
+import { TilburgButton, TilburgCheckbox, TilburgLink } from '@molecules';
+import { LABELS, VISUALS } from '@constants';
+import { TilburgModal } from '@components';
 import { TilburgFlex } from '@atoms';
+import { withStore } from '@stores';
+
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { LABELS, VISUALS } from '@constants';
-import { TilburgButton, TilburgCheckbox, TilburgLink } from '@molecules';
-import { TilburgModal } from '@components';
-import { observer } from 'mobx-react-lite';
-import { withStore } from '@stores';
 
 const TilburgSearchCategories = ({ store: { documents } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => {
-    if (modalRef.current) {
-      modalRef.current.showModal();
-    }
+    modalRef?.current?.showModal();
   };
 
   const { all_categories, category_checked, toggleSearchArrayValue } = documents;

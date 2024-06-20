@@ -1,25 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+
+import { observer } from 'mobx-react-lite';
 import FocusLock from 'react-focus-lock';
 import clsx from 'clsx';
-import { observer } from 'mobx-react-lite';
 
-import { TilburgFlex } from '@atoms';
+import { TilburgSearchCategories } from '@components';
 import { LABELS, VISUALS } from '@constants';
-import { TilburgModal, TilburgSearchCategories } from '@components';
+import { TilburgFlex } from '@atoms';
 import { withStore } from '@stores';
-import {
-  TilburgButton,
-  TilburgCheckbox,
-  TilburgLink,
-  TilburgFormField,
-  TilburgSelect,
-} from '@molecules';
+import { TilburgButton, TilburgFormField, TilburgSelect } from '@molecules';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 const TilburgSearchFilters = ({ store: { documents } }) => {
-  const overlayRef = React.useRef(null);
-  const wrapperRef = React.useRef(null);
+  const overlayRef = useRef(null);
+  const wrapperRef = useRef(null);
 
   const { all_categories, toggleMobileFilters, mobileFiltersOpen } = documents;
 
@@ -27,7 +22,7 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
     toggleMobileFilters();
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key !== 'Escape') {
         return;
@@ -45,7 +40,7 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
     };
   }, [mobileFiltersOpen]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleBackdropClick = (event) => {
       if (event.target === overlayRef.current) {
         handleCloseFilters();
@@ -110,16 +105,16 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
               <TilburgSearchCategories categories={all_categories} />
             </TilburgFlex>
           )}
-          <TilburgFlex
-            column
-            spacing='xs'
-            className='tilburg-search-filters__subjects'
-          >
-            <Heading level={4}>Onderwerpen</Heading>
-            <TilburgCheckbox label='Campus Wijkevoort' />
-            <TilburgCheckbox label='Evenementen in Tilburg' />
-            <TilburgCheckbox label='Duurzaamheid' />
-          </TilburgFlex>
+          {/*<TilburgFlex*/}
+          {/*  column*/}
+          {/*  spacing='xs'*/}
+          {/*  className='tilburg-search-filters__subjects'*/}
+          {/*>*/}
+          {/*  <Heading level={4}>Onderwerpen</Heading>*/}
+          {/*  <TilburgCheckbox label='Campus Wijkevoort' />*/}
+          {/*  <TilburgCheckbox label='Evenementen in Tilburg' />*/}
+          {/*  <TilburgCheckbox label='Duurzaamheid' />*/}
+          {/*</TilburgFlex>*/}
         </TilburgFlex>
         {mobileFiltersOpen && (
           <div

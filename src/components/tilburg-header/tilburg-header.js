@@ -14,7 +14,9 @@ const TilburgHeader = ({ store }) => {
 
   return (
     <header className='tilburg-header'>
-      <SkipLink href='#main'>Direct naar de inhoud</SkipLink>
+      <SkipLink id='skip-link' href='#main'>
+        Direct naar de inhoud
+      </SkipLink>
       <div className='tilburg-header__navigation-main'>
         <div className='tilburg-header__logo'>
           {isHomePage ? (
