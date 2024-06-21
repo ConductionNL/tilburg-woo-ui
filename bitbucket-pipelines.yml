@@ -85,7 +85,7 @@ pipelines:
           script:
             - deployer.phar deploy staging
   custom: # Pipelines that are triggered manually
-    production:
+    azure-test:
       - step:
           name: Install
           caches:
@@ -98,21 +98,19 @@ pipelines:
           artifacts:
             - node_modules/**
       - step:
-          name: Build
+          name: Build and push tot container registry
           deployment: production
           script:
             - unset CI
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
             - yarn set version 4.1.1
             - yarn build:web
-          artifacts:
-            - public_html/**
-      - step:
-          name: Deploy to production
-          image: acatonl/php-deployer-pipeline:8.1
-          script:
-            - deployer.phar deploy production
-
+            - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+            - COMMIT_HASH=$BITBUCKET_COMMIT
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-test:$COMMIT_HASH .
+            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-test:$COMMIT_HASH
+          services:
+              - docker
 definitions:
   caches:
     nodecustom: ./node_modules
