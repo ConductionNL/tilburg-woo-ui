@@ -6,11 +6,15 @@ import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgSearchbox } from '@components';
 import { LABELS, VISUALS } from '@constants';
-import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module';
-import { withStore } from '@stores';
-import { Pagination } from '@amsterdam/design-system-react';
-import { Paragraph } from '@utrecht/component-library-react';
 import { AcBuildURLSearchParams } from '@utils';
+import { withStore } from '@stores';
+
+import {
+  Heading,
+  Alert,
+  Paragraph,
+} from '@utrecht/component-library-react/dist/css-module';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcSearch = ({ store: { documents } }) => {
   const { query } = useParams();
@@ -18,7 +22,7 @@ const AcSearch = ({ store: { documents } }) => {
   const [searchParams] = useSearchParams();
 
   const {
-    searchQuery,
+    search_query,
     pagination,
     setPage,
     updateQuery,
@@ -42,19 +46,19 @@ const AcSearch = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    if (searchQuery.search === undefined) {
+    if (search_query.search === undefined) {
       return;
     }
     fetchDocuments();
     navigate(getNavigateUrl(), { replace: true });
-  }, [searchQuery]);
+  }, [search_query]);
 
   const getNavigateUrl = () => {
     const params = AcBuildURLSearchParams({
-      page: searchQuery._page,
-      categorie: searchQuery.categorie,
+      page: search_query._page,
+      categorie: search_query.categorie,
     });
-    return `/zoeken/${searchQuery.search}?${params}`;
+    return `/zoeken/${search_query.search}?${params}`;
   };
 
   const onPaginationChange = (page) => {
@@ -101,7 +105,7 @@ const AcSearch = ({ store: { documents } }) => {
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
-            defaultValue={searchQuery.search}
+            defaultValue={search_query.search}
           />
         </TilburgCard>
       </TilburgContainer>

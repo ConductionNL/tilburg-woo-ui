@@ -11,6 +11,7 @@ import { withStore } from '@stores';
 import { TilburgButton, TilburgFormField, TilburgSelect } from '@molecules';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { TilburgSearchDate } from '@components';
 
 const TilburgSearchFilters = ({ store: { documents } }) => {
   const overlayRef = useRef(null);
@@ -87,15 +88,7 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
               {LABELS.CLOSE}
             </TilburgButton>
           </TilburgFlex>
-          <TilburgFlex column spacing='sm' className='tilburg-search-filters__date'>
-            <TilburgSelect
-              label='Publicatiedatum'
-              defaultOption='Selecteer jaartallen'
-              options={['2023', '2024']}
-            />
-            <TilburgFormField label='Van (begindatum)' />
-            <TilburgFormField label='Tot (einddatum)' />
-          </TilburgFlex>
+          <TilburgSearchDate />
           {all_categories?.length > 0 && (
             <TilburgFlex
               column

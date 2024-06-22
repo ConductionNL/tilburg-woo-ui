@@ -39,6 +39,9 @@ const TilburgSubjects = loadable(() =>
 const TilburgSearchCategories = loadable(() =>
   import('@components/tilburg-search-categories/tilburg-search-categories')
 );
+const TilburgSearchDate = loadable(() =>
+  import('@components/tilburg-search-date/tilburg-search-date')
+);
 
 export {
   TilburgAbout,
@@ -55,4 +58,5 @@ export {
   TilburgSectionsHandler,
   TilburgSubjects,
   TilburgSearchCategories,
+  TilburgSearchDate,
 };

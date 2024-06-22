@@ -39,7 +39,6 @@ export class DocumentsStore {
     categorie: [],
     _limit: 2,
     _page: 1,
-    // 'date[after]': '2024-01-01',
   };
 
   @observable
@@ -49,11 +48,11 @@ export class DocumentsStore {
   };
 
   @computed
-  get searchQuery() {
+  get search_query() {
     return { ...this.defaultQuery, ...this.query };
   }
 
-  get categoriesQuery() {
+  get categories_query() {
     return { ...this.defaultQuery, ...this.categoriesQuery };
   }
 
@@ -66,11 +65,6 @@ export class DocumentsStore {
   get all_categories() {
     return this.categories;
   }
-
-  @action
-  category_checked = (id) => {
-    return this.query.categorie.includes(id);
-  };
 
   @computed
   get all_documents() {
@@ -85,6 +79,22 @@ export class DocumentsStore {
   }
 
   @action
+  category_checked = (id) => {
+    return this.query.categorie.includes(id);
+  };
+
+  @action
+  setQueryYear = (year) => {
+    if (isNaN(year)) {
+      this.query['publicatiedatum[after]'] = null;
+      this.query['publicatiedatum[before]'] = null;
+      return;
+    }
+    this.query['publicatiedatum[after]'] = `${year}-01-01`;
+    this.query['publicatiedatum[before]'] = `${year + 1}-01-01`;
+  };
+
+  @action
   updateQuery = (query) => {
     this.query = { ...this.query, ...query };
   };
@@ -97,11 +107,6 @@ export class DocumentsStore {
   @action
   setPage = (page) => {
     this.query._page = page;
-  };
-
-  @action
-  setQueryYear = (year) => {
-    this.query.year = year;
   };
 
   @action
@@ -131,7 +136,7 @@ export class DocumentsStore {
 
     app.store.api.documents
       .search(
-        new URLSearchParams(AcBuildURLSearchParams(this.searchQuery)).toString()
+        new URLSearchParams(AcBuildURLSearchParams(this.search_query)).toString()
       )
       .then((response) => {
         this.items = response.results;
@@ -150,7 +155,7 @@ export class DocumentsStore {
 
     app.store.api.documents
       .searchAggregations(
-        new URLSearchParams(AcBuildURLSearchParams(this.categoriesQuery)).toString()
+        new URLSearchParams(AcBuildURLSearchParams(this.categories_query)).toString()
       )
       .then((response) => {
         this.categories = response.categorie;
