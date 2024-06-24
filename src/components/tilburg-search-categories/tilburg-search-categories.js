@@ -56,10 +56,7 @@ const TilburgSearchCategories = ({ store: { documents } }) => {
     <>
       <TilburgFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
-        <TilburgButton
-          onClick={handleOpenModal}
-          sr='Bekijk de verschillende categorieën'
-        >
+        <TilburgButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
           <VISUALS.QUESTION_MARK />
         </TilburgButton>
         {renderModal}

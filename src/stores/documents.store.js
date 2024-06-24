@@ -35,10 +35,18 @@ export class DocumentsStore {
   };
 
   @observable
+  themesQuery = {
+    '_queries[]': 'thema',
+  };
+
+  @observable
   query = {
     categorie: [],
+    // @TODO DEFAULT 15
     _limit: 2,
     _page: 1,
+    'publicatiedatum[after]': null,
+    'publicatiedatum[before]': null,
   };
 
   @observable
@@ -92,6 +100,11 @@ export class DocumentsStore {
     }
     this.query['publicatiedatum[after]'] = `${year}-01-01`;
     this.query['publicatiedatum[before]'] = `${year + 1}-01-01`;
+  };
+
+  @action
+  setQueryDate = (key, value) => {
+    this.query[`publicatiedatum[${key}]`] = value;
   };
 
   @action

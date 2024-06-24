@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 import TilburgFlex from '@atoms/tilburg-flex/tilburg-flex';
 import TilburgButton from '@molecules/tilburg-button/tilburg-button';
 import clsx from 'clsx';
@@ -31,14 +31,14 @@ const TilburgModal = React.forwardRef(({ id, title, children }, ref) => {
           <Heading level={2}>{title}</Heading>
           <TilburgButton animate onClick={onCloseHandler}>
             <VISUALS.CLOSE />
-            Sluiten
+            {LABELS.CLOSE}
           </TilburgButton>
         </TilburgFlex>
       </div>
       <div className='tilburg-modal__content'>{children}</div>
       <div className='tilburg-modal__footer'>
         <TilburgButton style='button' onClick={onCloseHandler}>
-          Sluiten
+          {LABELS.CLOSE}
         </TilburgButton>
       </div>
     </dialog>

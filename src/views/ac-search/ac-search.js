@@ -82,10 +82,8 @@ const AcSearch = ({ store: { documents } }) => {
           <TilburgFlex spacing='sm'>
             <VISUALS.INFO_BLUE />
             <TilburgFlex column spacing='xs'>
-              <Heading level={3}>Geen resultaten gevonden</Heading>
-              <Paragraph>
-                Probeer een andere zoekterm of pas de filters aan.
-              </Paragraph>
+              <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
+              <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
             </TilburgFlex>
           </TilburgFlex>
         </Alert>

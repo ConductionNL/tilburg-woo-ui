@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-import { VISUALS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
 
 import { TilburgNavigation } from '@components';
@@ -15,7 +15,7 @@ const TilburgHeader = ({ store }) => {
   return (
     <header className='tilburg-header'>
       <SkipLink id='skip-link' href='#main'>
-        Direct naar de inhoud
+        {LABELS.TO_MAIN_CONTENT}
       </SkipLink>
       <div className='tilburg-header__navigation-main'>
         <div className='tilburg-header__logo'>
@@ -23,12 +23,12 @@ const TilburgHeader = ({ store }) => {
             <div>
               <VISUALS.LOGO />
               <span className='sr-only'>Logo</span>
-              Open Tilburg
+              {LABELS.APP_NAME}
             </div>
           ) : (
             <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
               <VISUALS.LOGO />
-              Open Tilburg
+              {LABELS.APP_NAME}
             </Link>
           )}
         </div>

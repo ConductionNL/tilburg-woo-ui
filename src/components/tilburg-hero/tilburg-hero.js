@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { VISUALS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 import { TilburgCard, TilburgContainer, TilburgSection } from '@atoms';
 import { TilburgSearchbox } from '@components';
 import { TilburgLink } from '@molecules';
@@ -23,10 +23,10 @@ const TilburgHero = () => {
           <TilburgSearchbox
             onSubmitCallback={submitSearch}
             page='home'
-            label='Waar ben je naar op zoek?'
+            label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
           />
           <TilburgLink href='/zoeken'>
-            Uitgebreid zoeken
+            {LABELS.SEARCH_EXTENSIVE}
             <VISUALS.ARROW_RIGHT />
           </TilburgLink>
         </TilburgCard>

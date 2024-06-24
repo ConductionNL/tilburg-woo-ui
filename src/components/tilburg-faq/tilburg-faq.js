@@ -8,7 +8,7 @@ export const TilburgFaq = ({ faqs = [] }) => {
       label: faq.question,
       body: AcSanitizeHtml(faq.answer),
     }));
-  });
+  }, [faqs]);
 
   return <AccordionProvider sections={getFaqs} />;
 };
