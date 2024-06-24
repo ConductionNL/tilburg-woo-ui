@@ -98,16 +98,6 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
               <TilburgSearchCategories categories={all_categories} />
             </TilburgFlex>
           )}
-          {/*<TilburgFlex*/}
-          {/*  column*/}
-          {/*  spacing='xs'*/}
-          {/*  className='tilburg-search-filters__subjects'*/}
-          {/*>*/}
-          {/*  <Heading level={4}>Onderwerpen</Heading>*/}
-          {/*  <TilburgCheckbox label='Campus Wijkevoort' />*/}
-          {/*  <TilburgCheckbox label='Evenementen in Tilburg' />*/}
-          {/*  <TilburgCheckbox label='Duurzaamheid' />*/}
-          {/*</TilburgFlex>*/}
         </TilburgFlex>
         {mobileFiltersOpen && (
           <div
