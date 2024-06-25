@@ -86,11 +86,6 @@ export class DocumentsStore {
   }
 
   @computed
-  get all_categories() {
-    return this.categories;
-  }
-
-  @computed
   get get_single() {
     return toJS(this.single);
   }
