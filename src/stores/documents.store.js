@@ -1,5 +1,5 @@
 // Imports => MOBX
-import { observable, computed, makeObservable, action } from 'mobx';
+import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { AcBuildURLSearchParams } from '@utils';
 
@@ -16,6 +16,9 @@ export class DocumentsStore {
 
   @observable
   items = [];
+
+  @observable
+  single = null;
 
   @observable
   categories = [];
@@ -75,9 +78,14 @@ export class DocumentsStore {
   }
 
   @computed
+  get get_single() {
+    return toJS(this.single);
+  }
+
+  @computed
   get all_documents() {
     return this.items.map((item) => ({
-      id: item.id,
+      _id: item._id,
       title: item.titel,
       content: item.samenvatting,
       date: acFormatDate(item.publicatiedatum, 'YYYY-MM-DD', 'DD MMMM YYYY'),
@@ -155,6 +163,25 @@ export class DocumentsStore {
         this.items = response.results;
         this.pagination = response;
         delete this.pagination.results;
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.loading.status = false;
+      });
+  };
+
+  @action
+  fetchDocument = async (_id) => {
+    this.loading.status = true;
+
+    app.store.api.documents
+      .search(
+        new URLSearchParams(
+          AcBuildURLSearchParams({ _id, ...this.defaultQuery })
+        ).toString()
+      )
+      .then((response) => {
+        this.single = response.results?.[0];
       })
       .catch((e) => console.error(e))
       .finally(() => {
