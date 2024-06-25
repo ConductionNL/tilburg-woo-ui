@@ -93,7 +93,7 @@ const AcSearch = ({ store: { documents } }) => {
     return all_documents?.map((document, index) => (
       <TilburgSearchResult {...document} key={index} />
     ));
-  }, [is_loading, all_documents]);
+  }, [is_loading, all_documents, pagination?.limit]);
 
   return (
     <>
@@ -111,6 +111,15 @@ const AcSearch = ({ store: { documents } }) => {
         <TilburgFlex spacing='xl' className='tilburg-search-results'>
           <TilburgSearchFilters />
           <TilburgFlex column grow spacing='xs'>
+            <div className='sr-only' aria-live='polite' aria-atomic='true'>
+              {is_loading
+                ? 'Zoekresultaten laden...'
+                : `Zoekresultaten geladen. ${
+                    all_documents?.length === 1
+                      ? `${all_documents?.length} resultaat`
+                      : `${all_documents.length} resultaten`
+                  } gevonden.`}
+            </div>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}
               {pagination?.pages > 1 && (

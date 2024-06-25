@@ -3,7 +3,7 @@ import { VISUALS } from '@constants';
 import { TilburgCard, TilburgFlex } from '@atoms';
 import { TilburgLink } from '@molecules';
 
-const TilburgSearchResult = ({ skeleton, title, content, date, category }) => {
+const TilburgSearchResult = ({ skeleton, title, content, date, category, _id }) => {
   return (
     <TilburgCard searchResult padding='md' skeleton={skeleton}>
       <Heading level={3}>{title}</Heading>
@@ -16,7 +16,7 @@ const TilburgSearchResult = ({ skeleton, title, content, date, category }) => {
           <VISUALS.ELLIPSE />
           <Paragraph small>{category}</Paragraph>
         </TilburgFlex>
-        <TilburgLink to='/'>
+        <TilburgLink to={`/publicatie/${_id}`}>
           <span class='sr-only'>Lees meer over {title}</span>
           <VISUALS.ARROW_RIGHT />
         </TilburgLink>

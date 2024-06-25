@@ -1,22 +1,22 @@
 // Imports => React
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useAutoFocus } from '@hooks';
+import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
+import { AcSetDocumentTitle, AcCapitalize } from '@utils';
 import loadable from '@loadable/component';
 
 // Imports => SCSS
 import '@styles/index.scss';
 
 // Imports => Config
-import config from '@config';
 
 // Imports => Constants
 import { DEFAULT_ROUTE, ROUTES } from '@constants';
 
 // Imports => Utilities
-import { AcHome, AcSearch } from '@views';
+import { AcHome } from '@views';
 import AcContent from '@views/ac-content/ac-content';
 
 // Imports => Molecules
@@ -40,24 +40,13 @@ const _CLASSES = {
 
 const App = ({ store }) => {
   const { fetchPages, all_pages } = store.pages;
-  const location = useLocation();
   const resetFocus = useAutoFocus();
 
   useEffect(() => {
     fetchPages();
   }, []);
 
-  useEffect(() => {
-    const baseTitle = ' - Open Tilburg';
-
-    const title =
-      (location.pathname === '/'
-        ? 'Home'
-        : all_pages.find((page) => `/${page.slug}` === location.pathname)?.name ||
-          baseTitle) + baseTitle;
-
-    document.title = title;
-  }, [location, all_pages]);
+  useDocumentTitleFromPath();
 
   const getView = (page) => {
     return page.slug === 'home' ? (
