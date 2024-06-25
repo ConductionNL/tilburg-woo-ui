@@ -23,6 +23,19 @@ export class DocumentsStore {
   @observable
   categories = [];
 
+  @computed
+  get all_categories() {
+    return this.categories;
+  }
+
+  @observable
+  themes = [];
+
+  @computed
+  get all_themes() {
+    return this.themes;
+  }
+
   // Pagination information
   @observable
   pagination = null;
@@ -33,8 +46,8 @@ export class DocumentsStore {
   };
 
   @observable
-  categoriesQuery = {
-    '_queries[]': 'categorie',
+  aggregationsQuery = {
+    _queries: ['categorie', 'themas'],
   };
 
   @observable
@@ -63,8 +76,8 @@ export class DocumentsStore {
     return { ...this.defaultQuery, ...this.query };
   }
 
-  get categories_query() {
-    return { ...this.defaultQuery, ...this.categoriesQuery };
+  get aggregations_query() {
+    return { ...this.defaultQuery, ...this.aggregationsQuery };
   }
 
   @computed
@@ -190,15 +203,18 @@ export class DocumentsStore {
   };
 
   @action
-  fetchCategories = async () => {
+  fetchAggregations = async () => {
     this.loading.status = true;
 
     app.store.api.documents
       .searchAggregations(
-        new URLSearchParams(AcBuildURLSearchParams(this.categories_query)).toString()
+        new URLSearchParams(
+          AcBuildURLSearchParams(this.aggregations_query)
+        ).toString()
       )
       .then((response) => {
         this.categories = response.categorie;
+        this.themes = response.themas;
       })
       .catch((e) => console.error(e))
       .finally(() => {

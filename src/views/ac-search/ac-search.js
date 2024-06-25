@@ -27,7 +27,7 @@ const AcSearch = ({ store: { documents } }) => {
     setPage,
     updateQuery,
     setSearchQuery,
-    fetchCategories,
+    fetchAggregations,
     fetchDocuments,
     is_loading,
     all_documents,
@@ -42,7 +42,7 @@ const AcSearch = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    fetchCategories();
+    fetchAggregations();
   }, []);
 
   useEffect(() => {
