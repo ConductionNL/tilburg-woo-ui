@@ -108,7 +108,7 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
         )}
         <TilburgFlex className='tilburg-search-filters__button'>
           <TilburgButton style='button' onClick={handleCloseFilters}>
-            Bekijk 5.724 resultaten
+            Bekijk resultaten
           </TilburgButton>
         </TilburgFlex>
       </TilburgFlex>

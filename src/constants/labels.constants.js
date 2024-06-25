@@ -15,6 +15,7 @@ export const LABELS = {
   NO_RESULTS: 'Geen resultaten gevonden',
   REFINE_SEARCH: 'Probeer een andere zoekterm of pas de filters aan.',
   WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
+  READ_MORE_ABOUT: 'Lees meer over',
 
   SELECT_YEARS: 'Selecteer jaartallen',
   DATE_PUBLICATION: 'Publicatiedatum',
