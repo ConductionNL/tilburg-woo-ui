@@ -6,6 +6,7 @@ export const LABELS = {
   MENU: 'Menu',
   SEARCH: 'Zoeken',
   SEARCH_EXTENSIVE: 'Uitgebreid zoeken',
+  CATEGORY: 'Categorie',
   CATEGORIES: 'Categorieën',
   CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
   TO_MAIN_CONTENT: 'Direct naar de inhoud',
@@ -19,4 +20,12 @@ export const LABELS = {
 
   SELECT_YEARS: 'Selecteer jaartallen',
   DATE_PUBLICATION: 'Publicatiedatum',
+  UNKNOWN: 'Onbekend',
+  SUMMARY: 'Samenvatting',
+  SUMMARY_UNAVAILABLE: 'Samenvatting niet beschikbaar',
+  DOCUMENTS_PRIMARY: 'Hoofddocumenten',
+
+  DOCUMENT: 'Document',
+  TYPE: 'Type',
+  DATE: 'Datum',
 };

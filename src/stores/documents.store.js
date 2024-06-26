@@ -162,6 +162,15 @@ export class DocumentsStore {
   };
 
   @action
+  getSearchPageURL = () => {
+    return `/zoeken?${AcBuildURLSearchParams({
+      search: this.query.search,
+      categorie: this.query.categorie,
+      page: this.query._page,
+    })}`;
+  };
+
+  @action
   fetchDocuments = async () => {
     this.loading.status = true;
 

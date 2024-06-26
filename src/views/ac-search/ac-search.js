@@ -4,7 +4,6 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
-import { AcBuildURLSearchParams } from '@utils';
 import { TilburgSearchbox } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { withStore } from '@stores';
@@ -30,6 +29,7 @@ const AcSearch = ({ store: { documents } }) => {
     fetchAggregations,
     fetchDocuments,
     is_loading,
+    getSearchPageURL,
     all_documents,
   } = documents;
 
@@ -50,16 +50,8 @@ const AcSearch = ({ store: { documents } }) => {
       return;
     }
     fetchDocuments();
-    navigate(getNavigateUrl(), { replace: true });
+    navigate(getSearchPageURL(), { replace: true });
   }, [search_query]);
-
-  const getNavigateUrl = () => {
-    const params = AcBuildURLSearchParams({
-      page: search_query._page,
-      categorie: search_query.categorie,
-    });
-    return `/zoeken/${search_query.search}?${params}`;
-  };
 
   const onPaginationChange = (page) => {
     setPage(page);

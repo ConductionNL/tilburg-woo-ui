@@ -7,6 +7,8 @@ import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
 import { TilburgNavigation } from '@components';
 import { TilburgBreadcrumbs } from '@molecules';
 import { TilburgContainer } from '@atoms';
+import { observer } from 'mobx-react-lite';
+import { withStore } from '@stores';
 
 const TilburgHeader = ({ store }) => {
   const location = useLocation();
@@ -35,12 +37,10 @@ const TilburgHeader = ({ store }) => {
         <TilburgNavigation />
       </div>
       <div className='tilburg-header__navigation-secondary'>
-        <TilburgContainer>
-          {!isHomePage && <TilburgBreadcrumbs store={store} />}
-        </TilburgContainer>
+        <TilburgContainer>{!isHomePage && <TilburgBreadcrumbs />}</TilburgContainer>
       </div>
     </header>
   );
 };
 
-export default TilburgHeader;
+export default withStore(observer(TilburgHeader));

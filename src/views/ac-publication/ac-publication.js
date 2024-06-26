@@ -12,6 +12,7 @@ import {
   Paragraph,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
+import { LABELS } from '@constants';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
@@ -32,35 +33,39 @@ const AcPublication = ({ store: { documents } }) => {
     return <TilburgLoader />;
   }
 
-  const mapRow = (row) => {
+  const mapAttachmentRow = (row) => {
     return [
       <Link href={row.url}>{row.titel}</Link>,
-      row.type || 'Onbekend',
-      row.datum || 'Onbekend',
+      row.type || LABELS.UNKNOWN,
+      row.datum || LABELS.UNKNOWN,
     ];
   };
 
   return (
     <>
       <TilburgContainer compact margin='xl'>
-        <TilburgFlex column spacing={'md'}>
+        <TilburgFlex column spacing={'lg'}>
           <Heading>{get_single?.titel}</Heading>
 
           <TilburgCard blue>
-            <Heading level={2}>Samenvatting</Heading>
-            <Paragraph>{get_single?.samenvatting}</Paragraph>
+            <Heading level={2}>{LABELS.SUMMARY}</Heading>
+            <Paragraph>
+              {get_single?.samenvatting || LABELS.SUMMARY_UNAVAILABLE}
+            </Paragraph>
           </TilburgCard>
 
           <div>
-            <Heading level={2}>Hoofddocumenten</Heading>
+            <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
             <Paragraph>Er zijn geen hoofddocumenten beschikbaar.</Paragraph>
           </div>
 
           <div>
             <Heading level={2}>Bijlagen</Heading>
             <TilburgTable
-              header={['Document', 'Type', 'Datum']}
-              rows={get_single.bijlagen.map((bijlage) => mapRow(bijlage))}
+              header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
+              rows={get_single.bijlagen.map((attachment) =>
+                mapAttachmentRow(attachment)
+              )}
             />
           </div>
 
@@ -69,7 +74,7 @@ const AcPublication = ({ store: { documents } }) => {
             <TilburgTable
               rows={[
                 ['Zaaknummer', 1922973],
-                ['Categorie', <Link>Woo-verzoek</Link>],
+                [LABELS.CATEGORY, <Link>Woo-verzoek</Link>],
                 ['Onderwerp', <Link>Duurzaamheid</Link>],
               ]}
             />
