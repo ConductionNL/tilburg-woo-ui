@@ -25,12 +25,12 @@ const TilburgHeader = ({ store }) => {
             <div>
               <VISUALS.LOGO />
               <span className='sr-only'>Logo</span>
-              {LABELS.APP_NAME}
+              <span class='logo-text'>{LABELS.APP_NAME}</span>
             </div>
           ) : (
             <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
               <VISUALS.LOGO />
-              {LABELS.APP_NAME}
+              <span class='logo-text'>{LABELS.APP_NAME}</span>
             </Link>
           )}
         </div>
