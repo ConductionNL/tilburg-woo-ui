@@ -1,7 +1,8 @@
-import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
+import { TilburgLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { TilburgCard, TilburgFlex } from '@atoms';
-import { TilburgLink } from '@molecules';
+
+import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 
 const TilburgSearchResult = ({
   skeleton,

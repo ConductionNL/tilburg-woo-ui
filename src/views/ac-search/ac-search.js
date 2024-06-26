@@ -2,16 +2,16 @@ import React, { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
+import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
+import { AcBuildURLSearchParams } from '@utils';
 import { TilburgSearchbox } from '@components';
 import { LABELS, VISUALS } from '@constants';
-import { AcBuildURLSearchParams } from '@utils';
 import { withStore } from '@stores';
 
 import {
-  Heading,
   Alert,
+  Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';

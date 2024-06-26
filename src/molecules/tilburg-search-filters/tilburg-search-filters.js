@@ -4,14 +4,13 @@ import { observer } from 'mobx-react-lite';
 import FocusLock from 'react-focus-lock';
 import clsx from 'clsx';
 
-import { TilburgSearchCategories } from '@components';
-import { LABELS, VISUALS } from '@constants';
-import { TilburgFlex } from '@atoms';
 import { withStore } from '@stores';
-import { TilburgButton, TilburgFormField, TilburgSelect } from '@molecules';
+import { TilburgFlex } from '@atoms';
+import { TilburgButton } from '@molecules';
+import { LABELS, VISUALS } from '@constants';
+import { TilburgSearchCategories, TilburgSearchDate } from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { TilburgSearchDate } from '@components';
 
 const TilburgSearchFilters = ({ store: { documents } }) => {
   const overlayRef = useRef(null);

@@ -38,7 +38,7 @@ export class DocumentsStore {
 
   // Pagination information
   @observable
-  pagination = null;
+  pagination = {};
 
   @observable
   defaultQuery = {
@@ -59,7 +59,7 @@ export class DocumentsStore {
   query = {
     categorie: [],
     // @TODO DEFAULT 15
-    _limit: 2,
+    _limit: 3,
     _page: 1,
     'publicatiedatum[after]': null,
     'publicatiedatum[before]': null,
@@ -120,6 +120,7 @@ export class DocumentsStore {
 
   @action
   setQueryDate = (key, value) => {
+    this.setPage(1);
     this.query[`publicatiedatum[${key}]`] = value;
   };
 
@@ -136,6 +137,7 @@ export class DocumentsStore {
   @action
   setPage = (page) => {
     this.query._page = page;
+    this.pagination.page = page;
   };
 
   @action
