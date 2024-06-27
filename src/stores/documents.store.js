@@ -207,6 +207,10 @@ export class DocumentsStore {
         this.loading.status = false;
       });
   };
+  @action
+  resetDocument = () => {
+    this.single = null;
+  };
 
   @action
   fetchAggregations = async () => {

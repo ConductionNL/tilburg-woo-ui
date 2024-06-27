@@ -38,7 +38,7 @@ const TilburgBreadcrumbs = ({ store: { pages, documents } }) => {
         Object.values(ROUTES).find((route) => route.path === location.pathname)
           ?.label || { label: 'Zoeken', href: '/zoeken' },
     ];
-  }, [get_single_document]);
+  }, [get_single_document, location]);
 
   return (
     <BreadcrumbNav>

@@ -17,11 +17,12 @@ import { LABELS } from '@constants';
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
 
-  const { fetchDocument, get_single, loading } = documents;
+  const { fetchDocument, resetDocument, get_single, loading } = documents;
 
   useEffect(() => {
     fetchDocument(id);
-  }, [id]);
+    return () => resetDocument();
+  }, []);
 
   useEffect(() => {
     console.log(get_single);
