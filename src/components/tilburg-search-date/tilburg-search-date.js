@@ -3,12 +3,11 @@ import { observer } from 'mobx-react-lite';
 
 import { withStore } from '@stores';
 import { TilburgFlex } from '@atoms';
-import { TilburgFormField, TilburgSelect } from '@molecules';
-import { LABELS } from '@constants';
 import { AcValidateDate } from '@utils';
+import { TilburgFormField } from '@molecules';
 
 const TilburgSearchDate = ({ store: { documents } }) => {
-  const { setQueryYear, setQueryDate } = documents;
+  const { setQueryDate } = documents;
 
   const setDate = (key, value) => {
     if (!AcValidateDate(value)) {
@@ -20,20 +19,14 @@ const TilburgSearchDate = ({ store: { documents } }) => {
 
   return (
     <TilburgFlex column spacing='sm' className='tilburg-search-filters__date'>
-      <TilburgSelect
-        label={LABELS.DATE_PUBLICATION}
-        defaultOption={LABELS.SELECT_YEARS}
-        options={['2023', '2024']}
-        onChange={(e) => {
-          setQueryYear(parseInt(e.target.value, 10));
-        }}
-      />
       <TilburgFormField
-        label='Vanaf (dd-mm-yyyy)'
+        defaultValue={documents.search_query['publicatiedatum[after]']}
+        label='Datum vanaf (dd-mm-yyyy)'
         onBlur={(value) => setDate('after', value)}
       />
       <TilburgFormField
-        label='Tot en met (dd-mm-yyyy)'
+        defaultValue={documents.search_query['publicatiedatum[before]']}
+        label='Datum tot en met (dd-mm-yyyy)'
         onBlur={(value) => setDate('before', value)}
       />
     </TilburgFlex>

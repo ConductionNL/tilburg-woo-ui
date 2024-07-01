@@ -25,8 +25,6 @@ const AcPublication = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    console.log(get_single);
-
     document.title = get_single?.titel || 'Open Tilburg | Publicatie';
   }, [get_single]);
 

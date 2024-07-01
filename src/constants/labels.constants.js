@@ -18,7 +18,6 @@ export const LABELS = {
   WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
   READ_MORE_ABOUT: 'Lees meer over',
 
-  SELECT_YEARS: 'Selecteer jaartallen',
   DATE_PUBLICATION: 'Publicatiedatum',
   UNKNOWN: 'Onbekend',
   SUMMARY: 'Samenvatting',
@@ -28,4 +27,15 @@ export const LABELS = {
   DOCUMENT: 'Document',
   TYPE: 'Type',
   DATE: 'Datum',
+  DOCUMENTS: 'Documenten',
+  DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
+  SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',
+  SEARCH_RESULTS_LOADED: 'Zoekresulten geladen',
+  FOUND: 'Gevonden',
+  RESULT: 'Resultaat',
+  RESULTS: 'Resultaten',
+};
+
+export const LABELS_DYNAMIC = {
+  RESULTS: (count) => (count === 1 ? LABELS.RESULT : LABELS.RESULTS),
 };

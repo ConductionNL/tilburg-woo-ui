@@ -108,17 +108,6 @@ export class DocumentsStore {
   };
 
   @action
-  setQueryYear = (year) => {
-    if (isNaN(year)) {
-      this.query['publicatiedatum[after]'] = null;
-      this.query['publicatiedatum[before]'] = null;
-      return;
-    }
-    this.query['publicatiedatum[after]'] = `${year}-01-01`;
-    this.query['publicatiedatum[before]'] = `${year + 1}-01-01`;
-  };
-
-  @action
   setQueryDate = (key, value) => {
     this.setPage(1);
     this.query[`publicatiedatum[${key}]`] = value;
@@ -167,6 +156,8 @@ export class DocumentsStore {
       search: this.query.search,
       categorie: this.query.categorie,
       page: this.query._page,
+      'publicatiedatum[before]': this.query['publicatiedatum[before]'],
+      'publicatiedatum[after]': this.query['publicatiedatum[after]'],
     })}`;
   };
 

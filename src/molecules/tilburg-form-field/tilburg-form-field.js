@@ -5,7 +5,7 @@ import {
   Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const TilburgFormField = ({ label, type = 'text', onBlur }) => {
+const TilburgFormField = ({ label, type = 'text', onBlur, defaultValue }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
       return;
@@ -19,7 +19,7 @@ const TilburgFormField = ({ label, type = 'text', onBlur }) => {
       <FormLabel>
         <Heading level={4}>{label}</Heading>
       </FormLabel>
-      <Textbox onBlur={onBlurHandler} />
+      <Textbox defaultValue={defaultValue} onBlur={onBlurHandler} />
     </FormField>
   );
 };

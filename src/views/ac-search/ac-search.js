@@ -5,7 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { TilburgSearchbox } from '@components';
-import { LABELS, VISUALS } from '@constants';
+import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
 import { withStore } from '@stores';
 
 import {
@@ -38,10 +38,10 @@ const AcSearch = ({ store: { documents } }) => {
       _page: searchParams.get('page') || 1,
       search: query || '',
       categorie: searchParams.getAll('categorie[]'),
+      'publicatiedatum[before]': searchParams.get('publicatiedatum[before]'),
+      'publicatiedatum[after]': searchParams.get('publicatiedatum[after]'),
     });
-  }, []);
 
-  useEffect(() => {
     fetchAggregations();
   }, []);
 
@@ -60,6 +60,16 @@ const AcSearch = ({ store: { documents } }) => {
   const onSearchSubmit = (query) => {
     setSearchQuery(query);
   };
+
+  const screenReaderText = useMemo(() => {
+    if (is_loading === true) {
+      return LABELS.SEARCH_RESULTS_LOADING;
+    }
+
+    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
+      all_documents?.length
+    )} ${LABELS.FOUND.toLowerCase()}.`;
+  }, [is_loading]);
 
   const renderDocuments = useMemo(() => {
     if (is_loading) {
@@ -104,13 +114,7 @@ const AcSearch = ({ store: { documents } }) => {
           <TilburgSearchFilters />
           <TilburgFlex column grow spacing='xs'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
-              {is_loading
-                ? 'Zoekresultaten laden...'
-                : `Zoekresultaten geladen. ${
-                    all_documents?.length === 1
-                      ? `${all_documents?.length} resultaat`
-                      : `${all_documents.length} resultaten`
-                  } gevonden.`}
+              {screenReaderText}
             </div>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}
