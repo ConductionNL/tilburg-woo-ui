@@ -12,6 +12,13 @@ export class DocumentsAPI {
       (response) => response.data
     );
   }
+
+  single(id, params) {
+    return this.Client.get(ENDPOINTS.DOCUMENTS.SINGLE(id, params)).then(
+      (response) => response.data
+    );
+  }
+
   searchAggregations(params) {
     return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH(params), {
       headers: {

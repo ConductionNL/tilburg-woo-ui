@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
@@ -16,6 +21,7 @@ import {
 import { Pagination } from '@amsterdam/design-system-react';
 
 const AcSearch = ({ store: { documents } }) => {
+  const location = useLocation();
   const { query } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,7 +39,7 @@ const AcSearch = ({ store: { documents } }) => {
     all_documents,
   } = documents;
 
-  useEffect(() => {
+  const setQuery = () => {
     updateQuery({
       _page: searchParams.get('page') || 1,
       search: query || '',
@@ -41,21 +47,54 @@ const AcSearch = ({ store: { documents } }) => {
       'publicatiedatum[before]': searchParams.get('publicatiedatum[before]'),
       'publicatiedatum[after]': searchParams.get('publicatiedatum[after]'),
     });
+  };
 
+  useEffect(() => {
+    setQuery();
     fetchAggregations();
+    fetchDocuments();
   }, []);
 
+  useEffect(() => {
+    if (getSearchPageURL() === location.pathname + location.search) {
+      return;
+    }
+
+    navigate(getSearchPageURL());
+  }, [search_query]);
+
+  // On GET params change.
   useEffect(() => {
     if (search_query.search === undefined) {
       return;
     }
+
+    setQuery();
     fetchDocuments();
-    navigate(getSearchPageURL(), { replace: true });
-  }, [search_query]);
+  }, [location.search]);
 
   const onPaginationChange = (page) => {
     setPage(page);
   };
+
+  const renderPagination = useMemo(() => {
+    // Pagination component does not update with updated props. It will keep the 'page' prop internally.
+    // To force an update, we need to rerender the component.
+    if (is_loading) {
+      return null;
+    }
+
+    return (
+      <Pagination
+        totalPages={pagination?.pages}
+        page={pagination?.page}
+        onPageChange={onPaginationChange}
+        nextLabel=''
+        previousLabel=''
+        maxVisiblePages={7}
+      />
+    );
+  }, [pagination, is_loading]);
 
   const onSearchSubmit = (query) => {
     setSearchQuery(query);
@@ -118,16 +157,7 @@ const AcSearch = ({ store: { documents } }) => {
             </div>
             <TilburgFlex column spacing='sm' margin='sm'>
               {renderDocuments}
-              {pagination?.pages > 1 && (
-                <Pagination
-                  totalPages={pagination?.pages}
-                  page={pagination?.page}
-                  onPageChange={onPaginationChange}
-                  nextLabel=''
-                  previousLabel=''
-                  maxVisiblePages={7}
-                />
-              )}
+              {pagination?.pages > 1 && renderPagination}
             </TilburgFlex>
           </TilburgFlex>
         </TilburgFlex>

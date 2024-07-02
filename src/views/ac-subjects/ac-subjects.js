@@ -2,6 +2,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
 import { TilburgSubjects } from '@components';
+import { useEffect } from 'react';
 
 const subjectsDummyData = [
   {
@@ -69,7 +70,13 @@ const subjectsDummyData = [
   },
 ];
 
-const AcSubjects = ({ store }) => {
+const AcSubjects = ({ store: { documents } }) => {
+  const { categories, fetchAggregations } = documents;
+
+  useEffect(() => {
+    fetchAggregations();
+  }, []);
+
   return (
     <>
       <TilburgSubjects

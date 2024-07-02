@@ -23,18 +23,8 @@ export class DocumentsStore {
   @observable
   categories = [];
 
-  @computed
-  get all_categories() {
-    return this.categories;
-  }
-
   @observable
   themes = [];
-
-  @computed
-  get all_themes() {
-    return this.themes;
-  }
 
   // Pagination information
   @observable
@@ -70,6 +60,15 @@ export class DocumentsStore {
     status: false,
     message: undefined,
   };
+
+  @computed
+  get all_categories() {
+    return this.categories;
+  }
+  @computed
+  get all_themes() {
+    return this.themes;
+  }
 
   @computed
   get search_query() {
@@ -185,13 +184,14 @@ export class DocumentsStore {
     this.loading.status = true;
 
     app.store.api.documents
-      .search(
+      .single(
+        _id,
         new URLSearchParams(
           AcBuildURLSearchParams({ _id, ...this.defaultQuery })
         ).toString()
       )
       .then((response) => {
-        this.single = response.results?.[0];
+        this.single = response;
       })
       .catch((e) => console.error(e))
       .finally(() => {

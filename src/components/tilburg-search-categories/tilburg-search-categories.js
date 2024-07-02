@@ -14,9 +14,7 @@ import {
 
 const TilburgSearchCategories = ({ store: { documents } }) => {
   const modalRef = useRef(null);
-  const handleOpenModal = () => {
-    modalRef?.current?.showModal();
-  };
+  const handleOpenModal = () => modalRef?.current?.showModal();
 
   const { all_categories, category_checked, toggleSearchArrayValue } = documents;
 
