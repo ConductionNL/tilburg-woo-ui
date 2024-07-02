@@ -5,6 +5,15 @@ import { AcBuildURLSearchParams } from '@utils';
 
 let app = {};
 
+const DEFAULT_SEARCH_QUERY = {
+  categorie: [],
+  // @TODO DEFAULT 15
+  _limit: 3,
+  _page: 1,
+  'publicatiedatum[after]': null,
+  'publicatiedatum[before]': null,
+};
+
 export class DocumentsStore {
   constructor(store) {
     makeObservable(this);
@@ -46,14 +55,7 @@ export class DocumentsStore {
   };
 
   @observable
-  query = {
-    categorie: [],
-    // @TODO DEFAULT 15
-    _limit: 3,
-    _page: 1,
-    'publicatiedatum[after]': null,
-    'publicatiedatum[before]': null,
-  };
+  query = DEFAULT_SEARCH_QUERY;
 
   @observable
   loading = {
@@ -201,6 +203,11 @@ export class DocumentsStore {
   @action
   resetDocument = () => {
     this.single = null;
+  };
+
+  @action
+  resetSearchQuery = () => {
+    this.query = DEFAULT_SEARCH_QUERY;
   };
 
   @action

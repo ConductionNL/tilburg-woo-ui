@@ -21,8 +21,8 @@ import {
 import { Pagination } from '@amsterdam/design-system-react';
 
 const AcSearch = ({ store: { documents } }) => {
-  const location = useLocation();
   const { query } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -37,6 +37,7 @@ const AcSearch = ({ store: { documents } }) => {
     is_loading,
     getSearchPageURL,
     all_documents,
+    resetSearchQuery,
   } = documents;
 
   const setQuery = () => {
@@ -53,6 +54,8 @@ const AcSearch = ({ store: { documents } }) => {
     setQuery();
     fetchAggregations();
     fetchDocuments();
+
+    return () => resetSearchQuery();
   }, []);
 
   useEffect(() => {
@@ -65,6 +68,7 @@ const AcSearch = ({ store: { documents } }) => {
 
   // On GET params change.
   useEffect(() => {
+    console.log('location changed');
     if (search_query.search === undefined) {
       return;
     }
