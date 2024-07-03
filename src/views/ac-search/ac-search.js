@@ -9,8 +9,8 @@ import {
 
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
-import { TilburgSearchbox } from '@components';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { TilburgSearchbox } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -68,7 +68,6 @@ const AcSearch = ({ store: { documents } }) => {
 
   // On GET params change.
   useEffect(() => {
-    console.log('location changed');
     if (search_query.search === undefined) {
       return;
     }

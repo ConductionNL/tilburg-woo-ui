@@ -41,7 +41,7 @@ export class DocumentsStore {
 
   @observable
   defaultQuery = {
-    'organisatie.oin': '00000001001172773000',
+    // 'organization.oin': '00000001001172773000',
   };
 
   @observable
