@@ -1,16 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
-import { TilburgSearchbox } from '@components';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { TilburgSearchbox } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -116,7 +111,7 @@ const AcSearch = ({ store: { documents } }) => {
   }, [is_loading]);
 
   const renderDocuments = useMemo(() => {
-    if (is_loading || all_documents?.length < 1) {
+    if (is_loading) {
       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
         <TilburgSearchResult skeleton key={index} />
       ));

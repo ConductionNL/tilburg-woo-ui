@@ -10,7 +10,7 @@ const TilburgHero = () => {
   const navigate = useNavigate();
 
   const submitSearch = (query) => {
-    navigate(`/zoeken/${query}`);
+    navigate(`/zoeken?search=${query}`);
   };
 
   return (

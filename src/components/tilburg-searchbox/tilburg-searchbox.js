@@ -15,8 +15,8 @@ export const TilburgSearchbox = ({
   small,
   label,
   spacing,
-  onSubmitCallback,
   defaultValue,
+  onSubmitCallback,
   store: { documents },
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
