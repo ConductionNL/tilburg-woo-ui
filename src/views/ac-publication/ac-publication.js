@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { TilburgLoader } from '@components';
-import { TilburgTable } from '@molecules';
+import { TilburgLink, TilburgTable } from '@molecules';
 import { withStore } from '@stores';
 
 import {
@@ -12,11 +12,10 @@ import {
   Paragraph,
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
-import { LABELS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
-
   const { fetchDocument, resetDocument, get_single, loading } = documents;
 
   useEffect(() => {
@@ -34,7 +33,10 @@ const AcPublication = ({ store: { documents } }) => {
 
   const mapAttachmentRow = (row) => {
     return [
-      <Link href={row.url}>{row.titel}</Link>,
+      <TilburgLink>
+        <VISUALS.DOCUMENT />
+        <Link href={row.url}>{row.titel}</Link>
+      </TilburgLink>,
       row.type || LABELS.UNKNOWN,
       row.datum || LABELS.UNKNOWN,
     ];

@@ -21,7 +21,6 @@ import {
 import { Pagination } from '@amsterdam/design-system-react';
 
 const AcSearch = ({ store: { documents } }) => {
-  const { query } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -43,7 +42,7 @@ const AcSearch = ({ store: { documents } }) => {
   const setQuery = () => {
     updateQuery({
       _page: searchParams.get('page') || 1,
-      search: query || '',
+      search: searchParams.get('search') || '',
       categorie: searchParams.getAll('categorie[]'),
       'publicatiedatum[before]': searchParams.get('publicatiedatum[before]'),
       'publicatiedatum[after]': searchParams.get('publicatiedatum[after]'),
@@ -59,7 +58,10 @@ const AcSearch = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    if (getSearchPageURL() === location.pathname + location.search) {
+    if (
+      getSearchPageURL() === location.pathname + location.search ||
+      search_query.search === undefined
+    ) {
       return;
     }
 
@@ -68,7 +70,6 @@ const AcSearch = ({ store: { documents } }) => {
 
   // On GET params change.
   useEffect(() => {
-    console.log('location changed');
     if (search_query.search === undefined) {
       return;
     }
@@ -115,8 +116,8 @@ const AcSearch = ({ store: { documents } }) => {
   }, [is_loading]);
 
   const renderDocuments = useMemo(() => {
-    if (is_loading) {
-      return Array.from({ length: pagination?.limit }).map((_, index) => (
+    if (is_loading || all_documents?.length < 1) {
+      return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
         <TilburgSearchResult skeleton key={index} />
       ));
     }
