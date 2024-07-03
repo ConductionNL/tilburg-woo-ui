@@ -1,5 +1,6 @@
 // Imports => Constants
 export { AUTH_KEYS, AUTH_MODES } from './auth.constants';
+export { BREADCRUMBS } from './breadcrumbs.constants';
 export { DATETIME_FORMATS } from './datetime.constants';
 export { ENDPOINTS } from './endpoints.constants';
 export { ENVIRONMENTS } from './environments.constants';
