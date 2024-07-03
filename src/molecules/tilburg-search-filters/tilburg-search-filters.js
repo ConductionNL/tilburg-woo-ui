@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { observer } from 'mobx-react-lite';
 import FocusLock from 'react-focus-lock';
@@ -11,6 +11,7 @@ import { LABELS, VISUALS } from '@constants';
 import { TilburgSearchCategories, TilburgSearchDate } from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import TilburgSearchSort from '@components/tilburg-search-sort/tilburg-search-sort';
 
 const TilburgSearchFilters = ({ store: { documents } }) => {
   const overlayRef = useRef(null);
@@ -87,6 +88,7 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
               {LABELS.CLOSE}
             </TilburgButton>
           </TilburgFlex>
+          {mobileFiltersOpen && <TilburgSearchSort />}
           <TilburgSearchDate />
           {all_categories?.length > 0 && (
             <TilburgFlex
