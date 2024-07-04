@@ -26,8 +26,8 @@ const TilburgModal = loadable(() =>
 const TilburgNavigation = loadable(() =>
   import('@components/tilburg-navigation/tilburg-navigation')
 );
-const TilburgSearchbox = loadable(() =>
-  import('@components/tilburg-searchbox/tilburg-searchbox')
+const TilburgSearchBox = loadable(() =>
+  import('@components/tilburg-search-box/tilburg-search-box')
 );
 const TilburgSectionsHandler = loadable(() =>
   import('@components/tilburg-sections-handler/tilburg-sections-handler')
@@ -60,7 +60,7 @@ export {
   TilburgLoader,
   TilburgModal,
   TilburgNavigation,
-  TilburgSearchbox,
+  TilburgSearchBox,
   TilburgSectionsHandler,
   TilburgSubjects,
   TilburgSearchCategories,

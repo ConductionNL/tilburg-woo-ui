@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { TilburgSearchbox } from '@components';
+import { TilburgSearchBox } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -148,7 +148,7 @@ const AcSearch = ({ store: { documents } }) => {
     <>
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
-          <TilburgSearchbox
+          <TilburgSearchBox
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}

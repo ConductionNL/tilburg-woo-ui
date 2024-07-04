@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 import { LABELS, VISUALS } from '@constants';
 import { TilburgCard, TilburgContainer, TilburgSection } from '@atoms';
-import { TilburgSearchbox } from '@components';
+import { TilburgSearchBox } from '@components';
 import { TilburgLink } from '@molecules';
 import { useNavigate } from 'react-router';
 
@@ -20,7 +20,7 @@ const TilburgHero = () => {
     >
       <TilburgContainer>
         <TilburgCard blue padding='lg'>
-          <TilburgSearchbox
+          <TilburgSearchBox
             onSubmitCallback={submitSearch}
             page='home'
             label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}

@@ -10,7 +10,7 @@ import { LABELS, VISUALS } from '@constants';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 
-export const TilburgSearchbox = ({
+export const TilburgSearchBox = ({
   page,
   small,
   label,
@@ -87,4 +87,4 @@ export const TilburgSearchbox = ({
   );
 };
 
-export default withStore(observer(TilburgSearchbox));
+export default withStore(observer(TilburgSearchBox));
