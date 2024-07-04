@@ -3,12 +3,13 @@ import { LABELS, VISUALS } from '@constants';
 import { TilburgCard, TilburgFlex } from '@atoms';
 
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
+import acFormatDate from '@src/utilities/ac-format-date';
 
 const TilburgSearchResult = ({
   skeleton,
   title,
   content,
-  date,
+  publicationDate,
   category,
   themes,
   _id,
@@ -21,11 +22,13 @@ const TilburgSearchResult = ({
         <TilburgFlex alignItems='center' spacing='sm'>
           {themes?.length > 0 && (
             <>
-              <StatusBadge>{themes[0]?.hoofdthema}</StatusBadge>
+              <StatusBadge>{themes[0]?.title}</StatusBadge>
               <VISUALS.ELLIPSE />
             </>
           )}
-          <Paragraph small>{date}</Paragraph>
+          <Paragraph small>
+            {acFormatDate(publicationDate, 'YYYY-MM-DD', 'DD MMMM YYYY')}
+          </Paragraph>
           <VISUALS.ELLIPSE />
           <Paragraph small>{category}</Paragraph>
         </TilburgFlex>

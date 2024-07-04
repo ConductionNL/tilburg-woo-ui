@@ -8,11 +8,11 @@ let app = {};
 const LIMIT = 15;
 
 const DEFAULT_SEARCH_QUERY = {
-  categorie: [],
+  category: [],
   _limit: LIMIT,
   _page: 1,
-  'publicatiedatum[after]': null,
-  'publicatiedatum[before]': null,
+  'publicationDate[after]': null,
+  'publicationDate[before]': null,
 };
 
 export class DocumentsStore {
@@ -42,18 +42,13 @@ export class DocumentsStore {
 
   @observable
   defaultQuery = {
-    'organisatie.oin':
+    'organization.oin':
       process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN || '00000001001172773000',
   };
 
   @observable
   aggregationsQuery = {
-    _queries: ['categorie', 'themas'],
-  };
-
-  @observable
-  themesQuery = {
-    '_queries[]': 'thema',
+    _queries: ['category', 'theme'],
   };
 
   @observable
@@ -71,7 +66,7 @@ export class DocumentsStore {
   }
 
   @computed
-  get all_themes() {
+  get all_themess() {
     return this.themes;
   }
 
@@ -96,25 +91,18 @@ export class DocumentsStore {
 
   @computed
   get all_documents() {
-    return this.items.map((item) => ({
-      _id: item._id,
-      title: item.titel,
-      content: item.samenvatting,
-      date: acFormatDate(item.publicatiedatum, 'YYYY-MM-DD', 'DD MMMM YYYY'),
-      category: item.categorie,
-      themes: item.themas,
-    }));
+    return this.items;
   }
 
   @action
   category_checked = (id) => {
-    return this.query.categorie.includes(id);
+    return this.query.category.includes(id);
   };
 
   @action
   setQueryDate = (key, value) => {
     this.setPage(1);
-    this.query[`publicatiedatum[${key}]`] = value;
+    this.query[`publicationDate[${key}]`] = value;
   };
 
   @action
@@ -135,14 +123,14 @@ export class DocumentsStore {
 
   @action
   toggleSearchArrayValue = (key, value) => {
-    const index = this.query[key].indexOf(value);
+    const index = this.query[key]?.indexOf(value);
     // Remove item if we find it in the array.
     if (index !== -1) {
       this.query[key] = this.query[key].filter((cat) => cat !== value);
       return;
     }
 
-    if (key === 'categorie') {
+    if (key === 'category') {
       this.query._page = 1;
     }
 
@@ -155,13 +143,14 @@ export class DocumentsStore {
   };
 
   @action
-  getSearchPageURL = () => {
+  getSearchPageURL = (params = {}) => {
     return `/zoeken?${AcBuildURLSearchParams({
       search: this.query.search,
-      categorie: this.query.categorie,
+      category: this.query.category,
       page: this.query._page,
-      'publicatiedatum[before]': this.query['publicatiedatum[before]'],
-      'publicatiedatum[after]': this.query['publicatiedatum[after]'],
+      'publicationDate[before]': this.query['publicationDate[before]'],
+      'publicationDate[after]': this.query['publicationDate[after]'],
+      ...params,
     })}`;
   };
 
@@ -214,6 +203,12 @@ export class DocumentsStore {
   };
 
   @action
+  resetAggregations = () => {
+    this.categories = [];
+    this.themes = [];
+  };
+
+  @action
   fetchAggregations = async () => {
     this.loading.status = true;
 
@@ -224,8 +219,8 @@ export class DocumentsStore {
         ).toString()
       )
       .then((response) => {
-        this.categories = response.categorie;
-        this.themes = response.themas;
+        this.categories = response.category;
+        this.themes = response.themes;
       })
       .catch((e) => console.error(e))
       .finally(() => {

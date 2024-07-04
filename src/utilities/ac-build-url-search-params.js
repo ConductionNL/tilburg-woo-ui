@@ -1,6 +1,5 @@
 export const AcBuildURLSearchParams = (data) => {
   const params = new URLSearchParams();
-
   Object.entries(data).forEach(([key, value]) => {
     if (value === null || value === undefined) {
       return;
@@ -13,6 +12,5 @@ export const AcBuildURLSearchParams = (data) => {
 
     params.append(key, window.encodeURI(value.toString()));
   });
-
   return params.toString();
 };

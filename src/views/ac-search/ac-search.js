@@ -32,13 +32,14 @@ const AcSearch = ({ store: { documents } }) => {
     getSearchPageURL,
     all_documents,
     resetSearchQuery,
+    resetAggregations,
   } = documents;
 
   const setQuery = () => {
     updateQuery({
       _page: searchParams.get('page') || 1,
       search: searchParams.get('search') || '',
-      categorie: searchParams.getAll('categorie[]'),
+      category: searchParams.getAll('category[]'),
       'publicatiedatum[before]': searchParams.get('publicatiedatum[before]'),
       'publicatiedatum[after]': searchParams.get('publicatiedatum[after]'),
     });
@@ -49,10 +50,14 @@ const AcSearch = ({ store: { documents } }) => {
     fetchAggregations();
     fetchDocuments();
 
-    return () => resetSearchQuery();
+    return () => {
+      resetSearchQuery();
+      resetAggregations();
+    };
   }, []);
 
   useEffect(() => {
+    console.log('Search query changed: ' + JSON.stringify(search_query));
     if (
       getSearchPageURL() === location.pathname + location.search ||
       search_query.search === undefined
@@ -60,11 +65,14 @@ const AcSearch = ({ store: { documents } }) => {
       return;
     }
 
+    console.log(getSearchPageURL());
+
     navigate(getSearchPageURL());
   }, [search_query]);
 
   // On GET params change.
   useEffect(() => {
+    console.log('Location changed: ' + location.search);
     if (search_query.search === undefined) {
       return;
     }

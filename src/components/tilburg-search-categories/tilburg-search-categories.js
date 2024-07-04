@@ -52,6 +52,7 @@ const TilburgSearchCategories = ({ store: { documents } }) => {
 
   return (
     <>
+      {JSON.stringify(documents.search_query.categories)}
       <TilburgFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
         <TilburgButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
@@ -66,7 +67,7 @@ const TilburgSearchCategories = ({ store: { documents } }) => {
           count={category.count}
           value={category._id}
           checked={category_checked(category._id)}
-          onChange={() => toggleSearchArrayValue('categorie', category._id)}
+          onChange={() => toggleSearchArrayValue('category', category._id)}
         />
       ))}
     </>

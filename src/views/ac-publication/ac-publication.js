@@ -13,10 +13,12 @@ import {
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
+import { AcBuildURLSearchParams } from '@utils';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
-  const { fetchDocument, resetDocument, get_single, loading } = documents;
+  const { fetchDocument, resetDocument, get_single, loading, getSearchPageURL } =
+    documents;
 
   useEffect(() => {
     fetchDocument(id);
@@ -24,7 +26,7 @@ const AcPublication = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.titel || 'Open Tilburg | Publicatie';
+    document.title = get_single?.title || 'Open Tilburg | Publicatie';
   }, [get_single]);
 
   if (loading.status || !get_single) {
@@ -33,9 +35,9 @@ const AcPublication = ({ store: { documents } }) => {
 
   const mapAttachmentRow = (row) => {
     return [
-      <TilburgLink>
+      <TilburgLink to={row.url}>
         <VISUALS.DOCUMENT />
-        <Link href={row.url}>{row.titel}</Link>
+        <Link>{row.title || 'Naamloos bestand'}</Link>
       </TilburgLink>,
       row.type || LABELS.UNKNOWN,
       row.datum || LABELS.UNKNOWN,
@@ -46,12 +48,12 @@ const AcPublication = ({ store: { documents } }) => {
     <>
       <TilburgContainer compact margin='xl'>
         <TilburgFlex column spacing={'lg'}>
-          <Heading>{get_single?.titel}</Heading>
+          <Heading>{get_single?.title}</Heading>
 
           <TilburgCard blue>
             <Heading level={2}>{LABELS.SUMMARY}</Heading>
             <Paragraph>
-              {get_single?.samenvatting || LABELS.SUMMARY_UNAVAILABLE}
+              {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
             </Paragraph>
           </TilburgCard>
 
@@ -64,7 +66,7 @@ const AcPublication = ({ store: { documents } }) => {
             <Heading level={2}>Bijlagen</Heading>
             <TilburgTable
               header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-              rows={get_single.bijlagen.map((attachment) =>
+              rows={get_single.attachments?.map((attachment) =>
                 mapAttachmentRow(attachment)
               )}
             />
@@ -75,7 +77,16 @@ const AcPublication = ({ store: { documents } }) => {
             <TilburgTable
               rows={[
                 ['Zaaknummer', 1922973],
-                [LABELS.CATEGORY, <Link>Woo-verzoek</Link>],
+                [
+                  LABELS.CATEGORY,
+                  <TilburgLink
+                    href={getSearchPageURL({
+                      category: [get_single?.category],
+                    })}
+                  >
+                    {get_single?.category}
+                  </TilburgLink>,
+                ],
                 ['Onderwerp', <Link>Duurzaamheid</Link>],
               ]}
             />
