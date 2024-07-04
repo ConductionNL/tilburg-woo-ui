@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
 
 import { withStore } from '@stores';
-import { ROUTES, VISUALS } from '@constants';
+import { BREADCRUMBS, ROUTES, VISUALS } from '@constants';
 
 import {
   BreadcrumbNav,
@@ -17,14 +17,15 @@ const TilburgBreadcrumbs = ({ store: { pages, documents } }) => {
   const location = useLocation();
 
   const getBreadcrumbs = useMemo(() => {
-    if (location.pathname.startsWith('/publicatie/')) {
-      return [
-        { label: 'Zoeken', href: '/zoeken' },
-        { label: get_single_document?.titel },
-      ];
+    if (location.pathname.startsWith('/zoeken')) {
+      return [BREADCRUMBS.SEARCH];
     }
 
-    if (get_single_page.name) {
+    if (location.pathname.startsWith('/publicatie/')) {
+      return [BREADCRUMBS.SEARCH, { label: get_single_document?.titel }];
+    }
+
+    if (get_single_page?.name) {
       return [
         {
           label: get_single_page.name,
@@ -33,12 +34,17 @@ const TilburgBreadcrumbs = ({ store: { pages, documents } }) => {
       ];
     }
 
-    return [
-      get_single_page.name ||
-        Object.values(ROUTES).find((route) => route.path === location.pathname)
-          ?.label || { label: 'Zoeken', href: '/zoeken' },
-    ];
-  }, [get_single_document, location]);
+    if (get_single_document?.name) {
+      return [
+        {
+          label: get_single_document.name,
+          href: get_single_document.url,
+        },
+      ];
+    }
+
+    return [];
+  }, [get_single_document, get_single_page, location]);
 
   return (
     <BreadcrumbNav>

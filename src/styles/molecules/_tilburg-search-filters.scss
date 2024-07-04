@@ -69,6 +69,11 @@
     }
   }
 
+  &__sort{
+    padding-block-end: var(--tilburg-space-block-rat);
+    border-bottom: 1px solid var(--tilburg-color-gray-300);
+  }
+
   &__category {
     padding-block: var(--tilburg-space-block-rat);
     border-color: var(--tilburg-color-gray-300);

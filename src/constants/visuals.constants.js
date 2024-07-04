@@ -45,6 +45,9 @@ const QUESTION_MARK = loadable(() =>
 const SEARCH = loadable(() =>
   import('-!svg-react-loader!@assets/images/search.svg')
 );
+const DOCUMENT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/document.svg')
+);
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -52,6 +55,7 @@ export const VISUALS = {
   CLOSE,
   CLOSE_SMALL,
   CONTACT,
+  DOCUMENT,
   ELLIPSE,
   EXTERNAL_LINK,
   EXTERNAL_LINK_BLUE,
