@@ -8,7 +8,11 @@ import { withStore } from '@stores';
 import { TilburgFlex } from '@atoms';
 import { TilburgButton } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
-import { TilburgSearchCategories, TilburgSearchDate } from '@components';
+import {
+  TilburgSearchCategories,
+  TilburgSearchDate,
+  TilburgSearchSubjects,
+} from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import TilburgSearchSort from '@components/tilburg-search-sort/tilburg-search-sort';
@@ -88,7 +92,15 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
               {LABELS.CLOSE}
             </TilburgButton>
           </TilburgFlex>
-          {mobileFiltersOpen && <TilburgSearchSort />}
+          {mobileFiltersOpen && (
+            <TilburgFlex
+              column
+              spacing='xs'
+              className='tilburg-search-filters__sort'
+            >
+              <TilburgSearchSort />
+            </TilburgFlex>
+          )}
           <TilburgSearchDate />
           {all_categories?.length > 0 && (
             <TilburgFlex
@@ -99,6 +111,13 @@ const TilburgSearchFilters = ({ store: { documents } }) => {
               <TilburgSearchCategories categories={all_categories} />
             </TilburgFlex>
           )}
+          <TilburgFlex
+            column
+            spacing='xs'
+            className='tilburg-search-filters__subjects'
+          >
+            <TilburgSearchSubjects />
+          </TilburgFlex>
         </TilburgFlex>
         {mobileFiltersOpen && (
           <div

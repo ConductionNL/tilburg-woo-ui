@@ -11,6 +11,7 @@ export const LABELS = {
   CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
   TO_MAIN_CONTENT: 'Direct naar de inhoud',
   HIGHLIGHTED: 'Uitgelicht',
+  SUBJECTS: 'Onderwerpen',
 
   CHOSEN_FILTERS: 'Gekozen filters',
   NO_RESULTS: 'Geen resultaten gevonden',

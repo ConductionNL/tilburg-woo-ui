@@ -42,9 +42,11 @@ const TilburgSearchCategories = loadable(() =>
 const TilburgSearchDate = loadable(() =>
   import('@components/tilburg-search-date/tilburg-search-date')
 );
-
 const TilburgSearchSort = loadable(() =>
   import('@components/tilburg-search-sort/tilburg-search-sort')
+);
+const TilburgSearchSubjects = loadable(() =>
+  import('@components/tilburg-search-subjects/tilburg-search-subjects')
 );
 
 export {
@@ -64,4 +66,5 @@ export {
   TilburgSearchCategories,
   TilburgSearchDate,
   TilburgSearchSort,
+  TilburgSearchSubjects,
 };
