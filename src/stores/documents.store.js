@@ -5,10 +5,11 @@ import { AcBuildURLSearchParams } from '@utils';
 
 let app = {};
 
+const LIMIT = 15;
+
 const DEFAULT_SEARCH_QUERY = {
   categorie: [],
-  // @TODO DEFAULT 15
-  _limit: 3,
+  _limit: LIMIT,
   _page: 1,
   'publicatiedatum[after]': null,
   'publicatiedatum[before]': null,
@@ -67,6 +68,7 @@ export class DocumentsStore {
   get all_categories() {
     return this.categories;
   }
+
   @computed
   get all_themes() {
     return this.themes;
