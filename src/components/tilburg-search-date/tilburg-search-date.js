@@ -20,12 +20,14 @@ const TilburgSearchDate = ({ store: { documents } }) => {
   return (
     <TilburgFlex column spacing='sm' className='tilburg-search-filters__date'>
       <TilburgFormField
+        id={'date_after'}
         defaultValue={documents.search_query['publicatiedatum[after]']}
         label='Datum vanaf (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('after', value)}
       />
       <TilburgFormField
+        id={'date_before'}
         defaultValue={documents.search_query['publicatiedatum[before]']}
         label='Datum tot en met (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'

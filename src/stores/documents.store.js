@@ -42,7 +42,8 @@ export class DocumentsStore {
 
   @observable
   defaultQuery = {
-    'organisatie.oin': '00000001001172773000',
+    'organisatie.oin':
+      process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN || '00000001001172773000',
   };
 
   @observable

@@ -11,6 +11,7 @@ const TilburgFormField = ({
   onBlur,
   defaultValue,
   placeholder,
+  id,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -22,10 +23,11 @@ const TilburgFormField = ({
 
   return (
     <FormField type={type}>
-      <FormLabel>
+      <FormLabel for={id}>
         <Heading level={4}>{label}</Heading>
       </FormLabel>
       <Textbox
+        id={id}
         defaultValue={defaultValue}
         placeholder={placeholder}
         onBlur={onBlurHandler}
