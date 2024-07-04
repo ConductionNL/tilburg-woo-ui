@@ -46,17 +46,21 @@ export const TilburgSearchBox = ({
     toggleMobileFilters();
   };
 
-  const _CLASSES = clsx('tilburg-searchbox', page && `tilburg-searchbox--${page}`, {
-    'tilburg-searchbox--small': small,
-    'tilburg-searchbox--spacing': spacing,
-  });
+  const _CLASSES = clsx(
+    'tilburg-search-box',
+    page && `tilburg-search-box--${page}`,
+    {
+      'tilburg-search-box--small': small,
+      'tilburg-search-box--spacing': spacing,
+    }
+  );
 
   return (
     <>
       <form className={_CLASSES} onSubmit={submitCallback}>
         {renderHeading}
 
-        <div className='tilburg-searchbox__search'>
+        <div className='tilburg-search-box__search'>
           <Textbox
             placeholder={LABELS.ENTER_QUERY}
             onChange={changeCallback}
@@ -64,13 +68,13 @@ export const TilburgSearchBox = ({
           />
           <PrimaryActionButton type='submit'>
             <VISUALS.SEARCH />
-            {LABELS.SEARCH}
+            <span>{LABELS.SEARCH}</span>
           </PrimaryActionButton>
         </div>
       </form>
 
       {page === 'search' && (
-        <div className='tilburg-searchbox__actions'>
+        <div className='tilburg-search-box__actions'>
           <SecondaryActionButton
             id='filters-toggle'
             onClick={handleMobileFilters}

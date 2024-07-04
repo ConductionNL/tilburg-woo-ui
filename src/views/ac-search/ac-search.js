@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
 import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { TilburgSearchBox } from '@components';
+import { TilburgSearchBox, TilburgSearchSort } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -164,6 +164,9 @@ const AcSearch = ({ store: { documents } }) => {
               {screenReaderText}
             </div>
             <TilburgFlex column spacing='sm' margin='sm'>
+              <TilburgFlex justifyContent='end'>
+                <TilburgSearchSort type='alt' />
+              </TilburgFlex>
               {renderDocuments}
               {pagination?.pages > 1 && renderPagination}
             </TilburgFlex>

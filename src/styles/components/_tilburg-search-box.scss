@@ -1,5 +1,6 @@
 @use '../global/breakpoints' as *;
 @use '../global/mixins/respond' as *;
+@use '../global/mixins/sr-only' as *;
 
 .tilburg-search-box {
   background: var(--tilburg-color-blue-100);
@@ -70,10 +71,14 @@
 
     @include respond-max($screen-md) {
       justify-content: space-between;
-    }
 
-    input {
-      max-inline-size: 100%;
+      input {
+        max-inline-size: 100%;
+      }
+
+      button span {
+        @include sr-only;
+      }
     }
 
     button {
