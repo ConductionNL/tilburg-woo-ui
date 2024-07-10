@@ -40,8 +40,8 @@ const TilburgSearchSort = ({ store: { documents }, type }) => {
         alignItems={type === 'alt' ? 'center' : null}
         spacing={type === 'alt' ? 'sm' : null}
       >
-        <FormLabel>{label}</FormLabel>
-        <Select onChange={onChangeCallback}>
+        <FormLabel for='sorting'>{label}</FormLabel>
+        <Select id='sorting' onChange={onChangeCallback}>
           <SelectOption value='default'>Meest relevant</SelectOption>
           <SelectOption
             selected={get_order?.publicationDate === 'asc'}
