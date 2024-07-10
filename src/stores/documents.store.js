@@ -1,6 +1,5 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
-import acFormatDate from '@src/utilities/ac-format-date';
 import { AcBuildURLSearchParams } from '@utils';
 
 let app = {};
@@ -8,11 +7,7 @@ let app = {};
 const LIMIT = 15;
 
 const DEFAULT_SEARCH_QUERY = {
-  category: [],
   _limit: LIMIT,
-  _page: 1,
-  'publicationDate[after]': null,
-  'publicationDate[before]': null,
 };
 
 export class DocumentsStore {
@@ -66,13 +61,15 @@ export class DocumentsStore {
   }
 
   @computed
-  get all_themess() {
+  get all_themes() {
     return this.themes;
   }
 
   @computed
   get search_query() {
-    return { ...this.defaultQuery, ...this.query };
+    const query = { ...this.defaultQuery, ...this.query };
+
+    return query;
   }
 
   get aggregations_query() {
@@ -82,6 +79,11 @@ export class DocumentsStore {
   @computed
   get is_loading() {
     return this.loading.status;
+  }
+
+  @computed
+  get get_order() {
+    return this.query._order;
   }
 
   @computed
@@ -96,7 +98,7 @@ export class DocumentsStore {
 
   @action
   category_checked = (id) => {
-    return this.query.category.includes(id);
+    return this.query.category?.includes(id);
   };
 
   @action
@@ -122,7 +124,23 @@ export class DocumentsStore {
   };
 
   @action
+  resetSort = () => {
+    const newObject = { ...this.query };
+    delete newObject._order;
+    this.query = newObject;
+  };
+
+  @action
+  setSort = (key, value) => {
+    this.updateQuery({ _order: { [key]: value } });
+  };
+
+  @action
   toggleSearchArrayValue = (key, value) => {
+    if (!this.query[key]) {
+      this.query[key] = [];
+    }
+
     const index = this.query[key]?.indexOf(value);
     // Remove item if we find it in the array.
     if (index !== -1) {
@@ -131,7 +149,7 @@ export class DocumentsStore {
     }
 
     if (key === 'category') {
-      this.query._page = 1;
+      this.setPage(1);
     }
 
     this.query[key] = [...this.query[key], value];
@@ -147,9 +165,10 @@ export class DocumentsStore {
     return `/zoeken?${AcBuildURLSearchParams({
       search: this.query.search,
       category: this.query.category,
-      page: this.query._page,
+      _page: this.query._page,
       'publicationDate[before]': this.query['publicationDate[before]'],
       'publicationDate[after]': this.query['publicationDate[after]'],
+      _order: this.query._order,
       ...params,
     })}`;
   };
@@ -159,9 +178,7 @@ export class DocumentsStore {
     this.loading.status = true;
 
     app.store.api.documents
-      .search(
-        new URLSearchParams(AcBuildURLSearchParams(this.search_query)).toString()
-      )
+      .search(this.search_query)
       .then((response) => {
         this.items = response.results;
         this.pagination = response;
@@ -192,6 +209,7 @@ export class DocumentsStore {
         this.loading.status = false;
       });
   };
+
   @action
   resetDocument = () => {
     this.single = null;
@@ -211,13 +229,8 @@ export class DocumentsStore {
   @action
   fetchAggregations = async () => {
     this.loading.status = true;
-
     app.store.api.documents
-      .searchAggregations(
-        new URLSearchParams(
-          AcBuildURLSearchParams(this.aggregations_query)
-        ).toString()
-      )
+      .searchAggregations(this.aggregations_query)
       .then((response) => {
         this.categories = response.category;
         this.themes = response.themes;

@@ -22,7 +22,7 @@ const TilburgBreadcrumbs = ({ store: { pages, documents } }) => {
     }
 
     if (location.pathname.startsWith('/publicatie/')) {
-      return [BREADCRUMBS.SEARCH, { label: get_single_document?.titel }];
+      return [BREADCRUMBS.SEARCH, { label: get_single_document?.title }];
     }
 
     if (get_single_page?.name) {

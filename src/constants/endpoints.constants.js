@@ -9,7 +9,7 @@ const PUBLICATIONS = '/publications';
 // V1
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
-    SEARCH: (_params) => `${API}${PUBLICATIONS}?${_params}`, // GET
+    SEARCH: `${API}${PUBLICATIONS}`, // GET
     SINGLE: (_id) => `${API}${PUBLICATIONS}/${_id}`, // GET
   },
   FAQS: {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 
@@ -11,14 +11,27 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { TilburgFlex } from '@atoms';
+import { LABELS } from '@constants';
 
 const TilburgSearchSort = ({ store: { documents }, type }) => {
+  const { setSort, resetSort, get_order } = documents;
+
   const label = useMemo(() => {
     if (type === 'alt') {
-      return <Paragraph>Sorteren</Paragraph>;
+      return <Paragraph>{LABELS.SORT}</Paragraph>;
     }
-    return <Heading level={4}>Sorteren</Heading>;
+    return <Heading level={4}>{LABELS.SORT}</Heading>;
   }, [type]);
+
+  const onChangeCallback = (e) => {
+    const value = e.target.value.split('|');
+    if (value.length !== 2) {
+      resetSort();
+      return;
+    }
+
+    setSort(...value);
+  };
 
   return (
     <FormField type='select'>
@@ -28,10 +41,20 @@ const TilburgSearchSort = ({ store: { documents }, type }) => {
         spacing={type === 'alt' ? 'sm' : null}
       >
         <FormLabel>{label}</FormLabel>
-        <Select>
-          <SelectOption value='relevance'>Meest relevant</SelectOption>
-          <SelectOption value='publicatiedatum'>Datum - oud naar nieuw</SelectOption>
-          <SelectOption value='publicatiedatum'>Datum - nieuw naar oud</SelectOption>
+        <Select onChange={onChangeCallback}>
+          <SelectOption value='default'>Meest relevant</SelectOption>
+          <SelectOption
+            selected={get_order?.publicationDate === 'asc'}
+            value='publicationDate|asc'
+          >
+            Datum - oud naar nieuw
+          </SelectOption>
+          <SelectOption
+            selected={get_order?.publicationDate === 'desc'}
+            value='publicationDate|desc'
+          >
+            Datum - nieuw naar oud
+          </SelectOption>
         </Select>
       </TilburgFlex>
     </FormField>

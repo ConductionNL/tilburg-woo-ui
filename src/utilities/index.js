@@ -89,6 +89,7 @@ export { AcNavigator } from './ac-navigator';
 export { AcRippleEffect } from './ac-ripple';
 export { AcSanitize } from './ac-sanitize';
 export { AcScrollTo } from './ac-scroll-to';
+export { AcSearchParamsToObject } from './ac-search-params-to-object';
 export { AcScrollIntoView } from './ac-scroll-into-view';
 export { AcSetDocumentTitle, AcGetDocumentTitle } from './ac-set-document-title';
 export { AcSetHash, AcGetHash, AcRemoveHash } from './ac-get-set-hash';

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
+import { AcSearchParamsToObject } from '@utils';
 
 const AcSearch = ({ store: { documents } }) => {
   const location = useLocation();
@@ -36,17 +37,12 @@ const AcSearch = ({ store: { documents } }) => {
   } = documents;
 
   const setQuery = () => {
-    updateQuery({
-      _page: searchParams.get('page') || 1,
-      search: searchParams.get('search') || '',
-      category: searchParams.getAll('category[]'),
-      'publicatiedatum[before]': searchParams.get('publicatiedatum[before]'),
-      'publicatiedatum[after]': searchParams.get('publicatiedatum[after]'),
-    });
+    updateQuery(AcSearchParamsToObject(searchParams));
   };
 
   useEffect(() => {
     setQuery();
+
     fetchAggregations();
     fetchDocuments();
 
@@ -57,26 +53,15 @@ const AcSearch = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    console.log('Search query changed: ' + JSON.stringify(search_query));
-    if (
-      getSearchPageURL() === location.pathname + location.search ||
-      search_query.search === undefined
-    ) {
+    if (getSearchPageURL() === location.pathname + location.search) {
       return;
     }
-
-    console.log(getSearchPageURL());
 
     navigate(getSearchPageURL());
   }, [search_query]);
 
   // On GET params change.
   useEffect(() => {
-    console.log('Location changed: ' + location.search);
-    if (search_query.search === undefined) {
-      return;
-    }
-
     setQuery();
     fetchDocuments();
   }, [location.search]);

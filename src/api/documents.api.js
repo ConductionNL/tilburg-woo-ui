@@ -8,7 +8,7 @@ export class DocumentsAPI {
   }
 
   search(params) {
-    return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH(params)).then(
+    return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH, { params }).then(
       (response) => response.data
     );
   }
@@ -20,7 +20,8 @@ export class DocumentsAPI {
   }
 
   searchAggregations(params) {
-    return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH(params), {
+    return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH, {
+      params,
       headers: {
         Accept: 'application/json+aggregations',
       },

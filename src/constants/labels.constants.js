@@ -12,7 +12,7 @@ export const LABELS = {
   TO_MAIN_CONTENT: 'Direct naar de inhoud',
   HIGHLIGHTED: 'Uitgelicht',
   SUBJECTS: 'Onderwerpen',
-
+  SORT: 'Sorteren',
   CHOSEN_FILTERS: 'Gekozen filters',
   NO_RESULTS: 'Geen resultaten gevonden',
   REFINE_SEARCH: 'Probeer een andere zoekterm of pas de filters aan.',
