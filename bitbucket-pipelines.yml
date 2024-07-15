@@ -24,8 +24,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-test:staging .
-            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-test:staging
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-staging:latest .
+            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-staging:latest
           services:
             - docker
   branches:
@@ -51,8 +51,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-test:dev .
-            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-test:dev
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-develop:latest .
+            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-develop:latest
           services:
             - docker
     release/*:
@@ -77,8 +77,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-test:staging .
-            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-test:staging
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-staging:latest .
+            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-staging:latest
           services:
             - docker
   custom: # Pipelines that are triggered manually
@@ -104,8 +104,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-test:prod .
-            - docker push $DOCKER_DOMAIN/tilburg-woo-ui-test:prod
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui:$BITBUCKET_COMMIT .
+            - docker push $DOCKER_DOMAIN/tilburg-woo-ui:$BITBUCKET_COMMIT
           services:
               - docker
 definitions:
