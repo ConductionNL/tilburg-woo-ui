@@ -1,7 +1,8 @@
 @use '../global/breakpoints' as *;
 @use '../global/mixins/respond' as *;
+@use '../global/mixins/sr-only' as *;
 
-.tilburg-searchbox {
+.tilburg-search-box {
   background: var(--tilburg-color-blue-100);
   display: flex;
   align-items: center;
@@ -14,7 +15,7 @@
   &--small {
     display: block;
 
-    .tilburg-searchbox__search {
+    .tilburg-search-box__search {
       gap: var(--tilburg-space-block-snail);
     }
   }
@@ -24,11 +25,11 @@
     align-items: flex-start;
     gap: var(--tilburg-space-block-rabbit);
 
-    .utrecht-textbox {
+    .utrecht-text-box {
       max-inline-size: unset;
     }
 
-    .tilburg-searchbox__search {
+    .tilburg-search-box__search {
       flex-direction: row;
       gap: var(--tilburg-space-block-mouse);
     }
@@ -36,7 +37,7 @@
     @include respond-max($screen-sm) {
       gap: var(--tilburg-space-block-mouse);
 
-      .tilburg-searchbox__search {
+      .tilburg-search-box__search {
         inline-size: 100%;
         flex-direction: column;
         gap: var(--tilburg-space-block-mouse);
@@ -68,6 +69,18 @@
     gap: var(--tilburg-space-block-mouse);
     inline-size: 100%;
 
+    @include respond-max($screen-md) {
+      justify-content: space-between;
+
+      input {
+        max-inline-size: 100%;
+      }
+
+      button span {
+        @include sr-only;
+      }
+    }
+
     button {
       flex-shrink: 0;
     }
@@ -78,6 +91,15 @@
 
     @include respond-max($screen-md) {
       display: block;
+
+      // custom overrides in favor of design rather then NLDS
+      button {
+        inline-size: 100%;
+        max-inline-size: 100%;
+        color: var(--tilburg-color-blue-400);
+        background-color: transparent;
+        border-color: var(--tilburg-color-blue-400);
+      }
     }
   }
 }

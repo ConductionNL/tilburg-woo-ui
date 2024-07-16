@@ -14,8 +14,8 @@ const AcContent = ({ store: { pages } }) => {
   const location = useLocation();
 
   useEffect(() => {
-    resetPage();
     fetchPage(location?.pathname);
+    return () => resetPage();
   }, [location]);
 
   if (loading.status) {

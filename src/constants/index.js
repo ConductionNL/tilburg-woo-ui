@@ -1,11 +1,12 @@
 // Imports => Constants
 export { AUTH_KEYS, AUTH_MODES } from './auth.constants';
+export { BREADCRUMBS } from './breadcrumbs.constants';
 export { DATETIME_FORMATS } from './datetime.constants';
 export { ENDPOINTS } from './endpoints.constants';
 export { ENVIRONMENTS } from './environments.constants';
 export { ICONS } from './icons.constants';
 export { KEYS } from './keys.constants';
-export { LABELS } from './labels.constants';
+export { LABELS, LABELS_DYNAMIC } from './labels.constants';
 export { LOADING_MESSAGES, ADDITIONAL_ERROR_MESSAGE } from './messages.constants';
 export { MIMETYPES } from './mimetypes.constants';
 export { RISKS, RISK_LEVEL } from './risks.constants';

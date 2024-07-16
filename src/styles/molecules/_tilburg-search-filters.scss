@@ -1,6 +1,4 @@
 .tilburg-search-filters {
-  --mobile-width: 350px;
-
   @include respond-max($screen-md) {
     position: fixed;
     display: none;
@@ -9,7 +7,7 @@
     z-index: 10;
 
     &.open {
-      display: block;
+      display: flex;
     }
   }
 
@@ -18,8 +16,11 @@
   }
 
   &__wrapper {
+    inline-size: 265px;
+
     @include respond-max($screen-md) {
-      inline-size: min(90%, var(--mobile-width));
+      position: relative;
+      inline-size: min(90%, 350px);
       min-block-size: 100dvh;
       padding: var(--tilburg-space-block-mouse);
       background-color: var(--tilburg-color-white);
@@ -27,6 +28,7 @@
       overflow-x: clip;
       overflow-y: scroll;
       overscroll-behavior-y: contain;
+      z-index: 2;
 
       > div:first-of-type {
         position: relative;
@@ -67,6 +69,11 @@
     }
   }
 
+  &__sort {
+    padding-block-end: var(--tilburg-space-block-rat);
+    border-bottom: 1px solid var(--tilburg-color-gray-300);
+  }
+
   &__category {
     padding-block: var(--tilburg-space-block-rat);
     border-color: var(--tilburg-color-gray-300);
@@ -92,10 +99,11 @@
       display: block;
       inset-block-end: 0;
       inset-inline-start: 0;
-      inline-size: min(90%, var(--mobile-width));
+      inline-size: min(90%, 350px);
       padding: var(--tilburg-space-row-mouse);
       background-color: var(--tilburg-color-white);
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 3;
     }
   }
 }

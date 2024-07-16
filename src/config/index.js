@@ -6,6 +6,8 @@ const _api_ = process.env.API_URL;
 const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 
 const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
+const _api_commonground_organization_oin_ =
+  process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
 
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;

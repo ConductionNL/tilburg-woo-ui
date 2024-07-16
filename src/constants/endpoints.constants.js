@@ -4,12 +4,13 @@ const API = '/api';
 const FAQS = '/faqs';
 const PUBLIC = '/public';
 const PAGES = '/pages';
-const PUBLICATIONS_NL = '/publicaties';
+const PUBLICATIONS = '/publications';
 
 // V1
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
-    SEARCH: (_params) => `${API}${PUBLICATIONS_NL}?${_params}`, // GET
+    SEARCH: `${API}${PUBLICATIONS}`, // GET
+    SINGLE: (_id) => `${API}${PUBLICATIONS}/${_id}`, // GET
   },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET

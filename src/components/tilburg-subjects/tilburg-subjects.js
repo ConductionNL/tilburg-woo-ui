@@ -6,31 +6,33 @@ import { VISUALS } from '@constants';
 import { TilburgContainer, TilburgSection } from '@atoms';
 import { TilburgCardCategory, TilburgLink } from '@molecules';
 
-const TilburgSubjects = () => {
-  return (
-    <TilburgSection className='tilburg-subjects' spacing>
-      <TilburgContainer>
-        <div class='tilburg-subjects__heading'>
-          <Heading>Zoeken op onderwerp</Heading>
-          <Paragraph>
-            Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de
-            gemeente Tilburg.
-          </Paragraph>
-        </div>
-        <div class='tilburg-subjects__content'>
-          <TilburgCardCategory />
-          <TilburgCardCategory />
-          <TilburgCardCategory />
-        </div>
-        <div class='tilburg-subjects__more'>
-          <TilburgLink type='button'>
+const TilburgSubjects = ({
+  heading,
+  paragraph,
+  showLink = false,
+  subjects = [],
+}) => (
+  <TilburgSection className='tilburg-subjects' spacing>
+    <TilburgContainer>
+      <div className='tilburg-subjects__heading'>
+        <Heading>{heading}</Heading>
+        <Paragraph>{paragraph}</Paragraph>
+      </div>
+      <div className='tilburg-subjects__content'>
+        {subjects.map((subject, index) => (
+          <TilburgCardCategory key={index} {...subject} />
+        ))}
+      </div>
+      {showLink && (
+        <div className='tilburg-subjects__more'>
+          <TilburgLink to='/onderwerpen' type='button'>
             <VISUALS.LIST />
             Toon alle onderwerpen
           </TilburgLink>
         </div>
-      </TilburgContainer>
-    </TilburgSection>
-  );
-};
+      )}
+    </TilburgContainer>
+  </TilburgSection>
+);
 
 export default TilburgSubjects;

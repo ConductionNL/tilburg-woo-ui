@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useLocation } from 'react-router-dom';
 
 import { withStore } from '@stores';
-import { ROUTES, VISUALS } from '@constants';
+import { BREADCRUMBS, ROUTES, VISUALS } from '@constants';
 
 import {
   BreadcrumbNav,
@@ -11,30 +11,60 @@ import {
   BreadcrumbNavSeparator,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const TilburgBreadcrumbs = ({ store: { pages } }) => {
-  const { get_single, is_loading } = pages;
+const TilburgBreadcrumbs = ({ store: { pages, documents } }) => {
+  const { get_single: get_single_page } = pages;
+  const { get_single: get_single_document } = documents;
   const location = useLocation();
 
-  const getCurrentPageTitle = useMemo(
-    () =>
-      get_single.name ||
-      Object.values(ROUTES).find((route) => route.path === location.pathname)
-        ?.label ||
-      'Zoeken',
-    [is_loading]
-  );
+  const getBreadcrumbs = useMemo(() => {
+    if (location.pathname.startsWith('/zoeken')) {
+      return [BREADCRUMBS.SEARCH];
+    }
+
+    if (location.pathname.startsWith('/publicatie/')) {
+      return [BREADCRUMBS.SEARCH, { label: get_single_document?.title }];
+    }
+
+    if (get_single_page?.name) {
+      return [
+        {
+          label: get_single_page.name,
+          href: get_single_page.url,
+        },
+      ];
+    }
+
+    if (get_single_document?.name) {
+      return [
+        {
+          label: get_single_document.name,
+          href: get_single_document.url,
+        },
+      ];
+    }
+
+    return [];
+  }, [get_single_document, get_single_page, location]);
 
   return (
     <BreadcrumbNav>
       <BreadcrumbNavLink href='/' rel='home' index={0}>
         Home
       </BreadcrumbNavLink>
-      <BreadcrumbNavSeparator>
-        <VISUALS.CHEVRON_RIGHT />
-      </BreadcrumbNavSeparator>
-      <BreadcrumbNavLink disabled current>
-        {getCurrentPageTitle}
-      </BreadcrumbNavLink>
+      {getBreadcrumbs.map((breadcrumb, index) => (
+        <>
+          <BreadcrumbNavSeparator>
+            <VISUALS.CHEVRON_RIGHT />
+          </BreadcrumbNavSeparator>
+          <BreadcrumbNavLink
+            href={breadcrumb?.href}
+            disabled={index + 1 === getBreadcrumbs.length}
+            current={index + 1 === getBreadcrumbs.length}
+          >
+            {breadcrumb?.label}
+          </BreadcrumbNavLink>
+        </>
+      ))}
     </BreadcrumbNav>
   );
 };

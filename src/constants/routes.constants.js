@@ -7,11 +7,13 @@ import { AcUUID } from '@utils/ac-uuid';
 import { AcLockObject } from '@utils/ac-lock-object';
 
 // Imports => Views
-import { AcHome, AcSearch } from '@views';
+import { AcHome, AcPublication, AcSearch, AcSubjects } from '@views';
 
 export const PATHS = AcLockObject({
   HOME: '/',
+  PUBLICATION: '/publicatie/:id',
   SEARCH: '/zoeken/:query?',
+  SUBJECTS: '/onderwerpen',
 });
 
 export const ROUTES = {
@@ -21,8 +23,15 @@ export const ROUTES = {
     label: TITLES.HOME,
     path: PATHS.HOME,
     component: AcHome,
-    title: 'Open Tilburg',
-    icon: ICONS.HOME,
+    title: 'Home | Open Tilburg',
+  },
+  PUBLICATION: {
+    id: AcUUID(),
+    name: 'Publication',
+    label: TITLES.PUBLICATION,
+    path: PATHS.PUBLICATION,
+    component: AcPublication,
+    title: 'Open Tilburg | Publicatie',
   },
   SEARCH: {
     id: AcUUID(),
@@ -31,6 +40,14 @@ export const ROUTES = {
     path: PATHS.SEARCH,
     component: AcSearch,
     title: 'Open Tilburg | Zoeken',
+  },
+  SUBJECTS: {
+    id: AcUUID(),
+    name: 'Subjects',
+    label: TITLES.SUBJECTS,
+    path: PATHS.SUBJECTS,
+    component: AcSubjects,
+    title: 'Open Tilburg | Onderwerpen',
   },
 };
 

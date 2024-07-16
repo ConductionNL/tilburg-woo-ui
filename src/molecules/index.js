@@ -26,9 +26,11 @@ const TilburgSearchFilters = loadable(() =>
 const TilburgCheckbox = loadable(() =>
   import('@molecules/tilburg-checkbox/tilburg-checkbox')
 );
-
 const TilburgSelect = loadable(() =>
   import('@molecules/tilburg-select/tilburg-select')
+);
+const TilburgTable = loadable(() =>
+  import('@molecules/tilburg-table/tilburg-table')
 );
 
 export {
@@ -43,4 +45,5 @@ export {
   TilburgCheckbox,
   TilburgSelect,
   TilburgFormField,
+  TilburgTable,
 };

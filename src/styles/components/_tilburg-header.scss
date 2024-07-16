@@ -31,15 +31,25 @@
       align-items: center;
       gap: var(--tilburg-space-column-pig);
       color: var(--tilburg-color-white);
-      font-size: var(--tilburg-typography-font-size-2xl);
+      font-size: var(--tilburg-typography-font-size-3xl);
       font-weight: var(--tilburg-typography-font-weight-bold);
+      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
       text-decoration: none;
       text-transform: uppercase;
 
       @include respond-max($screen-md) {
         gap: var(--tilburg-space-column-rabbit);
+        font-size: var(--tilburg-typography-font-size-2xl);
+      }
+
+      @include respond-max($screen-sm) {
         font-size: var(--tilburg-typography-font-size-xl);
       }
+    }
+
+    // small visual correction due to font-family rendering
+    .logo-text {
+      margin-block-start: 1rem;
     }
 
     svg {

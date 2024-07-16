@@ -59,3 +59,19 @@ $grid-gutter-size: 1.6rem;
 		--conversations-sidebar-size: calc(100vh - 10rem);
 	}
 }
+
+// accordion styles conform Figma design
+.utrecht-accordion {
+	&__button-icon {
+		margin-block-start: var(--tilburg-space-column-ant);
+		margin-inline-end: var(--tilburg-space-column-mouse);
+
+		svg {
+			fill: var(--tilburg-color-pink-300);
+		}
+	}
+
+	&__panel {
+		padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
+	}
+}

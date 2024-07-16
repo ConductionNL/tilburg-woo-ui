@@ -8,7 +8,7 @@ const TilburgFeatured = () => {
     <TilburgSection className='tilburg-featured' spacing>
       <TilburgContainer>
         <div class='tilburg-featured__heading'>
-          <Heading>Uitgelicht</Heading>
+          <Heading>{LABELS.HIGHLIGHTED}</Heading>
         </div>
         <div class='tilburg-featured__content'>
           <TilburgSearchResult />

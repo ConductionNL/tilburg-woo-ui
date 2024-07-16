@@ -7,6 +7,16 @@
     gap: var(--tilburg-space-column-pig);
   }
 
+  &__heading {
+    p {
+      max-inline-size: 50ch;
+
+        @include respond-max($screen-md) {
+            max-inline-size: fit-content;
+        }
+    }
+  }
+
   &__content {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

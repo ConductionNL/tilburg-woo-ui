@@ -1,94 +1,159 @@
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
 import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
-import { TilburgSearchbox } from '@components';
-import { LABELS, VISUALS } from '@constants';
-import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module';
+import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
+import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { TilburgSearchBox, TilburgSearchSort } from '@components';
 import { withStore } from '@stores';
-import { toJS } from 'mobx';
-import { Pagination } from '@amsterdam/design-system-react';
 
-const SEARCH_RESULTS = 7;
+import {
+  Alert,
+  Heading,
+  Paragraph,
+} from '@utrecht/component-library-react/dist/css-module';
+import { Pagination } from '@amsterdam/design-system-react';
+import { AcSearchParamsToObject } from '@utils';
 
 const AcSearch = ({ store: { documents } }) => {
+  const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const { searchQuery, pagination } = documents;
+  const {
+    search_query,
+    pagination,
+    setPage,
+    updateQuery,
+    setSearchQuery,
+    fetchAggregations,
+    fetchDocuments,
+    is_loading,
+    getSearchPageURL,
+    all_documents,
+    resetSearchQuery,
+    resetAggregations,
+  } = documents;
+
+  const setQuery = () => {
+    updateQuery(AcSearchParamsToObject(searchParams));
+  };
 
   useEffect(() => {
-    documents.fetchDocuments();
-  }, [searchQuery]);
+    setQuery();
 
-  useEffect(() => {
-    documents.fetchCategories();
+    fetchAggregations();
+    fetchDocuments();
+
+    return () => {
+      resetSearchQuery();
+      resetAggregations();
+    };
   }, []);
 
+  useEffect(() => {
+    if (getSearchPageURL() === location.pathname + location.search) {
+      return;
+    }
+
+    navigate(getSearchPageURL());
+  }, [search_query]);
+
+  // On GET params change.
+  useEffect(() => {
+    setQuery();
+    fetchDocuments();
+  }, [location.search]);
+
+  const onPaginationChange = (page) => {
+    setPage(page);
+  };
+
+  const renderPagination = useMemo(() => {
+    // Pagination component does not update with updated props. It will keep the 'page' prop internally.
+    // To force an update, we need to rerender the component.
+    if (is_loading) {
+      return null;
+    }
+
+    return (
+      <Pagination
+        totalPages={pagination?.pages}
+        page={pagination?.page}
+        onPageChange={onPaginationChange}
+        nextLabel=''
+        previousLabel=''
+        maxVisiblePages={7}
+      />
+    );
+  }, [pagination, is_loading]);
+
+  const onSearchSubmit = (query) => {
+    setSearchQuery(query);
+  };
+
+  const screenReaderText = useMemo(() => {
+    if (is_loading === true) {
+      return LABELS.SEARCH_RESULTS_LOADING;
+    }
+
+    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
+      all_documents?.length
+    )} ${LABELS.FOUND.toLowerCase()}.`;
+  }, [is_loading]);
+
   const renderDocuments = useMemo(() => {
-    if (documents.is_loading) {
-      return Array.from({ length: SEARCH_RESULTS }).map((_, index) => (
+    if (is_loading) {
+      return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
         <TilburgSearchResult skeleton key={index} />
       ));
     }
 
-    if (documents.all_documents.length < 1) {
+    if (all_documents?.length < 1) {
       return (
         <Alert type='info'>
           <TilburgFlex spacing='sm'>
             <VISUALS.INFO_BLUE />
             <TilburgFlex column spacing='xs'>
-              <Heading level={3}>Geen resultaten gevonden</Heading>
-              <p>Probeer een andere zoekterm of pas de filters aan.</p>
+              <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
+              <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
             </TilburgFlex>
           </TilburgFlex>
         </Alert>
       );
     }
 
-    return documents?.all_documents?.map((document, index) => (
+    return all_documents?.map((document, index) => (
       <TilburgSearchResult {...document} key={index} />
     ));
-  }, [documents.is_loading, documents.all_documents]);
-
-  const onSearchSubmit = (query) => {
-    documents.setSearchQuery(query);
-    navigate(`/zoeken/${query}`);
-  };
+  }, [is_loading, all_documents, pagination?.limit]);
 
   return (
     <>
-      {JSON.stringify(documents.searchQuery.categorie)}
-      {JSON.stringify(pagination)}
       <TilburgContainer spacing='lg'>
         <TilburgCard blue padding='md'>
-          <TilburgSearchbox
+          <TilburgSearchBox
             page='search'
-            mobileFiltersOpen={documents.mobileFiltersOpen}
-            toggleMobileFilters={documents.toggleMobileFilters}
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
+            defaultValue={search_query.search}
           />
         </TilburgCard>
       </TilburgContainer>
       <TilburgContainer spacing='sm' margin='xl'>
-        <TilburgFlex spacing='xl'>
-          <TilburgSearchFilters
-            mobileFiltersOpen={documents.mobileFiltersOpen}
-            toggleMobileFilters={documents.toggleMobileFilters}
-          />
+        <TilburgFlex spacing='xl' className='tilburg-search-results'>
+          <TilburgSearchFilters />
           <TilburgFlex column grow spacing='xs'>
+            <div className='sr-only' aria-live='polite' aria-atomic='true'>
+              {screenReaderText}
+            </div>
             <TilburgFlex column spacing='sm' margin='sm'>
+              <TilburgFlex justifyContent='end'>
+                <TilburgSearchSort type='alt' />
+              </TilburgFlex>
               {renderDocuments}
-              <Pagination
-                totalPages={30 || pagination?.pages}
-                // page={pagination?.page}
-                onPageChange={(page) => console.log(page)}
-                nextLabel=''
-                previousLabel=''
-                maxVisiblePages={7}
-              />
+              {pagination?.pages > 1 && renderPagination}
             </TilburgFlex>
           </TilburgFlex>
         </TilburgFlex>

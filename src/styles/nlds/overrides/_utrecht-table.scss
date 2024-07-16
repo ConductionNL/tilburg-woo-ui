@@ -1,5 +1,6 @@
 .utrecht-table{
-  &__cell {
+  &__cell,
+  &__header-cell {
     &:first-child {
       padding-left: 0;
     }

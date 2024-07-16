@@ -26,14 +26,27 @@ const TilburgModal = loadable(() =>
 const TilburgNavigation = loadable(() =>
   import('@components/tilburg-navigation/tilburg-navigation')
 );
-const TilburgSearchbox = loadable(() =>
-  import('@components/tilburg-searchbox/tilburg-searchbox')
+const TilburgSearchBox = loadable(() =>
+  import('@components/tilburg-search-box/tilburg-search-box')
 );
 const TilburgSectionsHandler = loadable(() =>
   import('@components/tilburg-sections-handler/tilburg-sections-handler')
 );
 const TilburgSubjects = loadable(() =>
   import('@components/tilburg-subjects/tilburg-subjects')
+);
+
+const TilburgSearchCategories = loadable(() =>
+  import('@components/tilburg-search-categories/tilburg-search-categories')
+);
+const TilburgSearchDate = loadable(() =>
+  import('@components/tilburg-search-date/tilburg-search-date')
+);
+const TilburgSearchSort = loadable(() =>
+  import('@components/tilburg-search-sort/tilburg-search-sort')
+);
+const TilburgSearchSubjects = loadable(() =>
+  import('@components/tilburg-search-subjects/tilburg-search-subjects')
 );
 
 export {
@@ -47,7 +60,11 @@ export {
   TilburgLoader,
   TilburgModal,
   TilburgNavigation,
-  TilburgSearchbox,
+  TilburgSearchBox,
   TilburgSectionsHandler,
   TilburgSubjects,
+  TilburgSearchCategories,
+  TilburgSearchDate,
+  TilburgSearchSort,
+  TilburgSearchSubjects,
 };
