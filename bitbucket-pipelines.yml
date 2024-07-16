@@ -104,8 +104,8 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:$BITBUCKET_COMMIT .
-            - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:$BITBUCKET_COMMIT
+            - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:$SHORT_COMMIT_HASH .
+            - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:$SHORT_COMMIT_HASH
           services:
               - docker
 definitions:
