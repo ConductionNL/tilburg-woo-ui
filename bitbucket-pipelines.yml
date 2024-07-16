@@ -103,7 +103,7 @@ pipelines:
             - yarn set version 4.1.1
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
-            - COMMIT_HASH=$BITBUCKET_COMMIT
+            - SHORT_COMMIT_HASH=$(echo $BITBUCKET_COMMIT | cut -c 1-7)
             - docker build -t $DOCKER_DOMAIN/acato/tilburg-woo-ui:$SHORT_COMMIT_HASH .
             - docker push $DOCKER_DOMAIN/acato/tilburg-woo-ui:$SHORT_COMMIT_HASH
           services:
