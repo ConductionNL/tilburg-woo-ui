@@ -1,70 +1,54 @@
 import loadable from '@loadable/component';
 
-const TilburgAbout = loadable(() =>
-  import('@components/tilburg-about/tilburg-about')
+const AcAbout = loadable(() => import('@components/ac-about/ac-about'));
+const AcFaq = loadable(() => import('@components/ac-faq/ac-faq'));
+const AcFeatured = loadable(() => import('@components/ac-featured/ac-featured'));
+const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
+const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
+const AcHero = loadable(() => import('@components/ac-hero/ac-hero'));
+const AcIntro = loadable(() => import('@components/ac-intro/ac-intro'));
+const AcLoader = loadable(() => import('@components/ac-loader/ac-loader'));
+const AcModal = loadable(() => import('@components/ac-modal/ac-modal'));
+const AcNavigation = loadable(() =>
+  import('@components/ac-navigation/ac-navigation')
 );
-const TilburgFaq = loadable(() => import('@components/tilburg-faq/tilburg-faq'));
-const TilburgFeatured = loadable(() =>
-  import('@components/tilburg-featured/tilburg-featured')
+const AcSearchBox = loadable(() =>
+  import('@components/ac-search-box/ac-search-box')
 );
-const TilburgFooter = loadable(() =>
-  import('@components/tilburg-footer/tilburg-footer')
+const AcSectionsHandler = loadable(() =>
+  import('@components/ac-sections-handler/ac-sections-handler')
 );
-const TilburgHeader = loadable(() =>
-  import('@components/tilburg-header/tilburg-header')
-);
-const TilburgHero = loadable(() => import('@components/tilburg-hero/tilburg-hero'));
-const TilburgIntro = loadable(() =>
-  import('@components/tilburg-intro/tilburg-intro')
-);
-const TilburgLoader = loadable(() =>
-  import('@components/tilburg-loader/tilburg-loader')
-);
-const TilburgModal = loadable(() =>
-  import('@components/tilburg-modal/tilburg-modal')
-);
-const TilburgNavigation = loadable(() =>
-  import('@components/tilburg-navigation/tilburg-navigation')
-);
-const TilburgSearchBox = loadable(() =>
-  import('@components/tilburg-search-box/tilburg-search-box')
-);
-const TilburgSectionsHandler = loadable(() =>
-  import('@components/tilburg-sections-handler/tilburg-sections-handler')
-);
-const TilburgSubjects = loadable(() =>
-  import('@components/tilburg-subjects/tilburg-subjects')
-);
+const AcSubjects = loadable(() => import('@components/ac-subjects/ac-subjects'));
 
-const TilburgSearchCategories = loadable(() =>
-  import('@components/tilburg-search-categories/tilburg-search-categories')
+const AcSearchCategories = loadable(() =>
+  import('@components/ac-search-categories/ac-search-categories')
 );
-const TilburgSearchDate = loadable(() =>
-  import('@components/tilburg-search-date/tilburg-search-date')
+const AcSearchDate = loadable(() =>
+  import('@components/ac-search-date/ac-search-date')
 );
-const TilburgSearchSort = loadable(() =>
-  import('@components/tilburg-search-sort/tilburg-search-sort')
+const AcSearchSort = loadable(() =>
+  import('@components/ac-search-sort/ac-search-sort')
 );
-const TilburgSearchSubjects = loadable(() =>
-  import('@components/tilburg-search-subjects/tilburg-search-subjects')
+const AcSearchSubjects = loadable(() =>
+  import('@components/ac-search-subjects/ac-search-subjects')
 );
 
 export {
-  TilburgAbout,
-  TilburgFaq,
-  TilburgFeatured,
-  TilburgFooter,
-  TilburgHeader,
-  TilburgHero,
-  TilburgIntro,
-  TilburgLoader,
-  TilburgModal,
-  TilburgNavigation,
-  TilburgSearchBox,
-  TilburgSectionsHandler,
-  TilburgSubjects,
-  TilburgSearchCategories,
-  TilburgSearchDate,
-  TilburgSearchSort,
-  TilburgSearchSubjects,
+  AcAbout,
+  AcFaq,
+  AcFeatured,
+  AcFooter,
+  AcHeader,
+  AcHero,
+  AcIntro,
+  AcLoader,
+  AcModal,
+  AcNavigation,
+  AcSearchBox,
+  AcSectionsHandler,
+  AcSubjects,
+  AcSearchCategories,
+  AcSearchDate,
+  AcSearchSort,
+  AcSearchSubjects,
 };

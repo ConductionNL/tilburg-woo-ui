@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 
-import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
-import { TilburgLoader } from '@components';
-import { TilburgLink, TilburgTable } from '@molecules';
+import { AcCard, AcContainer, AcFlex } from '@atoms';
+import { AcLoader } from '@components';
+import { AcLink, AcTable } from '@molecules';
 import { withStore } from '@stores';
 
 import {
@@ -13,7 +13,6 @@ import {
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
-import { AcBuildURLSearchParams } from '@utils';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
@@ -26,19 +25,19 @@ const AcPublication = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Open Tilburg | Publicatie';
+    document.title = get_single?.title || 'Open Ac | Publicatie';
   }, [get_single]);
 
   if (loading.status || !get_single) {
-    return <TilburgLoader />;
+    return <AcLoader />;
   }
 
   const mapAttachmentRow = (row) => {
     return [
-      <TilburgLink to={row.url}>
+      <AcLink to={row.url}>
         <VISUALS.DOCUMENT />
         <Link>{row.title || 'Naamloos bestand'}</Link>
-      </TilburgLink>,
+      </AcLink>,
       row.type || LABELS.UNKNOWN,
       row.datum || LABELS.UNKNOWN,
     ];
@@ -46,16 +45,16 @@ const AcPublication = ({ store: { documents } }) => {
 
   return (
     <>
-      <TilburgContainer compact margin='xl'>
-        <TilburgFlex column spacing={'lg'}>
+      <AcContainer compact margin='xl'>
+        <AcFlex column spacing={'lg'}>
           <Heading>{get_single?.title}</Heading>
 
-          <TilburgCard blue>
+          <AcCard blue>
             <Heading level={2}>{LABELS.SUMMARY}</Heading>
             <Paragraph>
               {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
             </Paragraph>
-          </TilburgCard>
+          </AcCard>
 
           <div>
             <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
@@ -64,7 +63,7 @@ const AcPublication = ({ store: { documents } }) => {
 
           <div>
             <Heading level={2}>Bijlagen</Heading>
-            <TilburgTable
+            <AcTable
               header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
               rows={get_single.attachments?.map((attachment) =>
                 mapAttachmentRow(attachment)
@@ -74,25 +73,25 @@ const AcPublication = ({ store: { documents } }) => {
 
           <div>
             <Heading level={2}>Aanvullende informatie</Heading>
-            <TilburgTable
+            <AcTable
               rows={[
                 ['Zaaknummer', 1922973],
                 [
                   LABELS.CATEGORY,
-                  <TilburgLink
+                  <AcLink
                     href={getSearchPageURL({
                       category: [get_single?.category],
                     })}
                   >
                     {get_single?.category}
-                  </TilburgLink>,
+                  </AcLink>,
                 ],
                 ['Onderwerp', <Link>Duurzaamheid</Link>],
               ]}
             />
           </div>
-        </TilburgFlex>
-      </TilburgContainer>
+        </AcFlex>
+      </AcContainer>
     </>
   );
 };

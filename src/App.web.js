@@ -20,12 +20,8 @@ import { AcHome } from '@views';
 import AcContent from '@views/ac-content/ac-content';
 
 // Imports => Molecules
-const TilburgHeader = loadable(() =>
-  import('@components/tilburg-header/tilburg-header')
-);
-const TilburgFooter = loadable(() =>
-  import('@components/tilburg-footer/tilburg-footer')
-);
+const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
+const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
 
 // Imports => Atoms
 
@@ -62,7 +58,7 @@ const App = ({ store }) => {
 
   return (
     <div className='tilburg-theme' tabIndex='-1' ref={resetFocus}>
-      <TilburgHeader store={store} />
+      <AcHeader store={store} />
       <main id='main'>
         <Routes>
           {all_pages.map((page) => (
@@ -86,7 +82,7 @@ const App = ({ store }) => {
           />
         </Routes>
       </main>
-      <TilburgFooter />
+      <AcFooter />
     </div>
   );
 };

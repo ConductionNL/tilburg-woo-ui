@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { TilburgSearchFilters, TilburgSearchResult } from '@molecules';
-import { TilburgCard, TilburgContainer, TilburgFlex } from '@atoms';
+import { AcSearchFilters, AcSearchResult } from '@molecules';
+import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { TilburgSearchBox, TilburgSearchSort } from '@components';
+import { AcSearchBox, AcSearchSort } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -106,58 +106,58 @@ const AcSearch = ({ store: { documents } }) => {
   const renderDocuments = useMemo(() => {
     if (is_loading) {
       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
-        <TilburgSearchResult skeleton key={index} />
+        <AcSearchResult skeleton key={index} />
       ));
     }
 
     if (all_documents?.length < 1) {
       return (
         <Alert type='info'>
-          <TilburgFlex spacing='sm'>
+          <AcFlex spacing='sm'>
             <VISUALS.INFO_BLUE />
-            <TilburgFlex column spacing='xs'>
+            <AcFlex column spacing='xs'>
               <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
               <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
-            </TilburgFlex>
-          </TilburgFlex>
+            </AcFlex>
+          </AcFlex>
         </Alert>
       );
     }
 
     return all_documents?.map((document, index) => (
-      <TilburgSearchResult {...document} key={index} />
+      <AcSearchResult {...document} key={index} />
     ));
   }, [is_loading, all_documents, pagination?.limit]);
 
   return (
     <>
-      <TilburgContainer spacing='lg'>
-        <TilburgCard blue padding='md'>
-          <TilburgSearchBox
+      <AcContainer spacing='lg'>
+        <AcCard blue padding='md'>
+          <AcSearchBox
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
             defaultValue={search_query.search}
           />
-        </TilburgCard>
-      </TilburgContainer>
-      <TilburgContainer spacing='sm' margin='xl'>
-        <TilburgFlex spacing='xl' className='tilburg-search-results'>
-          <TilburgSearchFilters />
-          <TilburgFlex column grow spacing='xs'>
+        </AcCard>
+      </AcContainer>
+      <AcContainer spacing='sm' margin='xl'>
+        <AcFlex spacing='xl' className='ac-search-results'>
+          <AcSearchFilters />
+          <AcFlex column grow spacing='xs'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
               {screenReaderText}
             </div>
-            <TilburgFlex column spacing='sm' margin='sm'>
-              <TilburgFlex justifyContent='end'>
-                <TilburgSearchSort type='alt' />
-              </TilburgFlex>
+            <AcFlex column spacing='sm' margin='sm'>
+              <AcFlex justifyContent='end'>
+                <AcSearchSort type='alt' />
+              </AcFlex>
               {renderDocuments}
               {pagination?.pages > 1 && renderPagination}
-            </TilburgFlex>
-          </TilburgFlex>
-        </TilburgFlex>
-      </TilburgContainer>
+            </AcFlex>
+          </AcFlex>
+        </AcFlex>
+      </AcContainer>
     </>
   );
 };

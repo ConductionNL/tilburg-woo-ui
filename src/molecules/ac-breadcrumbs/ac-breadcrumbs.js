@@ -1,0 +1,72 @@
+import { useMemo } from 'react';
+import { observer } from 'mobx-react-lite';
+import { useLocation } from 'react-router-dom';
+
+import { withStore } from '@stores';
+import { BREADCRUMBS, VISUALS } from '@constants';
+
+import {
+  BreadcrumbNav,
+  BreadcrumbNavLink,
+  BreadcrumbNavSeparator,
+} from '@utrecht/component-library-react/dist/css-module';
+
+const AcBreadcrumbs = ({ store: { pages, documents } }) => {
+  const { get_single: get_single_page } = pages;
+  const { get_single: get_single_document } = documents;
+  const location = useLocation();
+
+  const getBreadcrumbs = useMemo(() => {
+    if (location.pathname.startsWith('/zoeken')) {
+      return [BREADCRUMBS.SEARCH];
+    }
+
+    if (location.pathname.startsWith('/publicatie/')) {
+      return [BREADCRUMBS.SEARCH, { label: get_single_document?.title }];
+    }
+
+    if (get_single_page?.name) {
+      return [
+        {
+          label: get_single_page.name,
+          href: get_single_page.url,
+        },
+      ];
+    }
+
+    if (get_single_document?.name) {
+      return [
+        {
+          label: get_single_document.name,
+          href: get_single_document.url,
+        },
+      ];
+    }
+
+    return [];
+  }, [get_single_document, get_single_page, location]);
+
+  return (
+    <BreadcrumbNav>
+      <BreadcrumbNavLink href='/' rel='home' index={0}>
+        Home
+      </BreadcrumbNavLink>
+      {getBreadcrumbs.map((breadcrumb, index) => (
+        <>
+          <BreadcrumbNavSeparator>
+            <VISUALS.CHEVRON_RIGHT />
+          </BreadcrumbNavSeparator>
+          <BreadcrumbNavLink
+            href={breadcrumb?.href}
+            disabled={index + 1 === getBreadcrumbs.length}
+            current={index + 1 === getBreadcrumbs.length}
+          >
+            {breadcrumb?.label}
+          </BreadcrumbNavLink>
+        </>
+      ))}
+    </BreadcrumbNav>
+  );
+};
+
+export default withStore(observer(AcBreadcrumbs));

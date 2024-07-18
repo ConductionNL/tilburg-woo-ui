@@ -1,7 +1,7 @@
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { TilburgSubjects } from '@components';
+import { AcSubjects as AcSubjectsContainer } from '@components';
 import { useEffect } from 'react';
 
 const subjectsDummyData = [
@@ -79,7 +79,7 @@ const AcSubjects = ({ store: { documents } }) => {
 
   return (
     <>
-      <TilburgSubjects
+      <AcSubjectsContainer
         heading='Onderwerpen'
         paragraph='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dol magna aliqua.'
         subjects={subjectsDummyData}

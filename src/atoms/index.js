@@ -1,27 +1,11 @@
 import loadable from '@loadable/component';
 
-const TilburgCard = loadable(() => import('@atoms/tilburg-card/tilburg-card'));
-const TilburgContainer = loadable(() =>
-  import('@atoms/tilburg-container/tilburg-container')
-);
-const TilburgDataList = loadable(() =>
-  import('@atoms/tilburg-data-list/tilburg-data-list')
-);
-const TilburgFlex = loadable(() => import('@atoms/tilburg-flex/tilburg-flex'));
-const TilburgImage = loadable(() => import('@atoms/tilburg-image/tilburg-image'));
-const TilburgRichText = loadable(() =>
-  import('@atoms/tilburg-rich-text/tilburg-rich-text')
-);
-const TilburgSection = loadable(() =>
-  import('@atoms/tilburg-section/tilburg-section')
-);
+const AcCard = loadable(() => import('@atoms/ac-card/ac-card'));
+const AcContainer = loadable(() => import('@atoms/ac-container/ac-container'));
+const AcDataList = loadable(() => import('@atoms/ac-data-list/ac-data-list'));
+const AcFlex = loadable(() => import('@atoms/ac-flex/ac-flex'));
+const AcImage = loadable(() => import('@atoms/ac-image/ac-image'));
+const AcRichText = loadable(() => import('@atoms/ac-rich-text/ac-rich-text'));
+const AcSection = loadable(() => import('@atoms/ac-section/ac-section'));
 
-export {
-  TilburgCard,
-  TilburgContainer,
-  TilburgDataList,
-  TilburgFlex,
-  TilburgImage,
-  TilburgRichText,
-  TilburgSection,
-};
+export { AcCard, AcContainer, AcDataList, AcFlex, AcImage, AcRichText, AcSection };

@@ -5,8 +5,8 @@ import { useLocation } from 'react-router-dom';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
-import { TilburgContainer } from '@atoms';
-import { TilburgLoader, TilburgSectionsHandler } from '@components';
+import { AcContainer } from '@atoms';
+import { AcLoader, AcSectionsHandler } from '@components';
 
 const AcContent = ({ store: { pages } }) => {
   const { fetchPage, get_single, loading, resetPage } = pages;
@@ -19,14 +19,14 @@ const AcContent = ({ store: { pages } }) => {
   }, [location]);
 
   if (loading.status) {
-    return <TilburgLoader />;
+    return <AcLoader />;
   }
 
   return (
-    <TilburgContainer compact>
+    <AcContainer compact>
       <Heading level={1}>{get_single?.name}</Heading>
-      <TilburgSectionsHandler contents={get_single?.contents} />
-    </TilburgContainer>
+      <AcSectionsHandler contents={get_single?.contents} />
+    </AcContainer>
   );
 };
 

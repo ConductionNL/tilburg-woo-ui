@@ -1,0 +1,13 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
+.ac-section {
+
+  &--spacing {
+    padding-block: var(--tilburg-space-block-pig);
+
+    @include respond-max($screen-sm) {
+      padding-block: var(--tilburg-space-block-cat);
+    }
+  }
+}
