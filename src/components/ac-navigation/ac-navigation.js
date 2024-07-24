@@ -18,7 +18,7 @@ const AcNavigation = () => {
       <nav aria-label='Hoofd'>
         <ul>
           <li>
-            <Link to='/over-open-tilburg'>
+            <Link to='/over-ons'>
               <VISUALS.INFO />
               Over Open Tilburg
             </Link>

@@ -10,19 +10,19 @@ const AcFooter = () => {
           <h3>Deze website</h3>
           <ul>
             <li>
-              <a href='/'>Over Open Ac</a>
+              <a href='/over-ons'>Over Open Tilburg</a>
             </li>
             <li>
-              <a href='/'>Contact</a>
+              <a href='/contact'>Contact</a>
             </li>
             <li>
-              <a href='/'>Toegankelijkheid</a>
+              <a href='/toegankelijkheid'>Toegankelijkheid</a>
             </li>
             <li>
               <a href='/zoeken'>Uitgebreid zoeken</a>
             </li>
             <li>
-              <a href='/'>Onderwerpen</a>
+              <a href='/onderwerpen'>Onderwerpen</a>
             </li>
           </ul>
         </nav>
@@ -30,7 +30,7 @@ const AcFooter = () => {
           <h3>Snel naar</h3>
           <ul>
             <li>
-              <a href='/' target='_blank'>
+              <a href='https://www.tilburg.nl' target='_blank'>
                 www.tilburg.nl
                 <span class='sr-only'>Opent in een nieuw tabblad</span>
                 <VISUALS.EXTERNAL_LINK />
