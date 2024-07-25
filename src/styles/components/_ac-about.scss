@@ -1,6 +1,9 @@
 @use '../global/breakpoints' as *;
 @use '../global/mixins/respond' as *;
 
+@import '@utrecht/components/link/css';
+@import '../atoms/ac-usps';
+
 .ac-about {
   .container {
     display: grid;
@@ -10,6 +13,17 @@
     @include respond-max($screen-sm) {
       grid-template-columns: 1fr;
       gap: var(--tilburg-space-column-rabbit);
+    }
+  }
+
+  a {
+    @extend .utrecht-link !optional;
+  }
+
+  ul {
+    @extend .ac-usps !optional;
+    li {
+      display: block;
     }
   }
 

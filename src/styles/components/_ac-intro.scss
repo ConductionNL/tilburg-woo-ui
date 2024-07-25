@@ -21,12 +21,14 @@
     }
   }
 
-  p {
-    margin-block-end: var(--tilburg-space-block-rabbit);
-    font-size: var(--tilburg-typography-font-size-lg);
+  &__content {
+    > p {
+      margin-block-end: var(--tilburg-space-block-rabbit);
+      font-size: var(--tilburg-typography-font-size-lg);
 
-    @include respond-max($screen-sm) {
-      font-size: var(--tilburg-typography-font-size-md);
+      @include respond-max($screen-sm) {
+        font-size: var(--tilburg-typography-font-size-md);
+      }
     }
   }
 }

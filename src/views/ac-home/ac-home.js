@@ -1,7 +1,9 @@
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
+import { useEffect } from 'react';
 
-import { AcAbout, AcHero, AcIntro, AcSubjects } from '@components';
+import { AcAbout, AcHero, AcIntro, AcLoader, AcSubjects } from '@components';
+import { AcRemoveParagraphTags, AcRemoveTags, AcSanitizeHtml } from '@utils';
 
 const subjectsDummyData = [
   {
@@ -27,10 +29,27 @@ const subjectsDummyData = [
   },
 ];
 
-const AcHome = ({ store }) => {
+const AcHome = ({ store: { pages } }) => {
+  const { fetchPage, resetPage, get_single } = pages;
+
+  useEffect(() => {
+    fetchPage('/home');
+    return () => resetPage();
+  }, [location]);
+
+  const contents = get_single.contents;
+
+  if (!contents) {
+    return <AcLoader />;
+  }
+
   return (
     <>
-      <AcIntro />
+      <AcIntro
+        title={AcRemoveTags(contents[0]?.data.content)}
+        content={AcSanitizeHtml(contents[1]?.data.content)}
+        link={AcRemoveParagraphTags(contents[2]?.data.content)}
+      />
       <AcHero />
       <AcSubjects
         heading='Zoeken op onderwerp'
@@ -38,7 +57,11 @@ const AcHome = ({ store }) => {
         showLink
         subjects={subjectsDummyData}
       />
-      <AcAbout />
+      <AcAbout
+        title={AcRemoveTags(contents[3].data.content)}
+        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4].data.content))}
+        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5].data.content))}
+      />
     </>
   );
 };

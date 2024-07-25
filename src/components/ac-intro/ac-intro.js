@@ -3,29 +3,21 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcContainer, AcSection } from '@atoms';
-import { AcLink } from '@molecules';
+import { AcContainer, AcFlex, AcRichText, AcSection } from '@atoms';
 
-const AcIntro = () => {
+const AcIntro = ({ title, content, link }) => {
   return (
     <AcSection className='ac-intro' spacing>
       <AcContainer>
         <div className='ac-intro__heading'>
-          <Heading level={1}>
-            Alle documenten van de gemeente Tilburg openbaar beschikbaar
-          </Heading>
+          <Heading level={1}>{title}</Heading>
         </div>
         <div className='ac-intro__content'>
-          <Paragraph>
-            Bij gemeente Tilburg willen we transparant zijn. Alles wat we bespreken
-            willen we openbaar en inzichtelijk maken voor iedereen. Op deze website
-            kun je alle openbare documentatie en publicaties van de gemeente
-            terugvinden.
-          </Paragraph>
-          <AcLink to='/'>
+          <Paragraph>{content}</Paragraph>
+          <AcFlex spacing={'xs'} alignItems={'center'}>
             <VISUALS.QUESTION_MARK />
-            Welke documenten vind je hier?
-          </AcLink>
+            <AcRichText content={link}></AcRichText>
+          </AcFlex>
         </div>
       </AcContainer>
     </AcSection>
