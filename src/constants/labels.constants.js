@@ -18,6 +18,7 @@ export const LABELS = {
   REFINE_SEARCH: 'Probeer een andere zoekterm of pas de filters aan.',
   WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
   READ_MORE_ABOUT: 'Lees meer over',
+  VIEW_RESULTS: 'Bekijk resultaten',
 
   DATE_PUBLICATION: 'Publicatiedatum',
   UNKNOWN: 'Onbekend',

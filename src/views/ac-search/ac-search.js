@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AcSearchFilters, AcSearchResult } from '@molecules';
+import { AcBreadcrumbs, AcSearchFilters, AcSearchResult } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
 import { AcSearchBox, AcSearchSort } from '@components';

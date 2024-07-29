@@ -4,11 +4,11 @@ import { observer } from 'mobx-react-lite';
 import FocusLock from 'react-focus-lock';
 import clsx from 'clsx';
 
-import { withStore } from '@stores';
 import { AcFlex } from '@atoms';
+import { withStore } from '@stores';
 import { AcButton } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
-import { AcSearchCategories, AcSearchDate, AcSearchSubjects } from '@components';
+import { AcSearchCategories, AcSearchDate } from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import AcSearchSort from '@components/ac-search-sort/ac-search-sort';
@@ -99,9 +99,9 @@ const AcSearchFilters = ({ store: { documents } }) => {
               <AcSearchCategories categories={all_categories} />
             </AcFlex>
           )}
-          <AcFlex column spacing='xs' className='ac-search-filters__subjects'>
-            <AcSearchSubjects />
-          </AcFlex>
+          {/*<AcFlex column spacing='xs' className='ac-search-filters__subjects'>*/}
+          {/*  <AcSearchSubjects />*/}
+          {/*</AcFlex>*/}
         </AcFlex>
         {mobileFiltersOpen && (
           <div
@@ -112,7 +112,7 @@ const AcSearchFilters = ({ store: { documents } }) => {
         )}
         <AcFlex className='ac-search-filters__button'>
           <AcButton style='button' onClick={handleCloseFilters}>
-            Bekijk resultaten
+            {LABELS.VIEW_RESULTS}
           </AcButton>
         </AcFlex>
       </AcFlex>

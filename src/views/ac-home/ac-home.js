@@ -35,7 +35,7 @@ const AcHome = ({ store: { pages } }) => {
   useEffect(() => {
     fetchPage('/home');
     return () => resetPage();
-  }, [location]);
+  }, []);
 
   const contents = get_single.contents;
 
@@ -51,12 +51,12 @@ const AcHome = ({ store: { pages } }) => {
         link={AcRemoveParagraphTags(contents[2]?.data.content)}
       />
       <AcHero />
-      <AcSubjects
-        heading='Zoeken op onderwerp'
-        paragraph='Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de gemeente Tilburg.'
-        showLink
-        subjects={subjectsDummyData}
-      />
+      {/*<AcSubjects*/}
+      {/*  heading='Zoeken op onderwerp'*/}
+      {/*  paragraph='Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de gemeente Tilburg.'*/}
+      {/*  showLink*/}
+      {/*  subjects={subjectsDummyData}*/}
+      {/*/>*/}
       <AcAbout
         title={AcRemoveTags(contents[3].data.content)}
         content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4].data.content))}

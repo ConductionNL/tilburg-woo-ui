@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { withStore } from '@stores';
 import { BREADCRUMBS, VISUALS } from '@constants';
@@ -11,38 +11,28 @@ import {
   BreadcrumbNavSeparator,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcBreadcrumbs = ({ store: { pages, documents } }) => {
+const AcBreadcrumbs = ({ store: { pages, documents }, items }) => {
   const { get_single: get_single_page } = pages;
   const { get_single: get_single_document } = documents;
   const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const getBreadcrumbs = useMemo(() => {
     if (location.pathname.startsWith('/zoeken')) {
-      return [BREADCRUMBS.SEARCH];
+      return BREADCRUMBS.SEARCH(searchParams.get('search'));
     }
 
     if (location.pathname.startsWith('/publicatie/')) {
-      return [BREADCRUMBS.SEARCH, { label: get_single_document?.title }];
+      return BREADCRUMBS.PUBLICATION(get_single_document?.title);
+    }
+
+    if (location.pathname.startsWith('/onderwerpen')) {
+      return BREADCRUMBS.SUBJECTS;
     }
 
     if (get_single_page?.name) {
-      return [
-        {
-          label: get_single_page.name,
-          href: get_single_page.url,
-        },
-      ];
+      return BREADCRUMBS.CONTENT(get_single_page.name);
     }
-
-    if (get_single_document?.name) {
-      return [
-        {
-          label: get_single_document.name,
-          href: get_single_document.url,
-        },
-      ];
-    }
-
     return [];
   }, [get_single_document, get_single_page, location]);
 
