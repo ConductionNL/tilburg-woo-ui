@@ -36,6 +36,9 @@ export const LABELS = {
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
+
+  THIS_WEBSITE: 'Deze website',
+  QUICK_LINKS: 'Snel naar',
 };
 
 export const LABELS_DYNAMIC = {

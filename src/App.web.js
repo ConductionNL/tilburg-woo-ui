@@ -68,13 +68,15 @@ const App = ({ store }) => {
               element={getView(page)}
             />
           ))}
-          {Object.values(ROUTES).map((route) => (
-            <Route
-              key={`default-route-${route.id}`}
-              path={route.path}
-              element={<route.component store={store} />}
-            />
-          ))}
+          {Object.values(ROUTES)
+            .filter((route) => route.component)
+            .map((route) => (
+              <Route
+                key={`default-route-${route.id}`}
+                path={route.path}
+                element={<route.component store={store} />}
+              />
+            ))}
           <Route
             key={`default-route-${DEFAULT_ROUTE.id}`}
             path={'*'}

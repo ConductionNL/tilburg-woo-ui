@@ -1,5 +1,6 @@
-import { VISUALS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 import { AcContainer } from '@atoms';
+import { EXTERNAL_LINKS, FOOTER_ITEMS } from '@constants/routes.constants';
 
 const AcFooter = () => {
   return (
@@ -7,56 +8,27 @@ const AcFooter = () => {
       <h2 className='sr-only'>Footer</h2>
       <AcContainer>
         <nav className='ac-footer__links' aria-label='Footer menu 1'>
-          <h3>Deze website</h3>
+          <h3>{LABELS.THIS_WEBSITE}</h3>
           <ul>
-            <li>
-              <a href='/over-ons'>Over Open Tilburg</a>
-            </li>
-            <li>
-              <a href='/contact'>Contact</a>
-            </li>
-            <li>
-              <a href='/toegankelijkheid'>Toegankelijkheid</a>
-            </li>
-            <li>
-              <a href='/zoeken'>Uitgebreid zoeken</a>
-            </li>
-            <li>
-              <a href='/onderwerpen'>Onderwerpen</a>
-            </li>
+            {FOOTER_ITEMS.map((item, index) => (
+              <li key={index}>
+                <a href={item.path}>{item.label}</a>
+              </li>
+            ))}
           </ul>
         </nav>
         <nav className='ac-footer__links' aria-label='Footer menu 2'>
-          <h3>Snel naar</h3>
+          <h3>{LABELS.QUICK_LINKS}</h3>
           <ul>
-            <li>
-              <a href='https://www.tilburg.nl' target='_blank'>
-                www.tilburg.nl
-                <span class='sr-only'>Opent in een nieuw tabblad</span>
-                <VISUALS.EXTERNAL_LINK />
-              </a>
-            </li>
-            <li>
-              <a href='/' target='_blank'>
-                Privacy
-                <span class='sr-only'>Opent in een nieuw tabblad</span>
-                <VISUALS.EXTERNAL_LINK />
-              </a>
-            </li>
-            <li>
-              <a href='/' target='_blank'>
-                Proclaimer
-                <span class='sr-only'>Opent in een nieuw tabblad</span>
-                <VISUALS.EXTERNAL_LINK />
-              </a>
-            </li>
-            <li>
-              <a href='/' target='_blank'>
-                Cookies
-                <span class='sr-only'>Opent in een nieuw tabblad</span>
-                <VISUALS.EXTERNAL_LINK />
-              </a>
-            </li>
+            {EXTERNAL_LINKS.map((item, index) => (
+              <li>
+                <a href={item.href} target='_blank'>
+                  {item.label}
+                  <span className='sr-only'>Opent in een nieuw tabblad</span>
+                  <VISUALS.EXTERNAL_LINK />
+                </a>
+              </li>
+            ))}
           </ul>
         </nav>
         <div class='ac-footer__logo'>

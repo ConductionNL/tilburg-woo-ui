@@ -12,4 +12,8 @@ export const TITLES = AcLockObject({
   PROFILE: 'Profiel',
   SEARCH: 'Zoeken',
   TERMS_CONDITIONS: 'Algemene voorwaarden',
+  ABOUT: 'Over Open Tilburg',
+  ACCESSIBILITY: 'Toegankelijkheid',
+  CONTACT: 'Contact',
+  SUBJECTS: 'Onderwerpen',
 });
