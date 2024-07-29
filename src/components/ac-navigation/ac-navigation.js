@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { LABELS, VISUALS } from '@constants';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const AcNavigation = () => {
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
 
   return (
     <div className='ac-navigation'>
@@ -13,7 +18,7 @@ const AcNavigation = () => {
         aria-haspopup='true'
       >
         {isMenuOpen ? <VISUALS.CLOSE /> : <VISUALS.MENU />}
-        {isMenuOpen ? LABELS.CLOSE : LABELS.MENU}
+        {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
         <ul>

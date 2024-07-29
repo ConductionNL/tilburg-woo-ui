@@ -1,6 +1,7 @@
 export const LABELS = {
   APP_NAME: 'Open Tilburg',
   CLOSE: 'Sluiten',
+  CLOSE_SINGULAR: 'Sluit',
   ENTER_QUERY: 'Vul je zoekterm in',
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',

@@ -23,17 +23,6 @@ import AcContent from '@views/ac-content/ac-content';
 const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
 const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
 
-// Imports => Atoms
-
-const _CLASSES = {
-  ROOT: 'ac-root',
-  MAIN: 'ac-app',
-  ROUTE: {
-    SECTION: 'ac-route__section',
-    HIDDEN: 'ac-route__section--hidden',
-  },
-};
-
 const App = ({ store }) => {
   const { fetchPages, all_pages } = store.pages;
   const resetFocus = useAutoFocus();

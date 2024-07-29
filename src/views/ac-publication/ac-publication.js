@@ -75,7 +75,7 @@ const AcPublication = ({ store: { documents } }) => {
             <Heading level={2}>Aanvullende informatie</Heading>
             <AcTable
               rows={[
-                ['Zaaknummer', 1922973],
+                ['Zaaknummer', '???'],
                 [
                   LABELS.CATEGORY,
                   <AcLink

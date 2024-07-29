@@ -1,5 +1,5 @@
-import { LABELS, VISUALS } from '@constants';
 import { AcContainer } from '@atoms';
+import { LABELS, VISUALS } from '@constants';
 import { EXTERNAL_LINKS, FOOTER_ITEMS } from '@constants/routes.constants';
 
 const AcFooter = () => {
