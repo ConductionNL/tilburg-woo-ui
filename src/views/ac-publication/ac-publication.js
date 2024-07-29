@@ -13,11 +13,19 @@ import {
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
+import { AcFormatDate } from '@utils';
+import acFormatDate from '@src/utilities/ac-format-date';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
-  const { fetchDocument, resetDocument, get_single, loading, getSearchPageURL } =
-    documents;
+  const {
+    fetchDocument,
+    resetDocument,
+    get_single,
+    loading,
+    getSearchPageURL,
+    get_attachments,
+  } = documents;
 
   useEffect(() => {
     fetchDocument(id);
@@ -32,14 +40,24 @@ const AcPublication = ({ store: { documents } }) => {
     return <AcLoader />;
   }
 
-  const mapAttachmentRow = (row) => {
+  const mapAttachmentRow = (row, primary) => {
+    if (!primary) {
+      return [
+        <AcLink to={row.url}>
+          <VISUALS.DOCUMENT />
+          <Link>{row.title || 'Naamloos bestand'}</Link>
+        </AcLink>,
+      ];
+    }
+
     return [
       <AcLink to={row.url}>
         <VISUALS.DOCUMENT />
         <Link>{row.title || 'Naamloos bestand'}</Link>
       </AcLink>,
       row.type || LABELS.UNKNOWN,
-      row.datum || LABELS.UNKNOWN,
+      acFormatDate(row?._self?.dateCreated, 'YYYY-MM-DD', 'DD MMMM YYYY') ||
+        LABELS.UNKNOWN,
     ];
   };
 
@@ -58,14 +76,19 @@ const AcPublication = ({ store: { documents } }) => {
 
           <div>
             <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
-            <Paragraph>Er zijn geen hoofddocumenten beschikbaar.</Paragraph>
+            <AcTable
+              header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
+              rows={get_attachments(true)?.map((attachment) =>
+                mapAttachmentRow(attachment, true)
+              )}
+            />
           </div>
 
           <div>
             <Heading level={2}>Bijlagen</Heading>
             <AcTable
-              header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-              rows={get_single.attachments?.map((attachment) =>
+              header={[LABELS.DOCUMENT]}
+              rows={get_attachments()?.map((attachment) =>
                 mapAttachmentRow(attachment)
               )}
             />

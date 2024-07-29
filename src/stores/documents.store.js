@@ -102,6 +102,13 @@ export class DocumentsStore {
   };
 
   @action
+  get_attachments = (primary = false) => {
+    return this.single?.attachments?.filter((attachment) =>
+      primary ? attachment.labels.length > 0 : attachment.labels.length === 0
+    );
+  };
+
+  @action
   setQueryDate = (key, value) => {
     this.setPage(1);
     this.query[`publicationDate[${key}]`] = value;
