@@ -12,6 +12,7 @@ const AcFormField = ({
   defaultValue,
   placeholder,
   id,
+  onKeyDown,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -23,7 +24,7 @@ const AcFormField = ({
 
   return (
     <FormField type={type}>
-      <FormLabel for={id}>
+      <FormLabel htmlFor={id}>
         <Heading level={4}>{label}</Heading>
       </FormLabel>
       <Textbox
@@ -31,6 +32,7 @@ const AcFormField = ({
         defaultValue={defaultValue}
         placeholder={placeholder}
         onBlur={onBlurHandler}
+        onKeyDown={onKeyDown}
       />
     </FormField>
   );

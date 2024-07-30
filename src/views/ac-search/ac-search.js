@@ -149,8 +149,11 @@ const AcSearch = ({ store: { documents } }) => {
               {screenReaderText}
             </div>
             <AcFlex column spacing='sm' margin='sm'>
-              <AcFlex justifyContent='end'>
-                <AcSearchSort type='alt' />
+              <AcFlex justifyContent='between'>
+                <Heading level={2}>{LABELS.SEARCH_RESULTS}</Heading>
+                <div className='desktop-sorting'>
+                  <AcSearchSort type='alt' />
+                </div>
               </AcFlex>
               {renderDocuments}
               {pagination?.pages > 1 && renderPagination}

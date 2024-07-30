@@ -17,6 +17,12 @@ const AcSearchDate = ({ store: { documents } }) => {
     setQueryDate(key, value);
   };
 
+  const handleKeyDown = (key, event) => {
+    if (event.key === 'Enter') {
+      setDate(key, event.target.value);
+    }
+  };
+
   return (
     <AcFlex column spacing='sm' className='ac-search-filters__date'>
       <AcFormField
@@ -25,6 +31,7 @@ const AcSearchDate = ({ store: { documents } }) => {
         label='Datum vanaf (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('after', value)}
+        onKeyDown={(event) => handleKeyDown('after', event)}
       />
       <AcFormField
         id={'date_before'}
@@ -32,6 +39,7 @@ const AcSearchDate = ({ store: { documents } }) => {
         label='Datum tot en met (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('before', value)}
+        onKeyDown={(event) => handleKeyDown('before', event)}
       />
     </AcFlex>
   );
