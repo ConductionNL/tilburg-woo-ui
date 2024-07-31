@@ -68,7 +68,7 @@ const AcSearchFilters = ({ store: { documents } }) => {
         column
         spacing='sm'
         className={_CLASSES}
-        aria-labbeledby='filters-toggle'
+        aria-labelledby='filters-toggle'
         ref={overlayRef}
       >
         <AcFlex
@@ -105,7 +105,7 @@ const AcSearchFilters = ({ store: { documents } }) => {
         </AcFlex>
         {mobileFiltersOpen && (
           <div
-            style='position: absolute; inset: 0; z-index: 1;'
+            style={{ position: 'absolute', inset: 0, zIndex: 1 }}
             aria-hidden='true'
             onClick={handleCloseFilters}
           />

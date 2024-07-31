@@ -75,3 +75,27 @@ $grid-gutter-size: 1.6rem;
 		padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
 	}
 }
+
+// breadcrumb styles conform Figma design
+.utrecht-link.utrecht-breadcrumb-nav__link--disabled {
+	color: var(--utrecht-breadcrumb-nav-link-disabled-color);
+}
+
+// custom error styles for date input on search page
+.error {
+	&-input {
+		border-color: var(--tilburg-color-red-400) !important;
+	}
+
+	&-message {
+		margin-block-start: -10px;
+		color: var(--tilburg-color-red-400);
+		font-size: 1.4rem;
+	}
+}
+
+// notice element styles conform Figma design
+.notice {
+	margin-block: var(--tilburg-space-column-mouse);
+	color: var(--tilburg-color-gray-600);
+}

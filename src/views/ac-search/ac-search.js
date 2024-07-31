@@ -87,7 +87,7 @@ const AcSearch = ({ store: { documents } }) => {
         maxVisiblePages={7}
       />
     );
-  }, [pagination, is_loading]);
+  }, [is_loading, pagination?.page]);
 
   const onSearchSubmit = (query) => {
     setSearchQuery(query);
@@ -101,7 +101,7 @@ const AcSearch = ({ store: { documents } }) => {
     return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
       all_documents?.length
     )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading]);
+  }, [is_loading, all_documents?.length]);
 
   const renderDocuments = useMemo(() => {
     if (is_loading) {
@@ -149,8 +149,11 @@ const AcSearch = ({ store: { documents } }) => {
               {screenReaderText}
             </div>
             <AcFlex column spacing='sm' margin='sm'>
-              <AcFlex justifyContent='end'>
-                <AcSearchSort type='alt' />
+              <AcFlex justifyContent='between'>
+                <Heading level={2}>{LABELS.SEARCH_RESULTS}</Heading>
+                <div className='desktop-sorting'>
+                  <AcSearchSort type='alt' />
+                </div>
               </AcFlex>
               {renderDocuments}
               {pagination?.pages > 1 && renderPagination}

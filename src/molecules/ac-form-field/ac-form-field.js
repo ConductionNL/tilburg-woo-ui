@@ -4,6 +4,7 @@ import {
   Heading,
   Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
+import clsx from 'clsx';
 
 const AcFormField = ({
   label,
@@ -12,6 +13,8 @@ const AcFormField = ({
   defaultValue,
   placeholder,
   id,
+  onKeyDown,
+  hasError,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -23,14 +26,16 @@ const AcFormField = ({
 
   return (
     <FormField type={type}>
-      <FormLabel for={id}>
+      <FormLabel htmlFor={id}>
         <Heading level={4}>{label}</Heading>
       </FormLabel>
       <Textbox
         id={id}
+        className={clsx({ 'error-input': hasError })}
         defaultValue={defaultValue}
         placeholder={placeholder}
         onBlur={onBlurHandler}
+        onKeyDown={onKeyDown}
       />
     </FormField>
   );

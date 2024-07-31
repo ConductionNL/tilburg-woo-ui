@@ -34,7 +34,7 @@ const AcSearchSort = ({ store: { documents }, type }) => {
   };
 
   return (
-    <FormField type='select'>
+    <FormField type='select' className='ac-search-sort'>
       <AcFlex
         column={type !== 'alt'}
         alignItems={type === 'alt' ? 'center' : null}

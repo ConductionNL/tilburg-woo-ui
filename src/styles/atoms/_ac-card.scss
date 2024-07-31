@@ -61,11 +61,16 @@
 
   &--search-result {
     a {
-      &:where(:hover, :focus-visible) {
+     &:where(:hover, :focus-visible) {
         &:after {
           box-shadow: var(--tilburg-box-shadow-md);
         }
       }
+    }
+
+    .meta p {
+      color: var(--tilburg-color-blue-500);
+      font-weight: bold;
     }
   }
 
