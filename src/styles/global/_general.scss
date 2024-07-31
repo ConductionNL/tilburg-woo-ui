@@ -93,3 +93,9 @@ $grid-gutter-size: 1.6rem;
 		font-size: 1.4rem;
 	}
 }
+
+// notice element styles conform Figma design
+.notice {
+	margin-block: var(--tilburg-space-column-mouse);
+	color: var(--tilburg-color-gray-600);
+}

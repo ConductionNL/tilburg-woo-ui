@@ -27,6 +27,7 @@ export const LABELS = {
   SUMMARY: 'Samenvatting',
   SUMMARY_UNAVAILABLE: 'Samenvatting niet beschikbaar',
   DOCUMENTS_PRIMARY: 'Hoofddocumenten',
+  DOCUMENTS_SECONDARY: 'Bijlagen',
 
   DOCUMENT: 'Document',
   TYPE: 'Type',
