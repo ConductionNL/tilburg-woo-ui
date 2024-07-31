@@ -3,11 +3,9 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-import { AcLink } from '@molecules';
-import { AcSection, AcContainer, AcRichText } from '@atoms';
-import { AcSanitizeHtml } from '@utils';
+import { AcSection, AcContainer, AcImage } from '@atoms';
 
-const AcAbout = ({ title, content, link }) => {
+const AcAbout = ({ title, content, link, image }) => {
   return (
     <AcSection className='ac-about' spacing>
       <AcContainer>
@@ -17,7 +15,7 @@ const AcAbout = ({ title, content, link }) => {
           {link}
         </div>
         <div className='ac-about__img'>
-          <img src='about-tilburg-placeholder.png' alt='' />
+          <AcImage {...image} />
         </div>
       </AcContainer>
     </AcSection>

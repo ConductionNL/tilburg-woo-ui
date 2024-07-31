@@ -8,6 +8,7 @@
 @import '@utrecht/components/heading-4/css';
 @import '@utrecht/components/heading-5/css';
 @import '@utrecht/components/heading-6/css';
+@import '../atoms/ac-usps';
 
 .ac-rich-text {
 
@@ -31,9 +32,16 @@
   ul {
     @extend .utrecht-unordered-list !optional;
     @extend .utrecht-paragraph !optional;
+    @extend .ac-usps !optional;
+    padding-left: 0;
 
     li {
       @extend .utrecht-unordered-list__item !optional;
+      display:block;
+
+      p {
+        display: inline;
+      }
     }
   }
 

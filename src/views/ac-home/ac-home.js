@@ -37,6 +37,7 @@ const AcHome = ({ store: { pages } }) => {
         title={AcRemoveTags(contents[3].data.content)}
         content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4].data.content))}
         link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5].data.content))}
+        image={contents[6].data}
       />
     </>
   );

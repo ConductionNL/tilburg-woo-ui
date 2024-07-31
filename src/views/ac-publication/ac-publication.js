@@ -106,7 +106,7 @@ const AcPublication = ({ store: { documents } }) => {
             <Heading level={2}>Aanvullende informatie</Heading>
             <AcTable
               rows={[
-                ['Zaaknummer', '???'],
+                ['Zaaknummer', get_single?.reference || LABELS.UNKNOWN],
                 [
                   LABELS.CATEGORY,
                   <AcLink
@@ -117,7 +117,6 @@ const AcPublication = ({ store: { documents } }) => {
                     {get_single?.category}
                   </AcLink>,
                 ],
-                ['Onderwerp', <Link>Duurzaamheid</Link>],
               ]}
             />
           </div>
