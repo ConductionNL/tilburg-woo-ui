@@ -75,3 +75,15 @@ $grid-gutter-size: 1.6rem;
 		padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
 	}
 }
+
+.error {
+	&-input {
+		border-color: var(--tilburg-color-red-400) !important;
+	}
+
+	&-message {
+		margin-block-start: -10px;
+		color: var(--tilburg-color-red-400);
+		font-size: 1.4rem;
+	}
+}
