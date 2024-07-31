@@ -76,6 +76,12 @@ $grid-gutter-size: 1.6rem;
 	}
 }
 
+// breadcrumb styles conform Figma design
+.utrecht-link.utrecht-breadcrumb-nav__link--disabled {
+	color: var(--utrecht-breadcrumb-nav-link-disabled-color);
+}
+
+// custom error styles for date input on search page
 .error {
 	&-input {
 		border-color: var(--tilburg-color-red-400) !important;
