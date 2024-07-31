@@ -9,7 +9,7 @@ const BLOCK_TYPES = {
   Cta: AcCta,
   DataList: AcDataList,
   Faq: AcFaq,
-  // 'Image': AcImage,
+  Image: AcImage,
   RichText: AcRichText,
 };
 

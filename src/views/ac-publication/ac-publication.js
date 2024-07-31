@@ -55,7 +55,7 @@ const AcPublication = ({ store: { documents } }) => {
         <VISUALS.DOCUMENT />
         <Link>{row.title || 'Naamloos bestand'}</Link>
       </AcLink>,
-      row.type || LABELS.UNKNOWN,
+      row.labels[0] || LABELS.UNKNOWN,
       acFormatDate(row?._self?.dateCreated, 'YYYY-MM-DD', 'DD MMMM YYYY') ||
         LABELS.UNKNOWN,
     ];

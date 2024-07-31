@@ -20,7 +20,7 @@ const AcSearchResult = ({
       <Paragraph>{summary}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
-          {themes?.length > 0 && (
+          {themes?.length > 0 && false && (
             <>
               <StatusBadge>{themes[0]?.title}</StatusBadge>
               <VISUALS.ELLIPSE />
