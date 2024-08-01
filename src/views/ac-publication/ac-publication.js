@@ -75,19 +75,21 @@ const AcPublication = ({ store: { documents } }) => {
           </AcCard>
 
           {/* Show only when there are primary attachments */}
-          <div>
-            <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
-            <AcFlex spacing={'xs'} className='notice'>
-              <VISUALS.INFO />
-              Documenten worden in een nieuw tabblad geopend.
-            </AcFlex>
-            <AcTable
-              header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-              rows={get_attachments(true)?.map((attachment) =>
-                mapAttachmentRow(attachment, true)
-              )}
-            />
-          </div>
+          {get_attachments(true).length > 0 && (
+            <div>
+              <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
+              <AcFlex spacing={'xs'} className='notice'>
+                <VISUALS.INFO />
+                Documenten worden in een nieuw tabblad geopend.
+              </AcFlex>
+              <AcTable
+                header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
+                rows={get_attachments(true)?.map((attachment) =>
+                  mapAttachmentRow(attachment, true)
+                )}
+              />
+            </div>
+          )}
 
           {/* Show only if there are secondary attachments */}
           {get_attachments().length > 0 && (
