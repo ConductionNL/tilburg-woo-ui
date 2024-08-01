@@ -4,6 +4,10 @@
   >.utrecht-accordion,
   >.utrecht-table {
     margin-block: var(--tilburg-space-block-rabbit);
+
+    h2 {
+      margin-block-start: var(--tilburg-space-block-dog);
+    }
   }
 
   >.ac-card {
