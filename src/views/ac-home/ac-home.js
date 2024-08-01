@@ -22,9 +22,9 @@ const AcHome = ({ store: { pages } }) => {
   return (
     <>
       <AcIntro
-        title={AcRemoveTags(contents[0]?.data.content)}
-        content={AcSanitizeHtml(contents[1]?.data.content)}
-        link={AcRemoveParagraphTags(contents[2]?.data.content)}
+        title={AcRemoveTags(contents[0]?.data?.content)}
+        content={AcSanitizeHtml(contents[1]?.data?.content)}
+        link={AcRemoveParagraphTags(contents[2]?.data?.content)}
       />
       <AcHero />
       {/*<AcSubjects*/}
@@ -34,9 +34,9 @@ const AcHome = ({ store: { pages } }) => {
       {/*  subjects={subjectsDummyData}*/}
       {/*/>*/}
       <AcAbout
-        title={AcRemoveTags(contents[3].data.content)}
-        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4].data.content))}
-        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5].data.content))}
+        title={AcRemoveTags(contents[3]?.data?.content)}
+        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4]?.data?.content))}
+        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5]?.data?.content))}
         image={contents[6].data}
       />
     </>
