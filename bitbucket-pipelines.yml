@@ -49,6 +49,7 @@ pipelines:
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
             - yarn set version 4.1.1
             - yarn build:web
+            - docker login -u $DOCKER_HUB_USER_ACATO -p $DOCKER_HUB_PASSWORD_ACATO
             - COMMIT_HASH=$BITBUCKET_COMMIT
             - docker build -t acatonl/woo-ui-develop:latest .
             - docker push acatonl/woo-ui-develop:latest
