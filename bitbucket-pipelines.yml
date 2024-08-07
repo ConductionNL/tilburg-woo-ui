@@ -102,6 +102,7 @@ pipelines:
             - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
             - yarn set version 4.1.1
             - yarn build:web
+            - echo 'Set FE API url to "$API_URL_COMMONGROUND"'
             - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
             - docker build -t acatonl/woo-ui-develop:latest .
