@@ -96,13 +96,13 @@ pipelines:
             - node_modules/**
       - step:
           name: Build and push tot container registry
-          deployment: develop
+          deployment: conduction
           script:
             - unset CI
-            - env | awk -F"DOTENV_CONDUCTION_" '/^DOTENV_CONDUCTION_/ {print $2}' >> .env
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
             - yarn set version 4.1.1
             - yarn build:web
-            - docker login -u $DOCKER_HUB_USER_ACATO -p $DOCKER_HUB_PASSWORD_ACATO
+            - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
             - docker build -t acatonl/woo-ui-develop:latest .
             - docker push acatonl/woo-ui-develop:latest
