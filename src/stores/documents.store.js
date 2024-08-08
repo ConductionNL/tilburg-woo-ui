@@ -10,6 +10,13 @@ const DEFAULT_SEARCH_QUERY = {
   _limit: LIMIT,
 };
 
+const DEFAULT_QUERY = {};
+
+if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
+  DEFAULT_QUERY['organization.oin'] =
+    process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
+}
+console.log(DEFAULT_QUERY);
 export class DocumentsStore {
   constructor(store) {
     makeObservable(this);
@@ -36,10 +43,7 @@ export class DocumentsStore {
   pagination = {};
 
   @observable
-  defaultQuery = {
-    'organization.oin':
-      process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN || '00000001001172773000',
-  };
+  defaultQuery = DEFAULT_QUERY;
 
   @observable
   aggregationsQuery = {
