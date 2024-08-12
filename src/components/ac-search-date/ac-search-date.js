@@ -16,7 +16,7 @@ const AcSearchDate = ({ store: { documents } }) => {
   const [errors, setErrors] = useState({ after: '', before: '' });
 
   const setDate = (key, value) => {
-    if (!isValidDate(value)) {
+    if (value !== '' && !isValidDate(value)) {
       setErrors((prevErrors) => ({
         ...prevErrors,
         [key]: 'Ongeldig formaat. Gebruik dd-mm-yyyy.',
@@ -44,7 +44,7 @@ const AcSearchDate = ({ store: { documents } }) => {
       <AcFormField
         id={'date_after'}
         className={errors.after ? 'error-field' : ''}
-        defaultValue={search_query['publicationDate[after]']}
+        defaultValue={search_query?.published?.after}
         label='Datum vanaf (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('after', value)}
@@ -55,7 +55,7 @@ const AcSearchDate = ({ store: { documents } }) => {
       <AcFormField
         id={'date_before'}
         className={errors.after ? 'error-field' : ''}
-        defaultValue={search_query['publicationDate[before]']}
+        defaultValue={search_query?.published?.before}
         label='Datum tot en met (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('before', value)}

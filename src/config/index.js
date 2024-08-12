@@ -9,6 +9,15 @@ const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
 const _api_commonground_organization_oin_ =
   process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
 
+const _api_commonground_headers_ = {
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+};
+
+if (_api_commonground_token_) {
+  _api_commonground_headers_['Authorization'] = _api_commonground_token_;
+}
+
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;
 const _provider_ = process.env.PROVIDER;
@@ -57,11 +66,7 @@ export default {
     responseType: 'json',
     responseEncoding: 'utf8',
     credentials: false,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `${_api_commonground_token_}`,
-    },
+    headers: _api_commonground_headers_,
   },
   faqs: {
     baseURL: `${_api_}`,

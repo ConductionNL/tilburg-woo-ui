@@ -4,9 +4,9 @@ import { AcBuildURLSearchParams } from '@utils';
 
 let app = {};
 
-const LIMIT = 7;
+const LIMIT = 3;
 
-const DEFAULT_SEARCH_QUERY = {
+export const DEFAULT_SEARCH_QUERY = {
   _limit: LIMIT,
 };
 
@@ -16,7 +16,7 @@ if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
   DEFAULT_QUERY['organization.oin'] =
     process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
 }
-console.log(DEFAULT_QUERY);
+
 export class DocumentsStore {
   constructor(store) {
     makeObservable(this);
@@ -38,7 +38,6 @@ export class DocumentsStore {
   @observable
   themes = [];
 
-  // Pagination information
   @observable
   pagination = {};
 
@@ -108,14 +107,25 @@ export class DocumentsStore {
   @action
   get_attachments = (primary = false) => {
     return this.single?.attachments?.filter((attachment) =>
-      primary ? attachment.labels.length > 0 : attachment.labels.length === 0
+      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
   };
 
   @action
   setQueryDate = (key, value) => {
+    console.group('SET QUERY DATE');
+    console.log(key, value, 'SET QUERY DATE');
+    console.log('CURRENT QUERY:', toJS(this.query));
+
+    if (!this.query.published && value) {
+      this.query.published = {};
+    }
+
     this.setPage(1);
-    this.query[`publicationDate[${key}]`] = value;
+    this.query.published[key] = value;
+
+    console.log('NEW QUERY:', toJS(this.query));
+    console.groupEnd();
   };
 
   @action
@@ -125,7 +135,7 @@ export class DocumentsStore {
 
   @action
   setSearchQuery = (searchQuery) => {
-    this.query.search = searchQuery;
+    this.query._search = searchQuery;
   };
 
   @action
@@ -143,7 +153,12 @@ export class DocumentsStore {
 
   @action
   setSort = (key, value) => {
-    this.updateQuery({ _order: { [key]: value } });
+    console.group('SET SORT');
+    console.log(key, value);
+    console.log('VALUE', value);
+    this.query._order = {};
+    this.query._order[key] = value;
+    console.groupEnd();
   };
 
   @action
@@ -173,20 +188,21 @@ export class DocumentsStore {
 
   @action
   getSearchPageURL = (params = {}) => {
-    return `/zoeken?${AcBuildURLSearchParams({
-      search: this.query.search,
-      category: this.query.category,
-      _page: this.query._page,
-      'publicationDate[before]': this.query['publicationDate[before]'],
-      'publicationDate[after]': this.query['publicationDate[after]'],
-      _order: this.query._order,
-      ...params,
-    })}`;
+    console.group('GET SEARCH PAGE URL');
+    console.log('BUILDING URL, CURRENT QUERY:', toJS(this.query));
+    const urlParams = AcBuildURLSearchParams(this.query);
+    console.log(urlParams);
+    console.groupEnd();
+    // console.log('building url');
+    return `/zoeken?${urlParams}`;
   };
 
   @action
   fetchDocuments = async () => {
     this.loading.status = true;
+    console.group('MAKING API CALL');
+    console.log('SEARCH QUERY:', toJS(this.search_query.published));
+    console.groupEnd();
 
     app.store.api.documents
       .search(this.search_query)

@@ -5,12 +5,12 @@ const FAQS = '/faqs';
 const PUBLIC = '/public';
 const PAGES = '/pages';
 const PUBLICATIONS = '/publications';
+const SEARCH = '/search';
 
-// V1
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
-    SEARCH: `${API}${PUBLICATIONS}`, // GET
-    SINGLE: (_id) => `${API}${PUBLICATIONS}/${_id}`, // GET
+    SEARCH: `${API}${SEARCH}`, // GET
+    SINGLE: (_id) => `${API}${SEARCH}/${_id}`, // GET
   },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET

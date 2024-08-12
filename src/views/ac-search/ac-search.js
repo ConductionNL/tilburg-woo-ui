@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AcBreadcrumbs, AcSearchFilters, AcSearchResult } from '@molecules';
+import { AcSearchFilters, AcSearchResult } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
 import { AcSearchBox, AcSearchSort } from '@components';
@@ -58,7 +58,7 @@ const AcSearch = ({ store: { documents } }) => {
     }
 
     navigate(getSearchPageURL());
-  }, [search_query]);
+  }, [search_query, ...Object.values(search_query?.published || {})]);
 
   // On GET params change.
   useEffect(() => {
@@ -80,7 +80,7 @@ const AcSearch = ({ store: { documents } }) => {
     return (
       <Pagination
         totalPages={pagination?.pages}
-        page={pagination?.page}
+        page={parseInt(pagination?.page, 10)}
         onPageChange={onPaginationChange}
         nextLabel=''
         previousLabel=''

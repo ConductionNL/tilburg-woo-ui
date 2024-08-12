@@ -44,14 +44,14 @@ const AcSearchSort = ({ store: { documents }, type }) => {
         <Select id='sorting' onChange={onChangeCallback}>
           <SelectOption value='default'>Meest relevant</SelectOption>
           <SelectOption
-            selected={get_order?.publicationDate === 'asc'}
-            value='publicationDate|asc'
+            selected={get_order?.published === 'asc'}
+            value='published|asc'
           >
             Datum - oud naar nieuw
           </SelectOption>
           <SelectOption
-            selected={get_order?.publicationDate === 'desc'}
-            value='publicationDate|desc'
+            selected={get_order?.published === 'desc'}
+            value='published|desc'
           >
             Datum - nieuw naar oud
           </SelectOption>
