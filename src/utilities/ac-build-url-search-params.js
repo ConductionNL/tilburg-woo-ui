@@ -27,12 +27,12 @@ export const AcBuildURLSearchParams = (data) => {
       return;
     }
 
+    // If the object is empty, skip it.
     if (
       !Array.isArray(value) &&
       typeof value === 'object' &&
       Object.values(value).filter((v) => !INVALID_VALUES.includes(v)).length === 0
     ) {
-      console.log('EMPTY OBJECNT');
       return;
     }
 
@@ -42,6 +42,13 @@ export const AcBuildURLSearchParams = (data) => {
           return;
         }
         params.append(`${key}[${subKey}]`, getValue(subValue));
+      });
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((subValue) => {
+        params.append(`${key}[]`, getValue(subValue));
       });
       return;
     }

@@ -52,7 +52,6 @@ const AcSearchCategories = ({ store: { documents } }) => {
 
   return (
     <>
-      {JSON.stringify(documents.search_query.categories)}
       <AcFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
         <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>

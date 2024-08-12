@@ -163,13 +163,17 @@ export class DocumentsStore {
 
   @action
   toggleSearchArrayValue = (key, value) => {
+    console.group('TOGGLE SEARCH ARRAY VALUE');
+    console.log(key, value);
     if (!this.query[key]) {
+      console.log('KEY DOES NOT EXIST, CREATING ARRAY');
       this.query[key] = [];
     }
 
     const index = this.query[key]?.indexOf(value);
     // Remove item if we find it in the array.
     if (index !== -1) {
+      console.log(index, this.query[key]);
       this.query[key] = this.query[key].filter((cat) => cat !== value);
       return;
     }
@@ -179,6 +183,7 @@ export class DocumentsStore {
     }
 
     this.query[key] = [...this.query[key], value];
+    console.groupEnd();
   };
 
   @action
@@ -259,8 +264,8 @@ export class DocumentsStore {
     app.store.api.documents
       .searchAggregations(this.aggregations_query)
       .then((response) => {
-        this.categories = response.category;
-        this.themes = response.themes;
+        this.categories = response.facets.category;
+        this.themes = response.facets.themes;
       })
       .catch((e) => console.error(e))
       .finally(() => {
