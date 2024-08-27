@@ -51,7 +51,7 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-develop:latest .
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-develop:latest .
             - docker push $DOCKER_DOMAIN/tilburg-woo-ui-develop:latest
           services:
             - docker
@@ -82,6 +82,33 @@ pipelines:
           services:
             - docker
   custom: # Pipelines that are triggered manually
+    conduction:
+      - step:
+          name: Install
+          caches:
+            - nodecustom
+            - yarn
+          script:
+            - unset CI
+            - yarn set version 4.1.1
+            - yarn
+          artifacts:
+            - node_modules/**
+      - step:
+          name: Build and push tot container registry
+          deployment: conduction
+          script:
+            - unset CI
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
+            - yarn set version 4.1.1
+            - yarn build:web
+            - echo 'Set FE API url to "$API_URL_COMMONGROUND"'
+            - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+            - COMMIT_HASH=$BITBUCKET_COMMIT
+            - docker build -t acatonl/woo-ui-develop:latest .
+            - docker push acatonl/woo-ui-develop:latest
+          services:
+            - docker
     production:
       - step:
           name: Install
