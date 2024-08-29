@@ -10,7 +10,7 @@ const SEARCH = '/search';
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
     SEARCH: `${API}${SEARCH}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}/${_id}`, // GET
+    SINGLE: (_id) => `${API}${PUBLICATIONS}/${_id}`, // GET
   },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET
