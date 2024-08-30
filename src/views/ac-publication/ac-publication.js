@@ -20,6 +20,7 @@ const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
   const {
     fetchDocument,
+    fetchAttachments,
     resetDocument,
     get_single,
     loading,
@@ -29,6 +30,7 @@ const AcPublication = ({ store: { documents } }) => {
 
   useEffect(() => {
     fetchDocument(id);
+    fetchAttachments(id);
     return () => resetDocument();
   }, []);
 
@@ -40,24 +42,37 @@ const AcPublication = ({ store: { documents } }) => {
     return <AcLoader />;
   }
 
+  const getFilerdAttachements = (primary = false) => {
+    const filteredAttachmentsLabel = get_attachments?.filter((attachment) =>
+      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
+    );
+
+    const filterdAttachmentsPublished = filteredAttachmentsLabel?.filter(
+      (attachment) => {
+        return attachment.published < new Date().toISOString();
+      }
+    );
+
+    return filterdAttachmentsPublished;
+  };
+
   const mapAttachmentRow = (row, primary) => {
     if (!primary) {
       return [
-        <AcLink to={row.url}>
+        <AcLink to={row.accessUrl} target='_blank'>
           <VISUALS.DOCUMENT />
-          <Link>{row.title || 'Naamloos bestand'}</Link>
+          <Link>{`${row.title}.${row.extension}` || 'Naamloos bestand'}</Link>
         </AcLink>,
       ];
     }
 
     return [
-      <AcLink to={row.url}>
+      <AcLink to={row.accessUrl} target='_blank'>
         <VISUALS.DOCUMENT />
-        <Link>{row.title || 'Naamloos bestand'}</Link>
+        <Link>{`${row.title}.${row.extension}` || 'Naamloos bestand'}</Link>
       </AcLink>,
       row.labels[0] || LABELS.UNKNOWN,
-      acFormatDate(row?._self?.dateCreated, 'YYYY-MM-DD', 'DD MMMM YYYY') ||
-        LABELS.UNKNOWN,
+      acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
     ];
   };
 
@@ -75,7 +90,7 @@ const AcPublication = ({ store: { documents } }) => {
           </AcCard>
 
           {/* Show only when there are primary attachments */}
-          {get_attachments(true).length > 0 && (
+          {getFilerdAttachements(true)?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
               <AcFlex spacing={'xs'} className='notice'>
@@ -84,7 +99,7 @@ const AcPublication = ({ store: { documents } }) => {
               </AcFlex>
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-                rows={get_attachments(true)?.map((attachment) =>
+                rows={getFilerdAttachements(true)?.map((attachment) =>
                   mapAttachmentRow(attachment, true)
                 )}
               />
@@ -92,12 +107,12 @@ const AcPublication = ({ store: { documents } }) => {
           )}
 
           {/* Show only if there are secondary attachments */}
-          {get_attachments().length > 0 && (
+          {getFilerdAttachements()?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
               <AcTable
                 header={[LABELS.DOCUMENT]}
-                rows={get_attachments()?.map((attachment) =>
+                rows={getFilerdAttachements()?.map((attachment) =>
                   mapAttachmentRow(attachment)
                 )}
               />

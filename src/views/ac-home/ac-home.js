@@ -37,11 +37,7 @@ const AcHome = ({ store: { pages } }) => {
         title={AcRemoveTags(contents[3]?.data?.content)}
         content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4]?.data?.content))}
         link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5]?.data?.content))}
-        image={
-          contents[6]?.data || {
-            url: 'https://live.staticflickr.com/4351/36887739100_f58ccf28f7.jpg',
-          }
-        } // TODO: this is a quick and dirty fix, this should be properly fixed later by someone smarter
+        // image={contents[6].data}
       />
     </>
   );
