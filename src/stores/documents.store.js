@@ -13,7 +13,6 @@ export const DEFAULT_SEARCH_QUERY = {
 const DEFAULT_QUERY = {};
 
 if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
-  DEFAULT_QUERY['status'] = 'published';
 }
 
 export class DocumentsStore {
