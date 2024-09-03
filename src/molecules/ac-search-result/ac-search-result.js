@@ -12,7 +12,7 @@ const AcSearchResult = ({
   published,
   category,
   themes,
-  _id,
+  id,
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
@@ -32,7 +32,7 @@ const AcSearchResult = ({
           <VISUALS.ELLIPSE />
           <Paragraph small>{category}</Paragraph>
         </AcFlex>
-        <AcLink to={`/publicatie/${_id}`}>
+        <AcLink to={`/publicatie/${id}`}>
           <span class='sr-only'>
             {LABELS.READ_MORE_ABOUT} {title}
           </span>

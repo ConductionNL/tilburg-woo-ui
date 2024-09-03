@@ -13,8 +13,6 @@ export const DEFAULT_SEARCH_QUERY = {
 const DEFAULT_QUERY = {};
 
 if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
-  DEFAULT_QUERY['organization.oin'] =
-    process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
 }
 
 export class DocumentsStore {
@@ -31,6 +29,9 @@ export class DocumentsStore {
 
   @observable
   single = null;
+
+  @observable
+  attachments = null;
 
   @observable
   categories = [];
@@ -93,6 +94,10 @@ export class DocumentsStore {
   get get_single() {
     return toJS(this.single);
   }
+  @computed
+  get get_attachments() {
+    return toJS(this.attachments);
+  }
 
   @computed
   get all_documents() {
@@ -102,13 +107,6 @@ export class DocumentsStore {
   @action
   category_checked = (id) => {
     return this.query.category?.includes(id);
-  };
-
-  @action
-  get_attachments = (primary = false) => {
-    return this.single?.attachments?.filter((attachment) =>
-      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
-    );
   };
 
   @action
@@ -243,8 +241,29 @@ export class DocumentsStore {
   };
 
   @action
+  fetchAttachments = async (_id) => {
+    this.loading.status = true;
+
+    app.store.api.documents
+      .attachments(
+        _id,
+        new URLSearchParams(
+          AcBuildURLSearchParams({ _id, ...this.attachmentDefaultQuery })
+        ).toString()
+      )
+      .then((response) => {
+        this.attachments = response;
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.loading.status = false;
+      });
+  };
+
+  @action
   resetDocument = () => {
     this.single = null;
+    this.attachments = null;
   };
 
   @action
