@@ -42,18 +42,18 @@ const AcPublication = ({ store: { documents } }) => {
     return <AcLoader />;
   }
 
-  const getFilerdAttachements = (primary = false) => {
+  const getFilteredAttachements = (primary = false) => {
     const filteredAttachmentsLabel = get_attachments?.filter((attachment) =>
       primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
 
-    const filterdAttachmentsPublished = filteredAttachmentsLabel?.filter(
+    const filteredAttachmentsPublished = filteredAttachmentsLabel?.filter(
       (attachment) => {
         return attachment.published < new Date().toISOString();
       }
     );
 
-    return filterdAttachmentsPublished;
+    return filteredAttachmentsPublished;
   };
 
   const mapAttachmentRow = (row, primary) => {
@@ -90,7 +90,7 @@ const AcPublication = ({ store: { documents } }) => {
           </AcCard>
 
           {/* Show only when there are primary attachments */}
-          {getFilerdAttachements(true)?.length > 0 && (
+          {getFilteredAttachements(true)?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
               <AcFlex spacing={'xs'} className='notice'>
@@ -99,7 +99,7 @@ const AcPublication = ({ store: { documents } }) => {
               </AcFlex>
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-                rows={getFilerdAttachements(true)?.map((attachment) =>
+                rows={getFilteredAttachements(true)?.map((attachment) =>
                   mapAttachmentRow(attachment, true)
                 )}
               />
@@ -107,12 +107,12 @@ const AcPublication = ({ store: { documents } }) => {
           )}
 
           {/* Show only if there are secondary attachments */}
-          {getFilerdAttachements()?.length > 0 && (
+          {getFilteredAttachements()?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
               <AcTable
                 header={[LABELS.DOCUMENT]}
-                rows={getFilerdAttachements()?.map((attachment) =>
+                rows={getFilteredAttachements()?.map((attachment) =>
                   mapAttachmentRow(attachment)
                 )}
               />
