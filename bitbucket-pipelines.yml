@@ -51,7 +51,7 @@ pipelines:
             - yarn build:web
             - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
             - COMMIT_HASH=$BITBUCKET_COMMIT
-            - docker build -t $DOCKER_DOMAIN/tilburg-woo-develop:latest .
+            - docker build -t $DOCKER_DOMAIN/tilburg-woo-ui-develop:latest .
             - docker push $DOCKER_DOMAIN/tilburg-woo-ui-develop:latest
           services:
             - docker
