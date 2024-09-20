@@ -115,7 +115,7 @@ export class DocumentsStore {
     console.log(key, value, 'SET QUERY DATE');
     console.log('CURRENT QUERY:', toJS(this.query));
 
-    if (!this.query.published && value) {
+    if (!this.query.published && !value) {
       this.query.published = {};
     }
 

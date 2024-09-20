@@ -1,5 +1,5 @@
 // Imports => Utilities
-import { AcGetAccessToken, AcLockObject } from '@utils';
+import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 // Get ENV variables
 const _api_ = process.env.API_URL;
@@ -14,7 +14,7 @@ const _api_commonground_headers_ = {
   Accept: 'application/json',
 };
 
-if (_api_commonground_token_) {
+if (_api_commonground_token_ && !ACIsHttps(_api_commonground_)) {
   _api_commonground_headers_['Authorization'] = _api_commonground_token_;
 }
 
