@@ -87,7 +87,7 @@ const subjects = [
   },
 ];
 
-const AcSubjects = ({ store: { documents } }) => {
+const AcThemes = ({ store: { documents } }) => {
   const { fetchAggregations } = documents;
 
   useEffect(() => {
@@ -95,11 +95,11 @@ const AcSubjects = ({ store: { documents } }) => {
   }, []);
 
   return (
-    <AcSection className='ac-subjects' spacing>
+    <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
           <AcColumn>
-            <Heading>{LABELS.SUBJECTS}</Heading>
+            <Heading>{LABELS.THEMES}</Heading>
             <Paragraph>
               Op de campus gaan bedrijven, onderwijs – en onderzoeksinstellingen ook
               samen innoveren en medewerkers opleiden
@@ -121,4 +121,4 @@ const AcSubjects = ({ store: { documents } }) => {
   );
 };
 
-export default withStore(observer(AcSubjects));
+export default withStore(observer(AcThemes));
