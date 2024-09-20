@@ -47,13 +47,18 @@ const AcPublication = ({ store: { documents } }) => {
       primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
 
-    const filteredAttachmentsPublished = filteredAttachmentsLabel?.filter(
-      (attachment) => {
-        return attachment.published < new Date().toISOString();
-      }
-    );
+    const filteredAttachments = [];
+    filteredAttachmentsLabel &&
+      filteredAttachmentsLabel.forEach((attachment) => {
+        for (let i = 1; i <= attachment.labels.length; i++) {
+          filteredAttachments.push({
+            ...attachment,
+            labels: [attachment.labels[i - 1]],
+          });
+        }
+      });
 
-    return filteredAttachmentsPublished;
+    return primary ? filteredAttachments : filteredAttachmentsLabel;
   };
 
   const mapAttachmentRow = (row, primary) => {
