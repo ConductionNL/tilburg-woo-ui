@@ -5,6 +5,7 @@ import { AcGetAccessToken, AcLockObject } from '@utils';
 const _api_ = process.env.API_URL;
 const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 
+const _api_commonground_basic_auth_ = process.env.API_URL_COMMONGROUND_BASIC_AUTH;
 const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
 const _api_commonground_organization_oin_ =
   process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
@@ -13,10 +14,6 @@ const _api_commonground_headers_ = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
 };
-
-if (_api_commonground_token_) {
-  _api_commonground_headers_['Authorization'] = _api_commonground_token_;
-}
 
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;
@@ -66,7 +63,10 @@ export default {
     responseType: 'json',
     responseEncoding: 'utf8',
     credentials: false,
-    headers: _api_commonground_headers_,
+    headers: {
+      ..._api_commonground_headers_,
+      Authorization: _api_commonground_basic_auth_,
+    },
   },
   faqs: {
     baseURL: `${_api_}`,
@@ -90,6 +90,18 @@ export default {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+    },
+  },
+  themes: {
+    baseURL: `${_api_commonground_}`,
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    credentials: false,
+    headers: {
+      ..._api_commonground_headers_,
+      Authoriazation: `Basic ${btoa(_api_commonground_basic_auth_)}`,
     },
   },
   upload: {

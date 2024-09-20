@@ -7,6 +7,7 @@ const PAGES = '/pages';
 const PUBLICATIONS = '/publications';
 const SEARCH = '/search';
 const ATTACHMENTS = '/attachments';
+const THEMES = '/themes';
 
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
@@ -21,6 +22,9 @@ export const ENDPOINTS = AcLockObject({
   PAGES: {
     INDEX: `${API}${PUBLIC}${PAGES}`, // GET
     SHOW: (_slug) => `${API}${PUBLIC}${PAGES}${_slug}`, // GET
+  },
+  THEMES: {
+    INDEX: `${API}${THEMES}`, // GET
   },
 });
 

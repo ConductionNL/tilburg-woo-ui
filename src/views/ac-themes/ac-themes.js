@@ -7,10 +7,12 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcCardCategory, AcLink } from '@molecules';
-import { LABELS, ROUTES, VISUALS } from '@constants';
+import { AcCardCategory } from '@molecules';
+import { LABELS, ROUTES } from '@constants';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcGrid from '@atoms/ac-grid/ac-grid';
+import { useMemo } from 'react';
+import { AcLoader } from '@components';
 
 const subjects = [
   {
@@ -87,12 +89,32 @@ const subjects = [
   },
 ];
 
-const AcThemes = ({ store: { documents } }) => {
-  const { fetchAggregations } = documents;
+const AcThemes = ({ store: { themes } }) => {
+  const { fetchThemes, all_themes, is_loading } = themes;
 
   useEffect(() => {
-    fetchAggregations();
+    console.log(themes);
+    fetchThemes();
   }, []);
+
+  const renderGrid = useMemo(() => {
+    if (is_loading) {
+      return <AcLoader />;
+    }
+
+    return (
+      <AcGrid row={3}>
+        {subjects.map((subject, index) => (
+          // <AcCardCategory key={index} {...subject} />
+          <AcCardCategory
+            key={index}
+            {...subject}
+            linkUrl={`${ROUTES.SEARCH}?themes[]=${subject.id}`}
+          />
+        ))}
+      </AcGrid>
+    );
+  }, [all_themes, is_loading]);
 
   return (
     <AcSection spacing>
@@ -105,16 +127,7 @@ const AcThemes = ({ store: { documents } }) => {
               samen innoveren en medewerkers opleiden
             </Paragraph>
           </AcColumn>
-          <AcGrid row={3}>
-            {subjects.map((subject, index) => (
-              // <AcCardCategory key={index} {...subject} />
-              <AcCardCategory
-                key={index}
-                {...subject}
-                linkUrl={`${ROUTES.SEARCH}?themes[]=${subject.id}`}
-              />
-            ))}
-          </AcGrid>
+          {renderGrid}
         </AcColumn>
       </AcContainer>
     </AcSection>

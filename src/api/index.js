@@ -9,6 +9,7 @@ import AuthAPI from '@api/auth.api';
 import DocumentsAPI from '@api/documents.api';
 import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
+import ThemesAPI from '@api/themes.api';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -89,6 +90,11 @@ export class API {
     });
     addInterceptors(DocumentsClient);
 
+    const ThemesClient = axios.create({
+      ...config.themes,
+    });
+    addInterceptors(ThemesClient);
+
     const DownloadClient = axios.create({
       ...config.download,
       onDownloadProgress,
@@ -107,6 +113,7 @@ export class API {
     this.documents = new DocumentsAPI({ Store, Client: DocumentsClient });
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
+    this.themes = new ThemesAPI({ Store, Client: ThemesClient });
   }
 }
 
