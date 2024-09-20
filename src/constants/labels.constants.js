@@ -42,6 +42,7 @@ export const LABELS = {
 
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
+  SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
 };
 
 export const LABELS_DYNAMIC = {

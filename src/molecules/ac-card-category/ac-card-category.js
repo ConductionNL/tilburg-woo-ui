@@ -8,7 +8,7 @@ import { VISUALS } from '@constants';
 
 const AcCardCategory = ({ image, title, paragraph, linkUrl, linkTitle }) => {
   return (
-    <AcCard category image={image}>
+    <AcCard category image={image} spaceBetween>
       <Heading level={3}>{title}</Heading>
       <Paragraph>{paragraph}</Paragraph>
       <AcLink to={linkUrl}>

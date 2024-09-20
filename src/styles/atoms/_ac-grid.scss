@@ -1,0 +1,16 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
+.ac-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--tilburg-space-column-rabbit);
+
+  @include respond-max($screen-md) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @include respond-max($screen-sm) {
+    grid-template-columns: 1fr;
+  }
+}
