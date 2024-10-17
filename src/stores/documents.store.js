@@ -7,6 +7,7 @@ let app = {};
 const LIMIT = 3;
 
 export const DEFAULT_SEARCH_QUERY = {
+  extend: 'all',
   _limit: LIMIT,
 };
 
@@ -29,9 +30,6 @@ export class DocumentsStore {
 
   @observable
   single = null;
-
-  @observable
-  attachments = null;
 
   @observable
   categories = [];
@@ -93,10 +91,6 @@ export class DocumentsStore {
   @computed
   get get_single() {
     return toJS(this.single);
-  }
-  @computed
-  get get_attachments() {
-    return toJS(this.attachments);
   }
 
   @computed
@@ -241,29 +235,8 @@ export class DocumentsStore {
   };
 
   @action
-  fetchAttachments = async (_id) => {
-    this.loading.status = true;
-
-    app.store.api.documents
-      .attachments(
-        _id,
-        new URLSearchParams(
-          AcBuildURLSearchParams({ _id, ...this.attachmentDefaultQuery })
-        ).toString()
-      )
-      .then((response) => {
-        this.attachments = response;
-      })
-      .catch((e) => console.error(e))
-      .finally(() => {
-        this.loading.status = false;
-      });
-  };
-
-  @action
   resetDocument = () => {
     this.single = null;
-    this.attachments = null;
   };
 
   @action

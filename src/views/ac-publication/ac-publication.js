@@ -20,17 +20,14 @@ const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
   const {
     fetchDocument,
-    fetchAttachments,
     resetDocument,
     get_single,
     loading,
     getSearchPageURL,
-    get_attachments,
   } = documents;
 
   useEffect(() => {
     fetchDocument(id);
-    fetchAttachments(id);
     return () => resetDocument();
   }, []);
 
@@ -43,7 +40,7 @@ const AcPublication = ({ store: { documents } }) => {
   }
 
   const getFilteredAttachements = (primary = false) => {
-    const filteredAttachmentsLabel = get_attachments?.filter((attachment) =>
+    const filteredAttachmentsLabel = get_single?.attachments?.filter((attachment) =>
       primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
 

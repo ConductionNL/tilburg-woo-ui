@@ -10,9 +10,9 @@ const ATTACHMENTS = '/attachments';
 
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
-    SEARCH: `${API}${SEARCH}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}/${_id}`, // GET
-    ATTACHMENTS: (_id) => `${API}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+    SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+    ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET
