@@ -7,11 +7,13 @@ let app = {};
 const LIMIT = 3;
 
 export const DEFAULT_SEARCH_QUERY = {
-  extend: 'all',
+  extend: 'themes',
   _limit: LIMIT,
 };
 
-const DEFAULT_QUERY = {};
+const DEFAULT_QUERY = {
+  extend: 'all',
+};
 
 if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
 }
@@ -38,6 +40,9 @@ export class DocumentsStore {
   themes = [];
 
   @observable
+  themesFacets = [];
+
+  @observable
   pagination = {};
 
   @observable
@@ -45,7 +50,7 @@ export class DocumentsStore {
 
   @observable
   aggregationsQuery = {
-    _queries: ['category', 'theme'],
+    _queries: ['category', 'themes'],
   };
 
   @observable
@@ -64,12 +69,23 @@ export class DocumentsStore {
 
   @computed
   get all_themes() {
-    return this.themes;
+    return toJS(this.themes);
+  }
+
+  @computed
+  get all_themes_facets() {
+    return this.themesFacets;
   }
 
   @computed
   get search_query() {
     const query = { ...this.defaultQuery, ...this.query };
+
+    return query;
+  }
+
+  get themes_query() {
+    const query = { ...this.defaultQuery };
 
     return query;
   }
@@ -205,7 +221,10 @@ export class DocumentsStore {
       .search(this.search_query)
       .then((response) => {
         this.items = response.results;
-        this.pagination = response;
+        this.pagination = {
+          page: response.page ?? 1,
+          pages: Math.ceil(response.total / LIMIT),
+        };
         delete this.pagination.results;
       })
       .catch((e) => console.error(e))
@@ -248,6 +267,7 @@ export class DocumentsStore {
   resetAggregations = () => {
     this.categories = [];
     this.themes = [];
+    this.themesFacets = [];
   };
 
   @action
@@ -256,8 +276,25 @@ export class DocumentsStore {
     app.store.api.documents
       .searchAggregations(this.aggregations_query)
       .then((response) => {
-        this.categories = response.facets.category;
-        this.themes = response.facets.themes;
+        this.categories = response.facets.category.filter(
+          (category) => category._id !== ''
+        );
+        this.themesFacets = response.facets.themes;
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.loading.status = false;
+      });
+  };
+
+  @action
+  fetchThemes = async () => {
+    this.loading.status = true;
+
+    app.store.api.documents
+      .themes(this.themes_query)
+      .then((response) => {
+        this.themes = response;
       })
       .catch((e) => console.error(e))
       .finally(() => {

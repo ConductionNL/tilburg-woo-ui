@@ -18,13 +18,8 @@ import acFormatDate from '@src/utilities/ac-format-date';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
-  const {
-    fetchDocument,
-    resetDocument,
-    get_single,
-    loading,
-    getSearchPageURL,
-  } = documents;
+  const { fetchDocument, resetDocument, get_single, loading, getSearchPageURL } =
+    documents;
 
   useEffect(() => {
     fetchDocument(id);
@@ -59,11 +54,14 @@ const AcPublication = ({ store: { documents } }) => {
   };
 
   const mapAttachmentRow = (row, primary) => {
+    // Fallback for when there is no extension property
+    const extension = row.type.split('/').pop();
+
     if (!primary) {
       return [
         <AcLink to={row.accessUrl} target='_blank'>
           <VISUALS.DOCUMENT />
-          <Link>{`${row.title}.${row.extension}` || 'Naamloos bestand'}</Link>
+          <Link>{`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}</Link>
         </AcLink>,
       ];
     }
@@ -71,7 +69,7 @@ const AcPublication = ({ store: { documents } }) => {
     return [
       <AcLink to={row.accessUrl} target='_blank'>
         <VISUALS.DOCUMENT />
-        <Link>{`${row.title}.${row.extension}` || 'Naamloos bestand'}</Link>
+        <Link>{`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}</Link>
       </AcLink>,
       row.labels[0] || LABELS.UNKNOWN,
       acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,

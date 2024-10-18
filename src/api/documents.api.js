@@ -19,6 +19,12 @@ export class DocumentsAPI {
     );
   }
 
+  themes(params) {
+    return this.Client.get(ENDPOINTS.THEMES, { params }).then(
+      (response) => response.data
+    );
+  }
+
   searchAggregations(params) {
     return this.Client.get(ENDPOINTS.DOCUMENTS.SEARCH, {
       params,

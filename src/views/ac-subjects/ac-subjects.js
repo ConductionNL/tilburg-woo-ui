@@ -1,7 +1,7 @@
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { AcSubjects as AcSubjectsContainer } from '@components';
+import { AcSubjects as AcSubjectsContainer, AcLoader } from '@components';
 import { useEffect } from 'react';
 
 const subjectsDummyData = [
@@ -71,18 +71,33 @@ const subjectsDummyData = [
 ];
 
 const AcSubjects = ({ store: { documents } }) => {
-  const { categories, fetchAggregations } = documents;
+  const { themes, items, fetchThemes, fetchDocuments, is_loading } = documents;
+
+  const newThemes = themes.map((theme) => {
+    return {
+      ...theme,
+      paragraph: theme.description,
+      linkTitle: `Bekijk ${
+        items.filter((item) => item.themes.includes(theme.id))?.count ?? 0
+      } documenten`,
+    };
+  });
 
   useEffect(() => {
-    fetchAggregations();
+    fetchThemes();
+    fetchDocuments();
   }, []);
+
+  if (is_loading) {
+    return <AcLoader />;
+  }
 
   return (
     <>
       <AcSubjectsContainer
         heading='Onderwerpen'
-        paragraph='Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dol magna aliqua.'
-        subjects={subjectsDummyData}
+        paragraph='Hier vind je de onderwerpen die benoemd worden in de publicaties.'
+        subjects={newThemes}
       />
     </>
   );

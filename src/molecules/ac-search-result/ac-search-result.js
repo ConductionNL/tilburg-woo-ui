@@ -27,7 +27,7 @@ const AcSearchResult = ({
             </>
           )}
           <Paragraph small>
-            {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY')}
+            {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
           </Paragraph>
           <VISUALS.ELLIPSE />
           <Paragraph small>{category}</Paragraph>
