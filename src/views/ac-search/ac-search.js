@@ -137,7 +137,7 @@ const AcSearch = ({ store: { documents } }) => {
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
-            defaultValue={search_query.search}
+            defaultValue={search_query._search}
           />
         </AcCard>
       </AcContainer>
