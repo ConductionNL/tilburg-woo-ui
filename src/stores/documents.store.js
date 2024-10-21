@@ -69,7 +69,16 @@ export class DocumentsStore {
 
   @computed
   get all_themes() {
-    return toJS(this.themes);
+    return toJS(this.themes).map((theme) => {
+      return {
+        ...theme,
+        paragraph: theme.description,
+        linkTitle: `Bekijk ${
+          this.all_documents.filter((item) => item.themes.includes(theme.id))
+            ?.length ?? 0
+        } documenten`,
+      };
+    });
   }
 
   @computed
