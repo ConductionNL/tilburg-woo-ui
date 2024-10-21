@@ -27,7 +27,7 @@ const AcHome = ({ store: { pages } }) => {
         link={AcRemoveParagraphTags(contents[2]?.data?.content)}
       />
       <AcHero />
-      {/*<AcSubjects*/}
+      {/*<AcThemes*/}
       {/*  heading='Zoeken op onderwerp'*/}
       {/*  paragraph='Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de gemeente Tilburg.'*/}
       {/*  showLink*/}

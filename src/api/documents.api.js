@@ -19,9 +19,9 @@ export class DocumentsAPI {
     );
   }
 
-  attachments(id, params) {
-    return this.Client.get(ENDPOINTS.DOCUMENTS.ATTACHMENTS(id, params)).then(
-      (response) => response.data.results
+  themes(params) {
+    return this.Client.get(ENDPOINTS.THEMES, { params }).then(
+      (response) => response.data
     );
   }
 

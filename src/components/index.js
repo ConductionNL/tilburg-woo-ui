@@ -18,8 +18,6 @@ const AcSearchBox = loadable(() =>
 const AcSectionsHandler = loadable(() =>
   import('@components/ac-sections-handler/ac-sections-handler')
 );
-const AcSubjects = loadable(() => import('@components/ac-subjects/ac-subjects'));
-
 const AcSearchCategories = loadable(() =>
   import('@components/ac-search-categories/ac-search-categories')
 );
@@ -46,7 +44,6 @@ export {
   AcNavigation,
   AcSearchBox,
   AcSectionsHandler,
-  AcSubjects,
   AcSearchCategories,
   AcSearchDate,
   AcSearchSort,

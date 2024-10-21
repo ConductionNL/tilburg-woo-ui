@@ -27,7 +27,7 @@ const AcBreadcrumbs = ({ store: { pages, documents }, items }) => {
     }
 
     if (location.pathname.startsWith('/onderwerpen')) {
-      return BREADCRUMBS.SUBJECTS;
+      return BREADCRUMBS.THEMES;
     }
 
     if (get_single_page?.name) {

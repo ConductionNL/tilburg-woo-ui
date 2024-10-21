@@ -20,7 +20,7 @@ const AcSubjects = ({ heading, paragraph, showLink = false, subjects = [] }) => 
       </div>
       {showLink && (
         <div className='ac-subjects__more'>
-          <AcLink to='/onderwerpen' type='button'>
+          <AcLink to='/zoeken' type='button'>
             <VISUALS.LIST />
             Toon alle onderwerpen
           </AcLink>

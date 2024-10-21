@@ -7,12 +7,13 @@ const PAGES = '/pages';
 const PUBLICATIONS = '/publications';
 const SEARCH = '/search';
 const ATTACHMENTS = '/attachments';
+const THEMES = '/themes';
 
 export const ENDPOINTS = AcLockObject({
   DOCUMENTS: {
-    SEARCH: `${API}${SEARCH}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}/${_id}`, // GET
-    ATTACHMENTS: (_id) => `${API}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+    SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+    ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET
@@ -22,6 +23,7 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `${API}${PUBLIC}${PAGES}`, // GET
     SHOW: (_slug) => `${API}${PUBLIC}${PAGES}${_slug}`, // GET
   },
+  THEMES: `${API}${SEARCH}${THEMES}`, // GET
 });
 
 export default ENDPOINTS;

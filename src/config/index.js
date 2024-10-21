@@ -66,7 +66,9 @@ export default {
     responseType: 'json',
     responseEncoding: 'utf8',
     credentials: false,
-    headers: _api_commonground_headers_,
+    headers: {
+      ..._api_commonground_headers_,
+    },
   },
   faqs: {
     baseURL: `${_api_}`,
