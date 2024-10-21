@@ -138,6 +138,18 @@ const AcPublication = ({ store: { documents } }) => {
                     {get_single?.category}
                   </AcLink>,
                 ],
+                [
+                  LABELS.THEMES,
+                  get_single?.themes?.map((theme) => (
+                    <AcLink
+                      href={getSearchPageURL({
+                        theme: [theme.id],
+                      })}
+                    >
+                      {theme.title}
+                    </AcLink>
+                  )),
+                ],
               ]}
             />
           </div>
