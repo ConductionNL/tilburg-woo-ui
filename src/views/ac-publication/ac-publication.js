@@ -34,7 +34,7 @@ const AcPublication = ({ store: { documents } }) => {
     return <AcLoader />;
   }
 
-  const getFilteredAttachements = (primary = false) => {
+  const getFilteredAttachments = (primary = false) => {
     const filteredAttachmentsLabel = get_single?.attachments?.filter((attachment) =>
       primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
@@ -61,7 +61,9 @@ const AcPublication = ({ store: { documents } }) => {
       return [
         <AcLink to={row.accessUrl} target='_blank'>
           <VISUALS.DOCUMENT />
-          <Link>{`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}</Link>
+          <Link>
+            {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+          </Link>
         </AcLink>,
       ];
     }
@@ -69,7 +71,9 @@ const AcPublication = ({ store: { documents } }) => {
     return [
       <AcLink to={row.accessUrl} target='_blank'>
         <VISUALS.DOCUMENT />
-        <Link>{`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}</Link>
+        <Link>
+          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+        </Link>
       </AcLink>,
       row.labels[0] || LABELS.UNKNOWN,
       acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
@@ -90,7 +94,7 @@ const AcPublication = ({ store: { documents } }) => {
           </AcCard>
 
           {/* Show only when there are primary attachments */}
-          {getFilteredAttachements(true)?.length > 0 && (
+          {getFilteredAttachments(true)?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
               <AcFlex spacing={'xs'} className='notice'>
@@ -99,7 +103,7 @@ const AcPublication = ({ store: { documents } }) => {
               </AcFlex>
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-                rows={getFilteredAttachements(true)?.map((attachment) =>
+                rows={getFilteredAttachments(true)?.map((attachment) =>
                   mapAttachmentRow(attachment, true)
                 )}
               />
@@ -107,12 +111,12 @@ const AcPublication = ({ store: { documents } }) => {
           )}
 
           {/* Show only if there are secondary attachments */}
-          {getFilteredAttachements()?.length > 0 && (
+          {getFilteredAttachments()?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
               <AcTable
                 header={[LABELS.DOCUMENT]}
-                rows={getFilteredAttachements()?.map((attachment) =>
+                rows={getFilteredAttachments()?.map((attachment) =>
                   mapAttachmentRow(attachment)
                 )}
               />

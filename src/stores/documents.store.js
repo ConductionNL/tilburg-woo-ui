@@ -239,10 +239,10 @@ export class DocumentsStore {
   };
 
   @action
-  getSearchPageURL = (params = {}) => {
+  getSearchPageURL = (params = null) => {
     console.group('GET SEARCH PAGE URL');
     console.log('BUILDING URL, CURRENT QUERY:', toJS(this.query));
-    const urlParams = AcBuildURLSearchParams(this.query);
+    const urlParams = AcBuildURLSearchParams(params ?? this.query);
     console.log(urlParams);
     console.groupEnd();
     // console.log('building url');
