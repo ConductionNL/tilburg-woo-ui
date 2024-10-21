@@ -143,7 +143,7 @@ const AcPublication = ({ store: { documents } }) => {
                   get_single?.themes?.map((theme) => (
                     <AcLink
                       href={getSearchPageURL({
-                        theme: [theme.id],
+                        themes: [theme.id],
                       })}
                     >
                       {theme.title}

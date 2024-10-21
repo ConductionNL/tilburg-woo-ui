@@ -4,12 +4,23 @@ import { useEffect } from 'react';
 
 import { AcAbout, AcHero, AcIntro, AcLoader } from '@components';
 import { AcRemoveParagraphTags, AcRemoveTags, AcSanitizeHtml } from '@utils';
+import { AcContainer, AcSection } from '@atoms';
+import AcColumn from '@atoms/ac-column/ac-column';
+import {
+  Heading,
+  Paragraph,
+} from '@utrecht/component-library-react/dist/css-module';
+import { LABELS, PATHS, ROUTES } from '@constants';
+import { AcCardCategory, AcLink } from '@molecules';
+import AcGrid from '@atoms/ac-grid/ac-grid';
 
-const AcHome = ({ store: { pages } }) => {
+const AcHome = ({ store: { pages, documents } }) => {
   const { fetchPage, resetPage, get_single } = pages;
+  const { all_themes, fetchThemes, getSearchPageURL } = documents;
 
   useEffect(() => {
     fetchPage('/home');
+    fetchThemes();
     return () => resetPage();
   }, []);
 
@@ -27,12 +38,37 @@ const AcHome = ({ store: { pages } }) => {
         link={AcRemoveParagraphTags(contents[2]?.data?.content)}
       />
       <AcHero />
-      {/*<AcThemes*/}
-      {/*  heading='Zoeken op onderwerp'*/}
-      {/*  paragraph='Bekijk alle documenten van belangrijke onderwerpen die spelen binnen de gemeente Tilburg.'*/}
-      {/*  showLink*/}
-      {/*  subjects={subjectsDummyData}*/}
-      {/*/>*/}
+
+      <AcSection spacing>
+        <AcContainer>
+          <AcColumn gap='tiger'>
+            <AcColumn>
+              <Heading>{LABELS.THEMES}</Heading>
+              <Paragraph>
+                Bekijk onze publicatiesdossiers van belangrijke onderwerpen die
+                spelen binnen de gemeente Tilburg.
+              </Paragraph>
+            </AcColumn>
+            <AcGrid row={3}>
+              {all_themes
+                ?.slice(0, Math.max(3, all_themes.length))
+                .map((subject, index) => (
+                  // <AcCardCategory key={index} {...subject} />
+                  <AcCardCategory
+                    key={index}
+                    {...subject}
+                    linkUrl={getSearchPageURL({
+                      themes: [subject.id],
+                    })}
+                    linkTitle={LABELS.VIEW_DOCUMENTS}
+                  />
+                ))}
+            </AcGrid>
+            <AcLink to={PATHS.THEMES}>Bekijk alle onderwerpen</AcLink>
+          </AcColumn>
+        </AcContainer>
+      </AcSection>
+
       <AcAbout
         title={AcRemoveTags(contents[3]?.data?.content)}
         content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4]?.data?.content))}

@@ -12,9 +12,11 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
+import { AcBuildURLSearchParams } from '@utils';
 
 const AcSubjects = ({ store: { documents } }) => {
-  const { fetchThemes, fetchDocuments, is_loading, all_themes, themes } = documents;
+  const { fetchThemes, fetchDocuments, is_loading, all_themes, getSearchPageURL } =
+    documents;
 
   useEffect(() => {
     fetchThemes();
@@ -33,7 +35,9 @@ const AcSubjects = ({ store: { documents } }) => {
           <AcCardCategory
             key={index}
             {...subject}
-            linkUrl={`${PATHS.SEARCH_STATIC}?theme[]=${subject.id}`}
+            linkUrl={getSearchPageURL({
+              themes: [subject.id],
+            })}
             linkTitle={LABELS.VIEW_DOCUMENTS}
           />
         ))}
