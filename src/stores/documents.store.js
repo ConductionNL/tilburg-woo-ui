@@ -214,6 +214,26 @@ export class DocumentsStore {
   };
 
   @action
+  setLoadingStatus = (status) => {
+    this.loading.status = status;
+  };
+
+  @action
+  setDocument = (document) => {
+    this.single = document;
+  };
+
+  @action
+  setCategories = (categories) => {
+    this.categories = categories;
+  };
+
+  @action
+  setThemesFacets = (themesFacets) => {
+    this.themesFacets = themesFacets;
+  };
+
+  @action
   toggleMobileFilters = () => {
     this.mobileFiltersOpen = !this.mobileFiltersOpen;
   };
@@ -233,25 +253,19 @@ export class DocumentsStore {
   fetchDocuments = async () => {
     this.loading.status = true;
     console.group('MAKING API CALL');
-    console.log('SEARCH QUERY:', toJS(this.search_query.published));
+    console.log('SEARCH QUERY:', toJS(this.search_query));
     console.groupEnd();
 
     app.store.api.documents
       .search(this.search_query)
       .then((response) => {
-        this.items = response.results;
-        this.pagination = {
-          page: response.page ?? 1,
-          pages: Math.ceil(response.total / LIMIT),
-        };
-        delete this.pagination.results;
         this.setItems(response.results);
         delete response.results;
         this.setPagination(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {
-        this.loading.status = false;
+        this.setLoadingStatus(false);
       });
   };
 
@@ -267,11 +281,11 @@ export class DocumentsStore {
         ).toString()
       )
       .then((response) => {
-        this.single = response;
+        this.setDocument(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {
-        this.loading.status = false;
+        this.setLoadingStatus(false);
       });
   };
 
@@ -298,14 +312,14 @@ export class DocumentsStore {
     app.store.api.documents
       .searchAggregations(this.aggregations_query)
       .then((response) => {
-        this.categories = response.facets.category.filter(
-          (category) => category._id !== ''
+        this.setCategories(
+          response.facets.category.filter((category) => category._id !== '')
         );
-        this.themesFacets = response.facets.themes;
+        this.setThemesFacets(response.facets.themes);
       })
       .catch((e) => console.error(e))
       .finally(() => {
-        this.loading.status = false;
+        this.setLoadingStatus(false);
       });
   };
 
@@ -320,7 +334,7 @@ export class DocumentsStore {
       })
       .catch((e) => console.error(e))
       .finally(() => {
-        this.loading.status = false;
+        this.setLoadingStatus(false);
       });
   };
 }

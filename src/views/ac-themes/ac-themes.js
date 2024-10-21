@@ -52,8 +52,10 @@ const AcSubjects = ({ store: { documents } }) => {
           <AcColumn>
             <Heading>{LABELS.THEMES}</Heading>
             <Paragraph>
-              Op de campus gaan bedrijven, onderwijs – en onderzoeksinstellingen ook
-              samen innoveren en medewerkers opleiden
+              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Cumque
+              dolorum ducimus facere facilis id illum in laboriosam maiores nesciunt,
+              odit optio quasi quidem quo repellat soluta tenetur vero. Accusantium,
+              ducimus.
             </Paragraph>
           </AcColumn>
           {renderGrid}

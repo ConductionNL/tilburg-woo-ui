@@ -17,9 +17,14 @@ const getValue = (value) => {
 
 export const AcBuildURLSearchParams = (data) => {
   const params = new URLSearchParams();
+  console.log(toJS(data));
   Object.entries(data).forEach(([key, value]) => {
+    if (key === 'search' && value === '') {
+      return;
+    }
     console.log('search param:', key, toJS(value));
     if (!value) {
+      console.log(`skipping ${key}`);
       return;
     }
 
@@ -52,7 +57,6 @@ export const AcBuildURLSearchParams = (data) => {
       });
       return;
     }
-
     params.append(key, getValue(value));
   });
 

@@ -10,6 +10,10 @@ const AcHero = () => {
   const navigate = useNavigate();
 
   const submitSearch = (query) => {
+    if (!query) {
+      navigate('/zoeken');
+      return;
+    }
     navigate(`/zoeken?search=${query}`);
   };
 
