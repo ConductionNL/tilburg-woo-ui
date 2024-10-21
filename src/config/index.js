@@ -68,7 +68,6 @@ export default {
     credentials: false,
     headers: {
       ..._api_commonground_headers_,
-      Authorization: _api_commonground_basic_auth_,
     },
   },
   faqs: {

@@ -1,25 +1,24 @@
+import { useEffect, useMemo } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { useEffect } from 'react';
+import { AcCardCategory } from '@molecules';
+import { LABELS, PATHS } from '@constants';
+import AcGrid from '@atoms/ac-grid/ac-grid';
+import { AcLoader } from '@components';
 import { AcContainer, AcSection } from '@atoms';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcCardCategory } from '@molecules';
-import { LABELS, PATHS } from '@constants';
 import AcColumn from '@atoms/ac-column/ac-column';
-import AcGrid from '@atoms/ac-grid/ac-grid';
-import { useMemo } from 'react';
-import { AcLoader } from '@components';
 
-const AcThemes = ({ store: { themes } }) => {
-  const { fetchThemes, all_themes, is_loading } = themes;
+const AcSubjects = ({ store: { documents } }) => {
+  const { fetchThemes, fetchDocuments, is_loading, all_themes, themes } = documents;
 
   useEffect(() => {
-    console.log(all_themes);
     fetchThemes();
+    fetchDocuments();
   }, []);
 
   const renderGrid = useMemo(() => {
@@ -42,6 +41,10 @@ const AcThemes = ({ store: { themes } }) => {
     );
   }, [all_themes, is_loading]);
 
+  if (is_loading) {
+    return <AcLoader />;
+  }
+
   return (
     <AcSection spacing>
       <AcContainer>
@@ -60,4 +63,4 @@ const AcThemes = ({ store: { themes } }) => {
   );
 };
 
-export default withStore(observer(AcThemes));
+export default withStore(observer(AcSubjects));

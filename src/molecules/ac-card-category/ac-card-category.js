@@ -7,9 +7,9 @@ import { AcLink } from '@molecules';
 import { VISUALS } from '@constants';
 
 const AcCardCategory = ({ image, title, summary, linkUrl, linkTitle }) => {
-  if (!image) {
-    return;
-  }
+  // if (!image) {
+  //   return;
+  // }
 
   return (
     <AcCard category image={image} spaceBetween>
