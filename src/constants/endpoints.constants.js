@@ -24,7 +24,7 @@ export const ENDPOINTS = AcLockObject({
     SHOW: (_slug) => `${API}${PUBLIC}${PAGES}${_slug}`, // GET
   },
   THEMES: {
-    INDEX: `${API}${THEMES}`, // GET
+    INDEX: `${API}${SEARCH}${THEMES}`, // GET
   },
 });
 

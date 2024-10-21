@@ -6,11 +6,15 @@ import { AcCard } from '@atoms';
 import { AcLink } from '@molecules';
 import { VISUALS } from '@constants';
 
-const AcCardCategory = ({ image, title, paragraph, linkUrl, linkTitle }) => {
+const AcCardCategory = ({ image, title, summary, linkUrl, linkTitle }) => {
+  if (!image) {
+    return;
+  }
+
   return (
     <AcCard category image={image} spaceBetween>
       <Heading level={3}>{title}</Heading>
-      <Paragraph>{paragraph}</Paragraph>
+      <Paragraph>{summary}</Paragraph>
       <AcLink to={linkUrl}>
         {linkTitle}
         <VISUALS.ARROW_RIGHT />

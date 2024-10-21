@@ -43,6 +43,7 @@ export const LABELS = {
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
   SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
+  VIEW_DOCUMENTS: 'Bekijk de documenten',
 
   THEMES: 'Onderwerpen',
 };
