@@ -9,7 +9,7 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 const AcSearchSubjects = ({ store: { documents } }) => {
   return (
     <>
-      <Heading level={4}>{LABELS.SUBJECTS}</Heading>
+      <Heading level={4}>{LABELS.THEMES}</Heading>
       <AcCheckbox label='Campus Wijkevoort' value='Campus Wijkevoort' />
       <AcCheckbox label='Evenementen in Tilburg' value='Evenementen in Tilburg' />
       <AcCheckbox label='Duurzaamheid' value='Duurzaamheid' />

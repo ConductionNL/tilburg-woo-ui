@@ -1,0 +1,12 @@
+.ac-column {
+  display: flex;
+  flex-direction: column;
+
+  &--gap-horse {
+    gap: var(--tilburg-space-column-horse)
+  }
+
+  &--gap-tiger {
+    gap: var(--tilburg-space-column-tiger)
+  }
+}

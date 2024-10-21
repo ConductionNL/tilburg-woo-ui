@@ -124,6 +124,16 @@ export class DocumentsStore {
   }
 
   @action
+  setItems = (items) => {
+    this.items = items;
+  };
+
+  @action
+  setPagination = (pagination) => {
+    this.pagination = pagination;
+  };
+
+  @action
   category_checked = (id) => {
     return this.query.category?.includes(id);
   };
@@ -235,6 +245,9 @@ export class DocumentsStore {
           pages: Math.ceil(response.total / LIMIT),
         };
         delete this.pagination.results;
+        this.setItems(response.results);
+        delete response.results;
+        this.setPagination(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {

@@ -12,6 +12,7 @@ import ToastersStore from '@stores/toasters.store';
 import FaqsStore from '@stores/faqs.store';
 import PagesStore from '@stores/pages.store';
 import DocumentsStore from '@stores/documents.store';
+import ThemesStore from '@stores/themes.store';
 
 class Store {
   constructor(config) {
@@ -26,6 +27,7 @@ class Store {
     this.faqs = new FaqsStore(this);
     this.pages = new PagesStore(this);
     this.toasters = new ToastersStore(this);
+    this.themes = new ThemesStore(this);
 
     window.addEventListener(
       'swFreshContentReady',
