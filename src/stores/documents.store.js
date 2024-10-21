@@ -7,7 +7,7 @@ let app = {};
 const LIMIT = 3;
 
 export const DEFAULT_SEARCH_QUERY = {
-  extend: 'themes',
+  extend: 'all',
   _limit: LIMIT,
 };
 
