@@ -8,7 +8,7 @@ import acFormatDate from '@src/utilities/ac-format-date';
 const AcSearchResult = ({
   skeleton,
   title,
-  description,
+  summary,
   published,
   category,
   themes,
@@ -17,7 +17,7 @@ const AcSearchResult = ({
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
       <Heading level={3}>{title}</Heading>
-      <Paragraph>{description}</Paragraph>
+      <Paragraph>{summary}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
           {themes?.length > 0 && false && (
