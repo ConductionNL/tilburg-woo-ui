@@ -215,6 +215,11 @@ export class DocumentsStore {
   };
 
   @action
+  setThemes = (themes) => {
+    this.themes = themes;
+  };
+
+  @action
   setPage = (page) => {
     this.query._page = page;
     this.pagination.page = page;
@@ -381,7 +386,7 @@ export class DocumentsStore {
     app.store.api.documents
       .themes(this.themes_query)
       .then((response) => {
-        this.themes = response;
+        this.setThemes(response.results);
       })
       .catch((e) => console.error(e))
       .finally(() => {
