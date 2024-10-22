@@ -75,7 +75,7 @@ export class DocumentsStore {
 
   @computed
   get all_themes() {
-    return toJS(this.themes).map((theme) => {
+    return toJS(this.themes)?.map((theme) => {
       return {
         ...theme,
         paragraph: theme.description,
