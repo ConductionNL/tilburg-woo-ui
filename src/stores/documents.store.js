@@ -139,6 +139,11 @@ export class DocumentsStore {
   };
 
   @action
+  theme_checked = (id) => {
+    return this.query.themes?.includes(id);
+  };
+
+  @action
   setQueryDate = (key, value) => {
     console.group('SET QUERY DATE');
     console.log(key, value, 'SET QUERY DATE');

@@ -58,7 +58,8 @@ const AcHome = ({ store: { pages, documents } }) => {
                     key={index}
                     {...subject}
                     linkUrl={getSearchPageURL({
-                      themes: [subject.id],
+                      // themes: [subject.id],
+                      themes: subject.id,
                     })}
                     linkTitle={LABELS.VIEW_DOCUMENTS}
                   />
