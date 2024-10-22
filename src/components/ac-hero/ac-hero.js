@@ -14,7 +14,7 @@ const AcHero = () => {
       navigate('/zoeken');
       return;
     }
-    navigate(`/zoeken?search=${query}`);
+    navigate(`/zoeken?_search=${query}`);
   };
 
   return (
