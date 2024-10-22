@@ -31,13 +31,11 @@ const AcSubjects = ({ store: { documents } }) => {
     return (
       <AcGrid row={3}>
         {all_themes?.map((subject, index) => (
-          // <AcCardCategory key={index} {...subject} />
           <AcCardCategory
             key={index}
             {...subject}
             linkUrl={getSearchPageURL({
-              // themes: [subject.id],
-              themes: subject.id,
+              themes: [subject.id],
             })}
             linkTitle={LABELS.VIEW_DOCUMENTS}
           />

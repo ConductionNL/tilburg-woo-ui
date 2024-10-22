@@ -46,6 +46,12 @@ export class DocumentsStore {
   pagination = {};
 
   @observable
+  attachmentPagination = {
+    page: 1,
+    perPage: 1,
+  };
+
+  @observable
   defaultQuery = DEFAULT_QUERY;
 
   @observable
@@ -80,6 +86,39 @@ export class DocumentsStore {
       };
     });
   }
+
+  @action
+  getFilteredAttachments = (primary = false, page) => {
+    const filteredAttachmentsLabel = this.single?.attachments?.filter((attachment) =>
+      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
+    );
+
+    const filteredAttachments = [];
+    filteredAttachmentsLabel &&
+      filteredAttachmentsLabel.forEach((attachment) => {
+        for (let i = 1; i <= attachment.labels.length; i++) {
+          filteredAttachments.push({
+            ...attachment,
+            labels: [attachment.labels[i - 1]],
+          });
+        }
+      });
+
+    if (page) {
+      const start = (page - 1) * this.attachmentPagination.perPage;
+      const end = start + this.attachmentPagination.perPage;
+      return primary
+        ? filteredAttachments.slice(start, end)
+        : filteredAttachmentsLabel.slice(start, end);
+    }
+
+    return primary ? filteredAttachments : filteredAttachmentsLabel;
+  };
+
+  @action
+  setAttachmentsPage = (page) => {
+    this.attachmentPagination.page = page;
+  };
 
   @computed
   get all_themes_facets() {
@@ -131,6 +170,11 @@ export class DocumentsStore {
   @action
   setPagination = (pagination) => {
     this.pagination = pagination;
+  };
+
+  @action
+  setAttachmentPagination = (pagination) => {
+    this.attachmentPagination = pagination;
   };
 
   @action
@@ -245,11 +289,11 @@ export class DocumentsStore {
 
   @action
   getSearchPageURL = (params = null) => {
-    console.group('GET SEARCH PAGE URL');
-    console.log('BUILDING URL, CURRENT QUERY:', toJS(this.query));
     const urlParams = AcBuildURLSearchParams(params ?? this.query);
-    console.log(urlParams);
-    console.groupEnd();
+    // console.group('GET SEARCH PAGE URL');
+    // console.log('BUILDING URL, CURRENT QUERY:', toJS(this.query));
+    // console.log(urlParams);
+    // console.groupEnd();
     if (!urlParams) {
       return '/zoeken';
     }

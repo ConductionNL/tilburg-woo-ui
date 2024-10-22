@@ -41,9 +41,6 @@ const AcSearch = ({ store: { documents } }) => {
   };
 
   useEffect(() => {
-    console.group('STARTUP');
-    console.log([location.search]);
-    console.groupEnd();
     setQuery();
 
     fetchAggregations();

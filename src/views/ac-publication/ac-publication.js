@@ -13,13 +13,21 @@ import {
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
-import { AcFormatDate } from '@utils';
 import acFormatDate from '@src/utilities/ac-format-date';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcPublication = ({ store: { documents } }) => {
   const { id } = useParams();
-  const { fetchDocument, resetDocument, get_single, loading, getSearchPageURL } =
-    documents;
+  const {
+    fetchDocument,
+    resetDocument,
+    get_single,
+    loading,
+    attachmentPagination,
+    getSearchPageURL,
+    setAttachmentsPage,
+    getFilteredAttachments,
+  } = documents;
 
   useEffect(() => {
     fetchDocument(id);
@@ -33,25 +41,6 @@ const AcPublication = ({ store: { documents } }) => {
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
-
-  const getFilteredAttachments = (primary = false) => {
-    const filteredAttachmentsLabel = get_single?.attachments?.filter((attachment) =>
-      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
-    );
-
-    const filteredAttachments = [];
-    filteredAttachmentsLabel &&
-      filteredAttachmentsLabel.forEach((attachment) => {
-        for (let i = 1; i <= attachment.labels.length; i++) {
-          filteredAttachments.push({
-            ...attachment,
-            labels: [attachment.labels[i - 1]],
-          });
-        }
-      });
-
-    return primary ? filteredAttachments : filteredAttachmentsLabel;
-  };
 
   const mapAttachmentRow = (row, primary) => {
     // Fallback for when there is no extension property
@@ -114,20 +103,32 @@ const AcPublication = ({ store: { documents } }) => {
           {getFilteredAttachments()?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
-              <AcTable
-                header={[LABELS.DOCUMENT]}
-                rows={getFilteredAttachments()?.map((attachment) =>
-                  mapAttachmentRow(attachment)
+              <AcFlex spacing={'md'} column>
+                <AcTable
+                  header={[LABELS.DOCUMENT]}
+                  rows={getFilteredAttachments(
+                    false,
+                    attachmentPagination.page
+                  )?.map((attachment) => mapAttachmentRow(attachment))}
+                />
+                {getFilteredAttachments()?.length > attachmentPagination.perPage && (
+                  <Pagination
+                    totalPages={getFilteredAttachments().length}
+                    page={1}
+                    nextLabel=''
+                    previousLabel=''
+                    onPageChange={(page) => setAttachmentsPage(page)}
+                  />
                 )}
-              />
+              </AcFlex>
             </div>
           )}
 
           <div>
-            <Heading level={2}>Aanvullende informatie</Heading>
+            <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
             <AcTable
               rows={[
-                ['Zaaknummer', get_single?.reference || LABELS.UNKNOWN],
+                [LABELS.CASE_NUMBER, get_single?.reference || LABELS.UNKNOWN],
                 [
                   LABELS.CATEGORY,
                   <AcLink
@@ -143,8 +144,7 @@ const AcPublication = ({ store: { documents } }) => {
                   get_single?.themes?.map((theme) => (
                     <AcLink
                       href={getSearchPageURL({
-                        // themes: [theme.id],
-                        themes: theme.id,
+                        themes: [theme.id],
                       })}
                     >
                       {theme.title}
