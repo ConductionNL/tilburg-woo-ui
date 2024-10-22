@@ -41,10 +41,12 @@ const AcSearch = ({ store: { documents } }) => {
   };
 
   useEffect(() => {
+    console.group('STARTUP');
+    console.log([location.search]);
+    console.groupEnd();
     setQuery();
 
     fetchAggregations();
-    fetchDocuments();
 
     return () => {
       resetSearchQuery();
@@ -53,6 +55,8 @@ const AcSearch = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
+    console.log(getSearchPageURL());
+    console.log(location.pathname + location.search);
     if (getSearchPageURL() === location.pathname + location.search) {
       return;
     }
@@ -62,6 +66,10 @@ const AcSearch = ({ store: { documents } }) => {
 
   // On GET params change.
   useEffect(() => {
+    console.group('LOCATION PARAMS CHANGED');
+    console.log([location.search]);
+    console.groupEnd();
+
     setQuery();
     fetchDocuments();
   }, [location.search]);

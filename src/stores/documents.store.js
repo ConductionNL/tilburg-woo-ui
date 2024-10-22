@@ -250,7 +250,9 @@ export class DocumentsStore {
     const urlParams = AcBuildURLSearchParams(params ?? this.query);
     console.log(urlParams);
     console.groupEnd();
-    // console.log('building url');
+    if (!urlParams) {
+      return '/zoeken';
+    }
     return `/zoeken?${urlParams}`;
   };
 
