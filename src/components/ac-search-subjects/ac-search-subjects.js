@@ -7,9 +7,9 @@ import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { useEffect } from 'react';
 
-const AcSearchSubjects = ({ store: { documents } }) => {
-  const { all_themes, fetchThemes, theme_checked, toggleSearchArrayValue } =
-    documents;
+const AcSearchSubjects = ({ store: { documents, themes } }) => {
+  const { theme_checked, toggleSearchArrayValue } = documents;
+  const { all_themes, fetchThemes } = themes;
 
   useEffect(() => {
     fetchThemes();
@@ -19,7 +19,7 @@ const AcSearchSubjects = ({ store: { documents } }) => {
     <>
       <Heading level={4}>{LABELS.THEMES}</Heading>
 
-      {all_themes.map((theme) => (
+      {all_themes?.map((theme) => (
         <AcCheckbox
           key={theme.value}
           label={theme.title}

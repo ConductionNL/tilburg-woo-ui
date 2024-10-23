@@ -14,9 +14,9 @@ import {
 import AcColumn from '@atoms/ac-column/ac-column';
 import { AcBuildURLSearchParams } from '@utils';
 
-const AcSubjects = ({ store: { documents } }) => {
-  const { fetchThemes, fetchDocuments, is_loading, all_themes, getSearchPageURL } =
-    documents;
+const AcSubjects = ({ store: { documents, themes } }) => {
+  const { fetchDocuments, is_loading, getSearchPageURL } = documents;
+  const { fetchThemes, all_themes } = themes;
 
   useEffect(() => {
     fetchThemes();

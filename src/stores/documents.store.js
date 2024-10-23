@@ -1,6 +1,7 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
+import { LABELS, LABELS_DYNAMIC } from '@constants';
 
 let app = {};
 
@@ -73,20 +74,6 @@ export class DocumentsStore {
     return this.categories;
   }
 
-  @computed
-  get all_themes() {
-    return toJS(this.themes)?.map((theme) => {
-      return {
-        ...theme,
-        paragraph: theme.description,
-        linkTitle: `Bekijk ${
-          this.all_documents.filter((item) => item.themes.includes(theme.id))
-            ?.length ?? 0
-        } documenten`,
-      };
-    });
-  }
-
   @action
   getFilteredAttachments = (primary = false, page) => {
     const filteredAttachmentsLabel = this.single?.attachments?.filter((attachment) =>
@@ -127,15 +114,7 @@ export class DocumentsStore {
 
   @computed
   get search_query() {
-    const query = { ...this.defaultQuery, ...this.query };
-
-    return query;
-  }
-
-  get themes_query() {
-    const query = { ...this.defaultQuery };
-
-    return query;
+    return { ...this.defaultQuery, ...this.query };
   }
 
   get aggregations_query() {
@@ -212,11 +191,6 @@ export class DocumentsStore {
   @action
   setSearchQuery = (searchQuery) => {
     this.query._search = searchQuery;
-  };
-
-  @action
-  setThemes = (themes) => {
-    this.themes = themes;
   };
 
   @action
@@ -358,7 +332,6 @@ export class DocumentsStore {
   @action
   resetAggregations = () => {
     this.categories = [];
-    this.themes = [];
     this.themesFacets = [];
   };
 
@@ -372,21 +345,6 @@ export class DocumentsStore {
           response.facets.category.filter((category) => category._id !== '')
         );
         this.setThemesFacets(response.facets.themes);
-      })
-      .catch((e) => console.error(e))
-      .finally(() => {
-        this.setLoadingStatus(false);
-      });
-  };
-
-  @action
-  fetchThemes = async () => {
-    this.loading.status = true;
-
-    app.store.api.documents
-      .themes(this.themes_query)
-      .then((response) => {
-        this.setThemes(response.results);
       })
       .catch((e) => console.error(e))
       .finally(() => {

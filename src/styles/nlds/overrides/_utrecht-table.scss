@@ -1,4 +1,6 @@
-.utrecht-table{
+.utrecht-table {
+  table-layout: auto!important;
+
   &__cell,
   &__header-cell {
     &:first-child {

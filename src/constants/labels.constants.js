@@ -41,6 +41,8 @@ export const LABELS = {
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
 
+  VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
+
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
   SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
@@ -51,4 +53,5 @@ export const LABELS = {
 
 export const LABELS_DYNAMIC = {
   RESULTS: (count) => (count === 1 ? LABELS.RESULT : LABELS.RESULTS),
+  THEMES_VIEW: (count) => `Bekijk ${count} documenten`,
 };

@@ -10,13 +10,14 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { LABELS, PATHS, ROUTES } from '@constants';
+import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
 import AcGrid from '@atoms/ac-grid/ac-grid';
 
-const AcHome = ({ store: { pages, documents } }) => {
+const AcHome = ({ store: { pages, documents, themes } }) => {
   const { fetchPage, resetPage, get_single } = pages;
-  const { all_themes, fetchThemes, getSearchPageURL } = documents;
+  const { getSearchPageURL } = documents;
+  const { all_themes, fetchThemes } = themes;
 
   useEffect(() => {
     fetchPage('/home');
@@ -64,7 +65,7 @@ const AcHome = ({ store: { pages, documents } }) => {
                   />
                 ))}
             </AcGrid>
-            <AcLink to={PATHS.THEMES}>Bekijk alle onderwerpen</AcLink>
+            <AcLink to={PATHS.THEMES}>{LABELS.VIEW_ALL_THEMES}</AcLink>
           </AcColumn>
         </AcContainer>
       </AcSection>
