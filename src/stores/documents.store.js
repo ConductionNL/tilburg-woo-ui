@@ -4,7 +4,7 @@ import { AcBuildURLSearchParams } from '@utils';
 
 let app = {};
 
-const LIMIT = 3;
+const LIMIT = 7;
 
 export const DEFAULT_SEARCH_QUERY = {
   extend: 'all',

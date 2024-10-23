@@ -149,7 +149,7 @@ const AcPublication = ({ store: { documents } }) => {
                     >
                       {theme.title}
                     </AcLink>
-                  )),
+                  )) || '-',
                 ],
               ]}
             />

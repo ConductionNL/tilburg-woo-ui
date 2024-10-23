@@ -51,7 +51,7 @@ const AcHome = ({ store: { pages, documents } }) => {
             </AcColumn>
             <AcGrid row={3}>
               {all_themes
-                ?.slice(0, Math.max(3, all_themes.length))
+                ?.slice(0, Math.min(3, all_themes.length))
                 .map((subject, index) => (
                   // <AcCardCategory key={index} {...subject} />
                   <AcCardCategory

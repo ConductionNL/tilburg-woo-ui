@@ -14,7 +14,7 @@ export const PATHS = AcLockObject({
   PUBLICATION: '/publicatie/:id',
   SEARCH: '/zoeken/:query?',
   THEMES: '/onderwerpen',
-  ABOUT: '/over-open-tilburg',
+  ABOUT: '/over-ons',
   CONTACT: '/contact',
   ACCESSIBILITY: '/toegankelijkheid',
   SEARCH_STATIC: '/zoeken',

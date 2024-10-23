@@ -1,6 +1,7 @@
 import { AcContainer } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
 import { EXTERNAL_LINKS, FOOTER_ITEMS } from '@constants/routes.constants';
+import { Link } from 'react-router-dom';
 
 const AcFooter = () => {
   return (
@@ -12,7 +13,7 @@ const AcFooter = () => {
           <ul>
             {FOOTER_ITEMS.map((item, index) => (
               <li key={index}>
-                <a href={item.path}>{item.label}</a>
+                <Link to={item.path}>{item.label}</Link>
               </li>
             ))}
           </ul>
