@@ -13,11 +13,11 @@ import { AcSearchCategories, AcSearchDate, AcSearchSubjects } from '@components'
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import AcSearchSort from '@components/ac-search-sort/ac-search-sort';
 
-const AcSearchFilters = ({ store: { documents } }) => {
+const AcSearchFilters = ({ store: { publications } }) => {
   const overlayRef = useRef(null);
   const wrapperRef = useRef(null);
 
-  const { all_categories, toggleMobileFilters, mobileFiltersOpen } = documents;
+  const { all_categories, toggleMobileFilters, mobileFiltersOpen } = publications;
 
   const handleCloseFilters = () => {
     toggleMobileFilters();

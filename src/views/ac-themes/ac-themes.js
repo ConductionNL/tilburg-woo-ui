@@ -14,13 +14,13 @@ import {
 import AcColumn from '@atoms/ac-column/ac-column';
 import { AcBuildURLSearchParams } from '@utils';
 
-const AcSubjects = ({ store: { documents, themes } }) => {
-  const { fetchDocuments, is_loading, getSearchPageURL } = documents;
+const AcSubjects = ({ store: { publications, themes } }) => {
+  const { fetchPublications, is_loading, getSearchPageURL } = publications;
   const { fetchThemes, all_themes } = themes;
 
   useEffect(() => {
     fetchThemes();
-    fetchDocuments();
+    fetchPublications();
   }, []);
 
   const renderGrid = useMemo(() => {

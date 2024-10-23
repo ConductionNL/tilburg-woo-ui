@@ -19,7 +19,7 @@ const DEFAULT_QUERY = {
 if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
 }
 
-export class DocumentsStore {
+export class PublicationsStore {
   constructor(store) {
     makeObservable(this);
     app.store = store;
@@ -137,7 +137,7 @@ export class DocumentsStore {
   }
 
   @computed
-  get all_documents() {
+  get all_publications() {
     return this.items;
   }
 
@@ -247,8 +247,8 @@ export class DocumentsStore {
   };
 
   @action
-  setDocument = (document) => {
-    this.single = document;
+  setPublication = (publication) => {
+    this.single = publication;
   };
 
   @action
@@ -280,13 +280,13 @@ export class DocumentsStore {
   };
 
   @action
-  fetchDocuments = async () => {
+  fetchPublications = async () => {
     this.loading.status = true;
     console.group('MAKING API CALL');
     console.log('SEARCH QUERY:', toJS(this.search_query));
     console.groupEnd();
 
-    app.store.api.documents
+    app.store.api.publications
       .search(this.search_query)
       .then((response) => {
         this.setItems(response.results);
@@ -300,10 +300,10 @@ export class DocumentsStore {
   };
 
   @action
-  fetchDocument = async (_id) => {
+  fetchPublication = async (_id) => {
     this.loading.status = true;
 
-    app.store.api.documents
+    app.store.api.publications
       .single(
         _id,
         new URLSearchParams(
@@ -311,7 +311,7 @@ export class DocumentsStore {
         ).toString()
       )
       .then((response) => {
-        this.setDocument(response);
+        this.setPublication(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {
@@ -320,7 +320,7 @@ export class DocumentsStore {
   };
 
   @action
-  resetDocument = () => {
+  resetPublication = () => {
     this.single = null;
   };
 
@@ -338,7 +338,7 @@ export class DocumentsStore {
   @action
   fetchAggregations = async () => {
     this.loading.status = true;
-    app.store.api.documents
+    app.store.api.publications
       .searchAggregations(this.aggregations_query)
       .then((response) => {
         this.setCategories(
@@ -353,4 +353,4 @@ export class DocumentsStore {
   };
 }
 
-export default DocumentsStore;
+export default PublicationsStore;

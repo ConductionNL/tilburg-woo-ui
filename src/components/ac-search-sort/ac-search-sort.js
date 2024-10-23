@@ -13,8 +13,8 @@ import {
 import { AcFlex } from '@atoms';
 import { LABELS } from '@constants';
 
-const AcSearchSort = ({ store: { documents }, type }) => {
-  const { setSort, resetSort, get_order } = documents;
+const AcSearchSort = ({ store: { publications }, type }) => {
+  const { setSort, resetSort, get_order } = publications;
 
   const label = useMemo(() => {
     if (type === 'alt') {

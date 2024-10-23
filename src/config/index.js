@@ -59,7 +59,18 @@ export default {
       },
     ],
   },
-  documents: {
+  publications: {
+    baseURL: `${_api_commonground_}`,
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    credentials: false,
+    headers: {
+      ..._api_commonground_headers_,
+    },
+  },
+  themes: {
     baseURL: `${_api_commonground_}`,
     timeout: 1000 * 60,
     maxContentLength: 10000,

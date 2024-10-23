@@ -6,7 +6,7 @@ import { AcTokenRefresher } from './interceptors.api';
 
 // Imports => API
 import AuthAPI from '@api/auth.api';
-import DocumentsAPI from '@api/documents.api';
+import PublicationsAPI from '@api/publications.api';
 import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
 import ThemesAPI from '@api/themes.api';
@@ -85,10 +85,10 @@ export class API {
     });
     addInterceptors(Client);
 
-    const DocumentsClient = axios.create({
-      ...config.documents,
+    const PublicationsClient = axios.create({
+      ...config.publications,
     });
-    addInterceptors(DocumentsClient);
+    addInterceptors(PublicationsClient);
 
     const ThemesClient = axios.create({
       ...config.themes,
@@ -110,7 +110,7 @@ export class API {
     window.addEventListener('cancelRequests', cancelRequests, false);
 
     this.auth = new AuthAPI({ Store, Client });
-    this.documents = new DocumentsAPI({ Store, Client: DocumentsClient });
+    this.publications = new PublicationsAPI({ Store, Client: PublicationsClient });
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
     this.themes = new ThemesAPI({ Store, Client: ThemesClient });

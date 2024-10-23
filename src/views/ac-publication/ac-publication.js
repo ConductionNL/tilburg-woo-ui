@@ -16,22 +16,22 @@ import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
 
-const AcPublication = ({ store: { documents } }) => {
+const AcPublication = ({ store: { publications } }) => {
   const { id } = useParams();
   const {
-    fetchDocument,
-    resetDocument,
+    fetchPublication,
+    resetPublication,
     get_single,
     loading,
     attachmentPagination,
     getSearchPageURL,
     setAttachmentsPage,
     getFilteredAttachments,
-  } = documents;
+  } = publications;
 
   useEffect(() => {
-    fetchDocument(id);
-    return () => resetDocument();
+    fetchPublication(id);
+    return () => resetPublication();
   }, []);
 
   useEffect(() => {

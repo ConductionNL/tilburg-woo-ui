@@ -7,8 +7,8 @@ import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { useEffect } from 'react';
 
-const AcSearchSubjects = ({ store: { documents, themes } }) => {
-  const { theme_checked, toggleSearchArrayValue } = documents;
+const AcSearchSubjects = ({ store: { publications, themes } }) => {
+  const { theme_checked, toggleSearchArrayValue } = publications;
   const { all_themes, fetchThemes } = themes;
 
   useEffect(() => {

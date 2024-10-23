@@ -14,9 +14,9 @@ import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
 import AcGrid from '@atoms/ac-grid/ac-grid';
 
-const AcHome = ({ store: { pages, documents, themes } }) => {
+const AcHome = ({ store: { pages, publications, themes } }) => {
   const { fetchPage, resetPage, get_single } = pages;
-  const { getSearchPageURL } = documents;
+  const { getSearchPageURL } = publications;
   const { all_themes, fetchThemes } = themes;
 
   useEffect(() => {

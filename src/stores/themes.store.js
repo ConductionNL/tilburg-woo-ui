@@ -67,8 +67,8 @@ export class ThemesStore {
   fetchThemes = async () => {
     this.loading.status = true;
 
-    app.store.api.documents
-      .themes(this.themes_query)
+    app.store.api.themes
+      .list(DEFAULT_QUERY)
       .then((response) => {
         this.setThemes(response.results);
       })

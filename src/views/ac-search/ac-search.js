@@ -16,7 +16,7 @@ import {
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
 
-const AcSearch = ({ store: { documents } }) => {
+const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -28,13 +28,13 @@ const AcSearch = ({ store: { documents } }) => {
     updateQuery,
     setSearchQuery,
     fetchAggregations,
-    fetchDocuments,
+    fetchPublications,
     is_loading,
     getSearchPageURL,
-    all_documents,
+    all_publications,
     resetSearchQuery,
     resetAggregations,
-  } = documents;
+  } = publications;
 
   const setQuery = () => {
     updateQuery(AcSearchParamsToObject(searchParams));
@@ -68,7 +68,7 @@ const AcSearch = ({ store: { documents } }) => {
     console.groupEnd();
 
     setQuery();
-    fetchDocuments();
+    fetchPublications();
   }, [location.search]);
 
   const onPaginationChange = (page) => {
@@ -104,18 +104,18 @@ const AcSearch = ({ store: { documents } }) => {
     }
 
     return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
-      all_documents?.length
+      all_publications?.length
     )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_documents?.length]);
+  }, [is_loading, all_publications?.length]);
 
-  const renderDocuments = useMemo(() => {
+  const renderPublications = useMemo(() => {
     if (is_loading) {
       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
         <AcSearchResult skeleton key={index} />
       ));
     }
 
-    if (all_documents?.length < 1) {
+    if (all_publications?.length < 1) {
       return (
         <Alert type='info'>
           <AcFlex spacing='sm'>
@@ -129,10 +129,10 @@ const AcSearch = ({ store: { documents } }) => {
       );
     }
 
-    return all_documents?.map((document, index) => (
-      <AcSearchResult {...document} key={index} />
+    return all_publications?.map((publication, index) => (
+      <AcSearchResult {...publication} key={index} />
     ));
-  }, [is_loading, all_documents, pagination?.limit]);
+  }, [is_loading, all_publications, pagination?.limit]);
 
   return (
     <>
@@ -160,7 +160,7 @@ const AcSearch = ({ store: { documents } }) => {
                   <AcSearchSort type='alt' />
                 </div>
               </AcFlex>
-              {renderDocuments}
+              {renderPublications}
               {pagination?.pages > 1 && renderPagination}
             </AcFlex>
           </AcFlex>

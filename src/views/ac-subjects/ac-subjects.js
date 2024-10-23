@@ -4,12 +4,13 @@ import { observer } from 'mobx-react-lite';
 
 import { AcSubjects as AcSubjectsContainer, AcLoader } from '@components';
 
-const AcSubjects = ({ store: { documents } }) => {
-  const { fetchThemes, fetchDocuments, is_loading, all_themes } = documents;
+const AcSubjects = ({ store: { publications, themes } }) => {
+  const { fetchPublications, is_loading } = publications;
+  const { fetchThemes, all_themes } = themes;
 
   useEffect(() => {
     fetchThemes();
-    fetchDocuments();
+    fetchPublications();
   }, []);
 
   if (is_loading) {

@@ -11,9 +11,9 @@ import {
   BreadcrumbNavSeparator,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcBreadcrumbs = ({ store: { pages, documents }, items }) => {
+const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
   const { get_single: get_single_page } = pages;
-  const { get_single: get_single_document } = documents;
+  const { get_single: get_single_document } = publications;
   const location = useLocation();
   const [searchParams] = useSearchParams();
 

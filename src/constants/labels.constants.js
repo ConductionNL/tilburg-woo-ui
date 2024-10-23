@@ -53,5 +53,4 @@ export const LABELS = {
 
 export const LABELS_DYNAMIC = {
   RESULTS: (count) => (count === 1 ? LABELS.RESULT : LABELS.RESULTS),
-  THEMES_VIEW: (count) => `Bekijk ${count} documenten`,
 };

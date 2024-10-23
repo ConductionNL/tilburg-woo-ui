@@ -11,8 +11,8 @@ const isValidDate = (date) => {
   return regex.test(date);
 };
 
-const AcSearchDate = ({ store: { documents } }) => {
-  const { setQueryDate, search_query } = documents;
+const AcSearchDate = ({ store: { publications } }) => {
+  const { setQueryDate, search_query } = publications;
   const [errors, setErrors] = useState({ after: '', before: '' });
 
   const setDate = (key, value) => {

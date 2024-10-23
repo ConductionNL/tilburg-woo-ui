@@ -12,11 +12,11 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcSearchCategories = ({ store: { documents } }) => {
+const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => modalRef?.current?.showModal();
 
-  const { all_categories, category_checked, toggleSearchArrayValue } = documents;
+  const { all_categories, category_checked, toggleSearchArrayValue } = publications;
 
   const renderModal = (
     <AcModal ref={modalRef} id='categories-modal' title='Categorieën'>
