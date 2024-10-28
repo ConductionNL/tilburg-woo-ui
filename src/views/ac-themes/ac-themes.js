@@ -55,10 +55,11 @@ const AcSubjects = ({ store: { publications, themes } }) => {
           <AcColumn>
             <Heading>{LABELS.THEMES}</Heading>
             <Paragraph>
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Cumque
-              dolorum ducimus facere facilis id illum in laboriosam maiores nesciunt,
-              odit optio quasi quidem quo repellat soluta tenetur vero. Accusantium,
-              ducimus.
+              Op deze pagina staan de documenten niet ingedeeld per Woo-categorie.
+              Hier hebben we documenten over één onderwerp bij elkaar gezet. Bent u
+              op zoek naar bestuursstukken, raadsstukken, convenanten of
+              woo-verzoeken over een specifiek onderwerp? Dan kunt u deze hier
+              vinden.
             </Paragraph>
           </AcColumn>
           {renderGrid}
