@@ -13,23 +13,25 @@ import {
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
-import { AcFormatDate } from '@utils';
 import acFormatDate from '@src/utilities/ac-format-date';
+import { Pagination } from '@amsterdam/design-system-react';
 
-const AcPublication = ({ store: { documents } }) => {
+const AcPublication = ({ store: { publications } }) => {
   const { id } = useParams();
   const {
-    fetchDocument,
-    resetDocument,
+    fetchPublication,
+    resetPublication,
     get_single,
     loading,
+    attachmentPagination,
     getSearchPageURL,
-    get_attachments,
-  } = documents;
+    setAttachmentsPage,
+    getFilteredAttachments,
+  } = publications;
 
   useEffect(() => {
-    fetchDocument(id);
-    return () => resetDocument();
+    fetchPublication(id);
+    return () => resetPublication();
   }, []);
 
   useEffect(() => {
@@ -41,23 +43,29 @@ const AcPublication = ({ store: { documents } }) => {
   }
 
   const mapAttachmentRow = (row, primary) => {
+    // Fallback for when there is no extension property
+    const extension = row.type.split('/').pop();
+
     if (!primary) {
       return [
-        <AcLink to={row.url}>
+        <AcLink to={row.accessUrl} target='_blank'>
           <VISUALS.DOCUMENT />
-          <Link>{row.title || 'Naamloos bestand'}</Link>
+          <Link>
+            {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+          </Link>
         </AcLink>,
       ];
     }
 
     return [
-      <AcLink to={row.url}>
+      <AcLink to={row.accessUrl} target='_blank'>
         <VISUALS.DOCUMENT />
-        <Link>{row.title || 'Naamloos bestand'}</Link>
+        <Link>
+          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+        </Link>
       </AcLink>,
       row.labels[0] || LABELS.UNKNOWN,
-      acFormatDate(row?._self?.dateCreated, 'YYYY-MM-DD', 'DD MMMM YYYY') ||
-        LABELS.UNKNOWN,
+      acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
     ];
   };
 
@@ -75,7 +83,7 @@ const AcPublication = ({ store: { documents } }) => {
           </AcCard>
 
           {/* Show only when there are primary attachments */}
-          {get_attachments(true).length > 0 && (
+          {getFilteredAttachments(true)?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
               <AcFlex spacing={'xs'} className='notice'>
@@ -84,7 +92,7 @@ const AcPublication = ({ store: { documents } }) => {
               </AcFlex>
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-                rows={get_attachments(true)?.map((attachment) =>
+                rows={getFilteredAttachments(true)?.map((attachment) =>
                   mapAttachmentRow(attachment, true)
                 )}
               />
@@ -92,23 +100,35 @@ const AcPublication = ({ store: { documents } }) => {
           )}
 
           {/* Show only if there are secondary attachments */}
-          {get_attachments().length > 0 && (
+          {getFilteredAttachments()?.length > 0 && (
             <div>
               <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
-              <AcTable
-                header={[LABELS.DOCUMENT]}
-                rows={get_attachments()?.map((attachment) =>
-                  mapAttachmentRow(attachment)
+              <AcFlex spacing={'md'} column>
+                <AcTable
+                  header={[LABELS.DOCUMENT]}
+                  rows={getFilteredAttachments(
+                    false,
+                    attachmentPagination.page
+                  )?.map((attachment) => mapAttachmentRow(attachment))}
+                />
+                {getFilteredAttachments()?.length > attachmentPagination.perPage && (
+                  <Pagination
+                    totalPages={getFilteredAttachments().length}
+                    page={1}
+                    nextLabel=''
+                    previousLabel=''
+                    onPageChange={(page) => setAttachmentsPage(page)}
+                  />
                 )}
-              />
+              </AcFlex>
             </div>
           )}
 
           <div>
-            <Heading level={2}>Aanvullende informatie</Heading>
+            <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
             <AcTable
               rows={[
-                ['Zaaknummer', get_single?.reference || LABELS.UNKNOWN],
+                [LABELS.CASE_NUMBER, get_single?.reference || LABELS.UNKNOWN],
                 [
                   LABELS.CATEGORY,
                   <AcLink
@@ -118,6 +138,20 @@ const AcPublication = ({ store: { documents } }) => {
                   >
                     {get_single?.category}
                   </AcLink>,
+                ],
+                [
+                  LABELS.THEMES,
+                  get_single?.themes?.length
+                    ? get_single?.themes?.map((theme) => (
+                        <AcLink
+                          href={getSearchPageURL({
+                            themes: [theme.id],
+                          })}
+                        >
+                          {theme.title}
+                        </AcLink>
+                      ))
+                    : '-',
                 ],
               ]}
             />

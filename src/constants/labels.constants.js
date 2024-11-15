@@ -21,7 +21,8 @@ export const LABELS = {
   WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
   READ_MORE_ABOUT: 'Lees meer over',
   VIEW_RESULTS: 'Bekijk resultaten',
-
+  ADDITIONAL_INFO: 'Aanvullende informatie',
+  CASE_NUMBER: 'Zaaknummer',
   DATE_PUBLICATION: 'Publicatiedatum',
   UNKNOWN: 'Onbekend',
   SUMMARY: 'Samenvatting',
@@ -40,8 +41,14 @@ export const LABELS = {
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
 
+  VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
+
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
+  SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
+  VIEW_DOCUMENTS: 'Bekijk de documenten',
+
+  THEMES: 'Onderwerpen',
 };
 
 export const LABELS_DYNAMIC = {

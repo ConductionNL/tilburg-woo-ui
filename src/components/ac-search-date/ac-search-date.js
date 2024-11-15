@@ -11,17 +11,16 @@ const isValidDate = (date) => {
   return regex.test(date);
 };
 
-const AcSearchDate = ({ store: { documents } }) => {
-  const { setQueryDate, search_query } = documents;
+const AcSearchDate = ({ store: { publications } }) => {
+  const { setQueryDate, search_query } = publications;
   const [errors, setErrors] = useState({ after: '', before: '' });
 
   const setDate = (key, value) => {
-    if (!isValidDate(value)) {
+    if (value !== '' && !isValidDate(value)) {
       setErrors((prevErrors) => ({
         ...prevErrors,
         [key]: 'Ongeldig formaat. Gebruik dd-mm-yyyy.',
       }));
-      setQueryDate(key, null);
       return;
     }
 
@@ -30,7 +29,17 @@ const AcSearchDate = ({ store: { documents } }) => {
       [key]: '',
     }));
 
-    setQueryDate(key, value);
+    if (value !== '' && isValidDate(value)) {
+      const dateParts = value.split('-');
+      const dateObject = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+      const ISODate = dateObject.toISOString();
+
+      setQueryDate(key, ISODate);
+    }
+
+    if (value === '') {
+      setQueryDate(key, null);
+    }
   };
 
   const handleKeyDown = (key, event) => {
@@ -39,12 +48,28 @@ const AcSearchDate = ({ store: { documents } }) => {
     }
   };
 
+  const defaultValue = (isoDate) => {
+    if (!isoDate) return;
+    const date = new Date(isoDate);
+    const year = date.getFullYear();
+    let month = date.getMonth() + 1;
+    let day = date.getDate();
+
+    if (day < 10) {
+      day = '0' + day;
+    }
+    if (month < 10) {
+      month = '0' + month;
+    }
+    return day + '-' + month + '-' + year;
+  };
+
   return (
     <AcFlex column spacing='sm' className='ac-search-filters__date'>
       <AcFormField
         id={'date_after'}
         className={errors.after ? 'error-field' : ''}
-        defaultValue={search_query['publicationDate[after]']}
+        defaultValue={defaultValue(search_query?.published?.after)}
         label='Datum vanaf (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('after', value)}
@@ -55,7 +80,7 @@ const AcSearchDate = ({ store: { documents } }) => {
       <AcFormField
         id={'date_before'}
         className={errors.after ? 'error-field' : ''}
-        defaultValue={search_query['publicationDate[before]']}
+        defaultValue={defaultValue(search_query?.published?.before)}
         label='Datum tot en met (dd-mm-yyyy)'
         placeholder='dd-mm-yyyy'
         onBlur={(value) => setDate('before', value)}

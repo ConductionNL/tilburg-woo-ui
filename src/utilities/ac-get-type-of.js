@@ -46,9 +46,17 @@ export const AcIsEmail = (value) => patterns.email.test(value);
 
 export const AcIsPhoneNumber = (value) => patterns.phone.test(value);
 
-export const AcIsSlimPostalCode = (value) =>
-  patterns.slim_postal_code.test(value);
+export const AcIsSlimPostalCode = (value) => patterns.slim_postal_code.test(value);
 
 export const AcIsPostalCode = (value) => patterns.postal_code.test(value);
 
 export default AcGetTypeOf;
+
+export const ACIsHttps = (src) => {
+  try {
+    const url = new URL(src);
+    return url.protocol === 'https:';
+  } catch (_) {
+    return false;
+  }
+};

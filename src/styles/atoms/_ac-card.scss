@@ -146,6 +146,13 @@
     }
   }
 
+  &--space-between {
+    > .ac-card__content {
+      justify-content: space-between;
+      flex-grow: 1;
+    }
+  }
+
   @keyframes shimmer {
     100% {
       transform: translateX(100%);

@@ -1,3 +1,6 @@
+import { toJS } from 'mobx';
+import { DEFAULT_SEARCH_QUERY } from '@stores/publications.store';
+
 const INVALID_VALUES = [null, undefined, ''];
 
 const getValue = (value) => {
@@ -15,22 +18,43 @@ const getValue = (value) => {
 export const AcBuildURLSearchParams = (data) => {
   const params = new URLSearchParams();
   Object.entries(data).forEach(([key, value]) => {
-    if (INVALID_VALUES.includes(value)) {
+    if (key === 'search' && value === '') {
       return;
     }
 
-    if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-      Object.entries(data[key]).forEach(([subKey, subValue]) => {
+    if (!value) {
+      return;
+    }
+
+    if (Object.keys(DEFAULT_SEARCH_QUERY).includes(key)) {
+      return;
+    }
+
+    // If the object is empty, skip it.
+    if (
+      !Array.isArray(value) &&
+      typeof value === 'object' &&
+      Object.values(value).filter((v) => !INVALID_VALUES.includes(v)).length === 0
+    ) {
+      return;
+    }
+
+    if (!Array.isArray(value) && typeof value === 'object') {
+      Object.entries(value).forEach(([subKey, subValue]) => {
+        if (!subValue) {
+          return;
+        }
         params.append(`${key}[${subKey}]`, getValue(subValue));
       });
       return;
     }
 
     if (Array.isArray(value)) {
-      value.forEach((value) => params.append(`${key}[]`, getValue(value)));
+      value.forEach((subValue) => {
+        params.append(`${key}[]`, getValue(subValue));
+      });
       return;
     }
-
     params.append(key, getValue(value));
   });
 

@@ -42,13 +42,28 @@ export class PagesStore {
   };
 
   @action
+  setLoadingStatus = (status) => {
+    this.loading.status = status;
+  };
+
+  @action
+  setPages = (items) => {
+    this.items = items;
+  };
+
+  @action
+  setPage = (page) => {
+    this.single = page;
+  };
+
+  @action
   fetchPage = async (id) => {
     this.loading.status = true;
 
     app.store.api.pages
       .single(id)
       .then((response) => {
-        this.single = response.data;
+        this.setPage(response.data);
       })
       .catch((e) => console.error(e))
       .finally(() => {
@@ -63,11 +78,11 @@ export class PagesStore {
     app.store.api.pages
       .list()
       .then((response) => {
-        this.items = response.data;
+        this.setPages(response.data);
       })
       .catch((e) => console.error(e))
       .finally(() => {
-        this.loading.status = false;
+        this.setLoadingStatus(false);
       });
   };
 }
