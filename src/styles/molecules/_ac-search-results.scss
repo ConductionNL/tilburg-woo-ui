@@ -1,0 +1,9 @@
+.ac-search-results {
+  @include respond-max($screen-md) {
+    gap: 0;
+
+    .desktop-sorting {
+      display: none;
+    }
+  }
+}

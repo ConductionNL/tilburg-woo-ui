@@ -75,6 +75,7 @@ export {
   AcIsPostalCode,
   AcIsSlimPostalCode,
   AcIsPhoneNumber,
+  ACIsHttps,
 } from './ac-get-type-of';
 export {
   AcIsLongEnough,
@@ -101,3 +102,4 @@ export { AcMatchSubString } from './ac-match-substring';
 export { AcSanitizeHtml } from './ac-sanitize-html';
 export { AcBuildURLSearchParams } from './ac-build-url-search-params';
 export { AcValidateDate } from './ac-validate-date';
+export { AcRemoveTags, AcRemoveParagraphTags } from './ac-remove-tags';

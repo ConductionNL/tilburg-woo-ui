@@ -1,0 +1,16 @@
+.ac-sections {
+
+  >.ac-rich-text,
+  >.utrecht-accordion,
+  >.utrecht-table {
+    margin-block: var(--tilburg-space-block-rabbit);
+
+    h2 {
+      margin-block-start: var(--tilburg-space-block-dog);
+    }
+  }
+
+  >.ac-card {
+    margin-block: var(--tilburg-space-block-dog);
+  }
+}

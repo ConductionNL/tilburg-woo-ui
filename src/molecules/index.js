@@ -1,49 +1,37 @@
 import loadable from '@loadable/component';
 
-const TilburgCardCategory = loadable(() =>
-  import('@molecules/tilburg-card-category/tilburg-card-category')
+const AcCardCategory = loadable(() =>
+  import('@molecules/ac-card-category/ac-card-category')
 );
-const TilburgCardIntro = loadable(() =>
-  import('@molecules/tilburg-card-intro/tilburg-card-intro')
+const AcCardIntro = loadable(() => import('@molecules/ac-card-intro/ac-card-intro'));
+const AcButton = loadable(() => import('@molecules/ac-button/ac-button'));
+const AcCta = loadable(() => import('@molecules/ac-cta/ac-cta'));
+const AcFormField = loadable(() => import('@molecules/ac-form-field/ac-form-field'));
+const AcLink = loadable(() => import('@molecules/ac-link/ac-link'));
+const AcSearchResult = loadable(() =>
+  import('@molecules/ac-search-result/ac-search-result')
 );
-const TilburgButton = loadable(() =>
-  import('@molecules/tilburg-button/tilburg-button')
+const AcBreadcrumbs = loadable(() =>
+  import('@molecules/ac-breadcrumbs/ac-breadcrumbs')
 );
-const TilburgCta = loadable(() => import('@molecules/tilburg-cta/tilburg-cta'));
-const TilburgFormField = loadable(() =>
-  import('@molecules/tilburg-form-field/tilburg-form-field')
+const AcSearchFilters = loadable(() =>
+  import('@molecules/ac-search-filters/ac-search-filters')
 );
-const TilburgLink = loadable(() => import('@molecules/tilburg-link/tilburg-link'));
-const TilburgSearchResult = loadable(() =>
-  import('@molecules/tilburg-search-result/tilburg-search-result')
-);
-const TilburgBreadcrumbs = loadable(() =>
-  import('@molecules/tilburg-breadcrumbs/tilburg-breadcrumbs')
-);
-const TilburgSearchFilters = loadable(() =>
-  import('@molecules/tilburg-search-filters/tilburg-search-filters')
-);
-const TilburgCheckbox = loadable(() =>
-  import('@molecules/tilburg-checkbox/tilburg-checkbox')
-);
-const TilburgSelect = loadable(() =>
-  import('@molecules/tilburg-select/tilburg-select')
-);
-const TilburgTable = loadable(() =>
-  import('@molecules/tilburg-table/tilburg-table')
-);
+const AcCheckbox = loadable(() => import('@molecules/ac-checkbox/ac-checkbox'));
+const AcSelect = loadable(() => import('@molecules/ac-select/ac-select'));
+const AcTable = loadable(() => import('@molecules/ac-table/ac-table'));
 
 export {
-  TilburgBreadcrumbs,
-  TilburgCardCategory,
-  TilburgCardIntro,
-  TilburgCta,
-  TilburgButton,
-  TilburgLink,
-  TilburgSearchResult,
-  TilburgSearchFilters,
-  TilburgCheckbox,
-  TilburgSelect,
-  TilburgFormField,
-  TilburgTable,
+  AcBreadcrumbs,
+  AcCardCategory,
+  AcCardIntro,
+  AcCta,
+  AcButton,
+  AcLink,
+  AcSearchResult,
+  AcSearchFilters,
+  AcCheckbox,
+  AcSelect,
+  AcFormField,
+  AcTable,
 };

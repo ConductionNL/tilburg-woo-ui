@@ -1,0 +1,23 @@
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
+
+import { AcSection, AcContainer } from '@atoms';
+import { AcSearchResult } from '@molecules';
+
+const AcFeatured = () => {
+  return (
+    <AcSection className='ac-featured' spacing>
+      <AcContainer>
+        <div class='ac-featured__heading'>
+          <Heading>{LABELS.HIGHLIGHTED}</Heading>
+        </div>
+        <div class='ac-featured__content'>
+          <AcSearchResult />
+          <AcSearchResult />
+          <AcSearchResult />
+        </div>
+      </AcContainer>
+    </AcSection>
+  );
+};
+
+export default AcFeatured;

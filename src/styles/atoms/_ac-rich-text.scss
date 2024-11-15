@@ -1,0 +1,73 @@
+@import '@utrecht/components/link/css';
+@import '@utrecht/components/paragraph/css';
+@import '@utrecht/components/ordered-list/css';
+@import '@utrecht/components/unordered-list/css';
+@import '@utrecht/components/heading-1/css';
+@import '@utrecht/components/heading-2/css';
+@import '@utrecht/components/heading-3/css';
+@import '@utrecht/components/heading-4/css';
+@import '@utrecht/components/heading-5/css';
+@import '@utrecht/components/heading-6/css';
+@import '../atoms/ac-usps';
+
+.ac-rich-text {
+
+  a {
+    @extend .utrecht-link !optional;
+    display: inline;
+  }
+
+  p {
+    @extend .utrecht-paragraph !optional;
+  }
+
+  ol {
+    @extend .utrecht-ordered-list !optional;
+
+    li {
+      @extend .utrecht-ordered-list__item !optional;
+      @extend .utrecht-paragraph !optional;
+    }
+  }
+
+  ul {
+    @extend .utrecht-unordered-list !optional;
+    @extend .utrecht-paragraph !optional;
+    @extend .ac-usps !optional;
+    padding-left: 0;
+
+    li {
+      @extend .utrecht-unordered-list__item !optional;
+      display:block;
+
+      p {
+        display: inline;
+      }
+    }
+  }
+
+  h1 {
+    @extend .utrecht-heading-1 !optional;
+  }
+
+  h2 {
+    @extend .utrecht-heading-2 !optional;
+  }
+
+  h3 {
+    @extend .utrecht-heading-3 !optional;
+  }
+
+  h4 {
+    @extend .utrecht-heading-4 !optional;
+  }
+
+  h5 {
+    @extend .utrecht-heading-5 !optional;
+  }
+
+  h6 {
+    @extend .utrecht-heading-6 !optional;
+  }
+
+}

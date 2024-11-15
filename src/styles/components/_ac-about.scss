@@ -1,0 +1,46 @@
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
+@import '@utrecht/components/link/css';
+@import '../atoms/ac-usps';
+
+.ac-about {
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--tilburg-space-column-horse);
+
+    @include respond-max($screen-sm) {
+      grid-template-columns: 1fr;
+      gap: var(--tilburg-space-column-rabbit);
+    }
+  }
+
+  a {
+    @extend .utrecht-link !optional;
+  }
+
+  ul {
+    @extend .ac-usps !optional;
+    li {
+      display: block;
+    }
+  }
+
+  &__img {
+    display: grid;
+    place-items: center;
+  }
+
+  p {
+    margin-block: var(--tilburg-space-block-rabbit);
+
+    @include respond-max($screen-sm) {
+      font-size: var(--tilburg-typography-font-size-md);
+    }
+  }
+
+  img {
+    border-radius: var(--tilburg-border-radius-md);
+  }
+}

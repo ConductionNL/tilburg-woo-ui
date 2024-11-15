@@ -1,5 +1,4 @@
 import 'preact/debug';
-import React from 'react';
 import { render } from 'preact';
 
 import { register, unregister } from './registerServiceWorker';
@@ -22,16 +21,16 @@ const history = syncHistoryWithStore(browserHistory, routing);
 const container = document.getElementById('root');
 
 render(
-	<StoreContext.Provider value={store}>
-		<Router history={history}>
-			<App />
-		</Router>
-	</StoreContext.Provider>,
-	container
+  <StoreContext.Provider value={store}>
+    <Router basename="/publicatievoorziening" history={history}>
+      <App />
+    </Router>
+  </StoreContext.Provider>,
+  container
 );
 
 if (process.env.NODE_ENV === 'production') {
-	register();
+  register();
 } else {
-	unregister();
+  unregister();
 }

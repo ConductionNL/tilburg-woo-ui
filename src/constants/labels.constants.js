@@ -1,11 +1,13 @@
 export const LABELS = {
   APP_NAME: 'Open Tilburg',
   CLOSE: 'Sluiten',
+  CLOSE_SINGULAR: 'Sluit',
   ENTER_QUERY: 'Vul je zoekterm in',
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
   SEARCH_EXTENSIVE: 'Uitgebreid zoeken',
+  SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
   CATEGORIES: 'Categorieën',
   CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
@@ -18,12 +20,15 @@ export const LABELS = {
   REFINE_SEARCH: 'Probeer een andere zoekterm of pas de filters aan.',
   WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
   READ_MORE_ABOUT: 'Lees meer over',
-
+  VIEW_RESULTS: 'Bekijk resultaten',
+  ADDITIONAL_INFO: 'Aanvullende informatie',
+  CASE_NUMBER: 'Zaaknummer',
   DATE_PUBLICATION: 'Publicatiedatum',
   UNKNOWN: 'Onbekend',
   SUMMARY: 'Samenvatting',
   SUMMARY_UNAVAILABLE: 'Samenvatting niet beschikbaar',
   DOCUMENTS_PRIMARY: 'Hoofddocumenten',
+  DOCUMENTS_SECONDARY: 'Bijlagen',
 
   DOCUMENT: 'Document',
   TYPE: 'Type',
@@ -35,6 +40,15 @@ export const LABELS = {
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
+
+  VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
+
+  THIS_WEBSITE: 'Deze website',
+  QUICK_LINKS: 'Snel naar',
+  SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
+  VIEW_DOCUMENTS: 'Bekijk de documenten',
+
+  THEMES: 'Onderwerpen',
 };
 
 export const LABELS_DYNAMIC = {

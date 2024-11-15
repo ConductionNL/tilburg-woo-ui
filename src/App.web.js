@@ -20,23 +20,8 @@ import { AcHome } from '@views';
 import AcContent from '@views/ac-content/ac-content';
 
 // Imports => Molecules
-const TilburgHeader = loadable(() =>
-  import('@components/tilburg-header/tilburg-header')
-);
-const TilburgFooter = loadable(() =>
-  import('@components/tilburg-footer/tilburg-footer')
-);
-
-// Imports => Atoms
-
-const _CLASSES = {
-  ROOT: 'ac-root',
-  MAIN: 'ac-app',
-  ROUTE: {
-    SECTION: 'ac-route__section',
-    HIDDEN: 'ac-route__section--hidden',
-  },
-};
+const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
+const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
 
 const App = ({ store }) => {
   const { fetchPages, all_pages } = store.pages;
@@ -62,7 +47,7 @@ const App = ({ store }) => {
 
   return (
     <div className='tilburg-theme' tabIndex='-1' ref={resetFocus}>
-      <TilburgHeader store={store} />
+      <AcHeader store={store} />
       <main id='main'>
         <Routes>
           {all_pages.map((page) => (
@@ -72,13 +57,15 @@ const App = ({ store }) => {
               element={getView(page)}
             />
           ))}
-          {Object.values(ROUTES).map((route) => (
-            <Route
-              key={`default-route-${route.id}`}
-              path={route.path}
-              element={<route.component store={store} />}
-            />
-          ))}
+          {Object.values(ROUTES)
+            .filter((route) => route.component)
+            .map((route) => (
+              <Route
+                key={`default-route-${route.id}`}
+                path={route.path}
+                element={<route.component store={store} />}
+              />
+            ))}
           <Route
             key={`default-route-${DEFAULT_ROUTE.id}`}
             path={'*'}
@@ -86,7 +73,7 @@ const App = ({ store }) => {
           />
         </Routes>
       </main>
-      <TilburgFooter />
+      <AcFooter />
     </div>
   );
 };

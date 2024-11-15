@@ -1,0 +1,49 @@
+.ac-button {
+  &.utrecht-link {
+    padding: 0;
+    border: none;
+    text-decoration: underline;
+
+    &:where(:hover, :focus-visible) {
+      text-decoration: none;
+    }
+  }
+
+  &--animate {
+    &:has(svg) {
+      svg {
+        transition: rotate 0.25s cubic-bezier(0.1, 0.1, 0, 1);
+      }
+
+      &:where(:hover, :focus-visible) {
+        svg {
+          rotate: -90deg;
+        }
+      }
+    }
+  }
+
+  &:has(.utrecht-badge-status) {
+    text-decoration: none;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--tilburg-space-column-snail);
+      padding-inline-end: var(--tilburg-space-column-snail);
+      border-radius: var(--tilburg-border-radius-lg);
+
+      svg {
+        transition: rotate 0.25s cubic-bezier(0.1, 0.1, 0, 1);
+      }
+    }
+
+    &:where(:hover, :focus-visible) {
+      span {
+        svg {
+          rotate: -90deg;
+        }
+      }
+    }
+  }
+}

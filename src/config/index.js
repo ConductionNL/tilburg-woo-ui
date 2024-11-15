@@ -1,5 +1,5 @@
 // Imports => Utilities
-import { AcGetAccessToken, AcLockObject } from '@utils';
+import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 // Get ENV variables
 const _api_ = process.env.API_URL;
@@ -8,6 +8,15 @@ const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
 const _api_commonground_organization_oin_ =
   process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
+
+const _api_commonground_headers_ = {
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+};
+
+if (_api_commonground_token_ && !ACIsHttps(_api_commonground_)) {
+  _api_commonground_headers_['Authorization'] = _api_commonground_token_;
+}
 
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;
@@ -50,7 +59,7 @@ export default {
       },
     ],
   },
-  documents: {
+  publications: {
     baseURL: `${_api_commonground_}`,
     timeout: 1000 * 60,
     maxContentLength: 10000,
@@ -58,9 +67,18 @@ export default {
     responseEncoding: 'utf8',
     credentials: false,
     headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      Authorization: `${_api_commonground_token_}`,
+      ..._api_commonground_headers_,
+    },
+  },
+  themes: {
+    baseURL: `${_api_commonground_}`,
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    credentials: false,
+    headers: {
+      ..._api_commonground_headers_,
     },
   },
   faqs: {
