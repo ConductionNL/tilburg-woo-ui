@@ -75,6 +75,7 @@ export {
   AcIsPostalCode,
   AcIsSlimPostalCode,
   AcIsPhoneNumber,
+  ACIsHttps,
 } from './ac-get-type-of';
 export {
   AcIsLongEnough,

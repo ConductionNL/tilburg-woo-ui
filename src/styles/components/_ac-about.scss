@@ -34,7 +34,6 @@
 
   p {
     margin-block: var(--tilburg-space-block-rabbit);
-    font-size: var(--tilburg-typography-font-size-lg);
 
     @include respond-max($screen-sm) {
       font-size: var(--tilburg-typography-font-size-md);

@@ -34,7 +34,7 @@ DefaultLanguage nl-NL
     Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS
 
     # Set the correct domains here
-	Header set Content-Security-Policy "default-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl localhost:8080; style-src 'self' 'unsafe-inline' *.open-tilburg.nl *.tilburg.nl *.acato.nl cdn.fonts.net fonts.bunny.net localhost:8080; script-src 'self'; font-src 'self' cdn.fonts.net fonts.bunny.net localhost:8080; img-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl localhost:8080 data:; connect-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl *.rollbar.com *.commonground.nu localhost:8080; frame-ancestors 'self'; frame-src 'self'; block-all-mixed-content; upgrade-insecure-requests; form-action 'self';"
+	Header set Content-Security-Policy "default-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl localhost:8080 localhost:3000; style-src 'self' 'unsafe-inline' *.open-tilburg.nl *.tilburg.nl *.acato.nl cdn.fonts.net fonts.bunny.net localhost:8080 localhost:3000; script-src 'self'; font-src 'self' cdn.fonts.net fonts.bunny.net localhost:8080 localhost:3000; img-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl localhost:8080 localhost:3000 https://tilburg.accept.commonground.nu data:; connect-src 'self' *.open-tilburg.nl *.tilburg.nl *.acato.nl *.rollbar.com *.commonground.nu localhost:8080 localhost:3000; frame-ancestors 'self'; frame-src 'self'; block-all-mixed-content; upgrade-insecure-requests; form-action 'self';"
 
     <FilesMatch "\.(js|css|xml|php|html|gif|jpe?g|png|svg|gz)$">
         Header append Vary: "Accept-Encoding, gzip, User-Agent"

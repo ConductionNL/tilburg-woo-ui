@@ -8,6 +8,7 @@ const AcCard = ({
   children,
   image,
   skeleton,
+  spaceBetween = false,
 }) => {
   const _CLASSES = clsx(
     'ac-card',
@@ -15,7 +16,8 @@ const AcCard = ({
     category && 'ac-card--category',
     searchResult && 'ac-card--search-result',
     padding && `ac-card--padding-${padding}`,
-    skeleton && 'ac-card--skeleton'
+    skeleton && 'ac-card--skeleton',
+    spaceBetween && 'ac-card--space-between'
   );
 
   return (

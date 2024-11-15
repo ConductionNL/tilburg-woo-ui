@@ -17,11 +17,11 @@ export const AcSearchBox = ({
   spacing,
   defaultValue,
   onSubmitCallback,
-  store: { documents },
+  store: { publications },
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { mobileFiltersOpen, toggleMobileFilters } = documents;
+  const { mobileFiltersOpen, toggleMobileFilters } = publications;
 
   const renderHeading = useMemo(() => {
     return label && <Heading level={2}>{label}</Heading>;

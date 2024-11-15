@@ -9,10 +9,10 @@ const AcSearchResult = ({
   skeleton,
   title,
   summary,
-  publicationDate,
+  published,
   category,
   themes,
-  _id,
+  id,
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
@@ -27,12 +27,12 @@ const AcSearchResult = ({
             </>
           )}
           <Paragraph small>
-            {acFormatDate(publicationDate, 'YYYY-MM-DD', 'DD MMMM YYYY')}
+            {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
           </Paragraph>
           <VISUALS.ELLIPSE />
           <Paragraph small>{category}</Paragraph>
         </AcFlex>
-        <AcLink to={`/publicatie/${_id}`}>
+        <AcLink to={`/publicatie/${id}`}>
           <span class='sr-only'>
             {LABELS.READ_MORE_ABOUT} {title}
           </span>

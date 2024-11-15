@@ -1,7 +1,7 @@
 export const BREADCRUMB_ITEMS = {
   HOME: { label: 'Home', href: '/' },
   SEARCH: { label: 'Zoeken', href: '/zoeken' },
-  SUBJECTS: { label: 'Onderwerpen', href: '/onderwerpen' },
+  THEMES: { label: 'Onderwerpen', href: '/onderwerpen' },
 };
 
 export const BREADCRUMBS = {
@@ -14,6 +14,6 @@ export const BREADCRUMBS = {
     return items;
   },
   CONTENT: (label) => [{ label }],
-  SUBJECTS: [BREADCRUMB_ITEMS.SUBJECTS],
+  THEMES: [BREADCRUMB_ITEMS.THEMES],
   PUBLICATION: (label) => [BREADCRUMB_ITEMS.SEARCH, { label }],
 };

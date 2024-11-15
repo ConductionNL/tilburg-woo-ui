@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AcBreadcrumbs, AcSearchFilters, AcSearchResult } from '@molecules';
+import { AcSearchFilters, AcSearchResult } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
 import { AcSearchBox, AcSearchSort } from '@components';
@@ -16,7 +16,7 @@ import {
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
 
-const AcSearch = ({ store: { documents } }) => {
+const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -28,13 +28,13 @@ const AcSearch = ({ store: { documents } }) => {
     updateQuery,
     setSearchQuery,
     fetchAggregations,
-    fetchDocuments,
+    fetchPublications,
     is_loading,
     getSearchPageURL,
-    all_documents,
+    all_publications,
     resetSearchQuery,
     resetAggregations,
-  } = documents;
+  } = publications;
 
   const setQuery = () => {
     updateQuery(AcSearchParamsToObject(searchParams));
@@ -44,7 +44,6 @@ const AcSearch = ({ store: { documents } }) => {
     setQuery();
 
     fetchAggregations();
-    fetchDocuments();
 
     return () => {
       resetSearchQuery();
@@ -53,17 +52,23 @@ const AcSearch = ({ store: { documents } }) => {
   }, []);
 
   useEffect(() => {
+    console.log(getSearchPageURL());
+    console.log(location.pathname + location.search);
     if (getSearchPageURL() === location.pathname + location.search) {
       return;
     }
 
     navigate(getSearchPageURL());
-  }, [search_query]);
+  }, [search_query, ...Object.values(search_query?.published || {})]);
 
   // On GET params change.
   useEffect(() => {
+    console.group('LOCATION PARAMS CHANGED');
+    console.log([location.search]);
+    console.groupEnd();
+
     setQuery();
-    fetchDocuments();
+    fetchPublications();
   }, [location.search]);
 
   const onPaginationChange = (page) => {
@@ -80,7 +85,7 @@ const AcSearch = ({ store: { documents } }) => {
     return (
       <Pagination
         totalPages={pagination?.pages}
-        page={pagination?.page}
+        page={parseInt(pagination?.page, 10)}
         onPageChange={onPaginationChange}
         nextLabel=''
         previousLabel=''
@@ -99,18 +104,18 @@ const AcSearch = ({ store: { documents } }) => {
     }
 
     return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
-      all_documents?.length
+      all_publications?.length
     )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_documents?.length]);
+  }, [is_loading, all_publications?.length]);
 
-  const renderDocuments = useMemo(() => {
+  const renderPublications = useMemo(() => {
     if (is_loading) {
       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
         <AcSearchResult skeleton key={index} />
       ));
     }
 
-    if (all_documents?.length < 1) {
+    if (all_publications?.length < 1) {
       return (
         <Alert type='info'>
           <AcFlex spacing='sm'>
@@ -124,10 +129,10 @@ const AcSearch = ({ store: { documents } }) => {
       );
     }
 
-    return all_documents?.map((document, index) => (
-      <AcSearchResult {...document} key={index} />
+    return all_publications?.map((publication, index) => (
+      <AcSearchResult {...publication} key={index} />
     ));
-  }, [is_loading, all_documents, pagination?.limit]);
+  }, [is_loading, all_publications, pagination?.limit]);
 
   return (
     <>
@@ -137,7 +142,7 @@ const AcSearch = ({ store: { documents } }) => {
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
-            defaultValue={search_query.search}
+            defaultValue={search_query._search}
           />
         </AcCard>
       </AcContainer>
@@ -155,7 +160,7 @@ const AcSearch = ({ store: { documents } }) => {
                   <AcSearchSort type='alt' />
                 </div>
               </AcFlex>
-              {renderDocuments}
+              {renderPublications}
               {pagination?.pages > 1 && renderPagination}
             </AcFlex>
           </AcFlex>

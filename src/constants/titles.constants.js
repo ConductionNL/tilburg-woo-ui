@@ -6,6 +6,7 @@ export const TITLES = AcLockObject({
   CONVERSATIONS: 'Meldingen',
   DOCUMENTS: 'Documenten',
   FAQ: 'Veelgestelde vragen',
+  THEMES: 'Onderwerpen',
   HOME: 'Overzicht',
   NEWS: 'Nieuws',
   NEW_CONVERSATION: 'Nieuwe melding',
