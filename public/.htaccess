@@ -210,6 +210,9 @@ SetEnvIf host ^(?!localhost).\*$ ENFORCEHTTPS
     RewriteEngine On
     RewriteBase /
 
+    RewriteCond %{REQUEST_URI} !^/publicatievoorziening/.* [NC]
+    RewriteRule ^(.*)$ /publicatievoorziening/$1 [L,R=301]
+
     RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -f [OR]
     RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI} -d
     RewriteRule ^ - [L]
