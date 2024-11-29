@@ -14,6 +14,6 @@ const AcTabs = loadable(() => import('@src/atoms/tab/ac-tabs/ac-tabs'));
 const AcTabList = loadable(() => import('@src/atoms/tab/ac-tabList/ac-tabList'));
 const AcTab = loadable(() => import('@src/atoms/tab/ac-tab/ac-tab'));
 const AcTabPanel = loadable(() => import('@src/atoms/tab/ac-tabPanel/ac-tabPanel'));
+const AcLogo = loadable(() => import('@atoms/ac-logo/ac-logo'));
 
-
-export { AcCard, AcContainer, AcDataList, AcFlex, AcImage, AcRichText, AcSection, AcTabs, AcTabList, AcTab, AcTabPanel };
+export { AcCard, AcContainer, AcDataList, AcFlex, AcImage, AcRichText, AcSection, AcTabs, AcTabList, AcTab, AcTabPanel, AcLogo };

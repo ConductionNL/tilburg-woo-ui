@@ -1,4 +1,4 @@
-import { AcContainer } from '@atoms';
+import { AcContainer, AcLogo } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
 import { EXTERNAL_LINKS, FOOTER_ITEMS } from '@constants/routes.constants';
 import { Link } from 'react-router-dom';
@@ -33,7 +33,7 @@ const AcFooter = () => {
           </ul>
         </nav>
         <div class='ac-footer__logo'>
-          <VISUALS.LOGO />
+          <AcLogo variant='footer' />
           <span>
             <span>Open Tilburg</span>
             <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>

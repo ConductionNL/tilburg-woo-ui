@@ -6,7 +6,7 @@ import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
 
 import { AcNavigation } from '@components';
 import { AcBreadcrumbs } from '@molecules';
-import { AcContainer } from '@atoms';
+import { AcContainer, AcLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 
@@ -23,15 +23,17 @@ const AcHeader = ({ store }) => {
         <div className='ac-header__logo'>
           {isHomePage ? (
             <div>
-              <VISUALS.LOGO />
+              <AcLogo variant='header' />
               <span className='sr-only'>Logo</span>
               <span class='logo-text'>{LABELS.APP_NAME}</span>
             </div>
           ) : (
-            <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
-              <VISUALS.LOGO />
-              <span class='logo-text'>{LABELS.APP_NAME}</span>
-            </Link>
+            <>
+              <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
+                <AcLogo variant='header' />
+                <span class='logo-text'>{LABELS.APP_NAME}</span>
+              </Link>
+            </>
           )}
         </div>
         <AcNavigation />
