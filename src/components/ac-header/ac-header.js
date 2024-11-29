@@ -14,6 +14,8 @@ const AcHeader = ({ store }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
+  const hostname = window.location.hostname;
+
   return (
     <header className='ac-header'>
       <SkipLink id='skip-link' href='#main'>
@@ -25,13 +27,21 @@ const AcHeader = ({ store }) => {
             <div>
               <AcLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              <span class='logo-text'>{LABELS.APP_NAME}</span>
+              {hostname === 'vng.opencatalogi.nl' ? (
+                <span class='logo-text'>Softwarecatalogus</span>
+              ) : (
+                <span class='logo-text'>Open Tilburg</span>
+              )}
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <AcLogo variant='header' />
-                <span class='logo-text'>{LABELS.APP_NAME}</span>
+                {hostname === 'vng.opencatalogi.nl' ? (
+                  <span class='logo-text'>Softwarecatalogus</span>
+                ) : (
+                  <span class='logo-text'>Open Tilburg</span>
+                )}
               </Link>
             </>
           )}

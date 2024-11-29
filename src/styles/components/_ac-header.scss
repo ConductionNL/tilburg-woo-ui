@@ -22,7 +22,7 @@
     justify-content: space-between;
     align-items: center;
     block-size: var(--navigation-bar-height);
-    background-color: var(--tilburg-color-blue-300);
+    background-color: var(--tilburg-header-background-color);
   }
 
   &__logo {
@@ -30,7 +30,7 @@
       display: flex;
       align-items: center;
       gap: var(--tilburg-space-column-pig);
-      color: var(--tilburg-color-white);
+      color: var(--tilburg-logo-color);
       font-size: var(--tilburg-typography-font-size-3xl);
       font-weight: var(--tilburg-typography-font-weight-bold);
       font-family: var(--tilburg-typography-font-family-primary), sans-serif;

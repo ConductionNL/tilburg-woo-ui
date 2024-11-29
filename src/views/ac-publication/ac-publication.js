@@ -214,7 +214,7 @@ const AcPublication = ({ store: { publications } }) => {
 
           {get_single?.publicationType?.title === 'Softwarecatalogus' && get_single?.data?.github_url && (
             <div className='ac-publication-buttons'>
-              <Button>
+              <Button onClick={() => window.open(get_single?.data?.github_url, '_blank')}>
                 <VISUALS.GITHUB />
                 <span>Bekijk op Repository</span>
               </Button>

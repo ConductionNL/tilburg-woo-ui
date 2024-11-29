@@ -3,8 +3,8 @@
 
 .ac-footer {
   padding-block: var(--tilburg-space-row-elephant);
-  color: var(--tilburg-color-white);
-  background-color: var(--tilburg-color-blue-400);
+  color: var(--tilburg-footer-color);
+  background-color: var(--tilburg-footer-background-color);
 
   @include respond-max($screen-sm) {
     padding-block: var(--tilburg-space-row-cat);
@@ -31,7 +31,7 @@
       padding-inline-start: var(--tilburg-space-column-beetle);
 
       &::marker {
-        color: var(--tilburg-color-blue-300);
+        color: var(--tilburg-footer-color);
         font-size: 2rem;
       }
 

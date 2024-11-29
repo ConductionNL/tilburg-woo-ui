@@ -42,9 +42,14 @@ const LIST_BLUE = loadable(() =>
 );
 const LOGO = loadable(() => import('-!svg-react-loader!@assets/images/logo.svg'));
 const MENU = loadable(() => import('-!svg-react-loader!@assets/images/menu.svg'));
+
 const QUESTION_MARK = loadable(() =>
   import('-!svg-react-loader!@assets/images/question-mark.svg')
 );
+const QUESTION_MARK_VNG = loadable(() =>
+  import('-!svg-react-loader!@assets/images/question-mark-vng.svg')
+);
+
 const SEARCH = loadable(() =>
   import('-!svg-react-loader!@assets/images/search.svg')
 );
@@ -78,6 +83,7 @@ export const VISUALS = {
   LOGO,
   MENU,
   QUESTION_MARK,
+  QUESTION_MARK_VNG,
   SEARCH,
   GITHUB,
   COMMON_GROUND,

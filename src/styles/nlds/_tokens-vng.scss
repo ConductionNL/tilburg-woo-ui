@@ -3,7 +3,7 @@
  * Generated on Thu, 30 May 2024 13:54:04 GMT
  */
 
-.tilburg-theme {
+ .vng-theme {
   --ams-pagination-button-border-color: transparent;
   --ams-pagination-button-background-color: transparent;
   --ams-pagination-button-active-border-color: transparent;
@@ -112,8 +112,8 @@
   --tilburg-box-shadow-lg: 0 1ratpx rgba(0, 0, 0, 0.1);
   --tilburg-box-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --tilburg-box-shadow-sm: [object Object];
-  --tilburg-typography-font-family-secondary: 'Roboto', sans-serif;
-  --tilburg-typography-font-family-primary: TradeGothicCondensed18;
+  --tilburg-typography-font-family-secondary: 'Avenir', sans-serif;
+  --tilburg-typography-font-family-primary: 'Avenir', sans-serif;
   --tilburg-typography-font-weight-bold: 700;
   --tilburg-typography-font-weight-normal: 400;
   --tilburg-typography-line-height-lg: 200%;
@@ -121,7 +121,7 @@
   --tilburg-typography-line-height-sm: 125%;
   --tilburg-typography-line-height-xs: 100%;
   --tilburg-typography-font-size-4xl: 48px;
-  --tilburg-typography-font-size-3xl: 40px;
+  --tilburg-typography-font-size-3xl: 36px;
   --tilburg-typography-font-size-2xl: 32px;
   --tilburg-typography-font-size-xl: 24px;
   --tilburg-typography-font-size-lg: 20px;
@@ -241,7 +241,7 @@
   --tilburg-color-gray-100: #F2F4F6;
   --tilburg-color-gray-50: #F9F9FA;
   --tilburg-color-black-txt: #333333;
-  --tilburg-color-black: #000000;
+  --tilburg-color-black: #1a1a1a;
   --tilburg-color-white: #ffffff;
   --tilburg-border-width-lg: 4px;
   --tilburg-border-width-md: 2px;
@@ -451,10 +451,10 @@
   --tilburg-status-badge-border-width: var(--tilburg-border-width-sm);
   --tilburg-status-badge-font-size: var(--tilburg-typography-font-size-sm);
   --tilburg-line-border-width: var(--tilburg-border-width-sm);
-  --tilburg-line-border-color: var(--tilburg-color-gray-200);
-  --tilburg-interaction-hover-color: var(--tilburg-color-pink-400);
-  --tilburg-interaction-active-color: var(--tilburg-color-pink-300);
-  --tilburg-interaction-color: var(--tilburg-color-pink-300);
+  --tilburg-line-border-color: #75757c;
+  --tilburg-interaction-hover-color: #004488;
+  --tilburg-interaction-active-color: #004488;
+  --tilburg-interaction-color: #004488;
   --tilburg-icon-toptask-size: var(--tilburg-size-icon-4xl);
   --tilburg-icon-functional-size: var(--tilburg-size-icon-md);
   --tilburg-pointer-target-min-size: var(--tilburg-size-md);
@@ -489,8 +489,8 @@
   --tilburg-focus-outline-width: var(--tilburg-border-width-md);
   --tilburg-focus-inverse-outline-color: var(--tilburg-color-white);
   --tilburg-focus-outline-color: var(--tilburg-color-extra-purple);
-  --tilburg-focus-color: var(--tilburg-color-pink-300);
-  --tilburg-focus-background-color: var(--tilburg-color-pink-200);
+  --tilburg-focus-color: #004488;
+  --tilburg-focus-background-color: #0277bd;
   --tilburg-feedback-warning-color: var(--tilburg-color-orange-300);
   --tilburg-feedback-warning-border-color: var(--tilburg-color-orange-300);
   --tilburg-feedback-warning-background-color: var(--tilburg-color-orange-100);
@@ -515,7 +515,7 @@
   --tilburg-document-background-color: var(--tilburg-color-white);
   --tilburg-heading-font-weight: var(--tilburg-typography-font-weight-bold);
   --tilburg-heading-font-family: var(--tilburg-typography-font-family-primary);
-  --tilburg-heading-color: var(--tilburg-color-blue-500);
+  --tilburg-heading-color: var(--tilburg-color-black);
   --ams-pagination-description-font-weight: var(--tilburg-document-font-weight);
   --ams-pagination-description-color: var(--tilburg-document-color);
   --ams-pagination-ellipses-font-weight: var(--tilburg-document-font-weight);
@@ -838,15 +838,15 @@
   --utrecht-separator-block-size: var(--tilburg-size-4xs);
   --utrecht-separator-color: var(--tilburg-line-border-color);
 
-  --tilburg-header-background-color: var(--tilburg-color-blue-300);
-  --tilburg-footer-background-color: var(--tilburg-color-blue-400);
-  --tilburg-footer-color: var(--tilburg-color-white);
-  --tilburg-logo-color: var(--tilburg-color-white);
-  --tilburg-search-card-hover-border-color: var(--tilburg-color-pink-300);
+  --tilburg-header-background-color: #ffffff;
+  --tilburg-footer-background-color: #004589;
+  --tilburg-footer-color: #ffffff;
+  --tilburg-logo-color: var(--tilburg-color-black);
+  --tilburg-search-card-hover-border-color: #004488;
   --tilburg-navigation-font-weight: 700;
-  --tilburg-navigation-background-color: var(--tilburg-color-blue-400);
-  --tilburg-navigation-color: var(--tilburg-color-white);
-  --tilburg-navigation-hover-font-weight: var(--tilburg-typography-font-weight-bold);
+  --tilburg-navigation-background-color: #0277bd;
+  --tilburg-navigation-color: #ffffff;
+  --tilburg-navigation-hover-font-weight: 700;
   --tilburg-navigation-hover-background-color: #0277bd;
   --tilburg-navigation-hover-color: #ffffff;
   --tilburg-navigation-font-family: 'Montserrat', sans-serif;
@@ -893,7 +893,7 @@
   --conduction-tabs-tab-selected-border-bottom: unset;
   --conduction-tabs-tab-selected-border-bottom-width: 0.3rem;
   --conduction-tabs-tab-selected-border-bottom-style: solid;
-  --conduction-tabs-tab-selected-border-bottom-color: var(--tilburg-color-pink-300);
+  --conduction-tabs-tab-selected-border-bottom-color: #0277bd;
   --conduction-tabs-tab-selected-font-weight: 700;
   --conduction-tabs-tab-selected-font-family: unset;
 
@@ -912,7 +912,7 @@
   --conduction-tabs-tab-list-margin-block-end: 0px;
   --conduction-tabs-tab-list-border-bottom-width: 0.3rem;
   --conduction-tabs-tab-list-border-bottom-style: solid;
-  --conduction-tabs-tab-list-border-bottom-color: var(--tilburg-line-border-color);
+  --conduction-tabs-tab-list-border-bottom-color: #E4E7EC;
 
   --conduction-tabs-tab-panel-background-color: unset;
   --conduction-tabs-tab-panel-padding-block-start: 24px;
@@ -923,5 +923,15 @@
   --conduction-tabs-tab-panel-border-style: unset;
   --conduction-tabs-tab-panel-border-color: unset;
   --conduction-tabs-tab-panel-border-top: unset;
+  
+  --conduction-logo-header-inline-size: 96px;
+  --conduction-logo-header-block-size: 50px;
+  --conduction-logo-header-background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjE1MCAxNSA5NiA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+PGRlZnM+PHBhdGggaWQ9ImEiIGQ9Ik01Ny4zOTYuMjExSC4yODF2NDkuNDA1aDU3LjExNVYuMjF6Ii8+PHBhdGggaWQ9ImMiIGQ9Ik01Ny41NjQuMjExSC40NDh2NDkuNDA1aDU3LjExNlYuMjF6Ii8+PC9kZWZzPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTg3LjkzMSAxNSkiPjxtYXNrIGlkPSJiIiBmaWxsPSIjZmZmIj48dXNlIHhsaW5rOmhyZWY9IiNhIi8+PC9tYXNrPjxwYXRoIGQ9Ik01Ny4zOTYgMjQuOTEzYzAtMTMuNTczLTExLjAwNC0yNC42MjItMjQuNTYtMjQuNy0uMDI0IDAtLjA0OC0uMDAzLS4wNzMtLjAwM0gyNC43NWEyLjUwNCAyLjUwNCAwIDEgMCAwIDUuMDFoNy45NDVjMTAuODU4IDAgMTkuNjk0IDguODM0IDE5LjY5NCAxOS42OTMgMCAxMC44Ni04LjgzNiAxOS42OTQtMTkuNjk0IDE5LjY5NEg1LjI4OXYtNC41NzhILjI4MXY5LjU4N2gzMi40ODJ2LS4wMDFjMTMuNTktLjA0IDI0LjYzMy0xMS4xMDUgMjQuNjMzLTI0LjcwMiIgZmlsbD0iIzAwOUZFNCIgbWFzaz0idXJsKCNiKSIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAgMTUpIj48bWFzayBpZD0iZCIgZmlsbD0iI2ZmZiI+PHVzZSB4bGluazpocmVmPSIjYyIvPjwvbWFzaz48cGF0aCBkPSJNLjQ0OCAyNC45MTNjMCAxMy41NzMgMTEuMDA0IDI0LjYyMiAyNC41NiAyNC43LjAyNCAwIC4wNDguMDAzLjA3My4wMDNoOC4wMTRhMi41MDQgMi41MDQgMCAxIDAgMC01LjAwOWgtNy45NDRjLTEwLjg1OSAwLTE5LjY5NC04LjgzNC0xOS42OTQtMTkuNjk0IDAtMTAuODU5IDguODM1LTE5LjY5NCAxOS42OTQtMTkuNjk0aDI3LjQwNHY0LjU3OGg1LjAwOVYuMjFIMjUuMDh2LjAwMUMxMS40OS4yNTEuNDQ4IDExLjMxNi40NDggMjQuOTEzIiBmaWxsPSIjMDA5RkU0IiBtYXNrPSJ1cmwoI2QpIi8+PC9nPjxwYXRoIGZpbGw9IiMwMDQzODgiIGQ9Ik0xNzYuMDE3IDQyLjExNmwtNC42NzgtMTIuNDAxaC01LjY2NGw4LjE0IDIwLjM2NmgzLjkyMWw4LjQwMS0yMC4zNjZoLTUuMzYzem0yNi41NDIuNTU4bC03LjkyOC0xMi45NTloLTYuNDEzdjIwLjM2N2g0Ljk5N1YzNi43ODdsOC4xNSAxMy4yOTVoNi4xOVYyOS43MTVoLTQuOTk2em0xOS4zMjMtNC45NHY0LjY2M2gzLjUzN3YyLjY3N2E5Ljc3MyA5Ljc3MyAwIDAgMS0xLjQxNC41NGMtLjY1Mi4yMDMtMS40NDMuMzA2LTIuMzU0LjMwNi0uODggMC0xLjY4Ni0uMTUtMi4zOTQtLjQ0OGE1LjMzOCA1LjMzOCAwIDAgMS0xLjgyNC0xLjI0NyA1LjUyMiA1LjUyMiAwIDAgMS0xLjE3LTEuODk0Yy0uMjcyLS43MjktLjQxLTEuNTQ5LS40MS0yLjQzMyAwLS44NjcuMTM4LTEuNjgxLjQxLTIuNDJhNS41MDIgNS41MDIgMCAwIDEgMS4xNy0xLjkwOCA1LjM3NCA1LjM3NCAwIDAgMSAxLjgyNC0xLjI0NmMuNzA5LS4yOTggMS41MTQtLjQ0OSAyLjM5NC0uNDQ5IDEuMDY0IDAgMS45NTkuMTUxIDIuNjU3LjQ0OS43LjI5NyAxLjMzOC43NCAxLjg5OCAxLjMxOGwuMjQyLjI0OCAzLjUxNS0zLjgzNS0uMjM3LS4yMjFhOC45MjMgOC45MjMgMCAwIDAtMy42MjctMi4wMzhjLTEuMzUtLjM4Ni0yLjg0Ny0uNTgzLTQuNDQ4LS41ODMtMS41NzIgMC0zLjA0NC4yNS00LjM3My43NDVhMTAuMTM5IDEwLjEzOSAwIDAgMC0zLjQ4MSAyLjE0M2MtLjk3NS45MjgtMS43NDYgMi4wNjYtMi4yOSAzLjM4NC0uNTQzIDEuMzE1LS44MTkgMi44LS44MTkgNC40MTMgMCAxLjYxMy4yNzYgMy4wOTguODIgNC40MTMuNTQ1IDEuMzE5IDEuMzE0IDIuNDU3IDIuMjg5IDMuMzg0Ljk3NC45MjYgMi4xNDYgMS42NDcgMy40OCAyLjE0MyAxLjMzLjQ5NCAyLjgwMi43NDQgNC4zNzQuNzQ0IDEuNDY0IDAgMi45Mi0uMTUyIDQuMzMtLjQ1MmExNi4wNTQgMTYuMDU0IDAgMCAwIDQuMDktMS40NzhsLjE3Ny0uMDlWMzcuNzMzaC04LjM2NnoiLz48L2c+PC9zdmc+');
+  --conduction-logo-footer-inline-size: 96px;
+  --conduction-logo-footer-block-size: 50px;
+  --conduction-logo-footer-background-image: unset;
+  --conduction-logo-navbar-inline-size: 96px;
+  --conduction-logo-navbar-block-size: 50px;
+  --conduction-logo-navbar-background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjE1MCAxNSA5NiA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+PGRlZnM+PHBhdGggaWQ9ImEiIGQ9Ik01Ny4zOTYuMjExSC4yODF2NDkuNDA1aDU3LjExNVYuMjF6Ii8+PHBhdGggaWQ9ImMiIGQ9Ik01Ny41NjQuMjExSC40NDh2NDkuNDA1aDU3LjExNlYuMjF6Ii8+PC9kZWZzPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTg3LjkzMSAxNSkiPjxtYXNrIGlkPSJiIiBmaWxsPSIjZmZmIj48dXNlIHhsaW5rOmhyZWY9IiNhIi8+PC9tYXNrPjxwYXRoIGQ9Ik01Ny4zOTYgMjQuOTEzYzAtMTMuNTczLTExLjAwNC0yNC42MjItMjQuNTYtMjQuNy0uMDI0IDAtLjA0OC0uMDAzLS4wNzMtLjAwM0gyNC43NWEyLjUwNCAyLjUwNCAwIDEgMCAwIDUuMDFoNy45NDVjMTAuODU4IDAgMTkuNjk0IDguODM0IDE5LjY5NCAxOS42OTMgMCAxMC44Ni04LjgzNiAxOS42OTQtMTkuNjk0IDE5LjY5NEg1LjI4OXYtNC41NzhILjI4MXY5LjU4N2gzMi40ODJ2LS4wMDFjMTMuNTktLjA0IDI0LjYzMy0xMS4xMDUgMjQuNjMzLTI0LjcwMiIgZmlsbD0iIzAwOUZFNCIgbWFzaz0idXJsKCNiKSIvPjwvZz48ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAgMTUpIj48bWFzayBpZD0iZCIgZmlsbD0iI2ZmZiI+PHVzZSB4bGluazpocmVmPSIjYyIvPjwvbWFzaz48cGF0aCBkPSJNLjQ0OCAyNC45MTNjMCAxMy41NzMgMTEuMDA0IDI0LjYyMiAyNC41NiAyNC43LjAyNCAwIC4wNDguMDAzLjA3My4wMDNoOC4wMTRhMi41MDQgMi41MDQgMCAxIDAgMC01LjAwOWgtNy45NDRjLTEwLjg1OSAwLTE5LjY5NC04LjgzNC0xOS42OTQtMTkuNjk0IDAtMTAuODU5IDguODM1LTE5LjY5NCAxOS42OTQtMTkuNjk0aDI3LjQwNHY0LjU3OGg1LjAwOVYuMjFIMjUuMDh2LjAwMUMxMS40OS4yNTEuNDQ4IDExLjMxNi40NDggMjQuOTEzIiBmaWxsPSIjMDA5RkU0IiBtYXNrPSJ1cmwoI2QpIi8+PC9nPjxwYXRoIGZpbGw9IiMwMDQzODgiIGQ9Ik0xNzYuMDE3IDQyLjExNmwtNC42NzgtMTIuNDAxaC01LjY2NGw4LjE0IDIwLjM2NmgzLjkyMWw4LjQwMS0yMC4zNjZoLTUuMzYzem0yNi41NDIuNTU4bC03LjkyOC0xMi45NTloLTYuNDEzdjIwLjM2N2g0Ljk5N1YzNi43ODdsOC4xNSAxMy4yOTVoNi4xOVYyOS43MTVoLTQuOTk2em0xOS4zMjMtNC45NHY0LjY2M2gzLjUzN3YyLjY3N2E5Ljc3MyA5Ljc3MyAwIDAgMS0xLjQxNC41NGMtLjY1Mi4yMDMtMS40NDMuMzA2LTIuMzU0LjMwNi0uODggMC0xLjY4Ni0uMTUtMi4zOTQtLjQ0OGE1LjMzOCA1LjMzOCAwIDAgMS0xLjgyNC0xLjI0NyA1LjUyMiA1LjUyMiAwIDAgMS0xLjE3LTEuODk0Yy0uMjcyLS43MjktLjQxLTEuNTQ5LS40MS0yLjQzMyAwLS44NjcuMTM4LTEuNjgxLjQxLTIuNDJhNS41MDIgNS41MDIgMCAwIDEgMS4xNy0xLjkwOCA1LjM3NCA1LjM3NCAwIDAgMSAxLjgyNC0xLjI0NmMuNzA5LS4yOTggMS41MTQtLjQ0OSAyLjM5NC0uNDQ5IDEuMDY0IDAgMS45NTkuMTUxIDIuNjU3LjQ0OS43LjI5NyAxLjMzOC43NCAxLjg5OCAxLjMxOGwuMjQyLjI0OCAzLjUxNS0zLjgzNS0uMjM3LS4yMjFhOC45MjMgOC45MjMgMCAwIDAtMy42MjctMi4wMzhjLTEuMzUtLjM4Ni0yLjg0Ny0uNTgzLTQuNDQ4LS41ODMtMS41NzIgMC0zLjA0NC4yNS00LjM3My43NDVhMTAuMTM5IDEwLjEzOSAwIDAgMC0zLjQ4MSAyLjE0M2MtLjk3NS45MjgtMS43NDYgMi4wNjYtMi4yOSAzLjM4NC0uNTQzIDEuMzE1LS44MTkgMi44LS44MTkgNC40MTMgMCAxLjYxMy4yNzYgMy4wOTguODIgNC40MTMuNTQ1IDEuMzE5IDEuMzE0IDIuNDU3IDIuMjg5IDMuMzg0Ljk3NC45MjYgMi4xNDYgMS42NDcgMy40OCAyLjE0MyAxLjMzLjQ5NCAyLjgwMi43NDQgNC4zNzQuNzQ0IDEuNDY0IDAgMi45Mi0uMTUyIDQuMzMtLjQ1MmExNi4wNTQgMTYuMDU0IDAgMCAwIDQuMDktMS40NzhsLjE3Ny0uMDlWMzcuNzMzaC04LjM2NnoiLz48L2c+PC9zdmc+');
 
   }

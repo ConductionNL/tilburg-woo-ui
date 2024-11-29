@@ -12,9 +12,12 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
+const hostname = window.location.hostname;
+
 const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => modalRef?.current?.showModal();
+
 
   const { all_categories, category_checked, toggleSearchArrayValue } = publications;
 
@@ -55,7 +58,11 @@ const AcSearchCategories = ({ store: { publications } }) => {
       <AcFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
         <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
-          <VISUALS.QUESTION_MARK />
+          {hostname === 'vng.opencatalogi.nl' ? (
+            <VISUALS.QUESTION_MARK_VNG />
+          ) : (
+            <VISUALS.QUESTION_MARK />
+          )}
         </AcButton>
         {renderModal}
       </AcFlex>

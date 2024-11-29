@@ -1,6 +1,7 @@
 // General tokens.
 @use "tokens";
 @use "tokens-custom";
+@use "tokens-vng";	
 
 // Extends.
 @use "extends";
@@ -9,3 +10,4 @@
 @use "./overrides";
 
 @import '@amsterdam/design-system-css/dist/pagination/pagination.css';
+@import '@conduction/theme/municipalities/opencatalogi-design-tokens/dist/index.css';

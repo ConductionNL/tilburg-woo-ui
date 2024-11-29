@@ -5,6 +5,8 @@ import { AcSearchBox } from '@components';
 import { AcLink } from '@molecules';
 import { useNavigate } from 'react-router';
 
+const hostname = window.location.hostname;
+
 const AcHero = () => {
   const _CLASSES = clsx('ac-hero');
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ const AcHero = () => {
   return (
     <AcSection
       className={_CLASSES}
-      style="background-image: url('/home-hero-background.png');"
+      style={`background-image: url('${hostname === 'vng.opencatalogi.nl' ? '/home-hero-background.png' : '/home-hero-background.png'}');`}
     >
       <AcContainer>
         <AcCard blue padding='lg'>

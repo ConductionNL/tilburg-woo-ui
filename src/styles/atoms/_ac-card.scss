@@ -49,7 +49,7 @@
 
       &:where(:hover, :focus-visible) {
         &:after {
-          border-color: var(--tilburg-color-pink-300);
+          border-color: var(--tilburg-search-card-hover-border-color);
         }
 
         svg {

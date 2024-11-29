@@ -6,6 +6,8 @@ const AcNavigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
+  const hostname = window.location.hostname;
+
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
@@ -21,26 +23,37 @@ const AcNavigation = () => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        <ul>
-          <li>
-            <Link to='/over-ons'>
-              <VISUALS.INFO />
-              Over Open Tilburg
-            </Link>
-          </li>
-          <li>
-            <Link to='/onderwerpen'>
-              <VISUALS.LIST />
-              Onderwerpen
-            </Link>
-          </li>
-          <li>
-            <Link to='/contact'>
-              <VISUALS.CONTACT />
-              Contact
-            </Link>
-          </li>
-        </ul>
+        {hostname === 'vng.opencatalogi.nl' ? (
+          <ul>
+            <li>
+              <Link to='/over-ons'>
+                <VISUALS.INFO />
+                Over Softwarecatalogus
+              </Link>
+            </li>
+          </ul>
+        ) : (
+          <ul>
+            <li>
+              <Link to='/over-ons'>
+                <VISUALS.INFO />
+                Over Open Tilburg
+              </Link>
+            </li>
+            <li>
+              <Link to='/onderwerpen'>
+                <VISUALS.LIST />
+                Onderwerpen
+              </Link>
+            </li>
+            <li>
+              <Link to='/contact'>
+                <VISUALS.CONTACT />
+                Contact
+              </Link>
+            </li>
+          </ul>
+        )}
       </nav>
     </div>
   );

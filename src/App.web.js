@@ -45,8 +45,10 @@ const App = ({ store }) => {
     return null;
   }
 
+  const hostname = window.location.hostname;
+
   return (
-    <div className='tilburg-theme' tabIndex='-1' ref={resetFocus}>
+    <div className={hostname === 'vng.opencatalogi.nl' ? 'vng-theme' : 'tilburg-theme'} tabIndex='-1' ref={resetFocus}>
       <AcHeader store={store} />
       <main id='main'>
         <Routes>

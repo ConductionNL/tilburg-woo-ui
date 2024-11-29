@@ -74,6 +74,63 @@ export const ROUTES = {
   },
 };
 
+export const VNG_ROUTES_SITEMAP = {
+  ONDERWERPEN: {
+    label: 'Onderwerpen',
+    href: 'https://vng.nl/rubrieken',
+  },
+  NIEUWS: {
+    label: 'Nieuws',
+    href: 'https://vng.nl/nieuws',
+  },
+  AGENDA: {
+    label: 'Agenda',
+    href: 'https://vng.nl/agenda',
+  },
+  A_Z_INDEX: {
+    label: 'A-Z index',
+    href: 'https://vng.nl/a-z',
+  },
+  VNG_MAGAZINE: {
+    label: 'VNG Magazine',
+    href: 'https://vng.nl/magazines',
+  },
+};
+
+export const VNG_ROUTES_INFORMATIE = {
+  CONTACT: {
+    label: 'Contact',
+    href: 'https://vng.nl/contact',
+  },
+  OVER_ONS: {
+    label: 'Over Ons',
+    href: 'https://vng.nl/rubrieken/vereniging',
+  },
+  WERKEN_BIJ_DE_VNG: {
+    label: 'Werken bij de VNG',
+    href: 'https://vng.nl/werken-bij-de-vng',
+  },
+};
+
+export const VNG_ROUTES_BEDRIJVEN = {
+  VNG_INTERNATIONAL: {
+    label: 'VNG International',
+    href: 'https://www.vng-international.nl/',
+  },
+  VNG_CONNECT: {
+    label: 'VNG Connect',
+    href: 'https://www.vngconnect.nl/',
+  },
+  VNG_REALISATIE: {
+    label: 'VNG Realisatie',
+    href: 'https://vng.nl/artikelen/vng-realisatie',
+  },
+  VNG_RISICOBEHEER: {
+    label: 'VNGRisicobeheer',
+    href: 'https://vng.nl/rubrieken/risicobeheer',
+  },
+};
+
 const ROUTES_EXTERNAL = {
   TILBURG: {
     label: 'Tilburg',
@@ -101,6 +158,25 @@ export const FOOTER_ITEMS = [
   ROUTES.ACCESSIBILITY,
   ROUTES.SEARCH,
   ROUTES.THEMES,
+];
+
+export const VNG_FOOTER_ITEMS_SITEMAP = [
+  VNG_ROUTES_SITEMAP.ONDERWERPEN,
+  VNG_ROUTES_SITEMAP.NIEUWS,
+  VNG_ROUTES_SITEMAP.AGENDA,
+  VNG_ROUTES_SITEMAP.A_Z_INDEX,
+  VNG_ROUTES_SITEMAP.VNG_MAGAZINE,
+];
+export const VNG_FOOTER_ITEMS_INFORMATIE = [
+  VNG_ROUTES_INFORMATIE.CONTACT,
+  VNG_ROUTES_INFORMATIE.OVER_ONS,
+  VNG_ROUTES_INFORMATIE.WERKEN_BIJ_DE_VNG,
+];
+export const VNG_FOOTER_ITEMS_BEDRIJVEN = [
+  VNG_ROUTES_BEDRIJVEN.VNG_INTERNATIONAL,
+  VNG_ROUTES_BEDRIJVEN.VNG_CONNECT,
+  VNG_ROUTES_BEDRIJVEN.VNG_REALISATIE,
+  VNG_ROUTES_BEDRIJVEN.VNG_RISICOBEHEER,
 ];
 
 export const EXTERNAL_LINKS = [
