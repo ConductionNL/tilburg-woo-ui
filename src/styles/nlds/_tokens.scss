@@ -837,4 +837,79 @@
   --utrecht-separator-margin-block-end: var(--tilburg-space-block-snail);
   --utrecht-separator-block-size: var(--tilburg-size-4xs);
   --utrecht-separator-color: var(--tilburg-line-border-color);
+
+
+  --conduction-tabs-tab-background-color: transparent;
+  --conduction-tabs-tab-color: var(--utrecht-document-color);
+  --conduction-tabs-tab-border-width: unset;
+  --conduction-tabs-tab-border-style: unset;
+  --conduction-tabs-tab-border-color: unset;
+  --conduction-tabs-tab-border-bottom: unset;
+  --conduction-tabs-tab-border-bottom-width: unset;
+  --conduction-tabs-tab-border-bottom-style: unset;
+  --conduction-tabs-tab-border-bottom-color: unset;
+  --conduction-tabs-tab-bottom: -3px;
+  --conduction-tabs-tab-padding-block-start: 6px;
+  --conduction-tabs-tab-padding-block-end: 6px;
+  --conduction-tabs-tab-padding-inline-start: 12px;
+  --conduction-tabs-tab-padding-inline-end: 12px;
+  --conduction-tabs-tab-margin-inline-end: unset;
+  --conduction-tabs-tab-font-size: 14px;
+  --conduction-tabs-tab-font-weight: 400;
+  --conduction-tabs-tab-font-family: var(--utrecht-document-font-family);
+  --conduction-tabs-tab-max-width: unset;
+  --conduction-tabs-tab-min-height: 48px;
+  --conduction-tabs-tab-min-width: 160px;
+  --conduction-tabs-tab-letter-spacing: 0.02857em;
+  --conduction-tabs-tab-text-transform: unset;
+  --conduction-tabs-tab-button-bottom: 0px;
+
+  --conduction-tabs-scroll-button-background-color: var(--utrecht-button-primary-action-active-background-color);
+  --conduction-tabs-scroll-button-color: var(--utrecht-button-primary-action-color);
+  --conduction-tabs-scroll-button-hover-background-color: var(--utrecht-button-primary-action-hover-background-color);
+  --conduction-tabs-scroll-button-hover-color: var(--utrecht-button-primary-action-hover-color);
+  --conduction-tabs-scroll-button-border-width: unset;
+  --conduction-tabs-scroll-button-border-style: unset;
+  --conduction-tabs-scroll-button-border-color: unset;
+
+  --conduction-tabs-tab-selected-background-color: transparent;
+  --conduction-tabs-tab-selected-color: var(--tilburg-color-blue-500);
+  --conduction-tabs-tab-selected-box-shadow: unset;
+  --conduction-tabs-tab-selected-border-width: unset;
+  --conduction-tabs-tab-selected-border-style: unset;
+  --conduction-tabs-tab-selected-border-color: unset;
+  --conduction-tabs-tab-selected-border-bottom: unset;
+  --conduction-tabs-tab-selected-border-bottom-width: 0.3rem;
+  --conduction-tabs-tab-selected-border-bottom-style: solid;
+  --conduction-tabs-tab-selected-border-bottom-color: var(--tilburg-color-pink-300);
+  --conduction-tabs-tab-selected-font-weight: 700;
+  --conduction-tabs-tab-selected-font-family: unset;
+
+  --conduction-tabs-tab-selected-hover-background-color: unset;
+  --conduction-tabs-tab-selected-hover-color: var(--tilburg-color-blue-500);
+  --conduction-tabs-tab-selected-hover-text-decoration: unset;
+  --conduction-tabs-tab-selected-hover-font-weight: 700;
+
+  --conduction-tabs-tab-hover-background-color: transparent;
+  --conduction-tabs-tab-hover-color: var(--utrecht-document-color);
+  --conduction-tabs-tab-hover-text-decoration: unset;
+  --conduction-tabs-tab-hover-font-weight: 700;
+
+  --conduction-tabs-tab-list-padding-inline-start: 2px;
+  --conduction-tabs-tab-list-padding-inline-end: 2px;
+  --conduction-tabs-tab-list-margin-block-end: 0px;
+  --conduction-tabs-tab-list-border-bottom-width: 0.3rem;
+  --conduction-tabs-tab-list-border-bottom-style: solid;
+  --conduction-tabs-tab-list-border-bottom-color: var(--tilburg-line-border-color);
+
+  --conduction-tabs-tab-panel-background-color: unset;
+  --conduction-tabs-tab-panel-padding-block-start: 24px;
+  --conduction-tabs-tab-panel-padding-block-end: 24px;
+  --conduction-tabs-tab-panel-padding-inline-start: 24px;
+  --conduction-tabs-tab-panel-padding-inline-end: 24px;
+  --conduction-tabs-tab-panel-border-width: unset;
+  --conduction-tabs-tab-panel-border-style: unset;
+  --conduction-tabs-tab-panel-border-color: unset;
+  --conduction-tabs-tab-panel-border-top: unset;
+
 }

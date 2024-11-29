@@ -7,6 +7,9 @@ const ARROW_RIGHT = loadable(() =>
 const CHEVRON_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/chevron-right.svg')
 );
+const CHEVRON_LEFT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/chevron-left.svg')
+);
 const CLOSE = loadable(() => import('-!svg-react-loader!@assets/images/close.svg'));
 const CLOSE_SMALL = loadable(() =>
   import('-!svg-react-loader!@assets/images/close-small.svg')
@@ -48,10 +51,17 @@ const SEARCH = loadable(() =>
 const DOCUMENT = loadable(() =>
   import('-!svg-react-loader!@assets/images/document.svg')
 );
+const GITHUB = loadable(() =>
+  import('-!svg-react-loader!@assets/images/github.svg')
+);
+const COMMON_GROUND = loadable(() =>
+  import('-!svg-react-loader!@assets/images/commonground.svg')
+);
 
 export const VISUALS = {
   ARROW_RIGHT,
   CHEVRON_RIGHT,
+  CHEVRON_LEFT,
   CLOSE,
   CLOSE_SMALL,
   CONTACT,
@@ -69,6 +79,8 @@ export const VISUALS = {
   MENU,
   QUESTION_MARK,
   SEARCH,
+  GITHUB,
+  COMMON_GROUND,
 };
 
 export default {};
