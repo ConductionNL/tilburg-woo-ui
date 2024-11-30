@@ -63,6 +63,15 @@ const COMMON_GROUND = loadable(() =>
   import('-!svg-react-loader!@assets/images/commonground.svg')
 );
 
+const KEY = loadable(() =>
+  import('-!svg-react-loader!@assets/images/key.svg')
+);
+
+const PERSON_ADD = loadable(() =>
+  import('-!svg-react-loader!@assets/images/person_add.svg')
+);
+
+
 export const VISUALS = {
   ARROW_RIGHT,
   CHEVRON_RIGHT,
@@ -87,6 +96,8 @@ export const VISUALS = {
   SEARCH,
   GITHUB,
   COMMON_GROUND,
+  KEY,
+  PERSON_ADD,
 };
 
 export default {};

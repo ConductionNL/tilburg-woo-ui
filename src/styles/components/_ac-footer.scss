@@ -79,3 +79,10 @@
     }
   }
 }
+
+.ac-footer__link {
+  display: flex;
+  align-items: center;
+  gap: var(--tilburg-space-column-snail);
+  margin-block-end: var(--tilburg-space-block-snail);
+}

@@ -17,6 +17,7 @@ import { AcBuildURLSearchParams } from '@utils';
 const AcSubjects = ({ store: { publications, themes } }) => {
   const { fetchPublications, is_loading, getSearchPageURL } = publications;
   const { fetchThemes, all_themes } = themes;
+  const hostname = window.location.hostname;
 
   useEffect(() => {
     fetchThemes();
@@ -54,13 +55,21 @@ const AcSubjects = ({ store: { publications, themes } }) => {
         <AcColumn gap='tiger'>
           <AcColumn>
             <Heading>{LABELS.THEMES}</Heading>
-            <Paragraph>
-              Op deze pagina staan de documenten niet ingedeeld per Woo-categorie.
-              Hier hebben we documenten over één onderwerp bij elkaar gezet. Bent u
-              op zoek naar bestuursstukken, raadsstukken, convenanten of
-              woo-verzoeken over een specifiek onderwerp? Dan kunt u deze hier
-              vinden.
-            </Paragraph>
+            {hostname === 'vng.opencatalogi.nl' ? (
+              <Paragraph>
+                Op deze pagina vindt u een overzicht van onderwerpen die relevant zijn voor gemeenten en leveranciers binnen het domein van gemeentelijke ICT.
+                De documenten en informatie zijn thematisch gerangschikt om u te helpen snel en eenvoudig toegang te krijgen tot relevante gegevens.
+                Bent u op zoek naar specifieke softwarepakketten, standaarden, referentiecomponenten of rapportages? Dan kunt u deze hier vinden
+              </Paragraph>
+            ) : (
+              <Paragraph>
+                Op deze pagina staan de documenten niet ingedeeld per Woo-categorie.
+                Hier hebben we documenten over één onderwerp bij elkaar gezet. Bent u
+                op zoek naar bestuursstukken, raadsstukken, convenanten of
+                woo-verzoeken over een specifiek onderwerp? Dan kunt u deze hier
+                vinden.
+              </Paragraph>
+            )}
           </AcColumn>
           {renderGrid}
         </AcColumn>

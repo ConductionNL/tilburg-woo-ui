@@ -14,7 +14,15 @@
       content=""
     />
 
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.svg" />
+    
+<script type="text/javascript">
+  const hostname = window.location.hostname;
+  if (hostname === 'vng.opencatalogi.nl') {
+    document.write(`<link rel="shortcut icon" href="%PUBLIC_URL%/vng-favicon.ico" />`);
+  }else{
+    document.write(`<link rel="shortcut icon" href="%PUBLIC_URL%/favicon.svg" />`);
+  }
+</script>
 
     <!-- Prefetch | Preload -->
     <link rel="dns-prefetch" href="%API_URL%" />

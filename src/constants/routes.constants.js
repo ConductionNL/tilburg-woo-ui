@@ -76,58 +76,58 @@ export const ROUTES = {
 
 export const VNG_ROUTES_SITEMAP = {
   ONDERWERPEN: {
-    label: 'Onderwerpen',
+    label: 'Onderwerpen VNG',
     href: 'https://vng.nl/rubrieken',
+  },
+  PRIVACYVERKLARING: {
+    label: 'Privacyverklaring',
+    href: 'https://www.softwarecatalogus.nl/Privacyverklaring%20softwarecatalogus',
+  },
+  OVER_VNG_REALISATIE: {
+    label: 'Over VNG Realisatie',
+    href: 'https://vng.nl/artikelen/vng-realisatie',
+  },
+  VACATURES: {
+    label: 'Vacatures',
+    href: 'https://vng.nl/artikelen/werken-bij-de-vng',
+  },
+};
+
+export const VNG_ROUTES_INFORMATIE = {
+  AGENDA: {
+    label: 'Agenda VNG',
+    href: 'https://vng.nl/agenda',
   },
   NIEUWS: {
     label: 'Nieuws',
     href: 'https://vng.nl/nieuws',
   },
-  AGENDA: {
-    label: 'Agenda',
-    href: 'https://vng.nl/agenda',
-  },
-  A_Z_INDEX: {
-    label: 'A-Z index',
-    href: 'https://vng.nl/a-z',
-  },
-  VNG_MAGAZINE: {
-    label: 'VNG Magazine',
-    href: 'https://vng.nl/magazines',
-  },
-};
-
-export const VNG_ROUTES_INFORMATIE = {
   CONTACT: {
     label: 'Contact',
     href: 'https://vng.nl/contact',
   },
-  OVER_ONS: {
-    label: 'Over Ons',
-    href: 'https://vng.nl/rubrieken/vereniging',
-  },
-  WERKEN_BIJ_DE_VNG: {
-    label: 'Werken bij de VNG',
-    href: 'https://vng.nl/werken-bij-de-vng',
+  MELD_AAN_VNG_REALISATIE: {
+    label: 'Meld aan VNG Realisatie',
+    href: 'mailto:softwarecatalogus@vng.nl?subject=Softwarecatalogus: Terugmelding GEMMA Softwarecatalogus&amp;body=Hierbij ontvangt u mijn op- en aanmerkingen over de pagina https://www.softwarecatalogus.nl/swchome in de GEMMA softwarecatalogus.',
   },
 };
 
 export const VNG_ROUTES_BEDRIJVEN = {
-  VNG_INTERNATIONAL: {
-    label: 'VNG International',
-    href: 'https://www.vng-international.nl/',
+  TWITTER: {
+    label: 'Twitter',
+    href: 'https://twitter.com/VNGRealisatie',
   },
-  VNG_CONNECT: {
-    label: 'VNG Connect',
-    href: 'https://www.vngconnect.nl/',
+  LINKEDIN: {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/company/vng-realisatie/',
   },
-  VNG_REALISATIE: {
-    label: 'VNG Realisatie',
-    href: 'https://vng.nl/artikelen/vng-realisatie',
+  YOUTUBE: {
+    label: 'Youtube',
+    href: 'https://www.youtube.com/channel/UCg0bWcCn9Shnt57-L7hSbow',
   },
-  VNG_RISICOBEHEER: {
-    label: 'VNGRisicobeheer',
-    href: 'https://vng.nl/rubrieken/risicobeheer',
+  GEMMA_NIEUWSBRIEF: {
+    label: 'Nieuwsbrief GEMMA',
+    href: 'https://www.gemmaonline.nl/index.php/GEMMA_nieuwsbrief',
   },
 };
 
@@ -162,21 +162,21 @@ export const FOOTER_ITEMS = [
 
 export const VNG_FOOTER_ITEMS_SITEMAP = [
   VNG_ROUTES_SITEMAP.ONDERWERPEN,
-  VNG_ROUTES_SITEMAP.NIEUWS,
-  VNG_ROUTES_SITEMAP.AGENDA,
-  VNG_ROUTES_SITEMAP.A_Z_INDEX,
-  VNG_ROUTES_SITEMAP.VNG_MAGAZINE,
+  VNG_ROUTES_SITEMAP.PRIVACYVERKLARING,
+  VNG_ROUTES_SITEMAP.OVER_VNG_REALISATIE,
+  VNG_ROUTES_SITEMAP.VACATURES,
 ];
 export const VNG_FOOTER_ITEMS_INFORMATIE = [
   VNG_ROUTES_INFORMATIE.CONTACT,
-  VNG_ROUTES_INFORMATIE.OVER_ONS,
-  VNG_ROUTES_INFORMATIE.WERKEN_BIJ_DE_VNG,
+  VNG_ROUTES_INFORMATIE.AGENDA,
+  VNG_ROUTES_INFORMATIE.NIEUWS,
+  VNG_ROUTES_INFORMATIE.MELD_AAN_VNG_REALISATIE,
 ];
 export const VNG_FOOTER_ITEMS_BEDRIJVEN = [
-  VNG_ROUTES_BEDRIJVEN.VNG_INTERNATIONAL,
-  VNG_ROUTES_BEDRIJVEN.VNG_CONNECT,
-  VNG_ROUTES_BEDRIJVEN.VNG_REALISATIE,
-  VNG_ROUTES_BEDRIJVEN.VNG_RISICOBEHEER,
+  VNG_ROUTES_BEDRIJVEN.TWITTER,
+  VNG_ROUTES_BEDRIJVEN.LINKEDIN,
+  VNG_ROUTES_BEDRIJVEN.YOUTUBE,
+  VNG_ROUTES_BEDRIJVEN.GEMMA_NIEUWSBRIEF,
 ];
 
 export const EXTERNAL_LINKS = [

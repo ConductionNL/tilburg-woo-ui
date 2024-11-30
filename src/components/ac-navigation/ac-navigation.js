@@ -26,9 +26,15 @@ const AcNavigation = () => {
         {hostname === 'vng.opencatalogi.nl' ? (
           <ul>
             <li>
-              <Link to='/over-ons'>
-                <VISUALS.INFO />
-                Over Softwarecatalogus
+              <Link to='#'>
+                <VISUALS.PERSON_ADD />
+                Registren
+              </Link>
+            </li>
+            <li>
+              <Link to='#'>
+                <VISUALS.KEY />
+                Inloggen
               </Link>
             </li>
           </ul>

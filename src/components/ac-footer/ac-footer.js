@@ -1,6 +1,6 @@
 import { AcContainer, AcLogo } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
-import { EXTERNAL_LINKS, FOOTER_ITEMS, VNG_FOOTER_ITEMS_SITEMAP, VNG_FOOTER_ITEMS_INFORMATIE, } from '@constants/routes.constants';
+import { EXTERNAL_LINKS, FOOTER_ITEMS, VNG_FOOTER_ITEMS_SITEMAP, VNG_FOOTER_ITEMS_INFORMATIE, VNG_FOOTER_ITEMS_BEDRIJVEN } from '@constants/routes.constants';
 import { Link } from 'react-router-dom';
 
 const hostname = window.location.hostname;
@@ -14,46 +14,31 @@ const AcFooter = () => {
         {hostname === 'vng.opencatalogi.nl' ? (
           <>
             <nav className='ac-footer__links' aria-label='Footer menu 1'>
-              <h3>SITEMAP</h3>
-              <ul>
-                {VNG_FOOTER_ITEMS_SITEMAP.map((item, index) => (
-                  <li>
-                    <a href={item.href} target='_blank'>
-                      {item.label}
-                      <span className='sr-only'>Opent in een nieuw tabblad</span>
-                      <VISUALS.EXTERNAL_LINK />
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {VNG_FOOTER_ITEMS_SITEMAP.map((item, index) => (
+                <a href={item.href} target='_blank' className='ac-footer__link'>
+                  {item.label}
+                  <span className='sr-only'>Opent in een nieuw tabblad</span>
+                  <VISUALS.EXTERNAL_LINK />
+                </a>
+              ))}
             </nav>
             <nav className='ac-footer__links' aria-label='Footer menu 2'>
-              <h3>INFORMATIE</h3>
-              <ul>
-                {EXTERNAL_LINKS.map((item, index) => (
-                  <li>
-                    <a href={item.href} target='_blank'>
-                      {item.label}
-                      <span className='sr-only'>Opent in een nieuw tabblad</span>
-                      <VISUALS.EXTERNAL_LINK />
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              {VNG_FOOTER_ITEMS_INFORMATIE.map((item, index) => (
+                <a href={item.href} target='_blank' className='ac-footer__link'>
+                  {item.label}
+                  <span className='sr-only'>Opent in een nieuw tabblad</span>
+                  <VISUALS.EXTERNAL_LINK />
+                </a>
+              ))}
             </nav>
-            <nav className='ac-footer__links' aria-label='Footer menu 2'>
-              <h3>BEDRIJVEN</h3>
-              <ul>
-                {EXTERNAL_LINKS.map((item, index) => (
-                  <li>
-                    <a href={item.href} target='_blank'>
-                      {item.label}
-                      <span className='sr-only'>Opent in een nieuw tabblad</span>
-                      <VISUALS.EXTERNAL_LINK />
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            <nav className='ac-footer__links' aria-label='Footer menu 3'>
+              {VNG_FOOTER_ITEMS_BEDRIJVEN.map((item, index) => (
+                <a href={item.href} target='_blank' className='ac-footer__link'>
+                  {item.label}
+                  <span className='sr-only'>Opent in een nieuw tabblad</span>
+                  <VISUALS.EXTERNAL_LINK />
+                </a>
+              ))}
             </nav>
           </>
         ) : (
@@ -88,10 +73,7 @@ const AcFooter = () => {
           <AcLogo variant='footer' />
 
           {hostname === 'vng.opencatalogi.nl' ? (
-            <span>
-              <span>Softwarecatalogus</span>
-              <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
-            </span>
+            <></>
           ) : (
             <span>
               <span>Open Tilburg</span>
