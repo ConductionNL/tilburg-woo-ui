@@ -63,7 +63,12 @@ export class PagesStore {
     app.store.api.pages
       .single(id)
       .then((response) => {
-        this.setPage(response.data);
+        if (response.data) {
+          this.setPage(response.data);
+        }
+        else {
+          this.setPage(response)
+        }
       })
       .catch((e) => console.error(e))
       .finally(() => {

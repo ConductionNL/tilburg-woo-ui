@@ -2,7 +2,11 @@
 import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 // Get ENV variables
-const _api_ = process.env.API_URL; 
+
+const hostname = window.location.hostname;
+
+// const _api_ = process.env.API_URL; 
+const _api_ = hostname === 'vng.opencatalogi.nl' ? "https://directory.opencatalogi.nl/apps/opencatalogi" : process.env.API_URL;
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 const _api_commonground_ = "https://directory.opencatalogi.nl/apps/opencatalogi";
 
