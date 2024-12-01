@@ -48,7 +48,7 @@ const AcPublication = ({ store: { publications } }) => {
     return <AcLoader />;
   }
 
-  const tabsContent = JSON.parse(get_single?.data?.test || '{}');
+  const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
 
   const getTableRows = (publication) => {
     let tableRows = [];
@@ -176,6 +176,42 @@ const AcPublication = ({ store: { publications } }) => {
     ];
   };
 
+  const mapDependencyRow = (row) => {
+    return [
+      <span>{row.name}</span>,
+      <span>{row.version}</span>,
+      <span>{row.description}</span>,
+      <AcLink to={row.viewLink} target='_blank'>
+        <VISUALS.EXTERNAL_LINK />
+        <Link>
+          Bekijk
+        </Link>
+      </AcLink>,
+      <AcLink to={row.downloadLink} target='_blank'>
+        <VISUALS.EXTERNAL_LINK />
+        <Link>
+          Download
+        </Link>
+      </AcLink>,
+    ];
+  };
+  const mapReuseRow = (row) => {
+    return [
+      <span>{row.name}</span>,
+      <AcLink to={row.website} target='_blank'>
+        <VISUALS.WORLD />
+        <Link>
+          Website
+        </Link>
+      </AcLink>,
+      <AcLink to={row.github} target='_blank'>
+        <VISUALS.GITHUB />
+        <Link>
+          Github
+        </Link>
+      </AcLink>,
+    ];
+  };
   const mapConfigurationRow = (row) => {
     return [
       <span>{row.name}</span>,
@@ -291,7 +327,7 @@ const AcPublication = ({ store: { publications } }) => {
 
             </div>
           )}
-          {get_single?.publicationType?.title === 'Softwarecatalogus' && (
+          {(get_single?.publicationType?.title === 'Softwarecatalogus' || get_single?.catalog?.title === 'Softwarecatalogus') && (
             <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
               <AcTabList>
                 <AcTab>
@@ -317,8 +353,8 @@ const AcPublication = ({ store: { publications } }) => {
               <AcTabPanel>
                 {tabsContent?.dependencies?.length > 0 && (
                   <AcTable
-                    header={['Naam', 'Organisatie', 'Ondersteund']}
-                    rows={tabsContent?.configurations?.map((configuration) => mapConfigurationRow(configuration))}
+                    header={['Naam', 'Versie', 'Omschrijving']}
+                    rows={tabsContent?.dependencies?.map((configuration) => mapDependencyRow(configuration))}
                   />
                 )}
                 {!tabsContent?.dependencies?.length && (
@@ -328,8 +364,8 @@ const AcPublication = ({ store: { publications } }) => {
               <AcTabPanel>
                 {tabsContent?.reuse?.length > 0 && (
                   <AcTable
-                    header={['Naam', 'Organisatie', 'Ondersteund']}
-                    rows={tabsContent?.configurations?.map((configuration) => mapConfigurationRow(configuration))}
+                    header={['Naam', 'Website', 'GitHub']}
+                    rows={tabsContent?.reuse?.map((configuration) => mapReuseRow(configuration))}
                   />
                 )}
                 {!tabsContent?.reuse?.length && (

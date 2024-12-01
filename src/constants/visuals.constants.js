@@ -71,6 +71,9 @@ const PERSON_ADD = loadable(() =>
   import('-!svg-react-loader!@assets/images/person_add.svg')
 );
 
+const WORLD = loadable(() =>
+  import('-!svg-react-loader!@assets/images/world.svg')
+);
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -98,6 +101,7 @@ export const VISUALS = {
   COMMON_GROUND,
   KEY,
   PERSON_ADD,
+  WORLD,
 };
 
 export default {};

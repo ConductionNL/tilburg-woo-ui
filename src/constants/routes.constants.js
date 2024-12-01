@@ -20,13 +20,15 @@ export const PATHS = AcLockObject({
   SEARCH_STATIC: '/zoeken',
 });
 
+const hostname = window.location.hostname;
+
 export const ROUTES = {
   HOME: {
     id: AcUUID(),
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: 'Home | Open Tilburg',
+    title: `Home | ${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'}`,
     component: AcHome,
   },
   PUBLICATION: {
@@ -34,7 +36,7 @@ export const ROUTES = {
     name: 'Publication',
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
-    title: 'Open Tilburg | Publicatie',
+    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Publicatie`,
     component: AcPublication,
   },
   SEARCH: {
@@ -42,7 +44,7 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: 'Open Tilburg | Zoeken',
+    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Zoeken`,
     component: AcSearch,
   },
   THEMES: {
@@ -50,7 +52,7 @@ export const ROUTES = {
     name: 'Themes',
     label: TITLES.THEMES,
     path: PATHS.THEMES,
-    title: 'Open Tilburg | Onderwerpen',
+    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Onderwerpen`,
     component: AcThemes,
   },
   ABOUT: {
@@ -58,7 +60,7 @@ export const ROUTES = {
     name: 'Over Open Tilburg',
     label: TITLES.ABOUT,
     path: PATHS.ABOUT,
-    title: 'Open Tilburg | Onderwerpen',
+    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Over`,
   },
   CONTACT: {
     id: AcUUID(),
@@ -75,6 +77,10 @@ export const ROUTES = {
 };
 
 export const VNG_ROUTES_SITEMAP = {
+  FAQ: {
+    label: 'FAQ',
+    href: '/over-ons',
+  },
   ONDERWERPEN: {
     label: 'Onderwerpen VNG',
     href: 'https://vng.nl/rubrieken',
@@ -161,6 +167,7 @@ export const FOOTER_ITEMS = [
 ];
 
 export const VNG_FOOTER_ITEMS_SITEMAP = [
+  VNG_ROUTES_SITEMAP.FAQ,
   VNG_ROUTES_SITEMAP.ONDERWERPEN,
   VNG_ROUTES_SITEMAP.PRIVACYVERKLARING,
   VNG_ROUTES_SITEMAP.OVER_VNG_REALISATIE,

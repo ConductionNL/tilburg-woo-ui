@@ -15,11 +15,15 @@ const AcFooter = () => {
           <>
             <nav className='ac-footer__links' aria-label='Footer menu 1'>
               {VNG_FOOTER_ITEMS_SITEMAP.map((item, index) => (
-                <a href={item.href} target='_blank' className='ac-footer__link'>
-                  {item.label}
-                  <span className='sr-only'>Opent in een nieuw tabblad</span>
-                  <VISUALS.EXTERNAL_LINK />
-                </a>
+                item.label === 'FAQ' ? (
+                  <Link className='ac-footer__link' to={item.href}>{item.label}</Link>
+                ) : (
+                  <a href={item.href} className='ac-footer__link'>
+                    {item.label}
+                    <span className='sr-only'>Opent in een nieuw tabblad</span>
+                    <VISUALS.EXTERNAL_LINK />
+                  </a>
+                )
               ))}
             </nav>
             <nav className='ac-footer__links' aria-label='Footer menu 2'>

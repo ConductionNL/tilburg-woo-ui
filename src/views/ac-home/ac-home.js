@@ -18,6 +18,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
   const { fetchPage, resetPage, get_single } = pages;
   const { getSearchPageURL } = publications;
   const { all_themes, fetchThemes } = themes;
+  const hostname = window.location.hostname;
 
   useEffect(() => {
     fetchPage('/home');
@@ -45,10 +46,16 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
           <AcColumn gap='tiger'>
             <AcColumn>
               <Heading>{LABELS.THEMES}</Heading>
-              <Paragraph>
-                Bekijk onze publicatiesdossiers van belangrijke onderwerpen die
-                spelen binnen de gemeente Tilburg.
-              </Paragraph>
+              {hostname === 'vng.opencatalogi.nl' ? (
+                <Paragraph>
+                  Bekijk het overzicht van onderwerpen die relevant zijn voor gemeenten en leveranciers binnen het domein van gemeentelijke ICT.
+                </Paragraph>
+              ) : (
+                <Paragraph>
+                  Bekijk onze publicatiesdossiers van belangrijke onderwerpen die
+                  spelen binnen de gemeente Tilburg.
+                </Paragraph>
+              )}
             </AcColumn>
             <AcGrid row={3}>
               {all_themes

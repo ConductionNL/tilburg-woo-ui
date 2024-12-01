@@ -28,7 +28,7 @@ const AcNavigation = () => {
             <li>
               <Link to='#'>
                 <VISUALS.PERSON_ADD />
-                Registren
+                Registreren
               </Link>
             </li>
             <li>
