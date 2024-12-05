@@ -5,8 +5,18 @@ import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 const hostname = window.location.hostname;
 
+const apiUrl = () => {
+  switch (hostname) {
+    case 'vng.opencatalogi.nl':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'open-migrato.accept.commonground.nu':
+      return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
+    default:
+      return process.env.API_URL;
+  }
+}
 // const _api_ = process.env.API_URL; 
-const _api_ = hostname === 'vng.opencatalogi.nl' ? "https://directory.opencatalogi.nl/apps/opencatalogi" : process.env.API_URL;
+const _api_ = apiUrl();
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 const _api_commonground_ =
   hostname === 'vng.opencatalogi.nl'
