@@ -42,7 +42,8 @@
     transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:where(:hover, :focus-visible) {
-      background-color: var(--tilburg-color-blue-500);
+      background-color: var(--tilburg-navigation-hover-background-color);
+      color: var(--tilburg-navigation-hover-color, var(--tilburg-navigation-color));
     }
 
     svg {

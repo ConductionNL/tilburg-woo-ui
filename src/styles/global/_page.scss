@@ -123,6 +123,12 @@
 	display: grid;
 	grid-template-columns: repeat(4, 1fr) !important;
 }
+
+.ac-publication-products {
+	display: flex;
+	gap: 5px;
+}
+
 /////////////////////////////
 
 .ac-fresh-content-notice {

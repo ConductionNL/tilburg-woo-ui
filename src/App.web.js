@@ -47,8 +47,22 @@ const App = ({ store }) => {
 
   const hostname = window.location.hostname;
 
+
+  const getTheme = () => {
+    switch (hostname) {
+      case 'vng.opencatalogi.nl':
+        return 'vng-theme';
+      case 'open-tilburg.accept.commonground.nu':
+        return 'tilburg-theme';
+      case 'localhost':
+        return 'rotterdam-theme';
+      default:
+        return process.env.API_URL_COMMONGROUND;
+    }
+  }
+
   return (
-    <div className={hostname === 'vng.opencatalogi.nl' ? 'vng-theme' : 'tilburg-theme'} tabIndex='-1' ref={resetFocus}>
+    <div className={getTheme()} tabIndex='-1' ref={resetFocus}>
       <AcHeader store={store} />
       <main id='main'>
         <Routes>

@@ -1,8 +1,10 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
+const hostname = window.location.hostname;
+
 export const TITLES = AcLockObject({
   ACTIVATE: 'Activeren',
-  BASE: 'Open Tilburg',
+  BASE: hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg',
   CONVERSATIONS: 'Meldingen',
   DOCUMENTS: 'Documenten',
   FAQ: 'Veelgestelde vragen',

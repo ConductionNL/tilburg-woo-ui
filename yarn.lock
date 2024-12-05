@@ -1975,14 +1975,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@conduction/theme@npm:1.1.34":
-  version: 1.1.34
-  resolution: "@conduction/theme@npm:1.1.34"
+"@conduction/theme@npm:1.1.40":
+  version: 1.1.40
+  resolution: "@conduction/theme@npm:1.1.40"
   dependencies:
     "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
     sass: "npm:^1.70.0"
     style-dictionary: "npm:^3.9.2"
-  checksum: 10c0/944feed9cbd4baaf3db176b73d9debe8b4527ec0213a38b140177245ed33d899846df120d8a072717e589420aa95808fc6c884dd5359764f5824842c85e4d521
+  checksum: 10c0/490290ed816103095ac6fccd4a974355db9d65716d44392e22bf07036a156ce64a467eca22fceec8c6e7047f54c0c8a483406e48b4c2f5f5b8a86eb4eb50dd8c
   languageName: node
   linkType: hard
 
@@ -12621,10 +12621,11 @@ __metadata:
     "@babel/preset-react": "npm:^7.22.5"
     "@babel/runtime": "npm:7.22.5"
     "@babel/types": "npm:7.22.5"
-    "@conduction/theme": "npm:1.1.34"
+    "@conduction/theme": "npm:1.1.40"
     "@emotion/react": "npm:^11.11.1"
     "@loadable/component": "npm:^5.15.3"
     "@lottiefiles/react-lottie-player": "npm:^3.5.3"
+    "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
     "@utrecht/component-library-react": "npm:^3.0.1-alpha.41"
     "@utrecht/components": "npm:^3.0.1-alpha.42"
     axios: "npm:^1.6.7"
@@ -16008,8 +16009,8 @@ __metadata:
   linkType: hard
 
 "sass@npm:^1.70.0":
-  version: 1.81.0
-  resolution: "sass@npm:1.81.0"
+  version: 1.82.0
+  resolution: "sass@npm:1.82.0"
   dependencies:
     "@parcel/watcher": "npm:^2.4.1"
     chokidar: "npm:^4.0.0"
@@ -16020,7 +16021,7 @@ __metadata:
       optional: true
   bin:
     sass: sass.js
-  checksum: 10c0/9c59b3c9b4231c18fcb4583cc232dbc4de501ddc11101b7a025e44833e3f3ce6031546dc1cd109ee9f04ebcfb1fe30ff870810af33b8feb9aa9e36dfba9ec1ef
+  checksum: 10c0/7f86fe6ade4f6018862c448ed69d5c52f485b0125c9dab24e63f679739a04cc7c56562d588e3cf16b5efb4d2c4d0530e62740e1cfd273e2e3707d04d11011736
   languageName: node
   linkType: hard
 

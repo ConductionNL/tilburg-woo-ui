@@ -82,6 +82,16 @@ const AcPublication = ({ store: { publications } }) => {
             "Onderhouds type",
             <span>{publication?.data?.maintenance_type || '-'}</span>
           ],
+          [
+            "Products",
+            <span className='ac-publication-products'>
+              {
+                JSON.parse(get_single?.data?.products || '{}')?.length > 0 ?
+                  JSON.parse(get_single?.data?.products || '{}')?.map((product, idx) => <AcLink href={product.url}>{product.label}{idx < JSON.parse(get_single?.data?.products || '{}')?.length - 1 ? ', ' : ''} </AcLink>)
+                  : '-'
+              }
+            </span>
+          ],
         ]
         break;
       case 'Woo-verzoeken en -besluiten':
@@ -143,7 +153,6 @@ const AcPublication = ({ store: { publications } }) => {
         ]
         break;
     }
-
     return tableRows;
   }
 
@@ -330,7 +339,7 @@ const AcPublication = ({ store: { publications } }) => {
           {(get_single?.publicationType?.title === 'Softwarecatalogus' || get_single?.catalog?.title === 'Softwarecatalogus') && (
             <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
               <AcTabList>
-                <AcTab>
+                <AcTab selected={tabIndex === 0}>
                   <span>Componenten & Afhankelijkheden</span>
                   <BadgeCounter className="ac-publication-badge-counter">
                     {tabsContent?.dependencies?.length ?? 0}
@@ -350,7 +359,7 @@ const AcPublication = ({ store: { publications } }) => {
                   </BadgeCounter>
                 </AcTab>
               </AcTabList>
-              <AcTabPanel>
+              <AcTabPanel selected={tabIndex === 0}>
                 {tabsContent?.dependencies?.length > 0 && (
                   <AcTable
                     header={['Naam', 'Versie', 'Omschrijving']}
