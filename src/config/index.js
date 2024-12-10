@@ -19,7 +19,7 @@ const apiUrl = () => {
 }
 
 // const _api_ = process.env.API_URL; 
-const _api_ = hostname !== 'vng.opencatalogi.nl' ? "https://directory.opencatalogi.nl/apps/opencatalogi" : process.env.API_URL;
+const _api_ = hostname === 'vng.opencatalogi.nl' ? "https://directory.opencatalogi.nl/apps/opencatalogi" : process.env.API_URL;
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 const _api_commonground_ = apiUrl();
 

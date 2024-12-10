@@ -28,6 +28,26 @@
     --ams-pagination-relative-link-padding-inline-end: 0px;
     --ams-pagination-relative-link-padding-inline-start: 0px;
 
+    --ams-date-input-background-color: var(--utrecht-textbox-background-color);
+    --ams-date-input-box-shadow: '';
+    --ams-date-input-color: var(--utrecht-textbox-color);
+    --ams-date-input-font-family: var(--utrecht-textbox-font-family);
+    --ams-date-input-font-size: var(--utrecht-textbox-font-size);
+    --ams-date-input-font-weight: var(--utrecht-textbox-font-weight);   
+    --ams-date-input-line-height: var(--utrecht-textbox-line-height);
+    --ams-date-input-min-block-size: var(--utrecht-textbox-min-block-size);
+    --ams-date-input-min-inline-size: var(--utrecht-textbox-min-inline-size);
+    --ams-date-input-outline-offset: var(--utrecht-textbox-outline-offset);
+    --ams-date-input-padding-block: var(--utrecht-textbox-padding-block-start);
+    --ams-date-input-padding-inline: var(--utrecht-textbox-padding-inline-start);
+    --ams-date-input-calender-picker-indicator-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=');
+    --ams-date-input-hover-calender-picker-indicator-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=');
+    --ams-date-input-border-color: var(--utrecht-textbox-border-color);
+    --ams-date-input-border-style: solid;
+    --ams-date-input-border-width: var(--utrecht-textbox-border-width);
+    --ams-date-input-border-radius: var(--utrecht-textbox-border-radius);
+    --ams-date-input-margin-block: var(--utrecht-textbox-margin-block);
+
     --utrecht-link-icon-margin-inline: var(--tilburg-space-text-beetle);
 
     // Utrecht tokens (remaining unique ones)
