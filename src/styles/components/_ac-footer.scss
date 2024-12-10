@@ -51,9 +51,10 @@
 
   a {
     color: inherit;
+    text-decoration: var(--tilburg-footer-link-text-decoration, underline);
 
     &:where(:hover, :focus-visible) {
-      text-decoration: none;
+      text-decoration: var(--tilburg-footer-link-hover-text-decoration, none);
     }
   }
 
