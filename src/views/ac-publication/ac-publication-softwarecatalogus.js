@@ -230,7 +230,8 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
 
 
             </div>
-            <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+            {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (
+            <AcTabs  selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
               <AcTabList>
                 
               {uniquePublicationTypes && uniquePublicationTypes.map((publicationType, idx) => (
@@ -254,6 +255,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
               </AcTabPanel>
               ))}
             </AcTabs>
+            )}
         </AcFlex>
       </AcContainer>
     </>
