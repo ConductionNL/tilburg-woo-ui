@@ -13,6 +13,8 @@ const apiUrl = () => {
       return 'https://tilburg.accept.commonground.nu/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
       return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
+    case 'localhost':
+      return process.env.API_URL_COMMONGROUND;
     default:
       return process.env.API_URL_COMMONGROUND;
   }
