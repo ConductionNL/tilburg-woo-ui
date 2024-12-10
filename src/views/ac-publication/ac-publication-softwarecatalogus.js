@@ -19,6 +19,7 @@ import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import _ from 'lodash';
 
 const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
   const {
@@ -28,6 +29,11 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     getSearchPageURL,
     setAttachmentsPage,
     getFilteredAttachments,
+    get_relations,
+    resetRelations,
+    resetPublication,
+    fetchRelations,
+    fetchPublication,
   } = publications;
 
 
@@ -37,11 +43,16 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     document.title = get_single?.title || 'Open Ac | Publicatie';
   }, [get_single]);
 
+
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
 
   const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
+
+  const publicationTypes = get_relations?.map((relation) => relation.publicationType);
+  const uniquePublicationTypes = _.uniqBy(publicationTypes, "title")
+
 
   const mapAttachmentRow = (row, primary) => {
     // Fallback for when there is no extension property
@@ -70,61 +81,28 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     ];
   };
 
-  const mapDependencyRow = (row) => {
+  const mapTabRow = (row) => {
     return [
-      <span>{row.name}</span>,
-      <span>{row.version}</span>,
-      <span>{row.description}</span>,
-      <AcLink to={row.viewLink} target='_blank'>
-        <VISUALS.EXTERNAL_LINK />
+      <span>{row.title}</span>,
+      <span>{row.description || 'Geen omschrijving beschikbaar'}</span>,
+      <span>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
+      <AcLink  to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
+        <VISUALS.ARROW_RIGHT />
         <Link>
           Bekijk
         </Link>
       </AcLink>,
-      <AcLink to={row.downloadLink} target='_blank'>
-        <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Download
-        </Link>
-      </AcLink>,
     ];
   };
-  const mapReuseRow = (row) => {
-    return [
-      <span>{row.name}</span>,
-      <AcLink to={row.website} target='_blank'>
-        <VISUALS.WORLD />
-        <Link>
-          Website
-        </Link>
-      </AcLink>,
-      <AcLink to={row.github} target='_blank'>
-        <VISUALS.GITHUB />
-        <Link>
-          Github
-        </Link>
-      </AcLink>,
-    ];
-  };
-  const mapConfigurationRow = (row) => {
-    return [
-      <span>{row.name}</span>,
-      <span>{row.organization}</span>,
-      <span>{row.supports}</span>,
-      <AcLink to={row.viewLink} target='_blank'>
-        <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Bekijk
-        </Link>
-      </AcLink>,
-      <AcLink to={row.downloadLink} target='_blank'>
-        <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Download
-        </Link>
-      </AcLink>,
-    ];
-  };
+
+  const TabOnClick = (id) => {
+    resetRelations(); 
+    resetPublication();    
+    fetchPublication(id).then(() => {
+        fetchRelations(get_single.uri)    
+    });
+  }
+  
 
   return (
     <>
@@ -203,13 +181,19 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
               rows={[
                 [
                   LABELS.CATEGORY,
+                  <>
+                  {get_single?.category ? 
                   <AcLink
-                    href={getSearchPageURL({
+                  href={getSearchPageURL({
                       category: [get_single?.category],
                     })}
-                  >
-                    {get_single?.category}
-                  </AcLink>,
+                    >
+                    {get_single?.category} 
+                  </AcLink>
+                        :
+                        <span>{'-'}</span>
+                  }
+                  </>
                 ],
                 [
                   "Licentie",
@@ -248,59 +232,27 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
             </div>
             <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
               <AcTabList>
-                <AcTab selected={tabIndex === 0}>
-                  <span>Componenten & Afhankelijkheden</span>
+                
+              {uniquePublicationTypes && uniquePublicationTypes.map((publicationType, idx) => (
+
+                <AcTab selected={tabIndex === idx}>
+                  <span>{publicationType.title}</span>
                   <BadgeCounter className="ac-publication-badge-counter">
-                    {tabsContent?.dependencies?.length ?? 0}
+                    {get_relations?.filter((relation) => relation.publicationType.title === publicationType.title).length}
                   </BadgeCounter>
 
                 </AcTab>
-                <AcTab>
-                  <span>Hergebruik</span>
-                  <BadgeCounter className="ac-publication-badge-counter">
-                    {tabsContent?.reuse?.length ?? 0}
-                  </BadgeCounter>
-                </AcTab>
-                <AcTab>
-                  <span >Configuraties</span>
-                  <BadgeCounter className="ac-publication-badge-counter">
-                    {tabsContent?.configurations?.length ?? 0}
-                  </BadgeCounter>
-                </AcTab>
+              
+              ))}
               </AcTabList>
-              <AcTabPanel selected={tabIndex === 0}>
-                {tabsContent?.dependencies?.length > 0 && (
+              {uniquePublicationTypes && uniquePublicationTypes.map((publicationType, idx) => (
+              <AcTabPanel selected={tabIndex === idx}>
                   <AcTable
-                    header={['Naam', 'Versie', 'Omschrijving']}
-                    rows={tabsContent?.dependencies?.map((configuration) => mapDependencyRow(configuration))}
+                    header={['Naam', 'Omschrijving', 'Catalogus']}
+                    rows={get_relations?.filter((relation) => relation.publicationType.title === publicationType.title).map((relation) => mapTabRow(relation))}
                   />
-                )}
-                {!tabsContent?.dependencies?.length && (
-                  <Paragraph>Geen componenten & afhankelijkheden beschikbaar</Paragraph>
-                )}
               </AcTabPanel>
-              <AcTabPanel>
-                {tabsContent?.reuse?.length > 0 && (
-                  <AcTable
-                    header={['Naam', 'Website', 'GitHub']}
-                    rows={tabsContent?.reuse?.map((configuration) => mapReuseRow(configuration))}
-                  />
-                )}
-                {!tabsContent?.reuse?.length && (
-                  <Paragraph>Geen hergebruik beschikbaar</Paragraph>
-                )}
-              </AcTabPanel>
-              <AcTabPanel>
-                {tabsContent?.configurations?.length > 0 && (
-                  <AcTable
-                    header={['Naam', 'Organisatie', 'Ondersteund']}
-                    rows={tabsContent?.configurations?.map((configuration) => mapConfigurationRow(configuration))}
-                  />
-                )}
-                {!tabsContent?.configurations?.length && (
-                  <Paragraph>Geen configuraties beschikbaar</Paragraph>
-                )}
-              </AcTabPanel>
+              ))}
             </AcTabs>
         </AcFlex>
       </AcContainer>

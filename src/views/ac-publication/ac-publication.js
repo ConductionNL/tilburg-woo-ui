@@ -15,6 +15,8 @@ const AcPublication = ({ store: { publications } }) => {
     resetPublication,
     get_single,
     loading,
+    fetchRelations,
+    resetRelations,
   } = publications;
 
   useEffect(() => {
@@ -26,26 +28,36 @@ const AcPublication = ({ store: { publications } }) => {
     document.title = get_single?.title || 'Open Ac | Publicatie';
   }, [get_single]);
 
+  useEffect(() => {
+    get_single?.uri && fetchRelations(get_single.uri);
+    return () => resetRelations();
+  }, [get_single]);
+
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
 
-
-  switch (get_single?.publicationType?.title) {
-    case 'Softwarecatalogus':
-      return (
-          <AcPublicationSoftwarecatalogus />
-      )
-    case 'Formulier':
-      return (
-        <AcPublicationFormulier />
-      )
-    default:
-      return (
-          <AcPublicationWooVerzoek  />
-      )
+  if (get_single?.catalog?.title === 'Softwarecatalogus') {
+    return (
+      <AcPublicationSoftwarecatalogus />
+    )
   }
-
-};
+  else {
+    switch (get_single?.publicationType?.title) {
+      case 'Softwarecatalogus':
+        return (
+          <AcPublicationSoftwarecatalogus />
+        )
+      case 'Formulier':
+        return (
+          <AcPublicationFormulier />
+        )
+      default:
+        return (
+          <AcPublicationWooVerzoek />
+        )
+    }
+  };
+}
 
 export default withStore(observer(AcPublication));
