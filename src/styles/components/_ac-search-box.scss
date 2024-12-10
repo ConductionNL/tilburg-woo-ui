@@ -103,3 +103,36 @@
     }
   }
 }
+
+
+.ams-date-input {
+  background-color: var(--ams-date-input-background-color);
+  box-shadow: var(--ams-date-input-box-shadow);
+  color: var(--ams-date-input-color);
+  font-family: var(--ams-date-input-font-family);
+  font-size: var(--ams-date-input-font-size);
+  font-weight: var(--ams-date-input-font-weight);
+  line-height: var(--ams-date-input-line-height);
+  min-block-size: calc(var(--ams-date-input-font-size)* var(--ams-date-input-line-height) + 2* var(--ams-date-input-padding-block));
+  min-inline-size: calc(8ch + 2* var(--ams-date-input-padding-inline));
+  outline-offset: var(--ams-date-input-outline-offset);
+  padding-block: var(--ams-date-input-padding-block);
+  padding-inline: var(--ams-date-input-padding-inline);
+  touch-action: manipulation;
+  text-rendering: optimizeLegibility;
+  text-size-adjust: none;
+  appearance: none;
+  border-color: var(--ams-date-input-border-color);
+  border-style: var(--ams-date-input-border-style);
+  border-width: var(--ams-date-input-border-width);
+  border-radius: var(--ams-date-input-border-radius);
+  box-sizing: var(--ams-date-input-box-sizing);
+  margin-block: var(--ams-date-input-margin-block);
+}
+
+// .ams-date-input::-webkit-datetime-edit-fields-wrapper  {
+//   color: var(--utrecht-textbox-placeholder-color);
+// }
+// .ams-date-input::-webkit-datetime-edit-day-field {
+//   color: purple;
+// }

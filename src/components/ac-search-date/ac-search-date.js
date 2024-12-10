@@ -3,12 +3,12 @@ import { observer } from 'mobx-react-lite';
 
 import { withStore } from '@stores';
 import { AcFlex } from '@atoms';
-import { AcFormField } from '@molecules';
-import { AcValidateDate } from '@utils';
+import { DateInput } from '@amsterdam/design-system-react';
+import { Heading4 } from '@utrecht/component-library-react';
 
 const isValidDate = (date) => {
-  const regex = /^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[012])-\d{4}$/;
-  return regex.test(date);
+  const testedDate = new Date(date);
+  return testedDate instanceof Date && !isNaN(testedDate);
 };
 
 const AcSearchDate = ({ store: { publications } }) => {
@@ -16,13 +16,6 @@ const AcSearchDate = ({ store: { publications } }) => {
   const [errors, setErrors] = useState({ after: '', before: '' });
 
   const setDate = (key, value) => {
-    if (value !== '' && !isValidDate(value)) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [key]: 'Ongeldig formaat. Gebruik dd-mm-yyyy.',
-      }));
-      return;
-    }
 
     setErrors((prevErrors) => ({
       ...prevErrors,
@@ -31,7 +24,7 @@ const AcSearchDate = ({ store: { publications } }) => {
 
     if (value !== '' && isValidDate(value)) {
       const dateParts = value.split('-');
-      const dateObject = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+      const dateObject = new Date(+dateParts[0], dateParts[1] - 1, +dateParts[2]);
       const ISODate = dateObject.toISOString();
 
       setQueryDate(key, ISODate);
@@ -66,28 +59,26 @@ const AcSearchDate = ({ store: { publications } }) => {
 
   return (
     <AcFlex column spacing='sm' className='ac-search-filters__date'>
-      <AcFormField
-        id={'date_after'}
-        className={errors.after ? 'error-field' : ''}
-        defaultValue={defaultValue(search_query?.published?.after)}
-        label='Datum vanaf (dd-mm-yyyy)'
-        placeholder='dd-mm-yyyy'
-        onBlur={(value) => setDate('after', value)}
-        onKeyDown={(event) => handleKeyDown('after', event)}
-        hasError={!!errors.after}
-      />
-      {errors.after && <span className='error-message'>{errors.after}</span>}
-      <AcFormField
-        id={'date_before'}
-        className={errors.after ? 'error-field' : ''}
-        defaultValue={defaultValue(search_query?.published?.before)}
-        label='Datum tot en met (dd-mm-yyyy)'
-        placeholder='dd-mm-yyyy'
-        onBlur={(value) => setDate('before', value)}
-        onKeyDown={(event) => handleKeyDown('before', event)}
-        hasError={!!errors.before}
-      />
-      {errors.before && <span className='error-message'>{errors.before}</span>}
+      <div className='ac-search-filters__date-item-container'>
+        <Heading4>Datum vanaf (dd-mm-yyyy)</Heading4>
+        <DateInput
+          id={'date_after'}
+          invalid={!!errors.after}
+          defaultValue={defaultValue(search_query?.published?.after)}
+          onBlur={(event) => setDate('after', event.target.value)}
+          onKeyDown={(event) => handleKeyDown('after', event)}
+        />
+      </div>
+      <div className='ac-search-filters__date-item-container'>
+        <Heading4>Datum tot en met (dd-mm-yyyy)</Heading4>
+        <DateInput
+          id={'date_before'}
+          invalid={!!errors.before}
+          defaultValue={defaultValue(search_query?.published?.before)}
+          onBlur={(event) => setDate('before', event.target.value)}
+          onKeyDown={(event) => handleKeyDown('before', event)}
+        />
+      </div>
     </AcFlex>
   );
 };
