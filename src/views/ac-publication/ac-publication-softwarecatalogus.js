@@ -16,6 +16,7 @@ import {
 
 import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
+import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
@@ -46,11 +47,14 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     return <AcLoader />;
   }
 
-  const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
+  const publicationTypes = get_relations
+    ?.filter((relation) => {
+      if (relation.publicationType.title !== get_single.publicationType.title) {
+        return relation.publicationType;
+      }
+    })
+    .map((relation) => relation.publicationType);
 
-  const publicationTypes = get_relations?.map(
-    (relation) => relation.publicationType
-  );
   const uniquePublicationTypes = _.uniqBy(publicationTypes, 'title');
 
   const mapAttachmentRow = (row, primary) => {
@@ -83,7 +87,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
   const mapTabRow = (row) => {
     return [
       <span>{row.title}</span>,
-      <span>{row.description || 'Geen omschrijving beschikbaar'}</span>,
+      <span>{row.summary || 'Geen samenvatting beschikbaar'}</span>,
       <span>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
       <AcLink to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
         <VISUALS.ARROW_RIGHT />
@@ -115,9 +119,9 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
           </div>
 
           <AcCard blue>
-            <Heading level={2}>{LABELS.SUMMARY}</Heading>
+            <Heading level={2}>Omschrijving</Heading>
             <Paragraph>
-              {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
+              {get_single?.description || 'Geen omschrijving beschikbaar'}
             </Paragraph>
           </AcCard>
 
@@ -180,36 +184,11 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
 
           <div>
             <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
-            <AcTable
-              rows={[
-                [
-                  LABELS.CATEGORY,
-                  <>
-                    {get_single?.category ? (
-                      <AcLink
-                        href={getSearchPageURL({
-                          category: [get_single?.category],
-                        })}
-                      >
-                        {get_single?.category}
-                      </AcLink>
-                    ) : (
-                      <span>{'-'}</span>
-                    )}
-                  </>,
-                ],
-                ['Licentie', <span>{get_single?.license || '-'}</span>],
-                ['Status', <span>{get_single?.data?.status || '-'}</span>],
-                [
-                  'Software type',
-                  <span>{get_single?.data?.software_type || '-'}</span>,
-                ],
-                [
-                  'Onderhouds type',
-                  <span>{get_single?.data?.maintenance_type || '-'}</span>,
-                ],
-              ]}
-            />
+            <AcFlex spacing={'xs'} className='notice'>
+              <VISUALS.INFO />
+              Links worden in een nieuw tabblad geopend.
+            </AcFlex>
+            <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
           <div className='ac-publication-three-column'>
             <div>
@@ -257,7 +236,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
                 uniquePublicationTypes.map((publicationType, idx) => (
                   <AcTabPanel selected={tabIndex === idx}>
                     <AcTable
-                      header={['Naam', 'Omschrijving', 'Catalogus']}
+                      header={['Naam', 'Samenvatting', 'Catalogus']}
                       rows={get_relations
                         ?.filter(
                           (relation) =>

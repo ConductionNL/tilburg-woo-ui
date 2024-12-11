@@ -20,6 +20,7 @@ import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 
 const AcPublicationFormulier = ({ store: { publications } }) => {
   const { id } = useParams();
@@ -195,49 +196,12 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
 
           <div>
             <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
+            <AcFlex spacing={'xs'} className='notice'>
+              <VISUALS.INFO />
+              Documenten worden in een nieuw tabblad geopend.
+            </AcFlex>
             <AcTable
-              rows={[
-                [
-                  LABELS.CATEGORY,
-                  <AcLink
-                    href={getSearchPageURL({
-                      category: [get_single?.category],
-                    })}
-                  >
-                    {get_single?.category}
-                  </AcLink>,
-                ],
-                ['Licentie', <span>{get_single?.license || '-'}</span>],
-                ['Status', <span>{get_single?.data?.status || '-'}</span>],
-                [
-                  'Software type',
-                  <span>{get_single?.data?.software_type || '-'}</span>,
-                ],
-                [
-                  'Onderhouds type',
-                  <span>{get_single?.data?.maintenance_type || '-'}</span>,
-                ],
-                [
-                  'Products',
-                  <span className='ac-publication-products'>
-                    {JSON.parse(get_single?.data?.products || '{}')?.length > 0
-                      ? JSON.parse(get_single?.data?.products || '{}')?.map(
-                          (product, idx) => (
-                            <AcLink href={product.url}>
-                              {product.label}
-                              {idx <
-                              JSON.parse(get_single?.data?.products || '{}')
-                                ?.length -
-                                1
-                                ? ', '
-                                : ''}{' '}
-                            </AcLink>
-                          )
-                        )
-                      : '-'}
-                  </span>,
-                ],
-              ]}
+              rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)}
             />
           </div>
           <div className='ac-publication-three-column'>
