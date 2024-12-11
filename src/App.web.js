@@ -47,7 +47,6 @@ const App = ({ store }) => {
 
   const hostname = window.location.hostname;
 
-
   const getTheme = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
@@ -59,7 +58,7 @@ const App = ({ store }) => {
       default:
         return process.env.API_URL_COMMONGROUND;
     }
-  }
+  };
 
   return (
     <div className={getTheme()} tabIndex='-1' ref={resetFocus}>

@@ -22,7 +22,11 @@ const AcHero = () => {
   return (
     <AcSection
       className={_CLASSES}
-      style={`background-image: url('${hostname === 'vng.opencatalogi.nl' ? 'https://vng.nl/sites/default/files/styles/16_9_xl/public/2023-12/dso.jpg?itok=PVFVJNmT' : '/home-hero-background.png'}');`}
+      style={`background-image: url('${
+        hostname === 'vng.opencatalogi.nl'
+          ? 'https://vng.nl/sites/default/files/styles/16_9_xl/public/2023-12/dso.jpg?itok=PVFVJNmT'
+          : '/home-hero-background.png'
+      }');`}
     >
       <AcContainer>
         <AcCard blue padding='lg'>

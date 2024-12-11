@@ -1,176 +1,174 @@
 .ac-scroll-container,
 #ac-scroller {
-	// -webkit-overflow-scrolling: touch;
+  // -webkit-overflow-scrolling: touch;
 
-	@include respond-max($screen-xs-max) {
-		min-height: calc(var(--window-size) - var(--header-size));
-		max-height: calc(var(--window-size) - var(--header-size));
-	}
+  @include respond-max($screen-xs-max) {
+    min-height: calc(var(--window-size) - var(--header-size));
+    max-height: calc(var(--window-size) - var(--header-size));
+  }
 
-	.ac-app--unauthorized & {
-		@include respond-max($screen-xs-max) {
-			max-height: calc(var(--window-size));
-		}
-	}
+  .ac-app--unauthorized & {
+    @include respond-max($screen-xs-max) {
+      max-height: calc(var(--window-size));
+    }
+  }
 }
 
 .ac-root {
-	position: relative;
-	// overflow: hidden;
-	background: $color-pitch;
-	// -webkit-overflow-scrolling: touch;
+  position: relative;
+  // overflow: hidden;
+  background: $color-pitch;
+  // -webkit-overflow-scrolling: touch;
 }
 
 .ac-main,
 .ac-app {
-	display: flex;
-	flex-direction: column;
-	position: relative;
-	width: 100vw;
-	// min-height: var(--window-size);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100vw;
+  // min-height: var(--window-size);
 
-	@include respond-max($screen-xs-max) {
-		min-height: var(--window-size);
-	}
+  @include respond-max($screen-xs-max) {
+    min-height: var(--window-size);
+  }
 }
 
 .ac-page {
-	// z-index: +10;
-	// flex: 1 0 100%;
-	flex-grow: 1;
-	flex-shrink: 0;
-	position: relative;
-	width: 100vw;
-	min-height: calc(var(--window-size) - (var(--header-size) + var(--footer-size)));
-	margin: 0;
-	padding: 4.2rem 0 8.4rem;
-	// overflow: hidden;
-	// -webkit-overflow-scrolling: touch;
+  // z-index: +10;
+  // flex: 1 0 100%;
+  flex-grow: 1;
+  flex-shrink: 0;
+  position: relative;
+  width: 100vw;
+  min-height: calc(var(--window-size) - (var(--header-size) + var(--footer-size)));
+  margin: 0;
+  padding: 4.2rem 0 8.4rem;
+  // overflow: hidden;
+  // -webkit-overflow-scrolling: touch;
 
-	@include respond-max($screen-xs-max) {
-		min-height: 0;
-		min-height: calc(var(--window-size) - var(--header-size));
-		padding: 4.2rem 0 12.4rem;
-	}
+  @include respond-max($screen-xs-max) {
+    min-height: 0;
+    min-height: calc(var(--window-size) - var(--header-size));
+    padding: 4.2rem 0 12.4rem;
+  }
 
-	@include respond-minmax($screen-sm-min, $screen-lg-max) {
-		min-height: calc(var(--window-size) - var(--header-size));
-	}
+  @include respond-minmax($screen-sm-min, $screen-lg-max) {
+    min-height: calc(var(--window-size) - var(--header-size));
+  }
 
-	&--fullscreen {
-		padding: 0;
-		min-height: calc(var(--window-size));
+  &--fullscreen {
+    padding: 0;
+    min-height: calc(var(--window-size));
 
-		@include respond-max($screen-xs-max) {
-			min-height: calc(var(--window-size));
-		}
-	}
+    @include respond-max($screen-xs-max) {
+      min-height: calc(var(--window-size));
+    }
+  }
 }
 
 [class^='ac-col-'] > .react-reveal {
-	// display: inherit;
-	// flex-grow: 1;
-	// flex-shrink: 0;
-	// flex-basis: 100%;
-	// justify-content: inherit;
-	// align-items: inherit;
-	// position: relative;
-	// width: 100%;
-	// min-height: 100%;
+  // display: inherit;
+  // flex-grow: 1;
+  // flex-shrink: 0;
+  // flex-basis: 100%;
+  // justify-content: inherit;
+  // align-items: inherit;
+  // position: relative;
+  // width: 100%;
+  // min-height: 100%;
 }
 
 /////////////////////////////
 // ac-publication
 .ac-publication-header {
-	display: flex;
-	justify-content: space-between;
+  display: flex;
+  justify-content: space-between;
 }
 
 .ac-publication-container {
-	width: 980px;
+  width: 980px;
 }
 
 .ac-publication-three-column {
-	display: grid;
-	grid-template-columns: repeat(3, 1fr);
-	gap: 2.4rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.4rem;
 }
 
 .ac-publication-buttons {
-	display: flex;
-	gap: 10px;
+  display: flex;
+  gap: 10px;
 }
 
 .ac-publication-three-column-item {
-	background-color: #f2f2f2;
-	width: 300px;
-    height: 300px;
-    align-content: center;
-    text-align: center;
-
+  background-color: #f2f2f2;
+  width: 300px;
+  height: 300px;
+  align-content: center;
+  text-align: center;
 }
 
 .ac-publication-header-image {
-	max-width: 100px;
-    max-height: 100px;
+  max-width: 100px;
+  max-height: 100px;
 }
 
 .ac-publication-badge-counter {
-	margin-inline-start: 8px;
+  margin-inline-start: 8px;
 }
 
 .ac-footer__container {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr) !important;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) !important;
 }
 
 .ac-publication-products {
-	display: flex;
-	gap: 5px;
+  display: flex;
+  gap: 5px;
 }
 
 /////////////////////////////
 
 .ac-fresh-content-notice {
-	z-index: 10000000;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	position: fixed;
-	top: auto;
-	right: auto;
-	bottom: 4.2rem;
-	left: auto;
-	padding: 0 2.4rem;
-	background: $color-pitch;
-	border-radius: 0.6rem;
-	cursor: pointer;
+  z-index: 10000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: auto;
+  right: auto;
+  bottom: 4.2rem;
+  left: auto;
+  padding: 0 2.4rem;
+  background: $color-pitch;
+  border-radius: 0.6rem;
+  cursor: pointer;
 
-	@include font-size(1.6rem);
-	@include font-weight-semibold;
-	font-style: normal;
-	text-align: center;
-	color: $color-white;
+  @include font-size(1.6rem);
+  @include font-weight-semibold;
+  font-style: normal;
+  text-align: center;
+  color: $color-white;
 
-	p {
-		cursor: pointer;
-	}
+  p {
+    cursor: pointer;
+  }
 
-	@include respond-minmax($screen-sm-min, $screen-sm-max) {
-		width: 75vw;
-		left: 50%;
-		transform: translateX(-50%);
-	}
+  @include respond-minmax($screen-sm-min, $screen-sm-max) {
+    width: 75vw;
+    left: 50%;
+    transform: translateX(-50%);
+  }
 
-	@include respond-min($screen-md-min) {
-		width: calc(100vw / 2);
-		left: 50%;
-		transform: translateX(-50%);
-	}
+  @include respond-min($screen-md-min) {
+    width: calc(100vw / 2);
+    left: 50%;
+    transform: translateX(-50%);
+  }
 
-	@include respond-max($screen-xs-max) {
-		right: 1.6rem;
-		left: 1.6rem;
-	}
+  @include respond-max($screen-xs-max) {
+    right: 1.6rem;
+    left: 1.6rem;
+  }
 }
-

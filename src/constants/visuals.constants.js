@@ -63,17 +63,13 @@ const COMMON_GROUND = loadable(() =>
   import('-!svg-react-loader!@assets/images/commonground.svg')
 );
 
-const KEY = loadable(() =>
-  import('-!svg-react-loader!@assets/images/key.svg')
-);
+const KEY = loadable(() => import('-!svg-react-loader!@assets/images/key.svg'));
 
 const PERSON_ADD = loadable(() =>
   import('-!svg-react-loader!@assets/images/person_add.svg')
 );
 
-const WORLD = loadable(() =>
-  import('-!svg-react-loader!@assets/images/world.svg')
-);
+const WORLD = loadable(() => import('-!svg-react-loader!@assets/images/world.svg'));
 
 export const VISUALS = {
   ARROW_RIGHT,

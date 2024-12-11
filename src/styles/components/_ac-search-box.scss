@@ -51,7 +51,9 @@
 
   &--search {
     h2 {
-      margin-inline-end: calc(var(--tilburg-space-column-elephant) + var(--tilburg-space-block-cat));
+      margin-inline-end: calc(
+        var(--tilburg-space-column-elephant) + var(--tilburg-space-block-cat)
+      );
     }
 
     @include respond-max($screen-md) {
@@ -104,7 +106,6 @@
   }
 }
 
-
 .ams-date-input {
   background-color: var(--ams-date-input-background-color);
   box-shadow: var(--ams-date-input-box-shadow);
@@ -113,8 +114,11 @@
   font-size: var(--ams-date-input-font-size);
   font-weight: var(--ams-date-input-font-weight);
   line-height: var(--ams-date-input-line-height);
-  min-block-size: calc(var(--ams-date-input-font-size)* var(--ams-date-input-line-height) + 2* var(--ams-date-input-padding-block));
-  min-inline-size: calc(8ch + 2* var(--ams-date-input-padding-inline));
+  min-block-size: calc(
+    var(--ams-date-input-font-size) * var(--ams-date-input-line-height) + 2 *
+      var(--ams-date-input-padding-block)
+  );
+  min-inline-size: calc(8ch + 2 * var(--ams-date-input-padding-inline));
   outline-offset: var(--ams-date-input-outline-offset);
   padding-block: var(--ams-date-input-padding-block);
   padding-inline: var(--ams-date-input-padding-inline);

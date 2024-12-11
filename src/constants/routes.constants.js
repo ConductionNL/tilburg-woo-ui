@@ -28,7 +28,9 @@ export const ROUTES = {
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: `Home | ${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'}`,
+    title: `Home | ${
+      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
+    }`,
     component: AcHome,
   },
   PUBLICATION: {
@@ -36,7 +38,9 @@ export const ROUTES = {
     name: 'Publication',
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
-    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Publicatie`,
+    title: `${
+      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Publicatie`,
     component: AcPublication,
   },
   SEARCH: {
@@ -44,7 +48,9 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Zoeken`,
+    title: `${
+      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Zoeken`,
     component: AcSearch,
   },
   THEMES: {
@@ -52,7 +58,9 @@ export const ROUTES = {
     name: 'Themes',
     label: TITLES.THEMES,
     path: PATHS.THEMES,
-    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Onderwerpen`,
+    title: `${
+      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Onderwerpen`,
     component: AcThemes,
   },
   ABOUT: {
@@ -60,7 +68,9 @@ export const ROUTES = {
     name: 'Over Open Tilburg',
     label: TITLES.ABOUT,
     path: PATHS.ABOUT,
-    title: `${hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'} | Over`,
+    title: `${
+      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Over`,
   },
   CONTACT: {
     id: AcUUID(),

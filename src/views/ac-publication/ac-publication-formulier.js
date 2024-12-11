@@ -32,7 +32,6 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
     getFilteredAttachments,
   } = publications;
 
-
   const [tabIndex, setTabIndex] = useState(0);
 
   useEffect(() => {
@@ -44,10 +43,6 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
   }
 
   const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
-
-  
-
-
 
   const mapAttachmentRow = (row, primary) => {
     // Fallback for when there is no extension property
@@ -83,15 +78,11 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
       <span>{row.description}</span>,
       <AcLink to={row.viewLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Bekijk
-        </Link>
+        <Link>Bekijk</Link>
       </AcLink>,
       <AcLink to={row.downloadLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Download
-        </Link>
+        <Link>Download</Link>
       </AcLink>,
     ];
   };
@@ -100,15 +91,11 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
       <span>{row.name}</span>,
       <AcLink to={row.website} target='_blank'>
         <VISUALS.WORLD />
-        <Link>
-          Website
-        </Link>
+        <Link>Website</Link>
       </AcLink>,
       <AcLink to={row.github} target='_blank'>
         <VISUALS.GITHUB />
-        <Link>
-          Github
-        </Link>
+        <Link>Github</Link>
       </AcLink>,
     ];
   };
@@ -119,15 +106,11 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
       <span>{row.supports}</span>,
       <AcLink to={row.viewLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Bekijk
-        </Link>
+        <Link>Bekijk</Link>
       </AcLink>,
       <AcLink to={row.downloadLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
-        <Link>
-          Download
-        </Link>
+        <Link>Download</Link>
       </AcLink>,
     ];
   };
@@ -138,7 +121,12 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
         <AcFlex column spacing={'lg'}>
           <div className='ac-publication-header'>
             <Heading>{get_single?.title}</Heading>
-            { <img src={get_single?.image} className='ac-publication-header-image'></img>}
+            {
+              <img
+                src={get_single?.image}
+                className='ac-publication-header-image'
+              ></img>
+            }
           </div>
 
           <AcCard blue>
@@ -150,7 +138,9 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
 
           {get_single?.data?.github_url && (
             <div className='ac-publication-buttons'>
-              <Button onClick={() => window.open(get_single?.data?.github_url, '_blank')}>
+              <Button
+                onClick={() => window.open(get_single?.data?.github_url, '_blank')}
+              >
                 <VISUALS.GITHUB />
                 <span>Bekijk op Repository</span>
               </Button>
@@ -217,107 +207,122 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
                     {get_single?.category}
                   </AcLink>,
                 ],
+                ['Licentie', <span>{get_single?.license || '-'}</span>],
+                ['Status', <span>{get_single?.data?.status || '-'}</span>],
                 [
-                  "Licentie",
-                  <span>{get_single?.license || '-'}</span>
+                  'Software type',
+                  <span>{get_single?.data?.software_type || '-'}</span>,
                 ],
                 [
-                  "Status",
-                  <span>{get_single?.data?.status || '-'}</span>
+                  'Onderhouds type',
+                  <span>{get_single?.data?.maintenance_type || '-'}</span>,
                 ],
                 [
-                  "Software type",
-                  <span>{get_single?.data?.software_type || '-'}</span>
-                ],
-                [
-                  "Onderhouds type",
-                  <span>{get_single?.data?.maintenance_type || '-'}</span>
-                ],
-                [
-                  "Products",
+                  'Products',
                   <span className='ac-publication-products'>
-                    {
-                      JSON.parse(get_single?.data?.products || '{}')?.length > 0 ?
-                        JSON.parse(get_single?.data?.products || '{}')?.map((product, idx) => <AcLink href={product.url}>{product.label}{idx < JSON.parse(get_single?.data?.products || '{}')?.length - 1 ? ', ' : ''} </AcLink>)
-                        : '-'
-                    }
-                  </span>
+                    {JSON.parse(get_single?.data?.products || '{}')?.length > 0
+                      ? JSON.parse(get_single?.data?.products || '{}')?.map(
+                          (product, idx) => (
+                            <AcLink href={product.url}>
+                              {product.label}
+                              {idx <
+                              JSON.parse(get_single?.data?.products || '{}')
+                                ?.length -
+                                1
+                                ? ', '
+                                : ''}{' '}
+                            </AcLink>
+                          )
+                        )
+                      : '-'}
+                  </span>,
                 ],
               ]}
             />
           </div>
-            <div className='ac-publication-three-column'>
-              <div>
-                <Heading2>Applicatie</Heading2>
-                <div className='ac-publication-three-column-item'><span>Geen applicatie beschikbaar</span></div>
+          <div className='ac-publication-three-column'>
+            <div>
+              <Heading2>Applicatie</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen applicatie beschikbaar</span>
               </div>
-              <div>
-                <Heading2>Organisatie</Heading2>
-                <div className='ac-publication-three-column-item'><span>Geen organisatie beschikbaar</span></div>
-              </div>
-              <div>
-                <Heading2>Beoordeling</Heading2>
-                <div className='ac-publication-three-column-item'><span>Geen beoordeling beschikbaar</span></div>
-              </div>
-
-
             </div>
-            <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-              <AcTabList>
-                <AcTab selected={tabIndex === 0}>
-                  <span>Componenten & Afhankelijkheden</span>
-                  <BadgeCounter className="ac-publication-badge-counter">
-                    {tabsContent?.dependencies?.length ?? 0}
-                  </BadgeCounter>
-
-                </AcTab>
-                <AcTab>
-                  <span>Hergebruik</span>
-                  <BadgeCounter className="ac-publication-badge-counter">
-                    {tabsContent?.reuse?.length ?? 0}
-                  </BadgeCounter>
-                </AcTab>
-                <AcTab>
-                  <span >Configuraties</span>
-                  <BadgeCounter className="ac-publication-badge-counter">
-                    {tabsContent?.configurations?.length ?? 0}
-                  </BadgeCounter>
-                </AcTab>
-              </AcTabList>
-              <AcTabPanel selected={tabIndex === 0}>
-                {tabsContent?.dependencies?.length > 0 && (
-                  <AcTable
-                    header={['Naam', 'Versie', 'Omschrijving']}
-                    rows={tabsContent?.dependencies?.map((configuration) => mapDependencyRow(configuration))}
-                  />
-                )}
-                {!tabsContent?.dependencies?.length && (
-                  <Paragraph>Geen componenten & afhankelijkheden beschikbaar</Paragraph>
-                )}
-              </AcTabPanel>
-              <AcTabPanel>
-                {tabsContent?.reuse?.length > 0 && (
-                  <AcTable
-                    header={['Naam', 'Website', 'GitHub']}
-                    rows={tabsContent?.reuse?.map((configuration) => mapReuseRow(configuration))}
-                  />
-                )}
-                {!tabsContent?.reuse?.length && (
-                  <Paragraph>Geen hergebruik beschikbaar</Paragraph>
-                )}
-              </AcTabPanel>
-              <AcTabPanel>
-                {tabsContent?.configurations?.length > 0 && (
-                  <AcTable
-                    header={['Naam', 'Organisatie', 'Ondersteund']}
-                    rows={tabsContent?.configurations?.map((configuration) => mapConfigurationRow(configuration))}
-                  />
-                )}
-                {!tabsContent?.configurations?.length && (
-                  <Paragraph>Geen configuraties beschikbaar</Paragraph>
-                )}
-              </AcTabPanel>
-            </AcTabs>
+            <div>
+              <Heading2>Organisatie</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen organisatie beschikbaar</span>
+              </div>
+            </div>
+            <div>
+              <Heading2>Beoordeling</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen beoordeling beschikbaar</span>
+              </div>
+            </div>
+          </div>
+          <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+            <AcTabList>
+              <AcTab selected={tabIndex === 0}>
+                <span>Componenten & Afhankelijkheden</span>
+                <BadgeCounter className='ac-publication-badge-counter'>
+                  {tabsContent?.dependencies?.length ?? 0}
+                </BadgeCounter>
+              </AcTab>
+              <AcTab>
+                <span>Hergebruik</span>
+                <BadgeCounter className='ac-publication-badge-counter'>
+                  {tabsContent?.reuse?.length ?? 0}
+                </BadgeCounter>
+              </AcTab>
+              <AcTab>
+                <span>Configuraties</span>
+                <BadgeCounter className='ac-publication-badge-counter'>
+                  {tabsContent?.configurations?.length ?? 0}
+                </BadgeCounter>
+              </AcTab>
+            </AcTabList>
+            <AcTabPanel selected={tabIndex === 0}>
+              {tabsContent?.dependencies?.length > 0 && (
+                <AcTable
+                  header={['Naam', 'Versie', 'Omschrijving']}
+                  rows={tabsContent?.dependencies?.map((configuration) =>
+                    mapDependencyRow(configuration)
+                  )}
+                />
+              )}
+              {!tabsContent?.dependencies?.length && (
+                <Paragraph>
+                  Geen componenten & afhankelijkheden beschikbaar
+                </Paragraph>
+              )}
+            </AcTabPanel>
+            <AcTabPanel>
+              {tabsContent?.reuse?.length > 0 && (
+                <AcTable
+                  header={['Naam', 'Website', 'GitHub']}
+                  rows={tabsContent?.reuse?.map((configuration) =>
+                    mapReuseRow(configuration)
+                  )}
+                />
+              )}
+              {!tabsContent?.reuse?.length && (
+                <Paragraph>Geen hergebruik beschikbaar</Paragraph>
+              )}
+            </AcTabPanel>
+            <AcTabPanel>
+              {tabsContent?.configurations?.length > 0 && (
+                <AcTable
+                  header={['Naam', 'Organisatie', 'Ondersteund']}
+                  rows={tabsContent?.configurations?.map((configuration) =>
+                    mapConfigurationRow(configuration)
+                  )}
+                />
+              )}
+              {!tabsContent?.configurations?.length && (
+                <Paragraph>Geen configuraties beschikbaar</Paragraph>
+              )}
+            </AcTabPanel>
+          </AcTabs>
         </AcFlex>
       </AcContainer>
     </>

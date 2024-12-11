@@ -102,14 +102,15 @@
             padding-block: var(--tilburg-space-row-cat);
             font-size: var(--tilburg-typography-font-size-lg);
 
-
             &:after {
               content: '';
               position: absolute;
               inset-inline: var(--tilburg-space-block-rat);
               inset-block-end: -2px;
               block-size: 2px;
-              background-color: var(--tilburg-navigation-mobile-item-border-bottom-color);
+              background-color: var(
+                --tilburg-navigation-mobile-item-border-bottom-color
+              );
             }
           }
         }
@@ -117,4 +118,3 @@
     }
   }
 }
-

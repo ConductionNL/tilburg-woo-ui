@@ -36,13 +36,11 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     fetchPublication,
   } = publications;
 
-
   const [tabIndex, setTabIndex] = useState(0);
 
   useEffect(() => {
     document.title = get_single?.title || 'Open Ac | Publicatie';
   }, [get_single]);
-
 
   if (loading.status || !get_single) {
     return <AcLoader />;
@@ -50,9 +48,10 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
 
   const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
 
-  const publicationTypes = get_relations?.map((relation) => relation.publicationType);
-  const uniquePublicationTypes = _.uniqBy(publicationTypes, "title")
-
+  const publicationTypes = get_relations?.map(
+    (relation) => relation.publicationType
+  );
+  const uniquePublicationTypes = _.uniqBy(publicationTypes, 'title');
 
   const mapAttachmentRow = (row, primary) => {
     // Fallback for when there is no extension property
@@ -86,23 +85,20 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
       <span>{row.title}</span>,
       <span>{row.description || 'Geen omschrijving beschikbaar'}</span>,
       <span>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
-      <AcLink  to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
+      <AcLink to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
         <VISUALS.ARROW_RIGHT />
-        <Link>
-          Bekijk
-        </Link>
+        <Link>Bekijk</Link>
       </AcLink>,
     ];
   };
 
   const TabOnClick = (id) => {
-    resetRelations(); 
-    resetPublication();    
+    resetRelations();
+    resetPublication();
     fetchPublication(id).then(() => {
-        fetchRelations(get_single.uri)    
+      fetchRelations(get_single.uri);
     });
-  }
-  
+  };
 
   return (
     <>
@@ -110,7 +106,12 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
         <AcFlex column spacing={'lg'}>
           <div className='ac-publication-header'>
             <Heading>{get_single?.title}</Heading>
-            { <img src={get_single?.image} className='ac-publication-header-image'></img>}
+            {
+              <img
+                src={get_single?.image}
+                className='ac-publication-header-image'
+              ></img>
+            }
           </div>
 
           <AcCard blue>
@@ -122,7 +123,9 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
 
           {get_single?.data?.github_url && (
             <div className='ac-publication-buttons'>
-              <Button onClick={() => window.open(get_single?.data?.github_url, '_blank')}>
+              <Button
+                onClick={() => window.open(get_single?.data?.github_url, '_blank')}
+              >
                 <VISUALS.GITHUB />
                 <span>Bekijk op Repository</span>
               </Button>
@@ -182,80 +185,90 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
                 [
                   LABELS.CATEGORY,
                   <>
-                  {get_single?.category ? 
-                  <AcLink
-                  href={getSearchPageURL({
-                      category: [get_single?.category],
-                    })}
-                    >
-                    {get_single?.category} 
-                  </AcLink>
-                        :
-                        <span>{'-'}</span>
-                  }
-                  </>
+                    {get_single?.category ? (
+                      <AcLink
+                        href={getSearchPageURL({
+                          category: [get_single?.category],
+                        })}
+                      >
+                        {get_single?.category}
+                      </AcLink>
+                    ) : (
+                      <span>{'-'}</span>
+                    )}
+                  </>,
+                ],
+                ['Licentie', <span>{get_single?.license || '-'}</span>],
+                ['Status', <span>{get_single?.data?.status || '-'}</span>],
+                [
+                  'Software type',
+                  <span>{get_single?.data?.software_type || '-'}</span>,
                 ],
                 [
-                  "Licentie",
-                  <span>{get_single?.license || '-'}</span>
+                  'Onderhouds type',
+                  <span>{get_single?.data?.maintenance_type || '-'}</span>,
                 ],
-                [
-                  "Status",
-                  <span>{get_single?.data?.status || '-'}</span>
-                ],
-                [
-                  "Software type",
-                  <span>{get_single?.data?.software_type || '-'}</span>
-                ],
-                [
-                  "Onderhouds type",
-                  <span>{get_single?.data?.maintenance_type || '-'}</span>
-                ]
               ]}
             />
           </div>
-            <div className='ac-publication-three-column'>
-              <div>
-                <Heading2>Applicatie</Heading2>
-                <div className='ac-publication-three-column-item'><span>Geen applicatie beschikbaar</span></div>
+          <div className='ac-publication-three-column'>
+            <div>
+              <Heading2>Applicatie</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen applicatie beschikbaar</span>
               </div>
-              <div>
-                <Heading2>Organisatie</Heading2>
-                <div className='ac-publication-three-column-item'><span>Geen organisatie beschikbaar</span></div>
-              </div>
-              <div>
-                <Heading2>Beoordeling</Heading2>
-                <div className='ac-publication-three-column-item'><span>Geen beoordeling beschikbaar</span></div>
-              </div>
-
-
             </div>
-            {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (
-            <AcTabs  selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+            <div>
+              <Heading2>Organisatie</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen organisatie beschikbaar</span>
+              </div>
+            </div>
+            <div>
+              <Heading2>Beoordeling</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen beoordeling beschikbaar</span>
+              </div>
+            </div>
+          </div>
+          {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (
+            <AcTabs
+              selectedIndex={tabIndex}
+              onSelect={(index) => setTabIndex(index)}
+            >
               <AcTabList>
-                
-              {uniquePublicationTypes && uniquePublicationTypes.map((publicationType, idx) => (
-
-                <AcTab selected={tabIndex === idx}>
-                  <span>{publicationType.title}</span>
-                  <BadgeCounter className="ac-publication-badge-counter">
-                    {get_relations?.filter((relation) => relation.publicationType.title === publicationType.title).length}
-                  </BadgeCounter>
-
-                </AcTab>
-              
-              ))}
+                {uniquePublicationTypes &&
+                  uniquePublicationTypes.map((publicationType, idx) => (
+                    <AcTab selected={tabIndex === idx}>
+                      <span>{publicationType.title}</span>
+                      <BadgeCounter className='ac-publication-badge-counter'>
+                        {
+                          get_relations?.filter(
+                            (relation) =>
+                              relation.publicationType.title ===
+                              publicationType.title
+                          ).length
+                        }
+                      </BadgeCounter>
+                    </AcTab>
+                  ))}
               </AcTabList>
-              {uniquePublicationTypes && uniquePublicationTypes.map((publicationType, idx) => (
-              <AcTabPanel selected={tabIndex === idx}>
-                  <AcTable
-                    header={['Naam', 'Omschrijving', 'Catalogus']}
-                    rows={get_relations?.filter((relation) => relation.publicationType.title === publicationType.title).map((relation) => mapTabRow(relation))}
-                  />
-              </AcTabPanel>
-              ))}
+              {uniquePublicationTypes &&
+                uniquePublicationTypes.map((publicationType, idx) => (
+                  <AcTabPanel selected={tabIndex === idx}>
+                    <AcTable
+                      header={['Naam', 'Omschrijving', 'Catalogus']}
+                      rows={get_relations
+                        ?.filter(
+                          (relation) =>
+                            relation.publicationType.title === publicationType.title
+                        )
+                        .map((relation) => mapTabRow(relation))}
+                    />
+                  </AcTabPanel>
+                ))}
             </AcTabs>
-            )}
+          )}
         </AcFlex>
       </AcContainer>
     </>

@@ -337,9 +337,7 @@ export class PublicationsStore {
     this.loading.status = true;
 
     app.store.api.publications
-      .relations(
-        uri
-      )
+      .relations(uri)
       .then((response) => {
         this.setRelations(response);
       })

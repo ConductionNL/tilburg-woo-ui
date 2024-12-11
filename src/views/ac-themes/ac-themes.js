@@ -57,9 +57,13 @@ const AcSubjects = ({ store: { publications, themes } }) => {
             <Heading>{LABELS.THEMES}</Heading>
             {hostname === 'vng.opencatalogi.nl' ? (
               <Paragraph>
-                Op deze pagina vindt u een overzicht van onderwerpen die relevant zijn voor gemeenten en leveranciers binnen het domein van gemeentelijke ICT.
-                De documenten en informatie zijn thematisch gerangschikt om u te helpen snel en eenvoudig toegang te krijgen tot relevante gegevens.
-                Bent u op zoek naar specifieke softwarepakketten, standaarden, referentiecomponenten of rapportages? Dan kunt u deze hier vinden
+                Op deze pagina vindt u een overzicht van onderwerpen die relevant
+                zijn voor gemeenten en leveranciers binnen het domein van
+                gemeentelijke ICT. De documenten en informatie zijn thematisch
+                gerangschikt om u te helpen snel en eenvoudig toegang te krijgen tot
+                relevante gegevens. Bent u op zoek naar specifieke softwarepakketten,
+                standaarden, referentiecomponenten of rapportages? Dan kunt u deze
+                hier vinden
               </Paragraph>
             ) : (
               <Paragraph>

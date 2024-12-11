@@ -65,9 +65,8 @@ export class PagesStore {
       .then((response) => {
         if (response.data) {
           this.setPage(response.data);
-        }
-        else {
-          this.setPage(response)
+        } else {
+          this.setPage(response);
         }
       })
       .catch((e) => console.error(e))

@@ -16,7 +16,6 @@ const AcSearchDate = ({ store: { publications } }) => {
   const [errors, setErrors] = useState({ after: '', before: '' });
 
   const setDate = (key, value) => {
-
     setErrors((prevErrors) => ({
       ...prevErrors,
       [key]: '',

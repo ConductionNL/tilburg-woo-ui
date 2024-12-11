@@ -38,26 +38,17 @@ const AcPublication = ({ store: { publications } }) => {
   }
 
   if (get_single?.catalog?.title === 'Softwarecatalogus') {
-    return (
-      <AcPublicationSoftwarecatalogus />
-    )
-  }
-  else {
+    return <AcPublicationSoftwarecatalogus />;
+  } else {
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':
-        return (
-          <AcPublicationSoftwarecatalogus />
-        )
+        return <AcPublicationSoftwarecatalogus />;
       case 'Formulier':
-        return (
-          <AcPublicationFormulier />
-        )
+        return <AcPublicationFormulier />;
       default:
-        return (
-          <AcPublicationWooVerzoek />
-        )
+        return <AcPublicationWooVerzoek />;
     }
-  };
-}
+  }
+};
 
 export default withStore(observer(AcPublication));

@@ -13,7 +13,8 @@ export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
     SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
-    RELATIONS: (_uri) => `${API}${SEARCH}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
+    RELATIONS: (_uri) =>
+      `${API}${SEARCH}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   FAQS: {
