@@ -7,6 +7,7 @@ const AcNavigation = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -24,20 +25,33 @@ const AcNavigation = () => {
       </button>
       <nav aria-label='Hoofd'>
         {hostname === 'vng.opencatalogi.nl' ? (
-          <ul>
-            <li>
-              <Link to='#'>
-                <VISUALS.PERSON_ADD />
-                Registreren
-              </Link>
-            </li>
-            <li>
-              <Link to='#'>
-                <VISUALS.KEY />
-                Inloggen
-              </Link>
-            </li>
-          </ul>
+          <>
+            {pathname !== '/mijn-omgeving' ? (
+              <ul>
+                <li>
+                  <Link to='/login'>
+                    <VISUALS.PERSON_ADD />
+                    Registreren
+                  </Link>
+                </li>
+                <li>
+                  <Link to='/login'>
+                    <VISUALS.KEY />
+                    Inloggen
+                  </Link>
+                </li>
+              </ul>
+            ) : (
+              <ul>
+                <li>
+                  <Link to='#'>
+                    <VISUALS.USER />
+                    Account
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </>
         ) : (
           <ul>
             <li>

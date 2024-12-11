@@ -49,6 +49,9 @@ export const LABELS = {
   VIEW_DOCUMENTS: 'Bekijk de documenten',
 
   THEMES: 'Onderwerpen',
+
+  AUTHENTICATION: 'Login',
+  MIJN_OMGEVING: 'Mijn omgeving',
 };
 
 export const LABELS_DYNAMIC = {

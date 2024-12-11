@@ -1,0 +1,38 @@
+// Imports => Constants
+import { ENDPOINTS } from '@constants';
+
+export class AuthenticationAPI {
+  constructor(Instance) {
+    this.Store = Instance.Store;
+    this.Client = Instance.Client;
+  }
+
+  search(params) {
+    return this.Client.get(ENDPOINTS.AUTHENTICATION.SEARCH, { params }).then(
+      (response) => response.data
+    );
+  }
+
+  single(id, params) {
+    return this.Client.get(ENDPOINTS.AUTHENTICATION.SINGLE(id, params)).then(
+      (response) => response.data
+    );
+  }
+
+  themes(params) {
+    return this.Client.get(ENDPOINTS.THEMES, { params }).then(
+      (response) => response.data
+    );
+  }
+
+  searchAggregations(params) {
+    return this.Client.get(ENDPOINTS.AUTHENTICATION.SEARCH, {
+      params,
+      headers: {
+        Accept: 'application/json+aggregations',
+      },
+    }).then((response) => response.data);
+  }
+}
+
+export default AuthenticationAPI;

@@ -7,6 +7,7 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 import { AcContainer } from '@atoms';
 import { AcLoader, AcSectionsHandler } from '@components';
+import AcAuthentication from '@views/ac-authentication/ac-authentication';
 
 const AcContent = ({ store: { pages } }) => {
   const { fetchPage, get_single, loading, resetPage } = pages;
@@ -26,6 +27,7 @@ const AcContent = ({ store: { pages } }) => {
     <AcContainer compact>
       <Heading level={1}>{get_single?.name}</Heading>
       <AcSectionsHandler contents={get_single?.contents} />
+      {get_single?.slug === 'login' ? <AcAuthentication /> : <></>}
     </AcContainer>
   );
 };

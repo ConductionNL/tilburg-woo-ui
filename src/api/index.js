@@ -10,7 +10,8 @@ import PublicationsAPI from '@api/publications.api';
 import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
 import ThemesAPI from '@api/themes.api';
-
+import AuthenticationAPI from '@api/authentication.api';
+import MijnOmgevingAPI from '@api/mijnOmgeving.api';
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
   console.log('Event: ', event);
@@ -95,6 +96,16 @@ export class API {
     });
     addInterceptors(ThemesClient);
 
+    const AuthenticationClient = axios.create({
+      ...config.authentication,
+    });
+    addInterceptors(AuthenticationClient);
+
+    const MijnOmgevingClient = axios.create({
+      ...config.mijnOmgeving,
+    });
+    addInterceptors(MijnOmgevingClient);
+
     const DownloadClient = axios.create({
       ...config.download,
       onDownloadProgress,
@@ -114,6 +125,11 @@ export class API {
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
     this.themes = new ThemesAPI({ Store, Client: ThemesClient });
+    this.authentication = new AuthenticationAPI({
+      Store,
+      Client: AuthenticationClient,
+    });
+    this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client: MijnOmgevingClient });
   }
 }
 

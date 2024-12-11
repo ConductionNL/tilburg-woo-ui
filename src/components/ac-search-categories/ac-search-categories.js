@@ -18,7 +18,6 @@ const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => modalRef?.current?.showModal();
 
-
   const { all_categories, category_checked, toggleSearchArrayValue } = publications;
 
   const renderModal = (

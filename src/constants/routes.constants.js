@@ -6,7 +6,14 @@ import { AcUUID } from '@utils/ac-uuid';
 import { AcLockObject } from '@utils/ac-lock-object';
 
 // Imports => Views
-import { AcHome, AcPublication, AcSearch, AcSubjects, AcThemes } from '@views';
+import {
+  AcHome,
+  AcPublication,
+  AcSearch,
+  AcThemes,
+  AcAuthentication,
+  AcMijnOmgeving,
+} from '@views';
 import { LABELS } from '@constants/labels.constants';
 
 export const PATHS = AcLockObject({
@@ -18,6 +25,8 @@ export const PATHS = AcLockObject({
   CONTACT: '/contact',
   ACCESSIBILITY: '/toegankelijkheid',
   SEARCH_STATIC: '/zoeken',
+  AUTHENTICATION_STATIC: '/login',
+  MIJN_OMGEVING_STATIC: '/mijn-omgeving',
 });
 
 const hostname = window.location.hostname;
@@ -52,6 +61,22 @@ export const ROUTES = {
       hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
     } | Zoeken`,
     component: AcSearch,
+  },
+  AUTHENTICATION: {
+    id: AcUUID(),
+    name: 'Authentication',
+    label: LABELS.AUTHENTICATION,
+    path: PATHS.AUTHENTICATION_STATIC,
+    title: 'Open Tilburg | Login',
+    component: AcAuthentication,
+  },
+  MIJN_OMGEVING: {
+    id: AcUUID(),
+    name: 'Mijn omgeving',
+    label: LABELS.MIJN_OMGEVING,
+    path: PATHS.MIJN_OMGEVING_STATIC,
+    title: 'Open Tilburg | Mijn omgeving',
+    component: AcMijnOmgeving,
   },
   THEMES: {
     id: AcUUID(),

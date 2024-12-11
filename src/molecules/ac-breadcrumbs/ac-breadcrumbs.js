@@ -30,6 +30,14 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.THEMES;
     }
 
+    if (location.pathname.startsWith('/login')) {
+      return BREADCRUMBS.LOGIN;
+    }
+
+    if (location.pathname.startsWith('/mijn-omgeving')) {
+      return BREADCRUMBS.MIJN_OMGEVING;
+    }
+
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);
     }
