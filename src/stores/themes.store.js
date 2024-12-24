@@ -30,13 +30,13 @@ export class ThemesStore {
 
   @computed
   get all_themes() {
-    return toJS(this.items)?.map((theme) => {
-      return {
+    return this.items
+      ?.map((theme) => ({
         ...theme,
         paragraph: theme.description,
         linkTitle: LABELS.VIEW_ALL_THEMES,
-      };
-    });
+      }))
+      .filter((theme) => theme.image !== null);
   }
 
   get themes_query() {
