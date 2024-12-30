@@ -16,10 +16,6 @@ const BLOCK_TYPES = {
 const AcSectionsHandler = ({ contents = [] }) => {
   const _CLASSES = clsx('ac-sections');
 
-  useEffect(() => {
-    console.log(contents);
-  }, [contents]);
-
   return (
     <div class={_CLASSES}>
       {contents.map((content, index) => {

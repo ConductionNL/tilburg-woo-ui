@@ -20,6 +20,10 @@ export const PATHS = AcLockObject({
   SEARCH_STATIC: '/zoeken',
 });
 
+export const NAVIGATE_TO = AcLockObject({
+  PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
+});
+
 export const ROUTES = {
   HOME: {
     id: AcUUID(),
