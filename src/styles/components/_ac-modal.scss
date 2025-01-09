@@ -73,5 +73,5 @@
 }
 
 body:has(.ac-modal[open]) {
-  overflow-y: hidden;
+  overflow-y: clip;
 }
