@@ -2,10 +2,10 @@
   &.utrecht-link {
     padding: 0;
     border: none;
-    text-decoration: underline;
+    text-decoration: none;
 
     &:where(:hover, :focus-visible) {
-      text-decoration: none;
+      text-decoration: underline;
     }
   }
 
