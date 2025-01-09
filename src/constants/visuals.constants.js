@@ -34,6 +34,9 @@ const INFO_BLUE = loadable(() =>
   import('-!svg-react-loader!@assets/images/info-blue.svg')
 );
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
+const LIST_ALT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/list-alt.svg')
+);
 const LIST_BLUE = loadable(() =>
   import('-!svg-react-loader!@assets/images/list-blue.svg')
 );
@@ -44,6 +47,9 @@ const QUESTION_MARK = loadable(() =>
 );
 const SEARCH = loadable(() =>
   import('-!svg-react-loader!@assets/images/search.svg')
+);
+const SEARCH_ALT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/search-alt.svg')
 );
 const DOCUMENT = loadable(() =>
   import('-!svg-react-loader!@assets/images/document.svg')
@@ -64,11 +70,13 @@ export const VISUALS = {
   INFO,
   INFO_BLUE,
   LIST,
+  LIST_ALT,
   LIST_BLUE,
   LOGO,
   MENU,
   QUESTION_MARK,
   SEARCH,
+  SEARCH_ALT,
 };
 
 export default {};

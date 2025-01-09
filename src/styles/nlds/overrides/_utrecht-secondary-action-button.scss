@@ -1,0 +1,8 @@
+.utrecht-button--secondary-action {
+    color: var(--tilburg-color-blue-400) !important;
+    border-color: var(--tilburg-color-blue-400) !important;
+
+    &:not(:hover, :focus-visible) {
+        background-color: transparent !important;
+    }
+}
