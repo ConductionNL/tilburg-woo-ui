@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { VISUALS } from '@constants';
+import { VISUALS, LABELS, LABELS_DYNAMIC } from '@constants';
 import {
   FormLabel,
   Textbox,
@@ -17,10 +17,6 @@ const AcSearchFilter = ({
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
   const [resultCount, setResultCount] = useState(null);
-
-  const getResultText = (count) => {
-    return count === 1 ? 'resultaat' : 'resultaten';
-  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -62,7 +58,7 @@ const AcSearchFilter = ({
       {currentSearchTerm && (
         <div className='ac-search-filter__results'>
           Gezocht op: <strong>{currentSearchTerm}</strong> ({resultCount}{' '}
-          {getResultText(resultCount)})
+          {LABELS_DYNAMIC.RESULTS(resultCount).toLowerCase()})
           <br />
           <button onClick={clearSearch}>Wis zoekopdracht</button>
         </div>
