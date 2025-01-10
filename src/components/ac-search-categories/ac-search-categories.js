@@ -6,13 +6,13 @@ import { LABELS, VISUALS } from '@constants';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { withStore } from '@stores';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const hostname = window.location.hostname;
 
 const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
@@ -57,7 +57,7 @@ const AcSearchCategories = ({ store: { publications } }) => {
       <AcFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
         <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
-          {hostname === 'vng.opencatalogi.nl' ? (
+          {AcCheckIfSpecificHostname() ? (
             <VISUALS.QUESTION_MARK_VNG />
           ) : (
             <VISUALS.QUESTION_MARK />

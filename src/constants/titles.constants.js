@@ -1,10 +1,9 @@
 import { AcLockObject } from '@utils/ac-lock-object';
-
-const hostname = window.location.hostname;
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 export const TITLES = AcLockObject({
   ACTIVATE: 'Activeren',
-  BASE: hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg',
+  BASE: AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg',
   CONVERSATIONS: 'Meldingen',
   DOCUMENTS: 'Documenten',
   FAQ: 'Veelgestelde vragen',

@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import { LABELS, VISUALS } from '@constants';
 import { Link, useLocation } from 'react-router-dom';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 const AcNavigation = () => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  const hostname = window.location.hostname;
   const pathname = window.location.pathname;
 
   useEffect(() => {
@@ -24,7 +24,7 @@ const AcNavigation = () => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {hostname === 'vng.opencatalogi.nl' ? (
+        {AcCheckIfSpecificHostname() ? (
           <>
             {pathname !== '/mijn-omgeving' ? (
               <ul>

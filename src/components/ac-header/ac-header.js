@@ -9,12 +9,12 @@ import { AcBreadcrumbs } from '@molecules';
 import { AcContainer, AcLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 const AcHeader = ({ store }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
-  const hostname = window.location.hostname;
 
   return (
     <header className='ac-header'>
@@ -27,7 +27,7 @@ const AcHeader = ({ store }) => {
             <div>
               <AcLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              {hostname === 'vng.opencatalogi.nl' ? (
+              {AcCheckIfSpecificHostname() ? (
                 <span class='logo-text'>Softwarecatalogus</span>
               ) : (
                 <span class='logo-text'>Open Tilburg</span>
@@ -37,7 +37,7 @@ const AcHeader = ({ store }) => {
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <AcLogo variant='header' />
-                {hostname === 'vng.opencatalogi.nl' ? (
+                {AcCheckIfSpecificHostname() ? (
                   <span class='logo-text'>Softwarecatalogus</span>
                 ) : (
                   <span class='logo-text'>Open Tilburg</span>

@@ -81,10 +81,10 @@ export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
             infoArray.push([
               _.upperFirst(key),
               <span>
-                {value.split(',')?.map((_value, idx) => (
+                {value.split(/ *, */g)?.map((_value, idx) => (
                   <AcLink href={_value.replace(/\s/g, '')}>
                     {_value.replace(/\s/g, '')}
-                    {idx < value.split(',')?.length - 1 ? ', ' : ''}{' '}
+                    {idx < value.split(/ *, */g)?.length - 1 ? ', ' : ''}{' '}
                   </AcLink>
                 ))}
               </span>,
@@ -93,10 +93,10 @@ export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
             infoArray.push([
               _.upperFirst(key),
               <span className='ac-publication-products'>
-                {value.split(',')?.map((_value, idx) => (
+                {value.split(/ *, */g)?.map((_value, idx) => (
                   <span>
                     {_value.replace(/\s/g, '')}
-                    {idx < value.split(',')?.length - 1 ? ', ' : ''}{' '}
+                    {idx < value.split(/ *, */g)?.length - 1 ? ', ' : ''}{' '}
                   </span>
                 ))}
               </span>,
@@ -110,7 +110,6 @@ export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
           ]);
           break;
         default:
-          console.log('default', key);
           infoArray.push([_.upperFirst(key), <span>{value}</span>]);
           break;
       }

@@ -12,13 +12,15 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+
 import AcGrid from '@atoms/ac-grid/ac-grid';
 
 const AcHome = ({ store: { pages, publications, themes } }) => {
   const { fetchPage, resetPage, get_single } = pages;
   const { getSearchPageURL } = publications;
   const { all_themes, fetchThemes } = themes;
-  const hostname = window.location.hostname;
+
 
   useEffect(() => {
     fetchPage('/home');
@@ -46,7 +48,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
           <AcColumn gap='tiger'>
             <AcColumn>
               <Heading>{LABELS.THEMES}</Heading>
-              {hostname === 'vng.opencatalogi.nl' ? (
+              {AcCheckIfSpecificHostname() ? (
                 <Paragraph>
                   Bekijk het overzicht van onderwerpen die relevant zijn voor
                   gemeenten en leveranciers binnen het domein van gemeentelijke ICT.

@@ -1,5 +1,6 @@
 import { AcContainer, AcLogo } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 import {
   EXTERNAL_LINKS,
   FOOTER_ITEMS,
@@ -9,16 +10,15 @@ import {
 } from '@constants/routes.constants';
 import { Link } from 'react-router-dom';
 
-const hostname = window.location.hostname;
-
 const AcFooter = () => {
+
   return (
     <footer className='ac-footer'>
       <h2 className='sr-only'>Footer</h2>
       <AcContainer
-        className={hostname === 'vng.opencatalogi.nl' ? 'ac-footer__container' : ''}
+        className={AcCheckIfSpecificHostname() ? 'ac-footer__container' : ''}
       >
-        {hostname === 'vng.opencatalogi.nl' ? (
+        {AcCheckIfSpecificHostname() ? (
           <>
             <nav className='ac-footer__links' aria-label='Footer menu 1'>
               {VNG_FOOTER_ITEMS_SITEMAP.map((item, index) =>
@@ -85,7 +85,7 @@ const AcFooter = () => {
         <div class='ac-footer__logo'>
           <AcLogo variant='footer' />
 
-          {hostname === 'vng.opencatalogi.nl' ? (
+          {AcCheckIfSpecificHostname() ? (
             <></>
           ) : (
             <span>

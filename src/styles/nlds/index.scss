@@ -3,7 +3,7 @@
 @use "tokens-logo";
 @use "tokens-custom";
 @use "tokens-vng";	
-
+@use "tokens-dimpact";
 
 // Extends.
 @use "extends";
@@ -15,4 +15,5 @@
 @import '@amsterdam/design-system-css/dist/date-input/date-input.css';
 @import '@conduction/theme/municipalities/opencatalogi-design-tokens/dist/index.css';
 @import '@conduction/theme/municipalities/rotterdam-design-tokens/dist/index.css';
+@import '@conduction/theme/municipalities/dimpact-design-tokens/dist/index.css';
 @import '@nl-design-system-unstable/rotterdam-design-tokens/dist/index.css';

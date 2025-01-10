@@ -53,6 +53,10 @@ const App = ({ store }) => {
         return 'vng-theme';
       case 'open-tilburg.accept.commonground.nu':
         return 'tilburg-theme';
+      case 'open-dimpact.accept.commonground.nu':
+        return 'dimpact-theme';
+      case 'open-rotterdam.accept.commonground.nu':
+        return 'rotterdam-theme';
       case 'localhost':
         return 'rotterdam-theme';
       default:
