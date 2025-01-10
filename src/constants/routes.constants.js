@@ -15,6 +15,8 @@ import {
   AcMijnOmgeving,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+
 
 export const PATHS = AcLockObject({
   HOME: '/',
@@ -29,17 +31,13 @@ export const PATHS = AcLockObject({
   MIJN_OMGEVING_STATIC: '/mijn-omgeving',
 });
 
-const hostname = window.location.hostname;
-
 export const ROUTES = {
   HOME: {
     id: AcUUID(),
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: `Home | ${
-      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
-    }`,
+    title: `Home | ${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'}`,
     component: AcHome,
   },
   PUBLICATION: {
@@ -47,9 +45,7 @@ export const ROUTES = {
     name: 'Publication',
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
-    title: `${
-      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
-    } | Publicatie`,
+    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Publicatie`,
     component: AcPublication,
   },
   SEARCH: {
@@ -57,9 +53,7 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: `${
-      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
-    } | Zoeken`,
+    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Zoeken`,
     component: AcSearch,
   },
   AUTHENTICATION: {
@@ -83,9 +77,7 @@ export const ROUTES = {
     name: 'Themes',
     label: TITLES.THEMES,
     path: PATHS.THEMES,
-    title: `${
-      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
-    } | Onderwerpen`,
+    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Onderwerpen`,
     component: AcThemes,
   },
   ABOUT: {
@@ -93,9 +85,7 @@ export const ROUTES = {
     name: 'Over Open Tilburg',
     label: TITLES.ABOUT,
     path: PATHS.ABOUT,
-    title: `${
-      hostname === 'vng.opencatalogi.nl' ? 'Softwarecatalogus' : 'Open Tilburg'
-    } | Over`,
+    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Over`,
   },
   CONTACT: {
     id: AcUUID(),

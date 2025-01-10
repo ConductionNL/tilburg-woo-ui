@@ -13,11 +13,11 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
 import { AcBuildURLSearchParams } from '@utils';
+import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 const AcSubjects = ({ store: { publications, themes } }) => {
   const { fetchPublications, is_loading, getSearchPageURL } = publications;
   const { fetchThemes, all_themes } = themes;
-  const hostname = window.location.hostname;
 
   useEffect(() => {
     fetchThemes();
@@ -55,7 +55,7 @@ const AcSubjects = ({ store: { publications, themes } }) => {
         <AcColumn gap='tiger'>
           <AcColumn>
             <Heading>{LABELS.THEMES}</Heading>
-            {hostname === 'vng.opencatalogi.nl' ? (
+            {AcCheckIfSpecificHostname() ? (
               <Paragraph>
                 Op deze pagina vindt u een overzicht van onderwerpen die relevant
                 zijn voor gemeenten en leveranciers binnen het domein van

@@ -9,6 +9,27 @@ const apiUrl = () => {
   switch (hostname) {
     case 'vng.opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'open-dimpact.accept.commonground.nu':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'open-rotterdam.accept.commonground.nu':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'open-migrato.accept.commonground.nu':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'localhost':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    default:
+      return process.env.API_URL;
+  }
+};
+
+const commongroundApiUrl = () => {
+  switch (hostname) {
+    case 'vng.opencatalogi.nl':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'open-dimpact.accept.commonground.nu':
+      return 'https://dimpact.accept.commonground.nu/apps/opencatalogi';
+    case 'open-rotterdam.accept.commonground.nu':
+      return 'https://rotterdam.accept.commonground.nu/apps/opencatalogi';
     case 'open-tilburg.accept.commonground.nu':
       return 'https://tilburg.accept.commonground.nu/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
@@ -21,12 +42,9 @@ const apiUrl = () => {
 };
 
 // const _api_ = process.env.API_URL;
-const _api_ =
-  hostname === 'vng.opencatalogi.nl'
-    ? 'https://directory.opencatalogi.nl/apps/opencatalogi'
-    : process.env.API_URL;
+const _api_ = apiUrl();
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
-const _api_commonground_ = apiUrl();
+const _api_commonground_ = commongroundApiUrl();
 
 const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
 const _api_commonground_organization_oin_ =
