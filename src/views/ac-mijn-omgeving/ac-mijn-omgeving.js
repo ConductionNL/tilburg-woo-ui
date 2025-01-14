@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AcSearchFilters, AcSearchResult } from '@molecules';
+import { AcSearchFilters, AcSearchResult, AcLink, AcTable } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
 import { AcSearchBox, AcSearchSort } from '@components';
@@ -12,14 +12,28 @@ import {
   Alert,
   Heading,
   Paragraph,
+  BadgeCounter,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
+import AcSideNav from './ac-side-nav';
+import {
+  Sidenav,
+  SidenavList,
+  SidenavItem,
+  SidenavLink,
+  SidenavLinkLabel,
+} from '@gemeente-denhaag/components-react';
+import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 
 const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [tabIndex, setTabIndex] = useState(0);
+  const [catalogId, setCatalogId] = useState(null);
+  const [publicationTypeId, setPublicationTypeId] = useState(null);
+  const [selectedPublicationType, setSelectedPublicationType] = useState(null);
 
   const {
     search_query,
@@ -35,6 +49,26 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     resetSearchQuery,
     resetAggregations,
   } = mijnOmgeving;
+
+  const getSelectedPublicationType = (catalog_id, publication_type_id) => {
+    console.log(catalog_id, publication_type_id);
+    const catalog = all_publications.find((catalog) => catalog.id === catalog_id);
+    console.log(catalog);
+    const publicationType = catalog.publicationTypes.find(
+      (publicationType) => publicationType.id === publication_type_id
+    );
+    setSelectedPublicationType(publicationType);
+  };
+
+  const publicationRow = () => {
+    const test = JSON.parse(JSON.stringify(selectedPublicationType));
+    console.log(test.title);
+
+    return [
+      <span>{test.title}</span>,
+      <span>{test.summary || 'Geen samenvatting beschikbaar'}</span>,
+    ];
+  };
 
   const setQuery = () => {
     updateQuery(AcSearchParamsToObject(searchParams));
@@ -98,6 +132,32 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     setSearchQuery(query);
   };
 
+  const users = [
+    {
+      name: 'Lisa',
+      last_name: 'Smith',
+      function: 'Developer',
+    },
+    {
+      name: 'Bram',
+      last_name: 'van der Veen',
+      function: 'Manager',
+    },
+    {
+      name: 'Jeroen',
+      last_name: 'Molenaar',
+      function: 'Lead Developer',
+    },
+  ];
+
+  const mapConfigurationRow = (row) => {
+    return [
+      <span>{row.name}</span>,
+      <span>{row.last_name}</span>,
+      <span>{row.function}</span>,
+    ];
+  };
+
   const screenReaderText = useMemo(() => {
     if (is_loading === true) {
       return LABELS.SEARCH_RESULTS_LOADING;
@@ -136,32 +196,99 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
   return (
     <>
-      <AcContainer spacing='lg'>
-        <AcCard blue padding='md'>
-          <AcSearchBox
-            page='search'
-            onSubmitCallback={onSearchSubmit}
-            label={LABELS.SEARCH}
-            defaultValue={search_query._search}
-          />
-        </AcCard>
-      </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
-        <AcFlex spacing='xl' className='ac-search-results'>
-          <AcSearchFilters />
+        <AcFlex spacing='xl'>
+          <Sidenav>
+            <SidenavList>
+              <SidenavItem>
+                <SidenavLink current href='/#'>
+                  <VISUALS.USERS />
+                  Gebruikers
+                </SidenavLink>
+              </SidenavItem>
+              <SidenavItem>
+                <SidenavLink href='/#'>
+                  <VISUALS.CUBE />
+                  Voorzieningen
+                </SidenavLink>
+              </SidenavItem>
+              <SidenavItem>
+                <SidenavLink href='/#'>
+                  <VISUALS.HAND_HOLDING />
+                  Aanbod
+                </SidenavLink>
+              </SidenavItem>
+              <SidenavItem>
+                <SidenavLink href='/#'>
+                  <VISUALS.BUILDING />
+                  Organisaties
+                </SidenavLink>
+              </SidenavItem>
+              <SidenavItem>
+                <SidenavLink href='/#'>
+                  <VISUALS.TRUCK />
+                  Leveranciers
+                </SidenavLink>
+              </SidenavItem>
+            </SidenavList>
+          </Sidenav>
+          {/* {all_publications && (
+            <AcTabs
+              className='ac-mijn-omgeving-tabs'
+              selectedIndex={tabIndex}
+              onSelect={(index) => {
+                setTabIndex(index);
+                setCatalogId(all_publications[index].id);
+              }}
+            >
+              <AcTabList>
+                {all_publications.map((catalog, idx) => (
+                  <AcTab selected={tabIndex === idx}>
+                    <span>{catalog.title}</span>
+                    <BadgeCounter className='ac-publication-badge-counter'>
+                      {catalog?.publicationTypes?.length}
+                    </BadgeCounter>
+                  </AcTab>
+                ))}
+              </AcTabList>
+              {all_publications &&
+                all_publications.map((catalog, idx) => (
+                  <AcTabPanel
+                    selected={tabIndex === idx}
+                    className='ac-mijn-omgeving-tabpanels'
+                  >
+                    <Sidenav>
+                      <SidenavList>
+                        <SidenavItem>
+                          <SidenavLink>
+                            <span>Alles</span>
+                          </SidenavLink>
+                        </SidenavItem>
+                        {catalog.publicationTypes.map((item, index) => (
+                          <SidenavItem key={index} current={index === 0}>
+                            <SidenavLink
+                              onClick={() => {
+                                setPublicationTypeId(item.id);
+                                getSelectedPublicationType(catalog.id, item.id);
+                              }}
+                            >
+                              {item.title}
+                            </SidenavLink>
+                          </SidenavItem>
+                        ))}
+                      </SidenavList>
+                    </Sidenav>
+                  </AcTabPanel>
+                ))}
+            </AcTabs>
+          )} */}
+
           <AcFlex column grow spacing='xs'>
-            <div className='sr-only' aria-live='polite' aria-atomic='true'>
-              {screenReaderText}
-            </div>
             <AcFlex column spacing='sm' margin='sm'>
-              <AcFlex justifyContent='between'>
-                <Heading level={2}>{LABELS.SEARCH_RESULTS}</Heading>
-                <div className='desktop-sorting'>
-                  <AcSearchSort type='alt' />
-                </div>
-              </AcFlex>
-              {renderPublications}
-              {pagination?.pages > 1 && renderPagination}
+              <AcTable
+                header={['Voornaam', 'Achternaam', 'Functie']}
+                rows={users?.map((user) => mapConfigurationRow(user))}
+              />
             </AcFlex>
           </AcFlex>
         </AcFlex>

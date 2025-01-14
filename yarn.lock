@@ -2686,6 +2686,620 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@gemeente-denhaag/accordion@npm:0.2.3-alpha.422":
+  version: 0.2.3-alpha.422
+  resolution: "@gemeente-denhaag/accordion@npm:0.2.3-alpha.422"
+  checksum: 10c0/f25fafe483ccf2757c7d15aa96af444b02e93a7b70f767deed1e8b03acd7d7601cd9bb5cc73bb5003dead93ea98a8fe6bc6468a2a97cb96572ff6f8f1b4990c3
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/action@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@gemeente-denhaag/action@npm:0.1.2"
+  dependencies:
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@gemeente-denhaag/utils": "npm:0.2.3-alpha.421"
+    date-fns: "npm:3.6.0"
+  checksum: 10c0/7b19e1e06108307bdfadc40a94cbd01040dead77ac59e8603ada19336b4a4f04e5c9d0611657022eeced09cf31ad09fddda3d3185bb42ab3ce3e28143a9b6d3d
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/alert@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@gemeente-denhaag/alert@npm:0.1.3"
+  dependencies:
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/iconbutton": "npm:0.2.3-alpha.422"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/typography": "npm:0.2.4"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/5e6a90116303af4cf9d23c26f02ad28549340b9da17b40a2aa5b4fa68b2b5d4ced20d031568773e5a26cb29698063b2b46aad4a6c766d3b6d301208cb6a12e3d
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/badge-counter@npm:0.3.0-alpha.422":
+  version: 0.3.0-alpha.422
+  resolution: "@gemeente-denhaag/badge-counter@npm:0.3.0-alpha.422"
+  dependencies:
+    "@utrecht/component-library-react": "npm:7.0.0"
+    "@utrecht/components": "npm:7.3.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/77c341d053c9c26967f668b62c66a8a4cc34bc5fa42c3241b2e8222338a80ce0049d0c23035c003bbf0f670108412be5eb42c8d31325660ac7bd875b9cfb00f8
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/breadcrumb@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@gemeente-denhaag/breadcrumb@npm:0.1.1"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@gemeente-denhaag/responsive-content": "npm:0.1.1-alpha.282"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/b38f58b17e8921ff2c168b467b43119d4b06c00e2732bd5d68c8b394d5d91d32b7959973b0186d4ac8346665ee1f78b0035e6f0b289b6c72b5eac8d3793b32bd
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/button-group@npm:0.1.1-alpha.291":
+  version: 0.1.1-alpha.291
+  resolution: "@gemeente-denhaag/button-group@npm:0.1.1-alpha.291"
+  checksum: 10c0/b1d8e6d5cbef55a097edf56a04c9ebb0d9672cd8e62f2168a37978f1750d8eb0bbb6bc131865bbf28bb05df14eff3c5e5e7f768363c1f7c2a2ec05e146bc4d07
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/button@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@gemeente-denhaag/button@npm:0.2.3"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/4e0d3bb435149bfb0994e4b2aa4f048d0d4d7b0be9e92ce0abbbd5d02271db90094832b68808a66ca24324693f14024dcd4407a03787c908af4bfda0386cae24
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/card-authentication@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@gemeente-denhaag/card-authentication@npm:0.1.3"
+  dependencies:
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/button-group": "npm:0.1.1-alpha.291"
+    "@gemeente-denhaag/card": "npm:0.2.5"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+  checksum: 10c0/f987b7225a359aa65cfcb620ec99fc0c1f111dceb792c2a7122bca4d62d91ddb3ccf013b1fa7338e0b7b2bcbe27481e59ab394be3339bb5742f47998f6700f4a
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/card-group@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@gemeente-denhaag/card-group@npm:0.1.3"
+  dependencies:
+    "@gemeente-denhaag/card-authentication": "npm:0.1.3"
+  checksum: 10c0/8ee5aed7776b0dda2a0af03bed3b5fb502836d84bc6feeb4326687ec17754211bd99e6e58708e12e95a052abd4081c807e58b7b354ba805e70207d36f719f004
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/card@npm:0.2.5":
+  version: 0.2.5
+  resolution: "@gemeente-denhaag/card@npm:0.2.5"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@gemeente-denhaag/typography": "npm:0.2.4"
+    "@gemeente-denhaag/utils": "npm:0.2.3-alpha.421"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/a338ec34efa471c2802dcbcda8777efd9a1458a26973b1242c66fa46520590f85252a7fd665f5ab1c3e060b7097809e8c428f35b94f07a8265b2ac0e765f5677
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/checkbox@npm:0.3.0-alpha.422":
+  version: 0.3.0-alpha.422
+  resolution: "@gemeente-denhaag/checkbox@npm:0.3.0-alpha.422"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/335f1cb9869653099e0aec3e7cb689f665c73f4f902dddf754ce4b7a20f8363b8eb9f9a5c2a7f3bd48d42aecdd490401b6cc2dd26b2cd189366e434509521535
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/components-react@npm:^0.1.5":
+  version: 0.1.5
+  resolution: "@gemeente-denhaag/components-react@npm:0.1.5"
+  dependencies:
+    "@gemeente-denhaag/accordion": "npm:0.2.3-alpha.422"
+    "@gemeente-denhaag/action": "npm:0.1.2"
+    "@gemeente-denhaag/alert": "npm:0.1.3"
+    "@gemeente-denhaag/badge-counter": "npm:0.3.0-alpha.422"
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/card": "npm:0.2.5"
+    "@gemeente-denhaag/card-group": "npm:0.1.3"
+    "@gemeente-denhaag/checkbox": "npm:0.3.0-alpha.422"
+    "@gemeente-denhaag/contact-timeline": "npm:0.1.3"
+    "@gemeente-denhaag/descriptionlist": "npm:1.0.0"
+    "@gemeente-denhaag/divider": "npm:0.2.3"
+    "@gemeente-denhaag/file": "npm:0.1.1"
+    "@gemeente-denhaag/footer": "npm:0.1.2"
+    "@gemeente-denhaag/form-field": "npm:0.3.0-alpha.298"
+    "@gemeente-denhaag/form-field-description": "npm:0.3.0-alpha.55"
+    "@gemeente-denhaag/form-field-error-message": "npm:0.3.0-alpha.55"
+    "@gemeente-denhaag/form-fieldset": "npm:0.3.0-alpha.55"
+    "@gemeente-denhaag/form-label": "npm:0.3.0-alpha.55"
+    "@gemeente-denhaag/form-progress": "npm:0.1.1"
+    "@gemeente-denhaag/header": "npm:0.1.3"
+    "@gemeente-denhaag/iconbutton": "npm:0.2.3-alpha.422"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@gemeente-denhaag/link-button": "npm:0.0.1-alpha.49"
+    "@gemeente-denhaag/list": "npm:0.2.3"
+    "@gemeente-denhaag/menu": "npm:0.2.3"
+    "@gemeente-denhaag/page": "npm:0.1.1-alpha.282"
+    "@gemeente-denhaag/pagination": "npm:0.1.1-alpha.349"
+    "@gemeente-denhaag/process-steps": "npm:0.1.2"
+    "@gemeente-denhaag/radio-button": "npm:0.3.0-alpha.55"
+    "@gemeente-denhaag/responsive-content": "npm:0.1.1-alpha.282"
+    "@gemeente-denhaag/select": "npm:0.3.0-alpha.19"
+    "@gemeente-denhaag/sheet": "npm:0.1.0-alpha.218"
+    "@gemeente-denhaag/sidenav": "npm:0.1.0-alpha.240"
+    "@gemeente-denhaag/status-badge": "npm:0.3.0-alpha.28"
+    "@gemeente-denhaag/stylesprovider": "npm:0.1.1-alpha.422"
+    "@gemeente-denhaag/tab": "npm:0.2.3-alpha.422"
+    "@gemeente-denhaag/table": "npm:0.1.1"
+    "@gemeente-denhaag/text-input": "npm:0.3.0-alpha.422"
+    "@gemeente-denhaag/textarea": "npm:0.3.0-alpha.55"
+    "@gemeente-denhaag/typography": "npm:0.2.4"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/e1b770dc65d5e4e87c1235e2cf10dedd0ca8dd6c0c8a594bd86d6c3f1e52343c574ca5e1cef0088ecb59d2957aa71978a70fd3ffe90b44b90a861a1e8104b2fa
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/contact-timeline@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@gemeente-denhaag/contact-timeline@npm:0.1.3"
+  dependencies:
+    "@gemeente-denhaag/file": "npm:0.1.1"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/process-steps": "npm:0.1.2"
+    "@gemeente-denhaag/step-marker": "npm:0.0.1-alpha.123"
+    "@gemeente-denhaag/typography": "npm:0.2.4"
+    "@gemeente-denhaag/utils": "npm:0.2.3-alpha.421"
+    clsx: "npm:2.1.1"
+  checksum: 10c0/59ce507de2774538a1d400aceac04df74ee57977cb39da46edaf0fafb85fc4be8cc06f09c8673248be793b482d4983b4647b915c9f21818bd173f68726ec02be
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/descriptionlist@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@gemeente-denhaag/descriptionlist@npm:1.0.0"
+  checksum: 10c0/ce3f73717c6992a93b404b927c1f4d8283b327dc05facc30abc7ef1314812109ea959531b0f2da30bc82f6eacd94928b0c06837071facee557084c8cc73dea3e
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/design-tokens-common@npm:0.2.3-alpha.424":
+  version: 0.2.3-alpha.424
+  resolution: "@gemeente-denhaag/design-tokens-common@npm:0.2.3-alpha.424"
+  checksum: 10c0/b04674ab524fa4db73374d18bb70d4362ebd83379b9d73ec504ac4aa98c7a9eafbaf20dec92b13c44c761517ba1f713c9eca9b1ac8c86ccb1b5d45098f67c400
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/design-tokens-components@npm:0.2.4":
+  version: 0.2.4
+  resolution: "@gemeente-denhaag/design-tokens-components@npm:0.2.4"
+  checksum: 10c0/846fd5ca00a143ed197722b36a3d8d569c098b94b96351d21494a398debf3524d95b820ce6d3e8be50e0b1cfe1176fe10d9e7ffaf1cde95961a17ce0e65d49d8
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/divider@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@gemeente-denhaag/divider@npm:0.2.3"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/1946d120b45008bb2546c42edabd2b2ce4f681a87738f675f18a115cb1df8a0016d14bf06f533e8f85c18413ab14977d003f18358a73d18f6a3208cc2de9b6f2
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/file@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@gemeente-denhaag/file@npm:0.1.1"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+  checksum: 10c0/f0001ceeea19438f74a3c808964c9ecc2cdeb7b3a03cc8fcd48bbda6ef16a3a0e5e3ade7dd34d34d15d02b6f64d4ece90845570d6a8707c9e5b7bca67209b2c7
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/footer@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@gemeente-denhaag/footer@npm:0.1.2"
+  dependencies:
+    "@gemeente-denhaag/button-group": "npm:0.1.1-alpha.291"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@gemeente-denhaag/link-group": "npm:0.1.3-alpha.283"
+    "@gemeente-denhaag/list": "npm:0.2.3"
+    "@gemeente-denhaag/responsive-content": "npm:0.1.1-alpha.282"
+    "@utrecht/component-library-css": "npm:4.1.0"
+    "@utrecht/component-library-react": "npm:4.2.0"
+  checksum: 10c0/811047672ec3c2f44965744cad535ae7983791c1fe6976d0af99f98ce9a92e084353f182193189e9ac01ff27eb2205d9d2d2851908c5c88a9c6edc93f11c6804
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/form-field-description@npm:0.3.0-alpha.55":
+  version: 0.3.0-alpha.55
+  resolution: "@gemeente-denhaag/form-field-description@npm:0.3.0-alpha.55"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/5282c92346777f2789ad761a03caff96d0aa6a62e1b7dbdabbae56d3bf0cbef548adfba21b04145c6eb438b6588b5e5b7d4cccfd1ffdc7c6182541a0cb55e299
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/form-field-error-message@npm:0.3.0-alpha.55":
+  version: 0.3.0-alpha.55
+  resolution: "@gemeente-denhaag/form-field-error-message@npm:0.3.0-alpha.55"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/e3fed35b9916a56e84dd4203d5d97b0b6c74026a35f818108b4faf4170aa567e23703688db08e7d108479e13f469542b08d732c5a26cad448e9af43c00206657
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/form-field@npm:0.3.0-alpha.298":
+  version: 0.3.0-alpha.298
+  resolution: "@gemeente-denhaag/form-field@npm:0.3.0-alpha.298"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/92f5014458e3d245a98c7a28302aaabb7f9052d0d7ad33d6be239ee417a703af8cb8b5f368f170288be3a9ab15f2e23ad9337a98880f956d1217ecd8fe6b429f
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/form-fieldset@npm:0.3.0-alpha.55":
+  version: 0.3.0-alpha.55
+  resolution: "@gemeente-denhaag/form-fieldset@npm:0.3.0-alpha.55"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/788bab0121ada809d4bb2198a5a89fdc77b6a646e4e4f14a6a5173b3399d25c10b5fd1bd00f0d8651713c944f2e49fe1138ceb2aeb6773d22853ee05e28896f3
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/form-label@npm:0.3.0-alpha.55":
+  version: 0.3.0-alpha.55
+  resolution: "@gemeente-denhaag/form-label@npm:0.3.0-alpha.55"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/9414661707f70e125ab07a576c157c6e34017f0e115eeed43ab925f41007b18bf07e812e640b45f029d654803fa14292264043fdf63074af586703d50a10326e
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/form-progress@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@gemeente-denhaag/form-progress@npm:0.1.1"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/1bb80917abd59728128fa617f72c23e1c298ecde3be769c8fb1633cf1890df5e1b78f4114995eb84304948d35b2b9c281d2f07c3f11ac151f3bfe4245e8630d9
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/header-logo@npm:0.1.1-alpha.282":
+  version: 0.1.1-alpha.282
+  resolution: "@gemeente-denhaag/header-logo@npm:0.1.1-alpha.282"
+  checksum: 10c0/3b26e3a2f14203c9aa740661457ec05c24dd14be954ade4b0a17b8aadaa650b2c9c88a4a2c8c56f5281710ddab8b21d899ce9e5d18af0a28273d7b7eef91bcf6
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/header@npm:0.1.3":
+  version: 0.1.3
+  resolution: "@gemeente-denhaag/header@npm:0.1.3"
+  dependencies:
+    "@gemeente-denhaag/breadcrumb": "npm:0.1.1"
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/header-logo": "npm:0.1.1-alpha.282"
+    "@gemeente-denhaag/iconbutton": "npm:0.2.3-alpha.422"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/language-switcher": "npm:0.2.3"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@gemeente-denhaag/link-group": "npm:0.1.3-alpha.283"
+    "@gemeente-denhaag/menu": "npm:0.2.3"
+    "@gemeente-denhaag/responsive-content": "npm:0.1.1-alpha.282"
+    "@gemeente-denhaag/sheet": "npm:0.1.0-alpha.218"
+    "@gemeente-denhaag/typography": "npm:0.2.4"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/5b0028371aac8b099eaccb0d2de7b9ef19779bfd342a540bd3f5c7bc07c4ca1a47310b9d288afbf7fd185b0fe84279db1f0b7e3e7c7cdb5db48e44517e8b3f81
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/iconbutton@npm:0.2.3-alpha.422":
+  version: 0.2.3-alpha.422
+  resolution: "@gemeente-denhaag/iconbutton@npm:0.2.3-alpha.422"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/ca31f89c887e6caf76cffd6d8e03d3adbcf4547280bdf4abbdda5bf44cdf7a9a7e077b507c92bfa9c13c6378cff026c457d95cc41c90da6f674b8ac8a5c383c0
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/icons@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@gemeente-denhaag/icons@npm:1.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/932a73cafc3f56d35483be60d342ee89e342bcb824a8d1ef5bacc1d727ab73d4b6a19bf778e4311292c29cf93c0534f2038e45aacab6e05f900ef5ceb2ae5a61
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/language-switcher@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@gemeente-denhaag/language-switcher@npm:0.2.3"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/link": "npm:0.2.3"
+    "@utrecht/component-library-react": "npm:4.2.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/d07737c7b48dda830491ca134132457b7d8f3317a01e4345642bb06172d239e00c2bf15c681390b04126600962b03f21b671cfa4113e59e8d77f5abb37f41773
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/link-button@npm:0.0.1-alpha.49":
+  version: 0.0.1-alpha.49
+  resolution: "@gemeente-denhaag/link-button@npm:0.0.1-alpha.49"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/4b818b99e5784d6a2eccb340969100a41b260a989deb917e2d8beafad70235bbd4024d74402150fb15a442e2d4a65b2b1c67d0307bffc48a5a4af5d069ebe726
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/link-group@npm:0.1.3-alpha.283":
+  version: 0.1.3-alpha.283
+  resolution: "@gemeente-denhaag/link-group@npm:0.1.3-alpha.283"
+  checksum: 10c0/617415583fa1d1fd61361fb33377d2ac518f527f29da090274e086b496a7937fe557adc44334b92ea6bad780c64b6b303832636149ebdd3d7c9e24ac58a60b32
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/link@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@gemeente-denhaag/link@npm:0.2.3"
+  dependencies:
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/c6bd0b0ade75b763214dd8dc7ba487df1f9f4f86ce30fe82b47788ce135922e04757baf28e6e340795460874ca9e672826bb1bfb48396578bb9d40c780ef73df
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/list@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@gemeente-denhaag/list@npm:0.2.3"
+  dependencies:
+    "@gemeente-denhaag/iconbutton": "npm:0.2.3-alpha.422"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/3f8febe0acbeb201fe3ede2df320b2509fb1469a7514cfc139405ca6130ab14c6224092f44c033becd5f0bd40739375b51e8a0e2f4c18f7e87b19634bcfe8b01
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/menu@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@gemeente-denhaag/menu@npm:0.2.3"
+  dependencies:
+    "@gemeente-denhaag/badge-counter": "npm:0.3.0-alpha.422"
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/language-switcher": "npm:0.2.3"
+    "@gemeente-denhaag/sheet": "npm:0.1.0-alpha.218"
+    "@types/uuid": "npm:10.0.0"
+    "@utrecht/component-library-css": "npm:4.1.0"
+    uuid: "npm:10.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/9333c893f321ae131eaa061a1ec975ca8c17777e74912ce2b00512bf03ceaa0a5bcda7a027f54306298bacfb42f48355db5e4bb0e92d1952f22f638798cec4f0
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/page@npm:0.1.1-alpha.282":
+  version: 0.1.1-alpha.282
+  resolution: "@gemeente-denhaag/page@npm:0.1.1-alpha.282"
+  checksum: 10c0/d31e7422bdcd996493c3c25f8f2a306cbec47e8edb7bd12383c5bb8519c542a56480b7f841799000a283fd6dba54dc93bb92e2dbbaa8b035ffb022e5af75117d
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/pagination@npm:0.1.1-alpha.349":
+  version: 0.1.1-alpha.349
+  resolution: "@gemeente-denhaag/pagination@npm:0.1.1-alpha.349"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/d9ba2913c93214adca8ed8ce4ee086c96aaa53ce6abed14987a2fb7823ffae5114c3bda5e18d7f3f1187cec1c42b47d0e25cc41e3bd6f9c3c9d583dd3004655a
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/process-steps@npm:0.1.2":
+  version: 0.1.2
+  resolution: "@gemeente-denhaag/process-steps@npm:0.1.2"
+  dependencies:
+    "@gemeente-denhaag/button": "npm:0.2.3"
+    "@gemeente-denhaag/icons": "npm:1.0.0"
+    "@gemeente-denhaag/step-marker": "npm:0.0.1-alpha.123"
+    "@gemeente-denhaag/typography": "npm:0.2.4"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/c2af2b2b1c412d03e787d424f1fa4217aad98bf45fa5c16f43c7a305468ab44b994e179a893586ceb8160ad48b7f140bc88129a8e97c1f074c8957e795c0977a
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/radio-button@npm:0.3.0-alpha.55":
+  version: 0.3.0-alpha.55
+  resolution: "@gemeente-denhaag/radio-button@npm:0.3.0-alpha.55"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/d5c8365d525926b2083353fb2ea428a26f4ba8263ce937eb56d692b3d9a8ebabf487dbaf7152372dabd88c23f8127699a8fbe92b625096c843448d025e1c603a
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/responsive-content@npm:0.1.1-alpha.282":
+  version: 0.1.1-alpha.282
+  resolution: "@gemeente-denhaag/responsive-content@npm:0.1.1-alpha.282"
+  checksum: 10c0/e51a51c5d3f7e99d7daaac2bb69c669243fbde40cf577ac961e257fa44287f7b7d98fb755c71128e98d50a68e58cd353d0fa741f65bc3101ac5cc7288395a7f1
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/select@npm:0.3.0-alpha.19":
+  version: 0.3.0-alpha.19
+  resolution: "@gemeente-denhaag/select@npm:0.3.0-alpha.19"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/2b05e2beabe59efb3d1cc3a797a7f6fe3497f840ea6daed5ba1690c8f9f4abfcf2b35607b21c8bf432212ba56a9197889e3853f30eb1187c5b74d100f19c6b1a
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/sheet@npm:0.1.0-alpha.218":
+  version: 0.1.0-alpha.218
+  resolution: "@gemeente-denhaag/sheet@npm:0.1.0-alpha.218"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/4e8960bf68ca6e3f26282df19031778badfa68eacc47a32c2ec8c709fa0cc3e6bc6502046f5567e3c843064371983f6c124c5fa7a3b2bf7081ee5f596ec6a501
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/sidenav@npm:0.1.0-alpha.240":
+  version: 0.1.0-alpha.240
+  resolution: "@gemeente-denhaag/sidenav@npm:0.1.0-alpha.240"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/9445990b197d38be9cdb4aeef56b8c8e658200e753ddeebf307a195107388adf3231821791411dd1993ff77a57b79936ad55ae6ee592dec942f38b423fbc6b44
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/status-badge@npm:0.3.0-alpha.28":
+  version: 0.3.0-alpha.28
+  resolution: "@gemeente-denhaag/status-badge@npm:0.3.0-alpha.28"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  checksum: 10c0/5c3e5704837ec35b949a849772f62a1e1d8e5b6d8001953b80e4f2feb6bf90b6a244ac23b13ff48b8c688d77ae63348c70836cd43e81bbce57af5f52871092f1
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/step-marker@npm:0.0.1-alpha.123":
+  version: 0.0.1-alpha.123
+  resolution: "@gemeente-denhaag/step-marker@npm:0.0.1-alpha.123"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/444d8cf625c55c9ffc3436fa8436fc68e61ad05986b1feda4a90ef0756fddd7ff76c9eb51000c9db849ed8cb9bb10962953247021590f3046f5eb814859a740f
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/stylesprovider@npm:0.1.1-alpha.422":
+  version: 0.1.1-alpha.422
+  resolution: "@gemeente-denhaag/stylesprovider@npm:0.1.1-alpha.422"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/1fad7a2635cab4adfeca9a806d3d2fc52c2d26054cd666046b28c8d1a01c2b2e93dbf894c9b803f283052708152cb0afc9fcae9a4131ebb5d4e1031f6db05b71
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/tab@npm:0.2.3-alpha.422":
+  version: 0.2.3-alpha.422
+  resolution: "@gemeente-denhaag/tab@npm:0.2.3-alpha.422"
+  dependencies:
+    uuid: "npm:10.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/1d40a01112556425438c0e76ad4d302e7fe4fe31666d7446796f03125ae3d78f711079fa315de2e350757b949cd7ac719c3163d4f60ae1ea81265f219f8e2edf
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/table@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@gemeente-denhaag/table@npm:0.1.1"
+  dependencies:
+    "@gemeente-denhaag/link": "npm:0.2.3"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/0eff15a6d82cab23be1d1b75e6d9bbe68776b34076f9f9db3e7eef47f1c92bfa13656fd0399e4462fe4b6eb44dfa0fdb770b7e0909a895b5d71019497301d201
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/text-input@npm:0.3.0-alpha.422":
+  version: 0.3.0-alpha.422
+  resolution: "@gemeente-denhaag/text-input@npm:0.3.0-alpha.422"
+  dependencies:
+    "@utrecht/component-library-react": "npm:7.2.0"
+    "@utrecht/components": "npm:7.4.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/7bcb5dd8b66088a157597358b7185646260211557ab1ff7c1ec3e15c4318bef2b29bac864be0f040de5f68d144ef0bda3490697498b26abcc0d4041a191f5262
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/textarea@npm:0.3.0-alpha.55":
+  version: 0.3.0-alpha.55
+  resolution: "@gemeente-denhaag/textarea@npm:0.3.0-alpha.55"
+  dependencies:
+    "@utrecht/component-library-react": "npm:4.2.0"
+    "@utrecht/components": "npm:6.1.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/0ff97d6bcba9753ea418430e0fbfc331f606fe0a7a5d1fbc0718ce3c1be2d74567e94183c6c969cced1325d0d0fbd38392a243569e0b45743fae2c65aee8de7a
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/typography@npm:0.2.4":
+  version: 0.2.4
+  resolution: "@gemeente-denhaag/typography@npm:0.2.4"
+  dependencies:
+    "@gemeente-denhaag/design-tokens-common": "npm:0.2.3-alpha.424"
+    "@gemeente-denhaag/design-tokens-components": "npm:0.2.4"
+    "@utrecht/component-library-react": "npm:6.0.0"
+    "@utrecht/components": "npm:7.0.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/53c1522d3a3473fbb0fc02408e70c91b9c55aca3e3ba5bf6cacf947f075331ff834e8efa25ef845b616b30df45602a93183d645ed9950402bfa1485d464adb44
+  languageName: node
+  linkType: hard
+
+"@gemeente-denhaag/utils@npm:0.2.3-alpha.421":
+  version: 0.2.3-alpha.421
+  resolution: "@gemeente-denhaag/utils@npm:0.2.3-alpha.421"
+  dependencies:
+    date-fns: "npm:3.6.0"
+  peerDependencies:
+    react: ^18.0.0
+  checksum: 10c0/b45db0cbfe00eeca4f3cb5d1b2931cc26ec439d481af21823222e673796d20c9838bc4f8d0414361a66cb3bf74f6276407668ca336bf88cac19d988b2f4ecd93
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.14":
   version: 0.11.14
   resolution: "@humanwhocodes/config-array@npm:0.11.14"
@@ -3984,6 +4598,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/uuid@npm:10.0.0":
+  version: 10.0.0
+  resolution: "@types/uuid@npm:10.0.0"
+  checksum: 10c0/9a1404bf287164481cb9b97f6bb638f78f955be57c40c6513b7655160beb29df6f84c915aaf4089a1559c216557dc4d2f79b48d978742d3ae10b937420ddac60
+  languageName: node
+  linkType: hard
+
 "@types/ws@npm:^8.5.5":
   version: 8.5.10
   resolution: "@types/ws@npm:8.5.10"
@@ -4157,6 +4778,109 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@utrecht/component-library-css@npm:4.1.0":
+  version: 4.1.0
+  resolution: "@utrecht/component-library-css@npm:4.1.0"
+  checksum: 10c0/c07ccadecb95b476ad1c01ed1767f582cb24c5fff189ebdb76d49be0a385cf919af27da9b9a05b2a468248e6c23d9cbc4f625df5ae24c60195fd479e51525867
+  languageName: node
+  linkType: hard
+
+"@utrecht/component-library-react@npm:4.2.0":
+  version: 4.2.0
+  resolution: "@utrecht/component-library-react@npm:4.2.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+    lodash.chunk: "npm:4.2.0"
+  peerDependencies:
+    "@babel/runtime": ^7.23.6
+    date-fns: ^2.30.0
+    react: 18
+    react-dom: 18
+    react-vega: ^7.6.0
+    vega: ^5.25.0
+  peerDependenciesMeta:
+    date-fns:
+      optional: true
+    react-vega:
+      optional: true
+    vega:
+      optional: true
+  checksum: 10c0/2c6b64aedabf3aa39df3e36b2be8d3ceecd9e1df6c5d2d22c7dc4d58c1e63af34d96f554a0155e17db5912f7b9ac1b40a096655c23ae6c9bc733461baf2ea764
+  languageName: node
+  linkType: hard
+
+"@utrecht/component-library-react@npm:6.0.0":
+  version: 6.0.0
+  resolution: "@utrecht/component-library-react@npm:6.0.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+    lodash.chunk: "npm:4.2.0"
+  peerDependencies:
+    "@babel/runtime": ^7.23.6
+    date-fns: ^2.30.0
+    react: 18
+    react-dom: 18
+    react-vega: ^7.6.0
+    vega: ^5.25.0
+  peerDependenciesMeta:
+    date-fns:
+      optional: true
+    react-vega:
+      optional: true
+    vega:
+      optional: true
+  checksum: 10c0/4ec7e86c7fa235ef71fa0563cec635d59de7f02b16d18edca389e525996a2b54a84765fd55af6a98a8a724258f156f1c10e12ef932529371cf1075cb2fa1f762
+  languageName: node
+  linkType: hard
+
+"@utrecht/component-library-react@npm:7.0.0":
+  version: 7.0.0
+  resolution: "@utrecht/component-library-react@npm:7.0.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+    lodash.chunk: "npm:4.2.0"
+  peerDependencies:
+    "@babel/runtime": ^7.23.6
+    date-fns: ^2.30.0
+    react: 18
+    react-dom: 18
+    react-vega: ^7.6.0
+    vega: ^5.25.0
+  peerDependenciesMeta:
+    date-fns:
+      optional: true
+    react-vega:
+      optional: true
+    vega:
+      optional: true
+  checksum: 10c0/ec870c92cad9c2da48fe54c37761c74ae870b6493755214770e513fe8c18de09446dd1063e20e35067666fb35eaa414bf743edd38c59c54ddc593ba5a6310dae
+  languageName: node
+  linkType: hard
+
+"@utrecht/component-library-react@npm:7.2.0":
+  version: 7.2.0
+  resolution: "@utrecht/component-library-react@npm:7.2.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+    lodash.chunk: "npm:4.2.0"
+  peerDependencies:
+    "@babel/runtime": ^7.23.6
+    date-fns: ^2.30.0
+    react: 18
+    react-dom: 18
+    react-vega: ^7.6.0
+    vega: ^5.25.0
+  peerDependenciesMeta:
+    date-fns:
+      optional: true
+    react-vega:
+      optional: true
+    vega:
+      optional: true
+  checksum: 10c0/ea65afb4fcf80324783a9e79ad8c9d35509718f69140455e69c6d172de816c591012e0a600ee95e60d7640b0e14c7ea9e3c6cd7846db291a8f8b28db6f683db8
+  languageName: node
+  linkType: hard
+
 "@utrecht/component-library-react@npm:^3.0.1-alpha.41":
   version: 3.1.0
   resolution: "@utrecht/component-library-react@npm:3.1.0"
@@ -4177,6 +4901,42 @@ __metadata:
     vega:
       optional: true
   checksum: 10c0/3231758a9c0eea78a6475c57e85054b4f327e9c6bc1eade90d85ce979678fb8e199f3b728bbbd9118467ca1ecf7ae2b44e0b54ac149485223a90090ab9223f56
+  languageName: node
+  linkType: hard
+
+"@utrecht/components@npm:6.1.0":
+  version: 6.1.0
+  resolution: "@utrecht/components@npm:6.1.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+  checksum: 10c0/93980c1c2e23d81d84e605f0871dd1dcfabd75c714f34468184e6fe6ad5f866a8d4fddd2ef93ce938c851d0688ceeab0a93f4e7d93481a1bc0292a8326526b33
+  languageName: node
+  linkType: hard
+
+"@utrecht/components@npm:7.0.0":
+  version: 7.0.0
+  resolution: "@utrecht/components@npm:7.0.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+  checksum: 10c0/4d471e7e8f0a7f8329501fa9202cf88c83fa08c7eec90ab449bf739951596547d1a9dd1676b064a801f821e011d462a274f792fe2a8a9f399802013b1bae8ac3
+  languageName: node
+  linkType: hard
+
+"@utrecht/components@npm:7.3.0":
+  version: 7.3.0
+  resolution: "@utrecht/components@npm:7.3.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+  checksum: 10c0/16c2b15579156659f381e52655a1fc33fb2cbd0939ac306f28fdb67ca9eec04021e58f0bea9f19570db7ca68da6af497b1b60d1d8edf4c13f31fae8c5674d3ff
+  languageName: node
+  linkType: hard
+
+"@utrecht/components@npm:7.4.0":
+  version: 7.4.0
+  resolution: "@utrecht/components@npm:7.4.0"
+  dependencies:
+    clsx: "npm:2.1.1"
+  checksum: 10c0/d9f2cf289957a72074df100cfb5cf9350cb62517c60eccaa41bf23555133c7b3badf31685a0c0e84f52c86223cd5238383bfabf19e6f16af21ad1ff28e83f4c3
   languageName: node
   linkType: hard
 
@@ -6976,6 +7736,13 @@ __metadata:
     es-errors: "npm:^1.3.0"
     is-data-view: "npm:^1.0.1"
   checksum: 10c0/21b0d2e53fd6e20cc4257c873bf6d36d77bd6185624b84076c0a1ddaa757b49aaf076254006341d35568e89f52eecd1ccb1a502cfb620f2beca04f48a6a62a8f
+  languageName: node
+  linkType: hard
+
+"date-fns@npm:3.6.0":
+  version: 3.6.0
+  resolution: "date-fns@npm:3.6.0"
+  checksum: 10c0/0b5fb981590ef2f8e5a3ba6cd6d77faece0ea7f7158948f2eaae7bbb7c80a8f63ae30b01236c2923cf89bb3719c33aeb150c715ea4fe4e86e37dcf06bed42fb6
   languageName: node
   linkType: hard
 
@@ -12623,6 +13390,7 @@ __metadata:
     "@babel/types": "npm:7.22.5"
     "@conduction/theme": "npm:1.1.40"
     "@emotion/react": "npm:^11.11.1"
+    "@gemeente-denhaag/components-react": "npm:^0.1.5"
     "@loadable/component": "npm:^5.15.3"
     "@lottiefiles/react-lottie-player": "npm:^3.5.3"
     "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
@@ -18116,6 +18884,15 @@ __metadata:
   version: 1.0.1
   resolution: "utils-merge@npm:1.0.1"
   checksum: 10c0/02ba649de1b7ca8854bfe20a82f1dfbdda3fb57a22ab4a8972a63a34553cf7aa51bc9081cf7e001b035b88186d23689d69e71b510e610a09a4c66f68aa95b672
+  languageName: node
+  linkType: hard
+
+"uuid@npm:10.0.0":
+  version: 10.0.0
+  resolution: "uuid@npm:10.0.0"
+  bin:
+    uuid: dist/bin/uuid
+  checksum: 10c0/eab18c27fe4ab9fb9709a5d5f40119b45f2ec8314f8d4cf12ce27e4c6f4ffa4a6321dc7db6c515068fa373c075b49691ba969f0010bf37f44c37ca40cd6bf7fe
   languageName: node
   linkType: hard
 

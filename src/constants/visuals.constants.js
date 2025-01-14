@@ -71,6 +71,21 @@ const PERSON_ADD = loadable(() =>
 
 const WORLD = loadable(() => import('-!svg-react-loader!@assets/images/world.svg'));
 const USER = loadable(() => import('-!svg-react-loader!@assets/images/user.svg'));
+const USERS = loadable(() =>
+  import('-!svg-react-loader!@assets/images/users.svg')
+);
+const BUILDING = loadable(() =>
+  import('-!svg-react-loader!@assets/images/building.svg')
+);
+const TRUCK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/truck.svg')
+);
+const CUBE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/cube.svg')
+);
+const HAND_HOLDING = loadable(() =>
+  import('-!svg-react-loader!@assets/images/hand-holding.svg')
+);
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -100,6 +115,11 @@ export const VISUALS = {
   PERSON_ADD,
   WORLD,
   USER,
+  USERS,
+  BUILDING,
+  TRUCK,
+  CUBE,
+  HAND_HOLDING,
 };
 
 export default {};

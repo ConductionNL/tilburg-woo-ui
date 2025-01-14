@@ -58,7 +58,7 @@ const App = ({ store }) => {
       case 'open-rotterdam.accept.commonground.nu':
         return 'rotterdam-theme';
       case 'localhost':
-        return 'rotterdam-theme';
+        return 'vng-theme';
       default:
         return process.env.API_URL_COMMONGROUND;
     }
