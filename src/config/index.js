@@ -27,7 +27,7 @@ const commongroundApiUrl = () => {
     case 'vng.opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-dimpact.accept.commonground.nu':
-      return 'https://dimpact.commonground.nu/apps/opencatalogi';
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-rotterdam.accept.commonground.nu':
       return 'https://rotterdam.accept.commonground.nu/apps/opencatalogi';
     case 'open-tilburg.accept.commonground.nu':
