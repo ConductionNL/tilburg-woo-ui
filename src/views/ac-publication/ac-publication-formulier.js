@@ -183,8 +183,8 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
                 />
                 {getFilteredAttachments()?.length > attachmentPagination.perPage && (
                   <Pagination
-                    totalPages={getFilteredAttachments().length}
-                    page={1}
+                    totalPages={Math.ceil(getFilteredAttachments().length / attachmentPagination.perPage)}
+                    page={attachmentPagination.page}
                     nextLabel=''
                     previousLabel=''
                     onPageChange={(page) => setAttachmentsPage(page)}
