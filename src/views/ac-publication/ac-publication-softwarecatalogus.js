@@ -191,24 +191,24 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
             <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
           <div className='ac-publication-three-column'>
-            <div>
+            {/* <div>
               <Heading2>Applicatie</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen applicatie beschikbaar</span>
               </div>
-            </div>
+            </div> */}
             <div>
               <Heading2>Organisatie</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen organisatie beschikbaar</span>
               </div>
             </div>
-            <div>
+            {/* <div>
               <Heading2>Beoordeling</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen beoordeling beschikbaar</span>
               </div>
-            </div>
+            </div> */}
           </div>
           {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (
             <AcTabs
