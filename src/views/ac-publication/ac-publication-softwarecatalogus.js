@@ -18,7 +18,7 @@ import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Pagination } from '@amsterdam/design-system-react';
-import { Heading2 } from '@utrecht/component-library-react';
+import { Heading2, Heading3 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import _ from 'lodash';
 
@@ -192,19 +192,45 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
           </div>
           <div className='ac-publication-three-column'>
             {/* <div>
-              <Heading2>Applicatie</Heading2>
+              <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen applicatie beschikbaar</span>
               </div>
             </div> */}
             <div>
-              <Heading2>Organisatie</Heading2>
-              <div className='ac-publication-three-column-item'>
-                <span>Geen organisatie beschikbaar</span>
-              </div>
+              <Heading2 className='ac-publication-three-column-item-heading'>
+                Organisatie
+              </Heading2>
+              {get_single?.organization ? (
+                <div className='ac-publication-organization-card'>
+                  <AcCard>
+                    <div className='ac-publication-organization-card-content'>
+                      <div className='ac-publication-organization-card-header'>
+                        <Heading3>{get_single?.organization?.title}</Heading3>
+                        {get_single?.organization?.image && (
+                          <div className='ac-publication-organization-card-logo-container'>
+                            <img
+                              src={get_single?.organization?.image}
+                              className='ac-publication-organization-card-logo'
+                            ></img>
+                          </div>
+                        )}
+                      </div>
+                      <Paragraph className='ac-publication-organization-card-description'>
+                        {get_single?.organization?.summary ||
+                          'Geen omschrijving beschikbaar'}
+                      </Paragraph>
+                    </div>
+                  </AcCard>
+                </div>
+              ) : (
+                <div className='ac-publication-three-column-item'>
+                  <span>Geen organisatie beschikbaar</span>
+                </div>
+              )}
             </div>
             {/* <div>
-              <Heading2>Beoordeling</Heading2>
+              <Heading2 className='ac-publication-three-column-item-heading'>Beoordeling</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen beoordeling beschikbaar</span>
               </div>
