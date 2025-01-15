@@ -71,6 +71,8 @@ const PERSON_ADD = loadable(() =>
 
 const WORLD = loadable(() => import('-!svg-react-loader!@assets/images/world.svg'));
 const USER = loadable(() => import('-!svg-react-loader!@assets/images/user.svg'));
+const HOUSE = loadable(() => import('-!svg-react-loader!@assets/images/house.svg'));
+const PHONE = loadable(() => import('-!svg-react-loader!@assets/images/phone.svg'));
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -100,6 +102,8 @@ export const VISUALS = {
   PERSON_ADD,
   WORLD,
   USER,
+  HOUSE,
+  PHONE,
 };
 
 export default {};

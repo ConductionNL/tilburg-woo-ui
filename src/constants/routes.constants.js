@@ -1,5 +1,6 @@
 // Imports => Constants
 import { TITLES } from './titles.constants';
+import { VISUALS } from './visuals.constants';
 
 // Imports => Utilities
 import { AcUUID } from '@utils/ac-uuid';
@@ -16,7 +17,6 @@ import {
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
-
 
 export const PATHS = AcLockObject({
   HOME: '/',
@@ -37,7 +37,9 @@ export const ROUTES = {
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: `Home | ${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'}`,
+    title: `Home | ${
+      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+    }`,
     component: AcHome,
   },
   PUBLICATION: {
@@ -45,7 +47,9 @@ export const ROUTES = {
     name: 'Publication',
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
-    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Publicatie`,
+    title: `${
+      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Publicatie`,
     component: AcPublication,
   },
   SEARCH: {
@@ -53,7 +57,9 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Zoeken`,
+    title: `${
+      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Zoeken`,
     component: AcSearch,
   },
   AUTHENTICATION: {
@@ -77,7 +83,9 @@ export const ROUTES = {
     name: 'Themes',
     label: TITLES.THEMES,
     path: PATHS.THEMES,
-    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Onderwerpen`,
+    title: `${
+      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Onderwerpen`,
     component: AcThemes,
   },
   ABOUT: {
@@ -85,7 +93,9 @@ export const ROUTES = {
     name: 'Over Open Tilburg',
     label: TITLES.ABOUT,
     path: PATHS.ABOUT,
-    title: `${AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'} | Over`,
+    title: `${
+      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+    } | Over`,
   },
   CONTACT: {
     id: AcUUID(),
@@ -162,6 +172,68 @@ export const VNG_ROUTES_BEDRIJVEN = {
   },
 };
 
+export const DIMPACT_ROUTES_WHAT_WE_DO = {
+  WHAT_WE_DO: {
+    label: 'Wat we doen',
+    style: 'italic',
+  },
+  SERVICES: {
+    label: 'Diensten',
+    href: 'https://www.dimpact.nl/diensten',
+    iconLocation: 'left',
+  },
+  EVENTS: {
+    label: 'Evenementen',
+    href: 'https://www.dimpact.nl/evenementen',
+    iconLocation: 'left',
+  },
+  YEAR_REPORTS: {
+    label: 'Jaarverslagen',
+    href: 'https://www.dimpact.nl/over-ons/jaarverslagen',
+    iconLocation: 'left',
+  },
+  NEWS: {
+    label: 'Nieuws',
+    href: 'https://www.dimpact.nl/nieuws',
+    iconLocation: 'left',
+  },
+};
+export const DIMPACT_ROUTES_WHO_WE_ARE = {
+  WHO_WE_ARE: {
+    label: 'Wie we zijn',
+    style: 'italic',
+  },
+  ABOUT_US: {
+    label: 'Over ons',
+    href: 'https://www.dimpact.nl/over-ons',
+    iconLocation: 'left',
+  },
+  VACANCIES: {
+    label: 'Werken bij',
+    href: 'https://www.dimpact.nl/vacatures',
+    iconLocation: 'left',
+  },
+};
+export const DIMPACT_ROUTES_INFORMATION = {
+  PHONE_NUMBER: {
+    label: '088 346 0000',
+    href: 'tel:0883460000',
+    iconLocation: 'left',
+    icon: VISUALS.PHONE,
+  },
+  EMAIL: {
+    label: 'info@dimpact.nl',
+    href: 'mailto:info@dimpact.nl',
+    iconLocation: 'left',
+    icon: VISUALS.CONTACT,
+  },
+  KVK: {
+    label: 'KvK nummer: 0815 4067',
+    iconLocation: 'left',
+    icon: VISUALS.HOUSE,
+  },
+};
+
 const ROUTES_EXTERNAL = {
   TILBURG: {
     label: 'Tilburg',
@@ -209,6 +281,24 @@ export const VNG_FOOTER_ITEMS_BEDRIJVEN = [
   VNG_ROUTES_BEDRIJVEN.LINKEDIN,
   VNG_ROUTES_BEDRIJVEN.YOUTUBE,
   VNG_ROUTES_BEDRIJVEN.GEMMA_NIEUWSBRIEF,
+];
+
+export const DIMPACT_FOOTER_ITEMS_WHAT_WE_DO = [
+  DIMPACT_ROUTES_WHAT_WE_DO.WHAT_WE_DO,
+  DIMPACT_ROUTES_WHAT_WE_DO.SERVICES,
+  DIMPACT_ROUTES_WHAT_WE_DO.EVENTS,
+  DIMPACT_ROUTES_WHAT_WE_DO.YEAR_REPORTS,
+  DIMPACT_ROUTES_WHAT_WE_DO.NEWS,
+];
+export const DIMPACT_FOOTER_ITEMS_WHO_WE_ARE = [
+  DIMPACT_ROUTES_WHO_WE_ARE.WHO_WE_ARE,
+  DIMPACT_ROUTES_WHO_WE_ARE.ABOUT_US,
+  DIMPACT_ROUTES_WHO_WE_ARE.VACANCIES,
+];
+export const DIMPACT_FOOTER_ITEMS_INFORMATION = [
+  DIMPACT_ROUTES_INFORMATION.PHONE_NUMBER,
+  DIMPACT_ROUTES_INFORMATION.EMAIL,
+  DIMPACT_ROUTES_INFORMATION.KVK,
 ];
 
 export const EXTERNAL_LINKS = [
