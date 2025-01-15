@@ -15,7 +15,24 @@ const AcHeader = ({ store }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
+  const getTitle = () => {
+    const hostname = window.location.hostname;
 
+    switch (hostname) {
+      case 'vng.opencatalogi.nl':
+        return 'Softwarecatalogus';
+      case 'open-tilburg.accept.commonground.nu':
+        return 'Open Tilburg';
+      case 'open-dimpact.accept.commonground.nu':
+        return 'Producten catalogus';
+      case 'open-rotterdam.accept.commonground.nu':
+        return 'Open Rotterdam';
+      case 'localhost':
+        return 'Localhost catalogus';
+      default:
+        return process.env.API_URL_COMMONGROUND;
+    }
+  };
   return (
     <header className='ac-header'>
       <SkipLink id='skip-link' href='#main'>
@@ -27,21 +44,13 @@ const AcHeader = ({ store }) => {
             <div>
               <AcLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              {AcCheckIfSpecificHostname() ? (
-                <span class='logo-text'>Softwarecatalogus</span>
-              ) : (
-                <span class='logo-text'>Open Tilburg</span>
-              )}
+              <span class='logo-text'>{getTitle()}</span>
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <AcLogo variant='header' />
-                {AcCheckIfSpecificHostname() ? (
-                  <span class='logo-text'>Softwarecatalogus</span>
-                ) : (
-                  <span class='logo-text'>Open Tilburg</span>
-                )}
+                <span class='logo-text'>{getTitle()}</span>
               </Link>
             </>
           )}
