@@ -30,9 +30,13 @@ const AcSearchSort = loadable(() =>
 const AcSearchSubjects = loadable(() =>
   import('@components/ac-search-subjects/ac-search-subjects')
 );
+const AcCNavigation = loadable(() =>
+  import('@components/ac-c-navigation/ac-c-navigation')
+);
 
 export {
   AcAbout,
+  AcCNavigation,
   AcFaq,
   AcFeatured,
   AcFooter,
