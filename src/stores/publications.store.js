@@ -52,7 +52,7 @@ export class PublicationsStore {
   @observable
   attachmentPagination = {
     page: 1,
-    perPage: 1,
+    perPage: 10,
   };
 
   @observable

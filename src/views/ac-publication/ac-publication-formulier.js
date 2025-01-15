@@ -183,8 +183,10 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
                 />
                 {getFilteredAttachments()?.length > attachmentPagination.perPage && (
                   <Pagination
-                    totalPages={getFilteredAttachments().length}
-                    page={1}
+                    totalPages={Math.ceil(
+                      getFilteredAttachments().length / attachmentPagination.perPage
+                    )}
+                    page={attachmentPagination.page}
                     nextLabel=''
                     previousLabel=''
                     onPageChange={(page) => setAttachmentsPage(page)}
@@ -200,29 +202,27 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
               <VISUALS.INFO />
               Documenten worden in een nieuw tabblad geopend.
             </AcFlex>
-            <AcTable
-              rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)}
-            />
+            <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
           <div className='ac-publication-three-column'>
-            <div>
+            {/* <div>
               <Heading2>Applicatie</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen applicatie beschikbaar</span>
               </div>
-            </div>
+            </div> */}
             <div>
               <Heading2>Organisatie</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen organisatie beschikbaar</span>
               </div>
             </div>
-            <div>
+            {/* <div>
               <Heading2>Beoordeling</Heading2>
               <div className='ac-publication-three-column-item'>
                 <span>Geen beoordeling beschikbaar</span>
               </div>
-            </div>
+            </div> */}
           </div>
           <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
             <AcTabList>
