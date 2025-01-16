@@ -20,17 +20,17 @@ const AcSearchResult = ({
       <Paragraph>{summary}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
-          {themes?.length > 0 && false && (
-            <>
-              <StatusBadge>{themes[0]?.title}</StatusBadge>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
           <Paragraph small>
             {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
           </Paragraph>
           <VISUALS.ELLIPSE />
           <Paragraph small>{category}</Paragraph>
+          {themes?.length > 0 && (
+            <>
+              <VISUALS.ELLIPSE />
+              <Paragraph small>{themes[0]?.title}</Paragraph>
+            </>
+          )}
         </AcFlex>
         <AcLink to={`/publicatie/${id}`}>
           <span class='sr-only'>
