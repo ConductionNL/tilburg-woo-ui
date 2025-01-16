@@ -87,3 +87,7 @@
   gap: var(--tilburg-space-column-snail);
   margin-block-end: var(--tilburg-space-block-snail);
 }
+
+.ac-footer__link-icon > path {
+  fill: var(--tilburg-footer-icon-color);
+}

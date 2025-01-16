@@ -86,6 +86,8 @@ const CUBE = loadable(() =>
 const HAND_HOLDING = loadable(() =>
   import('-!svg-react-loader!@assets/images/hand-holding.svg')
 );
+const HOUSE = loadable(() => import('-!svg-react-loader!@assets/images/house.svg'));
+const PHONE = loadable(() => import('-!svg-react-loader!@assets/images/phone.svg'));
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -120,6 +122,8 @@ export const VISUALS = {
   TRUCK,
   CUBE,
   HAND_HOLDING,
+  HOUSE,
+  PHONE,
 };
 
 export default {};
