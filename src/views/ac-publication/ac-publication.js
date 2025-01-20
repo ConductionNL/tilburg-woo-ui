@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 
@@ -16,6 +16,7 @@ import {
 import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
+import { StatusBadge } from '@utrecht/component-library-react';
 
 const MOCK_CONCEPTS = {
   pageConcepts: [
@@ -127,10 +128,10 @@ const AcPublication = ({ store: { publications } }) => {
       content: (
         <>
           {MOCK_CONCEPTS.pageConcepts.map((concept) => (
-            <div key={concept.title}>
-              <h3>{concept.title}</h3>
-              <p>{concept.description}</p>
-            </div>
+            <AcFlex column key={concept.title}>
+              <Heading level={3}>{concept.title}</Heading>
+              <Paragraph>{concept.description}</Paragraph>
+            </AcFlex>
           ))}
         </>
       ),
@@ -145,10 +146,10 @@ const AcPublication = ({ store: { publications } }) => {
             label='Zoek in alle begrippen'
           />
           {filteredAllConcepts.map((concept) => (
-            <div key={concept.title}>
-              <h3>{concept.title}</h3>
-              <p>{concept.description}</p>
-            </div>
+            <AcFlex column key={concept.title}>
+              <Heading level={3}>{concept.title}</Heading>
+              <Paragraph>{concept.description}</Paragraph>
+            </AcFlex>
           ))}
         </>
       ),
@@ -161,7 +162,7 @@ const AcPublication = ({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Open Ac | Publicatie';
+    document.title = get_single?.title || 'Open Tilburg | Publicatie';
   }, [get_single]);
 
   if (loading.status || !get_single) {
@@ -199,6 +200,60 @@ const AcPublication = ({ store: { publications } }) => {
     ];
   };
 
+  const renderPrimaryAttachments = useMemo(() => {
+    if (!getFilteredAttachments(true)?.length) {
+      return null;
+    }
+
+    return (
+      <AcFlex column>
+        <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
+        <AcFlex spacing={'xs'} className='notice'>
+          <VISUALS.INFO />
+          Documenten worden in een nieuw tabblad geopend.
+        </AcFlex>
+        <AcTable
+          header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
+          rows={getFilteredAttachments(true)?.map((attachment) =>
+            mapAttachmentRow(attachment, true)
+          )}
+        />
+      </AcFlex>
+    );
+  }, [get_single]);
+
+  const renderAttachments = useMemo(() => {
+    if (!getFilteredAttachments()?.length) {
+      return null;
+    }
+
+    return (
+      <AcFlex column>
+        <AcFlex alignItems='center' spacing='snail'>
+          <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>{' '}
+          <StatusBadge>{getFilteredAttachments()?.length}</StatusBadge>
+        </AcFlex>
+        <AcFlex spacing={'md'} column>
+          <AcTable
+            header={[LABELS.DOCUMENT]}
+            rows={getFilteredAttachments(false, attachmentPagination.page)?.map(
+              (attachment) => mapAttachmentRow(attachment)
+            )}
+          />
+          {getFilteredAttachments()?.length > attachmentPagination.perPage && (
+            <Pagination
+              totalPages={getFilteredAttachments().length}
+              page={1}
+              nextLabel=''
+              previousLabel=''
+              onPageChange={(page) => setAttachmentsPage(page)}
+            />
+          )}
+        </AcFlex>
+      </AcFlex>
+    );
+  }, [get_single, attachmentPagination]);
+
   return (
     <>
       <AcContainer compact margin='xl'>
@@ -216,49 +271,10 @@ const AcPublication = ({ store: { publications } }) => {
             </SecondaryActionButton>
           </AcCard>
 
-          {/* Show only when there are primary attachments */}
-          {getFilteredAttachments(true)?.length > 0 && (
-            <div>
-              <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
-              <AcFlex spacing={'xs'} className='notice'>
-                <VISUALS.INFO />
-                Documenten worden in een nieuw tabblad geopend.
-              </AcFlex>
-              <AcTable
-                header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
-                rows={getFilteredAttachments(true)?.map((attachment) =>
-                  mapAttachmentRow(attachment, true)
-                )}
-              />
-            </div>
-          )}
+          {renderPrimaryAttachments}
+          {renderAttachments}
 
-          {/* Show only if there are secondary attachments */}
-          {getFilteredAttachments()?.length > 0 && (
-            <div>
-              <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
-              <AcFlex spacing={'md'} column>
-                <AcTable
-                  header={[LABELS.DOCUMENT]}
-                  rows={getFilteredAttachments(
-                    false,
-                    attachmentPagination.page
-                  )?.map((attachment) => mapAttachmentRow(attachment))}
-                />
-                {getFilteredAttachments()?.length > attachmentPagination.perPage && (
-                  <Pagination
-                    totalPages={getFilteredAttachments().length}
-                    page={1}
-                    nextLabel=''
-                    previousLabel=''
-                    onPageChange={(page) => setAttachmentsPage(page)}
-                  />
-                )}
-              </AcFlex>
-            </div>
-          )}
-
-          <div>
+          <AcFlex column>
             <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
             <AcTable
               rows={[
@@ -289,7 +305,7 @@ const AcPublication = ({ store: { publications } }) => {
                 ],
               ]}
             />
-          </div>
+          </AcFlex>
         </AcFlex>
       </AcContainer>
 
