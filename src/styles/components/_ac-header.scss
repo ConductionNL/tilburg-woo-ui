@@ -60,6 +60,20 @@
   }
 
   &__navigation-secondary {
+    background-color: var(--conduction-primary-top-nav-background-color, var(--tilburg-color-gray-50));
+
+    @include respond-max($screen-md) {
+      .container {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    &:has(.container:empty) {
+      padding: 0;
+    }
+  }
+  &__navigation-breadcrumb {
     padding-block: var(--tilburg-space-block-mouse);
     background-color: var(--tilburg-color-gray-50);
 

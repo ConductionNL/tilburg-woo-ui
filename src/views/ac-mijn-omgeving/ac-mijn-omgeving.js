@@ -25,7 +25,7 @@ import {
   SidenavLinkLabel,
 } from '@gemeente-denhaag/components-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-
+import { AcCNavigation } from '@components';
 const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -197,6 +197,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   return (
     <>
       <AcContainer spacing='sm' margin='xl'>
+
         <AcFlex spacing='xl'>
           <Sidenav>
             <SidenavList>

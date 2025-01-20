@@ -15,10 +15,8 @@ const apiUrl = () => {
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
-    case 'localhost':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     default:
-      return process.env.API_URL;
+      return "http://localhost:8080/index.php/apps/opencatalogi";
   }
 };
 
@@ -34,8 +32,6 @@ const commongroundApiUrl = () => {
       return 'https://tilburg.accept.commonground.nu/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
       return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
-    case 'localhost':
-      return process.env.API_URL_COMMONGROUND;
     default:
       return process.env.API_URL_COMMONGROUND;
   }

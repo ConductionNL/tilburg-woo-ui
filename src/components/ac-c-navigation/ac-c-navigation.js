@@ -36,11 +36,16 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
       <nav className={clsx('ac-c-navigation__primary', isOpen && 'isOpen')}>
         <ul className='ac-c-navigation__ul'>
           {items.map(({ label, icon, current, link, subItems }, idx) => (
-            <li c key={idx}>
+            <li
+              className={clsx(
+                'ac-c-navigation__li',
+                current && 'ac-c-navigation__current'
+              )}
+              c
+              key={idx}
+            >
               <Link
                 className={clsx(
-                  'ac-c-navigation__li',
-                  current && 'ac-c-navigation__current',
                   'ac-c-navigation__link',
                   'ac-c-navigation__label',
                   subItems && 'ac-c-navigation__mobile-link',

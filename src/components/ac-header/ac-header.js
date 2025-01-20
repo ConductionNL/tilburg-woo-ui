@@ -9,7 +9,7 @@ import { AcBreadcrumbs } from '@molecules';
 import { AcContainer, AcLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import { AcCNavigation } from '@components';
 
 const AcHeader = ({ store }) => {
   const location = useLocation();
@@ -33,6 +33,78 @@ const AcHeader = ({ store }) => {
         return process.env.API_URL_COMMONGROUND;
     }
   };
+
+  const isCurrent = (current) => {
+    return current.pathname === window.location.pathname;
+  };
+
+  const items = [
+    {
+      label: 'Home',
+      type: 'internal',
+      current: isCurrent({ pathname: '/' }),
+      subItems: [
+        {
+          label: 'All components',
+          type: 'internal',
+          current: isCurrent({ pathname: '/components' }),
+          handleClick: {
+            link: '/components',
+          },
+        },
+        {
+          label: 'Processes',
+          type: 'internal',
+          current: isCurrent({ pathname: '/components' }),
+          handleClick: {
+            link: '/components',
+            type: 'internal',
+            setFilter: {
+              filterKey: 'embedded.nl.embedded.commonground.layerType',
+              value: 'process',
+            },
+          },
+        },
+        {
+          label: 'Data models',
+          type: 'internal',
+          current: isCurrent({ pathname: '/components' }),
+          handleClick: {
+            link: '/components',
+            setFilter: {
+              filterKey: 'embedded.nl.embedded.commonground.layerType',
+              value: 'data',
+            },
+          },
+        },
+        {
+          label: "API's",
+          type: 'internal',
+          current: isCurrent({
+            pathname: '/components',
+            filterCondition: {
+              filterKey: 'embedded.nl.embedded.commonground.layerType',
+              value: 'service',
+            },
+          }),
+          handleClick: {
+            link: '/components',
+            setFilter: {
+              filterKey: 'embedded.nl.embedded.commonground.layerType',
+              value: 'service',
+            },
+          },
+        },
+      ],
+    },
+    {
+      label: 'Mijn omgeving',
+      type: 'internal',
+      current: isCurrent({ pathname: '/mijn-omgeving' }),
+      link: '/mijn-omgeving',
+    },
+  ];
+
   return (
     <header className='ac-header'>
       <SkipLink id='skip-link' href='#main'>
@@ -58,6 +130,9 @@ const AcHeader = ({ store }) => {
         <AcNavigation />
       </div>
       <div className='ac-header__navigation-secondary'>
+        <AcCNavigation items={items} />
+      </div>
+      <div className='ac-header__navigation-breadcrumb'>
         <AcContainer>{!isHomePage && <AcBreadcrumbs />}</AcContainer>
       </div>
     </header>
