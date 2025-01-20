@@ -22,7 +22,7 @@ const container = document.getElementById('root');
 
 render(
   <StoreContext.Provider value={store}>
-    <Router basename="/publicatievoorziening" history={history}>
+    <Router history={history}>
       <App />
     </Router>
   </StoreContext.Provider>,
