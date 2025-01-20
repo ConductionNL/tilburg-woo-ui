@@ -32,7 +32,6 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
           onClick={() => setIsOpen((o) => !o)}
         ></button>
       </div>
-
       <nav className={clsx('ac-c-navigation__primary', isOpen && 'isOpen')}>
         <ul className='ac-c-navigation__ul'>
           {items.map(({ label, icon, current, link, subItems }, idx) => (

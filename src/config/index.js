@@ -10,13 +10,15 @@ const apiUrl = () => {
     case 'vng.opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-dimpact.accept.commonground.nu':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'https://dimpact.commonground.nu/apps/opencatalogi';
     case 'open-rotterdam.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+    case 'localhost':
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     default:
-      return "http://localhost:8080/index.php/apps/opencatalogi";
+      return process.env.API_URL;
   }
 };
 

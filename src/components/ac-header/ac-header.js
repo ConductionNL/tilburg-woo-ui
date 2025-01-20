@@ -43,59 +43,7 @@ const AcHeader = ({ store }) => {
       label: 'Home',
       type: 'internal',
       current: isCurrent({ pathname: '/' }),
-      subItems: [
-        {
-          label: 'All components',
-          type: 'internal',
-          current: isCurrent({ pathname: '/components' }),
-          handleClick: {
-            link: '/components',
-          },
-        },
-        {
-          label: 'Processes',
-          type: 'internal',
-          current: isCurrent({ pathname: '/components' }),
-          handleClick: {
-            link: '/components',
-            type: 'internal',
-            setFilter: {
-              filterKey: 'embedded.nl.embedded.commonground.layerType',
-              value: 'process',
-            },
-          },
-        },
-        {
-          label: 'Data models',
-          type: 'internal',
-          current: isCurrent({ pathname: '/components' }),
-          handleClick: {
-            link: '/components',
-            setFilter: {
-              filterKey: 'embedded.nl.embedded.commonground.layerType',
-              value: 'data',
-            },
-          },
-        },
-        {
-          label: "API's",
-          type: 'internal',
-          current: isCurrent({
-            pathname: '/components',
-            filterCondition: {
-              filterKey: 'embedded.nl.embedded.commonground.layerType',
-              value: 'service',
-            },
-          }),
-          handleClick: {
-            link: '/components',
-            setFilter: {
-              filterKey: 'embedded.nl.embedded.commonground.layerType',
-              value: 'service',
-            },
-          },
-        },
-      ],
+      link: '/',
     },
     {
       label: 'Mijn omgeving',
@@ -129,9 +77,11 @@ const AcHeader = ({ store }) => {
         </div>
         <AcNavigation />
       </div>
-      <div className='ac-header__navigation-secondary'>
-        <AcCNavigation items={items} />
-      </div>
+      {items.length > 0 && (
+        <div className='ac-header__navigation-secondary'>
+          <AcCNavigation items={items} />
+        </div>
+      )}
       <div className='ac-header__navigation-breadcrumb'>
         <AcContainer>{!isHomePage && <AcBreadcrumbs />}</AcContainer>
       </div>
