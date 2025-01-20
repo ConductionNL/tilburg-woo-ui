@@ -6,6 +6,7 @@ import { withStore } from '@stores';
 
 import AcPublicationWooVerzoek from '@views/ac-publication/ac-publication-woo-verzoek';
 import AcPublicationSoftwarecatalogus from '@views/ac-publication/ac-publication-softwarecatalogus';
+import AcPublicationDefault from '@views/ac-publication/ac-publication-default';
 import AcPublicationFormulier from './ac-publication-formulier';
 
 const AcPublication = ({ store: { publications } }) => {
@@ -49,8 +50,10 @@ const AcPublication = ({ store: { publications } }) => {
         return <AcPublicationSoftwarecatalogus />;
       case 'Formulier':
         return <AcPublicationFormulier />;
-      default:
+      case 'Woo verzoek/besluit':
         return <AcPublicationWooVerzoek />;
+      default:
+        return <AcPublicationDefault />;
     }
   }
 };
