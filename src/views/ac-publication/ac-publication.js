@@ -44,10 +44,6 @@ const AcPublication = ({ store: { publications } }) => {
     switch (get_single?.publicationType?.title) {
       case 'Softwarecatalogus':
         return <AcPublicationSoftwarecatalogus />;
-      case 'Configuratie':
-        return <AcPublicationSoftwarecatalogus />;
-      case 'Service Blueprint':
-        return <AcPublicationSoftwarecatalogus />;
       case 'Formulier':
         return <AcPublicationFormulier />;
       case 'Woo verzoek/besluit':
