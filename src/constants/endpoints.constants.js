@@ -11,8 +11,14 @@ const CATALOG = '/catalogi';
 const THEMES = '/themes';
 const AUTHENTICATION = '/authentication';
 const MIJN_OMGEVING = '/mijn-omgeving';
+const MENUS = '/menu';
+const OBJECTS = '/objects';
 
 export const ENDPOINTS = AcLockObject({
+  MENU: {
+    INDEX: `${API}${PUBLIC}${MENUS}`, // GET
+    SINGLE: (_id) => `${API}${PUBLIC}${MENUS}/${_id}`, // GET
+  },
   PUBLICATIONS: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
     SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET

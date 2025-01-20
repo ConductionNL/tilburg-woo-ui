@@ -16,7 +16,7 @@ const apiUrl = () => {
     case 'open-migrato.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'localhost':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'http://localhost:8080/apps/opencatalogi';
     default:
       return process.env.API_URL;
   }
@@ -129,6 +129,18 @@ export default {
     credentials: false,
     headers: {
       ..._api_commonground_headers_,
+    },
+  },
+  navigation: {
+    baseURL: `${_api_}`,
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    credentials: false,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
   },
   themes: {

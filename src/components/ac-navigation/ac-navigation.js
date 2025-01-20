@@ -2,15 +2,20 @@ import React, { useEffect } from 'react';
 import { LABELS, VISUALS } from '@constants';
 import { Link, useLocation } from 'react-router-dom';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
 
-const AcNavigation = () => {
+const AcNavigation = ({ store: { menu } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   const pathname = window.location.pathname;
 
+  const { fetchMenus } = menu;
+
   useEffect(() => {
     setIsMenuOpen(false);
+    fetchMenus();
   }, [location]);
 
   return (
@@ -79,4 +84,4 @@ const AcNavigation = () => {
   );
 };
 
-export default AcNavigation;
+export default withStore(observer(AcNavigation));
