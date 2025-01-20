@@ -202,31 +202,31 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
           <Sidenav>
             <SidenavList>
               <SidenavItem>
-                <SidenavLink current href='/#'>
+                <SidenavLink current>
                   <VISUALS.USERS />
                   Gebruikers
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink href='/#'>
+                <SidenavLink>
                   <VISUALS.CUBE />
                   Voorzieningen
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink href='/#'>
+                <SidenavLink>
                   <VISUALS.HAND_HOLDING />
                   Aanbod
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink href='/#'>
+                <SidenavLink>
                   <VISUALS.BUILDING />
                   Organisaties
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink href='/#'>
+                <SidenavLink>
                   <VISUALS.TRUCK />
                   Leveranciers
                 </SidenavLink>
