@@ -47,16 +47,6 @@ const AcPublicationDefault = ({ store: { publications } }) => {
     return <AcLoader />;
   }
 
-  const publicationTypes = get_relations
-    ?.filter((relation) => {
-      if (relation.publicationType.title !== get_single.publicationType.title) {
-        return relation.publicationType;
-      }
-    })
-    .map((relation) => relation.publicationType);
-
-  const uniquePublicationTypes = _.uniqBy(publicationTypes, 'title');
-
   const mapAttachmentRow = (row, primary) => {
     // Fallback for when there is no extension property
     const extension = row.type.split('/').pop();
