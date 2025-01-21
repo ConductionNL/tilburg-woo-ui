@@ -1,5 +1,7 @@
 import { AcContainer, AcLogo } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 import {
   EXTERNAL_LINKS,
@@ -13,7 +15,16 @@ import {
 } from '@constants/routes.constants';
 import { Link } from 'react-router-dom';
 
-const AcFooter = () => {
+const AcFooter = ({ store: { menu } }) => {
+  const { all_menu_items } = menu;
+
+  // Icon component for finding icons based on a variable
+  const Icon = ({ icon }) => {
+    const Icon = VISUALS[icon];
+    if (!Icon) return <></>;
+    return <Icon className='ac-footer__link-icon' />;
+  };
+
   const getFooterItems = () => {
     const hostname = window.location.hostname;
 
@@ -44,9 +55,9 @@ const AcFooter = () => {
         ];
       case 'localhost':
         return [
-          DIMPACT_FOOTER_ITEMS_WHAT_WE_DO,
-          DIMPACT_FOOTER_ITEMS_WHO_WE_ARE,
-          DIMPACT_FOOTER_ITEMS_INFORMATION,
+          VNG_FOOTER_ITEMS_SITEMAP,
+          VNG_FOOTER_ITEMS_INFORMATIE,
+          VNG_FOOTER_ITEMS_BEDRIJVEN,
         ];
       default:
         return [
@@ -57,6 +68,10 @@ const AcFooter = () => {
     }
   };
 
+  const footerItems = all_menu_items.filter((item) => item.position > 2);
+
+  const hostname = window.location.hostname;
+
   return (
     <footer className='ac-footer'>
       <h2 className='sr-only'>Footer</h2>
@@ -65,61 +80,63 @@ const AcFooter = () => {
       >
         {AcCheckIfSpecificHostname() ? (
           <>
-            {getFooterItems().map((items, index) => (
+            {footerItems.map((footerItem, index) => (
               <nav
                 className='ac-footer__links'
                 key={`footer-menu-${index + 1}`}
                 aria-label={`Footer menu ${index + 1}`}
               >
-                {items.map((item, index) =>
-                  item.href ? (
-                    item.href.includes('http' || 'https') ? (
-                      <a
-                        href={item.href}
-                        target='_blank'
-                        className='ac-footer__link'
-                      >
-                        {item.iconLocation && item.iconLocation === 'left' ? (
-                          <>
-                            {item.icon ? (
-                              <item.icon className='ac-footer__link-icon' />
-                            ) : (
+                {footerItem.items.map((item, index) =>
+                  item.link ? (
+                    item.link.includes('http' || 'https') ? (
+                      <>
+                        <a
+                          href={item.link}
+                          target='_blank'
+                          className='ac-footer__link'
+                        >
+                          {hostname === 'open-dimpact.accept.commonground.nu' ? (
+                            <>
+                              {item.icon ? (
+                                <item.icon className='ac-footer__link-icon' />
+                              ) : (
+                                <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                              )}
+                              {item.name}
+                              <span className='sr-only'>
+                                Opent in een nieuw tabblad
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              {item.name}
+                              <span className='sr-only'>
+                                Opent in een nieuw tabblad
+                              </span>
                               <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                            )}
-                            {item.label}
-                            <span className='sr-only'>
-                              Opent in een nieuw tabblad
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            {item.label}
-                            <span className='sr-only'>
-                              Opent in een nieuw tabblad
-                            </span>
-                            <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                          </>
-                        )}
-                      </a>
+                            </>
+                          )}
+                        </a>
+                      </>
                     ) : (
-                      <Link className='ac-footer__link' to={item.href}>
-                        {item.icon && item.iconLocation === 'left' && (
-                          <item.icon className='ac-footer__link-icon' />
+                      <Link className='ac-footer__link' to={item.link}>
+                        {hostname === 'open-dimpact.accept.commonground.nu' && (
+                          <Icon icon={item.icon} />
                         )}
-                        {item.label}
-                        {item.icon && item.iconLocation !== 'left' && (
-                          <item.icon className='ac-footer__link-icon' />
+                        {item.name}
+                        {hostname !== 'open-dimpact.accept.commonground.nu' && (
+                          <Icon icon={item.icon} />
                         )}
                       </Link>
                     )
                   ) : (
                     <div className='ac-footer__link'>
-                      {item.icon && item.iconLocation === 'left' && (
-                        <item.icon className='ac-footer__link-icon' />
+                      {hostname === 'open-dimpact.accept.commonground.nu' && (
+                        <Icon icon={item.icon} />
                       )}
-                      {item.label}
-                      {item.icon && item.iconLocation !== 'left' && (
-                        <item.icon className='ac-footer__link-icon' />
+                      {item.name}
+                      {hostname !== 'open-dimpact.accept.commonground.nu' && (
+                        <Icon icon={item.icon} />
                       )}
                     </div>
                   )
@@ -172,4 +189,4 @@ const AcFooter = () => {
   );
 };
 
-export default AcFooter;
+export default withStore(observer(AcFooter));
