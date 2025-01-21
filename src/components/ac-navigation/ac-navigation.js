@@ -17,6 +17,7 @@ const AcNavigation = ({ store: { menu } }) => {
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
     const Icon = VISUALS[icon];
+    if (!Icon) return <></>;
     return <Icon />;
   };
 
