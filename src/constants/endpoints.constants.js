@@ -28,8 +28,8 @@ export const ENDPOINTS = AcLockObject({
     ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   MIJN_OMGEVING: {
-    SEARCH: `${API}${SEARCH}${CATALOG}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${CATALOG}/${_id}?extend=all`, // GET
+    SEARCH: `${API}${MENU}`, // GET
+    SINGLE: (_id) => `${API}${SEARCH}${MENU}/${_id}?extend=all`, // GET
   },
   AUTHENTICATION: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
