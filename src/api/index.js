@@ -13,7 +13,6 @@ import ThemesAPI from '@api/themes.api';
 import MenuAPI from '@api/menu.api';
 import AuthenticationAPI from '@api/authentication.api';
 import MijnOmgevingAPI from '@api/mijnOmgeving.api';
-import MenuAPI from '@api/menu.api';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -100,7 +99,7 @@ export class API {
     addInterceptors(ThemesClient);
 
     const MenuClient = axios.create({
-      ...config.menu,
+      ...config.menus,
     });
     addInterceptors(MenuClient);
 
@@ -125,11 +124,6 @@ export class API {
       onUploadProgress,
     });
     addInterceptors(UploadClient);
-
-    const MenuClient = axios.create({
-      ...config.navigation,
-    });
-    addInterceptors(MenuClient);
 
     window.addEventListener('cancelRequests', cancelRequests, false);
 

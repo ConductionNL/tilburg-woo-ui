@@ -16,7 +16,8 @@ const apiUrl = () => {
     case 'open-migrato.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'localhost':
-      return 'http://localhost:8080/apps/opencatalogi';
+    //   return 'http://localhost:8080/apps/opencatalogi';
+      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     default:
       return process.env.API_URL;
   }
@@ -131,8 +132,9 @@ export default {
       ..._api_commonground_headers_,
     },
   },
-  navigation: {
-    baseURL: `${_api_}`,
+  menus: {
+    // baseURL: `${_api_}`,
+    baseURL: `http://nextcloud.local/index.php/apps/opencatalogi`,
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
