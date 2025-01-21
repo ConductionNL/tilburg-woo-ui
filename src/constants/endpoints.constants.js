@@ -16,10 +16,6 @@ const MENUS = '/menu';
 const OBJECTS = '/objects';
 
 export const ENDPOINTS = AcLockObject({
-  MENU: {
-    INDEX: `${API}${PUBLIC}${MENUS}`, // GET
-    SINGLE: (_id) => `${API}${PUBLIC}${MENUS}/${_id}`, // GET
-  },
   PUBLICATIONS: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
     SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
@@ -28,8 +24,8 @@ export const ENDPOINTS = AcLockObject({
     ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   MIJN_OMGEVING: {
-    SEARCH: `${API}${SEARCH}${CATALOG}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${CATALOG}/${_id}?extend=all`, // GET
+    SEARCH: `${API}${MIJN_OMGEVING}`, // GET
+    SINGLE: (_id) => `${API}${SEARCH}${MIJN_OMGEVING}/${_id}?extend=all`, // GET
   },
   AUTHENTICATION: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
@@ -50,6 +46,10 @@ export const ENDPOINTS = AcLockObject({
     LIST: `${API}${SEARCH}${GEMMA}`,
     SINGLE: (_id) => `${API}${SEARCH}${GEMMA}/${_id}?extend=all`,
   }, // GET
+  MENU: {
+    INDEX: `${API}${PUBLIC}${MENUS}`, // GET
+    SINGLE: (_id) => `${API}${PUBLIC}${MENUS}/${_id}`, // GET
+  },
 });
 
 export default ENDPOINTS;

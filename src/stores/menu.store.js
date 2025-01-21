@@ -1,4 +1,5 @@
 // Imports => MOBX
+import { ActionSingle } from '@gemeente-denhaag/components-react';
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 
 let app = {};
@@ -57,8 +58,13 @@ export class MenuStore {
   };
 
   @action
+  getMenuFromPosition = (position) => {
+    return this.all_menu_items.find((item) => item.position === position);
+  };
+
+  @action
   fetchMenu = async (id) => {
-    this.loading.status = true;
+    this.setLoadingStatus(true);
 
     app.store.api.menu
       .single(id)
@@ -71,13 +77,13 @@ export class MenuStore {
       })
       .catch((e) => console.error(e))
       .finally(() => {
-        this.loading.status = false;
+        this.setLoadingStatus(false);
       });
   };
 
   @action
   fetchMenus = async () => {
-    this.loading.status = true;
+    this.setLoadingStatus(true);
 
     app.store.api.menu
       .list()

@@ -13,10 +13,10 @@ import FaqsStore from '@stores/faqs.store';
 import PagesStore from '@stores/pages.store';
 import PublicationsStore from '@stores/publications.store';
 import ThemesStore from '@stores/themes.store';
+import MenuStore from '@stores/menu.store';
 import AuthenticationStore from '@stores/authentication.store';
 import MijnOmgevingStore from '@stores/mijnOmgeving.store';
 import GemmaStore from '@stores/gemma.store';
-import MenuStore from '@stores/menu.store';
 
 class Store {
   constructor(config) {
@@ -32,10 +32,10 @@ class Store {
     this.pages = new PagesStore(this);
     this.toasters = new ToastersStore(this);
     this.themes = new ThemesStore(this);
+    this.menu = new MenuStore(this);
     this.authentication = new AuthenticationStore(this);
     this.mijnOmgeving = new MijnOmgevingStore(this);
     this.gemma = new GemmaStore(this);
-    this.menu = new MenuStore(this);
 
     window.addEventListener(
       'swFreshContentReady',

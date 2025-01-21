@@ -131,7 +131,7 @@ export default {
       ..._api_commonground_headers_,
     },
   },
-  navigation: {
+  menus: {
     baseURL: `${_api_}`,
     timeout: 1000 * 60,
     maxContentLength: 10000,
