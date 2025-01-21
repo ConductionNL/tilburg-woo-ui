@@ -197,7 +197,6 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   return (
     <>
       <AcContainer spacing='sm' margin='xl'>
-
         <AcFlex spacing='xl'>
           <Sidenav>
             <SidenavList>

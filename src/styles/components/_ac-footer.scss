@@ -89,5 +89,5 @@
 }
 
 .ac-footer__link-icon > path {
-  fill: var(--tilburg-footer-icon-color);
+  fill: var(--tilburg-footer-icon-color, currentColor);
 }
