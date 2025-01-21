@@ -7,6 +7,7 @@ const PAGES = '/pages';
 const PUBLICATIONS = '/publications';
 const SEARCH = '/search';
 const ATTACHMENTS = '/attachments';
+const CATALOG = '/catalogi';
 const THEMES = '/themes';
 const AUTHENTICATION = '/authentication';
 const MIJN_OMGEVING = '/mijn-omgeving';
@@ -21,8 +22,8 @@ export const ENDPOINTS = AcLockObject({
     ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   MIJN_OMGEVING: {
-    SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+    SEARCH: `${API}${SEARCH}${CATALOG}`, // GET
+    SINGLE: (_id) => `${API}${SEARCH}${CATALOG}/${_id}?extend=all`, // GET
   },
   AUTHENTICATION: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET

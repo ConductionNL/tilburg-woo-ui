@@ -9,7 +9,7 @@ import { AcBreadcrumbs } from '@molecules';
 import { AcContainer, AcLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import { AcCNavigation } from '@components';
 
 const AcHeader = ({ store }) => {
   const location = useLocation();
@@ -33,6 +33,26 @@ const AcHeader = ({ store }) => {
         return process.env.API_URL_COMMONGROUND;
     }
   };
+
+  const isCurrent = (current) => {
+    return current.pathname === window.location.pathname;
+  };
+
+  const items = [
+    {
+      label: 'Home',
+      type: 'internal',
+      current: isCurrent({ pathname: '/' }),
+      link: '/',
+    },
+    {
+      label: 'Mijn omgeving',
+      type: 'internal',
+      current: isCurrent({ pathname: '/mijn-omgeving' }),
+      link: '/mijn-omgeving',
+    },
+  ];
+
   return (
     <header className='ac-header'>
       <SkipLink id='skip-link' href='#main'>
@@ -57,7 +77,12 @@ const AcHeader = ({ store }) => {
         </div>
         <AcNavigation />
       </div>
-      <div className='ac-header__navigation-secondary'>
+      {items.length > 0 && (
+        <div className='ac-header__navigation-secondary'>
+          <AcCNavigation items={items} />
+        </div>
+      )}
+      <div className='ac-header__navigation-breadcrumb'>
         <AcContainer>{!isHomePage && <AcBreadcrumbs />}</AcContainer>
       </div>
     </header>

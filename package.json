@@ -53,6 +53,7 @@
     "@arktect-co/archimate-diagram-engine": "^1.0.1",
     "@conduction/theme": "1.1.40",
     "@emotion/react": "^11.11.1",
+    "@gemeente-denhaag/components-react": "^0.1.5",
     "@joint/core": "^4.1.2",
     "@loadable/component": "^5.15.3",
     "@lottiefiles/react-lottie-player": "^3.5.3",

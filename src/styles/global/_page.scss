@@ -67,7 +67,7 @@
   }
 }
 
-[class^='ac-col-'] > .react-reveal {
+[class^='ac-col-']>.react-reveal {
   // display: inherit;
   // flex-grow: 1;
   // flex-shrink: 0;
@@ -170,6 +170,14 @@
   display: flex;
   gap: 5px;
   flex-flow: wrap;
+}
+
+.ac-mijn-omgeving-tabs {
+  flex: 1;
+}
+
+.ac-mijn-omgeving-tabpanels {
+  margin-block-start: 10px;
 }
 
 /////////////////////////////

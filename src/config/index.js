@@ -10,7 +10,7 @@ const apiUrl = () => {
     case 'vng.opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-dimpact.accept.commonground.nu':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'https://dimpact.commonground.nu/apps/opencatalogi';
     case 'open-rotterdam.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
@@ -34,8 +34,6 @@ const commongroundApiUrl = () => {
       return 'https://tilburg.accept.commonground.nu/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
       return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
-    case 'localhost':
-      return process.env.API_URL_COMMONGROUND;
     default:
       return process.env.API_URL_COMMONGROUND;
   }

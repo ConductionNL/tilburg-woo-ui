@@ -1,5 +1,7 @@
 .conduction-theme,
-.rotterdam-theme, .dimpact-theme {
+.rotterdam-theme,
+.dimpact-theme,
+.opencatalogi-theme {
   --ams-pagination-button-border-color: transparent;
   --ams-pagination-button-background-color: transparent;
   --ams-pagination-button-active-border-color: transparent;
@@ -62,9 +64,7 @@
   --utrecht-link-text-decoration-thickness: auto;
   --utrecht-link-hover-text-decoration-thickness: auto;
   --utrecht-link-focus-text-decoration-thickness: auto;
-  --utrecht-form-label-checkbox-font-weight: var(
-    --tilburg-typography-font-weight-normal
-  );
+  --utrecht-form-label-checkbox-font-weight: var(--tilburg-typography-font-weight-normal);
 
   // Tilburg tokens
   --tilburg-status-badge-background-color: var(--tilburg-color-pink-100);
