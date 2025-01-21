@@ -188,6 +188,11 @@
 .ac-c-navigation__mobile-link {
   margin-block-end: 18px;
 }
+
+.ac-c-navigation__link-container {
+  text-decoration: none;
+}
+
 .ac-c-navigation__primary .ac-c-navigation__link {
   text-decoration: none;
   text-overflow: ellipsis;
@@ -198,7 +203,7 @@
 }
 
 .ac-c-navigation__primary
-  .ac-c-navigation__link:not(.ac-c-navigation__current-link) {
+  .ac-c-navigation__label:not(.ac-c-navigation__current-link) {
   display: block;
   color: var(--conduction-primary-top-nav-color);
 }
@@ -210,7 +215,7 @@
   fill: var(--conduction-primary-top-nav-color);
 }
 
-.ac-c-navigation__primary .ac-c-navigation__li:hover > .ac-c-navigation__link {
+.ac-c-navigation__primary .ac-c-navigation__li:hover > .ac-c-navigation__label {
   color: var(--conduction-primary-top-nav-hover-color);
   font-weight: var(--conduction-primary-top-nav-hover-font-weight);
 }
@@ -256,29 +261,37 @@
 .ac-c-navigation__primary
   .ac-c-navigation__dropdown
   .ac-c-navigation__li
-  .ac-c-navigation__link {
+  .ac-c-navigation__label {
   color: var(
     --conduction-primary-top-nav-dropdown-color,
     var(--conduction-primary-top-nav-color)
   );
+  text-decoration: var(--conduction-primary-top-nav-dropdown-text-decoration, none);
 }
 
 .ac-c-navigation__primary
   .ac-c-navigation__dropdown
   .ac-c-navigation__li:hover
-  .ac-c-navigation__
-  link {
+  .ac-c-navigation__label {
   color: var(
     --conduction-primary-top-nav-dropdown-hover-color,
     var(--conduction-primary-top-nav-hover-color)
   );
   font-weight: var(--conduction-primary-top-nav-dropdown-hover-font-weight);
+  text-decoration: var(
+    --conduction-primary-top-nav-dropdown-hover-text-decoration,
+    none
+  );
 }
 
 .ac-c-navigation__dropdown .ac-c-navigation__li:hover {
   background: var(
     --conduction-primary-top-nav-dropdown-hover-background-color,
     var(--conduction-primary-top-nav-hover-background-color)
+  );
+  text-decoration: var(
+    --conduction-primary-top-nav-dropdown-hover-text-decoration,
+    none
   );
   box-shadow: var(
     --conduction-primary-top-nav-dropdown-hover-box-shadow,
