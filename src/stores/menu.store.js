@@ -28,7 +28,7 @@ export class MenuStore {
   }
 
   @computed
-  get all_menus() {
+  get all_menu_items() {
     return this.items ? toJS(this.items) : [];
   }
 

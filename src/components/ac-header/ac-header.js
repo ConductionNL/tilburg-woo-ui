@@ -11,9 +11,13 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcCNavigation } from '@components';
 
-const AcHeader = ({ store }) => {
+const AcHeader = ({ store: { menu } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
+
+  const { all_menu_items } = menu;
+
+  const menuItems = all_menu_items.find((item) => item.position === 2);
 
   const getTitle = () => {
     const hostname = window.location.hostname;
@@ -33,25 +37,6 @@ const AcHeader = ({ store }) => {
         return process.env.API_URL_COMMONGROUND;
     }
   };
-
-  const isCurrent = (current) => {
-    return current.pathname === window.location.pathname;
-  };
-
-  const items = [
-    {
-      label: 'Home',
-      type: 'internal',
-      current: isCurrent({ pathname: '/' }),
-      link: '/',
-    },
-    {
-      label: 'Mijn omgeving',
-      type: 'internal',
-      current: isCurrent({ pathname: '/mijn-omgeving' }),
-      link: '/mijn-omgeving',
-    },
-  ];
 
   return (
     <header className='ac-header'>
@@ -77,9 +62,9 @@ const AcHeader = ({ store }) => {
         </div>
         <AcNavigation />
       </div>
-      {items.length > 0 && (
+      {menuItems && menuItems.items.length > 0 && (
         <div className='ac-header__navigation-secondary'>
-          <AcCNavigation items={items} />
+          <AcCNavigation items={menuItems.items} />
         </div>
       )}
       <div className='ac-header__navigation-breadcrumb'>
