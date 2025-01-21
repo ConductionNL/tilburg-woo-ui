@@ -9,8 +9,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcTable = ({ header = [], rows = [], footer = [] }) => {
-  console.log(rows);
-
   return (
     <Table>
       {Array.isArray(header) && (

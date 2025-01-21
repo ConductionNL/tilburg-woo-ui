@@ -14,6 +14,7 @@ import {
   AcThemes,
   AcAuthentication,
   AcMijnOmgeving,
+  AcGemma,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -29,6 +30,7 @@ export const PATHS = AcLockObject({
   SEARCH_STATIC: '/zoeken',
   AUTHENTICATION_STATIC: '/login',
   MIJN_OMGEVING_STATIC: '/mijn-omgeving',
+  GEMMA_STATIC: '/gemma',
 });
 
 export const ROUTES = {
@@ -77,6 +79,14 @@ export const ROUTES = {
     path: PATHS.MIJN_OMGEVING_STATIC,
     title: 'Open Tilburg | Mijn omgeving',
     component: AcMijnOmgeving,
+  },
+  GEMMA: {
+    id: AcUUID(),
+    name: 'Gemma',
+    label: LABELS.GEMMA,
+    path: PATHS.GEMMA_STATIC,
+    title: 'Open Tilburg | Gemma',
+    component: AcGemma,
   },
   THEMES: {
     id: AcUUID(),

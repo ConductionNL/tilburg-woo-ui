@@ -11,6 +11,7 @@ const CATALOG = '/catalogi';
 const THEMES = '/themes';
 const AUTHENTICATION = '/authentication';
 const MIJN_OMGEVING = '/mijn-omgeving';
+const GEMMA = '/gemma';
 
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
@@ -38,6 +39,10 @@ export const ENDPOINTS = AcLockObject({
   },
   THEMES: {
     INDEX: `${API}${SEARCH}${THEMES}`,
+  }, // GET
+  GEMMA: {
+    LIST: `${API}${SEARCH}${GEMMA}`,
+    SINGLE: (_id) => `${API}${SEARCH}${GEMMA}/${_id}?extend=all`,
   }, // GET
 });
 
