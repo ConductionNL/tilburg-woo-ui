@@ -74,36 +74,36 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     updateQuery(AcSearchParamsToObject(searchParams));
   };
 
-  useEffect(() => {
-    setQuery();
+  // useEffect(() => {
+  //   setQuery();
 
-    fetchAggregations();
+  //   fetchAggregations();
 
-    return () => {
-      resetSearchQuery();
-      resetAggregations();
-    };
-  }, []);
+  //   return () => {
+  //     resetSearchQuery();
+  //     resetAggregations();
+  //   };
+  // }, []);
 
-  useEffect(() => {
-    console.log(getSearchPageURL());
-    console.log(location.pathname + location.mijnOmgeving);
-    if (getSearchPageURL() === location.pathname + location.mijnOmgeving) {
-      return;
-    }
+  // useEffect(() => {
+  //   console.log(getSearchPageURL());
+  //   console.log(location.pathname + location.mijnOmgeving);
+  //   if (getSearchPageURL() === location.pathname + location.mijnOmgeving) {
+  //     return;
+  //   }
 
-    navigate(getSearchPageURL());
-  }, [search_query, ...Object.values(search_query?.published || {})]);
+  //   navigate(getSearchPageURL());
+  // }, [search_query, ...Object.values(search_query?.published || {})]);
 
-  // On GET params change.
-  useEffect(() => {
-    console.group('LOCATION PARAMS CHANGED');
-    console.log([location.mijnOmgeving]);
-    console.groupEnd();
+  // // On GET params change.
+  // useEffect(() => {
+  //   console.group('LOCATION PARAMS CHANGED');
+  //   console.log([location.mijnOmgeving]);
+  //   console.groupEnd();
 
-    setQuery();
-    fetchPublications();
-  }, [location.mijnOmgeving]);
+  //   setQuery();
+  //   fetchPublications();
+  // }, [location.mijnOmgeving]);
 
   const onPaginationChange = (page) => {
     setPage(page);
