@@ -12,6 +12,8 @@ import PagesAPI from '@api/pages.api';
 import ThemesAPI from '@api/themes.api';
 import AuthenticationAPI from '@api/authentication.api';
 import MijnOmgevingAPI from '@api/mijnOmgeving.api';
+import MenuAPI from '@api/menu.api';
+
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
   console.log('Event: ', event);
@@ -118,6 +120,11 @@ export class API {
     });
     addInterceptors(UploadClient);
 
+    const MenuClient = axios.create({
+      ...config.navigation,
+    });
+    addInterceptors(MenuClient);
+
     window.addEventListener('cancelRequests', cancelRequests, false);
 
     this.auth = new AuthAPI({ Store, Client });
@@ -130,6 +137,7 @@ export class API {
       Client: AuthenticationClient,
     });
     this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client: MijnOmgevingClient });
+    this.menu = new MenuAPI({ Store, Client: MenuClient });
   }
 }
 
