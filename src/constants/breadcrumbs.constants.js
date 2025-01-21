@@ -4,6 +4,7 @@ export const BREADCRUMB_ITEMS = {
   THEMES: { label: 'Onderwerpen', href: '/onderwerpen' },
   LOGIN: { label: 'Inloggen', href: '/login' },
   MIJN_OMGEVING: { label: 'Mijn omgeving', href: '/mijn-omgeving' },
+  GEMMA: { label: 'Gemma', href: '/gemma' },
 };
 
 export const BREADCRUMBS = {
@@ -19,5 +20,6 @@ export const BREADCRUMBS = {
   THEMES: [BREADCRUMB_ITEMS.THEMES],
   LOGIN: [BREADCRUMB_ITEMS.LOGIN],
   MIJN_OMGEVING: [BREADCRUMB_ITEMS.MIJN_OMGEVING],
+  GEMMA: [BREADCRUMB_ITEMS.GEMMA],
   PUBLICATION: (label) => [BREADCRUMB_ITEMS.SEARCH, { label }],
 };

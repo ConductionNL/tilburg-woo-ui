@@ -180,6 +180,17 @@ export default {
       Accept: 'application/json',
       type: 'formData',
     },
+    gemma: {
+      baseURL: `${_api_commonground_}`,
+      timeout: 1000 * 60,
+      maxContentLength: 10000,
+      responseType: 'json',
+      responseEncoding: 'utf8',
+      credentials: false,
+      headers: {
+        ..._api_commonground_headers_,
+      },
+    },
     transformRequest: [
       (data, headers) => {
         const token = AcGetAccessToken();
