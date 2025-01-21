@@ -5,18 +5,7 @@ import { useNavigate } from 'react-router';
 
 const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const [isMobile, setIsMobile] = React.useState(window.innerWidth < 992);
   const navigate = useNavigate();
-
-  React.useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 992);
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   const handleSubItemClick = (handleClick) => {
     setIsOpen(false);
@@ -58,13 +47,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                   )}
                 >
                   {icon && icon}
-                  {name}{' '}
-                  {items && isMobile && (
-                    <FontAwesomeIcon
-                      className='ac-c-navigation__toggle-icon'
-                      icon={faChevronRight}
-                    />
-                  )}
+                  {name}
                 </div>
 
                 {items && (
