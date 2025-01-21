@@ -38,9 +38,14 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.MIJN_OMGEVING;
     }
 
+    if (location.pathname.startsWith('/gemma')) {
+      return BREADCRUMBS.GEMMA;
+    }
+
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);
     }
+
     return [];
   }, [get_single_document, get_single_page, location]);
 

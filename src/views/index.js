@@ -6,6 +6,7 @@ const AcThemes = loadable(() => import('@views/ac-themes/ac-themes'));
 const AcPublication = loadable(() => import('@views/ac-publication/ac-publication'));
 const AcAuthentication = loadable(() => import('@views/ac-authentication/ac-authentication'));
 const AcMijnOmgeving = loadable(() => import('@views/ac-mijn-omgeving/ac-mijn-omgeving'));
+const AcGemma = loadable(() => import('@views/ac-gemma/ac-gemma'));
 
-export { AcHome, AcSearch, AcThemes, AcPublication, AcAuthentication, AcMijnOmgeving };
+export { AcHome, AcSearch, AcThemes, AcPublication, AcAuthentication, AcMijnOmgeving, AcGemma };
 

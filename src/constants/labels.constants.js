@@ -52,6 +52,7 @@ export const LABELS = {
 
   AUTHENTICATION: 'Login',
   MIJN_OMGEVING: 'Mijn omgeving',
+  GEMMA: 'Gemma',
 };
 
 export const LABELS_DYNAMIC = {
