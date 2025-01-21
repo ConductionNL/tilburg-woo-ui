@@ -59,7 +59,7 @@ export class MenuStore {
 
   @action
   getMenuFromPosition = (position) => {
-    return this.all_menus.find((item) => item.position === position);
+    return this.all_menu_items.find((item) => item.position === position);
   };
 
   @action

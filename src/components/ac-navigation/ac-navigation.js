@@ -37,69 +37,68 @@ const AcNavigation = ({ store: { menu } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {!menu_loading &&
-          ((menus && (
-            <ul>
-              {menus.items.map((menuItem) => (
-                <li>
-                  <Link to={menuItem.link}>
-                    <Icon icon={menuItem.icon} />
-                    {menuItem.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )) ||
-            (AcCheckIfSpecificHostname() && (
-              <>
-                {pathname !== '/mijn-omgeving' ? (
-                  <ul>
-                    <li>
-                      <Link to='/login'>
-                        <VISUALS.PERSON_ADD />
-                        Registreren
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to='/login'>
-                        <VISUALS.KEY />
-                        Inloggen
-                      </Link>
-                    </li>
-                  </ul>
-                ) : (
-                  <ul>
-                    <li>
-                      <Link to='#'>
-                        <VISUALS.USER />
-                        Account
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </>
-            )) || (
-              <ul>
-                <li>
-                  <Link to='/over-ons'>
-                    <VISUALS.INFO />
-                    Over Open Tilburg
-                  </Link>
-                </li>
-                <li>
-                  <Link to='/onderwerpen'>
-                    <VISUALS.LIST />
-                    Onderwerpen
-                  </Link>
-                </li>
-                <li>
-                  <Link to='/contact'>
-                    <VISUALS.CONTACT />
-                    Contact
-                  </Link>
-                </li>
-              </ul>
+        {(menus && (
+          <ul>
+            {menus.items.map((menuItem) => (
+              <li>
+                <Link to={menuItem.link}>
+                  <Icon icon={menuItem.icon} />
+                  {menuItem.name}
+                </Link>
+              </li>
             ))}
+          </ul>
+        )) ||
+          (AcCheckIfSpecificHostname() && (
+            <>
+              {pathname !== '/mijn-omgeving' ? (
+                <ul>
+                  <li>
+                    <Link to='/login'>
+                      <VISUALS.PERSON_ADD />
+                      Registreren
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to='/login'>
+                      <VISUALS.KEY />
+                      Inloggen
+                    </Link>
+                  </li>
+                </ul>
+              ) : (
+                <ul>
+                  <li>
+                    <Link to='#'>
+                      <VISUALS.USER />
+                      Account
+                    </Link>
+                  </li>
+                </ul>
+              )}
+            </>
+          )) || (
+            <ul>
+              <li>
+                <Link to='/over-ons'>
+                  <VISUALS.INFO />
+                  Over Open Tilburg
+                </Link>
+              </li>
+              <li>
+                <Link to='/onderwerpen'>
+                  <VISUALS.LIST />
+                  Onderwerpen
+                </Link>
+              </li>
+              <li>
+                <Link to='/contact'>
+                  <VISUALS.CONTACT />
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          )}
       </nav>
     </div>
   );
