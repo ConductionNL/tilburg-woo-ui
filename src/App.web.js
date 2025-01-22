@@ -69,22 +69,42 @@ const App = ({ store }) => {
   const setIcon = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
-        return (document.getElementById('favicon').href =
-          'https://vng.nl/themes/custom/vng/favicon.ico');
+        return (
+          (document.getElementById('favicon').href =
+            'https://vng.nl/themes/custom/vng/favicon.ico'),
+          (document.getElementById('faviconMeta').href =
+            'https://vng.nl/themes/custom/vng/favicon.ico')
+        );
       case 'open-tilburg.accept.commonground.nu':
         return;
       case 'open-dimpact.accept.commonground.nu':
-        return (document.getElementById('favicon').href =
-          'https://www.dimpact.nl/wp-content/themes/dimpact-child-theme/favicon.png');
+        return (
+          (document.getElementById('favicon').href =
+            'https://www.dimpact.nl/wp-content/themes/dimpact-child-theme/favicon.png'),
+          (document.getElementById('faviconMeta').href =
+            'https://www.dimpact.nl/wp-content/themes/dimpact-child-theme/favicon.png')
+        );
       case 'open-rotterdam.accept.commonground.nu':
-        return (document.getElementById('favicon').href =
-          'https://www.rotterdam.nl/favicon.ico?v=2');
+        return (
+          (document.getElementById('favicon').href =
+            'https://www.rotterdam.nl/favicon.ico?v=2'),
+          (document.getElementById('faviconMeta').href =
+            'https://www.rotterdam.nl/favicon.ico?v=2')
+        );
       case 'opencatalogi.nl':
-        return (document.getElementById('favicon').href =
-          'https://dev.opencatalogi.nl/static/logo_OpenCatalogi-8b1b0a001c3f37dae4d3f69b5964ec72.png');
+        return (
+          (document.getElementById('favicon').href =
+            'https://dev.opencatalogi.nl/static/logo_OpenCatalogi-8b1b0a001c3f37dae4d3f69b5964ec72.png'),
+          (document.getElementById('faviconMeta').href =
+            'https://dev.opencatalogi.nl/static/logo_OpenCatalogi-8b1b0a001c3f37dae4d3f69b5964ec72.png')
+        );
       case 'localhost':
-        return (document.getElementById('favicon').href =
-          'https://www.rotterdam.nl/favicon.ico?v=2');
+        return (
+          (document.getElementById('favicon').href =
+            'https://www.rotterdam.nl/favicon.ico?v=2'),
+          (document.getElementById('faviconMeta').href =
+            'https://www.rotterdam.nl/favicon.ico?v=2')
+        );
       default:
         return;
     }
