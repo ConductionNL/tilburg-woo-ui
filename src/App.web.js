@@ -94,9 +94,9 @@ const App = ({ store }) => {
       case 'opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
-            'https://dev.opencatalogi.nl/static/logo_OpenCatalogi-8b1b0a001c3f37dae4d3f69b5964ec72.png'),
+            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),
           (document.getElementById('faviconMeta').href =
-            'https://dev.opencatalogi.nl/static/logo_OpenCatalogi-8b1b0a001c3f37dae4d3f69b5964ec72.png')
+            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
         );
       case 'localhost':
         return (
