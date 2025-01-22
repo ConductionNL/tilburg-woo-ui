@@ -1,0 +1,83 @@
+.copy-button {
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .particles {
+    > svg:first-of-type {
+      display: none;
+      margin-inline-end: 0.5rem;
+      opacity: 0;
+
+      @media (prefers-reduced-motion: no-preference) {
+        transition-property: display, opacity, transform;
+        transition-duration: var(--transition-speed);
+        transition-timing-function: var(--transition-timing);
+        transition-behavior: allow-discrete;
+      }
+    }
+
+    &-inner {
+      position: absolute;
+      top: 50%;
+      left: 2.5rem;
+      transform: translate(-50%, -50%) scale(0);
+      transform-origin: center;
+    }
+  }
+
+  &[data-status='copied'] {
+    .particles {
+      > svg:first-of-type {
+        display: block;
+        opacity: 1;
+        animation: pop-in 0.3s ease-in-out;
+
+        @starting-style {
+          opacity: 0;
+          transform: scale(0.8);
+        }
+      }
+
+      .particles-inner {
+        @media (prefers-reduced-motion: no-preference) {
+          animation: particle-burst 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+      }
+    }
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes particle-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  50% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+}
