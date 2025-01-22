@@ -57,6 +57,8 @@ const App = ({ store }) => {
         return 'dimpact-theme';
       case 'open-rotterdam.accept.commonground.nu':
         return 'rotterdam-theme';
+      case 'opencatalogi.nl':
+        return 'opencatalogi-theme';
       case 'localhost':
         return 'rotterdam-theme';
       default:

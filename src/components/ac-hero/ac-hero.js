@@ -23,6 +23,8 @@ const AcHero = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
         return 'https://vng.nl/sites/default/files/styles/16_9_xl/public/2023-12/dso.jpg?itok=PVFVJNmT';
+      case 'opencatalogi.nl':
+        return 'https://vng.nl/sites/default/files/styles/16_9_xl/public/2023-12/dso.jpg?itok=PVFVJNmT';
       case 'open-dimpact.accept.commonground.nu':
         return 'https://www.dimpact.nl/wp-content/uploads/2024/02/Headerafbeelding-over-ons.jpg.webp';
       case 'open-rotterdam.accept.commonground.nu':

@@ -31,6 +31,8 @@ const AcHeader = ({ store: { menu } }) => {
         return 'Producten catalogus';
       case 'open-rotterdam.accept.commonground.nu':
         return 'Open Rotterdam';
+      case 'opencatalogi.nl':
+        return 'Open Catalogi';
       case 'localhost':
         return 'Localhost catalogus';
       default:
