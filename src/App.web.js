@@ -60,7 +60,7 @@ const App = ({ store }) => {
       case 'opencatalogi.nl':
         return 'opencatalogi-theme';
       case 'localhost':
-        return 'rotterdam-theme';
+        return 'opencatalogi-theme';
       default:
         return process.env.API_URL_COMMONGROUND;
     }

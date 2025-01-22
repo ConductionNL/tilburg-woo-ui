@@ -33,15 +33,34 @@ export const PATHS = AcLockObject({
   GEMMA_STATIC: '/gemma',
 });
 
+const getTitle = () => {
+  const hostname = window.location.hostname;
+
+  switch (hostname) {
+    case 'vng.opencatalogi.nl':
+      return 'Softwarecatalogus';
+    case 'open-tilburg.accept.commonground.nu':
+      return 'Open Tilburg';
+    case 'open-dimpact.accept.commonground.nu':
+      return 'Producten catalogus';
+    case 'open-rotterdam.accept.commonground.nu':
+      return 'Open Rotterdam';
+    case 'opencatalogi.nl':
+      return 'OpenCatalogi';
+    case 'localhost':
+      return 'Localhost catalogus';
+    default:
+      return 'Open Tilburg';
+  }
+};
+
 export const ROUTES = {
   HOME: {
     id: AcUUID(),
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: `Home | ${
-      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
-    }`,
+    title: `Home | ${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'}`,
     component: AcHome,
   },
   PUBLICATION: {
@@ -50,7 +69,7 @@ export const ROUTES = {
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
     title: `${
-      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Publicatie`,
     component: AcPublication,
   },
@@ -59,9 +78,7 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: `${
-      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
-    } | Zoeken`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Zoeken`,
     component: AcSearch,
   },
   AUTHENTICATION: {
@@ -77,7 +94,9 @@ export const ROUTES = {
     name: 'Mijn omgeving',
     label: LABELS.MIJN_OMGEVING,
     path: PATHS.MIJN_OMGEVING_STATIC,
-    title: 'Open Tilburg | Mijn omgeving',
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Mijn omgeving`,
     component: AcMijnOmgeving,
   },
   GEMMA: {
@@ -85,7 +104,7 @@ export const ROUTES = {
     name: 'Gemma',
     label: LABELS.GEMMA,
     path: PATHS.GEMMA_STATIC,
-    title: 'Open Tilburg | Gemma',
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Gemma`,
     component: AcGemma,
   },
   THEMES: {
@@ -94,7 +113,7 @@ export const ROUTES = {
     label: TITLES.THEMES,
     path: PATHS.THEMES,
     title: `${
-      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Onderwerpen`,
     component: AcThemes,
   },
@@ -103,9 +122,7 @@ export const ROUTES = {
     name: 'Over Open Tilburg',
     label: TITLES.ABOUT,
     path: PATHS.ABOUT,
-    title: `${
-      AcCheckIfSpecificHostname() ? 'Softwarecatalogus' : 'Open Tilburg'
-    } | Over`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Over`,
   },
   CONTACT: {
     id: AcUUID(),
