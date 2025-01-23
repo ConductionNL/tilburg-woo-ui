@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
+import { toJS } from 'mobx';
 
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { AcLoader, AcDrawer, AcTabList, AcSearchFilter } from '@components';
@@ -95,7 +96,7 @@ const MOCK_CONCEPTS = {
   ],
 };
 
-const AcPublication = ({ store: { publications } }) => {
+const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
   const {
     fetchPublication,
@@ -106,6 +107,8 @@ const AcPublication = ({ store: { publications } }) => {
     getSearchPageURL,
     setAttachmentsPage,
     getFilteredAttachments,
+    setAttachmentSearch,
+    attachmentSearch,
   } = publications;
 
   const drawerRef = useRef(null);
@@ -120,6 +123,11 @@ const AcPublication = ({ store: { publications } }) => {
     );
     setFilteredAllConcepts(filtered);
     return filtered.length;
+  };
+
+  const handleAttachmentSearch = (searchTerm) => {
+    setAttachmentSearch(searchTerm);
+    return getFilteredAttachments(false)?.length || 0;
   };
 
   const tabs = [
@@ -144,6 +152,7 @@ const AcPublication = ({ store: { publications } }) => {
             onSearch={handleAllConceptsSearch}
             ariaLabel='Zoek in alle begrippen'
             label='Zoek in alle begrippen'
+            searchIconOnly={true}
           />
           {filteredAllConcepts.map((concept) => (
             <AcFlex column key={concept.title}>
@@ -222,28 +231,43 @@ const AcPublication = ({ store: { publications } }) => {
     );
   }, [get_single]);
 
-  const renderAttachments = useMemo(() => {
-    if (!getFilteredAttachments()?.length) {
+  const renderAttachments = () => {
+    const allAttachments = getFilteredAttachments(false);
+
+    if (!allAttachments?.length) {
       return null;
     }
 
+    const totalItems = allAttachments.length;
+    const totalPages = Math.ceil(totalItems / attachmentPagination.perPage);
+    const paginatedAttachments = getFilteredAttachments(
+      false,
+      attachmentPagination.page
+    );
+
     return (
       <AcFlex column>
-        <AcFlex alignItems='center' spacing='snail'>
-          <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>{' '}
-          <StatusBadge>{getFilteredAttachments()?.length}</StatusBadge>
-        </AcFlex>
         <AcFlex spacing={'md'} column>
+          <AcFlex alignItems='center' spacing='snail'>
+            <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>{' '}
+            <StatusBadge>{totalItems}</StatusBadge>
+          </AcFlex>
+          <AcSearchFilter
+            onSearch={handleAttachmentSearch}
+            initialValue={attachmentSearch}
+            label='Zoek in bijlagen'
+            placeholder='Welk document zoek je?'
+          />
           <AcTable
             header={[LABELS.DOCUMENT]}
-            rows={getFilteredAttachments(false, attachmentPagination.page)?.map(
-              (attachment) => mapAttachmentRow(attachment)
+            rows={toJS(paginatedAttachments)?.map((attachment) =>
+              mapAttachmentRow(attachment)
             )}
           />
-          {getFilteredAttachments()?.length > attachmentPagination.perPage && (
+          {totalItems > attachmentPagination.perPage && (
             <Pagination
-              totalPages={getFilteredAttachments().length}
-              page={1}
+              totalPages={totalPages}
+              page={attachmentPagination.page}
               nextLabel=''
               previousLabel=''
               onPageChange={(page) => setAttachmentsPage(page)}
@@ -252,7 +276,7 @@ const AcPublication = ({ store: { publications } }) => {
         </AcFlex>
       </AcFlex>
     );
-  }, [get_single, attachmentPagination]);
+  };
 
   return (
     <>
@@ -272,7 +296,7 @@ const AcPublication = ({ store: { publications } }) => {
           </AcCard>
 
           {renderPrimaryAttachments}
-          {renderAttachments}
+          {renderAttachments()}
 
           <AcFlex column>
             <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
@@ -314,6 +338,6 @@ const AcPublication = ({ store: { publications } }) => {
       </AcDrawer>
     </>
   );
-};
+});
 
-export default withStore(observer(AcPublication));
+export default withStore(AcPublication);

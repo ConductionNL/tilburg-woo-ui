@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from 'react';
+import React, { forwardRef } from 'react';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
 import AcFlex from '@atoms/ac-flex/ac-flex';

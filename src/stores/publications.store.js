@@ -69,6 +69,9 @@ export class PublicationsStore {
     message: undefined,
   };
 
+  @observable
+  attachmentSearch = '';
+
   @computed
   get all_categories() {
     return this.categories;
@@ -76,8 +79,22 @@ export class PublicationsStore {
 
   @action
   getFilteredAttachments = (primary = false, page) => {
-    const filteredAttachmentsLabel = this.single?.attachments?.filter((attachment) =>
-      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
+    // @TODO: This is the way we want to filter but the API does not support it yet. Keep it for reference.
+    // const filteredAttachmentsLabel = this.single?.attachments?.filter((attachment) =>
+    //   primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
+    // );
+
+    const filteredAttachmentsLabel = this.single?.attachments?.filter(
+      (attachment) => {
+        const isPrimary = !attachment?.title?.toLowerCase().startsWith('bijlage');
+        const matchesSearch =
+          !this.attachmentSearch ||
+          attachment?.title
+            ?.toLowerCase()
+            .includes(this.attachmentSearch.toLowerCase());
+
+        return primary ? isPrimary && matchesSearch : !isPrimary && matchesSearch;
+      }
     );
 
     const filteredAttachments = [];
@@ -350,6 +367,12 @@ export class PublicationsStore {
       .finally(() => {
         this.setLoadingStatus(false);
       });
+  };
+
+  @action
+  setAttachmentSearch = (search) => {
+    this.attachmentSearch = search;
+    this.attachmentPagination.page = 1; // Reset to first page when searching
   };
 }
 

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { VISUALS, LABELS, LABELS_DYNAMIC } from '@constants';
+import { VISUALS, LABELS_DYNAMIC } from '@constants';
 import {
   FormLabel,
   Textbox,
   PrimaryActionButton,
-  SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@atoms';
 
@@ -13,6 +12,7 @@ const AcSearchFilter = ({
   onSearch,
   initialValue = '',
   label = 'Zoek in begrippen',
+  searchIconOnly = false,
 }) => {
   const [searchTerm, setSearchTerm] = useState(initialValue);
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
@@ -50,7 +50,7 @@ const AcSearchFilter = ({
           />
           <PrimaryActionButton type='submit'>
             <VISUALS.SEARCH />
-            <span className='sr-only'>Zoek</span>
+            <span className={searchIconOnly ? 'sr-only' : ''}>Zoeken</span>
           </PrimaryActionButton>
         </AcFlex>
       </form>
