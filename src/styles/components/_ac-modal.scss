@@ -70,6 +70,10 @@
     padding-block-start: var(--tilburg-space-row-cat);
     padding-inline: var(--tilburg-space-row-rat);
   }
+
+  &:not(:has(.ac-modal__footer)) {
+    padding-block-end: var(--tilburg-space-row-rat);
+  }
 }
 
 body:has(.ac-modal[open]) {

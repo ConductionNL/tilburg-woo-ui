@@ -41,7 +41,11 @@ export const LABELS = {
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
-
+  SHARE: 'Link naar publicatie delen',
+  SHARE_MODAL: 'Link kopiëren',
+  COPY_LINK: 'Kopieer link',
+  COPY_LINK_SUCCESS: 'Link gekopieerd!',
+  COPY_LINK_ERROR: 'Kopiëren mislukt',
   VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
 
   THIS_WEBSITE: 'Deze website',

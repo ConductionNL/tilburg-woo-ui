@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 
 import { AcCard, AcContainer, AcFlex } from '@atoms';
-import { AcLoader, AcDrawer, AcTabList, AcSearchFilter } from '@components';
+import { AcLoader, AcDrawer, AcTabList, AcSearchFilter, AcModal } from '@components';
 import { AcLink, AcTable } from '@molecules';
 import { withStore } from '@stores';
 
@@ -11,6 +11,8 @@ import {
   Heading,
   Paragraph,
   Link,
+  Textbox,
+  PrimaryActionButton,
   SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
@@ -109,10 +111,12 @@ const AcPublication = ({ store: { publications } }) => {
   } = publications;
 
   const drawerRef = useRef(null);
+  const modalRef = useRef(null);
 
   const [filteredAllConcepts, setFilteredAllConcepts] = useState(
     MOCK_CONCEPTS.allConcepts
   );
+  const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
 
   const handleAllConceptsSearch = (searchTerm) => {
     const filtered = MOCK_CONCEPTS.allConcepts.filter((concept) =>
@@ -171,6 +175,39 @@ const AcPublication = ({ store: { publications } }) => {
 
   const openDrawer = () => {
     drawerRef.current?.showModal();
+  };
+
+  const openDialog = () => {
+    modalRef.current?.showModal();
+  };
+
+  const copyLink = async () => {
+    try {
+      // Get the base URL (will be the actual domain in production)
+      const baseUrl = window.location.origin;
+      // Construct the publication URL
+      const url = `${baseUrl}/publicatie/${get_single?.id}`;
+
+      await navigator.clipboard.writeText(url);
+      setCopyStatus('copied');
+
+      setTimeout(() => {
+        setCopyStatus('idle');
+      }, 2000);
+    } catch (err) {
+      setCopyStatus('error');
+    }
+  };
+
+  const getCopyButtonText = () => {
+    switch (copyStatus) {
+      case 'copied':
+        return LABELS.COPY_LINK_SUCCESS;
+      case 'error':
+        return LABELS.COPY_LINK_ERROR;
+      default:
+        return LABELS.COPY_LINK;
+    }
   };
 
   const mapAttachmentRow = (row, primary) => {
@@ -306,12 +343,50 @@ const AcPublication = ({ store: { publications } }) => {
               ]}
             />
           </AcFlex>
+          <SecondaryActionButton style='button' onClick={openDialog}>
+            <VISUALS.SHARE />
+            Link delen
+          </SecondaryActionButton>
         </AcFlex>
       </AcContainer>
 
       <AcDrawer id='concepts-drawer' ref={drawerRef} title={LABELS.CONCEPTS_LIST}>
         <AcTabList tabs={tabs} />
       </AcDrawer>
+
+      <AcModal
+        id='share-modal'
+        ref={modalRef}
+        title={LABELS.SHARE_MODAL}
+        customFooter
+      >
+        <AcFlex column spacing='sm'>
+          <Paragraph>Kopieer de link naar uw klembord.</Paragraph>
+          <Textbox
+            value={`${window.location.origin}/publicatie/${get_single?.id}`}
+            readOnly
+          />
+          <div role='status' aria-live='polite' className='sr-only'>
+            {copyStatus === 'copied' && 'De link is gekopieerd naar uw klembord'}
+            {copyStatus === 'error' && 'Het kopiëren van de link is mislukt'}
+          </div>
+          <PrimaryActionButton
+            className='copy-button'
+            data-status={copyStatus}
+            style='button'
+            onClick={copyLink}
+            aria-label={getCopyButtonText()}
+          >
+            <div class='particles'>
+              <VISUALS.CHECK />
+              <div class='particles-inner'>
+                <VISUALS.PARTICLES />
+              </div>
+            </div>
+            {getCopyButtonText()}
+          </PrimaryActionButton>
+        </AcFlex>
+      </AcModal>
     </>
   );
 };
