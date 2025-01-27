@@ -28,11 +28,8 @@ const AcHero = () => {
             onSubmitCallback={submitSearch}
             page='home'
             label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
+            title='Open Tilburg, de plek voor alle openbare documenten van Gemeente Tilburg'
           />
-          <AcLink href='/zoeken'>
-            {LABELS.SEARCH_EXTENSIVE}
-            <VISUALS.ARROW_RIGHT />
-          </AcLink>
         </AcCard>
       </AcContainer>
     </AcSection>

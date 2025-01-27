@@ -55,6 +55,10 @@ const DOCUMENT = loadable(() =>
   import('-!svg-react-loader!@assets/images/document.svg')
 );
 
+const THEMES = loadable(() =>
+  import('-!svg-react-loader!@assets/images/themes.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   CHEVRON_RIGHT,
@@ -77,6 +81,7 @@ export const VISUALS = {
   QUESTION_MARK,
   SEARCH,
   SEARCH_ALT,
+  THEMES,
 };
 
 export default {};

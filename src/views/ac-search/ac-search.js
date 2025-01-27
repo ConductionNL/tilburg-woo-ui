@@ -149,7 +149,10 @@ const AcSearch = ({ store: { publications } }) => {
             </div>
             <AcFlex column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
-                <Heading level={2}>{LABELS.SEARCH_RESULTS}</Heading>
+                <Heading level={2}>
+                  {all_publications?.length}{' '}
+                  {LABELS_DYNAMIC.RESULTS(all_publications?.length).toLowerCase()}
+                </Heading>
                 <div className='desktop-sorting'>
                   <AcSearchSort type='alt' />
                 </div>

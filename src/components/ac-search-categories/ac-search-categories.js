@@ -54,11 +54,11 @@ const AcSearchCategories = ({ store: { publications } }) => {
     <>
       <AcFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
-        <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
-          <VISUALS.QUESTION_MARK />
-        </AcButton>
         {renderModal}
       </AcFlex>
+      <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
+        <VISUALS.QUESTION_MARK /> <span>{LABELS.ABOUT_CATEGORIES}</span>
+      </AcButton>
       {all_categories?.map((category, index) => (
         <AcCheckbox
           key={index}
