@@ -4,6 +4,7 @@ import loadable from '@loadable/component';
 const ARROW_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/arrow-right.svg')
 );
+const CHECK = loadable(() => import('-!svg-react-loader!@assets/images/check.svg'));
 const CHEVRON_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/chevron-right.svg')
 );
@@ -54,6 +55,10 @@ const SEARCH_ALT = loadable(() =>
 const DOCUMENT = loadable(() =>
   import('-!svg-react-loader!@assets/images/document.svg')
 );
+const SHARE = loadable(() => import('-!svg-react-loader!@assets/images/share.svg'));
+const PARTICLES = loadable(() =>
+  import('-!svg-react-loader!@assets/images/particles.svg')
+);
 
 const THEMES = loadable(() =>
   import('-!svg-react-loader!@assets/images/themes.svg')
@@ -65,6 +70,7 @@ export const VISUALS = {
   CLOSE,
   CLOSE_SMALL,
   CONTACT,
+  CHECK,
   DOCUMENT,
   ELLIPSE,
   EXTERNAL_LINK,
@@ -81,6 +87,8 @@ export const VISUALS = {
   QUESTION_MARK,
   SEARCH,
   SEARCH_ALT,
+  SHARE,
+  PARTICLES,
   THEMES,
 };
 
