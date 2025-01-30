@@ -23,6 +23,11 @@
     }
   }
 
+  span {
+    font-weight: bold;
+    text-decoration: underline!important;
+  }
+
   &:has(.utrecht-badge-status) {
     text-decoration: none;
 

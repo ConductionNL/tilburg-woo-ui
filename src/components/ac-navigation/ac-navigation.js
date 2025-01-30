@@ -30,7 +30,7 @@ const AcNavigation = () => {
           </li>
           <li>
             <Link to='/onderwerpen'>
-              <VISUALS.LIST />
+              <VISUALS.THEMES />
               Onderwerpen
             </Link>
           </li>

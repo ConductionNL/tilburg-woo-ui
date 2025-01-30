@@ -54,6 +54,7 @@ export const LABELS = {
   VIEW_DOCUMENTS: 'Bekijk de documenten',
 
   THEMES: 'Onderwerpen',
+  ABOUT_CATEGORIES: 'Over categorieën',
 };
 
 export const LABELS_DYNAMIC = {

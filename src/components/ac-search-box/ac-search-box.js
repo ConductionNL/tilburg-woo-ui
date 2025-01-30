@@ -5,14 +5,18 @@ import {
   Textbox,
   PrimaryActionButton,
   SecondaryActionButton,
+  FormLabel,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
+import { Label } from '@amsterdam/design-system-react';
+import { AcFlex } from '@atoms';
 
 export const AcSearchBox = ({
   page,
   small,
+  title,
   label,
   spacing,
   defaultValue,
@@ -24,8 +28,8 @@ export const AcSearchBox = ({
   const { mobileFiltersOpen, toggleMobileFilters } = publications;
 
   const renderHeading = useMemo(() => {
-    return label && <Heading level={2}>{label}</Heading>;
-  }, [label]);
+    return title && <Heading level={1}>{title}</Heading>;
+  }, [title]);
 
   const submitCallback = (e) => {
     e.preventDefault();
@@ -56,17 +60,20 @@ export const AcSearchBox = ({
       <form className={_CLASSES} onSubmit={submitCallback}>
         {renderHeading}
 
-        <div className='ac-search-box__search'>
-          <Textbox
-            placeholder={LABELS.ENTER_QUERY}
-            onChange={changeCallback}
-            defaultValue={defaultValue}
-          />
-          <PrimaryActionButton type='submit'>
-            <VISUALS.SEARCH />
-            <span>{LABELS.SEARCH}</span>
-          </PrimaryActionButton>
-        </div>
+        <AcFlex column spacing='sm'>
+          <FormLabel>{label}</FormLabel>
+          <div className='ac-search-box__search'>
+            <Textbox
+              placeholder={LABELS.ENTER_QUERY}
+              onChange={changeCallback}
+              defaultValue={defaultValue}
+            />
+            <PrimaryActionButton type='submit'>
+              <VISUALS.SEARCH />
+              <span>{LABELS.SEARCH}</span>
+            </PrimaryActionButton>
+          </div>
+        </AcFlex>
       </form>
 
       {page === 'search' && (

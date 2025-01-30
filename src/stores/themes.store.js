@@ -1,6 +1,6 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
-import { LABELS, LABELS_DYNAMIC } from '@constants';
+import { LABELS } from '@constants';
 
 let app = {};
 
@@ -31,6 +31,8 @@ export class ThemesStore {
   @computed
   get all_themes() {
     return this.items
+      ?.slice()
+      ?.sort((a, b) => a.title.localeCompare(b.title))
       ?.map((theme) => ({
         ...theme,
         paragraph: theme.description,

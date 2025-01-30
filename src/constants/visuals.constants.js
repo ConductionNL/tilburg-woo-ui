@@ -60,6 +60,10 @@ const PARTICLES = loadable(() =>
   import('-!svg-react-loader!@assets/images/particles.svg')
 );
 
+const THEMES = loadable(() =>
+  import('-!svg-react-loader!@assets/images/themes.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   CHEVRON_RIGHT,
@@ -85,6 +89,7 @@ export const VISUALS = {
   SEARCH_ALT,
   SHARE,
   PARTICLES,
+  THEMES,
 };
 
 export default {};
