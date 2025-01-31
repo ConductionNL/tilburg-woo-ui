@@ -36,7 +36,7 @@ const AcHeader = ({ store: { menu } }) => {
       case 'localhost':
         return 'Localhost catalogus';
       default:
-        return process.env.API_URL_COMMONGROUND;
+        return "Open Tilburg";
     }
   };
 

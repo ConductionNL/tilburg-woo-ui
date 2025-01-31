@@ -16,7 +16,7 @@ const apiUrl = () => {
     case 'open-rotterdam.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps/opencatalogi';
     case 'open-migrato.accept.commonground.nu':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
     case 'localhost':
       return 'http://localhost:8080/apps/opencatalogi';
     default:
