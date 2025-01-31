@@ -32,7 +32,7 @@ const AcHeader = ({ store: { menu } }) => {
       case 'open-rotterdam.accept.commonground.nu':
         return 'Open Rotterdam';
       case 'opencatalogi.nl':
-        return 'Open Catalogi';
+        return 'OpenCatalogi';
       case 'localhost':
         return 'Localhost catalogus';
       default:
