@@ -62,7 +62,7 @@ const App = ({ store }) => {
       case 'localhost':
         return 'opencatalogi-theme';
       default:
-        return process.env.API_URL_COMMONGROUND;
+        return 'tilburg-theme';
     }
   };
 
