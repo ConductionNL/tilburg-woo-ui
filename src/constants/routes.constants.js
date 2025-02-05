@@ -134,6 +134,7 @@ export const ROUTES = {
     name: 'WOO',
     label: TITLES.WOO,
     href: PATHS.WOO,
+    isExternal: true,
     title: `${TITLES.BASE} | ${TITLES.WOO}`,
   },
   REACH_OUT: {
@@ -141,6 +142,7 @@ export const ROUTES = {
     name: 'ReachOut',
     label: TITLES.REACH_OUT,
     href: PATHS.REACH_OUT,
+    isExternal: true,
     title: `${TITLES.BASE} | ${TITLES.REACH_OUT}`,
   },
 };

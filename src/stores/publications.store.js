@@ -49,7 +49,7 @@ export class PublicationsStore {
   @observable
   attachmentPagination = {
     page: 1,
-    perPage: 1,
+    perPage: 10,
   };
 
   @observable
@@ -327,7 +327,23 @@ export class PublicationsStore {
           AcBuildURLSearchParams({ _id, ...this.defaultQuery })
         ).toString()
       )
-      .then((response) => {
+      .then(async (response) => {
+        // Fetch file sizes for all attachments
+        if (response.attachments?.length) {
+          await Promise.all(
+            response.attachments.map(async (attachment) => {
+              try {
+                const response = await fetch(attachment.downloadUrl, {
+                  method: 'HEAD',
+                });
+                const size = response.headers.get('content-length');
+                attachment.size = size ? parseInt(size, 10) : null;
+              } catch (error) {
+                attachment.size = null;
+              }
+            })
+          );
+        }
         this.setPublication(response);
       })
       .catch((e) => console.error(e))

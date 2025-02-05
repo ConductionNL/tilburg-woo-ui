@@ -34,6 +34,7 @@ export const LABELS = {
   DOCUMENT: 'Document',
   TYPE: 'Type',
   DATE: 'Datum',
+  SIZE: 'Grootte',
   DOCUMENTS: 'Documenten',
   DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
   SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',

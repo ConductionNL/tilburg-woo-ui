@@ -223,26 +223,35 @@ const AcPublication = observer(({ store: { publications } }) => {
     // Fallback for when there is no extension property
     const extension = row.type.split('/').pop();
 
+    const formatFileSize = (bytes) => {
+      if (!bytes) return '-';
+      const mb = bytes / (1024 * 1024);
+      if (mb >= 1) {
+        return `${Math.round(mb)} MB`;
+      }
+      return `${Math.round(bytes / 1024)} KB`;
+    };
+
     if (!primary) {
       return [
         <AcLink to={row.accessUrl} target='_blank'>
-          <VISUALS.DOCUMENT />
-          <Link>
-            {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-          </Link>
+          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+          <span className='sr-only'>Opent in een nieuw tabblad</span>
+          <VISUALS.EXTERNAL_LINK_PINK />
         </AcLink>,
+        formatFileSize(row.size),
       ];
     }
 
     return [
       <AcLink to={row.accessUrl} target='_blank'>
-        <VISUALS.DOCUMENT />
-        <Link>
-          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-        </Link>
+        {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+        <span className='sr-only'>Opent in een nieuw tabblad</span>
+        <VISUALS.EXTERNAL_LINK_PINK />
       </AcLink>,
       row.labels[0] || LABELS.UNKNOWN,
       acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
+      formatFileSize(row.size),
     ];
   };
 
@@ -259,7 +268,7 @@ const AcPublication = observer(({ store: { publications } }) => {
           Documenten worden in een nieuw tabblad geopend.
         </AcFlex>
         <AcTable
-          header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
+          header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE, LABELS.SIZE]}
           rows={getFilteredAttachments(true)?.map((attachment) =>
             mapAttachmentRow(attachment, true)
           )}
@@ -296,7 +305,7 @@ const AcPublication = observer(({ store: { publications } }) => {
             placeholder='Welk document zoek je?'
           />
           <AcTable
-            header={[LABELS.DOCUMENT]}
+            header={[LABELS.DOCUMENT, LABELS.SIZE]}
             rows={toJS(paginatedAttachments)?.map((attachment) =>
               mapAttachmentRow(attachment)
             )}
