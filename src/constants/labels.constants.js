@@ -7,7 +7,7 @@ export const LABELS = {
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
-  SEARCH_EXTENSIVE: 'Uitgebreid zoeken',
+  SEARCH_EXTENSIVE: 'Zoeken',
   SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
   CATEGORIES: 'Categorieën',
@@ -55,6 +55,10 @@ export const LABELS = {
 
   THEMES: 'Onderwerpen',
   ABOUT_CATEGORIES: 'Over categorieën',
+
+  // Navigation & Footer Labels
+  ORGANIZATION: 'Organisatie en werkwijze',
+  EXTERNAL_LINK: 'Opent in een nieuw tabblad',
 };
 
 export const LABELS_DYNAMIC = {
