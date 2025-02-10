@@ -1937,14 +1937,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@conduction/theme@npm:1.1.40":
-  version: 1.1.40
-  resolution: "@conduction/theme@npm:1.1.40"
+"@conduction/theme@npm:1.1.42":
+  version: 1.1.42
+  resolution: "@conduction/theme@npm:1.1.42"
   dependencies:
     "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
+    npm-run-all: "npm:^4.1.5"
     sass: "npm:^1.70.0"
     style-dictionary: "npm:^3.9.2"
-  checksum: 10c0/490290ed816103095ac6fccd4a974355db9d65716d44392e22bf07036a156ce64a467eca22fceec8c6e7047f54c0c8a483406e48b4c2f5f5b8a86eb4eb50dd8c
+  checksum: 10c0/bb8387c163600984d2371a409cf7f9250485b620de59ef79a6f4094836ad7f364c809b85028148391605fa0f5a924c85c6325d8e7a417b52d2f68d231bd2e60d
   languageName: node
   linkType: hard
 
@@ -13493,7 +13494,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.22.5"
     "@babel/runtime": "npm:7.22.5"
     "@babel/types": "npm:7.22.5"
-    "@conduction/theme": "npm:1.1.40"
+    "@conduction/theme": "npm:1.1.42"
     "@emotion/react": "npm:^11.11.1"
     "@gemeente-denhaag/components-react": "npm:^0.1.5"
     "@joint/core": "npm:^4.1.2"

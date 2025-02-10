@@ -36,7 +36,7 @@ const AcHeader = ({ store: { menu } }) => {
       case 'localhost':
         return 'Localhost catalogus';
       default:
-        return "Open Tilburg";
+        return 'Open Tilburg';
     }
   };
 
