@@ -57,6 +57,8 @@ const App = ({ store }) => {
         return 'dimpact-theme';
       case 'open-rotterdam.accept.commonground.nu':
         return 'rotterdam-theme';
+      case 'open-migrato.accept.commonground.nu':
+        return 'migrato-theme';
       case 'opencatalogi.nl':
         return 'opencatalogi-theme';
       case 'localhost':
