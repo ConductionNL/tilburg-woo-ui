@@ -1,21 +1,21 @@
 /**
  * Do not edit directly
- * Generated on Mon, 10 Feb 2025 14:06:51 GMT
+ * Generated on Tue, 11 Feb 2025 12:44:53 GMT
  */
 
  .migrato-theme {
-    --tilburg-search-card-hover-border-color: var(--rotterdam-color-green-tint-01);
+    --tilburg-search-card-hover-border-color: var(--migrato-color-primary);
     --tilburg-navigation-hover-font-family: var(--utrecht-document-font-family);
     --tilburg-navigation-hover-font-weight: 400;
-    --tilburg-navigation-hover-color: var(--rotterdam-color-base-green);
-    --tilburg-navigation-hover-background-color: var(--rotterdam-color-base-white);
     --tilburg-navigation-font-weight: 400;
-    --tilburg-navigation-color: #404B4F;
-    --tilburg-navigation-background-color: var(--rotterdam-color-base-white);
-    --tilburg-logo-color: var(--rotterdam-color-gray-tint-11);
-    --tilburg-header-background-color: var(--rotterdam-color-base-white);
-    --tilburg-footer-color: var(--rotterdam-color-base-white);
-    --tilburg-footer-background-color: var(--rotterdam-color-base-green);
+    --tilburg-navigation-hover-color: var(--migrato-color-grey-20);
+    --tilburg-navigation-hover-background-color: var(--migrato-color-white-100);
+    --tilburg-navigation-color: var(--migrato-color-grey-50);
+    --tilburg-navigation-background-color: var(--migrato-color-white-100);
+    --tilburg-logo-color: var(--migrato-color-black-0);
+    --tilburg-header-background-color: var(--migrato-color-white-100);
+    --tilburg-footer-color: var(--migrato-color-lightgrey-93);
+    --tilburg-footer-background-color: var(--migrato-color-grey-22);
     --denhaag-step-marker-checked-border-width: 3px;
     --denhaag-step-marker-not-checked-border-width: 3px;
     --denhaag-step-marker-current-border-width: 5px;
@@ -229,6 +229,7 @@
     --migrato-color-white-98: #fafafa;
     --migrato-color-lightgrey-97: #f8f8f8;
     --migrato-color-lightgrey-96: #f5f5f5; /* Base/LightGrey */
+    --migrato-color-lightgrey-93: #eeeeee;
     --migrato-color-lightgrey-88: #e1e1e1; /* Base/LightGrey */
     --migrato-color-grey-97: #f7f7f7;
     --migrato-color-grey-95: #f2f2f2;
