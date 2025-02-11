@@ -45,6 +45,8 @@ const getTitle = () => {
       return 'Producten catalogus';
     case 'open-rotterdam.accept.commonground.nu':
       return 'Open Rotterdam';
+    case 'open-migrato.accept.commonground.nu':
+      return 'Open Migrato';
     case 'opencatalogi.nl':
       return 'OpenCatalogi';
     case 'localhost':
