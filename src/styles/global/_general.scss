@@ -12,7 +12,7 @@ body {
 	-webkit-overflow-scrolling: touch;
 
 	@include font-body();
-	font-size: 10px; //1rem = 10px;
+	font-size: var(--tilburg-erm-font-size); //1rem = 10px;
 	color: $color-pitch;
 
 	-moz-osx-font-smoothing: grayscale;

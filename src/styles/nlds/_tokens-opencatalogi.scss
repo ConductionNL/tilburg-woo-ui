@@ -781,5 +781,10 @@
     --conduction-input-checkbox-checked-color: var(--opencatalogi-color-base-green);
     --conduction-input-checkbox-hover-border-color: var(--opencatalogi-color-base-green);
     --conduction-card-header-color: var(--utrecht-document-color);
+    --tilburg-erm-font-size: 12px;
   }
   
+  body {
+    font-size: 12px !important; //1rem = 10px;
+
+  }

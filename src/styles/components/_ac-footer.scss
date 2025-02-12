@@ -5,6 +5,7 @@
   padding-block: var(--tilburg-space-row-elephant);
   color: var(--tilburg-footer-color);
   background-color: var(--tilburg-footer-background-color);
+  min-height: 50px;
 
   @include respond-max($screen-sm) {
     padding-block: var(--tilburg-space-row-cat);

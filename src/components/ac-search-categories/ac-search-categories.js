@@ -13,7 +13,6 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-
 const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => modalRef?.current?.showModal();
@@ -65,16 +64,20 @@ const AcSearchCategories = ({ store: { publications } }) => {
         </AcButton>
         {renderModal}
       </AcFlex>
-      {all_categories?.map((category, index) => (
-        <AcCheckbox
-          key={index}
-          label={category._id}
-          count={category.count}
-          value={category._id}
-          checked={category_checked(category._id)}
-          onChange={() => toggleSearchArrayValue('category', category._id)}
-        />
-      ))}
+      {all_categories?.map(
+        (category, index) =>
+          category.id &&
+          category.id !== '' && (
+            <AcCheckbox
+              key={index}
+              label={category._id}
+              count={category.count}
+              value={category._id}
+              checked={category_checked(category._id)}
+              onChange={() => toggleSearchArrayValue('category', category._id)}
+            />
+          )
+      )}
     </>
   );
 };

@@ -67,7 +67,7 @@
   }
 }
 
-[class^='ac-col-']>.react-reveal {
+[class^='ac-col-'] > .react-reveal {
   // display: inherit;
   // flex-grow: 1;
   // flex-shrink: 0;
@@ -113,7 +113,7 @@
   margin-block-end: 15px !important;
 }
 
-.ac-publication-organization-card>div {
+.ac-publication-organization-card > div {
   width: 300px;
   // height: 300px;
   height: auto;
@@ -223,4 +223,14 @@
     right: 1.6rem;
     left: 1.6rem;
   }
+}
+
+.ac-app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.ac-app-main {
+  flex: 1;
 }

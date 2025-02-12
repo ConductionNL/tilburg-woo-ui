@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
 import { AcSetDocumentTitle, AcCapitalize } from '@utils';
 import loadable from '@loadable/component';
+import clsx from 'clsx';
 
 // Imports => SCSS
 import '@styles/index.scss';
@@ -117,9 +118,13 @@ const App = ({ store }) => {
   }, []);
 
   return (
-    <div className={getTheme()} tabIndex='-1' ref={resetFocus}>
+    <div
+      className={clsx(getTheme(), 'ac-app-container')}
+      tabIndex='-1'
+      ref={resetFocus}
+    >
       <AcHeader store={store} />
-      <main id='main'>
+      <main id='main' className='ac-app-main'>
         <Routes>
           {all_pages.map((page) => (
             <Route

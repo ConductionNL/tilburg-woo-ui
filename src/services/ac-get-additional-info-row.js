@@ -58,6 +58,10 @@ export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
     ]),
     get_single.data &&
       Object.entries(get_single.data).map(([key, value]) => {
+
+        if (!Object.keys(get_single.publicationType.properties).includes(key)) {
+          return;
+        }
         const propertyType = get_single.publicationType.properties[key].type;
         const propertyFormat = get_single.publicationType.properties[key].format;
 
