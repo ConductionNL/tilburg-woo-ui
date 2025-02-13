@@ -25,19 +25,20 @@
     --opencatalogi-typography-scale-md-line-height: 24px;
     --opencatalogi-typography-scale-md-font-size: 1rem; /* 16px */
     --opencatalogi-typography-scale-lg-line-height: 28px;
-    --opencatalogi-typography-scale-lg-font-size: 1.25rem; /* 20px */
+    --opencatalogi-typography-scale-lg-font-size: 1.125rem; /* 18px */
     --opencatalogi-typography-scale-xl-line-height: 32px;
-    --opencatalogi-typography-scale-xl-font-size: 1.5rem; /* 24px */
+    --opencatalogi-typography-scale-xl-font-size: 1.25rem; /* 20px */
     --opencatalogi-typography-scale-2xl-line-height: 36px;
-    --opencatalogi-typography-scale-2xl-font-size: 1.75rem; /* 28px */
+    --opencatalogi-typography-scale-2xl-font-size: 1.5rem; /* 24px */
     --opencatalogi-typography-scale-3xl-line-height: 40px;
-    --opencatalogi-typography-scale-3xl-font-size: 2rem; /* 32px */
+    --opencatalogi-typography-scale-3xl-font-size: 1.75rem; /* 28px */
     --opencatalogi-typography-scale-4xl-line-height: 48px;
-    --opencatalogi-typography-scale-4xl-font-size: 2.5rem; /* 40px */
+    --opencatalogi-typography-scale-4xl-font-size: 2rem; /* 32px */
     --opencatalogi-typography-scale-5xl-line-height: 56px;
-    --opencatalogi-typography-scale-5xl-font-size: 3rem; /* 48px */
+    --opencatalogi-typography-scale-5xl-font-size: 2.5rem; /* 40px */
     --opencatalogi-typography-scale-6xl-line-height: 72px;
-    --opencatalogi-typography-scale-6xl-font-size: 4rem; /* 64px */
+    --opencatalogi-typography-scale-6xl-font-size: 3rem; /* 48px */
+
     --opencatalogi-typography-sans-serif-font-family: Bolder, ArialforRotterdam, Arial, sans-serif;
     --opencatalogi-color-red-tint-03: #9A0F0F; /* Secondary/Red/Tint 03 */
     --opencatalogi-color-red-tint-02: #D70D0D; /* Secondary/Red/Tint 02 */
@@ -894,6 +895,6 @@
   }
   
   body {
-    font-size: 12px !important; //1rem = 10px;
+    font-size: 16px !important; //1rem = 16px;
 
   }
