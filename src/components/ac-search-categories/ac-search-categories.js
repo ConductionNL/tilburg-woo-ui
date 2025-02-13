@@ -66,8 +66,8 @@ const AcSearchCategories = ({ store: { publications } }) => {
       </AcFlex>
       {all_categories?.map(
         (category, index) =>
-          category.id &&
-          category.id !== '' && (
+          category._id &&
+          category._id !== '' && (
             <AcCheckbox
               key={index}
               label={category._id}
