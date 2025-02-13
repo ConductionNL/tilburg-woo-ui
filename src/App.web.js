@@ -55,6 +55,7 @@ const App = ({ store }) => {
       case 'open-tilburg.accept.commonground.nu':
         return 'tilburg-theme';
       case 'open-dimpact.accept.commonground.nu':
+      case 'dimpact.opencatalogi.nl':
         return 'dimpact-theme';
       case 'open-rotterdam.accept.commonground.nu':
         return 'rotterdam-theme';
@@ -81,6 +82,7 @@ const App = ({ store }) => {
       case 'open-tilburg.accept.commonground.nu':
         return;
       case 'open-dimpact.accept.commonground.nu':
+      case 'dimpact.opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
             'https://www.dimpact.nl/wp-content/themes/dimpact-child-theme/favicon.png'),

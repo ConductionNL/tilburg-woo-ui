@@ -42,6 +42,7 @@ const AcFooter = ({ store: { menu } }) => {
           VNG_FOOTER_ITEMS_BEDRIJVEN,
         ];
       case 'open-dimpact.accept.commonground.nu':
+      case 'dimpact.opencatalogi.nl':
         return [
           DIMPACT_FOOTER_ITEMS_WHAT_WE_DO,
           DIMPACT_FOOTER_ITEMS_WHO_WE_ARE,
@@ -95,7 +96,8 @@ const AcFooter = ({ store: { menu } }) => {
                           target='_blank'
                           className='ac-footer__link'
                         >
-                          {hostname === 'open-dimpact.accept.commonground.nu' ? (
+                          {hostname === 'open-dimpact.accept.commonground.nu' ||
+                          hostname === 'dimpact.opencatalogi.nl' ? (
                             <>
                               {item.icon ? (
                                 <item.icon className='ac-footer__link-icon' />
@@ -120,24 +122,32 @@ const AcFooter = ({ store: { menu } }) => {
                       </>
                     ) : (
                       <Link className='ac-footer__link' to={item.link}>
-                        {hostname === 'open-dimpact.accept.commonground.nu' && (
+                        {hostname === 'open-dimpact.accept.commonground.nu' ||
+                        hostname === 'dimpact.opencatalogi.nl' ? (
+                          <Icon icon={item.icon} />
+                        ) : (
                           <Icon icon={item.icon} />
                         )}
                         {item.name}
-                        {hostname !== 'open-dimpact.accept.commonground.nu' && (
-                          <Icon icon={item.icon} />
-                        )}
+                        {hostname !== 'open-dimpact.accept.commonground.nu' &&
+                          hostname !== 'dimpact.opencatalogi.nl' && (
+                            <Icon icon={item.icon} />
+                          )}
                       </Link>
                     )
                   ) : (
                     <div className='ac-footer__link'>
-                      {hostname === 'open-dimpact.accept.commonground.nu' && (
+                      {hostname === 'open-dimpact.accept.commonground.nu' ||
+                      hostname === 'dimpact.opencatalogi.nl' ? (
+                        <Icon icon={item.icon} />
+                      ) : (
                         <Icon icon={item.icon} />
                       )}
                       {item.name}
-                      {hostname !== 'open-dimpact.accept.commonground.nu' && (
-                        <Icon icon={item.icon} />
-                      )}
+                      {hostname !== 'open-dimpact.accept.commonground.nu' &&
+                        hostname !== 'dimpact.opencatalogi.nl' && (
+                          <Icon icon={item.icon} />
+                        )}
                     </div>
                   )
                 )}

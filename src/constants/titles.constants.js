@@ -10,6 +10,7 @@ const getTitle = () => {
     case 'open-tilburg.accept.commonground.nu':
       return 'Open Tilburg';
     case 'open-dimpact.accept.commonground.nu':
+    case 'dimpact.opencatalogi.nl':
       return 'Producten catalogus';
     case 'open-rotterdam.accept.commonground.nu':
       return 'Open Rotterdam';
