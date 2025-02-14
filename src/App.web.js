@@ -70,6 +70,10 @@ const App = ({ store }) => {
     }
   };
 
+  const setTheme = () => {
+    document.getElementById('body').classList.add(getTheme());
+  };
+
   const setIcon = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
@@ -117,14 +121,11 @@ const App = ({ store }) => {
 
   useEffect(() => {
     setIcon();
+    setTheme();
   }, []);
 
   return (
-    <div
-      className={clsx(getTheme(), 'ac-app-container')}
-      tabIndex='-1'
-      ref={resetFocus}
-    >
+    <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
       <AcHeader store={store} />
       <main id='main' className='ac-app-main'>
         <Routes>

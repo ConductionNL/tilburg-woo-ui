@@ -23,7 +23,7 @@ body {
 body {
 	width: 100%;
 
-	@include font-size(1.6rem);
+	@include font-size(1rem);
 	@include font-weight-regular();
 
 	* {
@@ -74,6 +74,10 @@ $grid-gutter-size: 1.6rem;
 	&__panel {
 		padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
 	}
+}
+
+.utrecht-accordion__panel > ol {
+	margin-inline-start: var(--tilburg-space-column-rat) !important;
 }
 
 // breadcrumb styles conform Figma design
