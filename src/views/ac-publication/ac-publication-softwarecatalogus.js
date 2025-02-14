@@ -15,12 +15,12 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 import { LABELS, VISUALS } from '@constants';
-import acFormatDate from '@src/utilities/ac-format-date';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import _ from 'lodash';
+import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 
 const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
   const {
@@ -56,33 +56,6 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
     .map((relation) => relation.publicationType);
 
   const uniquePublicationTypes = _.uniqBy(publicationTypes, 'title');
-
-  const mapAttachmentRow = (row, primary) => {
-    // Fallback for when there is no extension property
-    const extension = row.type.split('/').pop();
-
-    if (!primary) {
-      return [
-        <AcLink to={row.accessUrl} target='_blank'>
-          <VISUALS.DOCUMENT />
-          <Link>
-            {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-          </Link>
-        </AcLink>,
-      ];
-    }
-
-    return [
-      <AcLink to={row.accessUrl} target='_blank'>
-        <VISUALS.DOCUMENT />
-        <Link>
-          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-        </Link>
-      </AcLink>,
-      row.labels[0] || LABELS.UNKNOWN,
-      acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
-    ];
-  };
 
   const mapTabRow = (row) => {
     return [
@@ -151,7 +124,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
                 rows={getFilteredAttachments(true)?.map((attachment) =>
-                  mapAttachmentRow(attachment, true)
+                  AcMappedAttachmentRow(attachment, true)
                 )}
               />
             </div>
@@ -167,7 +140,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
                   rows={getFilteredAttachments(
                     false,
                     attachmentPagination.page
-                  )?.map((attachment) => mapAttachmentRow(attachment))}
+                  )?.map((attachment) => AcMappedAttachmentRow(attachment))}
                 />
                 {getFilteredAttachments()?.length > attachmentPagination.perPage && (
                   <Pagination

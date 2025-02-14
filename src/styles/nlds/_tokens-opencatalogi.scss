@@ -4,6 +4,7 @@
  */
 
  .opencatalogi-theme {
+    --tilburg-erm-font-size: 16px;
     --rotterdam-textbox-hover-border-width: 2px;
     --rotterdam-paragraph-small-line-height: 20px;
     --rotterdam-paragraph-small-font-size: 0.75rem; /* 12px */
@@ -892,9 +893,4 @@
       --tilburg-space-text-beetle
     );
     --ams-pagination-relative-link-border-width: var(--tilburg-border-width-sm);
-  }
-  
-  body {
-    font-size: 16px !important; //1rem = 16px;
-
   }

@@ -62,12 +62,15 @@ const App = ({ store }) => {
       case 'open-migrato.accept.commonground.nu':
         return 'migrato-theme';
       case 'opencatalogi.nl':
-        return 'opencatalogi-theme';
       case 'localhost':
         return 'opencatalogi-theme';
       default:
         return 'tilburg-theme';
     }
+  };
+
+  const setTheme = () => {
+    document.getElementById('body').classList.add(getTheme());
   };
 
   const setIcon = () => {
@@ -97,18 +100,12 @@ const App = ({ store }) => {
             'https://www.rotterdam.nl/favicon.ico?v=2')
         );
       case 'opencatalogi.nl':
+      case 'localhost':
         return (
           (document.getElementById('favicon').href =
             'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),
           (document.getElementById('faviconMeta').href =
             'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
-        );
-      case 'localhost':
-        return (
-          (document.getElementById('favicon').href =
-            'https://www.rotterdam.nl/favicon.ico?v=2'),
-          (document.getElementById('faviconMeta').href =
-            'https://www.rotterdam.nl/favicon.ico?v=2')
         );
       default:
         return;
@@ -117,14 +114,11 @@ const App = ({ store }) => {
 
   useEffect(() => {
     setIcon();
+    setTheme();
   }, []);
 
   return (
-    <div
-      className={clsx(getTheme(), 'ac-app-container')}
-      tabIndex='-1'
-      ref={resetFocus}
-    >
+    <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
       <AcHeader store={store} />
       <main id='main' className='ac-app-main'>
         <Routes>
