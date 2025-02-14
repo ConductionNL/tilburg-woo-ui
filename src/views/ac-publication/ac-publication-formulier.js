@@ -16,11 +16,11 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 import { LABELS, VISUALS } from '@constants';
-import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
+import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 
 const AcPublicationFormulier = ({ store: { publications } }) => {
   const { id } = useParams();
@@ -45,32 +45,6 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
 
   const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
 
-  const mapAttachmentRow = (row, primary) => {
-    // Fallback for when there is no extension property
-    const extension = row.type.split('/').pop();
-
-    if (!primary) {
-      return [
-        <AcLink to={row.accessUrl} target='_blank'>
-          <VISUALS.DOCUMENT />
-          <Link>
-            {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-          </Link>
-        </AcLink>,
-      ];
-    }
-
-    return [
-      <AcLink to={row.accessUrl} target='_blank'>
-        <VISUALS.DOCUMENT />
-        <Link>
-          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-        </Link>
-      </AcLink>,
-      row.labels[0] || LABELS.UNKNOWN,
-      acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
-    ];
-  };
 
   const mapDependencyRow = (row) => {
     return [
@@ -163,7 +137,7 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
                 rows={getFilteredAttachments(true)?.map((attachment) =>
-                  mapAttachmentRow(attachment, true)
+                  AcMappedAttachmentRow(attachment, true)
                 )}
               />
             </div>
@@ -179,7 +153,7 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
                   rows={getFilteredAttachments(
                     false,
                     attachmentPagination.page
-                  )?.map((attachment) => mapAttachmentRow(attachment))}
+                  )?.map((attachment) => AcMappedAttachmentRow(attachment))}
                 />
                 {getFilteredAttachments()?.length > attachmentPagination.perPage && (
                   <Pagination

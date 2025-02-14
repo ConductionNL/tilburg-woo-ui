@@ -18,6 +18,9 @@ const AcPublication = ({ store: { publications } }) => {
     loading,
     fetchRelations,
     resetRelations,
+    fetchAttachments,
+    resetAttachments,
+    all_attachments,
   } = publications;
 
   useEffect(() => {
@@ -34,7 +37,12 @@ const AcPublication = ({ store: { publications } }) => {
     return () => resetRelations();
   }, [get_single]);
 
-  if (loading.status || !get_single) {
+  useEffect(() => {
+    get_single?.id && fetchAttachments(get_single.id);
+    return () => resetAttachments();
+  }, [get_single]);
+
+  if (loading.status || !get_single || !all_attachments) {
     return <AcLoader />;
   }
 

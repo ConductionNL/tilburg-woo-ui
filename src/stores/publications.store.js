@@ -8,12 +8,12 @@ let app = {};
 const LIMIT = 7;
 
 export const DEFAULT_SEARCH_QUERY = {
-  extend: 'all',
+  extend: 'themes',
   _limit: LIMIT,
 };
 
 const DEFAULT_QUERY = {
-  extend: 'all',
+  extend: 'themes',
 };
 
 if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
@@ -33,6 +33,9 @@ export class PublicationsStore {
 
   @observable
   single = null;
+
+  @observable
+  attachments = [];
 
   @observable
   relations = null;
@@ -79,7 +82,7 @@ export class PublicationsStore {
 
   @action
   getFilteredAttachments = (primary = false, page) => {
-    const filteredAttachmentsLabel = this.single?.attachments?.filter((attachment) =>
+    const filteredAttachmentsLabel = this.attachments?.filter((attachment) =>
       primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
 
@@ -149,9 +152,19 @@ export class PublicationsStore {
     return this.items;
   }
 
+  @computed
+  get all_attachments() {
+    return toJS(this.attachments);
+  }
+
   @action
   setItems = (items) => {
     this.items = items;
+  };
+
+  @action
+  setAttachments = (attachments) => {
+    this.attachments = attachments;
   };
 
   @action
@@ -313,6 +326,24 @@ export class PublicationsStore {
   };
 
   @action
+  fetchAttachments = async (_id) => {
+    this.loading.status = true;
+    console.group('MAKING API CALL');
+    console.log('SEARCH QUERY:', toJS(this.search_query));
+    console.groupEnd();
+
+    app.store.api.publications
+      .attachments(_id)
+      .then((response) => {
+        this.setAttachments(response.results);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
   fetchPublication = async (_id) => {
     this.loading.status = true;
 
@@ -350,6 +381,11 @@ export class PublicationsStore {
   @action
   resetPublication = () => {
     this.single = null;
+  };
+
+  @action
+  resetAttachments = () => {
+    this.attachments = [];
   };
 
   @action

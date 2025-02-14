@@ -20,6 +20,7 @@ import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import _ from 'lodash';
 
 const AcPublicationDefault = ({ store: { publications } }) => {
@@ -46,53 +47,6 @@ const AcPublicationDefault = ({ store: { publications } }) => {
   if (loading.status || !get_single) {
     return <AcLoader />;
   }
-
-  const mapAttachmentRow = (row, primary) => {
-    // Fallback for when there is no extension property
-    const extension = row.type.split('/').pop();
-
-    if (!primary) {
-      return [
-        <AcLink to={row.accessUrl} target='_blank'>
-          <VISUALS.DOCUMENT />
-          <Link>
-            {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-          </Link>
-        </AcLink>,
-      ];
-    }
-
-    return [
-      <AcLink to={row.accessUrl} target='_blank'>
-        <VISUALS.DOCUMENT />
-        <Link>
-          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
-        </Link>
-      </AcLink>,
-      row.labels[0] || LABELS.UNKNOWN,
-      acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
-    ];
-  };
-
-  const mapTabRow = (row) => {
-    return [
-      <span>{row.title}</span>,
-      <span>{row.summary || 'Geen samenvatting beschikbaar'}</span>,
-      <span>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
-      <AcLink to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
-        <VISUALS.ARROW_RIGHT />
-        <Link>Bekijk</Link>
-      </AcLink>,
-    ];
-  };
-
-  const TabOnClick = (id) => {
-    resetRelations();
-    resetPublication();
-    fetchPublication(id).then(() => {
-      fetchRelations(get_single.uri);
-    });
-  };
 
   return (
     <>
@@ -141,7 +95,7 @@ const AcPublicationDefault = ({ store: { publications } }) => {
               <AcTable
                 header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
                 rows={getFilteredAttachments(true)?.map((attachment) =>
-                  mapAttachmentRow(attachment, true)
+                  AcMappedAttachmentRow(attachment, true)
                 )}
               />
             </div>
@@ -157,7 +111,7 @@ const AcPublicationDefault = ({ store: { publications } }) => {
                   rows={getFilteredAttachments(
                     false,
                     attachmentPagination.page
-                  )?.map((attachment) => mapAttachmentRow(attachment))}
+                  )?.map((attachment) => AcMappedAttachmentRow(attachment))}
                 />
                 {getFilteredAttachments()?.length > attachmentPagination.perPage && (
                   <Pagination
@@ -225,7 +179,7 @@ const AcPublicationDefault = ({ store: { publications } }) => {
                 <span>Geen beoordeling beschikbaar</span>
               </div>
             </div> */}
-          </div> 
+          </div>
         </AcFlex>
       </AcContainer>
     </>
