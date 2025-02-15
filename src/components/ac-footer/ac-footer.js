@@ -39,7 +39,7 @@ const AcFooter = () => {
             <VISUALS.LOGO />
             <span>
               <span>Open Gemeente</span>
-              <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
+              <span>Éen plek voor alle publicaties van de Gemeente</span>
             </span>
           </div>
         </AcContainer>
