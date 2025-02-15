@@ -28,7 +28,7 @@ const AcHeader = ({ store }) => {
               <span class='logo-text'>{LABELS.APP_NAME}</span>
             </div>
           ) : (
-            <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
+            <Link to='/' title='Logo Gemeente - Ga naar de beginpagina'>
               <VISUALS.LOGO />
               <span class='logo-text'>{LABELS.APP_NAME}</span>
             </Link>

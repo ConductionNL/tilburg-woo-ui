@@ -3,7 +3,7 @@ import { AcLockObject } from '@utils/ac-lock-object';
 export const TITLES = AcLockObject({
   ABOUT: 'Over Open Gemeente',
   ACCESSIBILITY: 'Toegankelijkheid',
-  BASE: 'Open Tilburg',
+  BASE: 'Open Gemeente',
   CONTACT: 'Contact',
   COOKIES: 'Cookies',
   FAQ: 'Veelgestelde vragen',
