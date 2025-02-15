@@ -29,6 +29,32 @@ pipelines:
           services:
             - docker
   branches:
+    feature/woo-demo:
+      - step:
+          name: Install
+          caches:
+            - nodecustom
+            - yarn
+          script:
+            - unset CI
+            - yarn set version 4.1.1
+            - yarn
+          artifacts:
+            - node_modules/**
+      - step:
+          name: Build and push tot container registry
+          deployment: woo-demo
+          script:
+            - unset CI
+            - env | awk -F"DOTENV_" '/^DOTENV_/ {print $2}' >> .env
+            - yarn set version 4.1.1
+            - yarn build:web
+            - docker login $DOCKER_DOMAIN -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+            - COMMIT_HASH=$BITBUCKET_COMMIT
+            - docker build -t $DOCKER_DOMAIN/woo-ui-demo:latest .
+            - docker push $DOCKER_DOMAIN/woo-ui-demo:latest
+          services:
+            - docker
     develop:
       - step:
           name: Install
