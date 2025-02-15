@@ -15,6 +15,6 @@ export const TITLES = AcLockObject({
   REACH_OUT: 'Beschikbaarheidsgegevens',
   SEARCH: 'Zoeken',
   THEMES: 'Onderwerpen',
-  WEBSITE: 'www.tilburg.nl',
+  WEBSITE: 'www.acato.nl',
   WOO: 'WOO verzoek indienen',
 });
