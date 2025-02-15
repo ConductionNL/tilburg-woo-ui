@@ -175,7 +175,7 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Open Tilburg | Publicatie';
+    document.title = get_single?.title || 'Open Gemeente | Publicatie';
   }, [get_single]);
 
   if (loading.status || !get_single) {

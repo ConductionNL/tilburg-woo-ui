@@ -1,5 +1,5 @@
 {
-	"name": "Open Tilburg",
-	"displayName": "Open Tilburg",
+	"name": "Open Gemente",
+	"displayName": "Open Gemeente",
 	"entryPoint": "./src/index.web.js"
 }

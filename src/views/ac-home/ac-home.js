@@ -42,7 +42,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
               <Heading>{LABELS.THEMES}</Heading>
               <Paragraph>
                 Bekijk onze publicatiesdossiers van belangrijke onderwerpen die
-                spelen binnen de gemeente Tilburg.
+                spelen binnen de Gemeente.
               </Paragraph>
             </AcColumn>
             <AcGrid row={3}>
