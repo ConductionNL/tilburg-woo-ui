@@ -24,7 +24,7 @@ export const PATHS = AcLockObject({
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   THEMES: '/onderwerpen',
-  WEBSITE: 'https://www.tilburg.nl/',
+  WEBSITE: 'https://www.acato.nl/',
   WOO: '/woo-verzoek',
 });
 
