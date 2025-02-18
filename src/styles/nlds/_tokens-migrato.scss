@@ -171,6 +171,7 @@
   --utrecht-page-footer-link-text-decoration: none;
   --utrecht-page-footer-background-position: bottom right;
   --utrecht-page-footer-background-size: auto;
+  --utrecht-page-footer-background-repeat: no-repeat;
   --utrecht-page-footer-logo-max-width: 100px;
   --utrecht-page-footer-logo-max-height: 100px;
   --utrecht-link-text-decoration-thickness: 0;
@@ -905,4 +906,113 @@
   --utrecht-alert-warning-color: var(--migrato-color-primary);
   --utrecht-alert-color: var(--migrato-color-primary);
   --migrato-color-info: var(--migrato-color-primary);
+
+  --ams-date-input-background-color: var(--utrecht-textbox-background-color);
+  --ams-date-input-box-shadow: '';
+  --ams-date-input-color: var(--utrecht-textbox-color);
+  --ams-date-input-font-family: var(--utrecht-textbox-font-family);
+  --ams-date-input-font-size: var(--utrecht-textbox-font-size);
+  --ams-date-input-font-weight: var(--utrecht-textbox-font-weight);
+  --ams-date-input-line-height: var(--utrecht-textbox-line-height);
+  --ams-date-input-min-block-size: var(--utrecht-textbox-min-block-size);
+  --ams-date-input-min-inline-size: var(--utrecht-textbox-min-inline-size);
+  --ams-date-input-outline-offset: var(--utrecht-textbox-outline-offset);
+  --ams-date-input-padding-block: var(--utrecht-textbox-padding-block-start);
+  --ams-date-input-padding-inline: var(--utrecht-textbox-padding-inline-start);
+  --ams-date-input-calender-picker-indicator-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=');
+  --ams-date-input-hover-calender-picker-indicator-background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNSIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJXaW5kb3dUZXh0IiBkPSJNMjAgM2gtMVYxaC0ydjJIN1YxSDV2Mkg0Yy0xLjEgMC0yIC45LTIgMnYxNmMwIDEuMS45IDIgMiAyaDE2YzEuMSAwIDItLjkgMi0yVjVjMC0xLjEtLjktMi0yLTJ6bTAgMThINFY4aDE2djEzeiIvPjxwYXRoIGZpbGw9Im5vbmUiIGQ9Ik0wIDBoMjR2MjRIMHoiLz48L3N2Zz4=');
+  --ams-date-input-border-color: var(--utrecht-textbox-border-color);
+  --ams-date-input-border-style: solid;
+  --ams-date-input-border-width: var(--utrecht-textbox-border-width);
+  --ams-date-input-border-radius: var(--utrecht-textbox-border-radius);
+  --ams-date-input-margin-block: var(--utrecht-textbox-margin-block);
+  --ams-pagination-description-font-weight: var(--tilburg-document-font-weight);
+  --ams-pagination-description-color: var(--tilburg-document-color);
+  --ams-pagination-ellipses-font-weight: var(--tilburg-document-font-weight);
+  --ams-pagination-ellipses-color: var(--tilburg-document-subtle-color);
+  --ams-pagination-font-size: var(--tilburg-document-font-size);
+  --ams-pagination-line-height: var(--tilburg-document-line-height);
+  --ams-pagination-font-family: var(--tilburg-document-font-family);
+  --ams-pagination-color: var(--tilburg-interaction-color);
+  --ams-pagination-button-min-inline-size: var(--tilburg-pointer-target-min-size);
+  --ams-pagination-button-min-block-size: var(--tilburg-pointer-target-min-size);
+  --ams-pagination-button-color: var(--tilburg-interaction-color);
+  --ams-pagination-button-active-color: var(--tilburg-interaction-active-color);
+  --ams-pagination-button-hover-color: var(--tilburg-interaction-hover-color);
+  --ams-pagination-button-focus-color: var(--tilburg-focus-color);
+  --ams-pagination-button-focus-background-color: var(
+    --tilburg-focus-background-color
+  );
+  --ams-pagination-button-current-color: var(--tilburg-document-color);
+  --ams-pagination-button-current-font-weight: var(
+    --tilburg-document-strong-font-weight
+  );
+  --ams-pagination-button-font-weight: var(--tilburg-document-font-weight);
+  --ams-pagination-relative-link-min-inline-size: var(
+    --tilburg-pointer-target-min-size
+  );
+  --ams-pagination-relative-link-min-block-size: var(
+    --tilburg-pointer-target-min-size
+  );
+  --ams-pagination-relative-link-font-weight: var(--tilburg-document-font-weight);
+  --ams-pagination-relative-link-hover-color: var(--tilburg-interaction-hover-color);
+  --ams-pagination-relative-link-focus-color: var(--tilburg-focus-color);
+  --ams-pagination-relative-link-focus-background-color: var(
+    --tilburg-focus-background-color
+  );
+  --ams-pagination-relative-link-active-color: var(
+    --tilburg-interaction-active-color
+  );
+  --ams-pagination-relative-link-color: var(--tilburg-interaction-color);
+  --ams-pagination-relative-link-icon-size: var(--tilburg-icon-functional-size);
+
+  --ams-pagination-button-border-color: transparent;
+  --ams-pagination-button-background-color: transparent;
+  --ams-pagination-button-active-border-color: transparent;
+  --ams-pagination-button-active-background-color: transparent;
+  --ams-pagination-button-active-text-decoration: underline;
+  --ams-pagination-button-text-decoration: none;
+  --ams-pagination-button-hover-border-color: transparent;
+  --ams-pagination-button-hover-background-color: transparent;
+  --ams-pagination-button-hover-text-decoration: underline;
+  --ams-pagination-button-focus-text-decoration: none;
+  --ams-pagination-button-border-radius: 0px;
+  --ams-pagination-button-current-border-color: transparent;
+  --ams-pagination-button-current-text-decoration: none;
+  --ams-pagination-relative-link-disabled-border-color: transparent;
+  --ams-pagination-relative-link-disabled-background-color: transparent;
+  --ams-pagination-relative-link-border-radius: 0px;
+  --ams-pagination-relative-link-text-decoration: none;
+  --ams-pagination-relative-link-hover-text-decoration: underline;
+  --ams-pagination-relative-link-hover-border-color: transparent;
+  --ams-pagination-relative-link-hover-background-color: transparent;
+  --ams-pagination-relative-link-focus-text-decoration: none;
+  --ams-pagination-relative-link-active-text-decoration: underline;
+  --ams-pagination-relative-link-active-border-color: transparent;
+  --ams-pagination-relative-link-active-background-color: transparent;
+  --ams-pagination-relative-link-border-color: transparent;
+  --ams-pagination-relative-link-background-color: transparent;
+  --ams-pagination-relative-link-padding-inline-end: 0px;
+  --ams-pagination-relative-link-padding-inline-start: 0px;
+
+  --ams-pagination-ellipses-padding-inline-start: var(--tilburg-space-inline-ant);
+  --ams-pagination-ellipses-padding-inline-end: var(--tilburg-space-inline-ant);
+  --ams-pagination-ellipses-padding-block-start: var(--tilburg-space-block-snail);
+  --ams-pagination-ellipses-padding-block-end: var(--tilburg-space-block-snail);
+  --ams-pagination-button-padding-inline: var(--tilburg-space-inline-snail);
+  --ams-pagination-button-padding-inline-start: var(--tilburg-space-inline-snail);
+  --ams-pagination-button-padding-inline-end: var(--tilburg-space-inline-snail);
+  --ams-pagination-button-padding-block-start: var(--tilburg-space-block-snail);
+  --ams-pagination-button-padding-block-end: var(--tilburg-space-block-snail);
+  --ams-pagination-button-current-background-color: var(--tilburg-color-gray-100);
+  --ams-pagination-button-border-width: var(--tilburg-border-width-sm);
+  --ams-pagination-relative-link-disabled-color: var(--tilburg-color-gray-500);
+  --ams-pagination-relative-link-padding-block-start: var(
+    --tilburg-space-block-snail
+  );
+  --ams-pagination-relative-link-padding-block-end: var(--tilburg-space-block-snail);
+  --ams-pagination-relative-link-icon-margin-inline: var(
+    --tilburg-space-text-beetle
+  );
+  --ams-pagination-relative-link-border-width: var(--tilburg-border-width-sm);
 }

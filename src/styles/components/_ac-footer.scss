@@ -6,6 +6,10 @@
   color: var(--tilburg-footer-color);
   background-color: var(--tilburg-footer-background-color);
   min-height: 50px;
+  background-image: var(--utrecht-page-footer-background-image);
+  background-position: var(--utrecht-page-footer-background-position);
+  background-size: auto;
+  background-repeat: var(--utrecht-page-footer-background-repeat);
 
   @include respond-max($screen-sm) {
     padding-block: var(--tilburg-space-row-cat);
