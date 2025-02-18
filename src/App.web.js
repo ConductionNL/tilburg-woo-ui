@@ -85,9 +85,9 @@ const App = ({ store }) => {
       case 'open-migrato.accept.commonground.nu':
         return (
           (document.getElementById('favicon').href =
-            'https://migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png'),
+            'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png'),
           (document.getElementById('faviconMeta').href =
-            'https://migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png')
+            'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png')
         );
       case 'open-tilburg.accept.commonground.nu':
         return;
