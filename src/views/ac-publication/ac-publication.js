@@ -228,7 +228,6 @@ const AcPublication = observer(({ store: { publications } }) => {
 
   const mapAttachmentRow = (row, primary) => {
     // Fallback for when there is no extension property
-    const extension = row.type.split('/').pop();
 
     const formatFileSize = (bytes) => {
       if (!bytes) return '-';
@@ -242,7 +241,7 @@ const AcPublication = observer(({ store: { publications } }) => {
     if (!primary) {
       return [
         <AcLink to={row.accessUrl} target='_blank'>
-          {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+          {`${row.title}` || 'Naamloos bestand'}
           <span className='sr-only'>Opent in een nieuw tabblad</span>
           <VISUALS.EXTERNAL_LINK_PINK />
         </AcLink>,
@@ -252,7 +251,7 @@ const AcPublication = observer(({ store: { publications } }) => {
 
     return [
       <AcLink to={row.accessUrl} target='_blank'>
-        {`${row.title}.${row.extension ?? extension}` || 'Naamloos bestand'}
+        {`${row.title}` || 'Naamloos bestand'}
         <span className='sr-only'>Opent in een nieuw tabblad</span>
         <VISUALS.EXTERNAL_LINK_PINK />
       </AcLink>,
