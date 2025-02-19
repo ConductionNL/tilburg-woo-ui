@@ -35,6 +35,9 @@ export class PublicationsStore {
   single = null;
 
   @observable
+  attachments = null;
+
+  @observable
   categories = [];
 
   @observable
@@ -80,22 +83,22 @@ export class PublicationsStore {
   @action
   getFilteredAttachments = (primary = false, page) => {
     // @TODO: This is the way we want to filter but the API does not support it yet. Keep it for reference.
-    // const filteredAttachmentsLabel = this.single?.attachments?.filter((attachment) =>
-    //   primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
-    // );
-
-    const filteredAttachmentsLabel = this.single?.attachments?.filter(
-      (attachment) => {
-        const isPrimary = !attachment?.title?.toLowerCase().startsWith('bijlage');
-        const matchesSearch =
-          !this.attachmentSearch ||
-          attachment?.title
-            ?.toLowerCase()
-            .includes(this.attachmentSearch.toLowerCase());
-
-        return primary ? isPrimary && matchesSearch : !isPrimary && matchesSearch;
-      }
+    const filteredAttachmentsLabel = this.attachments?.filter((attachment) =>
+      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
     );
+
+    // const filteredAttachmentsLabel = this.attachments?.filter(
+    //   (attachment) => {
+    //     const isPrimary = !attachment?.title?.toLowerCase().startsWith('bijlage');
+    //     const matchesSearch =
+    //       !this.attachmentSearch ||
+    //       attachment?.title
+    //         ?.toLowerCase()
+    //         .includes(this.attachmentSearch.toLowerCase());
+
+    //     return primary ? isPrimary && matchesSearch : !isPrimary && matchesSearch;
+    //   }
+    // );
 
     const filteredAttachments = [];
     filteredAttachmentsLabel &&
@@ -162,6 +165,13 @@ export class PublicationsStore {
   setItems = (items) => {
     this.items = items;
   };
+
+  
+  @action
+  setAttachments = (attachments) => {
+    this.attachments = attachments;
+  };
+
 
   @action
   setPagination = (pagination) => {
@@ -355,6 +365,29 @@ export class PublicationsStore {
   @action
   resetPublication = () => {
     this.single = null;
+  };
+
+  @action
+  fetchAttachments = async (_id) => {
+    this.loading.status = true;
+    console.group('MAKING API CALL');
+    console.log('SEARCH QUERY:', toJS(this.search_query));
+    console.groupEnd();
+
+    app.store.api.publications
+      .attachments(_id)
+      .then((response) => {
+        this.setAttachments(response.results);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
+  resetAttachments = () => {
+    this.attachments = null;
   };
 
   @action
