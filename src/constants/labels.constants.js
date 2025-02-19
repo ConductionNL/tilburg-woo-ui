@@ -1,5 +1,5 @@
 export const LABELS = {
-  APP_NAME: 'Open Gemeente',
+  APP_NAME: 'Gemeente',
   CLOSE: 'Sluiten',
   CLOSE_SINGULAR: 'Sluit',
   CONCEPTS_LIST: 'Begrippenlijst',
