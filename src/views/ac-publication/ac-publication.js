@@ -111,6 +111,9 @@ const AcPublication = observer(({ store: { publications } }) => {
     getFilteredAttachments,
     setAttachmentSearch,
     attachmentSearch,
+    fetchAttachments,
+    attachments,
+    resetAttachments,
   } = publications;
 
   const drawerRef = useRef(null);
@@ -171,14 +174,18 @@ const AcPublication = observer(({ store: { publications } }) => {
 
   useEffect(() => {
     fetchPublication(id);
-    return () => resetPublication();
+    fetchAttachments(id);
+    return () => {
+      resetPublication();
+      resetAttachments();
+    };
   }, []);
 
   useEffect(() => {
     document.title = get_single?.title || 'Open Gemeente | Publicatie';
   }, [get_single]);
 
-  if (loading.status || !get_single) {
+  if (loading.status || !get_single || !attachments) {
     return <AcLoader />;
   }
 
