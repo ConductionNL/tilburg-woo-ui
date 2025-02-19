@@ -1,9 +1,9 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
 export const TITLES = AcLockObject({
-  ABOUT: 'Over Open Gemeente',
+  ABOUT: 'Over Gemeente',
   ACCESSIBILITY: 'Toegankelijkheid',
-  BASE: 'Open Gemeente',
+  BASE: 'Gemeente',
   CONTACT: 'Contact',
   COOKIES: 'Cookies',
   FAQ: 'Veelgestelde vragen',

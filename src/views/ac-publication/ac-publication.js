@@ -20,6 +20,7 @@ import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
 import { StatusBadge } from '@utrecht/component-library-react';
+import _ from 'lodash';
 
 const MOCK_CONCEPTS = {
   pageConcepts: [
@@ -182,7 +183,7 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Open Gemeente | Publicatie';
+    document.title = get_single?.title || 'Gemeente | Publicatie';
   }, [get_single]);
 
   if (loading.status || !get_single || !attachments) {
@@ -255,7 +256,7 @@ const AcPublication = observer(({ store: { publications } }) => {
         <span className='sr-only'>Opent in een nieuw tabblad</span>
         <VISUALS.EXTERNAL_LINK_PINK />
       </AcLink>,
-      row.labels[0] || LABELS.UNKNOWN,
+      _.upperFirst(row.labels[0]) || LABELS.UNKNOWN,
       acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
       formatFileSize(row.size),
     ];

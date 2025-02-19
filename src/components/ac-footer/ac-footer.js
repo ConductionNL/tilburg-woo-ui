@@ -38,7 +38,7 @@ const AcFooter = () => {
           <div className='ac-footer__logo'>
             <VISUALS.LOGO />
             <span>
-              <span>Open Gemeente</span>
+              <span>Gemeente</span>
               <span>Éen plek voor alle publicaties van de Gemeente</span>
             </span>
           </div>
