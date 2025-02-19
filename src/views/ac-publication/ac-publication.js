@@ -257,7 +257,7 @@ const AcPublication = observer(({ store: { publications } }) => {
         <VISUALS.EXTERNAL_LINK_PINK />
       </AcLink>,
       _.upperFirst(row.labels[0]) || LABELS.UNKNOWN,
-      acFormatDate(row?.published, 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
+      acFormatDate("2025-02-19T08:43:54Z", 'YYYY-MM-DD', 'DD MMMM YYYY') || LABELS.UNKNOWN,
       formatFileSize(row.size),
     ];
   };
