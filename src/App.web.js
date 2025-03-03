@@ -107,6 +107,12 @@ const App = ({ store }) => {
             'https://www.rotterdam.nl/favicon.ico?v=2')
         );
       case 'opencatalogi.nl':
+        return (
+          (document.getElementById('favicon').href =
+            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),
+          (document.getElementById('faviconMeta').href =
+            'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
+        );
       case 'localhost':
         return (
           (document.getElementById('favicon').href =
