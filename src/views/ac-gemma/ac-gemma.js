@@ -1,12 +1,65 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AcContainer } from '@atoms';
 import { withStore } from '@stores';
 import { dia, shapes } from 'jointjs';
 import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
+import {
+  Select,
+  SelectOption,
+} from '@utrecht/component-library-react/dist/css-module';
+import { AcLoader } from '@components';
 
 const AcGemma = ({ store: { gemma } }) => {
+  const {
+    fetchViews,
+    resetViews,
+    fetchView,
+    resetView,
+  } = gemma;
+  const [view, setView] = useState(null);
+  const [viewNodesNames, setViewNodesNames] = useState(null);
+
   useEffect(() => {
+    fetchViews();
+
+    return () => resetViews();
+  }, []);
+
+  useEffect(() => {
+    if (!view) return;
+
+    setViewNodesNames(null);
+
+    fetchView(view);
+    return () => {
+      resetView();
+    };
+  }, [view]);
+
+  useEffect(() => {
+    if (!gemma.get_view) return;
+    let viewNodesNames = [];
+
+    var getViewNodesNames = new Promise((resolve, reject) => {
+      gemma.get_view.node.forEach(async (node, index, array) => {
+        const response = await fetch(
+          `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
+        );
+        const data = await response.json();
+        viewNodesNames.push(data.results[0]?.name || 'unknown');
+        if (index === array.length - 1) resolve();
+      });
+    });
+
+    getViewNodesNames.then(() => {
+      setViewNodesNames(viewNodesNames);
+    });
+  }, [gemma.get_view]);
+
+  useEffect(() => {
+    if (!gemma.get_view) return;
+    if (!viewNodesNames) return;
     // Create container in HTML
     const container = document.getElementById('graph-container');
 
@@ -17,116 +70,47 @@ const AcGemma = ({ store: { gemma } }) => {
     const paper = new dia.Paper({
       el: container,
       model: outputGraph,
-      width: '100%',
+      width: 1168,
       height: 800,
       gridSize: 1,
     });
 
-    // Define nodes
-    const viewNodes = [
-      {
-        modelNodeId: 'c66f4f1de7ef4b28a5aafdbd497a2aff',
-        viewNodeId: 'ea00a3ff03f541fabc96f78348b55955',
-        name: 'Data-object',
+    const convertToViewNode = (node, idx) => {
+      return {
+        modelNodeId: node.elementRef,
+        viewNodeId: node.identifier || 'unknown',
+        name: viewNodesNames[idx] || 'unknown',
         type: 'dataobject',
-        x: 500,
-        y: 350,
-        width: 100,
-        height: 60,
+        x: node.position.x,
+        y: node.position.y,
+        width: node.position.w,
+        height: node.position.h,
         parent: null,
-      },
-      {
-        modelNodeId: '4ff521e69d724ae88c5a2324008613e7',
-        viewNodeId: '222f9942c68e47d5a7167e64cc435b8a',
-        name: 'Artifact',
-        type: 'artifact',
-        x: 500,
-        y: 200,
-        width: 100,
-        height: 60,
-        parent: null,
-      },
-      {
-        modelNodeId: '2339be41-cfcd-4496-820d-ce823a6d9ea4',
-        viewNodeId: '3942f672-c45d-47b5-90f5-a7d117d53bf3',
-        name: 'Applicatiefunctie',
-        type: 'applicationfunction',
-        x: 300,
-        y: 350,
-        width: 100,
-        height: 60,
-        parent: null,
-      },
-      {
-        modelNodeId: 'dbfc43a4-5002-4619-8d15-b2b0fc940135',
-        viewNodeId: '7b650e5c-fd1f-4897-b4ba-eaba0266ca36',
-        name: 'Applicatieservice',
-        type: 'applicationservice',
-        x: 500,
-        y: 500,
-        width: 100,
-        height: 60,
-        parent: null,
-      },
-      {
-        modelNodeId: 'bf2f547c-d9a3-47e5-b407-b2dcced24074',
-        viewNodeId: '79851822-319d-483f-bcc1-1aa4c14a04a8',
-        name: 'Bedrijfsobject',
-        type: 'businessobject',
-        x: 700,
-        y: 350,
-        width: 100,
-        height: 60,
-        parent: null,
-      },
-    ];
+        color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
+        borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
+        font: {
+          name: node.style.font.name,
+          size: node.style.font.size,
+          color: `rgba(${node.style.font.color.r}, ${node.style.font.color.g}, ${node.style.font.color.b}, ${node.style.font.color.a})`,
+        },
+      };
+    };
 
-    // Define relationships
-    let viewRelationships = [
-      {
-        modelRelationshipId: '790f2145455347d089d7afc34f6fba45',
-        sourceId: '222f9942c68e47d5a7167e64cc435b8a',
-        targetId: 'ea00a3ff03f541fabc96f78348b55955',
-        viewRelationshipId: '42c4085e-b2c8-4cb9-803f-3b5ab827d644',
-        type: 'realization',
-      },
-      {
-        modelRelationshipId: '40e8eadd-cb9a-4046-8f39-59247e1c433f',
-        sourceId: 'ea00a3ff03f541fabc96f78348b55955',
-        targetId: '3942f672-c45d-47b5-90f5-a7d117d53bf3',
-        viewRelationshipId: 'c8684fc5137444c09ce193268abfcb97',
-        isBidirectional: true,
-        type: 'access',
-      },
-      {
-        modelRelationshipId: 'a0417565-43ce-4871-a533-da278ac3c76d',
-        sourceId: '7b650e5c-fd1f-4897-b4ba-eaba0266ca36',
-        targetId: 'ea00a3ff03f541fabc96f78348b55955',
-        viewRelationshipId: 'e4eb4119-2585-4dcf-a9cb-91728db6d99b',
-        type: 'access',
-      },
-      {
-        modelRelationshipId: '6101f2e7-3685-4d21-9478-0670d1332447',
-        sourceId: 'ea00a3ff03f541fabc96f78348b55955',
-        targetId: '79851822-319d-483f-bcc1-1aa4c14a04a8',
-        viewRelationshipId: '415bc55b-eaa2-4ae1-9038-5548ca689a09',
-        type: 'realization',
-      },
-    ];
+    const viewNodes = gemma.get_view.node.map(convertToViewNode);
 
-    // Create settings
-    const settings = new ViewSettings({
-      archimateVersion: '<=3.1',
-      style: 'hybrid',
-      darkColor: 'black',
-      lightColor: 'white',
-      textColor: 'black',
-      textSize: 12,
-      defaultWidth: 140,
-      defaultHeight: 50,
-      borderWidth: 0.8,
-      edgeWidth: 0.8,
-    });
+    const convertToViewRelationship = (relationship) => {
+      return {
+        modelRelationshipId: relationship.relationshipRef,
+        sourceId: relationship.source,
+        targetId: relationship.target,
+        viewRelationshipId: relationship.identifier,
+        type: 'access',
+      };
+    };
+
+    const viewRelationships = gemma.get_view.connection.map(
+      convertToViewRelationship
+    );
 
     // Render the graph
     ViewRenderer.renderToGraph(
@@ -146,12 +130,72 @@ const AcGemma = ({ store: { gemma } }) => {
         edgeWidth: 0.8,
       })
     );
-  }, []);
+
+    viewNodes.forEach((node) => {
+      setNodeColor(node);
+    });
+
+    container.querySelectorAll(':scope > svg').forEach((node) => {
+      setSvgViewBox(node);
+    });
+  }, [gemma.get_view, viewNodesNames]);
+
+  const setSvgViewBox = (svg) => {
+    const box = svg.querySelector('g').getBBox();
+    svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
+  };
+
+  const setNodeColor = (node) => {
+    const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
+    let allRectElements = parentElement.querySelectorAll(':scope > rect');
+    allRectElements.forEach((item) => item.setAttribute('fill', node.color));
+    allRectElements.forEach((item) => item.setAttribute('stroke', node.borderColor));
+
+    let allTextElements = parentElement.querySelectorAll(':scope > text');
+
+    allTextElements.forEach((item) =>
+      item.setAttribute('font-family', node.font.name)
+    );
+    allTextElements.forEach((item) =>
+      item.setAttribute('font-size', node.font.size)
+    );
+    allTextElements.forEach((item) =>
+      item.setAttribute('font-color', node.font.color)
+    );
+  };
 
   return (
     <AcContainer spacing='lg'>
-      <h1>Architectuur plaat</h1>
-      <div className='ac-gemma-graph-container' id='graph-container'></div>
+      {gemma.all_views?.length === 0 && <AcLoader />}
+      {gemma.all_views?.length > 0 && (
+        <>
+          <Select
+            id='sorting'
+            className='ac-gemma-select'
+            onChange={(e) => setView(e.target.value)}
+            loading={gemma.all_views.length === 0}
+          >
+            <SelectOption value=''>Selecteer een view</SelectOption>
+            {gemma.all_views.map((view) => (
+              <SelectOption value={view.id}>{view.name}</SelectOption>
+            ))}
+          </Select>
+
+          {gemma.get_view && <h1>{gemma.get_view.name}</h1>}
+
+          {gemma.get_view && viewNodesNames && (
+            <div className='ac-gemma-graph-container' id='graph-container'></div>
+          )}
+          {!gemma.get_view && !viewNodesNames && (
+            <div className='ac-gemma-graph-container-loading' />
+          )}
+          {gemma.get_view && !viewNodesNames && (
+            <div className='ac-gemma-graph-container-loading'>
+              <AcLoader className='ac-gemma-graph-container-loading-loader' />
+            </div>
+          )}
+        </>
+      )}
     </AcContainer>
   );
 };

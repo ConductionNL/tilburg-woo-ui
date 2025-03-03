@@ -15,40 +15,56 @@ const GEMMA = '/gemma';
 const MENUS = '/menu';
 const OBJECTS = '/objects';
 
+const OPENCONNECTOR = '/openconnector';
+const OPENCATALOGI = '/opencatalogi';
+const ENDPOINT = '/endpoint';
+const VIEWS = '/views';
+const ELEMENTS = '/elements';
+
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
-    SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization`, // GET
+    SEARCH: `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SINGLE: (_id) =>
+      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization`, // GET
     RELATIONS: (_uri) =>
-      `${API}${SEARCH}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
-    ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
+    ATTACHMENTS: (_id) =>
+      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   MIJN_OMGEVING: {
-    SEARCH: `${API}${MIJN_OMGEVING}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${MIJN_OMGEVING}/${_id}?extend=all`, // GET
+    SEARCH: `${OPENCATALOGI}${API}${MIJN_OMGEVING}`, // GET
+    SINGLE: (_id) =>
+      `${OPENCATALOGI}${API}${SEARCH}${MIJN_OMGEVING}/${_id}?extend=all`, // GET
   },
   AUTHENTICATION: {
-    SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+    SEARCH: `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SINGLE: (_id) =>
+      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
   },
   FAQS: {
-    INDEX: `${API}${PUBLIC}${FAQS}`, // GET
-    SHOW: (_id) => `${API}${PUBLIC}${FAQS}${_id}`, // GET
+    INDEX: `${OPENCATALOGI}${API}${PUBLIC}${FAQS}`, // GET
+    SHOW: (_id) => `${OPENCATALOGI}${API}${PUBLIC}${FAQS}${_id}`, // GET
   },
   PAGES: {
-    INDEX: `${API}${PUBLIC}${PAGES}`, // GET
-    SHOW: (_slug) => `${API}${PUBLIC}${PAGES}${_slug}`, // GET
+    INDEX: `${OPENCATALOGI}${API}${PUBLIC}${PAGES}`, // GET
+    SHOW: (_slug) => `${OPENCATALOGI}${API}${PUBLIC}${PAGES}${_slug}`, // GET
   },
   THEMES: {
-    INDEX: `${API}${SEARCH}${THEMES}`,
+    INDEX: `${OPENCATALOGI}${API}${SEARCH}${THEMES}`,
   }, // GET
   GEMMA: {
-    LIST: `${API}${SEARCH}${GEMMA}`,
-    SINGLE: (_id) => `${API}${SEARCH}${GEMMA}/${_id}?extend=all`,
+    // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
+    VIEWS: `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/views`,
+    // VIEW: (_id) => `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}/${_id}?extend=all`,
+    VIEW: (_id) => `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/views/${_id}`,
+    // ELEMENTS: (_id) =>
+    //   `${OPENCONNECTOR}${API}${ENDPOINT}${ELEMENTS}/${_id}?extend=all`,
+    ELEMENT_REFERENCES: (_id) =>
+      `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${_id}`,
   }, // GET
   MENU: {
-    INDEX: `${API}${PUBLIC}${MENUS}`, // GET
-    SINGLE: (_id) => `${API}${PUBLIC}${MENUS}/${_id}`, // GET
+    INDEX: `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`, // GET
+    SINGLE: (_id) => `${OPENCATALOGI}${API}${PUBLIC}${MENUS}/${_id}`, // GET
   },
 });
 

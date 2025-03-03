@@ -26,10 +26,13 @@ export class GemmaStore {
   mobileFiltersOpen = false;
 
   @observable
-  items = [];
+  views = [];
 
   @observable
-  single = null;
+  view = null;
+
+  @observable
+  elementReferences = null;
 
   @observable
   defaultQuery = DEFAULT_QUERY;
@@ -54,18 +57,28 @@ export class GemmaStore {
   }
 
   @computed
-  get get_single() {
-    return toJS(this.single);
+  get get_view() {
+    return toJS(this.view);
   }
 
   @computed
-  get all_publications() {
-    return this.items;
+  get get_elementReferences() {
+    return toJS(this.elementReferences);
+  }
+
+  @computed
+  get all_views() {
+    return toJS(this.views);
   }
 
   @action
-  setItems = (items) => {
-    this.items = items;
+  setViews = (views) => {
+    this.views = views;
+  };
+
+  @action
+  setElementReferences = (elementReferences) => {
+    this.elementReferences = elementReferences;
   };
 
   @action
@@ -74,20 +87,19 @@ export class GemmaStore {
   };
 
   @action
-  setPublication = (publication) => {
-    this.single = publication;
+  setView = (view) => {
+    this.view = view;
   };
 
   @action
-  fetchGemmaList = async () => {
+  fetchViews = async () => {
     this.loading.status = true;
 
     app.store.api.gemma
-      .list(this.search_query)
+      .views()
       .then((response) => {
-        this.setItems(response.results);
+        this.setViews(response.results);
         delete response.results;
-        this.setPagination(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {
@@ -96,18 +108,18 @@ export class GemmaStore {
   };
 
   @action
-  fetchGemma = async (_id) => {
+  fetchView = async (_id) => {
     this.loading.status = true;
 
     app.store.api.gemma
-      .single(
+      .view(
         _id,
         new URLSearchParams(
           AcBuildURLSearchParams({ _id, ...this.defaultQuery })
         ).toString()
       )
       .then((response) => {
-        this.setPublication(response);
+        this.setView(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {
@@ -116,8 +128,38 @@ export class GemmaStore {
   };
 
   @action
-  resetPublication = () => {
-    this.single = null;
+  fetchElementReferences = async (_id) => {
+    this.loading.status = true;
+
+    app.store.api.gemma
+      .elementReferences(
+        _id,
+        new URLSearchParams(
+          AcBuildURLSearchParams({ _id, ...this.defaultQuery })
+        ).toString()
+      )
+      .then((response) => {
+        this.setElementReferences(response);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
+  resetView = () => {
+    this.view = null;
+  };
+
+  @action
+  resetElementReferences = () => {
+    this.elementReferences = null;
+  };
+
+  @action
+  resetViews = () => {
+    this.views = [];
   };
 }
 

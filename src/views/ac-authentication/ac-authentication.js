@@ -15,7 +15,7 @@ const AcAuthentication = () => {
   };
 
   return (
-    <form onSubmit={onSubmit}>
+    <form className='container container--compact' onSubmit={onSubmit}>
       <div className='ac-authentication-form'>
         <Textbox type='email' placeholder='email' />
         <Textbox type='password' placeholder='password' />

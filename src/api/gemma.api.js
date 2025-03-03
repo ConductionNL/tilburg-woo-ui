@@ -7,14 +7,20 @@ export class GemmaAPI {
     this.Client = Instance.Client;
   }
 
-  list(params) {
-    return this.Client.get(ENDPOINTS.GEMMA.LIST, { params }).then(
+  views(params) {
+    return this.Client.get(ENDPOINTS.GEMMA.VIEWS, { params }).then(
       (response) => response.data
     );
   }
 
-  single(id, params) {
-    return this.Client.get(ENDPOINTS.GEMMA.SINGLE(id, params)).then(
+  view(id, params) {
+    return this.Client.get(ENDPOINTS.GEMMA.VIEW(id, params)).then(
+      (response) => response.data
+    );
+  }
+
+  elementReferences(id, params) {
+    return this.Client.get(ENDPOINTS.GEMMA.ELEMENT_REFERENCES(id, params)).then(
       (response) => response.data
     );
   }

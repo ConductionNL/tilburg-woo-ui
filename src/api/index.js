@@ -13,6 +13,8 @@ import ThemesAPI from '@api/themes.api';
 import MenuAPI from '@api/menu.api';
 import AuthenticationAPI from '@api/authentication.api';
 import MijnOmgevingAPI from '@api/mijnOmgeving.api';
+import GemmaAPI from '@api/gemma.api';
+
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -113,6 +115,11 @@ export class API {
     });
     addInterceptors(MijnOmgevingClient);
 
+    const GemmaClient = axios.create({
+      ...config.gemma,
+    });
+    addInterceptors(GemmaClient);
+
     const DownloadClient = axios.create({
       ...config.download,
       onDownloadProgress,
@@ -138,7 +145,7 @@ export class API {
       Client: AuthenticationClient,
     });
     this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client: MijnOmgevingClient });
-    this.menu = new MenuAPI({ Store, Client: MenuClient });
+    this.gemma = new GemmaAPI({ Store, Client: GemmaClient });
   }
 }
 

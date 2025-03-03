@@ -8,18 +8,18 @@ const hostname = window.location.hostname;
 const apiUrl = () => {
   switch (hostname) {
     case 'vng.opencatalogi.nl':
-      return 'https://vng.accept.commonground.nu/apps/opencatalogi';
+      return 'https://vng.accept.commonground.nu/apps';
     case 'opencatalogi.nl':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'https://directory.opencatalogi.nl/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps/opencatalogi';
+      return 'https://dimpact.commonground.nu/apps';
     case 'open-rotterdam.accept.commonground.nu':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'https://directory.opencatalogi.nl/apps';
     case 'open-migrato.accept.commonground.nu':
-      return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
+      return 'https://migrato.accept.commonground.nu/apps';
     case 'localhost':
-      return 'http://localhost:8080/apps/opencatalogi';
+      return 'http://localhost:8080/apps';
     default:
       return process.env.API_URL;
   }
@@ -28,20 +28,20 @@ const apiUrl = () => {
 const commongroundApiUrl = () => {
   switch (hostname) {
     case 'vng.opencatalogi.nl':
-      return 'https://vng.accept.commonground.nu/apps/opencatalogi';
+      return 'https://vng.accept.commonground.nu/apps';
     case 'opencatalogi.nl':
-      return 'https://directory.opencatalogi.nl/apps/opencatalogi';
+      return 'https://directory.opencatalogi.nl/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps/opencatalogi';
+      return 'https://dimpact.commonground.nu/apps';
     case 'open-rotterdam.accept.commonground.nu':
-      return 'https://rotterdam.accept.commonground.nu/apps/opencatalogi';
+      return 'https://rotterdam.accept.commonground.nu/apps';
     case 'open-tilburg.accept.commonground.nu':
-      return 'https://tilburg.accept.commonground.nu/apps/opencatalogi';
+      return 'https://tilburg.accept.commonground.nu/apps';
     case 'open-migrato.accept.commonground.nu':
-      return 'https://migrato.accept.commonground.nu/apps/opencatalogi';
+      return 'https://migrato.accept.commonground.nu/apps';
     case 'localhost':
-      return 'http://localhost:8080/apps/opencatalogi';
+      return 'http://localhost:8080/apps';
     default:
       return process.env.API_URL_COMMONGROUND;
   }
@@ -186,6 +186,14 @@ export default {
       Accept: 'application/json',
     },
   },
+  gemma: {
+    baseURL: `${_api_commonground_}`,
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    credentials: false,
+  },
   upload: {
     baseURL: `${_api_}`,
     timeout: 1000 * 60,
@@ -198,17 +206,7 @@ export default {
       Accept: 'application/json',
       type: 'formData',
     },
-    gemma: {
-      baseURL: `${_api_commonground_}`,
-      timeout: 1000 * 60,
-      maxContentLength: 10000,
-      responseType: 'json',
-      responseEncoding: 'utf8',
-      credentials: false,
-      headers: {
-        ..._api_commonground_headers_,
-      },
-    },
+
     transformRequest: [
       (data, headers) => {
         const token = AcGetAccessToken();
