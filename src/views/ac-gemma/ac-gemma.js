@@ -11,18 +11,13 @@ import {
 import { AcLoader } from '@components';
 
 const AcGemma = ({ store: { gemma } }) => {
-  const {
-    fetchViews,
-    resetViews,
-    fetchView,
-    resetView,
-  } = gemma;
+  const { fetchViews, resetViews, fetchView, resetView } = gemma;
   const [view, setView] = useState(null);
   const [viewNodesNames, setViewNodesNames] = useState(null);
 
   useEffect(() => {
     fetchViews();
-
+    setViewNodesNames(null);
     return () => resetViews();
   }, []);
 
@@ -52,14 +47,18 @@ const AcGemma = ({ store: { gemma } }) => {
       });
     });
 
-    getViewNodesNames.then(() => {
-      setViewNodesNames(viewNodesNames);
+    getViewNodesNames.finally(() => {
+      console.info('Finished fetching view node names, applying after delay');
+      setTimeout(() => {
+        setViewNodesNames(viewNodesNames);
+      }, 1000);
     });
   }, [gemma.get_view]);
 
   useEffect(() => {
     if (!gemma.get_view) return;
     if (!viewNodesNames) return;
+
     // Create container in HTML
     const container = document.getElementById('graph-container');
 
@@ -76,11 +75,13 @@ const AcGemma = ({ store: { gemma } }) => {
     });
 
     const convertToViewNode = (node, idx) => {
+      const type =
+        viewNodesNames[idx] === 'StUF Geo IMGeo' ? 'constraint' : 'dataobject';
       return {
         modelNodeId: node.elementRef,
         viewNodeId: node.identifier || 'unknown',
         name: viewNodesNames[idx] || 'unknown',
-        type: 'dataobject',
+        type: type,
         x: node.position.x,
         y: node.position.y,
         width: node.position.w,
@@ -99,6 +100,8 @@ const AcGemma = ({ store: { gemma } }) => {
     const viewNodes = gemma.get_view.node.map(convertToViewNode);
 
     const convertToViewRelationship = (relationship) => {
+      if (!relationship.relationshipRef) return;
+
       return {
         modelRelationshipId: relationship.relationshipRef,
         sourceId: relationship.source,
@@ -108,9 +111,14 @@ const AcGemma = ({ store: { gemma } }) => {
       };
     };
 
-    const viewRelationships = gemma.get_view.connection.map(
+    const viewRelationshipsArray = gemma.get_view.connection.map(
       convertToViewRelationship
     );
+
+    const viewRelationships = viewRelationshipsArray.filter(
+      (relationship) => relationship !== undefined
+    );
+
 
     // Render the graph
     ViewRenderer.renderToGraph(
@@ -138,7 +146,7 @@ const AcGemma = ({ store: { gemma } }) => {
     container.querySelectorAll(':scope > svg').forEach((node) => {
       setSvgViewBox(node);
     });
-  }, [gemma.get_view, viewNodesNames]);
+  }, [viewNodesNames]);
 
   const setSvgViewBox = (svg) => {
     const box = svg.querySelector('g').getBBox();
