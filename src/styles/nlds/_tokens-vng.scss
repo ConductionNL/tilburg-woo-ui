@@ -1256,4 +1256,16 @@
   --conduction-primary-top-nav-hover-color: #ffffff;
   --conduction-primary-top-nav-background-color: #0078c8;
   --conduction-primary-top-nav-color: #ffffff;
+
+  --conduction-tooltip-z-index: 9999;
+  --conduction-tooltip-border-radius: 0px;
+  --conduction-tooltip-border-color: unset;
+  --conduction-tooltip-border-style: unset;
+  --conduction-tooltip-border-width: 0px;
+  --conduction-tooltip-padding-inline-end: 14px;
+  --conduction-tooltip-padding-inline-start: 14px;
+  --conduction-tooltip-padding-block-end: 8px;
+  --conduction-tooltip-padding-block-start: 8px;
+  --conduction-tooltip-color: var(--tilburg-color-white);
+  --conduction-tooltip-background-color: var(--tilburg-color-black);
 }

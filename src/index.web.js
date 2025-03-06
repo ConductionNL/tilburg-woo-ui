@@ -26,7 +26,7 @@ const container = document.getElementById('root');
 render(
   <StoreContext.Provider value={store}>
     <Router history={history}>
-      <Tooltip className='ac-gemma-tooltip' id={TOOLTIP_ID} />
+      <Tooltip delayShow={1000} className='ac-gemma-tooltip' id={TOOLTIP_ID} />
       <App />
     </Router>
   </StoreContext.Provider>,
