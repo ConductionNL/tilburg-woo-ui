@@ -77,17 +77,29 @@ const AcGemma = ({ store: { gemma } }) => {
       width: 1168,
       height: 800,
       gridSize: 1,
+      interactive: false, // Add this line
+      elementMove: false, // And this line
     });
 
     const convertToViewNode = (node) => {
       const nodeData = viewNodesData.find((item) => item.id === node.elementRef);
-      const type = nodeData?.name === 'StUF Geo IMGeo' ? 'constraint' : 'dataobject';
+
+      const getType = () => {
+        switch (nodeData.name) {
+          case 'StUF Geo IMGeo':
+            return 'constraint';
+          case 'SVB-BGT services en portaal':
+            return 'applicationcomponent';
+          default:
+            return 'dataobject';
+        }
+      };
 
       return {
         modelNodeId: node.elementRef,
         viewNodeId: node.identifier || 'unknown',
         name: nodeData?.name || 'unknown',
-        type: type,
+        type: getType(),
         x: node.position.x,
         y: node.position.y,
         width: node.position.w,
@@ -109,12 +121,17 @@ const AcGemma = ({ store: { gemma } }) => {
     const convertToViewRelationship = (relationship) => {
       if (!relationship.relationshipRef) return;
 
+      const bendpoints =
+        relationship.source === 'id-36645' && relationship.target === 'id-36642'
+          ? [{ x: 210, y: 130 }]
+          : [];
       return {
         modelRelationshipId: relationship.relationshipRef,
         sourceId: relationship.source,
         targetId: relationship.target,
         viewRelationshipId: relationship.identifier,
         type: 'access',
+        bendpoints,
       };
     };
 
@@ -142,6 +159,7 @@ const AcGemma = ({ store: { gemma } }) => {
         defaultHeight: 50,
         borderWidth: 0.8,
         edgeWidth: 0.8,
+        interactive: false,
       })
     );
 
@@ -156,7 +174,26 @@ const AcGemma = ({ store: { gemma } }) => {
 
   const setSvgViewBox = (svg) => {
     const box = svg.querySelector('g').getBBox();
+    svg.setAttribute('id', 'svg-container');
     svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
+
+    // Add styles for scrolling/zooming
+    svg.style.width = '100%';
+    svg.style.height = '800px';
+    svg.style.border = '1px solid #ccc';
+    svg.style.cursor = 'grab';
+
+    // Initialize the transform group if it doesn't exist
+    const existingGroup = svg.querySelector('g');
+    if (existingGroup) {
+      existingGroup.setAttribute('transform', `translate(0, 0) scale(1)`);
+    }
+
+    // Add event listeners after SVG is ready
+    svg.addEventListener('wheel', handleWheel);
+    svg.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   const setNodeColor = (node) => {
@@ -177,6 +214,91 @@ const AcGemma = ({ store: { gemma } }) => {
       item.setAttribute('font-color', node.font.color);
     });
   };
+
+  //////////////////// Scrolling ///////////////////////////
+  // Move these event handlers outside of the component but before it
+  const handleWheel = (event) => {
+    event.preventDefault();
+    const svg = document.getElementById('svg-container');
+    if (!svg) return;
+
+    const group = svg.querySelector('g');
+    if (!group) return;
+
+    const currentTransform =
+      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
+
+    // Improved parsing of current transform values
+    const scaleMatch = currentTransform.match(/scale\(([^\)]+)\)/);
+    const translateMatch = currentTransform.match(
+      /translate\(([^,]+),\s*([^\)]+)\)/
+    );
+
+    const currentScale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+    const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
+    const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
+
+    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.min(Math.max(currentScale * zoomFactor, 0.1), 10);
+
+    group.setAttribute(
+      'transform',
+      `translate(${currentX}, ${currentY}) scale(${newScale})`
+    );
+  };
+
+  const handleMouseDown = (event) => {
+    const svg = event.target.closest('svg');
+    if (!svg) return;
+
+    svg.style.cursor = 'grabbing';
+    const group = svg.querySelector('g');
+    if (!group) return;
+
+    const currentTransform =
+      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
+    const translateMatch = currentTransform.match(
+      /translate\(([^,]+),\s*([^\)]+)\)/
+    );
+
+    const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
+    const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
+
+    svg.dataset.isDragging = 'true';
+    svg.dataset.dragStartX = event.clientX - currentX;
+    svg.dataset.dragStartY = event.clientY - currentY;
+  };
+
+  const handleMouseMove = (event) => {
+    const svg = document.getElementById('svg-container');
+    if (!svg || svg.dataset.isDragging !== 'true') return;
+
+    const group = svg.querySelector('g');
+    if (!group) return;
+
+    const currentTransform =
+      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
+    const scaleMatch = currentTransform.match(/scale\(([^\)]+)\)/);
+    const currentScale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+
+    const newX = event.clientX - parseFloat(svg.dataset.dragStartX);
+    const newY = event.clientY - parseFloat(svg.dataset.dragStartY);
+
+    group.setAttribute(
+      'transform',
+      `translate(${newX}, ${newY}) scale(${currentScale})`
+    );
+  };
+
+  const handleMouseUp = () => {
+    const svg = document.getElementById('svg-container');
+    if (!svg) return;
+
+    svg.style.cursor = 'grab';
+    svg.dataset.isDragging = 'false';
+  };
+
+  //////////////////// End Scrolling ///////////////////////////
 
   return (
     <AcContainer spacing='lg'>
