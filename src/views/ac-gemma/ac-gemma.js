@@ -9,22 +9,23 @@ import {
   SelectOption,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader } from '@components';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcGemma = ({ store: { gemma } }) => {
   const { fetchViews, resetViews, fetchView, resetView } = gemma;
   const [view, setView] = useState(null);
-  const [viewNodesNames, setViewNodesNames] = useState(null);
+  const [viewNodesData, setViewNodesData] = useState(null);
 
   useEffect(() => {
     fetchViews();
-    setViewNodesNames(null);
+    setViewNodesData(null);
     return () => resetViews();
   }, []);
 
   useEffect(() => {
     if (!view) return;
 
-    setViewNodesNames(null);
+    setViewNodesData(null);
 
     fetchView(view);
     return () => {
@@ -34,7 +35,7 @@ const AcGemma = ({ store: { gemma } }) => {
 
   useEffect(() => {
     if (!gemma.get_view) return;
-    let viewNodesNames = [];
+    let viewNodesData = [];
 
     var getViewNodesNames = new Promise((resolve, reject) => {
       gemma.get_view.node.forEach(async (node, index, array) => {
@@ -42,7 +43,11 @@ const AcGemma = ({ store: { gemma } }) => {
           `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
         );
         const data = await response.json();
-        viewNodesNames.push(data.results[0]?.name || 'unknown');
+        viewNodesData.push({
+          name: data.results[0]?.name || 'unknown',
+          id: node.elementRef,
+          description: data.results[0]?.documentation || 'unknown',
+        });
         if (index === array.length - 1) resolve();
       });
     });
@@ -50,14 +55,14 @@ const AcGemma = ({ store: { gemma } }) => {
     getViewNodesNames.finally(() => {
       console.info('Finished fetching view node names, applying after delay');
       setTimeout(() => {
-        setViewNodesNames(viewNodesNames);
+        setViewNodesData(viewNodesData);
       }, 1000);
     });
   }, [gemma.get_view]);
 
   useEffect(() => {
     if (!gemma.get_view) return;
-    if (!viewNodesNames) return;
+    if (!viewNodesData) return;
 
     // Create container in HTML
     const container = document.getElementById('graph-container');
@@ -74,13 +79,14 @@ const AcGemma = ({ store: { gemma } }) => {
       gridSize: 1,
     });
 
-    const convertToViewNode = (node, idx) => {
-      const type =
-        viewNodesNames[idx] === 'StUF Geo IMGeo' ? 'constraint' : 'dataobject';
+    const convertToViewNode = (node) => {
+      const nodeData = viewNodesData.find((item) => item.id === node.elementRef);
+      const type = nodeData?.name === 'StUF Geo IMGeo' ? 'constraint' : 'dataobject';
+
       return {
         modelNodeId: node.elementRef,
         viewNodeId: node.identifier || 'unknown',
-        name: viewNodesNames[idx] || 'unknown',
+        name: nodeData?.name || 'unknown',
         type: type,
         x: node.position.x,
         y: node.position.y,
@@ -94,6 +100,7 @@ const AcGemma = ({ store: { gemma } }) => {
           size: node.style.font.size,
           color: `rgba(${node.style.font.color.r}, ${node.style.font.color.g}, ${node.style.font.color.b}, ${node.style.font.color.a})`,
         },
+        description: nodeData?.description || 'unknown',
       };
     };
 
@@ -118,7 +125,6 @@ const AcGemma = ({ store: { gemma } }) => {
     const viewRelationships = viewRelationshipsArray.filter(
       (relationship) => relationship !== undefined
     );
-
 
     // Render the graph
     ViewRenderer.renderToGraph(
@@ -146,7 +152,7 @@ const AcGemma = ({ store: { gemma } }) => {
     container.querySelectorAll(':scope > svg').forEach((node) => {
       setSvgViewBox(node);
     });
-  }, [viewNodesNames]);
+  }, [viewNodesData]);
 
   const setSvgViewBox = (svg) => {
     const box = svg.querySelector('g').getBBox();
@@ -155,21 +161,21 @@ const AcGemma = ({ store: { gemma } }) => {
 
   const setNodeColor = (node) => {
     const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
+    parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
+    parentElement.setAttribute('data-tooltip-content', node.description);
+
     let allRectElements = parentElement.querySelectorAll(':scope > rect');
-    allRectElements.forEach((item) => item.setAttribute('fill', node.color));
-    allRectElements.forEach((item) => item.setAttribute('stroke', node.borderColor));
+    allRectElements.forEach((item) => {
+      item.setAttribute('fill', node.color);
+      item.setAttribute('stroke', node.borderColor);
+    });
 
     let allTextElements = parentElement.querySelectorAll(':scope > text');
-
-    allTextElements.forEach((item) =>
-      item.setAttribute('font-family', node.font.name)
-    );
-    allTextElements.forEach((item) =>
-      item.setAttribute('font-size', node.font.size)
-    );
-    allTextElements.forEach((item) =>
-      item.setAttribute('font-color', node.font.color)
-    );
+    allTextElements.forEach((item) => {
+      item.setAttribute('font-family', node.font.name);
+      item.setAttribute('font-size', node.font.size);
+      item.setAttribute('font-color', node.font.color);
+    });
   };
 
   return (
@@ -191,13 +197,13 @@ const AcGemma = ({ store: { gemma } }) => {
 
           {gemma.get_view && <h1>{gemma.get_view.name}</h1>}
 
-          {gemma.get_view && viewNodesNames && (
+          {gemma.get_view && viewNodesData && (
             <div className='ac-gemma-graph-container' id='graph-container'></div>
           )}
-          {!gemma.get_view && !viewNodesNames && (
+          {!gemma.get_view && !viewNodesData && (
             <div className='ac-gemma-graph-container-loading' />
           )}
-          {gemma.get_view && !viewNodesNames && (
+          {gemma.get_view && !viewNodesData && (
             <div className='ac-gemma-graph-container-loading'>
               <AcLoader className='ac-gemma-graph-container-loading-loader' />
             </div>
