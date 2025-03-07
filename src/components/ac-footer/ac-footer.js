@@ -4,8 +4,9 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 import {
-  EXTERNAL_LINKS,
-  FOOTER_ITEMS,
+  FOOTER_PRIMARY_ABOUT,
+  FOOTER_PRIMARY_QUICK,
+  FOOTER_SECONDARY,
   VNG_FOOTER_ITEMS_SITEMAP,
   VNG_FOOTER_ITEMS_INFORMATIE,
   VNG_FOOTER_ITEMS_BEDRIJVEN,
@@ -23,6 +24,20 @@ const AcFooter = ({ store: { menu } }) => {
     const Icon = VISUALS[icon];
     if (!Icon) return <></>;
     return <Icon className='ac-footer__link-icon' />;
+  };
+
+  const renderLink = (item) => {
+    const linkContent = item.isExternal ? (
+      <a href={item.href} target='_blank' rel='noopener noreferrer'>
+        {item.label}
+        <span className='sr-only'>Opent in een nieuw tabblad</span>
+        <VISUALS.EXTERNAL_LINK />
+      </a>
+    ) : (
+      <Link to={item.path}>{item.label}</Link>
+    );
+
+    return <li key={item.id}>{linkContent}</li>;
   };
 
   const getFooterItems = () => {
@@ -76,52 +91,68 @@ const AcFooter = ({ store: { menu } }) => {
   return (
     <footer className='ac-footer'>
       <h2 className='sr-only'>Footer</h2>
-      <AcContainer
-        className={AcCheckIfSpecificHostname() ? 'ac-footer__container' : ''}
-      >
-        {AcCheckIfSpecificHostname() ? (
-          <>
-            {footerItems.map((footerItem, index) => (
-              <nav
-                className='ac-footer__links'
-                key={`footer-menu-${index + 1}`}
-                aria-label={`Footer menu ${index + 1}`}
-              >
-                {footerItem.items.map((item, index) =>
-                  item.link ? (
-                    item.link.includes('http' || 'https') ? (
-                      <>
-                        <a
-                          href={item.link}
-                          target='_blank'
-                          className='ac-footer__link'
-                        >
+      <section>
+        <AcContainer
+          className={AcCheckIfSpecificHostname() ? 'ac-footer__container' : ''}
+        >
+          {AcCheckIfSpecificHostname() ? (
+            <>
+              {footerItems.map((footerItem, index) => (
+                <nav
+                  className='ac-footer__links'
+                  key={`footer-menu-${index + 1}`}
+                  aria-label={`Footer menu ${index + 1}`}
+                >
+                  {footerItem.items.map((item, index) =>
+                    item.link ? (
+                      item.link.includes('http' || 'https') ? (
+                        <>
+                          <a
+                            href={item.link}
+                            target='_blank'
+                            className='ac-footer__link'
+                          >
+                            {hostname === 'open-dimpact.accept.commonground.nu' ||
+                            hostname === 'dimpact.opencatalogi.nl' ? (
+                              <>
+                                {item.icon ? (
+                                  <item.icon className='ac-footer__link-icon' />
+                                ) : (
+                                  <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                                )}
+                                {item.name}
+                                <span className='sr-only'>
+                                  Opent in een nieuw tabblad
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                {item.name}
+                                <span className='sr-only'>
+                                  Opent in een nieuw tabblad
+                                </span>
+                                <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                              </>
+                            )}
+                          </a>
+                        </>
+                      ) : (
+                        <Link className='ac-footer__link' to={item.link}>
                           {hostname === 'open-dimpact.accept.commonground.nu' ||
                           hostname === 'dimpact.opencatalogi.nl' ? (
-                            <>
-                              {item.icon ? (
-                                <item.icon className='ac-footer__link-icon' />
-                              ) : (
-                                <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                              )}
-                              {item.name}
-                              <span className='sr-only'>
-                                Opent in een nieuw tabblad
-                              </span>
-                            </>
+                            <Icon icon={item.icon} />
                           ) : (
-                            <>
-                              {item.name}
-                              <span className='sr-only'>
-                                Opent in een nieuw tabblad
-                              </span>
-                              <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                            </>
+                            <Icon icon={item.icon} />
                           )}
-                        </a>
-                      </>
+                          {item.name}
+                          {hostname !== 'open-dimpact.accept.commonground.nu' &&
+                            hostname !== 'dimpact.opencatalogi.nl' && (
+                              <Icon icon={item.icon} />
+                            )}
+                        </Link>
+                      )
                     ) : (
-                      <Link className='ac-footer__link' to={item.link}>
+                      <div className='ac-footer__link'>
                         {hostname === 'open-dimpact.accept.commonground.nu' ||
                         hostname === 'dimpact.opencatalogi.nl' ? (
                           <Icon icon={item.icon} />
@@ -133,68 +164,49 @@ const AcFooter = ({ store: { menu } }) => {
                           hostname !== 'dimpact.opencatalogi.nl' && (
                             <Icon icon={item.icon} />
                           )}
-                      </Link>
+                      </div>
                     )
-                  ) : (
-                    <div className='ac-footer__link'>
-                      {hostname === 'open-dimpact.accept.commonground.nu' ||
-                      hostname === 'dimpact.opencatalogi.nl' ? (
-                        <Icon icon={item.icon} />
-                      ) : (
-                        <Icon icon={item.icon} />
-                      )}
-                      {item.name}
-                      {hostname !== 'open-dimpact.accept.commonground.nu' &&
-                        hostname !== 'dimpact.opencatalogi.nl' && (
-                          <Icon icon={item.icon} />
-                        )}
-                    </div>
-                  )
-                )}
-              </nav>
-            ))}
-          </>
-        ) : (
-          <>
-            <nav className='ac-footer__links' aria-label='Footer menu 1'>
-              <h3>{LABELS.THIS_WEBSITE}</h3>
-              <ul>
-                {FOOTER_ITEMS.map((item, index) => (
-                  <li key={index}>
-                    <Link to={item.path}>{item.label}</Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <nav className='ac-footer__links' aria-label='Footer menu 2'>
-              <h3>{LABELS.QUICK_LINKS}</h3>
-              <ul>
-                {EXTERNAL_LINKS.map((item, index) => (
-                  <li>
-                    <a href={item.href} target='_blank'>
-                      {item.label}
-                      <span className='sr-only'>Opent in een nieuw tabblad</span>
-                      <VISUALS.EXTERNAL_LINK />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </>
-        )}
-        <div class='ac-footer__logo'>
-          <AcLogo variant='footer' />
-
-          {AcCheckIfSpecificHostname() ? (
-            <></>
+                  )}
+                </nav>
+              ))}
+            </>
           ) : (
-            <span>
-              <span>Open Tilburg</span>
-              <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
-            </span>
+            <>
+              <nav className='ac-footer__links' aria-label='Footer menu 1'>
+                <h3>{LABELS.THIS_WEBSITE}</h3>
+                <ul>{FOOTER_PRIMARY_ABOUT.map(renderLink)}</ul>
+              </nav>
+              <nav className='ac-footer__links' aria-label='Footer menu 2'>
+                <h3>{LABELS.QUICK_LINKS}</h3>
+                <ul>{FOOTER_PRIMARY_QUICK.map(renderLink)}</ul>
+              </nav>
+            </>
           )}
-        </div>
-      </AcContainer>
+          <div class='ac-footer__logo'>
+            <AcLogo variant='footer' />
+
+            {AcCheckIfSpecificHostname() ? (
+              <></>
+            ) : (
+              <span>
+                <span>Open Tilburg</span>
+                <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
+              </span>
+            )}
+          </div>
+        </AcContainer>
+      </section>
+      {AcCheckIfSpecificHostname() ? (
+        <></>
+      ) : (
+        <section>
+          <AcContainer>
+            <nav className='ac-footer__links' aria-label='Footer menu 3'>
+              <ul>{FOOTER_SECONDARY.map(renderLink)}</ul>
+            </nav>
+          </AcContainer>
+        </section>
+      )}
     </footer>
   );
 };

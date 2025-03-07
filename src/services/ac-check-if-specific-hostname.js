@@ -9,6 +9,7 @@ export const AcCheckIfSpecificHostname = () => {
     'vng.opencatalogi.nl',
     'opencatalogi.nl',
     'open-migrato.accept.commonground.nu',
+    'localhost',
   ].includes(hostname);
 
   // Development

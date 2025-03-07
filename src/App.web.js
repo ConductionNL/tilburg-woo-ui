@@ -63,7 +63,7 @@ const App = ({ store }) => {
         return 'migrato-theme';
       case 'opencatalogi.nl':
       case 'localhost':
-        return 'opencatalogi-theme';
+        return 'vng-theme';
       default:
         return 'tilburg-theme';
     }
