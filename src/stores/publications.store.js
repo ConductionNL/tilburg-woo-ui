@@ -5,7 +5,7 @@ import { LABELS, LABELS_DYNAMIC } from '@constants';
 
 let app = {};
 
-const LIMIT = 7;
+const LIMIT = 15;
 
 export const DEFAULT_SEARCH_QUERY = {
   extend: 'themes',
@@ -74,6 +74,9 @@ export class PublicationsStore {
     status: false,
     message: undefined,
   };
+
+  @observable
+  attachmentSearch = '';
 
   @computed
   get all_categories() {
@@ -419,6 +422,12 @@ export class PublicationsStore {
       .finally(() => {
         this.setLoadingStatus(false);
       });
+  };
+
+  @action
+  setAttachmentSearch = (search) => {
+    this.attachmentSearch = search;
+    this.attachmentPagination.page = 1; // Reset to first page when searching
   };
 }
 

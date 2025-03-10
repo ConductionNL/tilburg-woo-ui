@@ -2,11 +2,12 @@ export const LABELS = {
   APP_NAME: 'Open Tilburg',
   CLOSE: 'Sluiten',
   CLOSE_SINGULAR: 'Sluit',
+  CONCEPTS_LIST: 'Begrippenlijst',
   ENTER_QUERY: 'Vul je zoekterm in',
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
-  SEARCH_EXTENSIVE: 'Uitgebreid zoeken',
+  SEARCH_EXTENSIVE: 'Zoeken',
   SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
   CATEGORIES: 'Categorieën',
@@ -33,6 +34,7 @@ export const LABELS = {
   DOCUMENT: 'Document',
   TYPE: 'Type',
   DATE: 'Datum',
+  SIZE: 'Grootte',
   DOCUMENTS: 'Documenten',
   DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
   SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',
@@ -40,7 +42,11 @@ export const LABELS = {
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
-
+  SHARE: 'Link naar publicatie delen',
+  SHARE_MODAL: 'Link kopiëren',
+  COPY_LINK: 'Kopieer link',
+  COPY_LINK_SUCCESS: 'Link gekopieerd!',
+  COPY_LINK_ERROR: 'Kopiëren mislukt',
   VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
 
   THIS_WEBSITE: 'Deze website',
@@ -53,6 +59,11 @@ export const LABELS = {
   AUTHENTICATION: 'Login',
   MIJN_OMGEVING: 'Mijn omgeving',
   GEMMA: 'Gemma',
+  ABOUT_CATEGORIES: 'Over categorieën',
+
+  // Navigation & Footer Labels
+  ORGANIZATION: 'Organisatie en werkwijze',
+  EXTERNAL_LINK: 'Opent in een nieuw tabblad',
 };
 
 export const LABELS_DYNAMIC = {

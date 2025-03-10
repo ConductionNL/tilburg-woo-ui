@@ -4,6 +4,7 @@ import loadable from '@loadable/component';
 const ARROW_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/arrow-right.svg')
 );
+const CHECK = loadable(() => import('-!svg-react-loader!@assets/images/check.svg'));
 const CHEVRON_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/chevron-right.svg')
 );
@@ -37,6 +38,9 @@ const INFO_BLUE = loadable(() =>
   import('-!svg-react-loader!@assets/images/info-blue.svg')
 );
 const LIST = loadable(() => import('-!svg-react-loader!@assets/images/list.svg'));
+const LIST_ALT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/list-alt.svg')
+);
 const LIST_BLUE = loadable(() =>
   import('-!svg-react-loader!@assets/images/list-blue.svg')
 );
@@ -52,6 +56,9 @@ const QUESTION_MARK_VNG = loadable(() =>
 
 const SEARCH = loadable(() =>
   import('-!svg-react-loader!@assets/images/search.svg')
+);
+const SEARCH_ALT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/search-alt.svg')
 );
 const DOCUMENT = loadable(() =>
   import('-!svg-react-loader!@assets/images/document.svg')
@@ -88,6 +95,14 @@ const HAND_HOLDING = loadable(() =>
 );
 const HOUSE = loadable(() => import('-!svg-react-loader!@assets/images/house.svg'));
 const PHONE = loadable(() => import('-!svg-react-loader!@assets/images/phone.svg'));
+const SHARE = loadable(() => import('-!svg-react-loader!@assets/images/share.svg'));
+const PARTICLES = loadable(() =>
+  import('-!svg-react-loader!@assets/images/particles.svg')
+);
+
+const THEMES = loadable(() =>
+  import('-!svg-react-loader!@assets/images/themes.svg')
+);
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -96,6 +111,7 @@ export const VISUALS = {
   CLOSE,
   CLOSE_SMALL,
   CONTACT,
+  CHECK,
   DOCUMENT,
   ELLIPSE,
   EXTERNAL_LINK,
@@ -105,6 +121,7 @@ export const VISUALS = {
   INFO,
   INFO_BLUE,
   LIST,
+  LIST_ALT,
   LIST_BLUE,
   LOGO,
   MENU,
@@ -124,6 +141,10 @@ export const VISUALS = {
   HAND_HOLDING,
   HOUSE,
   PHONE,
+  SEARCH_ALT,
+  SHARE,
+  PARTICLES,
+  THEMES,
 };
 
 export default {};

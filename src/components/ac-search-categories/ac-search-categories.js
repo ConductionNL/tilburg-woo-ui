@@ -55,29 +55,26 @@ const AcSearchCategories = ({ store: { publications } }) => {
     <>
       <AcFlex justifyContent={'between'} alignItems={'center'}>
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
-        <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
-          {AcCheckIfSpecificHostname() ? (
-            <VISUALS.QUESTION_MARK_VNG />
-          ) : (
-            <VISUALS.QUESTION_MARK />
-          )}
-        </AcButton>
         {renderModal}
       </AcFlex>
-      {all_categories?.map(
-        (category, index) =>
-          category._id &&
-          category._id !== '' && (
-            <AcCheckbox
-              key={index}
-              label={category._id}
-              count={category.count}
-              value={category._id}
-              checked={category_checked(category._id)}
-              onChange={() => toggleSearchArrayValue('category', category._id)}
-            />
-          )
-      )}
+      <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
+        {AcCheckIfSpecificHostname() ? (
+          <VISUALS.QUESTION_MARK_VNG />
+        ) : (
+          <VISUALS.QUESTION_MARK />
+        )}{' '}
+        <span>{LABELS.ABOUT_CATEGORIES}</span>
+      </AcButton>
+      {all_categories?.map((category, index) => (
+        <AcCheckbox
+          key={index}
+          label={category._id}
+          count={category.count}
+          value={category._id}
+          checked={category_checked(category._id)}
+          onChange={() => toggleSearchArrayValue('category', category._id)}
+        />
+      ))}
     </>
   );
 };

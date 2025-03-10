@@ -4,8 +4,9 @@ import { LABELS, VISUALS } from '@constants';
 import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
+import { PrimaryActionButton } from '@utrecht/component-library-react';
 
-const AcModal = React.forwardRef(({ id, title, buttons, children }, ref) => {
+const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onCloseHandler = () => {
@@ -38,15 +39,40 @@ const AcModal = React.forwardRef(({ id, title, buttons, children }, ref) => {
       <div className='ac-modal__content'>{children}</div>
       <div className='ac-modal__footer'>
         <AcFlex spacing='sm'>
-        <AcButton style='button' onClick={onCloseHandler}>
-          {LABELS.CLOSE}
-        </AcButton>
-        {buttons?.map((button) => (
-          <AcButton style='button' onClick={button.onClick}>
-            {button.icon}
-            {button.label}
+          {!disableDefaultButton && (
+            <AcButton style='button' onClick={onCloseHandler}>
+              {LABELS.CLOSE}
             </AcButton>
-          ))}
+          )}
+
+          {buttons?.map((button) => {
+            if (button.shareLink) {
+              return (
+                <AcButton
+                  className='copy-button'
+                  data-status={button.shareLinkStatus}
+                  style='button'
+                  onClick={button.onClick}
+                  aria-label={button.shareLinkText()}
+                >
+                  <div class='particles'>
+                    <VISUALS.CHECK />
+                    <div class='particles-inner'>
+                      <VISUALS.PARTICLES />
+                    </div>
+                  </div>
+                  {button.shareLinkText()}
+                </AcButton>
+              );
+            }
+
+            return (
+              <AcButton style='button' onClick={button.onClick}>
+                {button.icon}
+                {button.label}
+              </AcButton>
+            );
+          })}
         </AcFlex>
       </div>
     </dialog>

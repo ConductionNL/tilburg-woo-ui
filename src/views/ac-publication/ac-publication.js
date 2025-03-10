@@ -9,7 +9,7 @@ import AcPublicationSoftwarecatalogus from '@views/ac-publication/ac-publication
 import AcPublicationDefault from '@views/ac-publication/ac-publication-default';
 import AcPublicationFormulier from './ac-publication-formulier';
 
-const AcPublication = ({ store: { publications } }) => {
+const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
   const {
     fetchPublication,
@@ -29,7 +29,7 @@ const AcPublication = ({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Open Ac | Publicatie';
+    document.title = get_single?.title || 'Open Tilburg | Publicatie';
   }, [get_single]);
 
   useEffect(() => {
@@ -55,11 +55,12 @@ const AcPublication = ({ store: { publications } }) => {
       case 'Formulier':
         return <AcPublicationFormulier />;
       case 'Woo verzoek/besluit':
+      case 'Woo-verzoeken en -besluiten':
         return <AcPublicationWooVerzoek />;
       default:
         return <AcPublicationDefault />;
     }
   }
-};
+});
 
-export default withStore(observer(AcPublication));
+export default withStore(AcPublication);

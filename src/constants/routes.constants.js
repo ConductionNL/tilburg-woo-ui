@@ -21,16 +21,28 @@ import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-ho
 
 export const PATHS = AcLockObject({
   HOME: '/',
-  PUBLICATION: '/publicatie/:id',
-  SEARCH: '/zoeken/:query?',
-  THEMES: '/onderwerpen',
   ABOUT: '/over-ons',
-  CONTACT: '/contact',
   ACCESSIBILITY: '/toegankelijkheid',
+  CONTACT: '/contact',
+  COOKIES: 'https://www.tilburg.nl/cookies/',
+  FAQ: '/veelgestelde-vragen',
+  ORGANIZATION: '/organisatie-en-werkwijze',
+  PRIVACY: 'https://www.tilburg.nl/privacystatement/',
+  PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
+  PUBLICATION: '/publicatie/:id',
+  REACH_OUT: '/bereikbaarheidsgegeverns',
+  SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   AUTHENTICATION_STATIC: '/login',
   MIJN_OMGEVING_STATIC: '/mijn-omgeving',
   GEMMA_STATIC: '/gemma',
+  THEMES: '/onderwerpen',
+  WEBSITE: 'https://www.tilburg.nl/',
+  WOO: '/woo-verzoek',
+});
+
+export const NAVIGATE_TO = AcLockObject({
+  PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
 });
 
 const getTitle = () => {
@@ -58,22 +70,80 @@ const getTitle = () => {
 };
 
 export const ROUTES = {
+  ABOUT: {
+    id: AcUUID(),
+    name: 'About',
+    label: TITLES.ABOUT,
+    path: PATHS.ABOUT,
+    title: `${TITLES.BASE} | ${TITLES.ABOUT}`,
+  },
+  ACCESSIBILITY: {
+    id: AcUUID(),
+    name: 'Accessibility',
+    label: TITLES.ACCESSIBILITY,
+    path: PATHS.ACCESSIBILITY,
+    title: `${TITLES.BASE} | ${TITLES.ACCESSIBILITY}`,
+  },
+  CONTACT: {
+    id: AcUUID(),
+    name: 'Contact',
+    label: TITLES.CONTACT,
+    path: PATHS.CONTACT,
+    title: `${TITLES.BASE} | ${TITLES.CONTACT}`,
+  },
+  COOKIES: {
+    id: AcUUID(),
+    name: 'Cookies',
+    label: TITLES.COOKIES,
+    href: PATHS.COOKIES,
+    isExternal: true,
+  },
+  FAQ: {
+    id: AcUUID(),
+    name: 'FAQ',
+    label: TITLES.FAQ,
+    href: PATHS.FAQ,
+    title: `${TITLES.BASE} | ${TITLES.FAQ}`,
+  },
   HOME: {
     id: AcUUID(),
     name: 'Home',
     label: TITLES.HOME,
     path: PATHS.HOME,
-    title: `Home | ${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'}`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.HOME
+    }`,
     component: AcHome,
+  },
+  ORGANIZATION: {
+    id: AcUUID(),
+    name: 'Organization',
+    label: LABELS.ORGANIZATION,
+    href: PATHS.ORGANIZATION,
+    title: `${TITLES.BASE} | ${TITLES.ORGANIZATION}`,
+  },
+  PRIVACY: {
+    id: AcUUID(),
+    name: 'Privacy',
+    label: TITLES.PRIVACY,
+    href: PATHS.PRIVACY,
+    isExternal: true,
+  },
+  PROCLAIMER: {
+    id: AcUUID(),
+    name: 'Proclaimer',
+    label: TITLES.PROCLAIMER,
+    href: PATHS.PROCLAIMER,
+    isExternal: true,
   },
   PUBLICATION: {
     id: AcUUID(),
     name: 'Publication',
     label: TITLES.PUBLICATION,
     path: PATHS.PUBLICATION,
-    title: `${
-      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
-    } | Publicatie`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.PUBLICATION
+    }`,
     component: AcPublication,
   },
   SEARCH: {
@@ -81,7 +151,9 @@ export const ROUTES = {
     name: 'Search',
     label: LABELS.SEARCH_EXTENSIVE,
     path: PATHS.SEARCH_STATIC,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Zoeken`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.SEARCH
+    }`,
     component: AcSearch,
   },
   AUTHENTICATION: {
@@ -115,9 +187,9 @@ export const ROUTES = {
     name: 'Themes',
     label: TITLES.THEMES,
     path: PATHS.THEMES,
-    title: `${
-      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
-    } | Onderwerpen`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | ${
+      TITLES.THEMES
+    }`,
     component: AcThemes,
   },
   ABOUT: {
@@ -127,17 +199,36 @@ export const ROUTES = {
     path: PATHS.ABOUT,
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Over`,
   },
-  CONTACT: {
+  WEBSITE: {
     id: AcUUID(),
-    name: 'Contact',
-    label: TITLES.CONTACT,
-    path: PATHS.CONTACT,
+    name: 'Website',
+    label: TITLES.WEBSITE,
+    href: PATHS.WEBSITE,
+    isExternal: true,
+    title: `${TITLES.BASE} | ${TITLES.WEBSITE}`,
+  },
+  WOO: {
+    id: AcUUID(),
+    name: 'WOO',
+    label: TITLES.WOO,
+    href: PATHS.WOO,
+    isExternal: true,
+    title: `${TITLES.BASE} | ${TITLES.WOO}`,
+  },
+  REACH_OUT: {
+    id: AcUUID(),
+    name: 'ReachOut',
+    label: TITLES.REACH_OUT,
+    href: PATHS.REACH_OUT,
+    isExternal: true,
+    title: `${TITLES.BASE} | ${TITLES.REACH_OUT}`,
   },
   ACCESSIBILITY: {
     id: AcUUID(),
     name: 'Toegankelijkheid',
     label: TITLES.ACCESSIBILITY,
     path: PATHS.ACCESSIBILITY,
+    title: `${TITLES.BASE} | ${TITLES.ACCESSIBILITY}`,
   },
 };
 
@@ -285,12 +376,13 @@ const ROUTES_EXTERNAL = {
 
 export const NAVIGATION_ITEMS = [ROUTES.HOME];
 
-export const FOOTER_ITEMS = [
+export const FOOTER_PRIMARY_ABOUT = [
   ROUTES.ABOUT,
-  ROUTES.CONTACT,
-  ROUTES.ACCESSIBILITY,
   ROUTES.SEARCH,
   ROUTES.THEMES,
+  ROUTES.ORGANIZATION,
+  ROUTES.FAQ,
+  ROUTES.CONTACT,
 ];
 
 export const VNG_FOOTER_ITEMS_SITEMAP = [
@@ -336,6 +428,15 @@ export const EXTERNAL_LINKS = [
   ROUTES_EXTERNAL.PRIVACY,
   ROUTES_EXTERNAL.PROCLAIMER,
   ROUTES_EXTERNAL.COOKIES,
+];
+
+export const FOOTER_PRIMARY_QUICK = [ROUTES.WEBSITE, ROUTES.WOO, ROUTES.REACH_OUT];
+
+export const FOOTER_SECONDARY = [
+  ROUTES.ACCESSIBILITY,
+  ROUTES.PROCLAIMER,
+  ROUTES.COOKIES,
+  ROUTES.PRIVACY,
 ];
 
 export const SUB_NAVIGATION_ITEMS = [];

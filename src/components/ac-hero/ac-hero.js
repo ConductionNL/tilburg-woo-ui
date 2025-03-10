@@ -7,7 +7,8 @@ import { useNavigate } from 'react-router';
 
 const hostname = window.location.hostname;
 
-const AcHero = () => {
+const AcHero = (contents) => {
+  const _contents = contents.contents;
   const _CLASSES = clsx('ac-hero');
   const navigate = useNavigate();
 
@@ -29,14 +30,16 @@ const AcHero = () => {
       case 'dimpact.opencatalogi.nl':
         return 'https://www.dimpact.nl/wp-content/uploads/2024/02/Headerafbeelding-over-ons.jpg.webp';
       case 'open-rotterdam.accept.commonground.nu':
-      case 'localhost':
+      case 'localh':
         return 'https://www.rotterdam.nl/_next/image?url=https%3A%2F%2Fbackend-dvg.rotterdam.nl%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fhero_large%2Fpublic%2F2022-12%2F22500-Arnoud-Verhey_0.jpg%3Fh%3D940640a5%26itok%3Dl9pnN9Gq&w=1920&q=75';
       case 'open-migrato.accept.commonground.nu':
         return MigratoHeroImage();
+      case 'localhost':
       default:
         return '/home-hero-background.png';
     }
   };
+
 
   return (
     <AcSection
@@ -49,11 +52,8 @@ const AcHero = () => {
             onSubmitCallback={submitSearch}
             page='home'
             label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
+            title={_contents[0]?.data?.content}
           />
-          <AcLink href='/zoeken'>
-            {LABELS.SEARCH_EXTENSIVE}
-            <VISUALS.ARROW_RIGHT />
-          </AcLink>
         </AcCard>
       </AcContainer>
     </AcSection>
