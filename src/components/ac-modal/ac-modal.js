@@ -4,7 +4,6 @@ import { LABELS, VISUALS } from '@constants';
 import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
 
 const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
