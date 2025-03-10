@@ -372,11 +372,10 @@ const AcPublication = observer(({ store: { publications } }) => {
         disableDefaultButton
         buttons={[
           {
-            label: 'Kopieer link',
+            label: getCopyButtonText(),
             onClick: copyLink,
             shareLink: true,
             shareLinkStatus: copyStatus,
-            shareLinkText: getCopyButtonText,
           },
         ]}
       >

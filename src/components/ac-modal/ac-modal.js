@@ -53,7 +53,7 @@ const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, ch
                   data-status={button.shareLinkStatus}
                   style='button'
                   onClick={button.onClick}
-                  aria-label={button.shareLinkText()}
+                  aria-label={button.label}
                 >
                   <div class='particles'>
                     <VISUALS.CHECK />
@@ -61,7 +61,7 @@ const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, ch
                       <VISUALS.PARTICLES />
                     </div>
                   </div>
-                  {button.shareLinkText()}
+                  {button.label}
                 </AcButton>
               );
             }
