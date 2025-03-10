@@ -1,6 +1,7 @@
 import loadable from '@loadable/component';
 
 const AcAbout = loadable(() => import('@components/ac-about/ac-about'));
+const AcDrawer = loadable(() => import('@components/ac-drawer/ac-drawer'));
 const AcFaq = loadable(() => import('@components/ac-faq/ac-faq'));
 const AcFeatured = loadable(() => import('@components/ac-featured/ac-featured'));
 const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
@@ -24,6 +25,9 @@ const AcSearchCategories = loadable(() =>
 const AcSearchDate = loadable(() =>
   import('@components/ac-search-date/ac-search-date')
 );
+const AcSearchFilter = loadable(() =>
+  import('@components/ac-search-filter/ac-search-filter')
+);
 const AcSearchSort = loadable(() =>
   import('@components/ac-search-sort/ac-search-sort')
 );
@@ -33,10 +37,14 @@ const AcSearchSubjects = loadable(() =>
 const AcCNavigation = loadable(() =>
   import('@components/ac-c-navigation/ac-c-navigation')
 );
+const AcTabList = loadable(() =>
+  import('@components/ac-tablist/ac-tablist')
+);
 
 export {
   AcAbout,
   AcCNavigation,
+  AcDrawer,
   AcFaq,
   AcFeatured,
   AcFooter,
@@ -50,6 +58,8 @@ export {
   AcSectionsHandler,
   AcSearchCategories,
   AcSearchDate,
+  AcSearchFilter,
   AcSearchSort,
   AcSearchSubjects,
+  AcTabList,
 };

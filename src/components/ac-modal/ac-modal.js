@@ -5,7 +5,7 @@ import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
 
-const AcModal = React.forwardRef(({ id, title, children }, ref) => {
+const AcModal = React.forwardRef(({ id, title, children, customFooter }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onCloseHandler = () => {
@@ -36,11 +36,13 @@ const AcModal = React.forwardRef(({ id, title, children }, ref) => {
         </AcFlex>
       </div>
       <div className='ac-modal__content'>{children}</div>
-      <div className='ac-modal__footer'>
-        <AcButton style='button' onClick={onCloseHandler}>
-          {LABELS.CLOSE}
-        </AcButton>
-      </div>
+      {!customFooter && (
+        <div className='ac-modal__footer'>
+          <AcButton style='button' onClick={onCloseHandler}>
+            {LABELS.CLOSE}
+          </AcButton>
+        </div>
+      )}
     </dialog>
   );
 });

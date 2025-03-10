@@ -36,12 +36,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
 
   return (
     <>
-      <AcIntro
-        title={AcRemoveTags(contents[0]?.data?.content)}
-        content={AcSanitizeHtml(contents[1]?.data?.content)}
-        link={AcRemoveParagraphTags(contents[2]?.data?.content)}
-      />
-      <AcHero />
+      <AcHero contents={contents} />
 
       <AcSection spacing>
         <AcContainer>
@@ -75,7 +70,9 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
                   />
                 ))}
             </AcGrid>
-            <AcLink to={PATHS.THEMES}>{LABELS.VIEW_ALL_THEMES}</AcLink>
+            <AcLink type='button' to={PATHS.THEMES}>
+              {LABELS.VIEW_ALL_THEMES}
+            </AcLink>
           </AcColumn>
         </AcContainer>
       </AcSection>

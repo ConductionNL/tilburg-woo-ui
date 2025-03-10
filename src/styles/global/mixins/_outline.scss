@@ -12,6 +12,6 @@
 }
 
 *:focus:not(:focus-visible) {
-  outline: none;
-  box-shadow: none;
+  outline: none !important; 
+  box-shadow: none !important;
 }

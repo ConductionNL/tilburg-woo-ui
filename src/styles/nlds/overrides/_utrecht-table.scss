@@ -1,10 +1,29 @@
 .utrecht-table {
-  table-layout: auto!important;
+  table-layout: auto !important;
 
   &__cell,
   &__header-cell {
     &:first-child {
       padding-left: 0;
+    }
+  }
+
+  &__cell {
+    a {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--tilburg-space-column-snail);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+
+      svg {
+        flex-shrink: 0;
+        width: 1em;
+        height: 1em;
+      }
     }
   }
 }

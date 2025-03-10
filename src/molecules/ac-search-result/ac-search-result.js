@@ -1,9 +1,9 @@
 import { AcLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
+import { NAVIGATE_TO } from '@constants/routes.constants';
 
 const AcSearchResult = ({
   skeleton,
@@ -20,19 +20,23 @@ const AcSearchResult = ({
       <Paragraph>{summary}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
-          <Paragraph small>
-            {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-          </Paragraph>
-          {published && category && category !== '' && <VISUALS.ELLIPSE />}
-          <Paragraph small>{category && category !== '' && category}</Paragraph>
           {themes?.length > 0 && (
             <>
+              <StatusBadge>{themes[0]?.title}</StatusBadge>
               <VISUALS.ELLIPSE />
-              <Paragraph small>{themes[0]?.title}</Paragraph>
             </>
           )}
+          {published && (
+            <>
+              <Paragraph small>
+                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+              </Paragraph>
+              <VISUALS.ELLIPSE />
+            </>
+          )}
+          <Paragraph small>{category}</Paragraph>
         </AcFlex>
-        <AcLink to={`/publicatie/${id}`}>
+        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span class='sr-only'>
             {LABELS.READ_MORE_ABOUT} {title}
           </span>

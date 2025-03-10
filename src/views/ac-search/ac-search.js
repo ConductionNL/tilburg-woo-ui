@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -52,8 +52,6 @@ const AcSearch = ({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    console.log(getSearchPageURL());
-    console.log(location.pathname + location.search);
     if (getSearchPageURL() === location.pathname + location.search) {
       return;
     }
@@ -63,10 +61,6 @@ const AcSearch = ({ store: { publications } }) => {
 
   // On GET params change.
   useEffect(() => {
-    console.group('LOCATION PARAMS CHANGED');
-    console.log([location.search]);
-    console.groupEnd();
-
     setQuery();
     fetchPublications();
   }, [location.search]);
@@ -155,7 +149,10 @@ const AcSearch = ({ store: { publications } }) => {
             </div>
             <AcFlex column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
-                <Heading level={2}>{LABELS.SEARCH_RESULTS}</Heading>
+                <Heading level={2}>
+                  {all_publications?.length}{' '}
+                  {LABELS_DYNAMIC.RESULTS(all_publications?.length).toLowerCase()}
+                </Heading>
                 <div className='desktop-sorting'>
                   <AcSearchSort type='alt' />
                 </div>

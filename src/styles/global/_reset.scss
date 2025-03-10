@@ -4,11 +4,6 @@ html {
 
   @media (prefers-reduced-motion: reduce) {
     scroll-behavior: auto;
-
-    body * {
-      animation-duration: 0s !important;
-      animation-delay: 0s !important;
-    }
   }
 }
 

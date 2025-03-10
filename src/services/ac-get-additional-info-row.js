@@ -2,8 +2,16 @@ import { LABELS } from '@constants';
 import { AcLink } from '@molecules';
 import { withStore } from '@stores';
 
-export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
+export const AcGetAdditionalInfoRow = (
+  get_single,
+  getSearchPageURL,
+  defaultPublication
+) => {
   let infoArray = [];
+
+  get_single.reference &&
+    defaultPublication &&
+    infoArray.push([LABELS.CASE_NUMBER, get_single?.reference || LABELS.UNKNOWN]);
 
   get_single.category &&
     infoArray.push([
@@ -16,6 +24,23 @@ export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
         {get_single?.category}
       </AcLink>,
     ]);
+
+  get_single?.themes &&
+    infoArray.push([
+      LABELS.THEMES,
+      get_single?.themes?.length
+        ? get_single?.themes?.map((theme) => (
+            <AcLink
+              href={getSearchPageURL({
+                themes: [theme.id],
+              })}
+            >
+              {theme.title}
+            </AcLink>
+          ))
+        : '-',
+    ]);
+
   get_single.license &&
     infoArray.push(['Licentie', <span>{get_single?.license}</span>]);
 
@@ -58,7 +83,6 @@ export const AcGetAdditionalInfoRow = (get_single, getSearchPageURL) => {
     ]),
     get_single.data &&
       Object.entries(get_single.data).map(([key, value]) => {
-
         if (!Object.keys(get_single.publicationType.properties).includes(key)) {
           return;
         }
