@@ -77,8 +77,8 @@ const AcGemma = ({ store: { gemma } }) => {
       width: 1168,
       height: 800,
       gridSize: 1,
-      interactive: false, // Add this line
-      elementMove: false, // And this line
+      interactive: false,
+      elementMove: false,
     });
 
     const convertToViewNode = (node) => {
@@ -216,7 +216,6 @@ const AcGemma = ({ store: { gemma } }) => {
   };
 
   //////////////////// Scrolling ///////////////////////////
-  // Move these event handlers outside of the component but before it
   const handleWheel = (event) => {
     event.preventDefault();
     const svg = document.getElementById('svg-container');

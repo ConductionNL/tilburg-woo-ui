@@ -19,11 +19,16 @@
 
       .container {
         display: grid;
-        grid-template-columns: 1fr 1fr 2fr;
+        grid-template-columns: repeat(4, 1fr);
         gap: var(--tilburg-space-column-dog);
 
         @include respond-max($screen-sm) {
           grid-template-columns: 1fr;
+        }
+        @include respond-min($screen-sm) {
+          @include respond-max($screen-md) {
+            grid-template-columns: repeat(2, 1fr);
+          }
         }
       }
 
@@ -96,7 +101,6 @@
   a {
     color: inherit;
     text-decoration: var(--tilburg-footer-link-text-decoration, underline);
-
 
     &:where(:hover, :focus-visible) {
       text-decoration: var(--tilburg-footer-link-hover-text-decoration, none);
