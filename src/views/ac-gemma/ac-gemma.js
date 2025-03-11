@@ -399,7 +399,7 @@ const AcGemma = ({ store: { gemma } }) => {
       }
     } else {
       // Handle single touch pan with smooth movement
-      const speedMultiplier = 1.5;
+      const speedMultiplier = 2.5;
       const deltaX =
         (event.touches[0].clientX - parseFloat(svg.dataset.touchStartX)) *
         speedMultiplier;
