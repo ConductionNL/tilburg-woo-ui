@@ -194,6 +194,11 @@ const AcGemma = ({ store: { gemma } }) => {
     svg.addEventListener('mousedown', handleMouseDown);
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
+
+    // Add touch event listeners
+    svg.addEventListener('touchstart', handleTouchStart, { passive: false });
+    svg.addEventListener('touchmove', handleTouchMove, { passive: false });
+    svg.addEventListener('touchend', handleTouchEnd);
   };
 
   const setNodeColor = (node) => {
@@ -295,6 +300,124 @@ const AcGemma = ({ store: { gemma } }) => {
 
     svg.style.cursor = 'grab';
     svg.dataset.isDragging = 'false';
+  };
+
+  // Add touch event handlers
+  const handleTouchStart = (event) => {
+    event.preventDefault();
+    const svg = event.target.closest('svg');
+    if (!svg) return;
+
+    svg.style.cursor = 'grabbing';
+    const group = svg.querySelector('g');
+    if (!group) return;
+
+    const currentTransform =
+      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
+    const translateMatch = currentTransform.match(
+      /translate\(([^,]+),\s*([^\)]+)\)/
+    );
+
+    const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
+    const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
+
+    svg.dataset.isDragging = 'true';
+
+    if (event.touches.length === 2) {
+      // Store initial pinch distance for zoom
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      svg.dataset.initialPinchDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      svg.dataset.initialScale = currentTransform.match(/scale\(([^\)]+)\)/)
+        ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
+        : 1;
+    } else {
+      // Store the current transform values and touch position
+      svg.dataset.lastX = currentX.toString();
+      svg.dataset.lastY = currentY.toString();
+      svg.dataset.touchStartX = event.touches[0].clientX.toString();
+      svg.dataset.touchStartY = event.touches[0].clientY.toString();
+    }
+  };
+
+  const handleTouchMove = (event) => {
+    event.preventDefault();
+    const svg = document.getElementById('svg-container');
+    if (!svg || svg.dataset.isDragging !== 'true') return;
+  
+    const group = svg.querySelector('g');
+    if (!group) return;
+  
+    const currentTransform = group.getAttribute('transform') || 'translate(0, 0) scale(1)';
+    const translateMatch = currentTransform.match(/translate\(([^,]+),\s*([^\)]+)\)/);
+    const currentScale = currentTransform.match(/scale\(([^\)]+)\)/)
+      ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
+      : 1;
+  
+    if (event.touches.length === 2) {
+      // Handle pinch zoom
+      const touch1 = event.touches[0];
+      const touch2 = event.touches[1];
+      const currentPinchDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+  
+      const initialPinchDistance = parseFloat(svg.dataset.initialPinchDistance);
+      const initialScale = parseFloat(svg.dataset.initialScale);
+      
+      const scaleFactor = currentPinchDistance / initialPinchDistance;
+      const newScale = Math.min(Math.max(initialScale * scaleFactor, 0.1), 10);
+  
+      // Get current position from translateMatch (which is now defined above)
+      const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
+      const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
+  
+      group.setAttribute(
+        'transform',
+        `translate(${currentX}, ${currentY}) scale(${newScale})`
+      );
+    } else {
+      // Handle single touch pan with smooth movement
+      const speedMultiplier = 2;
+      const deltaX = (event.touches[0].clientX - parseFloat(svg.dataset.touchStartX)) * speedMultiplier;
+      const deltaY = (event.touches[0].clientY - parseFloat(svg.dataset.touchStartY)) * speedMultiplier;
+      
+      const newX = parseFloat(svg.dataset.lastX) + deltaX;
+      const newY = parseFloat(svg.dataset.lastY) + deltaY;
+  
+      group.setAttribute(
+        'transform',
+        `translate(${newX}, ${newY}) scale(${currentScale})`
+      );
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const svg = document.getElementById('svg-container');
+    if (!svg) return;
+
+    // Store the final position before ending the drag
+    const currentTransform = svg.querySelector('g')?.getAttribute('transform');
+    if (currentTransform) {
+      const translateMatch = currentTransform.match(
+        /translate\(([^,]+),\s*([^\)]+)\)/
+      );
+      if (translateMatch) {
+        svg.dataset.lastX = parseFloat(translateMatch[1]).toString();
+        svg.dataset.lastY = parseFloat(translateMatch[2]).toString();
+      }
+    }
+
+    svg.style.cursor = 'grab';
+    svg.dataset.isDragging = 'false';
+    delete svg.dataset.initialPinchDistance;
+    delete svg.dataset.initialScale;
+    delete svg.dataset.touchStartX;
+    delete svg.dataset.touchStartY;
   };
 
   //////////////////// End Scrolling ///////////////////////////
