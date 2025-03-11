@@ -51,6 +51,9 @@
     // small visual correction due to font-family rendering
     .logo-text {
       margin-block-start: 1rem;
+      @include respond-max($screen-sm) {
+        word-break: break-word;
+      }
     }
 
     svg {
@@ -61,7 +64,10 @@
   }
 
   &__navigation-secondary {
-    background-color: var(--conduction-primary-top-nav-background-color, var(--tilburg-color-gray-50));
+    background-color: var(
+      --conduction-primary-top-nav-background-color,
+      var(--tilburg-color-gray-50)
+    );
 
     @include respond-max($screen-md) {
       .container {
