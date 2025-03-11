@@ -3,7 +3,7 @@ import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 // Get ENV variables
 const _api_ = process.env.API_URL;
-const _api_commonground_ = "https://equalit.accept.commonground.nu/index.php/apps/opencatalogi";
+const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 
 const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
 const _api_commonground_organization_oin_ =

@@ -8,12 +8,12 @@ let app = {};
 const LIMIT = 15;
 
 export const DEFAULT_SEARCH_QUERY = {
-  extend: 'all',
+  extend: ['themes', 'catalog'],
   _limit: LIMIT,
 };
 
 const DEFAULT_QUERY = {
-  extend: 'all',
+  extend: ['themes', 'catalog'],
 };
 
 if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
@@ -166,12 +166,10 @@ export class PublicationsStore {
     this.items = items;
   };
 
-  
   @action
   setAttachments = (attachments) => {
     this.attachments = attachments;
   };
-
 
   @action
   setPagination = (pagination) => {

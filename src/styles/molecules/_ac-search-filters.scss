@@ -59,7 +59,10 @@
   }
 
   &__date {
-    // ...
+    button {
+      inline-size: 100%;
+      max-inline-size: unset;
+    }
   }
 
   &__category,

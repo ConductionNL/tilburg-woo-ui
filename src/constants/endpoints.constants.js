@@ -12,7 +12,8 @@ const THEMES = '/themes';
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
     SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
-    SINGLE: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+    SINGLE: (_id) =>
+      `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog`, // GET
     ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   FAQS: {
