@@ -99,7 +99,7 @@ const AcGemma = ({ store: { gemma } }) => {
         modelNodeId: node.elementRef,
         viewNodeId: node.identifier || 'unknown',
         name: nodeData?.name || 'unknown',
-        type: getType(),
+        type: node.type || getType(),
         x: node.position.x,
         y: node.position.y,
         width: node.position.w,
@@ -121,17 +121,13 @@ const AcGemma = ({ store: { gemma } }) => {
     const convertToViewRelationship = (relationship) => {
       if (!relationship.relationshipRef) return;
 
-      const bendpoints =
-        relationship.source === 'id-36645' && relationship.target === 'id-36642'
-          ? [{ x: 210, y: 130 }]
-          : [];
       return {
         modelRelationshipId: relationship.relationshipRef,
         sourceId: relationship.source,
         targetId: relationship.target,
         viewRelationshipId: relationship.identifier,
-        type: 'access',
-        bendpoints,
+        type: relationship.type || 'access',
+        bendpoints: relationship.bendpoints || [],
       };
     };
 
@@ -324,20 +320,27 @@ const AcGemma = ({ store: { gemma } }) => {
     svg.dataset.isDragging = 'true';
 
     if (event.touches.length === 2) {
-      // Store initial pinch distance for zoom
       const touch1 = event.touches[0];
       const touch2 = event.touches[1];
-      svg.dataset.initialPinchDistance = Math.hypot(
+      const initialDistance = Math.hypot(
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-      svg.dataset.initialScale = currentTransform.match(/scale\(([^\)]+)\)/)
-        ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
-        : 1;
+
+      // Only set initial distance if it's valid
+      if (initialDistance && !isNaN(initialDistance) && initialDistance !== 0) {
+        svg.dataset.initialPinchDistance = initialDistance.toString();
+        const initialScale = currentTransform.match(/scale\(([^\)]+)\)/)
+          ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
+          : 1;
+        svg.dataset.initialScale = (
+          isNaN(initialScale) ? 1 : initialScale
+        ).toString();
+      }
     } else {
       // Store the current transform values and touch position
-      svg.dataset.lastX = currentX.toString();
-      svg.dataset.lastY = currentY.toString();
+      svg.dataset.lastX = (isNaN(currentX) ? 0 : currentX).toString();
+      svg.dataset.lastY = (isNaN(currentY) ? 0 : currentY).toString();
       svg.dataset.touchStartX = event.touches[0].clientX.toString();
       svg.dataset.touchStartY = event.touches[0].clientY.toString();
     }
@@ -347,16 +350,19 @@ const AcGemma = ({ store: { gemma } }) => {
     event.preventDefault();
     const svg = document.getElementById('svg-container');
     if (!svg || svg.dataset.isDragging !== 'true') return;
-  
+
     const group = svg.querySelector('g');
     if (!group) return;
-  
-    const currentTransform = group.getAttribute('transform') || 'translate(0, 0) scale(1)';
-    const translateMatch = currentTransform.match(/translate\(([^,]+),\s*([^\)]+)\)/);
+
+    const currentTransform =
+      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
+    const translateMatch = currentTransform.match(
+      /translate\(([^,]+),\s*([^\)]+)\)/
+    );
     const currentScale = currentTransform.match(/scale\(([^\)]+)\)/)
       ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
       : 1;
-  
+
     if (event.touches.length === 2) {
       // Handle pinch zoom
       const touch1 = event.touches[0];
@@ -365,33 +371,51 @@ const AcGemma = ({ store: { gemma } }) => {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       );
-  
+
       const initialPinchDistance = parseFloat(svg.dataset.initialPinchDistance);
       const initialScale = parseFloat(svg.dataset.initialScale);
-      
-      const scaleFactor = currentPinchDistance / initialPinchDistance;
-      const newScale = Math.min(Math.max(initialScale * scaleFactor, 0.1), 10);
-  
-      // Get current position from translateMatch (which is now defined above)
-      const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
-      const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
-  
-      group.setAttribute(
-        'transform',
-        `translate(${currentX}, ${currentY}) scale(${newScale})`
-      );
+
+      // Add validation to prevent NaN
+      if (
+        initialPinchDistance &&
+        !isNaN(initialPinchDistance) &&
+        initialPinchDistance !== 0
+      ) {
+        const scaleFactor = currentPinchDistance / initialPinchDistance;
+        let newScale = Math.min(Math.max(initialScale * scaleFactor, 0.1), 10);
+
+        // Ensure newScale is a valid number
+        if (isNaN(newScale)) {
+          newScale = currentScale;
+        }
+
+        const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
+        const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
+
+        group.setAttribute(
+          'transform',
+          `translate(${currentX}, ${currentY}) scale(${newScale})`
+        );
+      }
     } else {
       // Handle single touch pan with smooth movement
-      const speedMultiplier = 2;
-      const deltaX = (event.touches[0].clientX - parseFloat(svg.dataset.touchStartX)) * speedMultiplier;
-      const deltaY = (event.touches[0].clientY - parseFloat(svg.dataset.touchStartY)) * speedMultiplier;
-      
+      const speedMultiplier = 1.5;
+      const deltaX =
+        (event.touches[0].clientX - parseFloat(svg.dataset.touchStartX)) *
+        speedMultiplier;
+      const deltaY =
+        (event.touches[0].clientY - parseFloat(svg.dataset.touchStartY)) *
+        speedMultiplier;
+
       const newX = parseFloat(svg.dataset.lastX) + deltaX;
       const newY = parseFloat(svg.dataset.lastY) + deltaY;
-  
+
+      // Ensure currentScale is valid
+      const safeScale = isNaN(currentScale) ? 1 : currentScale;
+
       group.setAttribute(
         'transform',
-        `translate(${newX}, ${newY}) scale(${currentScale})`
+        `translate(${newX}, ${newY}) scale(${safeScale})`
       );
     }
   };
