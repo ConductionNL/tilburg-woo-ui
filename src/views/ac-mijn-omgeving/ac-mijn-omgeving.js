@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import { AcSearchFilters, AcSearchResult, AcLink, AcTable } from '@molecules';
+import {
+  AcSearchFilters,
+  AcSearchResult,
+  AcLink,
+  AcTable,
+  AcButton,
+  AcFormField,
+} from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { AcSearchBox, AcSearchSort } from '@components';
+import { AcModal, AcSearchBox, AcSearchSort } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -194,6 +201,72 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     ));
   }, [is_loading, all_publications, pagination?.limit]);
 
+  const modalRef = useRef(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '', 
+    category: '',
+    functionalities: '',
+    standards: '',
+    offerings: ''
+  });
+
+  const handleOpenModal = () => modalRef?.current?.showModal();
+
+  const handleFieldChange = (field) => (value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSubmit = () => {
+    // Here you can make your POST request with the formData
+    console.log('Form data to submit:', formData);
+  };
+
+  const renderModal = (
+    <AcModal
+      ref={modalRef}
+      id='categories-modal'
+      title='Voorziening aanmaken'
+      buttons={[{ label: 'opslaan', onClick: handleSubmit }]}
+    >
+      <AcFlex column spacing='sm'>
+        <AcFormField 
+          label='Naam' 
+          type='text'
+          onBlur={handleFieldChange('name')}
+        />
+        <AcFormField 
+          label='Beschrijving' 
+          type='text'
+          onBlur={handleFieldChange('description')}
+        />
+        <AcFormField 
+          label='Categorie' 
+          type='text'
+          onBlur={handleFieldChange('category')}
+        />
+        <AcFormField 
+          label='Functionaliteiten' 
+          type='text'
+          onBlur={handleFieldChange('functionalities')}
+        />
+        <AcFormField 
+          label='Standaarden' 
+          type='text'
+          onBlur={handleFieldChange('standards')}
+        />
+        <AcFormField 
+          label='Aanbiedingen' 
+          type='text'
+          onBlur={handleFieldChange('offerings')}
+        />
+      </AcFlex>
+    </AcModal>
+  );
+
   return (
     <>
       <AcContainer spacing='sm' margin='xl'>
@@ -292,6 +365,15 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
             </AcFlex>
           </AcFlex>
         </AcFlex>
+
+        <AcFlex spacing='xl' justifyContent='end'>
+          <AcButton style='button' onClick={handleOpenModal}>
+            <VISUALS.DOCUMENT />
+            Voorziening aanmaken
+          </AcButton>
+        </AcFlex>
+
+        {renderModal}
       </AcContainer>
     </>
   );

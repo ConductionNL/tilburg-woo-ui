@@ -369,7 +369,15 @@ const AcPublication = observer(({ store: { publications } }) => {
         id='share-modal'
         ref={modalRef}
         title={LABELS.SHARE_MODAL}
-        customFooter
+        disableDefaultButton
+        buttons={[
+          {
+            label: getCopyButtonText(),
+            onClick: copyLink,
+            shareLink: true,
+            shareLinkStatus: copyStatus,
+          },
+        ]}
       >
         <AcFlex column spacing='sm'>
           <Paragraph>Kopieer de link naar uw klembord.</Paragraph>
@@ -381,21 +389,6 @@ const AcPublication = observer(({ store: { publications } }) => {
             {copyStatus === 'copied' && 'De link is gekopieerd naar uw klembord'}
             {copyStatus === 'error' && 'Het kopiëren van de link is mislukt'}
           </div>
-          <PrimaryActionButton
-            className='copy-button'
-            data-status={copyStatus}
-            style='button'
-            onClick={copyLink}
-            aria-label={getCopyButtonText()}
-          >
-            <div class='particles'>
-              <VISUALS.CHECK />
-              <div class='particles-inner'>
-                <VISUALS.PARTICLES />
-              </div>
-            </div>
-            {getCopyButtonText()}
-          </PrimaryActionButton>
         </AcFlex>
       </AcModal>
     </>

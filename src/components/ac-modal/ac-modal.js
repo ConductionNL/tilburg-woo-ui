@@ -5,7 +5,7 @@ import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
 
-const AcModal = React.forwardRef(({ id, title, children, customFooter }, ref) => {
+const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onCloseHandler = () => {
@@ -36,13 +36,44 @@ const AcModal = React.forwardRef(({ id, title, children, customFooter }, ref) =>
         </AcFlex>
       </div>
       <div className='ac-modal__content'>{children}</div>
-      {!customFooter && (
-        <div className='ac-modal__footer'>
-          <AcButton style='button' onClick={onCloseHandler}>
-            {LABELS.CLOSE}
-          </AcButton>
-        </div>
-      )}
+      <div className='ac-modal__footer'>
+        <AcFlex spacing='sm'>
+          {!disableDefaultButton && (
+            <AcButton style='button' onClick={onCloseHandler}>
+              {LABELS.CLOSE}
+            </AcButton>
+          )}
+
+          {buttons?.map((button) => {
+            if (button.shareLink) {
+              return (
+                <AcButton
+                  className='copy-button'
+                  data-status={button.shareLinkStatus}
+                  style='button'
+                  onClick={button.onClick}
+                  aria-label={button.label}
+                >
+                  <div class='particles'>
+                    <VISUALS.CHECK />
+                    <div class='particles-inner'>
+                      <VISUALS.PARTICLES />
+                    </div>
+                  </div>
+                  {button.label}
+                </AcButton>
+              );
+            }
+
+            return (
+              <AcButton style='button' onClick={button.onClick}>
+                {button.icon}
+                {button.label}
+              </AcButton>
+            );
+          })}
+        </AcFlex>
+      </div>
     </dialog>
   );
 });
