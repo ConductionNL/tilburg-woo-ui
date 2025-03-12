@@ -64,6 +64,9 @@ export const LABELS = {
   // Navigation & Footer Labels
   ORGANIZATION: 'Organisatie en werkwijze',
   EXTERNAL_LINK: 'Opent in een nieuw tabblad',
+
+  // Nextcloud Labels
+  NEXTCLOUD_LOGIN: 'Nextcloud Login',
 };
 
 export const LABELS_DYNAMIC = {

@@ -5,6 +5,7 @@ export const BREADCRUMB_ITEMS = {
   LOGIN: { label: 'Inloggen', href: '/login' },
   MIJN_OMGEVING: { label: 'Mijn omgeving', href: '/mijn-omgeving' },
   GEMMA: { label: 'Gemma', href: '/gemma' },
+  NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/nextcloud/login' },
 };
 
 export const BREADCRUMBS = {
@@ -21,5 +22,6 @@ export const BREADCRUMBS = {
   LOGIN: [BREADCRUMB_ITEMS.LOGIN],
   MIJN_OMGEVING: [BREADCRUMB_ITEMS.MIJN_OMGEVING],
   GEMMA: [BREADCRUMB_ITEMS.GEMMA],
+  NEXTCLOUD_LOGIN: [BREADCRUMB_ITEMS.NEXTCLOUD_LOGIN],
   PUBLICATION: (label) => [BREADCRUMB_ITEMS.SEARCH, { label }],
 };
