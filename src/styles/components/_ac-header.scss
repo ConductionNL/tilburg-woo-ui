@@ -5,9 +5,17 @@
   --navigation-bar-height: 96px;
 
   position: relative;
+  padding-inline: var(--tilburg-space-column-cat);
+  background-color: var(--tilburg-color-blue-400);
 
-  @include respond-max($screen-md) {
+  @include respond-max($screen-lg) {
     --navigation-bar-height: 72px;
+
+    padding-inline: 0;
+
+    &:has(button[aria-expanded='true']) {
+      border-bottom: 2px solid var(--tilburg-color-blue-500);
+    }
   }
 
   .container {
@@ -22,34 +30,17 @@
     justify-content: space-between;
     align-items: center;
     block-size: var(--navigation-bar-height);
-    background-color: var(--tilburg-color-blue-300);
+    background-color: var(--tilburg-color-blue-400);
   }
 
-  &__logo {
-    > * {
-      display: flex;
-      align-items: center;
-      gap: var(--tilburg-space-column-pig);
-      color: var(--tilburg-color-white);
-      font-size: var(--tilburg-typography-font-size-3xl);
-      font-weight: var(--tilburg-typography-font-weight-bold);
-      font-family: var(--tilburg-typography-font-family-primary), sans-serif;
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: var(--tilburg-space-column-rat);
+    text-decoration: none;
+
+    &:where(:hover, :focus-visible) {
       text-decoration: none;
-      text-transform: uppercase;
-
-      @include respond-max($screen-md) {
-        gap: var(--tilburg-space-column-rabbit);
-        font-size: var(--tilburg-typography-font-size-2xl);
-      }
-
-      @include respond-max($screen-sm) {
-        font-size: var(--tilburg-typography-font-size-xl);
-      }
-    }
-
-    // small visual correction due to font-family rendering
-    .logo-text {
-      margin-block-start: 1rem;
     }
 
     svg {
@@ -59,11 +50,26 @@
     }
   }
 
+  .logo-text {
+    color: var(--tilburg-color-white);
+    font-size: var(--tilburg-typography-font-size-xl);
+    font-weight: var(--tilburg-typography-font-weight-bold);
+    font-family: var(--tilburg-typography-font-family-primary), sans-serif;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-wrap: balance;
+  }
+
   &__navigation-secondary {
     padding-block: var(--tilburg-space-block-mouse);
     background-color: var(--tilburg-color-gray-50);
+    margin-inline-start: calc(var(--tilburg-space-column-cat) * -1);
+    inline-size: calc(100% + var(--tilburg-space-column-cat) * 2);
 
-    @include respond-max($screen-md) {
+    @include respond-max($screen-lg) {
+      margin-inline-start: 0;
+      inline-size: 100%;
+
       .container {
         flex-direction: column;
         align-items: flex-start;

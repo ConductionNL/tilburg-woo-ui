@@ -1,5 +1,5 @@
 export const LABELS = {
-  APP_NAME: 'Gemeente',
+  APP_NAME: 'Publicaties Gemeente Tilburg',
   CLOSE: 'Sluiten',
   CLOSE_SINGULAR: 'Sluit',
   CONCEPTS_LIST: 'Begrippenlijst',
@@ -47,14 +47,14 @@ export const LABELS = {
   COPY_LINK: 'Kopieer link',
   COPY_LINK_SUCCESS: 'Link gekopieerd!',
   COPY_LINK_ERROR: 'Kopiëren mislukt',
-  VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
+  VIEW_ALL_THEMES: 'Toon alle onderwerpen',
 
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
   SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
   VIEW_DOCUMENTS: 'Bekijk de documenten',
 
-  THEMES: 'Onderwerpen',
+  THEMES: 'Zoeken op onderwerp',
   ABOUT_CATEGORIES: 'Over categorieën',
 
   // Navigation & Footer Labels

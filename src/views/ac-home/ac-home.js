@@ -27,6 +27,8 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
 
   const contents = get_single.contents;
 
+  console.log(contents);
+
   if (!contents) {
     return <AcLoader />;
   }
@@ -39,10 +41,10 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
         <AcContainer>
           <AcColumn gap='tiger'>
             <AcColumn>
-              <Heading>{LABELS.THEMES}</Heading>
+              <Heading level={2}>{LABELS.THEMES}</Heading>
               <Paragraph>
-                Bekijk onze publicatiesdossiers van belangrijke onderwerpen die
-                spelen binnen de Gemeente.
+                Bekijk alle documenten van belangrijke onderwerpen die spelen binnen
+                de gemeente Tilburg.
               </Paragraph>
             </AcColumn>
             <AcGrid row={3}>
@@ -70,7 +72,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
       <AcAbout
         title={AcRemoveTags(contents[3]?.data?.content)}
         content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4]?.data?.content))}
-        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[5]?.data?.content))}
+        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[2]?.data?.content))}
         image={contents[6]?.data}
       />
     </>
