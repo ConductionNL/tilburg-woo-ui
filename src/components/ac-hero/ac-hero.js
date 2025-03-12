@@ -28,7 +28,7 @@ const AcHero = () => {
             onSubmitCallback={submitSearch}
             page='home'
             label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
-            title='Gemeente, de plek voor alle openbare documenten van de Gemeente'
+            title='Open Tilburg, de plek voor alle openbare documenten van Gemeente Tilburg'
           />
         </AcCard>
       </AcContainer>

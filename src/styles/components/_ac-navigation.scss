@@ -2,7 +2,9 @@
 @use '../global/mixins/respond' as *;
 
 .ac-navigation {
-  margin-inline-end: var(--tilburg-space-column-rat);
+  @include respond-max($screen-lg) {
+    padding-inline-end: var(--tilburg-space-column-rat);
+  }
 
   ul {
     display: flex;
@@ -35,17 +37,35 @@
     gap: var(--tilburg-space-column-snail);
     padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
     color: var(--tilburg-color-white);
-    background-color: var(--tilburg-color-blue-400);
+    background-color: var(--tilburg-color-blue-500);
     font-weight: var(--tilburg-typography-font-weight-bold);
     text-decoration: none;
-    transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+
+    &:not([aria-haspopup]) {
+      @include respond-max($screen-lg) {
+        background-color: transparent;
+      }
+    }
 
     &:where(:hover, :focus-visible) {
-      background-color: var(--tilburg-color-blue-500);
+      color: var(--tilburg-color-blue-500);
+      background-color: var(--tilburg-color-white);
+
+      svg {
+        path {
+          fill: var(--tilburg-color-blue-500);
+        }
+      }
     }
 
     svg {
       flex-shrink: 0;
+
+      path {
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
     }
   }
 
@@ -54,12 +74,12 @@
     border: none;
     border-radius: var(--tilburg-border-radius-md);
 
-    @include respond-max($screen-md) {
+    @include respond-max($screen-lg) {
       display: flex;
     }
 
     &[aria-expanded='true'] {
-      @include respond-max($screen-md) {
+      @include respond-max($screen-lg) {
         + nav {
           visibility: visible;
           opacity: 1;
@@ -69,15 +89,16 @@
   }
 
   nav {
-    @include respond-max($screen-md) {
+    @include respond-max($screen-lg) {
       position: absolute;
       display: flex;
       inset-inline: 0;
       inset-block-start: var(--navigation-bar-height);
       block-size: calc(100dvh - var(--navigation-bar-height));
       padding-block-end: var(--tilburg-space-block-rat);
+      margin-block-start: 2px;
       background-color: var(--tilburg-color-blue-400);
-      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       visibility: hidden;
       opacity: 0;
       z-index: 99;
@@ -97,9 +118,8 @@
             gap: var(--tilburg-space-column-rat);
             inline-size: 100%;
             padding-inline: var(--tilburg-space-block-rabbit);
-            padding-block: var(--tilburg-space-row-cat);
+            padding-block: var(--tilburg-space-row-dog);
             font-size: var(--tilburg-typography-font-size-lg);
-
 
             &:after {
               content: '';
@@ -107,7 +127,7 @@
               inset-inline: var(--tilburg-space-block-rat);
               inset-block-end: -2px;
               block-size: 2px;
-              background-color: var(--tilburg-color-blue-300);
+              background-color: var(--tilburg-color-blue-500);
             }
           }
         }
@@ -115,4 +135,3 @@
     }
   }
 }
-

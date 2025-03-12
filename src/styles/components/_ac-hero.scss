@@ -20,5 +20,10 @@
         gap: var(--tilburg-space-block-mouse);
       }
     }
+
+    h1 {
+      font-size: var(--tilburg-typography-font-size-2xl);
+      color: var(--tilburg-color-blue-400);
+    }
   }
 }

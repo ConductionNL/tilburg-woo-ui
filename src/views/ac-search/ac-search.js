@@ -131,6 +131,7 @@ const AcSearch = ({ store: { publications } }) => {
   return (
     <>
       <AcContainer spacing='lg'>
+        <Heading level={1}>Zoeken in publicaties</Heading>
         <AcCard blue padding='md'>
           <AcSearchBox
             page='search'

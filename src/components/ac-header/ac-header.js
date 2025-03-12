@@ -22,15 +22,19 @@ const AcHeader = ({ store }) => {
       <div className='ac-header__navigation-main'>
         <div className='ac-header__logo'>
           {isHomePage ? (
-            <div>
+            <div className='logo-container'>
               <VISUALS.LOGO />
               <span className='sr-only'>Logo</span>
-              <span class='logo-text'>{LABELS.APP_NAME}</span>
+              <span className='logo-text'>{LABELS.APP_NAME}</span>
             </div>
           ) : (
-            <Link to='/' title='Logo Gemeente - Ga naar de beginpagina'>
+            <Link
+              to='/'
+              title='Logo Gemeente - Ga naar de beginpagina'
+              className='logo-container'
+            >
               <VISUALS.LOGO />
-              <span class='logo-text'>{LABELS.APP_NAME}</span>
+              <span className='logo-text'>{LABELS.APP_NAME}</span>
             </Link>
           )}
         </div>

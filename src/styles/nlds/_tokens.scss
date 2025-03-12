@@ -115,7 +115,7 @@
   --tilburg-box-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
   --tilburg-box-shadow-sm: [object Object];
   --tilburg-typography-font-family-secondary: 'Roboto', sans-serif;
-  --tilburg-typography-font-family-primary: TradeGothicCondensed18;
+  --tilburg-typography-font-family-primary: 'Roboto Condensed', sans-serif;
   --tilburg-typography-font-weight-bold: 700;
   --tilburg-typography-font-weight-normal: 400;
   --tilburg-typography-line-height-lg: 200%;
@@ -223,7 +223,7 @@
   --tilburg-color-blue-400: #026596;
   --tilburg-color-blue-300: #009dda;
   --tilburg-color-blue-200: #b9e4fc;
-  --tilburg-color-blue-100: #e6f6ff;
+  --tilburg-color-blue-100: #e6f7ff;
   --tilburg-color-extra-limegreen: #8bc63f;
   --tilburg-color-extra-purple: #513090;
   --tilburg-color-extra-yellow: #fbdd27;
@@ -249,9 +249,9 @@
   --tilburg-border-width-md: 2px;
   --tilburg-border-width-sm: 1px;
   --tilburg-border-radius-round: 999px;
-  --tilburg-border-radius-lg: 16px;
-  --tilburg-border-radius-md: 8px;
-  --tilburg-border-radius-sm: 4px;
+  --tilburg-border-radius-lg: 0px;
+  --tilburg-border-radius-md: 0px;
+  --tilburg-border-radius-sm: 0px;
   --ams-pagination-ellipses-padding-inline-start: var(--tilburg-space-inline-ant);
   --ams-pagination-ellipses-padding-inline-end: var(--tilburg-space-inline-ant);
   --ams-pagination-ellipses-padding-block-start: var(--tilburg-space-block-snail);
@@ -559,7 +559,7 @@
   --tilburg-document-background-color: var(--tilburg-color-white);
   --tilburg-heading-font-weight: var(--tilburg-typography-font-weight-bold);
   --tilburg-heading-font-family: var(--tilburg-typography-font-family-primary);
-  --tilburg-heading-color: var(--tilburg-color-blue-500);
+  --tilburg-heading-color: var(--tilburg-color-black);
   --ams-pagination-description-font-weight: var(--tilburg-document-font-weight);
   --ams-pagination-description-color: var(--tilburg-document-color);
   --ams-pagination-ellipses-font-weight: var(--tilburg-document-font-weight);
@@ -922,7 +922,7 @@
   --utrecht-button-subtle-font-weight: var(--tilburg-document-strong-font-weight);
   --utrecht-button-font-weight: var(--tilburg-document-strong-font-weight);
   --utrecht-button-font-size: var(--tilburg-document-font-size);
-  --utrecht-button-font-family: var(--tilburg-document-font-family);
+  --utrecht-button-font-family: var(--tilburg-typography-font-family-primary);
   --utrecht-button-icon-size: var(--tilburg-icon-functional-size);
   --utrecht-button-secondary-action-active-color: var(
     --tilburg-interaction-active-color
