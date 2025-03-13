@@ -15,6 +15,8 @@ import {
   AcAuthentication,
   AcMijnOmgeving,
   AcGemma,
+  AcNextcloudLogin,
+  AcNextcloudAuthorization,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -39,6 +41,8 @@ export const PATHS = AcLockObject({
   THEMES: '/onderwerpen',
   WEBSITE: 'https://www.tilburg.nl/',
   WOO: '/woo-verzoek',
+  NEXTCLOUD_LOGIN: '/login',
+  NEXTCLOUD_AUTHORIZATION: '/authorization',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -229,6 +233,21 @@ export const ROUTES = {
     label: TITLES.ACCESSIBILITY,
     path: PATHS.ACCESSIBILITY,
     title: `${TITLES.BASE} | ${TITLES.ACCESSIBILITY}`,
+  },
+  NEXTCLOUD_LOGIN: {
+    id: AcUUID(),
+    name: 'Nextcloud Login',
+    label: LABELS.NEXTCLOUD_LOGIN,
+    path: PATHS.NEXTCLOUD_LOGIN,
+    title: 'Open Tilburg | Nextcloud Login',
+  },
+  NEXTCLOUD_AUTHORIZATION: {
+    id: AcUUID(),
+    name: 'Nextcloud Authorization',
+    label: LABELS.NEXTCLOUD_AUTHORIZATION,
+    path: PATHS.NEXTCLOUD_AUTHORIZATION,
+    title: 'Nextcloud Authorization',
+    component: AcNextcloudAuthorization,
   },
 };
 

@@ -42,6 +42,10 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.GEMMA;
     }
 
+    if (location.pathname.startsWith('/nextcloud/login')) {
+      return BREADCRUMBS.NEXTCLOUD_LOGIN;
+    }
+
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);
     }
