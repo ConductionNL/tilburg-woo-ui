@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { AcCardCategory } from '@molecules';
-import { LABELS, PATHS } from '@constants';
+import { AcCardCategory, AcLink } from '@molecules';
+import { LABELS, PATHS, VISUALS } from '@constants';
 import AcGrid from '@atoms/ac-grid/ac-grid';
 import { AcLoader } from '@components';
 import { AcContainer, AcSection } from '@atoms';
@@ -14,68 +14,124 @@ import {
 import AcColumn from '@atoms/ac-column/ac-column';
 import { AcBuildURLSearchParams } from '@utils';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import { useParams } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
+import config from '@src/config';
+
+function getCookie(name) {
+  // Split document.cookie on `;` to handle multiple cookies
+  const cookieArr = document.cookie.split(';');
+
+  for (let cookie of cookieArr) {
+    // Remove leading spaces
+    cookie = cookie.trim();
+    // Check if this cookie starts with "<name>="
+    if (cookie.startsWith(`${encodeURIComponent(name)}=`)) {
+      // Return everything after the "<name>="
+      return decodeURIComponent(cookie.substring(name.length + 1));
+    }
+  }
+
+  return null;
+}
 
 const AcSubjects = ({ store: { publications, themes } }) => {
-  const { fetchPublications, is_loading, getSearchPageURL } = publications;
-  const { fetchThemes, all_themes } = themes;
+  // fetch client id and secret key from local storage
+  const clientId = getCookie('nextcloud_client_id');
+  const secretKey = getCookie('nextcloud_secret_key');
 
-  useEffect(() => {
-    fetchThemes();
-    fetchPublications();
-  }, []);
+  if (!clientId || !secretKey) {
+    return (
+      <AcSection spacing>
+        <AcContainer>
+          <AcColumn gap='tiger'>
+            <AcColumn>
+              <Heading>{LABELS.NEXTCLOUD_AUTHORIZATION}</Heading>
+              <Paragraph>
+                De tijd is verstreken. Probeer het opnieuw.
+                <br />
+                <br />
+                <AcLink
+                  href={window.location.origin + '/nextcloud/login'}
+                  type='button'
+                >
+                  Terug naar login
+                </AcLink>
+              </Paragraph>
+            </AcColumn>
+          </AcColumn>
+        </AcContainer>
+      </AcSection>
+    );
+  }
 
-  const renderGrid = useMemo(() => {
-    if (is_loading) {
-      return <AcLoader />;
+  const authenticationHostname = config.authentication.baseURL.includes('index.php')
+    ? new URL(config.authentication.baseURL).origin + '/index.php'
+    : new URL(config.authentication.baseURL).origin;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const state = searchParams.get('state');
+  const code = searchParams.get('code');
+
+  useEffect(async () => {
+    try {
+      const response = await fetch(`${authenticationHostname}/apps/oauth2/api/v1/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: `${window.location.origin}/nextcloud/authorization`,
+          client_id: clientId,
+          client_secret: secretKey,
+        }).toString(),
+      });
+
+      // check if response is good
+      if (!response.ok) {
+        setError(response.statusText);
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      setError(error.message);
+      setIsLoading(false);
+      return;
     }
 
-    return (
-      <AcGrid row={3}>
-        {all_themes?.map((subject, index) => (
-          <AcCardCategory
-            key={index}
-            {...subject}
-            linkUrl={getSearchPageURL({
-              themes: [subject.id],
-            })}
-            linkTitle={LABELS.VIEW_DOCUMENTS}
-          />
-        ))}
-      </AcGrid>
-    );
-  }, [all_themes, is_loading]);
+    const { access_token, expires_in, refresh_token, user_id } = await response.json();
 
-  if (is_loading) {
-    return <AcLoader />;
-  }
+    // check if expires_in is set
+    if (!expires_in) {
+      setError('Er is een fout opgetreden bij het autoriseren. Probeer het opnieuw.');
+      setIsLoading(false);
+      return;
+    }
+
+    // set cookies
+    document.cookie = `nextcloud_access_token=${encodeURIComponent(access_token)}; max-age=${expires_in}; path=/;`;
+    document.cookie = `nextcloud_refresh_token=${encodeURIComponent(refresh_token)}; max-age=${expires_in}; path=/;`;
+    document.cookie = `nextcloud_user_id=${encodeURIComponent(user_id)}; max-age=${expires_in}; path=/;`;
+
+    setIsLoading(false);
+  }, []);
 
   return (
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
           <AcColumn>
-            <Heading>{LABELS.THEMES}</Heading>
-            {AcCheckIfSpecificHostname() ? (
-              <Paragraph>
-                Op deze pagina vindt u een overzicht van onderwerpen die relevant
-                zijn voor gemeenten en leveranciers binnen het domein van
-                gemeentelijke ICT. De documenten en informatie zijn thematisch
-                gerangschikt om u te helpen snel en eenvoudig toegang te krijgen tot
-                relevante gegevens. Bent u op zoek naar specifieke softwarepakketten,
-                standaarden, referentiecomponenten of rapportages? Dan kunt u deze
-                hier vinden
-              </Paragraph>
-            ) : (
-              <Paragraph>
-                Op deze pagina staan de documenten niet ingedeeld per Woo-categorie.
-                Hier hebben we documenten over één onderwerp bij elkaar gezet. Bent u
-                op zoek naar bestuursstukken, raadsstukken, convenanten of
-                woo-verzoeken over een specifiek onderwerp? Dan kunt u deze hier
-                vinden.
-              </Paragraph>
-            )}
+            <Heading>{LABELS.NEXTCLOUD_AUTHORIZATION}</Heading>
+
+            {isLoading && <AcLoader />}
+            {!isLoading && !error && VISUALS.CHECK}
+            {error && <Paragraph>{error}</Paragraph>}
           </AcColumn>
-          {renderGrid}
         </AcColumn>
       </AcContainer>
     </AcSection>

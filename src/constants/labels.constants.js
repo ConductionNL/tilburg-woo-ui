@@ -67,6 +67,7 @@ export const LABELS = {
 
   // Nextcloud Labels
   NEXTCLOUD_LOGIN: 'Nextcloud Login',
+  NEXTCLOUD_AUTHORIZATION: 'Nextcloud Autorisatie',
 };
 
 export const LABELS_DYNAMIC = {
