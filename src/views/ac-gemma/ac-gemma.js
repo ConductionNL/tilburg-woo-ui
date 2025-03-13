@@ -7,18 +7,25 @@ import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine
 import {
   Select,
   SelectOption,
+  PrimaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
+import { VISUALS } from '@constants';
 
 const AcGemma = ({ store: { gemma } }) => {
   const { fetchViews, resetViews, fetchView, resetView } = gemma;
   const [view, setView] = useState(null);
   const [viewNodesData, setViewNodesData] = useState(null);
+  const [viewRelationsData, setViewRelationsData] = useState(null);
+  const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
 
   useEffect(() => {
     fetchViews();
     setViewNodesData(null);
+    setViewRelationsData(null);
+    setViewIsDoneLoading(false);
+
     return () => resetViews();
   }, []);
 
@@ -26,6 +33,8 @@ const AcGemma = ({ store: { gemma } }) => {
     if (!view) return;
 
     setViewNodesData(null);
+    setViewRelationsData(null);
+    setViewIsDoneLoading(false);
 
     fetchView(view);
     return () => {
@@ -36,9 +45,10 @@ const AcGemma = ({ store: { gemma } }) => {
   useEffect(() => {
     if (!gemma.get_view) return;
     let viewNodesData = [];
+    let viewRelationsData = [];
 
-    var getViewNodesNames = new Promise((resolve, reject) => {
-      gemma.get_view.node.forEach(async (node, index, array) => {
+    const getViewNodesData = new Promise((resolve, reject) => {
+      gemma.get_view.nodes.forEach(async (node, index, array) => {
         const response = await fetch(
           `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
         );
@@ -47,15 +57,39 @@ const AcGemma = ({ store: { gemma } }) => {
           name: data.results[0]?.name || 'unknown',
           id: node.elementRef,
           description: data.results[0]?.documentation || 'unknown',
+          type: data.results[0]?.type || undefined,
         });
         if (index === array.length - 1) resolve();
       });
     });
 
-    getViewNodesNames.finally(() => {
-      console.info('Finished fetching view node names, applying after delay');
+    const getViewRelationsData = new Promise((resolve, reject) => {
+      gemma.get_view.connections.forEach(async (relationship, index, array) => {
+        const response = await fetch(
+          `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
+        );
+        const data = await response.json();
+
+        viewRelationsData.push({
+          name: data.results[0]?.properties['propid-62'] || undefined,
+          id: relationship.relationshipRef,
+          type: data.results[0]?.type || undefined,
+        });
+        if (index === array.length - 1) resolve();
+      });
+    });
+
+    getViewNodesData.finally(() => {
+      console.info('Finished fetching view node data, applying after delay');
       setTimeout(() => {
         setViewNodesData(viewNodesData);
+      }, 1000);
+    });
+
+    getViewRelationsData.finally(() => {
+      console.info('Finished fetching view relations data, applying after delay');
+      setTimeout(() => {
+        setViewRelationsData(viewRelationsData);
       }, 1000);
     });
   }, [gemma.get_view]);
@@ -63,6 +97,7 @@ const AcGemma = ({ store: { gemma } }) => {
   useEffect(() => {
     if (!gemma.get_view) return;
     if (!viewNodesData) return;
+    if (!viewRelationsData) return;
 
     // Create container in HTML
     const container = document.getElementById('graph-container');
@@ -99,7 +134,7 @@ const AcGemma = ({ store: { gemma } }) => {
         modelNodeId: node.elementRef,
         viewNodeId: node.identifier || 'unknown',
         name: nodeData?.name || 'unknown',
-        type: node.type || getType(),
+        type: nodeData?.type || getType(),
         x: node.position.x,
         y: node.position.y,
         width: node.position.w,
@@ -110,29 +145,45 @@ const AcGemma = ({ store: { gemma } }) => {
         font: {
           name: node.style.font.name,
           size: node.style.font.size,
-          color: `rgba(${node.style.font.color.r}, ${node.style.font.color.g}, ${node.style.font.color.b}, ${node.style.font.color.a})`,
+          color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
         },
         description: nodeData?.description || 'unknown',
       };
     };
 
-    const viewNodes = gemma.get_view.node.map(convertToViewNode);
+    const viewNodes = gemma.get_view.nodes.map(convertToViewNode);
 
-    const convertToViewRelationship = (relationship) => {
-      if (!relationship.relationshipRef) return;
+    const convertToViewRelationship = (relationship, idx) => {
+      const relationshipData = viewRelationsData.find(
+        (item) => item.id === relationship.relationshipRef
+      );
 
       return {
         modelRelationshipId: relationship.relationshipRef,
         sourceId: relationship.source,
         targetId: relationship.target,
         viewRelationshipId: relationship.identifier,
-        type: relationship.type || 'access',
+        type: relationshipData?.type || 'access',
         bendpoints: relationship.bendpoints || [],
+        label: {
+          text: relationshipData?.name || undefined,
+          ...(relationshipData?.name && {
+            markup: [
+              {
+                style: {
+                  fontSize: relationship.style.font.size,
+                  fontFamily: relationship.style.font.name,
+                  fontColor: `rgba(${relationship.style.color.r}, ${relationship.style.color.g}, ${relationship.style.color.b}, ${relationship.style.color.a})`,
+                },
+              },
+            ],
+          }),
+        },
       };
     };
 
-    const viewRelationshipsArray = gemma.get_view.connection.map(
-      convertToViewRelationship
+    const viewRelationshipsArray = gemma.get_view.connections.map(
+      (relationship, idx) => convertToViewRelationship(relationship, idx)
     );
 
     const viewRelationships = viewRelationshipsArray.filter(
@@ -166,7 +217,9 @@ const AcGemma = ({ store: { gemma } }) => {
     container.querySelectorAll(':scope > svg').forEach((node) => {
       setSvgViewBox(node);
     });
-  }, [viewNodesData]);
+
+    setViewIsDoneLoading(true);
+  }, [viewNodesData, viewRelationsData]);
 
   const setSvgViewBox = (svg) => {
     const box = svg.querySelector('g').getBBox();
@@ -446,6 +499,34 @@ const AcGemma = ({ store: { gemma } }) => {
 
   //////////////////// End Scrolling ///////////////////////////
 
+  const downloadSvg = () => {
+    const svg = document.getElementById('svg-container');
+    if (!svg) return;
+
+    // Create a clone of the SVG to modify
+    const clonedSvg = svg.cloneNode(true);
+
+    // Add XML declaration and SVG namespace
+    const svgData = clonedSvg.outerHTML
+      .replace(/&nbsp;/g, '&#160;')
+      .replace(/xmlns=".*?"/g, '')
+      .replace(/<svg /g, '<svg xmlns="http://www.w3.org/2000/svg" ');
+
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    // Use view name if available, fallback to 'gemma' if not
+    const fileName = (gemma.get_view?.name || 'gemma')
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase();
+    a.download = `${fileName}.svg`;
+    a.click();
+
+    // Clean up
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AcContainer spacing='lg'>
       {gemma.all_views?.length === 0 && <AcLoader />}
@@ -463,15 +544,32 @@ const AcGemma = ({ store: { gemma } }) => {
             ))}
           </Select>
 
-          {gemma.get_view && <h1>{gemma.get_view.name}</h1>}
+          {gemma.get_view && (
+            <div className='ac-gemma-view-header'>
+              <h1>{gemma.get_view.name}</h1>
+              <PrimaryActionButton
+                disabled={
+                  !gemma.get_view ||
+                  (gemma.get_view &&
+                    !viewNodesData &&
+                    !viewRelationsData &&
+                    !viewIsDoneLoading &&
+                    !document.getElementById('svg-container'))
+                }
+                onClick={() => downloadSvg()}
+              >
+                <VISUALS.DOWNLOAD /> Download SVG
+              </PrimaryActionButton>
+            </div>
+          )}
 
-          {gemma.get_view && viewNodesData && (
+          {gemma.get_view && viewNodesData && viewRelationsData && (
             <div className='ac-gemma-graph-container' id='graph-container'></div>
           )}
-          {!gemma.get_view && !viewNodesData && (
+          {!gemma.get_view && !viewNodesData && !viewRelationsData && !viewIsDoneLoading && (
             <div className='ac-gemma-graph-container-loading' />
           )}
-          {gemma.get_view && !viewNodesData && (
+          {gemma.get_view && !viewNodesData && !viewRelationsData && !viewIsDoneLoading && (
             <div className='ac-gemma-graph-container-loading'>
               <AcLoader className='ac-gemma-graph-container-loading-loader' />
             </div>
