@@ -3,7 +3,8 @@ import { observer } from 'mobx-react-lite';
 import { AcContainer } from '@atoms';
 import { withStore } from '@stores';
 import { dia, shapes } from 'jointjs';
-import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
+// import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
+import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import {
   Select,
   SelectOption,
@@ -90,7 +91,7 @@ const AcGemma = ({ store: { gemma } }) => {
       console.info('Finished fetching view relations data, applying after delay');
       setTimeout(() => {
         setViewRelationsData(viewRelationsData);
-      }, 1000);
+      }, 2000);
     });
   }, [gemma.get_view]);
 
@@ -566,14 +567,20 @@ const AcGemma = ({ store: { gemma } }) => {
           {gemma.get_view && viewNodesData && viewRelationsData && (
             <div className='ac-gemma-graph-container' id='graph-container'></div>
           )}
-          {!gemma.get_view && !viewNodesData && !viewRelationsData && !viewIsDoneLoading && (
-            <div className='ac-gemma-graph-container-loading' />
-          )}
-          {gemma.get_view && !viewNodesData && !viewRelationsData && !viewIsDoneLoading && (
-            <div className='ac-gemma-graph-container-loading'>
-              <AcLoader className='ac-gemma-graph-container-loading-loader' />
-            </div>
-          )}
+          {!gemma.get_view &&
+            !viewNodesData &&
+            !viewRelationsData &&
+            !viewIsDoneLoading && (
+              <div className='ac-gemma-graph-container-loading' />
+            )}
+          {gemma.get_view &&
+            !viewNodesData &&
+            !viewRelationsData &&
+            !viewIsDoneLoading && (
+              <div className='ac-gemma-graph-container-loading'>
+                <AcLoader className='ac-gemma-graph-container-loading-loader' />
+              </div>
+            )}
         </>
       )}
     </AcContainer>
