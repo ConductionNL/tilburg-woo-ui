@@ -52,7 +52,7 @@ const AcSubjects = ({ store: { publications, themes } }) => {
                 <br />
                 <br />
                 <AcLink
-                  href={window.location.origin + '/nextcloud/login'}
+                  href={window.location.origin + '/login'}
                   type='button'
                 >
                   Terug naar login
@@ -86,7 +86,7 @@ const AcSubjects = ({ store: { publications, themes } }) => {
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           code,
-          redirect_uri: `${window.location.origin}/nextcloud/authorization`,
+          redirect_uri: `${window.location.origin}/authorization`,
           client_id: clientId,
           client_secret: secretKey,
         }).toString(),

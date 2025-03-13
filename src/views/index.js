@@ -7,7 +7,6 @@ const AcPublication = loadable(() => import('@views/ac-publication/ac-publicatio
 const AcAuthentication = loadable(() => import('@views/ac-authentication/ac-authentication'));
 const AcMijnOmgeving = loadable(() => import('@views/ac-mijn-omgeving/ac-mijn-omgeving'));
 const AcGemma = loadable(() => import('@views/ac-gemma/ac-gemma'));
-const AcNextcloudLogin = loadable(() => import('@views/ac-nextcloud-login/ac-nextcloud-login'));
 const AcNextcloudAuthorization = loadable(() => import('@views/ac-nextcloud-authorization/ac-nextcloud-authorization'));
 
 export {
@@ -18,6 +17,5 @@ export {
   AcAuthentication,
   AcMijnOmgeving,
   AcGemma,
-  AcNextcloudLogin,
   AcNextcloudAuthorization,
 };

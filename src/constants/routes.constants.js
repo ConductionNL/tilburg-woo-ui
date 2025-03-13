@@ -41,8 +41,8 @@ export const PATHS = AcLockObject({
   THEMES: '/onderwerpen',
   WEBSITE: 'https://www.tilburg.nl/',
   WOO: '/woo-verzoek',
-  NEXTCLOUD_LOGIN: '/nextcloud/login',
-  NEXTCLOUD_AUTHORIZATION: '/nextcloud/authorization',
+  NEXTCLOUD_LOGIN: '/login',
+  NEXTCLOUD_AUTHORIZATION: '/authorization',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -240,7 +240,6 @@ export const ROUTES = {
     label: LABELS.NEXTCLOUD_LOGIN,
     path: PATHS.NEXTCLOUD_LOGIN,
     title: 'Open Tilburg | Nextcloud Login',
-    component: AcNextcloudLogin,
   },
   NEXTCLOUD_AUTHORIZATION: {
     id: AcUUID(),
