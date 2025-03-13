@@ -104,6 +104,10 @@ const THEMES = loadable(() =>
   import('-!svg-react-loader!@assets/images/themes.svg')
 );
 
+const DOWNLOAD = loadable(() =>
+  import('-!svg-react-loader!@assets/images/download.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   CHEVRON_RIGHT,
@@ -145,6 +149,7 @@ export const VISUALS = {
   SHARE,
   PARTICLES,
   THEMES,
+  DOWNLOAD,
 };
 
 export default {};

@@ -23,9 +23,9 @@ const AcHero = (contents) => {
   const getHeroImage = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
-        return 'https://vng.nl/sites/default/files/styles/16_9_xl/public/2023-12/dso.jpg?itok=PVFVJNmT';
+        return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'opencatalogi.nl':
-        return 'https://vng.nl/sites/default/files/styles/16_9_xl/public/2023-12/dso.jpg?itok=PVFVJNmT';
+        return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
         return 'https://www.dimpact.nl/wp-content/uploads/2024/02/Headerafbeelding-over-ons.jpg.webp';
