@@ -61,6 +61,8 @@ export const LABELS = {
   GEMMA: 'Gemma',
   ABOUT_CATEGORIES: 'Over categorieën',
 
+  WRONG_PAGE: '404 | Deze pagina bestaat niet',
+
   // Navigation & Footer Labels
   ORGANIZATION: 'Organisatie en werkwijze',
   EXTERNAL_LINK: 'Opent in een nieuw tabblad',
@@ -68,6 +70,11 @@ export const LABELS = {
   // Nextcloud Labels
   NEXTCLOUD_LOGIN: 'Nextcloud Login',
   NEXTCLOUD_AUTHORIZATION: 'Nextcloud Autorisatie',
+
+  // Beheer labels
+  BEHEER: 'Beheer',
+  BEHEER_DETAILS: 'Beheer Details',
+  BEHEER_VOORZIENINGEN_AANBOD: 'Beheer Voorzieningen Aanbod',
 };
 
 export const LABELS_DYNAMIC = {

@@ -8,6 +8,7 @@ const AcAuthentication = loadable(() => import('@views/ac-authentication/ac-auth
 const AcMijnOmgeving = loadable(() => import('@views/ac-mijn-omgeving/ac-mijn-omgeving'));
 const AcGemma = loadable(() => import('@views/ac-gemma/ac-gemma'));
 const AcNextcloudAuthorization = loadable(() => import('@views/ac-nextcloud-authorization/ac-nextcloud-authorization'));
+const AcBeheer = loadable(() => import('@views/ac-beheer/ac-beheer'));
 
 export {
   AcHome,
@@ -18,4 +19,5 @@ export {
   AcMijnOmgeving,
   AcGemma,
   AcNextcloudAuthorization,
+  AcBeheer,
 };

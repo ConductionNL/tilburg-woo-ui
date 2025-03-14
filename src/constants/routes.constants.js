@@ -15,8 +15,8 @@ import {
   AcAuthentication,
   AcMijnOmgeving,
   AcGemma,
-  AcNextcloudLogin,
   AcNextcloudAuthorization,
+  AcBeheer,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -43,10 +43,13 @@ export const PATHS = AcLockObject({
   WOO: '/woo-verzoek',
   NEXTCLOUD_LOGIN: '/login',
   NEXTCLOUD_AUTHORIZATION: '/authorization',
+  BEHEER: '/beheer',
+  BEHEER_DETAILS: '/beheer/:id',
 });
 
 export const NAVIGATE_TO = AcLockObject({
   PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
+  BEHEER_DETAILS: (id) => PATHS.BEHEER_DETAILS.replace(':id', id),
 });
 
 const getTitle = () => {
@@ -248,6 +251,22 @@ export const ROUTES = {
     path: PATHS.NEXTCLOUD_AUTHORIZATION,
     title: 'Nextcloud Authorization',
     component: AcNextcloudAuthorization,
+  },
+  BEHEER_: {
+    id: AcUUID(),
+    name: 'Beheer',
+    label: LABELS.BEHEER,
+    path: PATHS.BEHEER,
+    title: 'Beheer',
+    component: AcBeheer,
+  },
+  BEHEER_DETAILS: {
+    id: AcUUID(),
+    name: 'Beheer Details',
+    label: LABELS.BEHEER_DETAILS,
+    path: PATHS.BEHEER_DETAILS,
+    title: 'Beheer Details',
+    component: AcBeheer,
   },
 };
 

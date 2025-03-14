@@ -17,6 +17,12 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  // split up the pathname into an array
+  const pathname = location.pathname.split('/');
+
+  // pretify the pathname
+  const prettifyPathname = (name) => name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+
   const getBreadcrumbs = useMemo(() => {
     if (location.pathname.startsWith('/zoeken')) {
       return BREADCRUMBS.SEARCH(searchParams.get('search'));
@@ -42,8 +48,12 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.GEMMA;
     }
 
-    if (location.pathname.startsWith('/nextcloud/login')) {
+    if (location.pathname.startsWith('/login')) {
       return BREADCRUMBS.NEXTCLOUD_LOGIN;
+    }
+
+    if (location.pathname.startsWith('/beheer')) {
+      return BREADCRUMBS.BEHEER(prettifyPathname(pathname[2]));
     }
 
     if (get_single_page?.name) {
