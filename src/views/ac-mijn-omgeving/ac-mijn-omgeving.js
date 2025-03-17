@@ -22,7 +22,7 @@ import {
   BadgeCounter,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcFormatFileSize, AcSearchParamsToObject } from '@utils';
+import { AcSearchParamsToObject } from '@utils';
 import AcSideNav from './ac-side-nav';
 import {
   Sidenav,
