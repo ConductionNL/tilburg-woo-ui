@@ -5,6 +5,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField, AcButton } from '@molecules';
 import { LABELS } from '@constants';
 import { SecondaryActionButton } from '@utrecht/component-library-react';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 const AcSearchDate = ({ store: { publications } }) => {
   const { setQueryDate, search_query } = publications;
@@ -49,6 +50,7 @@ const AcSearchDate = ({ store: { publications } }) => {
 
   return (
     <AcFlex column spacing='sm' className='ac-search-filters__date'>
+      <Heading level={3}>{LABELS.SEARCH_DATE}</Heading>
       <AcFormField
         id='date_after'
         label='Datum vanaf (dd-mm-jjjj)'

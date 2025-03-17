@@ -3,6 +3,9 @@
  * Generated on Thu, 30 May 2024 13:54:04 GMT
  */
 
+@use '../global/breakpoints' as *;
+@use '../global/mixins/respond' as *;
+
 .tilburg-theme {
   --ams-pagination-button-border-color: transparent;
   --ams-pagination-button-background-color: transparent;
@@ -394,8 +397,8 @@
   --utrecht-button-icon-gap: var(--tilburg-space-text-beetle);
   --utrecht-button-border-width: var(--tilburg-border-width-sm);
   --utrecht-button-border-radius: var(--tilburg-border-radius-md);
-  --utrecht-button-color: var(--tilburg-color-gray-900);
-  --utrecht-button-border-color: var(--tilburg-color-gray-900);
+  --utrecht-button-color: var(--tilburg-color-blue-400);
+  --utrecht-button-border-color: var(--tilburg-color-blue-400);
   --utrecht-button-secondary-action-active-background-color: var(
     --tilburg-color-gray-100
   );
@@ -550,7 +553,12 @@
   --tilburg-document-line-height: var(--tilburg-typography-line-height-md);
   --tilburg-document-strong-font-weight: var(--tilburg-typography-font-weight-bold);
   --tilburg-document-font-weight: var(--tilburg-typography-font-weight-normal);
-  --tilburg-document-font-size: var(--tilburg-typography-font-size-md);
+  --tilburg-document-font-size: var(--tilburg-typography-font-size-lg);
+
+  @include respond-max($screen-md) {
+    --tilburg-document-font-size: var(--tilburg-typography-font-size-md);
+  }
+
   --tilburg-document-font-family: var(--tilburg-typography-font-family-secondary);
   --tilburg-document-subtle-color: var(--tilburg-color-gray-600);
   --tilburg-document-inverse-color: var(--tilburg-color-white);
@@ -559,7 +567,7 @@
   --tilburg-document-background-color: var(--tilburg-color-white);
   --tilburg-heading-font-weight: var(--tilburg-typography-font-weight-bold);
   --tilburg-heading-font-family: var(--tilburg-typography-font-family-primary);
-  --tilburg-heading-color: var(--tilburg-color-black);
+  --tilburg-heading-color: var(--tilburg-color-black-txt);
   --ams-pagination-description-font-weight: var(--tilburg-document-font-weight);
   --ams-pagination-description-color: var(--tilburg-document-color);
   --ams-pagination-ellipses-font-weight: var(--tilburg-document-font-weight);
@@ -772,10 +780,10 @@
   --utrecht-heading-5-color: var(--tilburg-heading-color);
   --utrecht-heading-4-font-weight: var(--tilburg-heading-font-weight);
   --utrecht-heading-4-font-family: var(--tilburg-heading-font-family);
-  --utrecht-heading-4-color: var(--tilburg-heading-color);
+  --utrecht-heading-4-color: var(--tilburg-color-blue-500);
   --utrecht-heading-3-font-weight: var(--tilburg-heading-font-weight);
   --utrecht-heading-3-font-family: var(--tilburg-heading-font-family);
-  --utrecht-heading-3-color: var(--tilburg-heading-color);
+  --utrecht-heading-3-color: var(--tilburg-color-blue-500);
   --utrecht-heading-2-font-weight: var(--tilburg-heading-font-weight);
   --utrecht-heading-2-font-family: var(--tilburg-heading-font-family);
   --utrecht-heading-2-color: var(--tilburg-heading-color);
@@ -784,7 +792,7 @@
   --utrecht-heading-1-color: var(--tilburg-heading-color);
   --utrecht-form-label-line-height: var(--tilburg-document-line-height);
   --utrecht-form-label-font-weight: var(--tilburg-document-strong-font-weight);
-  --utrecht-form-label-font-size: var(--tilburg-document-font-size);
+  --utrecht-form-label-font-size: var(--tilburg-typography-font-size-md);
   --utrecht-form-label-font-family: var(--tilburg-document-font-family);
   --utrecht-form-label-color: var(--tilburg-document-color);
   --utrecht-form-field-error-message-line-height: var(

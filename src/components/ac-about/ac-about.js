@@ -7,7 +7,7 @@ import { AcSection, AcContainer, AcImage } from '@atoms';
 
 const AcAbout = ({ title, content, link, image }) => {
   return (
-    <AcSection className='ac-about' spacing>
+    <AcSection className='ac-about' spacing blue>
       <AcContainer>
         <div className='ac-about__heading'>
           <Heading level={2}>{title}</Heading>

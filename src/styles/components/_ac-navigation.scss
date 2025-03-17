@@ -35,13 +35,18 @@
     display: flex;
     align-items: center;
     gap: var(--tilburg-space-column-snail);
-    padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
+    padding: var(--tilburg-space-column-rat);
     color: var(--tilburg-color-white);
     background-color: var(--tilburg-color-blue-500);
+    font-size: 18px;
     font-weight: var(--tilburg-typography-font-weight-bold);
     text-decoration: none;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     text-transform: uppercase;
+
+    @include respond-max($screen-lg) {
+      font-size: var(--tilburg-typography-font-size-lg);
+    }
 
     &:not([aria-haspopup]) {
       @include respond-max($screen-lg) {
@@ -52,6 +57,20 @@
     &:where(:hover, :focus-visible) {
       color: var(--tilburg-color-blue-500);
       background-color: var(--tilburg-color-white);
+
+      @include respond-max($screen-lg) {
+        &:not([aria-haspopup]) {
+          color: var(--tilburg-color-white);
+          background-color: transparent;
+          text-decoration: underline;
+
+          svg {
+            path {
+              fill: var(--tilburg-color-white);
+            }
+          }
+        }
+      }
 
       svg {
         path {
@@ -64,7 +83,7 @@
       flex-shrink: 0;
 
       path {
-        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
     }
   }
@@ -96,12 +115,12 @@
       inset-block-start: var(--navigation-bar-height);
       block-size: calc(100dvh - var(--navigation-bar-height));
       padding-block-end: var(--tilburg-space-block-rat);
-      margin-block-start: 2px;
       background-color: var(--tilburg-color-blue-400);
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       visibility: hidden;
       opacity: 0;
       z-index: 99;
+      border-top: 2px solid var(--tilburg-color-blue-500);
 
       ul {
         flex-direction: column;

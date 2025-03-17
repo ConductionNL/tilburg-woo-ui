@@ -13,6 +13,7 @@ import {
 import { LABELS, PATHS } from '@constants';
 import { AcCardCategory, AcLink } from '@molecules';
 import AcGrid from '@atoms/ac-grid/ac-grid';
+import { VISUALS } from '@constants';
 
 const AcHome = ({ store: { pages, publications, themes } }) => {
   const { fetchPage, resetPage, get_single } = pages;
@@ -39,8 +40,65 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
 
       <AcSection spacing>
         <AcContainer>
+          <AcColumn gap='rat'>
+            <Heading level={2}>Welke documenten vind je hier?</Heading>
+            <Paragraph>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
+              tempor incididunt ut labore et dolore magna aliqua.
+            </Paragraph>
+          </AcColumn>
+          <br />
+          <AcGrid row={3}>
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+          </AcGrid>
+        </AcContainer>
+      </AcSection>
+
+      <AcSection spacing blue>
+        <AcContainer>
           <AcColumn gap='tiger'>
-            <AcColumn>
+            <AcColumn gap='rat'>
               <Heading level={2}>{LABELS.THEMES}</Heading>
               <Paragraph>
                 Bekijk alle documenten van belangrijke onderwerpen die spelen binnen
@@ -64,8 +122,41 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
             </AcGrid>
             <AcLink type='button' to={PATHS.THEMES}>
               {LABELS.VIEW_ALL_THEMES}
+              <VISUALS.ARROW_RIGHT />
             </AcLink>
           </AcColumn>
+        </AcContainer>
+      </AcSection>
+
+      <AcSection spacing>
+        <AcContainer>
+          <AcColumn gap='rat'>
+            <Heading level={2}>Uitgelicht</Heading>
+          </AcColumn>
+          <br />
+          <AcGrid row={3}>
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+            <div
+              style={{
+                border: '1px solid gray',
+                inlineSize: '100%',
+                blockSize: '200px',
+              }}
+            />
+          </AcGrid>
         </AcContainer>
       </AcSection>
 
