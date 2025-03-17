@@ -11,7 +11,7 @@ import {
   AcFormField,
 } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
-import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { LABELS, LABELS_DYNAMIC, TOASTER_TYPES, VISUALS } from '@constants';
 import { AcModal, AcSearchBox, AcSearchSort } from '@components';
 import { withStore } from '@stores';
 
@@ -22,7 +22,7 @@ import {
   BadgeCounter,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject } from '@utils';
+import { AcFormatFileSize, AcSearchParamsToObject } from '@utils';
 import AcSideNav from './ac-side-nav';
 import {
   Sidenav,
@@ -33,6 +33,8 @@ import {
 } from '@gemeente-denhaag/components-react';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcCNavigation } from '@components';
+import config from '@src/config';
+
 const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -201,75 +203,124 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     ));
   }, [is_loading, all_publications, pagination?.limit]);
 
-  const modalRef = useRef(null);
-  const [formData, setFormData] = useState({
+  // Add Voorziening Modal
+  const addVoorzieningModalRef = useRef(null);
+  const [addVoorzieningFormData, setAddVoorzieningFormData] = useState({
     name: '',
-    description: '', 
+    description: '',
     category: '',
     functionalities: '',
     standards: '',
-    offerings: ''
+    offerings: '',
   });
 
-  const handleOpenModal = () => modalRef?.current?.showModal();
+  const handleAddVoorzieningOpenModal = () =>
+    addVoorzieningModalRef?.current?.showModal();
 
-  const handleFieldChange = (field) => (value) => {
-    setFormData(prev => ({
+  const handleAddVoorzieningFieldChange = (field) => (value) => {
+    setAddVoorzieningFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
-  const handleSubmit = () => {
+  const handleAddVoorzieningSubmit = () => {
     // Here you can make your POST request with the formData
-    console.log('Form data to submit:', formData);
+    console.log('Form data to submit:', addVoorzieningFormData);
   };
 
-  const renderModal = (
+  const renderAddVoorzieningModal = (
     <AcModal
-      ref={modalRef}
+      ref={addVoorzieningModalRef}
       id='categories-modal'
       title='Voorziening aanmaken'
-      buttons={[{ label: 'opslaan', onClick: handleSubmit }]}
+      buttons={[{ label: 'opslaan', onClick: handleAddVoorzieningSubmit }]}
     >
       <AcFlex column spacing='sm'>
-        <AcFormField 
-          label='Naam' 
+        <AcFormField
+          label='Naam'
           type='text'
-          onBlur={handleFieldChange('name')}
+          onBlur={handleAddVoorzieningFieldChange('name')}
         />
-        <AcFormField 
-          label='Beschrijving' 
+        <AcFormField
+          label='Beschrijving'
           type='text'
-          onBlur={handleFieldChange('description')}
+          onBlur={handleAddVoorzieningFieldChange('description')}
         />
-        <AcFormField 
-          label='Categorie' 
+        <AcFormField
+          label='Categorie'
           type='text'
-          onBlur={handleFieldChange('category')}
+          onBlur={handleAddVoorzieningFieldChange('category')}
         />
-        <AcFormField 
-          label='Functionaliteiten' 
+        <AcFormField
+          label='Functionaliteiten'
           type='text'
-          onBlur={handleFieldChange('functionalities')}
+          onBlur={handleAddVoorzieningFieldChange('functionalities')}
         />
-        <AcFormField 
-          label='Standaarden' 
+        <AcFormField
+          label='Standaarden'
           type='text'
-          onBlur={handleFieldChange('standards')}
+          onBlur={handleAddVoorzieningFieldChange('standards')}
         />
-        <AcFormField 
-          label='Aanbiedingen' 
+        <AcFormField
+          label='Aanbiedingen'
           type='text'
-          onBlur={handleFieldChange('offerings')}
+          onBlur={handleAddVoorzieningFieldChange('offerings')}
         />
       </AcFlex>
     </AcModal>
   );
 
+  // sync gemma
+  const [syncGemmaLoading, setSyncGemmaLoading] = useState(false);
+  const [syncGemmaError, setSyncGemmaError] = useState(null);
+  const [syncGemmaSuccess, setSyncGemmaSuccess] = useState(false);
+
+  const syncGemma = async () => {
+    const baseUrl = config.mijnOmgeving.baseURL;
+    const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
+
+    try {
+      setSyncGemmaLoading(true);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      setSyncGemmaSuccess(true);
+      setTimeout(() => setSyncGemmaSuccess(false), 2500);
+    } catch (error) {
+      console.error('Error syncing GEMMA:', error);
+
+      setSyncGemmaError(error);
+      setTimeout(() => setSyncGemmaError(null), 2500);
+    } finally {
+      setSyncGemmaLoading(false);
+    }
+  };
+
+  const downloadGemma = () => {
+    // fire off a request to the API to download gemma
+    console.log('downloading gemma');
+  };
+
   return (
     <>
       <AcContainer spacing='sm' margin='xl'>
+        <AcFlex spacing='xl' justifyContent='end'>
+          <AcButton style='button' onClick={handleAddVoorzieningOpenModal}>
+            <VISUALS.DOCUMENT />
+            Voorziening aanmaken
+          </AcButton>
+        </AcFlex>
+
         <AcFlex spacing='xl'>
           <Sidenav>
             <SidenavList>
@@ -366,14 +417,26 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
           </AcFlex>
         </AcFlex>
 
-        <AcFlex spacing='xl' justifyContent='end'>
-          <AcButton style='button' onClick={handleOpenModal}>
-            <VISUALS.DOCUMENT />
-            Voorziening aanmaken
-          </AcButton>
+        <AcFlex column spacing='sm' justifyContent='end'>
+          <AcFlex spacing='sm' justifyContent='end'>
+            <AcButton style='button' onClick={syncGemma} disabled={syncGemmaLoading}>
+              <VISUALS.CLOUD />
+              {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
+            </AcButton>
+
+            <AcButton style='button' onClick={downloadGemma}>
+              <VISUALS.DOWNLOAD />
+              Gemma downloaden
+            </AcButton>
+          </AcFlex>
+
+          <AcFlex spacing='sm' justifyContent='end'>
+            {syncGemmaSuccess && <Paragraph>Succesvol gemma ingelezen.</Paragraph>}
+            {syncGemmaError && <Paragraph>Fout bij gemma inlezen.</Paragraph>}
+          </AcFlex>
         </AcFlex>
 
-        {renderModal}
+        {renderAddVoorzieningModal}
       </AcContainer>
     </>
   );
