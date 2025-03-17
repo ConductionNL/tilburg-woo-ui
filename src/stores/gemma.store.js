@@ -32,6 +32,12 @@ export class GemmaStore {
   view = null;
 
   @observable
+  voorzieningGebruik = null;
+
+  @observable
+  allVoorzieningGebruik = null;
+
+  @observable
   elementReferences = null;
 
   @observable
@@ -62,6 +68,16 @@ export class GemmaStore {
   }
 
   @computed
+  get get_voorzieningGebruik() {
+    return toJS(this.voorzieningGebruik);
+  }
+
+  @computed
+  get get_allVoorzieningGebruik() {
+    return toJS(this.allVoorzieningGebruik);
+  }
+
+  @computed
   get get_elementReferences() {
     return toJS(this.elementReferences);
   }
@@ -89,6 +105,16 @@ export class GemmaStore {
   @action
   setView = (view) => {
     this.view = view;
+  };
+
+  @action
+  setVoorzieningGebruik = (voorzieningGebruik) => {
+    this.voorzieningGebruik = voorzieningGebruik;
+  };
+
+  @action
+  setAllVoorzieningGebruik = (allVoorzieningGebruik) => {
+    this.allVoorzieningGebruik = allVoorzieningGebruik;
   };
 
   @action
@@ -128,6 +154,45 @@ export class GemmaStore {
   };
 
   @action
+  fetchAllVoorzieningGebruik = async () => {
+    this.loading.status = true;
+
+    app.store.api.gemma
+      .voorzieningGebruik()
+      .then((response) => {
+        this.setAllVoorzieningGebruik(response.results);
+        delete response.results;
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
+  fetchVoorzieningGebruik = async (_id) => {
+    this.loading.status = true;
+
+    console.log('fetchVoorzieningGebruik', _id);
+
+    app.store.api.gemma
+      .voorzieningGebruik(
+        _id,
+        new URLSearchParams(
+          AcBuildURLSearchParams({ _id, ...this.defaultQuery })
+        ).toString()
+      )
+      .then((response) => {
+        console.log('response', response);
+        this.setVoorzieningGebruik(response);
+      })
+      .catch((e) => console.error(e))
+      .finally(() => {
+        this.setLoadingStatus(false);
+      });
+  };
+
+  @action
   fetchElementReferences = async (_id) => {
     this.loading.status = true;
 
@@ -150,6 +215,16 @@ export class GemmaStore {
   @action
   resetView = () => {
     this.view = null;
+  };
+
+  @action
+  resetVoorzieningGebruik = () => {
+    this.voorzieningGebruik = null;
+  };
+
+  @action
+  resetAllVoorzieningGebruik = () => {
+    this.voorzieningGebruik = null;
   };
 
   @action
