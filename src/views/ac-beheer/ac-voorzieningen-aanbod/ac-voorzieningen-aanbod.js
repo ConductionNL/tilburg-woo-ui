@@ -16,26 +16,50 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
+import config from '@src/config';
+
+import { testData } from './testData';
 
 const AcBeheerVoorzieningenAanbod = () => {
-  const testData = [
-    {
-      id: 1,
-      title: 'title1',
-      summary: 'summary1',
-      status: 'status1',
-      createdAt: 'createdAt1',
-      updatedAt: 'updatedAt1',
-    },
-    {
-      id: 2,
-      title: 'title2',
-      summary: 'summary2',
-      status: 'status2',
-      createdAt: 'createdAt2',
-      updatedAt: 'updatedAt2',
-    },
-  ];
+  const [data, setData] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+        //   config.authentication.baseURL +
+          'https://vng.accept.commonground.nu/apps' +
+            '/openconnector/api/endpoint/voorzieningaanboden'
+        );
+        const data = await response.json();
+        setData(data);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  //   TODO: remove false
+  if (false && error) {
+    return (
+      <AcSection>
+        <AcContainer>
+          <AcFlex column spacing='sm'>
+            <Heading level={1}>Er is een fout opgetreden</Heading>
+            <Paragraph>
+              Er kon geen verbinding worden gemaakt met de server. Probeer het later
+              opnieuw.
+            </Paragraph>
+            <Paragraph>{error.message}</Paragraph>
+          </AcFlex>
+        </AcContainer>
+      </AcSection>
+    );
+  }
 
   const [selectedAll, setSelectedAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -73,29 +97,39 @@ const AcBeheerVoorzieningenAanbod = () => {
       ),
     },
     {
-      label: 'Titel',
-      key: 'title',
+      label: 'Naam',
+      key: 'naam',
     },
     {
-      label: 'Samenvatting',
-      key: 'summary',
+      label: 'Omschrijving',
+      key: 'omschrijving',
     },
     {
-      label: 'Status',
-      key: 'status',
+      label: 'Type',
+      key: 'type',
     },
     {
-        label: '',
-        key: '',
-        customHeader: (
-          <b>Acties</b>
-        ),
-        customContent: (row) => (
-          <button>
-            test
+      label: 'Productpagina',
+      key: 'productpagina',
+    },
+    {
+      label: 'Ondersteuningsmodel',
+      key: 'ondersteuningsmodel',
+    },
+    {
+      label: 'Acties',
+      key: '',
+      customContent: (row) => (
+        <AcFlex column spacing='xs'>
+          <button className='utrecht-button slim' variant='secondary'>
+            bewerken
           </button>
-        ),
-      },
+          <button className='utrecht-button slim' variant='secondary'>
+            verwijderen
+          </button>
+        </AcFlex>
+      ),
+    },
   ];
 
   const renderCustomElement = (element, row) => {
@@ -108,6 +142,11 @@ const AcBeheerVoorzieningenAanbod = () => {
     return element;
   };
 
+  const handleMultipleDelete = () => {
+    console.log('handleMultipleDelete');
+    console.log('ids to delete', selectedRows);
+  };
+
   return (
     <AcSection spacing>
       <AcContainer>
@@ -116,7 +155,10 @@ const AcBeheerVoorzieningenAanbod = () => {
             <Heading>{LABELS.BEHEER_VOORZIENINGEN_AANBOD}</Heading>
 
             <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton>do something</PrimaryActionButton>
+              <PrimaryActionButton disabled={selectedRows.length === 0} onClick={handleMultipleDelete}>
+                Delete {selectedRows.length}{' '}
+                {selectedRows.length === 1 ? 'item' : 'items'}
+              </PrimaryActionButton>
             </AcFlex>
 
             <Table>
