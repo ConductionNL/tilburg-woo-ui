@@ -78,18 +78,12 @@ const PERSON_ADD = loadable(() =>
 
 const WORLD = loadable(() => import('-!svg-react-loader!@assets/images/world.svg'));
 const USER = loadable(() => import('-!svg-react-loader!@assets/images/user.svg'));
-const USERS = loadable(() =>
-  import('-!svg-react-loader!@assets/images/users.svg')
-);
+const USERS = loadable(() => import('-!svg-react-loader!@assets/images/users.svg'));
 const BUILDING = loadable(() =>
   import('-!svg-react-loader!@assets/images/building.svg')
 );
-const TRUCK = loadable(() =>
-  import('-!svg-react-loader!@assets/images/truck.svg')
-);
-const CUBE = loadable(() =>
-  import('-!svg-react-loader!@assets/images/cube.svg')
-);
+const TRUCK = loadable(() => import('-!svg-react-loader!@assets/images/truck.svg'));
+const CUBE = loadable(() => import('-!svg-react-loader!@assets/images/cube.svg'));
 const HAND_HOLDING = loadable(() =>
   import('-!svg-react-loader!@assets/images/hand-holding.svg')
 );
@@ -106,6 +100,18 @@ const THEMES = loadable(() =>
 
 const DOWNLOAD = loadable(() =>
   import('-!svg-react-loader!@assets/images/download.svg')
+);
+
+const UPLOAD = loadable(() =>
+  import('-!svg-react-loader!@assets/images/upload.svg')
+);
+
+const CLOUD = loadable(() =>
+  import('-!svg-react-loader!@assets/images/cloud.svg')
+);
+
+const CIRCLE_CHECK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/circle-check.svg')
 );
 
 export const VISUALS = {
@@ -150,6 +156,9 @@ export const VISUALS = {
   PARTICLES,
   THEMES,
   DOWNLOAD,
+  UPLOAD,
+  CLOUD,
+  CIRCLE_CHECK,
 };
 
 export default {};

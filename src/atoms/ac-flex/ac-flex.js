@@ -8,7 +8,7 @@ import clsx from 'clsx';
  * @param {'xs'|'sm'|'md'|'lg'|'xl'|'xxl'} [props.spacing] - Gap spacing between flex items
  * @param {'xs'|'sm'|'md'|'lg'|'xl'|'xxl'} [props.margin] - Margin around the flex container
  * @param {'center'|'between'|'start'|'end'} [props.justifyContent] - Justify-content alignment
- * @param {'center'} [props.alignItems] - Align-items alignment
+ * @param {'center'|'start'|'end'} [props.alignItems] - Align-items alignment
  * @param {boolean} [props.wrap] - Whether items should wrap to next line
  * @param {boolean} [props.grow] - Whether container should grow to fill space
  * @param {string} [props.className] - Additional CSS class names
