@@ -277,7 +277,8 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const [syncGemmaSuccess, setSyncGemmaSuccess] = useState(false);
 
   const syncGemma = async () => {
-    const baseUrl = config.mijnOmgeving.baseURL;
+    // const baseUrl = config.mijnOmgeving.baseURL;
+    const baseUrl = 'https://vng.accept.commonground.nu/apps';
     const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
 
     try {
@@ -285,9 +286,6 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
       const response = await fetch(url, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       if (!response.ok) {
@@ -306,9 +304,44 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     }
   };
 
-  const downloadGemma = () => {
-    // fire off a request to the API to download gemma
-    console.log('downloading gemma');
+  // gemma download
+  const [downloadGemmaError, setDownloadGemmaError] = useState(null);
+
+  const downloadGemma = async () => {
+    try {
+      // const baseUrl = config.mijnOmgeving.baseURL;
+      const baseUrl = 'https://vng.accept.commonground.nu/apps';
+      const url = `${baseUrl}/openconnector/api/endpoint/model`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/xml',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const xmlData = await response.text();
+
+      // Create blob and download
+      const blob = new Blob([xmlData], { type: 'application/xml' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = 'gemma-model.xml';
+      a.click();
+
+      // Cleanup
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading GEMMA model:', error);
+      setDownloadGemmaError(error);
+      setTimeout(() => setDownloadGemmaError(null), 2500);
+      return;
+    }
   };
 
   return (
@@ -430,9 +463,10 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
             </AcButton>
           </AcFlex>
 
-          <AcFlex spacing='sm' justifyContent='end'>
+          <AcFlex column spacing='sm' alignItems='end'>
             {syncGemmaSuccess && <Paragraph>Succesvol gemma ingelezen.</Paragraph>}
             {syncGemmaError && <Paragraph>Fout bij gemma inlezen.</Paragraph>}
+            {downloadGemmaError && <Paragraph>Fout bij gemma downloaden.</Paragraph>}
           </AcFlex>
         </AcFlex>
 
