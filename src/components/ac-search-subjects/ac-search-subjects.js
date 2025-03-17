@@ -17,7 +17,7 @@ const AcSearchSubjects = ({ store: { publications, themes } }) => {
 
   return (
     <>
-      <Heading level={4}>{LABELS.THEMES}</Heading>
+      <Heading level={4}>{LABELS.THEMES_BUTTON}</Heading>
 
       {all_themes?.map((theme) => (
         <AcCheckbox

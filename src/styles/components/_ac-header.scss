@@ -12,10 +12,6 @@
     --navigation-bar-height: 72px;
 
     padding-inline: 0;
-
-    &:has(button[aria-expanded='true']) {
-      border-bottom: 2px solid var(--tilburg-color-blue-500);
-    }
   }
 
   .container {
@@ -36,7 +32,6 @@
   .logo-container {
     display: flex;
     align-items: center;
-    gap: var(--tilburg-space-column-rat);
     text-decoration: none;
 
     &:where(:hover, :focus-visible) {
@@ -52,12 +47,16 @@
 
   .logo-text {
     color: var(--tilburg-color-white);
-    font-size: var(--tilburg-typography-font-size-xl);
+    font-size: var(--tilburg-typography-font-size-lg);
     font-weight: var(--tilburg-typography-font-weight-bold);
     font-family: var(--tilburg-typography-font-family-primary), sans-serif;
     text-decoration: none;
     text-transform: uppercase;
     text-wrap: balance;
+
+    @include respond-max($screen-lg) {
+      font-size: var(--tilburg-typography-font-size-md);
+    }
   }
 
   &__navigation-secondary {

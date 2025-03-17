@@ -39,6 +39,8 @@ export const LABELS = {
   DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
   SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',
   SEARCH_RESULTS_LOADED: 'Zoekresulten geladen',
+  SEARCH_DATE_FILTER: 'Zoek op gekozen datum',
+  SEARCH_DATE: 'Publicatiedatum',
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
@@ -55,6 +57,7 @@ export const LABELS = {
   VIEW_DOCUMENTS: 'Bekijk de documenten',
 
   THEMES: 'Zoeken op onderwerp',
+  THEMES_BUTTON: 'Onderwerpen',
   ABOUT_CATEGORIES: 'Over categorieën',
 
   // Navigation & Footer Labels

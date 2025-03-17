@@ -73,10 +73,13 @@
     min-block-size: calc(100dvh - var(--header-height));
     padding-block-start: var(--tilburg-space-row-cat);
     padding-inline: var(--tilburg-space-row-rat);
+
+    .utrecht-paragraph {
+      font-size: var(--tilburg-typography-font-size-md);
+    }
   }
 }
 
 body:has(.ac-drawer[open]) {
   overflow-y: clip;
 }
-

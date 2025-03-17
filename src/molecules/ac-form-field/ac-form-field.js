@@ -1,7 +1,7 @@
 import {
   FormField,
   FormLabel,
-  Heading,
+  Paragraph,
   Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
 import clsx from 'clsx';
@@ -65,7 +65,7 @@ const AcFormField = ({
   return (
     <FormField type={type}>
       <FormLabel htmlFor={id}>
-        <Heading level={4}>{label}</Heading>
+        <Paragraph level={4}>{label}</Paragraph>
       </FormLabel>
       <Textbox {...inputProps} />
     </FormField>

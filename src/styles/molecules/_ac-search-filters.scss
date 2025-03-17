@@ -11,7 +11,7 @@
     }
   }
 
-  :is(h3, h4) {
+  :is(h3, h4, p:not(:has([class*='--checkbox']))) {
     margin-block-end: var(--tilburg-space-block-beetle);
   }
 
