@@ -77,6 +77,11 @@ const AcGemma = ({ store: { gemma } }) => {
     });
 
     const getViewRelationsData = new Promise((resolve, reject) => {
+      if (gemma.get_view.connections.length === 0) {
+        resolve();
+        return;
+      }
+
       gemma.get_view.connections.forEach(async (relationship, index, array) => {
         const response = await fetch(
           `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
@@ -104,7 +109,6 @@ const AcGemma = ({ store: { gemma } }) => {
             parentChildCount[ref] = (parentChildCount[ref] || 0) + 1;
           });
         });
-        console.log('parentChildCount', parentChildCount);
 
         gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
           voorziening.referentieComponenten.forEach((ref) => {
@@ -123,7 +127,6 @@ const AcGemma = ({ store: { gemma } }) => {
               (v) => v.id === voorziening.id
             );
             const totalChildren = parentChildCount[ref];
-            console.log('totalChildren', totalChildren);
 
             const PARENT_PADDING = 20;
             const CHILD_SPACING = 8;
@@ -160,8 +163,6 @@ const AcGemma = ({ store: { gemma } }) => {
       });
 
       voorzieningGebruik.finally(() => {
-        console.log({ viewNodesData });
-
         console.info('Finished fetching view node data, applying after delay');
         setTimeout(() => {
           setViewNodesData(viewNodesData);
@@ -172,7 +173,11 @@ const AcGemma = ({ store: { gemma } }) => {
     getViewRelationsData.finally(() => {
       console.info('Finished fetching view relations data, applying after delay');
       setTimeout(() => {
-        setViewRelationsData(viewRelationsData);
+        if (gemma.get_view.connections.length > 0) {
+          setViewRelationsData(viewRelationsData);
+        } else {
+          setViewRelationsData([]);
+        }
       }, 2000);
     });
   }, [gemma.get_view]);
@@ -296,9 +301,12 @@ const AcGemma = ({ store: { gemma } }) => {
       };
     };
 
-    const viewRelationshipsArray = gemma.get_view.connections.map(
-      (relationship, idx) => convertToViewRelationship(relationship, idx)
-    );
+    const viewRelationshipsArray =
+      gemma.get_view.connections.length > 0
+        ? gemma.get_view.connections.map((relationship, idx) =>
+            convertToViewRelationship(relationship, idx)
+          )
+        : [];
 
     const viewRelationships = viewRelationshipsArray.filter(
       (relationship) => relationship !== undefined
@@ -332,7 +340,7 @@ const AcGemma = ({ store: { gemma } }) => {
       setSvgViewBox(node);
     });
 
-    setViewIsDoneLoading(true);
+    viewNodes && viewRelationships && setViewIsDoneLoading(true);
   }, [viewNodesData, viewRelationsData]);
 
   const setSvgViewBox = (svg) => {
@@ -662,14 +670,7 @@ const AcGemma = ({ store: { gemma } }) => {
             <div className='ac-gemma-view-header'>
               <h1>{gemma.get_view.name}</h1>
               <PrimaryActionButton
-                disabled={
-                  !gemma.get_view ||
-                  (gemma.get_view &&
-                    !viewNodesData &&
-                    !viewRelationsData &&
-                    !viewIsDoneLoading &&
-                    !document.getElementById('svg-container'))
-                }
+                disabled={!gemma.get_view || (gemma.get_view && !viewIsDoneLoading)}
                 onClick={() => downloadSvg()}
               >
                 <VISUALS.DOWNLOAD /> Download SVG
@@ -686,14 +687,11 @@ const AcGemma = ({ store: { gemma } }) => {
             !viewIsDoneLoading && (
               <div className='ac-gemma-graph-container-loading' />
             )}
-          {gemma.get_view &&
-            !viewNodesData &&
-            !viewRelationsData &&
-            !viewIsDoneLoading && (
-              <div className='ac-gemma-graph-container-loading'>
-                <AcLoader className='ac-gemma-graph-container-loading-loader' />
-              </div>
-            )}
+          {gemma.get_view && !viewIsDoneLoading && (
+            <div className='ac-gemma-graph-container-loading'>
+              <AcLoader className='ac-gemma-graph-container-loading-loader' />
+            </div>
+          )}
         </>
       )}
     </AcContainer>
