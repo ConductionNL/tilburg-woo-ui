@@ -37,6 +37,107 @@
 
 .ac-gemma-select {
   margin-block-end: 25px;
+  max-width: 400px;
+}
+
+.ac-gemma-select > div {
+  background-color: var(
+    --utrecht-select-background-color,
+    var(--utrecht-form-control-background-color)
+  );
+  border-block-end-width: var(
+    --utrecht-select-border-block-end-width,
+    var(--utrecht-select-border-width, var(--utrecht-form-control-border-width))
+  );
+  border-block-start-width: var(
+    --utrecht-select-border-width,
+    var(--utrecht-form-control-border-width)
+  );
+  border-color: var(
+    --utrecht-select-border-color,
+    var(--utrecht-form-control-border-color)
+  );
+  border-inline-end-width: var(
+    --utrecht-select-border-width,
+    var(--utrecht-form-control-border-width)
+  );
+  border-inline-start-width: var(
+    --utrecht-select-border-width,
+    var(--utrecht-form-control-border-width)
+  );
+  border-radius: var(
+    --utrecht-select-border-radius,
+    var(--utrecht-form-control-border-radius, 0)
+  );
+  border-style: solid;
+  color: var(--utrecht-select-color, var(--utrecht-form-control-color));
+  font-family: var(
+    --utrecht-select-font-family,
+    var(--utrecht-form-control-font-family)
+  );
+  font-size: var(--utrecht-select-font-size, var(--utrecht-form-control-font-size));
+  font-weight: var(
+    --utrecht-select-font-size,
+    var(--utrecht-form-control-font-weight, initial)
+  );
+  inline-size: 100%;
+  line-height: var(
+    --utrecht-select-line-height,
+    var(--utrecht-form-control-line-height, initial)
+  );
+  max-inline-size: var(
+    --utrecht-select-max-inline-size,
+    var(--utrecht-form-control-max-inline-size)
+  );
+  min-block-size: var(
+    --utrecht-select-min-block-size,
+    var(--utrecht-pointer-target-min-size, 44px)
+  );
+  min-inline-size: var(--utrecht-pointer-target-min-size, 44px);
+}
+
+.ac-gemma-select > div > div > div {
+  color: var(--utrecht-select-color, var(--utrecht-form-control-color)) !important;
+  font-family: var(
+    --utrecht-select-font-family,
+    var(--utrecht-form-control-font-family)
+  );
+  font-size: var(--utrecht-select-font-size, var(--utrecht-form-control-font-size));
+  font-weight: var(
+    --utrecht-select-font-size,
+    var(--utrecht-form-control-font-weight, initial)
+  );
+  inline-size: 100%;
+  line-height: var(
+    --utrecht-select-line-height,
+    var(--utrecht-form-control-line-height, initial)
+  );
+}
+
+.ac-gemma-select.error > div {
+  border-color: var(--conduction-input-select-invalid-border-color);
+}
+
+.ac-gemma-select .ac-gemma-select > div:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+.ac-gemma-select * input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ac-gemma-select > div:focus-within::after {
+  content: '';
+  display: block;
+  position: absolute;
+  pointer-events: none;
+  bottom: calc(var(--skeleton-size-2xs) * -1);
+  left: calc(var(--skeleton-size-2xs) * -1);
+  right: calc(var(--skeleton-size-2xs) * -1);
+  top: calc(var(--skeleton-size-2xs) * -1);
+  border: var(--conduction-input-select-border-focus);
+  border-radius: var(--conduction-input-select-border-radius);
 }
 
 .ac-gemma-view-header {

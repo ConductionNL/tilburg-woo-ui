@@ -1883,6 +1883,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/runtime@npm:^7.12.0, @babel/runtime@npm:^7.21.0":
+  version: 7.26.10
+  resolution: "@babel/runtime@npm:7.26.10"
+  dependencies:
+    regenerator-runtime: "npm:^0.14.0"
+  checksum: 10c0/6dc6d88c7908f505c4f7770fb4677dfa61f68f659b943c2be1f2a99cb6680343462867abf2d49822adc435932919b36c77ac60125793e719ea8745f2073d3745
+  languageName: node
+  linkType: hard
+
 "@babel/template@npm:^7.22.5, @babel/template@npm:^7.25.9, @babel/template@npm:^7.3.3":
   version: 7.25.9
   resolution: "@babel/template@npm:7.25.9"
@@ -2518,7 +2527,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/cache@npm:^11.14.0":
+"@emotion/cache@npm:^11.14.0, @emotion/cache@npm:^11.4.0":
   version: 11.14.0
   resolution: "@emotion/cache@npm:11.14.0"
   dependencies:
@@ -2545,7 +2554,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emotion/react@npm:^11.11.1":
+"@emotion/react@npm:^11.11.1, @emotion/react@npm:^11.8.1":
   version: 11.14.0
   resolution: "@emotion/react@npm:11.14.0"
   dependencies:
@@ -2667,7 +2676,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^1.6.1":
+"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.6.1":
   version: 1.6.13
   resolution: "@floating-ui/dom@npm:1.6.13"
   dependencies:
@@ -4568,6 +4577,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-transition-group@npm:^4.4.0":
+  version: 4.4.12
+  resolution: "@types/react-transition-group@npm:4.4.12"
+  peerDependencies:
+    "@types/react": "*"
+  checksum: 10c0/0441b8b47c69312c89ec0760ba477ba1a0808a10ceef8dc1c64b1013ed78517332c30f18681b0ec0b53542731f1ed015169fed1d127cc91222638ed955478ec7
+  languageName: node
+  linkType: hard
+
 "@types/resolve@npm:1.17.1":
   version: 1.17.1
   resolution: "@types/resolve@npm:1.17.1"
@@ -4833,6 +4851,227 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@utrecht/accordion-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/accordion-css@npm:1.6.0"
+  checksum: 10c0/10c768c21632f75caaee30b376ec54cf7d30ccd2055478dccfbc2c0fe1aa09e41f9e74cc7a8e91d005a3f8817c5466a136d828cb37c63c8484c4c27f7193b746
+  languageName: node
+  linkType: hard
+
+"@utrecht/alert-css@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@utrecht/alert-css@npm:2.2.0"
+  checksum: 10c0/c47385696037d6fd492dc187c6ceb43732054d8000d9c627c6ffdc0ef200255d81bedb581c050e94ca387081dad48b79cb0f9b49270a48c996932eb3b49cbc01
+  languageName: node
+  linkType: hard
+
+"@utrecht/alert-dialog-css@npm:1.4.1":
+  version: 1.4.1
+  resolution: "@utrecht/alert-dialog-css@npm:1.4.1"
+  checksum: 10c0/07d26736bb3667106c5557bb997e1e8fc2762dc8058041efc80373c412fd9f360c22ff18f2e8d071c2467e8062575af38eab392dc7822ec431eb3cf9243525af
+  languageName: node
+  linkType: hard
+
+"@utrecht/alternate-lang-nav-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/alternate-lang-nav-css@npm:1.3.0"
+  checksum: 10c0/e4e7b22a6558695f1349fc6ea5f78e94c298a71ed44d61f564f525c39d1fd2a8888cefabc7e38a6bb4fb9d93924d852d8e0a4f09557b98fcfd12379a3525c842
+  languageName: node
+  linkType: hard
+
+"@utrecht/article-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/article-css@npm:1.5.0"
+  checksum: 10c0/5c89ece9a92abf0176e51cdb12695a478ff1daac2cc0a6edd39318004c3988f8c4b2a27e1d9feb2d83e5cc05e216b0dcee325571257e195b8f13feb7e0db5e78
+  languageName: node
+  linkType: hard
+
+"@utrecht/backdrop-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/backdrop-css@npm:1.4.0"
+  checksum: 10c0/49197887043068f92d92f547759cd30e6d014265b6b03ed8c785054e41a52f51f1b76030eed01c0a6a8b034aa87312580920cd498a43909a7eb24b3c64674abf
+  languageName: node
+  linkType: hard
+
+"@utrecht/badge-counter-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/badge-counter-css@npm:1.4.0"
+  checksum: 10c0/2f9f677ddc4c96a756d9be04b6528249c4e85cbe51c8162b1b82a11998889c1d8a0e7b0af818aade43d7ac94e80efb89d538a3c654d3ae2d0f9c0f5c04e8bc47
+  languageName: node
+  linkType: hard
+
+"@utrecht/badge-list-css@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@utrecht/badge-list-css@npm:2.2.0"
+  checksum: 10c0/fcdc86f05a951b16ba8894c7271ae4e5a4a97b8c4a70b310532ba79ed7d0707e55fc181fbd2baaf53e1cfe0d1070d151542dade0b0a0b22f96ae6684a42f729c
+  languageName: node
+  linkType: hard
+
+"@utrecht/badge-status-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/badge-status-css@npm:1.4.0"
+  checksum: 10c0/d18ee4915154383acda8505941f6dafabb71eae5d27e37319e43e6d267fa94ffcf36dc1d6a1e2caf993c251a4c0c30d1040e3a72c999853d0e085f763b04d9fc
+  languageName: node
+  linkType: hard
+
+"@utrecht/blockquote-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/blockquote-css@npm:1.6.0"
+  checksum: 10c0/98501cf1f14ed5bbf6682105d37403b4db8b748d1a094c023b9c05621358df4ee3c5a5e41f491d4f84d7ba16f30ddfec65ff6065dc01103ed21735f433cff568
+  languageName: node
+  linkType: hard
+
+"@utrecht/breadcrumb-nav-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/breadcrumb-nav-css@npm:1.4.0"
+  checksum: 10c0/a9028a764b52c239f7615af46a92dc511e4825efde169c8f96138a40d0a0cd6b26ff2396731805af9c5891b75f6549a1ee40db06379194d297f8819b3a18af11
+  languageName: node
+  linkType: hard
+
+"@utrecht/button-css@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@utrecht/button-css@npm:2.3.0"
+  checksum: 10c0/0a3c78292bc9f3d2e764fb8830710b6e04b78feb36754413ee1493db7983771b51d52f9febe2dcaf863030b217b2f1db479b325726fd921c91824f5591177088
+  languageName: node
+  linkType: hard
+
+"@utrecht/button-group-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/button-group-css@npm:1.4.0"
+  checksum: 10c0/9dcbde16b762f846e3a80f49a2d6d3090e49b51a2065fdea1e7e42f84f02608f49d7a24e309c3faaf24f5f7460d302898dfecd9cf68a410d716135f0d9530e70
+  languageName: node
+  linkType: hard
+
+"@utrecht/button-group-react@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@utrecht/button-group-react@npm:1.0.0"
+  dependencies:
+    "@utrecht/button-group-css": "npm:1.4.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/66c9015ebf280bc877b5a6bf6b25b379a7c2f477df9efd073ed2d3420259e7dc3dbc91e724f471fa225c23712bc9dd168504f5ce1f030c966dd858b31bceec89
+  languageName: node
+  linkType: hard
+
+"@utrecht/button-link-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/button-link-css@npm:1.3.0"
+  checksum: 10c0/62257189cf3cbf0afb2c5014178268e1becda2d283857825cc72609387ac46c1fa5219a1bec91b17a797ee2a9884b6a837d423584c49063a474a48d5b5551ff7
+  languageName: node
+  linkType: hard
+
+"@utrecht/button-react@npm:2.0.6":
+  version: 2.0.6
+  resolution: "@utrecht/button-react@npm:2.0.6"
+  dependencies:
+    "@utrecht/button-css": "npm:2.3.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/e5a6611610f93db437767e3e1272e6714ef86b0f44a6dace4fee247de09bc61b619911d4f7dca19476d23c85d4ea913204f82f95e1ac7507ce78563e7933d50d
+  languageName: node
+  linkType: hard
+
+"@utrecht/calendar-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/calendar-css@npm:1.4.0"
+  checksum: 10c0/e3a8b05ffe1dc80448e4e96905d3dc5cd9ba318c81deb9ab6af6fef976bd18d78bd1e16fd32f7396b5d84cda1335f934a58f2e66cdfc1f92bb164510bc955ef9
+  languageName: node
+  linkType: hard
+
+"@utrecht/calendar-react@npm:1.0.10":
+  version: 1.0.10
+  resolution: "@utrecht/calendar-react@npm:1.0.10"
+  dependencies:
+    "@utrecht/button-react": "npm:2.0.6"
+    "@utrecht/calendar-css": "npm:1.4.0"
+    clsx: "npm:2.1.1"
+    date-fns: "npm:2.30.0"
+    lodash-es: "npm:4.17.21"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/f31db26b0d49397a7984b695111174179339fa56da1a04f8c10d70be8f24df8bcb1434e7625336dba6d4ad39cd783a5039da438b88d25655f8dd3a79b841631c
+  languageName: node
+  linkType: hard
+
+"@utrecht/checkbox-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/checkbox-css@npm:1.6.0"
+  checksum: 10c0/af2495da8afb20915ef717cabc7a70ba4e4ba14a777699880c29258860f7c0b364141e06fd749ebd7691f68898f023f745999bc4236d2df96654981058dfcec0
+  languageName: node
+  linkType: hard
+
+"@utrecht/checkbox-react@npm:1.0.7":
+  version: 1.0.7
+  resolution: "@utrecht/checkbox-react@npm:1.0.7"
+  dependencies:
+    "@utrecht/checkbox-css": "npm:1.6.0"
+    "@utrecht/custom-checkbox-css": "npm:1.3.1"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/b8bcc820483994b873247164e64a111d0076feddc78446aa405baa06a287221668646d4be203467d17ad22357b5080a737dd09a43696ac44e00555ec4ad19cd4
+  languageName: node
+  linkType: hard
+
+"@utrecht/code-block-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/code-block-css@npm:1.5.0"
+  checksum: 10c0/3235839a64a58dee65897974e249ec61ed36a4e55188dd876778fa9acc5b1c4575caa267b28ccd1131c28c72cbabf53863bbe80464f53b0d18e89e16bdce8e39
+  languageName: node
+  linkType: hard
+
+"@utrecht/code-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/code-css@npm:1.5.0"
+  checksum: 10c0/84e395d97c3c84e427b0975ae83f61d377c419b916935c69ade04526c1cea46be35ea5fe07b419945a29b7ce8af4a08cddaf074b813a250209b7f5ce49886c65
+  languageName: node
+  linkType: hard
+
+"@utrecht/color-sample-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/color-sample-css@npm:1.4.0"
+  checksum: 10c0/61b274acc96e64bd0361c3055e0be21fc004aebab2a783a162f786c5847d193c879894340195c19f6376a570057ca733bd0025f05b189aef99ff20e7c7ad029e
+  languageName: node
+  linkType: hard
+
+"@utrecht/column-layout-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/column-layout-css@npm:1.5.0"
+  checksum: 10c0/fd29f4b55c72b8737729da638b9d59b819e5799a4d1168390ca1cb8675deb3914c0d9bc239e253a27cd2f54b381856863119d9af349997d70dc399c02bdee2be
+  languageName: node
+  linkType: hard
+
+"@utrecht/combobox-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/combobox-css@npm:1.4.0"
+  checksum: 10c0/8da5ae485f11696b7114a4ec704fb9f03c37ecf58cfb7ec440a0f4b6ff3d5c075a9ef3c284e772e87cf959d83acebd3aeb4454a4d1e5689dee75d2d69721ac30
+  languageName: node
+  linkType: hard
+
+"@utrecht/combobox-react@npm:0.0.7":
+  version: 0.0.7
+  resolution: "@utrecht/combobox-react@npm:0.0.7"
+  dependencies:
+    "@utrecht/combobox-css": "npm:1.4.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": ^7.23.6
+    react: 18
+    react-dom: 18
+  checksum: 10c0/8338b7f79972f4bca1266e91773fc87c977819d75b594838da7326af234e63a31e2e004af23b6b9fa0d9d7b79b8b1da8433c7e8302e7b1b2727362b6d7a19781
+  languageName: node
+  linkType: hard
+
 "@utrecht/component-library-css@npm:4.1.0":
   version: 4.1.0
   resolution: "@utrecht/component-library-css@npm:4.1.0"
@@ -4936,13 +5175,111 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@utrecht/component-library-react@npm:^3.0.1-alpha.41":
-  version: 3.1.0
-  resolution: "@utrecht/component-library-react@npm:3.1.0"
+"@utrecht/component-library-react@npm:9.0.3":
+  version: 9.0.3
+  resolution: "@utrecht/component-library-react@npm:9.0.3"
   dependencies:
-    clsx: "npm:1.2.1"
+    "@utrecht/accordion-css": "npm:1.6.0"
+    "@utrecht/alert-css": "npm:2.2.0"
+    "@utrecht/alert-dialog-css": "npm:1.4.1"
+    "@utrecht/alternate-lang-nav-css": "npm:1.3.0"
+    "@utrecht/article-css": "npm:1.5.0"
+    "@utrecht/backdrop-css": "npm:1.4.0"
+    "@utrecht/badge-counter-css": "npm:1.4.0"
+    "@utrecht/badge-list-css": "npm:2.2.0"
+    "@utrecht/badge-status-css": "npm:1.4.0"
+    "@utrecht/blockquote-css": "npm:1.6.0"
+    "@utrecht/breadcrumb-nav-css": "npm:1.4.0"
+    "@utrecht/button-group-react": "npm:1.0.0"
+    "@utrecht/button-link-css": "npm:1.3.0"
+    "@utrecht/button-react": "npm:2.0.6"
+    "@utrecht/calendar-react": "npm:1.0.10"
+    "@utrecht/checkbox-react": "npm:1.0.7"
+    "@utrecht/code-block-css": "npm:1.5.0"
+    "@utrecht/code-css": "npm:1.5.0"
+    "@utrecht/color-sample-css": "npm:1.4.0"
+    "@utrecht/column-layout-css": "npm:1.5.0"
+    "@utrecht/combobox-react": "npm:0.0.7"
+    "@utrecht/currency-data-css": "npm:1.3.0"
+    "@utrecht/custom-checkbox-css": "npm:1.3.1"
+    "@utrecht/data-badge-css": "npm:1.0.0"
+    "@utrecht/data-badge-react": "npm:1.0.3"
+    "@utrecht/data-list-css": "npm:1.4.0"
+    "@utrecht/data-placeholder-css": "npm:1.4.0"
+    "@utrecht/digid-button-css": "npm:1.4.0"
+    "@utrecht/document-css": "npm:1.5.0"
+    "@utrecht/drawer-css": "npm:1.4.0"
+    "@utrecht/emphasis-css": "npm:1.5.0"
+    "@utrecht/fieldset-react": "npm:1.0.6"
+    "@utrecht/figure-css": "npm:1.5.0"
+    "@utrecht/focus-ring-css": "npm:2.3.0"
+    "@utrecht/form-field-checkbox-react": "npm:1.0.9"
+    "@utrecht/form-field-description-react": "npm:1.0.6"
+    "@utrecht/form-field-error-message-react": "npm:1.0.6"
+    "@utrecht/form-field-react": "npm:1.0.6"
+    "@utrecht/form-label-react": "npm:1.0.6"
+    "@utrecht/form-toggle-css": "npm:1.5.0"
+    "@utrecht/heading-1-css": "npm:1.5.0"
+    "@utrecht/heading-2-css": "npm:1.5.0"
+    "@utrecht/heading-3-css": "npm:1.5.0"
+    "@utrecht/heading-4-css": "npm:1.5.0"
+    "@utrecht/heading-5-css": "npm:1.5.0"
+    "@utrecht/heading-6-css": "npm:1.5.0"
+    "@utrecht/heading-group-css": "npm:1.5.0"
+    "@utrecht/html-content-css": "npm:1.4.0"
+    "@utrecht/iban-data-css": "npm:1.3.0"
+    "@utrecht/icon-css": "npm:2.0.0"
+    "@utrecht/img-css": "npm:1.3.0"
+    "@utrecht/index-char-nav-css": "npm:1.4.0"
+    "@utrecht/link-button-css": "npm:1.4.0"
+    "@utrecht/link-list-css": "npm:2.3.0"
+    "@utrecht/link-react": "npm:1.0.6"
+    "@utrecht/link-social-css": "npm:1.4.0"
+    "@utrecht/list-social-css": "npm:1.4.0"
+    "@utrecht/listbox-react": "npm:1.0.9"
+    "@utrecht/logo-button-css": "npm:1.4.0"
+    "@utrecht/logo-css": "npm:1.4.0"
+    "@utrecht/logo-image-css": "npm:1.4.0"
+    "@utrecht/map-control-button-css": "npm:2.2.0"
+    "@utrecht/map-marker-css": "npm:1.4.0"
+    "@utrecht/mark-css": "npm:1.5.0"
+    "@utrecht/multiline-data-css": "npm:1.3.0"
+    "@utrecht/nav-bar-css": "npm:1.4.0"
+    "@utrecht/nav-list-css": "npm:1.3.0"
+    "@utrecht/number-badge-css": "npm:2.3.0"
+    "@utrecht/number-data-css": "npm:1.4.0"
+    "@utrecht/ordered-list-css": "npm:1.5.1"
+    "@utrecht/page-content-css": "npm:1.4.0"
+    "@utrecht/page-css": "npm:1.4.0"
+    "@utrecht/page-footer-css": "npm:2.1.0"
+    "@utrecht/page-header-css": "npm:1.5.0"
+    "@utrecht/pagination-css": "npm:1.4.0"
+    "@utrecht/paragraph-css": "npm:2.3.0"
+    "@utrecht/pre-heading-css": "npm:1.4.0"
+    "@utrecht/preserve-data-css": "npm:1.3.0"
+    "@utrecht/radio-button-react": "npm:1.0.6"
+    "@utrecht/rich-text-css": "npm:1.3.0"
+    "@utrecht/search-bar-css": "npm:2.2.0"
+    "@utrecht/select-css": "npm:1.8.0"
+    "@utrecht/separator-css": "npm:1.5.0"
+    "@utrecht/skip-link-css": "npm:1.5.0"
+    "@utrecht/spotlight-section-css": "npm:1.6.0"
+    "@utrecht/subscript-css": "npm:1.3.0"
+    "@utrecht/superscript-css": "npm:1.3.0"
+    "@utrecht/surface-css": "npm:1.4.0"
+    "@utrecht/table-css": "npm:1.5.0"
+    "@utrecht/table-of-contents-css": "npm:0.3.0"
+    "@utrecht/textarea-css": "npm:2.3.0"
+    "@utrecht/textbox-react": "npm:1.0.6"
+    "@utrecht/top-task-link-css": "npm:1.4.0"
+    "@utrecht/top-task-nav-css": "npm:1.3.0"
+    "@utrecht/unordered-list-css": "npm:1.5.0"
+    "@utrecht/url-data-css": "npm:1.3.0"
+    "@utrecht/vega-visualization-css": "npm:1.4.0"
+    clsx: "npm:2.1.1"
     lodash.chunk: "npm:4.2.0"
   peerDependencies:
+    "@babel/runtime": ^7.23.6
     date-fns: ^2.30.0
     react: 18
     react-dom: 18
@@ -4955,7 +5292,7 @@ __metadata:
       optional: true
     vega:
       optional: true
-  checksum: 10c0/3231758a9c0eea78a6475c57e85054b4f327e9c6bc1eade90d85ce979678fb8e199f3b728bbbd9118467ca1ecf7ae2b44e0b54ac149485223a90090ab9223f56
+  checksum: 10c0/e9358da56426561affbc76e0c7be5dbfb3058e89865be784946a3f978a30a4672dcf7c6a68687e5704a5a5633042f78914104de807b4f786cf18e99d95a3364a
   languageName: node
   linkType: hard
 
@@ -5001,6 +5338,682 @@ __metadata:
   dependencies:
     clsx: "npm:1.2.1"
   checksum: 10c0/4a7f3e9163ee2ef391105a2bcbc090234c761ed68b71d7f99e6f1d2b4f19d7cb8745e237c76c036a4c5dfed873ebdaf7ba0d0937695dc5e3a12e0d88dd1477c1
+  languageName: node
+  linkType: hard
+
+"@utrecht/currency-data-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/currency-data-css@npm:1.3.0"
+  checksum: 10c0/94b616938cc77e16c7c055ecf35d4c0c21a91928eb61418d32526a6f3dbb7a24521a4ffb7e9e9fc0a0de81adba87e9a54c8a0a23aa488edd7d5572bd881adef2
+  languageName: node
+  linkType: hard
+
+"@utrecht/custom-checkbox-css@npm:1.3.1":
+  version: 1.3.1
+  resolution: "@utrecht/custom-checkbox-css@npm:1.3.1"
+  checksum: 10c0/70b3b62d13bb9fdab68f6029788d2284310a1f4cd1adbc425db42409beb936ec2b61126f8cb9ccdcdc1a673dc875dd965afef8d10eb0792d5b0109424ac767ca
+  languageName: node
+  linkType: hard
+
+"@utrecht/data-badge-css@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@utrecht/data-badge-css@npm:1.0.0"
+  checksum: 10c0/d01f66739fc0e863e04a362bb82d863afa3fb9272d177e2018dc310d5efed93cf8f633edd262513b8b7069fc4ac8bba75d69581ee436e162a51b0b7f6c6d6000
+  languageName: node
+  linkType: hard
+
+"@utrecht/data-badge-react@npm:1.0.3":
+  version: 1.0.3
+  resolution: "@utrecht/data-badge-react@npm:1.0.3"
+  dependencies:
+    "@utrecht/data-badge-css": "npm:1.0.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/8de2fdbfbb99283783965b7cd0d0b6bbaf14f098371e6141a2232b46ab26bc6cc266d98b84595cbc741df4b25562a7383f314a349e3f247294dfa16b795bbda0
+  languageName: node
+  linkType: hard
+
+"@utrecht/data-list-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/data-list-css@npm:1.4.0"
+  checksum: 10c0/f394d62e62f2ab9dab049743eb4b21028a35fe8b4380f0eb1188169e9ae3f2258be814edf30895273d7998c44b824a30a6d5284fe12f3b33f96a74ead97ddd35
+  languageName: node
+  linkType: hard
+
+"@utrecht/data-placeholder-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/data-placeholder-css@npm:1.4.0"
+  checksum: 10c0/c176cd5a59bc3f782eaf9ebe0b43111713c043a6f437ff8519d2014df2d867a3c42c9fa6e8e57deed39b3e543206cc453d81d51de688b3107c48afb2c7a67925
+  languageName: node
+  linkType: hard
+
+"@utrecht/digid-button-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/digid-button-css@npm:1.4.0"
+  checksum: 10c0/a57e94e80c9055681d3a8132c7c6b4297497f586b5141b032f44091000bf6cca6c488358074f6470db93c7636299abad8328bfb097b8449d57a920a4be39eef6
+  languageName: node
+  linkType: hard
+
+"@utrecht/document-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/document-css@npm:1.5.0"
+  checksum: 10c0/82b7b8f22643e2351ffc76aeae7759b3a1344604dd8acff685754c66d5c4e1e7b3e474585ed921ef3519fcea002ec065ed0441deff2a76805ba3dac4aa7ca2cc
+  languageName: node
+  linkType: hard
+
+"@utrecht/drawer-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/drawer-css@npm:1.4.0"
+  checksum: 10c0/1e6154fbb606d454652b004c12c104e276b88aba8aeb001a162f9e941bbb5a33a7d8faa7062caa7021cfcefbc5285a0bfc309b81782a1a4f9e7490229c785599
+  languageName: node
+  linkType: hard
+
+"@utrecht/emphasis-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/emphasis-css@npm:1.5.0"
+  checksum: 10c0/da0c84178cd8770f200e9d88cf4df61f4ab095002ce04f62f67211428d347041941bc035b17355ba10ed7834740636f24f4eb62b8967f2da5e29704079e41d17
+  languageName: node
+  linkType: hard
+
+"@utrecht/fieldset-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/fieldset-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/form-fieldset-css": "npm:1.5.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/e697da4bb68ca6d3fd8bc04804d203135d194b18edb08ca83c16b5ba3bc0b2aca19655232136592229edaba61fef5ba66c346a94df5a09be2ef585ff35e3a656
+  languageName: node
+  linkType: hard
+
+"@utrecht/figure-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/figure-css@npm:1.5.0"
+  checksum: 10c0/713b345b7ca3a0d1e7563d1c254f718f1ef1e070a26de6505a2c4ba86ad74c34d436cd0947ebd0d6f4cbe77dc7f85c51dc2b22b7e754bac8c54e365e1c25e701
+  languageName: node
+  linkType: hard
+
+"@utrecht/focus-ring-css@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@utrecht/focus-ring-css@npm:2.3.0"
+  checksum: 10c0/a4477bf39f18147bc01810bad11d5a9c11217bf2cc7f47c598672af1414ad28aefd434d57d3853f667cd108165aca41311b6e54973ac5c172c358dfcc352e75f
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-checkbox-react@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@utrecht/form-field-checkbox-react@npm:1.0.9"
+  dependencies:
+    "@utrecht/checkbox-react": "npm:1.0.7"
+    "@utrecht/form-field-description-react": "npm:1.0.6"
+    "@utrecht/form-field-error-message-react": "npm:1.0.6"
+    "@utrecht/form-field-react": "npm:1.0.6"
+    "@utrecht/form-label-react": "npm:1.0.6"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/ac6ff29306fdfe91dd2118e7d817dde89178e3877f4594328ed5a4eccbbad9222b0849a5089e4055bca5192b663650d9c3d36d740f5342f2fdff06a7df4fd2d8
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/form-field-css@npm:1.5.0"
+  checksum: 10c0/13ac3e33108257b4a18cba447f73e0f424fc85e532ee28f21f34a24bedba26c6088fd80d14c60cfa09a3af8619f097ce8ad318c8011bed5acc8cc68c621b4b15
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-description-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/form-field-description-css@npm:1.5.0"
+  checksum: 10c0/ab16639d6417fceb69c7d187494732b90112a94b5ad46a76154d5927894debfd202389bf0a443f5c66e15de444606b89d5ccdd4afb192f39b68eb3c308d425de
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-description-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/form-field-description-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/form-field-description-css": "npm:1.5.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/7832c7b9b96af74494d93da8f64ed865633cf1d009165d3d5fd23efe18c29241cea0acb6673f327bff6284810c39eed92b8062280946dd0098913d915ad1c0b1
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-error-message-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/form-field-error-message-css@npm:1.5.0"
+  checksum: 10c0/016bb60d5c3c1f3b037a5b3bf98f710d95bcd7c1ee43b9a10b153ad997b52772376869db5e01f640ab763215cb9d1a5310b548b616d56f33702b4c1ab1252223
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-error-message-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/form-field-error-message-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/form-field-error-message-css": "npm:1.5.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/674ffdac0fa407fc7cff82ee52cfae0856d93244855aacbd56d0f72dd817fb0940b153651ebe1b0ce3ddc94e2d0f1000dc9b63d9aa683e048d4b7833eb131b85
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-field-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/form-field-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/form-field-css": "npm:1.5.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/c29ac587c75bb292951091a3cf66e786d5738daed42638d650e447c313721d0b80c1f01c88debca05c7612a6728682b5068a65cd24f182c629b5e6d1b8afc082
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-fieldset-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/form-fieldset-css@npm:1.5.0"
+  checksum: 10c0/36eba764832adf5c95028ac1557f504d0dc3c6dd43a7af36a89714065fe3fe34fd59946f35f731f86e3ff6a437f00993d1dad34ae0256438a33d6eadce3d7a4b
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-label-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/form-label-css@npm:1.6.0"
+  checksum: 10c0/180ff7c576b5606875851d3d11cfe414c6f2f9a9cdc27e11984ed56784da403b5ff090d5d8165e074076a0e648b90fba5ef4228a8bdab4e99bd1207e2c6f8c9d
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-label-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/form-label-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/form-label-css": "npm:1.6.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/4c8d10a0ddb9bc9148fdd1ca3283a6bbb91628d45d6d43e0a7cf6814c58c824ba04507de99e42f8ba5fd6ff2219478cc2cbb414180ba55c3d8633d85a871fb24
+  languageName: node
+  linkType: hard
+
+"@utrecht/form-toggle-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/form-toggle-css@npm:1.5.0"
+  checksum: 10c0/cb0a5d2f6823948f218a4dbb7233e395a528fd14595203fccb1e0118dc6c7453cc4780e4c9f0d0a3f6abe80f2df4291bf5748f1a14730670f56e7986322ced5f
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-1-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-1-css@npm:1.5.0"
+  checksum: 10c0/37e769a3f900fce7c676adb0defd0c27814640c9418ccfdfc3e68e2352e098c9093af3966710c34fd8e180826657849baf7b2b22ae7b0efda6dbd14defbd4a71
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-2-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-2-css@npm:1.5.0"
+  checksum: 10c0/25fa566142f7bb7c5b39ce11e6f88c78aee14d3e7f6f9a6c51a413cb6a0370e458499d77eeeba92dbcbef0fccf5ea256252cb88bd4e988210bbb0d554963277c
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-3-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-3-css@npm:1.5.0"
+  checksum: 10c0/b27e7e57c6dc65396638954003b6defa0e25cfddbb510bb8ae2346ee2bebf9ce5f2acaf8906f26918acccc4dfb7dc94209b4d4640d4bab31ac6e175f05066c69
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-4-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-4-css@npm:1.5.0"
+  checksum: 10c0/adf91fff2d9629a08fd6ba8b35519b414c062d08130c376b48895b33b3b6557f8aa35c268152735b833160076a4571a29fb0ec174f98fe77e0946e2bc481708c
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-5-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-5-css@npm:1.5.0"
+  checksum: 10c0/bc55ffb6d48534eba54cb091589a76320f21a5f2add4d82af3cccfab54fd366012306c246a76ddbf72cea9faf22093e3d94e1e6d7a1919aff7fb1dd021204edf
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-6-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-6-css@npm:1.5.0"
+  checksum: 10c0/c6052fb7cb1acd0d165697db6df6f26542632cf708bb55ef191801f77f720311b6a6532277786ef4f07b8f80d9e0de31212826bba13f78242a39b7b85a65984a
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-group-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/heading-group-css@npm:1.5.0"
+  checksum: 10c0/ce41ed051ab32af31858efcb9607c970398dfa42e8cd110fca33c09f7c293478bc170d16304609369fdb30eb019b66c602d71b74b078c6ba00936c257d615ab5
+  languageName: node
+  linkType: hard
+
+"@utrecht/html-content-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/html-content-css@npm:1.4.0"
+  checksum: 10c0/92481effd6727be2156b4285787f8b8ea58cc99e8761be897056126256faa3722c2c25924ea31f084760762c30fa28cddad87d746598a51784eb8fb67e4dd7f2
+  languageName: node
+  linkType: hard
+
+"@utrecht/iban-data-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/iban-data-css@npm:1.3.0"
+  checksum: 10c0/d33e365d701a2ff44142e644842ab889d16abf267a05d6c203e8000441717af069e86cf5e6f6f79a45294335d65e26cb245a682b2e184ab1b56954ff3502c017
+  languageName: node
+  linkType: hard
+
+"@utrecht/icon-css@npm:2.0.0":
+  version: 2.0.0
+  resolution: "@utrecht/icon-css@npm:2.0.0"
+  checksum: 10c0/74b563eb80067e463736067a74e3304465c5db7687b796e76ccac3c2bc723ad09f15eb3cdba64e27fa08dc703729cc1ea983d0561c69a993575c598f96b26707
+  languageName: node
+  linkType: hard
+
+"@utrecht/img-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/img-css@npm:1.3.0"
+  checksum: 10c0/7cbf1e6f2ab68a682dd2ca9aa661fb43fe920de55d528cbf4f5b0ffeb90549c43af8f62efd2775c3d67ddfbd79431c7ddb4b9c3e37f2bdd62dd154540ad7dc0c
+  languageName: node
+  linkType: hard
+
+"@utrecht/index-char-nav-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/index-char-nav-css@npm:1.4.0"
+  checksum: 10c0/fc94426d2176303a4f8226315cc07c82cee505ff4d66e2a47c3be68a2ed9a5bf2a6f07fb88eb0395ed106f5fa795b3ba6aedba16fa0347082f37e04918b9a690
+  languageName: node
+  linkType: hard
+
+"@utrecht/link-button-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/link-button-css@npm:1.4.0"
+  checksum: 10c0/8384973dee8f7ac81d6374365a38bd054a2734120771c0eb5b9a9374274c1b11d157efccc1f8f305048676ad5534aca062cf1cec57ca1ad7904009769d890b6b
+  languageName: node
+  linkType: hard
+
+"@utrecht/link-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/link-css@npm:1.6.0"
+  checksum: 10c0/548c735bb438762ebf96da8560aedfa6dc7c4b83181feed8bde42de45a83ef4fb16bb73beb0740aa8203b2f6ebcac5fb1b0c680e7c8c8a77f899404f16bbba61
+  languageName: node
+  linkType: hard
+
+"@utrecht/link-list-css@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@utrecht/link-list-css@npm:2.3.0"
+  checksum: 10c0/638913c91a5c50d6abd0bda2b8d997d4deb304d89452220d39e066b46da89ca84d2d996f5d3e8778e84290c68d8e188af953925dcaf57a9dde2bcb8e7c31219c
+  languageName: node
+  linkType: hard
+
+"@utrecht/link-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/link-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/link-css": "npm:1.6.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/2a6f39097f3abf35a9d4ee5fa6501919f46d99e15f0db3ce1ae07907c5649ac282e7313c74873ef5f2d2fbb5ea52bbff67e49a956fcb4c6c55c06c37563dc4c3
+  languageName: node
+  linkType: hard
+
+"@utrecht/link-social-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/link-social-css@npm:1.4.0"
+  checksum: 10c0/70d557d25ad6d5dd1c479d3639df97961c6d1d5a789ee85f478f659aff9ea5c2e914b19ffe56cba7c5b866151868b41af12fa79a75f6bfa4a90ef855446f89d2
+  languageName: node
+  linkType: hard
+
+"@utrecht/list-social-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/list-social-css@npm:1.4.0"
+  checksum: 10c0/bdab509445100d56b53126c61c0b07b0d74296e25e5b7bf815a058f7d11a175a6b5a6a0f883cb6cb18891275d8c172de067075e0648643116f62cb36da925921
+  languageName: node
+  linkType: hard
+
+"@utrecht/listbox-css@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/listbox-css@npm:1.5.1"
+  checksum: 10c0/f201bab58e78ef7df1e1893bbb6efb0530979a8c4acb0ccff6b24c40494526c139516a6a3d399bae87d284e1f6d6bd1cb7e02c9135697208001dce580c0a8a75
+  languageName: node
+  linkType: hard
+
+"@utrecht/listbox-react@npm:1.0.9":
+  version: 1.0.9
+  resolution: "@utrecht/listbox-react@npm:1.0.9"
+  dependencies:
+    "@utrecht/listbox-css": "npm:1.5.1"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/7df715393cdbc702658032f000b3242bd6c8fd389b3244f4bdee43d344d5add49195a31d6e8f1f37570717099d2be6ae40db2418bd5c018fe11c717d7a83ee96
+  languageName: node
+  linkType: hard
+
+"@utrecht/logo-button-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/logo-button-css@npm:1.4.0"
+  checksum: 10c0/9f2c30ceceda61b25393ace730f91c1f0b9dd0ea158f0b8ab16c9c4ed9cc830c9ac4c7f474e4dc1318bb3d70bb1062e426cf4713c7ec76d743eac93b8816ba85
+  languageName: node
+  linkType: hard
+
+"@utrecht/logo-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/logo-css@npm:1.4.0"
+  checksum: 10c0/9d9354a5473f26f8ce548d101829d4f54d7b2cc6ef4d7fccbfaf46e26f60dcbabd1a34b750d1c1c7aad96677bcc915832af6f3a02458ca89b843a9386d913598
+  languageName: node
+  linkType: hard
+
+"@utrecht/logo-image-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/logo-image-css@npm:1.4.0"
+  checksum: 10c0/9ac7a5dfdfc5b4a1ed7d12d3a6ce8f98419d536cb60af2e1b8965b0b46b837b0ee47addcfd4e0ac0cb41006f3a863e9c2bebc805ca628476c5b40d9eb75e4ee2
+  languageName: node
+  linkType: hard
+
+"@utrecht/map-control-button-css@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@utrecht/map-control-button-css@npm:2.2.0"
+  checksum: 10c0/5bff85df15d256632ec3be21c5e55ec33b724d72dbfbbb7b343c6737b0af01785e4dfc396af2d61b63b811960317842da79165a53bc62f0bdef99115a0fe0b60
+  languageName: node
+  linkType: hard
+
+"@utrecht/map-marker-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/map-marker-css@npm:1.4.0"
+  checksum: 10c0/0fbb8db011278e7476f7f34f93268204a3021cac2af25029517a0ad6becf9a4adb17f7c64d2e8ef991107b120ac9025530de8d69586e75257c062d83542b15ca
+  languageName: node
+  linkType: hard
+
+"@utrecht/mark-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/mark-css@npm:1.5.0"
+  checksum: 10c0/132d8462bc41761d13b3fa39f71ef7944ca3f9f95ee782186c3bf3f3eaab8e275ab13ec06d9309c9c9c6bbf34be3f6c14455d0b580b1ebd181d31c64cf032825
+  languageName: node
+  linkType: hard
+
+"@utrecht/multiline-data-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/multiline-data-css@npm:1.3.0"
+  checksum: 10c0/c8673d8cd9505c6bee447d3a252a182ef7e3c1b3b5f1bf47c1477667ea9e3d7c054914c3b527efec7f63f3e4a132f7c07f9cfe57d2a809ec7e5a8e3a48233c82
+  languageName: node
+  linkType: hard
+
+"@utrecht/nav-bar-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/nav-bar-css@npm:1.4.0"
+  checksum: 10c0/8e491e5815cf09ce789256e255a7a33cf74b393c5391451ffe97902baad8f1f58c962454ad63f9defe2c25baf70b39d1c22bb3a9708f225dd81dc46b41424283
+  languageName: node
+  linkType: hard
+
+"@utrecht/nav-list-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/nav-list-css@npm:1.3.0"
+  checksum: 10c0/9642f9607e3652cad403816d130073fdfbc1c3ad60d1d19fb92207edca9bb91f1ea2762acb1dc2ca61c40662e2b0da14c839d7930c67d1da55131ae324bc948d
+  languageName: node
+  linkType: hard
+
+"@utrecht/number-badge-css@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@utrecht/number-badge-css@npm:2.3.0"
+  checksum: 10c0/334b47265772ed011ad45cc1565b8dc22a85db4fc9e40499ba31a2b282ddfa3341d091ec8a8be84f3b46ae57f8bc5446b31a6c9ef53a401980835a2b1a49bcd8
+  languageName: node
+  linkType: hard
+
+"@utrecht/number-data-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/number-data-css@npm:1.4.0"
+  checksum: 10c0/aa29c494766fc7caa7bb5a1bad463bcae0e666b3cfaa5aeda84d6fe9c45dc92241f17e19b05debd60e685d95efc31133970cb8c6ffbf100b1a4fc30a5672a8ad
+  languageName: node
+  linkType: hard
+
+"@utrecht/ordered-list-css@npm:1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/ordered-list-css@npm:1.5.1"
+  checksum: 10c0/74c1b9a2a52512219eca948f79eaf97b0d6ad3b4aaea3a119424d07079494fbfdc8760a4891e2adf77b1ead845189ce4a44aae6e92d19edd924bc76159fb0cfc
+  languageName: node
+  linkType: hard
+
+"@utrecht/page-content-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/page-content-css@npm:1.4.0"
+  checksum: 10c0/da502b988f46da2843b671a5ed1e620d44a50885e978ce7f9639870f64872c81111082f05876d2c3e5d6e14ea9bb7a1f926056bd6169d853bf9405c50572626b
+  languageName: node
+  linkType: hard
+
+"@utrecht/page-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/page-css@npm:1.4.0"
+  checksum: 10c0/472af2d1523cd0e034ddd3dbbd6b2aa3e993a1b2fd04919a4bf06ce26299141252be19e514cfe06440da75aa14a3245335a640a0a4a2f4e58104fd07c7888812
+  languageName: node
+  linkType: hard
+
+"@utrecht/page-footer-css@npm:2.1.0":
+  version: 2.1.0
+  resolution: "@utrecht/page-footer-css@npm:2.1.0"
+  checksum: 10c0/409d9b44a7c66c816f3b9a3dc9e192f70772d9e54b0f5a8cbdeb767c649412e06f84e28279a8537110b7c7abb0c4ad27514a0be0fefa64b7436719dd25d00987
+  languageName: node
+  linkType: hard
+
+"@utrecht/page-header-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/page-header-css@npm:1.5.0"
+  checksum: 10c0/9870ecafdaf0a7ddfae71cfef21cddcede7a295814deb779043093c491553ba258694bf7d9f7853cf618a60f70334d57323a7d2e27d754c61b994b1c730b2cf9
+  languageName: node
+  linkType: hard
+
+"@utrecht/pagination-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/pagination-css@npm:1.4.0"
+  checksum: 10c0/d19a36510f63816bb8d489485778cd3f4de75c1309f3bed3bafda4b3fbcd515288397ea1daddb2dd96b4991bd230f61a33147e9edbb7726667254824d4fc3359
+  languageName: node
+  linkType: hard
+
+"@utrecht/paragraph-css@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@utrecht/paragraph-css@npm:2.3.0"
+  checksum: 10c0/ae4b5a6f22c5e31acb02d9e4e12d859dfe887a69a52fe50901cacd0db2964dfa67c1db81e20324ee799de34233e6594050331e3c430b0eb46faf306ae4388881
+  languageName: node
+  linkType: hard
+
+"@utrecht/pre-heading-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/pre-heading-css@npm:1.4.0"
+  checksum: 10c0/ab1357214068366cad628b29002090afca41708ea048d58b274069fff03281dd3f0814496d95b321966ed29a3ea48eadaf27b0aff0f3d659f63580499d0fca9d
+  languageName: node
+  linkType: hard
+
+"@utrecht/preserve-data-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/preserve-data-css@npm:1.3.0"
+  checksum: 10c0/6f20a6e924c32f7428e7a1c16aeff48444be47ffe15802a844c3eabf1a68e3e17a122527f2dd4f032dbd67a8f0006cfbdea9aed11fa09f649ae6088c89aaee08
+  languageName: node
+  linkType: hard
+
+"@utrecht/radio-button-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/radio-button-css@npm:1.6.0"
+  checksum: 10c0/32db05b4fed1ccc5fe72e1238bf5ba4127af533155644bea71a971f2b1f7af82c9e0ddae9a7b710e9d8055681f7e468f5eed09f4562571414de216539f0c9a78
+  languageName: node
+  linkType: hard
+
+"@utrecht/radio-button-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/radio-button-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/radio-button-css": "npm:1.6.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": "*"
+    react: 18
+    react-dom: 18
+  checksum: 10c0/66102f9cbce71cf5bbee44ab83b4e7d49f06a50c33810f5ca4fec017ffd144375e812bd45089fd40bc40e6f85da0e7b57896d652b821d64e8a6478881f5a3874
+  languageName: node
+  linkType: hard
+
+"@utrecht/rich-text-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/rich-text-css@npm:1.3.0"
+  checksum: 10c0/bef7c1ee0eede3ff125e6cbffedba36910078c65341a3e58b50a9a5233850751573887d986787060784c5a30d98bb9b14aecfca5aeb339f315aff3e4d9f1d509
+  languageName: node
+  linkType: hard
+
+"@utrecht/search-bar-css@npm:2.2.0":
+  version: 2.2.0
+  resolution: "@utrecht/search-bar-css@npm:2.2.0"
+  checksum: 10c0/fd73c877e9337a213d9b2e2e3278db7938b5f2cac89bbbb6be1e2dc563677318b9783f7e30c9f753dbe7f0ea67c8f0c808413e6912777c8b0f0354f1b911a7a7
+  languageName: node
+  linkType: hard
+
+"@utrecht/select-css@npm:1.8.0":
+  version: 1.8.0
+  resolution: "@utrecht/select-css@npm:1.8.0"
+  checksum: 10c0/3ac760da6cf7b593ffa39ab2e65cd740d67e3eceba5c64f173ea5e7e2aeed9f40910d0762f02060d44f4a1792191ee33cada45585626e920f8b1ec6b7a6a1fcd
+  languageName: node
+  linkType: hard
+
+"@utrecht/separator-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/separator-css@npm:1.5.0"
+  checksum: 10c0/c2c51bfa1fd18f1bde8dc29ee93a1dea51fb87066e7dc832c8c9f85f4e1309b3cea0fbe3990bd8f37816aa3e6f0599120177cbbaf0a1efddeec57c8c6e8a623b
+  languageName: node
+  linkType: hard
+
+"@utrecht/skip-link-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/skip-link-css@npm:1.5.0"
+  checksum: 10c0/b6941824f165011d6eedec2b1f55a7d5b1eac736474efa476cf22173b1bcf6515a03e29f30e55ff09d8551524c1e0cd2a87bd8758ba027cc1327f9d37aad95aa
+  languageName: node
+  linkType: hard
+
+"@utrecht/spotlight-section-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/spotlight-section-css@npm:1.6.0"
+  checksum: 10c0/8b58b9320626545f4b0830c07c3674a00fe8f9402edae3820e3b86c3fa0e84547107691408394feb834cdbc7908136338568940c8d5727e1368588b27e53d5a4
+  languageName: node
+  linkType: hard
+
+"@utrecht/subscript-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/subscript-css@npm:1.3.0"
+  checksum: 10c0/5062cbebba1df33a76f3567a0e5d193987591e7a4098d831592ca516cb21ba2a138f520bf657c7f1c69b4c2985b23026ec8bc1eab51b5d80a96905a254043b78
+  languageName: node
+  linkType: hard
+
+"@utrecht/superscript-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/superscript-css@npm:1.3.0"
+  checksum: 10c0/1481fcd0d82e1bf281245478d2626c5cccd9b541a917d8fe123b7d00849f2d4bcf9d27c6114b76b411bdfdc2a5ace142f99e649d3cf353fb24cfc5bcf251e47a
+  languageName: node
+  linkType: hard
+
+"@utrecht/surface-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/surface-css@npm:1.4.0"
+  checksum: 10c0/8219aea3a213b83cefe73f7832b78372492be064266782ce69a79acfcc3ddf1ada34b6eb2c3adb5f86b228a353ba78d412f1335760e52e8a9c0b3263023d2d2b
+  languageName: node
+  linkType: hard
+
+"@utrecht/table-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/table-css@npm:1.5.0"
+  checksum: 10c0/6c990188cae6e8daa37d8898b8488351f23a01e76b6c7c15ccf1ac2228b5eddb765af46225065774d4d1ea1d76f185ff184d12b23356b277528725aa9f2dfad6
+  languageName: node
+  linkType: hard
+
+"@utrecht/table-of-contents-css@npm:0.3.0":
+  version: 0.3.0
+  resolution: "@utrecht/table-of-contents-css@npm:0.3.0"
+  checksum: 10c0/11219df3510d007076d28cf838d04be2409c319e454205faaf5175abc01ee1e5cdd273259979bf512c603f9648788fe05dcbf2264a08186ee9c43ac29b6f173c
+  languageName: node
+  linkType: hard
+
+"@utrecht/textarea-css@npm:2.3.0":
+  version: 2.3.0
+  resolution: "@utrecht/textarea-css@npm:2.3.0"
+  checksum: 10c0/90d30cc0e2aa2c201b327b108d39d582ec8ebd727496d9d81cfceae3191e655317f1cbdcdc153ba388c4bc7f91730d1cfddef37566e9169b3bfe047cb24bd8c7
+  languageName: node
+  linkType: hard
+
+"@utrecht/textbox-css@npm:1.6.0":
+  version: 1.6.0
+  resolution: "@utrecht/textbox-css@npm:1.6.0"
+  checksum: 10c0/2635f46bc8650ac5f646c04181c7f605239129d5777f0d4b3ecd076c995208cdddd9a1ddaff5a27e3ea0f06de5055aec7d151851999308ecb882cd55620ce199
+  languageName: node
+  linkType: hard
+
+"@utrecht/textbox-react@npm:1.0.6":
+  version: 1.0.6
+  resolution: "@utrecht/textbox-react@npm:1.0.6"
+  dependencies:
+    "@utrecht/textbox-css": "npm:1.6.0"
+    clsx: "npm:2.1.1"
+  peerDependencies:
+    "@babel/runtime": ^7.23.6
+    react: 18
+    react-dom: 18
+  checksum: 10c0/c51368e0d243276e2a12c41f3fa9ab3424ffebd396365ac732694f355c6fdec57d1be2c614b44e99681a20744bcae01c5d8d9b0362e6e3ead81f077ee4341bc7
+  languageName: node
+  linkType: hard
+
+"@utrecht/top-task-link-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/top-task-link-css@npm:1.4.0"
+  checksum: 10c0/a9d8bdc6b17cdc5502e0f121c62cf5e53a17341e9c6759e9e4e662602fed1800da363d5cf3dd26a9b5a0fc6debf596044a12074f134bb4f12804263d3546f18a
+  languageName: node
+  linkType: hard
+
+"@utrecht/top-task-nav-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/top-task-nav-css@npm:1.3.0"
+  checksum: 10c0/4aa578a91028648fb55e3d5aa99b162075e1d7d243c75bfdd75a4063fe881a6d3afeae376946f351d49ef9b49788e02492f55f16f339c2bf8c8d4de78bcc13dc
+  languageName: node
+  linkType: hard
+
+"@utrecht/unordered-list-css@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@utrecht/unordered-list-css@npm:1.5.0"
+  checksum: 10c0/573bb5e2808e954ef2d2e300b991bfdc8ba495d2898e9a38083392d206996b95525d9a49380a7f3a690348ed7d180257c80d13aee8a9fab4ac71e40f1b1d1c98
+  languageName: node
+  linkType: hard
+
+"@utrecht/url-data-css@npm:1.3.0":
+  version: 1.3.0
+  resolution: "@utrecht/url-data-css@npm:1.3.0"
+  checksum: 10c0/9e7bbbe807b5f2ba57ded9e4cc3e9062f768c2cb5ce6ea31068f4e599872b02fd40a066d4f1bf13e049a2ef699131a63a82f9c23f3686281f790e85874ddb67e
+  languageName: node
+  linkType: hard
+
+"@utrecht/vega-visualization-css@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@utrecht/vega-visualization-css@npm:1.4.0"
+  checksum: 10c0/cd2419bea267003dd7b3413e725916beaeff97a7ca96c8bf925706f451bb8cf89003c80ad0181e4bb07426d362b3e14a75e31c8b23c3cf6d59b35608587ce442
   languageName: node
   linkType: hard
 
@@ -7807,6 +8820,15 @@ __metadata:
     es-errors: "npm:^1.3.0"
     is-data-view: "npm:^1.0.1"
   checksum: 10c0/fa7aa40078025b7810dcffc16df02c480573b7b53ef1205aa6a61533011005c1890e5ba17018c692ce7c900212b547262d33279fde801ad9843edc0863bf78c4
+  languageName: node
+  linkType: hard
+
+"date-fns@npm:2.30.0":
+  version: 2.30.0
+  resolution: "date-fns@npm:2.30.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.21.0"
+  checksum: 10c0/e4b521fbf22bc8c3db332bbfb7b094fd3e7627de0259a9d17c7551e2d2702608a7307a449206065916538e384f37b181565447ce2637ae09828427aed9cb5581
   languageName: node
   linkType: hard
 
@@ -12404,6 +13426,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lodash-es@npm:4.17.21":
+  version: 4.17.21
+  resolution: "lodash-es@npm:4.17.21"
+  checksum: 10c0/fb407355f7e6cd523a9383e76e6b455321f0f153a6c9625e21a8827d10c54c2a2341bd2ae8d034358b60e07325e1330c14c224ff582d04612a46a4f0479ff2f2
+  languageName: node
+  linkType: hard
+
 "lodash._reinterpolate@npm:^3.0.0":
   version: 3.0.0
   resolution: "lodash._reinterpolate@npm:3.0.0"
@@ -12731,6 +13760,13 @@ __metadata:
   dependencies:
     fs-monkey: "npm:^1.0.4"
   checksum: 10c0/038fc81bce17ea92dde15aaa68fa0fdaf4960c721ce3ffc7c2cb87a259333f5159784ea48b3b72bf9e054254d9d0d0d5209d0fdc3d07d08653a09933b168fbd7
+  languageName: node
+  linkType: hard
+
+"memoize-one@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "memoize-one@npm:6.0.0"
+  checksum: 10c0/45c88e064fd715166619af72e8cf8a7a17224d6edf61f7a8633d740ed8c8c0558a4373876c9b8ffc5518c2b65a960266adf403cc215cb1e90f7e262b58991f54
   languageName: node
   linkType: hard
 
@@ -13544,7 +14580,7 @@ __metadata:
     "@loadable/component": "npm:^5.15.3"
     "@lottiefiles/react-lottie-player": "npm:^3.5.3"
     "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
-    "@utrecht/component-library-react": "npm:^3.0.1-alpha.41"
+    "@utrecht/component-library-react": "npm:9.0.3"
     "@utrecht/components": "npm:^3.0.1-alpha.42"
     axios: "npm:^1.6.7"
     babel-loader: "npm:9.1.2"
@@ -13594,6 +14630,7 @@ __metadata:
     react-router: "npm:6.13.0"
     react-router-dom: "npm:6.13.0"
     react-scripts: "npm:5.0.1"
+    react-select: "npm:5.8.0"
     react-svg-loader: "npm:^3.0.3"
     react-tabs: "npm:^6.0.2"
     react-test-renderer: "npm:^18.2.0"
@@ -15787,7 +16824,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.5.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.5.0, prop-types@npm:^15.6.0, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -16196,6 +17233,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-select@npm:5.8.0":
+  version: 5.8.0
+  resolution: "react-select@npm:5.8.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.0"
+    "@emotion/cache": "npm:^11.4.0"
+    "@emotion/react": "npm:^11.8.1"
+    "@floating-ui/dom": "npm:^1.0.1"
+    "@types/react-transition-group": "npm:^4.4.0"
+    memoize-one: "npm:^6.0.0"
+    prop-types: "npm:^15.6.0"
+    react-transition-group: "npm:^4.3.0"
+    use-isomorphic-layout-effect: "npm:^1.1.2"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 10c0/b4b98aaf117ee5cc4642871b7bd51fd0e2697988d0b880f30b21e933ca90258959147117d8aada36713b622e0e4cb06bd18ec02069f3f108896e0d31e69e3c16
+  languageName: node
+  linkType: hard
+
 "react-shallow-renderer@npm:^16.15.0":
   version: 16.15.0
   resolution: "react-shallow-renderer@npm:16.15.0"
@@ -16271,7 +17328,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-transition-group@npm:^4.4.5":
+"react-transition-group@npm:^4.3.0, react-transition-group@npm:^4.4.5":
   version: 4.4.5
   resolution: "react-transition-group@npm:4.4.5"
   dependencies:
@@ -19107,6 +20164,18 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10c0/f887488c6e6075cdad4962979da1714b217bcb1ee009a9e57ce9a844bcfc4c3a99e93983dfc2e5af9e0913824d24e730090ff255e902c516dcb58d2d3837e01c
+  languageName: node
+  linkType: hard
+
+"use-isomorphic-layout-effect@npm:^1.1.2":
+  version: 1.2.0
+  resolution: "use-isomorphic-layout-effect@npm:1.2.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 10c0/2e4bdee68d65893b37e716ebdcc111550775189c80e662eda87d6f5b54dc431d3383a18914ea01a893ee5478902a878012713eaebcacbb6611ab88c463accb83
   languageName: node
   linkType: hard
 
