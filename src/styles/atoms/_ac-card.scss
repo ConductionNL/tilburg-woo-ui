@@ -30,16 +30,16 @@
     background-color: var(--tilburg-color-blue-100);
     border: 0;
 
-    .utrecht-button {
-      font-size: var(--tilburg-typography-font-size-md);
-    }
-
     .utrecht-paragraph {
       font-size: var(--tilburg-typography-font-size-lg);
 
       @include respond-max($screen-md) {
         font-size: var(--tilburg-typography-font-size-md);
       }
+    }
+
+    .utrecht-button--secondary-action {
+      font-size: var(--tilburg-typography-font-size-md);
     }
   }
 

@@ -6,12 +6,12 @@
   max-width: 100%;
 
   &--compact {
-    width: 936px;
+    width: calc(936px + var(--tilburg-space-column-rat) * 2);
     margin-block: var(--tilburg-space-row-tiger);
   }
 
   @include respond-min($screen-lg) {
-    max-width: 1128px;
+    max-width: calc(1128px + var(--tilburg-space-column-rat) * 2);
   }
 
   &.stretch {

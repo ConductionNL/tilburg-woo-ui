@@ -120,7 +120,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
                   />
                 ))}
             </AcGrid>
-            <AcLink type='button' to={PATHS.THEMES}>
+            <AcLink type='button' animate to={PATHS.THEMES}>
               {LABELS.VIEW_ALL_THEMES}
               <VISUALS.ARROW_RIGHT />
             </AcLink>
