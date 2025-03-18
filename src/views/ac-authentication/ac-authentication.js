@@ -5,18 +5,31 @@ import { VISUALS } from '@constants';
 import {
   Textbox,
   PrimaryActionButton,
-  Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 import config from '@src/config';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
 
-function setCookie(name, value, maxAgeSeconds) {
-  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
+/**
+ * Sets a cookie with the specified name, value and options
+ * @param {string} name - The name of the cookie
+ * @param {string} value - The value to store in the cookie
+ * @param {number} maxAgeSeconds - Maximum age of the cookie in seconds
+ * @param {Object} options - Additional cookie options
+ * @param {boolean} [options.secure] - Whether the cookie should only be transmitted over secure HTTPS
+ * @param {boolean} [options.httpOnly] - Whether the cookie should be accessible only through HTTP(S)
+ * @param {string} [options.sameSite] - SameSite attribute ('strict', 'lax' or 'none')
+ */
+function setCookie(name, value, maxAgeSeconds, options = {}) {
+  const { secure, httpOnly, sameSite } = options;
+  let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
     value
-  )}; max-age=${maxAgeSeconds}; path=/;`;
+  )}; max-age=${maxAgeSeconds}; path=/`;
+  if (secure) cookie += '; Secure';
+  if (httpOnly) cookie += '; HttpOnly';
+  if (sameSite) cookie += `; SameSite=${sameSite}`;
+  document.cookie = cookie;
 }
 
 function getCookie(name) {
@@ -55,7 +68,7 @@ const AcAuthentication = () => {
   // Save redirect_url to localStorage if it exists and is safe
   useEffect(() => {
     if (acSafeParseRedirectUri(redirect_url)) {
-      localStorage.setItem('redirect_url', acSafeParseRedirectUri(redirect_url));
+      sessionStorage.setItem('redirect_url', acSafeParseRedirectUri(redirect_url));
     }
   }, [redirect_url]);
 
@@ -70,8 +83,16 @@ const AcAuthentication = () => {
   const handleLogin = (e) => {
     e.preventDefault();
     // save client id and secret key as a cookie for 5 minutes
-    setCookie('nextcloud_client_id', clientId, 5 * 60);
-    setCookie('nextcloud_secret_key', secretKey, 5 * 60);
+    setCookie('nextcloud_client_id', clientId, 5 * 60, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+    setCookie('nextcloud_secret_key', secretKey, 5 * 60, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
 
     const url = new URL(authenticationHostname + '/apps/oauth2/authorize');
     url.searchParams.set('response_type', 'code');

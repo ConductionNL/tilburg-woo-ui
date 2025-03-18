@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { AcCardCategory, AcLink } from '@molecules';
-import { LABELS, PATHS, VISUALS } from '@constants';
-import AcGrid from '@atoms/ac-grid/ac-grid';
+import { AcLink } from '@molecules';
+import { LABELS, VISUALS } from '@constants';
 import { AcLoader } from '@components';
 import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
@@ -12,11 +11,30 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
-import { AcBuildURLSearchParams } from '@utils';
-import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
 import config from '@src/config';
+
+/**
+ * Sets a cookie with the specified name, value and options
+ * @param {string} name - The name of the cookie
+ * @param {string} value - The value to store in the cookie
+ * @param {number} maxAgeSeconds - Maximum age of the cookie in seconds
+ * @param {Object} options - Additional cookie options
+ * @param {boolean} [options.secure] - Whether the cookie should only be transmitted over secure HTTPS
+ * @param {boolean} [options.httpOnly] - Whether the cookie should be accessible only through HTTP(S)
+ * @param {string} [options.sameSite] - SameSite attribute ('strict', 'lax' or 'none')
+ */
+function setCookie(name, value, maxAgeSeconds, options = {}) {
+  const { secure, httpOnly, sameSite } = options;
+  let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
+    value
+  )}; max-age=${maxAgeSeconds}; path=/`;
+  if (secure) cookie += '; Secure';
+  if (httpOnly) cookie += '; HttpOnly';
+  if (sameSite) cookie += `; SameSite=${sameSite}`;
+  document.cookie = cookie;
+}
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
@@ -35,7 +53,7 @@ function getCookie(name) {
   return null;
 }
 
-const AcSubjects = ({ store: { publications, themes } }) => {
+const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   const nextcloud_user_id = getCookie('nextcloud_user_id');
 
   if (nextcloud_user_id) {
@@ -88,8 +106,8 @@ const AcSubjects = ({ store: { publications, themes } }) => {
   const state = searchParams.get('state');
   const code = searchParams.get('code');
 
-  const redirect_url = localStorage.getItem('redirect_url');
-  localStorage.removeItem('redirect_url');
+  const redirect_url = sessionStorage.getItem('redirect_url');
+  sessionStorage.removeItem('redirect_url');
 
   useEffect(async () => {
     let response;
@@ -133,15 +151,21 @@ const AcSubjects = ({ store: { publications, themes } }) => {
     }
 
     // set cookies
-    document.cookie = `nextcloud_access_token=${encodeURIComponent(
-      access_token
-    )}; max-age=${expires_in}; path=/;`;
-    document.cookie = `nextcloud_refresh_token=${encodeURIComponent(
-      refresh_token
-    )}; max-age=${expires_in}; path=/;`;
-    document.cookie = `nextcloud_user_id=${encodeURIComponent(
-      user_id
-    )}; max-age=${expires_in}; path=/;`;
+    setCookie('nextcloud_access_token', access_token, expires_in, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+    setCookie('nextcloud_refresh_token', refresh_token, expires_in, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+    setCookie('nextcloud_user_id', user_id, expires_in, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
 
     if (redirect_url) {
       setTimeout(() => {
@@ -175,4 +199,4 @@ const AcSubjects = ({ store: { publications, themes } }) => {
   );
 };
 
-export default withStore(observer(AcSubjects));
+export default withStore(observer(AcNextcloudAuthorization));
