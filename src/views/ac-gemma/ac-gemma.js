@@ -13,6 +13,8 @@ import {
 import { AcLoader } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
+import ReactSelect from 'react-select';
+import clsx from 'clsx';
 
 const AcGemma = ({ store: { gemma } }) => {
   const {
@@ -654,17 +656,16 @@ const AcGemma = ({ store: { gemma } }) => {
       {gemma.all_views?.length === 0 && <AcLoader />}
       {gemma.all_views?.length > 0 && (
         <>
-          <Select
-            id='sorting'
-            className='ac-gemma-select'
-            onChange={(e) => setView(e.target.value)}
-            loading={gemma.all_views.length === 0}
-          >
-            <SelectOption value=''>Selecteer een view</SelectOption>
-            {gemma.all_views.map((view) => (
-              <SelectOption value={view.id}>{view.name}</SelectOption>
-            ))}
-          </Select>
+          <ReactSelect
+            placeholder='Selecteer een view'
+            className={clsx('ac-gemma-select')}
+            onChange={(e) => setView(e.value)}
+            loading={gemma.all_views?.length === 0}
+            options={gemma.all_views?.map((view) => ({
+              value: view.id,
+              label: view.name,
+            }))}
+          />
 
           {gemma.get_view && (
             <div className='ac-gemma-view-header'>
