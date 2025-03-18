@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
-  redirect,
   useLocation,
   useNavigate,
   useSearchParams,
