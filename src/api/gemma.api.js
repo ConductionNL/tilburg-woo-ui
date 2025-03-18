@@ -13,6 +13,18 @@ export class GemmaAPI {
     );
   }
 
+  allVoorzieningGebruik(params) {
+    return this.Client.get(ENDPOINTS.GEMMA.VOORZIENING_GEBRUIK, { params }).then(
+      (response) => response.data
+    );
+  }
+
+  voorzieningGebruik(id, params) {
+    return this.Client.get(ENDPOINTS.GEMMA.VOORZIENING_GEBRUIK(id, params)).then(
+      (response) => response.data
+    );
+  }
+
   view(id, params) {
     return this.Client.get(ENDPOINTS.GEMMA.VIEW(id, params)).then(
       (response) => response.data

@@ -62,6 +62,7 @@ const App = ({ store }) => {
       case 'open-migrato.accept.commonground.nu':
         return 'migrato-theme';
       case 'opencatalogi.nl':
+        return 'opencatalogi-theme';
       case 'localhost':
         return 'vng-theme';
       default:
