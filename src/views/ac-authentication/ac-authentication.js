@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -10,6 +10,8 @@ import {
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 import config from '@src/config';
+import { acSafeParseRedirectUri } from '@src/utilities';
+import { useSearchParams } from 'react-router-dom';
 
 function setCookie(name, value, maxAgeSeconds) {
   document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
@@ -47,16 +49,27 @@ const AcAuthentication = () => {
     );
   }
 
-  const authenticationHostname = config.authentication.baseURL.includes('index.php')
-    ? new URL(config.authentication.baseURL).origin + '/index.php'
-    : new URL(config.authentication.baseURL).origin;
+  const [searchParams, setSearchParams] = useSearchParams();
+  const redirect_url = searchParams.get('redirect_url');
+
+  // Save redirect_url to localStorage if it exists and is safe
+  useEffect(() => {
+    if (acSafeParseRedirectUri(redirect_url)) {
+      localStorage.setItem('redirect_url', acSafeParseRedirectUri(redirect_url));
+    }
+  }, [redirect_url]);
+
+  //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
+  //     ? new URL(config.authentication.baseURL).origin + '/index.php'
+  //     : new URL(config.authentication.baseURL).origin;
+  const authenticationHostname = 'https://vng.accept.commonground.nu';
 
   const [clientId, setClientId] = useState('');
   const [secretKey, setSecretKey] = useState('');
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // save client id and secret key as a cookie
+    // save client id and secret key as a cookie for 5 minutes
     setCookie('nextcloud_client_id', clientId, 5 * 60);
     setCookie('nextcloud_secret_key', secretKey, 5 * 60);
 
@@ -96,8 +109,18 @@ const AcAuthentication = () => {
       </div>
 
       <div className='ac-authentication-form'>
-        <Textbox type='text' placeholder='Client ID' value={clientId} onChange={(e) => setClientId(e.target.value)} />
-        <Textbox type='password' placeholder='Secret key' value={secretKey} onChange={(e) => setSecretKey(e.target.value)} />
+        <Textbox
+          type='text'
+          placeholder='Client ID'
+          value={clientId}
+          onChange={(e) => setClientId(e.target.value)}
+        />
+        <Textbox
+          type='password'
+          placeholder='Secret key'
+          value={secretKey}
+          onChange={(e) => setSecretKey(e.target.value)}
+        />
       </div>
       <PrimaryActionButton type='submit' disabled={!clientId || !secretKey}>
         <VISUALS.ARROW_RIGHT />
