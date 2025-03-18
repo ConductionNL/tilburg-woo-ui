@@ -19,6 +19,7 @@ import {
 import config from '@src/config';
 
 import { testData } from './testData';
+import CDTable from './cd-table';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const [data, setData] = useState([]);
@@ -32,7 +33,8 @@ const AcBeheerVoorzieningenAanbod = () => {
           'https://vng.accept.commonground.nu/apps' +
             '/openconnector/api/endpoint/voorzieningaanboden'
         );
-        const data = await response.json();
+        const data = (await response.json()).results;
+        // const data = testData;
         setData(data);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -44,7 +46,7 @@ const AcBeheerVoorzieningenAanbod = () => {
   }, []);
 
   //   TODO: remove false
-  if (false && error) {
+  if (error) {
     return (
       <AcSection>
         <AcContainer>
@@ -61,41 +63,9 @@ const AcBeheerVoorzieningenAanbod = () => {
     );
   }
 
-  const [selectedAll, setSelectedAll] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
 
-  useEffect(() => {
-    setSelectedAll(selectedRows.length === testData.length);
-  }, [selectedRows]);
-
   const tableHeaders = [
-    {
-      label: '',
-      key: '',
-      customHeader: (
-        <input
-          checked={selectedAll}
-          onChange={(e) => {
-            setSelectedAll(e.target.checked);
-            setSelectedRows(e.target.checked ? testData.map((row) => row.id) : []);
-          }}
-          type='checkbox'
-        />
-      ),
-      customContent: (row) => (
-        <input
-          checked={selectedRows.includes(row.id)}
-          onChange={(e) => {
-            setSelectedRows(
-              e.target.checked
-                ? [...selectedRows, row.id]
-                : selectedRows.filter((id) => id !== row.id)
-            );
-          }}
-          type='checkbox'
-        />
-      ),
-    },
     {
       label: 'Naam',
       key: 'naam',
@@ -132,19 +102,9 @@ const AcBeheerVoorzieningenAanbod = () => {
     },
   ];
 
-  const renderCustomElement = (element, row) => {
-    if (React.isValidElement(element)) {
-      return element;
-    }
-    if (typeof element === 'function') {
-      return element(row);
-    }
-    return element;
-  };
-
   const handleMultipleDelete = () => {
     console.log('handleMultipleDelete');
-    console.log('ids to delete', selectedRows);
+    // console.log('ids to delete', selectedRows);
   };
 
   return (
@@ -161,34 +121,7 @@ const AcBeheerVoorzieningenAanbod = () => {
               </PrimaryActionButton>
             </AcFlex>
 
-            <Table>
-              <thead>
-                <TableRow>
-                  {tableHeaders.map((header, index) => (
-                    <TableCell key={index}>
-                      {header.customHeader ? (
-                        renderCustomElement(header.customHeader)
-                      ) : (
-                        <b>{header.label}</b>
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </thead>
-              <TableBody>
-                {testData.map((row, index) => (
-                  <TableRow key={index}>
-                    {tableHeaders.map((header, headerIndex) => (
-                      <TableCell key={headerIndex}>
-                        {header.customContent
-                          ? renderCustomElement(header.customContent, row)
-                          : row[header.key]}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <CDTable data={testData} tableHeaders={tableHeaders} getSelectedRows={setSelectedRows} renderSelectRowButtons />
           </AcColumn>
         </AcColumn>
       </AcContainer>
