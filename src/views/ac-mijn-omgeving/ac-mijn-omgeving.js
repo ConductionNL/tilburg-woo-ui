@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from 'react-router-dom';
 
 import {
   AcSearchFilters,
@@ -35,9 +39,33 @@ import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcCNavigation } from '@components';
 import config from '@src/config';
 
+function getCookie(name) {
+  // Split document.cookie on `;` to handle multiple cookies
+  const cookieArr = document.cookie.split(';');
+
+  for (let cookie of cookieArr) {
+    // Remove leading spaces
+    cookie = cookie.trim();
+    // Check if this cookie starts with "<name>="
+    if (cookie.startsWith(`${encodeURIComponent(name)}=`)) {
+      // Return everything after the "<name>="
+      return decodeURIComponent(cookie.substring(name.length + 1));
+    }
+  }
+
+  return null;
+}
+
 const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
-  const location = useLocation();
   const navigate = useNavigate();
+
+  if (!getCookie('nextcloud_user_id')) {
+    useEffect(() => {
+      navigate('/login?redirect_url=/mijn-omgeving');
+    }, []);
+  }
+
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [tabIndex, setTabIndex] = useState(0);
   const [catalogId, setCatalogId] = useState(null);
