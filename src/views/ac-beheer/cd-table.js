@@ -54,6 +54,11 @@ const CDTable = ({
     });
   }, [data]);
 
+  const removeUniqueSymbol = useMemo(() => (row) => {
+    const { [uniqueSymbol]: removed, ...cleanRow } = row;
+    return cleanRow;
+  }, [uniqueSymbol]);
+
   useEffect(() => {
     setSelectedAll(selectedRows.length === data.length && data.length > 0);
   }, [selectedRows, data.length]);
@@ -92,10 +97,7 @@ const CDTable = ({
   useEffect(() => {
     if (typeof getSelectedRows === 'function') {
       // Remove the unique symbol from selected rows before passing them
-      const cleanSelectedRows = selectedRows.map((row) => {
-        const { [uniqueSymbol]: removed, ...cleanRow } = row;
-        return cleanRow;
-      });
+      const cleanSelectedRows = selectedRows.map(removeUniqueSymbol);
       getSelectedRows(cleanSelectedRows);
     }
   }, [selectedRows, getSelectedRows]);
@@ -160,7 +162,7 @@ const CDTable = ({
         {tableHeaders.map((header, headerIndex) => (
           <TableCell key={headerIndex}>
             {header.customContent
-              ? renderCustomElement(header.customContent, row)
+              ? renderCustomElement(header.customContent, removeUniqueSymbol(row))
               : row[header.key]}
           </TableCell>
         ))}
