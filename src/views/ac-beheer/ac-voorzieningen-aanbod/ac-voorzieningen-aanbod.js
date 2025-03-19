@@ -22,7 +22,7 @@ import { testData } from './testData';
 import CDTable from '../cd-table';
 import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
 import { getCookie } from '@src/utilities';
-import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-aanbod-modall';
+import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-aanbod-modal';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const [data, setData] = useState([]);
