@@ -34,9 +34,6 @@ const AcBeheer = () => {
     case 'voorzieningen-aanbod':
       page = <AcBeheerVoorzieningenAanbod />;
       break;
-    case undefined:
-      page = null;
-      break;
     default:
       page = (
         <AcSection spacing>
@@ -52,19 +49,7 @@ const AcBeheer = () => {
       break;
   }
 
-  if (page) return page;
-
-  return (
-    <AcSection spacing>
-      <AcContainer>
-        <AcColumn gap='tiger'>
-          <AcColumn>
-            <Heading>beheer page</Heading>
-          </AcColumn>
-        </AcColumn>
-      </AcContainer>
-    </AcSection>
-  );
+  return page;
 };
 
 export default withStore(observer(AcBeheer));
