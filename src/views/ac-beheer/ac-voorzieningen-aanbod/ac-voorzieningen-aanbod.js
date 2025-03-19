@@ -19,7 +19,7 @@ import {
 import config from '@src/config';
 
 import { testData } from './testData';
-import CDTable from './cd-table';
+import CDTable from '../cd-table';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const [data, setData] = useState([]);
