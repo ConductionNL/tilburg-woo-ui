@@ -62,9 +62,6 @@ const AcEditVoorzieningAanbodModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    // Here you can make your POST request with the formData
-    console.log('Form data to submit:', voorzieningAanbodFormData);
-
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -91,9 +88,6 @@ const AcEditVoorzieningAanbodModal = ({
       if (response.ok) {
         onSuccess?.();
       }
-
-      const data = (await response.json()).results;
-      console.log('Data:', data);
     } catch (err) {
       console.error(err);
       setError(err);

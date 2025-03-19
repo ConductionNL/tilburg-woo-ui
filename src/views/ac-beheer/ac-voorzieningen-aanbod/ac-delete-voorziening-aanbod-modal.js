@@ -40,10 +40,6 @@ const AcDeleteVoorzieningAanbodModal = ({
 
   const [error, setError] = useState(null);
   const handleDeleteVoorziening = async () => {
-    console.log('Form data to submit:', voorzieningAanbodFormData);
-
-    console.log('WHY AM I HERE')
-
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -64,8 +60,6 @@ const AcDeleteVoorzieningAanbodModal = ({
             },
           }
         );
-        const data = (await response.json()).results;
-        console.log('Data:', data);
       });
 
       onSuccess?.();
