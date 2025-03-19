@@ -16,6 +16,7 @@ const AcFormField = ({
   onKeyDown,
   hasError,
   onChange,
+  value,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -42,6 +43,7 @@ const AcFormField = ({
         onBlur={onBlurHandler}
         onKeyDown={onKeyDown}
         onChange={onChangeHandler}
+        value={value}
       />
     </FormField>
   );

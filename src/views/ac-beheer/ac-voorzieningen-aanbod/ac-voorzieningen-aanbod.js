@@ -20,6 +20,7 @@ import config from '@src/config';
 
 import { testData } from './testData';
 import CDTable from '../cd-table';
+import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const [data, setData] = useState([]);
@@ -62,6 +63,7 @@ const AcBeheerVoorzieningenAanbod = () => {
   }
 
   const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
 
   const tableHeaders = [
     {
@@ -89,7 +91,11 @@ const AcBeheerVoorzieningenAanbod = () => {
       key: '',
       customContent: (row) => (
         <AcFlex column spacing='xs'>
-          <button className='utrecht-button slim' variant='secondary'>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => setSingleSelectedRow(row)}
+          >
             bewerken
           </button>
           <button className='utrecht-button slim' variant='secondary'>
@@ -127,6 +133,12 @@ const AcBeheerVoorzieningenAanbod = () => {
               tableHeaders={tableHeaders}
               getSelectedRows={setSelectedRows}
               renderSelectRowButtons
+            />
+
+            <AcEditVoorzieningAanbodModal
+              voorziening={singleSelectedRow}
+              showModal={!!singleSelectedRow}
+              onClose={() => setSingleSelectedRow(null)}
             />
           </AcColumn>
         </AcColumn>
