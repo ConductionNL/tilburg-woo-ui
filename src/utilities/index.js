@@ -104,3 +104,4 @@ export { AcBuildURLSearchParams } from './ac-build-url-search-params';
 export { AcValidateDate } from './ac-validate-date';
 export { AcRemoveTags, AcRemoveParagraphTags } from './ac-remove-tags';
 export { acSafeParseRedirectUri } from './ac-safe-parse-redirect-uri';
+export { getCookie, setCookie } from './ac-cookie';
