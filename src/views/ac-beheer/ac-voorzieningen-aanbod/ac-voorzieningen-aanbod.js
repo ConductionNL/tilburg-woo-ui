@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { LABELS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
   Heading,
@@ -24,6 +24,7 @@ import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
 import { getCookie } from '@src/utilities';
 import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
+import { AcLink } from '@src/molecules';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
@@ -131,24 +132,21 @@ const AcBeheerVoorzieningenAanbod = () => {
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='sm'>
+          <AcLink href='/mijn-omgeving'>
+            <VISUALS.ARROW_LEFT />
+            Terug naar mijn omgeving
+          </AcLink>
+
           <Heading>{LABELS.BEHEER_VOORZIENINGEN_AANBOD}</Heading>
 
-          <AcFlex spacing='sm' justifyContent='between'>
-            <AcFlex spacing='sm'>
-              <PrimaryActionButton onClick={() => navigate('/mijn-omgeving')}>
-                Terug naar mijn omgeving
-              </PrimaryActionButton>
-            </AcFlex>
-
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
+          <AcFlex spacing='sm' justifyContent='end'>
+            <PrimaryActionButton
+              disabled={selectedRows.length === 0}
+              onClick={handleMultipleDelete}
+            >
+              Delete {selectedRows.length}{' '}
+              {selectedRows.length === 1 ? 'item' : 'items'}
+            </PrimaryActionButton>
           </AcFlex>
 
           <CDTable

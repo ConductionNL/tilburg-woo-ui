@@ -4,6 +4,9 @@ import loadable from '@loadable/component';
 const ARROW_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/arrow-right.svg')
 );
+const ARROW_LEFT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/arrow-left.svg')
+);  
 const CHECK = loadable(() => import('-!svg-react-loader!@assets/images/check.svg'));
 const CHEVRON_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/chevron-right.svg')
@@ -106,9 +109,7 @@ const UPLOAD = loadable(() =>
   import('-!svg-react-loader!@assets/images/upload.svg')
 );
 
-const CLOUD = loadable(() =>
-  import('-!svg-react-loader!@assets/images/cloud.svg')
-);
+const CLOUD = loadable(() => import('-!svg-react-loader!@assets/images/cloud.svg'));
 
 const CIRCLE_CHECK = loadable(() =>
   import('-!svg-react-loader!@assets/images/circle-check.svg')
@@ -116,6 +117,7 @@ const CIRCLE_CHECK = loadable(() =>
 
 export const VISUALS = {
   ARROW_RIGHT,
+  ARROW_LEFT,
   CHEVRON_RIGHT,
   CHEVRON_LEFT,
   CLOSE,
