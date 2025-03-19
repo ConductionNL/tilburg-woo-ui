@@ -64,8 +64,6 @@ const AcEditVoorzieningAanbodModal = ({
   const handleSubmit = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
-    console.log(accessToken);
-
     if (!accessToken) {
       setError('Geen toegangstoken gevonden');
       modalRef?.current?.close();
