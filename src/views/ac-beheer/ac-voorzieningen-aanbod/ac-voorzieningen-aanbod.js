@@ -155,6 +155,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
+            truncateLines={2}
           />
 
           {/* modals */}
