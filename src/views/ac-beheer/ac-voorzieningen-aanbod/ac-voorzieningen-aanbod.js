@@ -29,12 +29,11 @@ const AcBeheerVoorzieningenAanbod = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-        //   config.authentication.baseURL +
+          //   config.authentication.baseURL +
           'https://vng.accept.commonground.nu/apps' +
             '/openconnector/api/endpoint/voorzieningaanboden'
         );
         const data = (await response.json()).results;
-        // const data = testData;
         setData(data);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -45,7 +44,6 @@ const AcBeheerVoorzieningenAanbod = () => {
     fetchData();
   }, []);
 
-  //   TODO: remove false
   if (error) {
     return (
       <AcSection>
@@ -104,7 +102,7 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const handleMultipleDelete = () => {
     console.log('handleMultipleDelete');
-    // console.log('ids to delete', selectedRows);
+    console.log('items', selectedRows);
   };
 
   return (
@@ -115,13 +113,21 @@ const AcBeheerVoorzieningenAanbod = () => {
             <Heading>{LABELS.BEHEER_VOORZIENINGEN_AANBOD}</Heading>
 
             <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton disabled={selectedRows.length === 0} onClick={handleMultipleDelete}>
+              <PrimaryActionButton
+                disabled={selectedRows.length === 0}
+                onClick={handleMultipleDelete}
+              >
                 Delete {selectedRows.length}{' '}
                 {selectedRows.length === 1 ? 'item' : 'items'}
               </PrimaryActionButton>
             </AcFlex>
 
-            <CDTable data={testData} tableHeaders={tableHeaders} getSelectedRows={setSelectedRows} renderSelectRowButtons />
+            <CDTable
+              data={testData}
+              tableHeaders={tableHeaders}
+              getSelectedRows={setSelectedRows}
+              renderSelectRowButtons
+            />
           </AcColumn>
         </AcColumn>
       </AcContainer>

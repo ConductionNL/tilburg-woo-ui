@@ -5,6 +5,7 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
+import { AcUUID } from '@src/utilities';
 
 /**
  * A highly customizable Conduction table component that can be used to display data in a table.
@@ -19,19 +20,39 @@ import {
  * @param {React.ReactElement | ((row: any) => React.ReactElement)} props.tableHeaders.customContent - The custom content to display in the table cell.
  * @returns {React.ReactElement} The rendered table component.
  *
+ * ### Known potential issues:
+ * - Passing new data to the component, even if it contains some of the same data, will cause all selections to be lost.
+ * - - unless it is requested that this is to be fixed, I will not fix this, since its not a big issue and a pain to fix.
+ *
  * @author Thijn Douwma
- * 
+ *
  * SSBoYXZlIHdvcmtlZCB3YXkgdG9vIGhhcmQgb24gdGhpcywgYW5kIG5vIG9uZSBpcyBldmVuIGdvaW5nIHRvIGtub3cgaXQgZXhpc3RzIPCfmKI=
  */
 const CDTable = ({
-  data,
+  data: _data,
   tableHeaders,
   renderSelectRowButtons,
   getSelectedRows,
 }) => {
+  // make a deepclone of the data to avoid mutating the original data
+  const data = useMemo(() => JSON.parse(JSON.stringify(_data)), [_data]);
+
   // list of selected rows as a full data object
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedAll, setSelectedAll] = useState(false);
+
+  /**
+   * A unique symbol used as the primary ID for each row.
+   * This is then used to check if a row is selected.
+   */
+  const uniqueSymbol = useMemo(() => Symbol(), []);
+
+  // add the unique symbol to each row as the key, which then contains a unique id
+  useEffect(() => {
+    data.forEach((row) => {
+      row[uniqueSymbol] = AcUUID('CD');
+    });
+  }, [data]);
 
   useEffect(() => {
     setSelectedAll(selectedRows.length === data.length && data.length > 0);
@@ -61,14 +82,21 @@ const CDTable = ({
       setSelectedRows(
         e.target.checked
           ? [...selectedRows, row]
-          : selectedRows.filter((selectedRow) => selectedRow.id !== row.id)
+          : selectedRows.filter(
+              (selectedRow) => selectedRow[uniqueSymbol] !== row[uniqueSymbol]
+            )
       );
     };
   }, [selectedRows]);
 
   useEffect(() => {
     if (typeof getSelectedRows === 'function') {
-      getSelectedRows(selectedRows);
+      // Remove the unique symbol from selected rows before passing them
+      const cleanSelectedRows = selectedRows.map((row) => {
+        const { [uniqueSymbol]: removed, ...cleanRow } = row;
+        return cleanRow;
+      });
+      getSelectedRows(cleanSelectedRows);
     }
   }, [selectedRows, getSelectedRows]);
 
@@ -97,15 +125,19 @@ const CDTable = ({
         </TableRow>
       </thead>
     );
-  }, [renderSelectRowButtons, selectedAll, handleSelectAll, tableHeaders, renderCustomElement]);
+  }, [
+    renderSelectRowButtons,
+    selectedAll,
+    handleSelectAll,
+    tableHeaders,
+    renderCustomElement,
+  ]);
 
   const tableRows = useMemo(() => {
     if (data.length === 0) {
       return (
         <TableRow>
-          <TableCell colSpan={tableHeaders.length}>
-            Geen data gevonden
-          </TableCell>
+          <TableCell colSpan={tableHeaders.length}>Geen data gevonden</TableCell>
         </TableRow>
       );
     }
@@ -117,7 +149,7 @@ const CDTable = ({
             <input
               checked={
                 selectedRows.find(
-                  (selectedRow) => selectedRow.id === row.id
+                  (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
                 ) || false
               }
               onChange={(e) => handleSelectRow(e, row)}
@@ -134,14 +166,19 @@ const CDTable = ({
         ))}
       </TableRow>
     ));
-  }, [data, tableHeaders, renderSelectRowButtons, selectedRows, handleSelectRow, renderCustomElement]);
+  }, [
+    data,
+    tableHeaders,
+    renderSelectRowButtons,
+    selectedRows,
+    handleSelectRow,
+    renderCustomElement,
+  ]);
 
   return (
     <Table>
       {tableHeader}
-      <TableBody>
-        {tableRows}
-      </TableBody>
+      <TableBody>{tableRows}</TableBody>
     </Table>
   );
 };
