@@ -19,11 +19,13 @@ import {
 } from '@utrecht/component-library-react';
 import config from '@src/config';
 import { AcFormField } from '@src/molecules';
+import { getCookie } from '@src/utilities';
 
 const AcEditVoorzieningAanbodModal = ({
   voorziening,
   showModal = false,
   onClose,
+  onSuccess,
 }) => {
   const modalRef = useRef(null);
   const [voorzieningAanbodFormData, setVoorzieningAanbodFormData] = useState({
@@ -63,9 +65,13 @@ const AcEditVoorzieningAanbodModal = ({
     // Here you can make your POST request with the formData
     console.log('Form data to submit:', voorzieningAanbodFormData);
 
-    return;
+    const accessToken = getCookie('nextcloud_access_token');
 
-    // it currently wont work because I need to make it work with the login functionality
+    if (!accessToken) {
+      setError('Geen toegangstoken gevonden');
+      modalRef?.current?.close();
+      return;
+    }
 
     try {
       const response = await fetch(
@@ -75,12 +81,21 @@ const AcEditVoorzieningAanbodModal = ({
         {
           method: 'PUT',
           body: JSON.stringify(voorzieningAanbodFormData),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
+
+      if (response.ok) {
+        onSuccess?.();
+      }
+
       const data = (await response.json()).results;
       console.log('Data:', data);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error(err);
       setError(err);
     }
   };

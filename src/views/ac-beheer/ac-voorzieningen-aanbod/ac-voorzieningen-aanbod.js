@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
@@ -21,6 +21,8 @@ import config from '@src/config';
 import { testData } from './testData';
 import CDTable from '../cd-table';
 import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
+import { getCookie } from '@src/utilities';
+import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-aanbod-modall';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const [data, setData] = useState([]);
@@ -64,6 +66,9 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
+  const tableRef = useRef(null);
 
   const tableHeaders = [
     {
@@ -94,11 +99,21 @@ const AcBeheerVoorzieningenAanbod = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
-            onClick={() => setSingleSelectedRow(row)}
+            onClick={() => {
+              setSingleSelectedRow(row);
+              setOpenModal('edit');
+            }}
           >
             bewerken
           </button>
-          <button className='utrecht-button slim' variant='secondary'>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
+              setSingleSelectedRow(row);
+              setOpenModal('delete');
+            }}
+          >
             verwijderen
           </button>
         </AcFlex>
@@ -107,8 +122,7 @@ const AcBeheerVoorzieningenAanbod = () => {
   ];
 
   const handleMultipleDelete = () => {
-    console.log('handleMultipleDelete');
-    console.log('items', selectedRows);
+    setOpenModal('delete');
   };
 
   return (
@@ -129,16 +143,34 @@ const AcBeheerVoorzieningenAanbod = () => {
             </AcFlex>
 
             <CDTable
-              data={data}
+              data={testData}
               tableHeaders={tableHeaders}
               getSelectedRows={setSelectedRows}
               renderSelectRowButtons
+              ref={tableRef}
             />
 
+            {/* modals */}
             <AcEditVoorzieningAanbodModal
               voorziening={singleSelectedRow}
-              showModal={!!singleSelectedRow}
-              onClose={() => setSingleSelectedRow(null)}
+              showModal={openModal === 'edit'}
+              onClose={() => {
+                setOpenModal(null);
+              }}
+              onSuccess={() => {
+                tableRef.current.resetSelectedRows();
+              }}
+            />
+
+            <AcDeleteVoorzieningAanbodModall
+              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+              showModal={openModal === 'delete'}
+              onClose={() => {
+                setOpenModal(null);
+              }}
+              onSuccess={() => {
+                tableRef.current.resetSelectedRows();
+              }}
             />
           </AcColumn>
         </AcColumn>

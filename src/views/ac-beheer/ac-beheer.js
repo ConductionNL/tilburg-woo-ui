@@ -12,26 +12,10 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { useNavigate, useParams } from 'react-router';
 
 import loadable from '@loadable/component';
+import { getCookie } from '@src/utilities';
 const AcBeheerVoorzieningenAanbod = loadable(() =>
   import('@views/ac-beheer/ac-voorzieningen-aanbod/ac-voorzieningen-aanbod')
 );
-
-function getCookie(name) {
-  // Split document.cookie on `;` to handle multiple cookies
-  const cookieArr = document.cookie.split(';');
-
-  for (let cookie of cookieArr) {
-    // Remove leading spaces
-    cookie = cookie.trim();
-    // Check if this cookie starts with "<name>="
-    if (cookie.startsWith(`${encodeURIComponent(name)}=`)) {
-      // Return everything after the "<name>="
-      return decodeURIComponent(cookie.substring(name.length + 1));
-    }
-  }
-
-  return null;
-}
 
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
