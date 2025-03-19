@@ -6,7 +6,7 @@ export const BREADCRUMB_ITEMS = {
   MIJN_OMGEVING: { label: 'Mijn omgeving', href: '/mijn-omgeving' },
   GEMMA: { label: 'Gemma', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
-  BEHEER: { label: 'Beheer', href: '/beheer' },
+  BEHEER: { label: 'Beheer' },
   BEHEER_DETAILS: { label: 'Beheer Details', href: '/beheer/:id' },
 };
 
