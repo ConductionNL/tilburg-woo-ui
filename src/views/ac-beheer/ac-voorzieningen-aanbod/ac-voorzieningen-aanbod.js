@@ -129,7 +129,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             </AcFlex>
 
             <CDTable
-              data={testData}
+              data={data}
               tableHeaders={tableHeaders}
               getSelectedRows={setSelectedRows}
               renderSelectRowButtons
