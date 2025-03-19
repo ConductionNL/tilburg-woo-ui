@@ -77,8 +77,9 @@ const AcAuthentication = () => {
   //     : new URL(config.authentication.baseURL).origin;
   const authenticationHostname = 'https://vng.accept.commonground.nu';
 
-  const [clientId, setClientId] = useState('');
-  const [secretKey, setSecretKey] = useState('');
+  // TODO: do not make this hardcoded
+  const [clientId, setClientId] = useState('QP2dpVmW5sl04tRoC4ixQ75Y52Rkz2Gj1Hi4jaLToe8dHlAROToLu2uPdjNaDsKX');
+  const [secretKey, setSecretKey] = useState('ZEp3E3fcF29sCOEiI7SjEoKFNZNf8Ngu24sUwqH03SrDaK4fLYWpo7j4intzPkdb');
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -104,32 +105,7 @@ const AcAuthentication = () => {
 
   return (
     <form className='container container--compact' onSubmit={handleLogin}>
-      <div>
-        Om te beginnen met inloggen met Nextcloud moet je een client id en secret key
-        aanmaken, als je dat nog niet gedaan hebt. Deze kun je vinden in de Nextcloud
-        beheerder instellingen.
-      </div>
-      <br />
-      <div>
-        <p>
-          Bij het aanmaken van een client id en secret key moet je de volgende
-          redirect URI opgeven:
-        </p>
-        <br />
-        <code className='ac-nextcloud-login__redirect-uri'>
-          {window.location.origin}/authorization
-        </code>
-        <br />
-        <br />
-        <AcLink
-          href={authenticationHostname + '/settings/admin/security'}
-          target='_blank'
-        >
-          Open Nextcloud beheerder instellingen
-        </AcLink>
-      </div>
-
-      <div className='ac-authentication-form'>
+      {/* <div className='ac-authentication-form'>
         <Textbox
           type='text'
           placeholder='Client ID'
@@ -142,7 +118,7 @@ const AcAuthentication = () => {
           value={secretKey}
           onChange={(e) => setSecretKey(e.target.value)}
         />
-      </div>
+      </div> */}
       <PrimaryActionButton type='submit' disabled={!clientId || !secretKey}>
         <VISUALS.ARROW_RIGHT />
         <span>Inloggen</span>
