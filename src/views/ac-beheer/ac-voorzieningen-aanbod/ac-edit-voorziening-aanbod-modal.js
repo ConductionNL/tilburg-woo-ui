@@ -74,7 +74,7 @@ const AcEditVoorzieningAanbodModal = ({
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningaanboden',
+          `/openconnector/api/endpoint/voorzieningaanboden/${voorzieningAanbodFormData.id}`,
         {
           method: 'PUT',
           body: JSON.stringify(voorzieningAanbodFormData),
