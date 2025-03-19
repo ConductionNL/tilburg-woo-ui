@@ -1,22 +1,40 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { AcCardCategory, AcLink } from '@molecules';
-import { LABELS, PATHS, VISUALS } from '@constants';
-import AcGrid from '@atoms/ac-grid/ac-grid';
+import { AcLink } from '@molecules';
+import { LABELS, VISUALS } from '@constants';
 import { AcLoader } from '@components';
-import { AcContainer, AcSection } from '@atoms';
+import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
-import { AcBuildURLSearchParams } from '@utils';
-import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
-import { useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
 import config from '@src/config';
+
+/**
+ * Sets a cookie with the specified name, value and options
+ * @param {string} name - The name of the cookie
+ * @param {string} value - The value to store in the cookie
+ * @param {number} maxAgeSeconds - Maximum age of the cookie in seconds
+ * @param {Object} options - Additional cookie options
+ * @param {boolean} [options.secure] - Whether the cookie should only be transmitted over secure HTTPS
+ * @param {boolean} [options.httpOnly] - Whether the cookie should be accessible only through HTTP(S)
+ * @param {string} [options.sameSite] - SameSite attribute ('strict', 'lax' or 'none')
+ */
+function setCookie(name, value, maxAgeSeconds, options = {}) {
+  const { secure, httpOnly, sameSite } = options;
+  let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
+    value
+  )}; max-age=${maxAgeSeconds}; path=/`;
+  if (secure) cookie += '; Secure';
+  if (httpOnly) cookie += '; HttpOnly';
+  if (sameSite) cookie += `; SameSite=${sameSite}`;
+  document.cookie = cookie;
+}
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
@@ -35,7 +53,19 @@ function getCookie(name) {
   return null;
 }
 
-const AcSubjects = ({ store: { publications, themes } }) => {
+const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
+  const nextcloud_user_id = getCookie('nextcloud_user_id');
+
+  if (nextcloud_user_id) {
+    return (
+      <div className='container container--compact'>
+        <div>
+          Je bent al ingelogd met Nextcloud. Je kunt nu naar de dashboard gaan.
+        </div>
+      </div>
+    );
+  }
+
   // fetch client id and secret key from local storage
   const clientId = getCookie('nextcloud_client_id');
   const secretKey = getCookie('nextcloud_secret_key');
@@ -51,10 +81,7 @@ const AcSubjects = ({ store: { publications, themes } }) => {
                 De tijd is verstreken. Probeer het opnieuw.
                 <br />
                 <br />
-                <AcLink
-                  href={window.location.origin + '/login'}
-                  type='button'
-                >
+                <AcLink href={window.location.origin + '/login'} type='button'>
                   Terug naar login
                 </AcLink>
               </Paragraph>
@@ -65,20 +92,27 @@ const AcSubjects = ({ store: { publications, themes } }) => {
     );
   }
 
-  const authenticationHostname = config.authentication.baseURL.includes('index.php')
-    ? new URL(config.authentication.baseURL).origin + '/index.php'
-    : new URL(config.authentication.baseURL).origin;
+  //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
+  //     ? new URL(config.authentication.baseURL).origin + '/index.php'
+  //     : new URL(config.authentication.baseURL).origin;
+  const authenticationHostname = 'https://vng.accept.commonground.nu';
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const state = searchParams.get('state');
   const code = searchParams.get('code');
 
+  const redirect_url = sessionStorage.getItem('redirect_url');
+  sessionStorage.removeItem('redirect_url');
+
   useEffect(async () => {
+    let response;
     try {
-      const response = await fetch(`${authenticationHostname}/apps/oauth2/api/v1/token`, {
+      response = await fetch(`${authenticationHostname}/apps/oauth2/api/v1/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -104,19 +138,40 @@ const AcSubjects = ({ store: { publications, themes } }) => {
       return;
     }
 
-    const { access_token, expires_in, refresh_token, user_id } = await response.json();
+    const { access_token, expires_in, refresh_token, user_id } =
+      await response.json();
 
     // check if expires_in is set
     if (!expires_in) {
-      setError('Er is een fout opgetreden bij het autoriseren. Probeer het opnieuw.');
+      setError(
+        'Er is een fout opgetreden bij het autoriseren. Probeer het opnieuw.'
+      );
       setIsLoading(false);
       return;
     }
 
     // set cookies
-    document.cookie = `nextcloud_access_token=${encodeURIComponent(access_token)}; max-age=${expires_in}; path=/;`;
-    document.cookie = `nextcloud_refresh_token=${encodeURIComponent(refresh_token)}; max-age=${expires_in}; path=/;`;
-    document.cookie = `nextcloud_user_id=${encodeURIComponent(user_id)}; max-age=${expires_in}; path=/;`;
+    setCookie('nextcloud_access_token', access_token, expires_in, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+    setCookie('nextcloud_refresh_token', refresh_token, expires_in, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+    setCookie('nextcloud_user_id', user_id, expires_in, {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+
+    if (redirect_url) {
+      setTimeout(() => {
+        navigate(redirect_url);
+      }, 2000);
+    }
 
     setIsLoading(false);
   }, []);
@@ -128,9 +183,15 @@ const AcSubjects = ({ store: { publications, themes } }) => {
           <AcColumn>
             <Heading>{LABELS.NEXTCLOUD_AUTHORIZATION}</Heading>
 
-            {isLoading && <AcLoader />}
-            {!isLoading && !error && VISUALS.CHECK}
-            {error && <Paragraph>{error}</Paragraph>}
+            <AcFlex spacing='sm'>
+              {isLoading && <AcLoader />}
+              {!isLoading && !error && VISUALS.CHECK}
+              {error && <Paragraph>{error}</Paragraph>}
+
+              {redirect_url && (
+                <Paragraph>Je wordt doorgestuurd naar {redirect_url}</Paragraph>
+              )}
+            </AcFlex>
           </AcColumn>
         </AcColumn>
       </AcContainer>
@@ -138,4 +199,4 @@ const AcSubjects = ({ store: { publications, themes } }) => {
   );
 };
 
-export default withStore(observer(AcSubjects));
+export default withStore(observer(AcNextcloudAuthorization));
