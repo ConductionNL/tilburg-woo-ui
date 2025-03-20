@@ -226,7 +226,7 @@ const AcGemma = ({ store: { gemma } }) => {
       };
 
       if (!node.elementRef) {
-        const nodes = node.referentieComponenten.map((refComponent) => {
+        if (!node.referentieComponenten) return;
         const nodes = node.referentieComponenten?.map((refComponent) => {
           const uniqueId = `${node.id}_${refComponent}`;
           const nodeData = viewNodesData.find((item) => item.id === uniqueId);
