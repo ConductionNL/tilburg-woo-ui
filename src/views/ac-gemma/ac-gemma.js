@@ -60,132 +60,198 @@ const AcGemma = ({ store: { gemma } }) => {
   useEffect(() => {
     if (!gemma.get_view) return;
     let viewNodesData = [];
-    let viewRelationsData = [];
 
-    const getViewNodesData = new Promise((resolve, reject) => {
-      let forLoop = null;
-      gemma.get_view.nodes.forEach(async (node, index, array) => {
-        forLoop += 1;
-        if (!node.elementRef) return;
-        const response = await fetch(
-          `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
-        );
-        const data = await response.json();
-        if (!data.results[0]) return;
-        viewNodesData.push({
-          name: data.results[0]?.name || 'unknown',
-          id: node.elementRef,
-          description: data.results[0]?.documentation || 'unknown',
-          type: data.results[0]?.type || undefined,
-        });
-        if (index === array.length - 1 || forLoop === array.length) resolve();
+    const getViewNodesData = () => {
+      const promises = gemma.get_view.nodes.map(async (node) => {
+        if (!node.elementRef) return null;
+
+        try {
+          const response = await fetch(
+            `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
+          );
+          const data = await response.json();
+
+          if (!data.results[0]) return null;
+
+          return {
+            name: data.results[0]?.name || 'unknown',
+            id: node.elementRef,
+            description: data.results[0]?.documentation || 'unknown',
+            type: data.results[0]?.type || undefined,
+          };
+        } catch (error) {
+          console.error(`Error fetching node data: ${error}`);
+          return null;
+        }
       });
-    });
 
-    const getViewRelationsData = new Promise((resolve, reject) => {
-      if (gemma.get_view.connections.length === 0) {
-        resolve();
-        return;
-      }
-
-      gemma.get_view.connections.forEach(async (relationship, index, array) => {
-        const response = await fetch(
-          `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
-        );
-        const data = await response.json();
-
-        viewRelationsData.push({
-          name:
-            data.results[0]?.properties.find(
-              (item) => item.propertyDefinitionRef === 'propid-62'
-            )?.value || undefined,
-          id: relationship.relationshipRef,
-          type: data.results[0]?.type || undefined,
-        });
-        if (index === array.length - 1) resolve();
+      return Promise.all(promises).then((results) => {
+        viewNodesData.push(...results.filter(Boolean));
       });
-    });
+    };
 
-    getViewNodesData.finally(async () => {
-      const voorzieningGebruik = new Promise((resolve, reject) => {
-        const parentChildCount = {};
+    const getChildNodesData = () => {
+      const childPromises = gemma.get_view.nodes.reduce((promises, node) => {
+        if (!node.nodes) return promises;
 
-        gemma.get_allVoorzieningGebruik.forEach((item) => {
-          item.referentieComponenten.forEach((ref) => {
-            parentChildCount[ref] = (parentChildCount[ref] || 0) + 1;
-          });
+        const nodePromises = node.nodes.map(async (child) => {
+          if (!child.elementRef) return null;
+
+          try {
+            const response = await fetch(
+              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${child.elementRef}`
+            );
+            const data = await response.json();
+
+            if (!data.results[0]) return null;
+
+            return {
+              name: data.results[0]?.name || 'unknown',
+              id: child.elementRef,
+              description: data.results[0]?.documentation || 'unknown',
+              type: data.results[0]?.type || undefined,
+              parent: node.elementRef,
+            };
+          } catch (error) {
+            console.error(`Error fetching child node data: ${error}`);
+            return null;
+          }
         });
 
-        gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-          voorziening.referentieComponenten.forEach((ref) => {
-            const parentNode = gemma.get_view.nodes.find(
-              (node) => node.elementRef === ref
-            );
+        return [...promises, ...nodePromises];
+      }, []);
 
-            if (!parentNode) return;
+      return Promise.all(childPromises).then((results) => {
+        viewNodesData.push(...results.filter(Boolean));
+      });
+    };
 
-            const uniqueId = `${voorziening.id}_${ref}`;
-            const childrenForThisParent = gemma.get_allVoorzieningGebruik.filter(
-              (v) => v.referentieComponenten.includes(ref)
-            );
+    getViewNodesData()
+      .then(() => getChildNodesData())
+      .then(() => {
+        const processVoorzieningNodes = new Promise((resolve) => {
+          // Create a map of parent nodes and their children count
+          const parentChildrenCount = {};
 
-            const childIndex = childrenForThisParent.findIndex(
-              (v) => v.id === voorziening.id
-            );
-            const totalChildren = parentChildCount[ref];
+          // First pass: count children per parent node
+          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
+            if (!voorziening?.referentieComponenten) return;
 
-            const PARENT_PADDING = 20;
-            const CHILD_SPACING = 8;
-            const parentWidth = parseInt(parentNode.position.w);
-            const parentHeight = parseInt(parentNode.position.h);
-
-            const childWidth = Math.min(
-              (parentWidth -
-                PARENT_PADDING * 2 -
-                CHILD_SPACING * (totalChildren - 1)) /
-                totalChildren,
-              120 // Max width cap
-            );
-            const childHeight = Math.min(parentHeight * 0.35, 30);
-
-            viewNodesData.push({
-              name: voorziening.opmerkingen,
-              id: uniqueId,
-              viewNodeId: `${voorziening.id}_${ref}`,
-              type: 'dataobject',
-              position: {
-                x: PARENT_PADDING + childIndex * (childWidth + CHILD_SPACING),
-                y: parentHeight * 0.5,
-                w: childWidth,
-                h: childHeight,
-              },
-              font: parentNode.style.font,
-              parent: parentNode.identifier,
+            voorziening.referentieComponenten.forEach((parentId) => {
+              parentChildrenCount[parentId] =
+                (parentChildrenCount[parentId] || 0) + 1;
             });
           });
+
+          // Second pass: create and position child nodes
+          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
+            if (!voorziening?.referentieComponenten) return;
+
+            voorziening.referentieComponenten.forEach((parentId) => {
+              // Find the parent node in the view
+              const parentNode = gemma.get_view.nodes.find(
+                (node) => node.elementRef === parentId
+              );
+
+              if (!parentNode) return;
+
+              // Calculate child node position
+              const totalChildren = parentChildrenCount[parentId];
+              const childIndex = viewNodesData.filter(
+                (node) => node.parent === parentNode.identifier
+              ).length;
+
+              const PARENT_PADDING = 20;
+              const CHILD_SPACING = 8;
+              const parentWidth = parseInt(parentNode.position.w);
+              const parentHeight = parseInt(parentNode.position.h);
+
+              // Calculate dimensions
+              const childWidth = Math.min(
+                (parentWidth -
+                  PARENT_PADDING * 2 -
+                  CHILD_SPACING * (totalChildren - 1)) /
+                  totalChildren,
+                120 // Max width cap
+              );
+              const childHeight = Math.min(parentHeight * 0.35, 30);
+
+              // Calculate absolute position based on parent's position
+              const absoluteX =
+                parseInt(parentNode.position.x) +
+                PARENT_PADDING +
+                childIndex * (childWidth + CHILD_SPACING);
+              // Position from bottom of parent instead of top
+              const absoluteY =
+                parseInt(parentNode.position.y) +
+                parseInt(parentNode.position.h) - // Parent height
+                childHeight - // Child height
+                10; // 10px padding from bottom
+
+              // Create child node
+              viewNodesData.push({
+                name: voorziening.opmerkingen || 'eDiensten',
+                id: `${voorziening.id}_${parentId}`,
+                viewNodeId: `${voorziening.id}_${parentId}`,
+                type: 'dataobject',
+                position: {
+                  x: absoluteX,
+                  y: absoluteY,
+                  w: childWidth,
+                  h: childHeight,
+                },
+                font: parentNode.style.font,
+                parent: parentNode.identifier,
+              });
+            });
+          });
+
+          resolve();
         });
 
-        resolve();
-      });
-
-      voorzieningGebruik.finally(() => {
-        console.info('Finished fetching view node data, applying after delay');
-        setTimeout(() => {
+        processVoorzieningNodes.finally(() => {
           setViewNodesData(viewNodesData);
-        }, 1000);
+        });
       });
-    });
 
-    getViewRelationsData.finally(() => {
-      console.info('Finished fetching view relations data, applying after delay');
-      setTimeout(() => {
+    const getViewRelationsData = () => {
+      const relationshipPromises = gemma.get_view.connections.map(
+        async (relationship) => {
+          if (!relationship.relationshipRef) return null;
+          if (relationship.relationshipRef.includes('@attribute')) return null;
+
+          try {
+            const response = await fetch(
+              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
+            );
+            const data = await response.json();
+
+            return {
+              name:
+                data.results[0]?.properties.find(
+                  (item) => item.propertyDefinitionRef === 'propid-62'
+                )?.value || undefined,
+              id: relationship.relationshipRef,
+              type: data.results[0]?.type || undefined,
+            };
+          } catch (error) {
+            console.error(`Error fetching relationship data: ${error}`);
+            return null;
+          }
+        }
+      );
+
+      return Promise.all(relationshipPromises).then((results) => {
+        const validRelations = results.filter(Boolean);
         if (gemma.get_view.connections.length > 0) {
-          setViewRelationsData(viewRelationsData);
+          setViewRelationsData(validRelations);
         } else {
           setViewRelationsData([]);
         }
-      }, 2000);
-    });
+      });
+    };
+
+    getViewRelationsData();
   }, [gemma.get_view]);
 
   useEffect(() => {
@@ -226,6 +292,21 @@ const AcGemma = ({ store: { gemma } }) => {
       };
 
       if (!node.elementRef) {
+        if (node.type === 'Label') {
+          return {
+            modelNodeId: node.identifier,
+            viewNodeId: node.identifier || 'unknown',
+            name: node.label,
+            type: node.type?.toLowerCase() || getType(),
+            x: node.position.x,
+            y: node.position.y,
+            width: node.position.w,
+            height: node.position.h,
+            parent: null,
+            description: node.label,
+            font: node.style.font,
+          };
+        }
         if (!node.referentieComponenten) return;
         const nodes = node.referentieComponenten?.map((refComponent) => {
           const uniqueId = `${node.id}_${refComponent}`;
@@ -251,7 +332,7 @@ const AcGemma = ({ store: { gemma } }) => {
         return nodes;
       } else {
         return {
-          modelNodeId: node.elementRef,
+          modelNodeId: node.isChildNode ? node.identifier : node.elementRef,
           viewNodeId: node.identifier || 'unknown',
           name: nodeDataNode?.name || 'unknown',
           type: nodeDataNode?.type?.toLowerCase() || getType(),
@@ -274,8 +355,12 @@ const AcGemma = ({ store: { gemma } }) => {
 
     const gemmaNodes = gemma.get_view.nodes;
     const voorzieningNodes = gemma.get_allVoorzieningGebruik;
+    const gemmaChildNodes = gemma.get_view.nodes
+      .flatMap((node) => node.nodes)
+      .filter(Boolean)
+      .map((node) => ({ ...node, isChildNode: true }));
 
-    const allNodes = [...gemmaNodes, ...voorzieningNodes];
+    const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
 
     const viewNodes = allNodes.flatMap(convertToViewNode).filter(Boolean);
 
