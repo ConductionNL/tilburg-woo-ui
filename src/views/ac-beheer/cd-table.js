@@ -18,6 +18,7 @@ import { AcUUID } from '@src/utilities';
  * @param {object} props - The component props.
  * @param {Array} props.data - The data to display in the table.
  * @param {boolean} props.renderSelectRowButtons - Whether to render the select row buttons.
+ * @param {number} props.truncateLines - The number of lines to truncate the text to. Default is 0 (no truncation).
  * @param {(selectedRows: any[]) => void} props.getSelectedRows - The function to call when the selected rows change.
  * @param {{ label?: string, key?: string, customHeader?: React.ReactElement | (() => React.ReactElement), customContent?: React.ReactElement | ((row: any) => React.ReactElement) }[]} props.tableHeaders - The headers to display in the table. (array of objects)
  * @param {string} props.tableHeaders.label - The label to display in the table header.
@@ -37,7 +38,13 @@ import { AcUUID } from '@src/utilities';
  * SSBoYXZlIHdvcmtlZCB3YXkgdG9vIGhhcmQgb24gdGhpcywgYW5kIG5vIG9uZSBpcyBldmVuIGdvaW5nIHRvIGtub3cgaXQgZXhpc3RzIPCfmKI=
  */
 const CDTable = (
-  { data: _data, tableHeaders, renderSelectRowButtons, getSelectedRows },
+  {
+    data: _data,
+    tableHeaders,
+    renderSelectRowButtons,
+    getSelectedRows,
+    truncateLines = 0,
+  },
   ref
 ) => {
   // make a deepclone of the data to avoid mutating the original data
@@ -126,6 +133,21 @@ const CDTable = (
     [resetSelectedRows]
   );
 
+  const getTruncateStyle = useMemo(() => {
+    return () => {
+      if (!truncateLines) {
+        return {};
+      }
+
+      return {
+        display: '-webkit-box',
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+        WebkitLineClamp: truncateLines,
+      };
+    };
+  }, [truncateLines]);
+
   const tableHeader = useMemo(() => {
     return (
       <thead>
@@ -190,9 +212,11 @@ const CDTable = (
         )}
         {tableHeaders.map((header, headerIndex) => (
           <TableCell key={headerIndex}>
-            {header.customContent
-              ? renderCustomElement(header.customContent, removeUniqueSymbol(row))
-              : row[header.key]}
+            <div style={getTruncateStyle()}>
+              {header.customContent
+                ? renderCustomElement(header.customContent, removeUniqueSymbol(row))
+                : row[header.key]}
+            </div>
           </TableCell>
         ))}
       </TableRow>
