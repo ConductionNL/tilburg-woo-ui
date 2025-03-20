@@ -410,6 +410,12 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
+                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-versie')}>
+                  <VISUALS.INFO />
+                  Versie
+                </SidenavLink>
+              </SidenavItem>
+              <SidenavItem>
                 <SidenavLink>
                   <VISUALS.BUILDING />
                   Organisaties
