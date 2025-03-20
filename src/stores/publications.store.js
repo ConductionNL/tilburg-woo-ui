@@ -32,6 +32,9 @@ export class PublicationsStore {
   items = [];
 
   @observable
+  latest_items = [];
+
+  @observable
   single = null;
 
   @observable
@@ -68,6 +71,12 @@ export class PublicationsStore {
 
   @observable
   loading = {
+    status: false,
+    message: undefined,
+  };
+
+  @observable
+  loading_latest = {
     status: false,
     message: undefined,
   };
@@ -127,6 +136,28 @@ export class PublicationsStore {
     this.attachmentPagination.page = page;
   };
 
+  @action
+  fetchLatestPublications = async (limit = 3) => {
+    this.loading_latest.status = true;
+
+    try {
+      // Create a query for the latest publications
+      const latestQuery = {
+        ...DEFAULT_QUERY,
+        _limit: limit,
+        _order: { date: 'desc' },
+      };
+
+      const response = await app.store.api.publications.search(latestQuery);
+      this.setLatestItems(response.results || []);
+    } catch (e) {
+      // Set empty array on error to avoid UI issues
+      this.setLatestItems([]);
+    } finally {
+      this.loading_latest.status = false;
+    }
+  };
+
   @computed
   get all_themes_facets() {
     return this.themesFacets;
@@ -147,6 +178,11 @@ export class PublicationsStore {
   }
 
   @computed
+  get is_loading_latest() {
+    return this.loading_latest.status;
+  }
+
+  @computed
   get get_order() {
     return this.query._order;
   }
@@ -161,9 +197,19 @@ export class PublicationsStore {
     return this.items;
   }
 
+  @computed
+  get latest_publications() {
+    return this.latest_items ? toJS(this.latest_items) : [];
+  }
+
   @action
   setItems = (items) => {
     this.items = items;
+  };
+
+  @action
+  setLatestItems = (items) => {
+    this.latest_items = items;
   };
 
   @action

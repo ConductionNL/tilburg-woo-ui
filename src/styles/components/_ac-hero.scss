@@ -8,8 +8,19 @@
   background-color: var(--tilburg-color-blue-500);
   padding-block: var(--tilburg-space-row-elephant);
 
+  @include respond-max($screen-sm) {
+    background-color: transparent;
+    background-image: none !important;
+    padding-block: 0;
+  }
+
   .ac-card {
     inline-size: min(100%, 744px);
+
+    @include respond-max($screen-sm) {
+      margin-inline-start: calc(-1 * var(--tilburg-space-column-rat));
+      inline-size: calc(100% + (2 * var(--tilburg-space-column-rat)));
+    }
 
     &__content {
       display: flex;
@@ -18,12 +29,18 @@
 
       @include respond-max($screen-sm) {
         gap: var(--tilburg-space-block-mouse);
+        padding: var(--tilburg-space-column-cat);
       }
     }
 
     h1 {
       font-size: var(--tilburg-typography-font-size-2xl);
       color: var(--tilburg-color-blue-400);
+      margin-block-end: 0 !important;
+
+      @include respond-max($screen-sm) {
+        // font-size: var(--tilburg-typography-font-size-xl);
+      }
     }
   }
 }

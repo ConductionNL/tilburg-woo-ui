@@ -2,23 +2,37 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcCard } from '@atoms';
+import { AcCard, AcFlex } from '@atoms';
 import { AcLink } from '@molecules';
 import { VISUALS } from '@constants';
 
-const AcCardCategory = ({ image, title, summary, linkUrl, linkTitle }) => {
-  // if (!image) {
-  //   return;
-  // }
-
+const AcCardCategory = ({
+  image,
+  icon,
+  title,
+  summary,
+  linkUrl,
+  linkTitle,
+  isExternal = false,
+}) => {
   return (
-    <AcCard category image={image} spaceBetween>
-      <Heading level={3}>{title}</Heading>
+    <AcCard category spaceBetween image={image} padding='md'>
+      <AcFlex spacing='sm'>
+        {icon}
+        <Heading level={3}>{title}</Heading>
+      </AcFlex>
       <Paragraph>{summary}</Paragraph>
-      <AcLink to={linkUrl}>
-        {linkTitle}
-        <VISUALS.ARROW_RIGHT />
-      </AcLink>
+      {isExternal ? (
+        <AcLink to={linkUrl} external>
+          {linkTitle}
+          <VISUALS.EXTERNAL_LINK_PINK />
+        </AcLink>
+      ) : (
+        <AcLink to={linkUrl}>
+          {linkTitle}
+          <VISUALS.ARROW_RIGHT />
+        </AcLink>
+      )}
     </AcCard>
   );
 };

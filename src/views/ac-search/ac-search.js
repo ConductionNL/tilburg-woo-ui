@@ -136,7 +136,7 @@ const AcSearch = ({ store: { publications } }) => {
           <AcSearchBox
             page='search'
             onSubmitCallback={onSearchSubmit}
-            label={LABELS.SEARCH}
+            label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
             defaultValue={search_query._search}
           />
         </AcCard>

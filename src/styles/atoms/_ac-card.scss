@@ -41,6 +41,13 @@
     .utrecht-button--secondary-action {
       font-size: var(--tilburg-typography-font-size-md);
     }
+
+    &:has([class*='ac-search-box--search']) {
+      @include respond-max($screen-sm) {
+        margin-inline-start: calc(-1 * var(--tilburg-space-column-rat));
+        inline-size: calc(100% + (2 * var(--tilburg-space-column-rat)));
+      }
+    }
   }
 
   &--category,
@@ -60,6 +67,7 @@
       }
 
       svg {
+        flex-shrink: 0;
         transition: translate 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
@@ -72,6 +80,12 @@
           translate: var(--tilburg-space-block-beetle) 0;
         }
       }
+    }
+  }
+
+  &--category {
+    > div:first-child > div svg path {
+      fill: var(--tilburg-color-blue-500);
     }
   }
 

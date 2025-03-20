@@ -22,29 +22,71 @@ const AcSearchCategories = ({ store: { publications } }) => {
     <AcModal ref={modalRef} id='categories-modal' title='Categorieën'>
       <AcFlex column spacing='sm'>
         <Paragraph>
-          <strong>Convenant</strong>
+          <strong>Bestuursstukken</strong>
           <br />
-          Een formele overeenkomst of afspraak tussen twee of meer partijen.
+          Dit zijn documenten die beslissingen en beleidsregels van de overheid
+          bevatten. Ze geven inzicht in hoe de overheid werkt en welke keuzes er
+          worden gemaakt.
         </Paragraph>
         <Paragraph>
-          <strong>Bestuursstuk</strong>
+          <strong>Raadsstukken</strong>
           <br />
-          Document dat wordt gebruikt om beleid of richtlijnen vast te leggen.
+          Dit zijn notulen en documenten van gemeenteraadsvergaderingen. Ze laten
+          zien wat er besproken en besloten is tijdens deze vergaderingen.
         </Paragraph>
         <Paragraph>
-          <strong>Woo-verzoek</strong>
+          <strong>Jaarplannen en verslagen</strong>
           <br />
-          Verzoek bij een overheidsinstantie om informatie op te vragen.
+          Dit zijn overzichten van geplande activiteiten en behaalde resultaten van
+          een jaar. Ze geven een beeld van de doelen en prestaties van de gemeente.
         </Paragraph>
         <Paragraph>
-          <strong>Raadstuk</strong>
+          <strong>Woo-dossiers</strong>
           <br />
-          Onderwerpen die worden besproken tijdens een gemeenteraadsvergadering.
+          Dit zijn documenten die openbaar worden gemaakt op basis van Woo-verzoeken.
+          Ze bevatten informatie die door inwoners is opgevraagd.
         </Paragraph>
         <Paragraph>
-          <strong>Organisatiegegevens</strong>
+          <strong>Organisatie- en bereikbaarheidsinformatie</strong>
           <br />
-          <AcLink to='/contact'>Die kun je hier vinden</AcLink>
+          Dit is informatie over de structuur en contactgegevens van een organisatie.
+          Het helpt inwoners om te weten wie ze kunnen benaderen voor bepaalde zaken.
+        </Paragraph>
+        <Paragraph>
+          <strong>Convenanten</strong>
+          <br />
+          Dit zijn afspraken en overeenkomsten tussen verschillende partijen. Ze
+          leggen vast wat de betrokken partijen van elkaar verwachten.
+        </Paragraph>
+        <Paragraph>
+          <strong>Beschikkingen</strong>
+          <br />
+          Dit zijn officiële besluiten van de gemeente over specifieke zaken. Ze
+          geven aan wat er wel of niet mag gebeuren in bepaalde situaties.
+        </Paragraph>
+        <Paragraph>
+          <strong>Adviezen van adviescolleges</strong>
+          <br />
+          Dit zijn aanbevelingen van adviesorganen over beleidsvoorstellen. Ze helpen
+          de gemeente om weloverwogen beslissingen te nemen.
+        </Paragraph>
+        <Paragraph>
+          <strong>Klachten</strong>
+          <br />
+          Dit zijn documenten met klachten van inwoners en de afhandeling daarvan. Ze
+          laten zien hoe de gemeente omgaat met ontevredenheid van inwoners.
+        </Paragraph>
+        <Paragraph>
+          <strong>Onderzoeksrapporten</strong>
+          <br />
+          Dit zijn verslagen van onderzoeken uitgevoerd door of voor de gemeente. Ze
+          bieden gedetailleerde informatie over specifieke onderwerpen.
+        </Paragraph>
+        <Paragraph>
+          <strong>Wet- en regelgeving</strong>
+          <br />
+          Dit zijn ontwerpen en definitieve versies van wetten en regels. Ze bepalen
+          wat er in een land of regio wel en niet mag.
         </Paragraph>
       </AcFlex>
     </AcModal>

@@ -13,35 +13,42 @@ const AcSearchResult = ({
   category,
   themes,
   id,
+  hideCategory = false,
+  hideThemes = false,
+  simplified = false,
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
-      <Heading level={3}>{title}</Heading>
-      <Paragraph>{summary}</Paragraph>
-      <AcFlex justifyContent='between' className='meta'>
-        <AcFlex alignItems='center' spacing='sm'>
-          {themes?.length > 0 && (
-            <>
-              <StatusBadge>{themes[0]?.title}</StatusBadge>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-          {published && (
-            <>
-              <Paragraph small>
-                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-              </Paragraph>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-          <Paragraph small>{category}</Paragraph>
+      <AcFlex column justifyContent='between' spacing='md' blockSize='full'>
+        <AcFlex column spacing='sm'>
+          <Heading level={3}>{title}</Heading>
+          <Paragraph>{summary}</Paragraph>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
-          <span class='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {title}
-          </span>
-          <VISUALS.ARROW_RIGHT />
-        </AcLink>
+        <AcFlex justifyContent='between' className='meta'>
+          <AcFlex alignItems='center' spacing='sm'>
+            {!hideThemes && themes?.length > 0 && (
+              <>
+                <StatusBadge>{themes[0]?.title}</StatusBadge>
+                {(published || (!hideCategory && category)) && <VISUALS.ELLIPSE />}
+              </>
+            )}
+            {published && (
+              <>
+                <Paragraph small>
+                  {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+                </Paragraph>
+                {!hideCategory && category && <VISUALS.ELLIPSE />}
+              </>
+            )}
+            {!hideCategory && category && <Paragraph small>{category}</Paragraph>}
+          </AcFlex>
+          <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+            <span className='sr-only'>
+              {LABELS.READ_MORE_ABOUT} {title}
+            </span>
+            <VISUALS.ARROW_RIGHT />
+          </AcLink>
+        </AcFlex>
       </AcFlex>
     </AcCard>
   );
