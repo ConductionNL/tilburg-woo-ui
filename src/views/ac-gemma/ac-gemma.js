@@ -127,44 +127,46 @@ const AcGemma = ({ store: { gemma } }) => {
     };
 
     getViewNodesData()
+      .then(() => getChildNodesData())
       .then(() => {
-        return getChildNodesData();
-      })
-      .then(() => {
-        const voorzieningGebruik = new Promise((resolve, reject) => {
-          const parentChildCount = {};
+        const processVoorzieningNodes = new Promise((resolve) => {
+          // Create a map of parent nodes and their children count
+          const parentChildrenCount = {};
 
-          gemma.get_allVoorzieningGebruik.forEach((item) => {
-            if (!item?.referentieComponenten) return;
-            item?.referentieComponenten.forEach((ref) => {
-              parentChildCount[ref] = (parentChildCount[ref] || 0) + 1;
+          // First pass: count children per parent node
+          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
+            if (!voorziening?.referentieComponenten) return;
+
+            voorziening.referentieComponenten.forEach((parentId) => {
+              parentChildrenCount[parentId] =
+                (parentChildrenCount[parentId] || 0) + 1;
             });
           });
 
+          // Second pass: create and position child nodes
           gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-            if (!voorziening.referentieComponenten) return;
-            voorziening.referentieComponenten.forEach((ref) => {
+            if (!voorziening?.referentieComponenten) return;
+
+            voorziening.referentieComponenten.forEach((parentId) => {
+              // Find the parent node in the view
               const parentNode = gemma.get_view.nodes.find(
-                (node) => node.elementRef === ref
+                (node) => node.elementRef === parentId
               );
 
               if (!parentNode) return;
 
-              const uniqueId = `${voorziening.id}_${ref}`;
-              const childrenForThisParent = gemma.get_allVoorzieningGebruik.filter(
-                (v) => v.referentieComponenten.includes(ref)
-              );
-
-              const childIndex = childrenForThisParent.findIndex(
-                (v) => v.id === voorziening.id
-              );
-              const totalChildren = parentChildCount[ref];
+              // Calculate child node position
+              const totalChildren = parentChildrenCount[parentId];
+              const childIndex = viewNodesData.filter(
+                (node) => node.parent === parentNode.identifier
+              ).length;
 
               const PARENT_PADDING = 20;
               const CHILD_SPACING = 8;
               const parentWidth = parseInt(parentNode.position.w);
               const parentHeight = parseInt(parentNode.position.h);
 
+              // Calculate dimensions
               const childWidth = Math.min(
                 (parentWidth -
                   PARENT_PADDING * 2 -
@@ -174,14 +176,27 @@ const AcGemma = ({ store: { gemma } }) => {
               );
               const childHeight = Math.min(parentHeight * 0.35, 30);
 
+              // Calculate absolute position based on parent's position
+              const absoluteX =
+                parseInt(parentNode.position.x) +
+                PARENT_PADDING +
+                childIndex * (childWidth + CHILD_SPACING);
+              // Position from bottom of parent instead of top
+              const absoluteY =
+                parseInt(parentNode.position.y) +
+                parseInt(parentNode.position.h) - // Parent height
+                childHeight - // Child height
+                10; // 10px padding from bottom
+
+              // Create child node
               viewNodesData.push({
-                name: voorziening.opmerkingen,
-                id: uniqueId,
-                viewNodeId: `${voorziening.id}_${ref}`,
+                name: voorziening.opmerkingen || 'eDiensten',
+                id: `${voorziening.id}_${parentId}`,
+                viewNodeId: `${voorziening.id}_${parentId}`,
                 type: 'dataobject',
                 position: {
-                  x: PARENT_PADDING + childIndex * (childWidth + CHILD_SPACING),
-                  y: parentHeight * 0.5,
+                  x: absoluteX,
+                  y: absoluteY,
                   w: childWidth,
                   h: childHeight,
                 },
@@ -194,7 +209,7 @@ const AcGemma = ({ store: { gemma } }) => {
           resolve();
         });
 
-        voorzieningGebruik.finally(() => {
+        processVoorzieningNodes.finally(() => {
           setViewNodesData(viewNodesData);
         });
       });
@@ -770,7 +785,6 @@ const AcGemma = ({ store: { gemma } }) => {
           )}
         </>
       )}
-      {/* <div className='ac-gemma-graph-container' id='graph-container'></div> */}
     </AcContainer>
   );
 };
