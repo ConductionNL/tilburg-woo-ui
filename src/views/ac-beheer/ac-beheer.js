@@ -17,6 +17,10 @@ const AcBeheerVoorzieningenAanbod = loadable(() =>
   import('@views/ac-beheer/ac-voorzieningen-aanbod/ac-voorzieningen-aanbod')
 );
 
+const AcBeheerVoorzieningenGebruik = loadable(() =>
+  import('@views/ac-beheer/ac-voorzieningen-gebruik/ac-voorzieningen-gebruik')
+);
+
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
 
@@ -33,6 +37,9 @@ const AcBeheer = () => {
   switch (id) {
     case 'voorzieningen-aanbod':
       page = <AcBeheerVoorzieningenAanbod />;
+      break;
+    case 'voorzieningen-gebruik':
+      page = <AcBeheerVoorzieningenGebruik />;
       break;
     default:
       page = (
