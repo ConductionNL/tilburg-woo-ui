@@ -63,18 +63,22 @@ const AcGemma = ({ store: { gemma } }) => {
     let viewRelationsData = [];
 
     const getViewNodesData = new Promise((resolve, reject) => {
+      let forLoop = null;
       gemma.get_view.nodes.forEach(async (node, index, array) => {
+        forLoop += 1;
+        if (!node.elementRef) return;
         const response = await fetch(
           `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
         );
         const data = await response.json();
+        if (!data.results[0]) return;
         viewNodesData.push({
           name: data.results[0]?.name || 'unknown',
           id: node.elementRef,
           description: data.results[0]?.documentation || 'unknown',
           type: data.results[0]?.type || undefined,
         });
-        if (index === array.length - 1) resolve();
+        if (index === array.length - 1 || forLoop === array.length) resolve();
       });
     });
 
@@ -222,7 +226,8 @@ const AcGemma = ({ store: { gemma } }) => {
       };
 
       if (!node.elementRef) {
-        const nodes = node.referentieComponenten.map((refComponent) => {
+        if (!node.referentieComponenten) return;
+        const nodes = node.referentieComponenten?.map((refComponent) => {
           const uniqueId = `${node.id}_${refComponent}`;
           const nodeData = viewNodesData.find((item) => item.id === uniqueId);
 
@@ -232,12 +237,12 @@ const AcGemma = ({ store: { gemma } }) => {
             modelNodeId: nodeData?.id,
             viewNodeId: nodeData?.viewNodeId || 'unknown',
             name: nodeData?.name || 'unknown',
-            type: nodeData?.type.toLowerCase() || getType(),
+            type: nodeData?.type?.toLowerCase() || getType(),
             x: nodeData?.position?.x || 0,
             y: nodeData?.position?.y || 0,
             width: nodeData?.position?.w || 0,
             height: nodeData?.position?.h || 0,
-            parent: nodeData?.parent || null,
+            parent: null,
             description: nodeData?.description || null,
             font: nodeData?.font || null,
           };
@@ -249,7 +254,7 @@ const AcGemma = ({ store: { gemma } }) => {
           modelNodeId: node.elementRef,
           viewNodeId: node.identifier || 'unknown',
           name: nodeDataNode?.name || 'unknown',
-          type: nodeDataNode?.type.toLowerCase() || getType(),
+          type: nodeDataNode?.type?.toLowerCase() || getType(),
           x: node.position.x,
           y: node.position.y,
           width: node.position.w,
@@ -284,7 +289,7 @@ const AcGemma = ({ store: { gemma } }) => {
         sourceId: relationship.source,
         targetId: relationship.target,
         viewRelationshipId: relationship.identifier,
-        type: relationshipData?.type.toLowerCase() || 'access',
+        type: relationshipData?.type?.toLowerCase() || 'access',
         bendpoints: relationship.bendpoints || [],
         label: {
           text: relationshipData?.name || undefined,
