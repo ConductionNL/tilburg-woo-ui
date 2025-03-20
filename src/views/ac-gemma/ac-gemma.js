@@ -66,6 +66,7 @@ const AcGemma = ({ store: { gemma } }) => {
       let forLoop = null;
       gemma.get_view.nodes.forEach(async (node, index, array) => {
         forLoop += 1;
+        if (!node.elementRef) return;
         const response = await fetch(
           `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
         );
@@ -226,6 +227,7 @@ const AcGemma = ({ store: { gemma } }) => {
 
       if (!node.elementRef) {
         const nodes = node.referentieComponenten.map((refComponent) => {
+        const nodes = node.referentieComponenten?.map((refComponent) => {
           const uniqueId = `${node.id}_${refComponent}`;
           const nodeData = viewNodesData.find((item) => item.id === uniqueId);
 
