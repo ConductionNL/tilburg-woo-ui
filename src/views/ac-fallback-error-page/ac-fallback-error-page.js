@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { useLocation } from 'react-router-dom';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
@@ -9,14 +7,7 @@ import { AcContainer } from '@atoms';
 import { AcLoader } from '@components';
 
 const AcFallbackErrorPage = ({ store: { pages } }) => {
-  const { fetchPage, loading, resetPage } = pages;
-
-  const location = useLocation();
-
-  useEffect(() => {
-    fetchPage(location?.pathname);
-    return () => resetPage();
-  }, [location]);
+  const { loading } = pages;
 
   if (loading.status) {
     return <AcLoader />;
