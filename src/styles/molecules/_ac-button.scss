@@ -9,6 +9,13 @@
     }
   }
 
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-inline-end: var(--tilburg-space-column-snail);
+  }
+
   &--animate {
     &:has(svg) {
       svg {

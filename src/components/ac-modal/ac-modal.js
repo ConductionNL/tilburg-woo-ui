@@ -39,7 +39,7 @@ const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, ch
       <div className='ac-modal__footer'>
         <AcFlex spacing='sm'>
           {!disableDefaultButton && (
-            <AcButton style='button' onClick={onCloseHandler}>
+            <AcButton style='button' icon={<VISUALS.CLOSE />} onClick={onCloseHandler}>
               {LABELS.CLOSE}
             </AcButton>
           )}
@@ -66,8 +66,7 @@ const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, ch
             }
 
             return (
-              <AcButton style='button' onClick={button.onClick}>
-                {button.icon}
+              <AcButton style='button' icon={button.icon} onClick={button.onClick}>
                 {button.label}
               </AcButton>
             );

@@ -29,6 +29,9 @@ const AcBeheerContracten = loadable(() =>
   import('@views/ac-beheer/ac-contracten/ac-contracten')
 );
 
+const AcBeheerOrganisaties = loadable(() =>
+  import('@views/ac-beheer/ac-organisatie/ac-organisatie')
+);
 
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
@@ -55,6 +58,9 @@ const AcBeheer = () => {
       break;
     case 'contracten':
       page = <AcBeheerContracten />;
+      break;
+    case 'organisaties':
+      page = <AcBeheerOrganisaties />;
       break;
     default:
       page = (

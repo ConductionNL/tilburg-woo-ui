@@ -119,6 +119,14 @@ const HAND_SHAKE = loadable(() =>
   import('-!svg-react-loader!@assets/images/handshake.svg')
 );
 
+const SAVE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/save.svg')
+);
+
+const TRASHCAN = loadable(() =>
+  import('-!svg-react-loader!@assets/images/trash-can.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -166,6 +174,8 @@ export const VISUALS = {
   CLOUD,
   CIRCLE_CHECK,
   HAND_SHAKE,
+  SAVE,
+  TRASHCAN,
 };
 
 export default {};
