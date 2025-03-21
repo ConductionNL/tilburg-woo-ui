@@ -19,6 +19,7 @@ import { DEFAULT_ROUTE, ROUTES } from '@constants';
 // Imports => Utilities
 import { AcHome } from '@views';
 import AcContent from '@views/ac-content/ac-content';
+import { AcFallbackErrorPage } from '@views';
 
 // Imports => Molecules
 const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
@@ -41,10 +42,6 @@ const App = ({ store }) => {
       <AcContent store={store} />
     );
   };
-
-  if (!all_pages?.length) {
-    return null;
-  }
 
   const hostname = window.location.hostname;
 
@@ -136,6 +133,18 @@ const App = ({ store }) => {
     setIcon();
     setTheme();
   }, []);
+
+  if (!all_pages?.length) {
+    return (
+      <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>
+        <AcHeader store={store} />
+        <main id='main' className='ac-app-main'>
+          <AcFallbackErrorPage />
+        </main>
+        <AcFooter />
+      </div>
+    );
+  }
 
   return (
     <div className={'ac-app-container'} tabIndex='-1' ref={resetFocus}>

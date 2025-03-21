@@ -4,11 +4,20 @@ const AcHome = loadable(() => import('@views/ac-home/ac-home'));
 const AcSearch = loadable(() => import('@views/ac-search/ac-search'));
 const AcThemes = loadable(() => import('@views/ac-themes/ac-themes'));
 const AcPublication = loadable(() => import('@views/ac-publication/ac-publication'));
-const AcAuthentication = loadable(() => import('@views/ac-authentication/ac-authentication'));
-const AcMijnOmgeving = loadable(() => import('@views/ac-mijn-omgeving/ac-mijn-omgeving'));
+const AcAuthentication = loadable(() =>
+  import('@views/ac-authentication/ac-authentication')
+);
+const AcMijnOmgeving = loadable(() =>
+  import('@views/ac-mijn-omgeving/ac-mijn-omgeving')
+);
 const AcGemma = loadable(() => import('@views/ac-gemma/ac-gemma'));
-const AcNextcloudAuthorization = loadable(() => import('@views/ac-nextcloud-authorization/ac-nextcloud-authorization'));
+const AcNextcloudAuthorization = loadable(() =>
+  import('@views/ac-nextcloud-authorization/ac-nextcloud-authorization')
+);
 const AcBeheer = loadable(() => import('@views/ac-beheer/ac-beheer'));
+const AcFallbackErrorPage = loadable(() =>
+  import('@views/ac-fallback-error-page/ac-fallback-error-page')
+);
 
 export {
   AcHome,
@@ -20,4 +29,5 @@ export {
   AcGemma,
   AcNextcloudAuthorization,
   AcBeheer,
+  AcFallbackErrorPage,
 };
