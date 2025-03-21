@@ -6,6 +6,7 @@ const AcButton = ({
   animate,
   children,
   className,
+  icon,
   sr,
   ...restProps
 }) => {
@@ -19,6 +20,7 @@ const AcButton = ({
 
   return (
     <button className={_CLASSES} {...restProps}>
+      {icon && <span className='ac-button__icon'>{icon}</span>}
       {children}
 
       {sr && <span className='sr-only'>{sr}</span>}

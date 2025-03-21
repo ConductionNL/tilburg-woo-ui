@@ -27,7 +27,8 @@ import { AcUUID } from '@src/utilities';
  * - Arrays: joined with commas
  * - Objects: converted to JSON strings
  * - Primitives: displayed as-is
- * - Custom content (if provided) overrides automatic handling
+ * - Cells with no data will display a `-`
+ * - Custom content (if provided) overrides automatic handling and the `-` for empty cells
  *
  * **Custom Headers and Content:**
  * 1. **Custom Headers**
@@ -43,7 +44,7 @@ import { AcUUID } from '@src/utilities';
  *
  * 2. **Custom Content**
  *    - Accepts either a React element or a function that receives the row data
- *    - Overrides automatic data type handling
+ *    - Overrides automatic data type handling and the `-` for empty cells
  *    ```jsx
  *    // As an element
  *    customContent: <button>Click me</button>
@@ -213,6 +214,10 @@ const CDTable = (
     return (header, row) => {
       if (header.customContent) {
         return renderCustomElement(header.customContent, removeUniqueSymbol(row));
+      }
+
+      if (!row[header.key]) {
+        return '-';
       }
 
       if (Array.isArray(row[header.key])) {
