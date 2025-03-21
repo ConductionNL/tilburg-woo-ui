@@ -37,7 +37,7 @@ const AcEditVoorzieningVersieModal = ({
     productieDatum: '',
     eindeDatum: '',
     status: '',
-});
+  });
 
   useEffect(() => {
     if (voorziening) {
