@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 
-import { AcButton, AcCheckbox, AcLink } from '@molecules';
+import { AcButton, AcCheckbox } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
@@ -16,7 +16,8 @@ const AcSearchCategories = ({ store: { publications } }) => {
   const modalRef = useRef(null);
   const handleOpenModal = () => modalRef?.current?.showModal();
 
-  const { all_categories, category_checked, toggleSearchArrayValue } = publications;
+  const { categories_with_facets, category_checked, toggleSearchArrayValue } =
+    publications;
 
   const renderModal = (
     <AcModal ref={modalRef} id='categories-modal' title='Categorieën'>
@@ -101,7 +102,7 @@ const AcSearchCategories = ({ store: { publications } }) => {
       <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
         <VISUALS.QUESTION_MARK /> <span>{LABELS.ABOUT_CATEGORIES}</span>
       </AcButton>
-      {all_categories?.map((category, index) => (
+      {categories_with_facets?.map((category, index) => (
         <AcCheckbox
           key={index}
           label={category._id}

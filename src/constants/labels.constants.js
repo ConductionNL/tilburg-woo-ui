@@ -10,6 +10,7 @@ export const LABELS = {
   SEARCH_EXTENSIVE: 'Zoeken',
   SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
+  SOURCE: 'Bron',
   CATEGORIES: 'Categorieën',
   CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
   TO_MAIN_CONTENT: 'Direct naar de inhoud',

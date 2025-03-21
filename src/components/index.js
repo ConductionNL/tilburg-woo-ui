@@ -31,12 +31,10 @@ const AcSearchFilter = loadable(() =>
 const AcSearchSort = loadable(() =>
   import('@components/ac-search-sort/ac-search-sort')
 );
-const AcSearchSubjects = loadable(() =>
-  import('@components/ac-search-subjects/ac-search-subjects')
+const AcSearchThemes = loadable(() =>
+  import('@components/ac-search-themes/ac-search-themes')
 );
-const AcTabList = loadable(() =>
-  import('@components/ac-tablist/ac-tablist')
-);
+const AcTabList = loadable(() => import('@components/ac-tablist/ac-tablist'));
 
 export {
   AcAbout,
@@ -56,6 +54,6 @@ export {
   AcSearchDate,
   AcSearchFilter,
   AcSearchSort,
-  AcSearchSubjects,
+  AcSearchThemes,
   AcTabList,
 };

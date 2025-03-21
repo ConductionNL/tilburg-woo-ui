@@ -44,6 +44,9 @@ export class PublicationsStore {
   categories = [];
 
   @observable
+  categoryFacets = [];
+
+  @observable
   themes = [];
 
   @observable
@@ -87,6 +90,23 @@ export class PublicationsStore {
   @computed
   get all_categories() {
     return this.categories;
+  }
+
+  @computed
+  get all_category_facets() {
+    return this.categoryFacets;
+  }
+
+  @computed
+  get categories_with_facets() {
+    return this.categories.map((category) => {
+      delete category.count;
+      const facet = this.categoryFacets.find((facet) => facet._id === category._id);
+      return {
+        ...category,
+        count: facet?.count || 0,
+      };
+    });
   }
 
   @action
@@ -165,7 +185,7 @@ export class PublicationsStore {
 
   @computed
   get search_query() {
-    return { ...this.defaultQuery, ...this.query };
+    return { ...this.defaultQuery, ...this.aggregationsQuery, ...this.query };
   }
 
   get aggregations_query() {
@@ -239,19 +259,12 @@ export class PublicationsStore {
 
   @action
   setQueryDate = (key, value) => {
-    console.group('SET QUERY DATE');
-    console.log(key, value, 'SET QUERY DATE');
-    console.log('CURRENT QUERY:', toJS(this.query));
-
     if (!this.query.published) {
       this.query.published = {};
     }
 
     this.setPage(1);
     this.query.published[key] = value;
-
-    console.log('NEW QUERY:', toJS(this.query));
-    console.groupEnd();
   };
 
   @action
@@ -279,27 +292,19 @@ export class PublicationsStore {
 
   @action
   setSort = (key, value) => {
-    console.group('SET SORT');
-    console.log(key, value);
-    console.log('VALUE', value);
     this.query._order = {};
     this.query._order[key] = value;
-    console.groupEnd();
   };
 
   @action
   toggleSearchArrayValue = (key, value) => {
-    console.group('TOGGLE SEARCH ARRAY VALUE');
-    console.log(key, value);
     if (!this.query[key]) {
-      console.log('KEY DOES NOT EXIST, CREATING ARRAY');
       this.query[key] = [];
     }
 
     const index = this.query[key]?.indexOf(value);
     // Remove item if we find it in the array.
     if (index !== -1) {
-      console.log(index, this.query[key]);
       this.query[key] = this.query[key].filter((cat) => cat !== value);
       return;
     }
@@ -309,7 +314,6 @@ export class PublicationsStore {
     }
 
     this.query[key] = [...this.query[key], value];
-    console.groupEnd();
   };
 
   @action
@@ -328,6 +332,11 @@ export class PublicationsStore {
   };
 
   @action
+  setCategoryFacets = (categoryFacets) => {
+    this.categoryFacets = categoryFacets;
+  };
+
+  @action
   setThemesFacets = (themesFacets) => {
     this.themesFacets = themesFacets;
   };
@@ -340,10 +349,6 @@ export class PublicationsStore {
   @action
   getSearchPageURL = (params = null) => {
     const urlParams = AcBuildURLSearchParams(params ?? this.query);
-    // console.group('GET SEARCH PAGE URL');
-    // console.log('BUILDING URL, CURRENT QUERY:', toJS(this.query));
-    // console.log(urlParams);
-    // console.groupEnd();
     if (!urlParams) {
       return '/zoeken';
     }
@@ -353,13 +358,15 @@ export class PublicationsStore {
   @action
   fetchPublications = async () => {
     this.loading.status = true;
-    console.group('MAKING API CALL');
-    console.log('SEARCH QUERY:', toJS(this.search_query));
-    console.groupEnd();
 
     app.store.api.publications
       .search(this.search_query)
       .then((response) => {
+        this.setCategoryFacets(
+          response.facets.category.filter((category) => category._id !== '')
+        );
+        this.setThemesFacets(response.facets.themes);
+
         this.setItems(response.results);
         delete response.results;
         this.setPagination(response);
@@ -414,9 +421,6 @@ export class PublicationsStore {
   @action
   fetchAttachments = async (_id) => {
     this.loading.status = true;
-    console.group('MAKING API CALL');
-    console.log('SEARCH QUERY:', toJS(this.search_query));
-    console.groupEnd();
 
     app.store.api.publications
       .attachments(_id)

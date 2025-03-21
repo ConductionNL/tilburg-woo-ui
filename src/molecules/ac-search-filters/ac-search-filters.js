@@ -8,7 +8,12 @@ import { AcFlex } from '@atoms';
 import { withStore } from '@stores';
 import { AcButton } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
-import { AcSearchCategories, AcSearchDate, AcSearchSubjects } from '@components';
+import {
+  AcSearchCategories,
+  AcSearchDate,
+  AcSearchSubjects,
+  AcSearchThemes,
+} from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import AcSearchSort from '@components/ac-search-sort/ac-search-sort';
@@ -96,11 +101,11 @@ const AcSearchFilters = ({ store: { publications } }) => {
           <AcSearchDate />
           {all_categories?.length > 0 && (
             <AcFlex column spacing='xs' className='ac-search-filters__category'>
-              <AcSearchCategories categories={all_categories} />
+              <AcSearchCategories />
             </AcFlex>
           )}
           <AcFlex column spacing='xs' className='ac-search-filters__subjects'>
-            <AcSearchSubjects />
+            <AcSearchThemes />
           </AcFlex>
         </AcFlex>
         {mobileFiltersOpen && (
