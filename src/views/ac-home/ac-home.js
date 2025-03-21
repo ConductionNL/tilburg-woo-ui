@@ -21,7 +21,6 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
   const { getSearchPageURL } = publications;
   const { all_themes, fetchThemes } = themes;
 
-
   useEffect(() => {
     fetchPage('/home');
     fetchThemes();
