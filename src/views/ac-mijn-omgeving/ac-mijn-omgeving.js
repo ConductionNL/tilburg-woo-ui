@@ -421,7 +421,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
                   Contracten
                 </SidenavLink>
               </SidenavItem>
-              <SidenavItem>
+              <SidenavItem onClick={() => navigate('/beheer/organisaties')}>
                 <SidenavLink>
                   <VISUALS.BUILDING />
                   Organisaties
