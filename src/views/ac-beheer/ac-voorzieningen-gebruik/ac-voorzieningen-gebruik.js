@@ -18,15 +18,14 @@ import {
 } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import { testData } from './testData';
 import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
+import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-gebruik-modal';
 import { getCookie } from '@src/utilities';
-import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-aanbod-modal';
+import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-gebruik-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 
-const AcBeheerVoorzieningenAanbod = () => {
+const AcBeheerVoorzieningenGebruik = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -37,7 +36,7 @@ const AcBeheerVoorzieningenAanbod = () => {
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.accept.commonground.nu/apps' +
-            '/openconnector/api/endpoint/voorzieningaanboden'
+            '/openconnector/api/endpoint/voorzieninggebruiken'
         );
         const data = (await response.json()).results;
         setData(data);
@@ -75,24 +74,28 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const tableHeaders = [
     {
-      label: 'Naam',
-      key: 'naam',
+      label: 'Id',
+      key: 'id',
     },
     {
-      label: 'Omschrijving',
-      key: 'omschrijving',
+      label: 'Versie Id',
+      key: 'versieId',
     },
     {
-      label: 'Type',
-      key: 'type',
+      label: 'Status',
+      key: 'status',
     },
     {
-      label: 'Productpagina',
-      key: 'productpagina',
+      label: 'Opmerkingen',
+      key: 'opmerkingen',
     },
     {
-      label: 'Ondersteuningsmodel',
-      key: 'ondersteuningsmodel',
+      label: 'BBN Score',
+      key: 'bbnScore',
+    },
+    {
+      label: 'IBP Score',
+      key: 'ibpScore',
     },
     {
       label: 'Acties',
@@ -137,7 +140,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             Terug naar mijn omgeving
           </AcLink>
 
-          <Heading>{LABELS.BEHEER_VOORZIENINGEN_AANBOD}</Heading>
+          <Heading>Voorzieningen gebruiken</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton
@@ -188,4 +191,4 @@ const AcBeheerVoorzieningenAanbod = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbod));
+export default withStore(observer(AcBeheerVoorzieningenGebruik));

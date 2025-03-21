@@ -11,6 +11,12 @@ const apiUrl = () => {
       return 'https://vng.accept.commonground.nu/apps';
     case 'opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps';
+    case 'developer.opencatalogi.nl':
+      return 'https://developer.opencatalogi.nl/apps';
+    case 'test.opencatalogi.nl':
+      return 'https://test.opencatalogi.nl/apps';
+    case 'opencatalogi.open-regels.nl':
+      return 'https://nextcloud.open-regels.nl/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
       return 'https://dimpact.commonground.nu/apps';
@@ -31,6 +37,12 @@ const commongroundApiUrl = () => {
       return 'https://vng.accept.commonground.nu/apps';
     case 'opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps';
+    case 'developer.opencatalogi.nl':
+      return 'https://developer.opencatalogi.nl/apps';
+    case 'test.opencatalogi.nl':
+      return 'https://test.opencatalogi.nl/apps';
+    case 'opencatalogi.open-regels.nl':
+      return 'https://nextcloud.open-regels.nl/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
       return 'https://dimpact.commonground.nu/apps';

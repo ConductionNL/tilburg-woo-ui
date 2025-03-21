@@ -9,6 +9,10 @@ import {
 const AcCheckbox = ({ label, value, checked, onChange }) => {
   const id = useMemo(() => `${label}_${value}`, [label, value]);
 
+  const onChangeHandler = (e) => {
+    if (onChange instanceof Function) onChange(e.target.checked);
+  };
+
   return (
     <FormField type='checkbox'>
       <Paragraph className='utrecht-form-field__label utrecht-form-field__label--checkbox'>
@@ -19,7 +23,7 @@ const AcCheckbox = ({ label, value, checked, onChange }) => {
             checked={checked}
             name={label}
             value={value}
-            onChange={onChange}
+            onChange={onChangeHandler}
           />
           {label}
         </FormLabel>

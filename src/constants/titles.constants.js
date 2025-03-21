@@ -17,7 +17,11 @@ const getTitle = () => {
     case 'open-migrato.accept.commonground.nu':
       return 'Open Migrato';
     case 'opencatalogi.nl':
+    case 'developer.opencatalogi.nl':
+    case 'test.opencatalogi.nl':
       return 'OpenCatalogi';
+    case 'opencatalogi.open-regels.nl':
+      return 'OpenRegels';
     case 'localhost':
       return 'Localhost catalogus';
     default:

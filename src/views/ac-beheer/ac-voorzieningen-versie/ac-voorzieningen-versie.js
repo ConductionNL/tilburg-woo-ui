@@ -18,15 +18,14 @@ import {
 } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import { testData } from './testData';
 import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
+import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-versie-modal';
 import { getCookie } from '@src/utilities';
-import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-aanbod-modal';
+import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-versie-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 
-const AcBeheerVoorzieningenAanbod = () => {
+const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -37,7 +36,7 @@ const AcBeheerVoorzieningenAanbod = () => {
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.accept.commonground.nu/apps' +
-            '/openconnector/api/endpoint/voorzieningaanboden'
+            '/openconnector/api/endpoint/voorzieningversies'
         );
         const data = (await response.json()).results;
         setData(data);
@@ -83,16 +82,20 @@ const AcBeheerVoorzieningenAanbod = () => {
       key: 'omschrijving',
     },
     {
-      label: 'Type',
-      key: 'type',
+      label: 'Release Notes',
+      key: 'releaseNotes',
     },
     {
-      label: 'Productpagina',
-      key: 'productpagina',
+      label: 'Nummer',
+      key: 'nummer',
     },
     {
-      label: 'Ondersteuningsmodel',
-      key: 'ondersteuningsmodel',
+      label: 'Status',
+      key: 'status',
+    },
+    {
+      label: 'Voorziening Aanbod ID',
+      key: 'voorzieningaanbodId',
     },
     {
       label: 'Acties',
@@ -137,7 +140,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             Terug naar mijn omgeving
           </AcLink>
 
-          <Heading>{LABELS.BEHEER_VOORZIENINGEN_AANBOD}</Heading>
+          <Heading>Voorzieningen versies</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton
@@ -188,4 +191,4 @@ const AcBeheerVoorzieningenAanbod = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbod));
+export default withStore(observer(AcBeheerVoorzieningenVersie));
