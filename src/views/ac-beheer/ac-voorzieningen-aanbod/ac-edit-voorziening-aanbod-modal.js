@@ -46,6 +46,15 @@ const AcEditVoorzieningAanbodModal = ({
       setVoorzieningAanbodFormData((prev) => ({
         ...prev,
         ...voorziening,
+        type: Array.isArray(voorziening.type)
+          ? voorziening.type.join(', ')
+          : voorziening.type,
+        hostingopties: Array.isArray(voorziening.hostingopties)
+          ? voorziening.hostingopties.join(', ')
+          : voorziening.hostingopties,
+        versies: Array.isArray(voorziening.versies)
+          ? voorziening.versies.join(', ')
+          : voorziening.versies,
       }));
     }
   }, [voorziening]);
@@ -77,7 +86,21 @@ const AcEditVoorzieningAanbodModal = ({
           `/openconnector/api/endpoint/voorzieningaanboden/${voorzieningAanbodFormData.id}`,
         {
           method: 'PUT',
-          body: JSON.stringify(voorzieningAanbodFormData),
+          body: JSON.stringify({
+            ...voorzieningAanbodFormData,
+            type: voorzieningAanbodFormData.type
+              .trim()
+              .split(/ *, */g)
+              .filter(Boolean),
+            hostingopties: voorzieningAanbodFormData.hostingopties
+              .trim()
+              .split(/ *, */g)
+              .filter(Boolean),
+            versies: voorzieningAanbodFormData.versies
+              .trim()
+              .split(/ *, */g)
+              .filter(Boolean),
+          }),
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${accessToken}`,
