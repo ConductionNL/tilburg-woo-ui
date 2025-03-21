@@ -14,7 +14,69 @@ import {
 import { AcUUID } from '@src/utilities';
 
 /**
- * A highly customizable Conduction table component that can be used to display data in a table.
+ * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
+ *
+ * **Key Features:**
+ * - Row selection with checkboxes
+ * - Customizable headers and cell content
+ * - Text truncation for lengthy content
+ * - Automatic handling of common data types (arrays, objects, primitives)
+ * - Communication with parent components via refs
+ *
+ * **Automatic Data Handling:**
+ * - Arrays: joined with commas
+ * - Objects: converted to JSON strings
+ * - Primitives: displayed as-is
+ * - Custom content (if provided) overrides automatic handling
+ *
+ * **Custom Headers and Content:**
+ * 1. **Custom Headers**
+ *    - Accepts either a React element or a function returning a React element
+ *    - Takes precedence over the default header
+ *    ```jsx
+ *    // As an element
+ *    customHeader: <div className="custom-header">Name</div>
+ *
+ *    // As a function
+ *    customHeader: () => <div className="custom-header">Name</div>
+ *    ```
+ *
+ * 2. **Custom Content**
+ *    - Accepts either a React element or a function that receives the row data
+ *    - Overrides automatic data type handling
+ *    ```jsx
+ *    // As an element
+ *    customContent: <button>Click me</button>
+ *
+ *    // As a function with row data
+ *    customContent: (row) => <button onClick={() => alert(row.name)}>Edit {row.name}</button>
+ *    ```
+ *
+ * @example
+ * ```jsx
+ * <CDTable
+ *   data={[{ name: "John", age: 30 }]}
+ *   tableHeaders={[
+ *     {
+ *       label: "Name",
+ *       key: "name"
+ *     },
+ *     {
+ *       label: "Age",
+ *       key: "age",
+ *       customHeader: <div className="age-header">Age (years)</div>
+ *     },
+ *     {
+ *       label: "Actions",
+ *       key: "",
+ *       customContent: (row) => <button onClick={() => edit(row)}>Edit</button>
+ *     }
+ *   ]}
+ *   renderSelectRowButtons
+ *   getSelectedRows={(selected) => console.log(selected)}
+ *   truncateLines={2}
+ * />
+ * ```
  * @param {object} props - The component props.
  * @param {Array} props.data - The data to display in the table.
  * @param {boolean} props.renderSelectRowButtons - Whether to render the select row buttons.
@@ -27,11 +89,10 @@ import { AcUUID } from '@src/utilities';
  * @param {React.ReactElement | ((row: any) => React.ReactElement)} props.tableHeaders.customContent - The custom content to display in the table cell.
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
+ *
  * @returns {React.ReactElement} The rendered table component.
  *
- * ### Known potential issues:
- * - Passing new data to the component, even if it contains some of the same data, will cause all selections to be lost.
- * - - unless it is requested that this is to be fixed, I will not fix this, since its not a big issue and a pain to fix.
+ * @note Row selection state is not preserved when new data is provided, even if it contains some of the same records.
  *
  * @author Thijn Douwma
  *
@@ -148,6 +209,24 @@ const CDTable = (
     };
   }, [truncateLines]);
 
+  const handleDataCellRender = useMemo(() => {
+    return (header, row) => {
+      if (header.customContent) {
+        return renderCustomElement(header.customContent, removeUniqueSymbol(row));
+      }
+
+      if (Array.isArray(row[header.key])) {
+        return row[header.key].join(', ');
+      }
+
+      if (typeof row[header.key] === 'object') {
+        return JSON.stringify(row[header.key]);
+      }
+
+      return row[header.key];
+    };
+  }, [renderCustomElement, removeUniqueSymbol]);
+
   const tableHeader = useMemo(() => {
     return (
       <thead>
@@ -212,11 +291,7 @@ const CDTable = (
         )}
         {tableHeaders.map((header, headerIndex) => (
           <TableCell key={headerIndex}>
-            <div style={getTruncateStyle()}>
-              {header.customContent
-                ? renderCustomElement(header.customContent, removeUniqueSymbol(row))
-                : row[header.key]}
-            </div>
+            <div style={getTruncateStyle()}>{handleDataCellRender(header, row)}</div>
           </TableCell>
         ))}
       </TableRow>
@@ -228,6 +303,7 @@ const CDTable = (
     selectedRows,
     handleSelectRow,
     renderCustomElement,
+    handleDataCellRender,
   ]);
 
   return (

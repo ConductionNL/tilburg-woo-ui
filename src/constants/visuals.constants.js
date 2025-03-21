@@ -115,6 +115,10 @@ const CIRCLE_CHECK = loadable(() =>
   import('-!svg-react-loader!@assets/images/circle-check.svg')
 );
 
+const HAND_SHAKE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/handshake.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -161,6 +165,7 @@ export const VISUALS = {
   UPLOAD,
   CLOUD,
   CIRCLE_CHECK,
+  HAND_SHAKE,
 };
 
 export default {};

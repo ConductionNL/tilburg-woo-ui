@@ -25,6 +25,11 @@ const AcBeheerVoorzieningenVersie = loadable(() =>
   import('@views/ac-beheer/ac-voorzieningen-versie/ac-voorzieningen-versie')
 );
 
+const AcBeheerContracten = loadable(() =>
+  import('@views/ac-beheer/ac-contracten/ac-contracten')
+);
+
+
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
 
@@ -47,6 +52,9 @@ const AcBeheer = () => {
       break;
     case 'voorzieningen-versie':
       page = <AcBeheerVoorzieningenVersie />;
+      break;
+    case 'contracten':
+      page = <AcBeheerContracten />;
       break;
     default:
       page = (
