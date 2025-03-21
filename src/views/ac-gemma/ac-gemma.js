@@ -76,7 +76,7 @@ const AcGemma = ({ store: { gemma } }) => {
           return {
             name: data.results[0]?.name || 'unknown',
             id: node.elementRef,
-            description: data.results[0]?.documentation || 'unknown',
+            description: data.results[0]?.documentation || undefined,
             type: data.results[0]?.type || undefined,
           };
         } catch (error) {
@@ -108,7 +108,7 @@ const AcGemma = ({ store: { gemma } }) => {
             const childNode = {
               name: data.results[0]?.name || 'unknown',
               id: child.elementRef,
-              description: data.results[0]?.documentation || 'unknown',
+              description: data.results[0]?.documentation || undefined,
               type: data.results[0]?.type || undefined,
               parent: node.elementRef,
             };
@@ -385,7 +385,10 @@ const AcGemma = ({ store: { gemma } }) => {
 
     const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
 
-    const viewNodes = allNodes.flatMap(convertToViewNode).filter(Boolean);
+    const viewNodes = allNodes
+      .flatMap(convertToViewNode)
+      .filter(Boolean)
+      .filter((node) => node.type && node.name && node.viewNodeId);
 
     const convertToViewRelationship = (relationship, idx) => {
       const relationshipData = viewRelationsData.find(
@@ -393,13 +396,11 @@ const AcGemma = ({ store: { gemma } }) => {
       );
 
       // Convert bendpoint to array with numeric coordinates or return empty array
-      const bendpoints = relationship.bendpoint
-        ? [
-            {
-              x: parseFloat(relationship.bendpoint.x) || 0,
-              y: parseFloat(relationship.bendpoint.y) || 0,
-            },
-          ]
+      const bendpoints = relationship.bendpoints
+        ? relationship.bendpoints.map((bendpoint) => ({
+            x: parseFloat(bendpoint.x) || 0,
+            y: parseFloat(bendpoint.y) || 0,
+          }))
         : [];
       return {
         modelRelationshipId: relationship.relationshipRef,
@@ -499,7 +500,8 @@ const AcGemma = ({ store: { gemma } }) => {
   const setNodeColor = (node) => {
     const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
     parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
-    parentElement.setAttribute('data-tooltip-content', node.description);
+    node.description &&
+      parentElement.setAttribute('data-tooltip-content', node.description);
 
     let allRectElements = parentElement.querySelectorAll(':scope > rect');
     allRectElements.forEach((item) => {
