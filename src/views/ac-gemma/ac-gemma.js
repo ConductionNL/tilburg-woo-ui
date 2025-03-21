@@ -90,8 +90,8 @@ const AcGemma = ({ store: { gemma } }) => {
       });
     };
 
-    const getChildNodesData = () => {
-      const childPromises = gemma.get_view.nodes.reduce((promises, node) => {
+    const getChildNodesData = async (nodes = gemma.get_view.nodes) => {
+      const childPromises = nodes.reduce((promises, node) => {
         if (!node.nodes) return promises;
 
         const nodePromises = node.nodes.map(async (child) => {
@@ -105,13 +105,22 @@ const AcGemma = ({ store: { gemma } }) => {
 
             if (!data.results[0]) return null;
 
-            return {
+            const childNode = {
               name: data.results[0]?.name || 'unknown',
               id: child.elementRef,
               description: data.results[0]?.documentation || 'unknown',
               type: data.results[0]?.type || undefined,
               parent: node.elementRef,
             };
+
+            viewNodesData.push(childNode);
+
+            // Recursively process child nodes if they exist
+            if (child.nodes) {
+              await getChildNodesData([child]);
+            }
+
+            return childNode;
           } catch (error) {
             console.error(`Error fetching child node data: ${error}`);
             return null;
@@ -121,9 +130,7 @@ const AcGemma = ({ store: { gemma } }) => {
         return [...promises, ...nodePromises];
       }, []);
 
-      return Promise.all(childPromises).then((results) => {
-        viewNodesData.push(...results.filter(Boolean));
-      });
+      return Promise.all(childPromises);
     };
 
     getViewNodesData()
@@ -355,10 +362,26 @@ const AcGemma = ({ store: { gemma } }) => {
 
     const gemmaNodes = gemma.get_view.nodes;
     const voorzieningNodes = gemma.get_allVoorzieningGebruik;
-    const gemmaChildNodes = gemma.get_view.nodes
-      .flatMap((node) => node.nodes)
-      .filter(Boolean)
-      .map((node) => ({ ...node, isChildNode: true }));
+
+    // Helper function to recursively collect all child nodes
+    const getAllChildNodes = (nodes) => {
+      return nodes.reduce((acc, node) => {
+        if (!node.nodes) return acc;
+
+        // Add immediate child nodes
+        const children = node.nodes.map((child) => ({
+          ...child,
+          isChildNode: true,
+        }));
+
+        // Recursively get children of children
+        const grandchildren = getAllChildNodes(node.nodes);
+
+        return [...acc, ...children, ...grandchildren];
+      }, []);
+    };
+
+    const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes).filter(Boolean);
 
     const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
 
@@ -369,13 +392,22 @@ const AcGemma = ({ store: { gemma } }) => {
         (item) => item.id === relationship.relationshipRef
       );
 
+      // Convert bendpoint to array with numeric coordinates or return empty array
+      const bendpoints = relationship.bendpoint
+        ? [
+            {
+              x: parseFloat(relationship.bendpoint.x) || 0,
+              y: parseFloat(relationship.bendpoint.y) || 0,
+            },
+          ]
+        : [];
       return {
         modelRelationshipId: relationship.relationshipRef,
         sourceId: relationship.source,
         targetId: relationship.target,
         viewRelationshipId: relationship.identifier,
         type: relationshipData?.type?.toLowerCase() || 'access',
-        bendpoints: relationship.bendpoints || [],
+        bendpoints: bendpoints,
         label: {
           text: relationshipData?.name || undefined,
           ...(relationshipData?.name && {
