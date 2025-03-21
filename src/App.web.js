@@ -53,6 +53,7 @@ const App = ({ store }) => {
       case 'vng.opencatalogi.nl':
         return 'vng-theme';
       case 'open-tilburg.accept.commonground.nu':
+      case 'opencatalogi.open-regels.nl':
         return 'tilburg-theme';
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
@@ -62,6 +63,8 @@ const App = ({ store }) => {
       case 'open-migrato.accept.commonground.nu':
         return 'migrato-theme';
       case 'opencatalogi.nl':
+      case 'developer.opencatalogi.nl':
+      case 'test.opencatalogi.nl':
         return 'opencatalogi-theme';
       case 'localhost':
         return 'vng-theme';
@@ -91,6 +94,7 @@ const App = ({ store }) => {
             'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png')
         );
       case 'open-tilburg.accept.commonground.nu':
+      case 'opencatalogi.open-regels.nl':
         return;
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
@@ -108,6 +112,8 @@ const App = ({ store }) => {
             'https://www.rotterdam.nl/favicon.ico?v=2')
         );
       case 'opencatalogi.nl':
+      case 'developer.opencatalogi.nl':
+      case 'test.opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
             'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),

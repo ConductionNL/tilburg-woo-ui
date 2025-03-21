@@ -25,16 +25,17 @@ const AcHero = (contents) => {
       case 'vng.opencatalogi.nl':
         return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'opencatalogi.nl':
+      case 'developer.opencatalogi.nl':
+      case 'test.opencatalogi.nl':
         return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
         return 'https://www.dimpact.nl/wp-content/uploads/2024/02/Headerafbeelding-over-ons.jpg.webp';
       case 'open-rotterdam.accept.commonground.nu':
-      case 'localh':
+      case 'localhost':
         return 'https://www.rotterdam.nl/_next/image?url=https%3A%2F%2Fbackend-dvg.rotterdam.nl%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fhero_large%2Fpublic%2F2022-12%2F22500-Arnoud-Verhey_0.jpg%3Fh%3D940640a5%26itok%3Dl9pnN9Gq&w=1920&q=75';
       case 'open-migrato.accept.commonground.nu':
         return MigratoHeroImage();
-      case 'localhost':
       default:
         return '/home-hero-background.png';
     }
