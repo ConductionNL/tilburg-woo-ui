@@ -313,6 +313,7 @@ const AcGemma = ({ store: { gemma } }) => {
             parent: null,
             description: node.label,
             font: node.style.font,
+            elementRef: null,
           };
         }
         if (!node.referentieComponenten) return;
@@ -334,6 +335,7 @@ const AcGemma = ({ store: { gemma } }) => {
             parent: null,
             description: nodeData?.description || null,
             font: nodeData?.font || null,
+            elementRef: null,
           };
         });
 
@@ -357,6 +359,7 @@ const AcGemma = ({ store: { gemma } }) => {
             color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
           },
           description: nodeDataNode?.description || null,
+          elementRef: node.elementRef || null,
         };
       }
     };
@@ -497,6 +500,22 @@ const AcGemma = ({ store: { gemma } }) => {
     allRectElements.forEach((item) => {
       node?.color && item.setAttribute('fill', node?.color);
       node?.borderColor && item.setAttribute('stroke', node?.borderColor);
+      item.setAttribute('cursor', 'pointer');
+      item.setAttribute(
+        'onclick',
+        `window.open('https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}', '_blank')`
+      );
+    });
+
+    let allPolygonElements = parentElement.querySelectorAll(':scope > polygon');
+    allPolygonElements.forEach((item) => {
+      node?.color && item.setAttribute('fill', node?.color);
+      node?.borderColor && item.setAttribute('stroke', node?.borderColor);
+      item.setAttribute('cursor', 'pointer');
+      item.setAttribute(
+        'onclick',
+        `window.open('https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}', '_blank')`
+      );
     });
 
     let allTextElements = parentElement.querySelectorAll(':scope > text');
