@@ -15,6 +15,7 @@ import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
+import svgPanZoom from 'svg-pan-zoom';
 
 const AcGemma = ({ store: { gemma } }) => {
   const {
@@ -484,17 +485,6 @@ const AcGemma = ({ store: { gemma } }) => {
     if (existingGroup) {
       existingGroup.setAttribute('transform', `translate(0, 0) scale(1)`);
     }
-
-    // Add event listeners after SVG is ready
-    svg.addEventListener('wheel', handleWheel);
-    svg.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    // Add touch event listeners
-    svg.addEventListener('touchstart', handleTouchStart, { passive: false });
-    svg.addEventListener('touchmove', handleTouchMove, { passive: false });
-    svg.addEventListener('touchend', handleTouchEnd);
   };
 
   const setNodeColor = (node) => {
@@ -518,232 +508,189 @@ const AcGemma = ({ store: { gemma } }) => {
   };
 
   //////////////////// Scrolling ///////////////////////////
-  const handleWheel = (event) => {
-    event.preventDefault();
+
+  const [panZoomInstance, setPanZoomInstance] = useState(null);
+
+  useEffect(() => {
+    if (!gemma.get_view || !viewIsDoneLoading) return;
+  
     const svg = document.getElementById('svg-container');
     if (!svg) return;
-
-    const group = svg.querySelector('g');
-    if (!group) return;
-
-    const currentTransform =
-      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
-
-    // Improved parsing of current transform values
-    const scaleMatch = currentTransform.match(/scale\(([^\)]+)\)/);
-    const translateMatch = currentTransform.match(
-      /translate\(([^,]+),\s*([^\)]+)\)/
-    );
-
-    const currentScale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
-    const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
-    const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
-
-    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.min(Math.max(currentScale * zoomFactor, 0.1), 10);
-
-    group.setAttribute(
-      'transform',
-      `translate(${currentX}, ${currentY}) scale(${newScale})`
-    );
-  };
-
-  const handleMouseDown = (event) => {
-    const svg = event.target.closest('svg');
-    if (!svg) return;
-
-    svg.style.cursor = 'grabbing';
-    const group = svg.querySelector('g');
-    if (!group) return;
-
-    const currentTransform =
-      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
-    const translateMatch = currentTransform.match(
-      /translate\(([^,]+),\s*([^\)]+)\)/
-    );
-
-    const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
-    const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
-
-    svg.dataset.isDragging = 'true';
-    svg.dataset.dragStartX = event.clientX - currentX;
-    svg.dataset.dragStartY = event.clientY - currentY;
-  };
-
-  const handleMouseMove = (event) => {
-    const svg = document.getElementById('svg-container');
-    if (!svg || svg.dataset.isDragging !== 'true') return;
-
-    const group = svg.querySelector('g');
-    if (!group) return;
-
-    const currentTransform =
-      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
-    const scaleMatch = currentTransform.match(/scale\(([^\)]+)\)/);
-    const currentScale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
-
-    const newX = event.clientX - parseFloat(svg.dataset.dragStartX);
-    const newY = event.clientY - parseFloat(svg.dataset.dragStartY);
-
-    group.setAttribute(
-      'transform',
-      `translate(${newX}, ${newY}) scale(${currentScale})`
-    );
-  };
-
-  const handleMouseUp = () => {
-    const svg = document.getElementById('svg-container');
-    if (!svg) return;
-
-    svg.style.cursor = 'grab';
-    svg.dataset.isDragging = 'false';
-  };
-
-  // Add touch event handlers
-  const handleTouchStart = (event) => {
-    event.preventDefault();
-    const svg = event.target.closest('svg');
-    if (!svg) return;
-
-    svg.style.cursor = 'grabbing';
-    const group = svg.querySelector('g');
-    if (!group) return;
-
-    const currentTransform =
-      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
-    const translateMatch = currentTransform.match(
-      /translate\(([^,]+),\s*([^\)]+)\)/
-    );
-
-    const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
-    const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
-
-    svg.dataset.isDragging = 'true';
-
-    if (event.touches.length === 2) {
-      const touch1 = event.touches[0];
-      const touch2 = event.touches[1];
-      const initialDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-
-      // Only set initial distance if it's valid
-      if (initialDistance && !isNaN(initialDistance) && initialDistance !== 0) {
-        svg.dataset.initialPinchDistance = initialDistance.toString();
-        const initialScale = currentTransform.match(/scale\(([^\)]+)\)/)
-          ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
-          : 1;
-        svg.dataset.initialScale = (
-          isNaN(initialScale) ? 1 : initialScale
-        ).toString();
-      }
-    } else {
-      // Store the current transform values and touch position
-      svg.dataset.lastX = (isNaN(currentX) ? 0 : currentX).toString();
-      svg.dataset.lastY = (isNaN(currentY) ? 0 : currentY).toString();
-      svg.dataset.touchStartX = event.touches[0].clientX.toString();
-      svg.dataset.touchStartY = event.touches[0].clientY.toString();
-    }
-  };
-
-  const handleTouchMove = (event) => {
-    event.preventDefault();
-    const svg = document.getElementById('svg-container');
-    if (!svg || svg.dataset.isDragging !== 'true') return;
-
-    const group = svg.querySelector('g');
-    if (!group) return;
-
-    const currentTransform =
-      group.getAttribute('transform') || 'translate(0, 0) scale(1)';
-    const translateMatch = currentTransform.match(
-      /translate\(([^,]+),\s*([^\)]+)\)/
-    );
-    const currentScale = currentTransform.match(/scale\(([^\)]+)\)/)
-      ? parseFloat(currentTransform.match(/scale\(([^\)]+)\)/)[1])
-      : 1;
-
-    if (event.touches.length === 2) {
-      // Handle pinch zoom
-      const touch1 = event.touches[0];
-      const touch2 = event.touches[1];
-      const currentPinchDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      );
-
-      const initialPinchDistance = parseFloat(svg.dataset.initialPinchDistance);
-      const initialScale = parseFloat(svg.dataset.initialScale);
-
-      // Add validation to prevent NaN
-      if (
-        initialPinchDistance &&
-        !isNaN(initialPinchDistance) &&
-        initialPinchDistance !== 0
-      ) {
-        const scaleFactor = currentPinchDistance / initialPinchDistance;
-        let newScale = Math.min(Math.max(initialScale * scaleFactor, 0.1), 10);
-
-        // Ensure newScale is a valid number
-        if (isNaN(newScale)) {
-          newScale = currentScale;
+  
+    let svgActive = false;
+    let svgHovered = false;
+    let touchStarted = false;
+    let initialPinchDistance = null;
+    let initialScale = null;
+    let lastPinchCenter = null;
+  
+    const instance = svgPanZoom(svg, {
+      zoomEnabled: true,
+      controlIconsEnabled: true,
+      fit: true,
+      center: true,
+      minZoom: 0.1,
+      maxZoom: 10,
+      zoomScaleSensitivity: 0.5,
+      customEventsHandler: {
+        haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
+        init: function(options) {
+          function updateSvgClassName() {
+            options.svgElement.setAttribute(
+              'class',
+              '' + (svgActive ? 'active' : '') + (svgHovered ? ' hovered' : '')
+            );
+          }
+  
+          function getTouchCenter(touch1, touch2) {
+            return {
+              x: (touch1.clientX + touch2.clientX) / 2,
+              y: (touch1.clientY + touch2.clientY) / 2
+            };
+          }
+  
+          function getRelativePoint(svgElement, x, y) {
+            const ctm = svgElement.getScreenCTM();
+            const point = svg.createSVGPoint();
+            point.x = x;
+            point.y = y;
+            return point.matrixTransform(ctm.inverse());
+          }
+  
+          this.listeners = {
+            click: function() {
+              if (svgActive) {
+                options.instance.disableZoom();
+                svgActive = false;
+              } else {
+                options.instance.enableZoom();
+                svgActive = true;
+              }
+              updateSvgClassName();
+            },
+            mouseenter: function() {
+              svgHovered = true;
+              updateSvgClassName();
+            },
+            mouseleave: function() {
+              svgActive = false;
+              svgHovered = false;
+              options.instance.disableZoom();
+              updateSvgClassName();
+            },
+            touchstart: function(evt) {
+              touchStarted = true;
+              if (evt.touches.length === 2) {
+                const touch1 = evt.touches[0];
+                const touch2 = evt.touches[1];
+                
+                initialPinchDistance = Math.hypot(
+                  touch2.clientX - touch1.clientX,
+                  touch2.clientY - touch1.clientY
+                );
+                
+                lastPinchCenter = getTouchCenter(touch1, touch2);
+                initialScale = options.instance.getZoom();
+              }
+              evt.preventDefault();
+            },
+            touchmove: function(evt) {
+              if (!touchStarted) return;
+  
+              evt.preventDefault();
+  
+              if (evt.touches.length === 2) {
+                const touch1 = evt.touches[0];
+                const touch2 = evt.touches[1];
+                
+                // Calculate new distance and center point
+                const currentDistance = Math.hypot(
+                  touch2.clientX - touch1.clientX,
+                  touch2.clientY - touch1.clientY
+                );
+                
+                const currentCenter = getTouchCenter(touch1, touch2);
+  
+                if (initialPinchDistance && initialScale && lastPinchCenter) {
+                  // Calculate scale change
+                  const scaleFactor = currentDistance / initialPinchDistance;
+                  const newScale = initialScale * scaleFactor;
+                  
+                  // Convert screen coordinates to SVG coordinates
+                  const svgPoint = getRelativePoint(
+                    options.svgElement,
+                    currentCenter.x,
+                    currentCenter.y
+                  );
+  
+                  // Apply zoom at the center point of the pinch
+                  options.instance.zoom(newScale, {
+                    x: svgPoint.x,
+                    y: svgPoint.y
+                  });
+  
+                  // Pan to adjust for any movement of the center point
+                  if (lastPinchCenter) {
+                    const dx = currentCenter.x - lastPinchCenter.x;
+                    const dy = currentCenter.y - lastPinchCenter.y;
+                    options.instance.panBy({ x: dx, y: dy });
+                  }
+  
+                  lastPinchCenter = currentCenter;
+                }
+              } else if (evt.touches.length === 1) {
+                // Handle single touch pan
+                const touch = evt.touches[0];
+                const dx = touch.clientX - (this.lastX || touch.clientX);
+                const dy = touch.clientY - (this.lastY || touch.clientY);
+                
+                options.instance.panBy({ x: dx, y: dy });
+                
+                this.lastX = touch.clientX;
+                this.lastY = touch.clientY;
+              }
+            },
+            touchend: function() {
+              touchStarted = false;
+              initialPinchDistance = null;
+              initialScale = null;
+              lastPinchCenter = null;
+              delete this.lastX;
+              delete this.lastY;
+            },
+            touchcancel: function() {
+              touchStarted = false;
+              initialPinchDistance = null;
+              initialScale = null;
+              lastPinchCenter = null;
+              delete this.lastX;
+              delete this.lastY;
+            }
+          };
+  
+          this.listeners.mousemove = this.listeners.mouseenter;
+  
+          // Add event listeners
+          for (const eventName in this.listeners) {
+            options.svgElement.addEventListener(eventName, this.listeners[eventName]);
+          }
+        },
+        destroy: function(options) {
+          for (const eventName in this.listeners) {
+            options.svgElement.removeEventListener(eventName, this.listeners[eventName]);
+          }
         }
-
-        const currentX = translateMatch ? parseFloat(translateMatch[1]) : 0;
-        const currentY = translateMatch ? parseFloat(translateMatch[2]) : 0;
-
-        group.setAttribute(
-          'transform',
-          `translate(${currentX}, ${currentY}) scale(${newScale})`
-        );
       }
-    } else {
-      // Handle single touch pan with smooth movement
-      const speedMultiplier = 2.5;
-      const deltaX =
-        (event.touches[0].clientX - parseFloat(svg.dataset.touchStartX)) *
-        speedMultiplier;
-      const deltaY =
-        (event.touches[0].clientY - parseFloat(svg.dataset.touchStartY)) *
-        speedMultiplier;
-
-      const newX = parseFloat(svg.dataset.lastX) + deltaX;
-      const newY = parseFloat(svg.dataset.lastY) + deltaY;
-
-      // Ensure currentScale is valid
-      const safeScale = isNaN(currentScale) ? 1 : currentScale;
-
-      group.setAttribute(
-        'transform',
-        `translate(${newX}, ${newY}) scale(${safeScale})`
-      );
-    }
-  };
-
-  const handleTouchEnd = () => {
-    const svg = document.getElementById('svg-container');
-    if (!svg) return;
-
-    // Store the final position before ending the drag
-    const currentTransform = svg.querySelector('g')?.getAttribute('transform');
-    if (currentTransform) {
-      const translateMatch = currentTransform.match(
-        /translate\(([^,]+),\s*([^\)]+)\)/
-      );
-      if (translateMatch) {
-        svg.dataset.lastX = parseFloat(translateMatch[1]).toString();
-        svg.dataset.lastY = parseFloat(translateMatch[2]).toString();
+    });
+  
+    setPanZoomInstance(instance);
+  
+    return () => {
+      if (instance) {
+        instance.destroy();
       }
-    }
-
-    svg.style.cursor = 'grab';
-    svg.dataset.isDragging = 'false';
-    delete svg.dataset.initialPinchDistance;
-    delete svg.dataset.initialScale;
-    delete svg.dataset.touchStartX;
-    delete svg.dataset.touchStartY;
-  };
+    };
+  }, [gemma.get_view, viewIsDoneLoading]);
 
   //////////////////// End Scrolling ///////////////////////////
 
