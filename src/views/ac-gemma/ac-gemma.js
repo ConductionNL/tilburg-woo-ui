@@ -513,17 +513,16 @@ const AcGemma = ({ store: { gemma } }) => {
 
   useEffect(() => {
     if (!gemma.get_view || !viewIsDoneLoading) return;
-  
+
     const svg = document.getElementById('svg-container');
     if (!svg) return;
-  
-    let svgActive = false;
+
     let svgHovered = false;
     let touchStarted = false;
     let initialPinchDistance = null;
     let initialScale = null;
     let lastPinchCenter = null;
-  
+
     const instance = svgPanZoom(svg, {
       zoomEnabled: true,
       controlIconsEnabled: true,
@@ -533,109 +532,108 @@ const AcGemma = ({ store: { gemma } }) => {
       maxZoom: 10,
       zoomScaleSensitivity: 0.5,
       customEventsHandler: {
-        haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel'],
-        init: function(options) {
+        haltEventListeners: [
+          'touchstart',
+          'touchend',
+          'touchmove',
+          'touchleave',
+          'touchcancel',
+        ],
+        init: function (options) {
           function updateSvgClassName() {
-            options.svgElement.setAttribute(
-              'class',
-              '' + (svgActive ? 'active' : '') + (svgHovered ? ' hovered' : '')
-            );
+            options.svgElement.setAttribute('class', svgHovered ? 'hovered' : '');
           }
-  
+
           function getTouchCenter(touch1, touch2) {
+            const rect = options.svgElement.getBoundingClientRect();
             return {
-              x: (touch1.clientX + touch2.clientX) / 2,
-              y: (touch1.clientY + touch2.clientY) / 2
+              x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+              y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
             };
           }
-  
+
           function getRelativePoint(svgElement, x, y) {
             const ctm = svgElement.getScreenCTM();
-            const point = svg.createSVGPoint();
+            const point = svgElement.createSVGPoint();
             point.x = x;
             point.y = y;
             return point.matrixTransform(ctm.inverse());
           }
-  
+
           this.listeners = {
-            click: function() {
-              if (svgActive) {
-                options.instance.disableZoom();
-                svgActive = false;
-              } else {
-                options.instance.enableZoom();
-                svgActive = true;
-              }
-              updateSvgClassName();
-            },
-            mouseenter: function() {
+            mouseenter: function () {
               svgHovered = true;
+              options.instance.enableZoom();
               updateSvgClassName();
             },
-            mouseleave: function() {
-              svgActive = false;
+            mouseleave: function () {
               svgHovered = false;
-              options.instance.disableZoom();
               updateSvgClassName();
             },
-            touchstart: function(evt) {
+            touchstart: function (evt) {
               touchStarted = true;
               if (evt.touches.length === 2) {
                 const touch1 = evt.touches[0];
                 const touch2 = evt.touches[1];
-                
+
                 initialPinchDistance = Math.hypot(
                   touch2.clientX - touch1.clientX,
                   touch2.clientY - touch1.clientY
                 );
-                
+
                 lastPinchCenter = getTouchCenter(touch1, touch2);
                 initialScale = options.instance.getZoom();
               }
               evt.preventDefault();
             },
-            touchmove: function(evt) {
+            touchmove: function (evt) {
               if (!touchStarted) return;
-  
+
               evt.preventDefault();
-  
+
               if (evt.touches.length === 2) {
                 const touch1 = evt.touches[0];
                 const touch2 = evt.touches[1];
-                
+
                 // Calculate new distance and center point
                 const currentDistance = Math.hypot(
                   touch2.clientX - touch1.clientX,
                   touch2.clientY - touch1.clientY
                 );
-                
+
                 const currentCenter = getTouchCenter(touch1, touch2);
-  
+
                 if (initialPinchDistance && initialScale && lastPinchCenter) {
                   // Calculate scale change
                   const scaleFactor = currentDistance / initialPinchDistance;
-                  const newScale = initialScale * scaleFactor;
-                  
-                  // Convert screen coordinates to SVG coordinates
+                  const newScale = Math.min(
+                    Math.max(initialScale * scaleFactor, 0.1),
+                    10
+                  );
+
+                  // Get the relative point in SVG coordinates
                   const svgPoint = getRelativePoint(
                     options.svgElement,
                     currentCenter.x,
                     currentCenter.y
                   );
-  
-                  // Apply zoom at the center point of the pinch
-                  options.instance.zoom(newScale, {
+
+                  // Calculate the zoom center point
+                  const zoomPoint = {
                     x: svgPoint.x,
-                    y: svgPoint.y
-                  });
-  
-                  // Pan to adjust for any movement of the center point
+                    y: svgPoint.y,
+                  };
+
+                  // Apply zoom centered on the pinch point
+                  options.instance.zoom(newScale, zoomPoint);
+
+                  // Calculate and apply the pan adjustment
                   if (lastPinchCenter) {
                     const dx = currentCenter.x - lastPinchCenter.x;
                     const dy = currentCenter.y - lastPinchCenter.y;
                     options.instance.panBy({ x: dx, y: dy });
                   }
-  
+
                   lastPinchCenter = currentCenter;
                 }
               } else if (evt.touches.length === 1) {
@@ -643,14 +641,14 @@ const AcGemma = ({ store: { gemma } }) => {
                 const touch = evt.touches[0];
                 const dx = touch.clientX - (this.lastX || touch.clientX);
                 const dy = touch.clientY - (this.lastY || touch.clientY);
-                
+
                 options.instance.panBy({ x: dx, y: dy });
-                
+
                 this.lastX = touch.clientX;
                 this.lastY = touch.clientY;
               }
             },
-            touchend: function() {
+            touchend: function () {
               touchStarted = false;
               initialPinchDistance = null;
               initialScale = null;
@@ -658,33 +656,39 @@ const AcGemma = ({ store: { gemma } }) => {
               delete this.lastX;
               delete this.lastY;
             },
-            touchcancel: function() {
+            touchcancel: function () {
               touchStarted = false;
               initialPinchDistance = null;
               initialScale = null;
               lastPinchCenter = null;
               delete this.lastX;
               delete this.lastY;
-            }
+            },
           };
-  
+
           this.listeners.mousemove = this.listeners.mouseenter;
-  
+
           // Add event listeners
           for (const eventName in this.listeners) {
-            options.svgElement.addEventListener(eventName, this.listeners[eventName]);
+            options.svgElement.addEventListener(
+              eventName,
+              this.listeners[eventName]
+            );
           }
         },
-        destroy: function(options) {
+        destroy: function (options) {
           for (const eventName in this.listeners) {
-            options.svgElement.removeEventListener(eventName, this.listeners[eventName]);
+            options.svgElement.removeEventListener(
+              eventName,
+              this.listeners[eventName]
+            );
           }
-        }
-      }
+        },
+      },
     });
-  
+
     setPanZoomInstance(instance);
-  
+
     return () => {
       if (instance) {
         instance.destroy();
@@ -700,6 +704,38 @@ const AcGemma = ({ store: { gemma } }) => {
 
     // Create a clone of the SVG to modify
     const clonedSvg = svg.cloneNode(true);
+
+    // Remove the zoom controls from the cloned SVG
+    const zoomControls = clonedSvg.querySelector('.svg-pan-zoom-control');
+    if (zoomControls) {
+      zoomControls.remove();
+    }
+
+    // Reset cursor style
+    clonedSvg.style.cursor = 'default';
+
+    // Convert React tooltips to native SVG tooltips
+    const elementsWithTooltips = clonedSvg.querySelectorAll(
+      '[data-tooltip-content]'
+    );
+    elementsWithTooltips.forEach((element) => {
+      const tooltipContent = element.getAttribute('data-tooltip-content');
+      if (tooltipContent) {
+        // Remove React tooltip attributes
+        element.removeAttribute('data-tooltip-id');
+        element.removeAttribute('data-tooltip-content');
+
+        // Create and add SVG title element
+        const titleElement = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'title'
+        );
+        titleElement.textContent = tooltipContent;
+
+        // Insert title as first child to ensure it appears on hover
+        element.insertBefore(titleElement, element.firstChild);
+      }
+    });
 
     // Add XML declaration and SVG namespace
     const svgData = clonedSvg.outerHTML
@@ -721,7 +757,6 @@ const AcGemma = ({ store: { gemma } }) => {
     // Clean up
     URL.revokeObjectURL(url);
   };
-
   return (
     <AcContainer spacing='lg'>
       {gemma.all_views?.length === 0 && <AcLoader />}
@@ -740,8 +775,9 @@ const AcGemma = ({ store: { gemma } }) => {
 
           {gemma.get_view && (
             <div className='ac-gemma-view-header'>
-              <h1>{gemma.get_view.name}</h1>
+              <h1 className='ac-gemma-view-header-title'>{gemma.get_view.name}</h1>
               <PrimaryActionButton
+                className='ac-gemma-view-header-download-button'
                 disabled={!gemma.get_view || (gemma.get_view && !viewIsDoneLoading)}
                 onClick={() => downloadSvg()}
               >
