@@ -14644,6 +14644,7 @@ __metadata:
     sass-loader: "npm:13.3.2"
     source-map-explorer: "npm:^2.5.3"
     style-loader: "npm:^3.3.3"
+    svg-pan-zoom: "npm:^3.6.2"
     svg-react-loader: "npm:^0.4.6"
     sw-precache-webpack-plugin: "npm:^1.0.0"
     terser-webpack-plugin: "npm:5.3.9"
@@ -19229,6 +19230,13 @@ __metadata:
   version: 1.0.0
   resolution: "supports-preserve-symlinks-flag@npm:1.0.0"
   checksum: 10c0/6c4032340701a9950865f7ae8ef38578d8d7053f5e10518076e6554a9381fa91bd9c6850193695c141f32b21f979c985db07265a758867bac95de05f7d8aeb39
+  languageName: node
+  linkType: hard
+
+"svg-pan-zoom@npm:^3.6.2":
+  version: 3.6.2
+  resolution: "svg-pan-zoom@npm:3.6.2"
+  checksum: 10c0/dc05030bd6545d523de71e38d79d6830f780a74416a609269cc378fe8778796e794cb3e27f0f5b20bd7ee930597820e5b4463e4e4e0708127bed81e020339ec0
   languageName: node
   linkType: hard
 
