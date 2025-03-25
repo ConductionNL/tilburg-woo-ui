@@ -74,7 +74,6 @@ export const LABELS = {
   // Beheer labels
   BEHEER: 'Beheer',
   BEHEER_DETAILS: 'Beheer Details',
-  BEHEER_VOORZIENINGEN_AANBOD: 'Beheer Voorzieningen Aanbod',
 };
 
 export const LABELS_DYNAMIC = {

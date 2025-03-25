@@ -63,13 +63,13 @@ import { AcUUID } from '@src/utilities';
  *       key: "name"
  *     },
  *     {
- *       label: "Age",
+ *       label: "", // not needed with a customHeader
  *       key: "age",
  *       customHeader: <div className="age-header">Age (years)</div>
  *     },
  *     {
  *       label: "Actions",
- *       key: "",
+ *       key: "", // not needed with a customContent
  *       customContent: (row) => <button onClick={() => edit(row)}>Edit</button>
  *     }
  *   ]}

@@ -1,27 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { LABELS, VISUALS } from '@constants';
+import { VISUALS } from '@constants';
 import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
+import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
 import CDTable from '../cd-table';
 import AcEditContractModal from './ac-edit-contract-modal';
-import { getCookie } from '@src/utilities';
-import AcDeleteContractenModall from './ac-delete-contracten-modal';
+import AcDeleteContractenModal from './ac-delete-contracten-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 
@@ -30,22 +23,22 @@ const AcBeheerContracten = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            '/openconnector/api/endpoint/contracts'
-        );
-        const data = (await response.json())?.results;
-        setData(data || []);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err);
-      }
-    };
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch(
+        //   config.authentication.baseURL +
+        'https://vng.accept.commonground.nu/apps' +
+          '/openconnector/api/endpoint/contracts'
+      );
+      const data = (await response.json())?.results;
+      setData(data || []);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -136,7 +129,7 @@ const AcBeheerContracten = () => {
             Terug naar mijn omgeving
           </AcLink>
 
-          <Heading>Contracten</Heading>
+          <Heading>Beheer Contracten</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton
@@ -167,10 +160,11 @@ const AcBeheerContracten = () => {
             }}
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
+              fetchData();
             }}
           />
 
-          <AcDeleteContractenModall
+          <AcDeleteContractenModal
             contracten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
@@ -179,6 +173,7 @@ const AcBeheerContracten = () => {
             }}
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
+              fetchData();
             }}
           />
         </AcColumn>

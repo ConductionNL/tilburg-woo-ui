@@ -127,6 +127,10 @@ const TRASHCAN = loadable(() =>
   import('-!svg-react-loader!@assets/images/trash-can.svg')
 );
 
+const TRIANGLE_EXCLAMATION = loadable(() =>
+  import('-!svg-react-loader!@assets/images/triangle-exclamation.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -176,6 +180,7 @@ export const VISUALS = {
   HAND_SHAKE,
   SAVE,
   TRASHCAN,
+  TRIANGLE_EXCLAMATION,
 };
 
 export default {};
