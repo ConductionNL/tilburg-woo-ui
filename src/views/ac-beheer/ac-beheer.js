@@ -13,6 +13,11 @@ import { useNavigate, useParams } from 'react-router';
 
 import loadable from '@loadable/component';
 import { getCookie } from '@src/utilities';
+
+const AcBeheerVoorzieningen = loadable(() =>
+  import('@views/ac-beheer/ac-voorzieningen/ac-voorzieningen')
+);
+
 const AcBeheerVoorzieningenAanbod = loadable(() =>
   import('@views/ac-beheer/ac-voorzieningen-aanbod/ac-voorzieningen-aanbod')
 );
@@ -51,6 +56,9 @@ const AcBeheer = () => {
 
   let page = null;
   switch (id) {
+    case 'voorzieningen':
+      page = <AcBeheerVoorzieningen />;
+      break;
     case 'voorzieningen-aanbod':
       page = <AcBeheerVoorzieningenAanbod />;
       break;

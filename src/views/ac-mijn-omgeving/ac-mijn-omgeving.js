@@ -391,7 +391,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
                   Gebruikers
                 </SidenavLink>
               </SidenavItem>
-              <SidenavItem>
+              <SidenavItem onClick={() => navigate('/beheer/voorzieningen')}>
                 <SidenavLink>
                   <VISUALS.CUBE />
                   Voorzieningen
