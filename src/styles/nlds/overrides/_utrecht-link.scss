@@ -12,9 +12,5 @@
 
   &:not(.ac-button) {
     font-size: var(--tilburg-typography-font-size-lg);
-
-    @include respond-max($screen-md) {
-      font-size: var(--tilburg-typography-font-size-md);
-    }
   }
 }
