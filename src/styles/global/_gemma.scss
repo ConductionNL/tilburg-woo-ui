@@ -153,7 +153,7 @@
 }
 
 .ac-gemma-view-header-download-button {
-  @include respond-min($screen-md) {
+  @include respond-min($screen-sm) {
     gap: 10px !important;
   }
 }
