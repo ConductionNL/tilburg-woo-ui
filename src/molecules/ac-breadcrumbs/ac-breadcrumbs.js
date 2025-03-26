@@ -18,7 +18,7 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
   const [searchParams] = useSearchParams();
 
   // split up the pathname into an array
-  const pathname = location.pathname.split('/');
+  const pathnames = location.pathname.split('/');
 
   // pretify the pathname
   const prettifyPathname = (name) => name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
@@ -52,9 +52,15 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.NEXTCLOUD_LOGIN;
     }
 
-    if (location.pathname.startsWith('/beheer')) {
-      return BREADCRUMBS.BEHEER(prettifyPathname(pathname[2]));
+    if (location.pathname.startsWith(`/beheer/${pathnames[2]}`)) {
+      return BREADCRUMBS.BEHEER_LIST(pathnames[2], pathnames[3]);
     }
+
+    if (location.pathname.startsWith('/beheer')) {
+      return BREADCRUMBS.BEHEER(prettifyPathname(pathnames[2]));
+    }
+
+
 
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);

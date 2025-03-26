@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   AcSearchFilters,
@@ -14,7 +10,7 @@ import {
   AcButton,
   AcFormField,
 } from '@molecules';
-import { AcCard, AcContainer, AcFlex } from '@atoms';
+import { AcCard, AcContainer, AcFlex, AcSection } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, TOASTER_TYPES, VISUALS } from '@constants';
 import { AcModal, AcSearchBox, AcSearchSort } from '@components';
 import { withStore } from '@stores';
@@ -373,144 +369,34 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   };
 
   return (
-    <>
-      <AcContainer spacing='sm' margin='xl'>
-        <AcFlex spacing='xl' justifyContent='end'>
-          <AcButton style='button' onClick={handleAddVoorzieningOpenModal}>
-            <VISUALS.DOCUMENT />
-            Voorziening aanmaken
-          </AcButton>
-        </AcFlex>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
 
-        <AcFlex spacing='xl'>
-          <Sidenav>
-            <SidenavList>
-              <SidenavItem>
-                <SidenavLink current>
-                  <VISUALS.USERS />
-                  Gebruikers
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem onClick={() => navigate('/beheer/voorzieningen')}>
-                <SidenavLink>
-                  <VISUALS.CUBE />
-                  Voorzieningen
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-aanbod')}>
-                  <VISUALS.HAND_HOLDING />
-                  Aanbod
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-gebruik')}>
-                  <VISUALS.CLOUD />
-                  Gebruik
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-versie')}>
-                  <VISUALS.INFO />
-                  Versie
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/contracten')}>
-                  <VISUALS.HAND_SHAKE />
-                  Contracten
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem onClick={() => navigate('/beheer/organisaties')}>
-                <SidenavLink>
-                  <VISUALS.BUILDING />
-                  Organisaties
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem onClick={() => navigate('/beheer/kwetsbaarheden')}>
-                <SidenavLink>
-                  <VISUALS.TRIANGLE_EXCLAMATION />
-                  Kwetsbaarheden
-                </SidenavLink>
-              </SidenavItem>
-              <SidenavItem>
-                <SidenavLink>
-                  <VISUALS.TRUCK />
-                  Leveranciers
-                </SidenavLink>
-              </SidenavItem>
-            </SidenavList>
-          </Sidenav>
-          {/* {all_publications && (
-            <AcTabs
-              className='ac-mijn-omgeving-tabs'
-              selectedIndex={tabIndex}
-              onSelect={(index) => {
-                setTabIndex(index);
-                setCatalogId(all_publications[index].id);
-              }}
+        <AcFlex column spacing='sm'>
+          <AcFlex spacing='sm'>
+            <AcButton
+              style='button'
+              icon={<VISUALS.DOCUMENT />}
+              onClick={handleAddVoorzieningOpenModal}
             >
-              <AcTabList>
-                {all_publications.map((catalog, idx) => (
-                  <AcTab selected={tabIndex === idx}>
-                    <span>{catalog.title}</span>
-                    <BadgeCounter className='ac-publication-badge-counter'>
-                      {catalog?.publicationTypes?.length}
-                    </BadgeCounter>
-                  </AcTab>
-                ))}
-              </AcTabList>
-              {all_publications &&
-                all_publications.map((catalog, idx) => (
-                  <AcTabPanel
-                    selected={tabIndex === idx}
-                    className='ac-mijn-omgeving-tabpanels'
-                  >
-                    <Sidenav>
-                      <SidenavList>
-                        <SidenavItem>
-                          <SidenavLink>
-                            <span>Alles</span>
-                          </SidenavLink>
-                        </SidenavItem>
-                        {catalog.publicationTypes.map((item, index) => (
-                          <SidenavItem key={index} current={index === 0}>
-                            <SidenavLink
-                              onClick={() => {
-                                setPublicationTypeId(item.id);
-                                getSelectedPublicationType(catalog.id, item.id);
-                              }}
-                            >
-                              {item.title}
-                            </SidenavLink>
-                          </SidenavItem>
-                        ))}
-                      </SidenavList>
-                    </Sidenav>
-                  </AcTabPanel>
-                ))}
-            </AcTabs>
-          )} */}
+              Voorziening aanmaken
+            </AcButton>
 
-          <AcFlex column grow spacing='xs'>
-            <AcFlex column spacing='sm' margin='sm'>
-              <AcTable
-                header={['Voornaam', 'Achternaam', 'Functie']}
-                rows={users?.map((user) => mapConfigurationRow(user))}
-              />
-            </AcFlex>
-          </AcFlex>
-        </AcFlex>
-
-        <AcFlex column spacing='sm' justifyContent='end'>
-          <AcFlex spacing='sm' justifyContent='end'>
-            <AcButton style='button' onClick={syncGemma} disabled={syncGemmaLoading}>
-              <VISUALS.CLOUD />
+            <AcButton
+              style='button'
+              icon={<VISUALS.CLOUD />}
+              onClick={syncGemma}
+              disabled={syncGemmaLoading}
+            >
               {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
             </AcButton>
 
-            <AcButton style='button' onClick={downloadGemma}>
-              <VISUALS.DOWNLOAD />
+            <AcButton
+              style='button'
+              icon={<VISUALS.DOWNLOAD />}
+              onClick={downloadGemma}
+            >
               Gemma downloaden
             </AcButton>
           </AcFlex>
@@ -521,10 +407,9 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
             {downloadGemmaError && <Paragraph>Fout bij gemma downloaden.</Paragraph>}
           </AcFlex>
         </AcFlex>
-
-        {renderAddVoorzieningModal}
-      </AcContainer>
-    </>
+      </AcFlex>
+      {renderAddVoorzieningModal}
+    </AcSection>
   );
 };
 

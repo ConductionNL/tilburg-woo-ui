@@ -12,24 +12,25 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-versie-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-versie-modal';
+import CDTable from '../../cd-table';
+import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
+import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
-const AcBeheerVoorzieningenVersie = () => {
+const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([
     {
       '@self': {
         id: null,
-        uuid: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+        uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
         version: null,
         register: '3',
-        schema: '22',
+        schema: '17',
         files: [],
         relations: [],
         locked: null,
@@ -37,19 +38,26 @@ const AcBeheerVoorzieningenVersie = () => {
         updated: null,
         created: null,
         folder:
-          'Open Registers/Software Catalogus Register/VoorzieningVersie/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+          'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
       },
-      naam: 'DigiD Machtigen Pro',
+      id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+      naam: 'eHerkenning Machtigingenregister',
       omschrijving:
-        'Nieuwe versie van DigiD Machtigen met uitgebreide functionaliteit voor zakelijke gebruikers, verbeterde beveiliging en ondersteuning voor eHerkenning integratie.',
-      releaseNotes:
-        '- Implementatie OAuth 2.0 authenticatie\n- Koppeling met eHerkenning niveau 3\n- Verbeterde logging en audit trail\n- Nieuwe API endpoints voor machtigingenbeheer',
-      nummer: '2.4.0',
-      voorzieningaanbodId: '8a5c12d4-e789-4f23-b567-a91c45d78e2b',
-      productieDatum: '2024-03-01',
-      eindeDatum: '2025-09-30',
-      status: 'acceptatie',
-      id: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+        'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
+      type: 'Authenticatie',
+      voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+      organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
+      productpagina: 'https://www.eherkenning.nl/machtigingenregister',
+      ondersteuningsmodel:
+        'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
+      licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
+      hostingopties: 'Private cloud',
+      versies: [
+        '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+        '45c67d89-ab12-4e56-8f90-123456789abc',
+        '67890abc-def1-2345-6789-012345678901',
+        '34567890-bcde-f123-4567-890123456789',
+      ],
     },
   ]);
   const [error, setError] = useState(null);
@@ -59,7 +67,7 @@ const AcBeheerVoorzieningenVersie = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningversies'
+          '/openconnector/api/endpoint/voorzieningaanboden'
       );
       const data = (await response.json()).results;
 
@@ -68,11 +76,11 @@ const AcBeheerVoorzieningenVersie = () => {
         {
           '@self': {
             id: null,
-            uuid: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+            uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
             version: null,
             register: '3',
-            schema: '22',
+            schema: '17',
             files: [],
             relations: [],
             locked: null,
@@ -80,19 +88,26 @@ const AcBeheerVoorzieningenVersie = () => {
             updated: null,
             created: null,
             folder:
-              'Open Registers/Software Catalogus Register/VoorzieningVersie/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+              'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
           },
-          naam: 'DigiD Machtigen Pro',
+          id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+          naam: 'eHerkenning Machtigingenregister',
           omschrijving:
-            'Nieuwe versie van DigiD Machtigen met uitgebreide functionaliteit voor zakelijke gebruikers, verbeterde beveiliging en ondersteuning voor eHerkenning integratie.',
-          releaseNotes:
-            '- Implementatie OAuth 2.0 authenticatie\n- Koppeling met eHerkenning niveau 3\n- Verbeterde logging en audit trail\n- Nieuwe API endpoints voor machtigingenbeheer',
-          nummer: '2.4.0',
-          voorzieningaanbodId: '8a5c12d4-e789-4f23-b567-a91c45d78e2b',
-          productieDatum: '2024-03-01',
-          eindeDatum: '2025-09-30',
-          status: 'acceptatie',
-          id: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+            'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
+          type: 'Authenticatie',
+          voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+          organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
+          productpagina: 'https://www.eherkenning.nl/machtigingenregister',
+          ondersteuningsmodel:
+            'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
+          licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
+          hostingopties: 'Private cloud',
+          versies: [
+            '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+            '45c67d89-ab12-4e56-8f90-123456789abc',
+            '67890abc-def1-2345-6789-012345678901',
+            '34567890-bcde-f123-4567-890123456789',
+          ],
         },
       ];
 
@@ -123,26 +138,33 @@ const AcBeheerVoorzieningenVersie = () => {
       key: 'omschrijving',
     },
     {
-      label: 'Release Notes',
-      key: 'releaseNotes',
+      label: 'Type',
+      key: 'type',
     },
     {
-      label: 'Nummer',
-      key: 'nummer',
+      label: 'Productpagina',
+      key: 'productpagina',
     },
     {
-      label: 'Status',
-      key: 'status',
-    },
-    {
-      label: 'Voorziening Aanbod ID',
-      key: 'voorzieningaanbodId',
+      label: 'Ondersteuningsmodel',
+      key: 'ondersteuningsmodel',
     },
     {
       label: 'Acties',
       key: '',
       customContent: (row) => (
         <AcFlex column spacing='xs'>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
+              navigate(
+                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-aanbod', row.id)
+              );
+            }}
+          >
+            Bekijken
+          </button>
           <button
             className='utrecht-button slim'
             variant='secondary'
@@ -192,7 +214,7 @@ const AcBeheerVoorzieningenVersie = () => {
           <AcSideNav />
 
           <AcColumn gap='sm'>
-            <Heading>Beheer Voorzieningen Versie</Heading>
+            <Heading>Beheer Voorzieningen Aanbod</Heading>
 
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton
@@ -211,20 +233,6 @@ const AcBeheerVoorzieningenVersie = () => {
               renderSelectRowButtons
               ref={tableRef}
               truncateLines={2}
-            />
-
-            {/* modals */}
-            <AcEditVoorzieningAanbodModal
-              voorziening={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
             />
 
             <AcDeleteVoorzieningAanbodModal
@@ -249,9 +257,8 @@ const AcBeheerVoorzieningenVersie = () => {
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <AcSideNav />
-
         <AcColumn gap='sm'>
-          <Heading>Beheer Voorzieningen Versie</Heading>
+          <Heading>Beheer Voorzieningen Aanbod</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton
@@ -304,4 +311,4 @@ const AcBeheerVoorzieningenVersie = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenVersie));
+export default withStore(observer(AcBeheerVoorzieningenAanbod));

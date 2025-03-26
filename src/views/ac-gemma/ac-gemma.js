@@ -274,15 +274,30 @@ const AcGemma = ({ store: { gemma } }) => {
     // Initialize the graph
     let outputGraph = new dia.Graph({}, { cellNamespace: shapes });
 
-    // Create paper for rendering
     const paper = new dia.Paper({
       el: container,
       model: outputGraph,
       width: 1168,
       height: 800,
       gridSize: 1,
-      interactive: false,
-      elementMove: false,
+      interactive: {
+        elementMove: false,
+        addLinkFromMagnet: false,
+        vertexAdd: false,
+        vertexMove: false,
+        labelMove: false,
+        useLinkTools: false,
+      },
+      defaultInteractive: false,
+    });
+
+    // Add click handler to the paper
+    paper.on('element:pointerclick', (elementView, evt) => {
+      const model = elementView.model;
+      const onClick = model.prop('onClick');
+      if (typeof onClick === 'function') {
+        onClick();
+      }
     });
 
     const convertToViewNode = (node) => {
@@ -360,6 +375,12 @@ const AcGemma = ({ store: { gemma } }) => {
           },
           description: nodeDataNode?.description || null,
           elementRef: node.elementRef || null,
+          onClick: () => {
+            window.open(
+              `https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}`,
+              '_blank'
+            );
+          },
         };
       }
     };
@@ -500,22 +521,12 @@ const AcGemma = ({ store: { gemma } }) => {
     allRectElements.forEach((item) => {
       node?.color && item.setAttribute('fill', node?.color);
       node?.borderColor && item.setAttribute('stroke', node?.borderColor);
-      item.setAttribute('cursor', 'pointer');
-      item.setAttribute(
-        'onclick',
-        `window.open('https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}', '_blank')`
-      );
     });
 
     let allPolygonElements = parentElement.querySelectorAll(':scope > polygon');
     allPolygonElements.forEach((item) => {
       node?.color && item.setAttribute('fill', node?.color);
       node?.borderColor && item.setAttribute('stroke', node?.borderColor);
-      item.setAttribute('cursor', 'pointer');
-      item.setAttribute(
-        'onclick',
-        `window.open('https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}', '_blank')`
-      );
     });
 
     let allTextElements = parentElement.querySelectorAll(':scope > text');
