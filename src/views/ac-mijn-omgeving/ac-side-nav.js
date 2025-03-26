@@ -35,18 +35,18 @@ const AcSideNav = () => {
               Dashboard
             </SidenavLink>
           </SidenavItem>
-          <SidenavItem>
+          {/* <SidenavItem>
             <SidenavLink>
               <VISUALS.USERS />
               Gebruikers
             </SidenavLink>
-          </SidenavItem>
-          <SidenavItem>
+          </SidenavItem> */}
+          {/* <SidenavItem>
             <SidenavLink>
               <VISUALS.CUBE />
               Voorzieningen
             </SidenavLink>
-          </SidenavItem>
+          </SidenavItem> */}
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-aanbod')}
@@ -99,12 +99,6 @@ const AcSideNav = () => {
             >
               <VISUALS.TRIANGLE_EXCLAMATION />
               Kwetsbaarheden
-            </SidenavLink>
-          </SidenavItem>
-          <SidenavItem>
-            <SidenavLink>
-              <VISUALS.TRUCK />
-              Leveranciers
             </SidenavLink>
           </SidenavItem>
         </SidenavList>
