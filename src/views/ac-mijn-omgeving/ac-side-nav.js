@@ -29,7 +29,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/mijn-omgeving')}
-              current={window.location.pathname === '/mijn-omgeving'}
+              current={window.location.pathname.startsWith('/mijn-omgeving')}
             >
               <VISUALS.USERS />
               Dashboard
@@ -50,7 +50,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-aanbod')}
-              current={window.location.pathname === '/beheer/voorzieningen-aanbod'}
+              current={window.location.pathname.startsWith('/beheer/voorzieningen-aanbod')}
             >
               <VISUALS.HAND_HOLDING />
               Aanbod
@@ -59,7 +59,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-gebruik')}
-              current={window.location.pathname === '/beheer/voorzieningen-gebruik'}
+              current={window.location.pathname.startsWith('/beheer/voorzieningen-gebruik')}
             >
               <VISUALS.CLOUD />
               Gebruik
@@ -68,7 +68,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-versie')}
-              current={window.location.pathname === '/beheer/voorzieningen-versie'}
+              current={window.location.pathname.startsWith('/beheer/voorzieningen-versie')}
             >
               <VISUALS.INFO />
               Versie
@@ -77,7 +77,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/contracten')}
-              current={window.location.pathname === '/beheer/contracten'}
+              current={window.location.pathname.startsWith('/beheer/contracten')}
             >
               <VISUALS.HAND_SHAKE />
               Contracten
@@ -86,7 +86,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/organisaties')}
-              current={window.location.pathname === '/beheer/organisaties'}
+              current={window.location.pathname.startsWith('/beheer/organisaties')}
             >
               <VISUALS.BUILDING />
               Organisaties
@@ -95,7 +95,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/kwetsbaarheden')}
-              current={window.location.pathname === '/beheer/kwetsbaarheden'}
+              current={window.location.pathname.startsWith('/beheer/kwetsbaarheden')}
             >
               <VISUALS.TRIANGLE_EXCLAMATION />
               Kwetsbaarheden

@@ -13,32 +13,50 @@ import { useNavigate, useParams } from 'react-router';
 
 import loadable from '@loadable/component';
 import { getCookie } from '@src/utilities';
-const AcBeheerVoorzieningenAanbod = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-aanbod/ac-voorzieningen-aanbod')
-);
 
+// list pages
+const AcBeheerVoorzieningenAanbod = loadable(() =>
+  import(
+    '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod'
+  )
+);
 const AcBeheerVoorzieningenGebruik = loadable(() =>
   import('@views/ac-beheer/ac-voorzieningen-gebruik/ac-voorzieningen-gebruik')
 );
-
 const AcBeheerVoorzieningenVersie = loadable(() =>
   import('@views/ac-beheer/ac-voorzieningen-versie/ac-voorzieningen-versie')
 );
-
 const AcBeheerContracten = loadable(() =>
   import('@views/ac-beheer/ac-contracten/ac-contracten')
 );
-
 const AcBeheerOrganisaties = loadable(() =>
   import('@views/ac-beheer/ac-organisatie/ac-organisatie')
 );
-
 const AcBeheerKwetsbaarheden = loadable(() =>
   import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
 );
 
+// detail pages
+const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
+  import(
+    '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod-details'
+  )
+);
+
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
+
+  const wrongPage = () => (
+    <AcSection spacing>
+      <AcContainer>
+        <AcColumn gap='tiger'>
+          <AcColumn>
+            <Heading>{LABELS.WRONG_PAGE}</Heading>
+          </AcColumn>
+        </AcColumn>
+      </AcContainer>
+    </AcSection>
+  );
 
   const loggedIn = !!getCookie('nextcloud_user_id');
   useEffect(() => {
@@ -47,44 +65,33 @@ const AcBeheer = () => {
     }
   }, [loggedIn]);
 
-  const { id } = useParams();
+  const { type, id } = useParams();
 
-  let page = null;
-  switch (id) {
-    case 'voorzieningen-aanbod':
-      page = <AcBeheerVoorzieningenAanbod />;
-      break;
-    case 'voorzieningen-gebruik':
-      page = <AcBeheerVoorzieningenGebruik />;
-      break;
-    case 'voorzieningen-versie':
-      page = <AcBeheerVoorzieningenVersie />;
-      break;
-    case 'contracten':
-      page = <AcBeheerContracten />;
-      break;
-    case 'organisaties':
-      page = <AcBeheerOrganisaties />;
-      break;
+  if (!id) {
+    switch (type) {
+      case 'voorzieningen-aanbod':
+        return <AcBeheerVoorzieningenAanbod />;
+      case 'voorzieningen-gebruik':
+        return <AcBeheerVoorzieningenGebruik />;
+      case 'voorzieningen-versie':
+        return <AcBeheerVoorzieningenVersie />;
+      case 'contracten':
+        return <AcBeheerContracten />;
+      case 'organisaties':
+        return <AcBeheerOrganisaties />;
     case 'kwetsbaarheden':
-      page = <AcBeheerKwetsbaarheden />;
-      break;
-    default:
-      page = (
-        <AcSection spacing>
-          <AcContainer>
-            <AcColumn gap='tiger'>
-              <AcColumn>
-                <Heading>{LABELS.WRONG_PAGE}</Heading>
-              </AcColumn>
-            </AcColumn>
-          </AcContainer>
-        </AcSection>
-      );
-      break;
+        return <AcBeheerKwetsbaarheden />;
+      default:
+        return wrongPage();
+    }
   }
 
-  return page;
+  switch (type) {
+    case 'voorzieningen-aanbod':
+      return <AcBeheerVoorzieningenAanbodDetails id={id} />;
+    default:
+      return wrongPage();
+  }
 };
 
 export default withStore(observer(AcBeheer));

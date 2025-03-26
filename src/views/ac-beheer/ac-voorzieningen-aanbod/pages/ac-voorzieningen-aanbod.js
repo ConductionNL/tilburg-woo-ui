@@ -12,11 +12,12 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-aanbod-modal';
+import CDTable from '../../cd-table';
+import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
+import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningenAanbod = () => {
@@ -97,6 +98,17 @@ const AcBeheerVoorzieningenAanbod = () => {
             className='utrecht-button slim'
             variant='secondary'
             onClick={() => {
+              navigate(
+                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-aanbod', row.id)
+              );
+            }}
+          >
+            Bekijken
+          </button>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
               setSingleSelectedRow(row);
               setOpenModal('edit');
             }}
@@ -124,58 +136,59 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-          <AcColumn gap='sm'>
-            <Heading>Beheer Voorzieningen Aanbod</Heading>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
 
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
+        <AcColumn gap='sm'>
+          <Heading>Beheer Voorzieningen Aanbod</Heading>
 
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
+          <AcFlex spacing='sm' justifyContent='end'>
+            <PrimaryActionButton
+              disabled={selectedRows.length === 0}
+              onClick={handleMultipleDelete}
+            >
+              Delete {selectedRows.length}{' '}
+              {selectedRows.length === 1 ? 'item' : 'items'}
+            </PrimaryActionButton>
+          </AcFlex>
 
-            {/* modals */}
-            <AcEditVoorzieningAanbodModal
-              voorziening={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
+          <CDTable
+            data={data}
+            tableHeaders={tableHeaders}
+            getSelectedRows={setSelectedRows}
+            renderSelectRowButtons
+            ref={tableRef}
+            truncateLines={2}
+          />
 
-            <AcDeleteVoorzieningAanbodModal
-              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-              showModal={openModal === 'delete'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-          </AcColumn>
-        </AcFlex>
+          {/* modals */}
+          <AcEditVoorzieningAanbodModal
+            voorziening={singleSelectedRow}
+            showModal={openModal === 'edit'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
+
+          <AcDeleteVoorzieningAanbodModal
+            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+            showModal={openModal === 'delete'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
+        </AcColumn>
+      </AcFlex>
     </AcSection>
   );
 };
