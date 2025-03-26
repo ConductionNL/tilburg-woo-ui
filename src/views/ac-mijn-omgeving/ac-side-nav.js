@@ -41,11 +41,14 @@ const AcSideNav = () => {
               Gebruikers
             </SidenavLink>
           </SidenavItem> */}
-          <SidenavItem
-            onClick={() => navigate('/beheer/voorzieningen')}
-            current={window.location.pathname.startsWith('/beheer/voorzieningen')}
-          >
-            <SidenavLink>
+          <SidenavItem>
+            <SidenavLink
+              onClick={() => navigate('/beheer/voorzieningen')}
+              current={
+                window.location.pathname.startsWith('/beheer/voorzieningen/') ||
+                window.location.pathname === '/beheer/voorzieningen'
+              }
+            >
               <VISUALS.CUBE />
               Voorzieningen
             </SidenavLink>

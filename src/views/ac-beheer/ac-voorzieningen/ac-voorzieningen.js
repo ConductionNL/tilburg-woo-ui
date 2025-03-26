@@ -17,6 +17,7 @@ import AcEditVoorzieningModal from './ac-edit-voorzieningen-modal';
 import AcDeleteVoorzieningModal from './ac-delete-voorzieningen-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningen = () => {
   const navigate = useNavigate();
@@ -125,14 +126,11 @@ const AcBeheerVoorzieningen = () => {
   };
 
   return (
-    <AcSection spacing>
-      <AcContainer>
-        <AcColumn gap='sm'>
-          <AcLink href='/mijn-omgeving'>
-            <VISUALS.ARROW_LEFT />
-            Terug naar mijn omgeving
-          </AcLink>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
 
+        <AcColumn gap='sm'>
           <Heading>Beheer Voorzieningen</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
@@ -181,7 +179,7 @@ const AcBeheerVoorzieningen = () => {
             }}
           />
         </AcColumn>
-      </AcContainer>
+      </AcFlex>
     </AcSection>
   );
 };
