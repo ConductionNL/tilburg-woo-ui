@@ -55,15 +55,10 @@ function getCookie(name) {
 
 const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   const nextcloud_user_id = getCookie('nextcloud_user_id');
+  const navigate = useNavigate();
 
   if (nextcloud_user_id) {
-    return (
-      <div className='container container--compact'>
-        <div>
-          Je bent al ingelogd met Nextcloud. Je kunt nu naar de dashboard gaan.
-        </div>
-      </div>
-    );
+    navigate('/mijn-omgeving');
   }
 
   // fetch client id and secret key from local storage
@@ -99,8 +94,6 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const state = searchParams.get('state');

@@ -4,10 +4,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
+import { useNavigate } from 'react-router';
+
 
 const AcNavigation = ({ store: { menu } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const navigate = useNavigate();
 
   const pathname = window.location.pathname;
 
@@ -25,6 +28,15 @@ const AcNavigation = ({ store: { menu } }) => {
     setIsMenuOpen(false);
     fetchMenus();
   }, [location]);
+
+  function removeCookie(name) {
+    document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+  }
+
+  const handleLogout = () => {
+    removeCookie('nextcloud_user_id');
+    navigate('/');
+  };
 
   return (
     <div className='ac-navigation'>
@@ -51,7 +63,7 @@ const AcNavigation = ({ store: { menu } }) => {
         )) ||
           (AcCheckIfSpecificHostname() && (
             <>
-              {pathname !== '/mijn-omgeving' ? (
+              {pathname !== '/mijn-omgeving' && !pathname.includes('beheer') ? (
                 <ul>
                   <li>
                     <Link to='/login'>
@@ -69,9 +81,9 @@ const AcNavigation = ({ store: { menu } }) => {
               ) : (
                 <ul>
                   <li>
-                    <Link to='#'>
-                      <VISUALS.USER />
-                      Account
+                    <Link to='#' onClick={handleLogout}>
+                      <VISUALS.RIGHT_FROM_BRACKET />
+                      Logout
                     </Link>
                   </li>
                 </ul>
