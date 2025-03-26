@@ -12,9 +12,9 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-aanbod-modal';
+import CDTable from '../../cd-table';
+import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
+import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';

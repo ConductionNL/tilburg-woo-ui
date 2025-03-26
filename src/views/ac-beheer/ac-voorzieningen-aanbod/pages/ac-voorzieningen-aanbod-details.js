@@ -2,26 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { LABELS, VISUALS } from '@constants';
+import { VISUALS } from '@constants';
 import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
+import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import { testData } from '../testData';
-import CDTable from '../../cd-table';
 import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
-import { getCookie } from '@src/utilities';
 import AcDeleteVoorzieningAanbodModall from '../modals/ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
