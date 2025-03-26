@@ -17,6 +17,7 @@ import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
 import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
@@ -47,6 +48,11 @@ const AcBeheerVoorzieningenAanbod = () => {
       <AcSection>
         <AcContainer>
           <AcFlex column spacing='sm'>
+            <AcLink href='/mijn-omgeving'>
+              <VISUALS.ARROW_LEFT />
+              Terug naar mijn omgeving
+            </AcLink>
+
             <Heading level={1}>Er is een fout opgetreden</Heading>
             <Paragraph>
               Er kon geen verbinding worden gemaakt met de server. Probeer het later
@@ -91,6 +97,17 @@ const AcBeheerVoorzieningenAanbod = () => {
       key: '',
       customContent: (row) => (
         <AcFlex column spacing='xs'>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
+              navigate(
+                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-aanbod', row.id)
+              );
+            }}
+          >
+            Bekijken
+          </button>
           <button
             className='utrecht-button slim'
             variant='secondary'
