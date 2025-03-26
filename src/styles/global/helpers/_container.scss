@@ -69,4 +69,14 @@
       margin-block: var(--tilburg-space-block-pig);
     }
   }
+
+  &:has(.utrecht-skip-link) {
+    position: relative;
+
+    .utrecht-skip-link:focus-visible {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  }
 }
