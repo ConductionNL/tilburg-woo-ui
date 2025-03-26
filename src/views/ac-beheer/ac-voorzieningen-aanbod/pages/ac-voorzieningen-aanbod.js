@@ -140,58 +140,59 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-          <AcColumn gap='sm'>
-            <Heading>Beheer Voorzieningen Aanbod</Heading>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
 
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
+        <AcColumn gap='sm'>
+          <Heading>Beheer Voorzieningen Aanbod</Heading>
 
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
+          <AcFlex spacing='sm' justifyContent='end'>
+            <PrimaryActionButton
+              disabled={selectedRows.length === 0}
+              onClick={handleMultipleDelete}
+            >
+              Delete {selectedRows.length}{' '}
+              {selectedRows.length === 1 ? 'item' : 'items'}
+            </PrimaryActionButton>
+          </AcFlex>
 
-            {/* modals */}
-            <AcEditVoorzieningAanbodModal
-              voorziening={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
+          <CDTable
+            data={data}
+            tableHeaders={tableHeaders}
+            getSelectedRows={setSelectedRows}
+            renderSelectRowButtons
+            ref={tableRef}
+            truncateLines={2}
+          />
 
-            <AcDeleteVoorzieningAanbodModal
-              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-              showModal={openModal === 'delete'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-          </AcColumn>
-        </AcFlex>
+          {/* modals */}
+          <AcEditVoorzieningAanbodModal
+            voorziening={singleSelectedRow}
+            showModal={openModal === 'edit'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
+
+          <AcDeleteVoorzieningAanbodModal
+            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+            showModal={openModal === 'delete'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
+        </AcColumn>
+      </AcFlex>
     </AcSection>
   );
 };
