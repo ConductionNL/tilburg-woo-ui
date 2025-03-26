@@ -16,6 +16,14 @@
 
     .utrecht-paragraph {
       font-size: var(--tilburg-typography-font-size-md);
+
+      &--small {
+        font-size: var(--tilburg-typography-font-size-sm);
+      }
+    }
+
+    .utrecht-badge-status {
+      font-size: var(--tilburg-typography-font-size-sm);
     }
   }
 

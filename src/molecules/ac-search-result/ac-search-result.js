@@ -15,7 +15,6 @@ const AcSearchResult = ({
   id,
   hideCategory = false,
   hideThemes = false,
-  simplified = false,
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
