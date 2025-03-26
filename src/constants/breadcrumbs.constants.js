@@ -1,5 +1,6 @@
 // pretify a pathname part
-const prettifyPathname = (name) => name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+const prettifyPathname = (name) =>
+  name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
 export const BREADCRUMB_ITEMS = {
   HOME: { label: 'Home', href: '/' },
@@ -10,7 +11,10 @@ export const BREADCRUMB_ITEMS = {
   GEMMA: { label: 'Gemma', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
   BEHEER: { label: 'Beheer' },
-  BEHEER_LIST: (type) => ({ label: prettifyPathname(type), href: `/beheer/${type}` }),
+  BEHEER_LIST: (type) => ({
+    label: prettifyPathname(type),
+    href: `/beheer/${type}`,
+  }),
 };
 
 export const BREADCRUMBS = {
