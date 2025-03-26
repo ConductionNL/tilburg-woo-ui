@@ -17,6 +17,7 @@ import AcEditContractModal from './ac-edit-contract-modal';
 import AcDeleteContractenModal from './ac-delete-contracten-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerContracten = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const AcBeheerContracten = () => {
 
   if (error) {
     return (
-      <AcSection>
+      <AcSection spacing className='ac-mijn-omgeving-section'>
         <AcContainer>
           <AcFlex column spacing='sm'>
             <Heading level={1}>Er is een fout opgetreden</Heading>
@@ -121,14 +122,10 @@ const AcBeheerContracten = () => {
   };
 
   return (
-    <AcSection spacing>
-      <AcContainer>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
         <AcColumn gap='sm'>
-          <AcLink href='/mijn-omgeving'>
-            <VISUALS.ARROW_LEFT />
-            Terug naar mijn omgeving
-          </AcLink>
-
           <Heading>Beheer Contracten</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
@@ -177,7 +174,7 @@ const AcBeheerContracten = () => {
             }}
           />
         </AcColumn>
-      </AcContainer>
+      </AcFlex>
     </AcSection>
   );
 };

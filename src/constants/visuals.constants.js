@@ -131,6 +131,10 @@ const TRIANGLE_EXCLAMATION = loadable(() =>
   import('-!svg-react-loader!@assets/images/triangle-exclamation.svg')
 );
 
+const RIGHT_FROM_BRACKET = loadable(() =>
+  import('-!svg-react-loader!@assets/images/right-from-bracket.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -181,6 +185,7 @@ export const VISUALS = {
   SAVE,
   TRASHCAN,
   TRIANGLE_EXCLAMATION,
+  RIGHT_FROM_BRACKET,
 };
 
 export default {};
