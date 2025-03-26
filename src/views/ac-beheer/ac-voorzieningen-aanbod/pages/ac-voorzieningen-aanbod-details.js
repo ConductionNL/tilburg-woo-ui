@@ -111,17 +111,18 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
 
   if (error) {
     return (
-      <AcSection>
-        <AcContainer>
-          <AcFlex column spacing='sm'>
+      <AcSection spacing className='ac-mijn-omgeving-section'>
+        <AcFlex spacing='xl'>
+          <AcSideNav />
+          <AcColumn gap='sm'>
             <Heading level={1}>Er is een fout opgetreden</Heading>
             <Paragraph>
               Er kon geen verbinding worden gemaakt met de server. Probeer het later
               opnieuw.
             </Paragraph>
             <Paragraph>{error.message}</Paragraph>
-          </AcFlex>
-        </AcContainer>
+          </AcColumn>
+        </AcFlex>
       </AcSection>
     );
   }
@@ -129,137 +130,135 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
   const [openModal, setOpenModal] = useState(null);
 
   return (
-    <AcSection spacing>
-      <AcContainer>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-          <AcColumn gap='sm'>
-            {loading && <AcLoader />}
-            {!loading && !data && <Heading>Er is een fout opgetreden</Heading>}
-            {!loading && data && (
-              <AcFlex column spacing='xl'>
-                <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam}</Heading>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
+        <AcColumn gap='sm'>
+          {loading && <AcLoader />}
+          {!loading && !data && <Heading>Er is een fout opgetreden</Heading>}
+          {!loading && data && (
+            <AcFlex column spacing='xl'>
+              <AcFlex spacing='sm' justifyContent='between'>
+                <Heading>{data.naam}</Heading>
 
-                  <AcFlex className='ac-beheer-details--remove-width' spacing='xs'>
-                    <AcButton
-                      style='button'
-                      icon={<VISUALS.PENCIL />}
-                      onClick={() => setOpenModal('edit')}
-                    >
-                      Bijwerken
-                    </AcButton>
-                    <AcButton
-                      style='button'
-                      icon={<VISUALS.TRASHCAN />}
-                      onClick={() => setOpenModal('delete')}
-                    >
-                      Verwijderen
-                    </AcButton>
-                    <AcButton style='button' icon={<VISUALS.PLUS />}>
-                      Toevoegen
-                    </AcButton>
-                  </AcFlex>
+                <AcFlex className='ac-beheer-details--remove-width' spacing='xs'>
+                  <AcButton
+                    style='button'
+                    icon={<VISUALS.PENCIL />}
+                    onClick={() => setOpenModal('edit')}
+                  >
+                    Bijwerken
+                  </AcButton>
+                  <AcButton
+                    style='button'
+                    icon={<VISUALS.TRASHCAN />}
+                    onClick={() => setOpenModal('delete')}
+                  >
+                    Verwijderen
+                  </AcButton>
+                  <AcButton style='button' icon={<VISUALS.PLUS />}>
+                    Toevoegen
+                  </AcButton>
                 </AcFlex>
+              </AcFlex>
 
-                <AcColumn gap='md'>
-                  <AcFlex column spacing='sm'>
-                    <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Omschrijving:</strong>
-                        <Paragraph>{data.omschrijving}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.type}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Productpagina:</strong>
-                        <Paragraph>
-                          <a
-                            href={data.productpagina}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            {data.productpagina}
-                          </a>
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Ondersteuningsmodel:</strong>
-                        <Paragraph>{data.ondersteuningsmodel}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Licentiemodel:</strong>
-                        <Paragraph>{data.licentiemodel}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Hostingopties:</strong>
-                        <Paragraph>{data.hostingopties}</Paragraph>
-                      </div>
+              <AcColumn gap='md'>
+                <AcFlex column spacing='sm'>
+                  <div className='ac-beheer-details--grid'>
+                    <div>
+                      <strong>Omschrijving:</strong>
+                      <Paragraph>{data.omschrijving}</Paragraph>
                     </div>
 
                     <div>
-                      <AcTabs
-                        selectedIndex={versionTabIndex}
-                        onSelect={(index) => setVersionTabIndex(index)}
-                      >
-                        <AcTabList>
-                          <AcTab selected={versionTabIndex === 0}>Versies</AcTab>
-                        </AcTabList>
-
-                        <AcTabPanel selected={versionTabIndex === 0}>
-                          {data.versies.map((versie, index) => (
-                            <Paragraph key={index}>{versie}</Paragraph>
-                          ))}
-                        </AcTabPanel>
-                      </AcTabs>
+                      <strong>Type:</strong>
+                      <Paragraph>{data.type}</Paragraph>
                     </div>
-                  </AcFlex>
-                </AcColumn>
 
-                {/* modals */}
-                <AcEditVoorzieningAanbodModal
-                  voorziening={data}
-                  showModal={openModal === 'edit'}
-                  onClose={() => {
-                    setOpenModal(null);
-                  }}
-                  onSuccess={() => {
-                    fetchData();
-                  }}
-                />
+                    <div>
+                      <strong>Voorziening ID:</strong>
+                      <Paragraph>{data.voorzieningId}</Paragraph>
+                    </div>
 
-                <AcDeleteVoorzieningAanbodModall
-                  voorzieningen={[data]}
-                  showModal={openModal === 'delete'}
-                  onClose={() => {
-                    setOpenModal(null);
-                  }}
-                  onSuccess={() => {
-                    fetchData();
-                  }}
-                />
-              </AcFlex>
-            )}
-          </AcColumn>
-        </AcFlex>
-      </AcContainer>
+                    <div>
+                      <strong>Organisatie ID:</strong>
+                      <Paragraph>{data.organisatieId}</Paragraph>
+                    </div>
+
+                    <div>
+                      <strong>Productpagina:</strong>
+                      <Paragraph>
+                        <a
+                          href={data.productpagina}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {data.productpagina}
+                        </a>
+                      </Paragraph>
+                    </div>
+
+                    <div>
+                      <strong>Ondersteuningsmodel:</strong>
+                      <Paragraph>{data.ondersteuningsmodel}</Paragraph>
+                    </div>
+
+                    <div>
+                      <strong>Licentiemodel:</strong>
+                      <Paragraph>{data.licentiemodel}</Paragraph>
+                    </div>
+
+                    <div>
+                      <strong>Hostingopties:</strong>
+                      <Paragraph>{data.hostingopties}</Paragraph>
+                    </div>
+                  </div>
+
+                  <div>
+                    <AcTabs
+                      selectedIndex={versionTabIndex}
+                      onSelect={(index) => setVersionTabIndex(index)}
+                    >
+                      <AcTabList>
+                        <AcTab selected={versionTabIndex === 0}>Versies</AcTab>
+                      </AcTabList>
+
+                      <AcTabPanel selected={versionTabIndex === 0}>
+                        {data.versies.map((versie, index) => (
+                          <Paragraph key={index}>{versie}</Paragraph>
+                        ))}
+                      </AcTabPanel>
+                    </AcTabs>
+                  </div>
+                </AcFlex>
+              </AcColumn>
+
+              {/* modals */}
+              <AcEditVoorzieningAanbodModal
+                voorziening={data}
+                showModal={openModal === 'edit'}
+                onClose={() => {
+                  setOpenModal(null);
+                }}
+                onSuccess={() => {
+                  fetchData();
+                }}
+              />
+
+              <AcDeleteVoorzieningAanbodModall
+                voorzieningen={[data]}
+                showModal={openModal === 'delete'}
+                onClose={() => {
+                  setOpenModal(null);
+                }}
+                onSuccess={() => {
+                  fetchData();
+                }}
+              />
+            </AcFlex>
+          )}
+        </AcColumn>
+      </AcFlex>
     </AcSection>
   );
 };
