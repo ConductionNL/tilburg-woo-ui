@@ -27,30 +27,79 @@ const AcSideNav = () => {
       <Sidenav>
         <SidenavList>
           <SidenavItem>
-            <SidenavLink current href='/#'>
-              Overzicht
+            <SidenavLink
+              onClick={() => navigate('/mijn-omgeving')}
+              current={window.location.pathname === '/mijn-omgeving'}
+            >
+              <VISUALS.USERS />
+              Dashboard
             </SidenavLink>
           </SidenavItem>
-        </SidenavList>
-        <SidenavList>
+          {/* <SidenavItem>
+            <SidenavLink>
+              <VISUALS.USERS />
+              Gebruikers
+            </SidenavLink>
+          </SidenavItem> */}
+          {/* <SidenavItem>
+            <SidenavLink>
+              <VISUALS.CUBE />
+              Voorzieningen
+            </SidenavLink>
+          </SidenavItem> */}
           <SidenavItem>
-            <SidenavLink href='/#'>Mijn taken</SidenavLink>
-          </SidenavItem>
-          <SidenavItem>
-            <SidenavLink href='/#'>
-              <SidenavLinkLabel>
-                Mijn berichten
-                <BadgeCounter>2</BadgeCounter>
-              </SidenavLinkLabel>
+            <SidenavLink
+              onClick={() => navigate('/beheer/voorzieningen-aanbod')}
+              current={window.location.pathname === '/beheer/voorzieningen-aanbod'}
+            >
+              <VISUALS.HAND_HOLDING />
+              Aanbod
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>
-            <SidenavLink href='/#'>Mijn lopende zaken</SidenavLink>
+            <SidenavLink
+              onClick={() => navigate('/beheer/voorzieningen-gebruik')}
+              current={window.location.pathname === '/beheer/voorzieningen-gebruik'}
+            >
+              <VISUALS.CLOUD />
+              Gebruik
+            </SidenavLink>
           </SidenavItem>
-        </SidenavList>
-        <SidenavList>
           <SidenavItem>
-            <SidenavLink href='/#'>Mijn gegevens</SidenavLink>
+            <SidenavLink
+              onClick={() => navigate('/beheer/voorzieningen-versie')}
+              current={window.location.pathname === '/beheer/voorzieningen-versie'}
+            >
+              <VISUALS.INFO />
+              Versie
+            </SidenavLink>
+          </SidenavItem>
+          <SidenavItem>
+            <SidenavLink
+              onClick={() => navigate('/beheer/contracten')}
+              current={window.location.pathname === '/beheer/contracten'}
+            >
+              <VISUALS.HAND_SHAKE />
+              Contracten
+            </SidenavLink>
+          </SidenavItem>
+          <SidenavItem>
+            <SidenavLink
+              onClick={() => navigate('/beheer/organisaties')}
+              current={window.location.pathname === '/beheer/organisaties'}
+            >
+              <VISUALS.BUILDING />
+              Organisaties
+            </SidenavLink>
+          </SidenavItem>
+          <SidenavItem>
+            <SidenavLink
+              onClick={() => navigate('/beheer/kwetsbaarheden')}
+              current={window.location.pathname === '/beheer/kwetsbaarheden'}
+            >
+              <VISUALS.TRIANGLE_EXCLAMATION />
+              Kwetsbaarheden
+            </SidenavLink>
           </SidenavItem>
         </SidenavList>
       </Sidenav>
