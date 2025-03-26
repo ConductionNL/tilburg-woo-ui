@@ -252,7 +252,7 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                   setOpenModal(null);
                 }}
                 onSuccess={() => {
-                  fetchData();
+                  navigate('/beheer/voorzieningen-aanbod');
                 }}
               />
             </AcFlex>

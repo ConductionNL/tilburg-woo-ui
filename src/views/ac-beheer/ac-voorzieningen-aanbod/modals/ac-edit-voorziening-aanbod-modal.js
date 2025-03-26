@@ -110,6 +110,7 @@ const AcEditVoorzieningAanbodModal = ({
 
       if (response.ok) {
         onSuccess?.();
+        modalRef?.current?.close();
       }
     } catch (err) {
       console.error(err);
