@@ -17,12 +17,12 @@ const AcFallbackErrorPage = ({ store: { pages } }) => {
     <AcContainer compact>
       <div className='ac-fallback-error-page-container'>
         <div className='ac-fallback-error-page-heading'>
-          <Heading level={1}>Oops! </Heading>
-          <Heading level={1}>Something went wrong.</Heading>
+          <Heading level={1}>Oeps! </Heading>
+          <Heading level={1}>Er is iets fout gegaan.</Heading>
         </div>
         <p>
-          We apologize for the inconvenience, but we're experiencing technical
-          issues. Please try again later.
+          Onze excuses voor het ongemak, maar we ondervinden technische problemen.
+          Probeer het later opnieuw.
         </p>
       </div>
     </AcContainer>
