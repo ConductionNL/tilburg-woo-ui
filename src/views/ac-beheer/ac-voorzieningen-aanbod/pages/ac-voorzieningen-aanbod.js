@@ -50,10 +50,6 @@ const AcBeheerVoorzieningenAanbod = () => {
         <AcFlex spacing='xl'>
           <AcSideNav />
           <AcColumn gap='sm'> 
-            <AcLink href='/mijn-omgeving'>
-              <VISUALS.ARROW_LEFT />
-              Terug naar mijn omgeving
-            </AcLink>
             <Heading level={1}>Er is een fout opgetreden</Heading>
             <Paragraph>
               Er kon geen verbinding worden gemaakt met de server. Probeer het later
