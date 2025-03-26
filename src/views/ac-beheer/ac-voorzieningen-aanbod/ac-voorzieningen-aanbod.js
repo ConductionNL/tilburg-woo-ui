@@ -21,7 +21,44 @@ import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([
+    {
+      '@self': {
+        id: null,
+        uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+        version: null,
+        register: '3',
+        schema: '17',
+        files: [],
+        relations: [],
+        locked: null,
+        owner: null,
+        updated: null,
+        created: null,
+        folder:
+          'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+      },
+      id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+      naam: 'eHerkenning Machtigingenregister',
+      omschrijving:
+        'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
+      type: 'Authenticatie',
+      voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+      organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
+      productpagina: 'https://www.eherkenning.nl/machtigingenregister',
+      ondersteuningsmodel:
+        'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
+      licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
+      hostingopties: 'Private cloud',
+      versies: [
+        '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+        '45c67d89-ab12-4e56-8f90-123456789abc',
+        '67890abc-def1-2345-6789-012345678901',
+        '34567890-bcde-f123-4567-890123456789',
+      ],
+    },
+  ]);
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
@@ -32,7 +69,48 @@ const AcBeheerVoorzieningenAanbod = () => {
           '/openconnector/api/endpoint/voorzieningaanboden'
       );
       const data = (await response.json()).results;
-      setData(data);
+
+      const dataWithTestData = [
+        ...data,
+        {
+          '@self': {
+            id: null,
+            uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+            version: null,
+            register: '3',
+            schema: '17',
+            files: [],
+            relations: [],
+            locked: null,
+            owner: null,
+            updated: null,
+            created: null,
+            folder:
+              'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+          },
+          id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+          naam: 'eHerkenning Machtigingenregister',
+          omschrijving:
+            'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
+          type: 'Authenticatie',
+          voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+          organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
+          productpagina: 'https://www.eherkenning.nl/machtigingenregister',
+          ondersteuningsmodel:
+            'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
+          licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
+          hostingopties: 'Private cloud',
+          versies: [
+            '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+            '45c67d89-ab12-4e56-8f90-123456789abc',
+            '67890abc-def1-2345-6789-012345678901',
+            '34567890-bcde-f123-4567-890123456789',
+          ],
+        },
+      ];
+
+      setData(dataWithTestData);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -45,16 +123,70 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   if (error) {
     return (
+      // <AcSection spacing className='ac-mijn-omgeving-section'>
+      //   <AcFlex spacing='xl'>
+      //     <AcSideNav />
+      //     <AcColumn gap='sm'>
+      //       <Heading level={1}>Er is een fout opgetreden</Heading>
+      //       <Paragraph>
+      //         Er kon geen verbinding worden gemaakt met de server. Probeer het later
+      //         opnieuw.
+      //       </Paragraph>
+      //       <Paragraph>{error.message}</Paragraph>
+      //     </AcColumn>
+      //   </AcFlex>
+      // </AcSection>
       <AcSection spacing className='ac-mijn-omgeving-section'>
         <AcFlex spacing='xl'>
           <AcSideNav />
-          <AcColumn gap='sm'> 
-            <Heading level={1}>Er is een fout opgetreden</Heading>
-            <Paragraph>
-              Er kon geen verbinding worden gemaakt met de server. Probeer het later
-              opnieuw.
-            </Paragraph>
-            <Paragraph>{error.message}</Paragraph>
+          <AcColumn gap='sm'>
+            <Heading>Beheer Voorzieningen Aanbod</Heading>
+
+            <AcFlex spacing='sm' justifyContent='end'>
+              <PrimaryActionButton
+                disabled={selectedRows.length === 0}
+                onClick={handleMultipleDelete}
+              >
+                Delete {selectedRows.length}{' '}
+                {selectedRows.length === 1 ? 'item' : 'items'}
+              </PrimaryActionButton>
+            </AcFlex>
+
+            <CDTable
+              data={data}
+              tableHeaders={tableHeaders}
+              getSelectedRows={setSelectedRows}
+              renderSelectRowButtons
+              ref={tableRef}
+              truncateLines={2}
+            />
+
+            {/* modals */}
+            <AcEditVoorzieningAanbodModal
+              voorziening={singleSelectedRow}
+              showModal={openModal === 'edit'}
+              onClose={() => {
+                setOpenModal(null);
+                setSingleSelectedRow(null);
+              }}
+              onSuccess={() => {
+                tableRef.current.resetSelectedRows();
+                fetchData();
+              }}
+            />
+
+            <AcDeleteVoorzieningAanbodModal
+              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+              showModal={openModal === 'delete'}
+              onClose={() => {
+                setOpenModal(null);
+                setSingleSelectedRow(null);
+              }}
+              onSuccess={() => {
+                tableRef.current.resetSelectedRows();
+                fetchData();
+              }}
+            />
           </AcColumn>
         </AcFlex>
       </AcSection>
@@ -124,58 +256,58 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-          <AcColumn gap='sm'>
-            <Heading>Beheer Voorzieningen Aanbod</Heading>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
+        <AcColumn gap='sm'>
+          <Heading>Beheer Voorzieningen Aanbod</Heading>
 
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
+          <AcFlex spacing='sm' justifyContent='end'>
+            <PrimaryActionButton
+              disabled={selectedRows.length === 0}
+              onClick={handleMultipleDelete}
+            >
+              Delete {selectedRows.length}{' '}
+              {selectedRows.length === 1 ? 'item' : 'items'}
+            </PrimaryActionButton>
+          </AcFlex>
 
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
+          <CDTable
+            data={data}
+            tableHeaders={tableHeaders}
+            getSelectedRows={setSelectedRows}
+            renderSelectRowButtons
+            ref={tableRef}
+            truncateLines={2}
+          />
 
-            {/* modals */}
-            <AcEditVoorzieningAanbodModal
-              voorziening={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
+          {/* modals */}
+          <AcEditVoorzieningAanbodModal
+            voorziening={singleSelectedRow}
+            showModal={openModal === 'edit'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
 
-            <AcDeleteVoorzieningAanbodModal
-              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-              showModal={openModal === 'delete'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-          </AcColumn>
-        </AcFlex>
+          <AcDeleteVoorzieningAanbodModal
+            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+            showModal={openModal === 'delete'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
+        </AcColumn>
+      </AcFlex>
     </AcSection>
   );
 };

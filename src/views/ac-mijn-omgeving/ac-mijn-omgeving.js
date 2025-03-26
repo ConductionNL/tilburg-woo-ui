@@ -373,51 +373,41 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
       <AcFlex spacing='xl'>
         <AcSideNav />
 
-        <AcFlex column grow spacing='xs'>
-          <AcFlex column spacing='sm' margin='sm'>
-            <AcTable
-              header={['Voornaam', 'Achternaam', 'Functie']}
-              rows={users?.map((user) => mapConfigurationRow(user))}
-            />
+        <AcFlex column spacing='sm'>
+          <AcFlex spacing='sm'>
+            <AcButton
+              style='button'
+              icon={<VISUALS.DOCUMENT />}
+              onClick={handleAddVoorzieningOpenModal}
+            >
+              Voorziening aanmaken
+            </AcButton>
+
+            <AcButton
+              style='button'
+              icon={<VISUALS.CLOUD />}
+              onClick={syncGemma}
+              disabled={syncGemmaLoading}
+            >
+              {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
+            </AcButton>
+
+            <AcButton
+              style='button'
+              icon={<VISUALS.DOWNLOAD />}
+              onClick={downloadGemma}
+            >
+              Gemma downloaden
+            </AcButton>
+          </AcFlex>
+
+          <AcFlex column spacing='sm' alignItems='end'>
+            {syncGemmaSuccess && <Paragraph>Succesvol gemma ingelezen.</Paragraph>}
+            {syncGemmaError && <Paragraph>Fout bij gemma inlezen.</Paragraph>}
+            {downloadGemmaError && <Paragraph>Fout bij gemma downloaden.</Paragraph>}
           </AcFlex>
         </AcFlex>
       </AcFlex>
-
-      <AcFlex column spacing='sm' justifyContent='end'>
-        <AcFlex spacing='sm' justifyContent='end'>
-          <AcButton
-            style='button'
-            icon={<VISUALS.DOCUMENT />}
-            onClick={handleAddVoorzieningOpenModal}
-          >
-            Voorziening aanmaken
-          </AcButton>
-
-          <AcButton
-            style='button'
-            icon={<VISUALS.CLOUD />}
-            onClick={syncGemma}
-            disabled={syncGemmaLoading}
-          >
-            {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
-          </AcButton>
-
-          <AcButton
-            style='button'
-            icon={<VISUALS.DOWNLOAD />}
-            onClick={downloadGemma}
-          >
-            Gemma downloaden
-          </AcButton>
-        </AcFlex>
-
-        <AcFlex column spacing='sm' alignItems='end'>
-          {syncGemmaSuccess && <Paragraph>Succesvol gemma ingelezen.</Paragraph>}
-          {syncGemmaError && <Paragraph>Fout bij gemma inlezen.</Paragraph>}
-          {downloadGemmaError && <Paragraph>Fout bij gemma downloaden.</Paragraph>}
-        </AcFlex>
-      </AcFlex>
-
       {renderAddVoorzieningModal}
     </AcSection>
   );
