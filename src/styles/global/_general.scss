@@ -116,3 +116,9 @@ footer {
     font-weight: 700;
   }
 }
+
+p > a.utrecht-link:not(.ac-button) {
+  @include respond-max($screen-sm) {
+    font-size: var(--tilburg-typography-font-size-md);
+  }
+}
