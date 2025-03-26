@@ -21,7 +21,37 @@ import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([
+    {
+      '@self': {
+        id: null,
+        uuid: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+        version: null,
+        register: '3',
+        schema: '22',
+        files: [],
+        relations: [],
+        locked: null,
+        owner: null,
+        updated: null,
+        created: null,
+        folder:
+          'Open Registers/Software Catalogus Register/VoorzieningVersie/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+      },
+      naam: 'DigiD Machtigen Pro',
+      omschrijving:
+        'Nieuwe versie van DigiD Machtigen met uitgebreide functionaliteit voor zakelijke gebruikers, verbeterde beveiliging en ondersteuning voor eHerkenning integratie.',
+      releaseNotes:
+        '- Implementatie OAuth 2.0 authenticatie\n- Koppeling met eHerkenning niveau 3\n- Verbeterde logging en audit trail\n- Nieuwe API endpoints voor machtigingenbeheer',
+      nummer: '2.4.0',
+      voorzieningaanbodId: '8a5c12d4-e789-4f23-b567-a91c45d78e2b',
+      productieDatum: '2024-03-01',
+      eindeDatum: '2025-09-30',
+      status: 'acceptatie',
+      id: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+    },
+  ]);
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
@@ -32,7 +62,41 @@ const AcBeheerVoorzieningenVersie = () => {
           '/openconnector/api/endpoint/voorzieningversies'
       );
       const data = (await response.json()).results;
-      setData(data);
+
+      const dataWithTestData = [
+        ...data,
+        {
+          '@self': {
+            id: null,
+            uuid: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+            version: null,
+            register: '3',
+            schema: '22',
+            files: [],
+            relations: [],
+            locked: null,
+            owner: null,
+            updated: null,
+            created: null,
+            folder:
+              'Open Registers/Software Catalogus Register/VoorzieningVersie/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+          },
+          naam: 'DigiD Machtigen Pro',
+          omschrijving:
+            'Nieuwe versie van DigiD Machtigen met uitgebreide functionaliteit voor zakelijke gebruikers, verbeterde beveiliging en ondersteuning voor eHerkenning integratie.',
+          releaseNotes:
+            '- Implementatie OAuth 2.0 authenticatie\n- Koppeling met eHerkenning niveau 3\n- Verbeterde logging en audit trail\n- Nieuwe API endpoints voor machtigingenbeheer',
+          nummer: '2.4.0',
+          voorzieningaanbodId: '8a5c12d4-e789-4f23-b567-a91c45d78e2b',
+          productieDatum: '2024-03-01',
+          eindeDatum: '2025-09-30',
+          status: 'acceptatie',
+          id: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
+        },
+      ];
+
+      setData(dataWithTestData);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -42,24 +106,6 @@ const AcBeheerVoorzieningenVersie = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  if (error) {
-    return (
-      <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-          <AcColumn gap='sm'>
-            <Heading level={1}>Er is een fout opgetreden</Heading>
-            <Paragraph>
-              Er kon geen verbinding worden gemaakt met de server. Probeer het later
-              opnieuw.
-            </Paragraph>
-            <Paragraph>{error.message}</Paragraph>
-          </AcColumn>
-        </AcFlex>
-      </AcSection>
-    );
-  }
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -125,6 +171,79 @@ const AcBeheerVoorzieningenVersie = () => {
   const handleMultipleDelete = () => {
     setOpenModal('delete');
   };
+
+  if (error) {
+    return (
+      // <AcSection spacing className='ac-mijn-omgeving-section'>
+      //   <AcFlex spacing='xl'>
+      //     <AcSideNav />
+      //     <AcColumn gap='sm'>
+      //       <Heading level={1}>Er is een fout opgetreden</Heading>
+      //       <Paragraph>
+      //         Er kon geen verbinding worden gemaakt met de server. Probeer het later
+      //         opnieuw.
+      //       </Paragraph>
+      //       <Paragraph>{error.message}</Paragraph>
+      //     </AcColumn>
+      //   </AcFlex>
+      // </AcSection>
+      <AcSection spacing className='ac-mijn-omgeving-section'>
+        <AcFlex spacing='xl'>
+          <AcSideNav />
+
+          <AcColumn gap='sm'>
+            <Heading>Beheer Voorzieningen Versie</Heading>
+
+            <AcFlex spacing='sm' justifyContent='end'>
+              <PrimaryActionButton
+                disabled={selectedRows.length === 0}
+                onClick={handleMultipleDelete}
+              >
+                Delete {selectedRows.length}{' '}
+                {selectedRows.length === 1 ? 'item' : 'items'}
+              </PrimaryActionButton>
+            </AcFlex>
+
+            <CDTable
+              data={data}
+              tableHeaders={tableHeaders}
+              getSelectedRows={setSelectedRows}
+              renderSelectRowButtons
+              ref={tableRef}
+              truncateLines={2}
+            />
+
+            {/* modals */}
+            <AcEditVoorzieningAanbodModal
+              voorziening={singleSelectedRow}
+              showModal={openModal === 'edit'}
+              onClose={() => {
+                setOpenModal(null);
+                setSingleSelectedRow(null);
+              }}
+              onSuccess={() => {
+                tableRef.current.resetSelectedRows();
+                fetchData();
+              }}
+            />
+
+            <AcDeleteVoorzieningAanbodModal
+              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+              showModal={openModal === 'delete'}
+              onClose={() => {
+                setOpenModal(null);
+                setSingleSelectedRow(null);
+              }}
+              onSuccess={() => {
+                tableRef.current.resetSelectedRows();
+                fetchData();
+              }}
+            />
+          </AcColumn>
+        </AcFlex>
+      </AcSection>
+    );
+  }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
