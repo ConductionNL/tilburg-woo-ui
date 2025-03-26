@@ -133,7 +133,7 @@ const AcBeheerOrganisaties = () => {
             Terug naar mijn omgeving
           </AcLink>
 
-          <Heading>Organisaties</Heading>
+          <Heading>Beheer Organisaties</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton

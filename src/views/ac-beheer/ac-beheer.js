@@ -33,6 +33,10 @@ const AcBeheerOrganisaties = loadable(() =>
   import('@views/ac-beheer/ac-organisatie/ac-organisatie')
 );
 
+const AcBeheerKwetsbaarheden = loadable(() =>
+  import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
+);
+
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
 
@@ -61,6 +65,9 @@ const AcBeheer = () => {
       break;
     case 'organisaties':
       page = <AcBeheerOrganisaties />;
+      break;
+    case 'kwetsbaarheden':
+      page = <AcBeheerKwetsbaarheden />;
       break;
     default:
       page = (

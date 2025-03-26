@@ -1,27 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
-import { LABELS, VISUALS } from '@constants';
+import { VISUALS } from '@constants';
 import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
+import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
 import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-gebruik-modal';
-import { getCookie } from '@src/utilities';
-import AcDeleteVoorzieningAanbodModall from './ac-delete-voorziening-gebruik-modal';
+import AcEditVoorzieningGebruikModal from './ac-edit-voorziening-gebruik-modal';
+import AcDeleteVoorzieningGebruikModal from './ac-delete-voorziening-gebruik-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 
@@ -30,22 +23,22 @@ const AcBeheerVoorzieningenGebruik = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            '/openconnector/api/endpoint/voorzieninggebruiken'
-        );
-        const data = (await response.json()).results;
-        setData(data);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err);
-      }
-    };
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch(
+        //   config.authentication.baseURL +
+        'https://vng.accept.commonground.nu/apps' +
+          '/openconnector/api/endpoint/voorzieninggebruiken'
+      );
+      const data = (await response.json()).results;
+      setData(data);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err);
+    }
+  }, []);
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -140,7 +133,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             Terug naar mijn omgeving
           </AcLink>
 
-          <Heading>Voorzieningen gebruiken</Heading>
+          <Heading>Beheer Voorzieningen Gebruik</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton
@@ -162,7 +155,7 @@ const AcBeheerVoorzieningenGebruik = () => {
           />
 
           {/* modals */}
-          <AcEditVoorzieningAanbodModal
+          <AcEditVoorzieningGebruikModal
             voorziening={singleSelectedRow}
             showModal={openModal === 'edit'}
             onClose={() => {
@@ -171,10 +164,11 @@ const AcBeheerVoorzieningenGebruik = () => {
             }}
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
+              fetchData();
             }}
           />
 
-          <AcDeleteVoorzieningAanbodModall
+          <AcDeleteVoorzieningGebruikModal
             voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
@@ -183,6 +177,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             }}
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
+              fetchData();
             }}
           />
         </AcColumn>

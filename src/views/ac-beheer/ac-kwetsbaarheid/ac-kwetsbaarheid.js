@@ -13,12 +13,12 @@ import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
 import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-aanbod-modal';
+import AcEditKwetsbaarheidModal from './ac-edit-kwetsbaarheid-modal';
+import AcDeleteKwetsbaarheidModal from './ac-delete-kwetsbaarheid-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 
-const AcBeheerVoorzieningenAanbod = () => {
+const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -28,10 +28,10 @@ const AcBeheerVoorzieningenAanbod = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningaanboden'
+          '/openconnector/api/endpoint/kwetsbaarheden'
       );
-      const data = (await response.json()).results;
-      setData(data);
+      const data = (await response.json())?.results;
+      setData(data || []);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -67,24 +67,34 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const tableHeaders = [
     {
-      label: 'Naam',
-      key: 'naam',
+      label: 'Titel',
+      key: 'titel',
     },
     {
-      label: 'Omschrijving',
-      key: 'omschrijving',
+      label: 'Beschrijving',
+      key: 'beschrijving',
     },
     {
-      label: 'Type',
-      key: 'type',
+      label: 'Ernst',
+      key: 'ernst',
     },
     {
-      label: 'Productpagina',
-      key: 'productpagina',
+      label: 'CVE nummer',
+      key: 'cveNummer',
     },
     {
-      label: 'Ondersteuningsmodel',
-      key: 'ondersteuningsmodel',
+      label: 'Ontdekt op',
+      key: 'ontdektOp',
+      customContent: (row) =>
+        row.ontdektOp
+          ? !isNaN(new Date(row.ontdektOp).getTime())
+            ? new Date(row.ontdektOp).toLocaleDateString()
+            : row.ontdektOp
+          : '-',
+    },
+    {
+      label: 'Voorziening versie ID',
+      key: 'voorzieningversieId',
     },
     {
       label: 'Acties',
@@ -129,7 +139,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             Terug naar mijn omgeving
           </AcLink>
 
-          <Heading>Beheer Voorzieningen Aanbod</Heading>
+          <Heading>Beheer Kwetsbaarheden</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
             <PrimaryActionButton
@@ -151,8 +161,8 @@ const AcBeheerVoorzieningenAanbod = () => {
           />
 
           {/* modals */}
-          <AcEditVoorzieningAanbodModal
-            voorziening={singleSelectedRow}
+          <AcEditKwetsbaarheidModal
+            kwetsbaarheid={singleSelectedRow}
             showModal={openModal === 'edit'}
             onClose={() => {
               setOpenModal(null);
@@ -164,8 +174,8 @@ const AcBeheerVoorzieningenAanbod = () => {
             }}
           />
 
-          <AcDeleteVoorzieningAanbodModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteKwetsbaarheidModal
+            kwetsbaarheden={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -182,4 +192,4 @@ const AcBeheerVoorzieningenAanbod = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbod));
+export default withStore(observer(AcBeheerKwetsbaarheden));
