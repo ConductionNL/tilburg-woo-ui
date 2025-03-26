@@ -57,12 +57,17 @@ const AcSearchCategories = ({ store: { publications } }) => {
         <Heading level={4}>{LABELS.CATEGORIES}</Heading>
         {renderModal}
       </AcFlex>
-      <AcButton onClick={handleOpenModal} sr={LABELS.CATEGORIES_EXPLAIN}>
-        {AcCheckIfSpecificHostname() ? (
-          <VISUALS.QUESTION_MARK_VNG />
-        ) : (
-          <VISUALS.QUESTION_MARK />
-        )}{' '}
+      <AcButton
+        onClick={handleOpenModal}
+        icon={
+          AcCheckIfSpecificHostname() ? (
+            <VISUALS.QUESTION_MARK_VNG />
+          ) : (
+            <VISUALS.QUESTION_MARK />
+          )
+        }
+        sr={LABELS.CATEGORIES_EXPLAIN}
+      >
         <span>{LABELS.ABOUT_CATEGORIES}</span>
       </AcButton>
       {all_categories?.map((category, index) => (

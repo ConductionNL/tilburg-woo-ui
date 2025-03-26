@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import {
-  useLocation,
-  useNavigate,
-  useSearchParams,
-} from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   AcSearchFilters,
@@ -376,8 +372,11 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     <>
       <AcContainer spacing='sm' margin='xl'>
         <AcFlex spacing='xl' justifyContent='end'>
-          <AcButton style='button' onClick={handleAddVoorzieningOpenModal}>
-            <VISUALS.DOCUMENT />
+          <AcButton
+            style='button'
+            icon={<VISUALS.DOCUMENT />}
+            onClick={handleAddVoorzieningOpenModal}
+          >
             Voorziening aanmaken
           </AcButton>
         </AcFlex>
@@ -398,19 +397,25 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-aanbod')}>
+                <SidenavLink
+                  onClick={() => navigate('/beheer/voorzieningen-aanbod')}
+                >
                   <VISUALS.HAND_HOLDING />
                   Aanbod
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-gebruik')}>
+                <SidenavLink
+                  onClick={() => navigate('/beheer/voorzieningen-gebruik')}
+                >
                   <VISUALS.CLOUD />
                   Gebruik
                 </SidenavLink>
               </SidenavItem>
               <SidenavItem>
-                <SidenavLink onClick={() => navigate('/beheer/voorzieningen-versie')}>
+                <SidenavLink
+                  onClick={() => navigate('/beheer/voorzieningen-versie')}
+                >
                   <VISUALS.INFO />
                   Versie
                 </SidenavLink>
@@ -504,13 +509,20 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
         <AcFlex column spacing='sm' justifyContent='end'>
           <AcFlex spacing='sm' justifyContent='end'>
-            <AcButton style='button' onClick={syncGemma} disabled={syncGemmaLoading}>
-              <VISUALS.CLOUD />
+            <AcButton
+              style='button'
+              icon={<VISUALS.CLOUD />}
+              onClick={syncGemma}
+              disabled={syncGemmaLoading}
+            >
               {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
             </AcButton>
 
-            <AcButton style='button' onClick={downloadGemma}>
-              <VISUALS.DOWNLOAD />
+            <AcButton
+              style='button'
+              icon={<VISUALS.DOWNLOAD />}
+              onClick={downloadGemma}
+            >
               Gemma downloaden
             </AcButton>
           </AcFlex>
