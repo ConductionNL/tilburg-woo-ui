@@ -17,6 +17,7 @@ import AcEditKwetsbaarheidModal from './ac-edit-kwetsbaarheid-modal';
 import AcDeleteKwetsbaarheidModal from './ac-delete-kwetsbaarheid-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const AcBeheerKwetsbaarheden = () => {
 
   if (error) {
     return (
-      <AcSection>
+      <AcSection spacing className='ac-mijn-omgeving-section'>
         <AcContainer>
           <AcFlex column spacing='sm'>
             <Heading level={1}>Er is een fout opgetreden</Heading>
@@ -131,14 +132,10 @@ const AcBeheerKwetsbaarheden = () => {
   };
 
   return (
-    <AcSection spacing>
-      <AcContainer>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
         <AcColumn gap='sm'>
-          <AcLink href='/mijn-omgeving'>
-            <VISUALS.ARROW_LEFT />
-            Terug naar mijn omgeving
-          </AcLink>
-
           <Heading>Beheer Kwetsbaarheden</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
@@ -187,7 +184,7 @@ const AcBeheerKwetsbaarheden = () => {
             }}
           />
         </AcColumn>
-      </AcContainer>
+      </AcFlex>
     </AcSection>
   );
 };

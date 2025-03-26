@@ -17,6 +17,7 @@ import AcEditVoorzieningGebruikModal from './ac-edit-voorziening-gebruik-modal';
 import AcDeleteVoorzieningGebruikModal from './ac-delete-voorziening-gebruik-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningenGebruik = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const AcBeheerVoorzieningenGebruik = () => {
 
   if (error) {
     return (
-      <AcSection>
+      <AcSection spacing className='ac-mijn-omgeving-section'>
         <AcContainer>
           <AcFlex column spacing='sm'>
             <Heading level={1}>Er is een fout opgetreden</Heading>
@@ -125,14 +126,11 @@ const AcBeheerVoorzieningenGebruik = () => {
   };
 
   return (
-    <AcSection spacing>
-      <AcContainer>
-        <AcColumn gap='sm'>
-          <AcLink href='/mijn-omgeving'>
-            <VISUALS.ARROW_LEFT />
-            Terug naar mijn omgeving
-          </AcLink>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
 
+        <AcColumn gap='sm'>
           <Heading>Beheer Voorzieningen Gebruik</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
@@ -181,7 +179,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             }}
           />
         </AcColumn>
-      </AcContainer>
+      </AcFlex>
     </AcSection>
   );
 };

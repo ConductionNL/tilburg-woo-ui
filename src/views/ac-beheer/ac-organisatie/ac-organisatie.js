@@ -17,6 +17,7 @@ import AcEditOrganisatieModal from './ac-edit-organisatie-modal';
 import AcDeleteOrganisatieModal from './ac-delete-organisatie-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const AcBeheerOrganisaties = () => {
 
   if (error) {
     return (
-      <AcSection>
+      <AcSection spacing className='ac-mijn-omgeving-section'>
         <AcContainer>
           <AcFlex column spacing='sm'>
             <Heading level={1}>Er is een fout opgetreden</Heading>
@@ -125,14 +126,10 @@ const AcBeheerOrganisaties = () => {
   };
 
   return (
-    <AcSection spacing>
-      <AcContainer>
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <AcSideNav />
         <AcColumn gap='sm'>
-          <AcLink href='/mijn-omgeving'>
-            <VISUALS.ARROW_LEFT />
-            Terug naar mijn omgeving
-          </AcLink>
-
           <Heading>Beheer Organisaties</Heading>
 
           <AcFlex spacing='sm' justifyContent='end'>
@@ -181,7 +178,7 @@ const AcBeheerOrganisaties = () => {
             }}
           />
         </AcColumn>
-      </AcContainer>
+      </AcFlex>
     </AcSection>
   );
 };
