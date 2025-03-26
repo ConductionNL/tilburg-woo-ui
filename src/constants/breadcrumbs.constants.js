@@ -1,3 +1,6 @@
+// pretify a pathname part
+const prettifyPathname = (name) => name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+
 export const BREADCRUMB_ITEMS = {
   HOME: { label: 'Home', href: '/' },
   SEARCH: { label: 'Zoeken', href: '/zoeken' },
@@ -7,7 +10,7 @@ export const BREADCRUMB_ITEMS = {
   GEMMA: { label: 'Gemma', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
   BEHEER: { label: 'Beheer' },
-  BEHEER_DETAILS: { label: 'Beheer Details', href: '/beheer/:id' },
+  BEHEER_LIST: (type) => ({ label: prettifyPathname(type), href: `/beheer/${type}` }),
 };
 
 export const BREADCRUMBS = {
@@ -28,6 +31,13 @@ export const BREADCRUMBS = {
   PUBLICATION: (label) => [BREADCRUMB_ITEMS.SEARCH, { label }],
   BEHEER: (label) => {
     const items = [BREADCRUMB_ITEMS.BEHEER];
+    if (label) {
+      items.push({ label });
+    }
+    return items;
+  },
+  BEHEER_LIST: (type, label) => {
+    const items = [BREADCRUMB_ITEMS.BEHEER, BREADCRUMB_ITEMS.BEHEER_LIST(type)];
     if (label) {
       items.push({ label });
     }
