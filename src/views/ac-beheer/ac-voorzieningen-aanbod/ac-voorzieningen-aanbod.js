@@ -121,6 +121,67 @@ const AcBeheerVoorzieningenAanbod = () => {
     fetchData();
   }, []);
 
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
+  const tableRef = useRef(null);
+
+  const tableHeaders = [
+    {
+      label: 'Naam',
+      key: 'naam',
+    },
+    {
+      label: 'Omschrijving',
+      key: 'omschrijving',
+    },
+    {
+      label: 'Type',
+      key: 'type',
+    },
+    {
+      label: 'Productpagina',
+      key: 'productpagina',
+    },
+    {
+      label: 'Ondersteuningsmodel',
+      key: 'ondersteuningsmodel',
+    },
+    {
+      label: 'Acties',
+      key: '',
+      customContent: (row) => (
+        <AcFlex column spacing='xs'>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
+              setSingleSelectedRow(row);
+              setOpenModal('edit');
+            }}
+          >
+            bewerken
+          </button>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
+              setSingleSelectedRow(row);
+              setOpenModal('delete');
+            }}
+          >
+            verwijderen
+          </button>
+        </AcFlex>
+      ),
+    },
+  ];
+
+  const handleMultipleDelete = () => {
+    setOpenModal('delete');
+  };
+
   if (error) {
     return (
       // <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -192,67 +253,6 @@ const AcBeheerVoorzieningenAanbod = () => {
       </AcSection>
     );
   }
-
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
-
-  const tableRef = useRef(null);
-
-  const tableHeaders = [
-    {
-      label: 'Naam',
-      key: 'naam',
-    },
-    {
-      label: 'Omschrijving',
-      key: 'omschrijving',
-    },
-    {
-      label: 'Type',
-      key: 'type',
-    },
-    {
-      label: 'Productpagina',
-      key: 'productpagina',
-    },
-    {
-      label: 'Ondersteuningsmodel',
-      key: 'ondersteuningsmodel',
-    },
-    {
-      label: 'Acties',
-      key: '',
-      customContent: (row) => (
-        <AcFlex column spacing='xs'>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('edit');
-            }}
-          >
-            bewerken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('delete');
-            }}
-          >
-            verwijderen
-          </button>
-        </AcFlex>
-      ),
-    },
-  ];
-
-  const handleMultipleDelete = () => {
-    setOpenModal('delete');
-  };
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
