@@ -20,46 +20,49 @@ import { AcLink } from '@src/molecules';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
+// TODO: remove test data
+const testData = [
+  {
+    '@self': {
+      id: null,
+      uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+      uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+      version: null,
+      register: '3',
+      schema: '17',
+      files: [],
+      relations: [],
+      locked: null,
+      owner: null,
+      updated: null,
+      created: null,
+      folder:
+        'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+    },
+    id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
+    naam: 'eHerkenning Machtigingenregister',
+    omschrijving:
+      'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
+    type: 'Authenticatie',
+    voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+    organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
+    productpagina: 'https://www.eherkenning.nl/machtigingenregister',
+    ondersteuningsmodel:
+      'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
+    licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
+    hostingopties: 'Private cloud',
+    versies: [
+      '9d4e8f23-7c16-42a5-b391-d85f12e67890',
+      '45c67d89-ab12-4e56-8f90-123456789abc',
+      '67890abc-def1-2345-6789-012345678901',
+      '34567890-bcde-f123-4567-890123456789',
+    ],
+  },
+];
+
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([
-    {
-      '@self': {
-        id: null,
-        uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-        version: null,
-        register: '3',
-        schema: '17',
-        files: [],
-        relations: [],
-        locked: null,
-        owner: null,
-        updated: null,
-        created: null,
-        folder:
-          'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-      },
-      id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-      naam: 'eHerkenning Machtigingenregister',
-      omschrijving:
-        'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
-      type: 'Authenticatie',
-      voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-      organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
-      productpagina: 'https://www.eherkenning.nl/machtigingenregister',
-      ondersteuningsmodel:
-        'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
-      licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
-      hostingopties: 'Private cloud',
-      versies: [
-        '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-        '45c67d89-ab12-4e56-8f90-123456789abc',
-        '67890abc-def1-2345-6789-012345678901',
-        '34567890-bcde-f123-4567-890123456789',
-      ],
-    },
-  ]);
+  const [data, setData] = useState([]);
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
@@ -71,45 +74,7 @@ const AcBeheerVoorzieningenAanbod = () => {
       );
       const data = (await response.json()).results;
 
-      const dataWithTestData = [
-        ...data,
-        {
-          '@self': {
-            id: null,
-            uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-            version: null,
-            register: '3',
-            schema: '17',
-            files: [],
-            relations: [],
-            locked: null,
-            owner: null,
-            updated: null,
-            created: null,
-            folder:
-              'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-          },
-          id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-          naam: 'eHerkenning Machtigingenregister',
-          omschrijving:
-            'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
-          type: 'Authenticatie',
-          voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-          organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
-          productpagina: 'https://www.eherkenning.nl/machtigingenregister',
-          ondersteuningsmodel:
-            'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
-          licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
-          hostingopties: 'Private cloud',
-          versies: [
-            '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-            '45c67d89-ab12-4e56-8f90-123456789abc',
-            '67890abc-def1-2345-6789-012345678901',
-            '34567890-bcde-f123-4567-890123456789',
-          ],
-        },
-      ];
+      const dataWithTestData = [...data, ...testData];
 
       setData(dataWithTestData);
     } catch (err) {
