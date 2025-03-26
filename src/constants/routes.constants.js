@@ -44,12 +44,15 @@ export const PATHS = AcLockObject({
   NEXTCLOUD_LOGIN: '/login',
   NEXTCLOUD_AUTHORIZATION: '/authorization',
   BEHEER: '/beheer',
-  BEHEER_DETAILS: '/beheer/:id',
+  BEHEER_TYPE: '/beheer/:type',
+  BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
 });
 
 export const NAVIGATE_TO = AcLockObject({
   PUBLICATION: (id) => PATHS.PUBLICATION.replace(':id', id),
-  BEHEER_DETAILS: (id) => PATHS.BEHEER_DETAILS.replace(':id', id),
+  BEHEER_TYPE: (type) => PATHS.BEHEER_TYPE.replace(':type', type),
+  BEHEER_TYPE_DETAILS: (type, id) =>
+    PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
 });
 
 const getTitle = () => {
@@ -256,7 +259,7 @@ export const ROUTES = {
     title: 'Nextcloud Authorization',
     component: AcNextcloudAuthorization,
   },
-  BEHEER_: {
+  BEHEER: {
     id: AcUUID(),
     name: 'Beheer',
     label: LABELS.BEHEER,
@@ -264,12 +267,20 @@ export const ROUTES = {
     title: 'Beheer',
     component: AcBeheer,
   },
-  BEHEER_DETAILS: {
+  BEHEER_TYPE: {
     id: AcUUID(),
-    name: 'Beheer Details',
-    label: LABELS.BEHEER_DETAILS,
-    path: PATHS.BEHEER_DETAILS,
-    title: 'Beheer Details',
+    name: 'Beheer Type List',
+    label: LABELS.BEHEER_TYPE,
+    path: PATHS.BEHEER_TYPE,
+    title: 'Beheer Type List',
+    component: AcBeheer,
+  },
+  BEHEER_TYPE_DETAILS: {
+    id: AcUUID(),
+    name: 'Beheer Type Details',
+    label: LABELS.BEHEER_TYPE_DETAILS,
+    path: PATHS.BEHEER_TYPE_DETAILS,
+    title: 'Beheer Type Details',
     component: AcBeheer,
   },
 };

@@ -135,6 +135,14 @@ const RIGHT_FROM_BRACKET = loadable(() =>
   import('-!svg-react-loader!@assets/images/right-from-bracket.svg')
 );
 
+const PLUS = loadable(() =>
+  import('-!svg-react-loader!@assets/images/plus.svg')
+);
+
+const PENCIL = loadable(() =>
+  import('-!svg-react-loader!@assets/images/pencil.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -186,6 +194,8 @@ export const VISUALS = {
   TRASHCAN,
   TRIANGLE_EXCLAMATION,
   RIGHT_FROM_BRACKET,
+  PLUS,
+  PENCIL,
 };
 
 export default {};

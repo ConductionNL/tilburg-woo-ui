@@ -73,7 +73,8 @@ export const LABELS = {
 
   // Beheer labels
   BEHEER: 'Beheer',
-  BEHEER_DETAILS: 'Beheer Details',
+  BEHEER_TYPE: 'Beheer Type',
+  BEHEER_TYPE_DETAILS: 'Beheer Type Details',
 };
 
 export const LABELS_DYNAMIC = {

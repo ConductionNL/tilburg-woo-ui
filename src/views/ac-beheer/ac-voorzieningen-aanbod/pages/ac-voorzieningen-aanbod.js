@@ -12,11 +12,12 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import config from '@src/config';
 
-import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-aanbod-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-aanbod-modal';
+import CDTable from '../../cd-table';
+import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
+import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningenAanbod = () => {
@@ -157,6 +158,17 @@ const AcBeheerVoorzieningenAanbod = () => {
             className='utrecht-button slim'
             variant='secondary'
             onClick={() => {
+              navigate(
+                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-aanbod', row.id)
+              );
+            }}
+          >
+            Bekijken
+          </button>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
               setSingleSelectedRow(row);
               setOpenModal('edit');
             }}
@@ -200,6 +212,7 @@ const AcBeheerVoorzieningenAanbod = () => {
       <AcSection spacing className='ac-mijn-omgeving-section'>
         <AcFlex spacing='xl'>
           <AcSideNav />
+
           <AcColumn gap='sm'>
             <Heading>Beheer Voorzieningen Aanbod</Heading>
 
@@ -220,20 +233,6 @@ const AcBeheerVoorzieningenAanbod = () => {
               renderSelectRowButtons
               ref={tableRef}
               truncateLines={2}
-            />
-
-            {/* modals */}
-            <AcEditVoorzieningAanbodModal
-              voorziening={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
             />
 
             <AcDeleteVoorzieningAanbodModal
