@@ -18,7 +18,6 @@ export class TermsStore {
   searchQuery = '';
 
   constructor(rootStore) {
-    console.log('Initializing TermsStore...');
     this.rootStore = rootStore;
 
     // Use makeAutoObservable for simpler setup
@@ -32,8 +31,6 @@ export class TermsStore {
     this.fetchTermsForPublication = this.fetchTermsForPublication.bind(this);
     this.setSearchQuery = this.setSearchQuery.bind(this);
     this.reset = this.reset.bind(this);
-
-    console.log('TermsStore initialized successfully');
   }
 
   get is_loading() {
@@ -73,15 +70,11 @@ export class TermsStore {
   }
 
   setSearchQuery(query = '') {
-    console.log('Setting search query:', query);
     this.searchQuery = query;
   }
 
   async fetchTerms() {
-    console.log('Fetching terms... (this):', this);
-
     if (!this.rootStore?.api?.terms) {
-      console.error('No terms API available');
       return Promise.resolve([]);
     }
 
@@ -89,7 +82,6 @@ export class TermsStore {
 
     try {
       const response = await this.rootStore.api.terms.list();
-      console.log('Terms API response:', response);
 
       // Check if response has a data property (API may return { data: [...] })
       const termsData = response?.data || response || [];
@@ -101,8 +93,6 @@ export class TermsStore {
 
       return response;
     } catch (error) {
-      console.error('Error fetching terms:', error);
-
       runInAction(() => {
         this.terms = [];
         this.loading = false;
@@ -113,10 +103,7 @@ export class TermsStore {
   }
 
   async fetchTermsForPublication(publicationId) {
-    console.log('Fetching terms for publication:', publicationId);
-
     if (!publicationId || !this.rootStore?.api?.terms) {
-      console.error('No publication ID or terms API available');
       return Promise.resolve([]);
     }
 
@@ -126,7 +113,6 @@ export class TermsStore {
       const response = await this.rootStore.api.terms.getForPublication(
         publicationId
       );
-      console.log('Publication terms response:', response);
 
       // Check if response has a data property (API may return { data: [...] })
       const termsData = response?.data || response || [];
@@ -138,8 +124,6 @@ export class TermsStore {
 
       return response;
     } catch (error) {
-      console.error(`Error fetching terms for publication ${publicationId}:`, error);
-
       runInAction(() => {
         this.publicationTerms.set(publicationId, []);
         this.loadingPublicationTerms = false;
@@ -150,8 +134,6 @@ export class TermsStore {
   }
 
   reset() {
-    console.log('Resetting terms store');
-
     runInAction(() => {
       this.terms = [];
       this.publicationTerms = new Map();

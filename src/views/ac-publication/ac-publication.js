@@ -23,14 +23,6 @@ import { StatusBadge } from '@utrecht/component-library-react';
 import _ from 'lodash';
 
 const AcPublication = observer(({ store: { publications, terms } }) => {
-  console.log('Publication component rendering with terms:', terms);
-  console.log('Terms properties:', {
-    terms: terms?.terms,
-    api: terms?.rootStore?.api?.terms,
-    fetchTerms: terms?.fetchTerms,
-    is_loading: terms?.is_loading,
-  });
-
   const { id } = useParams();
   const {
     fetchPublication,
@@ -48,22 +40,21 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
     resetAttachments,
   } = publications;
 
-  // Add safety check for terms store
-  const hasTermsStore = !!terms;
+  const drawerRef = useRef(null);
+  const modalRef = useRef(null);
+  const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
+
+  const hasTermsStore = Boolean(terms);
   const {
     fetchTerms = () => Promise.resolve(),
     fetchTermsForPublication = () => Promise.resolve(),
-    publication_terms = () => [],
-    filtered_terms = [],
     setSearchQuery = () => {},
+    filtered_terms = [],
+    publication_terms = () => [],
     is_loading = false,
     is_loading_publication_terms = false,
     all_terms = [],
   } = terms || {};
-
-  const drawerRef = useRef(null);
-  const modalRef = useRef(null);
-  const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
 
   const handleAllTermsSearch = (searchTerm) => {
     if (hasTermsStore) {

@@ -40,8 +40,6 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
 
   const contents = get_single.contents;
 
-  console.log(contents);
-
   if (!contents || is_loading_categories) {
     return <AcLoader />;
   }
