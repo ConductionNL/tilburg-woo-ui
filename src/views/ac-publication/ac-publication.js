@@ -22,84 +22,15 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { StatusBadge } from '@utrecht/component-library-react';
 import _ from 'lodash';
 
-const MOCK_CONCEPTS = {
-  pageConcepts: [
-    {
-      title: 'Ecologisch',
-      description:
-        'Ecologisch gaat over hoe dieren, planten en andere levende dingen samenwerken in de natuur. Het gaat ook over hoe we proberen de natuur te beschermen en gezond te houden.',
-    },
-    {
-      title: 'Natuurversnippering',
-      description:
-        'Natuurversnippering gebeurt als stukjes natuur worden verdeeld door menselijke activiteiten, zoals het bouwen van wegen en steden of het gebruiken van land voor landbouw. Dit kan slecht zijn voor dieren en planten.',
-    },
-  ],
-  allConcepts: [
-    {
-      title: 'Biodiversiteit',
-      description:
-        'De verscheidenheid van plant- en diersoorten in een gebied. Een grote biodiversiteit draagt bij aan een gezond ecosysteem.',
-    },
-    {
-      title: 'Duurzaamheid',
-      description:
-        'Het vermogen om te blijven bestaan zonder het vermogen van toekomstige generaties om in hun eigen behoeften te voorzien in gevaar te brengen.',
-    },
-    {
-      title: 'Ecologisch',
-      description:
-        'Ecologisch gaat over hoe dieren, planten en andere levende dingen samenwerken in de natuur. Het gaat ook over hoe we proberen de natuur te beschermen en gezond te houden.',
-    },
-    {
-      title: 'Ecosysteem',
-      description:
-        'Een gemeenschap van levende organismen in wisselwerking met hun omgeving.',
-    },
-    {
-      title: 'Habitat',
-      description:
-        'De natuurlijke leefomgeving van een plant of dier waar het kan overleven en zich voortplanten.',
-    },
-    {
-      title: 'Klimaatadaptatie',
-      description:
-        'Aanpassingen die worden gedaan om beter om te kunnen gaan met de gevolgen van klimaatverandering.',
-    },
-    {
-      title: 'Milieuvervuiling',
-      description:
-        'De aanwezigheid of introductie van schadelijke stoffen in het milieu die nadelige effecten hebben op mensen, dieren en planten.',
-    },
-    {
-      title: 'Natuurbeheer',
-      description:
-        'Het planmatig onderhouden en beschermen van natuurgebieden om de biodiversiteit en natuurlijke processen in stand te houden.',
-    },
-    {
-      title: 'Natuurversnippering',
-      description:
-        'Natuurversnippering gebeurt als stukjes natuur worden verdeeld door menselijke activiteiten, zoals het bouwen van wegen en steden of het gebruiken van land voor landbouw. Dit kan slecht zijn voor dieren en planten.',
-    },
-    {
-      title: 'Stikstofkringloop',
-      description:
-        'De cyclus waarbij stikstof door verschillende vormen en processen in de natuur wordt omgezet en hergebruikt.',
-    },
-    {
-      title: 'Voedselketen',
-      description:
-        'De reeks van organismen waarbij elk organisme voedsel is voor een ander organisme, beginnend bij producenten en eindigend bij de top-predatoren.',
-    },
-    {
-      title: 'Waterkwaliteit',
-      description:
-        'De chemische, fysische en biologische kenmerken van water in relatie tot de geschiktheid voor verschillende gebruiksdoeleinden en het ondersteunen van ecosystemen.',
-    },
-  ],
-};
+const AcPublication = observer(({ store: { publications, terms } }) => {
+  console.log('Publication component rendering with terms:', terms);
+  console.log('Terms properties:', {
+    terms: terms?.terms,
+    api: terms?.rootStore?.api?.terms,
+    fetchTerms: terms?.fetchTerms,
+    is_loading: terms?.is_loading,
+  });
 
-const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
   const {
     fetchPublication,
@@ -117,20 +48,42 @@ const AcPublication = observer(({ store: { publications } }) => {
     resetAttachments,
   } = publications;
 
+  // Add safety check for terms store
+  const hasTermsStore = !!terms;
+  const {
+    fetchTerms = () => Promise.resolve(),
+    fetchTermsForPublication = () => Promise.resolve(),
+    publication_terms = () => [],
+    filtered_terms = [],
+    setSearchQuery = () => {},
+    is_loading = false,
+    is_loading_publication_terms = false,
+    all_terms = [],
+  } = terms || {};
+
   const drawerRef = useRef(null);
   const modalRef = useRef(null);
-
-  const [filteredAllConcepts, setFilteredAllConcepts] = useState(
-    MOCK_CONCEPTS.allConcepts
-  );
   const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
 
-  const handleAllConceptsSearch = (searchTerm) => {
-    const filtered = MOCK_CONCEPTS.allConcepts.filter((concept) =>
-      concept.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredAllConcepts(filtered);
-    return filtered.length;
+  const handleAllTermsSearch = (searchTerm) => {
+    if (hasTermsStore) {
+      // Set the search query
+      setSearchQuery(searchTerm);
+
+      // Calculate the current filtered count based on the new search term
+      if (!searchTerm) {
+        // If search is empty, return all terms
+        return all_terms?.length || 0;
+      } else {
+        // Filter terms manually to get accurate count
+        return (
+          all_terms?.filter((term) =>
+            term.name?.toLowerCase().includes(searchTerm.toLowerCase())
+          )?.length || 0
+        );
+      }
+    }
+    return 0;
   };
 
   const handleAttachmentSearch = (searchTerm) => {
@@ -143,12 +96,20 @@ const AcPublication = observer(({ store: { publications } }) => {
       title: 'Deze pagina',
       content: (
         <>
-          {MOCK_CONCEPTS.pageConcepts.map((concept) => (
-            <AcFlex column key={concept.title}>
-              <Heading level={3}>{concept.title}</Heading>
-              <Paragraph>{concept.description}</Paragraph>
-            </AcFlex>
-          ))}
+          {!hasTermsStore ? (
+            <Paragraph>Begrippen worden geladen...</Paragraph>
+          ) : is_loading_publication_terms ? (
+            <AcLoader />
+          ) : publication_terms(id)?.length ? (
+            publication_terms(id).map((term) => (
+              <AcFlex column key={term.id || term.name}>
+                <Heading level={3}>{term.name}</Heading>
+                <Paragraph>{term.description}</Paragraph>
+              </AcFlex>
+            ))
+          ) : (
+            <Paragraph>Geen begrippen beschikbaar voor deze publicatie.</Paragraph>
+          )}
         </>
       ),
     },
@@ -157,17 +118,27 @@ const AcPublication = observer(({ store: { publications } }) => {
       content: (
         <>
           <AcSearchFilter
-            onSearch={handleAllConceptsSearch}
+            onSearch={handleAllTermsSearch}
             ariaLabel='Zoek in alle begrippen'
             label='Zoek in alle begrippen'
             searchIconOnly={true}
           />
-          {filteredAllConcepts.map((concept) => (
-            <AcFlex column key={concept.title}>
-              <Heading level={3}>{concept.title}</Heading>
-              <Paragraph>{concept.description}</Paragraph>
-            </AcFlex>
-          ))}
+          {!hasTermsStore ? (
+            <Paragraph>Begrippen worden geladen...</Paragraph>
+          ) : is_loading ? (
+            <AcLoader />
+          ) : filtered_terms?.length ? (
+            filtered_terms.map((term) => (
+              <AcFlex column key={term.id || term.name}>
+                <Heading level={3}>{term.name}</Heading>
+                <Paragraph>{term.description}</Paragraph>
+              </AcFlex>
+            ))
+          ) : (
+            <Paragraph>
+              Geen begrippen gevonden die overeenkomen met uw zoekopdracht.
+            </Paragraph>
+          )}
         </>
       ),
     },
@@ -176,6 +147,13 @@ const AcPublication = observer(({ store: { publications } }) => {
   useEffect(() => {
     fetchPublication(id);
     fetchAttachments(id);
+
+    // Only fetch terms if the store exists
+    if (hasTermsStore) {
+      fetchTerms();
+      fetchTermsForPublication(id);
+    }
+
     return () => {
       resetPublication();
       resetAttachments();

@@ -11,6 +11,7 @@ import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
 import ThemesAPI from '@api/themes.api';
 import CategoriesAPI from './categories.api';
+import TermsAPI from './terms.api';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -116,6 +117,10 @@ export class API {
     this.pages = new PagesAPI({ Store, Client });
     this.themes = new ThemesAPI({ Store, Client: ThemesClient });
     this.categories = new CategoriesAPI({ Store, Client: Client });
+
+    console.log('Creating TermsAPI instance with Store:', !!Store);
+    this.terms = new TermsAPI({ Store, Client: Client });
+    console.log('TermsAPI created:', !!this.terms);
   }
 }
 

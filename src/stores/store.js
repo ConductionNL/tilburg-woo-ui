@@ -13,6 +13,7 @@ import PagesStore from '@stores/pages.store';
 import PublicationsStore from '@stores/publications.store';
 import ThemesStore from '@stores/themes.store';
 import CategoriesStore from '@stores/categories.store';
+import TermsStore from '@stores/terms.store';
 
 class Store {
   constructor(config) {
@@ -29,6 +30,14 @@ class Store {
     this.toasters = new ToastersStore(this);
     this.themes = new ThemesStore(this);
     this.categories = new CategoriesStore(this);
+
+    console.log('Creating TermsStore with this context:', this);
+    try {
+      this.terms = new TermsStore(this);
+      console.log('TermsStore created successfully:', !!this.terms);
+    } catch (error) {
+      console.error('Error creating TermsStore:', error);
+    }
 
     window.addEventListener(
       'swFreshContentReady',
