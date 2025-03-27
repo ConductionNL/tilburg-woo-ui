@@ -31,10 +31,8 @@ class Store {
     this.themes = new ThemesStore(this);
     this.categories = new CategoriesStore(this);
 
-    console.log('Creating TermsStore with this context:', this);
     try {
       this.terms = new TermsStore(this);
-      console.log('TermsStore created successfully:', !!this.terms);
     } catch (error) {
       console.error('Error creating TermsStore:', error);
     }

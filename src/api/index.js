@@ -118,9 +118,7 @@ export class API {
     this.themes = new ThemesAPI({ Store, Client: ThemesClient });
     this.categories = new CategoriesAPI({ Store, Client: Client });
 
-    console.log('Creating TermsAPI instance with Store:', !!Store);
     this.terms = new TermsAPI({ Store, Client: Client });
-    console.log('TermsAPI created:', !!this.terms);
   }
 }
 

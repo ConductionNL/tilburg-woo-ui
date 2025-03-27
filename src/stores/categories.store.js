@@ -35,12 +35,12 @@ export class CategoriesStore {
   @computed
   get all_categories() {
     return this.items?.map((item) => ({
-      icon: this.getVisualComponent(item.icon),
+      // icon: this.getVisualComponent(item.icon),
       title: item.title,
-      summary: AcSanitizeHtml(item.description),
-      linkUrl: item.link_url,
-      linkTitle: item.link_title,
-      isExternal: item.is_external || false,
+      summary: AcSanitizeHtml(item.content),
+      linkUrl: item.url,
+      linkTitle: item.link,
+      // isExternal: true,
     }));
   }
 
