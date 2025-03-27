@@ -64,49 +64,6 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
             {all_categories?.map((category, index) => (
               <AcCardCategory key={index} {...category} />
             ))}
-            {/* Dummy category cards */}
-            <AcCardCategory
-              title='Vergunningen'
-              summary='Aanvragen en besluiten over omgevingsvergunningen en evenementen'
-              linkUrl='/search?categories=vergunningen'
-              linkTitle='Bekijk documenten'
-              icon={<VISUALS.COUNCIL_DOCUMENT />}
-            />
-            <AcCardCategory
-              title='Bestuurlijke stukken'
-              summary='Raadsvergaderingen, collegebesluiten en beleidsdocumenten'
-              linkUrl='/search?categories=bestuurlijke-stukken'
-              linkTitle='Bekijk documenten'
-              icon={<VISUALS.GOVERNANCE_DOCUMENT />}
-            />
-            <AcCardCategory
-              title='Financiën'
-              summary='Begrotingen, jaarverslagen en financiële rapportages'
-              linkUrl='/search?categories=financien'
-              linkTitle='Bekijk documenten'
-              icon={<VISUALS.DOCUMENT />}
-            />
-            <AcCardCategory
-              title='Ruimtelijke ordening'
-              summary='Bestemmingsplannen, structuurvisies en gebiedsontwikkeling'
-              linkUrl='/search?categories=ruimtelijke-ordening'
-              linkTitle='Bekijk documenten'
-              icon={<VISUALS.ORGANIZATION />}
-            />
-            <AcCardCategory
-              title='Milieu en duurzaamheid'
-              summary='Milieueffectrapportages, klimaatbeleid en energietransitie'
-              linkUrl='/search?categories=milieu-duurzaamheid'
-              linkTitle='Bekijk documenten'
-              icon={<VISUALS.THEMES />}
-            />
-            <AcCardCategory
-              title='Sociaal domein'
-              summary='Jeugdzorg, WMO, participatie en maatschappelijke ondersteuning'
-              linkUrl='/search?categories=sociaal-domein'
-              linkTitle='Bekijk documenten'
-              icon={<VISUALS.REACHABILITY />}
-            />
           </AcGrid>
         </AcContainer>
       </AcSection>

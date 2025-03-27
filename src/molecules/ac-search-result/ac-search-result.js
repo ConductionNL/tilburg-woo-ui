@@ -15,6 +15,7 @@ const AcSearchResult = ({
   id,
   hideCategory = false,
   hideThemes = false,
+  hideEllipses = false,
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
@@ -28,7 +29,9 @@ const AcSearchResult = ({
             {!hideThemes && themes?.length > 0 && (
               <>
                 <StatusBadge>{themes[0]?.title}</StatusBadge>
-                {(published || (!hideCategory && category)) && <VISUALS.ELLIPSE />}
+                {!hideEllipses && (published || (!hideCategory && category)) && (
+                  <VISUALS.ELLIPSE />
+                )}
               </>
             )}
             {published && (
@@ -36,7 +39,7 @@ const AcSearchResult = ({
                 <Paragraph small>
                   {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
                 </Paragraph>
-                {!hideCategory && category && <VISUALS.ELLIPSE />}
+                {!hideEllipses && !hideCategory && category && <VISUALS.ELLIPSE />}
               </>
             )}
             {!hideCategory && category && <Paragraph small>{category}</Paragraph>}
