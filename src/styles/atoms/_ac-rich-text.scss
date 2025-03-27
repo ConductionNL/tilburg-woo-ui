@@ -11,7 +11,6 @@
 @import '../atoms/ac-usps';
 
 .ac-rich-text {
-
   a {
     @extend .utrecht-link !optional;
     display: inline;
@@ -38,7 +37,8 @@
 
     li {
       @extend .utrecht-unordered-list__item !optional;
-      display:block;
+      padding-inline-start: 0;
+      display: block;
 
       p {
         display: inline;
@@ -69,5 +69,4 @@
   h6 {
     @extend .utrecht-heading-6 !optional;
   }
-
 }
