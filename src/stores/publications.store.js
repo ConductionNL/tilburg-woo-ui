@@ -111,23 +111,20 @@ export class PublicationsStore {
 
   @action
   getFilteredAttachments = (primary = false, page) => {
-    // @TODO: This is the way we want to filter but the API does not support it yet. Keep it for reference.
-    const filteredAttachmentsLabel = this.attachments?.filter((attachment) =>
-      primary ? attachment?.labels?.length > 0 : attachment?.labels?.length === 0
-    );
+    // Filter by both document type (primary/secondary) and search term
+    const filteredAttachmentsLabel = this.attachments?.filter((attachment) => {
+      // First filter by primary/secondary status using labels
+      const isPrimary = attachment?.labels?.length > 0;
 
-    // const filteredAttachmentsLabel = this.attachments?.filter(
-    //   (attachment) => {
-    //     const isPrimary = !attachment?.title?.toLowerCase().startsWith('bijlage');
-    //     const matchesSearch =
-    //       !this.attachmentSearch ||
-    //       attachment?.title
-    //         ?.toLowerCase()
-    //         .includes(this.attachmentSearch.toLowerCase());
+      // Then also filter by search term if one exists
+      const matchesSearch =
+        !this.attachmentSearch ||
+        attachment?.title
+          ?.toLowerCase()
+          .includes(this.attachmentSearch.toLowerCase());
 
-    //     return primary ? isPrimary && matchesSearch : !isPrimary && matchesSearch;
-    //   }
-    // );
+      return (primary ? isPrimary : !isPrimary) && matchesSearch;
+    });
 
     const filteredAttachments = [];
     filteredAttachmentsLabel &&

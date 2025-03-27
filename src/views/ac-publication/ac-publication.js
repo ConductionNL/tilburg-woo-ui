@@ -11,10 +11,10 @@ import { withStore } from '@stores';
 import {
   Heading,
   Paragraph,
-  Link,
   Textbox,
   PrimaryActionButton,
   SecondaryActionButton,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
@@ -286,25 +286,28 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, [get_single]);
 
   const renderAttachments = () => {
-    const allAttachments = getFilteredAttachments(false);
+    // Check if we have any attachments at all (before filtering)
+    const hasAttachments =
+      attachments &&
+      attachments.filter((att) => att?.labels?.length === 0).length > 0;
 
-    if (!allAttachments?.length) {
+    // If no attachments at all, return null to hide the section
+    if (!hasAttachments) {
       return null;
     }
 
-    const totalItems = allAttachments.length;
-    const totalPages = Math.ceil(totalItems / attachmentPagination.perPage);
-    const paginatedAttachments = getFilteredAttachments(
-      false,
-      attachmentPagination.page
-    );
+    // Get filtered attachments based on search
+    const allAttachments = getFilteredAttachments(false);
+    const totalItems = allAttachments?.length || 0;
 
     return (
       <AcFlex column>
         <AcFlex spacing={'md'} column>
           <AcFlex alignItems='center' spacing='snail'>
             <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>{' '}
-            <StatusBadge>{totalItems}</StatusBadge>
+            <StatusBadge>
+              {attachments?.filter((att) => att?.labels?.length === 0).length || 0}
+            </StatusBadge>
           </AcFlex>
           <AcSearchFilter
             onSearch={handleAttachmentSearch}
@@ -312,20 +315,37 @@ const AcPublication = observer(({ store: { publications } }) => {
             label='Zoek in bijlagen'
             placeholder='Welk document zoek je?'
           />
-          <AcTable
-            header={[LABELS.DOCUMENT, LABELS.SIZE]}
-            rows={toJS(paginatedAttachments)?.map((attachment) =>
-              mapAttachmentRow(attachment)
-            )}
-          />
-          {totalItems > attachmentPagination.perPage && (
-            <Pagination
-              totalPages={totalPages}
-              page={attachmentPagination.page}
-              nextLabel=''
-              previousLabel=''
-              onPageChange={(page) => setAttachmentsPage(page)}
-            />
+
+          {totalItems > 0 ? (
+            <>
+              <AcTable
+                header={[LABELS.DOCUMENT, LABELS.SIZE]}
+                rows={toJS(
+                  getFilteredAttachments(false, attachmentPagination.page)
+                )?.map((attachment) => mapAttachmentRow(attachment))}
+              />
+              {totalItems > attachmentPagination.perPage && (
+                <Pagination
+                  totalPages={Math.ceil(totalItems / attachmentPagination.perPage)}
+                  page={attachmentPagination.page}
+                  nextLabel=''
+                  previousLabel=''
+                  onPageChange={(page) => setAttachmentsPage(page)}
+                />
+              )}
+            </>
+          ) : (
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>Geen resultaten gevonden</Heading>
+                  <Paragraph>
+                    Pas je zoekopdracht aan om resultaten te vinden.
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
           )}
         </AcFlex>
       </AcFlex>
