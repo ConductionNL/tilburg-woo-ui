@@ -63,6 +63,15 @@ const AcFeatured = ({ publications = [], isLoading = false }) => {
                     hideCategory={true}
                   />
                 ))}
+            {/* Dummy search result for demonstration purposes */}
+            <AcSearchResult
+              id='dummy-1'
+              title='Begroting 2024 Gemeente Tilburg'
+              summary='Jaarlijkse begroting met financiële planning en beleidsdoelstellingen voor het komende jaar.'
+              published='2024-04-01'
+              themes={[{ title: 'Financiën' }]}
+              hideCategory={true}
+            />
           </AcGrid>
         </div>
       </AcContainer>
