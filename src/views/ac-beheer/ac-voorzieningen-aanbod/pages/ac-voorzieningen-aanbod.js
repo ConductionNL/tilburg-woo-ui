@@ -62,7 +62,7 @@ const testData = [
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
+  const [data, setData] = useState(testData);
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
