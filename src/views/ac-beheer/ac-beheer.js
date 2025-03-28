@@ -178,8 +178,8 @@ const AcBeheer = () => {
 
   const syncGemma = async () => {
     // const baseUrl = config.mijnOmgeving.baseURL;
-    // const baseUrl = 'https://vng.accept.commonground.nu/apps';
-    const baseUrl = 'http://localhost:8080/apps';
+    const baseUrl = 'https://vng.accept.commonground.nu/apps';
+    // const baseUrl = 'http://localhost:8080/apps';
     const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
 
     try {
@@ -211,9 +211,9 @@ const AcBeheer = () => {
   const downloadGemma = async () => {
     try {
       // const baseUrl = config.mijnOmgeving.baseURL;
-      // const baseUrl = 'https://vng.accept.commonground.nu/apps';
-      const baseUrl = 'http://localhost:8080/apps';
-      const url = `${baseUrl}/openconnector/api/endpoint/model`;
+      const baseUrl = 'https://vng.accept.commonground.nu/apps';
+      // const baseUrl = 'http://localhost:8080/apps';
+      const url = `${baseUrl}/openconnector/api/endpoint/model.xml`;
 
       const response = await fetch(url, {
         method: 'GET',
