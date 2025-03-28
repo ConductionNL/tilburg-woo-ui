@@ -17,7 +17,7 @@ import AcEditOrganisatieModal from './ac-edit-organisatie-modal';
 import AcDeleteOrganisatieModal from './ac-delete-organisatie-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
+import { AcSideNav } from '@components';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();

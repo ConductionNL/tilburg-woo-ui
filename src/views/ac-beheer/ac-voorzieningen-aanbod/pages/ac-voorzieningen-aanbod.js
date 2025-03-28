@@ -18,7 +18,7 @@ import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanb
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
+import { AcSideNav } from '@components';
 
 // TODO: remove test data
 const testData = [

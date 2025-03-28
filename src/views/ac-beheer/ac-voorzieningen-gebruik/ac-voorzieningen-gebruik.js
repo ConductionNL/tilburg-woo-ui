@@ -17,7 +17,7 @@ import AcEditVoorzieningGebruikModal from './ac-edit-voorziening-gebruik-modal';
 import AcDeleteVoorzieningGebruikModal from './ac-delete-voorziening-gebruik-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
+import { AcSideNav } from '@components';
 
 const AcBeheerVoorzieningenGebruik = () => {
   const navigate = useNavigate();

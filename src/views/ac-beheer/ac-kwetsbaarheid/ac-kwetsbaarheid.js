@@ -17,7 +17,7 @@ import AcEditKwetsbaarheidModal from './ac-edit-kwetsbaarheid-modal';
 import AcDeleteKwetsbaarheidModal from './ac-delete-kwetsbaarheid-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
+import { AcSideNav } from '@components';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();

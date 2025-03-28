@@ -13,7 +13,7 @@ import { AcSearchResult, AcButton, AcFormField } from '@molecules';
 import { AcModal } from '@components';
 import loadable from '@loadable/component';
 import AcColumn from '@atoms/ac-column/ac-column';
-import AcSideNav from '../../components/ac-sidenav/ac-side-nav';
+import { AcSideNav } from '@components';
 
 // list pages
 const AcBeheerVoorzieningenAanbod = loadable(() =>

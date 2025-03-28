@@ -17,7 +17,7 @@ import AcEditContractModal from './ac-edit-contract-modal';
 import AcDeleteContractenModal from './ac-delete-contracten-modal';
 import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
+import { AcSideNav } from '@components';
 
 const AcBeheerContracten = () => {
   const navigate = useNavigate();

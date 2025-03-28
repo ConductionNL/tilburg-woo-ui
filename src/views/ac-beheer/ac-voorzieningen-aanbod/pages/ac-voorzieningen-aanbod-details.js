@@ -25,7 +25,7 @@ import AcDeleteVoorzieningAanbodModall from '../modals/ac-delete-voorziening-aan
 import { useNavigate } from 'react-router';
 import { AcButton, AcLink } from '@src/molecules';
 import { AcLoader } from '@src/components';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
+import { AcSideNav } from '@components';
 
 const testData = [
   {
