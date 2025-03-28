@@ -18,20 +18,16 @@ import {
 const AcSideNav = () => {
   const navigate = useNavigate();
 
-  const onSubmit = () => {
-    navigate('/mijn-omgeving');
-  };
-
   return (
     <>
       <Sidenav>
         <SidenavList>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/mijn-omgeving')}
-              current={window.location.pathname.startsWith('/mijn-omgeving')}
+              onClick={() => navigate('/beheer')}
+              current={window.location.pathname === '/beheer'}
             >
-              <VISUALS.USERS />
+              <VISUALS.CHART_LINE />
               Dashboard
             </SidenavLink>
           </SidenavItem>
@@ -50,7 +46,9 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-aanbod')}
-              current={window.location.pathname.startsWith('/beheer/voorzieningen-aanbod')}
+              current={window.location.pathname.startsWith(
+                '/beheer/voorzieningen-aanbod'
+              )}
             >
               <VISUALS.HAND_HOLDING />
               Aanbod
@@ -59,7 +57,9 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-gebruik')}
-              current={window.location.pathname.startsWith('/beheer/voorzieningen-gebruik')}
+              current={window.location.pathname.startsWith(
+                '/beheer/voorzieningen-gebruik'
+              )}
             >
               <VISUALS.CLOUD />
               Gebruik
@@ -68,7 +68,9 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/voorzieningen-versie')}
-              current={window.location.pathname.startsWith('/beheer/voorzieningen-versie')}
+              current={window.location.pathname.startsWith(
+                '/beheer/voorzieningen-versie'
+              )}
             >
               <VISUALS.INFO />
               Versie

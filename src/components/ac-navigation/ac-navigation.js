@@ -6,7 +6,6 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router';
 
-
 const AcNavigation = ({ store: { menu } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -30,7 +29,9 @@ const AcNavigation = ({ store: { menu } }) => {
   }, [location]);
 
   function removeCookie(name) {
-    document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    document.cookie = `${encodeURIComponent(
+      name
+    )}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
   }
 
   const handleLogout = () => {

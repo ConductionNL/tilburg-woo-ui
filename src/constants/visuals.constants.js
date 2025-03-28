@@ -143,6 +143,10 @@ const PENCIL = loadable(() =>
   import('-!svg-react-loader!@assets/images/pencil.svg')
 );
 
+const CHART_LINE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/chart-line.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -196,6 +200,7 @@ export const VISUALS = {
   RIGHT_FROM_BRACKET,
   PLUS,
   PENCIL,
+  CHART_LINE,
 };
 
 export default {};
