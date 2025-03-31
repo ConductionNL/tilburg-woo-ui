@@ -247,11 +247,15 @@ const AcBeheer = () => {
   };
 
   const loggedIn = !!getCookie('nextcloud_user_id');
+  const loggedOut = getCookie('logout');
   useEffect(() => {
+    if (loggedOut) {
+      navigate('/');
+    }
     if (!loggedIn) {
       navigate(`/login?redirect_url=${window.location.pathname}`);
     }
-  }, [loggedIn]);
+  }, [loggedIn, loggedOut]);
 
   const { type, id } = useParams();
 
