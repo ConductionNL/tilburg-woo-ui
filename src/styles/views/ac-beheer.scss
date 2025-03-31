@@ -4,6 +4,12 @@
   padding-inline: 0.5rem;
 }
 
+.ac-gemma-sync-result {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .ac-gemma-sync-result-image--loading {
   animation-name: ckw;
   animation-duration: 1s;
@@ -22,6 +28,10 @@
   }
 }
 
-.ac-gemma-sync-result-image--succes {
+.ac-gemma-sync-result-image--success {
   fill: green;
+}
+
+.ac-gemma-sync-result-image--error {
+  fill: red;
 }

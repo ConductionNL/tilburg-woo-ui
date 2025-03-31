@@ -147,6 +147,10 @@ const SPINNER = loadable(() =>
   import('-!svg-react-loader!@assets/images/spinner.svg')
 );
 
+const CIRCLE_XMARK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/circle-xmark.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -202,6 +206,7 @@ export const VISUALS = {
   PENCIL,
   CHART_LINE,
   SPINNER,
+  CIRCLE_XMARK,
 };
 
 export default {};

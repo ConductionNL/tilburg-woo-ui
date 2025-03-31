@@ -37,7 +37,7 @@ const AcBeheerKwetsbaarheden = loadable(() =>
   import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
 );
 
-const AcDashboard = loadable(() => import('@views/ac-beheer/dashboard'));
+const AcDashboard = loadable(() => import('@views/ac-beheer/ac-dashboard'));
 
 // detail pages
 const AcBeheerVoorzieningenAanbodDetails = loadable(() =>

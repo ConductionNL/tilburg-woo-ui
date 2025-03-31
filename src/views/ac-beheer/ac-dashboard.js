@@ -21,12 +21,7 @@ const AcDashboard = () => {
   const [syncGemmaError, setSyncGemmaError] = useState(null);
   const [syncGemmaSuccess, setSyncGemmaSuccess] = useState(false);
 
-  const [syncGemmaResults, setSyncGemmaResults] = useState([
-    { id: 'model', status: 'loading' },
-    { id: 'views', status: 'succes' },
-    { id: 'elements', status: 'error' },
-    { id: 'relations', status: 'loading' },
-  ]);
+  const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
   const apiCalls = ['relations', 'model', 'views', 'elements'];
   const endpoints = [
@@ -62,21 +57,17 @@ const AcDashboard = () => {
 
   const handleAddVoorzieningSubmit = () => {
     // Here you can make your POST request with the formData
-    console.log('Form data to submit:', addVoorzieningFormData);
+    console.info('Form data to submit:', addVoorzieningFormData);
   };
 
   const checkHeartbeat = async (apiCall, accessToken) => {
     try {
-      const response = await fetch(
-        `https://vng.accept.commonground.nu/apps/openconnector/api/synchronizations/${apiCall.id}/status`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(`https://vng.accept.commonground.nu/status.php`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         throw new Error('Heartbeat request failed');
@@ -97,7 +88,7 @@ const AcDashboard = () => {
       heartbeatInterval = setInterval(async () => {
         try {
           const data = await checkHeartbeat(apiCall, accessToken);
-          console.log(`Heartbeat response for ${apiCall.name}:`, data);
+          console.info(`Heartbeat response for ${apiCall.name}:`, 'Success');
         } catch (error) {
           console.error(`Heartbeat error for ${apiCall.name}:`, error);
         }
@@ -118,12 +109,7 @@ const AcDashboard = () => {
     const accessToken = getCookie('nextcloud_access_token');
 
     setSyncGemmaLoading(true);
-    setSyncGemmaResults([
-      { id: 'model', status: 'loading' },
-      { id: 'views', status: 'succes' },
-      { id: 'elements', status: 'error' },
-      { id: 'relations', status: 'loading' },
-    ]); // Reset results
+    setSyncGemmaResults([]);
 
     const apiPromises = endpoints.map(async (apiCall) => {
       setSyncGemmaResults((prev) => [
@@ -179,12 +165,10 @@ const AcDashboard = () => {
 
     Promise.all(apiPromises).finally(() => {
       setSyncGemmaLoading(false);
+      setSyncGemmaSuccess(true);
+      setTimeout(() => setSyncGemmaSuccess(false), 4000);
     });
   };
-
-  useEffect(() => {
-    console.log(syncGemmaResults);
-  }, [syncGemmaResults]);
 
   const renderAddVoorzieningModal = (
     <AcModal
@@ -240,33 +224,34 @@ const AcDashboard = () => {
         return <VISUALS.SPINNER className='ac-gemma-sync-result-image--loading' />;
       case 'succes':
         return (
-          <VISUALS.CIRCLE_CHECK className='ac-gemma-sync-result-image--succes' />
+          <VISUALS.CIRCLE_CHECK className='ac-gemma-sync-result-image--success' />
         );
       case 'error':
-        return <VISUALS.CLOSE className='ac-gemma-sync-result-image--error' />;
+        return (
+          <VISUALS.CIRCLE_XMARK className='ac-gemma-sync-result-image--error' />
+        );
       case 'dash':
         return '-';
     }
   };
 
   const renderSyncGemmaModal = (
-    <AcModal
-      ref={syncGemmaRef}
-      id='categories-modal'
-      title='Voorziening aanmaken'
-      buttons={[{ label: 'opslaan', onClick: handleAddVoorzieningSubmit }]}
-    >
+    <AcModal ref={syncGemmaRef} id='categories-modal' title='Voorziening aanmaken'>
       <AcFlex column spacing='sm'>
-        <AcFormField
-          label='Naam'
-          type='text'
-          onBlur={handleAddVoorzieningFieldChange('name')}
-        />
-        <AcFormField
-          label='Beschrijving'
-          type='text'
-          onBlur={handleAddVoorzieningFieldChange('description')}
-        />
+        {!syncGemmaLoading && (
+          <>
+            <AcFormField
+              label='url gemma'
+              type='url'
+              value='https://www.gemmaonline.nl/index.php?title=DisplayArchiMateViews&elementtype=ArchiMateView&model=GEMMA%2Fid-2b2b88ba-8efe-46d3-8b40-47af290bc418'
+            />
+            <AcFormField
+              label='url naar Archimate(XML)'
+              type='url'
+              value='https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/main/docs/examples/GEMMA_release.xml'
+            />
+          </>
+        )}
       </AcFlex>
       <br />
       <AcButton
@@ -281,13 +266,13 @@ const AcDashboard = () => {
       <br />
       <br />
       <div>
-        {syncGemmaLoading}
-        {apiCalls.map((apiCall) => (
-          <div className='ac-gemma-sync-result'>
-            {getImage(apiCall)}
-            <span>{apiCall}</span>
-          </div>
-        ))}
+        {(syncGemmaLoading || syncGemmaSuccess) &&
+          apiCalls.map((apiCall) => (
+            <div className='ac-gemma-sync-result'>
+              {getImage(apiCall)}
+              <span>{apiCall}</span>
+            </div>
+          ))}
       </div>
     </AcModal>
   );
