@@ -8,6 +8,8 @@ const PUBLICATIONS = '/publications';
 const SEARCH = '/search';
 const ATTACHMENTS = '/attachments';
 const THEMES = '/themes';
+const CATEGORIES = '/categories';
+const TERMS = '/terms';
 
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
@@ -27,6 +29,14 @@ export const ENDPOINTS = AcLockObject({
   THEMES: {
     INDEX: `${API}${SEARCH}${THEMES}`,
   }, // GET
+  CATEGORIES: {
+    INDEX: `${API}${PUBLIC}${CATEGORIES}`, // GET
+    SHOW: (_id) => `${API}${PUBLIC}${CATEGORIES}/${_id}`, // GET
+  },
+  TERMS: {
+    INDEX: `${API}${PUBLIC}${TERMS}`, // GET
+    SHOW: (_id) => `${API}${PUBLIC}${TERMS}/${_id}`, // GET
+  },
 });
 
 export default ENDPOINTS;

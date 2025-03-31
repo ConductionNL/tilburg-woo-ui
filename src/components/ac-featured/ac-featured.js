@@ -61,18 +61,9 @@ const AcFeatured = ({ publications = [], isLoading = false }) => {
                     {...item}
                     // Override props to hide category and themes on homepage
                     hideCategory={true}
-                    hideThemes={true}
-                    simplified={true}
+                    hideEllipses={true}
                   />
                 ))}
-            <AcSearchResult
-              title='Woo-verzoek Wijkevoort - Gemeente Tilburg'
-              summary='Verzoek: alle relevante documenten, informatie en correspondentie betreffende het overleg over Wijkevoort tussen...'
-              published='2024-03-15'
-              hideCategory={true}
-              hideThemes={true}
-              simplified={true}
-            />
           </AcGrid>
         </div>
       </AcContainer>

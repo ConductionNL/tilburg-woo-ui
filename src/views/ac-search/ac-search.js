@@ -12,6 +12,7 @@ import {
   Alert,
   Heading,
   Paragraph,
+  SkipLink,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
@@ -97,10 +98,14 @@ const AcSearch = ({ store: { publications } }) => {
       return LABELS.SEARCH_RESULTS_LOADING;
     }
 
-    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
-      all_publications?.length
-    )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_publications?.length]);
+    // Make sure count is defined before using it
+    const count = all_publications?.length || 0;
+    const resultText = LABELS_DYNAMIC.RESULTS(count);
+
+    return `${
+      LABELS.SEARCH_RESULTS_LOADED
+    }. ${count} ${resultText.toLowerCase()} ${LABELS.FOUND.toLowerCase()}.`;
+  }, [is_loading, all_publications?.length, location.search]);
 
   const renderPublications = useMemo(() => {
     if (is_loading) {
@@ -142,13 +147,14 @@ const AcSearch = ({ store: { publications } }) => {
         </AcCard>
       </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
+        <SkipLink href='#search-results'>Ga direct naar zoekresultaten</SkipLink>
         <AcFlex spacing='xl' className='ac-search-results'>
           <AcSearchFilters />
           <AcFlex column grow spacing='xs'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
               {screenReaderText}
             </div>
-            <AcFlex column spacing='sm' margin='sm'>
+            <AcFlex id='search-results' column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
                 <Heading level={2}>
                   {all_publications?.length}{' '}

@@ -1,4 +1,7 @@
 .ac-button {
+  font-family: var(--tilburg-typography-font-family-primary), sans-serif;
+  font-weight: var(--tilburg-typography-font-weight-bold);
+
   &.utrecht-link {
     padding: 0;
     border: none;
@@ -25,7 +28,7 @@
 
   span {
     font-weight: bold;
-    text-decoration: underline!important;
+    text-decoration: underline !important;
   }
 
   &:has(.utrecht-badge-status) {

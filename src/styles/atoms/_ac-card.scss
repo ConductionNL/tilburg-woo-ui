@@ -16,6 +16,15 @@
 
     .utrecht-paragraph {
       font-size: var(--tilburg-typography-font-size-md);
+
+      &--small {
+        font-size: var(--tilburg-typography-font-size-sm);
+      }
+    }
+
+    .utrecht-badge-status {
+      font-size: var(--tilburg-typography-font-size-sm);
+      padding-block: 0.5rem;
     }
   }
 
@@ -42,11 +51,9 @@
       font-size: var(--tilburg-typography-font-size-md);
     }
 
-    &:has([class*='ac-search-box--search']) {
-      @include respond-max($screen-sm) {
-        margin-inline-start: calc(-1 * var(--tilburg-space-column-rat));
-        inline-size: calc(100% + (2 * var(--tilburg-space-column-rat)));
-      }
+    @include respond-max($screen-sm) {
+      margin-inline-start: calc(-1 * var(--tilburg-space-column-rat));
+      inline-size: calc(100% + (2 * var(--tilburg-space-column-rat)));
     }
   }
 

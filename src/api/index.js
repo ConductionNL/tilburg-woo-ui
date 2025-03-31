@@ -10,6 +10,8 @@ import PublicationsAPI from '@api/publications.api';
 import FaqsAPI from '@api/faqs.api';
 import PagesAPI from '@api/pages.api';
 import ThemesAPI from '@api/themes.api';
+import CategoriesAPI from './categories.api';
+import TermsAPI from './terms.api';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -114,6 +116,9 @@ export class API {
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
     this.themes = new ThemesAPI({ Store, Client: ThemesClient });
+    this.categories = new CategoriesAPI({ Store, Client: Client });
+
+    this.terms = new TermsAPI({ Store, Client: Client });
   }
 }
 
