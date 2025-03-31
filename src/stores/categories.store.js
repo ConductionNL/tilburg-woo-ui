@@ -22,11 +22,6 @@ export class CategoriesStore {
     message: undefined,
   };
 
-  // Map visual names to actual components
-  getVisualComponent = (visualName) => {
-    return VISUALS[visualName] || null;
-  };
-
   @computed
   get is_loading() {
     return this.loading.status;
@@ -35,12 +30,12 @@ export class CategoriesStore {
   @computed
   get all_categories() {
     return this.items?.map((item) => ({
-      // icon: this.getVisualComponent(item.icon),
+      icon: item.icon,
       title: item.title,
       summary: AcSanitizeHtml(item.content),
       linkUrl: item.url,
       linkTitle: item.link,
-      // isExternal: true,
+      isExternal: item.is_external,
     }));
   }
 

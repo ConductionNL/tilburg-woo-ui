@@ -44,6 +44,8 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
     return <AcLoader />;
   }
 
+  console.log('all_categories', all_categories);
+
   return (
     <>
       <AcHero />

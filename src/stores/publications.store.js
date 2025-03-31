@@ -5,7 +5,7 @@ import { LABELS, LABELS_DYNAMIC } from '@constants';
 
 let app = {};
 
-const LIMIT = 15;
+const LIMIT = 7;
 
 export const DEFAULT_SEARCH_QUERY = {
   extend: ['themes', 'catalog'],
