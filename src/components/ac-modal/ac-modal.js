@@ -5,11 +5,12 @@ import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
 
-const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children }, ref) => {
+const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children, onClose }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onCloseHandler = () => {
     setIsOpen(false);
+    onClose && onClose();
     ref?.current?.close();
   };
 

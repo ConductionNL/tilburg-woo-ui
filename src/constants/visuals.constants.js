@@ -6,7 +6,7 @@ const ARROW_RIGHT = loadable(() =>
 );
 const ARROW_LEFT = loadable(() =>
   import('-!svg-react-loader!@assets/images/arrow-left.svg')
-);  
+);
 const CHECK = loadable(() => import('-!svg-react-loader!@assets/images/check.svg'));
 const CHEVRON_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/chevron-right.svg')
@@ -119,9 +119,7 @@ const HAND_SHAKE = loadable(() =>
   import('-!svg-react-loader!@assets/images/handshake.svg')
 );
 
-const SAVE = loadable(() =>
-  import('-!svg-react-loader!@assets/images/save.svg')
-);
+const SAVE = loadable(() => import('-!svg-react-loader!@assets/images/save.svg'));
 
 const TRASHCAN = loadable(() =>
   import('-!svg-react-loader!@assets/images/trash-can.svg')
@@ -135,9 +133,7 @@ const RIGHT_FROM_BRACKET = loadable(() =>
   import('-!svg-react-loader!@assets/images/right-from-bracket.svg')
 );
 
-const PLUS = loadable(() =>
-  import('-!svg-react-loader!@assets/images/plus.svg')
-);
+const PLUS = loadable(() => import('-!svg-react-loader!@assets/images/plus.svg'));
 
 const PENCIL = loadable(() =>
   import('-!svg-react-loader!@assets/images/pencil.svg')
@@ -145,6 +141,10 @@ const PENCIL = loadable(() =>
 
 const CHART_LINE = loadable(() =>
   import('-!svg-react-loader!@assets/images/chart-line.svg')
+);
+
+const SPINNER = loadable(() =>
+  import('-!svg-react-loader!@assets/images/spinner.svg')
 );
 
 export const VISUALS = {
@@ -201,6 +201,7 @@ export const VISUALS = {
   PLUS,
   PENCIL,
   CHART_LINE,
+  SPINNER,
 };
 
 export default {};
