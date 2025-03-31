@@ -5,7 +5,7 @@ import {
   FormLabel,
   Checkbox,
 } from '@utrecht/component-library-react/dist/css-module';
-import { BadgeCounter, StatusBadge } from '@utrecht/component-library-react';
+import { BadgeCounter } from '@utrecht/component-library-react';
 import { AcFlex } from '@atoms';
 
 const AcCheckbox = ({ label, value, checked, onChange, count }) => {
