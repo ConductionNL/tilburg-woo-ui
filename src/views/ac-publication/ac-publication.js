@@ -92,12 +92,15 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
           ) : is_loading_publication_terms ? (
             <AcLoader />
           ) : publication_terms(id)?.length ? (
-            publication_terms(id).map((term) => (
-              <AcFlex column key={term.id || term.name}>
-                <Heading level={3}>{term.name}</Heading>
-                <Paragraph>{term.description}</Paragraph>
-              </AcFlex>
-            ))
+            publication_terms(id)
+              .slice()
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((term) => (
+                <AcFlex column key={term.id || term.name}>
+                  <Heading level={3}>{term.name}</Heading>
+                  <Paragraph>{term.description}</Paragraph>
+                </AcFlex>
+              ))
           ) : (
             <Paragraph>Geen begrippen beschikbaar voor deze publicatie.</Paragraph>
           )}
@@ -119,12 +122,15 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
           ) : is_loading ? (
             <AcLoader />
           ) : filtered_terms?.length ? (
-            filtered_terms.map((term) => (
-              <AcFlex column key={term.id || term.name}>
-                <Heading level={3}>{term.name}</Heading>
-                <Paragraph>{term.description}</Paragraph>
-              </AcFlex>
-            ))
+            filtered_terms
+              .slice()
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((term) => (
+                <AcFlex column key={term.id || term.name}>
+                  <Heading level={3}>{term.name}</Heading>
+                  <Paragraph>{term.description}</Paragraph>
+                </AcFlex>
+              ))
           ) : (
             <Paragraph>
               Geen begrippen gevonden die overeenkomen met uw zoekopdracht.
