@@ -53,16 +53,22 @@ const AcSearchFilter = ({
             <span className={searchIconOnly ? 'sr-only' : ''}>Zoeken</span>
           </PrimaryActionButton>
         </AcFlex>
-      </form>
 
-      {currentSearchTerm && (
-        <div className='ac-search-filter__results'>
-          Gezocht op: <strong>{currentSearchTerm}</strong> ({resultCount}{' '}
-          {LABELS_DYNAMIC.RESULTS(resultCount).toLowerCase()})
-          <br />
-          <button onClick={clearSearch}>Wis zoekopdracht</button>
+        <div
+          className='ac-search-filter__results-container'
+          aria-live='polite'
+          aria-atomic='true'
+        >
+          {currentSearchTerm && (
+            <div className='ac-search-filter__results'>
+              Gezocht op: <strong>{currentSearchTerm}</strong> ({resultCount}{' '}
+              {LABELS_DYNAMIC.RESULTS(resultCount).toLowerCase()})
+              <br />
+              <button onClick={clearSearch}>Wis zoekopdracht</button>
+            </div>
+          )}
         </div>
-      )}
+      </form>
     </div>
   );
 };
