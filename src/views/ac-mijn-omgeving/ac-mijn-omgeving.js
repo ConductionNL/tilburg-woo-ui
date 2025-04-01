@@ -373,7 +373,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
               onClick={syncGemma}
               disabled={syncGemmaLoading}
             >
-              {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
+              {syncGemmaLoading ? 'Archimate inlezen...' : 'Archimate inlezen'}
             </AcButton>
 
             <AcButton
@@ -381,7 +381,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
               icon={<VISUALS.DOWNLOAD />}
               onClick={downloadGemma}
             >
-              Gemma downloaden
+              GEMMA downloaden
             </AcButton>
           </AcFlex>
 

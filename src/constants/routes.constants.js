@@ -190,10 +190,10 @@ export const ROUTES = {
   },
   GEMMA: {
     id: AcUUID(),
-    name: 'Gemma',
+    name: 'GEMMA',
     label: LABELS.GEMMA,
     path: PATHS.GEMMA_STATIC,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Gemma`,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | GEMMA`,
     component: AcGemma,
   },
   THEMES: {

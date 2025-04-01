@@ -1,24 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
+import { VISUALS } from '@constants';
+import { AcCard, AcFlex, AcSection } from '@atoms';
 import { getCookie } from '@src/utilities';
-import { AcSearchResult, AcButton, AcFormField } from '@molecules';
+import { AcButton, AcFormField } from '@molecules';
 import { AcModal } from '@components';
-import loadable from '@loadable/component';
-import AcColumn from '@atoms/ac-column/ac-column';
 import { AcSideNav } from '@components';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from '@utrecht/component-library-react/dist/css-module';
+import _ from 'lodash';
 
 const AcDashboard = () => {
   // sync gemma
   const [syncGemmaLoading, setSyncGemmaLoading] = useState(false);
-  const [syncGemmaError, setSyncGemmaError] = useState(null);
   const [syncGemmaSuccess, setSyncGemmaSuccess] = useState(false);
 
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
@@ -60,7 +59,7 @@ const AcDashboard = () => {
     console.info('Form data to submit:', addVoorzieningFormData);
   };
 
-  const checkHeartbeat = async (apiCall, accessToken) => {
+  const checkHeartbeat = async (apiCall) => {
     try {
       const response = await fetch(`https://vng.accept.commonground.nu/status.php`, {
         method: 'GET',
@@ -81,13 +80,13 @@ const AcDashboard = () => {
     }
   };
 
-  const startHeartbeatChecks = async (apiCall, accessToken) => {
+  const startHeartbeatChecks = async (apiCall) => {
     let heartbeatInterval;
 
     try {
       heartbeatInterval = setInterval(async () => {
         try {
-          const data = await checkHeartbeat(apiCall, accessToken);
+          const data = await checkHeartbeat(apiCall);
           console.info(`Heartbeat response for ${apiCall.name}:`, 'Success');
         } catch (error) {
           console.error(`Heartbeat error for ${apiCall.name}:`, error);
@@ -114,7 +113,7 @@ const AcDashboard = () => {
     const apiPromises = endpoints.map(async (apiCall) => {
       setSyncGemmaResults((prev) => [
         ...prev,
-        { id: apiCall.name, status: 'loading' },
+        { name: apiCall.name, status: 'loading' },
       ]);
 
       let heartbeatInterval;
@@ -144,7 +143,9 @@ const AcDashboard = () => {
         if (initialData) {
           setSyncGemmaResults((prev) =>
             prev.map((item) =>
-              item.id === apiCall.name ? { ...item, status: 'succes' } : item
+              item.name === apiCall.name
+                ? { ...item, status: 'success', object: initialData }
+                : item
             )
           );
         }
@@ -157,7 +158,9 @@ const AcDashboard = () => {
         console.error(`Error in synchronization for ${apiCall.name}:`, error);
         setSyncGemmaResults((prev) =>
           prev.map((item) =>
-            item.id === apiCall.name ? { ...item, status: 'error' } : item
+            item.name === apiCall.name
+              ? { ...item, status: 'error', object: initialData }
+              : item
           )
         );
       }
@@ -166,7 +169,6 @@ const AcDashboard = () => {
     Promise.all(apiPromises).finally(() => {
       setSyncGemmaLoading(false);
       setSyncGemmaSuccess(true);
-      setTimeout(() => setSyncGemmaSuccess(false), 4000);
     });
   };
 
@@ -214,15 +216,11 @@ const AcDashboard = () => {
 
   const [downloadGemmaError, setDownloadGemmaError] = useState(null);
 
-  const getImage = (name) => {
-    const result = syncGemmaResults.find((result) => result.id === name);
-
-    const status = result?.status;
-
+  const getImage = (status) => {
     switch (status) {
       case 'loading':
         return <VISUALS.SPINNER className='ac-gemma-sync-result-image--loading' />;
-      case 'succes':
+      case 'success':
         return (
           <VISUALS.CIRCLE_CHECK className='ac-gemma-sync-result-image--success' />
         );
@@ -230,48 +228,95 @@ const AcDashboard = () => {
         return (
           <VISUALS.CIRCLE_XMARK className='ac-gemma-sync-result-image--error' />
         );
-      case 'dash':
-        return '-';
+      default:
+        return <VISUALS.SPINNER className='ac-gemma-sync-result-image--loading' />;
     }
   };
 
   const renderSyncGemmaModal = (
-    <AcModal ref={syncGemmaRef} id='categories-modal' title='Voorziening aanmaken'>
-      <AcFlex column spacing='sm'>
-        {!syncGemmaLoading && (
+    <AcModal
+      ref={syncGemmaRef}
+      id='categories-modal'
+      title='Archimate inlezen'
+      layoutClassName='ac-gemma-sync-modal'
+      onClose={() => {
+        setTimeout(() => {
+          setSyncGemmaSuccess(false);
+          setSyncGemmaResults([]);
+        }, 400);
+      }}
+    >
+      <AcFlex column spacing='sm' className='ac-gemma-sync-modal__form'>
+        {!syncGemmaLoading && !syncGemmaSuccess && (
           <>
             <AcFormField
-              label='url gemma'
+              className='ac-gemma-sync-modal__form-field'
+              label='GEMMA URL'
               type='url'
-              value='https://www.gemmaonline.nl/index.php?title=DisplayArchiMateViews&elementtype=ArchiMateView&model=GEMMA%2Fid-2b2b88ba-8efe-46d3-8b40-47af290bc418'
+              fullWidth
+              value='https://www.gemmaonline.nl/wiki/GEMMA/'
             />
             <AcFormField
-              label='url naar Archimate(XML)'
+              label='Archimate(XML) URL'
               type='url'
+              fullWidth
               value='https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/main/docs/examples/GEMMA_release.xml'
             />
           </>
         )}
       </AcFlex>
-      <br />
       <AcButton
         style='button'
+        className='ac-gemma-sync-modal__button'
         icon={<VISUALS.CLOUD />}
         onClick={syncGemma}
         disabled={syncGemmaLoading}
       >
-        {'Gemma inlezen'}
+        {'Archimate inlezen'}
       </AcButton>
-      <br />
-      <br />
-      <br />
-      <div>
+      <div className='ac-gemma-sync-modal__cards-container'>
         {(syncGemmaLoading || syncGemmaSuccess) &&
-          apiCalls.map((apiCall) => (
-            <div className='ac-gemma-sync-result'>
-              {getImage(apiCall)}
-              <span>{apiCall}</span>
-            </div>
+          syncGemmaResults.map((result) => (
+            <AcCard>
+              <div className='ac-gemma-sync-result'>
+                {getImage(result.status)}
+                <span>{_.upperFirst(result.name)}</span>
+              </div>
+              {(result.status === 'success' || result.status === 'error') && (
+                <Table>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>synchronizationId</TableCell>
+                      <TableCell>{result.object.synchronizationId}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell> Aantal objecten gevonden</TableCell>
+                      <TableCell> {result.object.result.objects.found}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell> Aantal objecten aangemaakt</TableCell>
+                      <TableCell> {result.object.result.objects.created}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Aantal objecten bijgewerkt</TableCell>
+                      <TableCell>{result.object.result.objects.updated}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Aantal objecten verwijderd</TableCell>
+                      <TableCell>{result.object.result.objects.deleted}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Aantal objecten overgeslagen</TableCell>
+                      <TableCell>{result.object.result.objects.deleted}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Aantal objecten ongeldig</TableCell>
+                      <TableCell>{result.object.result.objects.deleted}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              )}
+            </AcCard>
           ))}
       </div>
     </AcModal>
@@ -336,7 +381,7 @@ const AcDashboard = () => {
               onClick={handleSyncGemma}
               disabled={syncGemmaLoading}
             >
-              {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
+              Archimate inlezen
             </AcButton>
 
             <AcButton
@@ -344,14 +389,8 @@ const AcDashboard = () => {
               icon={<VISUALS.DOWNLOAD />}
               onClick={downloadGemma}
             >
-              Gemma downloaden
+              GEMMA downloaden
             </AcButton>
-          </AcFlex>
-
-          <AcFlex column spacing='sm' alignItems='end'>
-            {syncGemmaSuccess && <Paragraph>Succesvol gemma ingelezen.</Paragraph>}
-            {syncGemmaError && <Paragraph>Fout bij gemma inlezen.</Paragraph>}
-            {downloadGemmaError && <Paragraph>Fout bij gemma downloaden.</Paragraph>}
           </AcFlex>
         </AcFlex>
       </AcFlex>

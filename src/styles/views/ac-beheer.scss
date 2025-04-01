@@ -4,6 +4,18 @@
   padding-inline: 0.5rem;
 }
 
+.ac-gemma-sync-modal__form {
+  margin-block-end: 15px;
+}
+
+.ac-gemma-sync-modal__button {
+  margin-block-end: 25px;
+}
+
+.ac-gemma-sync-modal__cards-container > :not(:last-child) {
+  margin-block-end: 5px;
+}
+
 .ac-gemma-sync-result {
   display: flex;
   gap: 10px;
@@ -34,4 +46,8 @@
 
 .ac-gemma-sync-result-image--error {
   fill: red;
+}
+
+.ac-gemma-sync-modal {
+  width: 750px;
 }
