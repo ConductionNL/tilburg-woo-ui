@@ -158,15 +158,55 @@ export class PublicationsStore {
     this.loading_latest.status = true;
 
     try {
-      // Create a query for the latest publications
-      const latestQuery = {
+      // First fetch featured publications
+      const featuredQuery = {
         ...DEFAULT_QUERY,
-        _limit: limit,
+        _limit: 100, // Fetch enough to sort later
+        _order: { date: 'desc' },
+        featured: true,
+      };
+
+      // Fetch all recent publications as well (for fallback)
+      const recentQuery = {
+        ...DEFAULT_QUERY,
+        _limit: 100, // Fetch enough to fill gaps
         _order: { date: 'desc' },
       };
 
-      const response = await app.store.api.publications.search(latestQuery);
-      this.setLatestItems(response.results || []);
+      const [featuredResponse, recentResponse] = await Promise.all([
+        app.store.api.publications.search(featuredQuery),
+        app.store.api.publications.search(recentQuery),
+      ]);
+
+      // Get the featured publications (already sorted by date desc)
+      const featuredItems = featuredResponse.results || [];
+
+      // Get all recent publications
+      const recentItems = recentResponse.results || [];
+
+      let finalItems = [];
+
+      if (featuredItems.length >= limit) {
+        // If we have enough featured items, just take the most recent ones
+        finalItems = featuredItems.slice(0, limit);
+      } else if (featuredItems.length > 0) {
+        // If we have some featured items but not enough, add recent non-featured items
+        const nonFeaturedItems = recentItems.filter(
+          (item) =>
+            !item.featured &&
+            !featuredItems.some((featured) => featured.id === item.id)
+        );
+
+        finalItems = [
+          ...featuredItems,
+          ...nonFeaturedItems.slice(0, limit - featuredItems.length),
+        ];
+      } else {
+        // Fallback: If no featured items, use most recent
+        finalItems = recentItems.slice(0, limit);
+      }
+
+      this.setLatestItems(finalItems);
     } catch (e) {
       // Set empty array on error to avoid UI issues
       this.setLatestItems([]);

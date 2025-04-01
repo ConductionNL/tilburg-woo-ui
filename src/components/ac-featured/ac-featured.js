@@ -4,41 +4,9 @@ import { LABELS } from '@constants';
 import { AcSection, AcContainer } from '@atoms';
 import AcGrid from '@atoms/ac-grid/ac-grid';
 import { AcSearchResult } from '@molecules';
-import { AcLoader } from '@components';
-
-// Fallback data in case API fails
-const FALLBACK_ITEMS = [
-  {
-    id: '1',
-    title: 'Raadsbesluit Ontwikkeling Spoorzone',
-    summary:
-      'Besluitvorming over de herontwikkeling van het gebied rond het station Gouda, inclusief plannen voor woningbouw en voorzieningen.',
-    published: '2024-03-15',
-  },
-  {
-    id: '2',
-    title: 'WOO-verzoek Kaasmarkt evenementen',
-    summary:
-      'Openbaarmaking van documenten met betrekking tot de organisatie en vergunningverlening van evenementen op de historische Kaasmarkt.',
-    published: '2024-03-10',
-  },
-  {
-    id: '3',
-    title: 'Beleidsplan Duurzame Energietransitie',
-    summary:
-      'Strategisch plan voor de verduurzaming van de gemeente Gouda, met focus op energiebesparing en duurzame energieopwekking.',
-    published: '2024-03-05',
-  },
-];
 
 const AcFeatured = ({ publications = [], isLoading = false }) => {
-  // Check if publications have the required properties
-  const hasValidPublications =
-    publications.length > 0 &&
-    publications.every((item) => item.title && (item.summary || item.description));
-
-  // Use provided publications or fallback to static data if empty or invalid
-  const displayItems = hasValidPublications ? publications : FALLBACK_ITEMS;
+  console.log('publications', publications);
 
   return (
     <AcSection className='ac-featured' spacing>
@@ -55,7 +23,7 @@ const AcFeatured = ({ publications = [], isLoading = false }) => {
                   <AcSearchResult skeleton key={index} />
                 ))
               : // Show publications when loaded
-                displayItems.map((item, index) => (
+                publications.map((item, index) => (
                   <AcSearchResult
                     key={item.id || index}
                     {...item}
