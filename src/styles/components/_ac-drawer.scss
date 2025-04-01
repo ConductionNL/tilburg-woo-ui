@@ -63,6 +63,11 @@
     font-family: var(--tilburg-typography-font-family-secondary), sans-serif;
   }
 
+  h3 {
+    font-size: var(--tilburg-typography-font-size-md);
+    font-family: var(--tilburg-typography-font-family-secondary), sans-serif;
+  }
+
   &__header {
     block-size: var(--header-height);
     padding: var(--tilburg-space-row-rabbit);
@@ -75,7 +80,7 @@
     padding-inline: var(--tilburg-space-row-rat);
 
     .utrecht-paragraph {
-      font-size: var(--tilburg-typography-font-size-md);
+      font-size: var(--tilburg-typography-font-size-sm);
     }
   }
 }
