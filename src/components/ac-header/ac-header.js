@@ -16,7 +16,7 @@ const AcHeader = ({ store }) => {
 
   return (
     <header className='ac-header'>
-      <SkipLink id='skip-link' href='#main'>
+      <SkipLink id='skip-link' href={`${location.pathname}#main`}>
         {LABELS.TO_MAIN_CONTENT}
       </SkipLink>
       <div className='ac-header__navigation-main'>

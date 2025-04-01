@@ -147,7 +147,9 @@ const AcSearch = ({ store: { publications } }) => {
         </AcCard>
       </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
-        <SkipLink href='#search-results'>Ga direct naar zoekresultaten</SkipLink>
+        <SkipLink href={`${location.pathname}#search-results`}>
+          Ga direct naar zoekresultaten
+        </SkipLink>
         <AcFlex spacing='xl' className='ac-search-results'>
           <AcSearchFilters />
           <AcFlex column grow spacing='xs'>
