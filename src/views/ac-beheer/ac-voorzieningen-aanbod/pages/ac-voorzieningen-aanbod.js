@@ -5,7 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
-import { VISUALS } from '@src/constants';
+import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
