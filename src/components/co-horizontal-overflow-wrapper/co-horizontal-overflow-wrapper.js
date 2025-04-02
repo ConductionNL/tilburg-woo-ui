@@ -4,11 +4,11 @@ import { Button } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 
 const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
-  console.log(children);
   const [canScrollRight, setCanScrollRight] = React.useState(false);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
 
   const wrapperRef = React.useRef(null);
+  const contentRef = React.useRef(null);
 
   const scrollRight = () => {
     wrapperRef.current?.scrollTo({
@@ -24,30 +24,32 @@ const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
     });
   };
 
-  React.useEffect(() => {
-    checkScrollDirections(); // initiate available scroll directions
+  const checkScrollDirections = React.useCallback(() => {
+    if (!wrapperRef.current || !contentRef.current) return;
 
-    window.addEventListener('resize', checkScrollDirections);
-
-    return () => window.removeEventListener('resize', checkScrollDirections);
-  }, []);
-
-  const checkScrollDirections = () => {
-    console.log('wrapperRef.current', wrapperRef.current);
-    console.log('wrapperRef.current.scrollLeft', wrapperRef.current.scrollLeft);
-    console.log('wrapperRef.current.clientWidth', wrapperRef.current.clientWidth);
-    console.log('wrapperRef.current.scrollWidth', wrapperRef.current.scrollWidth);
-    
-    if (!wrapperRef.current) return;
+    const hasHorizontalOverflow =
+      contentRef.current.scrollWidth > wrapperRef.current.clientWidth;
 
     setCanScrollRight(
-      wrapperRef.current.scrollLeft + wrapperRef.current.clientWidth <
-        wrapperRef.current.scrollWidth
+      hasHorizontalOverflow &&
+        wrapperRef.current.scrollLeft + wrapperRef.current.clientWidth <
+          contentRef.current.scrollWidth
     );
     setCanScrollLeft(wrapperRef.current.scrollLeft > 0);
+  }, []);
 
-    console.log(canScrollLeft, canScrollRight);
-  };
+  React.useEffect(() => {
+    const resizeObserver = new ResizeObserver(() => {
+      checkScrollDirections();
+    });
+
+    if (wrapperRef.current && contentRef.current) {
+      resizeObserver.observe(wrapperRef.current);
+      resizeObserver.observe(contentRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, [checkScrollDirections]);
 
   return (
     <div className='co-horizontal-overflow-wrapper__container'>
@@ -81,7 +83,9 @@ const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
         className='co-horizontal-overflow-wrapper__wrapper'
         onScroll={checkScrollDirections}
       >
-        {children}
+        <div ref={contentRef} className='co-horizontal-overflow-wrapper__content'>
+          {children}
+        </div>
       </div>
     </div>
   );
