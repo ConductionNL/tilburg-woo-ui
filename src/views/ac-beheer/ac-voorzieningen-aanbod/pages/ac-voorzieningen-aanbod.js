@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router';
 import { AcLink } from '@src/molecules';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
+import CoHorizontalOverflowWrapper from '../../../../components/co-horizontal-overflow-wrapper/co-horizontal-overflow-wrapper';
 
 // TODO: remove test data
 const testData = [
@@ -191,14 +192,21 @@ const AcBeheerVoorzieningenAanbod = () => {
               </PrimaryActionButton>
             </AcFlex>
 
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
+            <CoHorizontalOverflowWrapper
+              ariaLabels={{
+                scrollLeftButton: 'Scroll left',
+                scrollRightButton: 'Scroll right',
+              }}
+            >
+              <CDTable
+                data={data}
+                tableHeaders={tableHeaders}
+                getSelectedRows={setSelectedRows}
+                renderSelectRowButtons
+                ref={tableRef}
+                truncateLines={2}
+              />
+            </CoHorizontalOverflowWrapper>
 
             <AcDeleteVoorzieningAanbodModal
               voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
