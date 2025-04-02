@@ -1,112 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-
-import { VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
+import { AcFlex, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
-import config from '@src/config';
-
+import { VISUALS } from '@constants';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
+import { AcSideNav } from '@components';
+import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcEditKwetsbaarheidModal from './ac-edit-kwetsbaarheid-modal';
 import AcDeleteKwetsbaarheidModal from './ac-delete-kwetsbaarheid-modal';
-import { useNavigate } from 'react-router';
-import { AcLink } from '@src/molecules';
-import { AcSideNav } from '@components';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([
-    {
-      '@self': {
-        id: null,
-        uuid: '8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-        version: null,
-        register: '3',
-        schema: '23',
-        files: [],
-        relations: [],
-        locked: null,
-        owner: null,
-        updated: null,
-        created: null,
-        folder:
-          'Open Registers/Software Catalogus Register/Kwetsbaarheid/8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-      },
-      voorzieningversieId: '7b9c3d45-a182-4d76-b894-53b5fc8de97a',
-      cveNummer: 'CVE-2024-28456',
-      titel: 'XSS kwetsbaarheid in DigiD koppelvlak',
-      beschrijving:
-        'Een cross-site scripting (XSS) kwetsbaarheid in het DigiD koppelvlak maakt het mogelijk voor aanvallers om kwaadaardige scripts te injecteren via onvoldoende gevalideerde gebruikersinvoer in het BSN-veld.',
-      ernst: 'kritiek',
-      ontdektOp: '2024-02-15',
-      gepubliceerdOp: '2024-02-28',
-      opgelostIn: '2.3.5',
-      mitigatie:
-        'Implementeer HTML encoding voor alle gebruikersinvoer en pas content security policy (CSP) headers toe. Update naar versie 2.3.5 of hoger zodra beschikbaar.',
-      referenties: [
-        'https://nvd.nist.gov/vuln/detail/CVE-2024-28456',
-        'https://www.ncsc.nl/actueel/advisories/NCSC-2024-0234',
-      ],
-      id: '8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-    },
-  ]);
+  const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
           '/openconnector/api/endpoint/kwetsbaarheden'
-      );
-      const data = (await response.json())?.results;
+      ).finally(() => setLoading(false));
+      const jsonResponse = await response.json();
 
-      const dataWithTestData = [
-        ...data,
-        {
-          '@self': {
-            id: null,
-            uuid: '8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-            version: null,
-            register: '3',
-            schema: '23',
-            files: [],
-            relations: [],
-            locked: null,
-            owner: null,
-            updated: null,
-            created: null,
-            folder:
-              'Open Registers/Software Catalogus Register/Kwetsbaarheid/8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-          },
-          voorzieningversieId: '7b9c3d45-a182-4d76-b894-53b5fc8de97a',
-          cveNummer: 'CVE-2024-28456',
-          titel: 'XSS kwetsbaarheid in DigiD koppelvlak',
-          beschrijving:
-            'Een cross-site scripting (XSS) kwetsbaarheid in het DigiD koppelvlak maakt het mogelijk voor aanvallers om kwaadaardige scripts te injecteren via onvoldoende gevalideerde gebruikersinvoer in het BSN-veld.',
-          ernst: 'kritiek',
-          ontdektOp: '2024-02-15',
-          gepubliceerdOp: '2024-02-28',
-          opgelostIn: '2.3.5',
-          mitigatie:
-            'Implementeer HTML encoding voor alle gebruikersinvoer en pas content security policy (CSP) headers toe. Update naar versie 2.3.5 of hoger zodra beschikbaar.',
-          referenties: [
-            'https://nvd.nist.gov/vuln/detail/CVE-2024-28456',
-            'https://www.ncsc.nl/actueel/advisories/NCSC-2024-0234',
-          ],
-          id: '8e5d2f34-c267-4b99-af43-e82d56f90c3d',
-        },
-      ];
+      const data = jsonResponse.results;
 
-      setData(dataWithTestData);
+      const errorResponse = jsonResponse.error;
+
+      errorResponse && setError({ message: errorResponse });
+      setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -162,12 +92,22 @@ const AcBeheerKwetsbaarheden = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
+            disabled={true}
+            onClick={() => {
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('kwetsbaarheden', row.id));
+            }}
+          >
+            <VISUALS.EYE className='ac-button__icon' /> Bekijken
+          </button>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
             onClick={() => {
               setSingleSelectedRow(row);
               setOpenModal('edit');
             }}
           >
-            bewerken
+            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
           </button>
           <button
             className='utrecht-button slim'
@@ -177,7 +117,7 @@ const AcBeheerKwetsbaarheden = () => {
               setOpenModal('delete');
             }}
           >
-            verwijderen
+            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
           </button>
         </AcFlex>
       ),
@@ -189,91 +129,26 @@ const AcBeheerKwetsbaarheden = () => {
   };
 
   if (error) {
-    return (
-      // <AcSection spacing className='ac-mijn-omgeving-section'>
-      //   <AcFlex spacing='xl'>
-      //     <AcSideNav />
-      //     <AcColumn gap='sm'>
-      //       <Heading level={1}>Er is een fout opgetreden</Heading>
-      //       <Paragraph>
-      //         Er kon geen verbinding worden gemaakt met de server. Probeer het later
-      //         opnieuw.
-      //       </Paragraph>
-      //       <Paragraph>{error.message}</Paragraph>
-      //     </AcColumn>
-      //   </AcFlex>
-      // </AcSection>
-      <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-          <AcColumn gap='sm'>
-            <Heading>Beheer Kwetsbaarheden</Heading>
+    return <AcBeheerError title='Beheer Kwetsbaarheden' error={error.message} />;
+  }
 
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
-
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
-
-            {/* modals */}
-            <AcEditKwetsbaarheidModal
-              kwetsbaarheid={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-
-            <AcDeleteKwetsbaarheidModal
-              kwetsbaarheden={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-              showModal={openModal === 'delete'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-          </AcColumn>
-        </AcFlex>
-      </AcSection>
-    );
+  if (loading) {
+    return <AcBeheerLoading title='Beheer Kwetsbaarheden' />;
   }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <AcSideNav />
-        <AcColumn gap='sm'>
-          <Heading>Beheer Kwetsbaarheden</Heading>
-
-          <AcFlex spacing='sm' justifyContent='end'>
+        <AcColumn gap='sm' horizontalOverflowWrapper>
+          <AcFlex spacing='sm' justifyContent='between'>
+            <Heading>Beheer Kwetsbaarheden</Heading>
             <PrimaryActionButton
               disabled={selectedRows.length === 0}
               onClick={handleMultipleDelete}
             >
-              Delete {selectedRows.length}{' '}
-              {selectedRows.length === 1 ? 'item' : 'items'}
+              <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
+              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
             </PrimaryActionButton>
           </AcFlex>
 

@@ -14,37 +14,16 @@ import { AcModal } from '@components';
 import loadable from '@loadable/component';
 import AcColumn from '@atoms/ac-column/ac-column';
 import { AcSideNav } from '@components';
-
-// list pages
-const AcBeheerVoorzieningenAanbod = loadable(() =>
-  import(
-    '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod'
-  )
-);
-const AcBeheerVoorzieningenGebruik = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-gebruik/ac-voorzieningen-gebruik')
-);
-const AcBeheerVoorzieningenVersie = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-versie/ac-voorzieningen-versie')
-);
-const AcBeheerContracten = loadable(() =>
-  import('@views/ac-beheer/ac-contracten/ac-contracten')
-);
-const AcBeheerOrganisaties = loadable(() =>
-  import('@views/ac-beheer/ac-organisatie/ac-organisatie')
-);
-const AcBeheerKwetsbaarheden = loadable(() =>
-  import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
-);
-
-const AcDashboard = loadable(() => import('@views/ac-beheer/ac-dashboard'));
-
-// detail pages
-const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
-  import(
-    '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod-details'
-  )
-);
+import {
+  AcBeheerVoorzieningenAanbod,
+  AcBeheerVoorzieningenGebruik,
+  AcBeheerVoorzieningenVersie,
+  AcBeheerContracten,
+  AcBeheerOrganisaties,
+  AcBeheerKwetsbaarheden,
+  AcDashboard,
+  AcBeheerVoorzieningenAanbodDetails,
+} from '@views/ac-beheer';
 
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);

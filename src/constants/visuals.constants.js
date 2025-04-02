@@ -151,6 +151,8 @@ const CIRCLE_XMARK = loadable(() =>
   import('-!svg-react-loader!@assets/images/circle-xmark.svg')
 );
 
+const EYE = loadable(() => import('-!svg-react-loader!@assets/images/eye.svg'));
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -207,6 +209,7 @@ export const VISUALS = {
   CHART_LINE,
   SPINNER,
   CIRCLE_XMARK,
+  EYE,
 };
 
 export default {};

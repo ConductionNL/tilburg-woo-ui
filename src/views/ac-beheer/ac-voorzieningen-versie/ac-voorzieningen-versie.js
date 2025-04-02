@@ -1,102 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-
-import { VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
+import { AcFlex, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
-import config from '@src/config';
-
+import { VISUALS } from '@constants';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
+import { AcSideNav } from '@components';
+import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcEditVoorzieningAanbodModal from './ac-edit-voorziening-versie-modal';
 import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-versie-modal';
-import { useNavigate } from 'react-router';
-import { AcLink } from '@src/molecules';
-import { AcSideNav } from '@components';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([
-    {
-      '@self': {
-        id: null,
-        uuid: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-        version: null,
-        register: '3',
-        schema: '22',
-        files: [],
-        relations: [],
-        locked: null,
-        owner: null,
-        updated: null,
-        created: null,
-        folder:
-          'Open Registers/Software Catalogus Register/VoorzieningVersie/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-      },
-      naam: 'DigiD Machtigen Pro',
-      omschrijving:
-        'Nieuwe versie van DigiD Machtigen met uitgebreide functionaliteit voor zakelijke gebruikers, verbeterde beveiliging en ondersteuning voor eHerkenning integratie.',
-      releaseNotes:
-        '- Implementatie OAuth 2.0 authenticatie\n- Koppeling met eHerkenning niveau 3\n- Verbeterde logging en audit trail\n- Nieuwe API endpoints voor machtigingenbeheer',
-      nummer: '2.4.0',
-      voorzieningaanbodId: '8a5c12d4-e789-4f23-b567-a91c45d78e2b',
-      productieDatum: '2024-03-01',
-      eindeDatum: '2025-09-30',
-      status: 'acceptatie',
-      id: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-    },
-  ]);
+  const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
           '/openconnector/api/endpoint/voorzieningversies'
-      );
-      const data = (await response.json()).results;
+      ).finally(() => setLoading(false));
+      const jsonResponse = await response.json();
 
-      const dataWithTestData = [
-        ...data,
-        {
-          '@self': {
-            id: null,
-            uuid: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-            version: null,
-            register: '3',
-            schema: '22',
-            files: [],
-            relations: [],
-            locked: null,
-            owner: null,
-            updated: null,
-            created: null,
-            folder:
-              'Open Registers/Software Catalogus Register/VoorzieningVersie/7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-          },
-          naam: 'DigiD Machtigen Pro',
-          omschrijving:
-            'Nieuwe versie van DigiD Machtigen met uitgebreide functionaliteit voor zakelijke gebruikers, verbeterde beveiliging en ondersteuning voor eHerkenning integratie.',
-          releaseNotes:
-            '- Implementatie OAuth 2.0 authenticatie\n- Koppeling met eHerkenning niveau 3\n- Verbeterde logging en audit trail\n- Nieuwe API endpoints voor machtigingenbeheer',
-          nummer: '2.4.0',
-          voorzieningaanbodId: '8a5c12d4-e789-4f23-b567-a91c45d78e2b',
-          productieDatum: '2024-03-01',
-          eindeDatum: '2025-09-30',
-          status: 'acceptatie',
-          id: '7d4e9f23-b156-4c88-ae32-d91c45a78e2b',
-        },
-      ];
+      const data = jsonResponse.results;
 
-      setData(dataWithTestData);
+      const errorResponse = jsonResponse.error;
+
+      errorResponse && setError({ message: errorResponse });
+      setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -146,12 +86,24 @@ const AcBeheerVoorzieningenVersie = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
+            disabled={true}
+            onClick={() => {
+              navigate(
+                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-versie', row.id)
+              );
+            }}
+          >
+            <VISUALS.EYE className='ac-button__icon' /> Bekijken
+          </button>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
             onClick={() => {
               setSingleSelectedRow(row);
               setOpenModal('edit');
             }}
           >
-            bewerken
+            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
           </button>
           <button
             className='utrecht-button slim'
@@ -161,7 +113,7 @@ const AcBeheerVoorzieningenVersie = () => {
               setOpenModal('delete');
             }}
           >
-            verwijderen
+            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
           </button>
         </AcFlex>
       ),
@@ -174,75 +126,12 @@ const AcBeheerVoorzieningenVersie = () => {
 
   if (error) {
     return (
-      // <AcSection spacing className='ac-mijn-omgeving-section'>
-      //   <AcFlex spacing='xl'>
-      //     <AcSideNav />
-      //     <AcColumn gap='sm'>
-      //       <Heading level={1}>Er is een fout opgetreden</Heading>
-      //       <Paragraph>
-      //         Er kon geen verbinding worden gemaakt met de server. Probeer het later
-      //         opnieuw.
-      //       </Paragraph>
-      //       <Paragraph>{error.message}</Paragraph>
-      //     </AcColumn>
-      //   </AcFlex>
-      // </AcSection>
-      <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-
-          <AcColumn gap='sm'>
-            <Heading>Beheer Voorzieningen Versie</Heading>
-
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
-
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
-
-            {/* modals */}
-            <AcEditVoorzieningAanbodModal
-              voorziening={singleSelectedRow}
-              showModal={openModal === 'edit'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-
-            <AcDeleteVoorzieningAanbodModal
-              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-              showModal={openModal === 'delete'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-          </AcColumn>
-        </AcFlex>
-      </AcSection>
+      <AcBeheerError title='Beheer Voorzieningen Versie' error={error.message} />
     );
+  }
+
+  if (loading) {
+    return <AcBeheerLoading title='Beheer Voorzieningen Versie' />;
   }
 
   return (
@@ -250,16 +139,15 @@ const AcBeheerVoorzieningenVersie = () => {
       <AcFlex spacing='xl'>
         <AcSideNav />
 
-        <AcColumn gap='sm'>
-          <Heading>Beheer Voorzieningen Versie</Heading>
-
-          <AcFlex spacing='sm' justifyContent='end'>
+        <AcColumn gap='sm' horizontalOverflowWrapper>
+          <AcFlex spacing='sm' justifyContent='between'>
+            <Heading>Beheer Voorzieningen Versie</Heading>
             <PrimaryActionButton
               disabled={selectedRows.length === 0}
               onClick={handleMultipleDelete}
             >
-              Delete {selectedRows.length}{' '}
-              {selectedRows.length === 1 ? 'item' : 'items'}
+              <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
+              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
             </PrimaryActionButton>
           </AcFlex>
 
