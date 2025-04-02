@@ -58,7 +58,7 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   const navigate = useNavigate();
 
   if (nextcloud_user_id) {
-    navigate('/mijn-omgeving');
+    navigate('/beheer');
   }
 
   // fetch client id and secret key from local storage

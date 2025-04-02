@@ -30,6 +30,7 @@
     > * {
       display: flex;
       align-items: center;
+      margin-inline-start: 1rem;
       gap: var(--tilburg-space-column-pig);
       color: var(--tilburg-logo-color);
       font-size: var(--tilburg-typography-font-size-3xl);

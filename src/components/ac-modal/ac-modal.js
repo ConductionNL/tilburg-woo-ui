@@ -5,11 +5,12 @@ import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
 
-const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children }, ref) => {
+const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children, onClose, layoutClassName }, ref) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onCloseHandler = () => {
     setIsOpen(false);
+    onClose && onClose();
     ref?.current?.close();
   };
 
@@ -22,7 +23,7 @@ const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, ch
     ref?.current?.close();
   };
 
-  const _CLASSES = clsx('ac-modal', isOpen && 'open');
+  const _CLASSES = clsx('ac-modal', isOpen && 'open', layoutClassName && layoutClassName);
 
   return (
     <dialog id={id} className={_CLASSES} ref={ref} onClick={onBackdropClick}>

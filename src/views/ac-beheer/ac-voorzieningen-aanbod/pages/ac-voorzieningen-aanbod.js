@@ -1,117 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-
-import { VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
+import { AcFlex, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
-import config from '@src/config';
-
+import { VISUALS } from '@constants';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
+import { AcSideNav } from '@components';
+import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../../cd-table';
 import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
-import { useNavigate } from 'react-router';
-import { AcLink } from '@src/molecules';
-import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState([
-    {
-      '@self': {
-        id: null,
-        uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-        uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-        version: null,
-        register: '3',
-        schema: '17',
-        files: [],
-        relations: [],
-        locked: null,
-        owner: null,
-        updated: null,
-        created: null,
-        folder:
-          'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-      },
-      id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-      naam: 'eHerkenning Machtigingenregister',
-      omschrijving:
-        'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
-      type: 'Authenticatie',
-      voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-      organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
-      productpagina: 'https://www.eherkenning.nl/machtigingenregister',
-      ondersteuningsmodel:
-        'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
-      licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
-      hostingopties: 'Private cloud',
-      versies: [
-        '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-        '45c67d89-ab12-4e56-8f90-123456789abc',
-        '67890abc-def1-2345-6789-012345678901',
-        '34567890-bcde-f123-4567-890123456789',
-      ],
-    },
-  ]);
+  const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
           '/openconnector/api/endpoint/voorzieningaanboden'
-      );
-      const data = (await response.json()).results;
+      ).finally(() => setLoading(false));
+      const jsonResponse = await response.json();
 
-      const dataWithTestData = [
-        ...data,
-        {
-          '@self': {
-            id: null,
-            uuid: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-            uri: 'https://vng.accept.commonground.nu/apps/openregister/api/objects/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-            version: null,
-            register: '3',
-            schema: '17',
-            files: [],
-            relations: [],
-            locked: null,
-            owner: null,
-            updated: null,
-            created: null,
-            folder:
-              'Open Registers/Software Catalogus Register/VoorzieningAanbod/8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-          },
-          id: '8f3b5671-a294-4c84-9e4a-b2c654d89f12',
-          naam: 'eHerkenning Machtigingenregister',
-          omschrijving:
-            'Het eHerkenning Machtigingenregister is een centrale voorziening voor het beheren en valideren van digitale machtigingen voor bedrijven en organisaties. Hiermee kunnen gebruikers anderen machtigen om namens hun organisatie digitaal zaken te doen met overheidsinstanties en andere aangesloten dienstverleners.',
-          type: 'Authenticatie',
-          voorzieningId: '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-          organisatieId: '45c67d89-ab12-4e56-8f90-123456789abc',
-          productpagina: 'https://www.eherkenning.nl/machtigingenregister',
-          ondersteuningsmodel:
-            'Beheerde dienst met zakelijke SLA en helpdesk tijdens kantooruren',
-          licentiemodel: 'Jaarlijks abonnement op basis van organisatiegrootte',
-          hostingopties: 'Private cloud',
-          versies: [
-            '9d4e8f23-7c16-42a5-b391-d85f12e67890',
-            '45c67d89-ab12-4e56-8f90-123456789abc',
-            '67890abc-def1-2345-6789-012345678901',
-            '34567890-bcde-f123-4567-890123456789',
-          ],
-        },
-      ];
+      const data = jsonResponse.results;
 
-      setData(dataWithTestData);
+      const errorResponse = jsonResponse.error;
+
+      errorResponse && setError({ message: errorResponse });
+      setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -163,7 +88,7 @@ const AcBeheerVoorzieningenAanbod = () => {
               );
             }}
           >
-            Bekijken
+            <VISUALS.EYE className='ac-button__icon' /> Bekijken
           </button>
           <button
             className='utrecht-button slim'
@@ -173,7 +98,7 @@ const AcBeheerVoorzieningenAanbod = () => {
               setOpenModal('edit');
             }}
           >
-            bewerken
+            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
           </button>
           <button
             className='utrecht-button slim'
@@ -183,7 +108,7 @@ const AcBeheerVoorzieningenAanbod = () => {
               setOpenModal('delete');
             }}
           >
-            verwijderen
+            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
           </button>
         </AcFlex>
       ),
@@ -196,77 +121,28 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   if (error) {
     return (
-      // <AcSection spacing className='ac-mijn-omgeving-section'>
-      //   <AcFlex spacing='xl'>
-      //     <AcSideNav />
-      //     <AcColumn gap='sm'>
-      //       <Heading level={1}>Er is een fout opgetreden</Heading>
-      //       <Paragraph>
-      //         Er kon geen verbinding worden gemaakt met de server. Probeer het later
-      //         opnieuw.
-      //       </Paragraph>
-      //       <Paragraph>{error.message}</Paragraph>
-      //     </AcColumn>
-      //   </AcFlex>
-      // </AcSection>
-      <AcSection spacing className='ac-mijn-omgeving-section'>
-        <AcFlex spacing='xl'>
-          <AcSideNav />
-
-          <AcColumn gap='sm'>
-            <Heading>Beheer Voorzieningen Aanbod</Heading>
-
-            <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                Delete {selectedRows.length}{' '}
-                {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
-            </AcFlex>
-
-            <CDTable
-              data={data}
-              tableHeaders={tableHeaders}
-              getSelectedRows={setSelectedRows}
-              renderSelectRowButtons
-              ref={tableRef}
-              truncateLines={2}
-            />
-
-            <AcDeleteVoorzieningAanbodModal
-              voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-              showModal={openModal === 'delete'}
-              onClose={() => {
-                setOpenModal(null);
-                setSingleSelectedRow(null);
-              }}
-              onSuccess={() => {
-                tableRef.current.resetSelectedRows();
-                fetchData();
-              }}
-            />
-          </AcColumn>
-        </AcFlex>
-      </AcSection>
+      <AcBeheerError title='Beheer Voorzieningen Aanbod' error={error.message} />
     );
+  }
+
+  if (loading) {
+    return <AcBeheerLoading title='Beheer Voorzieningen Aanbod' />;
   }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <AcSideNav />
-        <AcColumn gap='sm'>
-          <Heading>Beheer Voorzieningen Aanbod</Heading>
 
-          <AcFlex spacing='sm' justifyContent='end'>
+        <AcColumn gap='sm' horizontalOverflowWrapper>
+          <AcFlex spacing='sm' justifyContent='between'>
+            <Heading>Beheer Voorzieningen Aanbod</Heading>
             <PrimaryActionButton
               disabled={selectedRows.length === 0}
               onClick={handleMultipleDelete}
             >
-              Delete {selectedRows.length}{' '}
-              {selectedRows.length === 1 ? 'item' : 'items'}
+              <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
+              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
             </PrimaryActionButton>
           </AcFlex>
 

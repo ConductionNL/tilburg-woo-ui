@@ -2,38 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
-import {
-  AcSearchFilters,
-  AcSearchResult,
-  AcLink,
-  AcTable,
-  AcButton,
-  AcFormField,
-} from '@molecules';
-import { AcCard, AcContainer, AcFlex, AcSection } from '@atoms';
-import { LABELS, LABELS_DYNAMIC, TOASTER_TYPES, VISUALS } from '@constants';
-import { AcModal, AcSearchBox, AcSearchSort } from '@components';
+import { AcSearchResult, AcButton, AcFormField } from '@molecules';
+import { AcFlex, AcSection } from '@atoms';
+import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { AcModal } from '@components';
 import { withStore } from '@stores';
 
 import {
   Alert,
   Heading,
   Paragraph,
-  BadgeCounter,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
-import AcSideNav from './ac-side-nav';
-import {
-  Sidenav,
-  SidenavList,
-  SidenavItem,
-  SidenavLink,
-  SidenavLinkLabel,
-} from '@gemeente-denhaag/components-react';
-import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcCNavigation } from '@components';
-import config from '@src/config';
+import { AcSideNav } from '@components';
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
@@ -302,7 +284,8 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
   const syncGemma = async () => {
     // const baseUrl = config.mijnOmgeving.baseURL;
-    const baseUrl = 'https://vng.accept.commonground.nu/apps';
+    // const baseUrl = 'https://vng.accept.commonground.nu/apps';
+    const baseUrl = 'http://localhost:8080/apps';
     const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
 
     try {
@@ -334,7 +317,8 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const downloadGemma = async () => {
     try {
       // const baseUrl = config.mijnOmgeving.baseURL;
-      const baseUrl = 'https://vng.accept.commonground.nu/apps';
+      // const baseUrl = 'https://vng.accept.commonground.nu/apps';
+      const baseUrl = 'http://localhost:8080/apps';
       const url = `${baseUrl}/openconnector/api/endpoint/model`;
 
       const response = await fetch(url, {
@@ -389,7 +373,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
               onClick={syncGemma}
               disabled={syncGemmaLoading}
             >
-              {syncGemmaLoading ? 'Gemma inlezen...' : 'Gemma inlezen'}
+              {syncGemmaLoading ? 'Archimate inlezen...' : 'Archimate inlezen'}
             </AcButton>
 
             <AcButton
@@ -397,7 +381,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
               icon={<VISUALS.DOWNLOAD />}
               onClick={downloadGemma}
             >
-              Gemma downloaden
+              GEMMA downloaden
             </AcButton>
           </AcFlex>
 

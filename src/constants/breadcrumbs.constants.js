@@ -8,7 +8,7 @@ export const BREADCRUMB_ITEMS = {
   THEMES: { label: 'Onderwerpen', href: '/onderwerpen' },
   LOGIN: { label: 'Inloggen', href: '/login' },
   MIJN_OMGEVING: { label: 'Mijn omgeving', href: '/mijn-omgeving' },
-  GEMMA: { label: 'Gemma', href: '/gemma' },
+  GEMMA: { label: 'GEMMA', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
   BEHEER: { label: 'Beheer' },
   BEHEER_LIST: (type) => ({

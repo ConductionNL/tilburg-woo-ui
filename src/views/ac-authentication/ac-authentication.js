@@ -1,15 +1,9 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { VISUALS } from '@constants';
-import {
-  Textbox,
-  PrimaryActionButton,
-} from '@utrecht/component-library-react/dist/css-module';
-import { AcLink } from '@src/molecules';
-import config from '@src/config';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -49,21 +43,24 @@ function getCookie(name) {
   return null;
 }
 
+function removeCookie(name) {
+  document.cookie = `${encodeURIComponent(
+    name
+  )}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+}
+
 const AcAuthentication = () => {
   const nextcloud_user_id = getCookie('nextcloud_user_id');
-
-  if (nextcloud_user_id) {
-    return (
-      <div className='container container--compact'>
-        <div>
-          Je bent al ingelogd met Nextcloud. Je kunt nu naar de dashboard gaan.
-        </div>
-      </div>
-    );
-  }
+  const navigate = useNavigate();
 
   const [searchParams, setSearchParams] = useSearchParams();
   const redirect_url = searchParams.get('redirect_url');
+
+  useEffect(() => {
+    if (nextcloud_user_id) {
+      navigate('/beheer');
+    }
+  }, [nextcloud_user_id]);
 
   // Save redirect_url to localStorage if it exists and is safe
   useEffect(() => {
@@ -81,8 +78,7 @@ const AcAuthentication = () => {
   const [clientId, setClientId] = useState('QP2dpVmW5sl04tRoC4ixQ75Y52Rkz2Gj1Hi4jaLToe8dHlAROToLu2uPdjNaDsKX');
   const [secretKey, setSecretKey] = useState('ZEp3E3fcF29sCOEiI7SjEoKFNZNf8Ngu24sUwqH03SrDaK4fLYWpo7j4intzPkdb');
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const handleLogin = () => {
     // save client id and secret key as a cookie for 5 minutes
     setCookie('nextcloud_client_id', clientId, 5 * 60, {
       secure: true,
@@ -103,28 +99,12 @@ const AcAuthentication = () => {
     window.location.href = url.toString();
   };
 
-  return (
-    <form className='container container--compact' onSubmit={handleLogin}>
-      {/* <div className='ac-authentication-form'>
-        <Textbox
-          type='text'
-          placeholder='Client ID'
-          value={clientId}
-          onChange={(e) => setClientId(e.target.value)}
-        />
-        <Textbox
-          type='password'
-          placeholder='Secret key'
-          value={secretKey}
-          onChange={(e) => setSecretKey(e.target.value)}
-        />
-      </div> */}
-      <PrimaryActionButton type='submit' disabled={!clientId || !secretKey}>
-        <VISUALS.ARROW_RIGHT />
-        <span>Inloggen</span>
-      </PrimaryActionButton>
-    </form>
-  );
+  const location = window.location.pathname;
+
+  if (!nextcloud_user_id && location === '/login') {
+    handleLogin();
+    removeCookie('logout');
+  }
 };
 
 export default withStore(observer(AcAuthentication));

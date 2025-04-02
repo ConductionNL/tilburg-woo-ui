@@ -246,6 +246,7 @@
   --tilburg-color-black-txt: #333333;
   --tilburg-color-black: #1a1a1a;
   --tilburg-color-white: #ffffff;
+  --tilburg-color-code-background-color: #ededed;
   --tilburg-border-width-lg: 4px;
   --tilburg-border-width-md: 2px;
   --tilburg-border-width-sm: 1px;
@@ -1143,6 +1144,12 @@
   --denhaag-sidenav-item-font-size: 16px;
   --denhaag-sidenav-item-font-family: var(--utrecht-document-font-family);
   --denhaag-sidenav-row-gap: 5px;
+
+  --utrecht-code-background-color: var(--tilburg-color-code-background-color);
+  --utrecht-code-color: var(--tilburg-document-color);
+  --utrecht-code-font-size: inherit;
+  // --utrecht-code-font-family: inherit;
+  // --utrecht-code-line-height: inherit;
 
   --conduction-tabs-tab-background-color: transparent;
   --conduction-tabs-tab-color: var(--utrecht-document-color);

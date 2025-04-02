@@ -37,8 +37,11 @@ const AcSearchSubjects = loadable(() =>
 const AcCNavigation = loadable(() =>
   import('@components/ac-c-navigation/ac-c-navigation')
 );
-const AcTabList = loadable(() =>
-  import('@components/ac-tablist/ac-tablist')
+const AcTabList = loadable(() => import('@components/ac-tablist/ac-tablist'));
+
+const AcSideNav = loadable(() => import('@components/ac-sidenav/ac-side-nav'));
+const CoHorizontalOverflowWrapper = loadable(() =>
+  import('@components/co-horizontal-overflow-wrapper/co-horizontal-overflow-wrapper')
 );
 
 export {
@@ -62,4 +65,6 @@ export {
   AcSearchSort,
   AcSearchSubjects,
   AcTabList,
+  AcSideNav,
+  CoHorizontalOverflowWrapper,
 };

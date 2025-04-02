@@ -1,50 +1,29 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-
-import { LABELS } from '@constants';
-import { AcContainer, AcSection } from '@atoms';
+import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { AcContainer, AcFlex, AcSection } from '@atoms';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import { useNavigate, useParams } from 'react-router';
-
-import loadable from '@loadable/component';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { getCookie } from '@src/utilities';
-
-// list pages
-const AcBeheerVoorzieningen = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen/ac-voorzieningen')
-);
-const AcBeheerVoorzieningenAanbod = loadable(() =>
-  import(
-    '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod'
-  )
-);
-const AcBeheerVoorzieningenGebruik = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-gebruik/ac-voorzieningen-gebruik')
-);
-const AcBeheerVoorzieningenVersie = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-versie/ac-voorzieningen-versie')
-);
-const AcBeheerContracten = loadable(() =>
-  import('@views/ac-beheer/ac-contracten/ac-contracten')
-);
-const AcBeheerOrganisaties = loadable(() =>
-  import('@views/ac-beheer/ac-organisatie/ac-organisatie')
-);
-const AcBeheerKwetsbaarheden = loadable(() =>
-  import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
-);
-
-// detail pages
-const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
-  import(
-    '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod-details'
-  )
-);
+import { AcSearchResult, AcButton, AcFormField } from '@molecules';
+import { AcModal } from '@components';
+import loadable from '@loadable/component';
+import AcColumn from '@atoms/ac-column/ac-column';
+import { AcSideNav } from '@components';
+import {
+  AcBeheerVoorzieningenAanbod,
+  AcBeheerVoorzieningenGebruik,
+  AcBeheerVoorzieningenVersie,
+  AcBeheerContracten,
+  AcBeheerOrganisaties,
+  AcBeheerKwetsbaarheden,
+  AcDashboard,
+  AcBeheerVoorzieningenAanbodDetails,
+} from '@views/ac-beheer';
 
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);
@@ -62,13 +41,21 @@ const AcBeheer = () => {
   );
 
   const loggedIn = !!getCookie('nextcloud_user_id');
+  const loggedOut = getCookie('logout');
   useEffect(() => {
+    if (loggedOut) {
+      navigate('/');
+    }
     if (!loggedIn) {
       navigate(`/login?redirect_url=${window.location.pathname}`);
     }
-  }, [loggedIn]);
+  }, [loggedIn, loggedOut]);
 
   const { type, id } = useParams();
+
+  if (window.location.pathname === '/beheer') {
+    return <AcDashboard />;
+  }
 
   if (!id) {
     switch (type) {

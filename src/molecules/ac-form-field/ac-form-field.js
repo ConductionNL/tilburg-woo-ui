@@ -17,6 +17,7 @@ const AcFormField = ({
   hasError,
   onChange,
   value,
+  fullWidth,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -37,7 +38,10 @@ const AcFormField = ({
       </FormLabel>
       <Textbox
         id={id}
-        className={clsx({ 'error-input': hasError })}
+        className={clsx(
+          { 'error-input': hasError },
+          fullWidth && 'ac-form-field--full-width'
+        )}
         defaultValue={defaultValue}
         placeholder={placeholder}
         onBlur={onBlurHandler}

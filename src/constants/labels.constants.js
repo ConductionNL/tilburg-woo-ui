@@ -58,7 +58,7 @@ export const LABELS = {
 
   AUTHENTICATION: 'Login',
   MIJN_OMGEVING: 'Mijn omgeving',
-  GEMMA: 'Gemma',
+  GEMMA: 'GEMMA',
   ABOUT_CATEGORIES: 'Over categorieën',
 
   WRONG_PAGE: '404 | Deze pagina bestaat niet',

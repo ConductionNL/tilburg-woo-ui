@@ -3,3 +3,51 @@
   padding: 0;
   padding-inline: 0.5rem;
 }
+
+.ac-gemma-sync-modal__form {
+  margin-block-end: 15px;
+}
+
+.ac-gemma-sync-modal__button {
+  margin-block-end: 25px;
+}
+
+.ac-gemma-sync-modal__cards-container > :not(:last-child) {
+  margin-block-end: 5px;
+}
+
+.ac-gemma-sync-result {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.ac-gemma-sync-result-image--loading {
+  animation-name: ckw;
+  animation-duration: 1s;
+  /* Things added */
+  animation-iteration-count: infinite;
+  transform-origin: 50% 50%;
+  display: inline-block;
+  /* <--- */
+}
+@keyframes ckw {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ac-gemma-sync-result-image--success {
+  fill: green;
+}
+
+.ac-gemma-sync-result-image--error {
+  fill: red;
+}
+
+.ac-gemma-sync-modal {
+  width: 750px;
+}

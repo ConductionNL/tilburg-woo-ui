@@ -18,20 +18,16 @@ import {
 const AcSideNav = () => {
   const navigate = useNavigate();
 
-  const onSubmit = () => {
-    navigate('/mijn-omgeving');
-  };
-
   return (
     <>
       <Sidenav>
         <SidenavList>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/mijn-omgeving')}
-              current={window.location.pathname.startsWith('/mijn-omgeving')}
+              onClick={() => navigate('/beheer')}
+              current={window.location.pathname === '/beheer'}
             >
-              <VISUALS.USERS />
+              <VISUALS.CHART_LINE />
               Dashboard
             </SidenavLink>
           </SidenavItem>

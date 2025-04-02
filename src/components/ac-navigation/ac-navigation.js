@@ -6,7 +6,6 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router';
 
-
 const AcNavigation = ({ store: { menu } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
@@ -24,18 +23,60 @@ const AcNavigation = ({ store: { menu } }) => {
     return <Icon />;
   };
 
+  function setCookie(name, value, maxAgeSeconds, options = {}) {
+    const { secure, httpOnly, sameSite } = options;
+    let cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
+      value
+    )}; max-age=${maxAgeSeconds}; path=/`;
+    if (secure) cookie += '; Secure';
+    if (httpOnly) cookie += '; HttpOnly';
+    if (sameSite) cookie += `; SameSite=${sameSite}`;
+    document.cookie = cookie;
+  }
+
+  function getCookie(name) {
+    // Split document.cookie on `;` to handle multiple cookies
+    const cookieArr = document.cookie.split(';');
+
+    for (let cookie of cookieArr) {
+      // Remove leading spaces
+      cookie = cookie.trim();
+      // Check if this cookie starts with "<name>="
+      if (cookie.startsWith(`${encodeURIComponent(name)}=`)) {
+        // Return everything after the "<name>="
+        return decodeURIComponent(cookie.substring(name.length + 1));
+      }
+    }
+
+    return null;
+  }
+
   useEffect(() => {
     setIsMenuOpen(false);
     fetchMenus();
   }, [location]);
 
   function removeCookie(name) {
-    document.cookie = `${encodeURIComponent(name)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    document.cookie = `${encodeURIComponent(
+      name
+    )}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
   }
 
   const handleLogout = () => {
-    removeCookie('nextcloud_user_id');
-    navigate('/');
+    setCookie('logout', true, 'never', {
+      secure: true,
+      httpOnly: false,
+      sameSite: 'strict',
+    });
+
+    setTimeout(() => {
+      removeCookie('nextcloud_user_id');
+      if (pathname.includes('/beheer')) {
+        navigate('/');
+      }else{
+        navigate(pathname)
+      }
+    }, 1000);
   };
 
   return (
@@ -49,7 +90,7 @@ const AcNavigation = ({ store: { menu } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {(menus && (
+        {(menus && !getCookie('nextcloud_user_id') && (
           <ul>
             {menus.items.map((menuItem) => (
               <li>
@@ -63,7 +104,7 @@ const AcNavigation = ({ store: { menu } }) => {
         )) ||
           (AcCheckIfSpecificHostname() && (
             <>
-              {pathname !== '/mijn-omgeving' && !pathname.includes('beheer') ? (
+              {!pathname.includes('beheer') && !getCookie('nextcloud_user_id') ? (
                 <ul>
                   <li>
                     <Link to='/login'>
@@ -80,6 +121,12 @@ const AcNavigation = ({ store: { menu } }) => {
                 </ul>
               ) : (
                 <ul>
+                  <li>
+                    <Link to='/beheer'>
+                      <VISUALS.CHART_LINE />
+                      Dashboard
+                    </Link>
+                  </li>
                   <li>
                     <Link to='#' onClick={handleLogout}>
                       <VISUALS.RIGHT_FROM_BRACKET />

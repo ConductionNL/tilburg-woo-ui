@@ -2,15 +2,20 @@
   display: flex;
   flex-direction: column;
 
+  &--horizontal-overflow-wrapper {
+    min-width: 0;
+    flex: 1;
+  }
+
   &--gap-horse {
-    gap: var(--tilburg-space-column-horse)
+    gap: var(--tilburg-space-column-horse);
   }
 
   &--gap-tiger {
-    gap: var(--tilburg-space-column-tiger)
+    gap: var(--tilburg-space-column-tiger);
   }
 
   &--gap-sm {
-    gap: var(--tilburg-space-column-mouse)
+    gap: var(--tilburg-space-column-mouse);
   }
 }
