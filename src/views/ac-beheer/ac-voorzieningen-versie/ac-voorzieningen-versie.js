@@ -89,7 +89,7 @@ const AcBeheerVoorzieningenVersie = () => {
             disabled={true}
             onClick={() => {
               navigate(
-                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-gebruik', row.id)
+                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-versie', row.id)
               );
             }}
           >
