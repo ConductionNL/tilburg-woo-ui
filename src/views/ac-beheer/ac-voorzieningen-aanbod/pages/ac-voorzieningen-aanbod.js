@@ -7,7 +7,7 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@src/constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcLoader, AcSideNav } from '@components';
+import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../../cd-table';
@@ -23,6 +23,7 @@ const AcBeheerVoorzieningenAanbod = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
@@ -127,10 +128,12 @@ const AcBeheerVoorzieningenAanbod = () => {
   if (loading) {
     return <AcBeheerLoading title='Beheer Voorzieningen Aanbod' />;
   }
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <AcSideNav />
+
         <AcColumn gap='sm' horizontalOverflowWrapper>
           <AcFlex spacing='sm' justifyContent='between'>
             <Heading>Beheer Voorzieningen Aanbod</Heading>
