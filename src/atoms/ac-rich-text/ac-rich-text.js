@@ -3,7 +3,7 @@ import { AcSanitizeHtml } from '@src/utilities';
 import clsx from 'clsx';
 
 const AcRichText = ({ content }) => {
-  const _CLASSES = clsx('ac-rich-text');
+  const _CLASSES = clsx('ac-rich-text space-content');
 
   if (!content) {
     return null;

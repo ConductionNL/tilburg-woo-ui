@@ -69,4 +69,20 @@
   h6 {
     @extend .utrecht-heading-6 !optional;
   }
+
+  &.space-content {
+    > * + * {
+      margin-block-start: var(--tilburg-space-column-mouse);
+    }
+
+    > h2,
+    > h3,
+    > h4,
+    > h5,
+    > h6 {
+      &:not(:first-child) {
+        margin-block-start: var(--tilburg-space-column-cat);
+      }
+    }
+  }
 }
