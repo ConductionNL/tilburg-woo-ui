@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@utrecht/component-library-react';
 import { AcUUID } from '@src/utilities';
+import { TOOLTIP_ID } from '@src/index.web';
 import CoHorizontalOverflowWrapper from '@components/co-horizontal-overflow-wrapper/co-horizontal-overflow-wrapper';
 
 /**
@@ -196,6 +197,8 @@ const CDTable = (
     [resetSelectedRows]
   );
 
+  const isTextClamped = (elm) => elm && elm.scrollHeight > elm.clientHeight;
+
   const getTruncateStyle = useMemo(() => {
     return () => {
       if (!truncateLines) {
@@ -296,8 +299,22 @@ const CDTable = (
           </TableCell>
         )}
         {tableHeaders.map((header, headerIndex) => (
-          <TableCell key={headerIndex}>
-            <div style={getTruncateStyle()}>{handleDataCellRender(header, row)}</div>
+          <TableCell
+            data-tooltip-id={
+              isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
+                ? TOOLTIP_ID
+                : null
+            }
+            data-tooltip-content={
+              isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
+                ? row[header.key]
+                : null
+            }
+            key={headerIndex}
+          >
+            <div id={`table-cell-${headerIndex}`} style={getTruncateStyle()}>
+              {handleDataCellRender(header, row)}
+            </div>
           </TableCell>
         ))}
       </TableRow>

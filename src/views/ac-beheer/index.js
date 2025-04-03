@@ -1,10 +1,15 @@
 import loadable from '@loadable/component';
 
 // standard pages
-const AcBeheerError = loadable(() => import('@src/views/ac-beheer/ac-standard-pages/ac-beheer-error'));
-const AcBeheerLoading = loadable(() => import('@src/views/ac-beheer/ac-standard-pages/ac-beheer-loading'));
+const AcBeheerError = loadable(() =>
+  import('@src/views/ac-beheer/ac-standard-pages/ac-beheer-error')
+);
+const AcBeheerLoading = loadable(() =>
+  import('@src/views/ac-beheer/ac-standard-pages/ac-beheer-loading')
+);
 
 // list pages
+const AcDashboard = loadable(() => import('@views/ac-beheer/ac-dashboard'));
 const AcBeheerVoorzieningenAanbod = loadable(() =>
   import(
     '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod'
@@ -25,8 +30,9 @@ const AcBeheerOrganisaties = loadable(() =>
 const AcBeheerKwetsbaarheden = loadable(() =>
   import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
 );
-
-const AcDashboard = loadable(() => import('@views/ac-beheer/ac-dashboard'));
+const AcBeheerVoorzieningen = loadable(() =>
+  import('@views/ac-beheer/ac-voorzieningen/ac-voorzieningen')
+);
 
 // detail pages
 const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
@@ -46,4 +52,5 @@ export {
   AcBeheerVoorzieningenAanbodDetails,
   AcBeheerError,
   AcBeheerLoading,
+  AcBeheerVoorzieningen,
 };
