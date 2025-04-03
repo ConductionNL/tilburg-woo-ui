@@ -2,12 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import config from '@src/config';
 import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
+import ReactSelect from 'react-select';
 
 const AcEditVoorzieningModal = ({
   voorziening,
@@ -16,33 +15,49 @@ const AcEditVoorzieningModal = ({
   onSuccess,
 }) => {
   const modalRef = useRef(null);
+
+  const types = [
+    { id: '270f7176-2bdc-4702-a037-0684b2487ab8', label: 'Voorziening' },
+  ];
+  const targetGroups = [
+    'Gemeente',
+    'Waterschap',
+    'Provincie',
+    'Ministerie',
+    'Uitvoeringsorganisatie',
+    'Samenwerkingsverband',
+    'Leverancier',
+  ];
+
   const [voorzieningFormData, setVoorzieningFormData] = useState({
-    naam: '',
-    beschrijving: '',
-    voorzieningstypeId: '',
-    categorie: '',
-    functionaliteiten: '',
-    doelgroep: '',
-    referentieComponenten: '',
-    standaarden: '',
+    name: '',
+    description: '',
+    type: '',
+    category: '',
+    functionalities: '',
+    targetGroups: [],
+    referenceComponents: [],
+    standards: '',
   });
 
-  // load contract data into the form
+  // load voorziening data into the form
   useEffect(() => {
     if (voorziening) {
       setVoorzieningFormData((prev) => ({
         ...prev,
-        ...voorziening,
-        functionaliteiten: Array.isArray(voorziening.referenties)
-          ? voorziening.referenties.join(', ')
-          : voorziening.referenties,
-        doelgroep: Array.isArray(voorziening.doelgroep)
-          ? voorziening.doelgroep.join(', ')
-          : voorziening.doelgroep,
-        referentieComponenten: Array.isArray(voorziening.referentieComponenten)
+        id: voorziening.id,
+        name: voorziening.naam,
+        description: voorziening.beschrijving,
+        type: voorziening.voorzieningstypeId,
+        category: voorziening.categorie,
+        functionalities: Array.isArray(voorziening.functionaliteiten)
+          ? voorziening.functionaliteiten.join(', ')
+          : voorziening.functionaliteiten,
+        targetGroups: voorziening.doelgroep,
+        referenceComponents: Array.isArray(voorziening.referentieComponenten)
           ? voorziening.referentieComponenten.join(', ')
           : voorziening.referentieComponenten,
-        standaarden: Array.isArray(voorziening.standaarden)
+        standards: Array.isArray(voorziening.standaarden)
           ? voorziening.standaarden.join(', ')
           : voorziening.standaarden,
       }));
@@ -77,20 +92,20 @@ const AcEditVoorzieningModal = ({
         {
           method: 'PUT',
           body: JSON.stringify({
-            ...voorzieningFormData,
-            functionaliteiten: voorzieningFormData.functionaliteiten
+            naam: voorzieningFormData.name,
+            beschrijving: voorzieningFormData.description,
+            voorzieningstypeId: voorzieningFormData.type,
+            categorie: voorzieningFormData.category,
+            functionaliteiten: voorzieningFormData.functionalities
               .trim()
               .split(/ *, */g)
               .filter(Boolean),
-            doelgroep: voorzieningFormData.doelgroep
+            doelgroep: voorzieningFormData.targetGroups,
+            referentieComponenten: voorzieningFormData.referenceComponents
               .trim()
               .split(/ *, */g)
               .filter(Boolean),
-            referentieComponenten: voorzieningFormData.referentieComponenten
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            standaarden: voorzieningFormData.standaarden
+            standaarden: voorzieningFormData.standards
               .trim()
               .split(/ *, */g)
               .filter(Boolean),
@@ -139,62 +154,85 @@ const AcEditVoorzieningModal = ({
         <AcFormField
           label='Naam'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('naam')}
-          value={voorzieningFormData.naam}
+          onBlur={handleEditVoorzieningFieldChange('name')}
+          value={voorzieningFormData.name}
         />
         <AcFormField
           label='Beschrijving'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('beschrijving')}
-          value={voorzieningFormData.beschrijving}
+          onBlur={handleEditVoorzieningFieldChange('description')}
+          value={voorzieningFormData.description}
         />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Voorziening type</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een voorzieningsType'
+            value={types?.find((option) => option.id === voorzieningFormData.type)}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setAddVoorzieningFormData((prev) => ({
+                ...prev,
+                type: e.value,
+              }));
+            }}
+            loading={types?.length === 0}
+            options={types?.map((type) => ({
+              value: type.id,
+              label: type.label,
+            }))}
+          />
+        </div>
         <AcFormField
           label='Categorie'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('categorie')}
-          value={voorzieningFormData.categorie}
-        />
-        <AcFormField
-          label='Voorzienings type ID'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('voorzieningstypeId')}
-          value={voorzieningFormData.voorzieningstypeId}
+          onBlur={handleEditVoorzieningFieldChange('category')}
+          value={voorzieningFormData.category}
         />
         <AcFormField
           label='Functionaliteiten'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('functionaliteiten')}
-          value={voorzieningFormData.functionaliteiten}
+          onBlur={handleEditVoorzieningFieldChange('functionalities')}
+          value={voorzieningFormData.functionalities}
         />
-        <AcFormField
-          label='Doelgroep'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('doelgroep')}
-          value={voorzieningFormData.doelgroep}
-        />
+
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Doelgroepen</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een doelgroep'
+            className='ac-beheer-select'
+            isMulti
+            value={voorzieningFormData.targetGroups.map((targetGroup) => ({
+              value: targetGroup,
+              label: targetGroup,
+            }))}
+            onChange={(e) => {
+              setVoorzieningFormData((prev) => ({
+                ...prev,
+                targetGroups: e.map((item) => item.value),
+              }));
+            }}
+            loading={targetGroups?.length === 0}
+            options={targetGroups?.map((targetGroup) => ({
+              value: targetGroup,
+              label: targetGroup,
+            }))}
+          />
+        </div>
         <AcFormField
           label='Referentie componenten'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('referentieComponenten')}
-          value={voorzieningFormData.referentieComponenten}
+          onBlur={handleEditVoorzieningFieldChange('referenceComponents')}
+          value={voorzieningFormData.referenceComponents}
         />
         <AcFormField
           label='Standaarden'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('standaarden')}
-          value={voorzieningFormData.standaarden}
-        />
-        <AcFormField
-          label='Referenties'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('referenties')}
-          value={voorzieningFormData.referenties}
-        />
-        <AcFormField
-          label='Referenties'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('referenties')}
-          value={voorzieningFormData.referenties}
+          onBlur={handleEditVoorzieningFieldChange('standards')}
+          value={voorzieningFormData.standards}
         />
       </AcFlex>
     </AcModal>

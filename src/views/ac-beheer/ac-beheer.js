@@ -1,19 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
+import { LABELS } from '@constants';
+import { AcContainer, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { useNavigate, useParams } from 'react-router';
 import { getCookie } from '@src/utilities';
-import { AcSearchResult, AcButton, AcFormField } from '@molecules';
-import { AcModal } from '@components';
-import loadable from '@loadable/component';
-import AcColumn from '@atoms/ac-column/ac-column';
-import { AcSideNav } from '@components';
 import {
   AcBeheerVoorzieningenAanbod,
   AcBeheerVoorzieningenGebruik,
@@ -23,7 +15,9 @@ import {
   AcBeheerKwetsbaarheden,
   AcDashboard,
   AcBeheerVoorzieningenAanbodDetails,
+  AcBeheerVoorzieningen,
 } from '@views/ac-beheer';
+import AcColumn from '@atoms/ac-column/ac-column';
 
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);

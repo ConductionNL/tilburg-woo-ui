@@ -1,38 +1,42 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-
-import { VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
+import { AcFlex, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
-import config from '@src/config';
-
+import { VISUALS } from '@constants';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
+import { AcSideNav } from '@components';
+import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcEditVoorzieningModal from './ac-edit-voorzieningen-modal';
 import AcDeleteVoorzieningModal from './ac-delete-voorzieningen-modal';
-import { useNavigate } from 'react-router';
-import { AcLink } from '@src/molecules';
-import AcSideNav from '@src/views/ac-mijn-omgeving/ac-side-nav';
 
 const AcBeheerVoorzieningen = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
+      setLoading(true);
+
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
           '/openconnector/api/endpoint/voorziening'
-      );
-      const data = (await response.json())?.results;
-      setData(data || []);
+      ).finally(() => setLoading(false));
+      const jsonResponse = await response.json();
+
+      const data = jsonResponse.results;
+
+      const errorResponse = jsonResponse.error;
+
+      errorResponse && setError({ message: errorResponse });
+      setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -42,23 +46,6 @@ const AcBeheerVoorzieningen = () => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  if (error) {
-    return (
-      <AcSection>
-        <AcContainer>
-          <AcFlex column spacing='sm'>
-            <Heading level={1}>Er is een fout opgetreden</Heading>
-            <Paragraph>
-              Er kon geen verbinding worden gemaakt met de server. Probeer het later
-              opnieuw.
-            </Paragraph>
-            <Paragraph>{error.message}</Paragraph>
-          </AcFlex>
-        </AcContainer>
-      </AcSection>
-    );
-  }
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -99,12 +86,22 @@ const AcBeheerVoorzieningen = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
+            disabled={true}
+            onClick={() => {
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen', row.id));
+            }}
+          >
+            <VISUALS.EYE className='ac-button__icon' /> Bekijken
+          </button>
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
             onClick={() => {
               setSingleSelectedRow(row);
               setOpenModal('edit');
             }}
           >
-            bewerken
+            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
           </button>
           <button
             className='utrecht-button slim'
@@ -114,7 +111,7 @@ const AcBeheerVoorzieningen = () => {
               setOpenModal('delete');
             }}
           >
-            verwijderen
+            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
           </button>
         </AcFlex>
       ),
@@ -125,21 +122,28 @@ const AcBeheerVoorzieningen = () => {
     setOpenModal('delete');
   };
 
+  if (error) {
+    return <AcBeheerError title='Beheer Voorzieningen' error={error.message} />;
+  }
+
+  if (loading) {
+    return <AcBeheerLoading title='Beheer Voorzieningen' />;
+  }
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <AcSideNav />
 
-        <AcColumn gap='sm'>
-          <Heading>Beheer Voorzieningen</Heading>
-
-          <AcFlex spacing='sm' justifyContent='end'>
+        <AcColumn gap='sm' horizontalOverflowWrapper>
+          <AcFlex spacing='sm' justifyContent='between'>
+            <Heading>Beheer Voorzieningen</Heading>
             <PrimaryActionButton
               disabled={selectedRows.length === 0}
               onClick={handleMultipleDelete}
             >
-              Delete {selectedRows.length}{' '}
-              {selectedRows.length === 1 ? 'item' : 'items'}
+              <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
+              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
             </PrimaryActionButton>
           </AcFlex>
 

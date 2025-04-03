@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
+import ReactSelect from 'react-select';
 
 const AcDashboard = () => {
   // sync gemma
@@ -22,7 +23,18 @@ const AcDashboard = () => {
 
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
-  const apiCalls = ['relations', 'model', 'views', 'elements'];
+  const types = [
+    { id: '270f7176-2bdc-4702-a037-0684b2487ab8', label: 'Voorziening' },
+  ];
+  const targetGroups = [
+    'Gemeente',
+    'Waterschap',
+    'Provincie',
+    'Ministerie',
+    'Uitvoeringsorganisatie',
+    'Samenwerkingsverband',
+    'Leverancier',
+  ];
   const endpoints = [
     { id: '7', name: 'elements' },
     { id: '4', name: 'views' },
@@ -36,10 +48,12 @@ const AcDashboard = () => {
   const [addVoorzieningFormData, setAddVoorzieningFormData] = useState({
     name: '',
     description: '',
+    type: '',
     category: '',
     functionalities: '',
+    targetGroups: [],
+    referenceComponents: [],
     standards: '',
-    offerings: '',
   });
 
   const handleAddVoorzieningOpenModal = () =>
@@ -54,11 +68,58 @@ const AcDashboard = () => {
 
   const handleSyncGemma = () => syncGemmaRef?.current?.showModal();
 
-  const handleAddVoorzieningSubmit = () => {
-    // Here you can make your POST request with the formData
-    console.info('Form data to submit:', addVoorzieningFormData);
-  };
 
+  const handleAddVoorzieningSubmit = async () => {
+    const accessToken = getCookie('nextcloud_access_token');
+
+    console.info('Form data to submit:', addVoorzieningFormData);
+
+    if (!accessToken) {
+      setError('Geen toegangstoken gevonden');
+      modalRef?.current?.close();
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        //   config.authentication.baseURL +
+        'https://vng.accept.commonground.nu/apps' +
+          `/openconnector/api/endpoint/voorziening`,
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            naam: addVoorzieningFormData.name,
+            beschrijving: addVoorzieningFormData.description,
+            voorzieningstypeId: addVoorzieningFormData.type,
+            categorie: addVoorzieningFormData.category,
+            functionaliteiten: addVoorzieningFormData.functionalities
+              .trim()
+              .split(/ *, */g)
+              .filter(Boolean),
+            doelgroep: addVoorzieningFormData.targetGroups,
+            referentieComponenten: addVoorzieningFormData.referenceComponents
+              .trim()
+              .split(/ *, */g)
+              .filter(Boolean),
+            standaarden: addVoorzieningFormData.standards
+              .trim()
+              .split(/ *, */g)
+              .filter(Boolean),
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        addVoorzieningModalRef?.current?.close();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const checkHeartbeat = async (apiCall) => {
     try {
       const response = await fetch(`https://vng.accept.commonground.nu/status.php`, {
@@ -190,6 +251,26 @@ const AcDashboard = () => {
           type='text'
           onBlur={handleAddVoorzieningFieldChange('description')}
         />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Voorziening type</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een voorzieningsType'
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setAddVoorzieningFormData((prev) => ({
+                ...prev,
+                type: e.value,
+              }));
+            }}
+            loading={types?.length === 0}
+            options={types?.map((type) => ({
+              value: type.id,
+              label: type.label,
+            }))}
+          />
+        </div>
         <AcFormField
           label='Categorie'
           type='text'
@@ -200,15 +281,37 @@ const AcDashboard = () => {
           type='text'
           onBlur={handleAddVoorzieningFieldChange('functionalities')}
         />
+
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Doelgroepen</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een doelgroep'
+            className='ac-beheer-select'
+            isMulti
+            onChange={(e) => {
+              setAddVoorzieningFormData((prev) => ({
+                ...prev,
+                targetGroups: e.map((item) => item.value),
+              }));
+            }}
+            loading={targetGroups?.length === 0}
+            options={targetGroups?.map((targetGroup) => ({
+              value: targetGroup,
+              label: targetGroup,
+            }))}
+          />
+        </div>
+        <AcFormField
+          label='Referentie componenten'
+          type='text'
+          onBlur={handleAddVoorzieningFieldChange('referenceComponents')}
+        />
         <AcFormField
           label='Standaarden'
           type='text'
           onBlur={handleAddVoorzieningFieldChange('standards')}
-        />
-        <AcFormField
-          label='Aanbiedingen'
-          type='text'
-          onBlur={handleAddVoorzieningFieldChange('offerings')}
         />
       </AcFlex>
     </AcModal>
