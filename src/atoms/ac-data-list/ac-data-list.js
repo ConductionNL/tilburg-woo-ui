@@ -8,13 +8,18 @@ import {
 import { VISUALS } from '@constants';
 const AcDataList = ({ rows = [] }) => {
   const renderDataListValue = (row) => {
-    return row.url ? (
-      <Link href={row.url} target='_blank' rel='noreferrer'>
-        {row.label}
-        <VISUALS.EXTERNAL_LINK_PINK />
-      </Link>
-    ) : (
-      row.label
+    return (
+      <>
+        {row.description && <p className='utrecht-paragraph'>{row.description}</p>}
+        {row.url ? (
+          <Link href={row.url} target='_blank' rel='noreferrer'>
+            {row.label}
+            <VISUALS.EXTERNAL_LINK_PINK />
+          </Link>
+        ) : (
+          row.label
+        )}
+      </>
     );
   };
 
