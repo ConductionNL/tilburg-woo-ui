@@ -44,7 +44,7 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
     return <AcLoader />;
   }
 
-  console.log('all_categories', all_categories);
+  console.log('contents', contents);
 
   return (
     <>
@@ -101,10 +101,11 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
       <AcFeatured publications={latest_publications} isLoading={is_loading_latest} />
 
       <AcAbout
-        title={AcRemoveTags(contents[3]?.data?.content)}
-        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[4]?.data?.content))}
-        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[2]?.data?.content))}
-        image={contents[5]?.data}
+        title={AcRemoveTags(contents[0]?.data?.content)}
+        content={AcSanitizeHtml(AcRemoveParagraphTags(contents[1]?.data?.content))}
+        list={AcSanitizeHtml(AcRemoveParagraphTags(contents[2]?.data?.content))}
+        link={AcSanitizeHtml(AcRemoveParagraphTags(contents[3]?.data?.content))}
+        image={contents[4]?.data}
       />
     </>
   );
