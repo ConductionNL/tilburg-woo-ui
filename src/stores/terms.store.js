@@ -31,6 +31,7 @@ export class TermsStore {
     this.fetchTermsForPublication = this.fetchTermsForPublication.bind(this);
     this.setSearchQuery = this.setSearchQuery.bind(this);
     this.reset = this.reset.bind(this);
+    this.findTermsInText = this.findTermsInText.bind(this);
   }
 
   get is_loading() {
@@ -73,6 +74,24 @@ export class TermsStore {
     this.searchQuery = query;
   }
 
+  // Method to find terms that appear in a given text
+  findTermsInText(terms = [], text = '') {
+    if (!text || !terms.length) return [];
+
+    // Normalize the text for case-insensitive matching
+    const normalizedText = text.toLowerCase();
+
+    // Find all terms that appear in the text
+    return terms.filter((term) => {
+      if (!term.name) return false;
+
+      const termName = term.name.toLowerCase();
+
+      // Use simple includes for better matching
+      return normalizedText.includes(termName);
+    });
+  }
+
   async fetchTerms() {
     if (!this.rootStore?.api?.terms) {
       return Promise.resolve([]);
@@ -110,6 +129,11 @@ export class TermsStore {
     this.loadingPublicationTerms = true;
 
     try {
+      // Get the publication summary from the publications store
+      const publicationSummary =
+        this.rootStore.publications?.get_single?.summary || '';
+
+      // Call the API to get all terms
       const response = await this.rootStore.api.terms.getForPublication(
         publicationId
       );
@@ -117,8 +141,11 @@ export class TermsStore {
       // Check if response has a data property (API may return { data: [...] })
       const termsData = response?.data || response || [];
 
+      // Filter terms that appear in the publication summary
+      const filteredTerms = this.findTermsInText(termsData, publicationSummary);
+
       runInAction(() => {
-        this.publicationTerms.set(publicationId, termsData);
+        this.publicationTerms.set(publicationId, filteredTerms);
         this.loadingPublicationTerms = false;
       });
 

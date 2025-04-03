@@ -43,6 +43,7 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
   const drawerRef = useRef(null);
   const modalRef = useRef(null);
   const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
+  const [termsLoaded, setTermsLoaded] = useState(false);
 
   const hasTermsStore = Boolean(terms);
   const {
@@ -141,6 +142,7 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
     },
   ];
 
+  // Initial load of publication and terms data
   useEffect(() => {
     fetchPublication(id);
     fetchAttachments(id);
@@ -148,14 +150,26 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
     // Only fetch terms if the store exists
     if (hasTermsStore) {
       fetchTerms();
-      fetchTermsForPublication(id);
     }
 
     return () => {
       resetPublication();
       resetAttachments();
+      // Reset terms loaded state on unmount
+      setTermsLoaded(false);
     };
-  }, []);
+  }, [id]);
+
+  // Second effect to fetch publication-specific terms after publication data is loaded
+  useEffect(() => {
+    if (hasTermsStore && get_single && !termsLoaded) {
+      // Call the fetchTermsForPublication method
+      fetchTermsForPublication(id);
+
+      // Mark as loaded to avoid repeated calls
+      setTermsLoaded(true);
+    }
+  }, [hasTermsStore, get_single, termsLoaded]);
 
   useEffect(() => {
     document.title = get_single?.title || 'Gemeente | Publicatie';

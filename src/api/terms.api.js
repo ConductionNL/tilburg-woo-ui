@@ -17,10 +17,10 @@ export class TermsAPI {
     );
   }
 
-  // Since we don't know if filtering by publication is supported,
-  // let's just use the list method for now
+  // Since we don't have any API filtering capability, we'll continue returning all terms
+  // The filtering will happen in the store based on text matching
   getForPublication(publicationId) {
-    return this.list(); // For now, just return all terms
+    return this.list();
   }
 }
 
