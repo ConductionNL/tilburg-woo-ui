@@ -32,6 +32,10 @@
   /* <--- */
 }
 
+.ac-beheer-heading-container > * {
+  flex: 1;
+}
+
 .ac-beheer-select {
   max-width: 400px;
 }

@@ -5,12 +5,15 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
+import { VISUALS } from '@constants';
 
-const AcEditVoorzieningAanbodModal = ({
+
+const AcVoorzieningAanbodFormModal = ({
   voorziening,
   showModal = false,
   onClose,
   onSuccess,
+  isEdit = false,
 }) => {
   const modalRef = useRef(null);
   const [voorzieningAanbodFormData, setVoorzieningAanbodFormData] = useState({
@@ -27,7 +30,7 @@ const AcEditVoorzieningAanbodModal = ({
   });
 
   useEffect(() => {
-    if (voorziening) {
+    if (voorziening && isEdit) {
       setVoorzieningAanbodFormData((prev) => ({
         ...prev,
         ...voorziening,
@@ -42,7 +45,7 @@ const AcEditVoorzieningAanbodModal = ({
           : voorziening.versies,
       }));
     }
-  }, [voorziening]);
+  }, [voorziening, isEdit]);
 
   const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
@@ -64,34 +67,34 @@ const AcEditVoorzieningAanbodModal = ({
       return;
     }
 
+    const baseUrl =
+      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorzieningaanboden';
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit ? `${baseUrl}/${voorzieningAanbodFormData.id}` : baseUrl;
+
     try {
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningaanboden/${voorzieningAanbodFormData.id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            ...voorzieningAanbodFormData,
-            type: voorzieningAanbodFormData.type
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            hostingopties: voorzieningAanbodFormData.hostingopties
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            versies: voorzieningAanbodFormData.versies
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: method,
+        body: JSON.stringify({
+          ...voorzieningAanbodFormData,
+          type: voorzieningAanbodFormData.type
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          hostingopties: voorzieningAanbodFormData.hostingopties
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          versies: voorzieningAanbodFormData.versies
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (response.ok) {
         onSuccess?.();
@@ -119,12 +122,12 @@ const AcEditVoorzieningAanbodModal = ({
     modalRef?.current?.addEventListener('close', handleEditVoorzieningCloseModal);
   }, [modalRef.current]);
 
-  const renderEditVoorzieningModal = (
+  const renderVoorzieningAanbodFormModal = (
     <AcModal
       ref={modalRef}
       id='edit-voorziening-modal'
-      title='Voorziening bewerken'
-      buttons={[{ label: 'opslaan', onClick: handleSubmit }]}
+      title={isEdit ? 'Voorziening bewerken' : 'Voorziening toevoegen'}
+      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
@@ -191,7 +194,7 @@ const AcEditVoorzieningAanbodModal = ({
     </AcModal>
   );
 
-  return renderEditVoorzieningModal;
+  return renderVoorzieningAanbodFormModal;
 };
 
-export default withStore(observer(AcEditVoorzieningAanbodModal));
+export default withStore(observer(AcVoorzieningAanbodFormModal));
