@@ -97,9 +97,9 @@ const App = ({ store }) => {
       case 'dimpact.opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
-            'https://www.dimpact.nl/wp-content/themes/dimpact-child-theme/favicon.png'),
+            'https://dimpact.commonground.nu/apps/files_sharing/publicpreview/S53C7EbWtya4Kpp?file=/&fileId=938&x=3440&y=1440&a=true&etag=96ffdec8c8354f7dffe8e032f1a326b8'),
           (document.getElementById('faviconMeta').href =
-            'https://www.dimpact.nl/wp-content/themes/dimpact-child-theme/favicon.png')
+            'https://dimpact.commonground.nu/apps/files_sharing/publicpreview/S53C7EbWtya4Kpp?file=/&fileId=938&x=3440&y=1440&a=true&etag=96ffdec8c8354f7dffe8e032f1a326b8')
         );
       case 'open-rotterdam.accept.commonground.nu':
         return (

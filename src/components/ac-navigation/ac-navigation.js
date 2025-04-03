@@ -73,8 +73,8 @@ const AcNavigation = ({ store: { menu } }) => {
       removeCookie('nextcloud_user_id');
       if (pathname.includes('/beheer')) {
         navigate('/');
-      }else{
-        navigate(pathname)
+      } else {
+        navigate(pathname);
       }
     }, 1000);
   };
