@@ -11,8 +11,9 @@ export const LABELS = {
   SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
   SOURCE: 'Bron',
-  CATEGORIES: 'Categorieën',
-  CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
+  CATEGORIES: 'Welke documenten vind je hier?',
+  CATEGORIES_EXPLAIN:
+    'Op deze website zijn alle openbare documenten van de gemeente Tilburg te vinden.',
   TO_MAIN_CONTENT: 'Direct naar de inhoud',
   HIGHLIGHTED: 'Uitgelicht',
   SUBJECTS: 'Onderwerpen',
