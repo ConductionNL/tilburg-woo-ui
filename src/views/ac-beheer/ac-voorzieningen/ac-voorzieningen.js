@@ -144,8 +144,7 @@ const AcBeheerVoorzieningen = () => {
             <Heading>Beheer Voorzieningen</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
-                <VISUALS.PLUS className='ac-button__icon' /> Voorziening
-                toevoegen
+                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
               <PrimaryActionButton
                 disabled={selectedRows.length === 0}
@@ -178,6 +177,7 @@ const AcBeheerVoorzieningen = () => {
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
               fetchData();
+              setOpenModal(null);
             }}
           />
 

@@ -11,7 +11,7 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../../cd-table';
-import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
+import AcVoorzieningAanbodFormModal from '../modals/ac-voorziening-aanbod-form-modal';
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 
 const AcBeheerVoorzieningenAanbod = () => {
@@ -135,15 +135,24 @@ const AcBeheerVoorzieningenAanbod = () => {
         <AcSideNav />
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
-          <AcFlex spacing='sm' justifyContent='between'>
+          <AcFlex
+            className='ac-beheer-heading-container'
+            spacing='sm'
+            justifyContent='between'
+          >
             <Heading>Beheer Voorzieningen Aanbod</Heading>
-            <PrimaryActionButton
-              disabled={selectedRows.length === 0}
-              onClick={handleMultipleDelete}
-            >
-              <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
-              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
-            </PrimaryActionButton>
+            <AcFlex spacing='sm' justifyContent='end'>
+              <PrimaryActionButton onClick={() => setOpenModal('add')}>
+                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
+              </PrimaryActionButton>
+              <PrimaryActionButton
+                disabled={selectedRows.length === 0}
+                onClick={handleMultipleDelete}
+              >
+                <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
+                {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
+              </PrimaryActionButton>
+            </AcFlex>
           </AcFlex>
 
           <CDTable
@@ -156,9 +165,10 @@ const AcBeheerVoorzieningenAanbod = () => {
           />
 
           {/* modals */}
-          <AcEditVoorzieningAanbodModal
+          <AcVoorzieningAanbodFormModal
             voorziening={singleSelectedRow}
-            showModal={openModal === 'edit'}
+            isEdit={openModal === 'edit'}
+            showModal={openModal}
             onClose={() => {
               setOpenModal(null);
               setSingleSelectedRow(null);
@@ -166,6 +176,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
               fetchData();
+              setOpenModal(null);
             }}
           />
 

@@ -13,7 +13,7 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcEditVoorzieningAanbodModal from '../modals/ac-edit-voorziening-aanbod-modal';
+import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-aanbod-form-modal';
 import AcDeleteVoorzieningAanbodModall from '../modals/ac-delete-voorziening-aanbod-modal';
 
 const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
