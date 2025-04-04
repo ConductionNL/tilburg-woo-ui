@@ -2,30 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcCheckbox, AcFormField } from '@src/molecules';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
+import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 
-const AcEditContractModal = ({
+const AcContractFormModal = ({
   contract,
   showModal = false,
   onClose,
   onSuccess,
+  isEdit = false,
 }) => {
   const modalRef = useRef(null);
   const [contractFormData, setContractFormData] = useState({
@@ -41,7 +28,7 @@ const AcEditContractModal = ({
 
   // load contract data into the form
   useEffect(() => {
-    if (contract) {
+    if (contract && isEdit) {
       setContractFormData((prev) => ({
         ...prev,
         ...contract,
@@ -59,7 +46,19 @@ const AcEditContractModal = ({
           : contract.standaarden,
       }));
     }
-  }, [contract]);
+    if (!contract && !isEdit) {
+      setContractFormData(() => ({
+        naam: '',
+        beschrijving: '',
+        voorzieningstypeId: '',
+        categorie: '',
+        functionaliteiten: '',
+        doelgroep: '',
+        referentieComponenten: '',
+        standaarden: '',
+      }));
+    }
+  }, [contract, isEdit]);
 
   const handleEditContractOpenModal = () => modalRef?.current?.showModal();
 
@@ -81,38 +80,39 @@ const AcEditContractModal = ({
       return;
     }
 
+    const baseUrl =
+      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/contracts';
+
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit ? `${baseUrl}/${contractFormData.id}` : baseUrl;
+
     try {
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/contracts/${contractFormData.id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            ...contractFormData,
-            functionaliteiten: contractFormData.functionaliteiten
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            doelgroep: contractFormData.doelgroep
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            referentieComponenten: contractFormData.referentieComponenten
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            standaarden: contractFormData.standaarden
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: method,
+        body: JSON.stringify({
+          ...contractFormData,
+          functionaliteiten: contractFormData.functionaliteiten
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          doelgroep: contractFormData.doelgroep
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          referentieComponenten: contractFormData.referentieComponenten
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          standaarden: contractFormData.standaarden
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (response.ok) {
         onSuccess?.();
@@ -140,12 +140,12 @@ const AcEditContractModal = ({
     modalRef?.current?.addEventListener('close', handleEditContractCloseModal);
   }, [modalRef.current]);
 
-  const renderEditContractModal = (
+  const renderContractFormModal = (
     <AcModal
       ref={modalRef}
       id='edit-contract-modal'
-      title='Contract bewerken'
-      buttons={[{ label: 'opslaan', onClick: handleSubmit }]}
+      title={isEdit ? 'Contract bewerken' : 'Contract toevoegen'}
+      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
@@ -200,7 +200,7 @@ const AcEditContractModal = ({
     </AcModal>
   );
 
-  return renderEditContractModal;
+  return renderContractFormModal;
 };
 
-export default withStore(observer(AcEditContractModal));
+export default withStore(observer(AcContractFormModal));
