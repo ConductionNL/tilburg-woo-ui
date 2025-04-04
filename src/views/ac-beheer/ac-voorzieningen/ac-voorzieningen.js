@@ -169,7 +169,7 @@ const AcBeheerVoorzieningen = () => {
           <AcVoorzieningenFormModal
             voorziening={singleSelectedRow}
             isEdit={openModal === 'edit'}
-            showModal={openModal}
+            showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
               setOpenModal(null);
               setSingleSelectedRow(null);

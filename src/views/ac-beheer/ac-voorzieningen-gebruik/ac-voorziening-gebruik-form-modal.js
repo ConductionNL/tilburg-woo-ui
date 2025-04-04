@@ -2,30 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 
-const AcEditVoorzieningGebruikModal = ({
+const AcVoorzieningGebruikFormModal = ({
   voorziening,
   showModal = false,
   onClose,
   onSuccess,
+  isEdit = false,
 }) => {
   const modalRef = useRef(null);
   const [voorzieningGebruikFormData, setVoorzieningGebruikFormData] = useState({
@@ -54,13 +41,40 @@ const AcEditVoorzieningGebruikModal = ({
   });
 
   useEffect(() => {
-    if (voorziening) {
+    if (voorziening && isEdit) {
       setVoorzieningGebruikFormData((prev) => ({
         ...prev,
         ...voorziening,
       }));
     }
-  }, [voorziening]);
+
+    if (!voorziening && !isEdit) {
+      setVoorzieningGebruikFormData(() => ({
+        organisatieId: '',
+        voorzieningId: '',
+        versieId: '',
+        beheerder: {
+          naam: '',
+          email: '',
+          telefoon: '',
+          functie: '',
+        },
+        startDatum: '',
+        eindDatum: '',
+        status: '',
+        opmerkingen: '',
+        bbnScore: '',
+        ibpScore: '',
+        bivClassificatie: {
+          beschikbaarheid: '',
+          integriteit: '',
+          vertrouwelijkheid: '',
+        },
+        bedrijfsKritisch: false,
+        privacyGevoelig: false,
+      }));
+    }
+  }, [voorziening, isEdit]);
 
   const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
@@ -82,20 +96,21 @@ const AcEditVoorzieningGebruikModal = ({
       return;
     }
 
+    const baseUrl =
+      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorzieninggebruiken';
+
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit ? `${baseUrl}/${voorzieningGebruikFormData.id}` : baseUrl;
+
     try {
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieninggebruiken/${voorzieningGebruikFormData.id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(voorzieningGebruikFormData),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: method,
+        body: JSON.stringify(voorzieningGebruikFormData),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (response.ok) {
         onSuccess?.();
@@ -123,12 +138,12 @@ const AcEditVoorzieningGebruikModal = ({
     modalRef?.current?.addEventListener('close', handleEditVoorzieningCloseModal);
   }, [modalRef.current]);
 
-  const renderEditVoorzieningModal = (
+  const renderVoorzieningGebruikFormModal = (
     <AcModal
       ref={modalRef}
       id='edit-voorziening-modal'
-      title='Voorziening bewerken'
-      buttons={[{ label: 'opslaan', onClick: handleSubmit }]}
+      title={isEdit ? 'Voorziening bewerken' : 'Voorziening toevoegen'}
+      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
@@ -199,7 +214,7 @@ const AcEditVoorzieningGebruikModal = ({
     </AcModal>
   );
 
-  return renderEditVoorzieningModal;
+  return renderVoorzieningGebruikFormModal;
 };
 
-export default withStore(observer(AcEditVoorzieningGebruikModal));
+export default withStore(observer(AcVoorzieningGebruikFormModal));

@@ -63,6 +63,18 @@ const AcVoorzieningenFormModal = ({
           : voorziening.standaarden,
       }));
     }
+    if (!voorziening && !isEdit) {
+      setVoorzieningFormData(() => ({
+        name: '',
+        description: '',
+        type: '',
+        category: '',
+        functionalities: '',
+        targetGroups: [],
+        referenceComponents: [],
+        standards: '',
+      }));
+    }
   }, [voorziening, isEdit]);
 
   const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();

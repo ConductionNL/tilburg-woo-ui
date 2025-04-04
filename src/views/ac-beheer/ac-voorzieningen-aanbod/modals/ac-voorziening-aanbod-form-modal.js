@@ -7,7 +7,6 @@ import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 import { VISUALS } from '@constants';
 
-
 const AcVoorzieningAanbodFormModal = ({
   voorziening,
   showModal = false,
@@ -43,6 +42,20 @@ const AcVoorzieningAanbodFormModal = ({
         versies: Array.isArray(voorziening.versies)
           ? voorziening.versies.join(', ')
           : voorziening.versies,
+      }));
+    }
+    if (!voorziening && !isEdit) {
+      setVoorzieningAanbodFormData(() => ({
+        naam: '',
+        omschrijving: '',
+        type: '',
+        voorzieningId: '',
+        organisatieId: '',
+        productpagina: '',
+        ondersteuningsmodel: '',
+        licentiemodel: '',
+        hostingopties: '',
+        versies: [],
       }));
     }
   }, [voorziening, isEdit]);

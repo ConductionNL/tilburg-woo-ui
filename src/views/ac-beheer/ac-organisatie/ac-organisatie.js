@@ -11,7 +11,7 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
-import AcEditOrganisatieModal from './ac-edit-organisatie-modal';
+import AcOrganisatieFormModal from './ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from './ac-delete-organisatie-modal';
 
 const AcBeheerOrganisaties = () => {
@@ -136,15 +136,24 @@ const AcBeheerOrganisaties = () => {
         <AcSideNav />
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
-          <AcFlex spacing='sm' justifyContent='between'>
+          <AcFlex
+            className='ac-beheer-heading-container'
+            spacing='sm'
+            justifyContent='between'
+          >
             <Heading>Beheer Organisaties</Heading>
-            <PrimaryActionButton
-              disabled={selectedRows.length === 0}
-              onClick={handleMultipleDelete}
-            >
-              <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
-              {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
-            </PrimaryActionButton>
+            <AcFlex spacing='sm' justifyContent='end'>
+              <PrimaryActionButton onClick={() => setOpenModal('add')}>
+                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
+              </PrimaryActionButton>
+              <PrimaryActionButton
+                disabled={selectedRows.length === 0}
+                onClick={handleMultipleDelete}
+              >
+                <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
+                {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
+              </PrimaryActionButton>
+            </AcFlex>
           </AcFlex>
 
           <CDTable
@@ -157,9 +166,10 @@ const AcBeheerOrganisaties = () => {
           />
 
           {/* modals */}
-          <AcEditOrganisatieModal
+          <AcOrganisatieFormModal
             organisatie={singleSelectedRow}
-            showModal={openModal === 'edit'}
+            isEdit={openModal === 'edit'}
+            showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
               setOpenModal(null);
               setSingleSelectedRow(null);
@@ -167,6 +177,7 @@ const AcBeheerOrganisaties = () => {
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
               fetchData();
+              setOpenModal(null);
             }}
           />
 

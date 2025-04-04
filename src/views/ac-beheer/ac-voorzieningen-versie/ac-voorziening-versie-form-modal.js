@@ -2,30 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcCheckbox, AcFormField } from '@src/molecules';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
+import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 
-const AcEditVoorzieningVersieModal = ({
+const AcVoorzieningVersieFormModal = ({
   voorziening,
   showModal = false,
   onClose,
   onSuccess,
+  isEdit = false,
 }) => {
   const modalRef = useRef(null);
   const [voorzieningFormData, setVoorzieningFormData] = useState({
@@ -40,13 +27,26 @@ const AcEditVoorzieningVersieModal = ({
   });
 
   useEffect(() => {
-    if (voorziening) {
+    if (voorziening && isEdit) {
       setVoorzieningFormData((prev) => ({
         ...prev,
         ...voorziening,
       }));
     }
-  }, [voorziening]);
+
+    if (!voorziening && !isEdit) {
+      setVoorzieningFormData(() => ({
+        naam: '',
+        omschrijving: '',
+        releaseNotes: '',
+        nummer: '',
+        voorzieningaanbodId: '',
+        productieDatum: '',
+        eindeDatum: '',
+        status: '',
+      }));
+    }
+  }, [voorziening, isEdit]);
 
   const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
@@ -68,20 +68,21 @@ const AcEditVoorzieningVersieModal = ({
       return;
     }
 
+    const baseUrl =
+      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorzieningversies';
+
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;
+
     try {
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningversies/${voorzieningFormData.id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(voorzieningFormData),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await fetch(url, {
+        method: method,
+        body: JSON.stringify(voorzieningFormData),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (response.ok) {
         onSuccess?.();
@@ -109,12 +110,12 @@ const AcEditVoorzieningVersieModal = ({
     modalRef?.current?.addEventListener('close', handleEditVoorzieningCloseModal);
   }, [modalRef.current]);
 
-  const renderEditVoorzieningModal = (
+  const renderVoorzieningVersieFormModal = (
     <AcModal
       ref={modalRef}
       id='edit-voorziening-versie-modal'
-      title='Voorziening versie bewerken'
-      buttons={[{ label: 'opslaan', onClick: handleSubmit }]}
+      title={isEdit ? 'Voorziening versie bewerken' : 'Voorziening versie toevoegen'}
+      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
@@ -169,7 +170,7 @@ const AcEditVoorzieningVersieModal = ({
     </AcModal>
   );
 
-  return renderEditVoorzieningModal;
+  return renderVoorzieningVersieFormModal;
 };
 
-export default withStore(observer(AcEditVoorzieningVersieModal));
+export default withStore(observer(AcVoorzieningVersieFormModal));

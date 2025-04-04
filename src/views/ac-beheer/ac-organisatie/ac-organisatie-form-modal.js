@@ -2,30 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS, VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcCheckbox, AcFormField } from '@src/molecules';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
+import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 
-const AcEditOrganisatieModal = ({
+const AcOrganisatieFormModal = ({
   organisatie,
   showModal = false,
   onClose,
   onSuccess,
+  isEdit = false,
 }) => {
   const modalRef = useRef(null);
   const [organisatieFormData, setOrganisatieFormData] = useState({
@@ -58,7 +45,7 @@ const AcEditOrganisatieModal = ({
 
   // load contract data into the form
   useEffect(() => {
-    if (organisatie) {
+    if (organisatie && isEdit) {
       setOrganisatieFormData((prev) => ({
         ...prev,
         ...organisatie,
@@ -73,7 +60,36 @@ const AcEditOrganisatieModal = ({
           : organisatie.deelnemerIn,
       }));
     }
-  }, [organisatie]);
+    if (!organisatie && !isEdit) {
+      setOrganisatieFormData(() => ({
+        naam: '',
+        type: '',
+        kvkNummer: '',
+        oidn: '',
+        moederOrganisatie: '',
+        sector: '',
+        organisatietype: '',
+        website: '',
+        adres: {
+          straat: '',
+          huisnummer: '',
+          postcode: '',
+          plaats: '',
+          land: '',
+        },
+        contactgegevens: {
+          telefoon: '',
+          email: '',
+          contactpersoon: '',
+        },
+        beschrijving: '',
+        logo: '',
+        voorzieningen: [],
+        gebruik: [],
+        deelnemerIn: [],
+      }));
+    }
+  }, [organisatie, isEdit]);
 
   const handleEditOrganisatieOpenModal = () => modalRef?.current?.showModal();
 
@@ -96,33 +112,34 @@ const AcEditOrganisatieModal = ({
     }
 
     try {
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/organisaties/${organisatieFormData.id}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            ...organisatieFormData,
-            voorzieningen: organisatieFormData.voorzieningen
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            gebruik: organisatieFormData.gebruik
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-            deelnemerIn: organisatieFormData.deelnemerIn
-              .trim()
-              .split(/ *, */g)
-              .filter(Boolean),
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const baseUrl =
+        'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/organisaties';
+
+      const method = isEdit ? 'PUT' : 'POST';
+      const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;
+
+      const response = await fetch(url, {
+        method: method,
+        body: JSON.stringify({
+          ...organisatieFormData,
+          voorzieningen: organisatieFormData.voorzieningen
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          gebruik: organisatieFormData.gebruik
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+          deelnemerIn: organisatieFormData.deelnemerIn
+            .trim()
+            .split(/ *, */g)
+            .filter(Boolean),
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (response.ok) {
         onSuccess?.();
@@ -150,11 +167,11 @@ const AcEditOrganisatieModal = ({
     modalRef?.current?.addEventListener('close', handleEditOrganisatieCloseModal);
   }, [modalRef.current]);
 
-  const renderEditOrganisatieModal = (
+  const renderOrganisatieFormModal = (
     <AcModal
       ref={modalRef}
       id='edit-organisatie-modal'
-      title='Organisatie bewerken'
+      title={isEdit ? 'Organisatie bewerken' : 'Organisatie toevoegen'}
       buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
@@ -240,7 +257,7 @@ const AcEditOrganisatieModal = ({
     </AcModal>
   );
 
-  return renderEditOrganisatieModal;
+  return renderOrganisatieFormModal;
 };
 
-export default withStore(observer(AcEditOrganisatieModal));
+export default withStore(observer(AcOrganisatieFormModal));
