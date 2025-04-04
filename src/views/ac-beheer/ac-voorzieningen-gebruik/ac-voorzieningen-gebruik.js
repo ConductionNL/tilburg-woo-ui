@@ -140,7 +140,11 @@ const AcBeheerVoorzieningenGebruik = () => {
         <AcSideNav />
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
-          <AcFlex spacing='sm' justifyContent='between'>
+          <AcFlex
+            className='ac-beheer-heading-container'
+            spacing='sm'
+            justifyContent='between'
+          >
             <Heading>Beheer Voorzieningen Gebruik</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
