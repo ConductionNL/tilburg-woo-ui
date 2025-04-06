@@ -55,24 +55,28 @@ const AcBeheerContracten = () => {
 
   const tableHeaders = [
     {
-      label: 'Naam',
-      key: 'naam',
+      label: 'Contract nummer',
+      key: 'contractNummer',
     },
     {
-      label: 'Beschrijving',
-      key: 'beschrijving',
+      label: 'Contract type',
+      key: 'contractType',
     },
     {
-      label: 'Categorie',
-      key: 'categorie',
+      label: 'Status',
+      key: 'status',
     },
     {
-      label: 'Doelgroep',
-      key: 'doelgroep',
+      label: 'Start datum',
+      key: 'startDatum',
     },
     {
-      label: 'Referentie Componenten',
-      key: 'referentieComponenten',
+      label: 'Eind datum',
+      key: 'eindDatum',
+    },
+    {
+      label: 'Document referentie',
+      key: 'documentReferentie',
     },
     {
       label: 'Acties',

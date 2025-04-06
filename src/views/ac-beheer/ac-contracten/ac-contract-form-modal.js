@@ -6,6 +6,7 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
+import ReactSelect from 'react-select';
 
 const AcContractFormModal = ({
   contract,
@@ -16,57 +17,111 @@ const AcContractFormModal = ({
 }) => {
   const modalRef = useRef(null);
   const [contractFormData, setContractFormData] = useState({
-    naam: '',
-    beschrijving: '',
-    voorzieningstypeId: '',
-    categorie: '',
-    functionaliteiten: '',
-    doelgroep: '',
-    referentieComponenten: '',
-    standaarden: '',
+    provisionSupply: '',
+    provisionUse: '',
+    startDate: '',
+    endDate: '',
+    contractNumber: '',
+    contractType: '',
+    costs: 0,
+    costsPeriod: '',
+    contactPersonProvider: {
+      name: '',
+      email: '',
+    },
+    contactPersonUser: {
+      name: '',
+      email: '',
+    },
+    documentReference: '',
+    status: '',
+    notes: '',
   });
+
+  const contractTypes = [
+    { id: 'SLA', label: 'SLA' },
+    { id: 'Licentie', label: 'Licentie' },
+    { id: 'Onderhoud', label: 'Onderhoud' },
+  ];
+  const kostenPeriodes = [
+    { id: 'Maandelijks', label: 'Maandelijks' },
+    { id: 'Jaarlijks', label: 'Jaarlijks' },
+    { id: 'Eenmalig', label: 'Eenmalig' },
+  ];
+  const statuses = [
+    { id: 'Actief', label: 'Actief' },
+    { id: 'Verlopen', label: 'Verlopen' },
+    { id: 'Inonderhandeling', label: 'Inonderhandeling' },
+  ];
 
   // load contract data into the form
   useEffect(() => {
     if (contract && isEdit) {
       setContractFormData((prev) => ({
         ...prev,
-        ...contract,
-        functionaliteiten: Array.isArray(contract.functionaliteiten)
-          ? contract.functionaliteiten.join(', ')
-          : contract.functionaliteiten,
-        doelgroep: Array.isArray(contract.doelgroep)
-          ? contract.doelgroep.join(', ')
-          : contract.doelgroep,
-        referentieComponenten: Array.isArray(contract.referentieComponenten)
-          ? contract.referentieComponenten.join(', ')
-          : contract.referentieComponenten,
-        standaarden: Array.isArray(contract.standaarden)
-          ? contract.standaarden.join(', ')
-          : contract.standaarden,
+        provisionSupply: contract.voorzieningAanbod,
+        provisionUse: contract.voorzieningGebruik,
+        startDate: contract.startDatum,
+        endDate: contract.eindDatum,
+        contractNumber: contract.contractNummer,
+        contractType: contract.contractType,
+        costs: contract.kosten,
+        costsPeriod: contract.kostenPeriode,
+        contactPersonProvider: {
+          name: contract.contactPersoonAanbieder.naam,
+          email: contract.contactPersoonAanbieder.email,
+        },
+        contactPersonUser: {
+          name: contract.contactPersoonGebruiker.naam,
+          email: contract.contactPersoonGebruiker.email,
+        },
+        documentReference: contract.documentReferentie,
+        status: contract.status,
+        notes: contract.opmerkingen,
       }));
     }
     if (!contract && !isEdit) {
       setContractFormData(() => ({
-        naam: '',
-        beschrijving: '',
-        voorzieningstypeId: '',
-        categorie: '',
-        functionaliteiten: '',
-        doelgroep: '',
-        referentieComponenten: '',
-        standaarden: '',
+        provisionSupply: '',
+        provisionUse: '',
+        startDate: '',
+        endDate: '',
+        contractNumber: '',
+        contractType: '',
+        costs: 0,
+        costsPeriod: '',
+        contactPersonProvider: {
+          name: '',
+          email: '',
+        },
+        contactPersonUser: {
+          name: '',
+          email: '',
+        },
+        documentReference: '',
+        status: '',
+        notes: '',
       }));
     }
   }, [contract, isEdit]);
 
   const handleEditContractOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditContractFieldChange = (field) => (value) => {
-    setContractFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleEditContractFieldChange = (field, subField) => (value) => {
+    if (subField) {
+      setContractFormData((prev) => ({
+        ...prev,
+        [field]: {
+          ...prev[field],
+          [subField]: value,
+        },
+      }));
+    } else {
+      setContractFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
   };
 
   const [error, setError] = useState(null);
@@ -90,23 +145,25 @@ const AcContractFormModal = ({
       const response = await fetch(url, {
         method: method,
         body: JSON.stringify({
-          ...contractFormData,
-          functionaliteiten: contractFormData.functionaliteiten
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          doelgroep: contractFormData.doelgroep
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          referentieComponenten: contractFormData.referentieComponenten
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          standaarden: contractFormData.standaarden
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
+          voorzieningAanbod: contractFormData.provisionSupply,
+          voorzieningGebruik: contractFormData.provisionUse,
+          startDatum: contractFormData.startDate,
+          eindDatum: contractFormData.endDate,
+          contractNummer: contractFormData.contractNumber,
+          contractType: contractFormData.contractType,
+          kosten: contractFormData.costs,
+          kostenPeriode: contractFormData.costsPeriod,
+          contactPersoonAanbieder: {
+            naam: contractFormData.contactPersonProvider.name,
+            email: contractFormData.contactPersonProvider.email,
+          },
+          contactPersoonGebruiker: {
+            naam: contractFormData.contactPersonUser.name,
+            email: contractFormData.contactPersonUser.email,
+          },
+          documentReferentie: contractFormData.documentReference,
+          status: contractFormData.status,
+          opmerkingen: contractFormData.notes,
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -149,52 +206,164 @@ const AcContractFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <AcFormField
-          label='Naam'
+          label='Voorziening Aanbod'
           type='text'
-          onBlur={handleEditContractFieldChange('naam')}
-          value={contractFormData.naam}
+          onBlur={handleEditContractFieldChange('provisionSupply')}
+          value={contractFormData.provisionSupply}
         />
         <AcFormField
-          label='Beschrijving'
+          label='Voorziening Gebruik'
           type='text'
-          onBlur={handleEditContractFieldChange('beschrijving')}
-          value={contractFormData.beschrijving}
+          onBlur={handleEditContractFieldChange('provisionUse')}
+          value={contractFormData.provisionUse}
         />
         <AcFormField
-          label='Voorzieningstype ID'
-          type='text'
-          onBlur={handleEditContractFieldChange('voorzieningstypeId')}
-          value={contractFormData.voorzieningstypeId}
+          label='Startdatum'
+          type='date'
+          onBlur={handleEditContractFieldChange('startDate')}
+          value={contractFormData.startDate}
         />
         <AcFormField
-          label='Categorie'
-          type='text'
-          onBlur={handleEditContractFieldChange('categorie')}
-          value={contractFormData.categorie}
+          label='Einddatum'
+          type='date'
+          onBlur={handleEditContractFieldChange('endDate')}
+          value={contractFormData.endDate}
         />
         <AcFormField
-          label='Functionaliteiten'
+          label='Contract Nummer'
           type='text'
-          onBlur={handleEditContractFieldChange('functionaliteiten')}
-          value={contractFormData.functionaliteiten}
+          onBlur={handleEditContractFieldChange('contractNumber')}
+          value={contractFormData.contractNumber}
         />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Contract type</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een contract type'
+            value={contractTypes?.find(
+              (option) => option.id === contractFormData.contractType
+            )}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setContractFormData((prev) => ({
+                ...prev,
+                contractType: e.value,
+              }));
+            }}
+            loading={contractTypes?.length === 0}
+            options={contractTypes?.map((type) => ({
+              value: type.id,
+              label: type.label,
+            }))}
+          />
+        </div>
         <AcFormField
-          label='Doelgroep'
-          type='text'
-          onBlur={handleEditContractFieldChange('doelgroep')}
-          value={contractFormData.doelgroep}
+          label='Kosten'
+          type='number'
+          onBlur={handleEditContractFieldChange('costs')}
+          value={contractFormData.costs}
         />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Kosten periode</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een contract type'
+            value={kostenPeriodes?.find(
+              (option) => option.id === contractFormData.costsPeriod
+            )}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setContractFormData((prev) => ({
+                ...prev,
+                costsPeriod: e.value,
+              }));
+            }}
+            loading={kostenPeriodes?.length === 0}
+            options={kostenPeriodes?.map((periode) => ({
+              value: periode.id,
+              label: periode.label,
+            }))}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Contactpersoon Aanbieder</h4>
+          </label>
+          <AcFlex column spacing='sm'>
+            <AcFormField
+              headingLevel={5}
+              label='Naam'
+              type='text'
+              onBlur={handleEditContractFieldChange('contactPersonProvider', 'name')}
+              value={contractFormData.contactPersonProvider.name}
+            />
+            <AcFormField
+              headingLevel={5}
+              label='Email'
+              type='text'
+              onBlur={handleEditContractFieldChange(
+                'contactPersonProvider',
+                'email'
+              )}
+              value={contractFormData.contactPersonProvider.email}
+            />
+          </AcFlex>
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Contactpersoon Gebruiker</h4>
+          </label>
+          <AcFlex column spacing='sm'>
+            <AcFormField
+              headingLevel={5}
+              label='Naam'
+              type='text'
+              onBlur={handleEditContractFieldChange('contactPersonUser', 'name')}
+              value={contractFormData.contactPersonUser.name}
+            />
+            <AcFormField
+              headingLevel={5}
+              label='Email'
+              type='text'
+              onBlur={handleEditContractFieldChange('contactPersonUser', 'email')}
+              value={contractFormData.contactPersonUser.email}
+            />
+          </AcFlex>
+        </div>
         <AcFormField
-          label='Referentie Componenten'
+          label='Document Referentie'
           type='text'
-          onBlur={handleEditContractFieldChange('referentieComponenten')}
-          value={contractFormData.referentieComponenten}
+          onBlur={handleEditContractFieldChange('documentReference')}
+          value={contractFormData.documentReference}
         />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Status</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een contract type'
+            value={statuses?.find((option) => option.id === contractFormData.status)}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setContractFormData((prev) => ({
+                ...prev,
+                status: e.value,
+              }));
+            }}
+            loading={statuses?.length === 0}
+            options={statuses?.map((status) => ({
+              value: status.id,
+              label: status.label,
+            }))}
+          />
+        </div>
         <AcFormField
-          label='Standaarden'
+          label='Opmerkingen'
           type='text'
-          onBlur={handleEditContractFieldChange('standaarden')}
-          value={contractFormData.standaarden}
+          onBlur={handleEditContractFieldChange('notes')}
+          value={contractFormData.notes}
         />
       </AcFlex>
     </AcModal>

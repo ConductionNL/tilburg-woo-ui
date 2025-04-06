@@ -18,6 +18,7 @@ const AcFormField = ({
   onChange,
   value,
   fullWidth,
+  headingLevel = 4,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -34,7 +35,7 @@ const AcFormField = ({
   return (
     <FormField type={type}>
       <FormLabel htmlFor={id}>
-        <Heading level={4}>{label}</Heading>
+        <Heading level={headingLevel}>{label}</Heading>
       </FormLabel>
       <Textbox
         id={id}
