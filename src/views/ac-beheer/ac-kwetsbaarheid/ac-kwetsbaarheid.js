@@ -13,6 +13,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcKwetsbaarheidFormModal from './ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from './ac-delete-kwetsbaarheid-modal';
+import CDActionMenu from '../cd-action-menu';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -152,13 +153,36 @@ const AcBeheerKwetsbaarheden = () => {
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
-                {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
+              
+              <CDActionMenu>
+                <CDActionMenu.Button>Action</CDActionMenu.Button>
+
+                <CDActionMenu.Items position='right'>
+                  <CDActionMenu.Item
+                    icon={<VISUALS.EYE />}
+                    disabled={selectedRows.length === 0}
+                  >
+                    Weergeven als view
+                  </CDActionMenu.Item>
+                  <CDActionMenu.Item
+                    icon={<VISUALS.DOWNLOAD />}
+                    disabled={selectedRows.length === 0}
+                  >
+                    Downloaden als CSV
+                  </CDActionMenu.Item>
+
+                  <CDActionMenu.Divider />
+
+                  <CDActionMenu.Item
+                    icon={<VISUALS.TRASHCAN />}
+                    disabled={selectedRows.length === 0}
+                    onClick={handleMultipleDelete}
+                  >
+                    Delete {selectedRows.length}{' '}
+                    {selectedRows.length === 1 ? 'item' : 'items'}
+                  </CDActionMenu.Item>
+                </CDActionMenu.Items>
+              </CDActionMenu>
             </AcFlex>
           </AcFlex>
 
