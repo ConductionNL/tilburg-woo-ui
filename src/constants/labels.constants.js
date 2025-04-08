@@ -75,6 +75,9 @@ export const LABELS = {
   BEHEER: 'Beheer',
   BEHEER_TYPE: 'Beheer Type',
   BEHEER_TYPE_DETAILS: 'Beheer Type Details',
+
+  // Register labels
+  REGISTER: 'Registreren',
 };
 
 export const LABELS_DYNAMIC = {

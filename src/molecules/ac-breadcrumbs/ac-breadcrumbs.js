@@ -60,7 +60,9 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.BEHEER(prettifyPathname(pathnames[2]));
     }
 
-
+    if (location.pathname.startsWith('/register')) {
+      return BREADCRUMBS.REGISTER;
+    }
 
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);

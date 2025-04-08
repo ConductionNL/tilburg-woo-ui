@@ -18,6 +18,7 @@ const AcBeheer = loadable(() => import('@views/ac-beheer/ac-beheer'));
 const AcFallbackErrorPage = loadable(() =>
   import('@views/ac-fallback-error-page/ac-fallback-error-page')
 );
+const AcRegister = loadable(() => import('@views/ac-register/ac-register'));
 
 export {
   AcHome,
@@ -30,4 +31,5 @@ export {
   AcNextcloudAuthorization,
   AcBeheer,
   AcFallbackErrorPage,
+  AcRegister,
 };
