@@ -8,7 +8,7 @@ import {
   useCallback,
 } from 'react';
 import clsx from 'clsx';
-import { AcButton } from '@src/molecules';
+import { AcButton, AcCheckbox } from '@src/molecules';
 
 // Context for the ConActionMenu component
 const ConActionMenuContext = createContext(null);
@@ -39,34 +39,43 @@ function useOnClickOutside(ref, handler) {
  * It uses a React Context to manage its open/close state, which is shared with the sub-components.
  *
  * Sub-components:
- * - **ConActionMenu.Button**: A button that toggles the menu's open/close state.
+ * - **ConActionMenu.Trigger**: A button that toggles the menu's open/close state.
  * - **ConActionMenu.Items**: A container that displays the menu items when open. Accepts a `position` prop for alignment.
- * - **ConActionMenu.Item**: A single clickable menu item. By default, it closes the menu when clicked.
+ * - **ConActionMenu.Item**: A generic container for menu items. Provides a close function to its children.
+ * - **ConActionMenu.Button**: A clickable button menu item. By default, it closes the menu when clicked.
  * - **ConActionMenu.Divider**: A visual divider (\<hr>) used to separate menu items.
  *
  * @function
  * @name ConActionMenu
  * @param {object} props - The props object.
- * @param {React.ReactNode} props.children - The compound sub-components to render (Button, Items, Item, etc.).
+ * @param {React.ReactNode} props.children - The compound sub-components to render (Trigger, Items, Item, etc.).
  * @param {string} [props.className] - Optional CSS class names to style the outer container.
  * @returns {JSX.Element} The rendered menu container with context providers.
  *
  * @example
  * // Basic usage of the ConActionMenu with all sub-components:
  * <ConActionMenu className="my-dropdown">
- *   <ConActionMenu.Button>Open Menu</ConActionMenu.Button>
+ *   <ConActionMenu.Trigger>Open Menu</ConActionMenu.Trigger>
  *
  *   <ConActionMenu.Items position="right">
- *     <ConActionMenu.Item onClick={() => console.log('Item 1 clicked')} doNotClose>Item 1</ConActionMenu.Item>
+ *     <ConActionMenu.Button onClick={() => console.log('Button 1 clicked')} doNotClose>Button 1</ConActionMenu.Button>
  *     <ConActionMenu.Divider />
- *     <ConActionMenu.Item icon={<IconSome />} onClick={() => alert('Item 2 clicked')}>
- *       Item 2
+ *     <ConActionMenu.Item>
+ *       {(close) => (
+ *         <CustomComponent onAction={() => {
+ *           doSomething();
+ *           close();
+ *         }} />
+ *       )}
  *     </ConActionMenu.Item>
+ *     <ConActionMenu.Button icon={<IconSome />} onClick={() => alert('Button 2 clicked')}>
+ *       Button 2
+ *     </ConActionMenu.Button>
  *   </ConActionMenu.Items>
  * </ConActionMenu>
  *
- * // Note that clicking the button toggles the menu, clicking outside it closes the menu,
- * // and selecting any item also closes the menu automatically if doNotClose is not set.
+ * // Note that clicking the trigger toggles the menu, clicking outside it closes the menu,
+ * // and clicking any button also closes the menu automatically if doNotClose is not set.
  *
  * @author: Thijn Douwma (SudoThijn on github)
  * @version: 1.0.0
@@ -102,8 +111,8 @@ const ConActionMenu = ({ children, className }) => {
 };
 
 /**
- * A sub-component of ConActionMenu that renders a button.
- * Clicking this button toggles the open/close state of the menu.
+ * A sub-component of ConActionMenu that renders a trigger button.
+ * Clicking this button toggles the menu's open/close state.
  *
  * @function
  * @param {object} props
@@ -111,9 +120,9 @@ const ConActionMenu = ({ children, className }) => {
  * @returns {JSX.Element} The rendered toggle button.
  *
  * @example
- * <ConActionMenu.Button>Options</ConActionMenu.Button>
+ * <ConActionMenu.Trigger>Options</ConActionMenu.Trigger>
  */
-ConActionMenu.Button = ({ children, ...props }) => {
+ConActionMenu.Trigger = ({ children, ...props }) => {
   const { handleToggle } = useConActionMenuContext();
 
   return (
@@ -135,8 +144,8 @@ ConActionMenu.Button = ({ children, ...props }) => {
  *
  * @example
  * <ConActionMenu.Items position="left">
- *   <ConActionMenu.Item>Item 1</ConActionMenu.Item>
- *   <ConActionMenu.Item>Item 2</ConActionMenu.Item>
+ *   <ConActionMenu.Button>Button 1</ConActionMenu.Button>
+ *   <ConActionMenu.Item>{close => <CustomContent onDone={close} />}</ConActionMenu.Item>
  * </ConActionMenu.Items>
  */
 ConActionMenu.Items = ({ children, position = 'right', ...props }) => {
@@ -157,27 +166,76 @@ ConActionMenu.Items = ({ children, position = 'right', ...props }) => {
 };
 
 /**
- * A sub-component of ConActionMenu that represents a single clickable menu item.
+ * A sub-component of ConActionMenu that represents a generic container for menu items.
+ * Provides a close function to its children to allow custom closing behavior.
+ *
+ * @function
+ * @param {object} props
+ * @param {(close: () => void) => React.ReactNode} props.children - Render prop that receives close function.
+ * @returns {JSX.Element} The rendered menu item container.
+ *
+ * @example
+ * <ConActionMenu.Item>
+ *   {(close) => (
+ *     <CustomComponent
+ *       onClick={() => {
+ *         handleAction();
+ *         close();
+ *       }}
+ *     />
+ *   )}
+ * </ConActionMenu.Item>
+ */
+ConActionMenu.Item = ({ children, ...props }) => {
+  const { setIsOpen } = useConActionMenuContext();
+  const close = useCallback(() => setIsOpen(false), [setIsOpen]);
+
+  return (
+    <div className='con-action-menu__item' {...props}>
+      {children(close)}
+    </div>
+  );
+};
+
+/**
+ * A sub-component of ConActionMenu that renders a horizontal divider.
+ *
+ * @function
+ * @returns {JSX.Element} The rendered divider (\<hr>).
+ *
+ * @example
+ * <ConActionMenu.Items>
+ *   <ConActionMenu.Button>Button 1</ConActionMenu.Button>
+ *   <ConActionMenu.Divider />
+ *   <ConActionMenu.Button>Button 2</ConActionMenu.Button>
+ * </ConActionMenu.Items>
+ */
+ConActionMenu.Divider = () => {
+  return <hr className='con-action-menu__divider' />;
+};
+
+/**
+ * A sub-component of ConActionMenu that represents a clickable button menu item.
  * Clicking it closes the menu by default.
  *
  * @function
  * @param {object} props
- * @param {React.MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click handler for the menu item.
- * @param {boolean} [props.doNotClose] - If true, the menu will not close when the item is clicked.
+ * @param {React.MouseEventHandler<HTMLButtonElement>} [props.onClick] - Click handler for the button.
+ * @param {boolean} [props.doNotClose] - If true, the menu will not close when the button is clicked.
  * @param {React.ReactNode} [props.icon] - Optional icon element to render alongside text.
- * @param {React.ReactNode} props.children - The label of the menu item.
- * @returns {JSX.Element} The rendered menu item button.
+ * @param {React.ReactNode} props.children - The label of the button.
+ * @returns {JSX.Element} The rendered menu button.
  *
  * @example
- * <ConActionMenu.Item
+ * <ConActionMenu.Button
  *   onClick={() => doSomething()}
  *   doNotClose
  *   icon={<VISUALS.PLUS />}
  * >
  *   Menu Option
- * </ConActionMenu.Item>
+ * </ConActionMenu.Button>
  */
-ConActionMenu.Item = ({ children, onClick, doNotClose, icon, ...props }) => {
+ConActionMenu.Button = ({ children, onClick, doNotClose, icon, ...props }) => {
   const { setIsOpen } = useConActionMenuContext();
 
   const handleClick = (e) => {
@@ -190,7 +248,11 @@ ConActionMenu.Item = ({ children, onClick, doNotClose, icon, ...props }) => {
   };
 
   return (
-    <button className='con-action-menu__item' onClick={handleClick} {...props}>
+    <button
+      className='con-action-menu__item con-action-menu__item--button'
+      onClick={handleClick}
+      {...props}
+    >
       {icon && <span className='con-action-menu__item-icon'>{icon}</span>}
       {children}
     </button>
@@ -198,20 +260,82 @@ ConActionMenu.Item = ({ children, onClick, doNotClose, icon, ...props }) => {
 };
 
 /**
- * A sub-component of ConActionMenu that renders a horizontal divider.
+ * A sub-component of ConActionMenu that renders a checkbox menu item.
+ * The checkbox state can be controlled externally and responds to changes.
+ * The entire item area is clickable to toggle the checkbox.
  *
  * @function
- * @returns {JSX.Element} The rendered divider (\<hr>).
+ * @param {object} props - Additional props are passed to the checkbox. (Not passed to the containing div element)
+ * @param {boolean} [props.checked] - The controlled checked state of the checkbox
+ * @param {function} [props.onChange] - Handler called when checkbox changes, receives new checked state
+ * @param {boolean} [props.defaultChecked] - Initial checked state when uncontrolled
+ * @param {boolean} [props.disabled] - Whether the checkbox is disabled
+ * @param {React.ReactNode} props.children - Label content next to checkbox
+ * @returns {JSX.Element} The rendered checkbox menu item
  *
  * @example
- * <ConActionMenu.Items>
- *   <ConActionMenu.Item>Item 1</ConActionMenu.Item>
- *   <ConActionMenu.Divider />
- *   <ConActionMenu.Item>Item 2</ConActionMenu.Item>
- * </ConActionMenu.Items>
+ * // Controlled checkbox
+ * const [checked, setChecked] = useState(false);
+ * <ConActionMenu.Checkbox
+ *   checked={checked}
+ *   onChange={setChecked}
+ *   disabled={false}
+ * >
+ *   Toggle Feature
+ * </ConActionMenu.Checkbox>
+ *
+ * // Uncontrolled checkbox
+ * <ConActionMenu.Checkbox defaultChecked={true}>
+ *   Enable Option
+ * </ConActionMenu.Checkbox>
  */
-ConActionMenu.Divider = () => {
-  return <hr className='con-action-menu__divider' />;
+ConActionMenu.Checkbox = ({
+  children,
+  checked,
+  onChange,
+  defaultChecked,
+  disabled,
+  ...props
+}) => {
+  const [internalChecked, setInternalChecked] = useState(defaultChecked || false);
+  const isControlled = checked !== undefined;
+
+  const handleChange = (newChecked) => {
+    if (!disabled) {
+      if (!isControlled) {
+        setInternalChecked(newChecked);
+      }
+      onChange?.(newChecked);
+    }
+  };
+
+  const handleClick = () => {
+    if (!disabled) {
+      const newChecked = isControlled ? !checked : !internalChecked;
+      handleChange(newChecked);
+    }
+  };
+
+  return (
+    <div
+      className={clsx(
+        'con-action-menu__item',
+        'con-action-menu__item--checkbox',
+        disabled && 'con-action-menu__item--disabled'
+      )}
+      onClick={handleClick}
+      style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+    >
+      <AcCheckbox
+        checked={isControlled ? checked : internalChecked}
+        onChange={(e) => handleChange(e.target.checked)}
+        defaultChecked={defaultChecked}
+        disabled={disabled}
+        {...props}
+      />
+      {children}
+    </div>
+  );
 };
 
 export default ConActionMenu;

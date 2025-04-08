@@ -72,27 +72,27 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                   <Heading>{data.naam}</Heading>
 
                   <ConActionMenu>
-                    <ConActionMenu.Button icon={<VISUALS.ELLIPSIS />}>
+                    <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                       Acties
-                    </ConActionMenu.Button>
+                    </ConActionMenu.Trigger>
 
                     <ConActionMenu.Items>
-                      <ConActionMenu.Item icon={<VISUALS.PLUS />}>
+                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
                         Toevoegen
-                      </ConActionMenu.Item>
-                      <ConActionMenu.Item
+                      </ConActionMenu.Button>
+                      <ConActionMenu.Button
                         icon={<VISUALS.PENCIL />}
                         onClick={() => setOpenModal('edit')}
                       >
                         Bijwerken
-                      </ConActionMenu.Item>
+                      </ConActionMenu.Button>
                       <ConActionMenu.Divider />
-                      <ConActionMenu.Item
+                      <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => setOpenModal('delete')}
                       >
                         Verwijderen
-                      </ConActionMenu.Item>
+                      </ConActionMenu.Button>
                     </ConActionMenu.Items>
                   </ConActionMenu>
                 </AcFlex>

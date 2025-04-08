@@ -10,7 +10,10 @@
     min-width: 200px;
     background-color: var(--tilburg-color-white);
     border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
-    border-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+    border-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
     // due to a limitation of scss i had to do this in stages
     --stage1: var(--utrecht-separator-color, #000000);
     --stage2: rgb(from var(--stage1) r g b / 0.2);
@@ -40,13 +43,25 @@
 
   &__item {
     &:first-child {
-      border-top-left-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
-      border-top-right-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+      border-top-left-radius: var(
+        --utrecht-button-border-radius,
+        var(--tilburg-border-radius-md, 8px)
+      );
+      border-top-right-radius: var(
+        --utrecht-button-border-radius,
+        var(--tilburg-border-radius-md, 8px)
+      );
     }
 
     &:last-child {
-      border-bottom-left-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
-      border-bottom-right-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+      border-bottom-left-radius: var(
+        --utrecht-button-border-radius,
+        var(--tilburg-border-radius-md, 8px)
+      );
+      border-bottom-right-radius: var(
+        --utrecht-button-border-radius,
+        var(--tilburg-border-radius-md, 8px)
+      );
     }
 
     display: flex;
@@ -68,9 +83,17 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
     &-icon {
       margin-right: var(--tilburg-space-column-rat);
+    }
+
+    &--checkbox {
+      padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-rabbit);
     }
   }
 
