@@ -13,7 +13,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcVoorzieningenFormModal from './ac-voorzieningen-form-modal';
 import AcDeleteVoorzieningModal from './ac-delete-voorzieningen-modal';
-import CDActionMenu from '../cd-action-menu';
+import ConActionMenu from '../con-action-menu';
 
 const AcBeheerVoorzieningen = () => {
   const navigate = useNavigate();
@@ -147,36 +147,38 @@ const AcBeheerVoorzieningen = () => {
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
-              
-              <CDActionMenu>
-                <CDActionMenu.Button>Action</CDActionMenu.Button>
 
-                <CDActionMenu.Items position='right'>
-                  <CDActionMenu.Item
+              <ConActionMenu>
+                <ConActionMenu.Button icon={<VISUALS.ELLIPSIS />}>
+                  Acties
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Items position='right'>
+                  <ConActionMenu.Item
                     icon={<VISUALS.EYE />}
                     disabled={selectedRows.length === 0}
                   >
                     Weergeven als view
-                  </CDActionMenu.Item>
-                  <CDActionMenu.Item
+                  </ConActionMenu.Item>
+                  <ConActionMenu.Item
                     icon={<VISUALS.DOWNLOAD />}
                     disabled={selectedRows.length === 0}
                   >
                     Downloaden als CSV
-                  </CDActionMenu.Item>
+                  </ConActionMenu.Item>
 
-                  <CDActionMenu.Divider />
+                  <ConActionMenu.Divider />
 
-                  <CDActionMenu.Item
+                  <ConActionMenu.Item
                     icon={<VISUALS.TRASHCAN />}
                     disabled={selectedRows.length === 0}
                     onClick={handleMultipleDelete}
                   >
                     Delete {selectedRows.length}{' '}
                     {selectedRows.length === 1 ? 'item' : 'items'}
-                  </CDActionMenu.Item>
-                </CDActionMenu.Items>
-              </CDActionMenu>
+                  </ConActionMenu.Item>
+                </ConActionMenu.Items>
+              </ConActionMenu>
             </AcFlex>
           </AcFlex>
 

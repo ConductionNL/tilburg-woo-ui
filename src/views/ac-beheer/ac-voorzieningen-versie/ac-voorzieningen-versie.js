@@ -13,7 +13,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcEditVoorzieningAanbodModal from './ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-versie-modal';
-import CDActionMenu from '../cd-action-menu';
+import ConActionMenu from '../con-action-menu';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -152,35 +152,37 @@ const AcBeheerVoorzieningenVersie = () => {
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
 
-              <CDActionMenu>
-                <CDActionMenu.Button>Action</CDActionMenu.Button>
+              <ConActionMenu>
+                <ConActionMenu.Button icon={<VISUALS.ELLIPSIS />}>
+                  Acties
+                </ConActionMenu.Button>
 
-                <CDActionMenu.Items position='right'>
-                  <CDActionMenu.Item
+                <ConActionMenu.Items position='right'>
+                  <ConActionMenu.Item
                     icon={<VISUALS.EYE />}
                     disabled={selectedRows.length === 0}
                   >
                     Weergeven als view
-                  </CDActionMenu.Item>
-                  <CDActionMenu.Item
+                  </ConActionMenu.Item>
+                  <ConActionMenu.Item
                     icon={<VISUALS.DOWNLOAD />}
                     disabled={selectedRows.length === 0}
                   >
                     Downloaden als CSV
-                  </CDActionMenu.Item>
+                  </ConActionMenu.Item>
 
-                  <CDActionMenu.Divider />
+                  <ConActionMenu.Divider />
 
-                  <CDActionMenu.Item
+                  <ConActionMenu.Item
                     icon={<VISUALS.TRASHCAN />}
                     disabled={selectedRows.length === 0}
                     onClick={handleMultipleDelete}
                   >
                     Delete {selectedRows.length}{' '}
                     {selectedRows.length === 1 ? 'item' : 'items'}
-                  </CDActionMenu.Item>
-                </CDActionMenu.Items>
-              </CDActionMenu>
+                  </ConActionMenu.Item>
+                </ConActionMenu.Items>
+              </ConActionMenu>
             </AcFlex>
           </AcFlex>
 

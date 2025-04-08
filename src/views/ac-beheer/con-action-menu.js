@@ -10,12 +10,12 @@ import {
 import clsx from 'clsx';
 import { AcButton } from '@src/molecules';
 
-// Context for the CDActionMenu component
-const CDActionMenuContext = createContext(null);
-const useCDActionMenuContext = () => {
-  const context = useContext(CDActionMenuContext);
+// Context for the ConActionMenu component
+const ConActionMenuContext = createContext(null);
+const useConActionMenuContext = () => {
+  const context = useContext(ConActionMenuContext);
   if (!context) {
-    throw new Error('CDActionMenu.* must be used inside <CDActionMenu>');
+    throw new Error('ConActionMenu.* must be used inside <ConActionMenu>');
   }
   return context;
 };
@@ -35,35 +35,35 @@ function useOnClickOutside(ref, handler) {
 }
 
 /**
- * Main CDActionMenu component that provides a toggle-able dropdown or popover menu.
+ * Main ConActionMenu component that provides a toggle-able dropdown or popover menu.
  * It uses a React Context to manage its open/close state, which is shared with the sub-components.
  *
  * Sub-components:
- * - **CDActionMenu.Button**: A button that toggles the menu's open/close state.
- * - **CDActionMenu.Items**: A container that displays the menu items when open. Accepts a `position` prop for alignment.
- * - **CDActionMenu.Item**: A single clickable menu item. By default, it closes the menu when clicked.
- * - **CDActionMenu.Divider**: A visual divider (\<hr>) used to separate menu items.
+ * - **ConActionMenu.Button**: A button that toggles the menu's open/close state.
+ * - **ConActionMenu.Items**: A container that displays the menu items when open. Accepts a `position` prop for alignment.
+ * - **ConActionMenu.Item**: A single clickable menu item. By default, it closes the menu when clicked.
+ * - **ConActionMenu.Divider**: A visual divider (\<hr>) used to separate menu items.
  *
  * @function
- * @name CDActionMenu
+ * @name ConActionMenu
  * @param {object} props - The props object.
  * @param {React.ReactNode} props.children - The compound sub-components to render (Button, Items, Item, etc.).
  * @param {string} [props.className] - Optional CSS class names to style the outer container.
  * @returns {JSX.Element} The rendered menu container with context providers.
  *
  * @example
- * // Basic usage of the CDActionMenu with all sub-components:
- * <CDActionMenu className="my-dropdown">
- *   <CDActionMenu.Button>Open Menu</CDActionMenu.Button>
+ * // Basic usage of the ConActionMenu with all sub-components:
+ * <ConActionMenu className="my-dropdown">
+ *   <ConActionMenu.Button>Open Menu</ConActionMenu.Button>
  *
- *   <CDActionMenu.Items position="right">
- *     <CDActionMenu.Item onClick={() => console.log('Item 1 clicked')} doNotClose>Item 1</CDActionMenu.Item>
- *     <CDActionMenu.Divider />
- *     <CDActionMenu.Item icon={<IconSome />} onClick={() => alert('Item 2 clicked')}>
+ *   <ConActionMenu.Items position="right">
+ *     <ConActionMenu.Item onClick={() => console.log('Item 1 clicked')} doNotClose>Item 1</ConActionMenu.Item>
+ *     <ConActionMenu.Divider />
+ *     <ConActionMenu.Item icon={<IconSome />} onClick={() => alert('Item 2 clicked')}>
  *       Item 2
- *     </CDActionMenu.Item>
- *   </CDActionMenu.Items>
- * </CDActionMenu>
+ *     </ConActionMenu.Item>
+ *   </ConActionMenu.Items>
+ * </ConActionMenu>
  *
  * // Note that clicking the button toggles the menu, clicking outside it closes the menu,
  * // and selecting any item also closes the menu automatically if doNotClose is not set.
@@ -72,7 +72,7 @@ function useOnClickOutside(ref, handler) {
  * @version: 1.0.0
  * @since: 07/04/2025
  */
-const CDActionMenu = ({ children, className }) => {
+const ConActionMenu = ({ children, className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -82,7 +82,7 @@ const CDActionMenu = ({ children, className }) => {
     setIsOpen((prev) => !prev);
   }, [setIsOpen]);
 
-  // Memoize the context value so child components don’t cause re-renders unnecessarily.
+  // Memoize the context value so child components don't cause re-renders unnecessarily.
   const contextValue = useMemo(
     () => ({
       isOpen,
@@ -93,16 +93,16 @@ const CDActionMenu = ({ children, className }) => {
   );
 
   return (
-    <CDActionMenuContext.Provider value={contextValue}>
-      <div ref={menuRef} className={clsx('cd-action-menu', className)}>
+    <ConActionMenuContext.Provider value={contextValue}>
+      <div ref={menuRef} className={clsx('con-action-menu', className)}>
         {children}
       </div>
-    </CDActionMenuContext.Provider>
+    </ConActionMenuContext.Provider>
   );
 };
 
 /**
- * A sub-component of CDActionMenu that renders a button.
+ * A sub-component of ConActionMenu that renders a button.
  * Clicking this button toggles the open/close state of the menu.
  *
  * @function
@@ -111,10 +111,10 @@ const CDActionMenu = ({ children, className }) => {
  * @returns {JSX.Element} The rendered toggle button.
  *
  * @example
- * <CDActionMenu.Button>Options</CDActionMenu.Button>
+ * <ConActionMenu.Button>Options</ConActionMenu.Button>
  */
-CDActionMenu.Button = ({ children, ...props }) => {
-  const { handleToggle } = useCDActionMenuContext();
+ConActionMenu.Button = ({ children, ...props }) => {
+  const { handleToggle } = useConActionMenuContext();
 
   return (
     <AcButton onClick={handleToggle} style='button' {...props}>
@@ -124,7 +124,7 @@ CDActionMenu.Button = ({ children, ...props }) => {
 };
 
 /**
- * A sub-component of CDActionMenu that renders the list of menu items.
+ * A sub-component of ConActionMenu that renders the list of menu items.
  * Automatically hides or shows based on the menu's open state.
  *
  * @function
@@ -134,20 +134,20 @@ CDActionMenu.Button = ({ children, ...props }) => {
  * @returns {JSX.Element} The container for menu items.
  *
  * @example
- * <CDActionMenu.Items position="left">
- *   <CDActionMenu.Item>Item 1</CDActionMenu.Item>
- *   <CDActionMenu.Item>Item 2</CDActionMenu.Item>
- * </CDActionMenu.Items>
+ * <ConActionMenu.Items position="left">
+ *   <ConActionMenu.Item>Item 1</ConActionMenu.Item>
+ *   <ConActionMenu.Item>Item 2</ConActionMenu.Item>
+ * </ConActionMenu.Items>
  */
-CDActionMenu.Items = ({ children, position = 'right', ...props }) => {
-  const { isOpen } = useCDActionMenuContext();
+ConActionMenu.Items = ({ children, position = 'right', ...props }) => {
+  const { isOpen } = useConActionMenuContext();
 
   return (
     <div
       className={clsx(
-        'cd-action-menu__items',
-        isOpen && 'cd-action-menu__items--open',
-        `cd-action-menu__items--${position}`
+        'con-action-menu__items',
+        isOpen && 'con-action-menu__items--open',
+        `con-action-menu__items--${position}`
       )}
       {...props}
     >
@@ -157,7 +157,7 @@ CDActionMenu.Items = ({ children, position = 'right', ...props }) => {
 };
 
 /**
- * A sub-component of CDActionMenu that represents a single clickable menu item.
+ * A sub-component of ConActionMenu that represents a single clickable menu item.
  * Clicking it closes the menu by default.
  *
  * @function
@@ -169,16 +169,16 @@ CDActionMenu.Items = ({ children, position = 'right', ...props }) => {
  * @returns {JSX.Element} The rendered menu item button.
  *
  * @example
- * <CDActionMenu.Item
+ * <ConActionMenu.Item
  *   onClick={() => doSomething()}
  *   doNotClose
  *   icon={<VISUALS.PLUS />}
  * >
  *   Menu Option
- * </CDActionMenu.Item>
+ * </ConActionMenu.Item>
  */
-CDActionMenu.Item = ({ children, onClick, doNotClose, icon, ...props }) => {
-  const { setIsOpen } = useCDActionMenuContext();
+ConActionMenu.Item = ({ children, onClick, doNotClose, icon, ...props }) => {
+  const { setIsOpen } = useConActionMenuContext();
 
   const handleClick = (e) => {
     if (onClick) {
@@ -190,28 +190,28 @@ CDActionMenu.Item = ({ children, onClick, doNotClose, icon, ...props }) => {
   };
 
   return (
-    <button className='cd-action-menu__item' onClick={handleClick} {...props}>
-      {icon && <span className='cd-action-menu__item-icon'>{icon}</span>}
+    <button className='con-action-menu__item' onClick={handleClick} {...props}>
+      {icon && <span className='con-action-menu__item-icon'>{icon}</span>}
       {children}
     </button>
   );
 };
 
 /**
- * A sub-component of CDActionMenu that renders a horizontal divider.
+ * A sub-component of ConActionMenu that renders a horizontal divider.
  *
  * @function
  * @returns {JSX.Element} The rendered divider (\<hr>).
  *
  * @example
- * <CDActionMenu.Items>
- *   <CDActionMenu.Item>Item 1</CDActionMenu.Item>
- *   <CDActionMenu.Divider />
- *   <CDActionMenu.Item>Item 2</CDActionMenu.Item>
- * </CDActionMenu.Items>
+ * <ConActionMenu.Items>
+ *   <ConActionMenu.Item>Item 1</ConActionMenu.Item>
+ *   <ConActionMenu.Divider />
+ *   <ConActionMenu.Item>Item 2</ConActionMenu.Item>
+ * </ConActionMenu.Items>
  */
-CDActionMenu.Divider = () => {
-  return <hr className='cd-action-menu__divider' />;
+ConActionMenu.Divider = () => {
+  return <hr className='con-action-menu__divider' />;
 };
 
-export default CDActionMenu;
+export default ConActionMenu;

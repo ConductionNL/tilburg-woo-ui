@@ -153,6 +153,10 @@ const CIRCLE_XMARK = loadable(() =>
 
 const EYE = loadable(() => import('-!svg-react-loader!@assets/images/eye.svg'));
 
+const ELLIPSIS = loadable(() =>
+  import('-!svg-react-loader!@assets/images/ellipsis.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -210,6 +214,7 @@ export const VISUALS = {
   SPINNER,
   CIRCLE_XMARK,
   EYE,
+  ELLIPSIS,
 };
 
 export default {};
