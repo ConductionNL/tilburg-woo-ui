@@ -1,0 +1,87 @@
+.con-action-menu {
+  position: relative;
+  display: inline-block;
+  height: fit-content;
+
+  &__items {
+    position: absolute;
+    top: 110%;
+    right: 0;
+    min-width: 200px;
+    background-color: var(--tilburg-color-white);
+    border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
+    border-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+    // due to a limitation of scss i had to do this in stages
+    --stage1: var(--utrecht-separator-color, #000000);
+    --stage2: rgb(from var(--stage1) r g b / 0.2);
+    box-shadow: 0 2px 4px 2px var(--stage2);
+    display: none;
+    z-index: 1000;
+
+    &--open {
+      display: block;
+    }
+
+    &--left {
+      left: 0;
+      right: auto;
+    }
+
+    &--center {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    &--right {
+      left: auto;
+      right: 0;
+    }
+  }
+
+  &__item {
+    &:first-child {
+      border-top-left-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+      border-top-right-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+    }
+
+    &:last-child {
+      border-bottom-left-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+      border-bottom-right-radius: var(--utrecht-button-border-radius, var(--tilburg-border-radius-md, 8px));
+    }
+
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
+    text-align: left;
+    border: none;
+    background: none;
+    color: var(--tilburg-color-gray-900);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--tilburg-color-gray-100);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &-icon {
+      margin-right: var(--tilburg-space-column-rat);
+    }
+  }
+
+  &__divider {
+    border: 0;
+    background-color: var(--utrecht-separator-color, var(--tilburg-color-gray-200));
+    height: var(--utrecht-separator-width, 1px);
+    width: 90%;
+    margin-block-start: var(--utrecht-separator-margin-block-start);
+    margin-block-end: var(--utrecht-separator-margin-block-end);
+    margin-inline-start: auto;
+    margin-inline-end: auto;
+  }
+}

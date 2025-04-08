@@ -13,6 +13,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import CDTable from '../cd-table';
 import AcOrganisatieFormModal from './ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from './ac-delete-organisatie-modal';
+import ConActionMenu from '../con-action-menu';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -146,13 +147,38 @@ const AcBeheerOrganisaties = () => {
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
-              <PrimaryActionButton
-                disabled={selectedRows.length === 0}
-                onClick={handleMultipleDelete}
-              >
-                <VISUALS.TRASHCAN className='ac-button__icon' /> Delete{' '}
-                {selectedRows.length} {selectedRows.length === 1 ? 'item' : 'items'}
-              </PrimaryActionButton>
+
+              <ConActionMenu>
+                <ConActionMenu.Button icon={<VISUALS.ELLIPSIS />}>
+                  Acties
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Items position='right'>
+                  <ConActionMenu.Item
+                    icon={<VISUALS.EYE />}
+                    disabled={selectedRows.length === 0}
+                  >
+                    Weergeven als view
+                  </ConActionMenu.Item>
+                  <ConActionMenu.Item
+                    icon={<VISUALS.DOWNLOAD />}
+                    disabled={selectedRows.length === 0}
+                  >
+                    Downloaden als CSV
+                  </ConActionMenu.Item>
+
+                  <ConActionMenu.Divider />
+
+                  <ConActionMenu.Item
+                    icon={<VISUALS.TRASHCAN />}
+                    disabled={selectedRows.length === 0}
+                    onClick={handleMultipleDelete}
+                  >
+                    Delete {selectedRows.length}{' '}
+                    {selectedRows.length === 1 ? 'item' : 'items'}
+                  </ConActionMenu.Item>
+                </ConActionMenu.Items>
+              </ConActionMenu>
             </AcFlex>
           </AcFlex>
 
