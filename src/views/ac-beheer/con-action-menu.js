@@ -43,6 +43,7 @@ function useOnClickOutside(ref, handler) {
  * - **ConActionMenu.Items**: A container that displays the menu items when open. Accepts a `position` prop for alignment.
  * - **ConActionMenu.Item**: A generic container for menu items. Provides a close function to its children.
  * - **ConActionMenu.Button**: A clickable button menu item. By default, it closes the menu when clicked.
+ * - **ConActionMenu.Checkbox**: A checkbox menu item. Allows for external control of the checkbox state.
  * - **ConActionMenu.Divider**: A visual divider (\<hr>) used to separate menu items.
  *
  * @function
@@ -71,6 +72,9 @@ function useOnClickOutside(ref, handler) {
  *     <ConActionMenu.Button icon={<IconSome />} onClick={() => alert('Button 2 clicked')}>
  *       Button 2
  *     </ConActionMenu.Button>
+ *     <ConActionMenu.Checkbox defaultChecked={true} onChange={(checked) => alert('Checkbox changed: ' + checked)}>
+ *       Checkbox
+ *     </ConActionMenu.Checkbox>
  *   </ConActionMenu.Items>
  * </ConActionMenu>
  *
@@ -78,8 +82,8 @@ function useOnClickOutside(ref, handler) {
  * // and clicking any button also closes the menu automatically if doNotClose is not set.
  *
  * @author: Thijn Douwma (SudoThijn on github)
- * @version: 1.0.0
- * @since: 07/04/2025
+ * @version: 1.0.1
+ * @since: 08/04/2025
  */
 const ConActionMenu = ({ children, className }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -267,7 +271,7 @@ ConActionMenu.Button = ({ children, onClick, doNotClose, icon, ...props }) => {
  * @function
  * @param {object} props - Additional props are passed to the checkbox. (Not passed to the containing div element)
  * @param {boolean} [props.checked] - The controlled checked state of the checkbox
- * @param {function} [props.onChange] - Handler called when checkbox changes, receives new checked state
+ * @param {function} [props.onChange] - Handler called when checkbox changes, receives new checked state as a boolean
  * @param {boolean} [props.defaultChecked] - Initial checked state when uncontrolled
  * @param {boolean} [props.disabled] - Whether the checkbox is disabled
  * @param {React.ReactNode} props.children - Label content next to checkbox
@@ -328,7 +332,7 @@ ConActionMenu.Checkbox = ({
     >
       <AcCheckbox
         checked={isControlled ? checked : internalChecked}
-        onChange={(e) => handleChange(e.target.checked)}
+        onChange={handleChange}
         defaultChecked={defaultChecked}
         disabled={disabled}
         {...props}
