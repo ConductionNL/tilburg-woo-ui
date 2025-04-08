@@ -18,6 +18,7 @@ import {
   AcNextcloudAuthorization,
   AcBeheer,
   AcRegister,
+  AcViews,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -48,6 +49,7 @@ export const PATHS = AcLockObject({
   BEHEER_TYPE: '/beheer/:type',
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
   REGISTER: '/register',
+  VIEWS: '/views/:id',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -55,6 +57,7 @@ export const NAVIGATE_TO = AcLockObject({
   BEHEER_TYPE: (type) => PATHS.BEHEER_TYPE.replace(':type', type),
   BEHEER_TYPE_DETAILS: (type, id) =>
     PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
+  VIEWS: (id) => PATHS.VIEWS.replace(':id', id),
 });
 
 const getTitle = () => {
@@ -292,6 +295,14 @@ export const ROUTES = {
     path: PATHS.REGISTER,
     title: 'Open Tilburg | Register',
     component: AcRegister,
+  },
+  VIEWS: {
+    id: AcUUID(),
+    name: 'Views',
+    label: LABELS.VIEWS,
+    path: PATHS.VIEWS,
+    title: 'Open Tilburg | Views',
+    component: AcViews,
   },
 };
 

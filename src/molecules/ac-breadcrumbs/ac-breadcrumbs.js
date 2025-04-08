@@ -11,9 +11,10 @@ import {
   BreadcrumbNavSeparator,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
+const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
   const { get_single: get_single_page } = pages;
   const { get_single: get_single_document } = publications;
+  const { view: single_view } = gemma;
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
@@ -64,12 +65,16 @@ const AcBreadcrumbs = ({ store: { pages, publications }, items }) => {
       return BREADCRUMBS.REGISTER;
     }
 
+    if (location.pathname.startsWith('/views')) {
+      return BREADCRUMBS.VIEWS(single_view?.name);
+    }
+
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);
     }
 
     return [];
-  }, [get_single_document, get_single_page, location]);
+  }, [get_single_document, get_single_page, location, single_view]);
 
   return (
     <BreadcrumbNav>
