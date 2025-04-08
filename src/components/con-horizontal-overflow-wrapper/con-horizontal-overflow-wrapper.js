@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Button } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 
-const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
+const ConHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
   const [canScrollRight, setCanScrollRight] = React.useState(false);
   const [canScrollLeft, setCanScrollLeft] = React.useState(false);
 
@@ -52,10 +52,10 @@ const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
   }, [checkScrollDirections]);
 
   return (
-    <div className='co-horizontal-overflow-wrapper__container'>
+    <div className='con-horizontal-overflow-wrapper__container'>
       {canScrollLeft && (
         <Button
-          className='co-horizontal-overflow-wrapper__scroll-button'
+          className='con-horizontal-overflow-wrapper__scroll-button'
           onClick={scrollLeft}
           appearance='secondary-action-button'
           aria-label={ariaLabels.scrollLeftButton}
@@ -67,8 +67,8 @@ const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
       {canScrollRight && (
         <Button
           className={clsx(
-            'co-horizontal-overflow-wrapper__scroll-button',
-            'co-horizontal-overflow-wrapper__scroll-button--right'
+            'con-horizontal-overflow-wrapper__scroll-button',
+            'con-horizontal-overflow-wrapper__scroll-button--right'
           )}
           onClick={scrollRight}
           appearance='secondary-action-button'
@@ -80,10 +80,10 @@ const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
 
       <div
         ref={wrapperRef}
-        className='co-horizontal-overflow-wrapper__wrapper'
+        className='con-horizontal-overflow-wrapper__wrapper'
         onScroll={checkScrollDirections}
       >
-        <div ref={contentRef} className='co-horizontal-overflow-wrapper__content'>
+        <div ref={contentRef} className='con-horizontal-overflow-wrapper__content'>
           {children}
         </div>
       </div>
@@ -91,4 +91,4 @@ const CoHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
   );
 };
 
-export default CoHorizontalOverflowWrapper;
+export default ConHorizontalOverflowWrapper;

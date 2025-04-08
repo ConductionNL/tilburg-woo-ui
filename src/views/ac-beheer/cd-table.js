@@ -13,7 +13,7 @@ import {
 } from '@utrecht/component-library-react';
 import { AcUUID } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
-import CoHorizontalOverflowWrapper from '@components/co-horizontal-overflow-wrapper/co-horizontal-overflow-wrapper';
+import { ConHorizontalOverflowWrapper } from '@components';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -330,7 +330,7 @@ const CDTable = (
   ]);
 
   return (
-    <CoHorizontalOverflowWrapper
+    <ConHorizontalOverflowWrapper
       ariaLabels={{
         scrollLeftButton: 'Scroll left',
         scrollRightButton: 'Scroll right',
@@ -340,7 +340,7 @@ const CDTable = (
         {tableHeader}
         <TableBody>{tableRows}</TableBody>
       </Table>
-    </CoHorizontalOverflowWrapper>
+    </ConHorizontalOverflowWrapper>
   );
 };
 
