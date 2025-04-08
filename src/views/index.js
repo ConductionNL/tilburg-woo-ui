@@ -19,6 +19,7 @@ const AcFallbackErrorPage = loadable(() =>
   import('@views/ac-fallback-error-page/ac-fallback-error-page')
 );
 const AcRegister = loadable(() => import('@views/ac-register/ac-register'));
+const AcViews = loadable(() => import('@views/ac-views/ac-views'));
 
 export {
   AcHome,
@@ -32,4 +33,5 @@ export {
   AcBeheer,
   AcFallbackErrorPage,
   AcRegister,
+  AcViews,
 };

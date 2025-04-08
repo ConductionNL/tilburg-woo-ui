@@ -52,6 +52,9 @@ export class GemmaStore {
     message: undefined,
   };
 
+  @observable
+  viewError = null;
+
   @computed
   get search_query() {
     return { ...this.defaultQuery, ...this.query };
@@ -87,6 +90,11 @@ export class GemmaStore {
     return toJS(this.views);
   }
 
+  @computed
+  get get_viewError() {
+    return toJS(this.viewError);
+  }
+
   @action
   setViews = (views) => {
     this.views = views;
@@ -118,6 +126,11 @@ export class GemmaStore {
   };
 
   @action
+  setViewError = (error) => {
+    this.viewError = error;
+  };
+
+  @action
   fetchViews = async () => {
     this.loading.status = true;
 
@@ -136,6 +149,7 @@ export class GemmaStore {
   @action
   fetchView = async (_id) => {
     this.loading.status = true;
+    this.setViewError(null);
 
     app.store.api.gemma
       .view(
@@ -147,7 +161,11 @@ export class GemmaStore {
       .then((response) => {
         this.setView(response);
       })
-      .catch((e) => console.error(e))
+      .catch((e) => {
+        console.error(e);
+        this.setViewError(e);
+        this.setView(null);
+      })
       .finally(() => {
         this.setLoadingStatus(false);
       });
@@ -215,6 +233,7 @@ export class GemmaStore {
   @action
   resetView = () => {
     this.view = null;
+    this.setViewError(null);
   };
 
   @action

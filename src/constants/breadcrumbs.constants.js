@@ -16,6 +16,7 @@ export const BREADCRUMB_ITEMS = {
     href: `/beheer/${type}`,
   }),
   REGISTER: { label: 'Register', href: '/register' },
+  VIEWS: { label: 'Views' },
 };
 
 export const BREADCRUMBS = {
@@ -49,4 +50,11 @@ export const BREADCRUMBS = {
     return items;
   },
   REGISTER: [BREADCRUMB_ITEMS.REGISTER],
+  VIEWS: (label) => {
+    const items = [BREADCRUMB_ITEMS.VIEWS];
+    if (label) {
+      items.push({ label });
+    }
+    return items;
+  },
 };
