@@ -31,8 +31,12 @@ const AcBeheerKwetsbaarheden = loadable(() =>
   import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
 );
 const AcBeheerVoorzieningen = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen/ac-voorzieningen')
+  import('@src/views/ac-beheer/ac-voorzieningen/pages/ac-voorzieningen')
 );
+const AcBeheerVoorzieningenDetails = loadable(() =>
+  import('@src/views/ac-beheer/ac-voorzieningen/pages/ac-voorzieningen-details')
+);
+
 
 // detail pages
 const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
@@ -53,4 +57,5 @@ export {
   AcBeheerError,
   AcBeheerLoading,
   AcBeheerVoorzieningen,
+  AcBeheerVoorzieningenDetails,
 };

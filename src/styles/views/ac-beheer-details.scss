@@ -3,6 +3,10 @@
     width: unset !important;
   }
 
+  &--100-width {
+    width: 100%;
+  }
+
   &--list {
     margin-inline-start: 20px;
     list-style-type: disc;
