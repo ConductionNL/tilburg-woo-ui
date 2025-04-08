@@ -15,6 +15,7 @@ export const BREADCRUMB_ITEMS = {
     label: prettifyPathname(type),
     href: `/beheer/${type}`,
   }),
+  REGISTER: { label: 'Register', href: '/register' },
 };
 
 export const BREADCRUMBS = {
@@ -47,4 +48,5 @@ export const BREADCRUMBS = {
     }
     return items;
   },
+  REGISTER: [BREADCRUMB_ITEMS.REGISTER],
 };

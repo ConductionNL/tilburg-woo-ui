@@ -17,6 +17,7 @@ import {
   AcGemma,
   AcNextcloudAuthorization,
   AcBeheer,
+  AcRegister,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -46,6 +47,7 @@ export const PATHS = AcLockObject({
   BEHEER: '/beheer',
   BEHEER_TYPE: '/beheer/:type',
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
+  REGISTER: '/register',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -282,6 +284,14 @@ export const ROUTES = {
     path: PATHS.BEHEER_TYPE_DETAILS,
     title: 'Beheer Type Details',
     component: AcBeheer,
+  },
+  REGISTER: {
+    id: AcUUID(),
+    name: 'Register',
+    label: LABELS.REGISTER,
+    path: PATHS.REGISTER,
+    title: 'Open Tilburg | Register',
+    component: AcRegister,
   },
 };
 
