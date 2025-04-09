@@ -142,7 +142,8 @@ const AcBeheerVoorzieningenDetails = ({ id }) => {
                 {/* modals */}
                 <AcEditVoorzieningModal
                   voorziening={data}
-                  showModal={openModal === 'edit'}
+                  showModal={openModal === 'edit' || openModal === 'add'}
+                  isEdit={openModal === 'edit'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
