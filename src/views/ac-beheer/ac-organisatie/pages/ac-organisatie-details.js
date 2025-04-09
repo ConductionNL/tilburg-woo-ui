@@ -135,8 +135,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                       <div>
                         <strong>Adres:</strong>
-                        <Paragraph>{data.adres?.straat} {data.adres?.huisnummer}</Paragraph>
-                        <Paragraph>{data.adres?.postcode} {data.adres?.plaats}</Paragraph>
+                        <Paragraph>
+                          {data.adres?.straat} {data.adres?.huisnummer}
+                        </Paragraph>
+                        <Paragraph>
+                          {data.adres?.postcode} {data.adres?.plaats}
+                        </Paragraph>
                         <Paragraph>{data.adres?.land}</Paragraph>
                       </div>
 
@@ -159,7 +163,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                       <div>
                         <strong>Voorzieningen:</strong>
-                        <Paragraph>{data.voorzieningen?.join(', ') || '-'}</Paragraph>
+                        <Paragraph>
+                          {data.voorzieningen?.join(', ') || '-'}
+                        </Paragraph>
                       </div>
 
                       <div>

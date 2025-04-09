@@ -144,7 +144,13 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                         <Paragraph>
                           {data.referenties.map((ref, index) => (
                             <span key={index}>
-                              <a href={ref} target="_blank" rel="noopener noreferrer">{ref}</a>
+                              <a
+                                href={ref}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                              >
+                                {ref}
+                              </a>
                               {index < data.referenties.length - 1 && ', '}
                             </span>
                           ))}

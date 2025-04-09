@@ -96,7 +96,9 @@ const AcDeleteVoorzieningGebruikModal = ({
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {voorzieningen.length === 1 ? 'voorziening gebruik' : 'voorziening gebruiken'}{' '}
+        {voorzieningen.length === 1
+          ? 'voorziening gebruik'
+          : 'voorziening gebruiken'}{' '}
         wilt verwijderen?
         {voorzieningen.map((voorziening) => (
           <Paragraph key={voorziening.id}>{voorziening.id}</Paragraph>

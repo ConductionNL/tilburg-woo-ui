@@ -101,7 +101,13 @@ const AcDeleteOrganisatiesModal = ({
       title={`${
         organisaties.length === 1 ? 'Organisatie' : 'Organisaties'
       } verwijderen`}
-      buttons={[{ label: 'verwijderen', icon: <VISUALS.TRASHCAN />, onClick: handleDeleteOrganisatie }]}
+      buttons={[
+        {
+          label: 'verwijderen',
+          icon: <VISUALS.TRASHCAN />,
+          onClick: handleDeleteOrganisatie,
+        },
+      ]}
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}

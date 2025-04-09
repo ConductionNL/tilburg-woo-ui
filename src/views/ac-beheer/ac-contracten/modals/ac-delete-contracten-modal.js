@@ -89,15 +89,12 @@ const AcDeleteContractenModal = ({
     <AcModal
       ref={modalRef}
       id='delete-contract-modal'
-      title={`${
-        contracten.length === 1 ? 'Contract' : 'Contracten'
-      } verwijderen`}
+      title={`${contracten.length === 1 ? 'Contract' : 'Contracten'} verwijderen`}
       buttons={[{ label: 'verwijderen', onClick: handleDeleteVoorziening }]}
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {contracten.length === 1 ? 'contract' : 'contracten'}{' '}
-        wilt verwijderen?
+        {contracten.length === 1 ? 'contract' : 'contracten'} wilt verwijderen?
         {contracten.map((contract) => (
           <Paragraph key={contract.id}>{contract.naam}</Paragraph>
         ))}
