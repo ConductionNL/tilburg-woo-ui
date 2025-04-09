@@ -13,11 +13,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-aanbod-form-modal';
-import AcDeleteVoorzieningAanbodModall from '../modals/ac-delete-voorziening-aanbod-modal';
+import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-modal';
+import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
+const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningaanboden/${id}`
+          `/openconnector/api/endpoint/voorzieningversies/${id}`
       );
 
       if (!response.ok) {
@@ -106,70 +106,40 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                       </div>
 
                       <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.type}</Paragraph>
+                        <strong>Release Notes:</strong>
+                        <Paragraph>{data.releaseNotes}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
+                        <strong>Nummer:</strong>
+                        <Paragraph>{data.nummer}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
+                        <strong>Status:</strong>
+                        <Paragraph>{data.status}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Productpagina:</strong>
-                        <Paragraph>
-                          <a
-                            href={data.productpagina}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            {data.productpagina}
-                          </a>
-                        </Paragraph>
+                        <strong>Voorziening Aanbod ID:</strong>
+                        <Paragraph>{data.voorzieningaanbodId}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Ondersteuningsmodel:</strong>
-                        <Paragraph>{data.ondersteuningsmodel}</Paragraph>
+                        <strong>Productie datum:</strong>
+                        <Paragraph>{data.productieDatum}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Licentiemodel:</strong>
-                        <Paragraph>{data.licentiemodel}</Paragraph>
+                        <strong>Eind datum:</strong>
+                        <Paragraph>{data.eindeDatum}</Paragraph>
                       </div>
-
-                      <div>
-                        <strong>Hostingopties:</strong>
-                        <Paragraph>{data.hostingopties}</Paragraph>
-                      </div>
-                    </div>
-
-                    <div>
-                      <AcTabs
-                        selectedIndex={versionTabIndex}
-                        onSelect={(index) => setVersionTabIndex(index)}
-                      >
-                        <AcTabList>
-                          <AcTab selected={versionTabIndex === 0}>Versies</AcTab>
-                        </AcTabList>
-
-                        <AcTabPanel selected={versionTabIndex === 0}>
-                          {data.versies.map((versie, index) => (
-                            <Paragraph key={index}>{versie}</Paragraph>
-                          ))}
-                        </AcTabPanel>
-                      </AcTabs>
                     </div>
                   </AcFlex>
                 </AcColumn>
 
                 {/* modals */}
-                <AcEditVoorzieningAanbodModal
+                <AcEditVoorzieningVersieModal
                   voorziening={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -181,14 +151,14 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningAanbodModall
+                <AcDeleteVoorzieningVersieModal
                   voorzieningen={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/voorzieningen-aanbod');
+                    navigate('/beheer/voorzieningen-versie');
                   }}
                 />
               </AcFlex>
@@ -200,4 +170,4 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbodDetails));
+export default withStore(observer(AcBeheerVoorzieningenVersieDetails));

@@ -16,16 +16,20 @@ const AcBeheerVoorzieningenAanbod = loadable(() =>
   )
 );
 const AcBeheerVoorzieningenGebruik = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-gebruik/ac-voorzieningen-gebruik')
+  import(
+    '@src/views/ac-beheer/ac-voorzieningen-gebruik/pages/ac-voorzieningen-gebruik'
+  )
 );
 const AcBeheerVoorzieningenVersie = loadable(() =>
-  import('@views/ac-beheer/ac-voorzieningen-versie/ac-voorzieningen-versie')
+  import(
+    '@src/views/ac-beheer/ac-voorzieningen-versie/pages/ac-voorzieningen-versie'
+  )
 );
 const AcBeheerContracten = loadable(() =>
-  import('@views/ac-beheer/ac-contracten/ac-contracten')
+  import('@src/views/ac-beheer/ac-contracten/pages/ac-contracten')
 );
 const AcBeheerOrganisaties = loadable(() =>
-  import('@views/ac-beheer/ac-organisatie/ac-organisatie')
+  import('@src/views/ac-beheer/ac-organisatie/pages/ac-organisatie')
 );
 const AcBeheerKwetsbaarheden = loadable(() =>
   import('@views/ac-beheer/ac-kwetsbaarheid/ac-kwetsbaarheid')
@@ -37,12 +41,27 @@ const AcBeheerVoorzieningenDetails = loadable(() =>
   import('@src/views/ac-beheer/ac-voorzieningen/pages/ac-voorzieningen-details')
 );
 
-
 // detail pages
 const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
   import(
     '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod-details'
   )
+);
+const AcBeheerVoorzieningenGebruikDetails = loadable(() =>
+  import(
+    '@src/views/ac-beheer/ac-voorzieningen-gebruik/pages/ac-voorzieningen-gebruik-details'
+  )
+);
+const AcBeheerVoorzieningenVersieDetails = loadable(() =>
+  import(
+    '@src/views/ac-beheer/ac-voorzieningen-versie/pages/ac-voorzieningen-versie-details'
+  )
+);
+const AcBeheerContractenDetails = loadable(() =>
+  import('@src/views/ac-beheer/ac-contracten/pages/ac-contracten-details')
+);
+const AcBeheerOrganisatieDetails = loadable(() =>
+  import('@src/views/ac-beheer/ac-organisatie/pages/ac-organisatie-details')
 );
 
 export {
@@ -58,4 +77,8 @@ export {
   AcBeheerLoading,
   AcBeheerVoorzieningen,
   AcBeheerVoorzieningenDetails,
+  AcBeheerVoorzieningenGebruikDetails,
+  AcBeheerVoorzieningenVersieDetails,
+  AcBeheerContractenDetails,
+  AcBeheerOrganisatieDetails,
 };

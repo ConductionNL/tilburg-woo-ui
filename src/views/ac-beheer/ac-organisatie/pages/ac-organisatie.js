@@ -10,12 +10,12 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../cd-table';
-import AcVoorzieningGebruikFormModal from './ac-voorziening-gebruik-form-modal';
-import AcDeleteVoorzieningGebruikModal from './ac-delete-voorziening-gebruik-modal';
-import ConActionMenu from '../con-action-menu';
+import CDTable from '../../cd-table';
+import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
+import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
+import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenGebruik = () => {
+const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -28,7 +28,7 @@ const AcBeheerVoorzieningenGebruik = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieninggebruiken'
+          '/openconnector/api/endpoint/organisaties'
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -56,28 +56,28 @@ const AcBeheerVoorzieningenGebruik = () => {
 
   const tableHeaders = [
     {
-      label: 'Id',
-      key: 'id',
+      label: 'Naam',
+      key: 'naam',
     },
     {
-      label: 'Versie Id',
-      key: 'versieId',
+      label: 'Beschrijving',
+      key: 'beschrijving',
     },
     {
-      label: 'Status',
-      key: 'status',
+      label: 'Type',
+      key: 'type',
     },
     {
-      label: 'Opmerkingen',
-      key: 'opmerkingen',
+      label: 'KvK nummer',
+      key: 'kvkNummer',
     },
     {
-      label: 'BBN Score',
-      key: 'bbnScore',
+      label: 'OIDN',
+      key: 'oidn',
     },
     {
-      label: 'IBP Score',
-      key: 'ibpScore',
+      label: 'Moeder Organisatie',
+      key: 'moederOrganisatie',
     },
     {
       label: 'Acties',
@@ -87,11 +87,8 @@ const AcBeheerVoorzieningenGebruik = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
-            disabled={true}
             onClick={() => {
-              navigate(
-                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-gebruik', row.id)
-              );
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id));
             }}
           >
             <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -126,13 +123,11 @@ const AcBeheerVoorzieningenGebruik = () => {
   };
 
   if (error) {
-    return (
-      <AcBeheerError title='Beheer Voorzieningen Gebruik' error={error.message} />
-    );
+    return <AcBeheerError title='Beheer Organisaties' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen Gebruik' />;
+    return <AcBeheerLoading title='Beheer Organisaties' />;
   }
 
   return (
@@ -146,7 +141,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen Gebruik</Heading>
+            <Heading>Beheer Organisaties</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
@@ -196,8 +191,8 @@ const AcBeheerVoorzieningenGebruik = () => {
           />
 
           {/* modals */}
-          <AcVoorzieningGebruikFormModal
-            voorziening={singleSelectedRow}
+          <AcOrganisatieFormModal
+            organisatie={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -211,8 +206,8 @@ const AcBeheerVoorzieningenGebruik = () => {
             }}
           />
 
-          <AcDeleteVoorzieningGebruikModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteOrganisatieModal
+            organisaties={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -229,4 +224,4 @@ const AcBeheerVoorzieningenGebruik = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenGebruik));
+export default withStore(observer(AcBeheerOrganisaties));

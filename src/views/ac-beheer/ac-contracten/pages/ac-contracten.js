@@ -10,12 +10,12 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-voorziening-versie-form-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-versie-modal';
-import ConActionMenu from '../con-action-menu';
+import CDTable from '../../cd-table';
+import AcContractFormModal from '../modals/ac-contract-form-modal';
+import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
+import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenVersie = () => {
+const AcBeheerContracten = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -28,7 +28,7 @@ const AcBeheerVoorzieningenVersie = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningversies'
+          '/openconnector/api/endpoint/contracts'
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -56,28 +56,28 @@ const AcBeheerVoorzieningenVersie = () => {
 
   const tableHeaders = [
     {
-      label: 'Naam',
-      key: 'naam',
+      label: 'Contract nummer',
+      key: 'contractNummer',
     },
     {
-      label: 'Omschrijving',
-      key: 'omschrijving',
-    },
-    {
-      label: 'Release Notes',
-      key: 'releaseNotes',
-    },
-    {
-      label: 'Nummer',
-      key: 'nummer',
+      label: 'Contract type',
+      key: 'contractType',
     },
     {
       label: 'Status',
       key: 'status',
     },
     {
-      label: 'Voorziening Aanbod ID',
-      key: 'voorzieningaanbodId',
+      label: 'Start datum',
+      key: 'startDatum',
+    },
+    {
+      label: 'Eind datum',
+      key: 'eindDatum',
+    },
+    {
+      label: 'Document referentie',
+      key: 'documentReferentie',
     },
     {
       label: 'Acties',
@@ -87,11 +87,8 @@ const AcBeheerVoorzieningenVersie = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
-            disabled={true}
             onClick={() => {
-              navigate(
-                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-versie', row.id)
-              );
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('contracten', row.id));
             }}
           >
             <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -126,13 +123,11 @@ const AcBeheerVoorzieningenVersie = () => {
   };
 
   if (error) {
-    return (
-      <AcBeheerError title='Beheer Voorzieningen Versie' error={error.message} />
-    );
+    return <AcBeheerError title='Beheer Contracten' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen Versie' />;
+    return <AcBeheerLoading title='Beheer Contracten' />;
   }
 
   return (
@@ -146,7 +141,7 @@ const AcBeheerVoorzieningenVersie = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen Versie</Heading>
+            <Heading>Beheer Contracten</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
@@ -196,8 +191,8 @@ const AcBeheerVoorzieningenVersie = () => {
           />
 
           {/* modals */}
-          <AcEditVoorzieningAanbodModal
-            voorziening={singleSelectedRow}
+          <AcContractFormModal
+            contract={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -211,8 +206,8 @@ const AcBeheerVoorzieningenVersie = () => {
             }}
           />
 
-          <AcDeleteVoorzieningAanbodModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteContractenModal
+            contracten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -229,4 +224,4 @@ const AcBeheerVoorzieningenVersie = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenVersie));
+export default withStore(observer(AcBeheerContracten));

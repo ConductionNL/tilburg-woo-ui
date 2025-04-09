@@ -13,11 +13,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-aanbod-form-modal';
-import AcDeleteVoorzieningAanbodModall from '../modals/ac-delete-voorziening-aanbod-modal';
+import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
+import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
+const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningaanboden/${id}`
+          `/openconnector/api/endpoint/organisaties/${id}`
       );
 
       if (!response.ok) {
@@ -49,8 +49,6 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const [versionTabIndex, setVersionTabIndex] = useState(0);
 
   if (error) {
     return <AcBeheerError error={error.message} />;
@@ -101,76 +99,85 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       <div>
-                        <strong>Omschrijving:</strong>
-                        <Paragraph>{data.omschrijving}</Paragraph>
-                      </div>
-
-                      <div>
                         <strong>Type:</strong>
-                        <Paragraph>{data.type}</Paragraph>
+                        <Paragraph>{data.type || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
+                        <strong>KvK nummer:</strong>
+                        <Paragraph>{data.kvkNummer || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
+                        <strong>OIDN:</strong>
+                        <Paragraph>{data.oidn || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Productpagina:</strong>
-                        <Paragraph>
-                          <a
-                            href={data.productpagina}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            {data.productpagina}
-                          </a>
-                        </Paragraph>
+                        <strong>Moeder organisatie:</strong>
+                        <Paragraph>{data.moederOrganisatie || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Ondersteuningsmodel:</strong>
-                        <Paragraph>{data.ondersteuningsmodel}</Paragraph>
+                        <strong>Sector:</strong>
+                        <Paragraph>{data.sector || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Licentiemodel:</strong>
-                        <Paragraph>{data.licentiemodel}</Paragraph>
+                        <strong>Organisatietype:</strong>
+                        <Paragraph>{data.organisatietype || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Hostingopties:</strong>
-                        <Paragraph>{data.hostingopties}</Paragraph>
+                        <strong>Website:</strong>
+                        <Paragraph>{data.website || '-'}</Paragraph>
                       </div>
-                    </div>
 
-                    <div>
-                      <AcTabs
-                        selectedIndex={versionTabIndex}
-                        onSelect={(index) => setVersionTabIndex(index)}
-                      >
-                        <AcTabList>
-                          <AcTab selected={versionTabIndex === 0}>Versies</AcTab>
-                        </AcTabList>
+                      <div>
+                        <strong>Adres:</strong>
+                        <Paragraph>{data.adres?.straat} {data.adres?.huisnummer}</Paragraph>
+                        <Paragraph>{data.adres?.postcode} {data.adres?.plaats}</Paragraph>
+                        <Paragraph>{data.adres?.land}</Paragraph>
+                      </div>
 
-                        <AcTabPanel selected={versionTabIndex === 0}>
-                          {data.versies.map((versie, index) => (
-                            <Paragraph key={index}>{versie}</Paragraph>
-                          ))}
-                        </AcTabPanel>
-                      </AcTabs>
+                      <div>
+                        <strong>Contactgegevens:</strong>
+                        <Paragraph>{data.contactgegevens?.contactpersoon}</Paragraph>
+                        <Paragraph>{data.contactgegevens?.telefoon}</Paragraph>
+                        <Paragraph>{data.contactgegevens?.email}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Beschrijving:</strong>
+                        <Paragraph>{data.beschrijving || '-'}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Logo:</strong>
+                        <Paragraph>{data.logo || '-'}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Voorzieningen:</strong>
+                        <Paragraph>{data.voorzieningen?.join(', ') || '-'}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Gebruik:</strong>
+                        <Paragraph>{data.gebruik?.join(', ') || '-'}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Deelnemer in:</strong>
+                        <Paragraph>{data.deelnemerIn?.join(', ') || '-'}</Paragraph>
+                      </div>
                     </div>
                   </AcFlex>
                 </AcColumn>
 
                 {/* modals */}
-                <AcEditVoorzieningAanbodModal
-                  voorziening={data}
+                <AcOrganisatieFormModal
+                  organisatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -181,14 +188,14 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningAanbodModall
-                  voorzieningen={[data]}
+                <AcDeleteOrganisatieModal
+                  organisaties={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/voorzieningen-aanbod');
+                    navigate('/beheer/organisaties');
                   }}
                 />
               </AcFlex>
@@ -200,4 +207,4 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbodDetails));
+export default withStore(observer(AcBeheerOrganisatieDetails));
