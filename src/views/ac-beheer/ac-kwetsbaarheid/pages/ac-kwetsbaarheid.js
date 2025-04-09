@@ -10,10 +10,10 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../cd-table';
-import AcKwetsbaarheidFormModal from './ac-kwetsbaarheid-form-modal';
-import AcDeleteKwetsbaarheidModal from './ac-delete-kwetsbaarheid-modal';
-import ConActionMenu from '../con-action-menu';
+import CDTable from '../../cd-table';
+import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
+import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
+import ConActionMenu from '../../con-action-menu';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -93,7 +93,6 @@ const AcBeheerKwetsbaarheden = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
-            disabled={true}
             onClick={() => {
               navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('kwetsbaarheden', row.id));
             }}
@@ -194,7 +193,7 @@ const AcBeheerKwetsbaarheden = () => {
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
-            truncateLines={2}
+            truncateLines={3}
           />
 
           {/* modals */}
