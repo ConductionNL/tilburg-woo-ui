@@ -10,10 +10,10 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../cd-table';
-import AcEditVoorzieningAanbodModal from './ac-voorziening-versie-form-modal';
-import AcDeleteVoorzieningAanbodModal from './ac-delete-voorziening-versie-modal';
-import ConActionMenu from '../con-action-menu';
+import CDTable from '../../cd-table';
+import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-versie-form-modal';
+import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-versie-modal';
+import ConActionMenu from '../../con-action-menu';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -87,7 +87,6 @@ const AcBeheerVoorzieningenVersie = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
-            disabled={true}
             onClick={() => {
               navigate(
                 NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-versie', row.id)
@@ -192,7 +191,7 @@ const AcBeheerVoorzieningenVersie = () => {
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
-            truncateLines={2}
+            truncateLines={3}
           />
 
           {/* modals */}
