@@ -156,7 +156,7 @@ const AcBeheerVoorzieningenVersie = () => {
                   Acties
                 </ConActionMenu.Trigger>
 
-                <ConActionMenu.Items position='right'>
+                <ConActionMenu.Menu position='right'>
                   <ConActionMenu.Button
                     icon={<VISUALS.EYE />}
                     disabled={selectedRows.length === 0}
@@ -180,7 +180,7 @@ const AcBeheerVoorzieningenVersie = () => {
                     Delete {selectedRows.length}{' '}
                     {selectedRows.length === 1 ? 'item' : 'items'}
                   </ConActionMenu.Button>
-                </ConActionMenu.Items>
+                </ConActionMenu.Menu>
               </ConActionMenu>
             </AcFlex>
           </AcFlex>

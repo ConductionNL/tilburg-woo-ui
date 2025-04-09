@@ -3,7 +3,7 @@
   display: inline-block;
   height: fit-content;
 
-  &__items {
+  &__menu {
     position: absolute;
     top: 110%;
     right: 0;
@@ -106,5 +106,159 @@
     margin-block-end: var(--utrecht-separator-margin-block-end);
     margin-inline-start: auto;
     margin-inline-end: auto;
+  }
+}
+
+.con-action-submenu {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+
+  &:first-child > &__trigger {
+    border-top-left-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+    border-top-right-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+  }
+
+  &:last-child > &__trigger {
+    border-bottom-left-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+    border-bottom-right-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+  }
+
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
+    text-align: left;
+    border: none;
+    background: none;
+    color: var(--tilburg-color-gray-900);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--tilburg-color-gray-100);
+    }
+  }
+
+  &__arrow {
+    margin-left: var(--tilburg-space-column-rat);
+    font-size: var(--tilburg-font-size-sm);
+  }
+
+  &__menu {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 100%; /* By default, open to the left side */
+    transform: translateX(-4px);
+    min-width: 200px;
+    background-color: var(--tilburg-color-white);
+    border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
+    border-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+    // due to a limitation of scss i had to do this in stages
+    --stage1: var(--utrecht-separator-color, #000000);
+    --stage2: rgb(from var(--stage1) r g b / 0.2);
+    box-shadow: 0 2px 4px 2px var(--stage2);
+    z-index: 1000;
+
+    &--open {
+      display: block;
+    }
+
+    &--left {
+      right: 100%;
+      transform: translateX(-4px);
+      left: auto;
+    }
+
+    &--right {
+      left: 100%;
+      transform: translateX(4px);
+      right: auto;
+    }
+  }
+}
+
+.con-action-dropdown {
+  width: 100%;
+
+  &:first-child > &__trigger {
+    border-top-left-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+    border-top-right-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+  }
+
+  &:last-child > &__trigger {
+    border-bottom-left-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+    border-bottom-right-radius: var(
+      --utrecht-button-border-radius,
+      var(--tilburg-border-radius-md, 8px)
+    );
+  }
+
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
+    text-align: left;
+    border: none;
+    background: none;
+    color: var(--tilburg-color-gray-900);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--tilburg-color-gray-100);
+    }
+  }
+
+  &__arrow {
+    margin-left: var(--tilburg-space-column-rat);
+    font-size: var(--tilburg-font-size-sm);
+
+    transition: transform 0.2s ease;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__menu {
+    max-height: 0;
+    transition: max-height 0.5s ease;
+    overflow: hidden;
+    margin-inline-start: var(--tilburg-space-column-rat);
+
+    &--open {
+      max-height: 600px;
+      transition: max-height 1s ease-in;
+    }
   }
 }
