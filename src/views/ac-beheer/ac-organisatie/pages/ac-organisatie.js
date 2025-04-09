@@ -187,7 +187,7 @@ const AcBeheerOrganisaties = () => {
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
-            truncateLines={2}
+            truncateLines={3}
           />
 
           {/* modals */}
