@@ -153,34 +153,34 @@ const AcBeheerVoorzieningenVersie = () => {
               </PrimaryActionButton>
 
               <ConActionMenu>
-                <ConActionMenu.Button icon={<VISUALS.ELLIPSIS />}>
+                <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                   Acties
-                </ConActionMenu.Button>
+                </ConActionMenu.Trigger>
 
                 <ConActionMenu.Items position='right'>
-                  <ConActionMenu.Item
+                  <ConActionMenu.Button
                     icon={<VISUALS.EYE />}
                     disabled={selectedRows.length === 0}
                   >
                     Weergeven als view
-                  </ConActionMenu.Item>
-                  <ConActionMenu.Item
+                  </ConActionMenu.Button>
+                  <ConActionMenu.Button
                     icon={<VISUALS.DOWNLOAD />}
                     disabled={selectedRows.length === 0}
                   >
                     Downloaden als CSV
-                  </ConActionMenu.Item>
+                  </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
 
-                  <ConActionMenu.Item
+                  <ConActionMenu.Button
                     icon={<VISUALS.TRASHCAN />}
                     disabled={selectedRows.length === 0}
                     onClick={handleMultipleDelete}
                   >
                     Delete {selectedRows.length}{' '}
                     {selectedRows.length === 1 ? 'item' : 'items'}
-                  </ConActionMenu.Item>
+                  </ConActionMenu.Button>
                 </ConActionMenu.Items>
               </ConActionMenu>
             </AcFlex>

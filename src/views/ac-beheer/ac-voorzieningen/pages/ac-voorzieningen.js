@@ -10,10 +10,10 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../cd-table';
-import AcVoorzieningenFormModal from './ac-voorzieningen-form-modal';
-import AcDeleteVoorzieningModal from './ac-delete-voorzieningen-modal';
-import ConActionMenu from '../con-action-menu';
+import CDTable from '../../cd-table';
+import AcVoorzieningenFormModal from '../modals/ac-voorzieningen-form-modal';
+import AcDeleteVoorzieningModal from '../modals/ac-delete-voorzieningen-modal';
+import ConActionMenu from '../../con-action-menu';
 
 const AcBeheerVoorzieningen = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ const AcBeheerVoorzieningen = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorziening'
+          '/openconnector/api/endpoint/voorzieningen'
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -87,7 +87,6 @@ const AcBeheerVoorzieningen = () => {
           <button
             className='utrecht-button slim'
             variant='secondary'
-            disabled={true}
             onClick={() => {
               navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen', row.id));
             }}
@@ -149,34 +148,34 @@ const AcBeheerVoorzieningen = () => {
               </PrimaryActionButton>
 
               <ConActionMenu>
-                <ConActionMenu.Button icon={<VISUALS.ELLIPSIS />}>
+                <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                   Acties
-                </ConActionMenu.Button>
+                </ConActionMenu.Trigger>
 
                 <ConActionMenu.Items position='right'>
-                  <ConActionMenu.Item
+                  <ConActionMenu.Button
                     icon={<VISUALS.EYE />}
                     disabled={selectedRows.length === 0}
                   >
                     Weergeven als view
-                  </ConActionMenu.Item>
-                  <ConActionMenu.Item
+                  </ConActionMenu.Button>
+                  <ConActionMenu.Button
                     icon={<VISUALS.DOWNLOAD />}
                     disabled={selectedRows.length === 0}
                   >
                     Downloaden als CSV
-                  </ConActionMenu.Item>
+                  </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
 
-                  <ConActionMenu.Item
+                  <ConActionMenu.Button
                     icon={<VISUALS.TRASHCAN />}
                     disabled={selectedRows.length === 0}
                     onClick={handleMultipleDelete}
                   >
                     Delete {selectedRows.length}{' '}
                     {selectedRows.length === 1 ? 'item' : 'items'}
-                  </ConActionMenu.Item>
+                  </ConActionMenu.Button>
                 </ConActionMenu.Items>
               </ConActionMenu>
             </AcFlex>

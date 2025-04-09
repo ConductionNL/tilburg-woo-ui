@@ -16,6 +16,7 @@ import {
   AcDashboard,
   AcBeheerVoorzieningenAanbodDetails,
   AcBeheerVoorzieningen,
+  AcBeheerVoorzieningenDetails,
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
@@ -73,6 +74,8 @@ const AcBeheer = () => {
   }
 
   switch (type) {
+    case 'voorzieningen':
+      return <AcBeheerVoorzieningenDetails id={id} />;
     case 'voorzieningen-aanbod':
       return <AcBeheerVoorzieningenAanbodDetails id={id} />;
     default:
