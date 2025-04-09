@@ -346,7 +346,7 @@ ConActionMenu.Item = ({ children, ...props }) => {
  * </ConActionMenu.Menu>
  */
 ConActionMenu.Divider = () => {
-  return <hr className='con-action-menu__divider' />;
+  return <hr className='con-action-divider' />;
 };
 
 /**
