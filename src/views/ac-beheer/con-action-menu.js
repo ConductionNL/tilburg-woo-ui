@@ -9,6 +9,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { AcButton, AcCheckbox } from '@src/molecules';
+import { VISUALS } from '@src/constants';
 
 // Context for the ConActionMenu component
 const ConActionMenuContext = createContext(null);
@@ -40,7 +41,9 @@ function useOnClickOutside(ref, handler) {
  *
  * Sub-components:
  * - **ConActionMenu.Trigger**: A button that toggles the menu's open/close state.
- * - **ConActionMenu.Items**: A container that displays the menu items when open. Accepts a `position` prop for alignment.
+ * - **ConActionMenu.Menu**: A container that displays the menu items when open. Accepts a `position` prop for alignment.
+ * - **ConActionMenu.SubMenu**: A nested submenu that can be used to create a menu with multiple levels of options. Can be placed anywhere in the menu.
+ * - **ConActionMenu.Dropdown**: A collapsible section that reveals additional menu items when clicked. Can be nested within other menu items.
  * - **ConActionMenu.Item**: A generic container for menu items. Provides a close function to its children.
  * - **ConActionMenu.Button**: A clickable button menu item. By default, it closes the menu when clicked.
  * - **ConActionMenu.Checkbox**: A checkbox menu item. Allows for external control of the checkbox state.
@@ -58,7 +61,7 @@ function useOnClickOutside(ref, handler) {
  * <ConActionMenu className="my-dropdown">
  *   <ConActionMenu.Trigger>Open Menu</ConActionMenu.Trigger>
  *
- *   <ConActionMenu.Items position="right">
+ *   <ConActionMenu.Menu position="right">
  *     <ConActionMenu.Button onClick={() => console.log('Button 1 clicked')} doNotClose>Button 1</ConActionMenu.Button>
  *     <ConActionMenu.Divider />
  *     <ConActionMenu.Item>
@@ -75,15 +78,24 @@ function useOnClickOutside(ref, handler) {
  *     <ConActionMenu.Checkbox defaultChecked={true} onChange={(checked) => alert('Checkbox changed: ' + checked)}>
  *       Checkbox
  *     </ConActionMenu.Checkbox>
- *   </ConActionMenu.Items>
+ *
+ *     <ConActionMenu.Dropdown label='Dropdown'>
+ *       <ConActionMenu.Button>Nested Item 1</ConActionMenu.Button>
+ *       <ConActionMenu.Button>Nested Item 2</ConActionMenu.Button>
+ *     </ConActionMenu.Dropdown>
+ *     <ConActionMenu.SubMenu label='SubMenu'>
+ *       <ConActionMenu.Button>Nested Item 1</ConActionMenu.Button>
+ *       <ConActionMenu.Button>Nested Item 2</ConActionMenu.Button>
+ *     </ConActionMenu.SubMenu>
+ *   </ConActionMenu.Menu>
  * </ConActionMenu>
  *
  * // Note that clicking the trigger toggles the menu, clicking outside it closes the menu,
  * // and clicking any button also closes the menu automatically if doNotClose is not set.
  *
  * @author: Thijn Douwma (SudoThijn on github)
- * @version: 1.0.1
- * @since: 08/04/2025
+ * @version: 1.1.2
+ * @since: 10/04/2025
  */
 const ConActionMenu = ({ children, className }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -142,29 +154,167 @@ ConActionMenu.Trigger = ({ children, ...props }) => {
  *
  * @function
  * @param {object} props
+ * @param {'left'|'right'|'center'} [props.position='right'] - The alignment of the menu (CSS-based). defaults to right.
  * @param {React.ReactNode} props.children - The menu items to display.
- * @param {'left'|'right'|'center'} [props.position='right'] - The alignment of the menu (CSS-based).
  * @returns {JSX.Element} The container for menu items.
  *
  * @example
- * <ConActionMenu.Items position="left">
+ * <ConActionMenu.Menu position="left">
  *   <ConActionMenu.Button>Button 1</ConActionMenu.Button>
- *   <ConActionMenu.Item>{close => <CustomContent onDone={close} />}</ConActionMenu.Item>
- * </ConActionMenu.Items>
+ *   <ConActionMenu.Item>{(close) => <CustomContent onDone={close} />}</ConActionMenu.Item>
+ * </ConActionMenu.Menu>
  */
-ConActionMenu.Items = ({ children, position = 'right', ...props }) => {
+ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
   const { isOpen } = useConActionMenuContext();
 
   return (
     <div
       className={clsx(
-        'con-action-menu__items',
-        isOpen && 'con-action-menu__items--open',
-        `con-action-menu__items--${position}`
+        'con-action-menu__menu',
+        isOpen && 'con-action-menu__menu--open',
+        `con-action-menu__menu--${position}`
       )}
       {...props}
     >
       {children}
+    </div>
+  );
+};
+
+/**
+ * A sub-component of ConActionMenu that creates a nested submenu.
+ * Provides a trigger button and nested menu items.
+ *
+ * @function
+ * @param {object} props
+ * @param {React.ReactNode} props.label - The label for the submenu trigger button
+ * @param {React.ReactNode} props.icon - The icon for the submenu trigger button
+ * @param {'left'|'right'} props.position - The alignment of the submenu, defaults to left
+ * @param {boolean} props.disabled - Whether the submenu is disabled
+ * @param {React.ReactNode} props.children - The submenu items to display
+ * @returns {JSX.Element} The rendered submenu component
+ *
+ * @example
+ * <ConActionMenu.Menu>
+ *   <ConActionMenu.SubMenu label="More Options" position="left">
+ *     <ConActionMenu.Button>Nested Item 1</ConActionMenu.Button>
+ *     <ConActionMenu.Button>Nested Item 2</ConActionMenu.Button>
+ *   </ConActionMenu.SubMenu>
+ * </ConActionMenu.Menu>
+ */
+ConActionMenu.SubMenu = ({
+  label,
+  icon,
+  children,
+  position = 'right',
+  disabled,
+  ...props
+}) => {
+  const [isSubmenuOpen, setIsSubmenuOpen] = useState(false);
+  const submenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (submenuRef.current && !submenuRef.current.contains(event.target)) {
+        setIsSubmenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className='con-action-submenu' ref={submenuRef} {...props}>
+      <ConActionMenu.Button
+        icon={icon}
+        doNotClose
+        className='con-action-submenu__trigger'
+        onClick={() => setIsSubmenuOpen(!isSubmenuOpen)}
+        disabled={disabled}
+      >
+        <span className='con-action-submenu__trigger-label'>
+          {label}
+          {<VISUALS.CHEVRON_RIGHT />}
+        </span>
+      </ConActionMenu.Button>
+      <div
+        className={clsx(
+          'con-action-submenu__menu',
+          isSubmenuOpen && 'con-action-submenu__menu--open',
+          `con-action-submenu__menu--${position}`
+        )}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * A sub-component of ConActionMenu that creates a dropdown menu.
+ * Provides a trigger button and dropdown items.
+ *
+ * @function
+ * @param {object} props
+ * @param {React.ReactNode} props.label - The label for the dropdown trigger button
+ * @param {React.ReactNode} props.icon - The icon for the dropdown trigger button
+ * @param {boolean} props.disabled - Whether the dropdown is disabled
+ * @param {React.ReactNode} props.children - The dropdown items to display
+ * @returns {JSX.Element} The rendered dropdown component
+ *
+ * @example
+ * <ConActionMenu.Menu>
+ *   <ConActionMenu.Dropdown label="More Options">
+ *     <ConActionMenu.Button>Nested Item 1</ConActionMenu.Button>
+ *   </ConActionMenu.Dropdown>
+ * </ConActionMenu.Menu>
+ */
+ConActionMenu.Dropdown = ({ label, icon, children, disabled, ...props }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className='con-action-dropdown' ref={dropdownRef} {...props}>
+      <ConActionMenu.Button
+        doNotClose
+        className='con-action-dropdown__trigger'
+        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        icon={icon}
+        disabled={disabled}
+      >
+        <span className='con-action-dropdown__trigger-label'>
+          {label}
+
+          {
+            <VISUALS.CHEVRON_RIGHT
+              className={clsx(
+                'con-action-dropdown__arrow',
+                isDropdownOpen && 'con-action-dropdown__arrow--open'
+              )}
+            />
+          }
+        </span>
+      </ConActionMenu.Button>
+      <div
+        className={clsx(
+          'con-action-dropdown__menu',
+          isDropdownOpen && 'con-action-dropdown__menu--open'
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 };
@@ -190,12 +340,12 @@ ConActionMenu.Items = ({ children, position = 'right', ...props }) => {
  *   )}
  * </ConActionMenu.Item>
  */
-ConActionMenu.Item = ({ children, ...props }) => {
+ConActionMenu.Item = ({ children, className, ...props }) => {
   const { setIsOpen } = useConActionMenuContext();
   const close = useCallback(() => setIsOpen(false), [setIsOpen]);
 
   return (
-    <div className='con-action-menu__item' {...props}>
+    <div className={clsx('con-action-menu__item', className)} {...props}>
       {children(close)}
     </div>
   );
@@ -208,14 +358,14 @@ ConActionMenu.Item = ({ children, ...props }) => {
  * @returns {JSX.Element} The rendered divider (\<hr>).
  *
  * @example
- * <ConActionMenu.Items>
+ * <ConActionMenu.Menu>
  *   <ConActionMenu.Button>Button 1</ConActionMenu.Button>
  *   <ConActionMenu.Divider />
  *   <ConActionMenu.Button>Button 2</ConActionMenu.Button>
- * </ConActionMenu.Items>
+ * </ConActionMenu.Menu>
  */
 ConActionMenu.Divider = () => {
-  return <hr className='con-action-menu__divider' />;
+  return <hr className='con-action-divider' />;
 };
 
 /**
@@ -239,7 +389,14 @@ ConActionMenu.Divider = () => {
  *   Menu Option
  * </ConActionMenu.Button>
  */
-ConActionMenu.Button = ({ children, onClick, doNotClose, icon, ...props }) => {
+ConActionMenu.Button = ({
+  children,
+  onClick,
+  doNotClose,
+  icon,
+  className,
+  ...props
+}) => {
   const { setIsOpen } = useConActionMenuContext();
 
   const handleClick = (e) => {
@@ -253,7 +410,11 @@ ConActionMenu.Button = ({ children, onClick, doNotClose, icon, ...props }) => {
 
   return (
     <button
-      className='con-action-menu__item con-action-menu__item--button'
+      className={clsx(
+        'con-action-menu__item',
+        'con-action-menu__item--button',
+        className
+      )}
       onClick={handleClick}
       {...props}
     >

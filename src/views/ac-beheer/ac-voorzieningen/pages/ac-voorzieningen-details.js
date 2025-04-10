@@ -75,7 +75,7 @@ const AcBeheerVoorzieningenDetails = ({ id }) => {
                       Acties
                     </ConActionMenu.Trigger>
 
-                    <ConActionMenu.Items>
+                    <ConActionMenu.Menu>
                       <ConActionMenu.Button icon={<VISUALS.PLUS />}>
                         Toevoegen
                       </ConActionMenu.Button>
@@ -92,7 +92,7 @@ const AcBeheerVoorzieningenDetails = ({ id }) => {
                       >
                         Verwijderen
                       </ConActionMenu.Button>
-                    </ConActionMenu.Items>
+                    </ConActionMenu.Menu>
                   </ConActionMenu>
                 </AcFlex>
 

@@ -1,29 +1,87 @@
+// ---------------------------------------------
+// Shared SCSS variables/mixins
+// ---------------------------------------------
+
+$action-border-radius: var(
+  --utrecht-button-border-radius,
+  var(--tilburg-border-radius-md, 8px)
+);
+
+// Mixin for rounding top corners
+@mixin radius-top {
+  border-top-left-radius: $action-border-radius;
+  border-top-right-radius: $action-border-radius;
+}
+
+// Mixin for rounding bottom corners
+@mixin radius-bottom {
+  border-bottom-left-radius: $action-border-radius;
+  border-bottom-right-radius: $action-border-radius;
+}
+
+// Mixin for the item/trigger button style used in menus
+@mixin menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
+  text-align: left;
+  border: none;
+  background: none;
+  color: var(--tilburg-color-gray-900);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--tilburg-color-gray-100);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin menu-item-icon {
+  width: 20px;
+  margin-right: var(--tilburg-space-column-rat);
+}
+
+// Mixin for the “floating” menu container style
+@mixin floating-menu-base {
+  position: absolute;
+  min-width: 200px;
+  background-color: var(--tilburg-color-white);
+  border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
+  border-radius: $action-border-radius;
+
+  // this is done in stages due to limitations in SCSS.
+  --stage1: var(--utrecht-separator-color, #000000);
+  --stage2: rgb(from var(--stage1) r g b / 0.2);
+  box-shadow: 0 2px 4px 2px var(--stage2);
+
+  display: none;
+  z-index: 1000;
+
+  &--open {
+    display: block;
+  }
+}
+
+// ---------------------------------------------
+// .con-action-menu
+// ---------------------------------------------
 .con-action-menu {
   position: relative;
   display: inline-block;
   height: fit-content;
 
-  &__items {
-    position: absolute;
-    top: 110%;
-    right: 0;
-    min-width: 200px;
-    background-color: var(--tilburg-color-white);
-    border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
-    border-radius: var(
-      --utrecht-button-border-radius,
-      var(--tilburg-border-radius-md, 8px)
-    );
-    // due to a limitation of scss i had to do this in stages
-    --stage1: var(--utrecht-separator-color, #000000);
-    --stage2: rgb(from var(--stage1) r g b / 0.2);
-    box-shadow: 0 2px 4px 2px var(--stage2);
-    display: none;
-    z-index: 1000;
-
-    &--open {
-      display: block;
-    }
+  &__menu {
+    @include floating-menu-base;
+    top: 100%;
+    transform: translateY(4px);
+    // default to left
+    left: 0;
 
     &--left {
       left: 0;
@@ -42,69 +100,144 @@
   }
 
   &__item {
+    @include menu-item;
+
     &:first-child {
-      border-top-left-radius: var(
-        --utrecht-button-border-radius,
-        var(--tilburg-border-radius-md, 8px)
-      );
-      border-top-right-radius: var(
-        --utrecht-button-border-radius,
-        var(--tilburg-border-radius-md, 8px)
-      );
+      @include radius-top;
     }
-
     &:last-child {
-      border-bottom-left-radius: var(
-        --utrecht-button-border-radius,
-        var(--tilburg-border-radius-md, 8px)
-      );
-      border-bottom-right-radius: var(
-        --utrecht-button-border-radius,
-        var(--tilburg-border-radius-md, 8px)
-      );
+      @include radius-bottom;
     }
 
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-cat);
-    text-align: left;
-    border: none;
-    background: none;
-    color: var(--tilburg-color-gray-900);
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-
-    &:hover {
-      background-color: var(--tilburg-color-gray-100);
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
     &--disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
     &-icon {
-      margin-right: var(--tilburg-space-column-rat);
+      @include menu-item-icon;
     }
 
     &--checkbox {
       padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-rabbit);
     }
   }
+}
 
-  &__divider {
-    border: 0;
-    background-color: var(--utrecht-separator-color, var(--tilburg-color-gray-200));
-    height: var(--utrecht-separator-width, 1px);
-    width: 90%;
-    margin-block-start: var(--utrecht-separator-margin-block-start);
-    margin-block-end: var(--utrecht-separator-margin-block-end);
-    margin-inline-start: auto;
-    margin-inline-end: auto;
+// ---------------------------------------------
+// .con-action-divider
+// ---------------------------------------------
+.con-action-divider {
+  border: 0;
+  background-color: var(--utrecht-separator-color, var(--tilburg-color-gray-200));
+  height: var(--utrecht-separator-width, 1px);
+  width: 90%;
+  margin-block-start: var(--utrecht-separator-margin-block-start);
+  margin-block-end: var(--utrecht-separator-margin-block-end);
+  margin-inline-start: auto;
+  margin-inline-end: auto;
+}
+
+// ---------------------------------------------
+// .con-action-submenu
+// ---------------------------------------------
+.con-action-submenu {
+  position: relative;
+
+  // since the trigger is in its own div, it'll always be either the first.
+  // so we check the child position of the parent and modify the trigger accordingly.
+  &:first-child > &__trigger {
+    @include radius-top;
+  }
+  &:last-child > &__trigger {
+    @include radius-bottom;
+  }
+  &:not(:first-child) > &__trigger {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
+  &:not(:last-child) > &__trigger {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+
+  &__trigger-label {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__menu {
+    @include floating-menu-base;
+    top: 0;
+    // default to right
+    left: 100%;
+    transform: translateX(-4px);
+
+    &--left {
+      right: 100%;
+      left: auto;
+      transform: translateX(-4px);
+    }
+
+    &--right {
+      left: 100%;
+      right: auto;
+      transform: translateX(4px);
+    }
+  }
+}
+
+// ---------------------------------------------
+// .con-action-dropdown
+// ---------------------------------------------
+.con-action-dropdown {
+  // since the trigger is in its own div, it'll always be either the first.
+  // so we check the child position of the parent and modify the trigger accordingly.
+  &:first-child > &__trigger {
+    @include radius-top;
+  }
+  &:last-child > &__trigger {
+    @include radius-bottom;
+  }
+  &:not(:first-child) > &__trigger {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
+  &:not(:last-child) > &__trigger {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
+
+  &__trigger-label {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__icon {
+    @include menu-item-icon;
+  }
+
+  &__arrow {
+    transition: transform 0.2s ease;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  &__menu {
+    max-height: 0;
+    transition: max-height 0.5s ease;
+    overflow: hidden;
+    margin-inline-start: var(--tilburg-space-column-rat);
+
+    &--open {
+      max-height: 600px;
+      transition: max-height 1s ease-in;
+    }
   }
 }
