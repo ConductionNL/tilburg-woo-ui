@@ -155,16 +155,21 @@ const AcBeheerVoorzieningen = () => {
                 <ConActionMenu.Menu position='right'>
                   <ConActionMenu.Button
                     icon={<VISUALS.EYE />}
-                    disabled={selectedRows.length === 0}
+                    // disabled={selectedRows.length === 0}
+                    disabled={true}
                   >
                     Weergeven als view
                   </ConActionMenu.Button>
-                  <ConActionMenu.Button
-                    icon={<VISUALS.DOWNLOAD />}
+
+                  <ConActionMenu.SubMenu
+                    label='Download'
                     disabled={selectedRows.length === 0}
+                    icon={<VISUALS.DOWNLOAD />}
                   >
-                    Downloaden als CSV
-                  </ConActionMenu.Button>
+                    <ConActionMenu.Button disabled>Als CSV</ConActionMenu.Button>
+                    <ConActionMenu.Button disabled>Als XML</ConActionMenu.Button>
+                    <ConActionMenu.Button disabled>Als AFML</ConActionMenu.Button>
+                  </ConActionMenu.SubMenu>
 
                   <ConActionMenu.Divider />
 

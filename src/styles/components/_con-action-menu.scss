@@ -42,6 +42,11 @@ $action-border-radius: var(
   }
 }
 
+@mixin menu-item-icon {
+  width: 20px;
+  margin-right: var(--tilburg-space-column-rat);
+}
+
 // Mixin for the “floating” menu container style
 @mixin floating-menu-base {
   position: absolute;
@@ -50,7 +55,7 @@ $action-border-radius: var(
   border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
   border-radius: $action-border-radius;
 
-  // your 2-stage box shadow
+  // this is done in stages due to limitations in SCSS.
   --stage1: var(--utrecht-separator-color, #000000);
   --stage2: rgb(from var(--stage1) r g b / 0.2);
   box-shadow: 0 2px 4px 2px var(--stage2);
@@ -109,7 +114,7 @@ $action-border-radius: var(
     }
 
     &-icon {
-      margin-right: var(--tilburg-space-column-rat);
+      @include menu-item-icon;
     }
 
     &--checkbox {
@@ -137,25 +142,29 @@ $action-border-radius: var(
 // ---------------------------------------------
 .con-action-submenu {
   position: relative;
-  display: inline-block;
-  width: 100%;
 
+  // since the trigger is in its own div, it'll always be either the first.
+  // so we check the child position of the parent and modify the trigger accordingly.
   &:first-child > &__trigger {
     @include radius-top;
   }
   &:last-child > &__trigger {
     @include radius-bottom;
   }
-
-  &__trigger {
-    @include menu-item;
-    // We override the "justify-content" to space-between here
-    justify-content: space-between;
+  &:not(:first-child) > &__trigger {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
+  &:not(:last-child) > &__trigger {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
   }
 
-  &__arrow {
-    margin-left: var(--tilburg-space-column-rat);
-    font-size: var(--tilburg-font-size-sm);
+  &__trigger-label {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   &__menu {
@@ -164,7 +173,6 @@ $action-border-radius: var(
     right: 100%;
     transform: translateX(-4px);
 
-    // Notice we do NOT have a `&--center` here
     &--left {
       right: 100%;
       left: auto;
@@ -183,23 +191,35 @@ $action-border-radius: var(
 // .con-action-dropdown
 // ---------------------------------------------
 .con-action-dropdown {
-  width: 100%;
-
+  // since the trigger is in its own div, it'll always be either the first.
+  // so we check the child position of the parent and modify the trigger accordingly.
   &:first-child > &__trigger {
     @include radius-top;
   }
   &:last-child > &__trigger {
     @include radius-bottom;
   }
+  &:not(:first-child) > &__trigger {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+  }
+  &:not(:last-child) > &__trigger {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+  }
 
-  &__trigger {
-    @include menu-item;
+  &__trigger-label {
+    width: 100%;
+    display: flex;
     justify-content: space-between;
+    align-items: center;
+  }
+
+  &__icon {
+    @include menu-item-icon;
   }
 
   &__arrow {
-    margin-left: var(--tilburg-space-column-rat);
-    font-size: var(--tilburg-font-size-sm);
     transition: transform 0.2s ease;
 
     &--open {
