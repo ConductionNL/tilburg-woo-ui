@@ -165,6 +165,7 @@ const AcBeheerVoorzieningen = () => {
                     label='Download'
                     disabled={selectedRows.length === 0}
                     icon={<VISUALS.DOWNLOAD />}
+                    position='left'
                   >
                     <ConActionMenu.Button disabled>Als CSV</ConActionMenu.Button>
                     <ConActionMenu.Button disabled>Als XML</ConActionMenu.Button>

@@ -80,7 +80,8 @@ $action-border-radius: var(
     @include floating-menu-base;
     top: 100%;
     transform: translateY(4px);
-    right: 0;
+    // default to left
+    left: 0;
 
     &--left {
       left: 0;
@@ -170,7 +171,8 @@ $action-border-radius: var(
   &__menu {
     @include floating-menu-base;
     top: 0;
-    right: 100%;
+    // default to right
+    left: 100%;
     transform: translateX(-4px);
 
     &--left {

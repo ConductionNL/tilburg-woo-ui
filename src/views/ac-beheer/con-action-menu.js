@@ -94,7 +94,7 @@ function useOnClickOutside(ref, handler) {
  * // and clicking any button also closes the menu automatically if doNotClose is not set.
  *
  * @author: Thijn Douwma (SudoThijn on github)
- * @version: 1.1.1
+ * @version: 1.1.2
  * @since: 10/04/2025
  */
 const ConActionMenu = ({ children, className }) => {
@@ -164,7 +164,7 @@ ConActionMenu.Trigger = ({ children, ...props }) => {
  *   <ConActionMenu.Item>{(close) => <CustomContent onDone={close} />}</ConActionMenu.Item>
  * </ConActionMenu.Menu>
  */
-ConActionMenu.Menu = ({ children, position = 'right', ...props }) => {
+ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
   const { isOpen } = useConActionMenuContext();
 
   return (
@@ -206,7 +206,7 @@ ConActionMenu.SubMenu = ({
   label,
   icon,
   children,
-  position,
+  position = 'right',
   disabled,
   ...props
 }) => {
@@ -241,7 +241,8 @@ ConActionMenu.SubMenu = ({
       <div
         className={clsx(
           'con-action-submenu__menu',
-          isSubmenuOpen && 'con-action-submenu__menu--open'
+          isSubmenuOpen && 'con-action-submenu__menu--open',
+          `con-action-submenu__menu--${position}`
         )}
       >
         {children}
@@ -286,24 +287,6 @@ ConActionMenu.Dropdown = ({ label, icon, children, disabled, ...props }) => {
 
   return (
     <div className='con-action-dropdown' ref={dropdownRef} {...props}>
-      {/* <button
-        className='con-action-dropdown__trigger'
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        disabled={disabled}
-      >
-        <span className='con-action-dropdown__trigger__label-container'>
-          {icon && <span className='con-action-dropdown__icon'>{icon}</span>}
-          {label}
-        </span>
-        <span
-          className={clsx(
-            'con-action-dropdown__arrow',
-            isDropdownOpen && 'con-action-dropdown__arrow--open'
-          )}
-        >
-          {<VISUALS.CHEVRON_RIGHT />}
-        </span>
-      </button> */}
       <ConActionMenu.Button
         doNotClose
         className='con-action-dropdown__trigger'
