@@ -35,7 +35,11 @@ const AcGemma = ({ store: { gemma } }) => {
   const [voorzieningGebruikNodes, setVoorzieningGebruikNodes] = useState(null);
 
   const getViewName = (view) => {
-    return view.properties.find((property) => property.propertyDefinitionRef === 'propid-70')?.value || view.name;
+    return (
+      view.properties.find(
+        (property) => property.propertyDefinitionRef === 'propid-70'
+      )?.value || view.name
+    );
   };
 
   useEffect(() => {
@@ -810,10 +814,12 @@ const AcGemma = ({ store: { gemma } }) => {
           {gemma.get_view && (
             <div className='ac-gemma-view-header'>
               <div>
-                <h1 className='ac-gemma-view-header-title'>{getViewName(gemma.get_view)}</h1>
+                <h1 className='ac-gemma-view-header-title'>
+                  {getViewName(gemma.get_view)}
+                </h1>
                 <div>{gemma.get_view.documentation}</div>
               </div>
-              
+
               <PrimaryActionButton
                 className='ac-gemma-view-header-download-button'
                 disabled={!gemma.get_view || (gemma.get_view && !viewIsDoneLoading)}
