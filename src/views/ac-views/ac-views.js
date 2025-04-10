@@ -24,6 +24,14 @@ const AcViews = ({ store: { gemma } }) => {
 
   const { id } = useParams();
 
+  const getViewName = (view) => {
+    return (
+      view.properties.find(
+        (property) => property.propertyDefinitionRef === 'propid-70'
+      )?.value || view.name
+    );
+  };
+
   useEffect(() => {
     setViewNodesData(null);
     setViewRelationsData(null);
@@ -783,7 +791,13 @@ const AcViews = ({ store: { gemma } }) => {
 
       {gemma.get_view && !gemma.get_viewError && (
         <div className='ac-gemma-view-header'>
-          <h1 className='ac-gemma-view-header-title'>{gemma.get_view.name}</h1>
+          <div>
+            <h1 className='ac-gemma-view-header-title'>
+              {getViewName(gemma.get_view)}
+            </h1>
+            <div>{gemma.get_view.documentation}</div>
+          </div>
+
           <PrimaryActionButton
             className='ac-gemma-view-header-download-button'
             disabled={!gemma.get_view || (gemma.get_view && !viewIsDoneLoading)}
