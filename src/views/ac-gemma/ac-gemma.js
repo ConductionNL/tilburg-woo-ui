@@ -87,6 +87,7 @@ const AcGemma = ({ store: { gemma } }) => {
             id: node.elementRef,
             description: data.results[0]?.documentation || undefined,
             type: data.results[0]?.type || undefined,
+            properties: data.results[0]?.properties || undefined,
           };
         } catch (error) {
           console.error(`Error fetching node data: ${error}`);
@@ -120,6 +121,7 @@ const AcGemma = ({ store: { gemma } }) => {
               description: data.results[0]?.documentation || undefined,
               type: data.results[0]?.type || undefined,
               parent: node.elementRef,
+              properties: data.results[0]?.properties || undefined,
             };
 
             viewNodesData.push(childNode);
@@ -385,7 +387,17 @@ const AcGemma = ({ store: { gemma } }) => {
           elementRef: node.elementRef || null,
           onClick: () => {
             window.open(
-              `https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}`,
+              `https://www.gemmaonline.nl/wiki/GEMMA/${
+                nodeDataNode?.properties?.find(
+                  (item) => item.propertyDefinitionRef === 'propid-2'
+                )?.value
+                  ? `id-${
+                      nodeDataNode?.properties?.find(
+                        (item) => item.propertyDefinitionRef === 'propid-2'
+                      )?.value
+                    }`
+                  : node.elementRef
+              }`,
               '_blank'
             );
           },
