@@ -22,6 +22,7 @@ import {
   AcBeheerContractenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
+  AcBeheerGebruikers,
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
@@ -73,6 +74,8 @@ const AcBeheer = () => {
         return <AcBeheerOrganisaties />;
       case 'kwetsbaarheden':
         return <AcBeheerKwetsbaarheden />;
+      case 'gebruikers':
+        return <AcBeheerGebruikers />;
       default:
         return wrongPage();
     }
