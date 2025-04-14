@@ -247,8 +247,11 @@ const AcGemma = ({ store: { gemma } }) => {
             return {
               name:
                 data.results[0]?.properties.find(
-                  (item) => item.propertyDefinitionRef === 'propid-62'
-                )?.value || undefined,
+                  (item) =>
+                    item.propertyDefinitionRef === 'propid-61' ||
+                    item.propertyDefinitionRef === 'propid-62'
+                )?.value ||
+                undefined,
               id: relationship.relationshipRef,
               type: data.results[0]?.type || undefined,
             };
@@ -335,13 +338,64 @@ const AcGemma = ({ store: { gemma } }) => {
             y: node.position.y,
             width: node.position.w,
             height: node.position.h,
+            color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
+            borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
             parent: null,
             description: node.label,
-            font: node.style.font,
+            font: {
+              name: node.style.font.name,
+              size: node.style.font.size,
+              style: node.style.font.style,
+              color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
+            },
             elementRef: null,
           };
         }
-        if (!node.referentieComponenten) return;
+        if (node.type === 'Container') {
+          return {
+            modelNodeId: node.identifier,
+            viewNodeId: node.identifier || 'unknown',
+            name: node.label,
+            type: node.type?.toLowerCase() || getType(),
+            x: node.position.x,
+            y: node.position.y,
+            width: node.position.w,
+            height: node.position.h,
+            color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
+            borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
+            parent: null,
+            description: node.label,
+            font: {
+              name: node.style.font.name,
+              size: node.style.font.size,
+              style: node.style.font.style,
+              color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
+            },
+            elementRef: null,
+          };
+        }
+        if (!node.referentieComponenten)
+          return {
+            modelNodeId: node.identifier,
+            viewNodeId: node.identifier || 'unknown',
+            name: node?.label,
+            type: node.type?.toLowerCase() || getType(),
+            x: node.position?.x,
+            y: node.position?.y,
+            width: node.position?.w,
+            height: node.position?.h,
+            color: `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`,
+            borderColor: `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`,
+            parent: null,
+            description: node.label,
+            font: {
+              name: node.style?.font?.name,
+              size: node.style?.font?.size,
+              style: node.style?.font?.style,
+              color: `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`,
+            },
+            elementRef: null,
+          };
         const nodes = node.referentieComponenten?.map((refComponent) => {
           const uniqueId = `${node.id}_${refComponent}`;
           const nodeData = viewNodesData.find((item) => item.id === uniqueId);
@@ -359,7 +413,12 @@ const AcGemma = ({ store: { gemma } }) => {
             height: nodeData?.position?.h || 0,
             parent: null,
             description: nodeData?.description || null,
-            font: nodeData?.font || null,
+            font: {
+              name: node.style.font.name,
+              size: node.style.font.size,
+              style: node.style.font.style,
+              color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
+            },
             elementRef: null,
           };
         });
@@ -381,6 +440,7 @@ const AcGemma = ({ store: { gemma } }) => {
           font: {
             name: node.style.font.name,
             size: node.style.font.size,
+            style: node.style.font.style,
             color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
           },
           description: nodeDataNode?.description || null,
@@ -554,6 +614,8 @@ const AcGemma = ({ store: { gemma } }) => {
       node?.font?.name && item.setAttribute('font-family', node?.font?.name);
       node?.font?.size && item.setAttribute('font-size', node?.font?.size);
       node?.font?.color && item.setAttribute('font-color', node?.font?.color);
+      node?.font?.style && item.setAttribute('font-style', node?.font?.style);
+      node?.font?.style === 'bold' && item.setAttribute('font-weight', 'bold');
     });
   };
 
