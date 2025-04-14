@@ -13,11 +13,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcOrganisatieFormModal from '../modals/ac-gebruikers-form-modal';
-import AcDeleteOrganisatieModal from '../modals/ac-delete-gebruikers-modal';
+import AcGebruikersFormModal from '../modals/ac-gebruikers-form-modal';
+import AcDeleteGebruikersModal from '../modals/ac-delete-gebruikers-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerOrganisatieDetails = ({ id }) => {
+const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/organisaties/${id}`
+          `/openconnector/api/endpoint/gebruikers/${id}`
       );
 
       if (!response.ok) {
@@ -56,6 +56,11 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
   const [openModal, setOpenModal] = useState(null);
 
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleString('nl-NL');
+  };
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -67,14 +72,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam}</Heading>
+                  <Heading>{`${data.voornaam} ${data.achternaam}`}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                       Acties
                     </ConActionMenu.Trigger>
 
-                    <ConActionMenu.Menu>
+                    <ConActionMenu.Menu position='right'>
                       <ConActionMenu.Button icon={<VISUALS.PLUS />}>
                         Toevoegen
                       </ConActionMenu.Button>
@@ -99,91 +104,69 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.type || '-'}</Paragraph>
+                        <strong>Gebruikersnaam:</strong>
+                        <Paragraph>{data.username || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>KvK nummer:</strong>
-                        <Paragraph>{data.kvkNummer || '-'}</Paragraph>
+                        <strong>E-mail:</strong>
+                        <Paragraph>{data.email || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>OIDN:</strong>
-                        <Paragraph>{data.oidn || '-'}</Paragraph>
+                        <strong>Functie:</strong>
+                        <Paragraph>{data.functie || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Moeder organisatie:</strong>
-                        <Paragraph>{data.moederOrganisatie || '-'}</Paragraph>
+                        <strong>Organisatie:</strong>
+                        <Paragraph>{data.organisatie || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Sector:</strong>
-                        <Paragraph>{data.sector || '-'}</Paragraph>
+                        <strong>Telefoonnummer:</strong>
+                        <Paragraph>{data.telefoonnummer || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Organisatietype:</strong>
-                        <Paragraph>{data.organisatietype || '-'}</Paragraph>
+                        <strong>Rollen:</strong>
+                        <Paragraph>{data.rollen?.join(', ') || '-'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Website:</strong>
-                        <Paragraph>{data.website || '-'}</Paragraph>
+                        <strong>Status:</strong>
+                        <Paragraph>{data.actief ? 'Actief' : 'Inactief'}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Adres:</strong>
+                        <strong>Laatste inlog:</strong>
+                        <Paragraph>{formatDate(data.laatsteInlogdatum)}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Aangemaakt op:</strong>
+                        <Paragraph>{formatDate(data.aanmaakdatum)}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Laatst gewijzigd:</strong>
+                        <Paragraph>{formatDate(data.wijzigingsdatum)}</Paragraph>
+                      </div>
+
+                      <div>
+                        <strong>Voorkeuren:</strong>
                         <Paragraph>
-                          {data.adres?.straat} {data.adres?.huisnummer}
+                          Taal: {data.voorkeuren?.taal || '-'}<br />
+                          Thema: {data.voorkeuren?.thema || '-'}
                         </Paragraph>
-                        <Paragraph>
-                          {data.adres?.postcode} {data.adres?.plaats}
-                        </Paragraph>
-                        <Paragraph>{data.adres?.land}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Contactgegevens:</strong>
-                        <Paragraph>{data.contactgegevens?.contactpersoon}</Paragraph>
-                        <Paragraph>{data.contactgegevens?.telefoon}</Paragraph>
-                        <Paragraph>{data.contactgegevens?.email}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Beschrijving:</strong>
-                        <Paragraph>{data.beschrijving || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Logo:</strong>
-                        <Paragraph>{data.logo || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorzieningen:</strong>
-                        <Paragraph>
-                          {data.voorzieningen?.join(', ') || '-'}
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Gebruik:</strong>
-                        <Paragraph>{data.gebruik?.join(', ') || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Deelnemer in:</strong>
-                        <Paragraph>{data.deelnemerIn?.join(', ') || '-'}</Paragraph>
                       </div>
                     </div>
                   </AcFlex>
                 </AcColumn>
 
                 {/* modals */}
-                <AcOrganisatieFormModal
-                  organisatie={data}
+                <AcGebruikersFormModal
+                  gebruiker={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -194,14 +177,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteOrganisatieModal
-                  organisaties={[data]}
+                <AcDeleteGebruikersModal
+                  gebruikers={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/organisaties');
+                    navigate('/beheer/gebruikers');
                   }}
                 />
               </AcFlex>
@@ -213,4 +196,4 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerOrganisatieDetails));
+export default withStore(observer(AcBeheerGebruikerDetails));

@@ -43,8 +43,8 @@ const AcBeheerGebruikers = loadable(() =>
 
 // detail pages
 const AcBeheerVoorzieningenDetails = loadable(() =>
-    import('@src/views/ac-beheer/ac-voorzieningen/pages/ac-voorzieningen-details')
-  );
+  import('@src/views/ac-beheer/ac-voorzieningen/pages/ac-voorzieningen-details')
+);
 const AcBeheerVoorzieningenAanbodDetails = loadable(() =>
   import(
     '@src/views/ac-beheer/ac-voorzieningen-aanbod/pages/ac-voorzieningen-aanbod-details'
@@ -69,7 +69,9 @@ const AcBeheerOrganisatieDetails = loadable(() =>
 const AcBeheerKwetsbaarheidDetails = loadable(() =>
   import('@src/views/ac-beheer/ac-kwetsbaarheid/pages/ac-kwetsbaarheid-details')
 );
-
+const AcBeheerGebruikerDetails = loadable(() =>
+  import('@src/views/ac-beheer/ac-gebruikers/pages/ac-gebruikers-details')
+);
 
 export {
   AcBeheerVoorzieningenAanbod,
@@ -90,4 +92,5 @@ export {
   AcBeheerContractenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
+  AcBeheerGebruikerDetails,
 };

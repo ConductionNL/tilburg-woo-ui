@@ -75,7 +75,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                       Acties
                     </ConActionMenu.Trigger>
 
-                    <ConActionMenu.Menu>
+                    <ConActionMenu.Menu position='right'>
                       <ConActionMenu.Button icon={<VISUALS.PLUS />}>
                         Toevoegen
                       </ConActionMenu.Button>

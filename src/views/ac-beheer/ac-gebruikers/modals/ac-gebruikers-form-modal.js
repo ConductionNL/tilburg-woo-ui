@@ -24,7 +24,10 @@ const AcGebruikersFormModal = ({
     organisatie: '',
     telefoonnummer: '',
     rollen: '', // as array
-    actief: false,
+    actief: true,
+    laatsteInlogdatum: '', // as date
+    aanmaakdatum: '', // as date
+    wijzigingsdatum: '', // as date
     voorkeuren: {},
   });
 
@@ -49,7 +52,10 @@ const AcGebruikersFormModal = ({
         organisatie: '',
         telefoonnummer: '',
         rollen: '',
-        actief: false,
+        actief: true,
+        laatsteInlogdatum: '',
+        aanmaakdatum: '',
+        wijzigingsdatum: '',
         voorkeuren: '',
       }));
     }
