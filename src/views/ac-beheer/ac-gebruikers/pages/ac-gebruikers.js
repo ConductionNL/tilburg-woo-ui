@@ -10,7 +10,7 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../../cd-table';
+import ConTable from '../../con-table';
 import AcGebruikerFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
 import ConActionMenu from '../../con-action-menu';
@@ -189,7 +189,7 @@ const AcBeheerGebruikers = () => {
             </AcFlex>
           </AcFlex>
 
-          <CDTable
+          <ConTable
             data={data}
             tableHeaders={tableHeaders}
             getSelectedRows={setSelectedRows}

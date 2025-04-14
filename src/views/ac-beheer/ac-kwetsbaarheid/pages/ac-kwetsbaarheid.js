@@ -10,7 +10,7 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../../cd-table';
+import ConTable from '../../con-table';
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
@@ -193,7 +193,7 @@ const AcBeheerKwetsbaarheden = () => {
             </AcFlex>
           </AcFlex>
 
-          <CDTable
+          <ConTable
             data={data}
             tableHeaders={tableHeaders}
             getSelectedRows={setSelectedRows}

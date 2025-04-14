@@ -10,7 +10,7 @@ import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import CDTable from '../../cd-table';
+import ConTable from '../../con-table';
 import AcVoorzieningGebruikFormModal from '../modals/ac-voorziening-gebruik-form-modal';
 import AcDeleteVoorzieningGebruikModal from '../modals/ac-delete-voorziening-gebruik-modal';
 import ConActionMenu from '../../con-action-menu';
@@ -191,7 +191,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             </AcFlex>
           </AcFlex>
 
-          <CDTable
+          <ConTable
             data={data}
             tableHeaders={tableHeaders}
             getSelectedRows={setSelectedRows}
