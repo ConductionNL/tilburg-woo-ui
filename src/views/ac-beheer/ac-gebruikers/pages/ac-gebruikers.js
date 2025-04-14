@@ -56,12 +56,14 @@ const AcBeheerGebruikers = () => {
 
   const tableHeaders = [
     {
-      label: 'Voornaam',
-      key: 'voornaam',
+      label: 'Naam',
+      key: '',
+      customContent: (row) => `${row.voornaam} ${row.achternaam}`,
     },
     {
-      label: 'Achternaam',
-      key: 'achternaam',
+      label: 'Status',
+      key: '',
+      customContent: (row) => <span>{row.actief ? 'Actief' : 'Inactief'}</span>,
     },
     {
       label: 'Email',
