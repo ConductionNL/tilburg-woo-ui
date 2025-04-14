@@ -56,8 +56,7 @@ import { ConHorizontalOverflowWrapper } from '@components';
  *    ```
  *
  * @example
- * ```jsx
- * <CDTable
+ * <ConTable
  *   data={[{ name: "John", age: 30 }]}
  *   tableHeaders={[
  *     {
@@ -101,7 +100,7 @@ import { ConHorizontalOverflowWrapper } from '@components';
  *
  * SSBoYXZlIHdvcmtlZCB3YXkgdG9vIGhhcmQgb24gdGhpcywgYW5kIG5vIG9uZSBpcyBldmVuIGdvaW5nIHRvIGtub3cgaXQgZXhpc3RzIPCfmKI=
  */
-const CDTable = (
+const ConTable = (
   {
     data: _data,
     tableHeaders,
@@ -344,4 +343,4 @@ const CDTable = (
   );
 };
 
-export default forwardRef(CDTable);
+export default forwardRef(ConTable);
