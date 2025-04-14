@@ -24,3 +24,4 @@ export { POSITIONS, SIZES, THEMES, TYPES, VARIANTS } from './themes.constants';
 export { TITLES } from './titles.constants';
 export { TOASTER_TYPES } from './toasters.constants';
 export { VISUALS } from './visuals.constants';
+export { LANGUAGES } from './languages';

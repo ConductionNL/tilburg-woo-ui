@@ -109,6 +109,15 @@ const AcSideNav = () => {
               Kwetsbaarheden
             </SidenavLink>
           </SidenavItem>
+          <SidenavItem>
+            <SidenavLink
+              onClick={() => navigate('/beheer/gebruikers')}
+              current={window.location.pathname.startsWith('/beheer/gebruikers')}
+            >
+              <VISUALS.USERS />
+              Gebruikers
+            </SidenavLink>
+          </SidenavItem>
         </SidenavList>
       </Sidenav>
     </>
