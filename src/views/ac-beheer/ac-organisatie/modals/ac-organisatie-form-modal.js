@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
@@ -6,6 +6,7 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
+import ReactSelect from 'react-select';
 
 const AcOrganisatieFormModal = ({
   organisatie,
@@ -43,6 +44,15 @@ const AcOrganisatieFormModal = ({
     deelnemerIn: [],
   });
 
+  const [organisaties, setOrganisaties] = useState([]);
+  useEffect(async () => {
+    const response = await fetch(
+      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/organisaties'
+    );
+    const data = (await response.json()).results;
+    setOrganisaties(data);
+  }, []);
+
   // load contract data into the form
   useEffect(() => {
     if (organisatie && isEdit) {
@@ -55,8 +65,8 @@ const AcOrganisatieFormModal = ({
         gebruik: Array.isArray(organisatie.gebruik)
           ? organisatie.gebruik.join(', ')
           : organisatie.gebruik,
-        deelnemerIn: Array.isArray(organisatie.deelnemerIn)
-          ? organisatie.deelnemerIn.join(', ')
+        deelnemerIn: !Array.isArray(organisatie.deelnemerIn) // ensure deelnemerIn is an array for backwards compatibility
+          ? organisatie.deelnemerIn.split(', ')
           : organisatie.deelnemerIn,
       }));
     }
@@ -130,10 +140,6 @@ const AcOrganisatieFormModal = ({
             .trim()
             .split(/ *, */g)
             .filter(Boolean),
-          deelnemerIn: organisatieFormData.deelnemerIn
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -166,6 +172,14 @@ const AcOrganisatieFormModal = ({
   useEffect(() => {
     modalRef?.current?.addEventListener('close', handleEditOrganisatieCloseModal);
   }, [modalRef.current]);
+
+  const mapOrganisatieToValue = useCallback(
+    (organisatie) => ({
+      label: organisatie.naam,
+      value: organisatie.id,
+    }),
+    []
+  );
 
   const renderOrganisatieFormModal = (
     <AcModal
@@ -247,12 +261,30 @@ const AcOrganisatieFormModal = ({
           onBlur={handleEditOrganisatieFieldChange('gebruik')}
           value={organisatieFormData.gebruik}
         />
-        <AcFormField
-          label='Deelnemer In'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('deelnemerIn')}
-          value={organisatieFormData.deelnemerIn}
-        />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Deelnemer In</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een organisatie'
+            value={organisaties
+              .filter((organisatie) =>
+                organisatieFormData.deelnemerIn.includes(organisatie.id)
+              )
+              .map(mapOrganisatieToValue)}
+            isMulti
+            className='ac-beheer-select'
+            onChange={(selectedOptions) => {
+              handleEditOrganisatieFieldChange('deelnemerIn')(
+                selectedOptions ? selectedOptions.map((option) => option.value) : []
+              );
+            }}
+            loading={organisaties?.length === 0}
+            options={organisaties
+              ?.filter((organisatie) => organisatie.id !== organisatieFormData?.id)
+              ?.map(mapOrganisatieToValue)}
+          />
+        </div>
       </AcFlex>
     </AcModal>
   );
