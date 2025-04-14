@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { VISUALS } from '@constants';
+import { LANGUAGES, VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
 import { AcButton } from '@src/molecules';
@@ -16,6 +16,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcGebruikersFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikersModal from '../modals/ac-delete-gebruikers-modal';
 import ConActionMenu from '../../con-action-menu';
+import _ from 'lodash';
 
 const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -156,8 +157,8 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                       <div>
                         <strong>Voorkeuren:</strong>
                         <Paragraph>
-                          Taal: {data.voorkeuren?.taal || '-'}<br />
-                          Thema: {data.voorkeuren?.thema || '-'}
+                          Taal: {LANGUAGES.find((language) => language.code === data.voorkeuren?.taal)?.name || '-'}<br />
+                          Thema: {_.upperFirst(data.voorkeuren?.thema) || '-'}
                         </Paragraph>
                       </div>
                     </div>
