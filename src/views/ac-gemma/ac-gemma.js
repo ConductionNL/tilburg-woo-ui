@@ -88,7 +88,7 @@ const AcGemma = ({ store: { gemma } }) => {
             description: data.results[0]?.documentation || undefined,
             type: data.results[0]?.type || undefined,
             properties: data.results[0]?.properties || undefined,
-            parent: null
+            parent: null,
           };
         } catch (error) {
           console.error(`Error fetching node data: ${error}`);
@@ -283,28 +283,43 @@ const AcGemma = ({ store: { gemma } }) => {
     // Order nodes hierarchically
     const getOrderedNodes = () => {
       const orderedNodes = [];
-      
+
       try {
-        // Get root nodes (nodes without parents)
-        const rootNodes = gemma.get_view.nodes.filter(node => node.elementRef);
-        
-        // Process each level
-        rootNodes.forEach(rootNode => {
-          // Add root node
-          orderedNodes.push(rootNode);
-          
-          // Add child nodes if they exist
-          if (rootNode.nodes) {
-            rootNode.nodes.forEach(child => {
-              orderedNodes.push(child);
-              
-              // Add grandchild nodes if they exist
+        // Get all top-level nodes, including Labels and other types
+        const topLevelNodes = gemma.get_view.nodes;
+
+        // Helper function to recursively process nodes and their children
+        const processNode = (node) => {
+          // Add the current node (without isChildNode flag for root nodes)
+          orderedNodes.push(node);
+
+          if (node.nodes) {
+            // Process each child node
+            node.nodes.forEach((child) => {
+              // Add child with isChildNode flag
+              orderedNodes.push({
+                ...child,
+                isChildNode: true,
+              });
+
+              // Recursively process child's nodes if they exist
               if (child.nodes) {
-                orderedNodes.push(...child.nodes);
+                child.nodes.forEach((grandchild) => {
+                  // Add grandchild with isChildNode flag
+                  orderedNodes.push({
+                    ...grandchild,
+                    isChildNode: true,
+                  });
+                  // Continue recursion if needed
+                  processNode(grandchild);
+                });
               }
             });
           }
-        });
+        };
+
+        // Process all top-level nodes
+        topLevelNodes.forEach(processNode);
       } catch (error) {
         console.error('Error ordering nodes:', error);
       }
@@ -520,7 +535,6 @@ const AcGemma = ({ store: { gemma } }) => {
           },
           description: nodeDataNode?.description || null,
           elementRef: node.elementRef || null,
-
           onClick: () => {
             window.open(
               `https://www.gemmaonline.nl/wiki/GEMMA/${
@@ -545,9 +559,8 @@ const AcGemma = ({ store: { gemma } }) => {
     const orderedNodes = getOrderedNodes();
     const gemmaNodes = orderedNodes;
     const voorzieningNodes = gemma.get_allVoorzieningGebruik;
-    const gemmaChildNodes = getAllChildNodes(gemmaNodes).filter(Boolean);
 
-    const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
+    const allNodes = [...gemmaNodes, ...voorzieningNodes];
 
     const viewNodes = allNodes
       .flatMap(convertToViewNode)
