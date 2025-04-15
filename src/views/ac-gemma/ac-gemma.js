@@ -88,6 +88,7 @@ const AcGemma = ({ store: { gemma } }) => {
             description: data.results[0]?.documentation || undefined,
             type: data.results[0]?.type || undefined,
             properties: data.results[0]?.properties || undefined,
+            parent: null
           };
         } catch (error) {
           console.error(`Error fetching node data: ${error}`);
@@ -275,10 +276,41 @@ const AcGemma = ({ store: { gemma } }) => {
   }, [gemma.get_view]);
 
   useEffect(() => {
-    if (!gemma.get_view) return;
-    if (!gemma.get_allVoorzieningGebruik) return;
+    if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
     if (!viewNodesData) return;
     if (!viewRelationsData) return;
+
+    // Order nodes hierarchically
+    const getOrderedNodes = () => {
+      const orderedNodes = [];
+      
+      try {
+        // Get root nodes (nodes without parents)
+        const rootNodes = gemma.get_view.nodes.filter(node => node.elementRef);
+        
+        // Process each level
+        rootNodes.forEach(rootNode => {
+          // Add root node
+          orderedNodes.push(rootNode);
+          
+          // Add child nodes if they exist
+          if (rootNode.nodes) {
+            rootNode.nodes.forEach(child => {
+              orderedNodes.push(child);
+              
+              // Add grandchild nodes if they exist
+              if (child.nodes) {
+                orderedNodes.push(...child.nodes);
+              }
+            });
+          }
+        });
+      } catch (error) {
+        console.error('Error ordering nodes:', error);
+      }
+
+      return orderedNodes;
+    };
 
     // Create container in HTML
     const container = document.getElementById('graph-container');
@@ -311,6 +343,24 @@ const AcGemma = ({ store: { gemma } }) => {
         onClick();
       }
     });
+
+    // Helper function to recursively collect all child nodes
+    const getAllChildNodes = (nodes) => {
+      return nodes.reduce((acc, node) => {
+        if (!node.nodes) return acc;
+
+        // Add immediate child nodes
+        const children = node.nodes.map((child) => ({
+          ...child,
+          isChildNode: true,
+        }));
+
+        // Recursively get children of children
+        const grandchildren = getAllChildNodes(node.nodes);
+
+        return [...acc, ...children, ...grandchildren];
+      }, []);
+    };
 
     const convertToViewNode = (node) => {
       const nodeDataNode = viewNodesData.find((item) => item.id === node.elementRef);
@@ -491,27 +541,10 @@ const AcGemma = ({ store: { gemma } }) => {
       }
     };
 
-    const gemmaNodes = gemma.get_view.nodes;
+    // Get ordered nodes and process them
+    const orderedNodes = getOrderedNodes();
+    const gemmaNodes = orderedNodes;
     const voorzieningNodes = gemma.get_allVoorzieningGebruik;
-
-    // Helper function to recursively collect all child nodes
-    const getAllChildNodes = (nodes) => {
-      return nodes.reduce((acc, node) => {
-        if (!node.nodes) return acc;
-
-        // Add immediate child nodes
-        const children = node.nodes.map((child) => ({
-          ...child,
-          isChildNode: true,
-        }));
-
-        // Recursively get children of children
-        const grandchildren = getAllChildNodes(node.nodes);
-
-        return [...acc, ...children, ...grandchildren];
-      }, []);
-    };
-
     const gemmaChildNodes = getAllChildNodes(gemmaNodes).filter(Boolean);
 
     const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
