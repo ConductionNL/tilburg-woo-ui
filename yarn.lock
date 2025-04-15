@@ -1946,12 +1946,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@conduction/archimate-diagram-engine@npm:^1.0.4":
-  version: 1.0.4
-  resolution: "@conduction/archimate-diagram-engine@npm:1.0.4"
+"@conduction/archimate-diagram-engine@npm:^1.0.5":
+  version: 1.0.5
+  resolution: "@conduction/archimate-diagram-engine@npm:1.0.5"
   dependencies:
     jointjs: "npm:3.4.2"
-  checksum: 10c0/2cc5eab2325046645874211377ccf99be427e206ebd79958745f3edfcfb0e656616469683c1456672cdbf382300cbf1a96e33e4268db998b676b7865dd11a535
+  checksum: 10c0/073a0cf7bdcb33607e3a62f6b436a632886d5886bb374877aa8705cc60ecad38686b1c3dabc385d6c826e3ee59c395a98633ded07cb2954efed615b85a60d404
   languageName: node
   linkType: hard
 
@@ -14572,7 +14572,7 @@ __metadata:
     "@babel/preset-react": "npm:^7.22.5"
     "@babel/runtime": "npm:7.22.5"
     "@babel/types": "npm:7.22.5"
-    "@conduction/archimate-diagram-engine": "npm:^1.0.4"
+    "@conduction/archimate-diagram-engine": "npm:^1.0.5"
     "@conduction/theme": "npm:1.1.42"
     "@emotion/react": "npm:^11.11.1"
     "@gemeente-denhaag/components-react": "npm:^0.1.5"
