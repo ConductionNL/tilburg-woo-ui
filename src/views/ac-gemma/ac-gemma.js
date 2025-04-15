@@ -250,8 +250,7 @@ const AcGemma = ({ store: { gemma } }) => {
                   (item) =>
                     item.propertyDefinitionRef === 'propid-61' ||
                     item.propertyDefinitionRef === 'propid-62'
-                )?.value ||
-                undefined,
+                )?.value || undefined,
               id: relationship.relationshipRef,
               type: data.results[0]?.type || undefined,
             };
@@ -332,13 +331,13 @@ const AcGemma = ({ store: { gemma } }) => {
           return {
             modelNodeId: node.identifier,
             viewNodeId: node.identifier || 'unknown',
-            name: node.label,
+            name: node.label ?? ' ',
             type: node.type?.toLowerCase() || getType(),
             x: node.position?.x,
             y: node.position?.y,
             width: node.position?.w,
             height: node.position?.h,
-            color: node.style?.fillColor?.r
+            color: node.style?.fillColor?.a
               ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
               : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
             borderColor: node.style?.lineColor?.a
@@ -367,7 +366,7 @@ const AcGemma = ({ store: { gemma } }) => {
             y: node.position?.y,
             width: node.position?.w,
             height: node.position?.h,
-            color: node.style?.fillColor?.r
+            color: node.style?.fillColor?.a
               ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
               : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
             borderColor: node.style?.lineColor?.a
@@ -396,7 +395,7 @@ const AcGemma = ({ store: { gemma } }) => {
             y: node.position?.y,
             width: node.position?.w,
             height: node.position?.h,
-            color: node.style?.fillColor?.r
+            color: node.style?.fillColor?.a
               ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
               : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
             borderColor: node.style?.lineColor?.a
@@ -455,7 +454,7 @@ const AcGemma = ({ store: { gemma } }) => {
           width: node.position.w,
           height: node.position.h,
           parent: null,
-          color: node.style?.fillColor?.r
+          color: node.style?.fillColor?.a
             ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
             : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
           borderColor: node.style?.lineColor?.a
@@ -471,6 +470,7 @@ const AcGemma = ({ store: { gemma } }) => {
           },
           description: nodeDataNode?.description || null,
           elementRef: node.elementRef || null,
+
           onClick: () => {
             window.open(
               `https://www.gemmaonline.nl/wiki/GEMMA/${
@@ -512,7 +512,7 @@ const AcGemma = ({ store: { gemma } }) => {
       }, []);
     };
 
-    const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes).filter(Boolean);
+    const gemmaChildNodes = getAllChildNodes(gemmaNodes).filter(Boolean);
 
     const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
 
