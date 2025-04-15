@@ -338,15 +338,21 @@ const AcGemma = ({ store: { gemma } }) => {
             y: node.position?.y,
             width: node.position?.w,
             height: node.position?.h,
-            color: `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`,
-            borderColor: `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`,
+            color: node.style?.fillColor?.r
+              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+            borderColor: node.style?.lineColor?.a
+              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
             parent: null,
             description: node.label,
             font: {
               name: node.style?.font?.name,
               size: node.style?.font?.size,
               style: node.style?.font?.style,
-              color: `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
             },
             elementRef: null,
           };
@@ -361,15 +367,21 @@ const AcGemma = ({ store: { gemma } }) => {
             y: node.position?.y,
             width: node.position?.w,
             height: node.position?.h,
-            color: `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`,
-            borderColor: `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`,
+            color: node.style?.fillColor?.r
+              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+            borderColor: node.style?.lineColor?.a
+              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
             parent: null,
             description: node.label,
             font: {
               name: node.style?.font?.name,
               size: node.style?.font?.size,
               style: node.style?.font?.style,
-              color: `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
             },
             elementRef: null,
           };
@@ -384,15 +396,21 @@ const AcGemma = ({ store: { gemma } }) => {
             y: node.position?.y,
             width: node.position?.w,
             height: node.position?.h,
-            color: `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`,
-            borderColor: `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`,
+            color: node.style?.fillColor?.r
+              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+            borderColor: node.style?.lineColor?.a
+              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
             parent: null,
             description: node.label,
             font: {
               name: node.style?.font?.name,
               size: node.style?.font?.size,
               style: node.style?.font?.style,
-              color: `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
             },
             elementRef: null,
           };
@@ -417,7 +435,9 @@ const AcGemma = ({ store: { gemma } }) => {
               name: node.style?.font?.name,
               size: node.style?.font?.size,
               style: node.style?.font?.style,
-              color: `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
             },
             elementRef: null,
           };
@@ -435,13 +455,19 @@ const AcGemma = ({ store: { gemma } }) => {
           width: node.position.w,
           height: node.position.h,
           parent: null,
-          color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
-          borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
+          color: node.style?.fillColor?.r
+            ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+            : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+          borderColor: node.style?.lineColor?.a
+            ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+            : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
           font: {
             name: node.style?.font?.name,
             size: node.style?.font?.size,
             style: node.style?.font?.style,
-            color: `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`,
+            color: node.style?.color?.a
+              ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+              : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
           },
           description: nodeDataNode?.description || null,
           elementRef: node.elementRef || null,
@@ -520,9 +546,13 @@ const AcGemma = ({ store: { gemma } }) => {
             markup: [
               {
                 style: {
-                  fontSize: relationship.style.font.size,
-                  fontFamily: relationship.style.font.name,
-                  fontColor: `rgba(${relationship.style.color.r}, ${relationship.style.color.g}, ${relationship.style.color.b}, ${relationship.style.color.a})`,
+                  fontSize: relationship?.style?.font?.size,
+                  fontFamily: relationship?.style?.font?.name,
+                  fontColor: relationship?.style?.color?.a
+                    ? `rgba(${relationship?.style?.color?.r}, ${relationship?.style?.color?.g}, ${relationship?.style?.color?.b}, ${relationship?.style?.color?.a})`
+                    : `rgb(${relationship?.style?.color?.r}, ${relationship?.style?.color?.g}, ${relationship?.style?.color?.b})`,
+                  fontStyle: relationship?.style?.font?.style,
+                  fontWeight: relationship?.style?.font?.style,
                 },
               },
             ],
@@ -564,6 +594,10 @@ const AcGemma = ({ store: { gemma } }) => {
 
     viewNodes.forEach((node) => {
       setNodeColor(node);
+    });
+
+    viewRelationships.forEach((relationship) => {
+      setRelationshipColor(relationship);
     });
 
     container.querySelectorAll(':scope > svg').forEach((node) => {
@@ -616,6 +650,46 @@ const AcGemma = ({ store: { gemma } }) => {
       node?.font?.color && item.setAttribute('font-color', node?.font?.color);
       node?.font?.style && item.setAttribute('font-style', node?.font?.style);
       node?.font?.style === 'bold' && item.setAttribute('font-weight', 'bold');
+    });
+  };
+
+  const setRelationshipColor = (relationship) => {
+    const parentElement = document.querySelector(
+      `[model-id="${relationship.viewRelationshipId}"]`
+    );
+
+    let allPathElements = parentElement.querySelectorAll(':scope > path');
+    allPathElements.forEach((item) => {
+      item.setAttribute('cursor', 'drag');
+    });
+
+    let allTextElements = parentElement.querySelectorAll(':scope text');
+    allTextElements.forEach((item) => {
+      relationship?.label?.markup?.[0]?.style?.fontFamily &&
+        item.style.setProperty(
+          'font-family',
+          relationship?.label?.markup?.[0]?.style?.fontFamily
+        );
+      if (relationship?.label?.markup?.[0]?.style?.fontSize) {
+        // Ensure font size has a unit for Firefox
+        const fontSize = relationship.label.markup[0].style.fontSize;
+        const fontSizeWithUnit = fontSize.toString().match(/\d+$/)
+          ? `${fontSize}px`
+          : fontSize;
+        item.style.setProperty('font-size', fontSizeWithUnit);
+      }
+      relationship?.label?.markup?.[0]?.style?.fontColor &&
+        item.style.setProperty(
+          'fill',
+          relationship?.label?.markup?.[0]?.style?.fontColor
+        );
+      relationship?.label?.markup?.[0]?.style?.fontStyle &&
+        item.style.setProperty(
+          'font-style',
+          relationship?.label?.markup?.[0]?.style?.fontStyle
+        );
+      relationship?.label?.markup?.[0]?.style?.fontWeight === 'bold' &&
+        item.style.setProperty('font-weight', 'bold');
     });
   };
 
