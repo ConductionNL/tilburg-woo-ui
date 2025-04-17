@@ -1,0 +1,6 @@
+.urecht-select--html-select:hover {
+  border-width: var(
+    --utrecht-select-hover-border-width,
+    var(--utrecht-select-border-width)
+  ) !important;
+}
