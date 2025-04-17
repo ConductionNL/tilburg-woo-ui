@@ -82,8 +82,9 @@
     }
   }
   &__navigation-breadcrumb {
-    padding-block: var(--tilburg-space-block-mouse);
-    background-color: var(--tilburg-color-gray-50);
+    padding-block-start: var(--utrecht-breadcrumb-nav-padding-block-start, var(--tilburg-space-block-mouse));
+    padding-block-end: var(--utrecht-breadcrumb-nav-padding-block-end, var(--tilburg-space-block-mouse));
+    background-color: var(--utrecht-breadcrumb-nav-background-color, var(--tilburg-color-gray-50));
 
     @include respond-max($screen-md) {
       .container {

@@ -673,9 +673,11 @@ const AcGemma = ({ store: { gemma } }) => {
 
   const setNodeColor = (node) => {
     const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
-    parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
-    node.description &&
-      parentElement.setAttribute('data-tooltip-content', node.description);
+    if (node.type?.toLowerCase() !== 'label') {
+      parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
+      node.description &&
+        parentElement.setAttribute('data-tooltip-content', node.description);
+    }
 
     let allRectElements = parentElement.querySelectorAll(':scope > rect');
     allRectElements.forEach((item) => {
@@ -696,6 +698,36 @@ const AcGemma = ({ store: { gemma } }) => {
       node?.font?.color && item.setAttribute('font-color', node?.font?.color);
       node?.font?.style && item.setAttribute('font-style', node?.font?.style);
       node?.font?.style === 'bold' && item.setAttribute('font-weight', 'bold');
+
+      // Only apply left alignment for nodes with type 'label'
+      if (node.type?.toLowerCase() === 'label') {
+        // Get the current transform values
+        const currentTransform = item.getAttribute('transform');
+        if (currentTransform && currentTransform.includes('matrix')) {
+          // Extract the existing translation values
+          const matrix = currentTransform.match(
+            /matrix\(1,0,0,1,(\d+\.?\d*),(\d+\.?\d*)\)/
+          );
+          if (matrix) {
+            // Add left padding of 10px from the parent's left edge
+            const leftPadding = 10;
+            // Update transform to position text at the left with padding
+            item.setAttribute(
+              'transform',
+              `matrix(1,0,0,1,${leftPadding},${matrix[2]})`
+            );
+          }
+        }
+
+        // Set text-anchor to start for left alignment
+        item.setAttribute('text-anchor', 'start');
+
+        // Reset x position of tspans
+        const tspans = item.querySelectorAll('tspan');
+        tspans.forEach((tspan) => {
+          tspan.setAttribute('x', '0');
+        });
+      }
     });
   };
 
@@ -1007,7 +1039,7 @@ const AcGemma = ({ store: { gemma } }) => {
 
           {gemma.get_view && (
             <div className='ac-gemma-view-header'>
-              <div>
+              <div className='ac-gemma-view-header-title-container'>
                 <h1 className='ac-gemma-view-header-title'>
                   {getViewName(gemma.get_view)}
                 </h1>

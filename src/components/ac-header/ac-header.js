@@ -6,7 +6,7 @@ import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
 
 import { AcNavigation } from '@components';
 import { AcBreadcrumbs } from '@molecules';
-import { AcContainer, AcLogo } from '@atoms';
+import { AcContainer, ConLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcCNavigation } from '@components';
@@ -56,14 +56,14 @@ const AcHeader = ({ store: { menu } }) => {
         <div className='ac-header__logo'>
           {isHomePage ? (
             <div>
-              <AcLogo variant='header' />
+              <ConLogo variant='header' />
               <span className='sr-only'>Logo</span>
               <span class='logo-text'>{getTitle()}</span>
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
-                <AcLogo variant='header' />
+                <ConLogo variant='header' />
                 <span class='logo-text'>{getTitle()}</span>
               </Link>
             </>
