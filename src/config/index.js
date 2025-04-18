@@ -16,7 +16,7 @@ const apiUrl = () => {
     case 'test.opencatalogi.nl':
       return 'https://opencatalogi.test.commonground.nu/apps';
     case 'opencatalogi.open-regels.nl':
-      return 'https://nextcloud.open-regels.nl/apps';
+      return 'https://nextcloud.open-regels.nl/index.php/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
       return 'https://dimpact.commonground.nu/apps';
@@ -42,7 +42,7 @@ const commongroundApiUrl = () => {
     case 'test.opencatalogi.nl':
       return 'https://opencatalogi.test.commonground.nu/apps';
     case 'opencatalogi.open-regels.nl':
-      return 'https://nextcloud.open-regels.nl/apps';
+      return 'https://nextcloud.open-regels.nl/index.php/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
       return 'https://dimpact.commonground.nu/apps';
