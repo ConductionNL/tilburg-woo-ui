@@ -7,19 +7,22 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { AcDrawer, AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcVoorzieningenFormModal from '../modals/ac-voorzieningen-form-modal';
 import AcDeleteVoorzieningModal from '../modals/ac-delete-voorzieningen-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 
 const AcBeheerVoorzieningen = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -54,7 +57,9 @@ const AcBeheerVoorzieningen = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const [tableHeaders, setTableHeaders] = useState([]);
+  const defaultHeaders = ['naam', 'referentieComponenten', 'standaarden', 'categorie', 'koppelingen'];
+  const headers = [
     {
       label: 'Naam',
       key: 'naam',
@@ -143,6 +148,8 @@ const AcBeheerVoorzieningen = () => {
           >
             <Heading>Beheer Voorzieningen</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <PrimaryActionButton onClick={() => filterHeadersDrawerRef.current.showModal()}>Open Drawer</PrimaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -225,6 +232,9 @@ const AcBeheerVoorzieningen = () => {
               fetchData();
             }}
           />
+
+          <ConFilterHeadersDrawer ref={filterHeadersDrawerRef} headers={headers} onChange={setTableHeaders} />
+          
         </AcColumn>
       </AcFlex>
     </AcSection>
