@@ -25,18 +25,20 @@ const AcDataList = ({ rows = [] }) => {
 
   return (
     <>
-      <Table>
-        <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <b>{row.text}</b>
-              </TableCell>
-              <TableCell>{renderDataListValue(row)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className='utrecht-table-container'>
+        <Table>
+          <TableBody>
+            {rows.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <b>{row.text}</b>
+                </TableCell>
+                <TableCell>{renderDataListValue(row)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </>
   );
 };
