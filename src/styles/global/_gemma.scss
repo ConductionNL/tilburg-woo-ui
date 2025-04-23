@@ -1,5 +1,5 @@
 .ac-gemma-graph-container {
-  background-color: #f2f2f2;
+  background-color: #ffffff;
   // overflow: scroll;
 
   @include respond-max($screen-sm) {
@@ -13,7 +13,7 @@
 }
 
 .ac-gemma-graph-container-loading {
-  background-color: #f2f2f2;
+  background-color: #ffffff;
   height: 800px;
   @include respond-max($screen-sm) {
     width: 100% !important;
@@ -148,14 +148,18 @@
   gap: 10px;
 }
 
-.ac-gemma-view-header-title { 
+.ac-gemma-view-header-title {
   word-break: break-word;
 }
 
+.ac-gemma-view-header-title-container {
+  flex: 1;
+}
+
 .ac-gemma-view-header-download-button {
-  @include respond-min($screen-sm) {
-    gap: 10px !important;
-  }
+  gap: 10px !important;
+
+  flex: 2;
 }
 
 .ac-gemma-tooltip {

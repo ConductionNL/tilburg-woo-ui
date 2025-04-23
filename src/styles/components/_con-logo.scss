@@ -1,27 +1,39 @@
-.ac-logo-container {
+.con-logo-container {
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-.ac-logo-container.header {
+.con-logo-container.header {
   inline-size: var(--conduction-logo-header-inline-size);
   block-size: var(--conduction-logo-header-block-size);
   background-image: var(--conduction-logo-header-background-image);
 }
 
-.ac-logo-container.footer {
+.con-logo-container.header:hover {
+  filter: var(--conduction-logo-header-hover-filter);
+}
+
+.con-logo-container.footer {
   inline-size: var(--conduction-logo-footer-inline-size);
   block-size: var(--conduction-logo-footer-block-size);
   background-image: var(--conduction-logo-footer-background-image);
 }
 
-.ac-logo-container.navbar {
+.con-logo-container.footer:hover {
+  filter: var(--conduction-logo-footer-hover-filter);
+}
+
+.con-logo-container.navbar {
   inline-size: var(--conduction-logo-navbar-inline-size);
   block-size: var(--conduction-logo-navbar-block-size);
   background-image: var(--conduction-logo-navbar-background-image);
 }
 
-.ac-logo-container.clickable:hover {
+.con-logo-container.navbar:hover {
+  filter: var(--conduction-logo-navbar-hover-filter);
+}
+
+.con-logo-container.clickable:hover {
   cursor: pointer;
 }

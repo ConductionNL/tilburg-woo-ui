@@ -1,10 +1,10 @@
 import * as React from 'react';
 import clsx from 'clsx';
 
-const AcLogo = ({ onClick, layoutClassName, variant = 'header' }) => {
+const ConLogo = ({ onClick, layoutClassName, variant = 'header' }) => {
   return (
     <div
-      className={clsx('ac-logo-container', variant, [
+      className={clsx('con-logo-container', variant, [
         onClick && 'clickable',
         layoutClassName && layoutClassName,
       ])}
@@ -13,4 +13,4 @@ const AcLogo = ({ onClick, layoutClassName, variant = 'header' }) => {
   );
 };
 
-export default AcLogo;
+export default ConLogo;

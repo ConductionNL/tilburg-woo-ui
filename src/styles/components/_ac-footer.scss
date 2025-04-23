@@ -2,12 +2,15 @@
 @use '../global/mixins/respond' as *;
 
 .ac-footer {
-  color: var(--tilburg-footer-color);
+  color: var(--utrecht-page-footer-color, var(--tilburg-footer-color));
   section {
     &:first-of-type {
       min-height: 50px;
       padding-block: var(--tilburg-space-row-elephant);
-      background-color: var(--tilburg-footer-background-color);
+      background-color: var(
+        --utrecht-page-footer-background-color,
+        var(--tilburg-footer-background-color)
+      );
       background-image: var(--utrecht-page-footer-background-image);
       background-position: var(--utrecht-page-footer-background-position);
       background-size: auto;
@@ -103,13 +106,21 @@
     text-decoration: var(--tilburg-footer-link-text-decoration, underline);
 
     &:where(:hover, :focus-visible) {
-      text-decoration: var(--tilburg-footer-link-hover-text-decoration, none);
+      color: var(
+        --utrecht-page-footer-link-hover-color,
+        var(--tilburg-footer-link-hover-color)
+      );
+      text-decoration: var(
+        --utrecht-page-footer-link-hover-text-decoration,
+        var(--tilburg-footer-link-hover-text-decoration, none)
+      );
+      text-decoration-thickness: var(--utrecht-page-footer-link-hover-text-decoration-thickness, var(--tilburg-footer-link-hover-text-decoration-thickness, 0.0625rem));
     }
 
     &:has(svg) {
       display: flex;
       align-items: center;
-      gap: var(--tilburg-space-column-snail);
+      gap: var(--utrecht-page-footer-link-gap, var(--tilburg-space-column-snail));
     }
   }
 }
@@ -117,10 +128,21 @@
 .ac-footer__link {
   display: flex;
   align-items: center;
-  gap: var(--tilburg-space-column-snail);
-  margin-block-end: var(--tilburg-space-block-snail);
+  gap: var(--utrecht-page-footer-link-gap, var(--tilburg-space-column-snail));
+  margin-block-end: var(
+    --utrecht-page-footer-link-margin-block-end,
+    var(--tilburg-space-block-snail)
+  );
+  color: var(--utrecht-page-footer-link-color, var(--tilburg-footer-link-color));
+  text-decoration: var(
+    --utrecht-page-footer-link-text-decoration,
+    var(--tilburg-footer-link-text-decoration, underline)
+  );
 }
 
 .ac-footer__link-icon > path {
-  fill: var(--tilburg-footer-icon-color, currentColor);
+  fill: var(
+    --utrecht-page-footer-link-icon-color,
+    var(--tilburg-footer-icon-color, currentColor)
+  );
 }

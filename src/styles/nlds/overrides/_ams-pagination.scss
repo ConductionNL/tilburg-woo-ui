@@ -1,4 +1,9 @@
 .ams-pagination {
+  background-color: var(--ams-pagination-background-color);
+  padding-block-start: var(--ams-pagination-padding-block-start);
+  padding-block-end: var(--ams-pagination-padding-block-end);
+  padding-inline-start: var(--ams-pagination-padding-inline-start);
+  padding-inline-end: var(--ams-pagination-padding-inline-end);
 
   &__list {
     justify-content: start;
@@ -6,18 +11,84 @@
     li {
       display: flex;
 
-      &[aria-hidden="true"] {
+      &[aria-hidden='true'] {
         padding-block: var(--tilburg-space-text-snail);
       }
 
       .ams-pagination__button {
         align-self: center;
-        border-radius: var(--tilburg-border-radius-md);
-        padding-block: var(--tilburg-space-text-snail);
+        border-radius: var(
+          --ams-pagination-button-border-radius,
+          var(--tilburg-border-radius-md)
+        );
+        padding-block: var(
+          --ams-pagination-button-padding-block,
+          var(--tilburg-space-text-snail)
+        );
 
         &--current {
           background: var(--tilburg-color-blue-100);
         }
+      }
+    }
+  }
+
+  &__button {
+    background-color: var(--ams-pagination-button-background-color);
+    border-color: var(--ams-pagination-button-border-color);
+    border-radius: var(--ams-pagination-button-border-radius);
+    border-width: var(--ams-pagination-button-border-width);
+    color: var(--ams-pagination-button-color);
+    font-weight: var(--ams-pagination-button-font-weight);
+    min-block-size: var(--ams-pagination-button-min-block-size);
+    min-inline-size: var(--ams-pagination-button-min-inline-size);
+    padding-inline-start: var(--ams-pagination-button-padding-inline-start);
+    padding-inline-end: var(--ams-pagination-button-padding-inline-end);
+    padding-inline: var(--ams-pagination-button-padding-inline);
+    padding-block-start: var(--ams-pagination-button-padding-block-start);
+    padding-block-end: var(--ams-pagination-button-padding-block-end);
+    text-decoration: var(--ams-pagination-button-text-decoration);
+    text-decoration-thickness: var(
+      --ams-pagination-button-text-decoration-thickness
+    );
+
+    &:hover {
+      background-color: var(--ams-pagination-button-hover-background-color);
+      border-color: var(--ams-pagination-button-hover-border-color);
+      color: var(--ams-pagination-button-hover-color);
+      text-decoration: var(--ams-pagination-button-hover-text-decoration);
+      text-decoration-thickness: var(
+        --ams-pagination-button-hover-text-decoration-thickness
+      );
+    }
+
+    &:active {
+      background-color: var(--ams-pagination-button-active-background-color);
+      border-color: var(--ams-pagination-button-active-border-color);
+      color: var(--ams-pagination-button-active-color);
+      text-decoration: var(--ams-pagination-button-active-text-decoration);
+      text-decoration-thickness: var(
+        --ams-pagination-button-active-text-decoration-thickness
+      );
+
+      &:focus {
+        background-color: var(--ams-pagination-button-focus-background-color);
+        color: var(--ams-pagination-button-focus-color);
+        text-decoration: var(--ams-pagination-button-focus-text-decoration);
+        text-decoration-thickness: var(
+          --ams-pagination-button-focus-text-decoration-thickness
+        );
+      }
+
+      &:current {
+        background-color: var(--ams-pagination-button-current-background-color);
+        border-color: var(--ams-pagination-button-current-border-color);
+        color: var(--ams-pagination-button-current-color);
+        font-weight: var(--ams-pagination-button-current-font-weight);
+        text-decoration: var(--ams-pagination-button-current-text-decoration);
+        text-decoration-thickness: var(
+          --ams-pagination-button-current-text-decoration-thickness
+        );
       }
     }
   }

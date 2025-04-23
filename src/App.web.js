@@ -91,8 +91,14 @@ const App = ({ store }) => {
             'https://www.migrato.nl/wp-content/uploads/2023/01/favicon-32x32-1.png')
         );
       case 'open-tilburg.accept.commonground.nu':
-      case 'opencatalogi.open-regels.nl':
         return;
+      case 'opencatalogi.open-regels.nl':
+        return (
+          (document.getElementById('favicon').href =
+            'https://nextcloud.open-regels.nl/index.php/s/oCsbkE4FLiyPfnz/download/openregels-favicon.ico'),
+          (document.getElementById('faviconMeta').href =
+            'https://nextcloud.open-regels.nl/index.php/s/oCsbkE4FLiyPfnz/download/openregels-favicon.ico')
+        );
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
         return (

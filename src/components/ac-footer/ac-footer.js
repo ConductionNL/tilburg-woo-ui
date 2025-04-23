@@ -1,4 +1,4 @@
-import { AcContainer, AcLogo } from '@atoms';
+import { AcContainer, ConLogo } from '@atoms';
 import { LABELS, VISUALS } from '@constants';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -183,7 +183,7 @@ const AcFooter = ({ store: { menu } }) => {
             </>
           )}
           <div class='ac-footer__logo'>
-            <AcLogo variant='footer' />
+            <ConLogo variant='footer' />
 
             {AcCheckIfSpecificHostname() ? (
               <></>
