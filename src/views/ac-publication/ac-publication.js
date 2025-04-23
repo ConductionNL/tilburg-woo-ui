@@ -260,10 +260,6 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
     return (
       <AcFlex column>
         <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
-        <AcFlex spacing={'xs'} className='notice'>
-          <VISUALS.INFO />
-          Documenten worden in een nieuw tabblad geopend.
-        </AcFlex>
         <AcTable
           header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE, LABELS.SIZE]}
           rows={getFilteredAttachments(true)?.map((attachment) =>

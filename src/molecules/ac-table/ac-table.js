@@ -10,37 +10,39 @@ import {
 
 const AcTable = ({ header = [], rows = [], footer = [] }) => {
   return (
-    <Table>
-      {Array.isArray(header) && (
-        <TableHeader>
-          <TableRow>
-            {header.map((column) => (
-              <TableHeaderCell scope='col'>{column}</TableHeaderCell>
-            ))}
-          </TableRow>
-        </TableHeader>
-      )}
-      {Array.isArray(rows) && (
-        <TableBody>
-          {rows.map((row) => (
+    <div className='utrecht-table-container'>
+      <Table>
+        {Array.isArray(header) && (
+          <TableHeader>
             <TableRow>
-              {row.map((cell) => (
-                <TableCell>{cell}</TableCell>
+              {header.map((column) => (
+                <TableHeaderCell scope='col'>{column}</TableHeaderCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      )}
-      {Array.isArray(footer) && (
-        <TableFooter>
-          <TableRow>
-            {footer.map((column) => (
-              <TableCell>{column}</TableCell>
+          </TableHeader>
+        )}
+        {Array.isArray(rows) && (
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow>
+                {row.map((cell) => (
+                  <TableCell>{cell}</TableCell>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        </TableFooter>
-      )}
-    </Table>
+          </TableBody>
+        )}
+        {Array.isArray(footer) && (
+          <TableFooter>
+            <TableRow>
+              {footer.map((column) => (
+                <TableCell>{column}</TableCell>
+              ))}
+            </TableRow>
+          </TableFooter>
+        )}
+      </Table>
+    </div>
   );
 };
 
