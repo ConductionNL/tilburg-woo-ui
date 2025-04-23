@@ -102,11 +102,11 @@ import clsx from 'clsx';
  * @param {boolean} props.renderSelectRowButtons - Whether to render the select row buttons.
  * @param {number} props.truncateLines - The number of lines to truncate the text to. Default is 0 (no truncation).
  * @param {(selectedRows: any[]) => void} props.getSelectedRows - The function to call when the selected rows change.
- * @param {{ label?: string, key?: string, customHeader?: React.ReactElement | (() => React.ReactElement), customContent?: React.ReactElement | ((row: any) => React.ReactElement) }[]} props.tableHeaders - The headers to display in the table. (array of objects)
+ * @param {{ label?: string, key?: string, customHeader?: React.ReactElement | string | (() => React.ReactElement | string), customContent?: React.ReactElement | string | ((row: any) => React.ReactElement | string) }[]} props.tableHeaders - The headers to display in the table. (array of objects)
  * @param {string} props.tableHeaders.label - The label to display in the table header.
  * @param {string} props.tableHeaders.key - The key to get from the data object to display in the table cell. Required for sorting functionality.
- * @param {React.ReactElement | (() => React.ReactElement)} props.tableHeaders.customHeader - The custom header to display in the table cell.
- * @param {React.ReactElement | ((row: any) => React.ReactElement)} props.tableHeaders.customContent - The custom content to display in the table cell.
+ * @param {React.ReactElement | string | (() => React.ReactElement | string)} props.tableHeaders.customHeader - The custom header to display in the table cell.
+ * @param {React.ReactElement | string | ((row: any) => React.ReactElement | string)} props.tableHeaders.customContent - The custom content to display in the table cell.
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
