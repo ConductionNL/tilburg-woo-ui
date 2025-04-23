@@ -54,6 +54,10 @@
     @include respond-max($screen-sm) {
       margin-inline-start: calc(-1 * var(--tilburg-space-column-rat));
       inline-size: calc(100% + (2 * var(--tilburg-space-column-rat)));
+
+      &.ac-card--padding-default .ac-card__content {
+        padding: var(--tilburg-space-column-rat);
+      }
     }
   }
 

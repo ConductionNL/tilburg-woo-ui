@@ -137,7 +137,7 @@ const AcSearch = ({ store: { publications } }) => {
     <>
       <AcContainer spacing='lg'>
         <Heading level={1}>Zoeken in publicaties</Heading>
-        <AcCard blue padding='md'>
+        <AcCard blue>
           <AcSearchBox
             page='search'
             onSubmitCallback={onSearchSubmit}
