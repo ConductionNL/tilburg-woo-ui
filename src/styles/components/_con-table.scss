@@ -6,19 +6,27 @@
       justify-content: space-between;
       gap: 6px;
 
+      &-sortable {
+        cursor: pointer;
+      }
+
       &__sort-button-container {
         width: 8px;
         min-width: 8px;
         padding-block-start: 2px;
-        cursor: pointer;
-        opacity: 0.6;
       }
 
       & .con-table-sort-icon-non {
-        display: none;
+        opacity: 0.2;
       }
       &:hover .con-table-sort-icon-non {
-        display: block;
+        opacity: 0.6;
+      }
+      & .con-table-sort-icon-asc {
+        opacity: 0.6;
+      }
+      & .con-table-sort-icon-desc {
+        opacity: 0.6;
       }
     }
   }

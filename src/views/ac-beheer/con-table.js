@@ -16,6 +16,7 @@ import { ConSorter, AcUUID } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 import { ConHorizontalOverflowWrapper } from '@components';
 import { VISUALS } from '@src/constants';
+import clsx from 'clsx';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -290,7 +291,23 @@ const ConTable = (
           )}
           {tableHeaders.map((header, index) => (
             <TableCell key={index}>
-              <div className='con-table-header-content'>
+              <div 
+                className={clsx(
+                  'con-table-header-content',
+                  (header.key && showSortButtons) && 'con-table-header-content-sortable'
+                )}
+                onClick={() => {
+                  if (!header.key || !showSortButtons) return;
+                  
+                  if (headerSort[0] !== header.key || headerSort[1] === null) {
+                    setHeaderSort([header.key, true]);
+                  } else if (headerSort[1] === true) {
+                    setHeaderSort([header.key, false]); 
+                  } else {
+                    setHeaderSort([header.key, null]);
+                  }
+                }}
+              >
                 <span>
                   {header.customHeader ? (
                     renderCustomElement(header.customHeader)
@@ -301,19 +318,13 @@ const ConTable = (
                 {showSortButtons && !!header.key && (
                   <span className='con-table-header-content__sort-button-container'>
                     {(headerSort[0] !== header.key || headerSort[1] === null) && (
-                      <a onClick={() => setHeaderSort([header.key, true])}>
-                        <VISUALS.SORT className="con-table-sort-icon-non" />
-                      </a>
+                      <VISUALS.SORT className="con-table-sort-icon-non" />
                     )}
                     {headerSort[0] === header.key && headerSort[1] === true && (
-                      <a onClick={() => setHeaderSort([header.key, false])}>
-                        <VISUALS.SORT_UP />
-                      </a>
+                      <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
                     )}
                     {headerSort[0] === header.key && headerSort[1] === false && (
-                      <a onClick={() => setHeaderSort([header.key, null])}>
-                        <VISUALS.SORT_DOWN />
-                      </a>
+                      <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
                     )}
                   </span>
                 )}
