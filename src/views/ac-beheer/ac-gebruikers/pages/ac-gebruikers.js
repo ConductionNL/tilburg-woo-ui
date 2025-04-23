@@ -57,12 +57,12 @@ const AcBeheerGebruikers = () => {
   const tableHeaders = [
     {
       label: 'Naam',
-      key: '',
+      key: 'voornaam',
       customContent: (row) => `${row.voornaam} ${row.achternaam}`,
     },
     {
       label: 'Status',
-      key: '',
+      key: 'actief',
       customContent: (row) => <span>{row.actief ? 'Actief' : 'Inactief'}</span>,
     },
     {
@@ -196,6 +196,7 @@ const AcBeheerGebruikers = () => {
             renderSelectRowButtons
             ref={tableRef}
             truncateLines={3}
+            showSortButtons
           />
 
           {/* modals */}

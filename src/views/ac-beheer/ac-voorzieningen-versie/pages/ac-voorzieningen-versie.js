@@ -198,6 +198,7 @@ const AcBeheerVoorzieningenVersie = () => {
             renderSelectRowButtons
             ref={tableRef}
             truncateLines={3}
+            showSortButtons
           />
 
           {/* modals */}

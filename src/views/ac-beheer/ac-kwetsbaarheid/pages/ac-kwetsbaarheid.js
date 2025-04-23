@@ -200,6 +200,7 @@ const AcBeheerKwetsbaarheden = () => {
             renderSelectRowButtons
             ref={tableRef}
             truncateLines={3}
+            showSortButtons
           />
 
           {/* modals */}

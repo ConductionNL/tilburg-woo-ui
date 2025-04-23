@@ -1,5 +1,6 @@
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -11,9 +12,11 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
-import { AcUUID } from '@src/utilities';
+import { ConSorter, AcUUID } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 import { ConHorizontalOverflowWrapper } from '@components';
+import { VISUALS } from '@src/constants';
+import clsx from 'clsx';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -24,6 +27,7 @@ import { ConHorizontalOverflowWrapper } from '@components';
  * - Text truncation for lengthy content
  * - Automatic handling of common data types (arrays, objects, primitives)
  * - Communication with parent components via refs
+ * - Column sorting with ascending/descending/none states
  *
  * **Automatic Data Handling:**
  * - Arrays: joined with commas
@@ -31,6 +35,17 @@ import { ConHorizontalOverflowWrapper } from '@components';
  * - Primitives: displayed as-is
  * - Cells with no data will display a `-`
  * - Custom content (if provided) overrides automatic handling and the `-` for empty cells
+ *
+ * **Sorting:**
+ * - Enable sorting by setting `showSortButtons` prop to true
+ * - Sort buttons only appear for headers that have a `key` property defined
+ * - Click cycle: ascending -> descending -> no sort
+ * - Handles different data types appropriately:
+ *   - Strings: alphabetical order
+ *   - Numbers / booleans: numerical order
+ *   - Arrays: joined and compared as strings
+ *   - Objects: compared by number of keys
+ *   - Null/undefined/empty strings: sorted to end/start based on direction
  *
  * **Custom Headers and Content:**
  * 1. **Custom Headers**
@@ -56,6 +71,7 @@ import { ConHorizontalOverflowWrapper } from '@components';
  *    ```
  *
  * @example
+ * ```jsx
  * <ConTable
  *   data={[{ name: "John", age: 30 }]}
  *   tableHeaders={[
@@ -77,24 +93,28 @@ import { ConHorizontalOverflowWrapper } from '@components';
  *   renderSelectRowButtons
  *   getSelectedRows={(selected) => console.log(selected)}
  *   truncateLines={2}
+ *   showSortButtons
  * />
  * ```
+ *
  * @param {object} props - The component props.
  * @param {Array} props.data - The data to display in the table.
  * @param {boolean} props.renderSelectRowButtons - Whether to render the select row buttons.
  * @param {number} props.truncateLines - The number of lines to truncate the text to. Default is 0 (no truncation).
  * @param {(selectedRows: any[]) => void} props.getSelectedRows - The function to call when the selected rows change.
- * @param {{ label?: string, key?: string, customHeader?: React.ReactElement | (() => React.ReactElement), customContent?: React.ReactElement | ((row: any) => React.ReactElement) }[]} props.tableHeaders - The headers to display in the table. (array of objects)
+ * @param {{ label?: string, key?: string, customHeader?: React.ReactElement | string | (() => React.ReactElement | string), customContent?: React.ReactElement | string | ((row: any) => React.ReactElement | string) }[]} props.tableHeaders - The headers to display in the table. (array of objects)
  * @param {string} props.tableHeaders.label - The label to display in the table header.
- * @param {string} props.tableHeaders.key - The key to get from the data object to display in the table cell.
- * @param {React.ReactElement | (() => React.ReactElement)} props.tableHeaders.customHeader - The custom header to display in the table cell.
- * @param {React.ReactElement | ((row: any) => React.ReactElement)} props.tableHeaders.customContent - The custom content to display in the table cell.
+ * @param {string} props.tableHeaders.key - The key to get from the data object to display in the table cell. Required for sorting functionality.
+ * @param {React.ReactElement | string | (() => React.ReactElement | string)} props.tableHeaders.customHeader - The custom header to display in the table cell.
+ * @param {React.ReactElement | string | ((row: any) => React.ReactElement | string)} props.tableHeaders.customContent - The custom content to display in the table cell.
+ * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
  *
  * @returns {React.ReactElement} The rendered table component.
  *
  * @note Row selection state is not preserved when new data is provided, even if it contains some of the same records.
+ * @note Keys referencing deeply nested objects can not be used. e.g. `{ a: { b: 'test' } }` `key: 'a.b'` will not work.
  *
  * @author Thijn Douwma
  *
@@ -107,11 +127,27 @@ const ConTable = (
     renderSelectRowButtons,
     getSelectedRows,
     truncateLines = 0,
+    showSortButtons = false,
   },
   ref
 ) => {
+  /**
+   * Header sort state.
+   * Holds an array of two values:
+   * - The first value is the key to sort by.
+   * - The second value is the direction to sort by.
+   * - If the first or second value is null, the data is not sorted.
+   * - If the second value is true, the data is sorted in ascending order.
+   * - If the second value is false, the data is sorted in descending order.
+   */
+  const [headerSort, setHeaderSort] = useState([null, null]);
+
   // make a deepclone of the data to avoid mutating the original data
   const data = useMemo(() => JSON.parse(JSON.stringify(_data)), [_data]);
+  const sortedData = useMemo(
+    () => ConSorter(data, headerSort[0], headerSort[1]),
+    [data, headerSort]
+  );
 
   // list of selected rows as a full data object
   const [selectedRows, setSelectedRows] = useState([]);
@@ -124,6 +160,7 @@ const ConTable = (
   const uniqueSymbol = useMemo(() => Symbol(), []);
 
   // add the unique symbol to each row as the key, which then contains a unique id
+  // this should take place before the data is sorted
   useEffect(() => {
     data.forEach((row) => {
       row[uniqueSymbol] = AcUUID('CD');
@@ -139,8 +176,10 @@ const ConTable = (
   );
 
   useEffect(() => {
-    setSelectedAll(selectedRows.length === data.length && data.length > 0);
-  }, [selectedRows, data.length]);
+    setSelectedAll(
+      selectedRows.length === sortedData.length && sortedData.length > 0
+    );
+  }, [selectedRows, sortedData.length]);
 
   const renderCustomElement = useMemo(() => {
     return (element, row) => {
@@ -148,7 +187,7 @@ const ConTable = (
         return element;
       }
       if (typeof element === 'function') {
-        return element(row);
+        return element(removeUniqueSymbol(row));
       }
       return element;
     };
@@ -157,9 +196,9 @@ const ConTable = (
   const handleSelectAll = useMemo(() => {
     return (e) => {
       setSelectedAll(e.target.checked);
-      setSelectedRows(e.target.checked ? data : []);
+      setSelectedRows(e.target.checked ? sortedData : []);
     };
-  }, [data]);
+  }, [sortedData]);
 
   const handleSelectRow = useMemo(() => {
     return (e, row) => {
@@ -213,10 +252,10 @@ const ConTable = (
     };
   }, [truncateLines]);
 
-  const handleDataCellRender = useMemo(() => {
-    return (header, row) => {
+  const handleDataCellRender = useCallback(
+    (header, row) => {
       if (header.customContent) {
-        return renderCustomElement(header.customContent, removeUniqueSymbol(row));
+        return renderCustomElement(header.customContent, row);
       }
 
       if (!row[header.key]) {
@@ -224,7 +263,7 @@ const ConTable = (
       }
 
       if (Array.isArray(row[header.key])) {
-        return row[header.key].join(', ');
+        return row[header.key].join(', ') || '-';
       }
 
       if (typeof row[header.key] === 'object') {
@@ -232,8 +271,9 @@ const ConTable = (
       }
 
       return row[header.key];
-    };
-  }, [renderCustomElement, removeUniqueSymbol]);
+    },
+    [renderCustomElement, removeUniqueSymbol]
+  );
 
   const tableHeader = useMemo(() => {
     return (
@@ -242,7 +282,7 @@ const ConTable = (
           {renderSelectRowButtons && (
             <TableCell>
               <input
-                disabled={data.length === 0}
+                disabled={sortedData.length === 0}
                 checked={selectedAll}
                 onChange={handleSelectAll}
                 type='checkbox'
@@ -251,11 +291,44 @@ const ConTable = (
           )}
           {tableHeaders.map((header, index) => (
             <TableCell key={index}>
-              {header.customHeader ? (
-                renderCustomElement(header.customHeader)
-              ) : (
-                <b>{header.label}</b>
-              )}
+              <div 
+                className={clsx(
+                  'con-table-header-content',
+                  (header.key && showSortButtons) && 'con-table-header-content-sortable'
+                )}
+                onClick={() => {
+                  if (!header.key || !showSortButtons) return;
+                  
+                  if (headerSort[0] !== header.key || headerSort[1] === null) {
+                    setHeaderSort([header.key, true]);
+                  } else if (headerSort[1] === true) {
+                    setHeaderSort([header.key, false]); 
+                  } else {
+                    setHeaderSort([header.key, null]);
+                  }
+                }}
+              >
+                <span>
+                  {header.customHeader ? (
+                    renderCustomElement(header.customHeader)
+                  ) : (
+                    <b>{header.label}</b>
+                  )}
+                </span>
+                {showSortButtons && !!header.key && (
+                  <span className='con-table-header-content__sort-button-container'>
+                    {(headerSort[0] !== header.key || headerSort[1] === null) && (
+                      <VISUALS.SORT className="con-table-sort-icon-non" />
+                    )}
+                    {headerSort[0] === header.key && headerSort[1] === true && (
+                      <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
+                    )}
+                    {headerSort[0] === header.key && headerSort[1] === false && (
+                      <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
+                    )}
+                  </span>
+                )}
+              </div>
             </TableCell>
           ))}
         </TableRow>
@@ -264,13 +337,14 @@ const ConTable = (
   }, [
     renderSelectRowButtons,
     selectedAll,
+    headerSort,
     handleSelectAll,
     tableHeaders,
     renderCustomElement,
   ]);
 
   const tableRows = useMemo(() => {
-    if (data.length === 0) {
+    if (sortedData.length === 0) {
       return (
         <TableRow>
           <TableCell
@@ -282,7 +356,7 @@ const ConTable = (
       );
     }
 
-    return data.map((row, index) => (
+    return sortedData.map((row, index) => (
       <TableRow key={index}>
         {renderSelectRowButtons && (
           <TableCell>
@@ -319,7 +393,7 @@ const ConTable = (
       </TableRow>
     ));
   }, [
-    data,
+    sortedData,
     tableHeaders,
     renderSelectRowButtons,
     selectedRows,

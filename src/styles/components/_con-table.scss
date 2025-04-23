@@ -1,0 +1,33 @@
+.con-table {
+  &-header {
+    &-content {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 6px;
+
+      &-sortable {
+        cursor: pointer;
+      }
+
+      &__sort-button-container {
+        width: 8px;
+        min-width: 8px;
+        padding-block-start: 2px;
+      }
+
+      & .con-table-sort-icon-non {
+        opacity: 0.2;
+      }
+      &:hover .con-table-sort-icon-non {
+        opacity: 0.6;
+      }
+      & .con-table-sort-icon-asc {
+        opacity: 0.6;
+      }
+      & .con-table-sort-icon-desc {
+        opacity: 0.6;
+      }
+    }
+  }
+}
