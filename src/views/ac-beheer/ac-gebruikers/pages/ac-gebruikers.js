@@ -196,6 +196,7 @@ const AcBeheerGebruikers = () => {
             renderSelectRowButtons
             ref={tableRef}
             truncateLines={3}
+            showSortButtons
           />
 
           {/* modals */}

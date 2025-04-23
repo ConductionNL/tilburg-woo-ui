@@ -157,6 +157,14 @@ const ELLIPSIS = loadable(() =>
   import('-!svg-react-loader!@assets/images/ellipsis.svg')
 );
 
+const SORT = loadable(() => import('-!svg-react-loader!@assets/images/sort.svg'));
+const SORT_UP = loadable(() =>
+  import('-!svg-react-loader!@assets/images/sort-up.svg')
+);
+const SORT_DOWN = loadable(() =>
+  import('-!svg-react-loader!@assets/images/sort-down.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -215,6 +223,9 @@ export const VISUALS = {
   CIRCLE_XMARK,
   EYE,
   ELLIPSIS,
+  SORT,
+  SORT_UP,
+  SORT_DOWN,
 };
 
 export default {};
