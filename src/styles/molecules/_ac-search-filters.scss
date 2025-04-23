@@ -59,6 +59,15 @@
   }
 
   &__date {
+    .utrecht-form-field {
+      overflow-x: clip;
+    }
+
+    input {
+      block-size: 48px;
+      inline-size: 350px;
+    }
+
     button {
       inline-size: 100%;
       max-inline-size: unset;
