@@ -67,11 +67,6 @@ const AcBeheerVoorzieningen = () => {
       key: 'naam',
     },
     {
-      id: 'referenceComponents',
-      label: 'Referentie componenten',
-      key: 'referentieComponenten',
-    },
-    {
       id: 'description',
       label: 'Beschrijving',
       key: 'beschrijving',
@@ -80,11 +75,6 @@ const AcBeheerVoorzieningen = () => {
       id: 'category',
       label: 'Categorie',
       key: 'categorie',
-    },
-    {
-      id: 'voorzieningstypeId',
-      label: 'Voorzienings type ID',
-      key: 'voorzieningstypeId',
     },
     {
       id: 'functionalities',
@@ -97,9 +87,19 @@ const AcBeheerVoorzieningen = () => {
       key: 'doelgroep',
     },
     {
+      id: 'referenceComponents',
+      label: 'Referentie componenten',
+      key: 'referentieComponenten',
+    },
+    {
       id: 'standards',
       label: 'Standaarden',
       key: 'standaarden',
+    },
+    {
+      id: 'voorzieningstype',
+      label: 'Voorzienings type',
+      key: 'voorzieningstype',
     },
     {
       id: 'actions',

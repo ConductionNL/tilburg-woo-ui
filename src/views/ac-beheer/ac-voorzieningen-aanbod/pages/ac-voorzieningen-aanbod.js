@@ -60,6 +60,7 @@ const AcBeheerVoorzieningenAanbod = () => {
   const tableRef = useRef(null);
 
   const headers = [
+    // TODO: name is to be removed - https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/documentation/website/static/api/voorzieningen-api-specification.json#schema/Voorzieningaanbod
     {
       id: 'name',
       label: 'Naam',
@@ -98,19 +99,22 @@ const AcBeheerVoorzieningenAanbod = () => {
       },
     },
     {
-      id: 'ondersteunendeStandaard',
+      id: 'ondersteunendeStandaarden',
       label: 'Ondersteunende standaard',
-      key: '',
+      key: 'ondersteundeStandaarden',
       customContent: (row) => {
-        // TODO: replace with actual ondersteunende standaard
-        return row.voorzieningId;
+        if (!row?.ondersteundeStandaarden?.[0]) return 'N/A';
+        return `${row.ondersteundeStandaarden[0].naam} / ${row.ondersteundeStandaarden[0].status}`;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? // TODO: voorzieningId should become an ondersteunende standaard
-            a.voorzieningId.localeCompare(b.voorzieningId)
-          : b.voorzieningId.localeCompare(a.voorzieningId);
+          ? a.ondersteundeStandaarden.naam.localeCompare(
+              b.ondersteundeStandaarden.naam
+            )
+          : b.ondersteundeStandaarden.naam.localeCompare(
+              a.ondersteundeStandaarden.naam
+            );
       },
     },
     {
