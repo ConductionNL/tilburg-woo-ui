@@ -83,6 +83,21 @@ const AcBeheerVoorzieningenAanbod = () => {
       },
     },
     {
+      id: 'leverancierId',
+      label: 'Leverancier ID',
+      key: '',
+      customContent: (row) => {
+        // TODO: replace with actual voorziening name
+        return row?.leverancier?.id || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.leverancier?.id.localeCompare(b?.leverancier?.id)
+          : b?.leverancier?.id.localeCompare(a?.leverancier?.id);
+      },
+    },
+    {
       id: 'email',
       label: 'Email',
       key: '',
@@ -103,7 +118,8 @@ const AcBeheerVoorzieningenAanbod = () => {
       label: 'Ondersteunende standaard',
       key: 'ondersteundeStandaarden',
       customContent: (row) => {
-        if (!row?.ondersteundeStandaarden?.[0]) return 'N/A';
+        if (!row?.ondersteundeStandaarden) return 'N/A';
+        if (!row.ondersteundeStandaarden.length) return '-';
         return `${row.ondersteundeStandaarden[0].naam} / ${row.ondersteundeStandaarden[0].status}`;
       },
       sortComparator: (a, b, direction) => {
@@ -148,9 +164,24 @@ const AcBeheerVoorzieningenAanbod = () => {
       key: 'ondersteuningsmodel',
     },
     {
+      id: 'supportOptions',
+      label: 'Ondersteuningsopties',
+      key: 'ondersteuningsopties',
+    },
+    {
+      id: 'priceModel',
+      label: 'Prijsmodel',
+      key: 'prijsmodel',
+    },
+    {
       id: 'licenseModel',
       label: 'Licentiemodel',
       key: 'licentiemodel',
+    },
+    {
+      id: 'certifications',
+      label: 'Certificeringen',
+      key: 'certificeringen',
     },
     {
       id: 'hostingOptions',

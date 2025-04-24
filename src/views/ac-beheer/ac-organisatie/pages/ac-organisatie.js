@@ -92,6 +92,11 @@ const AcBeheerOrganisaties = () => {
       key: 'type',
     },
     {
+      id: 'website',
+      label: 'Website',
+      key: 'website',
+    },
+    {
       id: 'kvkNumber',
       label: 'KvK nummer',
       key: 'kvkNummer',

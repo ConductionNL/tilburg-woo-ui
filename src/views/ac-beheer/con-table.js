@@ -33,6 +33,7 @@ import clsx from 'clsx';
  * - Arrays: joined with commas
  * - Objects: converted to JSON strings
  * - Primitives: displayed as-is
+ * - Booleans: displayed as 'Ja' or 'Nee'
  * - Cells with no data will display a `-`
  * - Custom content (if provided) overrides automatic handling and the `-` for empty cells
  *
@@ -303,6 +304,10 @@ const ConTable = (
 
       if (typeof row[header.key] === 'object') {
         return JSON.stringify(row[header.key]);
+      }
+
+      if (typeof row[header.key] === 'boolean') {
+        return row[header.key] ? 'Ja' : 'Nee';
       }
 
       return row[header.key];

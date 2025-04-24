@@ -77,6 +77,11 @@ const AcBeheerVoorzieningenVersie = () => {
       key: 'releaseNotes',
     },
     {
+      id: 'releaseDate',
+      label: 'Release datum',
+      key: 'releaseDatum',
+    },
+    {
       id: 'nummer',
       label: 'Nummer',
       key: 'nummer',
@@ -87,9 +92,56 @@ const AcBeheerVoorzieningenVersie = () => {
       key: 'status',
     },
     {
+      id: 'versionNumber',
+      label: 'Versie nummer',
+      key: 'versienummer',
+    },
+    {
       id: 'voorzieningaanbodId',
       label: 'Voorziening Aanbod ID',
       key: 'voorzieningaanbodId',
+    },
+    {
+      id: 'voorzieningaanbod',
+      label: 'Voorziening Aanbod naam',
+      key: '',
+      customContent: (row) => {
+        return row?.voorzieningaanbod?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorzieningaanbod?.naam.localeCompare(b?.voorzieningaanbod?.naam)
+          : b?.voorzieningaanbod?.naam.localeCompare(a?.voorzieningaanbod?.naam);
+      },
+    },
+    {
+      id: 'endDateSupport',
+      label: 'Eind datum ondersteuning',
+      key: 'eindDatumOndersteuning',
+    },
+    {
+      id: 'systemRequirements',
+      label: 'Systeemvereisten',
+      key: 'systeemvereisten',
+    },
+    {
+      id: 'kwetsbaarheden',
+      label: 'Kwetsbaarheden',
+      key: '',
+      customContent: (row) => {
+        return (
+          row?.kwetsbaarheden?.[0]
+            ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
+            .join(', ') || '-'
+        );
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.kwetsbaarheden?.[0]?.titel.localeCompare(b?.kwetsbaarheden?.[0]?.titel)
+          : b?.kwetsbaarheden?.[0]?.titel.localeCompare(a?.kwetsbaarheden?.[0]?.titel);
+      },
     },
     {
       id: 'actions',

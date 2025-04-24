@@ -93,9 +93,35 @@ const AcBeheerKwetsbaarheden = () => {
           : '-',
     },
     {
+      id: 'publishedOn',
+      label: 'Gepubliceerd op',
+      key: 'gepubliceerdOp',
+      customContent: (row) =>
+        row.gepubliceerdOp
+          ? !isNaN(new Date(row.gepubliceerdOp).getTime())
+            ? new Date(row.gepubliceerdOp).toLocaleDateString()
+            : row.gepubliceerdOp
+          : '-',
+    },
+    {
+      id: 'solvedIn',
+      label: 'Opgelost in',
+      key: 'opgelostIn',
+    },
+    {
       id: 'voorzieningversieId',
       label: 'Voorziening versie ID',
       key: 'voorzieningversieId',
+    },
+    {
+      id: 'mitigation',
+      label: 'Mitigatie',
+      key: 'mitigatie',
+    },
+    {
+      id: 'references',
+      label: 'Referenties',
+      key: 'referenties',
     },
     {
       id: 'actions',

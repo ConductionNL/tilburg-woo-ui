@@ -74,9 +74,14 @@ const AcBeheerGebruikers = () => {
       customContent: (row) => <span>{row.actief ? 'Actief' : 'Inactief'}</span>,
     },
     {
+      id: 'active',
+      label: 'Actief',
+      key: 'actief',
+    },
+    {
       id: 'lastActivity',
       label: 'Laatste activiteit',
-      key: 'laatsteActiviteit',
+      key: 'laatsteInlogdatum',
     },
     {
       id: 'email',
@@ -97,6 +102,31 @@ const AcBeheerGebruikers = () => {
       id: 'functie',
       label: 'Functie',
       key: 'functie',
+    },
+    {
+      id: 'organisatie',
+      label: 'Organisatie',
+      key: 'organisatie',
+    },
+    {
+      id: 'preferences',
+      label: 'Voorkeuren',
+      key: 'voorkeuren',
+    },
+    {
+      id: 'rollen',
+      label: 'Rollen',
+      key: 'rollen',
+    },
+    {
+      id: 'createdAt',
+      label: 'Aanmaakdatum',
+      key: 'aanmaakdatum',
+    },
+    {
+      id: 'updatedAt',
+      label: 'Wijzigingsdatum',
+      key: 'wijzigingsdatum',
     },
     {
       id: 'actions',

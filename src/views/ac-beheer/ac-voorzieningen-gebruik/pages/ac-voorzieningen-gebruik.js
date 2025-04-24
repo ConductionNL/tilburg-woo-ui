@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading, SecondaryActionButton } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -79,6 +82,16 @@ const AcBeheerVoorzieningenGebruik = () => {
       key: 'opmerkingen',
     },
     {
+      id: 'bedrijfsKritisch',
+      label: 'Bedrijfs kritisch',
+      key: 'bedrijfsKritisch',
+    },
+    {
+      id: 'privacyGevoelig',
+      label: 'Privacy gevoelig',
+      key: 'privacyGevoelig',
+    },
+    {
       id: 'bbnScore',
       label: 'BBN Score',
       key: 'bbnScore',
@@ -87,6 +100,40 @@ const AcBeheerVoorzieningenGebruik = () => {
       id: 'ibpScore',
       label: 'IBP Score',
       key: 'ibpScore',
+    },
+    {
+      id: 'startDate',
+      label: 'Start datum',
+      key: 'startDatum',
+    },
+    {
+      id: 'endDate',
+      label: 'Eind datum',
+      key: 'eindDatum',
+    },
+    {
+      id: 'organisatieId',
+      label: 'Organisatie ID',
+      key: 'organisatieId',
+    },
+    {
+      id: 'voorzieningId',
+      label: 'Voorziening ID',
+      key: 'voorzieningId',
+    },
+    {
+      id: 'beheerderNaam',
+      label: 'Beheerder naam',
+      key: '',
+      customContent: (row) => {
+        return row?.beheerder?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.beheerder?.naam.localeCompare(b?.beheerder?.naam)
+          : b?.beheerder?.naam.localeCompare(a?.beheerder?.naam);
+      },
     },
     {
       id: 'actions',

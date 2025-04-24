@@ -77,6 +77,11 @@ const AcBeheerContracten = () => {
       key: 'status',
     },
     {
+      id: 'opmerkingen',
+      label: 'Opmerkingen',
+      key: 'opmerkingen',
+    },
+    {
       id: 'startDate',
       label: 'Start datum',
       key: 'startDatum',
@@ -85,6 +90,44 @@ const AcBeheerContracten = () => {
       id: 'endDate',
       label: 'Eind datum',
       key: 'eindDatum',
+    },
+    {
+      id: 'voorzieningAanbodNaam',
+      label: 'Voorziening aanbod naam',
+      key: '',
+      customContent: (row) => {
+        return row?.voorzieningAanbod?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorzieningAanbod?.naam.localeCompare(b?.voorzieningAanbod?.naam)
+          : b?.voorzieningAanbod?.naam.localeCompare(a?.voorzieningAanbod?.naam);
+      },
+    },
+    {
+      id: 'voorzieningGebruikId',
+      label: 'Voorziening gebruik ID',
+      key: 'voorzieningGebruikId',
+      customContent: (row) => {
+        return row?.voorzieningAanbod?.id || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorzieningAanbod?.id.localeCompare(b?.voorzieningAanbod?.id)
+          : b?.voorzieningAanbod?.id.localeCompare(a?.voorzieningAanbod?.id);
+      },
+    },
+    {
+      id: 'costs',
+      label: 'Kosten',
+      key: 'kosten',
+    },
+    {
+      id: 'costsPeriod',
+      label: 'Kosten periode',
+      key: 'kostenPeriode',
     },
     {
       id: 'documentReferentie',
@@ -107,6 +150,25 @@ const AcBeheerContracten = () => {
             )
           : b.contactpersoonAanbieder.naam.localeCompare(
               a.contactpersoonAanbieder.naam
+            );
+      },
+    },
+    {
+      id: 'contactPersonUser',
+      label: 'contactpersoon Gebruiker',
+      key: 'contactpersoonGebruiker',
+      customContent: (row) => {
+        if (!row?.contactpersoonGebruiker) return 'N/A';
+        return `${row.contactpersoonGebruiker.naam} / ${row.contactpersoonGebruiker.achternaam}`;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a.contactpersoonGebruiker.naam.localeCompare(
+              b.contactpersoonGebruiker.naam
+            )
+          : b.contactpersoonGebruiker.naam.localeCompare(
+              a.contactpersoonGebruiker.naam
             );
       },
     },
