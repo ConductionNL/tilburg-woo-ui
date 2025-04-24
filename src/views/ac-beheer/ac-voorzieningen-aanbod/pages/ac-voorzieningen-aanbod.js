@@ -8,18 +8,22 @@ import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import { SecondaryActionButton } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcVoorzieningAanbodFormModal from '../modals/ac-voorziening-aanbod-form-modal';
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import ConActionMenu from '../../con-action-menu';
 import { AcButton } from '@src/molecules';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -37,6 +41,7 @@ const AcBeheerVoorzieningenAanbod = () => {
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
+
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -54,28 +59,107 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'naam',
     },
     {
+      id: 'voorzieningName',
+      label: 'Voorziening naam',
+      key: '',
+      customContent: (row) => {
+        // TODO: replace with actual voorziening name
+        return row.voorzieningId;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? // TODO: voorzieningId should become an voorziening name
+            a.voorzieningId.localeCompare(b.voorzieningId)
+          : b.voorzieningId.localeCompare(a.voorzieningId);
+      },
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      key: '',
+      customContent: (row) => {
+        // TODO: replace with actual email
+        return row.organisatieId;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? // TODO: organisatieId should become an email
+            a.organisatieId.localeCompare(b.organisatieId)
+          : b.organisatieId.localeCompare(a.organisatieId);
+      },
+    },
+    {
+      id: 'ondersteunendeStandaard',
+      label: 'Ondersteunende standaard',
+      key: '',
+      customContent: (row) => {
+        // TODO: replace with actual ondersteunende standaard
+        return row.voorzieningId;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? // TODO: voorzieningId should become an ondersteunende standaard
+            a.voorzieningId.localeCompare(b.voorzieningId)
+          : b.voorzieningId.localeCompare(a.voorzieningId);
+      },
+    },
+    {
+      id: 'description',
       label: 'Omschrijving',
       key: 'omschrijving',
     },
     {
+      id: 'type',
       label: 'Type',
       key: 'type',
     },
     {
+      id: 'voorzieningId',
+      label: 'Voorziening ID',
+      key: 'voorzieningId',
+    },
+    {
+      id: 'organisationId',
+      label: 'Organisatie ID',
+      key: 'organisatieId',
+    },
+    {
+      id: 'productPage',
       label: 'Productpagina',
       key: 'productpagina',
     },
     {
+      id: 'supportModel',
       label: 'Ondersteuningsmodel',
       key: 'ondersteuningsmodel',
     },
     {
+      id: 'licenseModel',
+      label: 'Licentiemodel',
+      key: 'licentiemodel',
+    },
+    {
+      id: 'hostingOptions',
+      label: 'Hosting opties',
+      key: 'hostingopties',
+    },
+    {
+      id: 'versions',
+      label: 'Versies',
+      key: 'versies',
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -115,6 +199,16 @@ const AcBeheerVoorzieningenAanbod = () => {
       ),
     },
   ];
+  const defaultHeaders = [
+    'name',
+    'voorzieningName',
+    'email',
+    'productPage',
+    'actions',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -143,6 +237,12 @@ const AcBeheerVoorzieningenAanbod = () => {
           >
             <Heading>Beheer Voorzieningen Aanbod</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <AcButton
                 style='button'
                 icon={<VISUALS.PLUS />}
@@ -228,6 +328,13 @@ const AcBeheerVoorzieningenAanbod = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

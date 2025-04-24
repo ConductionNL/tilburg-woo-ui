@@ -4,7 +4,10 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
+import {
+  PrimaryActionButton,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcDrawer, AcSideNav } from '@components';
@@ -57,34 +60,49 @@ const AcBeheerVoorzieningen = () => {
 
   const tableRef = useRef(null);
 
-  const [tableHeaders, setTableHeaders] = useState([]);
-  const defaultHeaders = ['naam', 'referentieComponenten', 'standaarden', 'categorie', 'koppelingen'];
   const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'naam',
     },
     {
+      id: 'referenceComponents',
+      label: 'Referentie componenten',
+      key: 'referentieComponenten',
+    },
+    {
+      id: 'description',
       label: 'Beschrijving',
       key: 'beschrijving',
     },
     {
+      id: 'category',
       label: 'Categorie',
       key: 'categorie',
     },
     {
+      id: 'voorzieningstypeId',
       label: 'Voorzienings type ID',
       key: 'voorzieningstypeId',
     },
     {
+      id: 'functionalities',
       label: 'Functionaliteiten',
       key: 'functionaliteiten',
     },
     {
+      id: 'targetGroup',
       label: 'Doelgroep',
       key: 'doelgroep',
     },
     {
+      id: 'standards',
+      label: 'Standaarden',
+      key: 'standaarden',
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -122,6 +140,17 @@ const AcBeheerVoorzieningen = () => {
       ),
     },
   ];
+  const defaultHeaders = [
+    'name',
+    'referenceComponents',
+    'standards',
+    'category',
+    'links',
+    'actions',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -148,7 +177,11 @@ const AcBeheerVoorzieningen = () => {
           >
             <Heading>Beheer Voorzieningen</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
-              <PrimaryActionButton onClick={() => filterHeadersDrawerRef.current.showModal()}>Open Drawer</PrimaryActionButton>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
 
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
@@ -233,8 +266,12 @@ const AcBeheerVoorzieningen = () => {
             }}
           />
 
-          <ConFilterHeadersDrawer ref={filterHeadersDrawerRef} headers={headers} onChange={setTableHeaders} />
-          
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
+          />
         </AcColumn>
       </AcFlex>
     </AcSection>
