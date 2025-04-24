@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,12 +17,15 @@ import ConTable from '../../con-table';
 import AcContractFormModal from '../modals/ac-contract-form-modal';
 import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 
 const AcBeheerContracten = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -54,32 +60,58 @@ const AcBeheerContracten = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'contractNummer',
       label: 'Contract nummer',
       key: 'contractNummer',
     },
     {
+      id: 'contractType',
       label: 'Contract type',
       key: 'contractType',
     },
     {
+      id: 'status',
       label: 'Status',
       key: 'status',
     },
     {
+      id: 'startDate',
       label: 'Start datum',
       key: 'startDatum',
     },
     {
+      id: 'endDate',
       label: 'Eind datum',
       key: 'eindDatum',
     },
     {
+      id: 'documentReferentie',
       label: 'Document referentie',
       key: 'documentReferentie',
     },
     {
+      id: 'contactPersonProvider',
+      label: 'contactpersoon Aanbieder',
+      key: 'contactpersoonAanbieder',
+      customContent: (row) => {
+        if (!row?.contactpersoonAanbieder) return 'N/A';
+        return `${row.contactpersoonAanbieder.naam} / ${row.contactpersoonAanbieder.achternaam}`;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a.contactpersoonAanbieder.naam.localeCompare(
+              b.contactpersoonAanbieder.naam
+            )
+          : b.contactpersoonAanbieder.naam.localeCompare(
+              a.contactpersoonAanbieder.naam
+            );
+      },
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -117,6 +149,16 @@ const AcBeheerContracten = () => {
       ),
     },
   ];
+  const defaultHeaders = [
+    'name',
+    'startDate',
+    'endDate',
+    'contactPersonProvider',
+    'actions',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -143,6 +185,12 @@ const AcBeheerContracten = () => {
           >
             <Heading>Beheer Contracten</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -224,6 +272,13 @@ const AcBeheerContracten = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>
