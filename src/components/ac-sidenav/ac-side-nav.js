@@ -39,14 +39,11 @@ const AcSideNav = () => {
           </SidenavItem> */}
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/voorzieningen')}
-              current={
-                window.location.pathname.startsWith('/beheer/voorzieningen/') ||
-                window.location.pathname === '/beheer/voorzieningen'
-              }
+              onClick={() => navigate('/beheer/applicaties')}
+              current={window.location.pathname.startsWith('/beheer/applicaties')}
             >
               <VISUALS.CUBE />
-              Voorzieningen
+              Applicaties
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>

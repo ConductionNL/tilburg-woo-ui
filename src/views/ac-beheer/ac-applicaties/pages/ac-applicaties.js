@@ -11,11 +11,11 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcVoorzieningenFormModal from '../modals/ac-voorzieningen-form-modal';
-import AcDeleteVoorzieningModal from '../modals/ac-delete-voorzieningen-modal';
+import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
+import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningen = () => {
+const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -88,7 +88,7 @@ const AcBeheerVoorzieningen = () => {
             className='utrecht-button slim'
             variant='secondary'
             onClick={() => {
-              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen', row.id));
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', row.id));
             }}
           >
             <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -123,11 +123,11 @@ const AcBeheerVoorzieningen = () => {
   };
 
   if (error) {
-    return <AcBeheerError title='Beheer Voorzieningen' error={error.message} />;
+    return <AcBeheerError title='Beheer Applicaties' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen' />;
+    return <AcBeheerLoading title='Beheer Applicaties' />;
   }
 
   return (
@@ -141,7 +141,7 @@ const AcBeheerVoorzieningen = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen</Heading>
+            <Heading>Beheer Applicaties</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
@@ -198,8 +198,8 @@ const AcBeheerVoorzieningen = () => {
           />
 
           {/* modals */}
-          <AcVoorzieningenFormModal
-            voorziening={singleSelectedRow}
+          <AcApplicatiesFormModal
+            applicatie={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -213,8 +213,8 @@ const AcBeheerVoorzieningen = () => {
             }}
           />
 
-          <AcDeleteVoorzieningModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteApplicatiesModal
+            applicaties={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -231,4 +231,4 @@ const AcBeheerVoorzieningen = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningen));
+export default withStore(observer(AcBeheerApplicaties));

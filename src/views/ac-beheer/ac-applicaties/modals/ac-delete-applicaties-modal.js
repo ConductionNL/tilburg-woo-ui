@@ -10,24 +10,24 @@ import config from '@src/config';
 import { getCookie } from '@src/utilities';
 
 /**
- * modal to delete 1 or multiple voorzieningen
- * @param {object[]} voorzieningen - array of voorzieningen
+ * modal to delete 1 or multiple applicaties
+ * @param {object[]} applicaties - array of applicaties
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
- * @returns {React.JSX.Element} - modal to delete 1 or multiple voorzieningen
+ * @returns {React.JSX.Element} - modal to delete 1 or multiple applicaties
  */
-const AcDeleteVoorzieningenModal = ({
-  voorzieningen,
+const AcDeleteApplicatiesModal = ({
+  applicaties,
   showModal = false,
   onClose,
   onSuccess,
 }) => {
   const modalRef = useRef(null);
 
-  const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleDeleteApplicatieOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const handleDeleteVoorziening = async () => {
+  const handleDeleteApplicatie = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -37,11 +37,11 @@ const AcDeleteVoorzieningenModal = ({
     try {
       let deletePromises = [];
 
-      voorzieningen.forEach(async (voorziening) => {
+      applicaties.forEach(async (applicatie) => {
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/voorziening/${voorziening.id}`,
+            `/openconnector/api/endpoint/voorziening/${applicatie.id}`,
           {
             method: 'DELETE',
             headers: {
@@ -68,47 +68,46 @@ const AcDeleteVoorzieningenModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleDeleteVoorzieningOpenModal();
+      handleDeleteApplicatieOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleDeleteVoorzieningCloseModal = () => {
+  const handleDeleteApplicatieCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleDeleteApplicatieCloseModal);
   }, [modalRef.current]);
 
-  const renderDeleteVoorzieningModal = (
+  const renderDeleteApplicatieModal = (
     <AcModal
       ref={modalRef}
-      id='delete-voorziening-modal'
+      id='delete-applicatie-modal'
       title={`${
-        voorzieningen.length === 1 ? 'Voorziening' : 'Voorzieningen'
+        applicaties.length === 1 ? 'Applicatie' : 'Applicaties'
       } verwijderen`}
       buttons={[
         {
           label: 'verwijderen',
           icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteVoorziening,
+          onClick: handleDeleteApplicatie,
         },
       ]}
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {voorzieningen.length === 1 ? 'voorziening' : 'voorzieningen'} wilt
-        verwijderen?
-        {voorzieningen.map((voorziening) => (
-          <Paragraph key={voorziening.id}>{voorziening.naam}</Paragraph>
+        {applicaties.length === 1 ? 'applicatie' : 'applicaties'} wilt verwijderen?
+        {applicaties.map((applicatie) => (
+          <Paragraph key={applicatie.id}>{applicatie.naam}</Paragraph>
         ))}
       </AcFlex>
     </AcModal>
   );
 
-  return renderDeleteVoorzieningModal;
+  return renderDeleteApplicatieModal;
 };
 
-export default withStore(observer(AcDeleteVoorzieningenModal));
+export default withStore(observer(AcDeleteApplicatiesModal));

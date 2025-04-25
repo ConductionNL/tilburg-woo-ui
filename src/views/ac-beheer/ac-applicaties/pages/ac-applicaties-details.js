@@ -12,11 +12,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcEditVoorzieningModal from '../modals/ac-voorzieningen-form-modal';
-import AcDeleteVoorzieningModal from '../modals/ac-delete-voorzieningen-modal';
+import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
+import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenDetails = ({ id }) => {
+const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -140,8 +140,8 @@ const AcBeheerVoorzieningenDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcEditVoorzieningModal
-                  voorziening={data}
+                <AcApplicatiesFormModal
+                  applicatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -152,8 +152,8 @@ const AcBeheerVoorzieningenDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningModal
-                  voorzieningen={[data]}
+                <AcDeleteApplicatiesModal
+                  applicaties={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
@@ -171,4 +171,4 @@ const AcBeheerVoorzieningenDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenDetails));
+export default withStore(observer(AcBeheerApplicatiesDetails));

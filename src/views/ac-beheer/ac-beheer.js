@@ -15,8 +15,6 @@ import {
   AcBeheerKwetsbaarheden,
   AcDashboard,
   AcBeheerDienstDetails,
-  AcBeheerVoorzieningen,
-  AcBeheerVoorzieningenDetails,
   AcBeheerGebruikenDetails,
   AcBeheerVoorzieningenVersieDetails,
   AcBeheerOvereenkomstenDetails,
@@ -24,6 +22,8 @@ import {
   AcBeheerKwetsbaarheidDetails,
   AcBeheerGebruikers,
   AcBeheerGebruikerDetails,
+  AcBeheerApplicaties,
+  AcBeheerApplicatiesDetails,
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
@@ -61,8 +61,8 @@ const AcBeheer = () => {
 
   if (!id) {
     switch (type) {
-      case 'voorzieningen':
-        return <AcBeheerVoorzieningen />;
+      case 'applicaties':
+        return <AcBeheerApplicaties />;
       case 'diensten':
         return <AcBeheerDienst />;
       case 'gebruiken':
@@ -83,8 +83,8 @@ const AcBeheer = () => {
   }
 
   switch (type) {
-    case 'voorzieningen':
-      return <AcBeheerVoorzieningenDetails id={id} />;
+    case 'applicaties':
+      return <AcBeheerApplicatiesDetails id={id} />;
     case 'diensten':
       return <AcBeheerDienstDetails id={id} />;
     case 'gebruiken':
