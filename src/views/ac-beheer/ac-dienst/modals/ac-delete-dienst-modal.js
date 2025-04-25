@@ -13,18 +13,18 @@ import { getCookie } from '@src/utilities';
  * @param {function} onClose - function to call when the modal is closed
  * @returns {React.JSX.Element} - modal to delete 1 or multiple voorzieningen
  */
-const AcDeleteVoorzieningAanbodModal = ({
-  voorzieningen,
+const AcDeleteDienstModal = ({
+  diensten,
   showModal = false,
   onClose,
   onSuccess,
 }) => {
   const modalRef = useRef(null);
 
-  const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleDeleteDienstOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const handleDeleteVoorziening = async () => {
+  const handleDeleteDienst = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -32,11 +32,11 @@ const AcDeleteVoorzieningAanbodModal = ({
     }
 
     try {
-      voorzieningen.forEach(async (voorziening) => {
+      diensten.forEach(async (dienst) => {
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/voorzieningaanboden/${voorziening.id}`,
+            `/openconnector/api/endpoint/voorzieningaanboden/${dienst.id}`,
           {
             method: 'DELETE',
             headers: {
@@ -56,41 +56,38 @@ const AcDeleteVoorzieningAanbodModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleDeleteVoorzieningOpenModal();
+      handleDeleteDienstOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleDeleteVoorzieningCloseModal = () => {
+  const handleDeleteDienstCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleDeleteDienstCloseModal);
   }, [modalRef.current]);
 
-  const renderDeleteVoorzieningModal = (
+  const renderDeleteDienstModal = (
     <AcModal
       ref={modalRef}
-      id='delete-voorziening-modal'
-      title={`${
-        voorzieningen.length === 1 ? 'Voorziening aanbod' : 'Voorziening aanboden'
-      } verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteVoorziening }]}
+      id='delete-dienst-modal'
+      title={`${diensten.length === 1 ? 'Dienst' : 'Diensten'} verwijderen`}
+      buttons={[{ label: 'verwijderen', onClick: handleDeleteDienst }]}
     >
       <AcFlex column spacing='sm'>
-        Weet je zeker dat je deze{' '}
-        {voorzieningen.length === 1 ? 'voorziening aanbod' : 'voorziening aanboden'}{' '}
+        Weet je zeker dat je deze {diensten.length === 1 ? 'dienst' : 'diensten'}{' '}
         wilt verwijderen?
-        {voorzieningen.map((voorziening) => (
-          <Paragraph key={voorziening.id}>{voorziening.naam}</Paragraph>
+        {diensten.map((dienst) => (
+          <Paragraph key={dienst.id}>{dienst.naam}</Paragraph>
         ))}
       </AcFlex>
     </AcModal>
   );
 
-  return renderDeleteVoorzieningModal;
+  return renderDeleteDienstModal;
 };
 
-export default withStore(observer(AcDeleteVoorzieningAanbodModal));
+export default withStore(observer(AcDeleteDienstModal));

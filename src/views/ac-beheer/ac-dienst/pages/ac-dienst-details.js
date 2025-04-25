@@ -13,11 +13,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-aanbod-form-modal';
-import AcDeleteVoorzieningAanbodModall from '../modals/ac-delete-voorziening-aanbod-modal';
+import AcEditDienstModal from '../modals/ac-dienst-form-modal';
+import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
+const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -51,12 +51,15 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
   }, []);
 
   const [versionTabIndex, setVersionTabIndex] = useState(0);
+  const [openModal, setOpenModal] = useState(null);
 
   if (error) {
     return <AcBeheerError error={error.message} />;
   }
 
-  const [openModal, setOpenModal] = useState(null);
+  if (loading) {
+    return <AcLoader />;
+  }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -169,8 +172,8 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcEditVoorzieningAanbodModal
-                  voorziening={data}
+                <AcEditDienstModal
+                  dienst={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -181,14 +184,14 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningAanbodModall
-                  voorzieningen={[data]}
+                <AcDeleteDienstModal
+                  diensten={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/voorzieningen-aanbod');
+                    navigate('/beheer/diensten');
                   }}
                 />
               </AcFlex>
@@ -200,4 +203,4 @@ const AcBeheerVoorzieningenAanbodDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbodDetails));
+export default withStore(observer(AcBeheerDienstDetails));

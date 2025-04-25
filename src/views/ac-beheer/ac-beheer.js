@@ -7,14 +7,14 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { useNavigate, useParams } from 'react-router';
 import { getCookie } from '@src/utilities';
 import {
-  AcBeheerVoorzieningenAanbod,
+  AcBeheerDienst,
   AcBeheerVoorzieningenGebruik,
   AcBeheerVoorzieningenVersie,
   AcBeheerOvereenkomsten,
   AcBeheerOrganisaties,
   AcBeheerKwetsbaarheden,
   AcDashboard,
-  AcBeheerVoorzieningenAanbodDetails,
+  AcBeheerDienstDetails,
   AcBeheerVoorzieningen,
   AcBeheerVoorzieningenDetails,
   AcBeheerVoorzieningenGebruikDetails,
@@ -63,8 +63,8 @@ const AcBeheer = () => {
     switch (type) {
       case 'voorzieningen':
         return <AcBeheerVoorzieningen />;
-      case 'voorzieningen-aanbod':
-        return <AcBeheerVoorzieningenAanbod />;
+      case 'diensten':
+        return <AcBeheerDienst />;
       case 'voorzieningen-gebruik':
         return <AcBeheerVoorzieningenGebruik />;
       case 'voorzieningen-versie':
@@ -85,8 +85,8 @@ const AcBeheer = () => {
   switch (type) {
     case 'voorzieningen':
       return <AcBeheerVoorzieningenDetails id={id} />;
-    case 'voorzieningen-aanbod':
-      return <AcBeheerVoorzieningenAanbodDetails id={id} />;
+    case 'diensten':
+      return <AcBeheerDienstDetails id={id} />;
     case 'voorzieningen-gebruik':
       return <AcBeheerVoorzieningenGebruikDetails id={id} />;
     case 'voorzieningen-versie':

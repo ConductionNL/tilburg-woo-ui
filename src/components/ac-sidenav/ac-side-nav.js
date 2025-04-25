@@ -51,13 +51,13 @@ const AcSideNav = () => {
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/voorzieningen-aanbod')}
+              onClick={() => navigate('/beheer/diensten')}
               current={window.location.pathname.startsWith(
-                '/beheer/voorzieningen-aanbod'
+                '/beheer/diensten'
               )}
             >
               <VISUALS.HAND_HOLDING />
-              Aanbod
+              Diensten
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>
