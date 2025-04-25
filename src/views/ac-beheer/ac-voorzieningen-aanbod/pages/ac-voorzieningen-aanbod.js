@@ -14,6 +14,7 @@ import AcVoorzieningAanbodFormModal from '../modals/ac-voorziening-aanbod-form-m
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import ConActionMenu from '../../con-action-menu';
 import { AcButton } from '@src/molecules';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
@@ -24,11 +25,23 @@ const AcBeheerVoorzieningenAanbod = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen-aanbod`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningaanboden'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/5/12',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 

@@ -14,6 +14,7 @@ import ConTable from '../../con-table';
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -24,11 +25,23 @@ const AcBeheerOrganisaties = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/organisaties`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/organisaties'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/9/16',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 

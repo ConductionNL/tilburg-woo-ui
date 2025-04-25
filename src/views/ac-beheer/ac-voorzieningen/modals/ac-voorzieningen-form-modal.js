@@ -98,7 +98,7 @@ const AcVoorzieningenFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorziening';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/2/11';
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;

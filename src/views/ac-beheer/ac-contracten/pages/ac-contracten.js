@@ -14,6 +14,7 @@ import ConTable from '../../con-table';
 import AcContractFormModal from '../modals/ac-contract-form-modal';
 import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerContracten = () => {
   const navigate = useNavigate();
@@ -24,11 +25,23 @@ const AcBeheerContracten = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/contracten`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/contracts'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/11/18',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 

@@ -14,6 +14,7 @@ import ConTable from '../../con-table';
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -24,11 +25,24 @@ const AcBeheerKwetsbaarheden = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/kwetsbaarheden`);
+        return;
+      }
+
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/kwetsbaarheden'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/7/14',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 

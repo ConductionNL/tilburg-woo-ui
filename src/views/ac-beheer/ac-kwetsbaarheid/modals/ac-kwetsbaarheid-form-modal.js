@@ -77,7 +77,7 @@ const AcKwetsbaarheidFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/kwetsbaarheden';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/7/14';
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${kwetsbaarheidFormData.id}` : baseUrl;

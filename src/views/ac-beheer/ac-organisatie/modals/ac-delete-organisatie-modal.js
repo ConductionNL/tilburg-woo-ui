@@ -52,8 +52,8 @@ const AcDeleteOrganisatiesModal = ({
       organisaties.forEach(async (organisatie) => {
         const response = await fetch(
           //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/organisaties/${organisatie.id}`,
+          'https://vng.test.commonground.nu/apps' +
+            `/openregister/api/objects/9/16/${organisatie.id}`,
           {
             method: 'DELETE',
             headers: {

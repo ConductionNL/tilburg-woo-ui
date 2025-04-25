@@ -97,7 +97,7 @@ const AcVoorzieningGebruikFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorzieninggebruiken';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/10/17';
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningGebruikFormData.id}` : baseUrl;

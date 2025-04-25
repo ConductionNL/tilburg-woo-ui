@@ -46,8 +46,22 @@ const AcOrganisatieFormModal = ({
 
   const [organisaties, setOrganisaties] = useState([]);
   useEffect(async () => {
+    const accessToken = getCookie('nextcloud_access_token');
+
+    if (!accessToken) {
+      setError('Geen toegangstoken gevonden');
+      modalRef?.current?.close();
+      return;
+    }
+
     const response = await fetch(
-      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/organisaties'
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/9/16',
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
     );
     const data = (await response.json()).results;
     setOrganisaties(data);
@@ -123,7 +137,7 @@ const AcOrganisatieFormModal = ({
 
     try {
       const baseUrl =
-        'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/organisaties';
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/9/16';
 
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;

@@ -40,8 +40,8 @@ const AcDeleteVoorzieningenModal = ({
       voorzieningen.forEach(async (voorziening) => {
         const response = await fetch(
           //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/voorziening/${voorziening.id}`,
+          'https://vng.test.commonground.nu/apps' +
+            `/openregister/api/objects/2/11/${voorziening.id}`,
           {
             method: 'DELETE',
             headers: {
