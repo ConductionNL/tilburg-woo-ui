@@ -11,11 +11,11 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcContractFormModal from '../modals/ac-contract-form-modal';
-import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
+import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
+import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerContracten = () => {
+const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -88,7 +88,7 @@ const AcBeheerContracten = () => {
             className='utrecht-button slim'
             variant='secondary'
             onClick={() => {
-              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('contracten', row.id));
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('overeenkomsten', row.id));
             }}
           >
             <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -123,11 +123,11 @@ const AcBeheerContracten = () => {
   };
 
   if (error) {
-    return <AcBeheerError title='Beheer Contracten' error={error.message} />;
+    return <AcBeheerError title='Beheer Overeenkomsten' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Contracten' />;
+    return <AcBeheerLoading title='Beheer Overeenkomsten' />;
   }
 
   return (
@@ -141,7 +141,7 @@ const AcBeheerContracten = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Contracten</Heading>
+            <Heading>Beheer Overeenkomsten</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
@@ -198,8 +198,8 @@ const AcBeheerContracten = () => {
           />
 
           {/* modals */}
-          <AcContractFormModal
-            contract={singleSelectedRow}
+          <AcOvereenkomstFormModal
+            overeenkomst={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -213,8 +213,8 @@ const AcBeheerContracten = () => {
             }}
           />
 
-          <AcDeleteContractenModal
-            contracten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteOvereenkomstenModal
+            overeenkomsten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -231,4 +231,4 @@ const AcBeheerContracten = () => {
   );
 };
 
-export default withStore(observer(AcBeheerContracten));
+export default withStore(observer(AcBeheerOvereenkomsten));

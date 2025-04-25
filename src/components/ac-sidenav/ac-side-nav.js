@@ -84,11 +84,11 @@ const AcSideNav = () => {
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/contracten')}
-              current={window.location.pathname.startsWith('/beheer/contracten')}
+              onClick={() => navigate('/beheer/overeenkomsten')}
+              current={window.location.pathname.startsWith('/beheer/overeenkomsten')}
             >
               <VISUALS.HAND_SHAKE />
-              Contracten
+              Overeenkomsten
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>

@@ -13,11 +13,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcContractFormModal from '../modals/ac-contract-form-modal';
-import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
+import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
+import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerContractenDetails = ({ id }) => {
+const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -166,8 +166,8 @@ const AcBeheerContractenDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcContractFormModal
-                  contract={data}
+                <AcOvereenkomstFormModal
+                  overeenkomst={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -178,14 +178,14 @@ const AcBeheerContractenDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteContractenModal
-                  contracten={[data]}
+                <AcDeleteOvereenkomstenModal
+                  overeenkomsten={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/contracten');
+                    navigate('/beheer/overeenkomsten');
                   }}
                 />
               </AcFlex>
@@ -197,4 +197,4 @@ const AcBeheerContractenDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerContractenDetails));
+export default withStore(observer(AcBeheerOvereenkomstenDetails));

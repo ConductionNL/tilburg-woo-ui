@@ -10,7 +10,7 @@ import {
   AcBeheerVoorzieningenAanbod,
   AcBeheerVoorzieningenGebruik,
   AcBeheerVoorzieningenVersie,
-  AcBeheerContracten,
+  AcBeheerOvereenkomsten,
   AcBeheerOrganisaties,
   AcBeheerKwetsbaarheden,
   AcDashboard,
@@ -19,7 +19,7 @@ import {
   AcBeheerVoorzieningenDetails,
   AcBeheerVoorzieningenGebruikDetails,
   AcBeheerVoorzieningenVersieDetails,
-  AcBeheerContractenDetails,
+  AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
   AcBeheerGebruikers,
@@ -69,8 +69,8 @@ const AcBeheer = () => {
         return <AcBeheerVoorzieningenGebruik />;
       case 'voorzieningen-versie':
         return <AcBeheerVoorzieningenVersie />;
-      case 'contracten':
-        return <AcBeheerContracten />;
+      case 'overeenkomsten':
+        return <AcBeheerOvereenkomsten />;
       case 'organisaties':
         return <AcBeheerOrganisaties />;
       case 'kwetsbaarheden':
@@ -91,8 +91,8 @@ const AcBeheer = () => {
       return <AcBeheerVoorzieningenGebruikDetails id={id} />;
     case 'voorzieningen-versie':
       return <AcBeheerVoorzieningenVersieDetails id={id} />;
-    case 'contracten':
-      return <AcBeheerContractenDetails id={id} />;
+    case 'overeenkomsten':
+      return <AcBeheerOvereenkomstenDetails id={id} />;
     case 'organisaties':
       return <AcBeheerOrganisatieDetails id={id} />;
     case 'kwetsbaarheden':

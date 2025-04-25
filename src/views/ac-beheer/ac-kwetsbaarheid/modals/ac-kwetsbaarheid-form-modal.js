@@ -28,7 +28,7 @@ const AcKwetsbaarheidFormModal = ({
     referenties: '',
   });
 
-  // load contract data into the form
+  // load kwetsbaarheid data into the form
   useEffect(() => {
     if (kwetsbaarheid && isEdit) {
       setKwetsbaarheidFormData((prev) => ({
