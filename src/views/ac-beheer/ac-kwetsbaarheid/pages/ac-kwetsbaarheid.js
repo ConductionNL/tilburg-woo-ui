@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,7 @@ import ConTable from '../../con-table';
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
 const AcBeheerKwetsbaarheden = () => {
@@ -21,6 +25,8 @@ const AcBeheerKwetsbaarheden = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,24 +74,29 @@ const AcBeheerKwetsbaarheden = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'title',
       label: 'Titel',
       key: 'titel',
     },
     {
+      id: 'description',
       label: 'Beschrijving',
       key: 'beschrijving',
     },
     {
+      id: 'severity',
       label: 'Ernst',
       key: 'ernst',
     },
     {
+      id: 'cveNumber',
       label: 'CVE nummer',
       key: 'cveNummer',
     },
     {
+      id: 'detectedOn',
       label: 'Ontdekt op',
       key: 'ontdektOp',
       customContent: (row) =>
@@ -96,10 +107,38 @@ const AcBeheerKwetsbaarheden = () => {
           : '-',
     },
     {
+      id: 'publishedOn',
+      label: 'Gepubliceerd op',
+      key: 'gepubliceerdOp',
+      customContent: (row) =>
+        row.gepubliceerdOp
+          ? !isNaN(new Date(row.gepubliceerdOp).getTime())
+            ? new Date(row.gepubliceerdOp).toLocaleDateString()
+            : row.gepubliceerdOp
+          : '-',
+    },
+    {
+      id: 'solvedIn',
+      label: 'Opgelost in',
+      key: 'opgelostIn',
+    },
+    {
+      id: 'voorzieningversieId',
       label: 'Voorziening versie ID',
       key: 'voorzieningversieId',
     },
     {
+      id: 'mitigation',
+      label: 'Mitigatie',
+      key: 'mitigatie',
+    },
+    {
+      id: 'references',
+      label: 'Referenties',
+      key: 'referenties',
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -137,6 +176,10 @@ const AcBeheerKwetsbaarheden = () => {
       ),
     },
   ];
+  const defaultHeaders = ['title', 'severity', 'detectedOn', 'status', 'actions'];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -163,6 +206,12 @@ const AcBeheerKwetsbaarheden = () => {
           >
             <Heading>Beheer Kwetsbaarheden</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -244,6 +293,13 @@ const AcBeheerKwetsbaarheden = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

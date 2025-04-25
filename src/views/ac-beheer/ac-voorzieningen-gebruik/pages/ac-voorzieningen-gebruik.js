@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,7 @@ import ConTable from '../../con-table';
 import AcVoorzieningGebruikFormModal from '../modals/ac-voorziening-gebruik-form-modal';
 import AcDeleteVoorzieningGebruikModal from '../modals/ac-delete-voorziening-gebruik-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningenGebruik = () => {
@@ -21,6 +25,8 @@ const AcBeheerVoorzieningenGebruik = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -67,32 +73,83 @@ const AcBeheerVoorzieningenGebruik = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'id',
       label: 'Id',
       key: 'id',
     },
     {
+      id: 'versionId',
       label: 'Versie Id',
       key: 'versieId',
     },
     {
+      id: 'status',
       label: 'Status',
       key: 'status',
     },
     {
+      id: 'opmerkingen',
       label: 'Opmerkingen',
       key: 'opmerkingen',
     },
     {
+      id: 'bedrijfsKritisch',
+      label: 'Bedrijfs kritisch',
+      key: 'bedrijfsKritisch',
+    },
+    {
+      id: 'privacyGevoelig',
+      label: 'Privacy gevoelig',
+      key: 'privacyGevoelig',
+    },
+    {
+      id: 'bbnScore',
       label: 'BBN Score',
       key: 'bbnScore',
     },
     {
+      id: 'ibpScore',
       label: 'IBP Score',
       key: 'ibpScore',
     },
     {
+      id: 'startDate',
+      label: 'Start datum',
+      key: 'startDatum',
+    },
+    {
+      id: 'endDate',
+      label: 'Eind datum',
+      key: 'eindDatum',
+    },
+    {
+      id: 'organisatieId',
+      label: 'Organisatie ID',
+      key: 'organisatieId',
+    },
+    {
+      id: 'voorzieningId',
+      label: 'Voorziening ID',
+      key: 'voorzieningId',
+    },
+    {
+      id: 'beheerderNaam',
+      label: 'Beheerder naam',
+      key: '',
+      customContent: (row) => {
+        return row?.beheerder?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.beheerder?.naam.localeCompare(b?.beheerder?.naam)
+          : b?.beheerder?.naam.localeCompare(a?.beheerder?.naam);
+      },
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -132,6 +189,10 @@ const AcBeheerVoorzieningenGebruik = () => {
       ),
     },
   ];
+  const defaultHeaders = ['id', 'versionId', 'endDate', 'status', 'actions'];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -160,6 +221,12 @@ const AcBeheerVoorzieningenGebruik = () => {
           >
             <Heading>Beheer Voorzieningen Gebruik</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -241,6 +308,13 @@ const AcBeheerVoorzieningenGebruik = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

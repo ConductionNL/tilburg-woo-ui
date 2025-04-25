@@ -4,16 +4,20 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
+import {
+  PrimaryActionButton,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { AcDrawer, AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcVoorzieningenFormModal from '../modals/ac-voorzieningen-form-modal';
 import AcDeleteVoorzieningModal from '../modals/ac-delete-voorzieningen-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningen = () => {
@@ -21,6 +25,8 @@ const AcBeheerVoorzieningen = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,32 +74,49 @@ const AcBeheerVoorzieningen = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'naam',
     },
     {
+      id: 'description',
       label: 'Beschrijving',
       key: 'beschrijving',
     },
     {
+      id: 'category',
       label: 'Categorie',
       key: 'categorie',
     },
     {
-      label: 'Voorzienings type ID',
-      key: 'voorzieningstypeId',
-    },
-    {
+      id: 'functionalities',
       label: 'Functionaliteiten',
       key: 'functionaliteiten',
     },
     {
+      id: 'targetGroup',
       label: 'Doelgroep',
       key: 'doelgroep',
     },
     {
+      id: 'referenceComponents',
+      label: 'Referentie componenten',
+      key: 'referentieComponenten',
+    },
+    {
+      id: 'standards',
+      label: 'Standaarden',
+      key: 'standaarden',
+    },
+    {
+      id: 'voorzieningstype',
+      label: 'Voorzienings type',
+      key: 'voorzieningstype',
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -131,6 +154,17 @@ const AcBeheerVoorzieningen = () => {
       ),
     },
   ];
+  const defaultHeaders = [
+    'name',
+    'referenceComponents',
+    'standards',
+    'category',
+    'links',
+    'actions',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -157,6 +191,12 @@ const AcBeheerVoorzieningen = () => {
           >
             <Heading>Beheer Voorzieningen</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -238,6 +278,13 @@ const AcBeheerVoorzieningen = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

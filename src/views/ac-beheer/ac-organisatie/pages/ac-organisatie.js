@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,7 @@ import ConTable from '../../con-table';
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
 const AcBeheerOrganisaties = () => {
@@ -21,6 +25,8 @@ const AcBeheerOrganisaties = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -67,32 +73,59 @@ const AcBeheerOrganisaties = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'organizationName',
       label: 'Naam',
       key: 'naam',
     },
     {
+      id: 'description',
       label: 'Beschrijving',
       key: 'beschrijving',
     },
     {
+      id: 'contactDetails',
+      label: 'Contactgegevens',
+      key: 'contactgegevens',
+      customContent: (row) => {
+        if (!row?.contactDetails) return 'N/A';
+        return `${row.contactDetails.voornaam} ${row.contactDetails.tussenvoegsel} ${row.contactDetails.achternaam} / ${row.contactDetails.email} / ${row.contactDetails.telefoon}`;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a.contactgegevens.voornaam.localeCompare(b.contactgegevens.voornaam)
+          : b.contactgegevens.voornaam.localeCompare(a.contactgegevens.voornaam);
+      },
+    },
+    {
+      id: 'type',
       label: 'Type',
       key: 'type',
     },
     {
+      id: 'website',
+      label: 'Website',
+      key: 'website',
+    },
+    {
+      id: 'kvkNumber',
       label: 'KvK nummer',
       key: 'kvkNummer',
     },
     {
+      id: 'oidn',
       label: 'OIDN',
       key: 'oidn',
     },
     {
+      id: 'parentOrganization',
       label: 'Moeder Organisatie',
       key: 'moederOrganisatie',
     },
     {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -130,6 +163,15 @@ const AcBeheerOrganisaties = () => {
       ),
     },
   ];
+  const defaultHeaders = [
+    'organizationName',
+    'logo', // ?
+    'contactDetails',
+    'actions',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -156,6 +198,12 @@ const AcBeheerOrganisaties = () => {
           >
             <Heading>Beheer Organisaties</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -237,6 +285,13 @@ const AcBeheerOrganisaties = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

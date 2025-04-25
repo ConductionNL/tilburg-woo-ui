@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,7 @@ import ConTable from '../../con-table';
 import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningenVersie = () => {
@@ -21,6 +25,8 @@ const AcBeheerVoorzieningenVersie = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -68,32 +74,91 @@ const AcBeheerVoorzieningenVersie = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'naam',
     },
     {
+      id: 'description',
       label: 'Omschrijving',
       key: 'omschrijving',
     },
     {
+      id: 'releaseNotes',
       label: 'Release Notes',
       key: 'releaseNotes',
     },
     {
+      id: 'releaseDate',
+      label: 'Release datum',
+      key: 'releaseDatum',
+    },
+    {
+      id: 'nummer',
       label: 'Nummer',
       key: 'nummer',
     },
     {
+      id: 'status',
       label: 'Status',
       key: 'status',
     },
     {
+      id: 'versionNumber',
+      label: 'Versie nummer',
+      key: 'versienummer',
+    },
+    {
+      id: 'voorzieningaanbodId',
       label: 'Voorziening Aanbod ID',
       key: 'voorzieningaanbodId',
     },
     {
+      id: 'voorzieningaanbod',
+      label: 'Voorziening Aanbod naam',
+      key: '',
+      customContent: (row) => {
+        return row?.voorzieningaanbod?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorzieningaanbod?.naam.localeCompare(b?.voorzieningaanbod?.naam)
+          : b?.voorzieningaanbod?.naam.localeCompare(a?.voorzieningaanbod?.naam);
+      },
+    },
+    {
+      id: 'endDateSupport',
+      label: 'Eind datum ondersteuning',
+      key: 'eindDatumOndersteuning',
+    },
+    {
+      id: 'systemRequirements',
+      label: 'Systeemvereisten',
+      key: 'systeemvereisten',
+    },
+    {
+      id: 'kwetsbaarheden',
+      label: 'Kwetsbaarheden',
+      key: '',
+      customContent: (row) => {
+        return (
+          row?.kwetsbaarheden?.[0]
+            ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
+            .join(', ') || '-'
+        );
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.kwetsbaarheden?.[0]?.titel.localeCompare(b?.kwetsbaarheden?.[0]?.titel)
+          : b?.kwetsbaarheden?.[0]?.titel.localeCompare(a?.kwetsbaarheden?.[0]?.titel);
+      },
+    },
+    {
+      id: 'actions',
       label: 'Acties',
       key: '',
       customContent: (row) => (
@@ -133,6 +198,16 @@ const AcBeheerVoorzieningenVersie = () => {
       ),
     },
   ];
+  const defaultHeaders = [
+    'name',
+    'versionNumber',
+    'releaseDate',
+    'status',
+    'actions',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -161,6 +236,12 @@ const AcBeheerVoorzieningenVersie = () => {
           >
             <Heading>Beheer Voorzieningen Versie</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -242,6 +323,13 @@ const AcBeheerVoorzieningenVersie = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>
