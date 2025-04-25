@@ -39,7 +39,7 @@ const AcBeheerVoorzieningenAanbod = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/5/12',
+          '/openregister/api/objects/5/12?extend[]=all',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -74,25 +74,23 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const headers = [
     // TODO: name is to be removed - https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/documentation/website/static/api/voorzieningen-api-specification.json#schema/Voorzieningaanbod
-    {
-      id: 'name',
-      label: 'Naam',
-      key: 'naam',
-    },
+    // {
+    //   id: 'name',
+    //   label: 'Naam',
+    //   key: 'naam',
+    // },
     {
       id: 'voorzieningName',
       label: 'Voorziening naam',
       key: '',
       customContent: (row) => {
-        // TODO: replace with actual voorziening name
-        return row.voorzieningId;
+        return row?.voorziening?.naam || '-';
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? // TODO: voorzieningId should become an voorziening name
-            a.voorzieningId.localeCompare(b.voorzieningId)
-          : b.voorzieningId.localeCompare(a.voorzieningId);
+          ? a?.voorziening?.naam.localeCompare(b?.voorziening?.naam)
+          : b?.voorziening?.naam.localeCompare(a?.voorziening?.naam);
       },
     },
     {
@@ -100,7 +98,6 @@ const AcBeheerVoorzieningenAanbod = () => {
       label: 'Leverancier ID',
       key: '',
       customContent: (row) => {
-        // TODO: replace with actual voorziening name
         return row?.leverancier?.id || '-';
       },
       sortComparator: (a, b, direction) => {
@@ -115,15 +112,17 @@ const AcBeheerVoorzieningenAanbod = () => {
       label: 'Email',
       key: '',
       customContent: (row) => {
-        // TODO: replace with actual email
-        return row.organisatieId;
+        return row?.leverancier?.contactgegevens?.email || '-';
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? // TODO: organisatieId should become an email
-            a.organisatieId.localeCompare(b.organisatieId)
-          : b.organisatieId.localeCompare(a.organisatieId);
+          ? a?.leverancier?.contactgegevens?.email.localeCompare(
+              b?.leverancier?.contactgegevens?.email
+            )
+          : b?.leverancier?.contactgegevens?.email.localeCompare(
+              a?.leverancier?.contactgegevens?.email
+            );
       },
     },
     {
@@ -133,7 +132,16 @@ const AcBeheerVoorzieningenAanbod = () => {
       customContent: (row) => {
         if (!row?.ondersteundeStandaarden) return 'N/A';
         if (!row.ondersteundeStandaarden.length) return '-';
-        return `${row.ondersteundeStandaarden[0].naam} / ${row.ondersteundeStandaarden[0].status}`;
+        return row.ondersteundeStandaarden.map((standaard) => (
+          <>
+            <span>
+              {standaard.naam}
+              {' / '}
+              {standaard.status}
+            </span>
+            <br />
+          </>
+        ));
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
@@ -248,7 +256,7 @@ const AcBeheerVoorzieningenAanbod = () => {
     },
   ];
   const defaultHeaders = [
-    'name',
+    // 'name',
     'voorzieningName',
     'email',
     'productPage',
