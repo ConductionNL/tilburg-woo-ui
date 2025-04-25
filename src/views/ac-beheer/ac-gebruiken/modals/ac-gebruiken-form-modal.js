@@ -7,15 +7,15 @@ import { AcFlex } from '@atoms';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 
-const AcVoorzieningGebruikFormModal = ({
-  voorziening,
+const AcGebruikenFormModal = ({
+  gebruik,
   showModal = false,
   onClose,
   onSuccess,
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
-  const [voorzieningGebruikFormData, setVoorzieningGebruikFormData] = useState({
+  const [gebruikFormData, setGebruikFormData] = useState({
     organisatieId: '',
     voorzieningId: '',
     versieId: '',
@@ -41,15 +41,15 @@ const AcVoorzieningGebruikFormModal = ({
   });
 
   useEffect(() => {
-    if (voorziening && isEdit) {
-      setVoorzieningGebruikFormData((prev) => ({
+    if (gebruik && isEdit) {
+      setGebruikFormData((prev) => ({
         ...prev,
-        ...voorziening,
+        ...gebruik,
       }));
     }
 
-    if (!voorziening && !isEdit) {
-      setVoorzieningGebruikFormData(() => ({
+    if (!gebruik && !isEdit) {
+      setGebruikFormData(() => ({
         organisatieId: '',
         voorzieningId: '',
         versieId: '',
@@ -74,12 +74,12 @@ const AcVoorzieningGebruikFormModal = ({
         privacyGevoelig: false,
       }));
     }
-  }, [voorziening, isEdit]);
+  }, [gebruik, isEdit]);
 
-  const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleEditGebruikOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditVoorzieningFieldChange = (field) => (value) => {
-    setVoorzieningGebruikFormData((prev) => ({
+  const handleEditGebruikFieldChange = (field) => (value) => {
+    setGebruikFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -100,12 +100,12 @@ const AcVoorzieningGebruikFormModal = ({
       'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorzieninggebruiken';
 
     const method = isEdit ? 'PUT' : 'POST';
-    const url = isEdit ? `${baseUrl}/${voorzieningGebruikFormData.id}` : baseUrl;
+    const url = isEdit ? `${baseUrl}/${gebruikFormData.id}` : baseUrl;
 
     try {
       const response = await fetch(url, {
         method: method,
-        body: JSON.stringify(voorzieningGebruikFormData),
+        body: JSON.stringify(gebruikFormData),
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
@@ -124,97 +124,97 @@ const AcVoorzieningGebruikFormModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleEditVoorzieningOpenModal();
+      handleEditGebruikOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleEditVoorzieningCloseModal = () => {
+  const handleEditGebruikCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleEditVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleEditGebruikCloseModal);
   }, [modalRef.current]);
 
-  const renderVoorzieningGebruikFormModal = (
+  const renderGebruikFormModal = (
     <AcModal
       ref={modalRef}
-      id='edit-voorziening-modal'
-      title={isEdit ? 'Voorziening bewerken' : 'Voorziening toevoegen'}
+      id='edit-gebruik-modal'
+      title={isEdit ? 'Gebruik bewerken' : 'Gebruik toevoegen'}
       buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
           label='Organisatie Id'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('organisatieId')}
-          value={voorzieningGebruikFormData.organisatieId}
+          onBlur={handleEditGebruikFieldChange('organisatieId')}
+          value={gebruikFormData.organisatieId}
         />
         <AcFormField
           label='Voorziening ID'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('voorzieningId')}
-          value={voorzieningGebruikFormData.voorzieningId}
+          onBlur={handleEditGebruikFieldChange('voorzieningId')}
+          value={gebruikFormData.voorzieningId}
         />
         <AcFormField
           label='Versie ID'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('versieId')}
-          value={voorzieningGebruikFormData.versieId}
+          onBlur={handleEditGebruikFieldChange('versieId')}
+          value={gebruikFormData.versieId}
         />
         <AcFormField
           label='Startdatum'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('startDatum')}
-          value={voorzieningGebruikFormData.startDatum}
+          onBlur={handleEditGebruikFieldChange('startDatum')}
+          value={gebruikFormData.startDatum}
         />
         <AcFormField
           label='Einddatum'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('eindDatum')}
-          value={voorzieningGebruikFormData.eindDatum}
+          onBlur={handleEditGebruikFieldChange('eindDatum')}
+          value={gebruikFormData.eindDatum}
         />
         <AcFormField
           label='Status'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('status')}
-          value={voorzieningGebruikFormData.status}
+          onBlur={handleEditGebruikFieldChange('status')}
+          value={gebruikFormData.status}
         />
         <AcFormField
           label='Opmerkingen'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('opmerkingen')}
-          value={voorzieningGebruikFormData.opmerkingen}
+          onBlur={handleEditGebruikFieldChange('opmerkingen')}
+          value={gebruikFormData.opmerkingen}
         />
         <AcFormField
           label='BBN Score'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('bbnScore')}
-          value={voorzieningGebruikFormData.bbnScore}
+          onBlur={handleEditGebruikFieldChange('bbnScore')}
+          value={gebruikFormData.bbnScore}
         />
         <AcFormField
           label='IBP Score'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('ibpScore')}
-          value={voorzieningGebruikFormData.ibpScore}
+          onBlur={handleEditGebruikFieldChange('ibpScore')}
+          value={gebruikFormData.ibpScore}
         />
         <AcCheckbox
           label='BedrijfsKritisch'
-          checked={voorzieningGebruikFormData.bedrijfsKritisch}
-          onChange={handleEditVoorzieningFieldChange('bedrijfsKritisch')}
+          checked={gebruikFormData.bedrijfsKritisch}
+          onChange={handleEditGebruikFieldChange('bedrijfsKritisch')}
         />
         <AcCheckbox
           label='Privacy Gevoelig'
-          checked={voorzieningGebruikFormData.privacyGevoelig}
-          onChange={handleEditVoorzieningFieldChange('privacyGevoelig')}
+          checked={gebruikFormData.privacyGevoelig}
+          onChange={handleEditGebruikFieldChange('privacyGevoelig')}
         />
       </AcFlex>
     </AcModal>
   );
 
-  return renderVoorzieningGebruikFormModal;
+  return renderGebruikFormModal;
 };
 
-export default withStore(observer(AcVoorzieningGebruikFormModal));
+export default withStore(observer(AcGebruikenFormModal));

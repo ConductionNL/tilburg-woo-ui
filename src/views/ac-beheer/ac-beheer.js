@@ -8,7 +8,7 @@ import { useNavigate, useParams } from 'react-router';
 import { getCookie } from '@src/utilities';
 import {
   AcBeheerDienst,
-  AcBeheerVoorzieningenGebruik,
+  AcBeheerGebruiken,
   AcBeheerVoorzieningenVersie,
   AcBeheerOvereenkomsten,
   AcBeheerOrganisaties,
@@ -17,7 +17,7 @@ import {
   AcBeheerDienstDetails,
   AcBeheerVoorzieningen,
   AcBeheerVoorzieningenDetails,
-  AcBeheerVoorzieningenGebruikDetails,
+  AcBeheerGebruikenDetails,
   AcBeheerVoorzieningenVersieDetails,
   AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
@@ -65,8 +65,8 @@ const AcBeheer = () => {
         return <AcBeheerVoorzieningen />;
       case 'diensten':
         return <AcBeheerDienst />;
-      case 'voorzieningen-gebruik':
-        return <AcBeheerVoorzieningenGebruik />;
+      case 'gebruiken':
+        return <AcBeheerGebruiken />;
       case 'voorzieningen-versie':
         return <AcBeheerVoorzieningenVersie />;
       case 'overeenkomsten':
@@ -87,8 +87,8 @@ const AcBeheer = () => {
       return <AcBeheerVoorzieningenDetails id={id} />;
     case 'diensten':
       return <AcBeheerDienstDetails id={id} />;
-    case 'voorzieningen-gebruik':
-      return <AcBeheerVoorzieningenGebruikDetails id={id} />;
+    case 'gebruiken':
+      return <AcBeheerGebruikenDetails id={id} />;
     case 'voorzieningen-versie':
       return <AcBeheerVoorzieningenVersieDetails id={id} />;
     case 'overeenkomsten':

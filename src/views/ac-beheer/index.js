@@ -13,10 +13,8 @@ const AcDashboard = loadable(() => import('@views/ac-beheer/ac-dashboard'));
 const AcBeheerDienst = loadable(() =>
   import('@src/views/ac-beheer/ac-dienst/pages/ac-dienst')
 );
-const AcBeheerVoorzieningenGebruik = loadable(() =>
-  import(
-    '@src/views/ac-beheer/ac-voorzieningen-gebruik/pages/ac-voorzieningen-gebruik'
-  )
+const AcBeheerGebruiken = loadable(() =>
+  import('@src/views/ac-beheer/ac-gebruiken/pages/ac-gebruiken')
 );
 const AcBeheerVoorzieningenVersie = loadable(() =>
   import(
@@ -46,15 +44,13 @@ const AcBeheerVoorzieningenDetails = loadable(() =>
 const AcBeheerDienstDetails = loadable(() =>
   import('@src/views/ac-beheer/ac-dienst/pages/ac-dienst-details')
 );
-const AcBeheerVoorzieningenGebruikDetails = loadable(() =>
-  import(
-    '@src/views/ac-beheer/ac-voorzieningen-gebruik/pages/ac-voorzieningen-gebruik-details'
-  )
-);
 const AcBeheerVoorzieningenVersieDetails = loadable(() =>
   import(
     '@src/views/ac-beheer/ac-voorzieningen-versie/pages/ac-voorzieningen-versie-details'
   )
+);
+const AcBeheerGebruikenDetails = loadable(() =>
+  import('@src/views/ac-beheer/ac-gebruiken/pages/ac-gebruiken-details')
 );
 const AcBeheerOvereenkomstenDetails = loadable(() =>
   import('@src/views/ac-beheer/ac-overeenkomsten/pages/ac-overeenkomsten-details')
@@ -71,7 +67,7 @@ const AcBeheerGebruikerDetails = loadable(() =>
 
 export {
   AcBeheerDienst,
-  AcBeheerVoorzieningenGebruik,
+  AcBeheerGebruiken,
   AcBeheerVoorzieningenVersie,
   AcBeheerOvereenkomsten,
   AcBeheerOrganisaties,
@@ -83,8 +79,8 @@ export {
   AcBeheerGebruikers,
   AcBeheerDienstDetails,
   AcBeheerVoorzieningenDetails,
-  AcBeheerVoorzieningenGebruikDetails,
   AcBeheerVoorzieningenVersieDetails,
+  AcBeheerGebruikenDetails,
   AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,

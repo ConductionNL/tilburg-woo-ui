@@ -13,11 +13,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcVoorzieningGebruikFormModal from '../modals/ac-voorziening-gebruik-form-modal';
-import AcDeleteVoorzieningGebruikModal from '../modals/ac-delete-voorziening-gebruik-modal';
+import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
+import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
+const AcBeheerGebruikenDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -184,8 +184,8 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcVoorzieningGebruikFormModal
-                  voorziening={data}
+                <AcGebruikenFormModal
+                  gebruik={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -196,14 +196,14 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningGebruikModal
-                  voorzieningen={[data]}
+                <AcDeleteGebruikenModal
+                  gebruiken={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/voorzieningen-gebruik');
+                    navigate('/beheer/gebruiken');
                   }}
                 />
               </AcFlex>
@@ -215,4 +215,4 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenGebruikDetails));
+export default withStore(observer(AcBeheerGebruikenDetails));

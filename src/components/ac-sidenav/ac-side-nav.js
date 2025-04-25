@@ -52,9 +52,7 @@ const AcSideNav = () => {
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/diensten')}
-              current={window.location.pathname.startsWith(
-                '/beheer/diensten'
-              )}
+              current={window.location.pathname.startsWith('/beheer/diensten')}
             >
               <VISUALS.HAND_HOLDING />
               Diensten
@@ -62,10 +60,8 @@ const AcSideNav = () => {
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/voorzieningen-gebruik')}
-              current={window.location.pathname.startsWith(
-                '/beheer/voorzieningen-gebruik'
-              )}
+              onClick={() => navigate('/beheer/gebruiken')}
+              current={window.location.pathname.startsWith('/beheer/gebruiken')}
             >
               <VISUALS.CLOUD />
               Gebruik

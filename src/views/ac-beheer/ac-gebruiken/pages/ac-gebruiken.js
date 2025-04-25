@@ -11,11 +11,11 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcVoorzieningGebruikFormModal from '../modals/ac-voorziening-gebruik-form-modal';
-import AcDeleteVoorzieningGebruikModal from '../modals/ac-delete-voorziening-gebruik-modal';
+import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
+import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 
-const AcBeheerVoorzieningenGebruik = () => {
+const AcBeheerGebruiken = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -88,9 +88,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             className='utrecht-button slim'
             variant='secondary'
             onClick={() => {
-              navigate(
-                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-gebruik', row.id)
-              );
+              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruiken', row.id));
             }}
           >
             <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -125,13 +123,11 @@ const AcBeheerVoorzieningenGebruik = () => {
   };
 
   if (error) {
-    return (
-      <AcBeheerError title='Beheer Voorzieningen Gebruik' error={error.message} />
-    );
+    return <AcBeheerError title='Beheer Gebruiken' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen Gebruik' />;
+    return <AcBeheerLoading title='Beheer Gebruiken' />;
   }
 
   return (
@@ -145,7 +141,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen Gebruik</Heading>
+            <Heading>Beheer Gebruiken</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
@@ -202,8 +198,8 @@ const AcBeheerVoorzieningenGebruik = () => {
           />
 
           {/* modals */}
-          <AcVoorzieningGebruikFormModal
-            voorziening={singleSelectedRow}
+          <AcGebruikenFormModal
+            gebruik={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -217,8 +213,8 @@ const AcBeheerVoorzieningenGebruik = () => {
             }}
           />
 
-          <AcDeleteVoorzieningGebruikModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteGebruikenModal
+            gebruiken={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -235,4 +231,4 @@ const AcBeheerVoorzieningenGebruik = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenGebruik));
+export default withStore(observer(AcBeheerGebruiken));
