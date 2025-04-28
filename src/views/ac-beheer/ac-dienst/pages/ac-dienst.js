@@ -38,6 +38,7 @@ const AcBeheerDienst = () => {
         [
           ['_extend[]', 'voorziening'],
           ['_extend[]', 'leverancier'],
+          ['_extend[]', 'ondersteundeStandaarden'],
         ],
         null,
         '/beheer/voorzieningen-aanbod'
@@ -91,11 +92,15 @@ const AcBeheerDienst = () => {
       },
     },
     {
-      id: 'leverancierId',
-      label: 'Leverancier ID',
+      id: 'leverancier',
+      label: 'Leverancier',
       key: '',
       customContent: (row) => {
-        return row?.leverancier?.id || '-';
+        return (
+          <AcColumn key={row.id}>
+            <span>{row?.leverancier?.organisatienaam ?? '-'}</span>
+          </AcColumn>
+        );
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
@@ -169,7 +174,7 @@ const AcBeheerDienst = () => {
       key: 'certificeringen',
     },
   ];
-  const defaultHeaders = ['name', 'voorzieningName', 'email', 'productPage'];
+  const defaultHeaders = ['name', 'voorzieningName', 'email', 'ondersteunendeStandaarden'];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );

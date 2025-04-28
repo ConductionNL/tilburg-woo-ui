@@ -37,7 +37,10 @@ const AcBeheerGebruiken = () => {
 
       const response = await makeRequest(
         'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik',
-        null,
+        [
+          ['_extend[]', 'voorzieningId'],
+          ['_extend[]', 'organisatieId'],
+        ],
         null,
         '/beheer/voorzieningen-gebruik'
       ).finally(() => setLoading(false));
@@ -74,7 +77,7 @@ const AcBeheerGebruiken = () => {
     },
     {
       id: 'versionId',
-      label: 'Versie Id',
+      label: 'Versie ID',
       key: 'versieId',
     },
     {
@@ -118,14 +121,28 @@ const AcBeheerGebruiken = () => {
       key: 'eindDatum',
     },
     {
-      id: 'organisatieId',
-      label: 'Organisatie ID',
-      key: 'organisatieId',
+      id: 'organisatie',
+      label: 'Organisatie',
+      key: 'organisatie',
+      customContent: (row) => {
+        return (
+          <AcColumn key={row.id}>
+            <span>{row?.organisatieId?.organisatienaam ?? '-'}</span>
+          </AcColumn>
+        );
+      },
     },
     {
-      id: 'voorzieningId',
-      label: 'Voorziening ID',
-      key: 'voorzieningId',
+      id: 'voorziening',
+      label: 'Voorziening',
+      key: 'voorziening',
+      customContent: (row) => {
+        return (
+          <AcColumn key={row.id}>
+            <span>{row?.voorzieningId?.naam ?? '-'}</span>
+          </AcColumn>
+        );
+      },
     },
     {
       id: 'beheerderNaam',

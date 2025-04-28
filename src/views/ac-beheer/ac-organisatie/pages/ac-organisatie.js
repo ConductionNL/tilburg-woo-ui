@@ -91,8 +91,16 @@ const AcBeheerOrganisaties = () => {
       label: 'Contactgegevens',
       key: 'contactgegevens',
       customContent: (row) => {
-        if (!row?.contactDetails) return 'N/A';
-        return `${row.contactDetails.voornaam} ${row.contactDetails.tussenvoegsel} ${row.contactDetails.achternaam} / ${row.contactDetails.email} / ${row.contactDetails.telefoon}`;
+        if (!row?.contactgegevens) return '-';
+        return (
+          <AcColumn key={row.id}>
+            <span>
+              {row.contactgegevens.voornaam} {row.contactgegevens.tussenvoegsel}{' '}
+              {row.contactgegevens.achternaam} / {row.contactgegevens.email} /{' '}
+              {row.contactgegevens.telefoon}
+            </span>
+          </AcColumn>
+        );
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
@@ -109,7 +117,7 @@ const AcBeheerOrganisaties = () => {
     {
       id: 'kvkNumber',
       label: 'KvK nummer',
-      key: 'kvkNummer',
+      key: 'kvk-nummer',
     },
   ];
   const defaultHeaders = [

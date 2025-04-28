@@ -37,7 +37,7 @@ const AcBeheerVoorzieningenVersie = () => {
 
       const response = await makeRequest(
         'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie',
-        [['_extend[]', 'voorzieningaanbod']],
+        [['_extend[]', 'kwetsbaarheden']],
         null,
         '/beheer/voorzieningen-versie'
       ).finally(() => setLoading(false));

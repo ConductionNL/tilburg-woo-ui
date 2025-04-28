@@ -36,7 +36,7 @@ const AcBeheerApplicaties = () => {
 
       const response = await makeRequest(
         'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening',
-        null,
+        [['_extend[]', 'standaarden']],
         null,
         '/beheer/applicaties'
       ).finally(() => setLoading(false));
@@ -100,6 +100,13 @@ const AcBeheerApplicaties = () => {
       id: 'standards',
       label: 'Standaarden',
       key: 'standaarden',
+      customContent: (row) => {
+        return (
+          <AcColumn key={row.id}>
+            {row?.standaarden?.map((standaard) => standaard.naam).join(', ')}
+          </AcColumn>
+        );
+      },
     },
     {
       id: 'voorzieningstype',
