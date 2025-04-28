@@ -41,7 +41,7 @@ const AcBeheerVoorzieningenGebruik = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/10/17',
+          '/openregister/api/objects/voorzieninggebruik/voorzieninggebruik',
         {
           headers: {
             'Content-Type': 'application/json',

@@ -3,8 +3,9 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
 import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
+import clsx from 'clsx';
 
-const AcDrawer = forwardRef(({ id, title, children }, ref) => {
+const AcDrawer = forwardRef(({ id, title, children, removeBackdrop = false }, ref) => {
   const onCloseHandler = () => {
     ref?.current?.close();
   };
@@ -17,7 +18,12 @@ const AcDrawer = forwardRef(({ id, title, children }, ref) => {
   };
 
   return (
-    <dialog id={id} className='ac-drawer' ref={ref} onClick={onBackdropClick}>
+    <dialog
+      id={id}
+      className={clsx('ac-drawer', { 'ac-drawer--backdrop': !removeBackdrop })}
+      ref={ref}
+      onClick={onBackdropClick}
+    >
       <div className='ac-drawer__header'>
         <AcFlex justifyContent='between' alignItems='center'>
           <Heading level={2}>{title}</Heading>

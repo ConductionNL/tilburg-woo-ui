@@ -31,22 +31,27 @@ const AcBeheerGebruikers = () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/gebruikers'
-      ).finally(() => setLoading(false));
-      const jsonResponse = await response.json();
+      // TODO: a gebruiker endpoint is missing
+      //   const response = await fetch(
+      //     //   config.authentication.baseURL +
+      //     'https://vng.test.commonground.nu/apps' +
+      //       '/openregister/api/objects/gebruiker/gebruiker'
+      //   ).finally(() => setLoading(false));
+      //   const jsonResponse = await response.json();
 
-      const data = jsonResponse.results;
+      //   const data = jsonResponse.results;
+      const data = [];
 
-      const errorResponse = jsonResponse.error;
+      //   const errorResponse = jsonResponse.error;
+      const errorResponse = null;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 

@@ -42,7 +42,7 @@ const AcBeheerVoorzieningen = () => {
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
           //   '/openregister/api/objects/voorzieningen/voorziening',
-          '/openregister/api/objects/2/11',
+          '/openregister/api/objects/voorzieningen/voorziening',
         {
           headers: {
             'Content-Type': 'application/json',

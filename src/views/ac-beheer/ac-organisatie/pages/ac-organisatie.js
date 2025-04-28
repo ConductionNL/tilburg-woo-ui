@@ -41,7 +41,7 @@ const AcBeheerOrganisaties = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/9/16',
+          '/openregister/api/objects/organisatie/organisatie',
         {
           headers: {
             'Content-Type': 'application/json',

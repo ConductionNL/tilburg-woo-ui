@@ -42,7 +42,7 @@ const AcBeheerVoorzieningenVersie = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/6/13',
+          '/openregister/api/objects/voorzieningversie/voorzieningversie',
         {
           headers: {
             'Content-Type': 'application/json',

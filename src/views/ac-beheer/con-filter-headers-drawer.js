@@ -37,7 +37,7 @@ const ConFilterHeadersDrawer = forwardRef(({ headers, defaultHeaders = [], onCha
   };
 
   return (
-    <AcDrawer id="concepts-drawer" title="Header filters" ref={ref}>
+    <AcDrawer removeBackdrop id="concepts-drawer" title="Header filters" ref={ref}>
       <AcColumn gap="sm">
         {headers.map(({ id, label, key }) => (
           <AcCheckbox

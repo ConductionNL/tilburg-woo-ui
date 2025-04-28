@@ -41,7 +41,7 @@ const AcBeheerContracten = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/11/18',
+          '/openregister/api/objects/contract/contract',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -155,38 +155,38 @@ const AcBeheerContracten = () => {
     {
       id: 'contactPersonProvider',
       label: 'contactpersoon Aanbieder',
-      key: 'contactPersoonAanbieder',
+      key: 'contactpersoonAanbieder',
       customContent: (row) => {
-        if (!row?.contactPersoonAanbieder) return 'N/A';
-        return `${row.contactPersoonAanbieder.naam} / ${row.contactPersoonAanbieder.achternaam}`;
+        if (!row?.contactpersoonAanbieder) return 'N/A';
+        return row.contactpersoonAanbieder.naam;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a?.contactPersoonAanbieder?.naam.localeCompare(
-              b?.contactPersoonAanbieder?.naam
+          ? a?.contactpersoonAanbieder?.naam.localeCompare(
+              b?.contactpersoonAanbieder?.naam
             )
-          : b?.contactPersoonAanbieder?.naam.localeCompare(
-              a?.contactPersoonAanbieder?.naam
+          : b?.contactpersoonAanbieder?.naam.localeCompare(
+              a?.contactpersoonAanbieder?.naam
             );
       },
     },
     {
       id: 'contactPersonUser',
       label: 'contactpersoon Gebruiker',
-      key: 'contactPersoonGebruiker',
+      key: 'contactpersoonGebruiker',
       customContent: (row) => {
-        if (!row?.contactPersoonGebruiker) return 'N/A';
-        return row.contactPersoonGebruiker.naam;
+        if (!row?.contactpersoonGebruiker) return 'N/A';
+        return row.contactpersoonGebruiker.naam;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a.contactPersoonGebruiker.naam.localeCompare(
-              b.contactPersoonGebruiker.naam
+          ? a.contactpersoonGebruiker.naam.localeCompare(
+              b.contactpersoonGebruiker.naam
             )
-          : b.contactPersoonGebruiker.naam.localeCompare(
-              a.contactPersoonGebruiker.naam
+          : b.contactpersoonGebruiker.naam.localeCompare(
+              a.contactpersoonGebruiker.naam
             );
       },
     },
