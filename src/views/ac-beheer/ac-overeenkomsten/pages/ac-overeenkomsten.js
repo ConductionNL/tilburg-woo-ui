@@ -18,7 +18,8 @@ import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { ConSorterLogic } from '@src/utilities/con-sorter';
 
 const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
@@ -26,29 +27,24 @@ const AcBeheerOvereenkomsten = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/overeenkomsten`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/contract/contract',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract',
+        [
+          ['_extend[]', 'voorzieningAanbod'],
+          ['_extend[]', 'voorzieningGebruik'],
+        ],
+        null,
+        '/beheer/contracten'
       ).finally(() => setLoading(false));
+
       const jsonResponse = await response.json();
 
       const data = jsonResponse.results;
@@ -118,9 +114,9 @@ const AcBeheerOvereenkomsten = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.voorzieningAanbod?.naam.localeCompare(b?.voorzieningAanbod?.naam)
-          : b?.voorzieningAanbod?.naam.localeCompare(a?.voorzieningAanbod?.naam);
+        const aName = a?.voorzieningAanbod?.naam;
+        const bName = b?.voorzieningAanbod?.naam;
+        return ConSorterLogic(aName, bName, direction);
       },
     },
     {
@@ -132,9 +128,9 @@ const AcBeheerOvereenkomsten = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.voorzieningAanbod?.id.localeCompare(b?.voorzieningAanbod?.id)
-          : b?.voorzieningAanbod?.id.localeCompare(a?.voorzieningAanbod?.id);
+        const aId = a?.voorzieningAanbod?.id;
+        const bId = b?.voorzieningAanbod?.id;
+        return ConSorterLogic(aId, bId, direction);
       },
     },
     {
@@ -162,13 +158,9 @@ const AcBeheerOvereenkomsten = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.contactpersoonAanbieder?.naam.localeCompare(
-              b?.contactpersoonAanbieder?.naam
-            )
-          : b?.contactpersoonAanbieder?.naam.localeCompare(
-              a?.contactpersoonAanbieder?.naam
-            );
+        const aName = a?.contactpersoonAanbieder?.naam;
+        const bName = b?.contactpersoonAanbieder?.naam;
+        return ConSorterLogic(aName, bName, direction);
       },
     },
     {
@@ -181,13 +173,9 @@ const AcBeheerOvereenkomsten = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a.contactpersoonGebruiker.naam.localeCompare(
-              b.contactpersoonGebruiker.naam
-            )
-          : b.contactpersoonGebruiker.naam.localeCompare(
-              a.contactpersoonGebruiker.naam
-            );
+        const aName = a?.contactpersoonGebruiker?.naam;
+        const bName = b?.contactpersoonGebruiker?.naam;
+        return ConSorterLogic(aName, bName, direction);
       },
     },
   ];

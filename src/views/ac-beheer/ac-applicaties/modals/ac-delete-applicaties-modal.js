@@ -6,8 +6,7 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import config from '@src/config';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * modal to delete 1 or multiple applicaties
@@ -24,30 +23,22 @@ const AcDeleteApplicatiesModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const handleDeleteApplicatieOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
+
   const handleDeleteApplicatie = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      return;
-    }
-
     try {
       let deletePromises = [];
 
       applicaties.forEach(async (applicatie) => {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/voorzieningen/voorziening/${voorziening.id}`,
+        const response = await makeRequest(
+          `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening/${applicatie.id}`,
+          null,
           {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
           }
         );
 

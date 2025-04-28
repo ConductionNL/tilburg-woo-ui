@@ -5,7 +5,7 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcKwetsbaarheidFormModal = ({
   kwetsbaarheid,
@@ -15,6 +15,9 @@ const AcKwetsbaarheidFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+
+  const { makeRequest } = useNextcloudRequests();
+
   const [kwetsbaarheidFormData, setKwetsbaarheidFormData] = useState({
     voorzieningversieId: '',
     cveNummer: '',
@@ -68,14 +71,6 @@ const AcKwetsbaarheidFormModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      setError('Geen toegangstoken gevonden');
-      modalRef?.current?.close();
-      return;
-    }
-
     const baseUrl =
       'https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid';
 
@@ -83,7 +78,7 @@ const AcKwetsbaarheidFormModal = ({
     const url = isEdit ? `${baseUrl}/${kwetsbaarheidFormData.id}` : baseUrl;
 
     try {
-      const response = await fetch(url, {
+      const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
           ...kwetsbaarheidFormData,
@@ -92,10 +87,6 @@ const AcKwetsbaarheidFormModal = ({
             .split(/ *, */g)
             .filter(Boolean),
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (response.ok) {

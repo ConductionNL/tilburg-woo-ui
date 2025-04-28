@@ -18,7 +18,7 @@ import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -26,29 +26,21 @@ const AcBeheerKwetsbaarheden = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/kwetsbaarheden`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/kwetsbaarheid/kwetsbaarheid',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid',
+        null,
+        null,
+        '/beheer/kwetsbaarheden'
       ).finally(() => setLoading(false));
+
       const jsonResponse = await response.json();
 
       const data = jsonResponse.results;

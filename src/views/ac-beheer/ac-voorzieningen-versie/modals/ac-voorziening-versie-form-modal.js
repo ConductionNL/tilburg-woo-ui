@@ -5,7 +5,7 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcVoorzieningVersieFormModal = ({
   voorziening,
@@ -15,6 +15,9 @@ const AcVoorzieningVersieFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+
+  const { makeRequest } = useNextcloudRequests();
+
   const [voorzieningFormData, setVoorzieningFormData] = useState({
     naam: '',
     omschrijving: '',
@@ -60,14 +63,6 @@ const AcVoorzieningVersieFormModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      setError('Geen toegangstoken gevonden');
-      modalRef?.current?.close();
-      return;
-    }
-
     const baseUrl =
       'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie';
 
@@ -75,13 +70,9 @@ const AcVoorzieningVersieFormModal = ({
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;
 
     try {
-      const response = await fetch(url, {
+      const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify(voorzieningFormData),
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (response.ok) {

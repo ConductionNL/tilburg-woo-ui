@@ -18,6 +18,7 @@ import AcGebruikerFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import { ConSorterLogic } from '@src/utilities/con-sorter';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
@@ -123,9 +124,7 @@ const AcBeheerGebruikers = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.voorkeuren?.taal.localeCompare(b?.voorkeuren?.taal)
-          : b?.voorkeuren?.taal.localeCompare(a?.voorkeuren?.taal);
+        return ConSorterLogic(a?.voorkeuren?.taal, b?.voorkeuren?.taal, direction);
       },
     },
     {

@@ -2,24 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS, VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -36,30 +22,21 @@ const AcDeleteOrganisatiesModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const handleDeleteOrganisatieOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
   const handleDeleteOrganisatie = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      return;
-    }
-
     try {
       let deletePromises = [];
 
       organisaties.forEach(async (organisatie) => {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/organisatie/organisatie/${organisatie.id}`,
+        const response = await makeRequest(
+          `https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie/${organisatie.id}`,
+          null,
           {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
           }
         );
 

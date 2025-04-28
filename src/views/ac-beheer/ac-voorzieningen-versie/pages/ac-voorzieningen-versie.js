@@ -18,7 +18,8 @@ import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-versie-form-m
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { ConSorterLogic } from '@src/utilities/con-sorter';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -26,29 +27,21 @@ const AcBeheerVoorzieningenVersie = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen-versie`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieningversie/voorzieningversie',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie',
+        [['_extend[]', 'kwetsbaarheden']],
+        null,
+        '/beheer/voorzieningen-versie'
       ).finally(() => setLoading(false));
+
       const jsonResponse = await response.json();
 
       const data = jsonResponse.results;
@@ -122,13 +115,9 @@ const AcBeheerVoorzieningenVersie = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.kwetsbaarheden?.[0]?.titel.localeCompare(
-              b?.kwetsbaarheden?.[0]?.titel
-            )
-          : b?.kwetsbaarheden?.[0]?.titel.localeCompare(
-              a?.kwetsbaarheden?.[0]?.titel
-            );
+        const aTitle = a?.kwetsbaarheden?.[0]?.titel;
+        const bTitle = b?.kwetsbaarheden?.[0]?.titel;
+        return ConSorterLogic(aTitle, bTitle, direction);
       },
     },
   ];

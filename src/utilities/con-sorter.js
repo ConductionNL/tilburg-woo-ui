@@ -1,6 +1,6 @@
 /**
  * Sorts data based on a specified key and direction
- * 
+ *
  * @param {Array} data - The array of objects to sort
  * @param {string} sortKey - The key to sort by
  * @param {boolean|null} sortDirection - The direction to sort (true = ascending, false = descending, null = no sort)
@@ -18,51 +18,56 @@ const ConSorter = (data, sortKey, sortDirection) => {
   return copyData.sort((a, b) => {
     const aVal = a[sortKey];
     const bVal = b[sortKey];
-
-    // Handle null/undefined values and empty strings
-    if (aVal == null || aVal === '') return sortDirection ? 1 : -1;
-    if (bVal == null || bVal === '') return sortDirection ? -1 : 1;
-
-    // Handle different types
-    if (typeof aVal !== typeof bVal) {
-      return sortDirection
-        ? String(aVal).localeCompare(String(bVal))
-        : String(bVal).localeCompare(String(aVal));
-    }
-
-    // Sort based on type
-    if (typeof aVal === 'string') {
-      return sortDirection
-        ? aVal.localeCompare(bVal)
-        : bVal.localeCompare(aVal);
-    }
-    
-    if (typeof aVal === 'number' || typeof aVal === 'boolean') {
-      return sortDirection
-        ? aVal - bVal
-        : bVal - aVal;
-    }
-
-    // Sort arrays based by joining and then doing string comparison
-    if (Array.isArray(aVal)) {
-      const _aVal = aVal.join('');
-      const _bVal = bVal.join('');
-      return sortDirection
-        ? _aVal.localeCompare(_bVal)
-        : _bVal.localeCompare(_aVal);
-    }
-
-    // Sort objects based on number of keys
-    if (typeof aVal === 'object') {
-      const aKeys = Object.keys(aVal);
-      const bKeys = Object.keys(bVal);
-      return sortDirection
-        ? aKeys.length - bKeys.length
-        : bKeys.length - aKeys.length;
-    }
-
-    return 0;
+    return ConSorterLogic(aVal, bVal, sortDirection);
   });
 };
 
-export { ConSorter };
+/**
+ * The sorting logic that drives the ConSorter.
+ *
+ * @param {*} a - The first object to compare
+ * @param {*} b - The second object to compare
+ * @param {boolean} sortDirection - The direction to sort (true = ascending, false = descending)
+ * @note This function does not handle the direction value `null`, unlike its big brother ConSorter.
+ * @returns {number} - The result of the comparison (1, 0, -1)
+ */
+const ConSorterLogic = (a, b, sortDirection) => {
+  // Handle null/undefined values and empty strings
+  if (a == null || a === '') return sortDirection ? 1 : -1;
+  if (b == null || b === '') return sortDirection ? -1 : 1;
+
+  // Handle different types
+  if (typeof a !== typeof b) {
+    return sortDirection
+      ? String(a).localeCompare(String(b))
+      : String(b).localeCompare(String(a));
+  }
+
+  // Sort based on type
+  if (typeof a === 'string') {
+    return sortDirection ? a.localeCompare(b) : b.localeCompare(a);
+  }
+
+  if (typeof a === 'number' || typeof a === 'boolean') {
+    return sortDirection ? a - b : b - a;
+  }
+
+  // Sort arrays based by joining and then doing string comparison
+  if (Array.isArray(a)) {
+    const _a = a.join('');
+    const _b = b.join('');
+    return sortDirection ? _a.localeCompare(_b) : _b.localeCompare(_a);
+  }
+
+  // Sort objects based on number of keys
+  if (typeof a === 'object') {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    return sortDirection ? aKeys.length - bKeys.length : bKeys.length - aKeys.length;
+  }
+
+  return 0;
+};
+
+export default ConSorter;
+export { ConSorter, ConSorterLogic };

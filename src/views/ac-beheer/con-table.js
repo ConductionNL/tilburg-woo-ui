@@ -55,7 +55,8 @@ import clsx from 'clsx';
  *     sortComparator: (a, b, direction) => {
  *       // direction: true = ascending, false = descending, null = no sort
  *       if (direction === null) return 0;
- *       return direction ? a.myKey - b.myKey : b.myKey - a.myKey;
+ *       return ConSorterLogic(a.myKey, b.myKey, direction);
+ *       // or custom logic
  *     }
  *   }
  *   ```

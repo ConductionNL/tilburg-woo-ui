@@ -16,7 +16,8 @@ import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
 import { AcButton } from '@src/molecules';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { ConSorterLogic } from '@src/utilities/con-sorter';
 
 const AcBeheerDienst = () => {
   const navigate = useNavigate();
@@ -24,29 +25,25 @@ const AcBeheerDienst = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/diensten`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieningaanbod/voorzieningaanbod',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod',
+        [
+          ['_extend[]', 'voorziening'],
+          ['_extend[]', 'leverancier'],
+          ['_extend[]', 'ondersteundeStandaarden'],
+        ],
+        null,
+        '/beheer/voorzieningen-aanbod'
       ).finally(() => setLoading(false));
+
       const jsonResponse = await response.json();
 
       const data = jsonResponse.results;
@@ -54,7 +51,6 @@ const AcBeheerDienst = () => {
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
-
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -88,24 +84,31 @@ const AcBeheerDienst = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.voorziening?.naam.localeCompare(b?.voorziening?.naam)
-          : b?.voorziening?.naam.localeCompare(a?.voorziening?.naam);
+
+        const nameA = a?.voorziening?.naam || '';
+        const nameB = b?.voorziening?.naam || '';
+
+        return ConSorterLogic(nameA, nameB, direction);
       },
     },
     {
-      id: 'leverancierId',
-      label: 'Leverancier ID',
+      id: 'leverancier',
+      label: 'Leverancier',
       key: '',
       customContent: (row) => {
-        // TODO: replace with actual voorziening name
-        return row?.leverancier?.id || '-';
+        return (
+          <AcColumn key={row.id}>
+            <span>{row?.leverancier?.organisatienaam ?? '-'}</span>
+          </AcColumn>
+        );
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.leverancier?.id.localeCompare(b?.leverancier?.id)
-          : b?.leverancier?.id.localeCompare(a?.leverancier?.id);
+
+        const idA = a?.leverancier?.id || '';
+        const idB = b?.leverancier?.id || '';
+
+        return ConSorterLogic(idA, idB, direction);
       },
     },
     {
@@ -117,13 +120,11 @@ const AcBeheerDienst = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.leverancier?.contactgegevens?.email.localeCompare(
-              b?.leverancier?.contactgegevens?.email
-            )
-          : b?.leverancier?.contactgegevens?.email.localeCompare(
-              a?.leverancier?.contactgegevens?.email
-            );
+
+        const emailA = a?.leverancier?.contactgegevens?.email || '';
+        const emailB = b?.leverancier?.contactgegevens?.email || '';
+
+        return ConSorterLogic(emailA, emailB, direction);
       },
     },
     {
@@ -146,13 +147,10 @@ const AcBeheerDienst = () => {
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
 
-        if (!a.ondersteundeStandaarden?.length) return direction ? -1 : 1;
-        if (!b.ondersteundeStandaarden?.length) return direction ? 1 : -1;
-
         const aName = a.ondersteundeStandaarden[0].naam;
         const bName = b.ondersteundeStandaarden[0].naam;
 
-        return direction ? aName.localeCompare(bName) : bName.localeCompare(aName);
+        return ConSorterLogic(aName, bName, direction);
       },
     },
     {
@@ -176,7 +174,7 @@ const AcBeheerDienst = () => {
       key: 'certificeringen',
     },
   ];
-  const defaultHeaders = ['name', 'voorzieningName', 'email', 'productPage'];
+  const defaultHeaders = ['name', 'voorzieningName', 'email', 'ondersteunendeStandaarden'];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );

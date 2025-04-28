@@ -1,10 +1,18 @@
 import { getCookie } from '@src/utilities';
 import { useNavigate } from 'react-router';
 
-const useNextcloudRequests = (cb = () => {}) => {
+export default function useNextcloudRequests() {
   const navigate = useNavigate();
 
-  const makeRequest = async (url, queryParams, headers, redirectUrl) => {
+  /**
+   * Make a request to the Nextcloud API
+   * @param {string} url - The URL to make the request to
+   * @param {string[][]} queryParams - The query parameters to add to the request, array of `[key, value]`.
+   * @param {Object} fetchOptions - The fetch options to use
+   * @param {string} redirectUrl - The URL to redirect to if the user is not logged in
+   * @returns {Promise<Response>} - The response from the request
+   */
+  const makeRequest = async (url, queryParams, fetchOptions = {}, redirectUrl) => {
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -17,17 +25,18 @@ const useNextcloudRequests = (cb = () => {}) => {
       : '';
 
     const response = await fetch(url + queryParamsString, {
+      ...fetchOptions,
+      method: fetchOptions?.method || 'GET',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
-        ...headers,
+        ...fetchOptions?.headers,
       },
+      body: fetchOptions?.body,
     });
 
     return response;
   };
 
   return { makeRequest };
-};
-
-export default useNextcloudRequests;
+}

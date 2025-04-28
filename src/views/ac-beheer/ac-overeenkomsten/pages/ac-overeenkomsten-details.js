@@ -12,6 +12,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
@@ -24,26 +25,20 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/overeenkomsten/${id}`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/contract/contract/${id}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        `https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract/${id}`,
+        [
+          ['_extend[]', 'voorzieningAanbod'],
+          ['_extend[]', 'voorzieningGebruik'],
+        ],
+        null,
+        `/beheer/contracten/${id}`
       );
 
       if (!response.ok) {
