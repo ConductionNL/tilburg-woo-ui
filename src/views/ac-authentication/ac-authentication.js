@@ -72,7 +72,7 @@ const AcAuthentication = () => {
   //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
   //     ? new URL(config.authentication.baseURL).origin + '/index.php'
   //     : new URL(config.authentication.baseURL).origin;
-  const authenticationHostname = 'https://vng.accept.commonground.nu';
+  const authenticationHostname = 'https://vng.test.commonground.nu';
 
   // TODO: do not make this hardcoded
   const [clientId, setClientId] = useState('QP2dpVmW5sl04tRoC4ixQ75Y52Rkz2Gj1Hi4jaLToe8dHlAROToLu2uPdjNaDsKX');
