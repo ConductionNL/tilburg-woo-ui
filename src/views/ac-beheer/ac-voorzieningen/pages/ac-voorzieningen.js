@@ -41,7 +41,6 @@ const AcBeheerVoorzieningen = () => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          //   '/openregister/api/objects/voorzieningen/voorziening',
           '/openregister/api/objects/voorzieningen/voorziening',
         {
           headers: {

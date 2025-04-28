@@ -36,7 +36,7 @@ const AcDeleteVoorzieningAanbodModal = ({
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/5/12/${voorziening.id}`,
+            `/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${voorziening.id}`,
           {
             method: 'DELETE',
             headers: {

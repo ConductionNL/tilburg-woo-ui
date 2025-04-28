@@ -55,7 +55,7 @@ const AcOrganisatieFormModal = ({
     }
 
     const response = await fetch(
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/9/16',
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie',
       {
         headers: {
           'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ const AcOrganisatieFormModal = ({
 
     try {
       const baseUrl =
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/9/16';
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie';
 
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;

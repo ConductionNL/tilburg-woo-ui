@@ -136,7 +136,7 @@ const AcContractFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/11/18';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract';
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${contractFormData.id}` : baseUrl;

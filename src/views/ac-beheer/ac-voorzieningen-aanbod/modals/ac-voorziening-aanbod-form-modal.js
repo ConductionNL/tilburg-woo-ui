@@ -81,7 +81,7 @@ const AcVoorzieningAanbodFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/5/12';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod';
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningAanbodFormData.id}` : baseUrl;
 

@@ -69,7 +69,7 @@ const AcVoorzieningVersieFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/6/13';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie';
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;
