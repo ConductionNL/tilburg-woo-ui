@@ -16,6 +16,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -26,10 +27,23 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/organisaties/${id}`);
+        return;
+      }
+
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/organisaties/${id}`
+        'https://vng.test.commonground.nu/apps' +
+          `/openregister/api/objects/organisatie/organisatie/${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (!response.ok) {

@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,8 @@ import ConTable from '../../con-table';
 import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -21,14 +26,28 @@ const AcBeheerVoorzieningenVersie = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const filterHeadersDrawerRef = useRef(null);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen-versie`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningversies'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/voorzieningversie/voorzieningversie',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -54,71 +73,69 @@ const AcBeheerVoorzieningenVersie = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'naam',
     },
     {
-      label: 'Omschrijving',
-      key: 'omschrijving',
-    },
-    {
+      id: 'releaseNotes',
       label: 'Release Notes',
       key: 'releaseNotes',
     },
     {
-      label: 'Nummer',
-      key: 'nummer',
+      id: 'versionNumber',
+      label: 'Versie nummer',
+      key: 'versienummer',
     },
     {
+      id: 'releaseDate',
+      label: 'Release datum',
+      key: 'releaseDatum',
+    },
+    {
+      id: 'status',
       label: 'Status',
       key: 'status',
     },
     {
-      label: 'Voorziening Aanbod ID',
-      key: 'voorzieningaanbodId',
+      id: 'endDateSupport',
+      label: 'Eind datum ondersteuning',
+      key: 'eindDatumOndersteuning',
     },
     {
-      label: 'Acties',
+      id: 'systemRequirements',
+      label: 'Systeemvereisten',
+      key: 'systeemvereisten',
+    },
+    {
+      id: 'kwetsbaarheden',
+      label: 'Kwetsbaarheden',
       key: '',
-      customContent: (row) => (
-        <AcFlex column spacing='xs'>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              navigate(
-                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-versie', row.id)
-              );
-            }}
-          >
-            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('edit');
-            }}
-          >
-            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('delete');
-            }}
-          >
-            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-          </button>
-        </AcFlex>
-      ),
+      customContent: (row) => {
+        return (
+          row?.kwetsbaarheden
+            ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
+            .join(', ') || '-'
+        );
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.kwetsbaarheden?.[0]?.titel.localeCompare(
+              b?.kwetsbaarheden?.[0]?.titel
+            )
+          : b?.kwetsbaarheden?.[0]?.titel.localeCompare(
+              a?.kwetsbaarheden?.[0]?.titel
+            );
+      },
     },
   ];
+  const defaultHeaders = ['name', 'versionNumber', 'releaseDate', 'status'];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -147,6 +164,12 @@ const AcBeheerVoorzieningenVersie = () => {
           >
             <Heading>Beheer Voorzieningen Versie</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -193,7 +216,52 @@ const AcBeheerVoorzieningenVersie = () => {
 
           <ConTable
             data={data}
-            tableHeaders={tableHeaders}
+            tableHeaders={[
+              ...tableHeaders,
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                customContent: (row) => (
+                  <AcFlex column spacing='xs'>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        navigate(
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
+                            'voorzieningen-versie',
+                            row.id
+                          )
+                        );
+                      }}
+                    >
+                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('edit');
+                      }}
+                    >
+                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('delete');
+                      }}
+                    >
+                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+                    </button>
+                  </AcFlex>
+                ),
+              },
+            ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
@@ -228,6 +296,13 @@ const AcBeheerVoorzieningenVersie = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

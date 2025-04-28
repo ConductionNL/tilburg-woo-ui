@@ -52,8 +52,8 @@ const AcDeleteKwetsbaarhedenModal = ({
       kwetsbaarheden.forEach(async (kwetsbaarheid) => {
         const response = await fetch(
           //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/kwetsbaarheden/${kwetsbaarheid.id}`,
+          'https://vng.test.commonground.nu/apps' +
+            `/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${kwetsbaarheid.id}`,
           {
             method: 'DELETE',
             headers: {

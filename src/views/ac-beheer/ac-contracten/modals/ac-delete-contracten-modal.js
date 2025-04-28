@@ -50,8 +50,8 @@ const AcDeleteContractenModal = ({
       contracten.forEach(async (contract) => {
         const response = await fetch(
           //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/contracts/${contract.id}`,
+          'https://vng.test.commonground.nu/apps' +
+            `/openregister/api/objects/contract/contract/${contract.id}`,
           {
             method: 'DELETE',
             headers: {

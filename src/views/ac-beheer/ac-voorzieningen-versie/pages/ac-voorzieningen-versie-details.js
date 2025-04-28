@@ -16,6 +16,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -26,10 +27,23 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen-versie/${id}`);
+        return;
+      }
+
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningversies/${id}`
+        'https://vng.test.commonground.nu/apps' +
+          `/openregister/api/objects/voorzieningversie/voorzieningversie/${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (!response.ok) {

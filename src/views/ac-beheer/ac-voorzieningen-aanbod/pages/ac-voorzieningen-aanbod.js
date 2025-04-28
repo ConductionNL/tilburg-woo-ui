@@ -8,12 +8,15 @@ import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import { SecondaryActionButton } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcVoorzieningAanbodFormModal from '../modals/ac-voorziening-aanbod-form-modal';
 import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
 import ConActionMenu from '../../con-action-menu';
 import { AcButton } from '@src/molecules';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerVoorzieningenAanbod = () => {
   const navigate = useNavigate();
@@ -21,14 +24,28 @@ const AcBeheerVoorzieningenAanbod = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const filterHeadersDrawerRef = useRef(null);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen-aanbod`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningaanboden'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/voorzieningaanbod/voorzieningaanbod',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -37,6 +54,7 @@ const AcBeheerVoorzieningenAanbod = () => {
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
+
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -54,67 +72,114 @@ const AcBeheerVoorzieningenAanbod = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
+    // TODO: name is to be removed - https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/documentation/website/static/api/voorzieningen-api-specification.json#schema/Voorzieningaanbod
+    // {
+    //   id: 'name',
+    //   label: 'Naam',
+    //   key: 'naam',
+    // },
     {
-      label: 'Naam',
-      key: 'naam',
+      id: 'voorzieningName',
+      label: 'Voorziening naam',
+      key: '',
+      customContent: (row) => {
+        return row?.voorziening?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorziening?.naam.localeCompare(b?.voorziening?.naam)
+          : b?.voorziening?.naam.localeCompare(a?.voorziening?.naam);
+      },
     },
     {
-      label: 'Omschrijving',
-      key: 'omschrijving',
+      id: 'leverancierId',
+      label: 'Leverancier ID',
+      key: '',
+      customContent: (row) => {
+        // TODO: replace with actual voorziening name
+        return row?.leverancier?.id || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.leverancier?.id.localeCompare(b?.leverancier?.id)
+          : b?.leverancier?.id.localeCompare(a?.leverancier?.id);
+      },
     },
     {
-      label: 'Type',
-      key: 'type',
+      id: 'email',
+      label: 'Email',
+      key: '',
+      customContent: (row) => {
+        return row?.leverancier?.contactgegevens?.email || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.leverancier?.contactgegevens?.email.localeCompare(
+              b?.leverancier?.contactgegevens?.email
+            )
+          : b?.leverancier?.contactgegevens?.email.localeCompare(
+              a?.leverancier?.contactgegevens?.email
+            );
+      },
     },
     {
+      id: 'ondersteunendeStandaarden',
+      label: 'Ondersteunende standaard',
+      key: 'ondersteundeStandaarden',
+      customContent: (row) => {
+        if (!row?.ondersteundeStandaarden) return 'N/A';
+        if (!row?.ondersteundeStandaarden?.length) return '-';
+        return row?.ondersteundeStandaarden?.map((standaard) => {
+          return (
+            <AcColumn key={standaard.id}>
+              <span>
+                {standaard.naam} / {standaard.status}
+              </span>
+            </AcColumn>
+          );
+        });
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+
+        if (!a.ondersteundeStandaarden?.length) return direction ? -1 : 1;
+        if (!b.ondersteundeStandaarden?.length) return direction ? 1 : -1;
+
+        const aName = a.ondersteundeStandaarden[0].naam;
+        const bName = b.ondersteundeStandaarden[0].naam;
+
+        return direction ? aName.localeCompare(bName) : bName.localeCompare(aName);
+      },
+    },
+    {
+      id: 'productPage',
       label: 'Productpagina',
       key: 'productpagina',
     },
     {
-      label: 'Ondersteuningsmodel',
-      key: 'ondersteuningsmodel',
+      id: 'supportOptions',
+      label: 'Ondersteuningsopties',
+      key: 'ondersteuningsopties',
     },
     {
-      label: 'Acties',
-      key: '',
-      customContent: (row) => (
-        <AcFlex column spacing='xs'>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              navigate(
-                NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen-aanbod', row.id)
-              );
-            }}
-          >
-            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('edit');
-            }}
-          >
-            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('delete');
-            }}
-          >
-            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-          </button>
-        </AcFlex>
-      ),
+      id: 'priceModel',
+      label: 'Prijsmodel',
+      key: 'prijsmodel',
+    },
+    {
+      id: 'certifications',
+      label: 'Certificeringen',
+      key: 'certificeringen',
     },
   ];
+  const defaultHeaders = ['name', 'voorzieningName', 'email', 'productPage'];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -143,6 +208,12 @@ const AcBeheerVoorzieningenAanbod = () => {
           >
             <Heading>Beheer Voorzieningen Aanbod</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <AcButton
                 style='button'
                 icon={<VISUALS.PLUS />}
@@ -193,7 +264,52 @@ const AcBeheerVoorzieningenAanbod = () => {
 
           <ConTable
             data={data}
-            tableHeaders={tableHeaders}
+            tableHeaders={[
+              ...tableHeaders,
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                customContent: (row) => (
+                  <AcFlex column spacing='xs'>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        navigate(
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
+                            'voorzieningen-aanbod',
+                            row.id
+                          )
+                        );
+                      }}
+                    >
+                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('edit');
+                      }}
+                    >
+                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('delete');
+                      }}
+                    >
+                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+                    </button>
+                  </AcFlex>
+                ),
+              },
+            ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
@@ -228,6 +344,13 @@ const AcBeheerVoorzieningenAanbod = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

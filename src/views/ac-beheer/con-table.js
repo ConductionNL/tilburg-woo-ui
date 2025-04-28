@@ -33,6 +33,7 @@ import clsx from 'clsx';
  * - Arrays: joined with commas
  * - Objects: converted to JSON strings
  * - Primitives: displayed as-is
+ * - Booleans: displayed as 'Ja' or 'Nee'
  * - Cells with no data will display a `-`
  * - Custom content (if provided) overrides automatic handling and the `-` for empty cells
  *
@@ -40,12 +41,24 @@ import clsx from 'clsx';
  * - Enable sorting by setting `showSortButtons` prop to true
  * - Sort buttons only appear for headers that have a `key` property defined
  * - Click cycle: ascending -> descending -> no sort
- * - Handles different data types appropriately:
+ * - Default sorting handles different data types appropriately:
  *   - Strings: alphabetical order
  *   - Numbers / booleans: numerical order
  *   - Arrays: joined and compared as strings
  *   - Objects: compared by number of keys
  *   - Null/undefined/empty strings: sorted to end/start based on direction
+ * - Custom sorting can be defined per header using the `sortComparator` property:
+ *   ```jsx
+ *   {
+ *     label: "Custom Sort",
+ *     key: "myKey",
+ *     sortComparator: (a, b, direction) => {
+ *       // direction: true = ascending, false = descending, null = no sort
+ *       if (direction === null) return 0;
+ *       return direction ? a.myKey - b.myKey : b.myKey - a.myKey;
+ *     }
+ *   }
+ *   ```
  *
  * **Custom Headers and Content:**
  * 1. **Custom Headers**
@@ -76,15 +89,18 @@ import clsx from 'clsx';
  *   data={[{ name: "John", age: 30 }]}
  *   tableHeaders={[
  *     {
+ *       id: "name",
  *       label: "Name",
  *       key: "name"
  *     },
  *     {
+ *       id: "age",
  *       label: "", // not needed with a customHeader
  *       key: "age",
  *       customHeader: <div className="age-header">Age (years)</div>
  *     },
  *     {
+ *       id: "actions",
  *       label: "Actions",
  *       key: "", // not needed with a customContent
  *       customContent: (row) => <button onClick={() => edit(row)}>Edit</button>
@@ -102,11 +118,20 @@ import clsx from 'clsx';
  * @param {boolean} props.renderSelectRowButtons - Whether to render the select row buttons.
  * @param {number} props.truncateLines - The number of lines to truncate the text to. Default is 0 (no truncation).
  * @param {(selectedRows: any[]) => void} props.getSelectedRows - The function to call when the selected rows change.
- * @param {{ label?: string, key?: string, customHeader?: React.ReactElement | string | (() => React.ReactElement | string), customContent?: React.ReactElement | string | ((row: any) => React.ReactElement | string) }[]} props.tableHeaders - The headers to display in the table. (array of objects)
- * @param {string} props.tableHeaders.label - The label to display in the table header.
- * @param {string} props.tableHeaders.key - The key to get from the data object to display in the table cell. Required for sorting functionality.
- * @param {React.ReactElement | string | (() => React.ReactElement | string)} props.tableHeaders.customHeader - The custom header to display in the table cell.
- * @param {React.ReactElement | string | ((row: any) => React.ReactElement | string)} props.tableHeaders.customContent - The custom content to display in the table cell.
+ * @param {{
+ *      id: string,
+ *      label?: string,
+ *      key?: string,
+ *      customHeader?: React.ReactElement | string | (() => React.ReactElement | string),
+ *      customContent?: React.ReactElement | string | ((row: any) => React.ReactElement | string),
+ *      sortComparator?: (a: any, b: any, direction: boolean | null) => number
+ * }[]} props.tableHeaders - The headers to display in the table. (array of objects)
+ * @param props.tableHeaders.id - The unique identifier for the header. Required.
+ * @param props.tableHeaders.label - The label to display in the table header.
+ * @param props.tableHeaders.key - The key to get from the data object to display in the table cell. Required for sorting functionality.
+ * @param props.tableHeaders.customHeader - The custom header to display in the table cell.
+ * @param props.tableHeaders.customContent - The custom content to display in the table cell.
+ * @param props.tableHeaders.sortComparator - The custom sort function to display in the table cell. for direction true = ascending, false = descending, null = no sort
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
@@ -134,8 +159,9 @@ const ConTable = (
   /**
    * Header sort state.
    * Holds an array of two values:
-   * - The first value is the key to sort by.
+   * - The first value is the header id to sort by.
    * - The second value is the direction to sort by.
+   * - The key associated with the header id is used to sort the data.
    * - If the first or second value is null, the data is not sorted.
    * - If the second value is true, the data is sorted in ascending order.
    * - If the second value is false, the data is sorted in descending order.
@@ -144,10 +170,20 @@ const ConTable = (
 
   // make a deepclone of the data to avoid mutating the original data
   const data = useMemo(() => JSON.parse(JSON.stringify(_data)), [_data]);
-  const sortedData = useMemo(
-    () => ConSorter(data, headerSort[0], headerSort[1]),
-    [data, headerSort]
-  );
+  const sortedData = useMemo(() => {
+    // if no id is set, do not sort
+    if (!headerSort[0]) return data;
+
+    const h = tableHeaders.find((h) => h.id === headerSort[0]);
+
+    // if a sort comparator is set, use it
+    if (h?.sortComparator && typeof h.sortComparator === 'function') {
+      return [...data].sort((a, b) => h.sortComparator(a, b, headerSort[1]));
+    }
+
+    // if no sort comparator is set, use the default sort comparator
+    return ConSorter(data, h.key, headerSort[1]);
+  }, [data, headerSort]);
 
   // list of selected rows as a full data object
   const [selectedRows, setSelectedRows] = useState([]);
@@ -270,6 +306,10 @@ const ConTable = (
         return JSON.stringify(row[header.key]);
       }
 
+      if (typeof row[header.key] === 'boolean') {
+        return row[header.key] ? 'Ja' : 'Nee';
+      }
+
       return row[header.key];
     },
     [renderCustomElement, removeUniqueSymbol]
@@ -289,48 +329,65 @@ const ConTable = (
               />
             </TableCell>
           )}
-          {tableHeaders.map((header, index) => (
-            <TableCell key={index}>
-              <div 
-                className={clsx(
-                  'con-table-header-content',
-                  (header.key && showSortButtons) && 'con-table-header-content-sortable'
-                )}
-                onClick={() => {
-                  if (!header.key || !showSortButtons) return;
-                  
-                  if (headerSort[0] !== header.key || headerSort[1] === null) {
-                    setHeaderSort([header.key, true]);
-                  } else if (headerSort[1] === true) {
-                    setHeaderSort([header.key, false]); 
-                  } else {
-                    setHeaderSort([header.key, null]);
-                  }
-                }}
-              >
-                <span>
-                  {header.customHeader ? (
-                    renderCustomElement(header.customHeader)
-                  ) : (
-                    <b>{header.label}</b>
+          {tableHeaders.map((header, index) => {
+            // Do not render headers without an id, a lot of functionality depends on it
+            if (!header.id) {
+              console.error(
+                `[ConTable::tableHeader] Header at index ${index} (label: ${header.label}) is missing required 'id' property`
+              );
+              return null;
+            }
+
+            const isSortable =
+              header.key ||
+              (!!header.sortComparator &&
+                typeof header.sortComparator === 'function');
+
+            return (
+              <TableCell key={header.id}>
+                <div
+                  className={clsx(
+                    'con-table-header-content',
+                    isSortable &&
+                      showSortButtons &&
+                      'con-table-header-content-sortable'
                   )}
-                </span>
-                {showSortButtons && !!header.key && (
-                  <span className='con-table-header-content__sort-button-container'>
-                    {(headerSort[0] !== header.key || headerSort[1] === null) && (
-                      <VISUALS.SORT className="con-table-sort-icon-non" />
-                    )}
-                    {headerSort[0] === header.key && headerSort[1] === true && (
-                      <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
-                    )}
-                    {headerSort[0] === header.key && headerSort[1] === false && (
-                      <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
+                  onClick={() => {
+                    if (!isSortable || !showSortButtons) return;
+
+                    if (headerSort[0] !== header.id || headerSort[1] === null) {
+                      setHeaderSort([header.id, true]);
+                    } else if (headerSort[1] === true) {
+                      setHeaderSort([header.id, false]);
+                    } else {
+                      setHeaderSort([header.id, null]);
+                    }
+                  }}
+                >
+                  <span>
+                    {header.customHeader ? (
+                      renderCustomElement(header.customHeader)
+                    ) : (
+                      <b>{header.label}</b>
                     )}
                   </span>
-                )}
-              </div>
-            </TableCell>
-          ))}
+                  {showSortButtons && isSortable && (
+                    <span className='con-table-header-content__sort-button-container'>
+                      {(headerSort[0] !== header.id || headerSort[1] === null) && (
+                        <VISUALS.SORT className='con-table-sort-icon-non' />
+                      )}
+                      {headerSort[0] === header.id && headerSort[1] === true && (
+                        <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
+                      )}
+                      {headerSort[0] === header.id && headerSort[1] === false && (
+                        <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
+                      )}
+                    </span>
+                  )}
+                </div>
+              </TableCell>
+            );
+          })}
         </TableRow>
       </thead>
     );
@@ -371,25 +428,30 @@ const ConTable = (
             />
           </TableCell>
         )}
-        {tableHeaders.map((header, headerIndex) => (
-          <TableCell
-            data-tooltip-id={
-              isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
-                ? TOOLTIP_ID
-                : null
-            }
-            data-tooltip-content={
-              isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
-                ? row[header.key]
-                : null
-            }
-            key={headerIndex}
-          >
-            <div id={`table-cell-${headerIndex}`} style={getTruncateStyle()}>
-              {handleDataCellRender(header, row)}
-            </div>
-          </TableCell>
-        ))}
+        {tableHeaders.map((header, headerIndex) => {
+          // Do not render headers content where header does not have an id
+          if (!header.id) return null;
+
+          return (
+            <TableCell
+              data-tooltip-id={
+                isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
+                  ? TOOLTIP_ID
+                  : null
+              }
+              data-tooltip-content={
+                isTextClamped(document.getElementById(`table-cell-${headerIndex}`))
+                  ? row[header.key]
+                  : null
+              }
+              key={header.id}
+            >
+              <div id={`table-cell-${headerIndex}`} style={getTruncateStyle()}>
+                {handleDataCellRender(header, row)}
+              </div>
+            </TableCell>
+          );
+        })}
       </TableRow>
     ));
   }, [

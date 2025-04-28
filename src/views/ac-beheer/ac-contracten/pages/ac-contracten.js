@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,8 @@ import ConTable from '../../con-table';
 import AcContractFormModal from '../modals/ac-contract-form-modal';
 import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerContracten = () => {
   const navigate = useNavigate();
@@ -21,14 +26,28 @@ const AcBeheerContracten = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const filterHeadersDrawerRef = useRef(null);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/contracten`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/contracts'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/contract/contract',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -54,69 +73,128 @@ const AcBeheerContracten = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
+      label: 'Naam',
+      key: 'naam',
+    },
+    {
+      id: 'contractNummer',
       label: 'Contract nummer',
       key: 'contractNummer',
     },
     {
+      id: 'contractType',
       label: 'Contract type',
       key: 'contractType',
     },
     {
+      id: 'status',
       label: 'Status',
       key: 'status',
     },
     {
+      id: 'opmerkingen',
+      label: 'Opmerkingen',
+      key: 'opmerkingen',
+    },
+    {
+      id: 'startDate',
       label: 'Start datum',
       key: 'startDatum',
     },
     {
+      id: 'endDate',
       label: 'Eind datum',
       key: 'eindDatum',
     },
     {
+      id: 'voorzieningAanbodNaam',
+      label: 'Voorziening aanbod naam',
+      key: 'voorzieningAanbod',
+      customContent: (row) => {
+        return row?.voorzieningAanbod?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorzieningAanbod?.naam.localeCompare(b?.voorzieningAanbod?.naam)
+          : b?.voorzieningAanbod?.naam.localeCompare(a?.voorzieningAanbod?.naam);
+      },
+    },
+    {
+      id: 'voorzieningGebruikId',
+      label: 'Voorziening gebruik ID',
+      key: 'voorzieningGebruikId',
+      customContent: (row) => {
+        return row?.voorzieningAanbod?.id || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorzieningAanbod?.id.localeCompare(b?.voorzieningAanbod?.id)
+          : b?.voorzieningAanbod?.id.localeCompare(a?.voorzieningAanbod?.id);
+      },
+    },
+    {
+      id: 'costs',
+      label: 'Kosten',
+      key: 'kosten',
+    },
+    {
+      id: 'costsPeriod',
+      label: 'Kosten periode',
+      key: 'kostenPeriode',
+    },
+    {
+      id: 'documentReferentie',
       label: 'Document referentie',
       key: 'documentReferentie',
     },
     {
-      label: 'Acties',
-      key: '',
-      customContent: (row) => (
-        <AcFlex column spacing='xs'>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('contracten', row.id));
-            }}
-          >
-            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('edit');
-            }}
-          >
-            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('delete');
-            }}
-          >
-            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-          </button>
-        </AcFlex>
-      ),
+      id: 'contactPersonProvider',
+      label: 'contactpersoon Aanbieder',
+      key: 'contactpersoonAanbieder',
+      customContent: (row) => {
+        if (!row?.contactpersoonAanbieder) return 'N/A';
+        return row.contactpersoonAanbieder.naam;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.contactpersoonAanbieder?.naam.localeCompare(
+              b?.contactpersoonAanbieder?.naam
+            )
+          : b?.contactpersoonAanbieder?.naam.localeCompare(
+              a?.contactpersoonAanbieder?.naam
+            );
+      },
+    },
+    {
+      id: 'contactPersonUser',
+      label: 'contactpersoon Gebruiker',
+      key: 'contactpersoonGebruiker',
+      customContent: (row) => {
+        if (!row?.contactpersoonGebruiker) return 'N/A';
+        return row.contactpersoonGebruiker.naam;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a.contactpersoonGebruiker.naam.localeCompare(
+              b.contactpersoonGebruiker.naam
+            )
+          : b.contactpersoonGebruiker.naam.localeCompare(
+              a.contactpersoonGebruiker.naam
+            );
+      },
     },
   ];
+  const defaultHeaders = ['name', 'startDate', 'endDate', 'contactPersonProvider'];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -143,6 +221,12 @@ const AcBeheerContracten = () => {
           >
             <Heading>Beheer Contracten</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -189,7 +273,49 @@ const AcBeheerContracten = () => {
 
           <ConTable
             data={data}
-            tableHeaders={tableHeaders}
+            tableHeaders={[
+              ...tableHeaders,
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                customContent: (row) => (
+                  <AcFlex column spacing='xs'>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        navigate(
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('contracten', row.id)
+                        );
+                      }}
+                    >
+                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('edit');
+                      }}
+                    >
+                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('delete');
+                      }}
+                    >
+                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+                    </button>
+                  </AcFlex>
+                ),
+              },
+            ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
@@ -224,6 +350,13 @@ const AcBeheerContracten = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>
