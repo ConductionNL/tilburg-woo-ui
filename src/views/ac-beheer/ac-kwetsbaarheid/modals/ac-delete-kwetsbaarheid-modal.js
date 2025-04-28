@@ -2,24 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS, VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
 import {
-  Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -36,30 +24,21 @@ const AcDeleteKwetsbaarhedenModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const handleDeleteKwetsbaarheidOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
   const handleDeleteKwetsbaarheid = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      return;
-    }
-
     try {
       let deletePromises = [];
 
       kwetsbaarheden.forEach(async (kwetsbaarheid) => {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${kwetsbaarheid.id}`,
+        const response = await makeRequest(
+          `https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${kwetsbaarheid.id}`,
+          null,
           {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
           }
         );
 

@@ -18,7 +18,7 @@ import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
 import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -26,29 +26,21 @@ const AcBeheerApplicaties = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/applicaties`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieningen/voorziening',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening',
+        null,
+        null,
+        '/beheer/applicaties'
       ).finally(() => setLoading(false));
+
       const jsonResponse = await response.json();
 
       const data = jsonResponse.results;

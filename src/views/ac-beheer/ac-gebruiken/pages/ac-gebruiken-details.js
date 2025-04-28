@@ -12,6 +12,9 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
+import { NAVIGATE_TO } from '@src/constants/routes.constants';
+import { AcDrawer } from '@components';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
 import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
@@ -24,26 +27,17 @@ const AcBeheerGebruikenDetails = ({ id }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/gebruiken/${id}`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${id}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${id}`,
+        null,
+        null,
+        `/beheer/voorzieningen-gebruik/${id}`
       );
 
       if (!response.ok) {

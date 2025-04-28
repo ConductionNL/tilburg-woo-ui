@@ -5,8 +5,8 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
 import ReactSelect from 'react-select';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -16,6 +16,8 @@ const AcApplicatiesFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+
+  const { makeRequest } = useNextcloudRequests();
 
   const types = [
     { id: '270f7176-2bdc-4702-a037-0684b2487ab8', label: 'Voorziening' },
@@ -89,14 +91,6 @@ const AcApplicatiesFormModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      setError('Geen toegangstoken gevonden');
-      modalRef?.current?.close();
-      return;
-    }
-
     const baseUrl =
       'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening';
 
@@ -104,7 +98,7 @@ const AcApplicatiesFormModal = ({
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;
 
     try {
-      const response = await fetch(url, {
+      const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
           naam: applicatieFormData.name,
@@ -125,10 +119,6 @@ const AcApplicatiesFormModal = ({
             .split(/ *, */g)
             .filter(Boolean),
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (response.ok) {

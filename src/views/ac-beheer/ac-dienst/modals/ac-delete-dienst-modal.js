@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -21,28 +21,19 @@ const AcDeleteDienstModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const handleDeleteDienstOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
   const handleDeleteDienst = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      return;
-    }
-
     try {
       diensten.forEach(async (dienst) => {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/contract/contract/${contract.id}`,
+        const response = await makeRequest(
+          `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${dienst.id}`,
+          null,
           {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
           }
         );
       });

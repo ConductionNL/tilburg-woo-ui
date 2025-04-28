@@ -2,24 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
+import { AcFlex } from '@atoms';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -36,28 +21,19 @@ const AcDeleteVoorzieningVersieModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
   const handleDeleteVoorziening = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      return;
-    }
-
     try {
       voorzieningen.forEach(async (voorziening) => {
-        const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/voorzieningversie/voorzieningversie/${voorziening.id}`,
+        const response = await makeRequest(
+          `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie/${voorziening.id}`,
+          null,
           {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
           }
         );
       });

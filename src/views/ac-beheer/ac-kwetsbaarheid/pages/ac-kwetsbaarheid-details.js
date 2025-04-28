@@ -12,6 +12,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
@@ -24,25 +25,17 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/kwetsbaarheden/${id}`);
-        return;
-      }
-
-      const response = await fetch(
-        'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${id}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        `https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${id}`,
+        null,
+        null,
+        `/beheer/kwetsbaarheden/${id}`
       );
 
       if (!response.ok) {

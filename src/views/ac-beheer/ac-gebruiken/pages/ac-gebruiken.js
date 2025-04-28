@@ -18,7 +18,8 @@ import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
 import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
-import { getCookie } from '@src/utilities';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { ConSorterLogic } from '@src/utilities/con-sorter';
 
 const AcBeheerGebruiken = () => {
   const navigate = useNavigate();
@@ -26,29 +27,21 @@ const AcBeheerGebruiken = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const accessToken = getCookie('nextcloud_access_token');
 
-      if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/gebruiken`);
-        return;
-      }
-
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieninggebruik/voorzieninggebruik',
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      const response = await makeRequest(
+        'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik',
+        null,
+        null,
+        '/beheer/voorzieningen-gebruik'
       ).finally(() => setLoading(false));
+
       const jsonResponse = await response.json();
 
       const data = jsonResponse.results;
@@ -143,9 +136,7 @@ const AcBeheerGebruiken = () => {
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a?.beheerder?.naam.localeCompare(b?.beheerder?.naam)
-          : b?.beheerder?.naam.localeCompare(a?.beheerder?.naam);
+        return ConSorterLogic(a?.beheerder?.naam, b?.beheerder?.naam, direction);
       },
     },
   ];

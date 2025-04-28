@@ -5,8 +5,8 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
 import ReactSelect from 'react-select';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcOvereenkomstFormModal = ({
   overeenkomst,
@@ -37,6 +37,8 @@ const AcOvereenkomstFormModal = ({
     status: '',
     notes: '',
   });
+
+  const { makeRequest } = useNextcloudRequests();
 
   const contractTypes = [
     { id: 'SLA', label: 'SLA' },
@@ -127,14 +129,6 @@ const AcOvereenkomstFormModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      setError('Geen toegangstoken gevonden');
-      modalRef?.current?.close();
-      return;
-    }
-
     const baseUrl =
       'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract';
 
@@ -142,7 +136,7 @@ const AcOvereenkomstFormModal = ({
     const url = isEdit ? `${baseUrl}/${overeenkomstFormData.id}` : baseUrl;
 
     try {
-      const response = await fetch(url, {
+      const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
           voorzieningAanbod: overeenkomstFormData.provisionSupply,
@@ -165,10 +159,6 @@ const AcOvereenkomstFormModal = ({
           status: overeenkomstFormData.status,
           opmerkingen: overeenkomstFormData.notes,
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (response.ok) {
@@ -296,7 +286,10 @@ const AcOvereenkomstFormModal = ({
               headingLevel={5}
               label='Naam'
               type='text'
-              onBlur={handleEditOvereenkomstFieldChange('contactPersonProvider', 'name')}
+              onBlur={handleEditOvereenkomstFieldChange(
+                'contactPersonProvider',
+                'name'
+              )}
               value={overeenkomstFormData.contactPersonProvider.name}
             />
             <AcFormField
@@ -327,7 +320,10 @@ const AcOvereenkomstFormModal = ({
               headingLevel={5}
               label='Email'
               type='text'
-              onBlur={handleEditOvereenkomstFieldChange('contactPersonUser', 'email')}
+              onBlur={handleEditOvereenkomstFieldChange(
+                'contactPersonUser',
+                'email'
+              )}
               value={overeenkomstFormData.contactPersonUser.email}
             />
           </AcFlex>
@@ -344,7 +340,9 @@ const AcOvereenkomstFormModal = ({
           </label>
           <ReactSelect
             placeholder='Selecteer een contract type'
-            value={statuses?.find((option) => option.id === overeenkomstFormData.status)}
+            value={statuses?.find(
+              (option) => option.id === overeenkomstFormData.status
+            )}
             className='ac-beheer-select'
             onChange={(e) => {
               setOvereenkomstFormData((prev) => ({
