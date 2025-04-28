@@ -29,7 +29,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen/${id}`);
+        navigate(`/login?redirect_url=/beheer/applicaties/${id}`);
         return;
       }
 
@@ -172,7 +172,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/voorzieningen');
+                    navigate('/beheer/applicaties');
                   }}
                 />
               </AcFlex>

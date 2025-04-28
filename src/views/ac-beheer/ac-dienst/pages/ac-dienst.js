@@ -32,7 +32,7 @@ const AcBeheerDienst = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen-aanbod`);
+        navigate(`/login?redirect_url=/beheer/diensten`);
         return;
       }
 

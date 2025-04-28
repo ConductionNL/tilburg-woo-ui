@@ -34,7 +34,7 @@ const AcBeheerApplicaties = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen`);
+        navigate(`/login?redirect_url=/beheer/applicaties`);
         return;
       }
 

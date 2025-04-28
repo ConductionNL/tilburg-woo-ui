@@ -34,7 +34,7 @@ const AcBeheerOvereenkomsten = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/contracten`);
+        navigate(`/login?redirect_url=/beheer/overeenkomsten`);
         return;
       }
 
