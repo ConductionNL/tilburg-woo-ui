@@ -275,10 +275,7 @@ const AcBeheerDienst = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                            'voorzieningen-aanbod',
-                            row.id
-                          )
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('diensten', row.id)
                         );
                       }}
                     >

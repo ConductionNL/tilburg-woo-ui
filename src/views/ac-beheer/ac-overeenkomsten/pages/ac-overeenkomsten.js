@@ -286,7 +286,7 @@ const AcBeheerOvereenkomsten = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('contracten', row.id)
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('overeenkomsten', row.id)
                         );
                       }}
                     >

@@ -216,7 +216,7 @@ const AcBeheerApplicaties = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen', row.id)
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', row.id)
                         );
                       }}
                     >

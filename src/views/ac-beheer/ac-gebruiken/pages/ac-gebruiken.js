@@ -244,10 +244,7 @@ const AcBeheerGebruiken = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                            'voorzieningen-gebruik',
-                            row.id
-                          )
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruiken', row.id)
                         );
                       }}
                     >
