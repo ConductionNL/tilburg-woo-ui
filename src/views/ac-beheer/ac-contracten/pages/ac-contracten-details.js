@@ -37,7 +37,7 @@ const AcBeheerContractenDetails = ({ id }) => {
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/11/18/${id}`,
+          `/openregister/api/objects/contract/contract/${id}`,
         {
           headers: {
             'Content-Type': 'application/json',

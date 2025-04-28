@@ -36,7 +36,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
 
       const response = await fetch(
         'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/7/14/${id}`,
+          `/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${id}`,
         {
           headers: {
             'Content-Type': 'application/json',
