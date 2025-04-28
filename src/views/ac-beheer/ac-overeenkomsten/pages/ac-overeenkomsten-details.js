@@ -16,6 +16,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -26,10 +27,23 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/contracten/${id}`);
+        return;
+      }
+
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/contracts/${id}`
+        'https://vng.test.commonground.nu/apps' +
+          `/openregister/api/objects/contract/contract/${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (!response.ok) {

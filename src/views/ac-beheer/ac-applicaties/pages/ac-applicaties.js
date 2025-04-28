@@ -4,16 +4,21 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
+import {
+  PrimaryActionButton,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { AcDrawer, AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
 import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -21,14 +26,28 @@ const AcBeheerApplicaties = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const filterHeadersDrawerRef = useRef(null);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen`);
+        return;
+      }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/voorzieningen'
+        'https://vng.test.commonground.nu/apps' +
+          '/openregister/api/objects/voorzieningen/voorziening',
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       ).finally(() => setLoading(false));
       const jsonResponse = await response.json();
 
@@ -54,69 +73,58 @@ const AcBeheerApplicaties = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'naam',
     },
     {
+      id: 'description',
       label: 'Beschrijving',
       key: 'beschrijving',
     },
     {
+      id: 'category',
       label: 'Categorie',
       key: 'categorie',
     },
     {
-      label: 'Voorzienings type ID',
-      key: 'voorzieningstypeId',
-    },
-    {
+      id: 'functionalities',
       label: 'Functionaliteiten',
       key: 'functionaliteiten',
     },
     {
+      id: 'targetGroup',
       label: 'Doelgroep',
       key: 'doelgroep',
     },
     {
-      label: 'Acties',
-      key: '',
-      customContent: (row) => (
-        <AcFlex column spacing='xs'>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', row.id));
-            }}
-          >
-            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('edit');
-            }}
-          >
-            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('delete');
-            }}
-          >
-            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-          </button>
-        </AcFlex>
-      ),
+      id: 'referenceComponents',
+      label: 'Referentie componenten',
+      key: 'referentieComponenten',
+    },
+    {
+      id: 'standards',
+      label: 'Standaarden',
+      key: 'standaarden',
+    },
+    {
+      id: 'voorzieningstype',
+      label: 'Voorzienings type',
+      key: 'voorzieningstype',
     },
   ];
+  const defaultHeaders = [
+    'name',
+    'referenceComponents',
+    'standards',
+    'category',
+    'links',
+  ];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -143,6 +151,12 @@ const AcBeheerApplicaties = () => {
           >
             <Heading>Beheer Applicaties</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -189,7 +203,49 @@ const AcBeheerApplicaties = () => {
 
           <ConTable
             data={data}
-            tableHeaders={tableHeaders}
+            tableHeaders={[
+              ...tableHeaders,
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                customContent: (row) => (
+                  <AcFlex column spacing='xs'>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        navigate(
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen', row.id)
+                        );
+                      }}
+                    >
+                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('edit');
+                      }}
+                    >
+                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('delete');
+                      }}
+                    >
+                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+                    </button>
+                  </AcFlex>
+                ),
+              },
+            ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
@@ -224,6 +280,13 @@ const AcBeheerApplicaties = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

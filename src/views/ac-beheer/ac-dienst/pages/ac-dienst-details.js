@@ -16,6 +16,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcEditDienstModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -26,10 +27,23 @@ const AcBeheerDienstDetails = ({ id }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen-aanbod/${id}`);
+        return;
+      }
+
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningaanboden/${id}`
+        'https://vng.test.commonground.nu/apps' +
+          `/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (!response.ok) {

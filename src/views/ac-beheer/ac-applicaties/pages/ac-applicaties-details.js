@@ -15,6 +15,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
 import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
+import { getCookie } from '@src/utilities';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -25,10 +26,22 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const accessToken = getCookie('nextcloud_access_token');
+
+      if (!accessToken) {
+        navigate(`/login?redirect_url=/beheer/voorzieningen/${id}`);
+        return;
+      }
+
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/voorzieningen/${id}`
+        'https://vng.test.commonground.nu/apps' + `/openregister/api/objects/voorzieningen/voorziening/${id}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (!response.ok) {

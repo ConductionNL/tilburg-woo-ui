@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
@@ -14,6 +17,7 @@ import ConTable from '../../con-table';
 import AcGebruikerFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
 import ConActionMenu from '../../con-action-menu';
+import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
@@ -21,26 +25,33 @@ const AcBeheerGebruikers = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const filterHeadersDrawerRef = useRef(null);
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          '/openconnector/api/endpoint/gebruikers'
-      ).finally(() => setLoading(false));
-      const jsonResponse = await response.json();
+      // TODO: a gebruiker endpoint is missing
+      //   const response = await fetch(
+      //     //   config.authentication.baseURL +
+      //     'https://vng.test.commonground.nu/apps' +
+      //       '/openregister/api/objects/gebruiker/gebruiker'
+      //   ).finally(() => setLoading(false));
+      //   const jsonResponse = await response.json();
 
-      const data = jsonResponse.results;
+      //   const data = jsonResponse.results;
+      const data = [];
 
-      const errorResponse = jsonResponse.error;
+      //   const errorResponse = jsonResponse.error;
+      const errorResponse = null;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -54,71 +65,89 @@ const AcBeheerGebruikers = () => {
 
   const tableRef = useRef(null);
 
-  const tableHeaders = [
+  const headers = [
     {
+      id: 'name',
       label: 'Naam',
       key: 'voornaam',
       customContent: (row) => `${row.voornaam} ${row.achternaam}`,
     },
     {
+      id: 'status',
       label: 'Status',
       key: 'actief',
       customContent: (row) => <span>{row.actief ? 'Actief' : 'Inactief'}</span>,
     },
     {
+      id: 'active',
+      label: 'Actief',
+      key: 'actief',
+    },
+    {
+      id: 'lastActivity',
+      label: 'Laatste activiteit',
+      key: 'laatsteInlogdatum',
+    },
+    {
+      id: 'email',
       label: 'Email',
       key: 'email',
     },
     {
+      id: 'phoneNumber',
       label: 'Telefoonnummer',
       key: 'telefoonnummer',
     },
     {
+      id: 'username',
       label: 'Username',
       key: 'username',
     },
     {
+      id: 'functie',
       label: 'Functie',
       key: 'functie',
     },
     {
-      label: 'Acties',
-      key: '',
-      customContent: (row) => (
-        <AcFlex column spacing='xs'>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruikers', row.id));
-            }}
-          >
-            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('edit');
-            }}
-          >
-            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-          </button>
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              setSingleSelectedRow(row);
-              setOpenModal('delete');
-            }}
-          >
-            <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-          </button>
-        </AcFlex>
-      ),
+      id: 'organisatie',
+      label: 'Organisatie',
+      key: 'organisatie',
+    },
+    {
+      id: 'preferences',
+      label: 'Voorkeuren',
+      key: 'voorkeuren',
+      customContent: (row) => {
+        if (!row?.voorkeuren) return '-';
+        return `Taal: ${row.voorkeuren.taal}, Thema: ${row.voorkeuren.thema}`;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorkeuren?.taal.localeCompare(b?.voorkeuren?.taal)
+          : b?.voorkeuren?.taal.localeCompare(a?.voorkeuren?.taal);
+      },
+    },
+    {
+      id: 'rollen',
+      label: 'Rollen',
+      key: 'rollen',
+    },
+    {
+      id: 'createdAt',
+      label: 'Aanmaakdatum',
+      key: 'aanmaakdatum',
+    },
+    {
+      id: 'updatedAt',
+      label: 'Wijzigingsdatum',
+      key: 'wijzigingsdatum',
     },
   ];
+  const defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
+  const [tableHeaders, setTableHeaders] = useState(
+    headers.filter((header) => defaultHeaders.includes(header.id))
+  );
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -145,6 +174,12 @@ const AcBeheerGebruikers = () => {
           >
             <Heading>Beheer Gebruikers</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <SecondaryActionButton
+                onClick={() => filterHeadersDrawerRef.current.showModal()}
+              >
+                <VISUALS.FILTER />
+              </SecondaryActionButton>
+
               <PrimaryActionButton onClick={() => setOpenModal('add')}>
                 <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
               </PrimaryActionButton>
@@ -191,7 +226,49 @@ const AcBeheerGebruikers = () => {
 
           <ConTable
             data={data}
-            tableHeaders={tableHeaders}
+            tableHeaders={[
+              ...tableHeaders,
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                customContent: (row) => (
+                  <AcFlex column spacing='xs'>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        navigate(
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruikers', row.id)
+                        );
+                      }}
+                    >
+                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('edit');
+                      }}
+                    >
+                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                    </button>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedRow(row);
+                        setOpenModal('delete');
+                      }}
+                    >
+                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+                    </button>
+                  </AcFlex>
+                ),
+              },
+            ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
@@ -226,6 +303,13 @@ const AcBeheerGebruikers = () => {
               tableRef.current.resetSelectedRows();
               fetchData();
             }}
+          />
+
+          <ConFilterHeadersDrawer
+            ref={filterHeadersDrawerRef}
+            headers={headers}
+            defaultHeaders={defaultHeaders}
+            onChange={setTableHeaders}
           />
         </AcColumn>
       </AcFlex>

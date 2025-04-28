@@ -136,7 +136,7 @@ const AcOvereenkomstFormModal = ({
     }
 
     const baseUrl =
-      'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/contracts';
+      'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract';
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${overeenkomstFormData.id}` : baseUrl;

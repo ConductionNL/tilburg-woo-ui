@@ -36,8 +36,8 @@ const AcDeleteOvereenkomstenModal = ({
       overeenkomsten.forEach(async (overeenkomst) => {
         const response = await fetch(
           //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
-            `/openconnector/api/endpoint/contracts/${overeenkomst.id}`,
+          'https://vng.test.commonground.nu/apps' +
+            `/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${voorziening.id}`,
           {
             method: 'DELETE',
             headers: {

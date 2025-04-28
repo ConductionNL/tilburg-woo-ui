@@ -90,7 +90,7 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
   //     ? new URL(config.authentication.baseURL).origin + '/index.php'
   //     : new URL(config.authentication.baseURL).origin;
-  const authenticationHostname = 'https://vng.accept.commonground.nu';
+  const authenticationHostname = 'https://vng.test.commonground.nu';
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
