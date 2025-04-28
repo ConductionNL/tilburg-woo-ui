@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
@@ -13,6 +13,7 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
+import ConActionMenu from './con-action-menu';
 import _ from 'lodash';
 
 const AcDashboard = () => {
@@ -23,11 +24,15 @@ const AcDashboard = () => {
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
   const endpoints = [
-    { id: '7', name: 'elements' },
+    { id: '3', name: 'elements' },
     { id: '4', name: 'views' },
-    { id: '8', name: 'relations' },
-    { id: '10', name: 'model' },
+    { id: '2', name: 'relations' },
+    { id: '1', name: 'model' },
   ];
+
+  const [archimateUrl, setArchimateUrl] = useState(
+    'https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/main/docs/examples/GEMMA_release.xml'
+  );
 
   // Add Voorziening Modal
   const syncGemmaRef = useRef(null);
@@ -36,7 +41,7 @@ const AcDashboard = () => {
 
   const checkHeartbeat = async (apiCall) => {
     try {
-      const response = await fetch(`https://vng.accept.commonground.nu/status.php`, {
+      const response = await fetch(`https://vng.test.commonground.nu/status.php`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -99,13 +104,14 @@ const AcDashboard = () => {
 
         // Make the initial API call
         const response = await fetch(
-          `https://vng.accept.commonground.nu/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
+          `https://vng.test.commonground.nu/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${accessToken}`,
             },
+            source: archimateUrl,
           }
         );
         const initialData = await response.json();
@@ -147,7 +153,9 @@ const AcDashboard = () => {
     });
   };
 
-  const [downloadGemmaError, setDownloadGemmaError] = useState(null);
+  const [downloadError, setDownloadError] = useState(null);
+  const [modelLoading, setModelLoading] = useState(false);
+  const [models, setModels] = useState([]);
 
   const getImage = (status) => {
     switch (status) {
@@ -165,6 +173,35 @@ const AcDashboard = () => {
         return <VISUALS.SPINNER className='ac-gemma-sync-result-image--loading' />;
     }
   };
+
+  const getModels = async () => {
+    const accessToken = getCookie('nextcloud_access_token');
+
+    const response = await fetch(
+      `https://vng.test.commonground.nu/apps/openconnector/api/endpoint/models`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    const data = await response.json();
+    console.log(data);
+    if (data?.results) {
+      setModels(
+        data.results.map((model) => ({
+          name: model.name['#text'] ?? model.name,
+          id: model.id,
+        }))
+      );
+    }
+  };
+
+  useEffect(() => {
+    getModels();
+  }, []);
 
   const renderSyncGemmaModal = (
     <AcModal
@@ -193,7 +230,8 @@ const AcDashboard = () => {
               label='Archimate(XML) URL'
               type='url'
               fullWidth
-              value='https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/main/docs/examples/GEMMA_release.xml'
+              value={archimateUrl}
+              onChange={(e) => setArchimateUrl(e.target.value)}
             />
           </>
         )}
@@ -255,19 +293,20 @@ const AcDashboard = () => {
     </AcModal>
   );
 
-  const downloadGemma = async () => {
+  const downloadModel = async (model) => {
+    setModelLoading(true);
     try {
       // const baseUrl = config.mijnOmgeving.baseURL;
-      const baseUrl = 'https://vng.accept.commonground.nu/apps';
+      const baseUrl = 'https://vng.test.commonground.nu/apps';
       // const baseUrl = 'http://localhost:8080/apps';
-      const url = `${baseUrl}/openconnector/api/endpoint/model.xml`;
+      const url = `${baseUrl}/openconnector/api/endpoint/models/${model.id}`;
 
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           Accept: 'application/xml',
         },
-      });
+      }).finally(() => setModelLoading(false));
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -280,16 +319,19 @@ const AcDashboard = () => {
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = downloadUrl;
-      a.download = 'gemma-model.xml';
+      a.download = `${model.name}.xml`;
       a.click();
 
       // Cleanup
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Error downloading GEMMA model:', error);
-      setDownloadGemmaError(error);
-      setTimeout(() => setDownloadGemmaError(null), 2500);
+      setDownloadError(error);
+      setTimeout(() => setDownloadError(null), 2500);
       return;
+    } finally {
+      setModelLoading(false);
+      setActiveModel(null);
     }
   };
 
@@ -309,13 +351,31 @@ const AcDashboard = () => {
               Archimate inlezen
             </AcButton>
 
-            <AcButton
-              style='button'
-              icon={<VISUALS.DOWNLOAD />}
-              onClick={downloadGemma}
-            >
-              GEMMA downloaden
-            </AcButton>
+            <ConActionMenu>
+              <ConActionMenu.Trigger
+                icon={modelLoading ? <VISUALS.SPINNER /> : <VISUALS.DOWNLOAD />}
+                loading={modelLoading}
+                disabled={models.length === 0 || modelLoading}
+              >
+                {modelLoading
+                  ? `Downloading ${activeModel.name}...`
+                  : 'Download model'}
+              </ConActionMenu.Trigger>
+
+              <ConActionMenu.Menu position='right'>
+                {models.map((model) => (
+                  <ConActionMenu.Button
+                    icon={<VISUALS.DOWNLOAD />}
+                    onClick={() => {
+                      setActiveModel(model);
+                      downloadModel(model);
+                    }}
+                  >
+                    {model.name}
+                  </ConActionMenu.Button>
+                ))}
+              </ConActionMenu.Menu>
+            </ConActionMenu>
           </AcFlex>
         </AcFlex>
       </AcFlex>

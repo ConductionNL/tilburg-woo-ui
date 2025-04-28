@@ -8,6 +8,7 @@ const AcButton = ({
   children,
   className,
   icon,
+  loading,
   sr,
   ...restProps
 }) => {
@@ -21,7 +22,8 @@ const AcButton = ({
       'utrecht-button utrecht-button--secondary-action',
     animate && 'ac-button--animate',
     'ac-button',
-    className
+    className,
+    loading && 'ac-button--loading'
   );
 
   return (

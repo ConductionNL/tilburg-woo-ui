@@ -17,6 +17,23 @@
     max-width: unset;
   }
 
+  &--loading {
+    &:has(svg) {
+      svg {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   &--animate {
     &:has(svg) {
       svg {
@@ -33,7 +50,7 @@
 
   span {
     font-weight: bold;
-    text-decoration: underline!important;
+    text-decoration: underline !important;
   }
 
   &:has(.utrecht-badge-status) {
