@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import config from '@src/config';
@@ -16,18 +14,18 @@ import { getCookie } from '@src/utilities';
  * @param {function} onClose - function to call when the modal is closed
  * @returns {React.JSX.Element} - modal to delete 1 or multiple voorzieningen
  */
-const AcDeleteVoorzieningenModal = ({
-  voorzieningen,
+const AcDeleteOvereenkomstenModal = ({
+  overeenkomsten,
   showModal = false,
   onClose,
   onSuccess,
 }) => {
   const modalRef = useRef(null);
 
-  const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleDeleteOvereenkomstOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const handleDeleteVoorziening = async () => {
+  const handleDeleteOvereenkomst = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -35,13 +33,11 @@ const AcDeleteVoorzieningenModal = ({
     }
 
     try {
-      let deletePromises = [];
-
-      voorzieningen.forEach(async (voorziening) => {
+      overeenkomsten.forEach(async (overeenkomst) => {
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/voorzieningen/voorziening/${voorziening.id}`,
+            `/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${voorziening.id}`,
           {
             method: 'DELETE',
             headers: {
@@ -50,16 +46,9 @@ const AcDeleteVoorzieningenModal = ({
             },
           }
         );
-
-        deletePromises.push(response);
       });
 
-      await Promise.all(deletePromises);
-
-      if (deletePromises.some((response) => response.ok)) {
-        onSuccess?.();
-        modalRef?.current?.close();
-      }
+      onSuccess?.();
     } catch (err) {
       console.error(err);
       setError(err);
@@ -68,47 +57,38 @@ const AcDeleteVoorzieningenModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleDeleteVoorzieningOpenModal();
+      handleDeleteOvereenkomstOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleDeleteVoorzieningCloseModal = () => {
+  const handleDeleteOvereenkomstCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleDeleteOvereenkomstCloseModal);
   }, [modalRef.current]);
 
-  const renderDeleteVoorzieningModal = (
+  const renderDeleteOvereenkomstModal = (
     <AcModal
       ref={modalRef}
-      id='delete-voorziening-modal'
-      title={`${
-        voorzieningen.length === 1 ? 'Voorziening' : 'Voorzieningen'
-      } verwijderen`}
-      buttons={[
-        {
-          label: 'verwijderen',
-          icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteVoorziening,
-        },
-      ]}
+      id='delete-overeenkomst-modal'
+      title={`${overeenkomsten.length === 1 ? 'Overeenkomst' : 'Overeenkomsten'} verwijderen`}
+      buttons={[{ label: 'verwijderen', onClick: handleDeleteOvereenkomst }]}
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {voorzieningen.length === 1 ? 'voorziening' : 'voorzieningen'} wilt
-        verwijderen?
-        {voorzieningen.map((voorziening) => (
-          <Paragraph key={voorziening.id}>{voorziening.naam}</Paragraph>
+        {overeenkomsten.length === 1 ? 'overeenkomst' : 'overeenkomsten'} wilt verwijderen?
+        {overeenkomsten.map((overeenkomst) => (
+          <Paragraph key={overeenkomst.id}>{overeenkomst.contractNummer}</Paragraph>
         ))}
       </AcFlex>
     </AcModal>
   );
 
-  return renderDeleteVoorzieningModal;
+  return renderDeleteOvereenkomstModal;
 };
 
-export default withStore(observer(AcDeleteVoorzieningenModal));
+export default withStore(observer(AcDeleteOvereenkomstenModal));

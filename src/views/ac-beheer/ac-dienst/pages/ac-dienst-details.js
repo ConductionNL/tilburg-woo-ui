@@ -13,12 +13,12 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcContractFormModal from '../modals/ac-contract-form-modal';
-import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
+import AcEditDienstModal from '../modals/ac-dienst-form-modal';
+import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
 
-const AcBeheerContractenDetails = ({ id }) => {
+const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,14 +30,14 @@ const AcBeheerContractenDetails = ({ id }) => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/contracten/${id}`);
+        navigate(`/login?redirect_url=/beheer/diensten/${id}`);
         return;
       }
 
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/contract/contract/${id}`,
+          `/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${id}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -65,12 +65,15 @@ const AcBeheerContractenDetails = ({ id }) => {
   }, []);
 
   const [versionTabIndex, setVersionTabIndex] = useState(0);
+  const [openModal, setOpenModal] = useState(null);
 
   if (error) {
     return <AcBeheerError error={error.message} />;
   }
 
-  const [openModal, setOpenModal] = useState(null);
+  if (loading) {
+    return <AcLoader />;
+  }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -83,7 +86,7 @@ const AcBeheerContractenDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.contractNummer}</Heading>
+                  <Heading>{data.naam}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -115,73 +118,76 @@ const AcBeheerContractenDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       <div>
-                        <strong>Voorziening aanbod:</strong>
-                        <Paragraph>{data.voorzieningAanbod}</Paragraph>
+                        <strong>Omschrijving:</strong>
+                        <Paragraph>{data.omschrijving}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Voorziening gebruik:</strong>
-                        <Paragraph>{data.voorzieningGebruik}</Paragraph>
+                        <strong>Type:</strong>
+                        <Paragraph>{data.type}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Start datum:</strong>
-                        <Paragraph>{data.startDatum}</Paragraph>
+                        <strong>Voorziening ID:</strong>
+                        <Paragraph>{data.voorzieningId}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Eind datum:</strong>
-                        <Paragraph>{data.eindDatum}</Paragraph>
+                        <strong>Organisatie ID:</strong>
+                        <Paragraph>{data.organisatieId}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Contract type:</strong>
-                        <Paragraph>{data.contractType}</Paragraph>
+                        <strong>Productpagina:</strong>
+                        <Paragraph>
+                          <a
+                            href={data.productpagina}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                          >
+                            {data.productpagina}
+                          </a>
+                        </Paragraph>
                       </div>
 
                       <div>
-                        <strong>Kosten:</strong>
-                        <Paragraph>€{data.kosten}</Paragraph>
+                        <strong>Ondersteuningsmodel:</strong>
+                        <Paragraph>{data.ondersteuningsmodel}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Kosten periode:</strong>
-                        <Paragraph>{data.kostenPeriode}</Paragraph>
+                        <strong>Licentiemodel:</strong>
+                        <Paragraph>{data.licentiemodel}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Contact persoon aanbieder:</strong>
-                        <Paragraph>{data.contactPersoonAanbieder?.naam}</Paragraph>
-                        <Paragraph>{data.contactPersoonAanbieder?.email}</Paragraph>
+                        <strong>Hostingopties:</strong>
+                        <Paragraph>{data.hostingopties}</Paragraph>
                       </div>
+                    </div>
 
-                      <div>
-                        <strong>Contact persoon gebruiker:</strong>
-                        <Paragraph>{data.contactPersoonGebruiker?.naam}</Paragraph>
-                        <Paragraph>{data.contactPersoonGebruiker?.email}</Paragraph>
-                      </div>
+                    <div>
+                      <AcTabs
+                        selectedIndex={versionTabIndex}
+                        onSelect={(index) => setVersionTabIndex(index)}
+                      >
+                        <AcTabList>
+                          <AcTab selected={versionTabIndex === 0}>Versies</AcTab>
+                        </AcTabList>
 
-                      <div>
-                        <strong>Document referentie:</strong>
-                        <Paragraph>{data.documentReferentie}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.status}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Opmerkingen:</strong>
-                        <Paragraph>{data.opmerkingen}</Paragraph>
-                      </div>
+                        <AcTabPanel selected={versionTabIndex === 0}>
+                          {data.versies.map((versie, index) => (
+                            <Paragraph key={index}>{versie}</Paragraph>
+                          ))}
+                        </AcTabPanel>
+                      </AcTabs>
                     </div>
                   </AcFlex>
                 </AcColumn>
 
                 {/* modals */}
-                <AcContractFormModal
-                  contract={data}
+                <AcEditDienstModal
+                  dienst={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -192,14 +198,14 @@ const AcBeheerContractenDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteContractenModal
-                  contracten={[data]}
+                <AcDeleteDienstModal
+                  diensten={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/contracten');
+                    navigate('/beheer/diensten');
                   }}
                 />
               </AcFlex>
@@ -211,4 +217,4 @@ const AcBeheerContractenDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerContractenDetails));
+export default withStore(observer(AcBeheerDienstDetails));

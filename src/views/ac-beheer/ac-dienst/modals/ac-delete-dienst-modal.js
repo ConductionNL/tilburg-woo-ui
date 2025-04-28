@@ -2,23 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcFormField } from '@src/molecules';
+import { AcFlex } from '@atoms';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import { getCookie } from '@src/utilities';
 
 /**
@@ -28,18 +13,18 @@ import { getCookie } from '@src/utilities';
  * @param {function} onClose - function to call when the modal is closed
  * @returns {React.JSX.Element} - modal to delete 1 or multiple voorzieningen
  */
-const AcDeleteVoorzieningGebruikModal = ({
-  voorzieningen,
+const AcDeleteDienstModal = ({
+  diensten,
   showModal = false,
   onClose,
   onSuccess,
 }) => {
   const modalRef = useRef(null);
 
-  const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleDeleteDienstOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const handleDeleteVoorziening = async () => {
+  const handleDeleteDienst = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
     if (!accessToken) {
@@ -47,11 +32,11 @@ const AcDeleteVoorzieningGebruikModal = ({
     }
 
     try {
-      voorzieningen.forEach(async (voorziening) => {
+      diensten.forEach(async (dienst) => {
         const response = await fetch(
           //   config.authentication.baseURL +
           'https://vng.test.commonground.nu/apps' +
-            `/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${voorziening.id}`,
+            `/openregister/api/objects/contract/contract/${contract.id}`,
           {
             method: 'DELETE',
             headers: {
@@ -71,43 +56,38 @@ const AcDeleteVoorzieningGebruikModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleDeleteVoorzieningOpenModal();
+      handleDeleteDienstOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleDeleteVoorzieningCloseModal = () => {
+  const handleDeleteDienstCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleDeleteDienstCloseModal);
   }, [modalRef.current]);
 
-  const renderDeleteVoorzieningModal = (
+  const renderDeleteDienstModal = (
     <AcModal
       ref={modalRef}
-      id='delete-voorziening-modal'
-      title={`${
-        voorzieningen.length === 1 ? 'Voorziening gebruik' : 'Voorziening gebruiken'
-      } verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteVoorziening }]}
+      id='delete-dienst-modal'
+      title={`${diensten.length === 1 ? 'Dienst' : 'Diensten'} verwijderen`}
+      buttons={[{ label: 'verwijderen', onClick: handleDeleteDienst }]}
     >
       <AcFlex column spacing='sm'>
-        Weet je zeker dat je deze{' '}
-        {voorzieningen.length === 1
-          ? 'voorziening gebruik'
-          : 'voorziening gebruiken'}{' '}
+        Weet je zeker dat je deze {diensten.length === 1 ? 'dienst' : 'diensten'}{' '}
         wilt verwijderen?
-        {voorzieningen.map((voorziening) => (
-          <Paragraph key={voorziening.id}>{voorziening.id}</Paragraph>
+        {diensten.map((dienst) => (
+          <Paragraph key={dienst.id}>{dienst.naam}</Paragraph>
         ))}
       </AcFlex>
     </AcModal>
   );
 
-  return renderDeleteVoorzieningModal;
+  return renderDeleteDienstModal;
 };
 
-export default withStore(observer(AcDeleteVoorzieningGebruikModal));
+export default withStore(observer(AcDeleteDienstModal));

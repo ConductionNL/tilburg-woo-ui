@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
-import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
+import { AcFlex, AcSection } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcButton } from '@src/molecules';
 import { AcSideNav, AcLoader } from '@components';
 import {
   Heading,
@@ -13,12 +12,12 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-import AcVoorzieningGebruikFormModal from '../modals/ac-voorziening-gebruik-form-modal';
-import AcDeleteVoorzieningGebruikModal from '../modals/ac-delete-voorziening-gebruik-modal';
+import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
+import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
 
-const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
+const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,14 +29,13 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen-gebruik/${id}`);
+        navigate(`/login?redirect_url=/beheer/applicaties/${id}`);
         return;
       }
 
       const response = await fetch(
         //   config.authentication.baseURL +
-        'https://vng.test.commonground.nu/apps' +
-          `/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${id}`,
+        'https://vng.test.commonground.nu/apps' + `/openregister/api/objects/voorzieningen/voorziening/${id}`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -83,7 +81,7 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.id}</Heading>
+                  <Heading>{data.naam}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -115,91 +113,48 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.status}</Paragraph>
+                        <strong>Omschrijving:</strong>
+                        <Paragraph>{data.beschrijving}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Opmerkingen:</strong>
-                        <Paragraph>{data.opmerkingen}</Paragraph>
+                        <strong>Type:</strong>
+                        <Paragraph>{data.voorzieningstypeId}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>BBN Score:</strong>
-                        <Paragraph>{data.bbnScore}</Paragraph>
+                        <strong>Categorie:</strong>
+                        <Paragraph>{data.categorie}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>IBP Score:</strong>
-                        <Paragraph>{data.ibpScore}</Paragraph>
+                        <strong>Functionaliteiten:</strong>
+                        <Paragraph>{data.functionaliteiten?.join(', ')}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Versie ID:</strong>
-                        <Paragraph>{data.versieId}</Paragraph>
+                        <strong>Doelgroepen:</strong>
+                        <Paragraph>{data.doelgroep?.join(', ')}</Paragraph>
                       </div>
 
                       <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Beheerder:</strong>
+                        <strong>Referentie componenten:</strong>
                         <Paragraph>
-                          {data.beheerder?.naam}
-                          <br />
-                          {data.beheerder?.email}
-                          <br />
-                          {data.beheerder?.telefoon}
-                          <br />
-                          {data.beheerder?.functie}
+                          {data.referentieComponenten?.join(', ')}
                         </Paragraph>
                       </div>
 
                       <div>
-                        <strong>Start Datum:</strong>
-                        <Paragraph>{data.startDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Eind Datum:</strong>
-                        <Paragraph>{data.eindDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>BIV Classificatie:</strong>
-                        <Paragraph>
-                          Beschikbaarheid: {data.bivClassificatie?.beschikbaarheid}
-                          <br />
-                          Integriteit: {data.bivClassificatie?.integriteit}
-                          <br />
-                          Vertrouwelijkheid:{' '}
-                          {data.bivClassificatie?.vertrouwelijkheid}
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Bedrijfs Kritisch:</strong>
-                        <Paragraph>{data.bedrijfsKritisch ? 'Ja' : 'Nee'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Privacy Gevoelig:</strong>
-                        <Paragraph>{data.privacyGevoelig ? 'Ja' : 'Nee'}</Paragraph>
+                        <strong>standaarden:</strong>
+                        <Paragraph>{data.standaarden}</Paragraph>
                       </div>
                     </div>
                   </AcFlex>
                 </AcColumn>
 
                 {/* modals */}
-                <AcVoorzieningGebruikFormModal
-                  voorziening={data}
+                <AcApplicatiesFormModal
+                  applicatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -210,14 +165,14 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningGebruikModal
-                  voorzieningen={[data]}
+                <AcDeleteApplicatiesModal
+                  applicaties={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/voorzieningen-gebruik');
+                    navigate('/beheer/applicaties');
                   }}
                 />
               </AcFlex>
@@ -229,4 +184,4 @@ const AcBeheerVoorzieningenGebruikDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenGebruikDetails));
+export default withStore(observer(AcBeheerApplicatiesDetails));

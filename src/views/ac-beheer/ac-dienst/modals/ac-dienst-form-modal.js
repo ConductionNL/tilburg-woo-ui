@@ -7,15 +7,15 @@ import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 import { VISUALS } from '@constants';
 
-const AcVoorzieningAanbodFormModal = ({
-  voorziening,
+const AcDienstFormModal = ({
+  dienst,
   showModal = false,
   onClose,
   onSuccess,
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
-  const [voorzieningAanbodFormData, setVoorzieningAanbodFormData] = useState({
+  const [dienstFormData, setDienstFormData] = useState({
     naam: '',
     omschrijving: '',
     type: '',
@@ -29,23 +29,21 @@ const AcVoorzieningAanbodFormModal = ({
   });
 
   useEffect(() => {
-    if (voorziening && isEdit) {
-      setVoorzieningAanbodFormData((prev) => ({
+    if (dienst && isEdit) {
+      setDienstFormData((prev) => ({
         ...prev,
-        ...voorziening,
-        type: Array.isArray(voorziening.type)
-          ? voorziening.type.join(', ')
-          : voorziening.type,
-        hostingopties: Array.isArray(voorziening.hostingopties)
-          ? voorziening.hostingopties.join(', ')
-          : voorziening.hostingopties,
-        versies: Array.isArray(voorziening.versies)
-          ? voorziening.versies.join(', ')
-          : voorziening.versies,
+        ...dienst,
+        type: Array.isArray(dienst.type) ? dienst.type.join(', ') : dienst.type,
+        hostingopties: Array.isArray(dienst.hostingopties)
+          ? dienst.hostingopties.join(', ')
+          : dienst.hostingopties,
+        versies: Array.isArray(dienst.versies)
+          ? dienst.versies.join(', ')
+          : dienst.versies,
       }));
     }
-    if (!voorziening && !isEdit) {
-      setVoorzieningAanbodFormData(() => ({
+    if (!dienst && !isEdit) {
+      setDienstFormData(() => ({
         naam: '',
         omschrijving: '',
         type: '',
@@ -58,15 +56,15 @@ const AcVoorzieningAanbodFormModal = ({
         versies: [],
       }));
     }
-  }, [voorziening, isEdit]);
+  }, [dienst, isEdit]);
 
-  const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleEditDienstOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditVoorzieningFieldChange = (field) => (value) => {
-    setVoorzieningAanbodFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleEditDienstFieldChange = (field) => (event) => {
+    setDienstFormData({
+      ...dienstFormData,
+      [field]: event.target.value,
+    });
   };
 
   const [error, setError] = useState(null);
@@ -83,25 +81,19 @@ const AcVoorzieningAanbodFormModal = ({
     const baseUrl =
       'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod';
     const method = isEdit ? 'PUT' : 'POST';
-    const url = isEdit ? `${baseUrl}/${voorzieningAanbodFormData.id}` : baseUrl;
+    const url = isEdit ? `${baseUrl}/${dienstFormData.id}` : baseUrl;
 
     try {
       const response = await fetch(url, {
         method: method,
         body: JSON.stringify({
-          ...voorzieningAanbodFormData,
-          type: voorzieningAanbodFormData.type
+          ...dienstFormData,
+          type: dienstFormData.type.trim().split(/ *, */g).filter(Boolean),
+          hostingopties: dienstFormData.hostingopties
             .trim()
             .split(/ *, */g)
             .filter(Boolean),
-          hostingopties: voorzieningAanbodFormData.hostingopties
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          versies: voorzieningAanbodFormData.versies
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
+          versies: dienstFormData.versies.trim().split(/ *, */g).filter(Boolean),
         }),
         headers: {
           'Content-Type': 'application/json',
@@ -121,93 +113,93 @@ const AcVoorzieningAanbodFormModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleEditVoorzieningOpenModal();
+      handleEditDienstOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleEditVoorzieningCloseModal = () => {
+  const handleEditDienstCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleEditVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleEditDienstCloseModal);
   }, [modalRef.current]);
 
-  const renderVoorzieningAanbodFormModal = (
+  const renderDienstFormModal = (
     <AcModal
       ref={modalRef}
-      id='edit-voorziening-modal'
-      title={isEdit ? 'Voorziening bewerken' : 'Voorziening toevoegen'}
+      id='edit-dienst-modal'
+      title={isEdit ? 'Dienst bewerken' : 'Dienst toevoegen'}
       buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
           label='Naam'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('naam')}
-          value={voorzieningAanbodFormData.naam}
+          onBlur={handleEditDienstFieldChange('naam')}
+          value={dienstFormData.naam}
         />
         <AcFormField
           label='Beschrijving'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('omschrijving')}
-          value={voorzieningAanbodFormData.omschrijving}
+          onBlur={handleEditDienstFieldChange('omschrijving')}
+          value={dienstFormData.omschrijving}
         />
         <AcFormField
           label='Type'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('type')}
-          value={voorzieningAanbodFormData.type}
+          onBlur={handleEditDienstFieldChange('type')}
+          value={dienstFormData.type}
         />
         <AcFormField
           label='Voorziening ID'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('voorzieningId')}
-          value={voorzieningAanbodFormData.voorzieningId}
+          onBlur={handleEditDienstFieldChange('voorzieningId')}
+          value={dienstFormData.voorzieningId}
         />
         <AcFormField
           label='Organisatie ID'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('organisatieId')}
-          value={voorzieningAanbodFormData.organisatieId}
+          onBlur={handleEditDienstFieldChange('organisatieId')}
+          value={dienstFormData.organisatieId}
         />
         <AcFormField
           label='Productpagina'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('productpagina')}
-          value={voorzieningAanbodFormData.productpagina}
+          onBlur={handleEditDienstFieldChange('productpagina')}
+          value={dienstFormData.productpagina}
         />
         <AcFormField
           label='Ondersteuningsmodel'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('ondersteuningsmodel')}
-          value={voorzieningAanbodFormData.ondersteuningsmodel}
+          onBlur={handleEditDienstFieldChange('ondersteuningsmodel')}
+          value={dienstFormData.ondersteuningsmodel}
         />
         <AcFormField
           label='Licentiemodel'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('licentiemodel')}
-          value={voorzieningAanbodFormData.licentiemodel}
+          onBlur={handleEditDienstFieldChange('licentiemodel')}
+          value={dienstFormData.licentiemodel}
         />
         <AcFormField
           label='Hostingopties'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('hostingopties')}
-          value={voorzieningAanbodFormData.hostingopties}
+          onBlur={handleEditDienstFieldChange('hostingopties')}
+          value={dienstFormData.hostingopties}
         />
         <AcFormField
           label='Versies'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('versies')}
-          value={voorzieningAanbodFormData.versies}
+          onBlur={handleEditDienstFieldChange('versies')}
+          value={dienstFormData.versies}
         />
       </AcFlex>
     </AcModal>
   );
 
-  return renderVoorzieningAanbodFormModal;
+  return renderDienstFormModal;
 };
 
-export default withStore(observer(AcVoorzieningAanbodFormModal));
+export default withStore(observer(AcDienstFormModal));

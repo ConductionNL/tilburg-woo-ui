@@ -7,23 +7,23 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { useNavigate, useParams } from 'react-router';
 import { getCookie } from '@src/utilities';
 import {
-  AcBeheerVoorzieningenAanbod,
-  AcBeheerVoorzieningenGebruik,
+  AcBeheerDienst,
+  AcBeheerGebruiken,
   AcBeheerVoorzieningenVersie,
-  AcBeheerContracten,
+  AcBeheerOvereenkomsten,
   AcBeheerOrganisaties,
   AcBeheerKwetsbaarheden,
   AcDashboard,
-  AcBeheerVoorzieningenAanbodDetails,
-  AcBeheerVoorzieningen,
-  AcBeheerVoorzieningenDetails,
-  AcBeheerVoorzieningenGebruikDetails,
+  AcBeheerDienstDetails,
+  AcBeheerGebruikenDetails,
   AcBeheerVoorzieningenVersieDetails,
-  AcBeheerContractenDetails,
+  AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
   AcBeheerGebruikers,
   AcBeheerGebruikerDetails,
+  AcBeheerApplicaties,
+  AcBeheerApplicatiesDetails,
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
@@ -61,16 +61,16 @@ const AcBeheer = () => {
 
   if (!id) {
     switch (type) {
-      case 'voorzieningen':
-        return <AcBeheerVoorzieningen />;
-      case 'voorzieningen-aanbod':
-        return <AcBeheerVoorzieningenAanbod />;
-      case 'voorzieningen-gebruik':
-        return <AcBeheerVoorzieningenGebruik />;
+      case 'applicaties':
+        return <AcBeheerApplicaties />;
+      case 'diensten':
+        return <AcBeheerDienst />;
+      case 'gebruiken':
+        return <AcBeheerGebruiken />;
       case 'voorzieningen-versie':
         return <AcBeheerVoorzieningenVersie />;
-      case 'contracten':
-        return <AcBeheerContracten />;
+      case 'overeenkomsten':
+        return <AcBeheerOvereenkomsten />;
       case 'organisaties':
         return <AcBeheerOrganisaties />;
       case 'kwetsbaarheden':
@@ -83,16 +83,16 @@ const AcBeheer = () => {
   }
 
   switch (type) {
-    case 'voorzieningen':
-      return <AcBeheerVoorzieningenDetails id={id} />;
-    case 'voorzieningen-aanbod':
-      return <AcBeheerVoorzieningenAanbodDetails id={id} />;
-    case 'voorzieningen-gebruik':
-      return <AcBeheerVoorzieningenGebruikDetails id={id} />;
+    case 'applicaties':
+      return <AcBeheerApplicatiesDetails id={id} />;
+    case 'diensten':
+      return <AcBeheerDienstDetails id={id} />;
+    case 'gebruiken':
+      return <AcBeheerGebruikenDetails id={id} />;
     case 'voorzieningen-versie':
       return <AcBeheerVoorzieningenVersieDetails id={id} />;
-    case 'contracten':
-      return <AcBeheerContractenDetails id={id} />;
+    case 'overeenkomsten':
+      return <AcBeheerOvereenkomstenDetails id={id} />;
     case 'organisaties':
       return <AcBeheerOrganisatieDetails id={id} />;
     case 'kwetsbaarheden':

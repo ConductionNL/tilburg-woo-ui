@@ -3,22 +3,24 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  SecondaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
+import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
-import { SecondaryActionButton } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcVoorzieningAanbodFormModal from '../modals/ac-voorziening-aanbod-form-modal';
-import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-aanbod-modal';
+import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
+import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
-import { AcButton } from '@src/molecules';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
-const AcBeheerVoorzieningenAanbod = () => {
+const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -32,14 +34,14 @@ const AcBeheerVoorzieningenAanbod = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen-aanbod`);
+        navigate(`/login?redirect_url=/beheer/overeenkomsten`);
         return;
       }
 
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieningaanbod/voorzieningaanbod',
+          '/openregister/api/objects/contract/contract',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -54,7 +56,6 @@ const AcBeheerVoorzieningenAanbod = () => {
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
-
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -73,110 +74,124 @@ const AcBeheerVoorzieningenAanbod = () => {
   const tableRef = useRef(null);
 
   const headers = [
-    // TODO: name is to be removed - https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/documentation/website/static/api/voorzieningen-api-specification.json#schema/Voorzieningaanbod
-    // {
-    //   id: 'name',
-    //   label: 'Naam',
-    //   key: 'naam',
-    // },
     {
-      id: 'voorzieningName',
-      label: 'Voorziening naam',
-      key: '',
+      id: 'name',
+      label: 'Naam',
+      key: 'naam',
+    },
+    {
+      id: 'contractNummer',
+      label: 'Contract nummer',
+      key: 'contractNummer',
+    },
+    {
+      id: 'contractType',
+      label: 'Contract type',
+      key: 'contractType',
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      key: 'status',
+    },
+    {
+      id: 'opmerkingen',
+      label: 'Opmerkingen',
+      key: 'opmerkingen',
+    },
+    {
+      id: 'startDate',
+      label: 'Start datum',
+      key: 'startDatum',
+    },
+    {
+      id: 'endDate',
+      label: 'Eind datum',
+      key: 'eindDatum',
+    },
+    {
+      id: 'voorzieningAanbodNaam',
+      label: 'Voorziening aanbod naam',
+      key: 'voorzieningAanbod',
       customContent: (row) => {
-        return row?.voorziening?.naam || '-';
+        return row?.voorzieningAanbod?.naam || '-';
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a?.voorziening?.naam.localeCompare(b?.voorziening?.naam)
-          : b?.voorziening?.naam.localeCompare(a?.voorziening?.naam);
+          ? a?.voorzieningAanbod?.naam.localeCompare(b?.voorzieningAanbod?.naam)
+          : b?.voorzieningAanbod?.naam.localeCompare(a?.voorzieningAanbod?.naam);
       },
     },
     {
-      id: 'leverancierId',
-      label: 'Leverancier ID',
-      key: '',
+      id: 'voorzieningGebruikId',
+      label: 'Voorziening gebruik ID',
+      key: 'voorzieningGebruikId',
       customContent: (row) => {
-        // TODO: replace with actual voorziening name
-        return row?.leverancier?.id || '-';
+        return row?.voorzieningAanbod?.id || '-';
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a?.leverancier?.id.localeCompare(b?.leverancier?.id)
-          : b?.leverancier?.id.localeCompare(a?.leverancier?.id);
+          ? a?.voorzieningAanbod?.id.localeCompare(b?.voorzieningAanbod?.id)
+          : b?.voorzieningAanbod?.id.localeCompare(a?.voorzieningAanbod?.id);
       },
     },
     {
-      id: 'email',
-      label: 'Email',
-      key: '',
+      id: 'costs',
+      label: 'Kosten',
+      key: 'kosten',
+    },
+    {
+      id: 'costsPeriod',
+      label: 'Kosten periode',
+      key: 'kostenPeriode',
+    },
+    {
+      id: 'documentReferentie',
+      label: 'Document referentie',
+      key: 'documentReferentie',
+    },
+    {
+      id: 'contactPersonProvider',
+      label: 'contactpersoon Aanbieder',
+      key: 'contactpersoonAanbieder',
       customContent: (row) => {
-        return row?.leverancier?.contactgegevens?.email || '-';
+        if (!row?.contactpersoonAanbieder) return 'N/A';
+        return row.contactpersoonAanbieder.naam;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a?.leverancier?.contactgegevens?.email.localeCompare(
-              b?.leverancier?.contactgegevens?.email
+          ? a?.contactpersoonAanbieder?.naam.localeCompare(
+              b?.contactpersoonAanbieder?.naam
             )
-          : b?.leverancier?.contactgegevens?.email.localeCompare(
-              a?.leverancier?.contactgegevens?.email
+          : b?.contactpersoonAanbieder?.naam.localeCompare(
+              a?.contactpersoonAanbieder?.naam
             );
       },
     },
     {
-      id: 'ondersteunendeStandaarden',
-      label: 'Ondersteunende standaard',
-      key: 'ondersteundeStandaarden',
+      id: 'contactPersonUser',
+      label: 'contactpersoon Gebruiker',
+      key: 'contactpersoonGebruiker',
       customContent: (row) => {
-        if (!row?.ondersteundeStandaarden) return 'N/A';
-        if (!row?.ondersteundeStandaarden?.length) return '-';
-        return row?.ondersteundeStandaarden?.map((standaard) => {
-          return (
-            <AcColumn key={standaard.id}>
-              <span>
-                {standaard.naam} / {standaard.status}
-              </span>
-            </AcColumn>
-          );
-        });
+        if (!row?.contactpersoonGebruiker) return 'N/A';
+        return row.contactpersoonGebruiker.naam;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-
-        if (!a.ondersteundeStandaarden?.length) return direction ? -1 : 1;
-        if (!b.ondersteundeStandaarden?.length) return direction ? 1 : -1;
-
-        const aName = a.ondersteundeStandaarden[0].naam;
-        const bName = b.ondersteundeStandaarden[0].naam;
-
-        return direction ? aName.localeCompare(bName) : bName.localeCompare(aName);
+        return direction
+          ? a.contactpersoonGebruiker.naam.localeCompare(
+              b.contactpersoonGebruiker.naam
+            )
+          : b.contactpersoonGebruiker.naam.localeCompare(
+              a.contactpersoonGebruiker.naam
+            );
       },
     },
-    {
-      id: 'productPage',
-      label: 'Productpagina',
-      key: 'productpagina',
-    },
-    {
-      id: 'supportOptions',
-      label: 'Ondersteuningsopties',
-      key: 'ondersteuningsopties',
-    },
-    {
-      id: 'priceModel',
-      label: 'Prijsmodel',
-      key: 'prijsmodel',
-    },
-    {
-      id: 'certifications',
-      label: 'Certificeringen',
-      key: 'certificeringen',
-    },
   ];
-  const defaultHeaders = ['name', 'voorzieningName', 'email', 'productPage'];
+  const defaultHeaders = ['name', 'startDate', 'endDate', 'contactPersonProvider'];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );
@@ -186,13 +201,11 @@ const AcBeheerVoorzieningenAanbod = () => {
   };
 
   if (error) {
-    return (
-      <AcBeheerError title='Beheer Voorzieningen Aanbod' error={error.message} />
-    );
+    return <AcBeheerError title='Beheer Overeenkomsten' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen Aanbod' />;
+    return <AcBeheerLoading title='Beheer Overeenkomsten' />;
   }
 
   return (
@@ -206,7 +219,7 @@ const AcBeheerVoorzieningenAanbod = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen Aanbod</Heading>
+            <Heading>Beheer Overeenkomsten</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -214,13 +227,9 @@ const AcBeheerVoorzieningenAanbod = () => {
                 <VISUALS.FILTER />
               </SecondaryActionButton>
 
-              <AcButton
-                style='button'
-                icon={<VISUALS.PLUS />}
-                onClick={() => setOpenModal('add')}
-              >
-                Toevoegen
-              </AcButton>
+              <PrimaryActionButton onClick={() => setOpenModal('add')}>
+                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
+              </PrimaryActionButton>
 
               <ConActionMenu>
                 <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -277,10 +286,7 @@ const AcBeheerVoorzieningenAanbod = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                            'voorzieningen-aanbod',
-                            row.id
-                          )
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('overeenkomsten', row.id)
                         );
                       }}
                     >
@@ -318,8 +324,8 @@ const AcBeheerVoorzieningenAanbod = () => {
           />
 
           {/* modals */}
-          <AcVoorzieningAanbodFormModal
-            voorziening={singleSelectedRow}
+          <AcOvereenkomstFormModal
+            overeenkomst={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -333,8 +339,8 @@ const AcBeheerVoorzieningenAanbod = () => {
             }}
           />
 
-          <AcDeleteVoorzieningAanbodModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteOvereenkomstenModal
+            overeenkomsten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -358,4 +364,4 @@ const AcBeheerVoorzieningenAanbod = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenAanbod));
+export default withStore(observer(AcBeheerOvereenkomsten));

@@ -3,24 +3,22 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  SecondaryActionButton,
-} from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import { SecondaryActionButton } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcVoorzieningGebruikFormModal from '../modals/ac-voorziening-gebruik-form-modal';
-import AcDeleteVoorzieningGebruikModal from '../modals/ac-delete-voorziening-gebruik-modal';
+import AcDienstFormModal from '../modals/ac-dienst-form-modal';
+import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
+import { AcButton } from '@src/molecules';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
-const AcBeheerVoorzieningenGebruik = () => {
+const AcBeheerDienst = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -34,14 +32,14 @@ const AcBeheerVoorzieningenGebruik = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen-gebruik`);
+        navigate(`/login?redirect_url=/beheer/diensten`);
         return;
       }
 
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieninggebruik/voorzieninggebruik',
+          '/openregister/api/objects/voorzieningaanbod/voorzieningaanbod',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -56,6 +54,7 @@ const AcBeheerVoorzieningenGebruik = () => {
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
+
       setData(data);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -74,82 +73,110 @@ const AcBeheerVoorzieningenGebruik = () => {
   const tableRef = useRef(null);
 
   const headers = [
+    // TODO: name is to be removed - https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/documentation/website/static/api/voorzieningen-api-specification.json#schema/Voorzieningaanbod
+    // {
+    //   id: 'name',
+    //   label: 'Naam',
+    //   key: 'naam',
+    // },
     {
-      id: 'id',
-      label: 'Id',
-      key: 'id',
-    },
-    {
-      id: 'versionId',
-      label: 'Versie Id',
-      key: 'versieId',
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      key: 'status',
-    },
-    {
-      id: 'opmerkingen',
-      label: 'Opmerkingen',
-      key: 'opmerkingen',
-    },
-    {
-      id: 'bedrijfsKritisch',
-      label: 'Bedrijfs kritisch',
-      key: 'bedrijfsKritisch',
-    },
-    {
-      id: 'privacyGevoelig',
-      label: 'Privacy gevoelig',
-      key: 'privacyGevoelig',
-    },
-    {
-      id: 'bbnScore',
-      label: 'BBN Score',
-      key: 'bbnScore',
-    },
-    {
-      id: 'ibpScore',
-      label: 'IBP Score',
-      key: 'ibpScore',
-    },
-    {
-      id: 'startDate',
-      label: 'Start datum',
-      key: 'startDatum',
-    },
-    {
-      id: 'endDate',
-      label: 'Eind datum',
-      key: 'eindDatum',
-    },
-    {
-      id: 'organisatieId',
-      label: 'Organisatie ID',
-      key: 'organisatieId',
-    },
-    {
-      id: 'voorzieningId',
-      label: 'Voorziening ID',
-      key: 'voorzieningId',
-    },
-    {
-      id: 'beheerderNaam',
-      label: 'Beheerder naam',
+      id: 'voorzieningName',
+      label: 'Voorziening naam',
       key: '',
       customContent: (row) => {
-        return row?.beheerder?.naam || '-';
+        return row?.voorziening?.naam || '-';
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a?.beheerder?.naam.localeCompare(b?.beheerder?.naam)
-          : b?.beheerder?.naam.localeCompare(a?.beheerder?.naam);
+          ? a?.voorziening?.naam.localeCompare(b?.voorziening?.naam)
+          : b?.voorziening?.naam.localeCompare(a?.voorziening?.naam);
       },
     },
+    {
+      id: 'leverancierId',
+      label: 'Leverancier ID',
+      key: '',
+      customContent: (row) => {
+        // TODO: replace with actual voorziening name
+        return row?.leverancier?.id || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.leverancier?.id.localeCompare(b?.leverancier?.id)
+          : b?.leverancier?.id.localeCompare(a?.leverancier?.id);
+      },
+    },
+    {
+      id: 'email',
+      label: 'Email',
+      key: '',
+      customContent: (row) => {
+        return row?.leverancier?.contactgegevens?.email || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.leverancier?.contactgegevens?.email.localeCompare(
+              b?.leverancier?.contactgegevens?.email
+            )
+          : b?.leverancier?.contactgegevens?.email.localeCompare(
+              a?.leverancier?.contactgegevens?.email
+            );
+      },
+    },
+    {
+      id: 'ondersteunendeStandaarden',
+      label: 'Ondersteunende standaard',
+      key: 'ondersteundeStandaarden',
+      customContent: (row) => {
+        if (!row?.ondersteundeStandaarden) return 'N/A';
+        if (!row?.ondersteundeStandaarden?.length) return '-';
+        return row?.ondersteundeStandaarden?.map((standaard) => {
+          return (
+            <AcColumn key={standaard.id}>
+              <span>
+                {standaard.naam} / {standaard.status}
+              </span>
+            </AcColumn>
+          );
+        });
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+
+        if (!a.ondersteundeStandaarden?.length) return direction ? -1 : 1;
+        if (!b.ondersteundeStandaarden?.length) return direction ? 1 : -1;
+
+        const aName = a.ondersteundeStandaarden[0].naam;
+        const bName = b.ondersteundeStandaarden[0].naam;
+
+        return direction ? aName.localeCompare(bName) : bName.localeCompare(aName);
+      },
+    },
+    {
+      id: 'productPage',
+      label: 'Productpagina',
+      key: 'productpagina',
+    },
+    {
+      id: 'supportOptions',
+      label: 'Ondersteuningsopties',
+      key: 'ondersteuningsopties',
+    },
+    {
+      id: 'priceModel',
+      label: 'Prijsmodel',
+      key: 'prijsmodel',
+    },
+    {
+      id: 'certifications',
+      label: 'Certificeringen',
+      key: 'certificeringen',
+    },
   ];
-  const defaultHeaders = ['id', 'versionId', 'endDate', 'status'];
+  const defaultHeaders = ['name', 'voorzieningName', 'email', 'productPage'];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );
@@ -159,13 +186,11 @@ const AcBeheerVoorzieningenGebruik = () => {
   };
 
   if (error) {
-    return (
-      <AcBeheerError title='Beheer Voorzieningen Gebruik' error={error.message} />
-    );
+    return <AcBeheerError title='Beheer Dienst' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen Gebruik' />;
+    return <AcBeheerLoading title='Beheer Dienst' />;
   }
 
   return (
@@ -179,7 +204,7 @@ const AcBeheerVoorzieningenGebruik = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen Gebruik</Heading>
+            <Heading>Beheer Dienst</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -187,9 +212,13 @@ const AcBeheerVoorzieningenGebruik = () => {
                 <VISUALS.FILTER />
               </SecondaryActionButton>
 
-              <PrimaryActionButton onClick={() => setOpenModal('add')}>
-                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
-              </PrimaryActionButton>
+              <AcButton
+                style='button'
+                icon={<VISUALS.PLUS />}
+                onClick={() => setOpenModal('add')}
+              >
+                Toevoegen
+              </AcButton>
 
               <ConActionMenu>
                 <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -246,10 +275,7 @@ const AcBeheerVoorzieningenGebruik = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                            'voorzieningen-gebruik',
-                            row.id
-                          )
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('diensten', row.id)
                         );
                       }}
                     >
@@ -287,8 +313,8 @@ const AcBeheerVoorzieningenGebruik = () => {
           />
 
           {/* modals */}
-          <AcVoorzieningGebruikFormModal
-            voorziening={singleSelectedRow}
+          <AcDienstFormModal
+            dienst={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -302,8 +328,8 @@ const AcBeheerVoorzieningenGebruik = () => {
             }}
           />
 
-          <AcDeleteVoorzieningGebruikModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteDienstModal
+            diensten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -327,4 +353,4 @@ const AcBeheerVoorzieningenGebruik = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenGebruik));
+export default withStore(observer(AcBeheerDienst));

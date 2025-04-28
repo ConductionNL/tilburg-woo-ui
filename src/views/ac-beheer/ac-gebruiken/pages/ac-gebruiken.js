@@ -3,24 +3,24 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import {
-  PrimaryActionButton,
+  Heading,
   SecondaryActionButton,
-} from '@utrecht/component-library-react';
+} from '@utrecht/component-library-react/dist/css-module';
+import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcDrawer, AcSideNav } from '@components';
+import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcVoorzieningenFormModal from '../modals/ac-voorzieningen-form-modal';
-import AcDeleteVoorzieningModal from '../modals/ac-delete-voorzieningen-modal';
+import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
+import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
-const AcBeheerVoorzieningen = () => {
+const AcBeheerGebruiken = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -34,14 +34,14 @@ const AcBeheerVoorzieningen = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/voorzieningen`);
+        navigate(`/login?redirect_url=/beheer/gebruiken`);
         return;
       }
 
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/voorzieningen/voorziening',
+          '/openregister/api/objects/voorzieninggebruik/voorzieninggebruik',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -75,53 +75,81 @@ const AcBeheerVoorzieningen = () => {
 
   const headers = [
     {
-      id: 'name',
-      label: 'Naam',
-      key: 'naam',
+      id: 'id',
+      label: 'Id',
+      key: 'id',
     },
     {
-      id: 'description',
-      label: 'Beschrijving',
-      key: 'beschrijving',
+      id: 'versionId',
+      label: 'Versie Id',
+      key: 'versieId',
     },
     {
-      id: 'category',
-      label: 'Categorie',
-      key: 'categorie',
+      id: 'status',
+      label: 'Status',
+      key: 'status',
     },
     {
-      id: 'functionalities',
-      label: 'Functionaliteiten',
-      key: 'functionaliteiten',
+      id: 'opmerkingen',
+      label: 'Opmerkingen',
+      key: 'opmerkingen',
     },
     {
-      id: 'targetGroup',
-      label: 'Doelgroep',
-      key: 'doelgroep',
+      id: 'bedrijfsKritisch',
+      label: 'Bedrijfs kritisch',
+      key: 'bedrijfsKritisch',
     },
     {
-      id: 'referenceComponents',
-      label: 'Referentie componenten',
-      key: 'referentieComponenten',
+      id: 'privacyGevoelig',
+      label: 'Privacy gevoelig',
+      key: 'privacyGevoelig',
     },
     {
-      id: 'standards',
-      label: 'Standaarden',
-      key: 'standaarden',
+      id: 'bbnScore',
+      label: 'BBN Score',
+      key: 'bbnScore',
     },
     {
-      id: 'voorzieningstype',
-      label: 'Voorzienings type',
-      key: 'voorzieningstype',
+      id: 'ibpScore',
+      label: 'IBP Score',
+      key: 'ibpScore',
+    },
+    {
+      id: 'startDate',
+      label: 'Start datum',
+      key: 'startDatum',
+    },
+    {
+      id: 'endDate',
+      label: 'Eind datum',
+      key: 'eindDatum',
+    },
+    {
+      id: 'organisatieId',
+      label: 'Organisatie ID',
+      key: 'organisatieId',
+    },
+    {
+      id: 'voorzieningId',
+      label: 'Voorziening ID',
+      key: 'voorzieningId',
+    },
+    {
+      id: 'beheerderNaam',
+      label: 'Beheerder naam',
+      key: '',
+      customContent: (row) => {
+        return row?.beheerder?.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.beheerder?.naam.localeCompare(b?.beheerder?.naam)
+          : b?.beheerder?.naam.localeCompare(a?.beheerder?.naam);
+      },
     },
   ];
-  const defaultHeaders = [
-    'name',
-    'referenceComponents',
-    'standards',
-    'category',
-    'links',
-  ];
+  const defaultHeaders = ['id', 'versionId', 'endDate', 'status'];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );
@@ -131,11 +159,11 @@ const AcBeheerVoorzieningen = () => {
   };
 
   if (error) {
-    return <AcBeheerError title='Beheer Voorzieningen' error={error.message} />;
+    return <AcBeheerError title='Beheer Gebruiken' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen' />;
+    return <AcBeheerLoading title='Beheer Gebruiken' />;
   }
 
   return (
@@ -149,7 +177,7 @@ const AcBeheerVoorzieningen = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen</Heading>
+            <Heading>Beheer Gebruiken</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -216,7 +244,7 @@ const AcBeheerVoorzieningen = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('voorzieningen', row.id)
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruiken', row.id)
                         );
                       }}
                     >
@@ -254,8 +282,8 @@ const AcBeheerVoorzieningen = () => {
           />
 
           {/* modals */}
-          <AcVoorzieningenFormModal
-            voorziening={singleSelectedRow}
+          <AcGebruikenFormModal
+            gebruik={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -269,8 +297,8 @@ const AcBeheerVoorzieningen = () => {
             }}
           />
 
-          <AcDeleteVoorzieningModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteGebruikenModal
+            gebruiken={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -294,4 +322,4 @@ const AcBeheerVoorzieningen = () => {
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningen));
+export default withStore(observer(AcBeheerGebruiken));

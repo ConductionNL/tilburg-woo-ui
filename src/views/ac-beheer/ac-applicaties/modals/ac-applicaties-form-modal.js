@@ -8,8 +8,8 @@ import { AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 import ReactSelect from 'react-select';
 
-const AcVoorzieningenFormModal = ({
-  voorziening,
+const AcApplicatiesFormModal = ({
+  applicatie,
   showModal = false,
   onClose,
   onSuccess,
@@ -30,7 +30,7 @@ const AcVoorzieningenFormModal = ({
     'Leverancier',
   ];
 
-  const [voorzieningFormData, setVoorzieningFormData] = useState({
+  const [applicatieFormData, setApplicatieFormData] = useState({
     name: '',
     description: '',
     type: '',
@@ -41,30 +41,30 @@ const AcVoorzieningenFormModal = ({
     standards: '',
   });
 
-  // load voorziening data into the form
+  // load applicatie data into the form
   useEffect(() => {
-    if (voorziening && isEdit) {
-      setVoorzieningFormData((prev) => ({
+    if (applicatie && isEdit) {
+      setApplicatieFormData((prev) => ({
         ...prev,
-        id: voorziening.id,
-        name: voorziening.naam,
-        description: voorziening.beschrijving,
-        type: voorziening.voorzieningstypeId,
-        category: voorziening.categorie,
-        functionalities: Array.isArray(voorziening.functionaliteiten)
-          ? voorziening.functionaliteiten.join(', ')
-          : voorziening.functionaliteiten,
-        targetGroups: voorziening.doelgroep,
-        referenceComponents: Array.isArray(voorziening.referentieComponenten)
-          ? voorziening.referentieComponenten.join(', ')
-          : voorziening.referentieComponenten,
-        standards: Array.isArray(voorziening.standaarden)
-          ? voorziening.standaarden.join(', ')
-          : voorziening.standaarden,
+        id: applicatie.id,
+        name: applicatie.naam,
+        description: applicatie.beschrijving,
+        type: applicatie.voorzieningstypeId,
+        category: applicatie.categorie,
+        functionalities: Array.isArray(applicatie.functionaliteiten)
+          ? applicatie.functionaliteiten.join(', ')
+          : applicatie.functionaliteiten,
+        targetGroups: applicatie.doelgroep,
+        referenceComponents: Array.isArray(applicatie.referentieComponenten)
+          ? applicatie.referentieComponenten.join(', ')
+          : applicatie.referentieComponenten,
+        standards: Array.isArray(applicatie.standaarden)
+          ? applicatie.standaarden.join(', ')
+          : applicatie.standaarden,
       }));
     }
-    if (!voorziening && !isEdit) {
-      setVoorzieningFormData(() => ({
+    if (!applicatie && !isEdit) {
+      setApplicatieFormData(() => ({
         name: '',
         description: '',
         type: '',
@@ -75,12 +75,12 @@ const AcVoorzieningenFormModal = ({
         standards: '',
       }));
     }
-  }, [voorziening, isEdit]);
+  }, [applicatie, isEdit]);
 
-  const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
+  const handleEditApplicatieOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditVoorzieningFieldChange = (field) => (value) => {
-    setVoorzieningFormData((prev) => ({
+  const handleEditApplicatieFieldChange = (field) => (value) => {
+    setApplicatieFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -101,26 +101,26 @@ const AcVoorzieningenFormModal = ({
       'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening';
 
     const method = isEdit ? 'PUT' : 'POST';
-    const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;
+    const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;
 
     try {
       const response = await fetch(url, {
         method: method,
         body: JSON.stringify({
-          naam: voorzieningFormData.name,
-          beschrijving: voorzieningFormData.description,
-          voorzieningstypeId: voorzieningFormData.type,
-          categorie: voorzieningFormData.category,
-          functionaliteiten: voorzieningFormData.functionalities
+          naam: applicatieFormData.name,
+          beschrijving: applicatieFormData.description,
+          voorzieningstypeId: applicatieFormData.type,
+          categorie: applicatieFormData.category,
+          functionaliteiten: applicatieFormData.functionalities
             .trim()
             .split(/ *, */g)
             .filter(Boolean),
-          doelgroep: voorzieningFormData.targetGroups,
-          referentieComponenten: voorzieningFormData.referenceComponents
+          doelgroep: applicatieFormData.targetGroups,
+          referentieComponenten: applicatieFormData.referenceComponents
             .trim()
             .split(/ *, */g)
             .filter(Boolean),
-          standaarden: voorzieningFormData.standards
+          standaarden: applicatieFormData.standards
             .trim()
             .split(/ *, */g)
             .filter(Boolean),
@@ -143,50 +143,50 @@ const AcVoorzieningenFormModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleEditVoorzieningOpenModal();
+      handleEditApplicatieOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleEditVoorzieningCloseModal = () => {
+  const handleEditApplicatieCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleEditVoorzieningCloseModal);
+    modalRef?.current?.addEventListener('close', handleEditApplicatieCloseModal);
   }, [modalRef.current]);
 
-  const renderVoorzieningenFormModal = (
+  const renderApplicatiesFormModal = (
     <AcModal
       ref={modalRef}
-      id='edit-voorziening-modal'
-      title={isEdit ? 'Voorziening bewerken' : 'Voorziening toevoegen'}
+      id='edit-applicatie-modal'
+      title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
       buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
         <AcFormField
           label='Naam'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('name')}
-          value={voorzieningFormData.name}
+          onBlur={handleEditApplicatieFieldChange('name')}
+          value={applicatieFormData.name}
         />
         <AcFormField
           label='Beschrijving'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('description')}
-          value={voorzieningFormData.description}
+          onBlur={handleEditApplicatieFieldChange('description')}
+          value={applicatieFormData.description}
         />
         <div>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Voorziening type</h4>
+            <h4 className='utrecht-heading-4'>Applicatie type</h4>
           </label>
           <ReactSelect
-            placeholder='Selecteer een voorzieningsType'
-            value={types?.find((option) => option.id === voorzieningFormData.type)}
+            placeholder='Selecteer een applicatieType'
+            value={types?.find((option) => option.id === applicatieFormData.type)}
             className='ac-beheer-select'
             onChange={(e) => {
-              setVoorzieningFormData((prev) => ({
+              setApplicatieFormData((prev) => ({
                 ...prev,
                 type: e.value,
               }));
@@ -201,14 +201,14 @@ const AcVoorzieningenFormModal = ({
         <AcFormField
           label='Categorie'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('category')}
-          value={voorzieningFormData.category}
+          onBlur={handleEditApplicatieFieldChange('category')}
+          value={applicatieFormData.category}
         />
         <AcFormField
           label='Functionaliteiten'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('functionalities')}
-          value={voorzieningFormData.functionalities}
+          onBlur={handleEditApplicatieFieldChange('functionalities')}
+          value={applicatieFormData.functionalities}
         />
 
         <div>
@@ -219,12 +219,12 @@ const AcVoorzieningenFormModal = ({
             placeholder='Selecteer een doelgroep'
             className='ac-beheer-select'
             isMulti
-            value={voorzieningFormData.targetGroups.map((targetGroup) => ({
+            value={applicatieFormData.targetGroups.map((targetGroup) => ({
               value: targetGroup,
               label: targetGroup,
             }))}
             onChange={(e) => {
-              setVoorzieningFormData((prev) => ({
+              setApplicatieFormData((prev) => ({
                 ...prev,
                 targetGroups: e.map((item) => item.value),
               }));
@@ -239,20 +239,20 @@ const AcVoorzieningenFormModal = ({
         <AcFormField
           label='Referentie componenten'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('referenceComponents')}
-          value={voorzieningFormData.referenceComponents}
+          onBlur={handleEditApplicatieFieldChange('referenceComponents')}
+          value={applicatieFormData.referenceComponents}
         />
         <AcFormField
           label='Standaarden'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('standards')}
-          value={voorzieningFormData.standards}
+          onBlur={handleEditApplicatieFieldChange('standards')}
+          value={applicatieFormData.standards}
         />
       </AcFlex>
     </AcModal>
   );
 
-  return renderVoorzieningenFormModal;
+  return renderApplicatiesFormModal;
 };
 
-export default withStore(observer(AcVoorzieningenFormModal));
+export default withStore(observer(AcApplicatiesFormModal));

@@ -67,7 +67,7 @@ const AcOrganisatieFormModal = ({
     setOrganisaties(data);
   }, []);
 
-  // load contract data into the form
+  // load organisatie data into the form
   useEffect(() => {
     if (organisatie && isEdit) {
       setOrganisatieFormData((prev) => ({

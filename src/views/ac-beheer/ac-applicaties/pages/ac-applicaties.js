@@ -3,24 +3,24 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import {
-  Heading,
+  PrimaryActionButton,
   SecondaryActionButton,
-} from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
+} from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { AcDrawer, AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcContractFormModal from '../modals/ac-contract-form-modal';
-import AcDeleteContractenModal from '../modals/ac-delete-contracten-modal';
+import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
+import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { getCookie } from '@src/utilities';
 
-const AcBeheerContracten = () => {
+const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [error, setError] = useState(null);
@@ -34,14 +34,14 @@ const AcBeheerContracten = () => {
       const accessToken = getCookie('nextcloud_access_token');
 
       if (!accessToken) {
-        navigate(`/login?redirect_url=/beheer/contracten`);
+        navigate(`/login?redirect_url=/beheer/applicaties`);
         return;
       }
 
       const response = await fetch(
         //   config.authentication.baseURL +
         'https://vng.test.commonground.nu/apps' +
-          '/openregister/api/objects/contract/contract',
+          '/openregister/api/objects/voorzieningen/voorziening',
         {
           headers: {
             'Content-Type': 'application/json',
@@ -80,118 +80,48 @@ const AcBeheerContracten = () => {
       key: 'naam',
     },
     {
-      id: 'contractNummer',
-      label: 'Contract nummer',
-      key: 'contractNummer',
+      id: 'description',
+      label: 'Beschrijving',
+      key: 'beschrijving',
     },
     {
-      id: 'contractType',
-      label: 'Contract type',
-      key: 'contractType',
+      id: 'category',
+      label: 'Categorie',
+      key: 'categorie',
     },
     {
-      id: 'status',
-      label: 'Status',
-      key: 'status',
+      id: 'functionalities',
+      label: 'Functionaliteiten',
+      key: 'functionaliteiten',
     },
     {
-      id: 'opmerkingen',
-      label: 'Opmerkingen',
-      key: 'opmerkingen',
+      id: 'targetGroup',
+      label: 'Doelgroep',
+      key: 'doelgroep',
     },
     {
-      id: 'startDate',
-      label: 'Start datum',
-      key: 'startDatum',
+      id: 'referenceComponents',
+      label: 'Referentie componenten',
+      key: 'referentieComponenten',
     },
     {
-      id: 'endDate',
-      label: 'Eind datum',
-      key: 'eindDatum',
+      id: 'standards',
+      label: 'Standaarden',
+      key: 'standaarden',
     },
     {
-      id: 'voorzieningAanbodNaam',
-      label: 'Voorziening aanbod naam',
-      key: 'voorzieningAanbod',
-      customContent: (row) => {
-        return row?.voorzieningAanbod?.naam || '-';
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return direction
-          ? a?.voorzieningAanbod?.naam.localeCompare(b?.voorzieningAanbod?.naam)
-          : b?.voorzieningAanbod?.naam.localeCompare(a?.voorzieningAanbod?.naam);
-      },
-    },
-    {
-      id: 'voorzieningGebruikId',
-      label: 'Voorziening gebruik ID',
-      key: 'voorzieningGebruikId',
-      customContent: (row) => {
-        return row?.voorzieningAanbod?.id || '-';
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return direction
-          ? a?.voorzieningAanbod?.id.localeCompare(b?.voorzieningAanbod?.id)
-          : b?.voorzieningAanbod?.id.localeCompare(a?.voorzieningAanbod?.id);
-      },
-    },
-    {
-      id: 'costs',
-      label: 'Kosten',
-      key: 'kosten',
-    },
-    {
-      id: 'costsPeriod',
-      label: 'Kosten periode',
-      key: 'kostenPeriode',
-    },
-    {
-      id: 'documentReferentie',
-      label: 'Document referentie',
-      key: 'documentReferentie',
-    },
-    {
-      id: 'contactPersonProvider',
-      label: 'contactpersoon Aanbieder',
-      key: 'contactpersoonAanbieder',
-      customContent: (row) => {
-        if (!row?.contactpersoonAanbieder) return 'N/A';
-        return row.contactpersoonAanbieder.naam;
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return direction
-          ? a?.contactpersoonAanbieder?.naam.localeCompare(
-              b?.contactpersoonAanbieder?.naam
-            )
-          : b?.contactpersoonAanbieder?.naam.localeCompare(
-              a?.contactpersoonAanbieder?.naam
-            );
-      },
-    },
-    {
-      id: 'contactPersonUser',
-      label: 'contactpersoon Gebruiker',
-      key: 'contactpersoonGebruiker',
-      customContent: (row) => {
-        if (!row?.contactpersoonGebruiker) return 'N/A';
-        return row.contactpersoonGebruiker.naam;
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return direction
-          ? a.contactpersoonGebruiker.naam.localeCompare(
-              b.contactpersoonGebruiker.naam
-            )
-          : b.contactpersoonGebruiker.naam.localeCompare(
-              a.contactpersoonGebruiker.naam
-            );
-      },
+      id: 'voorzieningstype',
+      label: 'Voorzienings type',
+      key: 'voorzieningstype',
     },
   ];
-  const defaultHeaders = ['name', 'startDate', 'endDate', 'contactPersonProvider'];
+  const defaultHeaders = [
+    'name',
+    'referenceComponents',
+    'standards',
+    'category',
+    'links',
+  ];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );
@@ -201,11 +131,11 @@ const AcBeheerContracten = () => {
   };
 
   if (error) {
-    return <AcBeheerError title='Beheer Contracten' error={error.message} />;
+    return <AcBeheerError title='Beheer Applicaties' error={error.message} />;
   }
 
   if (loading) {
-    return <AcBeheerLoading title='Beheer Contracten' />;
+    return <AcBeheerLoading title='Beheer Applicaties' />;
   }
 
   return (
@@ -219,7 +149,7 @@ const AcBeheerContracten = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Contracten</Heading>
+            <Heading>Beheer Applicaties</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -286,7 +216,7 @@ const AcBeheerContracten = () => {
                       variant='secondary'
                       onClick={() => {
                         navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('contracten', row.id)
+                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', row.id)
                         );
                       }}
                     >
@@ -324,8 +254,8 @@ const AcBeheerContracten = () => {
           />
 
           {/* modals */}
-          <AcContractFormModal
-            contract={singleSelectedRow}
+          <AcApplicatiesFormModal
+            applicatie={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -339,8 +269,8 @@ const AcBeheerContracten = () => {
             }}
           />
 
-          <AcDeleteContractenModal
-            contracten={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+          <AcDeleteApplicatiesModal
+            applicaties={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -364,4 +294,4 @@ const AcBeheerContracten = () => {
   );
 };
 
-export default withStore(observer(AcBeheerContracten));
+export default withStore(observer(AcBeheerApplicaties));

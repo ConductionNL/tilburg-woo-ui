@@ -72,16 +72,11 @@ const AcAuthentication = () => {
   //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
   //     ? new URL(config.authentication.baseURL).origin + '/index.php'
   //     : new URL(config.authentication.baseURL).origin;
-  const authenticationHostname = 'https://vng.test.commonground.nu';
+  const authenticationHostname = 'https://vng.accept.commonground.nu';
 
   // TODO: do not make this hardcoded
-
-  const [clientId, setClientId] = useState(
-    'VS5gXQ44yhuSAlxFRQYEtSfq258R5PFT41e0v4gjhfJh025HJu7mSJKB5XPnNWHV'
-  );
-  const [secretKey, setSecretKey] = useState(
-    'ChodX8gLZM14k8dO3MzQDrFncRgvD54a5BPqwJkHvEIyFfEBK1awgAB3S3ltSpS3'
-  );
+  const [clientId, setClientId] = useState('QP2dpVmW5sl04tRoC4ixQ75Y52Rkz2Gj1Hi4jaLToe8dHlAROToLu2uPdjNaDsKX');
+  const [secretKey, setSecretKey] = useState('ZEp3E3fcF29sCOEiI7SjEoKFNZNf8Ngu24sUwqH03SrDaK4fLYWpo7j4intzPkdb');
 
   const handleLogin = () => {
     // save client id and secret key as a cookie for 5 minutes

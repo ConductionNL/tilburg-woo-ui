@@ -39,33 +39,26 @@ const AcSideNav = () => {
           </SidenavItem> */}
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/voorzieningen')}
-              current={
-                window.location.pathname.startsWith('/beheer/voorzieningen/') ||
-                window.location.pathname === '/beheer/voorzieningen'
-              }
+              onClick={() => navigate('/beheer/applicaties')}
+              current={window.location.pathname.startsWith('/beheer/applicaties')}
             >
               <VISUALS.CUBE />
-              Voorzieningen
+              Applicaties
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/voorzieningen-aanbod')}
-              current={window.location.pathname.startsWith(
-                '/beheer/voorzieningen-aanbod'
-              )}
+              onClick={() => navigate('/beheer/diensten')}
+              current={window.location.pathname.startsWith('/beheer/diensten')}
             >
               <VISUALS.HAND_HOLDING />
-              Aanbod
+              Diensten
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/voorzieningen-gebruik')}
-              current={window.location.pathname.startsWith(
-                '/beheer/voorzieningen-gebruik'
-              )}
+              onClick={() => navigate('/beheer/gebruiken')}
+              current={window.location.pathname.startsWith('/beheer/gebruiken')}
             >
               <VISUALS.CLOUD />
               Gebruik
@@ -84,11 +77,11 @@ const AcSideNav = () => {
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/contracten')}
-              current={window.location.pathname.startsWith('/beheer/contracten')}
+              onClick={() => navigate('/beheer/overeenkomsten')}
+              current={window.location.pathname.startsWith('/beheer/overeenkomsten')}
             >
               <VISUALS.HAND_SHAKE />
-              Contracten
+              Overeenkomsten
             </SidenavLink>
           </SidenavItem>
           <SidenavItem>
