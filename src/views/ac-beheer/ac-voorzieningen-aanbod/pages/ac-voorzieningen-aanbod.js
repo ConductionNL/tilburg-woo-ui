@@ -98,6 +98,7 @@ const AcBeheerVoorzieningenAanbod = () => {
       label: 'Leverancier ID',
       key: '',
       customContent: (row) => {
+        // TODO: replace with actual voorziening name
         return row?.leverancier?.id || '-';
       },
       sortComparator: (a, b, direction) => {
@@ -131,58 +132,33 @@ const AcBeheerVoorzieningenAanbod = () => {
       key: 'ondersteundeStandaarden',
       customContent: (row) => {
         if (!row?.ondersteundeStandaarden) return 'N/A';
-        if (!row.ondersteundeStandaarden.length) return '-';
-        return row.ondersteundeStandaarden.map((standaard) => (
-          <>
-            <span>
-              {standaard.naam}
-              {' / '}
-              {standaard.status}
-            </span>
-            <br />
-          </>
-        ));
+        if (!row?.ondersteundeStandaarden?.length) return '-';
+        return row?.ondersteundeStandaarden?.map((standaard) => {
+          return (
+            <AcColumn key={standaard.id}>
+              <span>
+                {standaard.naam} / {standaard.status}
+              </span>
+            </AcColumn>
+          );
+        });
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
-        return direction
-          ? a.ondersteundeStandaarden.naam.localeCompare(
-              b.ondersteundeStandaarden.naam
-            )
-          : b.ondersteundeStandaarden.naam.localeCompare(
-              a.ondersteundeStandaarden.naam
-            );
+
+        if (!a.ondersteundeStandaarden?.length) return direction ? -1 : 1;
+        if (!b.ondersteundeStandaarden?.length) return direction ? 1 : -1;
+
+        const aName = a.ondersteundeStandaarden[0].naam;
+        const bName = b.ondersteundeStandaarden[0].naam;
+
+        return direction ? aName.localeCompare(bName) : bName.localeCompare(aName);
       },
-    },
-    {
-      id: 'description',
-      label: 'Omschrijving',
-      key: 'omschrijving',
-    },
-    {
-      id: 'type',
-      label: 'Type',
-      key: 'type',
-    },
-    {
-      id: 'voorzieningId',
-      label: 'Voorziening ID',
-      key: 'voorzieningId',
-    },
-    {
-      id: 'organisationId',
-      label: 'Organisatie ID',
-      key: 'organisatieId',
     },
     {
       id: 'productPage',
       label: 'Productpagina',
       key: 'productpagina',
-    },
-    {
-      id: 'supportModel',
-      label: 'Ondersteuningsmodel',
-      key: 'ondersteuningsmodel',
     },
     {
       id: 'supportOptions',
@@ -195,24 +171,9 @@ const AcBeheerVoorzieningenAanbod = () => {
       key: 'prijsmodel',
     },
     {
-      id: 'licenseModel',
-      label: 'Licentiemodel',
-      key: 'licentiemodel',
-    },
-    {
       id: 'certifications',
       label: 'Certificeringen',
       key: 'certificeringen',
-    },
-    {
-      id: 'hostingOptions',
-      label: 'Hosting opties',
-      key: 'hostingopties',
-    },
-    {
-      id: 'versions',
-      label: 'Versies',
-      key: 'versies',
     },
     {
       id: 'actions',

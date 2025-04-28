@@ -81,29 +81,9 @@ const AcBeheerVoorzieningenVersie = () => {
       key: 'naam',
     },
     {
-      id: 'description',
-      label: 'Omschrijving',
-      key: 'omschrijving',
-    },
-    {
       id: 'releaseNotes',
       label: 'Release Notes',
       key: 'releaseNotes',
-    },
-    {
-      id: 'releaseDate',
-      label: 'Release datum',
-      key: 'releaseDatum',
-    },
-    {
-      id: 'nummer',
-      label: 'Nummer',
-      key: 'nummer',
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      key: 'status',
     },
     {
       id: 'versionNumber',
@@ -111,23 +91,14 @@ const AcBeheerVoorzieningenVersie = () => {
       key: 'versienummer',
     },
     {
-      id: 'voorzieningaanbodId',
-      label: 'Voorziening Aanbod ID',
-      key: 'voorzieningaanbodId',
+      id: 'releaseDate',
+      label: 'Release datum',
+      key: 'releaseDatum',
     },
     {
-      id: 'voorzieningaanbod',
-      label: 'Voorziening Aanbod naam',
-      key: '',
-      customContent: (row) => {
-        return row?.voorzieningaanbod?.naam || '-';
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return direction
-          ? a?.voorzieningaanbod?.naam.localeCompare(b?.voorzieningaanbod?.naam)
-          : b?.voorzieningaanbod?.naam.localeCompare(a?.voorzieningaanbod?.naam);
-      },
+      id: 'status',
+      label: 'Status',
+      key: 'status',
     },
     {
       id: 'endDateSupport',
@@ -145,7 +116,7 @@ const AcBeheerVoorzieningenVersie = () => {
       key: '',
       customContent: (row) => {
         return (
-          row?.kwetsbaarheden?.[0]
+          row?.kwetsbaarheden
             ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
             .join(', ') || '-'
         );
@@ -153,8 +124,12 @@ const AcBeheerVoorzieningenVersie = () => {
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a?.kwetsbaarheden?.[0]?.titel.localeCompare(b?.kwetsbaarheden?.[0]?.titel)
-          : b?.kwetsbaarheden?.[0]?.titel.localeCompare(a?.kwetsbaarheden?.[0]?.titel);
+          ? a?.kwetsbaarheden?.[0]?.titel.localeCompare(
+              b?.kwetsbaarheden?.[0]?.titel
+            )
+          : b?.kwetsbaarheden?.[0]?.titel.localeCompare(
+              a?.kwetsbaarheden?.[0]?.titel
+            );
       },
     },
     {

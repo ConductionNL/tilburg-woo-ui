@@ -112,6 +112,16 @@ const AcBeheerGebruikers = () => {
       id: 'preferences',
       label: 'Voorkeuren',
       key: 'voorkeuren',
+      customContent: (row) => {
+        if (!row?.voorkeuren) return '-';
+        return `Taal: ${row.voorkeuren.taal}, Thema: ${row.voorkeuren.thema}`;
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        return direction
+          ? a?.voorkeuren?.taal.localeCompare(b?.voorkeuren?.taal)
+          : b?.voorkeuren?.taal.localeCompare(a?.voorkeuren?.taal);
+      },
     },
     {
       id: 'rollen',

@@ -75,6 +75,11 @@ const AcBeheerContracten = () => {
 
   const headers = [
     {
+      id: 'name',
+      label: 'Naam',
+      key: 'naam',
+    },
+    {
       id: 'contractNummer',
       label: 'Contract nummer',
       key: 'contractNummer',
@@ -107,7 +112,7 @@ const AcBeheerContracten = () => {
     {
       id: 'voorzieningAanbodNaam',
       label: 'Voorziening aanbod naam',
-      key: '',
+      key: 'voorzieningAanbod',
       customContent: (row) => {
         return row?.voorzieningAanbod?.naam || '-';
       },
@@ -150,38 +155,38 @@ const AcBeheerContracten = () => {
     {
       id: 'contactPersonProvider',
       label: 'contactpersoon Aanbieder',
-      key: 'contactpersoonAanbieder',
+      key: 'contactPersoonAanbieder',
       customContent: (row) => {
-        if (!row?.contactpersoonAanbieder) return 'N/A';
-        return `${row.contactpersoonAanbieder.naam} / ${row.contactpersoonAanbieder.achternaam}`;
+        if (!row?.contactPersoonAanbieder) return 'N/A';
+        return `${row.contactPersoonAanbieder.naam} / ${row.contactPersoonAanbieder.achternaam}`;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a.contactpersoonAanbieder.naam.localeCompare(
-              b.contactpersoonAanbieder.naam
+          ? a?.contactPersoonAanbieder?.naam.localeCompare(
+              b?.contactPersoonAanbieder?.naam
             )
-          : b.contactpersoonAanbieder.naam.localeCompare(
-              a.contactpersoonAanbieder.naam
+          : b?.contactPersoonAanbieder?.naam.localeCompare(
+              a?.contactPersoonAanbieder?.naam
             );
       },
     },
     {
       id: 'contactPersonUser',
       label: 'contactpersoon Gebruiker',
-      key: 'contactpersoonGebruiker',
+      key: 'contactPersoonGebruiker',
       customContent: (row) => {
-        if (!row?.contactpersoonGebruiker) return 'N/A';
-        return `${row.contactpersoonGebruiker.naam} / ${row.contactpersoonGebruiker.achternaam}`;
+        if (!row?.contactPersoonGebruiker) return 'N/A';
+        return row.contactPersoonGebruiker.naam;
       },
       sortComparator: (a, b, direction) => {
         if (direction === null) return 0;
         return direction
-          ? a.contactpersoonGebruiker.naam.localeCompare(
-              b.contactpersoonGebruiker.naam
+          ? a.contactPersoonGebruiker.naam.localeCompare(
+              b.contactPersoonGebruiker.naam
             )
-          : b.contactpersoonGebruiker.naam.localeCompare(
-              a.contactpersoonGebruiker.naam
+          : b.contactPersoonGebruiker.naam.localeCompare(
+              a.contactPersoonGebruiker.naam
             );
       },
     },

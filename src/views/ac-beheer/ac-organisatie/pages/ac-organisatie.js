@@ -77,7 +77,18 @@ const AcBeheerOrganisaties = () => {
     {
       id: 'organizationName',
       label: 'Naam',
-      key: 'naam',
+      key: 'organisatienaam',
+      customContent: (row) => {
+        return row.organisatienaam || row.naam || '-';
+      },
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        const aName = a.organisatienaam || a.naam || undefined;
+        const bName = b.organisatienaam || b.naam || undefined;
+        return direction
+          ? aName.localeCompare(bName)
+          : bName.localeCompare(aName);
+      },
     },
     {
       id: 'description',
@@ -100,11 +111,6 @@ const AcBeheerOrganisaties = () => {
       },
     },
     {
-      id: 'type',
-      label: 'Type',
-      key: 'type',
-    },
-    {
       id: 'website',
       label: 'Website',
       key: 'website',
@@ -113,16 +119,6 @@ const AcBeheerOrganisaties = () => {
       id: 'kvkNumber',
       label: 'KvK nummer',
       key: 'kvkNummer',
-    },
-    {
-      id: 'oidn',
-      label: 'OIDN',
-      key: 'oidn',
-    },
-    {
-      id: 'parentOrganization',
-      label: 'Moeder Organisatie',
-      key: 'moederOrganisatie',
     },
     {
       id: 'actions',
