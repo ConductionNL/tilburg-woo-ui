@@ -155,6 +155,7 @@ const AcDashboard = () => {
 
   const [downloadError, setDownloadError] = useState(null);
   const [modelLoading, setModelLoading] = useState(false);
+  const [activeModel, setActiveModel] = useState(null);
   const [models, setModels] = useState([]);
 
   const getImage = (status) => {
@@ -231,7 +232,7 @@ const AcDashboard = () => {
               type='url'
               fullWidth
               value={archimateUrl}
-              onChange={(e) => setArchimateUrl(e.target.value)}
+              onChange={(e) => setArchimateUrl(e)}
             />
           </>
         )}
@@ -306,7 +307,7 @@ const AcDashboard = () => {
         headers: {
           Accept: 'application/xml',
         },
-      }).finally(() => setModelLoading(false));
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
