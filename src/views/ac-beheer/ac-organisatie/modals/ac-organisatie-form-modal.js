@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 
 const AcOrganisatieFormModal = ({
   organisatie,
@@ -20,31 +21,11 @@ const AcOrganisatieFormModal = ({
   const { makeRequest } = useNextcloudRequests();
 
   const [organisatieFormData, setOrganisatieFormData] = useState({
-    naam: '',
-    type: '',
-    kvkNummer: '',
-    oidn: '',
-    moederOrganisatie: '',
-    sector: '',
-    organisatietype: '',
+    'kvk-nummer': '',
+    organisatienaam: '',
+    contactgegevens: '',
     website: '',
-    adres: {
-      straat: '',
-      huisnummer: '',
-      postcode: '',
-      plaats: '',
-      land: '',
-    },
-    contactgegevens: {
-      telefoon: '',
-      email: '',
-      contactpersoon: '',
-    },
     beschrijving: '',
-    logo: '',
-    voorzieningen: [],
-    gebruik: [],
-    deelnemerIn: [],
   });
 
   const [organisaties, setOrganisaties] = useState([]);
@@ -64,44 +45,16 @@ const AcOrganisatieFormModal = ({
       setOrganisatieFormData((prev) => ({
         ...prev,
         ...organisatie,
-        voorzieningen: Array.isArray(organisatie.voorzieningen)
-          ? organisatie.voorzieningen.join(', ')
-          : organisatie.voorzieningen,
-        gebruik: Array.isArray(organisatie.gebruik)
-          ? organisatie.gebruik.join(', ')
-          : organisatie.gebruik,
-        deelnemerIn: !Array.isArray(organisatie.deelnemerIn) // ensure deelnemerIn is an array for backwards compatibility
-          ? organisatie.deelnemerIn.split(', ')
-          : organisatie.deelnemerIn,
+        contactgegevens: collapseExtendedObjects(organisatie.contactgegevens),
       }));
     }
     if (!organisatie && !isEdit) {
       setOrganisatieFormData(() => ({
-        naam: '',
-        type: '',
-        kvkNummer: '',
-        oidn: '',
-        moederOrganisatie: '',
-        sector: '',
-        organisatietype: '',
+        'kvk-nummer': '',
+        organisatienaam: '',
+        contactgegevens: '',
         website: '',
-        adres: {
-          straat: '',
-          huisnummer: '',
-          postcode: '',
-          plaats: '',
-          land: '',
-        },
-        contactgegevens: {
-          telefoon: '',
-          email: '',
-          contactpersoon: '',
-        },
         beschrijving: '',
-        logo: '',
-        voorzieningen: [],
-        gebruik: [],
-        deelnemerIn: [],
       }));
     }
   }, [organisatie, isEdit]);
@@ -129,14 +82,7 @@ const AcOrganisatieFormModal = ({
         method: method,
         body: JSON.stringify({
           ...organisatieFormData,
-          voorzieningen: organisatieFormData.voorzieningen
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          gebruik: organisatieFormData.gebruik
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
+          contactgegevens: smartSplit(organisatieFormData.contactgegevens),
         }),
       });
 
@@ -183,46 +129,22 @@ const AcOrganisatieFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <AcFormField
-          label='Naam'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('naam')}
-          value={organisatieFormData.naam}
-        />
-        <AcFormField
-          label='Type'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('type')}
-          value={organisatieFormData.type}
-        />
-        <AcFormField
           label='KvK nummer'
           type='text'
-          onBlur={handleEditOrganisatieFieldChange('kvkNummer')}
-          value={organisatieFormData.kvkNummer}
+          onBlur={handleEditOrganisatieFieldChange('kvk-nummer')}
+          value={organisatieFormData['kvk-nummer']}
         />
         <AcFormField
-          label='OIDN'
+          label='Organisatienaam'
           type='text'
-          onBlur={handleEditOrganisatieFieldChange('oidn')}
-          value={organisatieFormData.oidn}
+          onBlur={handleEditOrganisatieFieldChange('organisatienaam')}
+          value={organisatieFormData.organisatienaam}
         />
         <AcFormField
-          label='Moeder Organisatie'
+          label='Contactgegevens'
           type='text'
-          onBlur={handleEditOrganisatieFieldChange('moederOrganisatie')}
-          value={organisatieFormData.moederOrganisatie}
-        />
-        <AcFormField
-          label='Sector'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('sector')}
-          value={organisatieFormData.sector}
-        />
-        <AcFormField
-          label='Organisatietype'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('organisatietype')}
-          value={organisatieFormData.organisatietype}
+          onBlur={handleEditOrganisatieFieldChange('contactgegevens')}
+          value={organisatieFormData.contactgegevens}
         />
         <AcFormField
           label='Website'
@@ -236,48 +158,6 @@ const AcOrganisatieFormModal = ({
           onBlur={handleEditOrganisatieFieldChange('beschrijving')}
           value={organisatieFormData.beschrijving}
         />
-        <AcFormField
-          label='Logo'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('logo')}
-          value={organisatieFormData.logo}
-        />
-        <AcFormField
-          label='Voorzieningen'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('voorzieningen')}
-          value={organisatieFormData.voorzieningen}
-        />
-        <AcFormField
-          label='Gebruik'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('gebruik')}
-          value={organisatieFormData.gebruik}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Deelnemer In</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een organisatie'
-            value={organisaties
-              .filter((organisatie) =>
-                organisatieFormData.deelnemerIn.includes(organisatie.id)
-              )
-              .map(mapOrganisatieToValue)}
-            isMulti
-            className='ac-beheer-select'
-            onChange={(selectedOptions) => {
-              handleEditOrganisatieFieldChange('deelnemerIn')(
-                selectedOptions ? selectedOptions.map((option) => option.value) : []
-              );
-            }}
-            loading={organisaties?.length === 0}
-            options={organisaties
-              ?.filter((organisatie) => organisatie.id !== organisatieFormData?.id)
-              ?.map(mapOrganisatieToValue)}
-          />
-        </div>
       </AcFlex>
     </AcModal>
   );

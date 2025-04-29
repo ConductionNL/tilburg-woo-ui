@@ -79,6 +79,9 @@ const AcBeheerGebruiken = () => {
       id: 'versionId',
       label: 'Versie ID',
       key: 'versieId',
+      customContent: (row) => {
+        return row?.versieId?.id ?? row?.versieId ?? '-';
+      },
     },
     {
       id: 'status',

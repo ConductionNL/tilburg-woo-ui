@@ -6,6 +6,7 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { collapseExtendedObjects } from '@src/utilities';
 
 const AcGebruikenFormModal = ({
   gebruik,
@@ -48,6 +49,9 @@ const AcGebruikenFormModal = ({
       setGebruikFormData((prev) => ({
         ...prev,
         ...gebruik,
+        voorzieningId: collapseExtendedObjects(gebruik.voorzieningId),
+        versieId: collapseExtendedObjects(gebruik.versieId),
+        organisatieId: collapseExtendedObjects(gebruik.organisatieId),
       }));
     }
 

@@ -106,3 +106,5 @@ export { AcRemoveTags, AcRemoveParagraphTags } from './ac-remove-tags';
 export { acSafeParseRedirectUri } from './ac-safe-parse-redirect-uri';
 export { getCookie, setCookie } from './ac-cookie';
 export { ConSorter } from './con-sorter';
+export { collapseExtendedObjects } from './con-collapse-extended-objects';
+export { smartSplit } from './con-smart-split';

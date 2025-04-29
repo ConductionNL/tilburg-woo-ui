@@ -6,6 +6,7 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 
 const AcVoorzieningVersieFormModal = ({
   voorziening,
@@ -19,14 +20,13 @@ const AcVoorzieningVersieFormModal = ({
   const { makeRequest } = useNextcloudRequests();
 
   const [voorzieningFormData, setVoorzieningFormData] = useState({
-    naam: '',
-    omschrijving: '',
+    voorzieningaanbod: '',
+    versienummer: '',
     releaseNotes: '',
-    nummer: '',
-    voorzieningaanbodId: '',
-    productieDatum: '',
-    eindeDatum: '',
-    status: '',
+    releaseDatum: '',
+    eindDatumOndersteuning: '',
+    systeemvereisten: '',
+    kwetsbaarheden: '',
   });
 
   useEffect(() => {
@@ -34,19 +34,20 @@ const AcVoorzieningVersieFormModal = ({
       setVoorzieningFormData((prev) => ({
         ...prev,
         ...voorziening,
+        voorzieningaanbod: collapseExtendedObjects(voorziening.voorzieningaanbod),
+        kwetsbaarheden: collapseExtendedObjects(voorziening.kwetsbaarheden),
       }));
     }
 
     if (!voorziening && !isEdit) {
       setVoorzieningFormData(() => ({
-        naam: '',
-        omschrijving: '',
+        voorzieningaanbod: '',
+        versienummer: '',
         releaseNotes: '',
-        nummer: '',
-        voorzieningaanbodId: '',
-        productieDatum: '',
-        eindeDatum: '',
-        status: '',
+        releaseDatum: '',
+        eindDatumOndersteuning: '',
+        systeemvereisten: '',
+        kwetsbaarheden: '',
       }));
     }
   }, [voorziening, isEdit]);
@@ -72,7 +73,10 @@ const AcVoorzieningVersieFormModal = ({
     try {
       const response = await makeRequest(url, null, {
         method: method,
-        body: JSON.stringify(voorzieningFormData),
+        body: JSON.stringify({
+          ...voorzieningFormData,
+          kwetsbaarheden: smartSplit(voorzieningFormData.kwetsbaarheden),
+        }),
       });
 
       if (response.ok) {
@@ -110,52 +114,46 @@ const AcVoorzieningVersieFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <AcFormField
-          label='Naam'
+          label='Voorziening Aanbod ID'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('naam')}
-          value={voorzieningFormData.naam}
+          onBlur={handleEditVoorzieningFieldChange('voorzieningaanbod')}
+          value={voorzieningFormData.voorzieningaanbod}
         />
         <AcFormField
-          label='Omschrijving'
+          label='Versie Nummer'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('omschrijving')}
-          value={voorzieningFormData.omschrijving}
+          onBlur={handleEditVoorzieningFieldChange('versienummer')}
+          value={voorzieningFormData.versienummer}
         />
         <AcFormField
-          label='Versie ID'
+          label='Release Notes'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('releaseNotes')}
           value={voorzieningFormData.releaseNotes}
         />
         <AcFormField
-          label='Nummer'
+          label='Release Datum'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('nummer')}
-          value={voorzieningFormData.nummer}
+          onBlur={handleEditVoorzieningFieldChange('releaseDatum')}
+          value={voorzieningFormData.releaseDatum}
         />
         <AcFormField
-          label='Voorziening Aanbod ID'
+          label='Eind Datum Ondersteuning'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('voorzieningaanbodId')}
-          value={voorzieningFormData.voorzieningaanbodId}
+          onBlur={handleEditVoorzieningFieldChange('eindDatumOndersteuning')}
+          value={voorzieningFormData.eindDatumOndersteuning}
         />
         <AcFormField
-          label='Productie Datum'
+          label='Systeem Vereisten'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('productieDatum')}
-          value={voorzieningFormData.productieDatum}
+          onBlur={handleEditVoorzieningFieldChange('systeemvereisten')}
+          value={voorzieningFormData.systeemvereisten}
         />
         <AcFormField
-          label='Einde Datum'
+          label='Kwetsbaarheden'
           type='text'
-          onBlur={handleEditVoorzieningFieldChange('eindeDatum')}
-          value={voorzieningFormData.eindeDatum}
-        />
-        <AcFormField
-          label='Status'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('status')}
-          value={voorzieningFormData.status}
+          onBlur={handleEditVoorzieningFieldChange('kwetsbaarheden')}
+          value={voorzieningFormData.kwetsbaarheden}
         />
       </AcFlex>
     </AcModal>
