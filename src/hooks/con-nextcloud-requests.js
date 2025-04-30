@@ -35,6 +35,11 @@ export default function useNextcloudRequests() {
       body: fetchOptions?.body,
     });
 
+    if (response.status === 401) {
+      navigate(`/login?redirect_url=${redirectUrl}`);
+      return;
+    }
+
     return response;
   };
 

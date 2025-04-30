@@ -6,6 +6,7 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 
 const AcKwetsbaarheidFormModal = ({
   kwetsbaarheid,
@@ -37,6 +38,7 @@ const AcKwetsbaarheidFormModal = ({
       setKwetsbaarheidFormData((prev) => ({
         ...prev,
         ...kwetsbaarheid,
+        voorzieningversieId: collapseExtendedObjects(kwetsbaarheid.voorzieningversieId),
         referenties: Array.isArray(kwetsbaarheid.referenties)
           ? kwetsbaarheid.referenties.join(', ')
           : kwetsbaarheid.referenties,
@@ -82,10 +84,7 @@ const AcKwetsbaarheidFormModal = ({
         method: method,
         body: JSON.stringify({
           ...kwetsbaarheidFormData,
-          referenties: kwetsbaarheidFormData.referenties
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
+          referenties: smartSplit(kwetsbaarheidFormData.referenties),
         }),
       });
 

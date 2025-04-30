@@ -17,25 +17,27 @@ const AcOvereenkomstFormModal = ({
 }) => {
   const modalRef = useRef(null);
   const [overeenkomstFormData, setOvereenkomstFormData] = useState({
-    provisionSupply: '',
-    provisionUse: '',
-    startDate: '',
-    endDate: '',
-    contractNumber: '',
+    voorzieningAanbod: '', // extended object, as id
+    voorzieningGebruik: '', // extended object, as id
+    startDatum: '',
+    eindDatum: '',
+    contractNummer: '',
     contractType: '',
-    costs: 0,
-    costsPeriod: '',
-    contactPersonProvider: {
-      name: '',
+    kosten: 0,
+    kostenPeriode: '',
+    contactpersoonAanbieder: {
+      id: '',
+      naam: '',
       email: '',
     },
-    contactPersonUser: {
-      name: '',
+    contactpersoonGebruiker: {
+      id: '',
+      naam: '',
       email: '',
     },
-    documentReference: '',
+    documentReferentie: '',
     status: '',
-    notes: '',
+    opmerkingen: '',
   });
 
   const { makeRequest } = useNextcloudRequests();
@@ -61,48 +63,56 @@ const AcOvereenkomstFormModal = ({
     if (overeenkomst && isEdit) {
       setOvereenkomstFormData((prev) => ({
         ...prev,
-        provisionSupply: overeenkomst.voorzieningAanbod,
-        provisionUse: overeenkomst.voorzieningGebruik,
-        startDate: overeenkomst.startDatum,
-        endDate: overeenkomst.eindDatum,
-        contractNumber: overeenkomst.contractNummer,
+        ...overeenkomst,
+        id: overeenkomst.id,
+        // === convert extended objects to ids ================
+        voorzieningAanbod: overeenkomst.voorzieningAanbod?.id,
+        voorzieningGebruik: overeenkomst.voorzieningGebruik?.id,
+        // ====================================================
+        startDatum: overeenkomst.startDatum,
+        eindDatum: overeenkomst.eindDatum,
+        contractNummer: overeenkomst.contractNummer,
         contractType: overeenkomst.contractType,
-        costs: overeenkomst.kosten,
-        costsPeriod: overeenkomst.kostenPeriode,
-        contactPersonProvider: {
-          name: overeenkomst.contactPersoonAanbieder.naam,
-          email: overeenkomst.contactPersoonAanbieder.email,
+        kosten: overeenkomst.kosten,
+        kostenPeriode: overeenkomst.kostenPeriode,
+        contactpersoonAanbieder: {
+          id: overeenkomst.contactPersoonAanbieder?.id,
+          naam: overeenkomst.contactPersoonAanbieder?.naam,
+          email: overeenkomst.contactPersoonAanbieder?.email,
         },
-        contactPersonUser: {
-          name: overeenkomst.contactPersoonGebruiker.naam,
-          email: overeenkomst.contactPersoonGebruiker.email,
+        contactpersoonGebruiker: {
+          id: overeenkomst.contactPersoonGebruiker?.id,
+          naam: overeenkomst.contactPersoonGebruiker?.naam,
+          email: overeenkomst.contactPersoonGebruiker?.email,
         },
-        documentReference: overeenkomst.documentReferentie,
+        documentReferentie: overeenkomst.documentReferentie,
         status: overeenkomst.status,
-        notes: overeenkomst.opmerkingen,
+        opmerkingen: overeenkomst.opmerkingen,
       }));
     }
     if (!overeenkomst && !isEdit) {
       setOvereenkomstFormData(() => ({
-        provisionSupply: '',
-        provisionUse: '',
-        startDate: '',
-        endDate: '',
-        contractNumber: '',
+        voorzieningAanbod: '',
+        voorzieningGebruik: '',
+        startDatum: '',
+        eindDatum: '',
+        contractNummer: '',
         contractType: '',
-        costs: 0,
-        costsPeriod: '',
-        contactPersonProvider: {
-          name: '',
+        kosten: 0,
+        kostenPeriode: '',
+        contactpersoonAanbieder: {
+          id: '',
+          naam: '',
           email: '',
         },
-        contactPersonUser: {
-          name: '',
+        contactpersoonGebruiker: {
+          id: '',
+          naam: '',
           email: '',
         },
-        documentReference: '',
+        documentReferentie: '',
         status: '',
-        notes: '',
+        opmerkingen: '',
       }));
     }
   }, [overeenkomst, isEdit]);
@@ -139,25 +149,27 @@ const AcOvereenkomstFormModal = ({
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
-          voorzieningAanbod: overeenkomstFormData.provisionSupply,
-          voorzieningGebruik: overeenkomstFormData.provisionUse,
-          startDatum: overeenkomstFormData.startDate,
-          eindDatum: overeenkomstFormData.endDate,
-          contractNummer: overeenkomstFormData.contractNumber,
+          voorzieningAanbod: overeenkomstFormData.voorzieningAanbod,
+          voorzieningGebruik: overeenkomstFormData.voorzieningGebruik,
+          startDatum: overeenkomstFormData.startDatum,
+          eindDatum: overeenkomstFormData.eindDatum,
+          contractNummer: overeenkomstFormData.contractNummer,
           contractType: overeenkomstFormData.contractType,
-          kosten: overeenkomstFormData.costs,
-          kostenPeriode: overeenkomstFormData.costsPeriod,
+          kosten: overeenkomstFormData.kosten,
+          kostenPeriode: overeenkomstFormData.kostenPeriode,
           contactPersoonAanbieder: {
-            naam: overeenkomstFormData.contactPersonProvider.name,
-            email: overeenkomstFormData.contactPersonProvider.email,
+            id: overeenkomstFormData.contactpersoonAanbieder.id,
+            naam: overeenkomstFormData.contactpersoonAanbieder.naam,
+            email: overeenkomstFormData.contactpersoonAanbieder.email,
           },
           contactPersoonGebruiker: {
-            naam: overeenkomstFormData.contactPersonUser.name,
-            email: overeenkomstFormData.contactPersonUser.email,
+            id: overeenkomstFormData.contactpersoonGebruiker.id,
+            naam: overeenkomstFormData.contactpersoonGebruiker.naam,
+            email: overeenkomstFormData.contactpersoonGebruiker.email,
           },
-          documentReferentie: overeenkomstFormData.documentReference,
+          documentReferentie: overeenkomstFormData.documentReferentie,
           status: overeenkomstFormData.status,
-          opmerkingen: overeenkomstFormData.notes,
+          opmerkingen: overeenkomstFormData.opmerkingen,
         }),
       });
 
@@ -198,32 +210,32 @@ const AcOvereenkomstFormModal = ({
         <AcFormField
           label='Voorziening Aanbod'
           type='text'
-          onBlur={handleEditOvereenkomstFieldChange('provisionSupply')}
-          value={overeenkomstFormData.provisionSupply}
+          onBlur={handleEditOvereenkomstFieldChange('voorzieningAanbod')}
+          value={overeenkomstFormData.voorzieningAanbod}
         />
         <AcFormField
           label='Voorziening Gebruik'
           type='text'
-          onBlur={handleEditOvereenkomstFieldChange('provisionUse')}
-          value={overeenkomstFormData.provisionUse}
+          onBlur={handleEditOvereenkomstFieldChange('voorzieningGebruik')}
+          value={overeenkomstFormData.voorzieningGebruik}
         />
         <AcFormField
           label='Startdatum'
           type='date'
-          onBlur={handleEditOvereenkomstFieldChange('startDate')}
-          value={overeenkomstFormData.startDate}
+          onBlur={handleEditOvereenkomstFieldChange('startDatum')}
+          value={overeenkomstFormData.startDatum}
         />
         <AcFormField
           label='Einddatum'
           type='date'
-          onBlur={handleEditOvereenkomstFieldChange('endDate')}
-          value={overeenkomstFormData.endDate}
+          onBlur={handleEditOvereenkomstFieldChange('eindDatum')}
+          value={overeenkomstFormData.eindDatum}
         />
         <AcFormField
           label='Contract Nummer'
           type='text'
-          onBlur={handleEditOvereenkomstFieldChange('contractNumber')}
-          value={overeenkomstFormData.contractNumber}
+          onBlur={handleEditOvereenkomstFieldChange('contractNummer')}
+          value={overeenkomstFormData.contractNummer}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -251,8 +263,8 @@ const AcOvereenkomstFormModal = ({
         <AcFormField
           label='Kosten'
           type='number'
-          onBlur={handleEditOvereenkomstFieldChange('costs')}
-          value={overeenkomstFormData.costs}
+          onBlur={handleEditOvereenkomstFieldChange('kosten')}
+          value={overeenkomstFormData.kosten}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -261,13 +273,13 @@ const AcOvereenkomstFormModal = ({
           <ReactSelect
             placeholder='Selecteer een contract type'
             value={kostenPeriodes?.find(
-              (option) => option.id === overeenkomstFormData.costsPeriod
+              (option) => option.id === overeenkomstFormData.kostenPeriode
             )}
             className='ac-beheer-select'
             onChange={(e) => {
               setOvereenkomstFormData((prev) => ({
                 ...prev,
-                costsPeriod: e.value,
+                kostenPeriode: e.value,
               }));
             }}
             loading={kostenPeriodes?.length === 0}
@@ -287,20 +299,20 @@ const AcOvereenkomstFormModal = ({
               label='Naam'
               type='text'
               onBlur={handleEditOvereenkomstFieldChange(
-                'contactPersonProvider',
-                'name'
+                'contactpersoonAanbieder',
+                'naam'
               )}
-              value={overeenkomstFormData.contactPersonProvider.name}
+              value={overeenkomstFormData.contactpersoonAanbieder.naam}
             />
             <AcFormField
               headingLevel={5}
               label='Email'
               type='text'
               onBlur={handleEditOvereenkomstFieldChange(
-                'contactPersonProvider',
+                'contactpersoonAanbieder',
                 'email'
               )}
-              value={overeenkomstFormData.contactPersonProvider.email}
+              value={overeenkomstFormData.contactpersoonAanbieder.email}
             />
           </AcFlex>
         </div>
@@ -313,26 +325,29 @@ const AcOvereenkomstFormModal = ({
               headingLevel={5}
               label='Naam'
               type='text'
-              onBlur={handleEditOvereenkomstFieldChange('contactPersonUser', 'name')}
-              value={overeenkomstFormData.contactPersonUser.name}
+              onBlur={handleEditOvereenkomstFieldChange(
+                'contactpersoonGebruiker',
+                'naam'
+              )}
+              value={overeenkomstFormData.contactpersoonGebruiker.naam}
             />
             <AcFormField
               headingLevel={5}
               label='Email'
               type='text'
               onBlur={handleEditOvereenkomstFieldChange(
-                'contactPersonUser',
+                'contactpersoonGebruiker',
                 'email'
               )}
-              value={overeenkomstFormData.contactPersonUser.email}
+              value={overeenkomstFormData.contactpersoonGebruiker.email}
             />
           </AcFlex>
         </div>
         <AcFormField
           label='Document Referentie'
           type='text'
-          onBlur={handleEditOvereenkomstFieldChange('documentReference')}
-          value={overeenkomstFormData.documentReference}
+          onBlur={handleEditOvereenkomstFieldChange('documentReferentie')}
+          value={overeenkomstFormData.documentReferentie}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -360,8 +375,8 @@ const AcOvereenkomstFormModal = ({
         <AcFormField
           label='Opmerkingen'
           type='text'
-          onBlur={handleEditOvereenkomstFieldChange('notes')}
-          value={overeenkomstFormData.notes}
+          onBlur={handleEditOvereenkomstFieldChange('opmerkingen')}
+          value={overeenkomstFormData.opmerkingen}
         />
       </AcFlex>
     </AcModal>

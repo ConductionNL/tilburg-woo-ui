@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -22,6 +23,13 @@ const AcApplicatiesFormModal = ({
   const types = [
     { id: '270f7176-2bdc-4702-a037-0684b2487ab8', label: 'Voorziening' },
   ];
+  const voorzieningsTypes = [
+    { id: 'Toepassing', label: 'Toepassing' },
+    { id: 'Platform', label: 'Platform' },
+    { id: 'GeneriekComponent', label: 'GeneriekComponent' },
+    { id: 'Service', label: 'Service' },
+    { id: 'Anders', label: 'Anders' },
+  ];
   const targetGroups = [
     'Gemeente',
     'Waterschap',
@@ -35,12 +43,12 @@ const AcApplicatiesFormModal = ({
   const [applicatieFormData, setApplicatieFormData] = useState({
     name: '',
     description: '',
-    type: '',
     category: '',
     functionalities: '',
     targetGroups: [],
     referenceComponents: [],
     standards: '',
+    voorzieningstype: '',
   });
 
   // load applicatie data into the form
@@ -48,10 +56,10 @@ const AcApplicatiesFormModal = ({
     if (applicatie && isEdit) {
       setApplicatieFormData((prev) => ({
         ...prev,
+        ...applicatie,
         id: applicatie.id,
         name: applicatie.naam,
         description: applicatie.beschrijving,
-        type: applicatie.voorzieningstypeId,
         category: applicatie.categorie,
         functionalities: Array.isArray(applicatie.functionaliteiten)
           ? applicatie.functionaliteiten.join(', ')
@@ -60,21 +68,20 @@ const AcApplicatiesFormModal = ({
         referenceComponents: Array.isArray(applicatie.referentieComponenten)
           ? applicatie.referentieComponenten.join(', ')
           : applicatie.referentieComponenten,
-        standards: Array.isArray(applicatie.standaarden)
-          ? applicatie.standaarden.join(', ')
-          : applicatie.standaarden,
+        standards: collapseExtendedObjects(applicatie.standaarden),
+        voorzieningstype: applicatie.voorzieningstype,
       }));
     }
     if (!applicatie && !isEdit) {
       setApplicatieFormData(() => ({
         name: '',
         description: '',
-        type: '',
         category: '',
         functionalities: '',
         targetGroups: [],
         referenceComponents: [],
         standards: '',
+        voorzieningstype: '',
       }));
     }
   }, [applicatie, isEdit]);
@@ -103,21 +110,12 @@ const AcApplicatiesFormModal = ({
         body: JSON.stringify({
           naam: applicatieFormData.name,
           beschrijving: applicatieFormData.description,
-          voorzieningstypeId: applicatieFormData.type,
           categorie: applicatieFormData.category,
-          functionaliteiten: applicatieFormData.functionalities
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
+          functionaliteiten: smartSplit(applicatieFormData.functionalities),
           doelgroep: applicatieFormData.targetGroups,
-          referentieComponenten: applicatieFormData.referenceComponents
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          standaarden: applicatieFormData.standards
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
+          referentieComponenten: smartSplit(applicatieFormData.referenceComponents),
+          standaarden: smartSplit(applicatieFormData.standards),
+          voorzieningstype: applicatieFormData.voorzieningstype,
         }),
       });
 
@@ -172,19 +170,21 @@ const AcApplicatiesFormModal = ({
             <h4 className='utrecht-heading-4'>Applicatie type</h4>
           </label>
           <ReactSelect
-            placeholder='Selecteer een applicatieType'
-            value={types?.find((option) => option.id === applicatieFormData.type)}
+            placeholder='Selecteer een applicatie type'
+            value={voorzieningsTypes?.find(
+              (option) => option.id === applicatieFormData.voorzieningstype
+            )}
             className='ac-beheer-select'
             onChange={(e) => {
               setApplicatieFormData((prev) => ({
                 ...prev,
-                type: e.value,
+                voorzieningstype: e.value,
               }));
             }}
-            loading={types?.length === 0}
-            options={types?.map((type) => ({
-              value: type.id,
-              label: type.label,
+            loading={voorzieningsTypes?.length === 0}
+            options={voorzieningsTypes?.map((voorzieningstype) => ({
+              value: voorzieningstype.id,
+              label: voorzieningstype.label,
             }))}
           />
         </div>

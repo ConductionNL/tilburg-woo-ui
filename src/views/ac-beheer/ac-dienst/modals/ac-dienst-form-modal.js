@@ -6,6 +6,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 
 const AcDienstFormModal = ({
   dienst,
@@ -16,16 +17,13 @@ const AcDienstFormModal = ({
 }) => {
   const modalRef = useRef(null);
   const [dienstFormData, setDienstFormData] = useState({
-    naam: '',
-    omschrijving: '',
-    type: '',
-    voorzieningId: '',
-    organisatieId: '',
+    voorziening: '',
+    leverancier: '',
     productpagina: '',
-    ondersteuningsmodel: '',
-    licentiemodel: '',
-    hostingopties: '',
-    versies: [],
+    ondersteuningsopties: '',
+    prijsmodel: '',
+    certificeringen: '',
+    ondersteundeStandaarden: '',
   });
 
   const { makeRequest } = useNextcloudRequests();
@@ -35,27 +33,26 @@ const AcDienstFormModal = ({
       setDienstFormData((prev) => ({
         ...prev,
         ...dienst,
-        type: Array.isArray(dienst.type) ? dienst.type.join(', ') : dienst.type,
-        hostingopties: Array.isArray(dienst.hostingopties)
-          ? dienst.hostingopties.join(', ')
-          : dienst.hostingopties,
-        versies: Array.isArray(dienst.versies)
-          ? dienst.versies.join(', ')
-          : dienst.versies,
+        voorziening: dienst.voorziening.id,
+        leverancier: dienst.leverancier.id,
+        ondersteuningsopties: Array.isArray(dienst.ondersteuningsopties)
+          ? dienst.ondersteuningsopties.join(', ')
+          : dienst.ondersteuningsopties,
+        certificeringen: Array.isArray(dienst.certificeringen)
+          ? dienst.certificeringen.join(', ')
+          : dienst.certificeringen,
+        ondersteundeStandaarden: collapseExtendedObjects(dienst.ondersteundeStandaarden),
       }));
     }
     if (!dienst && !isEdit) {
       setDienstFormData(() => ({
-        naam: '',
-        omschrijving: '',
-        type: '',
-        voorzieningId: '',
-        organisatieId: '',
+        voorziening: '',
+        leverancier: '',
         productpagina: '',
-        ondersteuningsmodel: '',
-        licentiemodel: '',
-        hostingopties: '',
-        versies: [],
+        ondersteuningsopties: '',
+        prijsmodel: '',
+        certificeringen: '',
+        ondersteundeStandaarden: '',
       }));
     }
   }, [dienst, isEdit]);
@@ -63,9 +60,10 @@ const AcDienstFormModal = ({
   const handleEditDienstOpenModal = () => modalRef?.current?.showModal();
 
   const handleEditDienstFieldChange = (field) => (event) => {
+    const value = event?.target?.value ?? event;
     setDienstFormData({
       ...dienstFormData,
-      [field]: event.target.value,
+      [field]: value,
     });
   };
 
@@ -82,12 +80,12 @@ const AcDienstFormModal = ({
         method: method,
         body: JSON.stringify({
           ...dienstFormData,
-          type: dienstFormData.type.trim().split(/ *, */g).filter(Boolean),
-          hostingopties: dienstFormData.hostingopties
-            .trim()
-            .split(/ *, */g)
-            .filter(Boolean),
-          versies: dienstFormData.versies.trim().split(/ *, */g).filter(Boolean),
+          voorziening: dienstFormData.voorziening,
+          leverancier: dienstFormData.leverancier,
+          ondersteuningsopties: smartSplit(dienstFormData.ondersteuningsopties),
+          prijsmodel: dienstFormData.prijsmodel,
+          certificeringen: smartSplit(dienstFormData.certificeringen),
+          ondersteundeStandaarden: smartSplit(dienstFormData.ondersteundeStandaarden),
         }),
       });
 
@@ -126,34 +124,16 @@ const AcDienstFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <AcFormField
-          label='Naam'
+          label='Voorziening'
           type='text'
-          onBlur={handleEditDienstFieldChange('naam')}
-          value={dienstFormData.naam}
+          onBlur={handleEditDienstFieldChange('voorziening')}
+          value={dienstFormData.voorziening}
         />
         <AcFormField
-          label='Beschrijving'
+          label='Leverancier'
           type='text'
-          onBlur={handleEditDienstFieldChange('omschrijving')}
-          value={dienstFormData.omschrijving}
-        />
-        <AcFormField
-          label='Type'
-          type='text'
-          onBlur={handleEditDienstFieldChange('type')}
-          value={dienstFormData.type}
-        />
-        <AcFormField
-          label='Voorziening ID'
-          type='text'
-          onBlur={handleEditDienstFieldChange('voorzieningId')}
-          value={dienstFormData.voorzieningId}
-        />
-        <AcFormField
-          label='Organisatie ID'
-          type='text'
-          onBlur={handleEditDienstFieldChange('organisatieId')}
-          value={dienstFormData.organisatieId}
+          onBlur={handleEditDienstFieldChange('leverancier')}
+          value={dienstFormData.leverancier}
         />
         <AcFormField
           label='Productpagina'
@@ -162,28 +142,28 @@ const AcDienstFormModal = ({
           value={dienstFormData.productpagina}
         />
         <AcFormField
-          label='Ondersteuningsmodel'
+          label='Ondersteuningsopties'
           type='text'
-          onBlur={handleEditDienstFieldChange('ondersteuningsmodel')}
-          value={dienstFormData.ondersteuningsmodel}
+          onBlur={handleEditDienstFieldChange('ondersteuningsopties')}
+          value={dienstFormData.ondersteuningsopties}
         />
         <AcFormField
-          label='Licentiemodel'
+          label='Prijsmodel'
           type='text'
-          onBlur={handleEditDienstFieldChange('licentiemodel')}
-          value={dienstFormData.licentiemodel}
+          onBlur={handleEditDienstFieldChange('prijsmodel')}
+          value={dienstFormData.prijsmodel}
         />
         <AcFormField
-          label='Hostingopties'
+          label='Certificeringen'
           type='text'
-          onBlur={handleEditDienstFieldChange('hostingopties')}
-          value={dienstFormData.hostingopties}
+          onBlur={handleEditDienstFieldChange('certificeringen')}
+          value={dienstFormData.certificeringen}
         />
         <AcFormField
-          label='Versies'
+          label='Ondersteunde standaarden'
           type='text'
-          onBlur={handleEditDienstFieldChange('versies')}
-          value={dienstFormData.versies}
+          onBlur={handleEditDienstFieldChange('ondersteundeStandaarden')}
+          value={dienstFormData.ondersteundeStandaarden}
         />
       </AcFlex>
     </AcModal>
