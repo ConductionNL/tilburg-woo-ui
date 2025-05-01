@@ -27,10 +27,13 @@ const AcBeheerGebruikerDetails = ({ id }) => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      const hostname = window.location.hostname;
+      const baseUrl =
+        hostname === 'vng.test.opencatalogi.nl'
+          ? 'https://vng.test.commonground.nu/apps'
+          : 'https://vng.accept.commonground.nu/apps';
       const response = await fetch(
-        //   config.authentication.baseURL +
-        'https://vng.accept.commonground.nu/apps' +
-          `/openconnector/api/endpoint/gebruikers/${id}`
+        baseUrl + `/openconnector/api/endpoint/gebruikers/${id}`
       );
 
       if (!response.ok) {
@@ -157,7 +160,11 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                       <div>
                         <strong>Voorkeuren:</strong>
                         <Paragraph>
-                          Taal: {LANGUAGES.find((language) => language.code === data.voorkeuren?.taal)?.name || '-'}<br />
+                          Taal:{' '}
+                          {LANGUAGES.find(
+                            (language) => language.code === data.voorkeuren?.taal
+                          )?.name || '-'}
+                          <br />
                           Thema: {_.upperFirst(data.voorkeuren?.thema) || '-'}
                         </Paragraph>
                       </div>

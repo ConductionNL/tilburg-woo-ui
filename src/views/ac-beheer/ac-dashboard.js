@@ -83,7 +83,12 @@ const AcDashboard = () => {
   };
 
   const syncGemma = () => {
-    const baseUrl = 'https://vng.accept.commonground.nu/apps';
+    const hostname = window.location.hostname;
+
+    const baseUrl =
+      hostname === 'vng.test.opencatalogi.nl'
+        ? 'https://vng.test.commonground.nu/apps'
+        : 'https://vng.accept.commonground.nu/apps';
     const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
     const accessToken = getCookie('nextcloud_access_token');
 
