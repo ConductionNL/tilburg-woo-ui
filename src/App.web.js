@@ -48,6 +48,7 @@ const App = ({ store }) => {
   const getTheme = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'vng.test.opencatalogi.nl':
         return 'vng-theme';
       case 'open-tilburg.accept.commonground.nu':
       case 'opencatalogi.open-regels.nl':
