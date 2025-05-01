@@ -9,6 +9,8 @@ const apiUrl = () => {
   switch (hostname) {
     case 'vng.opencatalogi.nl':
       return 'https://vng.accept.commonground.nu/apps';
+    case 'vng.test.opencatalogi.nl':
+      return 'https://vng.test.commonground.nu/apps';
     case 'opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps';
     case 'developer.opencatalogi.nl':
@@ -35,6 +37,8 @@ const commongroundApiUrl = () => {
   switch (hostname) {
     case 'vng.opencatalogi.nl':
       return 'https://vng.accept.commonground.nu/apps';
+    case 'vng.test.opencatalogi.nl':
+      return 'https://vng.test.commonground.nu/apps';
     case 'opencatalogi.nl':
       return 'https://directory.opencatalogi.nl/apps';
     case 'developer.opencatalogi.nl':

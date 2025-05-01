@@ -68,18 +68,26 @@ const AcAuthentication = () => {
       sessionStorage.setItem('redirect_url', acSafeParseRedirectUri(redirect_url));
     }
   }, [redirect_url]);
+  const hostname = window.location.hostname;
 
   //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
   //     ? new URL(config.authentication.baseURL).origin + '/index.php'
   //     : new URL(config.authentication.baseURL).origin;
-  const authenticationHostname = 'https://vng.test.commonground.nu';
+  const authenticationHostname =
+    hostname === 'vng.test.opencatalogi.nl'
+      ? 'https://vng.test.commonground.nu'
+      : 'https://vng.accept.commonground.nu';
 
   // TODO: do not make this hardcoded
   const [clientId, setClientId] = useState(
-    'VS5gXQ44yhuSAlxFRQYEtSfq258R5PFT41e0v4gjhfJh025HJu7mSJKB5XPnNWHV'
+    hostname === 'vng.test.opencatalogi.nl'
+      ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
+      : 'KSfaGMRU3Te9YH8UacgDWQgEfqew7pmwO3pCbgJ97mh45ORoKEqrhoH4zJmO2wre'
   );
   const [secretKey, setSecretKey] = useState(
-    'ChodX8gLZM14k8dO3MzQDrFncRgvD54a5BPqwJkHvEIyFfEBK1awgAB3S3ltSpS3'
+    hostname === 'vng.test.opencatalogi.nl'
+      ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
+      : 'KmnZvx2mOO9WkvtCCgrbA4AYhJqEDl8lOo3R2oxxFup1RYYMQwSgcIATsDwT8VCf'
   );
 
   const handleLogin = () => {

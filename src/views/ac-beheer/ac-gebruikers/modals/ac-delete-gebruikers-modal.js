@@ -50,9 +50,13 @@ const AcDeleteGebruikersModal = ({
       let deletePromises = [];
 
       gebruikers.forEach(async (gebruiker) => {
+        const hostname = window.location.hostname;
+        const baseUrl =
+          hostname === 'vng.test.opencatalogi.nl'
+            ? 'https://vng.test.commonground.nu/apps'
+            : 'https://vng.accept.commonground.nu/apps';
         const response = await fetch(
-          //   config.authentication.baseURL +
-          'https://vng.accept.commonground.nu/apps' +
+          baseUrl +
             `/openconnector/api/endpoint/gebruikers/${gebruiker.id}`,
           {
             method: 'DELETE',

@@ -7,6 +7,7 @@ export const AcCheckIfSpecificHostname = () => {
     'dimpact.opencatalogi.nl',
     'open-rotterdam.accept.commonground.nu',
     'vng.opencatalogi.nl',
+    'vng.test.opencatalogi.nl',
     'opencatalogi.nl',
     'developer.opencatalogi.nl',
     'test.opencatalogi.nl',

@@ -104,8 +104,11 @@ const AcGebruikersFormModal = ({
     }
 
     try {
+      const hostname = window.location.hostname;
       const baseUrl =
-        'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/gebruikers';
+        hostname === 'vng.test.opencatalogi.nl'
+          ? 'https://vng.test.commonground.nu/apps/openconnector/api/endpoint/gebruikers'
+          : 'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/gebruikers';
 
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${gebruikerFormData.id}` : baseUrl;
