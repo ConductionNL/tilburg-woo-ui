@@ -24,6 +24,7 @@ const AcHeader = ({ store: { menu } }) => {
 
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'vng.test.opencatalogi.nl':
         return 'Softwarecatalogus';
       case 'open-tilburg.accept.commonground.nu':
         return 'Open Tilburg';
