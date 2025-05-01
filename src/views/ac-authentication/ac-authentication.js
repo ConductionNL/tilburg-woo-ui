@@ -82,12 +82,12 @@ const AcAuthentication = () => {
   const [clientId, setClientId] = useState(
     hostname === 'vng.test.opencatalogi.nl'
       ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
-      : 'KSfaGMRU3Te9YH8UacgDWQgEfqew7pmwO3pCbgJ97mh45ORoKEqrhoH4zJmO2wre'
+      : 'VSCKXDSJmhXxa3DSWrCkNtFw3tUDQkPYj2CgBETTR8pioOp1qmcvhDr2nC1OF1zL'
   );
   const [secretKey, setSecretKey] = useState(
     hostname === 'vng.test.opencatalogi.nl'
       ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
-      : 'KmnZvx2mOO9WkvtCCgrbA4AYhJqEDl8lOo3R2oxxFup1RYYMQwSgcIATsDwT8VCf'
+      : 'emNfF5yBpAXPDGqghgm11bKDfNSgzdsd7uEdBq9GxHYg9E5USxVqZguKQ3QBYLoL'
   );
 
   const handleLogin = () => {
