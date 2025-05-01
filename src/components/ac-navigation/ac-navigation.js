@@ -25,7 +25,7 @@ const AcNavigation = () => {
           <li>
             <Link to='/over-ons'>
               <VISUALS.INFO />
-              Over Gemeente
+              Over Open Tilburg
             </Link>
           </li>
           <li>

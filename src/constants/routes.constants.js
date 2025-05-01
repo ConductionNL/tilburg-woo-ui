@@ -14,18 +14,18 @@ export const PATHS = AcLockObject({
   ABOUT: '/over-ons',
   ACCESSIBILITY: '/toegankelijkheid',
   CONTACT: '/contact',
-  COOKIES: 'https://www.acato.nl.nl/cookies/',
+  COOKIES: 'https://www.tilburg.nl/cookies/',
   FAQ: '/veelgestelde-vragen',
   ORGANIZATION: '/organisatie-en-werkwijze',
-  PRIVACY: 'https://www.acato.nl/privacystatement/',
-  PROCLAIMER: 'https://www.acato.nl/proclaimer/',
+  PRIVACY: 'https://www.tilburg.nl/privacystatement/',
+  PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
   PUBLICATION: '/publicatie/:id',
-  REACH_OUT: '/bereikbaarheidsgegeverns',
+  REACH_OUT: 'https://www.tilburg.nl/contact/',
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   THEMES: '/onderwerpen',
-  WEBSITE: 'https://www.acato.nl/',
-  WOO: '/woo-verzoek',
+  WEBSITE: 'https://www.tilburg.nl/',
+  WOO: 'https://www.tilburg.nl/gemeente/wet-open-overheid-woo/',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -65,7 +65,7 @@ export const ROUTES = {
     id: AcUUID(),
     name: 'FAQ',
     label: TITLES.FAQ,
-    href: PATHS.FAQ,
+    path: PATHS.ABOUT,
     title: `${TITLES.BASE} | ${TITLES.FAQ}`,
   },
   HOME: {
@@ -80,7 +80,7 @@ export const ROUTES = {
     id: AcUUID(),
     name: 'Organization',
     label: LABELS.ORGANIZATION,
-    href: PATHS.ORGANIZATION,
+    path: PATHS.ABOUT,
     title: `${TITLES.BASE} | ${TITLES.ORGANIZATION}`,
   },
   PRIVACY: {

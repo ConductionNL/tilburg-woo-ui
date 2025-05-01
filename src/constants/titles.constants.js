@@ -1,7 +1,7 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
 export const TITLES = AcLockObject({
-  ABOUT: 'Over Gemeente',
+  ABOUT: 'Over Open Tilburg',
   ACCESSIBILITY: 'Toegankelijkheid',
   BASE: 'Gemeente',
   CONTACT: 'Contact',
@@ -15,6 +15,6 @@ export const TITLES = AcLockObject({
   REACH_OUT: 'Beschikbaarheidsgegevens',
   SEARCH: 'Zoeken',
   THEMES: 'Onderwerpen',
-  WEBSITE: 'www.acato.nl',
+  WEBSITE: 'www.tilburg.nl',
   WOO: 'WOO verzoek indienen',
 });
