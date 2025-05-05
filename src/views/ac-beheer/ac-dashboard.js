@@ -23,11 +23,17 @@ const AcDashboard = () => {
 
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
-  const endpoints = [
+  const endpointsTest = [
     { id: '3', name: 'elements' },
     { id: '4', name: 'views' },
     { id: '2', name: 'relations' },
     { id: '1', name: 'model' },
+  ];
+  const endpointsAccept = [
+    { id: '7', name: 'elements' },
+    { id: '4', name: 'views' },
+    { id: '8', name: 'relations' },
+    { id: '10', name: 'model' },
   ];
 
   const [archimateUrl, setArchimateUrl] = useState(
@@ -37,11 +43,18 @@ const AcDashboard = () => {
   // Add Voorziening Modal
   const syncGemmaRef = useRef(null);
 
+  const hostname = window.location.hostname;
+
+  const baseUrl =
+    hostname === 'vng.test.opencatalogi.nl'
+      ? 'https://vng.test.commonground.nu'
+      : 'https://vng.accept.commonground.nu';
+
   const handleSyncGemma = () => syncGemmaRef?.current?.showModal();
 
   const checkHeartbeat = async (apiCall) => {
     try {
-      const response = await fetch(`https://vng.test.commonground.nu/status.php`, {
+      const response = await fetch(`${baseUrl}/status.php`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -83,19 +96,18 @@ const AcDashboard = () => {
   };
 
   const syncGemma = () => {
-    const hostname = window.location.hostname;
-
-    const baseUrl =
-      hostname === 'vng.test.opencatalogi.nl'
-        ? 'https://vng.test.commonground.nu/apps'
-        : 'https://vng.accept.commonground.nu/apps';
-    const url = `${baseUrl}/openconnector/api/endpoint/synchronize-model`;
+    const url = `${baseUrl}/apps/openconnector/api/endpoint/synchronize-model`;
     const accessToken = getCookie('nextcloud_access_token');
 
     setSyncGemmaLoading(true);
     setSyncGemmaResults([]);
 
+    const endpoints = hostname === 'localhost' ? endpointsTest : endpointsAccept;
+
     const apiPromises = endpoints.map(async (apiCall) => {
+      // Skip the verification endpoint in the initial sync
+      if (apiCall.id === 'final') return;
+
       setSyncGemmaResults((prev) => [
         ...prev,
         { name: apiCall.name, status: 'loading' },
@@ -109,7 +121,7 @@ const AcDashboard = () => {
 
         // Make the initial API call
         const response = await fetch(
-          `https://vng.test.commonground.nu/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
+          `${baseUrl}/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
           {
             method: 'POST',
             headers: {
@@ -119,6 +131,18 @@ const AcDashboard = () => {
             source: archimateUrl,
           }
         );
+
+        // Clone the response before reading it
+        const responseClone = response.clone();
+        const responseData = await responseClone.json();
+
+        if (!response.ok) {
+          throw new Error(
+            responseData?.message ||
+              `Synchronization failed with status: ${response.status}`
+          );
+        }
+
         const initialData = await response.json();
 
         // Stop heartbeat checks when we get initial data
@@ -126,15 +150,13 @@ const AcDashboard = () => {
           clearInterval(heartbeatInterval);
         }
 
-        if (initialData) {
-          setSyncGemmaResults((prev) =>
-            prev.map((item) =>
-              item.name === apiCall.name
-                ? { ...item, status: 'success', object: initialData }
-                : item
-            )
-          );
-        }
+        setSyncGemmaResults((prev) =>
+          prev.map((item) =>
+            item.name === apiCall.name
+              ? { ...item, status: 'success', object: initialData }
+              : item
+          )
+        );
       } catch (error) {
         // Stop heartbeat checks on error
         if (heartbeatInterval) {
@@ -145,17 +167,90 @@ const AcDashboard = () => {
         setSyncGemmaResults((prev) =>
           prev.map((item) =>
             item.name === apiCall.name
-              ? { ...item, status: 'error', object: initialData }
+              ? {
+                  ...item,
+                  status: 'error',
+                  object: { error: { message: error.message } },
+                }
               : item
           )
         );
       }
     });
 
-    Promise.all(apiPromises).finally(() => {
-      setSyncGemmaLoading(false);
-      setSyncGemmaSuccess(true);
-    });
+    Promise.all(apiPromises)
+      .then(async () => {
+        // Add the connect-views API call after initial sync
+        setSyncGemmaResults((prev) => [
+          ...prev,
+          { name: 'connect-views', status: 'loading' },
+        ]);
+
+        let heartbeatInterval;
+
+        try {
+          // Start heartbeat checks immediately
+          heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
+
+          const response = await fetch(
+            `${baseUrl}/apps/openconnector/api/endpoint/connect-views`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+          // Clone the response before reading it
+          const responseClone = response.clone();
+          const responseData = await responseClone.json();
+
+          if (!response.ok) {
+            throw new Error(
+              responseData?.message ||
+                `Synchronization failed with status: ${response.status}`
+            );
+          }
+
+          const connectViewsData = await response.json();
+
+          // Stop heartbeat checks when we get connectViewsData
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+          }
+
+          setSyncGemmaResults((prev) =>
+            prev.map((item) =>
+              item.name === 'connect-views'
+                ? { ...item, status: 'success', object: connectViewsData }
+                : item
+            )
+          );
+        } catch (error) {
+          // Stop heartbeat checks on error
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+          }
+
+          console.error('Error in connect-views:', error);
+          setSyncGemmaResults((prev) =>
+            prev.map((item) =>
+              item.name === 'connect-views'
+                ? {
+                    ...item,
+                    status: 'error',
+                    object: { error: { message: error.message } },
+                  }
+                : item
+            )
+          );
+        }
+      })
+      .finally(() => {
+        setSyncGemmaLoading(false);
+        setSyncGemmaSuccess(true);
+      });
   };
 
   const [downloadError, setDownloadError] = useState(null);
@@ -184,7 +279,7 @@ const AcDashboard = () => {
     const accessToken = getCookie('nextcloud_access_token');
 
     const response = await fetch(
-      `https://vng.test.commonground.nu/apps/openconnector/api/endpoint/models`,
+      `${baseUrl}/apps/openconnector/api/endpoint/models`,
       {
         method: 'GET',
         headers: {
@@ -259,7 +354,7 @@ const AcDashboard = () => {
                 {getImage(result.status)}
                 <span>{_.upperFirst(result.name)}</span>
               </div>
-              {(result.status === 'success' || result.status === 'error') && (
+              {result.status === 'success' && (
                 <Table>
                   <TableBody>
                     <TableRow>
@@ -293,6 +388,15 @@ const AcDashboard = () => {
                   </TableBody>
                 </Table>
               )}
+              {result.status === 'error' && (
+                <div className='ac-gemma-sync-result__error'>
+                  <span>
+                    Error:{' '}
+                    {result.object?.error?.message ||
+                      'An unknown error occurred during synchronization'}
+                  </span>
+                </div>
+              )}
             </AcCard>
           ))}
       </div>
@@ -302,10 +406,7 @@ const AcDashboard = () => {
   const downloadModel = async (model) => {
     setModelLoading(true);
     try {
-      // const baseUrl = config.mijnOmgeving.baseURL;
-      const baseUrl = 'https://vng.test.commonground.nu/apps';
-      // const baseUrl = 'http://localhost:8080/apps';
-      const url = `${baseUrl}/openconnector/api/endpoint/models/${model.id}`;
+      const url = `${baseUrl}/apps/openconnector/api/endpoint/models/${model.id}`;
 
       const response = await fetch(url, {
         method: 'GET',
