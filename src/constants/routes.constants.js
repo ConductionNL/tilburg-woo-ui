@@ -65,6 +65,7 @@ const getTitle = () => {
 
   switch (hostname) {
     case 'vng.opencatalogi.nl':
+    case 'vng.test.opencatalogi.nl':
       return 'Softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
       return 'Open Tilburg';
@@ -180,7 +181,7 @@ export const ROUTES = {
     name: 'Authentication',
     label: LABELS.AUTHENTICATION,
     path: PATHS.AUTHENTICATION_STATIC,
-    title: 'Open Tilburg | Login',
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
     component: AcAuthentication,
   },
   MIJN_OMGEVING: {
@@ -254,7 +255,9 @@ export const ROUTES = {
     name: 'Nextcloud Login',
     label: LABELS.NEXTCLOUD_LOGIN,
     path: PATHS.NEXTCLOUD_LOGIN,
-    title: 'Open Tilburg | Nextcloud Login',
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Nextcloud Login`,
   },
   NEXTCLOUD_AUTHORIZATION: {
     id: AcUUID(),
@@ -293,7 +296,7 @@ export const ROUTES = {
     name: 'Register',
     label: LABELS.REGISTER,
     path: PATHS.REGISTER,
-    title: 'Open Tilburg | Register',
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Register`,
     component: AcRegister,
   },
   VIEWS: {
@@ -301,7 +304,7 @@ export const ROUTES = {
     name: 'Views',
     label: LABELS.VIEWS,
     path: PATHS.VIEWS,
-    title: 'Open Tilburg | Views',
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
     component: AcViews,
   },
 };
