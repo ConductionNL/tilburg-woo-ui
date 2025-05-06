@@ -23,11 +23,10 @@ const AcGemma = observer(({ store: { gemma } }) => {
   }, []);
 
   switch (hostname) {
-    // return console.log('localhost');
-    case 'localhost':
-    case 'vng.accept.commonground.nu':
+    case 'vng.opencatalogi.nl':
       return <AcGemmaAccept />;
-    case 'vng.test.commonground.nu':
+    case 'localhost':
+    case 'vng.test.opencatalogi.nl':
       return <AcGemmaTest />;
   }
 });
