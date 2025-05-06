@@ -74,18 +74,18 @@ const AcAuthentication = () => {
   //     ? new URL(config.authentication.baseURL).origin + '/index.php'
   //     : new URL(config.authentication.baseURL).origin;
   const authenticationHostname =
-    hostname === 'vng.test.opencatalogi.nl'
+    hostname === 'vng.test.opencatalogi.nl' || hostname === 'localhost'
       ? 'https://vng.test.commonground.nu'
       : 'https://vng.accept.commonground.nu';
 
   // TODO: do not make this hardcoded
   const [clientId, setClientId] = useState(
-    hostname === 'vng.test.opencatalogi.nl'
+    hostname === 'vng.test.opencatalogi.nl' || hostname === 'localhost'
       ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
       : 'VSCKXDSJmhXxa3DSWrCkNtFw3tUDQkPYj2CgBETTR8pioOp1qmcvhDr2nC1OF1zL'
   );
   const [secretKey, setSecretKey] = useState(
-    hostname === 'vng.test.opencatalogi.nl'
+    hostname === 'vng.test.opencatalogi.nl' || hostname === 'localhost'
       ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
       : 'emNfF5yBpAXPDGqghgm11bKDfNSgzdsd7uEdBq9GxHYg9E5USxVqZguKQ3QBYLoL'
   );

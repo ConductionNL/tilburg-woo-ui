@@ -15,19 +15,18 @@ const AcGemma = observer(({ store: { gemma } }) => {
   useEffect(() => {
     if (
       hostname !== 'localhost' &&
-      hostname !== 'vng.accept.commonground.nu' &&
-      hostname !== 'vng.test.commonground.nu'
+      hostname !== 'vng.opencatalogi.nl' &&
+      hostname !== 'vng.test.opencatalogi.nl'
     ) {
-      console.log(hostname);
       navigate('/');
     }
   }, []);
 
   switch (hostname) {
     // return console.log('localhost');
+    case 'localhost':
     case 'vng.accept.commonground.nu':
       return <AcGemmaAccept />;
-    case 'localhost':
     case 'vng.test.commonground.nu':
       return <AcGemmaTest />;
   }

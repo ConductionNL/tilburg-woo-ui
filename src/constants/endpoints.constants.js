@@ -26,10 +26,10 @@ const HOSTNAME = window.location.hostname;
 const getGemmaEndpoint = () => {
   switch (HOSTNAME) {
     // return 'http://localhost:8080';
-    case 'localhost':
     case 'vng.test.opencatalogi.nl':
       return 'https://vng.test.commonground.nu';
-    case 'vng.accept.commonground.nu':
+    case 'localhost':
+    case 'vng.opencatalogi.nl':
       return 'https://vng.accept.commonground.nu';
     default:
       return 'https://vng.accept.commonground.nu';

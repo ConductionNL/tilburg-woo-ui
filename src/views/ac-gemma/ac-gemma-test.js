@@ -72,7 +72,7 @@ const AcGemmaTest = ({ store: { gemma } }) => {
 
     const hostname = window.location.hostname;
     const baseUrl =
-      hostname === 'localhost'
+      hostname === 'localhost' || hostname === 'vng.opencatalogi.nl'
         ? 'https://vng.test.commonground.nu/apps'
         : 'https://vng.accept.commonground.nu/apps';
 
