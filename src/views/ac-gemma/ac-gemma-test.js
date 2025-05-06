@@ -28,7 +28,7 @@ const AcGemmaTest = ({ store: { gemma } }) => {
     fetchAllVoorzieningGebruik,
     resetAllVoorzieningGebruik,
   } = gemma;
-  const [view, setView] = useState('137f6f45-2163-4dd4-957f-aeebc40e3136');
+  const [view, setView] = useState(null);
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
@@ -43,7 +43,7 @@ const AcGemmaTest = ({ store: { gemma } }) => {
   };
 
   useEffect(() => {
-    // fetchViews();
+    fetchViews();
     setViewNodesData(null);
     setViewRelationsData(null);
     setViewIsDoneLoading(false);
@@ -65,10 +65,6 @@ const AcGemmaTest = ({ store: { gemma } }) => {
       resetAllVoorzieningGebruik();
     };
   }, [view]);
-
-  useEffect(() => {
-    console.log(gemma.all_views);
-  }, [gemma.all_views]);
 
   useEffect(() => {
     if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
@@ -358,181 +354,118 @@ const AcGemmaTest = ({ store: { gemma } }) => {
     };
 
     const convertToViewNode = (node) => {
-      const nodeDataNode = viewNodesData.find((item) => item.id === node.elementRef);
+      // Create a memoized map of viewNodesData for faster lookups
+      const nodeDataMap = new Map(viewNodesData.map((item) => [item.id, item]));
+      const nodeDataNode = node.elementRef ? nodeDataMap.get(node.elementRef) : null;
 
-      const getType = () => {
-        switch (nodeDataNode?.name) {
-          case 'StUF Geo IMGeo':
-            return 'constraint';
-          case 'SVB-BGT services en portaal':
-            return 'applicationcomponent';
-          default:
-            return 'dataobject';
-        }
+      // Helper function to create style object - reduces repeated code
+      const createStyleObject = (style) => ({
+        color: style?.color?.a
+          ? `rgba(${style?.color?.r}, ${style?.color?.g}, ${style?.color?.b}, ${style?.color?.a})`
+          : `rgb(${style?.color?.r}, ${style?.color?.g}, ${style?.color?.b})`,
+        fillColor: style?.fillColor?.a
+          ? `rgba(${style?.fillColor?.r}, ${style?.fillColor?.g}, ${style?.fillColor?.b}, ${style?.fillColor?.a})`
+          : `rgb(${style?.fillColor?.r}, ${style?.fillColor?.g}, ${style?.fillColor?.b})`,
+        lineColor: style?.lineColor?.a
+          ? `rgba(${style?.lineColor?.r}, ${style?.lineColor?.g}, ${style?.lineColor?.b}, ${style?.lineColor?.a})`
+          : `rgb(${style?.lineColor?.r}, ${style?.lineColor?.g}, ${style?.lineColor?.b})`,
+        font: {
+          name: style?.font?.name,
+          size: style?.font?.size,
+          style: style?.font?.style,
+        },
+      });
+
+      // Base node properties
+      const baseNode = {
+        modelNodeId: node.isChildNode
+          ? node.identifier
+          : node.elementRef || node.identifier,
+        viewNodeId: node.identifier || 'unknown',
+        x: node.position?.x,
+        y: node.position?.y,
+        width: node.position?.w,
+        height: node.position?.h,
+        parent: null,
       };
 
+      // Handle special node types
       if (!node.elementRef) {
-        if (node.type === 'Label') {
+        if (['Label', 'Container'].includes(node.type)) {
+          const style = createStyleObject(node.style);
           return {
-            modelNodeId: node.identifier,
-            viewNodeId: node.identifier || 'unknown',
+            ...baseNode,
             name: node.label ?? ' ',
-            type: node.type?.toLowerCase() || getType(),
-            x: node.position?.x,
-            y: node.position?.y,
-            width: node.position?.w,
-            height: node.position?.h,
-            color: node.style?.fillColor?.a
-              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-            borderColor: node.style?.lineColor?.a
-              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-            parent: null,
+            type: node.type?.toLowerCase(),
+            color: style.fillColor,
+            borderColor: style.lineColor,
             description: node.label,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
+            font: { ...style.font, color: style.color },
             elementRef: null,
           };
         }
-        if (node.type === 'Container') {
-          return {
-            modelNodeId: node.identifier,
-            viewNodeId: node.identifier || 'unknown',
-            name: node.label,
-            type: node.type?.toLowerCase() || getType(),
-            x: node.position?.x,
-            y: node.position?.y,
-            width: node.position?.w,
-            height: node.position?.h,
-            color: node.style?.fillColor?.a
-              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-            borderColor: node.style?.lineColor?.a
-              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-            parent: null,
-            description: node.label,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
-            elementRef: null,
-          };
+
+        if (node.referentieComponenten) {
+          return node.referentieComponenten
+            .map((refComponent) => {
+              const uniqueId = `${node.id}_${refComponent}`;
+              const nodeData = nodeDataMap.get(uniqueId);
+              if (!nodeData) return null;
+
+              const style = createStyleObject(node.style);
+              return {
+                ...baseNode,
+                modelNodeId: nodeData.id,
+                viewNodeId: nodeData.viewNodeId || 'unknown',
+                name: nodeData.name || 'unknown',
+                type: nodeData.type?.toLowerCase() || 'dataobject',
+                x: nodeData.position?.x || 0,
+                y: nodeData.position?.y || 0,
+                width: nodeData.position?.w || 0,
+                height: nodeData.position?.h || 0,
+                font: { ...style.font, color: style.color },
+                description: nodeData.description || null,
+                elementRef: null,
+              };
+            })
+            .filter(Boolean);
         }
-        if (!node.referentieComponenten)
-          return {
-            modelNodeId: node.identifier,
-            viewNodeId: node.identifier || 'unknown',
-            name: node?.label,
-            type: node.type?.toLowerCase() || getType(),
-            x: node.position?.x,
-            y: node.position?.y,
-            width: node.position?.w,
-            height: node.position?.h,
-            color: node.style?.fillColor?.a
-              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-            borderColor: node.style?.lineColor?.a
-              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-            parent: null,
-            description: node.label,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
-            elementRef: null,
-          };
-        const nodes = node.referentieComponenten?.map((refComponent) => {
-          const uniqueId = `${node.id}_${refComponent}`;
-          const nodeData = viewNodesData.find((item) => item.id === uniqueId);
 
-          if (!nodeData) return;
-
-          return {
-            modelNodeId: nodeData?.id,
-            viewNodeId: nodeData?.viewNodeId || 'unknown',
-            name: nodeData?.name || 'unknown',
-            type: nodeData?.type?.toLowerCase() || getType(),
-            x: nodeData?.position?.x || 0,
-            y: nodeData?.position?.y || 0,
-            width: nodeData?.position?.w || 0,
-            height: nodeData?.position?.h || 0,
-            parent: null,
-            description: nodeData?.description || null,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
-            elementRef: null,
-          };
-        });
-
-        return nodes;
-      } else {
+        // Handle regular nodes without elementRef
+        const style = createStyleObject(node.style);
         return {
-          modelNodeId: node.isChildNode ? node.identifier : node.elementRef,
-          viewNodeId: node.identifier || 'unknown',
-          name: nodeDataNode?.name || 'unknown',
-          type: nodeDataNode?.type?.toLowerCase() || getType(),
-          x: node.position.x,
-          y: node.position.y,
-          width: node.position.w,
-          height: node.position.h,
-          parent: null,
-          color: node.style?.fillColor?.a
-            ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-            : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-          borderColor: node.style?.lineColor?.a
-            ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-            : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-          font: {
-            name: node.style?.font?.name,
-            size: node.style?.font?.size,
-            style: node.style?.font?.style,
-            color: node.style?.color?.a
-              ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-              : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-          },
-          description: nodeDataNode?.description || null,
-          elementRef: node.elementRef || null,
-          onClick: () => {
-            window.open(
-              `https://www.gemmaonline.nl/wiki/GEMMA/${
-                nodeDataNode?.properties?.find(
-                  (item) => item.propertyDefinitionRef === 'propid-2'
-                )?.value
-                  ? `id-${
-                      nodeDataNode?.properties?.find(
-                        (item) => item.propertyDefinitionRef === 'propid-2'
-                      )?.value
-                    }`
-                  : node.elementRef
-              }`,
-              '_blank'
-            );
-          },
+          ...baseNode,
+          name: node.label,
+          type: node.type?.toLowerCase() || 'dataobject',
+          color: style.fillColor,
+          borderColor: style.lineColor,
+          font: { ...style.font, color: style.color },
+          description: node.label,
+          elementRef: null,
         };
       }
+
+      // Handle nodes with elementRef
+      const style = createStyleObject(node.style);
+      return {
+        ...baseNode,
+        name: nodeDataNode?.name || 'unknown',
+        type: nodeDataNode?.type?.toLowerCase() || 'dataobject',
+        color: style.fillColor,
+        borderColor: style.lineColor,
+        font: { ...style.font, color: style.color },
+        description: nodeDataNode?.description || null,
+        elementRef: node.elementRef || null,
+        onClick: () => {
+          const propertyId = nodeDataNode?.properties?.find(
+            (item) => item.propertyDefinitionRef === 'propid-2'
+          )?.value;
+          const url = `https://www.gemmaonline.nl/wiki/GEMMA/${
+            propertyId ? `id-${propertyId}` : node.elementRef
+          }`;
+          window.open(url, '_blank');
+        },
+      };
     };
 
     // Get ordered nodes and process them
@@ -1003,7 +936,7 @@ const AcGemmaTest = ({ store: { gemma } }) => {
   };
   return (
     <AcContainer spacing='lg'>
-      {/* {gemma.all_views?.length === 0 && <AcLoader />}
+      {gemma.all_views?.length === 0 && <AcLoader />}
       {gemma.all_views?.length > 0 && (
         <>
           <ReactSelect
@@ -1051,8 +984,8 @@ const AcGemmaTest = ({ store: { gemma } }) => {
             </div>
           )}
         </>
-      )} */}
-      <div className='ac-gemma-graph-container' id='graph-container'></div>
+      )}
+      {/* <div className='ac-gemma-graph-container' id='graph-container'></div> */}
     </AcContainer>
   );
 };
