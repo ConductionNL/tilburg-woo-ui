@@ -3,26 +3,36 @@ import { observer } from 'mobx-react-lite';
 import { AcContainer } from '@atoms';
 import { withStore } from '@stores';
 import { dia, shapes } from 'jointjs';
+// import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
-import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Select,
+  SelectOption,
+  PrimaryActionButton,
+} from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
+import ReactSelect from 'react-select';
+import clsx from 'clsx';
 import svgPanZoom from 'svg-pan-zoom';
-import { useParams } from 'react-router';
 
-const AcViews = ({ store: { gemma } }) => {
+const AcGemmaAccept = ({ store: { gemma } }) => {
   const {
+    fetchViews,
+    resetViews,
     fetchView,
     resetView,
+    fetchVoorzieningGebruik,
+    resetVoorzieningGebruik,
     fetchAllVoorzieningGebruik,
     resetAllVoorzieningGebruik,
   } = gemma;
+  const [view, setView] = useState(null);
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
-
-  const { id } = useParams();
+  const [voorzieningGebruikNodes, setVoorzieningGebruikNodes] = useState(null);
 
   const getViewName = (view) => {
     return (
@@ -33,26 +43,32 @@ const AcViews = ({ store: { gemma } }) => {
   };
 
   useEffect(() => {
+    fetchViews();
+    setViewNodesData(null);
+    setViewRelationsData(null);
+    setViewIsDoneLoading(false);
+
+    return () => resetViews();
+  }, []);
+
+  useEffect(() => {
+    if (!view) return;
+
     setViewNodesData(null);
     setViewRelationsData(null);
     setViewIsDoneLoading(false);
 
     fetchAllVoorzieningGebruik();
-    fetchView(id);
+    fetchView(view);
     return () => {
       resetView();
       resetAllVoorzieningGebruik();
     };
-  }, [id]);
+  }, [view]);
 
   useEffect(() => {
     if (!gemma.get_view) return;
     let viewNodesData = [];
-    const hostname = window.location.hostname;
-    const baseUrl =
-      hostname === 'vng.test.opencatalogi.nl'
-        ? 'https://vng.test.commonground.nu/apps'
-        : 'https://vng.accept.commonground.nu/apps';
 
     const getViewNodesData = () => {
       const promises = gemma.get_view.nodes.map(async (node) => {
@@ -60,7 +76,7 @@ const AcViews = ({ store: { gemma } }) => {
 
         try {
           const response = await fetch(
-            `${baseUrl}/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
+            `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
           );
           const data = await response.json();
 
@@ -71,6 +87,8 @@ const AcViews = ({ store: { gemma } }) => {
             id: node.elementRef,
             description: data.results[0]?.documentation || undefined,
             type: data.results[0]?.type || undefined,
+            properties: data.results[0]?.properties || undefined,
+            parent: null,
           };
         } catch (error) {
           console.error(`Error fetching node data: ${error}`);
@@ -92,7 +110,7 @@ const AcViews = ({ store: { gemma } }) => {
 
           try {
             const response = await fetch(
-              `${baseUrl}/openconnector/api/endpoint/elements?identifier=${child.elementRef}`
+              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${child.elementRef}`
             );
             const data = await response.json();
 
@@ -104,6 +122,7 @@ const AcViews = ({ store: { gemma } }) => {
               description: data.results[0]?.documentation || undefined,
               type: data.results[0]?.type || undefined,
               parent: node.elementRef,
+              properties: data.results[0]?.properties || undefined,
             };
 
             viewNodesData.push(childNode);
@@ -222,14 +241,16 @@ const AcViews = ({ store: { gemma } }) => {
 
           try {
             const response = await fetch(
-              `${baseUrl}/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
+              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
             );
             const data = await response.json();
 
             return {
               name:
                 data.results[0]?.properties.find(
-                  (item) => item.propertyDefinitionRef === 'propid-62'
+                  (item) =>
+                    item.propertyDefinitionRef === 'propid-61' ||
+                    item.propertyDefinitionRef === 'propid-62'
                 )?.value || undefined,
               id: relationship.relationshipRef,
               type: data.results[0]?.type || undefined,
@@ -255,10 +276,56 @@ const AcViews = ({ store: { gemma } }) => {
   }, [gemma.get_view]);
 
   useEffect(() => {
-    if (!gemma.get_view) return;
-    if (!gemma.get_allVoorzieningGebruik) return;
+    if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
     if (!viewNodesData) return;
     if (!viewRelationsData) return;
+
+    // Order nodes hierarchically
+    const getOrderedNodes = () => {
+      const orderedNodes = [];
+
+      try {
+        // Get all top-level nodes, including Labels and other types
+        const topLevelNodes = gemma.get_view.nodes;
+
+        // Helper function to recursively process nodes and their children
+        const processNode = (node) => {
+          // Add the current node (without isChildNode flag for root nodes)
+          orderedNodes.push(node);
+
+          if (node.nodes) {
+            // Process each child node
+            node.nodes.forEach((child) => {
+              // Add child with isChildNode flag
+              orderedNodes.push({
+                ...child,
+                isChildNode: true,
+              });
+
+              // Recursively process child's nodes if they exist
+              if (child.nodes) {
+                child.nodes.forEach((grandchild) => {
+                  // Add grandchild with isChildNode flag
+                  orderedNodes.push({
+                    ...grandchild,
+                    isChildNode: true,
+                  });
+                  // Continue recursion if needed
+                  processNode(grandchild);
+                });
+              }
+            });
+          }
+        };
+
+        // Process all top-level nodes
+        topLevelNodes.forEach(processNode);
+      } catch (error) {
+        console.error('Error ordering nodes:', error);
+      }
+
+      return orderedNodes;
+    };
 
     // Create container in HTML
     const container = document.getElementById('graph-container');
@@ -292,6 +359,24 @@ const AcViews = ({ store: { gemma } }) => {
       }
     });
 
+    // Helper function to recursively collect all child nodes
+    const getAllChildNodes = (nodes) => {
+      return nodes.reduce((acc, node) => {
+        if (!node.nodes) return acc;
+
+        // Add immediate child nodes
+        const children = node.nodes.map((child) => ({
+          ...child,
+          isChildNode: true,
+        }));
+
+        // Recursively get children of children
+        const grandchildren = getAllChildNodes(node.nodes);
+
+        return [...acc, ...children, ...grandchildren];
+      }, []);
+    };
+
     const convertToViewNode = (node) => {
       const nodeDataNode = viewNodesData.find((item) => item.id === node.elementRef);
 
@@ -311,19 +396,88 @@ const AcViews = ({ store: { gemma } }) => {
           return {
             modelNodeId: node.identifier,
             viewNodeId: node.identifier || 'unknown',
-            name: node.label,
+            name: node.label ?? ' ',
             type: node.type?.toLowerCase() || getType(),
-            x: node.position.x,
-            y: node.position.y,
-            width: node.position.w,
-            height: node.position.h,
+            x: node.position?.x,
+            y: node.position?.y,
+            width: node.position?.w,
+            height: node.position?.h,
+            color: node.style?.fillColor?.a
+              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+            borderColor: node.style?.lineColor?.a
+              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
             parent: null,
             description: node.label,
-            font: node.style.font,
+            font: {
+              name: node.style?.font?.name,
+              size: node.style?.font?.size,
+              style: node.style?.font?.style,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
+            },
             elementRef: null,
           };
         }
-        if (!node.referentieComponenten) return;
+        if (node.type === 'Container') {
+          return {
+            modelNodeId: node.identifier,
+            viewNodeId: node.identifier || 'unknown',
+            name: node.label,
+            type: node.type?.toLowerCase() || getType(),
+            x: node.position?.x,
+            y: node.position?.y,
+            width: node.position?.w,
+            height: node.position?.h,
+            color: node.style?.fillColor?.a
+              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+            borderColor: node.style?.lineColor?.a
+              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
+            parent: null,
+            description: node.label,
+            font: {
+              name: node.style?.font?.name,
+              size: node.style?.font?.size,
+              style: node.style?.font?.style,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
+            },
+            elementRef: null,
+          };
+        }
+        if (!node.referentieComponenten)
+          return {
+            modelNodeId: node.identifier,
+            viewNodeId: node.identifier || 'unknown',
+            name: node?.label,
+            type: node.type?.toLowerCase() || getType(),
+            x: node.position?.x,
+            y: node.position?.y,
+            width: node.position?.w,
+            height: node.position?.h,
+            color: node.style?.fillColor?.a
+              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+            borderColor: node.style?.lineColor?.a
+              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
+            parent: null,
+            description: node.label,
+            font: {
+              name: node.style?.font?.name,
+              size: node.style?.font?.size,
+              style: node.style?.font?.style,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
+            },
+            elementRef: null,
+          };
         const nodes = node.referentieComponenten?.map((refComponent) => {
           const uniqueId = `${node.id}_${refComponent}`;
           const nodeData = viewNodesData.find((item) => item.id === uniqueId);
@@ -341,7 +495,14 @@ const AcViews = ({ store: { gemma } }) => {
             height: nodeData?.position?.h || 0,
             parent: null,
             description: nodeData?.description || null,
-            font: nodeData?.font || null,
+            font: {
+              name: node.style?.font?.name,
+              size: node.style?.font?.size,
+              style: node.style?.font?.style,
+              color: node.style?.color?.a
+                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
+            },
             elementRef: null,
           };
         });
@@ -358,18 +519,35 @@ const AcViews = ({ store: { gemma } }) => {
           width: node.position.w,
           height: node.position.h,
           parent: null,
-          color: `rgba(${node.style.fillColor.r}, ${node.style.fillColor.g}, ${node.style.fillColor.b}, ${node.style.fillColor.a})`,
-          borderColor: `rgba(${node.style.lineColor.r}, ${node.style.lineColor.g}, ${node.style.lineColor.b}, ${node.style.lineColor.a})`,
+          color: node.style?.fillColor?.a
+            ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
+            : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
+          borderColor: node.style?.lineColor?.a
+            ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
+            : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
           font: {
-            name: node.style.font.name,
-            size: node.style.font.size,
-            color: `rgba(${node.style.color.r}, ${node.style.color.g}, ${node.style.color.b}, ${node.style.color.a})`,
+            name: node.style?.font?.name,
+            size: node.style?.font?.size,
+            style: node.style?.font?.style,
+            color: node.style?.color?.a
+              ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
+              : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
           },
           description: nodeDataNode?.description || null,
           elementRef: node.elementRef || null,
           onClick: () => {
             window.open(
-              `https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}`,
+              `https://www.gemmaonline.nl/wiki/GEMMA/${
+                nodeDataNode?.properties?.find(
+                  (item) => item.propertyDefinitionRef === 'propid-2'
+                )?.value
+                  ? `id-${
+                      nodeDataNode?.properties?.find(
+                        (item) => item.propertyDefinitionRef === 'propid-2'
+                      )?.value
+                    }`
+                  : node.elementRef
+              }`,
               '_blank'
             );
           },
@@ -377,30 +555,12 @@ const AcViews = ({ store: { gemma } }) => {
       }
     };
 
-    const gemmaNodes = gemma.get_view.nodes;
+    // Get ordered nodes and process them
+    const orderedNodes = getOrderedNodes();
+    const gemmaNodes = orderedNodes;
     const voorzieningNodes = gemma.get_allVoorzieningGebruik;
 
-    // Helper function to recursively collect all child nodes
-    const getAllChildNodes = (nodes) => {
-      return nodes.reduce((acc, node) => {
-        if (!node.nodes) return acc;
-
-        // Add immediate child nodes
-        const children = node.nodes.map((child) => ({
-          ...child,
-          isChildNode: true,
-        }));
-
-        // Recursively get children of children
-        const grandchildren = getAllChildNodes(node.nodes);
-
-        return [...acc, ...children, ...grandchildren];
-      }, []);
-    };
-
-    const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes).filter(Boolean);
-
-    const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
+    const allNodes = [...gemmaNodes, ...voorzieningNodes];
 
     const viewNodes = allNodes
       .flatMap(convertToViewNode)
@@ -432,9 +592,13 @@ const AcViews = ({ store: { gemma } }) => {
             markup: [
               {
                 style: {
-                  fontSize: relationship.style.font.size,
-                  fontFamily: relationship.style.font.name,
-                  fontColor: `rgba(${relationship.style.color.r}, ${relationship.style.color.g}, ${relationship.style.color.b}, ${relationship.style.color.a})`,
+                  fontSize: relationship?.style?.font?.size,
+                  fontFamily: relationship?.style?.font?.name,
+                  fontColor: relationship?.style?.color?.a
+                    ? `rgba(${relationship?.style?.color?.r}, ${relationship?.style?.color?.g}, ${relationship?.style?.color?.b}, ${relationship?.style?.color?.a})`
+                    : `rgb(${relationship?.style?.color?.r}, ${relationship?.style?.color?.g}, ${relationship?.style?.color?.b})`,
+                  fontStyle: relationship?.style?.font?.style,
+                  fontWeight: relationship?.style?.font?.style,
                 },
               },
             ],
@@ -478,6 +642,10 @@ const AcViews = ({ store: { gemma } }) => {
       setNodeColor(node);
     });
 
+    viewRelationships.forEach((relationship) => {
+      setRelationshipColor(relationship);
+    });
+
     container.querySelectorAll(':scope > svg').forEach((node) => {
       setSvgViewBox(node);
     });
@@ -505,9 +673,11 @@ const AcViews = ({ store: { gemma } }) => {
 
   const setNodeColor = (node) => {
     const parentElement = document.querySelector(`[model-id="${node.viewNodeId}"]`);
-    parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
-    node.description &&
-      parentElement.setAttribute('data-tooltip-content', node.description);
+    if (node.type?.toLowerCase() !== 'label') {
+      parentElement.setAttribute('data-tooltip-id', TOOLTIP_ID);
+      node.description &&
+        parentElement.setAttribute('data-tooltip-content', node.description);
+    }
 
     let allRectElements = parentElement.querySelectorAll(':scope > rect');
     allRectElements.forEach((item) => {
@@ -526,6 +696,78 @@ const AcViews = ({ store: { gemma } }) => {
       node?.font?.name && item.setAttribute('font-family', node?.font?.name);
       node?.font?.size && item.setAttribute('font-size', node?.font?.size);
       node?.font?.color && item.setAttribute('font-color', node?.font?.color);
+      node?.font?.style && item.setAttribute('font-style', node?.font?.style);
+      node?.font?.style === 'bold' && item.setAttribute('font-weight', 'bold');
+
+      // Only apply left alignment for nodes with type 'label'
+      if (node.type?.toLowerCase() === 'label') {
+        // Get the current transform values
+        const currentTransform = item.getAttribute('transform');
+        if (currentTransform && currentTransform.includes('matrix')) {
+          // Extract the existing translation values
+          const matrix = currentTransform.match(
+            /matrix\(1,0,0,1,(\d+\.?\d*),(\d+\.?\d*)\)/
+          );
+          if (matrix) {
+            // Add left padding of 10px from the parent's left edge
+            const leftPadding = 10;
+            // Update transform to position text at the left with padding
+            item.setAttribute(
+              'transform',
+              `matrix(1,0,0,1,${leftPadding},${matrix[2]})`
+            );
+          }
+        }
+
+        // Set text-anchor to start for left alignment
+        item.setAttribute('text-anchor', 'start');
+
+        // Reset x position of tspans
+        const tspans = item.querySelectorAll('tspan');
+        tspans.forEach((tspan) => {
+          tspan.setAttribute('x', '0');
+        });
+      }
+    });
+  };
+
+  const setRelationshipColor = (relationship) => {
+    const parentElement = document.querySelector(
+      `[model-id="${relationship.viewRelationshipId}"]`
+    );
+
+    let allPathElements = parentElement.querySelectorAll(':scope > path');
+    allPathElements.forEach((item) => {
+      item.setAttribute('cursor', 'drag');
+    });
+
+    let allTextElements = parentElement.querySelectorAll(':scope text');
+    allTextElements.forEach((item) => {
+      relationship?.label?.markup?.[0]?.style?.fontFamily &&
+        item.style.setProperty(
+          'font-family',
+          relationship?.label?.markup?.[0]?.style?.fontFamily
+        );
+      if (relationship?.label?.markup?.[0]?.style?.fontSize) {
+        // Ensure font size has a unit for Firefox
+        const fontSize = relationship.label.markup[0].style.fontSize;
+        const fontSizeWithUnit = fontSize.toString().match(/\d+$/)
+          ? `${fontSize}px`
+          : fontSize;
+        item.style.setProperty('font-size', fontSizeWithUnit);
+      }
+      relationship?.label?.markup?.[0]?.style?.fontColor &&
+        item.style.setProperty(
+          'fill',
+          relationship?.label?.markup?.[0]?.style?.fontColor
+        );
+      relationship?.label?.markup?.[0]?.style?.fontStyle &&
+        item.style.setProperty(
+          'font-style',
+          relationship?.label?.markup?.[0]?.style?.fontStyle
+        );
+      relationship?.label?.markup?.[0]?.style?.fontWeight === 'bold' &&
+        item.style.setProperty('font-weight', 'bold');
     });
   };
 
@@ -779,58 +1021,59 @@ const AcViews = ({ store: { gemma } }) => {
     // Clean up
     URL.revokeObjectURL(url);
   };
-
   return (
     <AcContainer spacing='lg'>
-      {!gemma.get_view && !gemma.get_viewError && <AcLoader />}
+      {gemma.all_views?.length === 0 && <AcLoader />}
+      {gemma.all_views?.length > 0 && (
+        <>
+          <ReactSelect
+            placeholder='Selecteer een view'
+            className={clsx('ac-gemma-select')}
+            onChange={(e) => setView(e.value)}
+            loading={gemma.all_views?.length === 0}
+            options={gemma.all_views?.map((view) => ({
+              value: view.id,
+              label: getViewName(view),
+            }))}
+          />
 
-      {gemma.get_viewError && (
-        <div className='ac-gemma-view-error'>
-          <h1>View Not Found</h1>
-          <p>
-            The requested view could not be found or there was an error loading it.
-          </p>
-          <p>Please check the URL and try again.</p>
-        </div>
-      )}
+          {gemma.get_view && (
+            <div className='ac-gemma-view-header'>
+              <div className='ac-gemma-view-header-title-container'>
+                <h1 className='ac-gemma-view-header-title'>
+                  {getViewName(gemma.get_view)}
+                </h1>
+                <div>{gemma.get_view.documentation}</div>
+              </div>
 
-      {gemma.get_view && !gemma.get_viewError && (
-        <div className='ac-gemma-view-header'>
-          <div>
-            <h1 className='ac-gemma-view-header-title'>
-              {getViewName(gemma.get_view)}
-            </h1>
-            <div>{gemma.get_view.documentation}</div>
-          </div>
+              <PrimaryActionButton
+                className='ac-gemma-view-header-download-button'
+                disabled={!gemma.get_view || (gemma.get_view && !viewIsDoneLoading)}
+                onClick={() => downloadSvg()}
+              >
+                <VISUALS.DOWNLOAD /> Download SVG
+              </PrimaryActionButton>
+            </div>
+          )}
 
-          <PrimaryActionButton
-            className='ac-gemma-view-header-download-button'
-            disabled={!gemma.get_view || (gemma.get_view && !viewIsDoneLoading)}
-            onClick={() => downloadSvg()}
-          >
-            <VISUALS.DOWNLOAD /> Download SVG
-          </PrimaryActionButton>
-        </div>
-      )}
-
-      {gemma.get_view &&
-        viewNodesData &&
-        viewRelationsData &&
-        !gemma.get_viewError && (
-          <div className='ac-gemma-graph-container' id='graph-container'></div>
-        )}
-      {!gemma.get_view &&
-        !viewNodesData &&
-        !viewRelationsData &&
-        !viewIsDoneLoading &&
-        !gemma.get_viewError && <div className='ac-gemma-graph-container-loading' />}
-      {gemma.get_view && !viewIsDoneLoading && !gemma.get_viewError && (
-        <div className='ac-gemma-graph-container-loading'>
-          <AcLoader className='ac-gemma-graph-container-loading-loader' />
-        </div>
+          {gemma.get_view && viewNodesData && viewRelationsData && (
+            <div className='ac-gemma-graph-container' id='graph-container'></div>
+          )}
+          {!gemma.get_view &&
+            !viewNodesData &&
+            !viewRelationsData &&
+            !viewIsDoneLoading && (
+              <div className='ac-gemma-graph-container-loading' />
+            )}
+          {gemma.get_view && !viewIsDoneLoading && (
+            <div className='ac-gemma-graph-container-loading'>
+              <AcLoader className='ac-gemma-graph-container-loading-loader' />
+            </div>
+          )}
+        </>
       )}
     </AcContainer>
   );
 };
 
-export default withStore(observer(AcViews));
+export default withStore(observer(AcGemmaAccept));

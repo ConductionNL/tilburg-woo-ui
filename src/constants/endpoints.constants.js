@@ -21,6 +21,20 @@ const ENDPOINT = '/endpoint';
 const VIEWS = '/views';
 const ELEMENTS = '/elements';
 const VOORZIENING_GEBRUIK = '/voorzieninggebruiken';
+const HOSTNAME = window.location.hostname;
+
+const getGemmaEndpoint = () => {
+  switch (HOSTNAME) {
+    // return 'http://localhost:8080';
+    case 'localhost':
+    case 'vng.test.opencatalogi.nl':
+      return 'https://vng.test.commonground.nu';
+    case 'vng.accept.commonground.nu':
+      return 'https://vng.accept.commonground.nu';
+    default:
+      return 'https://vng.accept.commonground.nu';
+  }
+};
 
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
@@ -55,19 +69,19 @@ export const ENDPOINTS = AcLockObject({
   }, // GET
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
-    VIEWS: `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/views`,
+    VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views`,
     // VIEW: (_id) => `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}/${_id}?extend=all`,
     VIEW: (_id) =>
-      `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/views/${_id}`,
+      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views/${_id}`,
     // ELEMENTS: (_id) =>
     //   `${OPENCONNECTOR}${API}${ENDPOINT}${ELEMENTS}/${_id}?extend=all`,
     ELEMENT_REFERENCES: (_id) =>
-      `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${_id}`,
+      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/elements?identifier=${_id}`,
 
     // VOORZIENING_GEBRUIK: (_id) =>
     //   `${OPENCONNECTOR}${API}${ENDPOINT}${VOORZIENING_GEBRUIK}`,
     VOORZIENING_GEBRUIK: (_id) =>
-      `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/voorzieninggebruiken`,
+      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken`,
   }, // GET
   MENU: {
     INDEX: `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`, // GET
