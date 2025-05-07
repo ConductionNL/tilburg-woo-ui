@@ -18,6 +18,7 @@ import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${id}`,
         null,
         null,
         `/beheer/kwetsbaarheden/${id}`

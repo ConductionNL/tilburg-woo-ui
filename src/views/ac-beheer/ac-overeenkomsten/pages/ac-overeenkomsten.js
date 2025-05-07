@@ -20,6 +20,7 @@ import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const AcBeheerOvereenkomsten = () => {
       setLoading(true);
 
       const response = await makeRequest(
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract',
+        `${BASE_URL}/apps/openregister/api/objects/contract/contract`,
         [
           ['_extend[]', 'voorzieningAanbod'],
           ['_extend[]', 'voorzieningGebruik'],

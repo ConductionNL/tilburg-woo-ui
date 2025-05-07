@@ -8,6 +8,7 @@ import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcOrganisatieFormModal = ({
   organisatie,
@@ -31,7 +32,7 @@ const AcOrganisatieFormModal = ({
   const [organisaties, setOrganisaties] = useState([]);
   useEffect(async () => {
     const response = await makeRequest(
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie',
+      `${BASE_URL}/apps/openregister/api/objects/organisatie/organisatie`,
       [['_extend[]', 'contactgegevens']]
     );
 
@@ -72,8 +73,7 @@ const AcOrganisatieFormModal = ({
 
   const handleSubmit = async () => {
     try {
-      const baseUrl =
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie';
+      const baseUrl = `${BASE_URL}/apps/openregister/api/objects/organisatie/organisatie`;
 
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;

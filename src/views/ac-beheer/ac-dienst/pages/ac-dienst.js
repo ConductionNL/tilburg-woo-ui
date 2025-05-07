@@ -18,6 +18,7 @@ import { AcButton } from '@src/molecules';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerDienst = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const AcBeheerDienst = () => {
       setLoading(true);
 
       const response = await makeRequest(
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod',
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod`,
         [
           ['_extend[]', 'voorziening'],
           ['_extend[]', 'leverancier'],
@@ -174,7 +175,12 @@ const AcBeheerDienst = () => {
       key: 'certificeringen',
     },
   ];
-  const defaultHeaders = ['name', 'voorzieningName', 'email', 'ondersteunendeStandaarden'];
+  const defaultHeaders = [
+    'name',
+    'voorzieningName',
+    'email',
+    'ondersteunendeStandaarden',
+  ];
   const [tableHeaders, setTableHeaders] = useState(
     headers.filter((header) => defaultHeaders.includes(header.id))
   );

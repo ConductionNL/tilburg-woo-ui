@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcOvereenkomstFormModal = ({
   overeenkomst,
@@ -139,8 +140,7 @@ const AcOvereenkomstFormModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract';
+    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/contract/contract`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${overeenkomstFormData.id}` : baseUrl;

@@ -20,6 +20,7 @@ import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/organisatie/organisatie/${id}`,
         [['_extend[]', 'contactgegevens']],
         null,
         `/beheer/organisaties/${id}`

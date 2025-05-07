@@ -8,6 +8,7 @@ import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -98,8 +99,7 @@ const AcApplicatiesFormModal = ({
   const [error, setError] = useState(null);
 
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening';
+    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;

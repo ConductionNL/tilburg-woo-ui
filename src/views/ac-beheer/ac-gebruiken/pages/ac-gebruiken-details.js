@@ -20,6 +20,7 @@ import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
 import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerGebruikenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ const AcBeheerGebruikenDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${id}`,
         null,
         null,
         `/beheer/voorzieningen-gebruik/${id}`

@@ -16,6 +16,7 @@ import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
 import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening/${id}`,
         null,
         null,
         `/beheer/applicaties/${id}`

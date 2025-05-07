@@ -18,6 +18,7 @@ import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/contract/contract/${id}`,
         [
           ['_extend[]', 'voorzieningAanbod'],
           ['_extend[]', 'voorzieningGebruik'],

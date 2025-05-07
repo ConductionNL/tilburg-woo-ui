@@ -17,6 +17,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningversie/voorzieningversie/${id}`,
         [['_extend[]', 'voorzieningaanbod']],
         null,
         `/beheer/voorzieningen-versie/${id}`

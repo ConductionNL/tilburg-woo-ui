@@ -5,6 +5,7 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -30,7 +31,7 @@ const AcDeleteVoorzieningVersieModal = ({
     try {
       voorzieningen.forEach(async (voorziening) => {
         const response = await makeRequest(
-          `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie/${voorziening.id}`,
+          `${BASE_URL}/apps/openregister/api/objects/voorzieningversie/voorzieningversie/${voorziening.id}`,
           null,
           {
             method: 'DELETE',

@@ -18,6 +18,7 @@ import AcEditDienstModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const AcBeheerDienstDetails = ({ id }) => {
       setLoading(true);
 
       const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${id}`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${id}`,
         [
           ['_extend[]', 'voorziening'],
           ['_extend[]', 'leverancier'],

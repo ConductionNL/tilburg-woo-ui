@@ -19,6 +19,7 @@ import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal'
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const AcBeheerKwetsbaarheden = () => {
       setLoading(true);
 
       const response = await makeRequest(
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid',
+        `${BASE_URL}/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid`,
         null,
         null,
         '/beheer/kwetsbaarheden'
