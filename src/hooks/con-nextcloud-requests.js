@@ -20,7 +20,7 @@ export default function useNextcloudRequests() {
       return;
     }
 
-    const queryParamsString = queryParams?.flat().length
+    const queryParamsString = queryParams?.flat()?.length
       ? `?${new URLSearchParams(queryParams).toString()}`
       : '';
 
