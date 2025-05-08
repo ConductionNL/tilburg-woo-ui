@@ -67,7 +67,7 @@ const App = ({ store }) => {
       case 'localhost':
         return 'horst-aan-de-maas-theme';
       case 'horstadmaas.accept.opencatalogi.nl':
-        return 'horstadmaas-theme';
+        return 'horst-aan-de-maas-theme';
       default:
         return 'tilburg-theme';
     }
