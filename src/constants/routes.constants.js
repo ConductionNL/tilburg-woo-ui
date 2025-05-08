@@ -84,6 +84,8 @@ const getTitle = () => {
       return 'OpenRegels';
     case 'localhost':
       return 'Localhost catalogus';
+    case 'horstadmaas.accept.opencatalogi.nl':
+      return 'Horst aan de Maas';
     default:
       return 'Open Tilburg';
   }

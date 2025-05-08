@@ -114,7 +114,10 @@
         --utrecht-page-footer-link-hover-text-decoration,
         var(--tilburg-footer-link-hover-text-decoration, none)
       );
-      text-decoration-thickness: var(--utrecht-page-footer-link-hover-text-decoration-thickness, var(--tilburg-footer-link-hover-text-decoration-thickness, 0.0625rem));
+      text-decoration-thickness: var(
+        --utrecht-page-footer-link-hover-text-decoration-thickness,
+        var(--tilburg-footer-link-hover-text-decoration-thickness, 0.0625rem)
+      );
     }
 
     &:has(svg) {

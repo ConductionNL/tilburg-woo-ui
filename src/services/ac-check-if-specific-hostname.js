@@ -13,6 +13,7 @@ export const AcCheckIfSpecificHostname = () => {
     'test.opencatalogi.nl',
     'opencatalogi.open-regels.nl',
     'open-migrato.accept.commonground.nu',
+    'horstadmaas.accept.opencatalogi.nl',
     'localhost',
   ].includes(hostname);
 
