@@ -32,14 +32,22 @@ const AcBeheerDienstDetails = ({ id }) => {
     try {
       setLoading(true);
 
+      const endpoint = BASE_URL.includes('test')
+        ? 'openregister/api/objects/voorzieningaanbod/voorzieningaanbod'
+        : 'openconnector/api/endpoint/voorzieningaanboden';
+
+      const extend = BASE_URL.includes('test')
+        ? [
+            ['_extend[]', 'voorziening'],
+            ['_extend[]', 'leverancier'],
+          ]
+        : [];
+
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${id}`,
-        [
-          ['_extend[]', 'voorziening'],
-          ['_extend[]', 'leverancier'],
-        ],
+        `${BASE_URL}/apps/${endpoint}/${id}`,
+        extend,
         null,
-        `/beheer/voorzieningen-aanbod/${id}`
+        `/beheer/diensten/${id}`
       );
 
       if (!response.ok) {
@@ -172,7 +180,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={versionTabIndex === 0}>
-                          {data.versies.map((versie, index) => (
+                          {data.versies?.map((versie, index) => (
                             <Paragraph key={index}>{versie}</Paragraph>
                           ))}
                         </AcTabPanel>

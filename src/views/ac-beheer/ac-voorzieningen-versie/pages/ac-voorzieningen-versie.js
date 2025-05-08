@@ -36,9 +36,17 @@ const AcBeheerVoorzieningenVersie = () => {
     try {
       setLoading(true);
 
+      const endpoint = BASE_URL.includes('test')
+        ? 'openregister/api/objects/voorzieningversie/voorzieningversie'
+        : 'openconnector/api/endpoint/voorzieningversies';
+
+      const extend = BASE_URL.includes('test')
+        ? [['_extend[]', 'kwetsbaarheden']]
+        : [];
+
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningversie/voorzieningversie`,
-        [['_extend[]', 'kwetsbaarheden']],
+        `${BASE_URL}/apps/${endpoint}`,
+        extend,
         null,
         '/beheer/voorzieningen-versie'
       ).finally(() => setLoading(false));

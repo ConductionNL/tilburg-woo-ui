@@ -32,8 +32,12 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
     try {
       setLoading(true);
 
+      const endpoint = BASE_URL.includes('test')
+        ? 'openregister/api/objects/kwetsbaarheid/kwetsbaarheid'
+        : 'openconnector/api/endpoint/kwetsbaarheden';
+
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid/${id}`,
+        `${BASE_URL}/apps/${endpoint}/${id}`,
         null,
         null,
         `/beheer/kwetsbaarheden/${id}`

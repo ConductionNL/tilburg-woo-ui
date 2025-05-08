@@ -30,19 +30,27 @@ const AcBeheerDienst = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningaanbod/voorzieningaanbod'
+    : 'openconnector/api/endpoint/voorzieningaanboden';
+
+  const extend = BASE_URL.includes('test')
+    ? [
+        ['_extend[]', 'voorziening'],
+        ['_extend[]', 'leverancier'],
+        ['_extend[]', 'ondersteundeStandaarden'],
+      ]
+    : [];
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod`,
-        [
-          ['_extend[]', 'voorziening'],
-          ['_extend[]', 'leverancier'],
-          ['_extend[]', 'ondersteundeStandaarden'],
-        ],
+        `${BASE_URL}/apps/${endpoint}`,
+        extend,
         null,
-        '/beheer/voorzieningen-aanbod'
+        '/beheer/diensten'
       ).finally(() => setLoading(false));
 
       const jsonResponse = await response.json();
