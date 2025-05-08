@@ -27,11 +27,16 @@ const AcDeleteVoorzieningVersieModal = ({
   const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
+
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningversie/voorzieningversie'
+    : 'openconnector/api/endpoint/voorzieningversies';
+
   const handleDeleteVoorziening = async () => {
     try {
       voorzieningen.forEach(async (voorziening) => {
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningversie/voorzieningversie/${voorziening.id}`,
+          `${BASE_URL}/apps/${endpoint}/${voorziening.id}`,
           null,
           {
             method: 'DELETE',

@@ -64,8 +64,13 @@ const AcVoorzieningVersieFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint =
+    BASE_URL.includes('test')
+      ? 'openregister/api/objects/voorzieningversie/voorzieningversie'
+      : 'openconnector/api/endpoint/voorzieningversies';
+
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/voorzieningversie/voorzieningversie`;
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;

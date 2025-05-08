@@ -32,12 +32,20 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
     try {
       setLoading(true);
 
+      const endpoint = BASE_URL.includes('test')
+        ? 'openregister/api/objects/contract/contract'
+        : 'openconnector/api/endpoint/contracts';
+
+      const extend = BASE_URL.includes('test')
+        ? [
+            ['_extend[]', 'voorzieningAanbod'],
+            ['_extend[]', 'voorzieningGebruik'],
+          ]
+        : [];
+
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/contract/contract/${id}`,
-        [
-          ['_extend[]', 'voorzieningAanbod'],
-          ['_extend[]', 'voorzieningGebruik'],
-        ],
+        `${BASE_URL}/apps/${endpoint}/${id}`,
+        extend,
         null,
         `/beheer/contracten/${id}`
       );

@@ -98,8 +98,13 @@ const AcApplicatiesFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorziening'
+    : 'openconnector/api/endpoint/voorziening';
+
+
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`;
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;

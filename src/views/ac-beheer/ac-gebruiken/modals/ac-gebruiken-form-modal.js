@@ -96,8 +96,13 @@ const AcGebruikenFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint =
+    BASE_URL.includes('test')
+      ? 'openregister/api/objects/voorzieninggebruik/voorzieninggebruik'
+      : 'openconnector/api/endpoint/voorzieninggebruiken';
+
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik`;
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${gebruikFormData.id}` : baseUrl;

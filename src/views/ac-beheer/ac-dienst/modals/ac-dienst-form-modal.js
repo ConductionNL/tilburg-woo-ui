@@ -35,8 +35,8 @@ const AcDienstFormModal = ({
       setDienstFormData((prev) => ({
         ...prev,
         ...dienst,
-        voorziening: dienst.voorziening.id,
-        leverancier: dienst.leverancier.id,
+        voorziening: dienst.voorziening?.id ?? dienst.voorzieningId,
+        leverancier: dienst.leverancier?.id ?? dienst.organisatieId,
         ondersteuningsopties: Array.isArray(dienst.ondersteuningsopties)
           ? dienst.ondersteuningsopties.join(', ')
           : dienst.ondersteuningsopties,
@@ -73,8 +73,13 @@ const AcDienstFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint =
+  BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningaanbod/voorzieningaanbod'
+    : 'openconnector/api/endpoint/voorzieningaanboden';
+
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod`;
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${dienstFormData.id}` : baseUrl;
 

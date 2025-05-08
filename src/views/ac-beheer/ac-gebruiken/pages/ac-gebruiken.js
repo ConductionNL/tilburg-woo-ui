@@ -32,18 +32,23 @@ const AcBeheerGebruiken = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieninggebruik/voorzieninggebruik'
+    : 'openconnector/api/endpoint/voorzieninggebruiken';
+
+  const extend = BASE_URL.includes('test')
+    ? [['_extend[]', 'voorzieningId'], ['_extend[]', 'organisatieId']]
+    : [];
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik`,
-        [
-          ['_extend[]', 'voorzieningId'],
-          ['_extend[]', 'organisatieId'],
-        ],
+        `${BASE_URL}/apps/${endpoint}`,
+        extend,
         null,
-        '/beheer/voorzieningen-gebruik'
+        '/beheer/gebruiken'
       ).finally(() => setLoading(false));
 
       const jsonResponse = await response.json();

@@ -29,12 +29,15 @@ const AcOrganisatieFormModal = ({
     beschrijving: '',
   });
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/organisatie/organisatie'
+    : 'openconnector/api/endpoint/organisaties';
+
+  const extend = BASE_URL.includes('test') ? [['_extend[]', 'contactgegevens']] : [];
+
   const [organisaties, setOrganisaties] = useState([]);
   useEffect(async () => {
-    const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/organisatie/organisatie`,
-      [['_extend[]', 'contactgegevens']]
-    );
+    const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, extend);
 
     const data = (await response.json()).results;
     setOrganisaties(data);
@@ -73,7 +76,7 @@ const AcOrganisatieFormModal = ({
 
   const handleSubmit = async () => {
     try {
-      const baseUrl = `${BASE_URL}/apps/openregister/api/objects/organisatie/organisatie`;
+      const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;

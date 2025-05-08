@@ -31,13 +31,19 @@ const AcBeheerApplicaties = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorziening'
+    : 'openconnector/api/endpoint/voorzieningen';
+
+  const extend = BASE_URL.includes('test') ? [['_extend[]', 'standaarden']] : [];
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`,
-        [['_extend[]', 'standaarden']],
+        `${BASE_URL}/apps/${endpoint}`,
+        extend,
         null,
         '/beheer/applicaties'
       ).finally(() => setLoading(false));

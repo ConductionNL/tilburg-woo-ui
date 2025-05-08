@@ -29,13 +29,17 @@ const AcDeleteApplicatiesModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorziening'
+    : 'openconnector/api/endpoint/voorziening';
+
   const handleDeleteApplicatie = async () => {
     try {
       let deletePromises = [];
 
       applicaties.forEach(async (applicatie) => {
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening/${applicatie.id}`,
+          `${BASE_URL}/apps/${endpoint}/${applicatie.id}`,
           null,
           {
             method: 'DELETE',

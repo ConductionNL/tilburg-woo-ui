@@ -75,8 +75,12 @@ const AcKwetsbaarheidFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/kwetsbaarheid/kwetsbaarheid'
+    : 'openconnector/api/endpoint/kwetsbaarheden';
+
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid`;
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${kwetsbaarheidFormData.id}` : baseUrl;
