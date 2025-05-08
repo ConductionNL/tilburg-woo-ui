@@ -26,6 +26,8 @@ const apiUrl = () => {
       return 'https://directory.opencatalogi.nl/apps';
     case 'open-migrato.accept.commonground.nu':
       return 'https://migrato.accept.commonground.nu/apps';
+    case 'horstadmaas.accept.opencatalogi.nl':
+      return 'https://horstadmaas.accept.commonground.nu/apps';
     case 'localhost':
       return 'http://localhost:8080/apps';
     default:
@@ -56,6 +58,8 @@ const commongroundApiUrl = () => {
       return 'https://tilburg.accept.commonground.nu/apps';
     case 'open-migrato.accept.commonground.nu':
       return 'https://migrato.accept.commonground.nu/apps';
+    case 'horstadmaas.accept.opencatalogi.nl':
+      return 'https://horstadmaas.accept.commonground.nu/apps';
     case 'localhost':
       return 'http://localhost:8080/apps';
     default:

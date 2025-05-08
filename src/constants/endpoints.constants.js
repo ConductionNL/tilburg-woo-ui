@@ -38,13 +38,13 @@ const getGemmaEndpoint = () => {
 
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
-    SEARCH: `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SEARCH: `${OPENCATALOGI}${API}${PUBLICATIONS}`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization`, // GET
+      `${OPENCATALOGI}${API}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization`, // GET
     RELATIONS: (_uri) =>
-      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
+      `${OPENCATALOGI}${API}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) =>
-      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+      `${OPENCATALOGI}${API}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   MIJN_OMGEVING: {
     SEARCH: `${OPENCATALOGI}${API}${MIJN_OMGEVING}`, // GET

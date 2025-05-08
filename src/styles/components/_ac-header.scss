@@ -52,6 +52,7 @@
     // small visual correction due to font-family rendering
     .logo-text {
       margin-block-start: 1rem;
+      color: var(--tilburg-header-logo-color, inherit);
       @include respond-max($screen-sm) {
         word-break: break-word;
       }
@@ -82,9 +83,18 @@
     }
   }
   &__navigation-breadcrumb {
-    padding-block-start: var(--utrecht-breadcrumb-nav-padding-block-start, var(--tilburg-space-block-mouse));
-    padding-block-end: var(--utrecht-breadcrumb-nav-padding-block-end, var(--tilburg-space-block-mouse));
-    background-color: var(--utrecht-breadcrumb-nav-background-color, var(--tilburg-color-gray-50));
+    padding-block-start: var(
+      --utrecht-breadcrumb-nav-padding-block-start,
+      var(--tilburg-space-block-mouse)
+    );
+    padding-block-end: var(
+      --utrecht-breadcrumb-nav-padding-block-end,
+      var(--tilburg-space-block-mouse)
+    );
+    background-color: var(
+      --utrecht-breadcrumb-nav-background-color,
+      var(--tilburg-color-gray-50)
+    );
 
     @include respond-max($screen-md) {
       .container {

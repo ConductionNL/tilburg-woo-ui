@@ -41,6 +41,8 @@ const AcHeader = ({ store: { menu } }) => {
         return 'OpenCatalogi';
       case 'opencatalogi.open-regels.nl':
         return 'OpenRegels';
+      case 'horstadmaas.accept.opencatalogi.nl':
+        return 'Horst aan de Maas';
       case 'localhost':
         return 'Localhost catalogus';
       default:

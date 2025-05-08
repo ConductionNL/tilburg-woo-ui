@@ -65,7 +65,9 @@ const App = ({ store }) => {
       case 'test.opencatalogi.nl':
         return 'opencatalogi-theme';
       case 'localhost':
-        return 'vng-theme';
+        return 'horst-aan-de-maas-theme';
+      case 'horstadmaas.accept.opencatalogi.nl':
+        return 'horstadmaas-theme';
       default:
         return 'tilburg-theme';
     }
@@ -131,6 +133,13 @@ const App = ({ store }) => {
             'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008'),
           (document.getElementById('faviconMeta').href =
             'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
+        );
+      case 'horstadmaas.accept.commonground.nu':
+        return (
+          (document.getElementById('favicon').href =
+            'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download'),
+          (document.getElementById('faviconMeta').href =
+            'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download')
         );
       default:
         return;
