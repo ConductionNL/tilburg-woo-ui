@@ -84,11 +84,18 @@ export class MenuStore {
   @action
   fetchMenus = async () => {
     this.setLoadingStatus(true);
+    const hostname = window.location.hostname;
 
     app.store.api.menu
       .list()
       .then((response) => {
-        this.setMenus(response.data);
+        if (hostname === 'horstadmaas.accept.opencatalogi.nl') {
+          this.setMenus(response.results);
+        } else if (response.data) {
+          this.setMenus(response.data);
+        } else {
+          this.setMenus(response);
+        }
       })
       .catch((e) => console.error(e))
       .finally(() => {

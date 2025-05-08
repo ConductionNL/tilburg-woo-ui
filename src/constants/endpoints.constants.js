@@ -46,6 +46,11 @@ const MENUS_ENDPOINT =
     ? `${OPENCATALOGI}${API}${MENUS}`
     : `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`;
 
+const THEMES_ENDPOINT =
+  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
+    ? `${OPENCATALOGI}${API}${THEMES}`
+    : `${OPENCATALOGI}${API}${PUBLIC}${THEMES}`;
+
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
     SEARCH: `${OPENCATALOGI}${API}${PUBLICATIONS}`, // GET
@@ -75,8 +80,8 @@ export const ENDPOINTS = AcLockObject({
     SHOW: (_slug) => `${PAGES_ENDPOINT}${_slug}`, // GET
   },
   THEMES: {
-    INDEX: `${OPENCATALOGI}${API}${SEARCH}${THEMES}`,
-  }, // GET
+    INDEX: `${THEMES_ENDPOINT}`, // GET
+  },
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
     VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views`,
