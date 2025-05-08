@@ -37,7 +37,7 @@ const AcHero = (contents) => {
         return 'https://www.rotterdam.nl/_next/image?url=https%3A%2F%2Fbackend-dvg.rotterdam.nl%2Fsites%2Fdefault%2Ffiles%2Fstyles%2Fhero_large%2Fpublic%2F2022-12%2F22500-Arnoud-Verhey_0.jpg%3Fh%3D940640a5%26itok%3Dl9pnN9Gq&w=1920&q=75';
       case 'open-migrato.accept.commonground.nu':
         return MigratoHeroImage();
-      case 'horstandemaas.accept.opencatalogi.nl':
+      case 'horstadmaas.accept.opencatalogi.nl':
         return HorstAanDeMaasHeroImage();
       default:
         return '/home-hero-background.png';

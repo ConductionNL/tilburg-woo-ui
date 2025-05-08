@@ -43,7 +43,7 @@ const PAGES_ENDPOINT =
 
 const MENUS_ENDPOINT =
   HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${MENUS}`
+    ? `${OPENCATALOGI}${API}${MENUS}s`
     : `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`;
 
 const THEMES_ENDPOINT =
