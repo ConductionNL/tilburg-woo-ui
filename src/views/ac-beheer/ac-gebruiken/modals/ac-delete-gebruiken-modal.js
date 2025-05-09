@@ -27,7 +27,7 @@ const AcDeleteGebruikenModal = ({
   const handleDeleteGebruikenOpenModal = () => modalRef?.current?.showModal();
 
   const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieninggebruik/voorzieninggebruik'
+    ? 'openregister/api/objects/voorzieningen/voorzieninggebruik'
     : 'openconnector/api/endpoint/voorzieninggebruiken';
 
   const [error, setError] = useState(null);

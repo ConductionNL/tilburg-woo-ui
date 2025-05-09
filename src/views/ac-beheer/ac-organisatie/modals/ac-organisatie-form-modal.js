@@ -30,7 +30,7 @@ const AcOrganisatieFormModal = ({
   });
 
   const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/organisatie/organisatie'
+    ? 'openregister/api/objects/voorzieningen/organisatie'
     : 'openconnector/api/endpoint/organisaties';
 
   const extend = BASE_URL.includes('test') ? [['_extend[]', 'contactgegevens']] : [];
