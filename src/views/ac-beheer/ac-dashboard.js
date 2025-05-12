@@ -255,6 +255,7 @@ const AcDashboard = () => {
 
   const [downloadError, setDownloadError] = useState(null);
   const [modelLoading, setModelLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
   const [activeModel, setActiveModel] = useState(null);
   const [models, setModels] = useState([]);
 
@@ -278,6 +279,8 @@ const AcDashboard = () => {
   const getModels = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
+    setModelsLoading(true);
+
     const response = await fetch(
       `${baseUrl}/apps/openconnector/api/endpoint/models`,
       {
@@ -289,7 +292,6 @@ const AcDashboard = () => {
       }
     );
     const data = await response.json();
-    console.log(data);
     if (data?.results) {
       setModels(
         data.results.map((model) => ({
@@ -298,6 +300,7 @@ const AcDashboard = () => {
         }))
       );
     }
+    setModelsLoading(false);
   };
 
   useEffect(() => {
@@ -406,7 +409,7 @@ const AcDashboard = () => {
   const downloadModel = async (model) => {
     setModelLoading(true);
     try {
-      const url = `${baseUrl}/apps/openconnector/api/endpoint/models/${model.id}`;
+      const url = `${baseUrl}/apps/openconnector/api/endpoint/model/${model.id}?organisatie=89e904fc-e0c5-4fc0-ba0f-adf9c4be42a9`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -460,9 +463,15 @@ const AcDashboard = () => {
 
             <ConActionMenu>
               <ConActionMenu.Trigger
-                icon={modelLoading ? <VISUALS.SPINNER /> : <VISUALS.DOWNLOAD />}
-                loading={modelLoading}
-                disabled={models.length === 0 || modelLoading}
+                icon={
+                  modelLoading || modelsLoading ? (
+                    <VISUALS.SPINNER />
+                  ) : (
+                    <VISUALS.DOWNLOAD />
+                  )
+                }
+                loading={modelLoading || modelsLoading}
+                disabled={models.length === 0 || modelLoading || modelsLoading}
               >
                 {modelLoading
                   ? `Downloading ${activeModel.name}...`
