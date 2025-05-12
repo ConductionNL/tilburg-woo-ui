@@ -13,6 +13,8 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
@@ -22,36 +24,55 @@ import { BASE_URL } from '../../ac-beheer';
 const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorzieningversie'
+    : 'openconnector/api/endpoint/voorzieningversies';
+
+  const schemaSlug = 'voorzieningversie';
+
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      const endpoint = BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningen/voorzieningversie'
-        : 'openconnector/api/endpoint/voorzieningversies';
 
       const extend = BASE_URL.includes('test')
         ? [['_extend[]', 'voorzieningaanbod']]
         : [];
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}/${id}`,
-        extend,
-        null,
-        `/beheer/voorzieningen-versie/${id}`
-      );
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          extend,
+          null,
+          `/beheer/voorzieningen-versie/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/voorzieningen-versie/${id}`
+        ),
+      ]);
 
-      if (!response.ok) {
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -83,7 +104,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam}</Heading>
+                  <Heading>{data.naam || data.id}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -114,40 +135,20 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Omschrijving:</strong>
-                        <Paragraph>{data.omschrijving}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Release Notes:</strong>
-                        <Paragraph>{data.releaseNotes}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Nummer:</strong>
-                        <Paragraph>{data.nummer}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.status}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening Aanbod ID:</strong>
-                        <Paragraph>{data.voorzieningaanbodId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Productie datum:</strong>
-                        <Paragraph>{data.productieDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Eind datum:</strong>
-                        <Paragraph>{data.eindeDatum}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'naam'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                include: ['id'],
+                                includeUnknown: true,
+                                inline: true,
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
                   </AcFlex>
                 </AcColumn>

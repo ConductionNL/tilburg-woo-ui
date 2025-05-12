@@ -19,22 +19,27 @@ import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorzieningaanbod'
+    : 'openconnector/api/endpoint/voorzieningaanboden';
+
+  const schemaSlug = 'voorzieningaanbod';
+
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      const endpoint = BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningen/voorzieningaanbod'
-        : 'openconnector/api/endpoint/voorzieningaanboden';
 
       const extend = BASE_URL.includes('test')
         ? [
@@ -43,19 +48,35 @@ const AcBeheerDienstDetails = ({ id }) => {
           ]
         : [];
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}/${id}`,
-        extend,
-        null,
-        `/beheer/diensten/${id}`
-      );
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          extend,
+          null,
+          `/beheer/diensten/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/diensten/${id}`
+        ),
+      ]);
 
-      if (!response.ok) {
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -90,7 +111,7 @@ const AcBeheerDienstDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam}</Heading>
+                  <Heading>{data.voorziening.naam}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -121,53 +142,20 @@ const AcBeheerDienstDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Omschrijving:</strong>
-                        <Paragraph>{data.omschrijving}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.type}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Productpagina:</strong>
-                        <Paragraph>
-                          <a
-                            href={data.productpagina}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            {data.productpagina}
-                          </a>
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Ondersteuningsmodel:</strong>
-                        <Paragraph>{data.ondersteuningsmodel}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Licentiemodel:</strong>
-                        <Paragraph>{data.licentiemodel}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Hostingopties:</strong>
-                        <Paragraph>{data.hostingopties}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'naam', 'versies'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                include: ['naam'],
+                                includeUnknown: true,
+                                inline: true,
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
 
                     <div>

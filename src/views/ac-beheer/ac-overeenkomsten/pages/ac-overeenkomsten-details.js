@@ -13,6 +13,8 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
@@ -23,18 +25,21 @@ import { BASE_URL } from '../../ac-beheer';
 const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'contract';
+  const endpoint = BASE_URL.includes('test')
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : 'openconnector/api/endpoint/contracts';
+
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      const endpoint = BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningen/contract'
-        : 'openconnector/api/endpoint/contracts';
 
       const extend = BASE_URL.includes('test')
         ? [
@@ -43,19 +48,35 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
           ]
         : [];
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}/${id}`,
-        extend,
-        null,
-        `/beheer/contracten/${id}`
-      );
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          extend,
+          null,
+          `/beheer/contracten/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/contracten/${id}`
+        ),
+      ]);
 
-      if (!response.ok) {
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -118,67 +139,31 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Voorziening aanbod:</strong>
-                        <Paragraph>{data.voorzieningAanbod}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening gebruik:</strong>
-                        <Paragraph>{data.voorzieningGebruik}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Start datum:</strong>
-                        <Paragraph>{data.startDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Eind datum:</strong>
-                        <Paragraph>{data.eindDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Contract type:</strong>
-                        <Paragraph>{data.contractType}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Kosten:</strong>
-                        <Paragraph>€{data.kosten}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Kosten periode:</strong>
-                        <Paragraph>{data.kostenPeriode}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Contact persoon aanbieder:</strong>
-                        <Paragraph>{data.contactPersoonAanbieder?.naam}</Paragraph>
-                        <Paragraph>{data.contactPersoonAanbieder?.email}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Contact persoon gebruiker:</strong>
-                        <Paragraph>{data.contactPersoonGebruiker?.naam}</Paragraph>
-                        <Paragraph>{data.contactPersoonGebruiker?.email}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Document referentie:</strong>
-                        <Paragraph>{data.documentReferentie}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.status}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Opmerkingen:</strong>
-                        <Paragraph>{data.opmerkingen}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'contractNummer'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                include: ['naam'],
+                                inline: true,
+                                profile: {
+                                  voorzieningAanbod: {
+                                    includeUnknown: true,
+                                    include: ['id'],
+                                    inline: true,
+                                  },
+                                  voorzieningGebruik: {
+                                    includeUnknown: true,
+                                    include: ['id'],
+                                    inline: true,
+                                  },
+                                },
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
                   </AcFlex>
                 </AcColumn>

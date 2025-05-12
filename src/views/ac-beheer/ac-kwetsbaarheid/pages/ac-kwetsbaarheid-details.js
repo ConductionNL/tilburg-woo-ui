@@ -13,6 +13,8 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
@@ -23,32 +25,51 @@ import { BASE_URL } from '../../ac-beheer';
 const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/kwetsbaarheid'
+    : 'openconnector/api/endpoint/kwetsbaarheden';
+
+  const schemaSlug = 'kwetsbaarheid';
+
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const endpoint = BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningen/kwetsbaarheid'
-        : 'openconnector/api/endpoint/kwetsbaarheden';
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          null,
+          null,
+          `/beheer/kwetsbaarheden/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/kwetsbaarheden/${id}`
+        ),
+      ]);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}/${id}`,
-        null,
-        null,
-        `/beheer/kwetsbaarheden/${id}`
-      );
-
-      if (!response.ok) {
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -111,63 +132,16 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Voorzieningversie ID:</strong>
-                        <Paragraph>{data.voorzieningversieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>CVE Nummer:</strong>
-                        <Paragraph>{data.cveNummer}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Beschrijving:</strong>
-                        <Paragraph>{data.beschrijving}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Ernst:</strong>
-                        <Paragraph>{data.ernst}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Ontdekt op:</strong>
-                        <Paragraph>{data.ontdektOp}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Gepubliceerd op:</strong>
-                        <Paragraph>{data.gepubliceerdOp}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Opgelost in:</strong>
-                        <Paragraph>{data.opgelostIn}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Mitigatie:</strong>
-                        <Paragraph>{data.mitigatie}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Referenties:</strong>
-                        <Paragraph>
-                          {data.referenties.map((ref, index) => (
-                            <span key={index}>
-                              <a
-                                href={ref}
-                                target='_blank'
-                                rel='noopener noreferrer'
-                              >
-                                {ref}
-                              </a>
-                              {index < data.referenties.length - 1 && ', '}
-                            </span>
-                          ))}
-                        </Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'titel'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key)}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
                   </AcFlex>
                 </AcColumn>
