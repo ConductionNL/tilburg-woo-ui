@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -21,10 +21,12 @@ import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 const AcBeheerGebruiken = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,33 +34,55 @@ const AcBeheerGebruiken = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'voorzieninggebruik';
   const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/voorzieninggebruik'
-    : 'openconnector/api/endpoint/voorzieninggebruiken';
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/voorzieninggebruiken`;
+
+  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
   const extend = BASE_URL.includes('test')
-    ? [['_extend[]', 'voorzieningId'], ['_extend[]', 'organisatieId']]
+    ? [
+        ['_extend[]', 'voorzieningId'],
+        ['_extend[]', 'organisatieId'],
+      ]
     : [];
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        extend,
-        null,
-        '/beheer/gebruiken'
-      ).finally(() => setLoading(false));
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          extend,
+          null,
+          '/beheer/gebruiken'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          extend,
+          null,
+          '/beheer/gebruiken'
+        ),
+      ]);
 
-      const jsonResponse = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      setLoading(false);
 
       const data = jsonResponse.results;
+      const dataProperties = schemaJsonResponse.properties;
 
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -75,101 +99,88 @@ const AcBeheerGebruiken = () => {
 
   const tableRef = useRef(null);
 
-  const headers = [
-    {
-      id: 'id',
-      label: 'Id',
-      key: 'id',
-    },
-    {
-      id: 'versionId',
-      label: 'Versie ID',
-      key: 'versieId',
-      customContent: (row) => {
-        return row?.versieId?.id ?? row?.versieId ?? '-';
+  // Custom header overrides for special cases
+  const customHeaders = useMemo(
+    () => ({
+      versieId: {
+        id: 'versionId',
+        label: 'Versie ID',
+        key: 'versieId',
+        customContent: (row) => {
+          return row?.versieId?.id ?? row?.versieId ?? '-';
+        },
       },
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      key: 'status',
-    },
-    {
-      id: 'opmerkingen',
-      label: 'Opmerkingen',
-      key: 'opmerkingen',
-    },
-    {
-      id: 'bedrijfsKritisch',
-      label: 'Bedrijfs kritisch',
-      key: 'bedrijfsKritisch',
-    },
-    {
-      id: 'privacyGevoelig',
-      label: 'Privacy gevoelig',
-      key: 'privacyGevoelig',
-    },
-    {
-      id: 'bbnScore',
-      label: 'BBN Score',
-      key: 'bbnScore',
-    },
-    {
-      id: 'ibpScore',
-      label: 'IBP Score',
-      key: 'ibpScore',
-    },
-    {
-      id: 'startDate',
-      label: 'Start datum',
-      key: 'startDatum',
-    },
-    {
-      id: 'endDate',
-      label: 'Eind datum',
-      key: 'eindDatum',
-    },
-    {
-      id: 'organisatie',
-      label: 'Organisatie',
-      key: 'organisatie',
-      customContent: (row) => {
-        return (
-          <AcColumn key={row.id}>
-            <span>{row?.organisatieId?.organisatienaam ?? '-'}</span>
-          </AcColumn>
-        );
+      organisatieId: {
+        id: 'organisatieId',
+        label: 'Organisatie',
+        key: 'organisatieId',
+        customContent: (row) => {
+          return (
+            <AcColumn key={row.id}>
+              <span>{row?.organisatieId?.organisatienaam ?? '-'}</span>
+            </AcColumn>
+          );
+        },
       },
-    },
-    {
-      id: 'voorziening',
-      label: 'Voorziening',
-      key: 'voorziening',
-      customContent: (row) => {
-        return (
-          <AcColumn key={row.id}>
-            <span>{row?.voorzieningId?.naam ?? '-'}</span>
-          </AcColumn>
-        );
+      voorzieningId: {
+        id: 'voorzieningId',
+        label: 'Voorziening',
+        key: 'voorzieningId',
+        customContent: (row) => {
+          return (
+            <AcColumn key={row.id}>
+              <span>{row?.voorzieningId?.naam ?? '-'}</span>
+            </AcColumn>
+          );
+        },
       },
-    },
-    {
-      id: 'beheerderNaam',
-      label: 'Beheerder naam',
-      key: '',
-      customContent: (row) => {
-        return row?.beheerder?.naam || '-';
+      beheerder: {
+        id: 'beheerderNaam',
+        label: 'Beheerder naam',
+        key: 'beheerder',
+        customContent: (row) => {
+          return row?.beheerder?.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          return ConSorterLogic(a?.beheerder?.naam, b?.beheerder?.naam, direction);
+        },
       },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return ConSorterLogic(a?.beheerder?.naam, b?.beheerder?.naam, direction);
-      },
-    },
-  ];
-  const defaultHeaders = ['id', 'versionId', 'endDate', 'status'];
-  const [tableHeaders, setTableHeaders] = useState(
-    headers.filter((header) => defaultHeaders.includes(header.id))
+    }),
+    []
   );
+
+  // Generate headers from dataProperties schema
+  const headers = useMemo(() => {
+    if (!dataProperties) return [];
+
+    return Object.entries(dataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // Check if we have a custom override for this header
+        if (customHeaders[key]) {
+          return customHeaders[key];
+        }
+
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      });
+  }, [dataProperties, customHeaders]);
+
+  const defaultHeaders = ['id', 'versionId', 'eindDatum', 'status'];
+  const [tableHeaders, setTableHeaders] = useState([]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');

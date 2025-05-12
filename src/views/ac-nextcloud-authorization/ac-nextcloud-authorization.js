@@ -14,6 +14,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
 import config from '@src/config';
+import { BASE_URL } from '../ac-beheer/ac-beheer';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -87,17 +88,6 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
     );
   }
 
-  //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
-  //     ? new URL(config.authentication.baseURL).origin + '/index.php'
-  //     : new URL(config.authentication.baseURL).origin;
-
-  const hostname = window.location.hostname;
-
-  const authenticationHostname =
-    hostname === 'vng.test.opencatalogi.nl'
-      ? 'https://vng.test.commonground.nu'
-      : 'https://vng.accept.commonground.nu';
-
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -111,7 +101,7 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   useEffect(async () => {
     let response;
     try {
-      response = await fetch(`${authenticationHostname}/apps/oauth2/api/v1/token`, {
+      response = await fetch(`${BASE_URL}/apps/oauth2/api/v1/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
