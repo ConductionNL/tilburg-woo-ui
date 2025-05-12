@@ -73,7 +73,10 @@ const AcDienstFormModal = ({
 
   const [error, setError] = useState(null);
 
-  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
+  const endpoint =
+  BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorzieningaanbod'
+    : 'openconnector/api/endpoint/voorzieningaanboden';
 
   const handleSubmit = async () => {
     const baseUrl = `${BASE_URL}/apps/${endpoint}`;

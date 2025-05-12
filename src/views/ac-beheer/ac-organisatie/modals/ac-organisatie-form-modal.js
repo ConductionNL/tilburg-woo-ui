@@ -29,9 +29,11 @@ const AcOrganisatieFormModal = ({
     beschrijving: '',
   });
 
-  const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/organisatie'
+    : 'openconnector/api/endpoint/organisaties';
 
-  const extend = [['_extend[]', 'contactgegevens']];
+  const extend = BASE_URL.includes('test') ? [['_extend[]', 'contactgegevens']] : [];
 
   const [organisaties, setOrganisaties] = useState([]);
   useEffect(async () => {

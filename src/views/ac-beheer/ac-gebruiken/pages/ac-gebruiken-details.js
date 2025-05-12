@@ -31,7 +31,9 @@ const AcBeheerGebruikenDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = 'openregister/api/objects/voorzieningen/voorzieninggebruik';
+  const endpoint = BASE_URL.includes('test')
+    ? 'openregister/api/objects/voorzieningen/voorzieninggebruik'
+    : 'openconnector/api/endpoint/voorzieninggebruiken';
 
   const schemaSlug = 'voorzieninggebruik';
 

@@ -32,7 +32,9 @@ const AcDeleteKwetsbaarhedenModal = ({
     try {
       let deletePromises = [];
 
-      const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
+      const endpoint = BASE_URL.includes('test')
+        ? 'openregister/api/objects/voorzieningen/kwetsbaarheid'
+        : 'openconnector/api/endpoint/kwetsbaarheden';
 
       kwetsbaarheden.forEach(async (kwetsbaarheid) => {
         const response = await makeRequest(

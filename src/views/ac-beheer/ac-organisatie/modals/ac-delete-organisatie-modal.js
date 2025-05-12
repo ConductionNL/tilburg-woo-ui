@@ -31,7 +31,9 @@ const AcDeleteOrganisatiesModal = ({
     try {
       let deletePromises = [];
 
-      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
+      const endpoint = BASE_URL.includes('test')
+        ? 'openregister/api/objects/voorzieningen/organisatie'
+        : 'openconnector/api/endpoint/organisaties';
 
       organisaties.forEach(async (organisatie) => {
         const response = await makeRequest(

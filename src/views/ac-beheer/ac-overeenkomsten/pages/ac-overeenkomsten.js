@@ -37,11 +37,13 @@ const AcBeheerOvereenkomsten = () => {
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'contract';
-  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+  const endpoint = BASE_URL.includes('test')
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/contracts`;
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'all']];
+  const extend = BASE_URL.includes('test') ? [['_extend[]', 'all']] : [];
 
   const fetchData = useCallback(async () => {
     try {

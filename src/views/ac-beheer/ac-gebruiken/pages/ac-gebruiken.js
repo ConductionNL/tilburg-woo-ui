@@ -36,14 +36,18 @@ const AcBeheerGebruiken = () => {
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieninggebruik';
-  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+  const endpoint = BASE_URL.includes('test')
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/voorzieninggebruiken`;
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [
-    ['_extend[]', 'voorzieningId'],
-    ['_extend[]', 'organisatieId'],
-  ];
+  const extend = BASE_URL.includes('test')
+    ? [
+        ['_extend[]', 'voorzieningId'],
+        ['_extend[]', 'organisatieId'],
+      ]
+    : [];
 
   const fetchData = useCallback(async () => {
     try {

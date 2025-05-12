@@ -35,11 +35,13 @@ const AcBeheerKwetsbaarheden = () => {
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'kwetsbaarheid';
-  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+  const endpoint = BASE_URL.includes('test')
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/kwetsbaarheden`;
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [];
+  const extend = BASE_URL.includes('test') ? [] : [];
 
   const fetchData = useCallback(async () => {
     try {

@@ -37,11 +37,13 @@ const AcBeheerVoorzieningenVersie = () => {
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningversie';
-  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+  const endpoint = BASE_URL.includes('test')
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/voorzieningversies`;
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'voorziening']];
+  const extend = BASE_URL.includes('test') ? [['_extend[]', 'voorziening']] : [];
 
   const fetchData = useCallback(async () => {
     try {
