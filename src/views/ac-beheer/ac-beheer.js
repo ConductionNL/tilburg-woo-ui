@@ -29,10 +29,15 @@ import AcColumn from '@atoms/ac-column/ac-column';
 
 const hostname = window.location.hostname;
 
-export const BASE_URL =
-  hostname === 'vng.test.opencatalogi.nl'
-    ? 'https://vng.test.commonground.nu'
-    : 'https://vng.accept.commonground.nu';
+export const BASE_URL = (() => {
+  switch (hostname) {
+    case 'vng.test.opencatalogi.nl':
+    case 'localhost':
+      return 'https://vng.test.commonground.nu';
+    default:
+      return 'https://vng.accept.commonground.nu';
+  }
+})();
 
 const AcBeheer = () => {
   const navigate = useMemo(() => useNavigate(), []);

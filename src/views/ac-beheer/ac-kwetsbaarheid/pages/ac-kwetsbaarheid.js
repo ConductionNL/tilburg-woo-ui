@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -20,10 +20,12 @@ import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,35 +33,50 @@ const AcBeheerKwetsbaarheden = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'kwetsbaarheid';
+  const endpoint = BASE_URL.includes('test')
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/kwetsbaarheden`;
+
+  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
+
+  const extend = BASE_URL.includes('test') ? [] : [];
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const endpoint =
-      BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningen/kwetsbaarheid'
-        : 'openconnector/api/endpoint/kwetsbaarheden';
-  
-    const extend =
-      BASE_URL.includes('test')
-        ? []
-        : [];
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          extend,
+          null,
+          '/beheer/kwetsbaarheden'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          extend,
+          null,
+          '/beheer/kwetsbaarheden'
+        ),
+      ]);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        extend,
-        null,
-        '/beheer/kwetsbaarheden'
-      ).finally(() => setLoading(false));
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
 
-      const jsonResponse = await response.json();
+      setLoading(false);
 
       const data = jsonResponse.results;
+      const dataProperties = schemaJsonResponse.properties;
 
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -76,74 +93,66 @@ const AcBeheerKwetsbaarheden = () => {
 
   const tableRef = useRef(null);
 
-  const headers = [
-    {
-      id: 'title',
-      label: 'Titel',
-      key: 'titel',
-    },
-    {
-      id: 'description',
-      label: 'Beschrijving',
-      key: 'beschrijving',
-    },
-    {
-      id: 'severity',
-      label: 'Ernst',
-      key: 'ernst',
-    },
-    {
-      id: 'cveNumber',
-      label: 'CVE nummer',
-      key: 'cveNummer',
-    },
-    {
-      id: 'detectedOn',
-      label: 'Ontdekt op',
-      key: 'ontdektOp',
-      customContent: (row) =>
-        row.ontdektOp
-          ? !isNaN(new Date(row.ontdektOp).getTime())
-            ? new Date(row.ontdektOp).toLocaleDateString()
-            : row.ontdektOp
-          : '-',
-    },
-    {
-      id: 'publishedOn',
-      label: 'Gepubliceerd op',
-      key: 'gepubliceerdOp',
-      customContent: (row) =>
-        row.gepubliceerdOp
-          ? !isNaN(new Date(row.gepubliceerdOp).getTime())
-            ? new Date(row.gepubliceerdOp).toLocaleDateString()
-            : row.gepubliceerdOp
-          : '-',
-    },
-    {
-      id: 'solvedIn',
-      label: 'Opgelost in',
-      key: 'opgelostIn',
-    },
-    {
-      id: 'voorzieningversieId',
-      label: 'Voorziening versie ID',
-      key: 'voorzieningversieId',
-    },
-    {
-      id: 'mitigation',
-      label: 'Mitigatie',
-      key: 'mitigatie',
-    },
-    {
-      id: 'references',
-      label: 'Referenties',
-      key: 'referenties',
-    },
-  ];
-  const defaultHeaders = ['title', 'severity', 'detectedOn', 'status'];
-  const [tableHeaders, setTableHeaders] = useState(
-    headers.filter((header) => defaultHeaders.includes(header.id))
+  // Custom header overrides for special cases
+  const customHeaders = useMemo(
+    () => ({
+      ontdektOp: {
+        id: 'detectedOn',
+        label: 'Ontdekt op',
+        key: 'ontdektOp',
+        customContent: (row) =>
+          row.ontdektOp
+            ? !isNaN(new Date(row.ontdektOp).getTime())
+              ? new Date(row.ontdektOp).toLocaleDateString()
+              : row.ontdektOp
+            : '-',
+      },
+      gepubliceerdOp: {
+        id: 'publishedOn',
+        label: 'Gepubliceerd op',
+        key: 'gepubliceerdOp',
+        customContent: (row) =>
+          row.gepubliceerdOp
+            ? !isNaN(new Date(row.gepubliceerdOp).getTime())
+              ? new Date(row.gepubliceerdOp).toLocaleDateString()
+              : row.gepubliceerdOp
+            : '-',
+      },
+    }),
+    []
   );
+
+  // Generate headers from dataProperties schema
+  const headers = useMemo(() => {
+    if (!dataProperties) return [];
+
+    return Object.entries(dataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // Check if we have a custom override for this header
+        if (customHeaders[key]) {
+          return customHeaders[key];
+        }
+
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      });
+  }, [dataProperties, customHeaders]);
+
+  const defaultHeaders = ['titel', 'ernst', 'detectedOn', 'status'];
+  const [tableHeaders, setTableHeaders] = useState([]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');

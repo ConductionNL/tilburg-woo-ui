@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -19,10 +19,12 @@ import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 const AcBeheerDienst = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,9 +32,14 @@ const AcBeheerDienst = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'voorzieningaanbod';
+  const openConnectorSlug = 'voorzieningaanboden';
   const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/voorzieningaanbod'
-    : 'openconnector/api/endpoint/voorzieningaanboden';
+    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
+    : `openconnector/api/endpoint/${openConnectorSlug}`;
+
+  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
   const extend = BASE_URL.includes('test')
     ? [
@@ -46,21 +53,36 @@ const AcBeheerDienst = () => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        extend,
-        null,
-        '/beheer/diensten'
-      ).finally(() => setLoading(false));
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          extend,
+          null,
+          '/beheer/diensten'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          extend,
+          null,
+          '/beheer/diensten'
+        ),
+      ]);
 
-      const jsonResponse = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      setLoading(false);
 
       const data = jsonResponse.results;
+      const dataProperties = schemaJsonResponse.properties;
 
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -77,121 +99,139 @@ const AcBeheerDienst = () => {
 
   const tableRef = useRef(null);
 
-  const headers = [
-    // TODO: name is to be removed - https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/VNG-Realisatie/Softwarecatalogus/refs/heads/documentation/website/static/api/voorzieningen-api-specification.json#schema/Voorzieningaanbod
-    // {
-    //   id: 'name',
-    //   label: 'Naam',
-    //   key: 'naam',
-    // },
-    {
-      id: 'voorzieningName',
-      label: 'Voorziening naam',
-      key: '',
-      customContent: (row) => {
-        return row?.voorziening?.naam || '-';
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
+  // Custom header overrides for special cases
+  const customHeaders = useMemo(
+    () => ({
+      voorziening: {
+        id: 'voorzieningName',
+        label: 'Voorziening naam',
+        key: 'voorziening',
+        customContent: (row) => {
+          return row?.voorziening?.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
 
-        const nameA = a?.voorziening?.naam || '';
-        const nameB = b?.voorziening?.naam || '';
+          const nameA = a?.voorziening?.naam || '';
+          const nameB = b?.voorziening?.naam || '';
 
-        return ConSorterLogic(nameA, nameB, direction);
+          return ConSorterLogic(nameA, nameB, direction);
+        },
       },
-    },
-    {
-      id: 'leverancier',
-      label: 'Leverancier',
-      key: '',
-      customContent: (row) => {
-        return (
-          <AcColumn key={row.id}>
-            <span>{row?.leverancier?.organisatienaam ?? '-'}</span>
-          </AcColumn>
-        );
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-
-        const idA = a?.leverancier?.id || '';
-        const idB = b?.leverancier?.id || '';
-
-        return ConSorterLogic(idA, idB, direction);
-      },
-    },
-    {
-      id: 'email',
-      label: 'Email',
-      key: '',
-      customContent: (row) => {
-        return row?.leverancier?.contactgegevens?.email || '-';
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-
-        const emailA = a?.leverancier?.contactgegevens?.email || '';
-        const emailB = b?.leverancier?.contactgegevens?.email || '';
-
-        return ConSorterLogic(emailA, emailB, direction);
-      },
-    },
-    {
-      id: 'ondersteunendeStandaarden',
-      label: 'Ondersteunende standaard',
-      key: 'ondersteundeStandaarden',
-      customContent: (row) => {
-        if (!row?.ondersteundeStandaarden) return 'N/A';
-        if (!row?.ondersteundeStandaarden?.length) return '-';
-        return row?.ondersteundeStandaarden?.map((standaard) => {
+      leverancier_naam: {
+        id: 'leverancier',
+        label: 'Leverancier',
+        key: '',
+        customContent: (row) => {
           return (
-            <AcColumn key={standaard.id}>
-              <span>
-                {standaard.naam} / {standaard.status}
-              </span>
+            <AcColumn key={row.id}>
+              <span>{row?.leverancier?.organisatienaam ?? '-'}</span>
             </AcColumn>
           );
-        });
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
 
-        const aName = a.ondersteundeStandaarden[0].naam;
-        const bName = b.ondersteundeStandaarden[0].naam;
+          const idA = a?.leverancier?.id || '';
+          const idB = b?.leverancier?.id || '';
 
-        return ConSorterLogic(aName, bName, direction);
+          return ConSorterLogic(idA, idB, direction);
+        },
       },
-    },
-    {
-      id: 'productPage',
-      label: 'Productpagina',
-      key: 'productpagina',
-    },
-    {
-      id: 'supportOptions',
-      label: 'Ondersteuningsopties',
-      key: 'ondersteuningsopties',
-    },
-    {
-      id: 'priceModel',
-      label: 'Prijsmodel',
-      key: 'prijsmodel',
-    },
-    {
-      id: 'certifications',
-      label: 'Certificeringen',
-      key: 'certificeringen',
-    },
-  ];
+      leverancier_email: {
+        id: 'email',
+        label: 'Email',
+        key: '',
+        customContent: (row) => {
+          return row?.leverancier?.contactgegevens?.email || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+
+          const emailA = a?.leverancier?.contactgegevens?.email || '';
+          const emailB = b?.leverancier?.contactgegevens?.email || '';
+
+          return ConSorterLogic(emailA, emailB, direction);
+        },
+      },
+      ondersteundeStandaarden: {
+        id: 'ondersteundeStandaarden',
+        label: 'Ondersteunende standaard',
+        key: 'ondersteundeStandaarden',
+        customContent: (row) => {
+          if (!row?.ondersteundeStandaarden) return 'N/A';
+          if (!row?.ondersteundeStandaarden?.length) return '-';
+          return row?.ondersteundeStandaarden?.map((standaard) => {
+            return (
+              <AcColumn key={standaard.id}>
+                <span>
+                  {standaard.naam} / {standaard.status}
+                </span>
+              </AcColumn>
+            );
+          });
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+
+          const aName = a.ondersteundeStandaarden[0].naam;
+          const bName = b.ondersteundeStandaarden[0].naam;
+
+          return ConSorterLogic(aName, bName, direction);
+        },
+      },
+    }),
+    []
+  );
+
+  // Generate headers from dataProperties schema
+  const headers = useMemo(() => {
+    if (!dataProperties) return [];
+
+    const schemaHeaders = Object.entries(dataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // leverancier is a special case as its referenced twice
+        if (key === 'leverancier') {
+          return [
+            customHeaders['leverancier_naam'],
+            customHeaders['leverancier_email'],
+          ];
+        }
+
+        // Check if we have a custom override for this header
+        if (customHeaders[key]) {
+          return customHeaders[key];
+        }
+
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      })
+      .flat(); // flatten the array of arrays
+
+    return schemaHeaders;
+  }, [dataProperties, customHeaders]);
+
   const defaultHeaders = [
     'name',
     'voorzieningName',
     'email',
-    'ondersteunendeStandaarden',
+    'ondersteundeStandaarden',
   ];
-  const [tableHeaders, setTableHeaders] = useState(
-    headers.filter((header) => defaultHeaders.includes(header.id))
-  );
+
+  const [tableHeaders, setTableHeaders] = useState([]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
