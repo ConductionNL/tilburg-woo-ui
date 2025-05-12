@@ -174,11 +174,6 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         );
       }
 
-      if (dataKey === 'contactgegevens') {
-        console.log(value);
-        console.log(entries);
-      }
-
       return (
         <div style={{ paddingLeft: 12, borderLeft: '2px solid #eee' }}>
           {entries.map(([key, childSchema]) => (
