@@ -25,10 +25,7 @@ const AcDeleteDienstModal = ({
 
   const handleDeleteDienstOpenModal = () => modalRef?.current?.showModal();
 
-  const endpoint =
-    BASE_URL.includes('test')
-      ? 'openregister/api/objects/voorzieningen/voorzieningaanbod'
-      : 'openconnector/api/endpoint/voorzieningaanboden';
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
 
   const [error, setError] = useState(null);
   const handleDeleteDienst = async () => {

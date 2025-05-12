@@ -26,9 +26,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/voorziening'
-    : 'openconnector/api/endpoint/voorzieningen';
+  const endpoint = 'openregister/api/objects/voorzieningen/voorziening';
 
   const fetchData = async () => {
     try {
