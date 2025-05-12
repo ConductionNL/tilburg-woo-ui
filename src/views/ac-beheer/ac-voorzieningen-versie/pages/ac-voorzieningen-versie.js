@@ -37,7 +37,7 @@ const AcBeheerVoorzieningenVersie = () => {
       setLoading(true);
 
       const endpoint = BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningversie/voorzieningversie'
+        ? 'openregister/api/objects/voorzieningen/voorzieningversie'
         : 'openconnector/api/endpoint/voorzieningversies';
 
       const extend = BASE_URL.includes('test')

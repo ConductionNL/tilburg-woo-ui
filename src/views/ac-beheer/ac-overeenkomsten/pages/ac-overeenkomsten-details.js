@@ -33,7 +33,7 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
       setLoading(true);
 
       const endpoint = BASE_URL.includes('test')
-        ? 'openregister/api/objects/contract/contract'
+        ? 'openregister/api/objects/voorzieningen/contract'
         : 'openconnector/api/endpoint/contracts';
 
       const extend = BASE_URL.includes('test')

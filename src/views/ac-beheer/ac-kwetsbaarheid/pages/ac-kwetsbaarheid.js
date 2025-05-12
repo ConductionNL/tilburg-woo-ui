@@ -37,7 +37,7 @@ const AcBeheerKwetsbaarheden = () => {
 
       const endpoint =
       BASE_URL.includes('test')
-        ? 'openregister/api/objects/kwetsbaarheid/kwetsbaarheid'
+        ? 'openregister/api/objects/voorzieningen/kwetsbaarheid'
         : 'openconnector/api/endpoint/kwetsbaarheden';
   
     const extend =

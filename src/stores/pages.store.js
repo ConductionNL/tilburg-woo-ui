@@ -78,11 +78,18 @@ export class PagesStore {
   @action
   fetchPages = async () => {
     this.loading.status = true;
+    const hostname = window.location.hostname;
 
     app.store.api.pages
       .list()
       .then((response) => {
-        this.setPages(response.data);
+        if (hostname === 'horstadmaas.accept.opencatalogi.nl') {
+          this.setPages(response.results);
+        } else if (response.data) {
+          this.setPages(response.data);
+        } else {
+          this.setPages(response);
+        }
       })
       .catch((e) => console.error(e))
       .finally(() => {

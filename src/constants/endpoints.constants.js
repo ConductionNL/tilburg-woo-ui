@@ -36,6 +36,21 @@ const getGemmaEndpoint = () => {
   }
 };
 
+const PAGES_ENDPOINT =
+  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
+    ? `${OPENCATALOGI}${API}${PAGES}`
+    : `${OPENCATALOGI}${API}${PUBLIC}${PAGES}`;
+
+const MENUS_ENDPOINT =
+  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
+    ? `${OPENCATALOGI}${API}${MENUS}s`
+    : `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`;
+
+const THEMES_ENDPOINT =
+  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
+    ? `${OPENCATALOGI}${API}${THEMES}`
+    : `${OPENCATALOGI}${API}${PUBLIC}${THEMES}`;
+
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
     SEARCH: `${OPENCATALOGI}${API}${PUBLICATIONS}`, // GET
@@ -61,12 +76,12 @@ export const ENDPOINTS = AcLockObject({
     SHOW: (_id) => `${OPENCATALOGI}${API}${PUBLIC}${FAQS}${_id}`, // GET
   },
   PAGES: {
-    INDEX: `${OPENCATALOGI}${API}${PUBLIC}${PAGES}`, // GET
-    SHOW: (_slug) => `${OPENCATALOGI}${API}${PUBLIC}${PAGES}${_slug}`, // GET
+    INDEX: `${PAGES_ENDPOINT}`, // GET
+    SHOW: (_slug) => `${PAGES_ENDPOINT}${_slug}`, // GET
   },
   THEMES: {
-    INDEX: `${OPENCATALOGI}${API}${SEARCH}${THEMES}`,
-  }, // GET
+    INDEX: `${THEMES_ENDPOINT}`, // GET
+  },
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
     VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views`,
@@ -84,8 +99,8 @@ export const ENDPOINTS = AcLockObject({
       `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken`,
   }, // GET
   MENU: {
-    INDEX: `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`, // GET
-    SINGLE: (_id) => `${OPENCATALOGI}${API}${PUBLIC}${MENUS}/${_id}`, // GET
+    INDEX: `${MENUS_ENDPOINT}`, // GET
+    SINGLE: (_id) => `${MENUS_ENDPOINT}/${_id}`, // GET
   },
 });
 

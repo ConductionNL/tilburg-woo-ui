@@ -33,7 +33,7 @@ const AcBeheerGebruiken = () => {
   const filterHeadersDrawerRef = useRef(null);
 
   const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieninggebruik/voorzieninggebruik'
+    ? 'openregister/api/objects/voorzieningen/voorzieninggebruik'
     : 'openconnector/api/endpoint/voorzieninggebruiken';
 
   const extend = BASE_URL.includes('test')
