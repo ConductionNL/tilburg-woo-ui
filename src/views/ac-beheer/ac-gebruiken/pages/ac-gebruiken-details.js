@@ -30,9 +30,7 @@ const AcBeheerGebruikenDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/voorzieninggebruik'
-    : 'openconnector/api/endpoint/voorzieninggebruiken';
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieninggebruik';
 
   const fetchData = async () => {
     try {

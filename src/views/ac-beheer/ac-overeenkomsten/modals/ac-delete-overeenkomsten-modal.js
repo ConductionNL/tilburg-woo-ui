@@ -27,9 +27,7 @@ const AcDeleteOvereenkomstenModal = ({
   const handleDeleteOvereenkomstOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/contract'
-    : 'openconnector/api/endpoint/contracts';
+  const endpoint = 'openregister/api/objects/voorzieningen/contract';
 
   const handleDeleteOvereenkomst = async () => {
     try {

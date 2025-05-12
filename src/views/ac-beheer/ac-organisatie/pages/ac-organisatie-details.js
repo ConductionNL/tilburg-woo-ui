@@ -35,15 +35,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       setLoading(true);
 
 
-      const endpoint =
-      BASE_URL.includes('test')
-        ? 'openregister/api/objects/voorzieningen/organisatie'
-        : 'openconnector/api/endpoint/organisaties';
-  
-    const extend =
-      BASE_URL.includes('test')
-        ? [['_extend[]', 'contactgegevens']]
-        : [];
+      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
+
+      const extend = [['_extend[]', 'contactgegevens']];
+
       const response = await makeRequest(
         `${BASE_URL}/apps/${endpoint}/${id}`,
         extend,

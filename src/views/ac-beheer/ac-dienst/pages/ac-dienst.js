@@ -35,19 +35,15 @@ const AcBeheerDienst = () => {
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningaanbod';
   const openConnectorSlug = 'voorzieningaanboden';
-  const endpoint = BASE_URL.includes('test')
-    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
-    : `openconnector/api/endpoint/${openConnectorSlug}`;
+  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = BASE_URL.includes('test')
-    ? [
-        ['_extend[]', 'voorziening'],
-        ['_extend[]', 'leverancier'],
-        ['_extend[]', 'ondersteundeStandaarden'],
-      ]
-    : [];
+  const extend = [
+    ['_extend[]', 'voorziening'],
+    ['_extend[]', 'leverancier'],
+    ['_extend[]', 'ondersteundeStandaarden'],
+  ];
 
   const fetchData = useCallback(async () => {
     try {
