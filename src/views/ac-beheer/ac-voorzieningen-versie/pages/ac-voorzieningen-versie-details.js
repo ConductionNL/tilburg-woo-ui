@@ -30,19 +30,14 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/voorzieningversie'
-    : 'openconnector/api/endpoint/voorzieningversies';
-
-  const schemaSlug = 'voorzieningversie';
-
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const extend = BASE_URL.includes('test')
-        ? [['_extend[]', 'voorzieningaanbod']]
-        : [];
+      const endpoint = 'openregister/api/objects/voorzieningen/voorzieningversie';
+      const schemaSlug = 'voorzieningversie';
+
+      const extend = [['_extend[]', 'voorzieningaanbod']];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(

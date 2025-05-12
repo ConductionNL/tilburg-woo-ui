@@ -31,22 +31,17 @@ const AcBeheerDienstDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/voorzieningaanbod'
-    : 'openconnector/api/endpoint/voorzieningaanboden';
-
-  const schemaSlug = 'voorzieningaanbod';
-
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const extend = BASE_URL.includes('test')
-        ? [
-            ['_extend[]', 'voorziening'],
-            ['_extend[]', 'leverancier'],
-          ]
-        : [];
+      const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
+      const schemaSlug = 'voorzieningaanbod';
+
+      const extend = [
+        ['_extend[]', 'voorziening'],
+        ['_extend[]', 'leverancier'],
+      ];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(

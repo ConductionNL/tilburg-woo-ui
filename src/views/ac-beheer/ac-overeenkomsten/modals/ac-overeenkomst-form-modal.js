@@ -139,9 +139,7 @@ const AcOvereenkomstFormModal = ({
 
   const [error, setError] = useState(null);
 
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/contract'
-    : 'openconnector/api/endpoint/contracts';
+  const endpoint = 'openregister/api/objects/voorzieningen/contract';
 
   const handleSubmit = async () => {
     const baseUrl = `${BASE_URL}/apps/${endpoint}`;
