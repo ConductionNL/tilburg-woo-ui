@@ -64,10 +64,7 @@ const AcVoorzieningVersieFormModal = ({
 
   const [error, setError] = useState(null);
 
-  const endpoint =
-    BASE_URL.includes('test')
-      ? 'openregister/api/objects/voorzieningen/voorzieningversie'
-      : 'openconnector/api/endpoint/voorzieningversies';
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningversie';
 
   const handleSubmit = async () => {
     const baseUrl = `${BASE_URL}/apps/${endpoint}`;

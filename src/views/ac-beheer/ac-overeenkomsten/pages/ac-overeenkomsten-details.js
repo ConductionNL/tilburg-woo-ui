@@ -31,22 +31,17 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const registerSlug = 'voorzieningen';
-  const schemaSlug = 'contract';
-  const endpoint = BASE_URL.includes('test')
-    ? `openregister/api/objects/${registerSlug}/${schemaSlug}`
-    : 'openconnector/api/endpoint/contracts';
-
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const extend = BASE_URL.includes('test')
-        ? [
-            ['_extend[]', 'voorzieningAanbod'],
-            ['_extend[]', 'voorzieningGebruik'],
-          ]
-        : [];
+      const endpoint = 'openregister/api/objects/voorzieningen/contract';
+      const schemaSlug = 'contract';
+
+      const extend = [
+        ['_extend[]', 'voorzieningAanbod'],
+        ['_extend[]', 'voorzieningGebruik'],
+      ];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(

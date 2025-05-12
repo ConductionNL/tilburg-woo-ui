@@ -31,15 +31,12 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = BASE_URL.includes('test')
-    ? 'openregister/api/objects/voorzieningen/kwetsbaarheid'
-    : 'openconnector/api/endpoint/kwetsbaarheden';
-
-  const schemaSlug = 'kwetsbaarheid';
-
   const fetchData = async () => {
     try {
       setLoading(true);
+
+      const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
+      const schemaSlug = 'kwetsbaarheid';
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(

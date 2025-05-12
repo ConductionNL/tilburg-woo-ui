@@ -241,7 +241,7 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
 
           try {
             const response = await fetch(
-              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relationships?identifier=${relationship.relationshipRef}`
+              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relations?identifier=${relationship.relationshipRef}`
             );
             const data = await response.json();
 
