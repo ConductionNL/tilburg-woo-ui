@@ -23,17 +23,11 @@ const AcDashboard = () => {
 
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
-  const endpointsTest = [
+  const endpoints = [
     { id: '3', name: 'elements' },
     { id: '4', name: 'views' },
     { id: '2', name: 'relations' },
     { id: '1', name: 'model' },
-  ];
-  const endpointsAccept = [
-    { id: '7', name: 'elements' },
-    { id: '4', name: 'views' },
-    { id: '8', name: 'relations' },
-    { id: '10', name: 'model' },
   ];
 
   const [archimateUrl, setArchimateUrl] = useState(
@@ -101,8 +95,6 @@ const AcDashboard = () => {
 
     setSyncGemmaLoading(true);
     setSyncGemmaResults([]);
-
-    const endpoints = hostname === 'localhost' ? endpointsTest : endpointsAccept;
 
     const apiPromises = endpoints.map(async (apiCall) => {
       // Skip the verification endpoint in the initial sync
@@ -179,74 +171,74 @@ const AcDashboard = () => {
     });
 
     Promise.all(apiPromises)
-      .then(async () => {
-        // Add the connect-views API call after initial sync
-        setSyncGemmaResults((prev) => [
-          ...prev,
-          { name: 'connect-views', status: 'loading' },
-        ]);
+      // .then(async () => {
+      //   // Add the connect-views API call after initial sync
+      //   setSyncGemmaResults((prev) => [
+      //     ...prev,
+      //     { name: 'connect-views', status: 'loading' },
+      //   ]);
 
-        let heartbeatInterval;
+      //   let heartbeatInterval;
 
-        try {
-          // Start heartbeat checks immediately
-          heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
+      //   try {
+      //     // Start heartbeat checks immediately
+      //     heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
 
-          const response = await fetch(
-            `${baseUrl}/apps/openconnector/api/endpoint/connect-views`,
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
-          // Clone the response before reading it
-          const responseClone = response.clone();
-          const responseData = await responseClone.json();
+      //     const response = await fetch(
+      //       `${baseUrl}/apps/openconnector/api/endpoint/connect-views/137f6f45-2163-4dd4-957f-aeebc40e3136`,
+      //       {
+      //         method: 'GET',
+      //         headers: {
+      //           'Content-Type': 'application/json',
+      //           Authorization: `Bearer ${accessToken}`,
+      //         },
+      //       }
+      //     );
+      //     // Clone the response before reading it
+      //     const responseClone = response.clone();
+      //     const responseData = await responseClone.json();
 
-          if (!response.ok) {
-            throw new Error(
-              responseData?.message ||
-                `Synchronization failed with status: ${response.status}`
-            );
-          }
+      //     if (!response.ok) {
+      //       throw new Error(
+      //         responseData?.message ||
+      //           `Synchronization failed with status: ${response.status}`
+      //       );
+      //     }
 
-          const connectViewsData = await response.json();
+      //     const connectViewsData = await response.json();
 
-          // Stop heartbeat checks when we get connectViewsData
-          if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-          }
+      //     // Stop heartbeat checks when we get connectViewsData
+      //     if (heartbeatInterval) {
+      //       clearInterval(heartbeatInterval);
+      //     }
 
-          setSyncGemmaResults((prev) =>
-            prev.map((item) =>
-              item.name === 'connect-views'
-                ? { ...item, status: 'success', object: connectViewsData }
-                : item
-            )
-          );
-        } catch (error) {
-          // Stop heartbeat checks on error
-          if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-          }
+      //     setSyncGemmaResults((prev) =>
+      //       prev.map((item) =>
+      //         item.name === 'connect-views'
+      //           ? { ...item, status: 'success', object: connectViewsData }
+      //           : item
+      //       )
+      //     );
+      //   } catch (error) {
+      //     // Stop heartbeat checks on error
+      //     if (heartbeatInterval) {
+      //       clearInterval(heartbeatInterval);
+      //     }
 
-          console.error('Error in connect-views:', error);
-          setSyncGemmaResults((prev) =>
-            prev.map((item) =>
-              item.name === 'connect-views'
-                ? {
-                    ...item,
-                    status: 'error',
-                    object: { error: { message: error.message } },
-                  }
-                : item
-            )
-          );
-        }
-      })
+      //     console.error('Error in connect-views:', error);
+      //     setSyncGemmaResults((prev) =>
+      //       prev.map((item) =>
+      //         item.name === 'connect-views'
+      //           ? {
+      //               ...item,
+      //               status: 'error',
+      //               object: { error: { message: error.message } },
+      //             }
+      //           : item
+      //       )
+      //     );
+      //   }
+      // })
       .finally(() => {
         setSyncGemmaLoading(false);
         setSyncGemmaSuccess(true);
