@@ -41,7 +41,7 @@ const AcBeheerVoorzieningenVersie = () => {
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'voorziening']];
+  const extend = [['_extend[]', 'voorziening'], ['_extend[]', 'kwetsbaarheden']];
 
   const fetchData = useCallback(async () => {
     try {

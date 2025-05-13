@@ -65,7 +65,7 @@ const App = ({ store }) => {
       case 'test.opencatalogi.nl':
         return 'opencatalogi-theme';
       case 'localhost':
-        return 'horst-aan-de-maas-theme';
+        return 'vng-theme';
       case 'horstadmaas.accept.opencatalogi.nl':
         return 'horst-aan-de-maas-theme';
       default:
