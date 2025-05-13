@@ -24,10 +24,10 @@ const AcDashboard = () => {
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
   const endpoints = [
-    { id: '3', name: 'elements' },
+    { id: '1', name: 'elements' },
     { id: '4', name: 'views' },
-    { id: '2', name: 'relations' },
-    { id: '1', name: 'model' },
+    { id: '3', name: 'relations' },
+    { id: '2', name: 'model' },
   ];
 
   const [archimateUrl, setArchimateUrl] = useState(
