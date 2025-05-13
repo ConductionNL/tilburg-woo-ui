@@ -37,7 +37,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
       const endpoint = 'openregister/api/objects/voorzieningen/voorzieningversie';
       const schemaSlug = 'voorzieningversie';
 
-      const extend = [['_extend[]', 'voorzieningaanbod']];
+      const extend = [['_extend[]', 'voorzieningaanbod'], ['_extend[]', 'kwetsbaarheden']];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(

@@ -41,6 +41,7 @@ const AcBeheerDienstDetails = ({ id }) => {
       const extend = [
         ['_extend[]', 'voorziening'],
         ['_extend[]', 'leverancier'],
+        ['_extend[]', 'ondersteundeStandaarden'],
       ];
 
       const [response, schemaResponse] = await Promise.all([

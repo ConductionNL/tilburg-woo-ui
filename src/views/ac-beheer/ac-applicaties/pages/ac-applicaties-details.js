@@ -33,6 +33,8 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
   const schemaSlug = 'voorziening';
 
+  const extend = [];
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -40,7 +42,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}/${id}`,
-          null,
+          extend,
           null,
           `/beheer/applicaties/${id}`
         ),
