@@ -4,6 +4,7 @@ import { withStore } from '@stores';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router';
+import { BASE_URL } from '../ac-beheer/ac-beheer';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -68,16 +69,6 @@ const AcAuthentication = () => {
       sessionStorage.setItem('redirect_url', acSafeParseRedirectUri(redirect_url));
     }
   }, [redirect_url]);
-  const hostname = window.location.hostname;
-
-  const isHostNameTest = hostname === 'vng.test.opencatalogi.nl';
-
-  //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
-  //     ? new URL(config.authentication.baseURL).origin + '/index.php'
-  //     : new URL(config.authentication.baseURL).origin;
-  const authenticationHostname = isHostNameTest
-    ? 'https://vng.test.commonground.nu'
-    : 'https://vng.accept.commonground.nu';
 
   // TODO: do not make this hardcoded
   const [clientId, setClientId] = useState(
@@ -104,7 +95,7 @@ const AcAuthentication = () => {
       sameSite: 'strict',
     });
 
-    const url = new URL(authenticationHostname + '/apps/oauth2/authorize');
+    const url = new URL(BASE_URL + '/apps/oauth2/authorize');
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('scope', 'api');

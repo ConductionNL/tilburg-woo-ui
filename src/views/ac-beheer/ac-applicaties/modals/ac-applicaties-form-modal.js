@@ -152,6 +152,7 @@ const AcApplicatiesFormModal = ({
       ref={modalRef}
       id='edit-applicatie-modal'
       title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
+      buttonType='secondary'
       buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
     >
       <AcFlex column spacing='sm'>
