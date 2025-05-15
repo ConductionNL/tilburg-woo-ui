@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcKwetsbaarheidFormModal = ({
   kwetsbaarheid,
@@ -38,7 +39,9 @@ const AcKwetsbaarheidFormModal = ({
       setKwetsbaarheidFormData((prev) => ({
         ...prev,
         ...kwetsbaarheid,
-        voorzieningversieId: collapseExtendedObjects(kwetsbaarheid.voorzieningversieId),
+        voorzieningversieId: collapseExtendedObjects(
+          kwetsbaarheid.voorzieningversieId
+        ),
         referenties: Array.isArray(kwetsbaarheid.referenties)
           ? kwetsbaarheid.referenties.join(', ')
           : kwetsbaarheid.referenties,
@@ -72,9 +75,10 @@ const AcKwetsbaarheidFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
+
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/kwetsbaarheid/kwetsbaarheid';
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${kwetsbaarheidFormData.id}` : baseUrl;

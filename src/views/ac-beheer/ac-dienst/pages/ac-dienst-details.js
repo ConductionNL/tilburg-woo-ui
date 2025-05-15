@@ -18,10 +18,14 @@ import AcEditDienstModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -31,22 +35,44 @@ const AcBeheerDienstDetails = ({ id }) => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod/${id}`,
-        [
-          ['_extend[]', 'voorziening'],
-          ['_extend[]', 'leverancier'],
-        ],
-        null,
-        `/beheer/voorzieningen-aanbod/${id}`
-      );
+      const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
+      const schemaSlug = 'voorzieningaanbod';
 
-      if (!response.ok) {
+      const extend = [
+        ['_extend[]', 'voorziening'],
+        ['_extend[]', 'leverancier'],
+        ['_extend[]', 'ondersteundeStandaarden'],
+      ];
+
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          extend,
+          null,
+          `/beheer/diensten/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/diensten/${id}`
+        ),
+      ]);
+
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -81,7 +107,7 @@ const AcBeheerDienstDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam}</Heading>
+                  <Heading>{data.voorziening.naam}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -112,53 +138,20 @@ const AcBeheerDienstDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Omschrijving:</strong>
-                        <Paragraph>{data.omschrijving}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.type}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Productpagina:</strong>
-                        <Paragraph>
-                          <a
-                            href={data.productpagina}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                          >
-                            {data.productpagina}
-                          </a>
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Ondersteuningsmodel:</strong>
-                        <Paragraph>{data.ondersteuningsmodel}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Licentiemodel:</strong>
-                        <Paragraph>{data.licentiemodel}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Hostingopties:</strong>
-                        <Paragraph>{data.hostingopties}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'naam', 'versies'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                include: ['naam'],
+                                includeUnknown: true,
+                                inline: true,
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
 
                     <div>
@@ -171,7 +164,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={versionTabIndex === 0}>
-                          {data.versies.map((versie, index) => (
+                          {data.versies?.map((versie, index) => (
                             <Paragraph key={index}>{versie}</Paragraph>
                           ))}
                         </AcTabPanel>

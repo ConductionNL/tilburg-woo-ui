@@ -84,9 +84,13 @@ const AcFooter = ({ store: { menu } }) => {
     }
   };
 
-  const footerItems = all_menu_items.filter((item) => item.position > 2);
-
   const hostname = window.location.hostname;
+
+  const footerItems = all_menu_items.filter((item) =>
+    hostname === 'horstadmaas.accept.opencatalogi.nl'
+      ? item.position > 1
+      : item.position > 2
+  );
 
   return (
     <footer className='ac-footer'>
@@ -139,11 +143,9 @@ const AcFooter = ({ store: { menu } }) => {
                       ) : (
                         <Link className='ac-footer__link' to={item.link}>
                           {hostname === 'open-dimpact.accept.commonground.nu' ||
-                          hostname === 'dimpact.opencatalogi.nl' ? (
-                            <Icon icon={item.icon} />
-                          ) : (
-                            <Icon icon={item.icon} />
-                          )}
+                            (hostname === 'dimpact.opencatalogi.nl' && (
+                              <Icon icon={item.icon} />
+                            ))}
                           {item.name}
                           {hostname !== 'open-dimpact.accept.commonground.nu' &&
                             hostname !== 'dimpact.opencatalogi.nl' && (
@@ -154,11 +156,9 @@ const AcFooter = ({ store: { menu } }) => {
                     ) : (
                       <div className='ac-footer__link'>
                         {hostname === 'open-dimpact.accept.commonground.nu' ||
-                        hostname === 'dimpact.opencatalogi.nl' ? (
-                          <Icon icon={item.icon} />
-                        ) : (
-                          <Icon icon={item.icon} />
-                        )}
+                          (hostname === 'dimpact.opencatalogi.nl' && (
+                            <Icon icon={item.icon} />
+                          ))}
                         {item.name}
                         {hostname !== 'open-dimpact.accept.commonground.nu' &&
                           hostname !== 'dimpact.opencatalogi.nl' && (

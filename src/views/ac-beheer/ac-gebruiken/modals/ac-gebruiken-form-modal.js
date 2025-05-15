@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcGebruikenFormModal = ({
   gebruik,
@@ -14,6 +15,7 @@ const AcGebruikenFormModal = ({
   onClose,
   onSuccess,
   isEdit = false,
+  baseUrl,
 }) => {
   const modalRef = useRef(null);
 
@@ -94,9 +96,10 @@ const AcGebruikenFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieninggebruik';
+
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik';
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${gebruikFormData.id}` : baseUrl;

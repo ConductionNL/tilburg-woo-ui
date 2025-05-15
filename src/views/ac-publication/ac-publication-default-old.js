@@ -51,9 +51,6 @@ const AcPublication = observer(({ store: { publications } }) => {
   );
   const [copyStatus, setCopyStatus] = useState('idle'); // 'idle' | 'copied' | 'error'
 
-  const [headers, setHeaders] = useState([]);
-  const [rows, setRows] = useState([]);
-
   const handleAllConceptsSearch = (searchTerm) => {
     const filtered = MOCK_CONCEPTS.allConcepts.filter((concept) =>
       concept.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -111,23 +108,9 @@ const AcPublication = observer(({ store: { publications } }) => {
   //   };
   // }, []);
 
-  const getFilterdRows = (data) => {
-    return Object.entries(data).filter(([key, value]) => {
-      if (key === '@self') return false;
-      if (key === 'name') return false;
-      return [
-        <div>
-          <strong>{key}</strong>
-        </div>,
-        <div>{value ? value : '-'}</div>,
-      ];
-    });
-  };
-
-  useEffect(() => {
-    setHeaders(['Titel', 'Waarde']);
-    setRows(getFilterdRows(get_single));
-  }, [get_single]);
+  // useEffect(() => {
+  //   document.title = get_single?.title || 'Gemeente | Publicatie';
+  // }, [get_single]);
 
   if (loading.status || !get_single || !attachments) {
     return <AcLoader />;
@@ -280,7 +263,7 @@ const AcPublication = observer(({ store: { publications } }) => {
       <AcContainer compact margin='xl'>
         <AcFlex column spacing={'lg'}>
           <div className='ac-publication-header'>
-            <Heading>{get_single?.title ?? get_single?.name}</Heading>
+            <Heading>{get_single?.title}</Heading>
             {
               <img
                 src={get_single?.image}
@@ -288,9 +271,126 @@ const AcPublication = observer(({ store: { publications } }) => {
               ></img>
             }
           </div>
-          <AcTable header={headers} rows={rows} />{' '}
+
+          <AcCard blue>
+            <Heading level={2}>{LABELS.SUMMARY}</Heading>
+            <Paragraph>
+              {get_single?.summary || LABELS.SUMMARY_UNAVAILABLE}
+            </Paragraph>
+            <SecondaryActionButton style='button' onClick={openDrawer}>
+              <VISUALS.LIST_ALT />
+              {LABELS.CONCEPTS_LIST}
+            </SecondaryActionButton>
+          </AcCard>
+
+          {get_single?.data?.github_url && (
+            <div className='ac-publication-buttons'>
+              <Button
+                onClick={() => window.open(get_single?.data?.github_url, '_blank')}
+              >
+                <VISUALS.GITHUB />
+                <span>Bekijk op Repository</span>
+              </Button>
+              <Button>
+                <VISUALS.COMMON_GROUND />
+                <span>Common Ground Beoordeling</span>
+              </Button>
+            </div>
+          )}
+
+          {renderPrimaryAttachments}
+          {renderAttachments()}
+
+          <AcFlex column>
+            <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>
+            <AcTable
+              rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL, true)}
+            />
+          </AcFlex>
+
+          <div className='ac-publication-three-column'>
+            {/* <div>
+              <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen applicatie beschikbaar</span>
+              </div>
+            </div> */}
+            <div>
+              <Heading2 className='ac-publication-three-column-item-heading'>
+                Organisatie
+              </Heading2>
+              {get_single?.organization ? (
+                <div className='ac-publication-organization-card'>
+                  <AcCard>
+                    <div className='ac-publication-organization-card-content'>
+                      <div className='ac-publication-organization-card-header'>
+                        <Heading3>{get_single?.organization?.title}</Heading3>
+                        {get_single?.organization?.image && (
+                          <div className='ac-publication-organization-card-logo-container'>
+                            <img
+                              src={get_single?.organization?.image}
+                              className='ac-publication-organization-card-logo'
+                            ></img>
+                          </div>
+                        )}
+                      </div>
+                      <Paragraph className='ac-publication-organization-card-description'>
+                        {get_single?.organization?.summary ||
+                          'Geen omschrijving beschikbaar'}
+                      </Paragraph>
+                    </div>
+                  </AcCard>
+                </div>
+              ) : (
+                <div className='ac-publication-three-column-item'>
+                  <span>Geen organisatie beschikbaar</span>
+                </div>
+              )}
+            </div>
+            {/* <div>
+              <Heading2 className='ac-publication-three-column-item-heading'>Beoordeling</Heading2>
+              <div className='ac-publication-three-column-item'>
+                <span>Geen beoordeling beschikbaar</span>
+              </div>
+            </div> */}
+          </div>
+          <SecondaryActionButton style='button' onClick={openDialog}>
+            <VISUALS.SHARE />
+            Link delen
+          </SecondaryActionButton>
         </AcFlex>
       </AcContainer>
+
+      <AcDrawer id='concepts-drawer' ref={drawerRef} title={LABELS.CONCEPTS_LIST}>
+        <AcTabList tabs={tabs} />
+      </AcDrawer>
+
+      <AcModal
+        id='share-modal'
+        ref={modalRef}
+        title={LABELS.SHARE_MODAL}
+        disableDefaultButton
+        buttons={[
+          {
+            label: getCopyButtonText(),
+            onClick: copyLink,
+            shareLink: true,
+            shareLinkStatus: copyStatus,
+          },
+        ]}
+      >
+        <AcFlex column spacing='sm'>
+          <Paragraph>Kopieer de link naar uw klembord.</Paragraph>
+          <Textbox
+            value={`${window.location.origin}/publicatie/${get_single?.id}`}
+            readOnly
+          />
+          <div role='status' aria-live='polite' className='sr-only'>
+            {copyStatus === 'copied' && 'De link is gekopieerd naar uw klembord'}
+            {copyStatus === 'error' && 'Het kopiëren van de link is mislukt'}
+          </div>
+        </AcFlex>
+      </AcModal>
     </>
   );
 });

@@ -12,18 +12,20 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcDrawer } from '@components';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -33,19 +35,40 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie/${id}`,
-        [['_extend[]', 'contactgegevens']],
-        null,
-        `/beheer/organisaties/${id}`
-      );
+      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
+      const schemaSlug = 'organisatie';
 
-      if (!response.ok) {
+      const extend = [['_extend[]', 'contactgegevens']];
+
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          extend,
+          null,
+          `/beheer/organisaties/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/organisaties/${id}`
+        ),
+      ]);
+
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -75,7 +98,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam}</Heading>
+                  <Heading>{data.naam || data.organisatienaam}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -106,85 +129,19 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.type || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>KvK nummer:</strong>
-                        <Paragraph>{data.kvkNummer || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>OIDN:</strong>
-                        <Paragraph>{data.oidn || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Moeder organisatie:</strong>
-                        <Paragraph>{data.moederOrganisatie || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Sector:</strong>
-                        <Paragraph>{data.sector || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatietype:</strong>
-                        <Paragraph>{data.organisatietype || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Website:</strong>
-                        <Paragraph>{data.website || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Adres:</strong>
-                        <Paragraph>
-                          {data.adres?.straat} {data.adres?.huisnummer}
-                        </Paragraph>
-                        <Paragraph>
-                          {data.adres?.postcode} {data.adres?.plaats}
-                        </Paragraph>
-                        <Paragraph>{data.adres?.land}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Contactgegevens:</strong>
-                        <Paragraph>{data.contactgegevens?.contactpersoon}</Paragraph>
-                        <Paragraph>{data.contactgegevens?.telefoon}</Paragraph>
-                        <Paragraph>{data.contactgegevens?.email}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Beschrijving:</strong>
-                        <Paragraph>{data.beschrijving || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Logo:</strong>
-                        <Paragraph>{data.logo || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorzieningen:</strong>
-                        <Paragraph>
-                          {data.voorzieningen?.join(', ') || '-'}
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Gebruik:</strong>
-                        <Paragraph>{data.gebruik?.join(', ') || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Deelnemer in:</strong>
-                        <Paragraph>{data.deelnemerIn?.join(', ') || '-'}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'naam'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                exclude: ['@self'],
+                                includeUnknown: true,
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
                   </AcFlex>
                 </AcColumn>

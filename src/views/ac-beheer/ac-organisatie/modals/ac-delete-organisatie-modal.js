@@ -6,7 +6,7 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-
+import { BASE_URL } from '../../ac-beheer';
 /**
  * modal to delete 1 or multiple voorzieningen
  * @param {object[]} voorzieningen - array of voorzieningen
@@ -31,9 +31,11 @@ const AcDeleteOrganisatiesModal = ({
     try {
       let deletePromises = [];
 
+      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
+
       organisaties.forEach(async (organisatie) => {
         const response = await makeRequest(
-          `https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie/${organisatie.id}`,
+          `${BASE_URL}/apps/${endpoint}/${organisatie.id}`,
           null,
           {
             method: 'DELETE',

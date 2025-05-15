@@ -4,6 +4,7 @@ import { withStore } from '@stores';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router';
+import { BASE_URL } from '../ac-beheer/ac-beheer';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -68,24 +69,15 @@ const AcAuthentication = () => {
       sessionStorage.setItem('redirect_url', acSafeParseRedirectUri(redirect_url));
     }
   }, [redirect_url]);
-  const hostname = window.location.hostname;
-
-  //   const authenticationHostname = config.authentication.baseURL.includes('index.php')
-  //     ? new URL(config.authentication.baseURL).origin + '/index.php'
-  //     : new URL(config.authentication.baseURL).origin;
-  const authenticationHostname =
-    hostname === 'vng.test.opencatalogi.nl'
-      ? 'https://vng.test.commonground.nu'
-      : 'https://vng.accept.commonground.nu';
 
   // TODO: do not make this hardcoded
   const [clientId, setClientId] = useState(
-    hostname === 'vng.test.opencatalogi.nl'
+    BASE_URL.includes('test')
       ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
       : 'VSCKXDSJmhXxa3DSWrCkNtFw3tUDQkPYj2CgBETTR8pioOp1qmcvhDr2nC1OF1zL'
   );
   const [secretKey, setSecretKey] = useState(
-    hostname === 'vng.test.opencatalogi.nl'
+    BASE_URL.includes('test')
       ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
       : 'emNfF5yBpAXPDGqghgm11bKDfNSgzdsd7uEdBq9GxHYg9E5USxVqZguKQ3QBYLoL'
   );
@@ -103,7 +95,7 @@ const AcAuthentication = () => {
       sameSite: 'strict',
     });
 
-    const url = new URL(authenticationHostname + '/apps/oauth2/authorize');
+    const url = new URL(BASE_URL + '/apps/oauth2/authorize');
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('scope', 'api');

@@ -7,6 +7,7 @@ import { AcFormField } from '@src/molecules';
 import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcDienstFormModal = ({
   dienst,
@@ -14,6 +15,7 @@ const AcDienstFormModal = ({
   onClose,
   onSuccess,
   isEdit = false,
+  baseUrl,
 }) => {
   const modalRef = useRef(null);
   const [dienstFormData, setDienstFormData] = useState({
@@ -33,15 +35,17 @@ const AcDienstFormModal = ({
       setDienstFormData((prev) => ({
         ...prev,
         ...dienst,
-        voorziening: dienst.voorziening.id,
-        leverancier: dienst.leverancier.id,
+        voorziening: dienst.voorziening?.id ?? dienst.voorzieningId,
+        leverancier: dienst.leverancier?.id ?? dienst.organisatieId,
         ondersteuningsopties: Array.isArray(dienst.ondersteuningsopties)
           ? dienst.ondersteuningsopties.join(', ')
           : dienst.ondersteuningsopties,
         certificeringen: Array.isArray(dienst.certificeringen)
           ? dienst.certificeringen.join(', ')
           : dienst.certificeringen,
-        ondersteundeStandaarden: collapseExtendedObjects(dienst.ondersteundeStandaarden),
+        ondersteundeStandaarden: collapseExtendedObjects(
+          dienst.ondersteundeStandaarden
+        ),
       }));
     }
     if (!dienst && !isEdit) {
@@ -69,9 +73,10 @@ const AcDienstFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
+
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningaanbod/voorzieningaanbod';
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${dienstFormData.id}` : baseUrl;
 
@@ -85,7 +90,9 @@ const AcDienstFormModal = ({
           ondersteuningsopties: smartSplit(dienstFormData.ondersteuningsopties),
           prijsmodel: dienstFormData.prijsmodel,
           certificeringen: smartSplit(dienstFormData.certificeringen),
-          ondersteundeStandaarden: smartSplit(dienstFormData.ondersteundeStandaarden),
+          ondersteundeStandaarden: smartSplit(
+            dienstFormData.ondersteundeStandaarden
+          ),
         }),
       });
 

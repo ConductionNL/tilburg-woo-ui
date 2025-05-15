@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -20,10 +20,14 @@ import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
+import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
+import { format } from 'date-fns';
 
 const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,28 +35,48 @@ const AcBeheerOvereenkomsten = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'contract';
+  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+
+  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
+
+  const extend = [['_extend[]', 'all']];
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract',
-        [
-          ['_extend[]', 'voorzieningAanbod'],
-          ['_extend[]', 'voorzieningGebruik'],
-        ],
-        null,
-        '/beheer/contracten'
-      ).finally(() => setLoading(false));
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          extend,
+          null,
+          '/beheer/overeenkomsten'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          extend,
+          null,
+          '/beheer/overeenkomsten'
+        ),
+      ]);
 
-      const jsonResponse = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      setLoading(false);
 
       const data = jsonResponse.results;
+      const dataProperties = schemaJsonResponse.properties;
 
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -69,120 +93,102 @@ const AcBeheerOvereenkomsten = () => {
 
   const tableRef = useRef(null);
 
-  const headers = [
-    {
-      id: 'name',
-      label: 'Naam',
-      key: 'naam',
-    },
-    {
-      id: 'contractNummer',
-      label: 'Contract nummer',
-      key: 'contractNummer',
-    },
-    {
-      id: 'contractType',
-      label: 'Contract type',
-      key: 'contractType',
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      key: 'status',
-    },
-    {
-      id: 'opmerkingen',
-      label: 'Opmerkingen',
-      key: 'opmerkingen',
-    },
-    {
-      id: 'startDate',
-      label: 'Start datum',
-      key: 'startDatum',
-    },
-    {
-      id: 'endDate',
-      label: 'Eind datum',
-      key: 'eindDatum',
-    },
-    {
-      id: 'voorzieningAanbodNaam',
-      label: 'Voorziening aanbod naam',
-      key: 'voorzieningAanbod',
-      customContent: (row) => {
-        return row?.voorzieningAanbod?.naam || '-';
+  // Custom header overrides for special cases
+  const customHeaders = useMemo(
+    () => ({
+      voorzieningAanbod: {
+        id: 'voorzieningAanbodNaam',
+        label: 'Voorziening aanbod naam',
+        key: 'voorzieningAanbod',
+        customContent: (row) => {
+          return row?.voorzieningAanbod?.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aName = a?.voorzieningAanbod?.naam;
+          const bName = b?.voorzieningAanbod?.naam;
+          return ConSorterLogic(aName, bName, direction);
+        },
       },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        const aName = a?.voorzieningAanbod?.naam;
-        const bName = b?.voorzieningAanbod?.naam;
-        return ConSorterLogic(aName, bName, direction);
+      voorzieningGebruik: {
+        id: 'voorzieningGebruikId',
+        label: 'Voorziening gebruik ID',
+        key: 'voorzieningGebruikId',
+        customContent: (row) => {
+          return row?.voorzieningGebruik?.id || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aId = a?.voorzieningGebruik?.id;
+          const bId = b?.voorzieningGebruik?.id;
+          return ConSorterLogic(aId, bId, direction);
+        },
       },
-    },
-    {
-      id: 'voorzieningGebruikId',
-      label: 'Voorziening gebruik ID',
-      key: 'voorzieningGebruikId',
-      customContent: (row) => {
-        return row?.voorzieningAanbod?.id || '-';
+      contactpersoonAanbieder: {
+        id: 'contactPersonProvider',
+        label: 'contactpersoon Aanbieder',
+        key: 'contactpersoonAanbieder',
+        customContent: (row) => {
+          if (!row?.contactpersoonAanbieder) return 'N/A';
+          return row.contactpersoonAanbieder.naam;
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aName = a?.contactpersoonAanbieder?.naam;
+          const bName = b?.contactpersoonAanbieder?.naam;
+          return ConSorterLogic(aName, bName, direction);
+        },
       },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        const aId = a?.voorzieningAanbod?.id;
-        const bId = b?.voorzieningAanbod?.id;
-        return ConSorterLogic(aId, bId, direction);
+      contactpersoonGebruiker: {
+        id: 'contactPersonUser',
+        label: 'contactpersoon Gebruiker',
+        key: 'contactpersoonGebruiker',
+        customContent: (row) => {
+          if (!row?.contactpersoonGebruiker) return 'N/A';
+          return row.contactpersoonGebruiker.naam;
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aName = a?.contactpersoonGebruiker?.naam;
+          const bName = b?.contactpersoonGebruiker?.naam;
+          return ConSorterLogic(aName, bName, direction);
+        },
       },
-    },
-    {
-      id: 'costs',
-      label: 'Kosten',
-      key: 'kosten',
-    },
-    {
-      id: 'costsPeriod',
-      label: 'Kosten periode',
-      key: 'kostenPeriode',
-    },
-    {
-      id: 'documentReferentie',
-      label: 'Document referentie',
-      key: 'documentReferentie',
-    },
-    {
-      id: 'contactPersonProvider',
-      label: 'contactpersoon Aanbieder',
-      key: 'contactpersoonAanbieder',
-      customContent: (row) => {
-        if (!row?.contactpersoonAanbieder) return 'N/A';
-        return row.contactpersoonAanbieder.naam;
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        const aName = a?.contactpersoonAanbieder?.naam;
-        const bName = b?.contactpersoonAanbieder?.naam;
-        return ConSorterLogic(aName, bName, direction);
-      },
-    },
-    {
-      id: 'contactPersonUser',
-      label: 'contactpersoon Gebruiker',
-      key: 'contactpersoonGebruiker',
-      customContent: (row) => {
-        if (!row?.contactpersoonGebruiker) return 'N/A';
-        return row.contactpersoonGebruiker.naam;
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        const aName = a?.contactpersoonGebruiker?.naam;
-        const bName = b?.contactpersoonGebruiker?.naam;
-        return ConSorterLogic(aName, bName, direction);
-      },
-    },
-  ];
-  const defaultHeaders = ['name', 'startDate', 'endDate', 'contactPersonProvider'];
-  const [tableHeaders, setTableHeaders] = useState(
-    headers.filter((header) => defaultHeaders.includes(header.id))
+    }),
+    []
   );
+
+  // Generate headers from dataProperties schema
+  const headers = useMemo(() => {
+    if (!dataProperties) return [];
+
+    return Object.entries(dataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // Check if we have a custom override for this header
+        if (customHeaders[key]) {
+          return customHeaders[key];
+        }
+
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      });
+  }, [dataProperties, customHeaders]);
+
+  const defaultHeaders = ['name', 'startDatum', 'eindDatum', 'contactPersonProvider'];
+  const [tableHeaders, setTableHeaders] = useState([]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');

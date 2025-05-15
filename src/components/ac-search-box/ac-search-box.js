@@ -69,7 +69,7 @@ export const AcSearchBox = ({
               defaultValue={defaultValue}
             />
             <PrimaryActionButton type='submit'>
-              <VISUALS.SEARCH />
+              <VISUALS.SEARCH className='ac-search-box__search-icon' />
               <span>{LABELS.SEARCH}</span>
             </PrimaryActionButton>
           </div>

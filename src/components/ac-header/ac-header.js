@@ -17,7 +17,13 @@ const AcHeader = ({ store: { menu } }) => {
 
   const { all_menu_items } = menu;
 
-  const menuItems = all_menu_items.find((item) => item.position === 2);
+  const hostname = window.location.hostname;
+
+  const menuItems = all_menu_items.find((item) =>
+    hostname === 'horstadmaas.accept.opencatalogi.nl'
+      ? item.position === 1
+      : item.position === 2
+  );
 
   const getTitle = () => {
     const hostname = window.location.hostname;
@@ -41,6 +47,8 @@ const AcHeader = ({ store: { menu } }) => {
         return 'OpenCatalogi';
       case 'opencatalogi.open-regels.nl':
         return 'OpenRegels';
+      case 'horstadmaas.accept.opencatalogi.nl':
+        return 'Horst aan de Maas';
       case 'localhost':
         return 'Localhost catalogus';
       default:

@@ -12,40 +12,62 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcDrawer } from '@components';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import _ from 'lodash';
 
 import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
 import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcBeheerGebruikenDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieninggebruik';
+
+  const schemaSlug = 'voorzieninggebruik';
+
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieninggebruik/voorzieninggebruik/${id}`,
-        null,
-        null,
-        `/beheer/voorzieningen-gebruik/${id}`
-      );
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          null,
+          null,
+          `/beheer/gebruiken/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/gebruiken/${id}`
+        ),
+      ]);
 
-      if (!response.ok) {
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -108,85 +130,19 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.status}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Opmerkingen:</strong>
-                        <Paragraph>{data.opmerkingen}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>BBN Score:</strong>
-                        <Paragraph>{data.bbnScore}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>IBP Score:</strong>
-                        <Paragraph>{data.ibpScore}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Versie ID:</strong>
-                        <Paragraph>{data.versieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatie ID:</strong>
-                        <Paragraph>{data.organisatieId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorziening ID:</strong>
-                        <Paragraph>{data.voorzieningId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Beheerder:</strong>
-                        <Paragraph>
-                          {data.beheerder?.naam}
-                          <br />
-                          {data.beheerder?.email}
-                          <br />
-                          {data.beheerder?.telefoon}
-                          <br />
-                          {data.beheerder?.functie}
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Start Datum:</strong>
-                        <Paragraph>{data.startDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Eind Datum:</strong>
-                        <Paragraph>{data.eindDatum}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>BIV Classificatie:</strong>
-                        <Paragraph>
-                          Beschikbaarheid: {data.bivClassificatie?.beschikbaarheid}
-                          <br />
-                          Integriteit: {data.bivClassificatie?.integriteit}
-                          <br />
-                          Vertrouwelijkheid:{' '}
-                          {data.bivClassificatie?.vertrouwelijkheid}
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Bedrijfs Kritisch:</strong>
-                        <Paragraph>{data.bedrijfsKritisch ? 'Ja' : 'Nee'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Privacy Gevoelig:</strong>
-                        <Paragraph>{data.privacyGevoelig ? 'Ja' : 'Nee'}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                include: ['naam'],
+                                inline: true,
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
                   </AcFlex>
                 </AcColumn>

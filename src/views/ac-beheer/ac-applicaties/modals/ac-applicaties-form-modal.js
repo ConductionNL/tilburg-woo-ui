@@ -8,6 +8,7 @@ import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -16,9 +17,107 @@ const AcApplicatiesFormModal = ({
   onSuccess,
   isEdit = false,
 }) => {
+  const [applicatieFormData, setApplicatieFormData] = useState({
+    name: '',
+    description: '',
+    category: '',
+    functionalities: '',
+    targetGroups: [],
+    referenceComponents: [],
+    standards: [],
+    voorzieningstype: '',
+  });
+
   const modalRef = useRef(null);
 
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
+    []
+  );
+  const [referentieComponentenLoading, setReferentieComponentenLoading] =
+    useState(false);
+  const [standaardenOptions, setStandaardenOptions] = useState([]);
+  const [standaardenLoading, setStandaardenLoading] = useState(false);
+
   const { makeRequest } = useNextcloudRequests();
+
+  // get referentie componenten when modal is opened
+  useEffect(() => {
+    const fetchVoorzieningsTypes = async () => {
+      setReferentieComponentenLoading(true);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
+      ).finally(() => setReferentieComponentenLoading(false));
+
+      const data = await response.json();
+
+      setReferentieComponentenOptions(
+        data.results.map((item) => ({
+          value: item.identifier,
+          label: item.name,
+        }))
+      );
+    };
+
+    if (showModal) {
+      fetchVoorzieningsTypes();
+    }
+  }, [showModal]);
+
+  // get standards when reference components are selected
+  useEffect(async () => {
+    if (!applicatieFormData?.referenceComponents?.length) {
+      setStandaardenOptions([]);
+      setStandaardenLoading(false);
+      return;
+    }
+
+    setStandaardenLoading(true);
+
+    // create query params for the voorzieningen request
+    const voorzieningQueryParams = applicatieFormData.referenceComponents.map(
+      (component) => ['referentieComponenten', component]
+    );
+
+    // get the voorziening with the selected reference components in the data
+    const voorzieningResponse = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`,
+      voorzieningQueryParams
+    );
+    const voorzieningData = (await voorzieningResponse.json()).results;
+
+    // flatten the voorziening standaarden array
+    const voorzieningStandaarden = [
+      ...new Set(voorzieningData.flatMap((voorziening) => voorziening.standaarden)),
+    ];
+
+    // create query params for the standaarden request
+    const standaardenQueryParams = voorzieningStandaarden.map((standaard) => [
+      'id',
+      standaard,
+    ]);
+
+    // if no standards are found, set the loading to false and return
+    if (standaardenQueryParams.length === 0) {
+      setStandaardenLoading(false);
+      return;
+    }
+
+    // get the standaarden with the same id as the voorziening standaarden
+    const standaardenResponse = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/standaard`,
+      standaardenQueryParams
+    ).finally(() => setStandaardenLoading(false));
+
+    const standaardenData = (await standaardenResponse.json()).results;
+
+    // set the standaarden options
+    setStandaardenOptions(
+      standaardenData.map((standaard) => ({
+        value: standaard.id,
+        label: standaard.naam,
+      }))
+    );
+  }, [applicatieFormData.referenceComponents]);
 
   const types = [
     { id: '270f7176-2bdc-4702-a037-0684b2487ab8', label: 'Voorziening' },
@@ -40,17 +139,6 @@ const AcApplicatiesFormModal = ({
     'Leverancier',
   ];
 
-  const [applicatieFormData, setApplicatieFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
-    functionalities: '',
-    targetGroups: [],
-    referenceComponents: [],
-    standards: '',
-    voorzieningstype: '',
-  });
-
   // load applicatie data into the form
   useEffect(() => {
     if (applicatie && isEdit) {
@@ -65,10 +153,10 @@ const AcApplicatiesFormModal = ({
           ? applicatie.functionaliteiten.join(', ')
           : applicatie.functionaliteiten,
         targetGroups: applicatie.doelgroep,
-        referenceComponents: Array.isArray(applicatie.referentieComponenten)
-          ? applicatie.referentieComponenten.join(', ')
-          : applicatie.referentieComponenten,
-        standards: collapseExtendedObjects(applicatie.standaarden),
+        referenceComponents: smartSplit(
+          collapseExtendedObjects(applicatie.referentieComponenten)
+        ),
+        standards: smartSplit(collapseExtendedObjects(applicatie.standaarden)),
         voorzieningstype: applicatie.voorzieningstype,
       }));
     }
@@ -80,7 +168,7 @@ const AcApplicatiesFormModal = ({
         functionalities: '',
         targetGroups: [],
         referenceComponents: [],
-        standards: '',
+        standards: [],
         voorzieningstype: '',
       }));
     }
@@ -97,9 +185,10 @@ const AcApplicatiesFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = 'openregister/api/objects/voorzieningen/voorziening';
+
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening';
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;
@@ -113,8 +202,8 @@ const AcApplicatiesFormModal = ({
           categorie: applicatieFormData.category,
           functionaliteiten: smartSplit(applicatieFormData.functionalities),
           doelgroep: applicatieFormData.targetGroups,
-          referentieComponenten: smartSplit(applicatieFormData.referenceComponents),
-          standaarden: smartSplit(applicatieFormData.standards),
+          referentieComponenten: applicatieFormData.referenceComponents,
+          standaarden: applicatieFormData.standards,
           voorzieningstype: applicatieFormData.voorzieningstype,
         }),
       });
@@ -226,18 +315,51 @@ const AcApplicatiesFormModal = ({
             }))}
           />
         </div>
-        <AcFormField
-          label='Referentie componenten'
-          type='text'
-          onBlur={handleEditApplicatieFieldChange('referenceComponents')}
-          value={applicatieFormData.referenceComponents}
-        />
-        <AcFormField
-          label='Standaarden'
-          type='text'
-          onBlur={handleEditApplicatieFieldChange('standards')}
-          value={applicatieFormData.standards}
-        />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Referentie componenten</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een referentie component'
+            className='ac-beheer-select'
+            value={referentieComponentenOptions?.filter((option) =>
+              applicatieFormData?.referenceComponents?.includes(option.value)
+            )}
+            onChange={(e) => {
+              setApplicatieFormData((prev) => ({
+                ...prev,
+                referenceComponents: e.map((item) => item.value),
+              }));
+            }}
+            isLoading={referentieComponentenLoading}
+            options={referentieComponentenOptions}
+            closeMenuOnSelect={false}
+            isMulti
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Standaarden</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een standaard'
+            className='ac-beheer-select'
+            value={standaardenOptions?.filter((option) =>
+              applicatieFormData?.standards?.includes(option.value)
+            )}
+            onChange={(e) => {
+              setApplicatieFormData((prev) => ({
+                ...prev,
+                standards: e.map((item) => item.value),
+              }));
+            }}
+            isLoading={standaardenLoading}
+            options={standaardenOptions}
+            isDisabled={!applicatieFormData?.referenceComponents.length}
+            closeMenuOnSelect={false}
+            isMulti
+          />
+        </div>
       </AcFlex>
     </AcModal>
   );

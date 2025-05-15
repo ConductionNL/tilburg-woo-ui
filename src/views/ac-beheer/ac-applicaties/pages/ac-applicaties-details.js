@@ -16,32 +16,58 @@ import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
 import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
+  const endpoint = 'openregister/api/objects/voorzieningen/voorziening';
+
+  const schemaSlug = 'voorziening';
+
+  const extend = [];
+
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        `https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningen/voorziening/${id}`,
-        null,
-        null,
-        `/beheer/applicaties/${id}`
-      );
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          extend,
+          null,
+          `/beheer/applicaties/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/applicaties/${id}`
+        ),
+      ]);
 
-      if (!response.ok) {
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -104,42 +130,16 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Omschrijving:</strong>
-                        <Paragraph>{data.beschrijving}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Type:</strong>
-                        <Paragraph>{data.voorzieningstypeId}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Categorie:</strong>
-                        <Paragraph>{data.categorie}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Functionaliteiten:</strong>
-                        <Paragraph>{data.functionaliteiten?.join(', ')}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Doelgroepen:</strong>
-                        <Paragraph>{data.doelgroep?.join(', ')}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Referentie componenten:</strong>
-                        <Paragraph>
-                          {data.referentieComponenten?.join(', ')}
-                        </Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>standaarden:</strong>
-                        <Paragraph>{data.standaarden}</Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(([key]) => !['id', 'naam'].includes(key))
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key)}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
                   </AcFlex>
                 </AcColumn>

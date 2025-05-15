@@ -5,6 +5,7 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -26,11 +27,13 @@ const AcDeleteOvereenkomstenModal = ({
   const handleDeleteOvereenkomstOpenModal = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
+  const endpoint = 'openregister/api/objects/voorzieningen/contract';
+
   const handleDeleteOvereenkomst = async () => {
     try {
       overeenkomsten.forEach(async (overeenkomst) => {
         const response = await makeRequest(
-          `https://vng.test.commonground.nu/apps/openregister/api/objects/contract/contract/${overeenkomst.id}`,
+          `${BASE_URL}/apps/${endpoint}/${overeenkomst.id}`,
           null,
           {
             method: 'DELETE',

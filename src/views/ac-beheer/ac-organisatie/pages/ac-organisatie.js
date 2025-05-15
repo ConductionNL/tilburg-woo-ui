@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -20,10 +20,13 @@ import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
+import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,25 +34,48 @@ const AcBeheerOrganisaties = () => {
 
   const filterHeadersDrawerRef = useRef(null);
 
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'organisatie';
+  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+
+  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
+
+  const extend = [['_extend[]', 'contactgegevens']];
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const response = await makeRequest(
-        'https://vng.test.commonground.nu/apps/openregister/api/objects/organisatie/organisatie',
-        [['_extend[]', 'contactgegevens']],
-        null,
-        '/beheer/organisaties'
-      ).finally(() => setLoading(false));
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          extend,
+          null,
+          '/beheer/organisaties'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          extend,
+          null,
+          '/beheer/organisaties'
+        ),
+      ]);
 
-      const jsonResponse = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      setLoading(false);
 
       const data = jsonResponse.results;
+      const dataProperties = schemaJsonResponse.properties;
 
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -66,68 +92,81 @@ const AcBeheerOrganisaties = () => {
 
   const tableRef = useRef(null);
 
-  const headers = [
-    {
-      id: 'organizationName',
-      label: 'Naam',
-      key: 'organisatienaam',
-      customContent: (row) => {
-        return row.organisatienaam || row.naam || '-';
+  // Custom header overrides for special cases
+  const customHeaders = useMemo(
+    () => ({
+      organisatienaam: {
+        id: 'organizationName',
+        label: 'Naam',
+        key: 'organisatienaam',
+        customContent: (row) => {
+          return row.organisatienaam || row.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aName = a.organisatienaam || a.naam || undefined;
+          const bName = b.organisatienaam || b.naam || undefined;
+          return ConSorterLogic(aName, bName, direction);
+        },
       },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        const aName = a.organisatienaam || a.naam || undefined;
-        const bName = b.organisatienaam || b.naam || undefined;
-        return ConSorterLogic(aName, bName, direction);
+      contactgegevens: {
+        id: 'contactDetails',
+        label: 'Contactgegevens',
+        key: 'contactgegevens',
+        customContent: (row) => {
+          if (!row?.contactgegevens) return '-';
+          return (
+            <AcColumn key={row.id}>
+              <span>
+                {row.contactgegevens.voornaam} {row.contactgegevens.tussenvoegsel}{' '}
+                {row.contactgegevens.achternaam} / {row.contactgegevens.email} /{' '}
+                {row.contactgegevens.telefoon}
+              </span>
+            </AcColumn>
+          );
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aName = a?.contactgegevens?.voornaam;
+          const bName = b?.contactgegevens?.voornaam;
+          return ConSorterLogic(aName, bName, direction);
+        },
       },
-    },
-    {
-      id: 'description',
-      label: 'Beschrijving',
-      key: 'beschrijving',
-    },
-    {
-      id: 'contactDetails',
-      label: 'Contactgegevens',
-      key: 'contactgegevens',
-      customContent: (row) => {
-        if (!row?.contactgegevens) return '-';
-        return (
-          <AcColumn key={row.id}>
-            <span>
-              {row.contactgegevens.voornaam} {row.contactgegevens.tussenvoegsel}{' '}
-              {row.contactgegevens.achternaam} / {row.contactgegevens.email} /{' '}
-              {row.contactgegevens.telefoon}
-            </span>
-          </AcColumn>
-        );
-      },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        const aName = a?.contactgegevens?.voornaam;
-        const bName = b?.contactgegevens?.voornaam;
-        return ConSorterLogic(aName, bName, direction);
-      },
-    },
-    {
-      id: 'website',
-      label: 'Website',
-      key: 'website',
-    },
-    {
-      id: 'kvkNumber',
-      label: 'KvK nummer',
-      key: 'kvk-nummer',
-    },
-  ];
-  const defaultHeaders = [
-    'organizationName',
-    'logo', // ?
-    'contactDetails',
-  ];
-  const [tableHeaders, setTableHeaders] = useState(
-    headers.filter((header) => defaultHeaders.includes(header.id))
+    }),
+    []
   );
+
+  // Generate headers from dataProperties schema
+  const headers = useMemo(() => {
+    if (!dataProperties) return [];
+
+    return Object.entries(dataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // Check if we have a custom override for this header
+        if (customHeaders[key]) {
+          return customHeaders[key];
+        }
+
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      });
+  }, [dataProperties, customHeaders]);
+
+  const defaultHeaders = ['organizationName', 'logo', 'contactDetails'];
+  const [tableHeaders, setTableHeaders] = useState([]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');

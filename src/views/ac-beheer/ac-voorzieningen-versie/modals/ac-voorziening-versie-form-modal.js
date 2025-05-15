@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { BASE_URL } from '../../ac-beheer';
 
 const AcVoorzieningVersieFormModal = ({
   voorziening,
@@ -63,9 +64,10 @@ const AcVoorzieningVersieFormModal = ({
 
   const [error, setError] = useState(null);
 
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningversie';
+
   const handleSubmit = async () => {
-    const baseUrl =
-      'https://vng.test.commonground.nu/apps/openregister/api/objects/voorzieningversie/voorzieningversie';
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;

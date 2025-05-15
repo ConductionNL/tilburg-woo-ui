@@ -23,17 +23,11 @@ const AcDashboard = () => {
 
   const [syncGemmaResults, setSyncGemmaResults] = useState([]);
 
-  const endpointsTest = [
-    { id: '3', name: 'elements' },
+  const endpoints = [
+    { id: '1', name: 'elements' },
     { id: '4', name: 'views' },
-    { id: '2', name: 'relations' },
-    { id: '1', name: 'model' },
-  ];
-  const endpointsAccept = [
-    { id: '7', name: 'elements' },
-    { id: '4', name: 'views' },
-    { id: '8', name: 'relations' },
-    { id: '10', name: 'model' },
+    { id: '3', name: 'relations' },
+    { id: '2', name: 'model' },
   ];
 
   const [archimateUrl, setArchimateUrl] = useState(
@@ -101,8 +95,6 @@ const AcDashboard = () => {
 
     setSyncGemmaLoading(true);
     setSyncGemmaResults([]);
-
-    const endpoints = hostname === 'localhost' ? endpointsTest : endpointsAccept;
 
     const apiPromises = endpoints.map(async (apiCall) => {
       // Skip the verification endpoint in the initial sync
@@ -179,74 +171,74 @@ const AcDashboard = () => {
     });
 
     Promise.all(apiPromises)
-      .then(async () => {
-        // Add the connect-views API call after initial sync
-        setSyncGemmaResults((prev) => [
-          ...prev,
-          { name: 'connect-views', status: 'loading' },
-        ]);
+      // .then(async () => {
+      //   // Add the connect-views API call after initial sync
+      //   setSyncGemmaResults((prev) => [
+      //     ...prev,
+      //     { name: 'connect-views', status: 'loading' },
+      //   ]);
 
-        let heartbeatInterval;
+      //   let heartbeatInterval;
 
-        try {
-          // Start heartbeat checks immediately
-          heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
+      //   try {
+      //     // Start heartbeat checks immediately
+      //     heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
 
-          const response = await fetch(
-            `${baseUrl}/apps/openconnector/api/endpoint/connect-views`,
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }
-          );
-          // Clone the response before reading it
-          const responseClone = response.clone();
-          const responseData = await responseClone.json();
+      //     const response = await fetch(
+      //       `${baseUrl}/apps/openconnector/api/endpoint/connect-views/137f6f45-2163-4dd4-957f-aeebc40e3136`,
+      //       {
+      //         method: 'GET',
+      //         headers: {
+      //           'Content-Type': 'application/json',
+      //           Authorization: `Bearer ${accessToken}`,
+      //         },
+      //       }
+      //     );
+      //     // Clone the response before reading it
+      //     const responseClone = response.clone();
+      //     const responseData = await responseClone.json();
 
-          if (!response.ok) {
-            throw new Error(
-              responseData?.message ||
-                `Synchronization failed with status: ${response.status}`
-            );
-          }
+      //     if (!response.ok) {
+      //       throw new Error(
+      //         responseData?.message ||
+      //           `Synchronization failed with status: ${response.status}`
+      //       );
+      //     }
 
-          const connectViewsData = await response.json();
+      //     const connectViewsData = await response.json();
 
-          // Stop heartbeat checks when we get connectViewsData
-          if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-          }
+      //     // Stop heartbeat checks when we get connectViewsData
+      //     if (heartbeatInterval) {
+      //       clearInterval(heartbeatInterval);
+      //     }
 
-          setSyncGemmaResults((prev) =>
-            prev.map((item) =>
-              item.name === 'connect-views'
-                ? { ...item, status: 'success', object: connectViewsData }
-                : item
-            )
-          );
-        } catch (error) {
-          // Stop heartbeat checks on error
-          if (heartbeatInterval) {
-            clearInterval(heartbeatInterval);
-          }
+      //     setSyncGemmaResults((prev) =>
+      //       prev.map((item) =>
+      //         item.name === 'connect-views'
+      //           ? { ...item, status: 'success', object: connectViewsData }
+      //           : item
+      //       )
+      //     );
+      //   } catch (error) {
+      //     // Stop heartbeat checks on error
+      //     if (heartbeatInterval) {
+      //       clearInterval(heartbeatInterval);
+      //     }
 
-          console.error('Error in connect-views:', error);
-          setSyncGemmaResults((prev) =>
-            prev.map((item) =>
-              item.name === 'connect-views'
-                ? {
-                    ...item,
-                    status: 'error',
-                    object: { error: { message: error.message } },
-                  }
-                : item
-            )
-          );
-        }
-      })
+      //     console.error('Error in connect-views:', error);
+      //     setSyncGemmaResults((prev) =>
+      //       prev.map((item) =>
+      //         item.name === 'connect-views'
+      //           ? {
+      //               ...item,
+      //               status: 'error',
+      //               object: { error: { message: error.message } },
+      //             }
+      //           : item
+      //       )
+      //     );
+      //   }
+      // })
       .finally(() => {
         setSyncGemmaLoading(false);
         setSyncGemmaSuccess(true);
@@ -255,6 +247,7 @@ const AcDashboard = () => {
 
   const [downloadError, setDownloadError] = useState(null);
   const [modelLoading, setModelLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
   const [activeModel, setActiveModel] = useState(null);
   const [models, setModels] = useState([]);
 
@@ -278,6 +271,8 @@ const AcDashboard = () => {
   const getModels = async () => {
     const accessToken = getCookie('nextcloud_access_token');
 
+    setModelsLoading(true);
+
     const response = await fetch(
       `${baseUrl}/apps/openconnector/api/endpoint/models`,
       {
@@ -289,7 +284,6 @@ const AcDashboard = () => {
       }
     );
     const data = await response.json();
-    console.log(data);
     if (data?.results) {
       setModels(
         data.results.map((model) => ({
@@ -298,6 +292,7 @@ const AcDashboard = () => {
         }))
       );
     }
+    setModelsLoading(false);
   };
 
   useEffect(() => {
@@ -405,32 +400,35 @@ const AcDashboard = () => {
 
   const downloadModel = async (model) => {
     setModelLoading(true);
+
     try {
-      const url = `${baseUrl}/apps/openconnector/api/endpoint/models/${model.id}`;
+      const url = `${baseUrl}/apps/openconnector/api/endpoint/model/${model.id}?organisatie=89e904fc-e0c5-4fc0-ba0f-adf9c4be42a9`;
+      window.open(url, '_blank');
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/xml',
-        },
-      });
+      // TODO: download model back to original with correct disposition name
+      // const response = await fetch(url, {
+      //   method: 'GET',
+      //   headers: {
+      //     Accept: 'application/xml',
+      //   },
+      // });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // if (!response.ok) {
+      //   throw new Error(`HTTP error! status: ${response.status}`);
+      // }
 
-      const xmlData = await response.text();
+      // const xmlData = await response.text();
 
-      // Create blob and download
-      const blob = new Blob([xmlData], { type: 'application/xml' });
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `${model.name}.xml`;
-      a.click();
+      // // Create blob and download
+      // const blob = new Blob([xmlData], { type: 'application/xml' });
+      // const downloadUrl = URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = downloadUrl;
+      // a.download = `${model.name}.xml`;
+      // a.click();
 
-      // Cleanup
-      URL.revokeObjectURL(downloadUrl);
+      // // Cleanup
+      // URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Error downloading GEMMA model:', error);
       setDownloadError(error);
@@ -460,9 +458,15 @@ const AcDashboard = () => {
 
             <ConActionMenu>
               <ConActionMenu.Trigger
-                icon={modelLoading ? <VISUALS.SPINNER /> : <VISUALS.DOWNLOAD />}
-                loading={modelLoading}
-                disabled={models.length === 0 || modelLoading}
+                icon={
+                  modelLoading || modelsLoading ? (
+                    <VISUALS.SPINNER />
+                  ) : (
+                    <VISUALS.DOWNLOAD />
+                  )
+                }
+                loading={modelLoading || modelsLoading}
+                disabled={models.length === 0 || modelLoading || modelsLoading}
               >
                 {modelLoading
                   ? `Downloading ${activeModel.name}...`
