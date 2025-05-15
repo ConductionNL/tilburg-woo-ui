@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
+import ReactSelect from 'react-select';
 import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
@@ -15,10 +16,12 @@ const AcDienstFormModal = ({
   onClose,
   onSuccess,
   isEdit = false,
-  baseUrl,
+  /** the voorziening ID that is pre-selected in the modal */
+  preSelectedVoorziening,
 }) => {
   const modalRef = useRef(null);
-  const [dienstFormData, setDienstFormData] = useState({
+
+  const initialData = {
     voorziening: '',
     leverancier: '',
     productpagina: '',
@@ -26,40 +29,91 @@ const AcDienstFormModal = ({
     prijsmodel: '',
     certificeringen: '',
     ondersteundeStandaarden: '',
-  });
+  };
+
+  const [dienstFormData, setDienstFormData] = useState({});
+
+  const [voorzieningOptions, setVoorzieningOptions] = useState([]);
+  const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
+  const [leverancierOptions, setLeverancierOptions] = useState([]);
+  const [leveranciersLoading, setLeveranciersLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
+  //   fetch voorzieningen
   useEffect(() => {
-    if (dienst && isEdit) {
-      setDienstFormData((prev) => ({
-        ...prev,
-        ...dienst,
-        voorziening: dienst.voorziening?.id ?? dienst.voorzieningId,
-        leverancier: dienst.leverancier?.id ?? dienst.organisatieId,
-        ondersteuningsopties: Array.isArray(dienst.ondersteuningsopties)
-          ? dienst.ondersteuningsopties.join(', ')
-          : dienst.ondersteuningsopties,
-        certificeringen: Array.isArray(dienst.certificeringen)
-          ? dienst.certificeringen.join(', ')
-          : dienst.certificeringen,
-        ondersteundeStandaarden: collapseExtendedObjects(
-          dienst.ondersteundeStandaarden
-        ),
-      }));
+    const fetchVoorzieningen = async () => {
+      try {
+        setVoorzieningenLoading(true);
+        const response = await makeRequest(
+          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
+        );
+        const data = (await response.json()).results;
+        const options = data.map((voorziening) => ({
+          label: voorziening.naam,
+          value: voorziening.id,
+        }));
+        setVoorzieningOptions(options);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setVoorzieningenLoading(false);
+      }
+    };
+
+    const fetchLeveranciers = async () => {
+      try {
+        setLeveranciersLoading(true);
+        const response = await makeRequest(
+          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+        );
+        const data = (await response.json()).results;
+        const options = data.map((leverancier) => ({
+          label: leverancier.organisatienaam,
+          value: leverancier.id,
+        }));
+        setLeverancierOptions(options);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLeveranciersLoading(false);
+      }
+    };
+
+    if (showModal) {
+      fetchVoorzieningen();
+      fetchLeveranciers();
     }
-    if (!dienst && !isEdit) {
-      setDienstFormData(() => ({
-        voorziening: '',
-        leverancier: '',
-        productpagina: '',
-        ondersteuningsopties: '',
-        prijsmodel: '',
-        certificeringen: '',
-        ondersteundeStandaarden: '',
-      }));
-    }
-  }, [dienst, isEdit]);
+  }, [showModal]);
+
+  useEffect(() => {
+    // Set the form data in 1 go
+    // This is a simple and compact way to conditionally set the form data
+    // if preSelectedVoorziening is provided, set the voorziening to the preSelectedVoorziening
+    // if dienst is provided, set the form data to the dienst data
+    setDienstFormData({
+      // initial data
+      ...initialData,
+      // custom props and state
+      ...(preSelectedVoorziening && { voorziening: preSelectedVoorziening }),
+      // data to edit (only if data is provided and isEdit is true)
+      ...(dienst &&
+        isEdit && {
+          ...dienst,
+          voorziening: dienst.voorziening?.id ?? dienst.voorzieningId,
+          leverancier: dienst.leverancier?.id ?? dienst.organisatieId,
+          ondersteuningsopties: Array.isArray(dienst.ondersteuningsopties)
+            ? dienst.ondersteuningsopties.join(', ')
+            : dienst.ondersteuningsopties,
+          certificeringen: Array.isArray(dienst.certificeringen)
+            ? dienst.certificeringen.join(', ')
+            : dienst.certificeringen,
+          ondersteundeStandaarden: collapseExtendedObjects(
+            dienst.ondersteundeStandaarden
+          ),
+        }),
+    });
+  }, [dienst, showModal]);
 
   const handleEditDienstOpenModal = () => modalRef?.current?.showModal();
 
@@ -97,7 +151,7 @@ const AcDienstFormModal = ({
       });
 
       if (response.ok) {
-        onSuccess?.();
+        onSuccess?.(response);
         modalRef?.current?.close();
       }
     } catch (err) {
@@ -114,6 +168,7 @@ const AcDienstFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditDienstCloseModal = () => {
+    setDienstFormData(initialData);
     onClose?.();
   };
 
@@ -139,18 +194,47 @@ const AcDienstFormModal = ({
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        <AcFormField
-          label='Voorziening'
-          type='text'
-          onBlur={handleEditDienstFieldChange('voorziening')}
-          value={dienstFormData.voorziening}
-        />
-        <AcFormField
-          label='Leverancier'
-          type='text'
-          onBlur={handleEditDienstFieldChange('leverancier')}
-          value={dienstFormData.leverancier}
-        />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Voorziening</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een voorziening'
+            className='ac-beheer-select'
+            value={voorzieningOptions?.filter(
+              (option) => dienstFormData?.voorziening === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                voorziening: e.value,
+              }));
+            }}
+            isLoading={voorzieningenLoading}
+            options={voorzieningOptions}
+            isDisabled={preSelectedVoorziening}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Leverancier</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een leverancier'
+            className='ac-beheer-select'
+            value={leverancierOptions?.filter(
+              (option) => dienstFormData?.leverancier === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                leverancier: e.value,
+              }));
+            }}
+            isLoading={leveranciersLoading}
+            options={leverancierOptions}
+          />
+        </div>
         <AcFormField
           label='Productpagina'
           type='text'

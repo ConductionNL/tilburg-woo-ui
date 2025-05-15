@@ -1,0 +1,716 @@
+[
+    {
+        "name": "1-clause BSD License",
+        "SPDX ID": "BSD-1-Clause",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/bsd-1-clause"
+    },
+    {
+        "name": "Academic Free License v. 3.0",
+        "SPDX ID": "AFL-3.0",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/afl-3-0-php"
+    },
+    {
+        "name": "Adaptive Public License 1.0",
+        "SPDX ID": "APL-1.0",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/apl1-0-php"
+    },
+    {
+        "name": "Apache License, Version 2.0",
+        "SPDX ID": "Apache-2.0",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/apache-2-0"
+    },
+    {
+        "name": "Apache Software License, version 1.1",
+        "SPDX ID": "Apache-1.1",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/apache-1-1"
+    },
+    {
+        "name": "Apple Public Source License 2.0",
+        "SPDX ID": "APSL-2.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/apsl-2-0"
+    },
+    {
+        "name": "Artistic License (Perl) 1.0",
+        "SPDX ID": "Artistic-1.0-Perl",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/artistic-perl-1-0-2"
+    },
+    {
+        "name": "Artistic License 1.0",
+        "SPDX ID": "Artistic-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/artistic-1-0"
+    },
+    {
+        "name": "Artistic License 2.0",
+        "SPDX ID": "Artistic-2.0",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/artistic-2-0"
+    },
+    {
+        "name": "Attribution Assurance License",
+        "SPDX ID": "AAL",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/attribution-php"
+    },
+    {
+        "name": "Blue Oak Model License",
+        "SPDX ID": "BlueOak-1.0.0",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/blue-oak-model-license"
+    },
+    {
+        "name": "Boost Software License 1.0",
+        "SPDX ID": "BSL-1.0",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/bsl-1-0"
+    },
+    {
+        "name": "BSD+Patent",
+        "SPDX ID": "BSD-2-Clause-Patent",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/bsdpluspatent"
+    },
+    {
+        "name": "Cea Cnrs Inria Logiciel Libre License, version 2.1",
+        "SPDX ID": "CECILL-2.1",
+        "category": "International",
+        "URL": "https://opensource.org/license/cecill-2-1"
+    },
+    {
+        "name": "CERN Open Hardware Licence Version 2 – Permissive",
+        "SPDX ID": "CERN-OHL-P-2.0",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/cern-ohl-p"
+    },
+    {
+        "name": "CERN Open Hardware Licence Version 2 – Strongly Reciprocal",
+        "SPDX ID": "CERN-OHL-S-2.0",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/cern-ohl-s"
+    },
+    {
+        "name": "CERN Open Hardware Licence Version 2 – Weakly Reciprocal",
+        "SPDX ID": "CERN-OHL-W-2.0",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/cern-ohl-w"
+    },
+    {
+        "name": "CMU License",
+        "SPDX ID": "MIT-CMU",
+        "category": "",
+        "URL": "https://opensource.org/license/cmu-license"
+    },
+    {
+        "name": "Common Development and Distribution License 1.0",
+        "SPDX ID": "CDDL-1.0",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/cddl-1-0"
+    },
+    {
+        "name": "Common Public Attribution License Version 1.0",
+        "SPDX ID": "CPAL-1.0",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/cpal_1-0"
+    },
+    {
+        "name": "Common Public License Version 1.0",
+        "SPDX ID": "CPL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/cpl1-0-txt"
+    },
+    {
+        "name": "Computer Associates Trusted Open Source License 1.1",
+        "SPDX ID": "CATOSL-1.1",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/ca-tosl1-1-php"
+    },
+    {
+        "name": "Cryptographic Autonomy License",
+        "SPDX ID": "CAL-1.0",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/cal-1-0"
+    },
+    {
+        "name": "CUA Office Public License",
+        "SPDX ID": "CUA-OPL-1.0",
+        "category": "Voluntarily retired",
+        "URL": "https://opensource.org/license/cuaoffice-php"
+    },
+    {
+        "name": "Eclipse Public License -v 1.0",
+        "SPDX ID": "EPL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/epl-1-0"
+    },
+    {
+        "name": "Eclipse Public License version 2.0",
+        "SPDX ID": "EPL-2.0",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/epl-2-0"
+    },
+    {
+        "name": "eCos License version 2.0",
+        "SPDX ID": "eCos-2.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/ecos-2-0"
+    },
+    {
+        "name": "Educational Community License, Version 1.0",
+        "SPDX ID": "ECL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/ecl-1-0"
+    },
+    {
+        "name": "Educational Community License, Version 2.0",
+        "SPDX ID": "ECL-2.0",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/ecl-2-0"
+    },
+    {
+        "name": "Eiffel Forum License, version 1",
+        "SPDX ID": "EFL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/efl-1-0"
+    },
+    {
+        "name": "Eiffel Forum License, Version 2",
+        "SPDX ID": "EFL-2.0",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/ver2_eiffel-php"
+    },
+    {
+        "name": "Entessa Public License Version. 1.0",
+        "SPDX ID": "Entessa",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/entessa"
+    },
+    {
+        "name": "EU DataGrid Software License",
+        "SPDX ID": "EUDatagrid",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/eudatagrid-php"
+    },
+    {
+        "name": "European Union Public Licence, version 1.2",
+        "SPDX ID": "EUPL-1.2",
+        "category": "International",
+        "URL": "https://opensource.org/license/eupl-1-2"
+    },
+    {
+        "name": "Fair License",
+        "SPDX ID": "Fair",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/fair"
+    },
+    {
+        "name": "Frameworx License 1.0",
+        "SPDX ID": "Frameworx-1.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/frameworx-php"
+    },
+    {
+        "name": "GNU Affero General Public License version 3",
+        "SPDX ID": "AGPL-3.0-only",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/agpl-v3"
+    },
+    {
+        "name": "GNU General Public License version 2",
+        "SPDX ID": "GPL-2.0",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/gpl-2-0"
+    },
+    {
+        "name": "GNU General Public License version 3",
+        "SPDX ID": "GPL-3.0-only",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/gpl-3-0"
+    },
+    {
+        "name": "GNU General Public License, version 1",
+        "SPDX ID": "",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/gpl-1-0"
+    },
+    {
+        "name": "GNU Lesser General Public License version 2.1",
+        "SPDX ID": "LGPL-2.1",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/lgpl-2-1"
+    },
+    {
+        "name": "GNU Lesser General Public License version 3",
+        "SPDX ID": "LGPL-3.0-only",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/lgpl-3-0"
+    },
+    {
+        "name": "GNU Library General Public License version 2",
+        "SPDX ID": "LGPL-2.0-only",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/lgpl-2-0"
+    },
+    {
+        "name": "Historical Permission Notice and Disclaimer",
+        "SPDX ID": "HPND",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/historical-php"
+    },
+    {
+        "name": "IBM Public License Version 1.0",
+        "SPDX ID": "IPL-1.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/ibmpl-php"
+    },
+    {
+        "name": "ICU License",
+        "SPDX ID": "ICU",
+        "category": "",
+        "URL": "https://opensource.org/license/icu-license"
+    },
+    {
+        "name": "Intel Open Source License",
+        "SPDX ID": "Intel",
+        "category": "Voluntarily retired",
+        "URL": "https://opensource.org/license/intel"
+    },
+    {
+        "name": "IPA Font License",
+        "SPDX ID": "IPA",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/ipafont-html"
+    },
+    {
+        "name": "ISC License",
+        "SPDX ID": "ISC",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/isc-license-txt"
+    },
+    {
+        "name": "Jabber Open Source License",
+        "SPDX ID": "",
+        "category": "Voluntarily retired",
+        "URL": "https://opensource.org/license/jabberpl-php"
+    },
+    {
+        "name": "JAM License",
+        "SPDX ID": "Jam",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/jam"
+    },
+    {
+        "name": "LaTeX Project Public License, Version 1.3c",
+        "SPDX ID": "LPPL-1.3c",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/lppl"
+    },
+    {
+        "name": "Lawrence Berkeley National Labs BSD Variant License",
+        "SPDX ID": "BSD-3-Clause-LBNL",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/bsd-3-clause-lbnl"
+    },
+    {
+        "name": "Licence Libre du Québec – Permissive  version 1.1",
+        "SPDX ID": "LiLiQ-P-1.1",
+        "category": "International",
+        "URL": "https://opensource.org/license/liliq-p-1-1"
+    },
+    {
+        "name": "Licence Libre du Québec – Réciprocité forte version 1.1",
+        "SPDX ID": "LiLiQ-Rplus-1.1",
+        "category": "International",
+        "URL": "https://opensource.org/license/liliq-rplus-1-1"
+    },
+    {
+        "name": "Licence Libre du Québec – Réciprocité version 1.1",
+        "SPDX ID": "LiLiQ-R-1.1",
+        "category": "International",
+        "URL": "https://opensource.org/license/liliq-r-1-1"
+    },
+    {
+        "name": "Los Alamos National Labs BSD-3 Variant",
+        "SPDX ID": "",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/los-alamos-national-labs-bsd-3-variant"
+    },
+    {
+        "name": "Lucent Public License Version 1.02",
+        "SPDX ID": "LPL-1.02",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/lucent1-02-php"
+    },
+    {
+        "name": "Lucent Public License, Plan 9, version 1.0",
+        "SPDX ID": "LPL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/lpl-1-0"
+    },
+    {
+        "name": "Microsoft Public License",
+        "SPDX ID": "MS-PL",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/ms-pl-html"
+    },
+    {
+        "name": "Microsoft Reciprocal License",
+        "SPDX ID": "MS-RL",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/ms-rl-html"
+    },
+    {
+        "name": "MirOS Licence",
+        "SPDX ID": "MirOS",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/miros-html"
+    },
+    {
+        "name": "MIT No Attribution License",
+        "SPDX ID": "MIT-0",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/mit-0"
+    },
+    {
+        "name": "MITRE Collaborative Virtual Workspace License",
+        "SPDX ID": "",
+        "category": "Voluntarily retired",
+        "URL": "https://opensource.org/license/cvw"
+    },
+    {
+        "name": "Motosoto Open Source License",
+        "SPDX ID": "Motosoto",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/motosoto"
+    },
+    {
+        "name": "Mozilla Public License 1.1",
+        "SPDX ID": "MPL-1.1",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/mpl-1-1"
+    },
+    {
+        "name": "Mozilla Public License 2.0",
+        "SPDX ID": "MPL-2.0",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/mpl-2-0"
+    },
+    {
+        "name": "Mozilla Public License, version 1.0",
+        "SPDX ID": "MPL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/mpl-1-0"
+    },
+    {
+        "name": "Mulan Permissive Software License v2",
+        "SPDX ID": "MulanPSL-2.0",
+        "category": "International",
+        "URL": "https://opensource.org/license/mulanpsl-2-0"
+    },
+    {
+        "name": "Multics License",
+        "SPDX ID": "Multics",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/multics-txt"
+    },
+    {
+        "name": "NASA Open Source Agreement v1.3",
+        "SPDX ID": "NASA-1.3",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/nasa1-3-php"
+    },
+    {
+        "name": "NAUMEN Public License",
+        "SPDX ID": "Naumen",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/naumen-php"
+    },
+    {
+        "name": "Nokia Open Source License Version 1.0a",
+        "SPDX ID": "NOKIA",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/nokia"
+    },
+    {
+        "name": "Non-Profit Open Software License version 3.0",
+        "SPDX ID": "NPOSL-3.0",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/nposl-3-0"
+    },
+    {
+        "name": "NTP License",
+        "SPDX ID": "NTP",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/ntp-license-php"
+    },
+    {
+        "name": "Open Group Test Suite License",
+        "SPDX ID": "OGTSL",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/opengroup-php"
+    },
+    {
+        "name": "Open Logistics Foundation License v1.3",
+        "SPDX ID": "OLFL-1.3",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/olfl-1-3"
+    },
+    {
+        "name": "Open Software License 2.1",
+        "SPDX ID": "OSL-2.1",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/osl-2-1"
+    },
+    {
+        "name": "Open Software License, version 1.0",
+        "SPDX ID": "OSL-1.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/osl-1-0"
+    },
+    {
+        "name": "OpenLDAP Public License Version 2.8",
+        "SPDX ID": "OLDAP-2.8",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/oldap-2-8"
+    },
+    {
+        "name": "OSC License 1.0",
+        "SPDX ID": "",
+        "category": "International",
+        "URL": "https://opensource.org/license/osc-license-1-0"
+    },
+    {
+        "name": "OSET Public License version 2.1",
+        "SPDX ID": "OSET-PL-2.1",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/opl-2-1"
+    },
+    {
+        "name": "PHP License 3.0",
+        "SPDX ID": "PHP-3.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/php-3-0"
+    },
+    {
+        "name": "PHP License 3.01",
+        "SPDX ID": "PHP-3.01",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/php-3-01"
+    },
+    {
+        "name": "Python License, Version 2",
+        "SPDX ID": "PSF-2.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/python-2-0"
+    },
+    {
+        "name": "RealNetworks Public Source License Version 1.0",
+        "SPDX ID": "RPSL-1.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/real-php"
+    },
+    {
+        "name": "Reciprocal Public License 1.5",
+        "SPDX ID": "RPL-1.5",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/rpl-1-5"
+    },
+    {
+        "name": "Reciprocal Public License, version 1.1",
+        "SPDX ID": "RPL-1.1",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/rpl-1-1"
+    },
+    {
+        "name": "SIL OPEN FONT LICENSE",
+        "SPDX ID": "OFL-1.1",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/ofl-1-1"
+    },
+    {
+        "name": "Simple Public License",
+        "SPDX ID": "SimPL-2.0",
+        "category": "Uncategorized",
+        "URL": "https://opensource.org/license/simpl-2-0-html"
+    },
+    {
+        "name": "Sun Industry Standards Source License",
+        "SPDX ID": "SISSL",
+        "category": "Voluntarily retired",
+        "URL": "https://opensource.org/license/sissl"
+    },
+    {
+        "name": "Sun Public License, Version 1.0",
+        "SPDX ID": "SPL-1.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/sunpublic-php"
+    },
+    {
+        "name": "The 2-Clause BSD License",
+        "SPDX ID": "BSD-2-Clause",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/bsd-2-clause"
+    },
+    {
+        "name": "The 3-Clause BSD License",
+        "SPDX ID": "BSD-3-Clause",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/bsd-3-clause"
+    },
+    {
+        "name": "The CNRI portion of the multi-part Python License",
+        "SPDX ID": "CNRI-Python",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/cnri-python"
+    },
+    {
+        "name": "The European Union Public License, version 1.1",
+        "SPDX ID": "EUPL-1.1",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/eupl-1-1"
+    },
+    {
+        "name": "The MIT License",
+        "SPDX ID": "MIT",
+        "category": "Popular / Strong Community",
+        "URL": "https://opensource.org/license/mit"
+    },
+    {
+        "name": "The Nethack General Public License",
+        "SPDX ID": "NGPL",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/nethack"
+    },
+    {
+        "name": "The OCLC Research Public License 2.0 License",
+        "SPDX ID": "",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/oclc2-php"
+    },
+    {
+        "name": "The Open Software License 3.0",
+        "SPDX ID": "OSL-3.0",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/osl-3-0-php"
+    },
+    {
+        "name": "The PostgreSQL License",
+        "SPDX ID": "PostgreSQL",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/postgresql"
+    },
+    {
+        "name": "The Q Public License Version",
+        "SPDX ID": "QPL-1.0",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/qpl-1-0"
+    },
+    {
+        "name": "The Ricoh Source Code Public License",
+        "SPDX ID": "RSCPL",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/ricohpl-php"
+    },
+    {
+        "name": "The Sleepycat License",
+        "SPDX ID": "Sleepycat",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/sleepycat-php"
+    },
+    {
+        "name": "The Sybase Open Source Licence",
+        "SPDX ID": "Watcom-1.0",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/sybase-php"
+    },
+    {
+        "name": "The Universal Permissive License Version 1.0",
+        "SPDX ID": "UPL-1.0",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/upl"
+    },
+    {
+        "name": "The University of Illinois/NCSA Open Source License",
+        "SPDX ID": "NCSA",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/uoi-ncsa-php"
+    },
+    {
+        "name": "The Unlicense",
+        "SPDX ID": "Unlicense",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/unlicense"
+    },
+    {
+        "name": "The Vovida Software License v. 1.0",
+        "SPDX ID": "VSL-0.1",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/vovidapl-php"
+    },
+    {
+        "name": "The W3C® Software and Document license",
+        "SPDX ID": "W3C-20150513",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/w3c"
+    },
+    {
+        "name": "The wxWindows Library Licence",
+        "SPDX ID": "wxWindows",
+        "category": "Non-Reusable",
+        "URL": "https://opensource.org/license/wxwindows-php"
+    },
+    {
+        "name": "The X.Net, Inc. License",
+        "SPDX ID": "Xnet",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/xnet"
+    },
+    {
+        "name": "The zlib/libpng License",
+        "SPDX ID": "Zlib",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/zlib"
+    },
+    {
+        "name": "UNICODE LICENSE V3",
+        "SPDX ID": "",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/unicode-license-v3"
+    },
+    {
+        "name": "Unicode, Inc. License Agreement – Data Files and Software",
+        "SPDX ID": "Unicode-DFS-2015",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/unicode-inc-license-agreement-data-files-and-software"
+    },
+    {
+        "name": "Upstream Compatibility License v1.0",
+        "SPDX ID": "UCL-1.0",
+        "category": "Special Purpose",
+        "URL": "https://opensource.org/license/ucl-1-0"
+    },
+    {
+        "name": "Zero-Clause BSD",
+        "SPDX ID": "0BSD",
+        "category": "Other/Miscellaneous",
+        "URL": "https://opensource.org/license/0bsd"
+    },
+    {
+        "name": "Zope Public License 2.0",
+        "SPDX ID": "ZPL-2.0",
+        "category": "Superseded",
+        "URL": "https://opensource.org/license/zpl-2-0"
+    },
+    {
+        "name": "Zope Public License 2.1",
+        "SPDX ID": "ZPL-2.1",
+        "category": "Redundant with more popular",
+        "URL": "https://opensource.org/license/zpl-2-1"
+    }
+]

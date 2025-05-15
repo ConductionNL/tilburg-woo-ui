@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
+import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
