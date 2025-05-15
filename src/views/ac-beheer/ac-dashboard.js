@@ -25,7 +25,7 @@ const AcDashboard = () => {
 
   const endpoints = [
     { id: '1', name: 'elements' },
-    { id: '4', name: 'views' },
+    // { id: '4', name: 'views' },
     { id: '3', name: 'relations' },
     { id: '2', name: 'model' },
   ];
