@@ -72,12 +72,12 @@ const AcAuthentication = () => {
 
   // TODO: do not make this hardcoded
   const [clientId, setClientId] = useState(
-    isHostNameTest
+    BASE_URL.includes('test')
       ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
       : 'VSCKXDSJmhXxa3DSWrCkNtFw3tUDQkPYj2CgBETTR8pioOp1qmcvhDr2nC1OF1zL'
   );
   const [secretKey, setSecretKey] = useState(
-    isHostNameTest
+    BASE_URL.includes('test')
       ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
       : 'emNfF5yBpAXPDGqghgm11bKDfNSgzdsd7uEdBq9GxHYg9E5USxVqZguKQ3QBYLoL'
   );
