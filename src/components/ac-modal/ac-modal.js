@@ -89,7 +89,12 @@ const AcModal = React.forwardRef(
               }
 
               return (
-                <AcButton style='button' icon={button.icon} onClick={button.onClick}>
+                <AcButton
+                  {...button}
+                  style='button'
+                  icon={button.icon}
+                  onClick={button.onClick}
+                >
                   {button.label}
                 </AcButton>
               );

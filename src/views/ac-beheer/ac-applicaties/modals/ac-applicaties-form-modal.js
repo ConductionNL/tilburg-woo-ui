@@ -152,8 +152,16 @@ const AcApplicatiesFormModal = ({
       ref={modalRef}
       id='edit-applicatie-modal'
       title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
-      buttonType='secondary'
-      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
+      buttons={[
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         <AcFormField

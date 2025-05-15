@@ -164,7 +164,16 @@ const AcGebruikersFormModal = ({
       ref={modalRef}
       id='edit-gebruiker-modal'
       title={isEdit ? 'Gebruiker bewerken' : 'Gebruiker toevoegen'}
-      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
+      buttons={[
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         <AcFormField

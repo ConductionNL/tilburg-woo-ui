@@ -71,7 +71,15 @@ const AcDeleteOvereenkomstenModal = ({
       title={`${
         overeenkomsten.length === 1 ? 'Overeenkomst' : 'Overeenkomsten'
       } verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteOvereenkomst }]}
+      buttons={[{ label: 'verwijderen', onClick: handleDeleteOvereenkomst },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}

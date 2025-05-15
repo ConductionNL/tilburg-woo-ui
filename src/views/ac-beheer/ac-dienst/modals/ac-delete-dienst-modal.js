@@ -68,7 +68,16 @@ const AcDeleteDienstModal = ({
       ref={modalRef}
       id='delete-dienst-modal'
       title={`${diensten.length === 1 ? 'Dienst' : 'Diensten'} verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteDienst }]}
+      buttons={[
+        { label: 'verwijderen', onClick: handleDeleteDienst },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze {diensten.length === 1 ? 'dienst' : 'diensten'}{' '}

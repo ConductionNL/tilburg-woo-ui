@@ -159,7 +159,7 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
     if (redirect_url) {
       setTimeout(() => {
         navigate(redirect_url);
-      }, 2000);
+      }, 500);
     }
 
     setIsLoading(false);
