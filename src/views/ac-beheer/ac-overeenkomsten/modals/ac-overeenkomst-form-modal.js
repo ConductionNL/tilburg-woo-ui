@@ -206,7 +206,16 @@ const AcOvereenkomstFormModal = ({
       ref={modalRef}
       id='edit-overeenkomst-modal'
       title={isEdit ? 'Overeenkomst bewerken' : 'Overeenkomst toevoegen'}
-      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
+      buttons={[
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         <AcFormField

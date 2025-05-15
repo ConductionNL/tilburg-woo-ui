@@ -127,7 +127,16 @@ const AcDienstFormModal = ({
       ref={modalRef}
       id='edit-dienst-modal'
       title={isEdit ? 'Dienst bewerken' : 'Dienst toevoegen'}
-      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
+      buttons={[
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         <AcFormField

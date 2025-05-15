@@ -123,7 +123,16 @@ const AcKwetsbaarheidFormModal = ({
       ref={modalRef}
       id='edit-kwetsbaarheid-modal'
       title={isEdit ? 'Kwetsbaarheid bewerken' : 'Kwetsbaarheid toevoegen'}
-      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
+      buttons={[
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         <AcFormField
