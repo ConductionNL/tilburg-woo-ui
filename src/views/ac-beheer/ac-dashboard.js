@@ -400,32 +400,35 @@ const AcDashboard = () => {
 
   const downloadModel = async (model) => {
     setModelLoading(true);
+
     try {
       const url = `${baseUrl}/apps/openconnector/api/endpoint/model/${model.id}?organisatie=89e904fc-e0c5-4fc0-ba0f-adf9c4be42a9`;
+      window.open(url, '_blank');
 
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          Accept: 'application/xml',
-        },
-      });
+      // TODO: download model back to original with correct disposition name
+      // const response = await fetch(url, {
+      //   method: 'GET',
+      //   headers: {
+      //     Accept: 'application/xml',
+      //   },
+      // });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      // if (!response.ok) {
+      //   throw new Error(`HTTP error! status: ${response.status}`);
+      // }
 
-      const xmlData = await response.text();
+      // const xmlData = await response.text();
 
-      // Create blob and download
-      const blob = new Blob([xmlData], { type: 'application/xml' });
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = `${model.name}.xml`;
-      a.click();
+      // // Create blob and download
+      // const blob = new Blob([xmlData], { type: 'application/xml' });
+      // const downloadUrl = URL.createObjectURL(blob);
+      // const a = document.createElement('a');
+      // a.href = downloadUrl;
+      // a.download = `${model.name}.xml`;
+      // a.click();
 
-      // Cleanup
-      URL.revokeObjectURL(downloadUrl);
+      // // Cleanup
+      // URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error('Error downloading GEMMA model:', error);
       setDownloadError(error);
