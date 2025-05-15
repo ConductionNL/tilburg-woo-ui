@@ -139,19 +139,19 @@ const AcGemmaView = ({ store: { gemma } }) => {
     const parentChildrenCount = {};
 
     // First pass: count children per parent node
-    gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-      if (!voorziening.voorzieningId?.referentieComponenten) return;
+    gemma.get_allVoorzieningGebruik.forEach((voorzieningGebruik) => {
+      if (!voorzieningGebruik.voorzieningId?.referentieComponenten) return;
 
-      voorziening.voorzieningId.referentieComponenten.forEach((parentId) => {
+      voorzieningGebruik.voorzieningId.referentieComponenten.forEach((parentId) => {
         parentChildrenCount[parentId] = (parentChildrenCount[parentId] || 0) + 1;
       });
     });
 
     // Second pass: create and position child nodes
-    gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-      if (!voorziening.voorzieningId?.referentieComponenten) return;
+    gemma.get_allVoorzieningGebruik.forEach((voorzieningGebruik) => {
+      if (!voorzieningGebruik.voorzieningId?.referentieComponenten) return;
 
-      voorziening.voorzieningId.referentieComponenten.forEach((parentId) => {
+      voorzieningGebruik.voorzieningId.referentieComponenten.forEach((parentId) => {
         // Find the parent node in the view
         const parentNode = gemma.get_view.nodes.find(
           (node) => node.elementRef === parentId
@@ -192,9 +192,9 @@ const AcGemmaView = ({ store: { gemma } }) => {
 
         // Create child node
         viewNodesData.push({
-          name: voorziening.voorzieningId.naam || 'eDiensten',
-          id: `${voorziening.voorzieningId.id}_${parentId}`,
-          viewNodeId: `${voorziening.voorzieningId.id}_${parentId}`,
+          name: voorzieningGebruik.voorzieningId.naam || 'eDiensten',
+          id: `${voorzieningGebruik.voorzieningId.id}_${parentId}`,
+          viewNodeId: `${voorzieningGebruik.voorzieningId.id}_${parentId}`,
           type: 'dataobject',
           position: {
             x: absoluteX,
