@@ -84,11 +84,11 @@ const AcGemmaView = ({ store: { gemma } }) => {
           const nodeData = node.element;
 
           return {
-            name: nodeData.name,
-            id: nodeData.identifier,
-            description: nodeData.documentation,
-            type: nodeData.type,
-            properties: nodeData.properties,
+            name: nodeData?.name || node.name,
+            id: nodeData?.identifier || node.elementRef,
+            description: nodeData?.documentation || node.documentation,
+            type: nodeData?.type || 'dataobject',
+            properties: nodeData?.properties || node.properties,
             parent: null,
           };
         })
@@ -109,11 +109,11 @@ const AcGemmaView = ({ store: { gemma } }) => {
 
             const childNode = {
               name: childData.name || 'unknown',
-              id: childData.identifier,
-              description: childData.documentation || undefined,
-              type: childData.type || undefined,
+              id: childData?.identifier || child.elementRef,
+              description: childData?.documentation || child.documentation,
+              type: childData?.type || 'dataobject',
               parent: node.elementRef,
-              properties: childData.properties || undefined,
+              properties: childData?.properties || child.properties,
             };
 
             viewNodesData.push(childNode);
@@ -226,8 +226,8 @@ const AcGemmaView = ({ store: { gemma } }) => {
                   item.propertyDefinitionRef === 'propid-61' ||
                   item.propertyDefinitionRef === 'propid-62'
               )?.value || undefined,
-            id: relationshipData.identifier,
-            type: relationshipData.type || undefined,
+            id: relationshipData?.identifier || relationship.relationshipRef,
+            type: relationshipData?.type || undefined,
           };
         }
       );
@@ -537,11 +537,19 @@ const AcGemmaView = ({ store: { gemma } }) => {
       (relationship) => relationship !== undefined
     );
 
+    const addSuffix = (id, suffix = '-sc') => {
+      return id.endsWith(suffix) ? id : `${id}${suffix}`;
+    };
+
     // Render the graph
     ViewRenderer.renderToGraph(
       outputGraph,
       viewNodes,
-      viewRelationships,
+      viewRelationships.map((rel) => ({
+        ...rel,
+        sourceId: addSuffix(rel.sourceId),
+        targetId: addSuffix(rel.targetId),
+      })),
       new ViewSettings({
         archimateVersion: '<=3.1',
         style: 'hybrid',
