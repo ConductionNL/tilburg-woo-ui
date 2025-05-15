@@ -17,7 +17,7 @@ import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import svgPanZoom from 'svg-pan-zoom';
 
-const AcGemmaAccept = ({ store: { gemma } }) => {
+const AcGemmaView = ({ store: { gemma } }) => {
   const {
     fetchViews,
     resetViews,
@@ -37,7 +37,7 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
   const getViewName = (view) => {
     return (
       view.properties.find(
-        (property) => property.propertyDefinitionRef === 'propid-70'
+        (property) => property.propertyDefinitionRef === 'propid-70' //propid-70
       )?.value || view.name
     );
   };
@@ -67,171 +67,149 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
   }, [view]);
 
   useEffect(() => {
-    if (!gemma.get_view) return;
+    if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
     let viewNodesData = [];
 
+    const hostname = window.location.hostname;
+    const baseUrl =
+      hostname === 'localhost' || hostname === 'vng.opencatalogi.nl'
+        ? 'https://vng.test.commonground.nu/apps'
+        : 'https://vng.accept.commonground.nu/apps';
+
     const getViewNodesData = () => {
-      const promises = gemma.get_view.nodes.map(async (node) => {
-        if (!node.elementRef) return null;
+      const nodes = gemma.get_view.nodes
+        .map((node) => {
+          if (!node.elementRef) return null;
 
-        try {
-          const response = await fetch(
-            `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${node.elementRef}`
-          );
-          const data = await response.json();
-
-          if (!data.results[0]) return null;
+          const nodeData = node.element;
 
           return {
-            name: data.results[0]?.name || 'unknown',
-            id: node.elementRef,
-            description: data.results[0]?.documentation || undefined,
-            type: data.results[0]?.type || undefined,
-            properties: data.results[0]?.properties || undefined,
+            name: nodeData.name,
+            id: nodeData.identifier,
+            description: nodeData.documentation,
+            type: nodeData.type,
+            properties: nodeData.properties,
             parent: null,
           };
-        } catch (error) {
-          console.error(`Error fetching node data: ${error}`);
-          return null;
-        }
-      });
+        })
+        .filter(Boolean);
 
-      return Promise.all(promises).then((results) => {
-        viewNodesData.push(...results.filter(Boolean));
-      });
+      viewNodesData.push(...nodes);
     };
 
-    const getChildNodesData = async (nodes = gemma.get_view.nodes) => {
-      const childPromises = nodes.reduce((promises, node) => {
-        if (!node.nodes) return promises;
+    const getChildNodesData = (nodes = gemma.get_view.nodes) => {
+      const childNodes = nodes.flatMap((node) => {
+        if (!node.nodes) return [];
 
-        const nodePromises = node.nodes.map(async (child) => {
-          if (!child.elementRef) return null;
+        return node.nodes
+          .map((child) => {
+            if (!child.elementRef) return null;
 
-          try {
-            const response = await fetch(
-              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/elements?identifier=${child.elementRef}`
-            );
-            const data = await response.json();
-
-            if (!data.results[0]) return null;
+            const childData = child.element;
 
             const childNode = {
-              name: data.results[0]?.name || 'unknown',
-              id: child.elementRef,
-              description: data.results[0]?.documentation || undefined,
-              type: data.results[0]?.type || undefined,
+              name: childData.name || 'unknown',
+              id: childData.identifier,
+              description: childData.documentation || undefined,
+              type: childData.type || undefined,
               parent: node.elementRef,
-              properties: data.results[0]?.properties || undefined,
+              properties: childData.properties || undefined,
             };
 
             viewNodesData.push(childNode);
 
             // Recursively process child nodes if they exist
             if (child.nodes) {
-              await getChildNodesData([child]);
+              getChildNodesData([child]);
             }
 
             return childNode;
-          } catch (error) {
-            console.error(`Error fetching child node data: ${error}`);
-            return null;
-          }
-        });
+          })
+          .filter(Boolean);
+      });
 
-        return [...promises, ...nodePromises];
-      }, []);
-
-      return Promise.all(childPromises);
+      return childNodes;
     };
 
-    getViewNodesData()
-      .then(() => getChildNodesData())
-      .then(() => {
-        const processVoorzieningNodes = new Promise((resolve) => {
-          // Create a map of parent nodes and their children count
-          const parentChildrenCount = {};
+    // Execute functions sequentially
+    getViewNodesData();
+    getChildNodesData();
 
-          // First pass: count children per parent node
-          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-            if (!voorziening?.referentieComponenten) return;
+    // Process voorziening nodes
+    const parentChildrenCount = {};
 
-            voorziening.referentieComponenten.forEach((parentId) => {
-              parentChildrenCount[parentId] =
-                (parentChildrenCount[parentId] || 0) + 1;
-            });
-          });
+    // First pass: count children per parent node
+    gemma.get_allVoorzieningGebruik.forEach((voorzieningGebruik) => {
+      if (!voorzieningGebruik.voorzieningId?.referentieComponenten) return;
 
-          // Second pass: create and position child nodes
-          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-            if (!voorziening?.referentieComponenten) return;
+      voorzieningGebruik.voorzieningId.referentieComponenten.forEach((parentId) => {
+        parentChildrenCount[parentId] = (parentChildrenCount[parentId] || 0) + 1;
+      });
+    });
 
-            voorziening.referentieComponenten.forEach((parentId) => {
-              // Find the parent node in the view
-              const parentNode = gemma.get_view.nodes.find(
-                (node) => node.elementRef === parentId
-              );
+    // Second pass: create and position child nodes
+    gemma.get_allVoorzieningGebruik.forEach((voorzieningGebruik) => {
+      if (!voorzieningGebruik.voorzieningId?.referentieComponenten) return;
 
-              if (!parentNode) return;
+      voorzieningGebruik.voorzieningId.referentieComponenten.forEach((parentId) => {
+        // Find the parent node in the view
+        const parentNode = gemma.get_view.nodes.find(
+          (node) => node.elementRef === parentId
+        );
 
-              // Calculate child node position
-              const totalChildren = parentChildrenCount[parentId];
-              const childIndex = viewNodesData.filter(
-                (node) => node.parent === parentNode.identifier
-              ).length;
+        if (!parentNode) return;
 
-              const PARENT_PADDING = 20;
-              const CHILD_SPACING = 8;
-              const parentWidth = parseInt(parentNode.position.w);
-              const parentHeight = parseInt(parentNode.position.h);
+        // Calculate child node position
+        const totalChildren = parentChildrenCount[parentId];
+        const childIndex = viewNodesData.filter(
+          (node) => node.parent === parentNode.identifier
+        ).length;
 
-              // Calculate dimensions
-              const childWidth = Math.min(
-                (parentWidth -
-                  PARENT_PADDING * 2 -
-                  CHILD_SPACING * (totalChildren - 1)) /
-                  totalChildren,
-                120 // Max width cap
-              );
-              const childHeight = Math.min(parentHeight * 0.35, 30);
+        const PARENT_PADDING = 20;
+        const CHILD_SPACING = 8;
+        const parentWidth = parseInt(parentNode.position.w);
+        const parentHeight = parseInt(parentNode.position.h);
 
-              // Calculate absolute position based on parent's position
-              const absoluteX =
-                parseInt(parentNode.position.x) +
-                PARENT_PADDING +
-                childIndex * (childWidth + CHILD_SPACING);
-              // Position from bottom of parent instead of top
-              const absoluteY =
-                parseInt(parentNode.position.y) +
-                parseInt(parentNode.position.h) - // Parent height
-                childHeight - // Child height
-                10; // 10px padding from bottom
+        // Calculate dimensions
+        const childWidth = Math.min(
+          (parentWidth - PARENT_PADDING * 2 - CHILD_SPACING * (totalChildren - 1)) /
+            totalChildren,
+          120 // Max width cap
+        );
+        const childHeight = Math.min(parentHeight * 0.35, 30);
 
-              // Create child node
-              viewNodesData.push({
-                name: voorziening.opmerkingen || 'eDiensten',
-                id: `${voorziening.id}_${parentId}`,
-                viewNodeId: `${voorziening.id}_${parentId}`,
-                type: 'dataobject',
-                position: {
-                  x: absoluteX,
-                  y: absoluteY,
-                  w: childWidth,
-                  h: childHeight,
-                },
-                font: parentNode.style.font,
-                parent: parentNode.identifier,
-              });
-            });
-          });
+        // Calculate absolute position based on parent's position
+        const absoluteX =
+          parseInt(parentNode.position.x) +
+          PARENT_PADDING +
+          childIndex * (childWidth + CHILD_SPACING);
+        // Position from bottom of parent instead of top
+        const absoluteY =
+          parseInt(parentNode.position.y) +
+          parseInt(parentNode.position.h) - // Parent height
+          childHeight - // Child height
+          10; // 10px padding from bottom
 
-          resolve();
-        });
-
-        processVoorzieningNodes.finally(() => {
-          setViewNodesData(viewNodesData);
+        // Create child node
+        viewNodesData.push({
+          name: voorzieningGebruik.voorzieningId.naam || 'eDiensten',
+          id: `${voorzieningGebruik.voorzieningId.id}_${parentId}`,
+          viewNodeId: `${voorzieningGebruik.voorzieningId.id}_${parentId}`,
+          type: 'dataobject',
+          position: {
+            x: absoluteX,
+            y: absoluteY,
+            w: childWidth,
+            h: childHeight,
+          },
+          font: parentNode.style.font,
+          parent: parentNode.identifier,
         });
       });
+    });
+
+    // Update state with the complete data
+    setViewNodesData(viewNodesData);
 
     const getViewRelationsData = () => {
       const relationshipPromises = gemma.get_view.connections.map(
@@ -239,26 +217,18 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
           if (!relationship.relationshipRef) return null;
           if (relationship.relationshipRef.includes('@attribute')) return null;
 
-          try {
-            const response = await fetch(
-              `https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/relations?identifier=${relationship.relationshipRef}`
-            );
-            const data = await response.json();
+          const relationshipData = relationship.relationship;
 
-            return {
-              name:
-                data.results[0]?.properties.find(
-                  (item) =>
-                    item.propertyDefinitionRef === 'propid-61' ||
-                    item.propertyDefinitionRef === 'propid-62'
-                )?.value || undefined,
-              id: relationship.relationshipRef,
-              type: data.results[0]?.type || undefined,
-            };
-          } catch (error) {
-            console.error(`Error fetching relationship data: ${error}`);
-            return null;
-          }
+          return {
+            name:
+              relationshipData?.properties?.find(
+                (item) =>
+                  item.propertyDefinitionRef === 'propid-61' ||
+                  item.propertyDefinitionRef === 'propid-62'
+              )?.value || undefined,
+            id: relationshipData.identifier,
+            type: relationshipData.type || undefined,
+          };
         }
       );
 
@@ -273,7 +243,7 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
     };
 
     getViewRelationsData();
-  }, [gemma.get_view]);
+  }, [gemma.get_view, gemma.get_allVoorzieningGebruik]);
 
   useEffect(() => {
     if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
@@ -378,181 +348,130 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
     };
 
     const convertToViewNode = (node) => {
-      const nodeDataNode = viewNodesData.find((item) => item.id === node.elementRef);
+      // Create a memoized map of viewNodesData for faster lookups
+      const nodeDataMap = new Map(viewNodesData.map((item) => [item.id, item]));
+      const nodeDataNode = node.elementRef ? nodeDataMap.get(node.elementRef) : null;
 
-      const getType = () => {
-        switch (nodeDataNode?.name) {
-          case 'StUF Geo IMGeo':
-            return 'constraint';
-          case 'SVB-BGT services en portaal':
-            return 'applicationcomponent';
-          default:
-            return 'dataobject';
-        }
+      // Helper function to create style object - reduces repeated code
+      const createStyleObject = (style) => ({
+        color: style?.color?.a
+          ? `rgba(${style?.color?.r ?? 0}, ${style?.color?.g ?? 0}, ${
+              style?.color?.b ?? 0
+            }, ${style?.color?.a ?? 1})`
+          : `rgb(${style?.color?.r ?? 0}, ${style?.color?.g ?? 0}, ${
+              style?.color?.b ?? 0
+            })`,
+        fillColor: style?.fillColor?.a
+          ? `rgba(${style?.fillColor?.r ?? 0}, ${style?.fillColor?.g ?? 0}, ${
+              style?.fillColor?.b ?? 0
+            }, ${style?.fillColor?.a ?? 1})`
+          : `rgb(${style?.fillColor?.r ?? 0}, ${style?.fillColor?.g ?? 0}, ${
+              style?.fillColor?.b ?? 0
+            })`,
+        lineColor: style?.lineColor?.a
+          ? `rgba(${style?.lineColor?.r ?? 0}, ${style?.lineColor?.g ?? 0}, ${
+              style?.lineColor?.b ?? 0
+            }, ${style?.lineColor?.a ?? 1})`
+          : `rgb(${style?.lineColor?.r ?? 0}, ${style?.lineColor?.g ?? 0}, ${
+              style?.lineColor?.b ?? 0
+            })`,
+        font: {
+          name: style?.font?.name ?? 'Arial',
+          size: style?.font?.size ?? 12,
+          style: style?.font?.style ?? 'normal',
+        },
+      });
+
+      // Base node properties
+      const baseNode = {
+        modelNodeId: node.isChildNode
+          ? node.identifier
+          : node.elementRef || node.identifier,
+        viewNodeId: node.identifier || 'unknown',
+        x: node.position?.x,
+        y: node.position?.y,
+        width: node.position?.w,
+        height: node.position?.h,
+        parent: null,
       };
 
+      // Handle special node types
       if (!node.elementRef) {
-        if (node.type === 'Label') {
+        if (['Label', 'Container'].includes(node.type)) {
+          const style = createStyleObject(node.style);
           return {
-            modelNodeId: node.identifier,
-            viewNodeId: node.identifier || 'unknown',
+            ...baseNode,
             name: node.label ?? ' ',
-            type: node.type?.toLowerCase() || getType(),
-            x: node.position?.x,
-            y: node.position?.y,
-            width: node.position?.w,
-            height: node.position?.h,
-            color: node.style?.fillColor?.a
-              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-            borderColor: node.style?.lineColor?.a
-              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-            parent: null,
+            type: node.type?.toLowerCase(),
+            color: style.fillColor,
+            borderColor: style.lineColor,
             description: node.label,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
+            font: { ...style.font, color: style.color },
             elementRef: null,
           };
         }
-        if (node.type === 'Container') {
-          return {
-            modelNodeId: node.identifier,
-            viewNodeId: node.identifier || 'unknown',
-            name: node.label,
-            type: node.type?.toLowerCase() || getType(),
-            x: node.position?.x,
-            y: node.position?.y,
-            width: node.position?.w,
-            height: node.position?.h,
-            color: node.style?.fillColor?.a
-              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-            borderColor: node.style?.lineColor?.a
-              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-            parent: null,
-            description: node.label,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
-            elementRef: null,
-          };
+
+        if (node.voorzieningId.referentieComponenten) {
+          return node.voorzieningId.referentieComponenten
+            .map((refComponent) => {
+              const uniqueId = `${node.voorzieningId.id}_${refComponent}`;
+              const nodeData = nodeDataMap.get(uniqueId);
+              if (!nodeData) return null;
+
+              const style = createStyleObject(node.style);
+              return {
+                ...baseNode,
+                modelNodeId: nodeData.id,
+                viewNodeId: nodeData.viewNodeId || 'unknown',
+                name: nodeData.name || 'unknown',
+                type: nodeData.type?.toLowerCase() || 'dataobject',
+                x: nodeData.position?.x || 0,
+                y: nodeData.position?.y || 0,
+                width: nodeData.position?.w || 0,
+                height: nodeData.position?.h || 0,
+                font: { ...style.font, color: style.color },
+                description: nodeData.description || null,
+                elementRef: null,
+              };
+            })
+            .filter(Boolean);
         }
-        if (!node.referentieComponenten)
-          return {
-            modelNodeId: node.identifier,
-            viewNodeId: node.identifier || 'unknown',
-            name: node?.label,
-            type: node.type?.toLowerCase() || getType(),
-            x: node.position?.x,
-            y: node.position?.y,
-            width: node.position?.w,
-            height: node.position?.h,
-            color: node.style?.fillColor?.a
-              ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-              : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-            borderColor: node.style?.lineColor?.a
-              ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-              : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-            parent: null,
-            description: node.label,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
-            elementRef: null,
-          };
-        const nodes = node.referentieComponenten?.map((refComponent) => {
-          const uniqueId = `${node.id}_${refComponent}`;
-          const nodeData = viewNodesData.find((item) => item.id === uniqueId);
 
-          if (!nodeData) return;
-
-          return {
-            modelNodeId: nodeData?.id,
-            viewNodeId: nodeData?.viewNodeId || 'unknown',
-            name: nodeData?.name || 'unknown',
-            type: nodeData?.type?.toLowerCase() || getType(),
-            x: nodeData?.position?.x || 0,
-            y: nodeData?.position?.y || 0,
-            width: nodeData?.position?.w || 0,
-            height: nodeData?.position?.h || 0,
-            parent: null,
-            description: nodeData?.description || null,
-            font: {
-              name: node.style?.font?.name,
-              size: node.style?.font?.size,
-              style: node.style?.font?.style,
-              color: node.style?.color?.a
-                ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-                : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-            },
-            elementRef: null,
-          };
-        });
-
-        return nodes;
-      } else {
+        // Handle regular nodes without elementRef
+        const style = createStyleObject(node.style);
         return {
-          modelNodeId: node.isChildNode ? node.identifier : node.elementRef,
-          viewNodeId: node.identifier || 'unknown',
-          name: nodeDataNode?.name || 'unknown',
-          type: nodeDataNode?.type?.toLowerCase() || getType(),
-          x: node.position.x,
-          y: node.position.y,
-          width: node.position.w,
-          height: node.position.h,
-          parent: null,
-          color: node.style?.fillColor?.a
-            ? `rgba(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b}, ${node.style?.fillColor?.a})`
-            : `rgb(${node.style?.fillColor?.r}, ${node.style?.fillColor?.g}, ${node.style?.fillColor?.b})`,
-          borderColor: node.style?.lineColor?.a
-            ? `rgba(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b}, ${node.style?.lineColor?.a})`
-            : `rgb(${node.style?.lineColor?.r}, ${node.style?.lineColor?.g}, ${node.style?.lineColor?.b})`,
-          font: {
-            name: node.style?.font?.name,
-            size: node.style?.font?.size,
-            style: node.style?.font?.style,
-            color: node.style?.color?.a
-              ? `rgba(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b}, ${node.style?.color?.a})`
-              : `rgb(${node.style?.color?.r}, ${node.style?.color?.g}, ${node.style?.color?.b})`,
-          },
-          description: nodeDataNode?.description || null,
-          elementRef: node.elementRef || null,
-          onClick: () => {
-            window.open(
-              `https://www.gemmaonline.nl/wiki/GEMMA/${
-                nodeDataNode?.properties?.find(
-                  (item) => item.propertyDefinitionRef === 'propid-2'
-                )?.value
-                  ? `id-${
-                      nodeDataNode?.properties?.find(
-                        (item) => item.propertyDefinitionRef === 'propid-2'
-                      )?.value
-                    }`
-                  : node.elementRef
-              }`,
-              '_blank'
-            );
-          },
+          ...baseNode,
+          name: node.label,
+          type: node.type?.toLowerCase() || 'dataobject',
+          color: style.fillColor,
+          borderColor: style.lineColor,
+          font: { ...style.font, color: style.color },
+          description: node.label,
+          elementRef: null,
         };
       }
+
+      // Handle nodes with elementRef
+      const style = createStyleObject(node.style);
+      return {
+        ...baseNode,
+        name: nodeDataNode?.name || 'unknown',
+        type: nodeDataNode?.type?.toLowerCase() || 'dataobject',
+        color: style.fillColor,
+        borderColor: style.lineColor,
+        font: { ...style.font, color: style.color },
+        description: nodeDataNode?.description || null,
+        elementRef: node.elementRef || null,
+        onClick: () => {
+          const propertyId = nodeDataNode?.properties?.find(
+            (item) => item.propertyDefinitionRef === 'propid-2'
+          )?.value;
+          const url = `https://www.gemmaonline.nl/wiki/GEMMA/${
+            propertyId ? `id-${propertyId}` : node.elementRef
+          }`;
+          window.open(url, '_blank');
+        },
+      };
     };
 
     // Get ordered nodes and process them
@@ -1072,8 +991,9 @@ const AcGemmaAccept = ({ store: { gemma } }) => {
           )}
         </>
       )}
+      {/* <div className='ac-gemma-graph-container' id='graph-container'></div> */}
     </AcContainer>
   );
 };
 
-export default withStore(observer(AcGemmaAccept));
+export default withStore(observer(AcGemmaView));

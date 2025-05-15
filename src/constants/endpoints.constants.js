@@ -96,7 +96,7 @@ export const ENDPOINTS = AcLockObject({
     // VOORZIENING_GEBRUIK: (_id) =>
     //   `${OPENCONNECTOR}${API}${ENDPOINT}${VOORZIENING_GEBRUIK}`,
     VOORZIENING_GEBRUIK: (_id) =>
-      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken`,
+      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken?extend[]=voorzieningId`,
   }, // GET
   MENU: {
     INDEX: `${MENUS_ENDPOINT}`, // GET
