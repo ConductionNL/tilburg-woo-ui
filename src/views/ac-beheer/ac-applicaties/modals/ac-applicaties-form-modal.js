@@ -153,7 +153,9 @@ const AcApplicatiesFormModal = ({
           ? applicatie.functionaliteiten.join(', ')
           : applicatie.functionaliteiten,
         targetGroups: applicatie.doelgroep,
-        referenceComponents: smartSplit(collapseExtendedObjects(applicatie.referentieComponenten)),
+        referenceComponents: smartSplit(
+          collapseExtendedObjects(applicatie.referentieComponenten)
+        ),
         standards: smartSplit(collapseExtendedObjects(applicatie.standaarden)),
         voorzieningstype: applicatie.voorzieningstype,
       }));
@@ -329,7 +331,7 @@ const AcApplicatiesFormModal = ({
                 referenceComponents: e.map((item) => item.value),
               }));
             }}
-            loading={referentieComponentenLoading}
+            isLoading={referentieComponentenLoading}
             options={referentieComponentenOptions}
             closeMenuOnSelect={false}
             isMulti
@@ -351,8 +353,9 @@ const AcApplicatiesFormModal = ({
                 standards: e.map((item) => item.value),
               }));
             }}
-            loading={standaardenLoading}
+            isLoading={standaardenLoading}
             options={standaardenOptions}
+            isDisabled={!applicatieFormData?.referenceComponents.length}
             closeMenuOnSelect={false}
             isMulti
           />
