@@ -109,7 +109,14 @@ const AcDeleteGebruikersModal = ({
           icon: <VISUALS.TRASHCAN />,
           onClick: handleDeleteGebruiker,
         },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
       ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
