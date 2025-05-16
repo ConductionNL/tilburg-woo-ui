@@ -6,6 +6,7 @@ import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
+import { VISUALS } from '@constants';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -72,7 +73,15 @@ const AcDeleteVoorzieningVersieModal = ({
       title={`${
         voorzieningen.length === 1 ? 'Voorziening versie' : 'Voorziening versies'
       } verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteVoorziening }]}
+      buttons={[{ label: 'verwijderen', onClick: handleDeleteVoorziening },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}

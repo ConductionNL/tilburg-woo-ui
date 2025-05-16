@@ -5,77 +5,105 @@ import AcFlex from '@atoms/ac-flex/ac-flex';
 import AcButton from '@molecules/ac-button/ac-button';
 import clsx from 'clsx';
 
-const AcModal = React.forwardRef(({ id, title, disableDefaultButton, buttons, children, onClose, layoutClassName }, ref) => {
-  const [isOpen, setIsOpen] = useState(false);
+const AcModal = React.forwardRef(
+  (
+    {
+      id,
+      title,
+      disableDefaultButton,
+      buttonType,
+      buttons,
+      children,
+      onClose,
+      layoutClassName,
+    },
+    ref
+  ) => {
+    const [isOpen, setIsOpen] = useState(false);
 
-  const onCloseHandler = () => {
-    setIsOpen(false);
-    onClose && onClose();
-    ref?.current?.close();
-  };
+    const onCloseHandler = () => {
+      setIsOpen(false);
+      onClose && onClose();
+      ref?.current?.close();
+    };
 
-  const onBackdropClick = (event) => {
-    if (event.target !== ref.current) {
-      return;
-    }
+    const onBackdropClick = (event) => {
+      if (event.target !== ref.current) {
+        return;
+      }
 
-    setIsOpen(false);
-    ref?.current?.close();
-  };
+      setIsOpen(false);
+      ref?.current?.close();
+    };
 
-  const _CLASSES = clsx('ac-modal', isOpen && 'open', layoutClassName && layoutClassName);
+    const _CLASSES = clsx(
+      'ac-modal',
+      isOpen && 'open',
+      layoutClassName && layoutClassName
+    );
 
-  return (
-    <dialog id={id} className={_CLASSES} ref={ref} onClick={onBackdropClick}>
-      <div className='ac-modal__header'>
-        <AcFlex justifyContent='between' alignItems='center'>
-          <Heading level={2}>{title}</Heading>
-          <AcButton animate onClick={onCloseHandler}>
-            <VISUALS.CLOSE />
-            {LABELS.CLOSE}
-          </AcButton>
-        </AcFlex>
-      </div>
-      <div className='ac-modal__content'>{children}</div>
-      <div className='ac-modal__footer'>
-        <AcFlex spacing='sm'>
-          {!disableDefaultButton && (
-            <AcButton style='button' icon={<VISUALS.CLOSE />} onClick={onCloseHandler}>
+    return (
+      <dialog id={id} className={_CLASSES} ref={ref} onClick={onBackdropClick}>
+        <div className='ac-modal__header'>
+          <AcFlex justifyContent='between' alignItems='center'>
+            <Heading level={2}>{title}</Heading>
+            <AcButton animate onClick={onCloseHandler}>
+              <VISUALS.CLOSE />
               {LABELS.CLOSE}
             </AcButton>
-          )}
+          </AcFlex>
+        </div>
+        <div className='ac-modal__content'>{children}</div>
+        <div className='ac-modal__footer'>
+          <AcFlex spacing='sm'>
+            {!disableDefaultButton && (
+              <AcButton
+                style='button'
+                icon={<VISUALS.CLOSE />}
+                buttonType={buttonType}
+                onClick={onCloseHandler}
+              >
+                {LABELS.CLOSE}
+              </AcButton>
+            )}
 
-          {buttons?.map((button) => {
-            if (button.shareLink) {
+            {buttons?.map((button) => {
+              if (button.shareLink) {
+                return (
+                  <AcButton
+                    {...button}
+                    className={clsx(button.className, 'copy-button')}
+                    data-status={button.shareLinkStatus}
+                    style='button'
+                    aria-label={button.label}
+                  >
+                    <div class='particles'>
+                      <VISUALS.CHECK />
+                      <div class='particles-inner'>
+                        <VISUALS.PARTICLES />
+                      </div>
+                    </div>
+                    {button.label}
+                  </AcButton>
+                );
+              }
+
               return (
                 <AcButton
-                  className='copy-button'
-                  data-status={button.shareLinkStatus}
+                  {...button}
                   style='button'
+                  icon={button.icon}
                   onClick={button.onClick}
-                  aria-label={button.label}
                 >
-                  <div class='particles'>
-                    <VISUALS.CHECK />
-                    <div class='particles-inner'>
-                      <VISUALS.PARTICLES />
-                    </div>
-                  </div>
                   {button.label}
                 </AcButton>
               );
-            }
-
-            return (
-              <AcButton style='button' icon={button.icon} onClick={button.onClick}>
-                {button.label}
-              </AcButton>
-            );
-          })}
-        </AcFlex>
-      </div>
-    </dialog>
-  );
-});
+            })}
+          </AcFlex>
+        </div>
+      </dialog>
+    );
+  }
+);
 
 export default AcModal;

@@ -26,7 +26,7 @@ const AcDashboard = () => {
 
   const endpoints = [
     { id: '1', name: 'elements' },
-    // { id: '4', name: 'views' },
+    { id: '4', name: 'views' },
     { id: '3', name: 'relations' },
     { id: '2', name: 'model' },
   ];
@@ -89,6 +89,8 @@ const AcDashboard = () => {
     const url = `${BASE_URL}/apps/openconnector/api/endpoint/synchronize-model`;
     const accessToken = getCookie('nextcloud_access_token');
 
+    let modelData = [];
+
     setSyncGemmaLoading(true);
     setSyncGemmaResults([]);
 
@@ -116,7 +118,9 @@ const AcDashboard = () => {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${accessToken}`,
             },
-            source: archimateUrl,
+            body: JSON.stringify({
+              source: archimateUrl,
+            }),
           }
         );
 
@@ -136,6 +140,10 @@ const AcDashboard = () => {
         // Stop heartbeat checks when we get initial data
         if (heartbeatInterval) {
           clearInterval(heartbeatInterval);
+        }
+
+        if (apiCall.name === 'model') {
+          modelData = initialData;
         }
 
         setSyncGemmaResults((prev) =>
@@ -180,12 +188,10 @@ const AcDashboard = () => {
           // Start heartbeat checks immediately
           heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
 
-          // For later use
-          // const modelId = syncGemmaResults.find((item) => item.name === 'model')
-          //   .object.uuid;
+          const modelId = modelData.result._embed.contracts[0].targetId;
 
           const response = await fetch(
-            `${BASE_URL}/apps/openconnector/api/endpoint/connect-views/b1a49a19-9304-4d86-9c27-38e668978a1d`,
+            `${BASE_URL}/apps/openconnector/api/endpoint/connect-views/${modelId}`,
             {
               method: 'GET',
               headers: {

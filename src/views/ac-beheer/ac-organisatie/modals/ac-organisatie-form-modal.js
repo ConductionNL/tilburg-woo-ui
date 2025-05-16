@@ -126,7 +126,16 @@ const AcOrganisatieFormModal = ({
       ref={modalRef}
       id='edit-organisatie-modal'
       title={isEdit ? 'Organisatie bewerken' : 'Organisatie toevoegen'}
-      buttons={[{ label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit }]}
+      buttons={[
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         <AcFormField

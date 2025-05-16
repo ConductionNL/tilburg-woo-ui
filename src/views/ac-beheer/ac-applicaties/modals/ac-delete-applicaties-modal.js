@@ -88,7 +88,14 @@ const AcDeleteApplicatiesModal = ({
           icon: <VISUALS.TRASHCAN />,
           onClick: handleDeleteApplicatie,
         },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
       ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}

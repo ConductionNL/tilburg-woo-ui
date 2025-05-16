@@ -6,6 +6,7 @@ import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
+import { VISUALS } from '@constants';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -69,7 +70,15 @@ const AcDeleteGebruikenModal = ({
       ref={modalRef}
       id='delete-gebruik-modal'
       title={`${gebruiken.length === 1 ? 'Gebruik' : 'Gebruiken'} verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteGebruiken }]}
+      buttons={[{ label: 'verwijderen', onClick: handleDeleteGebruiken },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+      ]}
+      disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze {gebruiken.length === 1 ? 'gebruik' : 'gebruiken'}{' '}
