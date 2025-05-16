@@ -19,6 +19,7 @@ const AcFormField = ({
   value,
   fullWidth,
   headingLevel = 4,
+  disabled,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -46,6 +47,7 @@ const AcFormField = ({
         defaultValue={defaultValue}
         placeholder={placeholder}
         onBlur={onBlurHandler}
+        disabled={disabled}
         onKeyDown={onKeyDown}
         onChange={onChangeHandler}
         value={value}

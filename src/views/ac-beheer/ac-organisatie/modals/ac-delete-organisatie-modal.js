@@ -47,10 +47,8 @@ const AcDeleteOrganisatiesModal = ({
 
       await Promise.all(deletePromises);
 
-      if (deletePromises.some((response) => response.ok)) {
-        onSuccess?.();
-        modalRef?.current?.close();
-      }
+      onSuccess?.();
+      modalRef?.current?.close();
     } catch (err) {
       console.error(err);
       setError(err);
