@@ -19,6 +19,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -116,6 +117,12 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+                      <ConActionMenu.Button
+                        icon={<VISUALS.HAND_HOLDING />}
+                        onClick={() => setOpenModal('addDienst')}
+                      >
+                        Dienst toevoegen
+                      </ConActionMenu.Button>
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -166,6 +173,18 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   onSuccess={() => {
                     navigate('/beheer/applicaties');
                   }}
+                />
+
+                <AcDienstFormModal
+                  showModal={openModal === 'addDienst'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={async (e) => {
+                    const data = await e.json();
+                    navigate(`/beheer/diensten/${data.id}`);
+                  }}
+                  preSelectedVoorziening={data.id}
                 />
               </AcFlex>
             )}
