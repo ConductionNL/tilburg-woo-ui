@@ -89,12 +89,10 @@ export class MenuStore {
     app.store.api.menu
       .list()
       .then((response) => {
-        if (hostname === 'horstadmaas.accept.opencatalogi.nl') {
-          this.setMenus(response.results);
-        } else if (response.data) {
+        if (response.data) {
           this.setMenus(response.data);
         } else {
-          this.setMenus(response);
+          this.setMenus(response.results);
         }
       })
       .catch((e) => console.error(e))

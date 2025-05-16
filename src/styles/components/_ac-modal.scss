@@ -12,6 +12,10 @@
   opacity: 0;
   overscroll-behavior-y: contain;
 
+  &.wide-content {
+    inline-size: min(80%, 800px) !important;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     transition-property: display, opacity, translate, overlay;
     transition-duration: var(--transition-speed);
@@ -73,6 +77,13 @@
 
   &:not(:has(.ac-modal__footer)) {
     padding-block-end: var(--tilburg-space-row-rat);
+  }
+
+  &-grid-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tilburg-space-row-rat);
+    justify-content: end;
   }
 }
 

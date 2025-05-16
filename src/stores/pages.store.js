@@ -83,12 +83,10 @@ export class PagesStore {
     app.store.api.pages
       .list()
       .then((response) => {
-        if (hostname === 'horstadmaas.accept.opencatalogi.nl') {
-          this.setPages(response.results);
-        } else if (response.data) {
+        if (response.data) {
           this.setPages(response.data);
         } else {
-          this.setPages(response);
+          this.setPages(response.results);
         }
       })
       .catch((e) => console.error(e))

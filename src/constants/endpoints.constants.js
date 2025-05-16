@@ -36,20 +36,11 @@ const getGemmaEndpoint = () => {
   }
 };
 
-const PAGES_ENDPOINT =
-  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${PAGES}`
-    : `${OPENCATALOGI}${API}${PUBLIC}${PAGES}`;
+const PAGES_ENDPOINT = `${OPENCATALOGI}${API}${PAGES}`;
 
-const MENUS_ENDPOINT =
-  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${MENUS}s`
-    : `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`;
+const MENUS_ENDPOINT = `${OPENCATALOGI}${API}${MENUS}s`;
 
-const THEMES_ENDPOINT =
-  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${THEMES}`
-    : `${OPENCATALOGI}${API}${PUBLIC}${THEMES}`;
+const THEMES_ENDPOINT = `${OPENCATALOGI}${API}${THEMES}`;
 
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
