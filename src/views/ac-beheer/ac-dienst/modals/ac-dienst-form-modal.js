@@ -11,7 +11,7 @@ import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import licenses from '@assets/licenses/licenses.json';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
-
+import clsx from 'clsx';
 const AcDienstFormModal = ({
   dienst,
   showModal = false,
@@ -214,7 +214,10 @@ const AcDienstFormModal = ({
           </label>
           <ReactSelect
             placeholder='Selecteer een voorziening'
-            className='ac-beheer-select'
+            className={clsx(
+              'ac-beheer-select',
+              preSelectedVoorziening && 'ac-beheer-select--disabled'
+            )}
             value={voorzieningOptions?.filter(
               (option) => dienstFormData?.voorziening === option.value
             )}
