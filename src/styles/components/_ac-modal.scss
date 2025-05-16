@@ -12,6 +12,10 @@
   opacity: 0;
   overscroll-behavior-y: contain;
 
+  &.wide-content {
+    inline-size: min(80%, 800px) !important;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     transition-property: display, opacity, translate, overlay;
     transition-duration: var(--transition-speed);

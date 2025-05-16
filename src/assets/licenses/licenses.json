@@ -234,12 +234,6 @@
         "URL": "https://opensource.org/license/gpl-3-0"
     },
     {
-        "name": "GNU General Public License, version 1",
-        "SPDX ID": "",
-        "category": "Superseded",
-        "URL": "https://opensource.org/license/gpl-1-0"
-    },
-    {
         "name": "GNU Lesser General Public License version 2.1",
         "SPDX ID": "LGPL-2.1",
         "category": "Popular / Strong Community",
@@ -294,12 +288,6 @@
         "URL": "https://opensource.org/license/isc-license-txt"
     },
     {
-        "name": "Jabber Open Source License",
-        "SPDX ID": "",
-        "category": "Voluntarily retired",
-        "URL": "https://opensource.org/license/jabberpl-php"
-    },
-    {
         "name": "JAM License",
         "SPDX ID": "Jam",
         "category": "Other/Miscellaneous",
@@ -336,12 +324,6 @@
         "URL": "https://opensource.org/license/liliq-r-1-1"
     },
     {
-        "name": "Los Alamos National Labs BSD-3 Variant",
-        "SPDX ID": "",
-        "category": "Non-Reusable",
-        "URL": "https://opensource.org/license/los-alamos-national-labs-bsd-3-variant"
-    },
-    {
         "name": "Lucent Public License Version 1.02",
         "SPDX ID": "LPL-1.02",
         "category": "Redundant with more popular",
@@ -376,12 +358,6 @@
         "SPDX ID": "MIT-0",
         "category": "Other/Miscellaneous",
         "URL": "https://opensource.org/license/mit-0"
-    },
-    {
-        "name": "MITRE Collaborative Virtual Workspace License",
-        "SPDX ID": "",
-        "category": "Voluntarily retired",
-        "URL": "https://opensource.org/license/cvw"
     },
     {
         "name": "Motosoto Open Source License",
@@ -478,12 +454,6 @@
         "SPDX ID": "OLDAP-2.8",
         "category": "Redundant with more popular",
         "URL": "https://opensource.org/license/oldap-2-8"
-    },
-    {
-        "name": "OSC License 1.0",
-        "SPDX ID": "",
-        "category": "International",
-        "URL": "https://opensource.org/license/osc-license-1-0"
     },
     {
         "name": "OSET Public License version 2.1",
@@ -588,12 +558,6 @@
         "URL": "https://opensource.org/license/nethack"
     },
     {
-        "name": "The OCLC Research Public License 2.0 License",
-        "SPDX ID": "",
-        "category": "Non-Reusable",
-        "URL": "https://opensource.org/license/oclc2-php"
-    },
-    {
         "name": "The Open Software License 3.0",
         "SPDX ID": "OSL-3.0",
         "category": "Other/Miscellaneous",
@@ -676,12 +640,6 @@
         "SPDX ID": "Zlib",
         "category": "Other/Miscellaneous",
         "URL": "https://opensource.org/license/zlib"
-    },
-    {
-        "name": "UNICODE LICENSE V3",
-        "SPDX ID": "",
-        "category": "Special Purpose",
-        "URL": "https://opensource.org/license/unicode-license-v3"
     },
     {
         "name": "Unicode, Inc. License Agreement – Data Files and Software",

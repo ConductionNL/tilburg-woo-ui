@@ -9,6 +9,8 @@ import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import licenses from '@assets/licenses/licenses.json';
+import AcGrid from '@src/atoms/ac-grid/ac-grid';
 
 const AcDienstFormModal = ({
   dienst,
@@ -29,6 +31,7 @@ const AcDienstFormModal = ({
     prijsmodel: '',
     certificeringen: '',
     ondersteundeStandaarden: '',
+    licentiemodel: '',
   };
 
   const [dienstFormData, setDienstFormData] = useState({});
@@ -37,6 +40,16 @@ const AcDienstFormModal = ({
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
   const [leverancierOptions, setLeverancierOptions] = useState([]);
   const [leveranciersLoading, setLeveranciersLoading] = useState(false);
+
+  const [licenseOptions, setLicenseOptions] = useState([]);
+  useEffect(() => {
+    setLicenseOptions(
+      licenses.map((license) => ({
+        label: license.name,
+        value: license['SPDX ID'],
+      }))
+    );
+  }, []);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -182,6 +195,7 @@ const AcDienstFormModal = ({
       ref={modalRef}
       id='edit-dienst-modal'
       title={isEdit ? 'Dienst bewerken' : 'Dienst toevoegen'}
+      layoutClassName='wide-content'
       buttons={[
         { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
@@ -193,7 +207,7 @@ const AcDienstFormModal = ({
       ]}
       disableDefaultButton
     >
-      <AcFlex column spacing='sm'>
+      <AcGrid columns={2}>
         <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Voorziening</h4>
@@ -248,10 +262,10 @@ const AcDienstFormModal = ({
           value={dienstFormData.ondersteuningsopties}
         />
         <AcFormField
-          label='Prijsmodel'
+          label='Ondersteunde standaarden'
           type='text'
-          onBlur={handleEditDienstFieldChange('prijsmodel')}
-          value={dienstFormData.prijsmodel}
+          onBlur={handleEditDienstFieldChange('ondersteundeStandaarden')}
+          value={dienstFormData.ondersteundeStandaarden}
         />
         <AcFormField
           label='Certificeringen'
@@ -260,12 +274,31 @@ const AcDienstFormModal = ({
           value={dienstFormData.certificeringen}
         />
         <AcFormField
-          label='Ondersteunde standaarden'
+          label='Prijsmodel'
           type='text'
-          onBlur={handleEditDienstFieldChange('ondersteundeStandaarden')}
-          value={dienstFormData.ondersteundeStandaarden}
+          onBlur={handleEditDienstFieldChange('prijsmodel')}
+          value={dienstFormData.prijsmodel}
         />
-      </AcFlex>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Licentiemodel</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een licentiemodel'
+            className='ac-beheer-select'
+            value={licenseOptions?.filter(
+              (option) => dienstFormData?.licentiemodel === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                licentiemodel: e.value,
+              }));
+            }}
+            options={licenseOptions}
+          />
+        </div>
+      </AcGrid>
     </AcModal>
   );
 
