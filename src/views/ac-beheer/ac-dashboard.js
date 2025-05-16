@@ -13,6 +13,7 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
+import { BASE_URL } from './ac-beheer';
 import ConActionMenu from './con-action-menu';
 import _ from 'lodash';
 
@@ -25,7 +26,7 @@ const AcDashboard = () => {
 
   const endpoints = [
     { id: '1', name: 'elements' },
-    // { id: '4', name: 'views' },
+    { id: '4', name: 'views' },
     { id: '3', name: 'relations' },
     { id: '2', name: 'model' },
   ];
@@ -39,16 +40,11 @@ const AcDashboard = () => {
 
   const hostname = window.location.hostname;
 
-  const baseUrl =
-    hostname === 'vng.test.opencatalogi.nl'
-      ? 'https://vng.test.commonground.nu'
-      : 'https://vng.accept.commonground.nu';
-
   const handleSyncGemma = () => syncGemmaRef?.current?.showModal();
 
   const checkHeartbeat = async (apiCall) => {
     try {
-      const response = await fetch(`${baseUrl}/status.php`, {
+      const response = await fetch(`${BASE_URL}/status.php`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -90,8 +86,10 @@ const AcDashboard = () => {
   };
 
   const syncGemma = () => {
-    const url = `${baseUrl}/apps/openconnector/api/endpoint/synchronize-model`;
+    const url = `${BASE_URL}/apps/openconnector/api/endpoint/synchronize-model`;
     const accessToken = getCookie('nextcloud_access_token');
+
+    let modelData = [];
 
     setSyncGemmaLoading(true);
     setSyncGemmaResults([]);
@@ -113,14 +111,16 @@ const AcDashboard = () => {
 
         // Make the initial API call
         const response = await fetch(
-          `${baseUrl}/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
+          `${BASE_URL}/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${accessToken}`,
             },
-            source: archimateUrl,
+            body: JSON.stringify({
+              source: archimateUrl,
+            }),
           }
         );
 
@@ -140,6 +140,10 @@ const AcDashboard = () => {
         // Stop heartbeat checks when we get initial data
         if (heartbeatInterval) {
           clearInterval(heartbeatInterval);
+        }
+
+        if (apiCall.name === 'model') {
+          modelData = initialData;
         }
 
         setSyncGemmaResults((prev) =>
@@ -171,74 +175,76 @@ const AcDashboard = () => {
     });
 
     Promise.all(apiPromises)
-      // .then(async () => {
-      //   // Add the connect-views API call after initial sync
-      //   setSyncGemmaResults((prev) => [
-      //     ...prev,
-      //     { name: 'connect-views', status: 'loading' },
-      //   ]);
+      .then(async () => {
+        // Add the connect-views API call after initial sync
+        setSyncGemmaResults((prev) => [
+          ...prev,
+          { name: 'connect-views', status: 'loading' },
+        ]);
 
-      //   let heartbeatInterval;
+        let heartbeatInterval;
 
-      //   try {
-      //     // Start heartbeat checks immediately
-      //     heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
+        try {
+          // Start heartbeat checks immediately
+          heartbeatInterval = await startHeartbeatChecks({ name: 'connect-views' });
 
-      //     const response = await fetch(
-      //       `${baseUrl}/apps/openconnector/api/endpoint/connect-views/137f6f45-2163-4dd4-957f-aeebc40e3136`,
-      //       {
-      //         method: 'GET',
-      //         headers: {
-      //           'Content-Type': 'application/json',
-      //           Authorization: `Bearer ${accessToken}`,
-      //         },
-      //       }
-      //     );
-      //     // Clone the response before reading it
-      //     const responseClone = response.clone();
-      //     const responseData = await responseClone.json();
+          const modelId = modelData.result._embed.contracts[0].targetId;
 
-      //     if (!response.ok) {
-      //       throw new Error(
-      //         responseData?.message ||
-      //           `Synchronization failed with status: ${response.status}`
-      //       );
-      //     }
+          const response = await fetch(
+            `${BASE_URL}/apps/openconnector/api/endpoint/connect-views/${modelId}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+          // Clone the response before reading it
+          const responseClone = response.clone();
+          const responseData = await responseClone.json();
 
-      //     const connectViewsData = await response.json();
+          if (!response.ok) {
+            throw new Error(
+              responseData?.message ||
+                `Synchronization failed with status: ${response.status}`
+            );
+          }
 
-      //     // Stop heartbeat checks when we get connectViewsData
-      //     if (heartbeatInterval) {
-      //       clearInterval(heartbeatInterval);
-      //     }
+          const connectViewsData = await response.json();
 
-      //     setSyncGemmaResults((prev) =>
-      //       prev.map((item) =>
-      //         item.name === 'connect-views'
-      //           ? { ...item, status: 'success', object: connectViewsData }
-      //           : item
-      //       )
-      //     );
-      //   } catch (error) {
-      //     // Stop heartbeat checks on error
-      //     if (heartbeatInterval) {
-      //       clearInterval(heartbeatInterval);
-      //     }
+          // Stop heartbeat checks when we get connectViewsData
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+          }
 
-      //     console.error('Error in connect-views:', error);
-      //     setSyncGemmaResults((prev) =>
-      //       prev.map((item) =>
-      //         item.name === 'connect-views'
-      //           ? {
-      //               ...item,
-      //               status: 'error',
-      //               object: { error: { message: error.message } },
-      //             }
-      //           : item
-      //       )
-      //     );
-      //   }
-      // })
+          setSyncGemmaResults((prev) =>
+            prev.map((item) =>
+              item.name === 'connect-views'
+                ? { ...item, status: 'success', object: connectViewsData }
+                : item
+            )
+          );
+        } catch (error) {
+          // Stop heartbeat checks on error
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+          }
+
+          console.error('Error in connect-views:', error);
+          setSyncGemmaResults((prev) =>
+            prev.map((item) =>
+              item.name === 'connect-views'
+                ? {
+                    ...item,
+                    status: 'error',
+                    object: { error: { message: error.message } },
+                  }
+                : item
+            )
+          );
+        }
+      })
       .finally(() => {
         setSyncGemmaLoading(false);
         setSyncGemmaSuccess(true);
@@ -274,7 +280,7 @@ const AcDashboard = () => {
     setModelsLoading(true);
 
     const response = await fetch(
-      `${baseUrl}/apps/openconnector/api/endpoint/models`,
+      `${BASE_URL}/apps/openconnector/api/endpoint/models`,
       {
         method: 'GET',
         headers: {
@@ -343,57 +349,62 @@ const AcDashboard = () => {
       </AcButton>
       <div className='ac-gemma-sync-modal__cards-container'>
         {(syncGemmaLoading || syncGemmaSuccess) &&
-          syncGemmaResults.map((result) => (
-            <AcCard>
-              <div className='ac-gemma-sync-result'>
-                {getImage(result.status)}
-                <span>{_.upperFirst(result.name)}</span>
-              </div>
-              {result.status === 'success' && (
-                <Table>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>synchronizationId</TableCell>
-                      <TableCell>{result.object.synchronizationId}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell> Aantal objecten gevonden</TableCell>
-                      <TableCell> {result.object.result.objects.found}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell> Aantal objecten aangemaakt</TableCell>
-                      <TableCell> {result.object.result.objects.created}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Aantal objecten bijgewerkt</TableCell>
-                      <TableCell>{result.object.result.objects.updated}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Aantal objecten verwijderd</TableCell>
-                      <TableCell>{result.object.result.objects.deleted}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Aantal objecten overgeslagen</TableCell>
-                      <TableCell>{result.object.result.objects.deleted}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Aantal objecten ongeldig</TableCell>
-                      <TableCell>{result.object.result.objects.deleted}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              )}
-              {result.status === 'error' && (
-                <div className='ac-gemma-sync-result__error'>
-                  <span>
-                    Error:{' '}
-                    {result.object?.error?.message ||
-                      'An unknown error occurred during synchronization'}
-                  </span>
+          syncGemmaResults.map((result) => {
+            if (result.name === 'connect-views') {
+              return <></>;
+            }
+            return (
+              <AcCard>
+                <div className='ac-gemma-sync-result'>
+                  {getImage(result.status)}
+                  <span>{_.upperFirst(result.name)}</span>
                 </div>
-              )}
-            </AcCard>
-          ))}
+                {result.status === 'success' && (
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>synchronizationId</TableCell>
+                        <TableCell>{result.object.synchronizationId}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell> Aantal objecten gevonden</TableCell>
+                        <TableCell> {result.object.result.objects.found}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell> Aantal objecten aangemaakt</TableCell>
+                        <TableCell>{result.object.result.objects.created}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Aantal objecten bijgewerkt</TableCell>
+                        <TableCell>{result.object.result.objects.updated}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Aantal objecten verwijderd</TableCell>
+                        <TableCell>{result.object.result.objects.deleted}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Aantal objecten overgeslagen</TableCell>
+                        <TableCell>{result.object.result.objects.skipped}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Aantal objecten ongeldig</TableCell>
+                        <TableCell>{result.object.result.objects.invalid}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
+                {result.status === 'error' && (
+                  <div className='ac-gemma-sync-result__error'>
+                    <span>
+                      Error:{' '}
+                      {result.object?.error?.message ||
+                        'An unknown error occurred during synchronization'}
+                    </span>
+                  </div>
+                )}
+              </AcCard>
+            );
+          })}
       </div>
     </AcModal>
   );
@@ -402,7 +413,7 @@ const AcDashboard = () => {
     setModelLoading(true);
 
     try {
-      const url = `${baseUrl}/apps/openconnector/api/endpoint/model/${model.id}?organisatie=89e904fc-e0c5-4fc0-ba0f-adf9c4be42a9`;
+      const url = `${BASE_URL}/apps/openconnector/api/endpoint/model/${model.id}?organisatie=89e904fc-e0c5-4fc0-ba0f-adf9c4be42a9`;
       window.open(url, '_blank');
 
       // TODO: download model back to original with correct disposition name

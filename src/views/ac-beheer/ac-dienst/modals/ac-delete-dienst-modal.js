@@ -7,6 +7,9 @@ import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
+import { VISUALS } from '@constants';
+
+
 /**
  * modal to delete 1 or multiple voorzieningen
  * @param {object[]} voorzieningen - array of voorzieningen

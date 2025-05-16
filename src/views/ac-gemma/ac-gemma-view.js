@@ -84,11 +84,11 @@ const AcGemmaView = ({ store: { gemma } }) => {
           const nodeData = node.element;
 
           return {
-            name: nodeData.name,
-            id: nodeData.identifier,
-            description: nodeData.documentation,
-            type: nodeData.type,
-            properties: nodeData.properties,
+            name: nodeData?.name || node.name,
+            id: nodeData?.identifier || node.elementRef,
+            description: nodeData?.documentation || node.documentation,
+            type: nodeData?.type || 'dataobject',
+            properties: nodeData?.properties || node.properties,
             parent: null,
           };
         })
@@ -108,12 +108,12 @@ const AcGemmaView = ({ store: { gemma } }) => {
             const childData = child.element;
 
             const childNode = {
-              name: childData.name || 'unknown',
-              id: childData.identifier,
-              description: childData.documentation || undefined,
-              type: childData.type || undefined,
+              name: childData?.name || 'unknown',
+              id: childData?.identifier || child.elementRef,
+              description: childData?.documentation || child.documentation,
+              type: childData?.type || 'dataobject',
               parent: node.elementRef,
-              properties: childData.properties || undefined,
+              properties: childData?.properties || child.properties,
             };
 
             viewNodesData.push(childNode);
@@ -226,8 +226,8 @@ const AcGemmaView = ({ store: { gemma } }) => {
                   item.propertyDefinitionRef === 'propid-61' ||
                   item.propertyDefinitionRef === 'propid-62'
               )?.value || undefined,
-            id: relationshipData.identifier,
-            type: relationshipData.type || undefined,
+            id: relationshipData?.identifier || relationship.relationshipRef,
+            type: relationshipData?.type || undefined,
           };
         }
       );
@@ -537,11 +537,19 @@ const AcGemmaView = ({ store: { gemma } }) => {
       (relationship) => relationship !== undefined
     );
 
+    const addSuffix = (id, suffix = '-sc') => {
+      return id.endsWith(suffix) ? id : `${id}${suffix}`;
+    };
+
     // Render the graph
     ViewRenderer.renderToGraph(
       outputGraph,
       viewNodes,
-      viewRelationships,
+      viewRelationships.map((rel) => ({
+        ...rel,
+        sourceId: addSuffix(rel.sourceId),
+        targetId: addSuffix(rel.targetId),
+      })),
       new ViewSettings({
         archimateVersion: '<=3.1',
         style: 'hybrid',
@@ -695,189 +703,224 @@ const AcGemmaView = ({ store: { gemma } }) => {
   const [panZoomInstance, setPanZoomInstance] = useState(null);
 
   useEffect(() => {
-    if (!gemma.get_view || !viewIsDoneLoading) return;
+    // Only initialize when view is fully loaded and rendered
+    if (
+      !gemma.get_view ||
+      !viewIsDoneLoading ||
+      !viewNodesData ||
+      !viewRelationsData
+    )
+      return;
 
-    const svg = document.getElementById('svg-container');
-    if (!svg) return;
+    // Add a small delay to ensure DOM is fully updated
+    const initTimer = setTimeout(() => {
+      const svg = document.getElementById('svg-container');
+      if (!svg) return;
 
-    let svgHovered = false;
-    let touchStarted = false;
-    let initialPinchDistance = null;
-    let initialScale = null;
-    let lastPinchCenter = null;
+      // Clean up existing instance and controls
+      try {
+        if (panZoomInstance && typeof panZoomInstance.destroy === 'function') {
+          panZoomInstance.destroy();
+        }
+        const existingControls = svg.querySelector('.svg-pan-zoom-control');
+        if (existingControls) {
+          existingControls.remove();
+        }
+      } catch (error) {
+        console.warn('Error cleaning up pan-zoom instance:', error);
+      }
 
-    const instance = svgPanZoom(svg, {
-      zoomEnabled: true,
-      controlIconsEnabled: true,
-      fit: true,
-      center: true,
-      minZoom: 0.1,
-      maxZoom: 10,
-      zoomScaleSensitivity: 0.5,
-      customEventsHandler: {
-        haltEventListeners: [
-          'touchstart',
-          'touchend',
-          'touchmove',
-          'touchleave',
-          'touchcancel',
-        ],
-        init: function (options) {
-          function updateSvgClassName() {
-            options.svgElement.setAttribute('class', svgHovered ? 'hovered' : '');
-          }
+      // Reset transformations
+      const existingGroup = svg.querySelector('g');
+      if (existingGroup) {
+        existingGroup.setAttribute('transform', 'translate(0,0) scale(1)');
+      }
 
-          function getTouchCenter(touch1, touch2) {
-            const rect = options.svgElement.getBoundingClientRect();
-            return {
-              x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
-              y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
-            };
-          }
+      let svgHovered = false;
+      let touchStarted = false;
+      let initialPinchDistance = null;
+      let initialScale = null;
+      let lastPinchCenter = null;
 
-          function getRelativePoint(svgElement, x, y) {
-            const ctm = svgElement.getScreenCTM();
-            const point = svgElement.createSVGPoint();
-            point.x = x;
-            point.y = y;
-            return point.matrixTransform(ctm.inverse());
-          }
+      const instance = svgPanZoom(svg, {
+        zoomEnabled: true,
+        controlIconsEnabled: true,
+        fit: true,
+        center: true,
+        minZoom: 0.1,
+        maxZoom: 10,
+        zoomScaleSensitivity: 0.5,
+        customEventsHandler: {
+          haltEventListeners: [
+            'touchstart',
+            'touchend',
+            'touchmove',
+            'touchleave',
+            'touchcancel',
+          ],
+          init: function (options) {
+            function updateSvgClassName() {
+              options.svgElement.setAttribute('class', svgHovered ? 'hovered' : '');
+            }
 
-          this.listeners = {
-            mouseenter: function () {
-              svgHovered = true;
-              options.instance.enableZoom();
-              updateSvgClassName();
-            },
-            mouseleave: function () {
-              svgHovered = false;
-              updateSvgClassName();
-            },
-            touchstart: function (evt) {
-              touchStarted = true;
-              if (evt.touches.length === 2) {
-                const touch1 = evt.touches[0];
-                const touch2 = evt.touches[1];
+            function getTouchCenter(touch1, touch2) {
+              const rect = options.svgElement.getBoundingClientRect();
+              return {
+                x: (touch1.clientX + touch2.clientX) / 2 - rect.left,
+                y: (touch1.clientY + touch2.clientY) / 2 - rect.top,
+              };
+            }
 
-                initialPinchDistance = Math.hypot(
-                  touch2.clientX - touch1.clientX,
-                  touch2.clientY - touch1.clientY
-                );
+            function getRelativePoint(svgElement, x, y) {
+              const ctm = svgElement.getScreenCTM();
+              const point = svgElement.createSVGPoint();
+              point.x = x;
+              point.y = y;
+              return point.matrixTransform(ctm.inverse());
+            }
 
-                lastPinchCenter = getTouchCenter(touch1, touch2);
-                initialScale = options.instance.getZoom();
-              }
-              evt.preventDefault();
-            },
-            touchmove: function (evt) {
-              if (!touchStarted) return;
+            this.listeners = {
+              mouseenter: function () {
+                svgHovered = true;
+                options.instance.enableZoom();
+                updateSvgClassName();
+              },
+              mouseleave: function () {
+                svgHovered = false;
+                updateSvgClassName();
+              },
+              touchstart: function (evt) {
+                touchStarted = true;
+                if (evt.touches.length === 2) {
+                  const touch1 = evt.touches[0];
+                  const touch2 = evt.touches[1];
 
-              evt.preventDefault();
-
-              if (evt.touches.length === 2) {
-                const touch1 = evt.touches[0];
-                const touch2 = evt.touches[1];
-
-                // Calculate new distance and center point
-                const currentDistance = Math.hypot(
-                  touch2.clientX - touch1.clientX,
-                  touch2.clientY - touch1.clientY
-                );
-
-                const currentCenter = getTouchCenter(touch1, touch2);
-
-                if (initialPinchDistance && initialScale && lastPinchCenter) {
-                  // Calculate scale change
-                  const scaleFactor = currentDistance / initialPinchDistance;
-                  const newScale = Math.min(
-                    Math.max(initialScale * scaleFactor, 0.1),
-                    10
+                  initialPinchDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
                   );
 
-                  // Get the relative point in SVG coordinates
-                  const svgPoint = getRelativePoint(
-                    options.svgElement,
-                    currentCenter.x,
-                    currentCenter.y
-                  );
-
-                  // Calculate the zoom center point
-                  const zoomPoint = {
-                    x: svgPoint.x,
-                    y: svgPoint.y,
-                  };
-
-                  // Apply zoom centered on the pinch point
-                  options.instance.zoom(newScale, zoomPoint);
-
-                  // Calculate and apply the pan adjustment
-                  if (lastPinchCenter) {
-                    const dx = currentCenter.x - lastPinchCenter.x;
-                    const dy = currentCenter.y - lastPinchCenter.y;
-                    options.instance.panBy({ x: dx, y: dy });
-                  }
-
-                  lastPinchCenter = currentCenter;
+                  lastPinchCenter = getTouchCenter(touch1, touch2);
+                  initialScale = options.instance.getZoom();
                 }
-              } else if (evt.touches.length === 1) {
-                // Handle single touch pan
-                const touch = evt.touches[0];
-                const dx = touch.clientX - (this.lastX || touch.clientX);
-                const dy = touch.clientY - (this.lastY || touch.clientY);
+                evt.preventDefault();
+              },
+              touchmove: function (evt) {
+                if (!touchStarted) return;
 
-                options.instance.panBy({ x: dx, y: dy });
+                evt.preventDefault();
 
-                this.lastX = touch.clientX;
-                this.lastY = touch.clientY;
-              }
-            },
-            touchend: function () {
-              touchStarted = false;
-              initialPinchDistance = null;
-              initialScale = null;
-              lastPinchCenter = null;
-              delete this.lastX;
-              delete this.lastY;
-            },
-            touchcancel: function () {
-              touchStarted = false;
-              initialPinchDistance = null;
-              initialScale = null;
-              lastPinchCenter = null;
-              delete this.lastX;
-              delete this.lastY;
-            },
-          };
+                if (evt.touches.length === 2) {
+                  const touch1 = evt.touches[0];
+                  const touch2 = evt.touches[1];
 
-          this.listeners.mousemove = this.listeners.mouseenter;
+                  // Calculate new distance and center point
+                  const currentDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                  );
 
-          // Add event listeners
-          for (const eventName in this.listeners) {
-            options.svgElement.addEventListener(
-              eventName,
-              this.listeners[eventName]
-            );
-          }
+                  const currentCenter = getTouchCenter(touch1, touch2);
+
+                  if (initialPinchDistance && initialScale && lastPinchCenter) {
+                    // Calculate scale change
+                    const scaleFactor = currentDistance / initialPinchDistance;
+                    const newScale = Math.min(
+                      Math.max(initialScale * scaleFactor, 0.1),
+                      10
+                    );
+
+                    // Get the relative point in SVG coordinates
+                    const svgPoint = getRelativePoint(
+                      options.svgElement,
+                      currentCenter.x,
+                      currentCenter.y
+                    );
+
+                    // Calculate the zoom center point
+                    const zoomPoint = {
+                      x: svgPoint.x,
+                      y: svgPoint.y,
+                    };
+
+                    // Apply zoom centered on the pinch point
+                    options.instance.zoom(newScale, zoomPoint);
+
+                    // Calculate and apply the pan adjustment
+                    if (lastPinchCenter) {
+                      const dx = currentCenter.x - lastPinchCenter.x;
+                      const dy = currentCenter.y - lastPinchCenter.y;
+                      options.instance.panBy({ x: dx, y: dy });
+                    }
+
+                    lastPinchCenter = currentCenter;
+                  }
+                } else if (evt.touches.length === 1) {
+                  // Handle single touch pan
+                  const touch = evt.touches[0];
+                  const dx = touch.clientX - (this.lastX || touch.clientX);
+                  const dy = touch.clientY - (this.lastY || touch.clientY);
+
+                  options.instance.panBy({ x: dx, y: dy });
+
+                  this.lastX = touch.clientX;
+                  this.lastY = touch.clientY;
+                }
+              },
+              touchend: function () {
+                touchStarted = false;
+                initialPinchDistance = null;
+                initialScale = null;
+                lastPinchCenter = null;
+                delete this.lastX;
+                delete this.lastY;
+              },
+              touchcancel: function () {
+                touchStarted = false;
+                initialPinchDistance = null;
+                initialScale = null;
+                lastPinchCenter = null;
+                delete this.lastX;
+                delete this.lastY;
+              },
+            };
+
+            this.listeners.mousemove = this.listeners.mouseenter;
+
+            // Add event listeners
+            for (const eventName in this.listeners) {
+              options.svgElement.addEventListener(
+                eventName,
+                this.listeners[eventName]
+              );
+            }
+          },
+          destroy: function (options) {
+            for (const eventName in this.listeners) {
+              options.svgElement.removeEventListener(
+                eventName,
+                this.listeners[eventName]
+              );
+            }
+          },
         },
-        destroy: function (options) {
-          for (const eventName in this.listeners) {
-            options.svgElement.removeEventListener(
-              eventName,
-              this.listeners[eventName]
-            );
-          }
-        },
-      },
-    });
+      });
 
-    setPanZoomInstance(instance);
+      setPanZoomInstance(instance);
+    }, 100); // Small delay to ensure DOM is ready
 
     return () => {
-      if (instance) {
-        instance.destroy();
+      clearTimeout(initTimer);
+      try {
+        if (panZoomInstance && typeof panZoomInstance.destroy === 'function') {
+          panZoomInstance.destroy();
+        }
+      } catch (error) {
+        console.warn('Error cleaning up pan-zoom instance:', error);
       }
+      setPanZoomInstance(null);
     };
-  }, [gemma.get_view, viewIsDoneLoading]);
+  }, [gemma.get_view, viewIsDoneLoading, viewNodesData, viewRelationsData]); // Add viewNodesData and viewRelationsData as dependencies
 
   //////////////////// End Scrolling ///////////////////////////
 
