@@ -36,20 +36,11 @@ const getGemmaEndpoint = () => {
   }
 };
 
-const PAGES_ENDPOINT =
-  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${PAGES}`
-    : `${OPENCATALOGI}${API}${PUBLIC}${PAGES}`;
+const PAGES_ENDPOINT = `${OPENCATALOGI}${API}${PAGES}`;
 
-const MENUS_ENDPOINT =
-  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${MENUS}s`
-    : `${OPENCATALOGI}${API}${PUBLIC}${MENUS}`;
+const MENUS_ENDPOINT = `${OPENCATALOGI}${API}${MENUS}s`;
 
-const THEMES_ENDPOINT =
-  HOSTNAME === 'horstadmaas.accept.opencatalogi.nl'
-    ? `${OPENCATALOGI}${API}${THEMES}`
-    : `${OPENCATALOGI}${API}${PUBLIC}${THEMES}`;
+const THEMES_ENDPOINT = `${OPENCATALOGI}${API}${THEMES}`;
 
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
@@ -84,7 +75,7 @@ export const ENDPOINTS = AcLockObject({
   },
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
-    VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views`,
+    VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views?_fields[]=name&_fields[]=id&_fields[]=identifier&_fields[]=properties`,
     // VIEW: (_id) => `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}/${_id}?extend=all`,
     VIEW: (_id) =>
       `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views/${_id}`,

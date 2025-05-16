@@ -33,17 +33,41 @@ const AcGemmaView = ({ store: { gemma } }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [voorzieningGebruikNodes, setVoorzieningGebruikNodes] = useState(null);
+  const [propertyDefinitions, setPropertyDefinitions] = useState(null);
+
+  const getPropertyDefinitions = async () => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/apps/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
+      );
+      const data = await response.json();
+
+      setPropertyDefinitions(data.results[0].propertyDefinitions);
+    } catch (error) {
+      console.error(`Error fetching node data: ${error}`);
+      return null;
+    }
+  };
 
   const getViewName = (view) => {
+    const propertyDefinitionRef = propertyDefinitions.find(
+      (property) => property.name === 'Titel view SWC'
+    )?.identifier;
     return (
       view.properties.find(
-        (property) => property.propertyDefinitionRef === 'propid-70' //propid-70
+        (property) => property.propertyDefinitionRef === propertyDefinitionRef
       )?.value || view.name
     );
   };
 
   useEffect(() => {
-    fetchViews();
+    getPropertyDefinitions()
+      .then(() => {
+        fetchViews();
+      })
+      .catch((error) => {
+        console.error(`Error fetching property definitions: ${error}`);
+      });
     setViewNodesData(null);
     setViewRelationsData(null);
     setViewIsDoneLoading(false);
@@ -69,12 +93,6 @@ const AcGemmaView = ({ store: { gemma } }) => {
   useEffect(() => {
     if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
     let viewNodesData = [];
-
-    const hostname = window.location.hostname;
-    const baseUrl =
-      hostname === 'localhost' || hostname === 'vng.opencatalogi.nl'
-        ? 'https://vng.test.commonground.nu/apps'
-        : 'https://vng.accept.commonground.nu/apps';
 
     const getViewNodesData = () => {
       const nodes = gemma.get_view.nodes
@@ -219,12 +237,14 @@ const AcGemmaView = ({ store: { gemma } }) => {
 
           const relationshipData = relationship.relationship;
 
+          const propertyDefinitionRef = propertyDefinitions.find(
+            (property) => property.name === 'Verbindingsrol'
+          )?.identifier;
+
           return {
             name:
               relationshipData?.properties?.find(
-                (item) =>
-                  item.propertyDefinitionRef === 'propid-61' ||
-                  item.propertyDefinitionRef === 'propid-62'
+                (item) => item.propertyDefinitionRef === propertyDefinitionRef
               )?.value || undefined,
             id: relationshipData?.identifier || relationship.relationshipRef,
             type: relationshipData?.type || undefined,
