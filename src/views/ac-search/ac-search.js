@@ -126,7 +126,13 @@ const AcSearch = ({ store: { publications } }) => {
     return all_publications?.map((publication, index) => (
       <AcSearchResult
         {...publication}
-        title={publication.title ?? publication.name}
+        title={
+          publication.title ??
+          publication.titel ??
+          publication.name ??
+          publication.naam ??
+          publication.id
+        }
         key={index}
       />
     ));
