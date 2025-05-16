@@ -20,6 +20,7 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
+import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -123,6 +124,12 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                       >
                         Gebruiken aanmaken
                       </ConActionMenu.Button>
+                      <ConActionMenu.Button
+                        icon={<VISUALS.HAND_HOLDING />}
+                        onClick={() => setOpenModal('addDienst')}
+                      >
+                        Dienst toevoegen
+                      </ConActionMenu.Button>
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -185,6 +192,18 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     const gebruik = await e.json();
                     navigate(`/beheer/gebruiken/${gebruik.id}`);
                   }}
+                />
+
+                <AcDienstFormModal
+                  showModal={openModal === 'addDienst'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={async (e) => {
+                    const data = await e.json();
+                    navigate(`/beheer/diensten/${data.id}`);
+                  }}
+                  preSelectedVoorziening={data.id}
                 />
               </AcFlex>
             )}

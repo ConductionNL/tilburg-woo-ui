@@ -40,60 +40,80 @@
   max-width: 400px;
 }
 
-.ac-beheer-select > div {
-  background-color: var(
-    --utrecht-select-background-color,
-    var(--utrecht-form-control-background-color)
-  );
-  border-block-end-width: var(
-    --utrecht-select-border-block-end-width,
-    var(--utrecht-select-border-width, var(--utrecht-form-control-border-width))
-  );
-  border-block-start-width: var(
-    --utrecht-select-border-width,
-    var(--utrecht-form-control-border-width)
-  );
-  border-color: var(
-    --utrecht-select-border-color,
-    var(--utrecht-form-control-border-color)
-  );
-  border-inline-end-width: var(
-    --utrecht-select-border-width,
-    var(--utrecht-form-control-border-width)
-  );
-  border-inline-start-width: var(
-    --utrecht-select-border-width,
-    var(--utrecht-form-control-border-width)
-  );
-  border-radius: var(
-    --utrecht-select-border-radius,
-    var(--utrecht-form-control-border-radius, 0)
-  );
-  border-style: solid;
-  color: var(--utrecht-select-color, var(--utrecht-form-control-color));
-  font-family: var(
-    --utrecht-select-font-family,
-    var(--utrecht-form-control-font-family)
-  );
-  font-size: var(--utrecht-select-font-size, var(--utrecht-form-control-font-size));
-  font-weight: var(
-    --utrecht-select-font-size,
-    var(--utrecht-form-control-font-weight, initial)
-  );
-  inline-size: 100%;
-  line-height: var(
-    --utrecht-select-line-height,
-    var(--utrecht-form-control-line-height, initial)
-  );
-  max-inline-size: var(
-    --utrecht-select-max-inline-size,
-    var(--utrecht-form-control-max-inline-size)
-  );
-  min-block-size: var(
-    --utrecht-select-min-block-size,
-    var(--utrecht-pointer-target-min-size, 44px)
-  );
-  min-inline-size: var(--utrecht-pointer-target-min-size, 44px);
+.ac-beheer-select {
+  > div {
+    background-color: var(
+      --utrecht-select-background-color,
+      var(--utrecht-form-control-background-color)
+    );
+    border-block-end-width: var(
+      --utrecht-select-border-block-end-width,
+      var(--utrecht-select-border-width, var(--utrecht-form-control-border-width))
+    );
+    border-block-start-width: var(
+      --utrecht-select-border-width,
+      var(--utrecht-form-control-border-width)
+    );
+    border-color: var(
+      --utrecht-select-border-color,
+      var(--utrecht-form-control-border-color)
+    );
+    border-inline-end-width: var(
+      --utrecht-select-border-width,
+      var(--utrecht-form-control-border-width)
+    );
+    border-inline-start-width: var(
+      --utrecht-select-border-width,
+      var(--utrecht-form-control-border-width)
+    );
+    border-radius: var(
+      --utrecht-select-border-radius,
+      var(--utrecht-form-control-border-radius, 0)
+    );
+    border-style: solid;
+    color: var(--utrecht-select-color, var(--utrecht-form-control-color));
+    font-family: var(
+      --utrecht-select-font-family,
+      var(--utrecht-form-control-font-family)
+    );
+    font-size: var(
+      --utrecht-select-font-size,
+      var(--utrecht-form-control-font-size)
+    );
+    font-weight: var(
+      --utrecht-select-font-size,
+      var(--utrecht-form-control-font-weight, initial)
+    );
+    inline-size: 100%;
+    line-height: var(
+      --utrecht-select-line-height,
+      var(--utrecht-form-control-line-height, initial)
+    );
+    max-inline-size: var(
+      --utrecht-select-max-inline-size,
+      var(--utrecht-form-control-max-inline-size)
+    );
+    min-block-size: var(
+      --utrecht-select-min-block-size,
+      var(--utrecht-pointer-target-min-size, 44px)
+    );
+    min-inline-size: var(--utrecht-pointer-target-min-size, 44px);
+  }
+
+  &--disabled > div {
+    background-color: var(
+      --utrecht-select-disabled-background-color,
+      var(--utrecht-form-control-disabled-background-color)
+    );
+    color: var(
+      --utrecht-select-disabled-color,
+      var(--utrecht-form-control-disabled-color)
+    );
+    border-color: var(
+      --utrecht-select-disabled-border-color,
+      var(--utrecht-form-control-disabled-border-color)
+    );
+  }
 }
 
 .ac-beheer-select > div > div > div {
