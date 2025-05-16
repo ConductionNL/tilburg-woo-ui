@@ -6,6 +6,7 @@ import AcColumn from '@src/atoms/ac-column/ac-column';
 import { AcContainer, AcSection } from '@src/atoms';
 import { LABELS, VISUALS } from '@src/constants';
 import { AcFormField, AcButton } from '@src/molecules';
+import { BASE_URL } from '../ac-beheer/ac-beheer';
 
 const AcRegister = () => {
   const [kvkNumber, setKvkNumber] = useState('');
@@ -18,7 +19,7 @@ const AcRegister = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://vng.test.commonground.nu/apps/openconnector/api/endpoint/register`,
+        `${BASE_URL}/apps/openconnector/api/endpoint/register`,
         {
           method: 'POST',
           headers: {
