@@ -39,6 +39,8 @@ const AcRegister = () => {
     } catch (error) {
       setRegisterCallBack('error');
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -123,7 +125,7 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={resetForm}
+                onClick={() => resetForm()}
               >
                 Terug naar registratie
               </AcButton>
@@ -149,7 +151,7 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={resetForm}
+                onClick={() => resetForm()}
               >
                 Terug naar registratie
               </AcButton>
