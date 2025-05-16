@@ -115,6 +115,8 @@ const AcPublication = observer(({ store: { publications } }) => {
     return Object.entries(data).filter(([key, value]) => {
       if (key === '@self') return false;
       if (key === 'name') return false;
+      if (typeof value === 'object') return false;
+
       return [
         <div>
           <strong>{key}</strong>
