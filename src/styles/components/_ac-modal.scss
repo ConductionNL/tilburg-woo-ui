@@ -78,6 +78,13 @@
   &:not(:has(.ac-modal__footer)) {
     padding-block-end: var(--tilburg-space-row-rat);
   }
+
+  &-grid-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tilburg-space-row-rat);
+    justify-content: end;
+  }
 }
 
 body:has(.ac-modal[open]) {
