@@ -31,7 +31,7 @@ const AcDienstFormModal = ({
     prijsmodel: '',
     certificeringen: '',
     ondersteundeStandaarden: '',
-    licentiemodel: '',
+    licentie: '',
   };
 
   const [dienstFormData, setDienstFormData] = useState({});
@@ -284,18 +284,18 @@ const AcDienstFormModal = ({
         />
         <div>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Licentiemodel</h4>
+            <h4 className='utrecht-heading-4'>licentie</h4>
           </label>
           <ReactSelect
-            placeholder='Selecteer een licentiemodel'
+            placeholder='Selecteer een licentie'
             className='ac-beheer-select'
             value={licenseOptions?.filter(
-              (option) => dienstFormData?.licentiemodel === option.value
+              (option) => dienstFormData?.licentie === option.value
             )}
             onChange={(e) => {
               setDienstFormData((prev) => ({
                 ...prev,
-                licentiemodel: e.value,
+                licentie: e.value,
               }));
             }}
             options={licenseOptions}
