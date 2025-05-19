@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
@@ -22,15 +22,31 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 
 const AcBeheerDienst = () => {
+  // get the query params manually since useParams doesn't work with any query param
+  const searchParams = new URLSearchParams(window.location.search);
+  const showCreateModal = searchParams.get('showCreateModal');
+  const voorzieningId = searchParams.get('voorzieningId');
+  console.log(showCreateModal, voorzieningId);
+
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
   const filterHeadersDrawerRef = useRef(null);
+
+  useEffect(() => {
+    if (showCreateModal) {
+      setOpenModal('add');
+    }
+  }, [showCreateModal]);
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningaanbod';
@@ -92,10 +108,6 @@ const AcBeheerDienst = () => {
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
   }, []);
-
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
 
   const tableRef = useRef(null);
 
@@ -369,6 +381,7 @@ const AcBeheerDienst = () => {
           {/* modals */}
           <AcDienstFormModal
             dienst={singleSelectedRow}
+            preSelectedVoorziening={voorzieningId}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
