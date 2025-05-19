@@ -21,9 +21,17 @@ const AcPublication = observer(({ store: { publications } }) => {
     fetchAttachments,
     resetAttachments,
     all_attachments,
+    all_publications,
+    fetchPublications,
   } = publications;
 
+  const currentPublicationFromList = all_publications.find(
+    (publication) => publication.id === id
+  );
+  const schema = currentPublicationFromList?.['@self']?.schema;
+
   useEffect(() => {
+    fetchPublications();
     fetchPublication(id);
     return () => resetPublication();
   }, []);
@@ -58,7 +66,7 @@ const AcPublication = observer(({ store: { publications } }) => {
       case 'Woo-verzoeken en -besluiten':
         return <AcPublicationWooVerzoek />;
       default:
-        return <AcPublicationDefault />;
+        return <AcPublicationDefault schema={schema} />;
     }
   }
 });

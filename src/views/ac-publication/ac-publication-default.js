@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toJS } from 'mobx';
 
 import { AcCard, AcContainer, AcFlex } from '@atoms';
@@ -24,8 +24,10 @@ import _ from 'lodash';
 import { MOCK_CONCEPTS } from '@constants/mock.data.constants';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
+import AcDienstFormModal from '../ac-beheer/ac-dienst/modals/ac-dienst-form-modal';
+import { getCookie } from '@src/utilities';
 
-const AcPublication = observer(({ store: { publications } }) => {
+const AcPublication = observer(({ store: { publications }, schema }) => {
   const { id } = useParams();
   const {
     fetchPublication,
@@ -42,6 +44,11 @@ const AcPublication = observer(({ store: { publications } }) => {
     attachments,
     resetAttachments,
   } = publications;
+
+  const navigate = useNavigate();
+
+  const isVoorziening = schema?.title === 'Voorziening';
+  const isLoggedIn = !!getCookie('nextcloud_user_id');
 
   const drawerRef = useRef(null);
   const modalRef = useRef(null);
@@ -281,15 +288,31 @@ const AcPublication = observer(({ store: { publications } }) => {
     <>
       <AcContainer compact margin='xl'>
         <AcFlex column spacing={'lg'}>
-          <div className='ac-publication-header'>
-            <Heading>{get_single?.title ?? get_single?.name}</Heading>
+          <AcFlex spacing='lg' className='ac-publication-header'>
+            <Heading>
+              {get_single?.title ?? get_single?.name ?? get_single?.naam}
+            </Heading>
             {
               <img
                 src={get_single?.image}
                 className='ac-publication-header-image'
               ></img>
             }
-          </div>
+
+            {isVoorziening && isLoggedIn && (
+              <div>
+                <PrimaryActionButton
+                  onClick={() =>
+                    navigate(
+                      `/beheer/diensten?showCreateModal=true&voorzieningId=${id}`
+                    )
+                  }
+                >
+                  Dienst toevoegen
+                </PrimaryActionButton>
+              </div>
+            )}
+          </AcFlex>
           <AcTable header={headers} rows={rows} />{' '}
         </AcFlex>
       </AcContainer>

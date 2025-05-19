@@ -311,12 +311,21 @@ export class PublicationsStore {
   @action
   fetchPublications = async () => {
     this.loading.status = true;
+
+    // recreate the search query to include the metadata schema in the extend array
+    // I just do it like this because the current API system is just so awful and not flexible at all.
+    // I spent more hours then i'd like to admit figuring out where the original extend is coming from, and I still dont know.
+    const search_query = {
+      ...this.search_query,
+      extend: ['@self.schema', this.search_query.extend],
+    };
+
     console.group('MAKING API CALL');
-    console.log('SEARCH QUERY:', toJS(this.search_query));
+    console.log('SEARCH QUERY:', toJS(search_query));
     console.groupEnd();
 
     app.store.api.publications
-      .search(this.search_query)
+      .search(search_query)
       .then((response) => {
         this.setItems(response.results);
         delete response.results;
