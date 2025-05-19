@@ -82,16 +82,20 @@ export default function useNextcloudRequests() {
    * @param {string} schema - The schema to download
    * @param {'csv' | 'excel'} type - The type to download (csv, excel)
    */
-  const downloadObjectList = async (
-    register,
-    schema,
-    type = 'csv',
-    redirectUrl = '/beheer'
-  ) => {
-    const url = `${BASE_URL}/apps/${register}/${schema}/export?type=${type}`;
+  const downloadObjectList = async (register, schema, type = 'csv', redirectUrl) => {
+    const url = `${BASE_URL}/apps/openregister/api/objects/${register}/${schema}/export?type=${type}`;
+
     const extension = type === 'excel' ? 'xlsx' : 'csv';
     const currentDate = new Date().toISOString().split('T')[0];
-    const filename = `${schema}-${currentDate}.${extension}`;
+    const currentTime = (() => {
+      const now = new Date(); // gets the current HHMMSS time in UTC, which is what the backend also uses.
+      const hh = String(now.getUTCHours()).padStart(2, '0');
+      const mm = String(now.getUTCMinutes()).padStart(2, '0');
+      const ss = String(now.getUTCSeconds()).padStart(2, '0');
+      return `${hh}${mm}${ss}`;
+    })();
+
+    const filename = `${register}_${schema}_${currentDate}_${currentTime}.${extension}`;
 
     await makeDownloadRequest(
       url,
