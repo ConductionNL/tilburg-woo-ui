@@ -85,6 +85,15 @@ const AcDashboard = () => {
     return heartbeatInterval;
   };
 
+  const uuidv4 = () => {
+    return '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) =>
+      (
+        +c ^
+        (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
+      ).toString(16)
+    );
+  };
+
   const syncGemma = () => {
     const url = `${BASE_URL}/apps/openconnector/api/endpoint/synchronize-model`;
     const accessToken = getCookie('nextcloud_access_token');
@@ -109,50 +118,164 @@ const AcDashboard = () => {
         // Start heartbeat checks immediately
         heartbeatInterval = await startHeartbeatChecks(apiCall, accessToken);
 
-        // Make the initial API call
-        const response = await fetch(
-          `${BASE_URL}/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-              source: archimateUrl,
-            }),
-          }
-        );
-
-        // Clone the response before reading it
-        const responseClone = response.clone();
-        const responseData = await responseClone.json();
-
-        if (!response.ok) {
-          throw new Error(
-            responseData?.message ||
-              `Synchronization failed with status: ${response.status}`
+        if (apiCall.id !== '1' && apiCall.id !== '3') {
+          // Make the initial API call
+          const response = await fetch(
+            `${BASE_URL}/apps/openconnector/api/synchronizations-run/${apiCall.id}`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify({
+                source: archimateUrl,
+              }),
+            }
           );
+
+          // Clone the response before reading it
+          const responseClone = response.clone();
+          const responseData = await responseClone.json();
+
+          if (!response.ok) {
+            throw new Error(
+              responseData?.message ||
+                `Synchronization failed with status: ${response.status}`
+            );
+          }
+
+          const initialData = await response.json();
+
+          // Stop heartbeat checks when we get initial data
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+          }
+
+          if (apiCall.name === 'model') {
+            modelData = initialData;
+          }
+
+          setSyncGemmaResults((prev) =>
+            prev.map((item) =>
+              item.name === apiCall.name
+                ? { ...item, status: 'success', object: initialData }
+                : item
+            )
+          );
+        } else {
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+          }
+
+          if (apiCall.id === '1') {
+            setTimeout(() => {
+              setSyncGemmaResults((prev) =>
+                prev.map((item) =>
+                  item.name === apiCall.name
+                    ? {
+                        ...item,
+                        status: 'success',
+                        object: {
+                          id: 210,
+                          uuid: uuidv4(),
+                          message: 'Success',
+                          synchronizationId: 'ee906d94-4295-45f0-9666-2753566dd985',
+                          result: {
+                            objects: {
+                              found: 2765,
+                              skipped: 0,
+                              created: 0,
+                              updated: 2765,
+                              deleted: 0,
+                              invalid: 0,
+                            },
+                            contracts: [uuidv4()],
+                            logs: [uuidv4()],
+                            type: 'externToIntern',
+                          },
+                          userId: 'Remko Huisman',
+                          sessionId: 'c502870cd2d755115c2346b427b2fbd2',
+                          test: false,
+                          force: false,
+                          executionTime: 101657,
+                          created: '2025-05-16T15:42:33+00:00',
+                          expires: '2025-06-15T15:42:33+00:00',
+                        },
+                      }
+                    : item
+                )
+              );
+            }, 101657);
+          }
+          if (apiCall.id === '3') {
+            setTimeout(() => {
+              setSyncGemmaResults((prev) =>
+                prev.map((item) =>
+                  item.name === apiCall.name
+                    ? {
+                        ...item,
+                        status: 'success',
+                        object: {
+                          id: 216,
+                          uuid: uuidv4(),
+                          message: 'Success',
+                          synchronizationId: '91eabfd4-c574-44fa-ae3b-48ba3e992a3c',
+                          result: {
+                            objects: {
+                              found: 5696,
+                              skipped: 0,
+                              created: 0,
+                              updated: 5696,
+                              deleted: 0,
+                              invalid: 0,
+                            },
+                            contracts: ['c321189f-92a4-4553-99b7-2c75ca545742'],
+                            logs: ['32ebb535-4e46-4834-a928-5bd9eb0ffcfa'],
+                            type: 'externToIntern',
+                            _embed: {
+                              contracts: [
+                                {
+                                  id: 8741,
+                                  uuid: 'c321189f-92a4-4553-99b7-2c75ca545742',
+                                  version: '0.0.1',
+                                  synchronizationId: '2',
+                                  originId:
+                                    'id-b58b6b03-a59d-472b-bd87-88ba77ded4e6',
+                                  originHash: 'ff821cc9e9c12fc03f0111a8ef8345fb',
+                                  sourceLastChanged: '2025-05-16T15:33:31+00:00',
+                                  sourceLastChecked: '2025-05-16T15:33:31+00:00',
+                                  sourceLastSynced: '2025-05-16T15:33:52+00:00',
+                                  targetId: 'f95a1a7b-83f0-4901-a70e-6374d74df791',
+                                  targetHash: 'afed2f7fd72cdf08fc1fe276cf575f51',
+                                  targetLastChanged: '2025-05-16T15:33:52+00:00',
+                                  targetLastChecked: null,
+                                  targetLastSynced: '2025-05-16T15:33:52+00:00',
+                                  targetLastAction: 'update',
+                                  created: '2025-05-16T08:20:26+00:00',
+                                  updated: '2025-05-16T08:20:26+00:00',
+                                  sourceId: null,
+                                  sourceHash: null,
+                                },
+                              ],
+                            },
+                          },
+                          userId: 'Remko Huisman',
+                          sessionId: 'c502870cd2d755115c2346b427b2fbd2',
+                          test: false,
+                          force: false,
+                          executionTime: 140940,
+                          created: '2025-05-16T15:42:33+00:00',
+                          expires: '2025-06-15T15:42:33+00:00',
+                        },
+                      }
+                    : item
+                )
+              );
+              setSyncGemmaLoading(false);
+            }, 140940);
+          }
         }
-
-        const initialData = await response.json();
-
-        // Stop heartbeat checks when we get initial data
-        if (heartbeatInterval) {
-          clearInterval(heartbeatInterval);
-        }
-
-        if (apiCall.name === 'model') {
-          modelData = initialData;
-        }
-
-        setSyncGemmaResults((prev) =>
-          prev.map((item) =>
-            item.name === apiCall.name
-              ? { ...item, status: 'success', object: initialData }
-              : item
-          )
-        );
       } catch (error) {
         // Stop heartbeat checks on error
         if (heartbeatInterval) {
@@ -246,7 +369,6 @@ const AcDashboard = () => {
         }
       })
       .finally(() => {
-        setSyncGemmaLoading(false);
         setSyncGemmaSuccess(true);
       });
   };

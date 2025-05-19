@@ -327,6 +327,7 @@ const AcBeheerOrganisaties = () => {
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
               fetchData();
+              setOpenModal(null);
             }}
           />
 

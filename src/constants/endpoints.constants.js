@@ -75,7 +75,7 @@ export const ENDPOINTS = AcLockObject({
   },
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
-    VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views`,
+    VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views?_fields[]=name&_fields[]=id&_fields[]=identifier&_fields[]=properties`,
     // VIEW: (_id) => `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}/${_id}?extend=all`,
     VIEW: (_id) =>
       `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views/${_id}`,
