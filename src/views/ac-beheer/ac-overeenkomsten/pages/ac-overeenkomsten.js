@@ -31,7 +31,7 @@ const AcBeheerOvereenkomsten = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { makeRequest } = useNextcloudRequests();
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
   const filterHeadersDrawerRef = useRef(null);
 
@@ -85,6 +85,10 @@ const AcBeheerOvereenkomsten = () => {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  const downloadData = useCallback(async (type = 'csv') => {
+    await downloadObjectList(registerSlug, schemaSlug, type);
   }, []);
 
   const [selectedRows, setSelectedRows] = useState([]);
@@ -179,7 +183,12 @@ const AcBeheerOvereenkomsten = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['name', 'startDatum', 'eindDatum', 'contactPersonProvider'];
+  const defaultHeaders = [
+    'name',
+    'startDatum',
+    'eindDatum',
+    'contactPersonProvider',
+  ];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
@@ -241,13 +250,15 @@ const AcBeheerOvereenkomsten = () => {
 
                   <ConActionMenu.SubMenu
                     label='Download'
-                    disabled={selectedRows.length === 0}
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
-                    <ConActionMenu.Button disabled>Als CSV</ConActionMenu.Button>
-                    <ConActionMenu.Button disabled>Als XML</ConActionMenu.Button>
-                    <ConActionMenu.Button disabled>Als AFML</ConActionMenu.Button>
+                    <ConActionMenu.Button onClick={() => downloadData('csv')}>
+                      Als CSV
+                    </ConActionMenu.Button>
+                    <ConActionMenu.Button onClick={() => downloadData('excel')}>
+                      Als Excel
+                    </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
 
                   <ConActionMenu.Divider />
