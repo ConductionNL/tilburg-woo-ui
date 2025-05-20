@@ -8,6 +8,15 @@ import { AcCheckbox, AcFormField } from '@src/molecules';
 import { getCookie } from '@src/utilities';
 import ReactSelect from 'react-select';
 import _ from 'lodash';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
+import clsx from 'clsx';
+
+// create option for creatable select
+const createOption = (label) => ({
+  label,
+  value: label.toLowerCase().replace(/\W/g, ''),
+});
 
 const AcGebruikersFormModal = ({
   gebruiker,
@@ -17,7 +26,8 @@ const AcGebruikersFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
-  const [gebruikerFormData, setGebruikerFormData] = useState({
+
+  const initialData = {
     username: '',
     email: '',
     voornaam: '',
@@ -25,43 +35,41 @@ const AcGebruikersFormModal = ({
     functie: '',
     organisatie: '',
     telefoonnummer: '',
-    rollen: '', // as array
+    rollen: [], // as array
     actief: true,
     laatsteInlogdatum: '', // as date
     aanmaakdatum: '', // as date
     wijzigingsdatum: '', // as date
     voorkeuren: { taal: '', thema: '' },
-  });
+  };
 
-  // load gebruiker data into the form
+  const rollenOptions = [
+    { label: 'Admin', value: 'admin' },
+    { label: 'Editor', value: 'editor' },
+    { label: 'Viewer', value: 'viewer' },
+  ];
+
+  // form data
+  const [gebruikerFormData, setGebruikerFormData] = useState({});
+
+  // nextcloud requests
+  const { makeRequest } = useNextcloudRequests();
+
   useEffect(() => {
-    if (gebruiker && isEdit) {
-      setGebruikerFormData((prev) => ({
-        ...prev,
-        ...gebruiker,
-        rollen: Array.isArray(gebruiker.rollen)
-          ? gebruiker.rollen.join(', ')
-          : gebruiker.rollen,
-      }));
-    }
-    if (!gebruiker && !isEdit) {
-      setGebruikerFormData(() => ({
-        username: '',
-        email: '',
-        voornaam: '',
-        achternaam: '',
-        functie: '',
-        organisatie: '',
-        telefoonnummer: '',
-        rollen: '',
-        actief: true,
-        laatsteInlogdatum: '',
-        aanmaakdatum: '',
-        wijzigingsdatum: '',
-        voorkeuren: { taal: '', thema: '' },
-      }));
-    }
-  }, [gebruiker, isEdit]);
+    // Set the form data in 1 go
+    // This is a simple and compact way to conditionally set the form data
+    // if preSelectedVoorziening is provided, set the voorziening to the preSelectedVoorziening
+    // if dienst is provided, set the form data to the dienst data
+    setGebruikerFormData({
+      // initial data
+      ...initialData,
+      // data to edit (only if data is provided and isEdit is true)
+      ...(gebruiker &&
+        isEdit && {
+          ...gebruiker,
+        }),
+    });
+  }, [gebruiker, showModal]);
 
   const handleEditGebruikerOpenModal = () => modalRef?.current?.showModal();
 
@@ -94,39 +102,23 @@ const AcGebruikersFormModal = ({
 
   const [error, setError] = useState(null);
 
-  const handleSubmit = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
+  const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
 
-    if (!accessToken) {
-      setError('Geen toegangstoken gevonden');
-      modalRef?.current?.close();
-      return;
-    }
+  const handleSubmit = async () => {
+    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const method = isEdit ? 'PUT' : 'POST';
+    const url = isEdit ? `${baseUrl}/${gebruikerFormData.id}` : baseUrl;
 
     try {
-      const hostname = window.location.hostname;
-      const baseUrl =
-        hostname === 'vng.test.opencatalogi.nl'
-          ? 'https://vng.test.commonground.nu/apps/openconnector/api/endpoint/gebruikers'
-          : 'https://vng.accept.commonground.nu/apps/openconnector/api/endpoint/gebruikers';
-
-      const method = isEdit ? 'PUT' : 'POST';
-      const url = isEdit ? `${baseUrl}/${gebruikerFormData.id}` : baseUrl;
-
-      const response = await fetch(url, {
+      const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
           ...gebruikerFormData,
-          rollen: gebruikerFormData.rollen.trim().split(/ *, */g).filter(Boolean),
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
       });
 
       if (response.ok) {
-        onSuccess?.();
+        onSuccess?.(response);
         modalRef?.current?.close();
       }
     } catch (err) {
@@ -218,12 +210,27 @@ const AcGebruikersFormModal = ({
           onBlur={handleEditGebruikerFieldChange('telefoonnummer')}
           value={gebruikerFormData.telefoonnummer}
         />
-        <AcFormField
-          label='Rollen'
-          type='text'
-          onBlur={handleEditGebruikerFieldChange('rollen')}
-          value={gebruikerFormData.rollen}
-        />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Rollen</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer of maak een rol aan'
+            className={clsx('ac-beheer-select')}
+            value={rollenOptions.filter((option) =>
+              gebruikerFormData?.rollen?.includes(option.value)
+            )}
+            onChange={(e) => {
+              setGebruikerFormData((prev) => ({
+                ...prev,
+                rollen: e.map((option) => option.value),
+              }));
+            }}
+            options={rollenOptions}
+            closeMenuOnSelect={false}
+            isMulti
+          />
+        </div>
         <AcCheckbox
           label='Actief'
           onChange={handleEditGebruikerFieldChange('actief')}
@@ -240,7 +247,7 @@ const AcGebruikersFormModal = ({
             placeholder='Selecteer een taal'
             value={mapLanguageToValue(
               LANGUAGES?.find(
-                (language) => language.code === gebruikerFormData.voorkeuren.taal
+                (language) => language.code === gebruikerFormData?.voorkeuren?.taal
               )
             )}
             className='ac-beheer-select'
@@ -260,8 +267,8 @@ const AcGebruikersFormModal = ({
           <ReactSelect
             placeholder='Selecteer een thema'
             value={{
-              label: _.upperFirst(gebruikerFormData.voorkeuren.thema),
-              value: gebruikerFormData.voorkeuren.thema,
+              label: _.upperFirst(gebruikerFormData?.voorkeuren?.thema),
+              value: gebruikerFormData?.voorkeuren?.thema,
             }}
             className='ac-beheer-select'
             onChange={(selectedOption) => {

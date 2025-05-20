@@ -2,24 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-
-import { LABELS, VISUALS } from '@constants';
-import { AcContainer, AcFlex, AcSection } from '@atoms';
-import {
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
-import AcColumn from '@atoms/ac-column/ac-column';
-import {
-  PrimaryActionButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
-import config from '@src/config';
-import { AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
+import { AcFlex } from '@atoms';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import { BASE_URL } from '../../ac-beheer';
+import { VISUALS } from '@constants';
 
 /**
  * modal to delete 1 or multiple gebruikers
@@ -36,46 +23,26 @@ const AcDeleteGebruikersModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const { makeRequest } = useNextcloudRequests();
+
   const handleDeleteGebruikerOpenModal = () => modalRef?.current?.showModal();
+
+  const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
 
   const [error, setError] = useState(null);
   const handleDeleteGebruiker = async () => {
-    const accessToken = getCookie('nextcloud_access_token');
-
-    if (!accessToken) {
-      return;
-    }
-
     try {
-      let deletePromises = [];
-
       gebruikers.forEach(async (gebruiker) => {
-        const hostname = window.location.hostname;
-        const baseUrl =
-          hostname === 'vng.test.opencatalogi.nl'
-            ? 'https://vng.test.commonground.nu/apps'
-            : 'https://vng.accept.commonground.nu/apps';
-        const response = await fetch(
-          baseUrl +
-            `/openconnector/api/endpoint/gebruikers/${gebruiker.id}`,
+        const response = await makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${gebruiker.id}`,
+          null,
           {
             method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
           }
         );
-
-        deletePromises.push(response);
       });
 
-      await Promise.all(deletePromises);
-
-      if (deletePromises.some((response) => response.ok)) {
-        onSuccess?.();
-        modalRef?.current?.close();
-      }
+      onSuccess?.();
     } catch (err) {
       console.error(err);
       setError(err);
