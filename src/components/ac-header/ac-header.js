@@ -10,6 +10,7 @@ import { AcContainer, ConLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcCNavigation } from '@components';
+import { getTitle } from '@services/con-get-title';
 
 const AcHeader = ({ store: { menu } }) => {
   const location = useLocation();
@@ -24,37 +25,6 @@ const AcHeader = ({ store: { menu } }) => {
       ? item.position === 1
       : item.position === 2
   );
-
-  const getTitle = () => {
-    const hostname = window.location.hostname;
-
-    switch (hostname) {
-      case 'vng.opencatalogi.nl':
-      case 'vng.test.opencatalogi.nl':
-        return 'Softwarecatalogus';
-      case 'open-tilburg.accept.commonground.nu':
-        return 'Open Tilburg';
-      case 'open-dimpact.accept.commonground.nu':
-      case 'dimpact.opencatalogi.nl':
-        return 'Producten catalogus';
-      case 'open-rotterdam.accept.commonground.nu':
-        return 'Open Rotterdam';
-      case 'open-migrato.accept.commonground.nu':
-        return 'Open Migrato';
-      case 'opencatalogi.nl':
-      case 'developer.opencatalogi.nl':
-      case 'test.opencatalogi.nl':
-        return 'OpenCatalogi';
-      case 'opencatalogi.open-regels.nl':
-        return 'OpenRegels';
-      case 'horstadmaas.accept.opencatalogi.nl':
-        return 'Horst aan de Maas';
-      case 'localhost':
-        return 'Localhost catalogus';
-      default:
-        return 'Open Tilburg';
-    }
-  };
 
   return (
     <header className='ac-header'>
