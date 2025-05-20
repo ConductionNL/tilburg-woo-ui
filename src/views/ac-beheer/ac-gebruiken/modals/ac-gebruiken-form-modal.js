@@ -46,7 +46,15 @@ const AcGebruikenFormModal = ({
     },
     bedrijfsKritisch: false,
     privacyGevoelig: false,
+    hosting: '',
   };
+
+  const hostingOptions = [
+    { label: 'On-premises', value: 'on-premises' },
+    { label: 'SaaS', value: 'SaaS' },
+    { label: 'PaaS', value: 'PaaS' },
+    { label: 'hybride', value: 'hybride' },
+  ];
 
   const [gebruikFormData, setGebruikFormData] = useState({});
 
@@ -397,6 +405,28 @@ const AcGebruikenFormModal = ({
             label='Privacy Gevoelig'
             checked={gebruikFormData.privacyGevoelig}
             onChange={handleEditGebruikFieldChange('privacyGevoelig')}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Hosting</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een hosting'
+            className={clsx(
+              'ac-beheer-select',
+            )}
+            value={hostingOptions?.filter(
+              (option) => gebruikFormData?.hosting === option.value
+            )}
+            onChange={(e) => {
+              setGebruikFormData((prev) => ({
+                ...prev,
+                hosting: e.value,
+              }));
+            }}
+            isLoading={organisatieLoading}
+            options={hostingOptions}
           />
         </div>
       </AcGrid>

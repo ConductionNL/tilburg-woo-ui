@@ -32,7 +32,7 @@ const AcDienstFormModal = ({
     certificeringen: '',
     ondersteundeStandaarden: '',
     licentie: '',
-    hostingopties: '',
+    hostingopties: [],
   };
 
   const hostingOptions = [
