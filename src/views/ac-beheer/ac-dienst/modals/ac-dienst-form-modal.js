@@ -12,6 +12,7 @@ import { BASE_URL } from '../../ac-beheer';
 import licenses from '@assets/licenses/licenses.json';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import clsx from 'clsx';
+
 const AcDienstFormModal = ({
   dienst,
   showModal = false,
@@ -32,7 +33,17 @@ const AcDienstFormModal = ({
     certificeringen: '',
     ondersteundeStandaarden: '',
     licentie: '',
+    laag: '',
   };
+
+  const laagOptions = [
+    { label: '(0) Hosting', value: 'Hosting' },
+    { label: '(1) Data', value: 'Data' },
+    { label: '(2) Services', value: 'Services' },
+    { label: '(3) Integratie', value: 'Integratie' },
+    { label: '(4) Processen', value: 'Processen' },
+    { label: '(5) Interactie', value: 'Interactie' },
+  ];
 
   const [dienstFormData, setDienstFormData] = useState({});
 
@@ -299,6 +310,26 @@ const AcDienstFormModal = ({
               }));
             }}
             options={licenseOptions}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Laag</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een laag'
+            className='ac-beheer-select'
+            value={laagOptions?.filter(
+              (option) => dienstFormData?.laag === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                laag: e.value,
+              }));
+            }}
+            isLoading={false}
+            options={laagOptions}
           />
         </div>
       </AcGrid>
