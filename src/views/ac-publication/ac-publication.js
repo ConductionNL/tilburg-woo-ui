@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 import { AcLoader } from '@components';
 import { withStore } from '@stores';
+import { getTitle } from '@services/con-get-title';
 
 import AcPublicationWooVerzoek from '@views/ac-publication/ac-publication-woo-verzoek';
 import AcPublicationSoftwarecatalogus from '@views/ac-publication/ac-publication-softwarecatalogus';
@@ -37,7 +38,12 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    document.title = get_single?.title || 'Open Tilburg | Publicatie';
+    document.title =
+      get_single?.title ??
+      get_single?.titel ??
+      get_single?.name ??
+      get_single?.naam ??
+      `${getTitle()} | Publicatie`;
   }, [get_single]);
 
   useEffect(() => {
