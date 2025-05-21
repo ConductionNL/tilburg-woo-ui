@@ -11,6 +11,7 @@ import ReactSelect from 'react-select';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import clsx from 'clsx';
 import { DateInput } from '@amsterdam/design-system-react';
+import _ from 'lodash';
 
 const AcGebruikenFormModal = ({
   gebruik,
@@ -47,6 +48,7 @@ const AcGebruikenFormModal = ({
     bedrijfsKritisch: false,
     privacyGevoelig: false,
     hosting: '',
+    contact: '',
   };
 
   const hostingOptions = [
@@ -64,6 +66,8 @@ const AcGebruikenFormModal = ({
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
   const [versiesOptions, setVersiesOptions] = useState([]); // based on selected voorziening
   const [versiesLoading, setVersiesLoading] = useState(false);
+  const [gebruikersOptions, setGebruikersOptions] = useState([]);
+  const [gebruikersLoading, setGebruikersLoading] = useState(false);
   const [schema, setSchema] = useState(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
@@ -125,10 +129,27 @@ const AcGebruikenFormModal = ({
       }
     };
 
+    const fetchGebruikers = async () => {
+      setGebruikersLoading(true);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
+      ).finally(() => setGebruikersLoading(false));
+
+      const data = await response.json();
+
+      setGebruikersOptions(
+        data.results.map((item) => ({
+          value: item.username,
+          label: item.username,
+        }))
+      );
+    };
+
     if (showModal) {
       fetchOrganisaties();
       fetchVoorzieningen();
       fetchSchema();
+      fetchGebruikers();
     }
   }, [showModal]);
 
@@ -179,6 +200,7 @@ const AcGebruikenFormModal = ({
           voorzieningId: collapseExtendedObjects(gebruik.voorzieningId),
           versieId: collapseExtendedObjects(gebruik.versieId),
           organisatieId: collapseExtendedObjects(gebruik.organisatieId),
+          contact: collapseExtendedObjects(gebruik.contact, 'username'),
         }),
     });
   }, [gebruik, isEdit]);
@@ -413,9 +435,7 @@ const AcGebruikenFormModal = ({
           </label>
           <ReactSelect
             placeholder='Selecteer een hosting'
-            className={clsx(
-              'ac-beheer-select',
-            )}
+            className={clsx('ac-beheer-select')}
             value={hostingOptions?.filter(
               (option) => gebruikFormData?.hosting === option.value
             )}
@@ -427,6 +447,26 @@ const AcGebruikenFormModal = ({
             }}
             isLoading={organisatieLoading}
             options={hostingOptions}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Contact</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een contact'
+            value={gebruikersOptions?.find(
+              (option) => option.value === applicatieFormData.contact
+            )}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setApplicatieFormData((prev) => ({
+                ...prev,
+                contact: e.value,
+              }));
+            }}
+            loading={gebruikersLoading}
+            options={gebruikersOptions}
           />
         </div>
       </AcGrid>

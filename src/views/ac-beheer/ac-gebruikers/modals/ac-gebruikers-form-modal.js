@@ -62,7 +62,7 @@ const AcGebruikersFormModal = ({
     // if dienst is provided, set the form data to the dienst data
     setGebruikerFormData({
       // initial data
-      ...initialData,
+      ..._.cloneDeep(initialData),
       // data to edit (only if data is provided and isEdit is true)
       ...(gebruiker &&
         isEdit && {

@@ -9,6 +9,7 @@ import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -165,7 +166,7 @@ const AcApplicatiesFormModal = ({
   useEffect(() => {
     setApplicatieFormData({
       // initial data
-      ...initialData,
+      ..._.cloneDeep(initialData),
       // data to edit (only if data is provided and isEdit is true)
       ...(applicatie &&
         isEdit && {
@@ -183,7 +184,7 @@ const AcApplicatiesFormModal = ({
           ),
           standards: smartSplit(collapseExtendedObjects(applicatie.standaarden)),
           voorzieningstype: applicatie.voorzieningstype,
-          contact: collapseExtendedObjects(applicatie.gebruikers, 'username'),
+          contact: collapseExtendedObjects(applicatie.contact, 'username'),
         }),
     });
   }, [applicatie, showModal]);
