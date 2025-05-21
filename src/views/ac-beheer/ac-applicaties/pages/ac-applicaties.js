@@ -102,6 +102,9 @@ const AcBeheerApplicaties = () => {
         label: 'Standaarden',
         key: 'standaarden',
         customContent: (row) => {
+          if (row?.standaarden && typeof row?.standaarden === 'string') {
+            return <AcColumn key={row.id}>Data invalid</AcColumn>;
+          }
           return (
             <AcColumn key={row.id}>
               {row?.standaarden?.map((standaard) => standaard.naam).join(', ')}

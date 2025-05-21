@@ -172,6 +172,12 @@ const AcBeheerDienst = () => {
         customContent: (row) => {
           if (!row?.ondersteundeStandaarden) return 'N/A';
           if (!row?.ondersteundeStandaarden?.length) return '-';
+          if (
+            row?.ondersteundeStandaarden &&
+            typeof row?.ondersteundeStandaarden === 'string'
+          ) {
+            return <AcColumn key={row.id}>Data invalid</AcColumn>;
+          }
           return row?.ondersteundeStandaarden?.map((standaard) => {
             return (
               <AcColumn key={standaard.id}>
