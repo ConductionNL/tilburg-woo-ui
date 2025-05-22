@@ -18,6 +18,9 @@ export const ENDPOINTS = AcLockObject({
       `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog`, // GET
     ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
+  THEMES: {
+    INDEX: `${API}${SEARCH}${THEMES}`,
+  },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET
     SHOW: (_id) => `${API}${PUBLIC}${FAQS}${_id}`, // GET
@@ -26,9 +29,6 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `${API}${PUBLIC}${PAGES}`, // GET
     SHOW: (_slug) => `${API}${PUBLIC}${PAGES}${_slug}`, // GET
   },
-  THEMES: {
-    INDEX: `${API}${SEARCH}${THEMES}`,
-  }, // GET
   CATEGORIES: {
     INDEX: `${API}${PUBLIC}${CATEGORIES}`, // GET
     SHOW: (_id) => `${API}${PUBLIC}${CATEGORIES}/${_id}`, // GET

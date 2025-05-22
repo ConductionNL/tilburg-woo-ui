@@ -29,7 +29,6 @@ DefaultLanguage nl-NL
     Header set Feature-Policy "accelerometer 'none'; ambient-light-sensor 'self'; autoplay 'self'; camera 'none'; cookie 'self'; document-write 'self'; fullscreen 'self'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; midi 'none'; payment 'self'; picture-in-picture 'self'; speaker 'self'; sync-script 'self'; sync-xhr 'self'; unsized-media 'self'; usb 'none'; vertical-scroll 'self'; vibrate 'none'; vr 'none'"
     Header set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), publickey-credentials-get=(), usb=()"
 
-
     # HSTS (ngx_http_headers_module is required) (31536000 seconds, 1 year)
     Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" env=HTTPS
 
