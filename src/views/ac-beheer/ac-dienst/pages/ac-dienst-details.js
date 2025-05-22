@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcButton, AcTable } from '@src/molecules';
 import { AcSideNav, AcLoader } from '@components';
 import {
   Heading,
@@ -17,7 +16,6 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcEditDienstModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
-import { getCookie } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
