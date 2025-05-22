@@ -89,11 +89,17 @@ export class API {
 
     const PublicationsClient = axios.create({
       ...config.publications,
+      paramsSerializer: {
+        encode: (param) => encodeURIComponent(param),
+      },
     });
     addInterceptors(PublicationsClient);
 
     const ThemesClient = axios.create({
       ...config.themes,
+      paramsSerializer: {
+        encode: (param) => encodeURIComponent(param),
+      },
     });
     addInterceptors(ThemesClient);
 

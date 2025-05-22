@@ -270,7 +270,7 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
     );
   }, [get_single]);
 
-  const renderAttachments = () => {
+  const renderAttachments = useMemo(() => {
     // Check if we have any attachments at all (before filtering)
     const hasAttachments =
       attachments &&
@@ -335,7 +335,7 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
         </AcFlex>
       </AcFlex>
     );
-  };
+  }, [attachments]);
 
   return (
     <>
@@ -355,7 +355,7 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
           </AcCard>
 
           {renderPrimaryAttachments}
-          {renderAttachments()}
+          {renderAttachments}
 
           <AcFlex column>
             <Heading level={2}>{LABELS.ADDITIONAL_INFO}</Heading>

@@ -13,7 +13,6 @@ export class PublicationsAPI {
     );
   }
 
-  
   attachments(id) {
     return this.Client.get(ENDPOINTS.PUBLICATIONS.ATTACHMENTS(id)).then(
       (response) => response.data
