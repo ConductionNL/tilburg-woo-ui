@@ -22,7 +22,7 @@ const AcApplicatiesFormModal = ({
     name: '',
     description: '',
     category: '',
-    functionalities: '',
+    functionalities: '[]',
     targetGroups: [],
     referenceComponents: [],
     standards: [],
@@ -175,10 +175,8 @@ const AcApplicatiesFormModal = ({
           name: applicatie.naam,
           description: applicatie.beschrijving,
           category: applicatie.categorie,
-          functionalities: Array.isArray(applicatie.functionaliteiten)
-            ? applicatie.functionaliteiten.join(', ')
-            : applicatie.functionaliteiten,
-          targetGroups: applicatie.doelgroep,
+          functionalities: applicatie.functionaliteiten,
+          targetGroups: JSON.parse(applicatie.doelgroep),
           referenceComponents: smartSplit(
             collapseExtendedObjects(applicatie.referentieComponenten)
           ),
@@ -216,8 +214,8 @@ const AcApplicatiesFormModal = ({
           naam: applicatieFormData.name,
           beschrijving: applicatieFormData.description,
           categorie: applicatieFormData.category,
-          functionaliteiten: smartSplit(applicatieFormData.functionalities),
-          doelgroep: applicatieFormData.targetGroups,
+          functionaliteiten: JSON.parse(applicatieFormData.functionalities),
+          doelgroep: JSON.stringify(applicatieFormData.targetGroups),
           referentieComponenten: applicatieFormData.referenceComponents,
           standaarden: applicatieFormData.standards,
           voorzieningstype: applicatieFormData.voorzieningstype,
@@ -323,7 +321,7 @@ const AcApplicatiesFormModal = ({
             placeholder='Selecteer een doelgroep'
             className='ac-beheer-select'
             isMulti
-            value={applicatieFormData?.targetGroups?.map((targetGroup) => ({
+            value={(applicatieFormData?.targetGroups || []).map((targetGroup) => ({
               value: targetGroup,
               label: targetGroup,
             }))}
