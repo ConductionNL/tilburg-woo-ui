@@ -18,6 +18,7 @@
 
   a {
     @extend .utrecht-link !optional;
+    display: inline;
   }
 
   ul {

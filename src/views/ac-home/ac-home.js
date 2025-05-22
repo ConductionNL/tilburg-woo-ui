@@ -53,10 +53,10 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
       <AcSection spacing>
         <AcContainer>
           <AcColumn gap='rat'>
-            <Heading level={2}>Welke documenten vind je hier?</Heading>
+            <Heading level={2}>Welke documenten vind je hier binnenkort?</Heading>
             <Paragraph>
-              Op deze website zijn alle openbare documenten van de gemeente Tilburg
-              te vinden.
+              In de komende maanden zijn op deze website alle openbare documenten van
+              de gemeente Tilburg te vinden.
             </Paragraph>
           </AcColumn>
           <br />
@@ -68,7 +68,7 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
         </AcContainer>
       </AcSection>
 
-      <AcSection spacing blue>
+      {/* <AcSection spacing blue>
         <AcContainer>
           <AcColumn gap='tiger'>
             <AcColumn gap='rat'>
@@ -96,7 +96,7 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
             </AcLink>
           </AcColumn>
         </AcContainer>
-      </AcSection>
+      </AcSection> */}
 
       <AcFeatured publications={latest_publications} isLoading={is_loading_latest} />
 

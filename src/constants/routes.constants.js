@@ -15,7 +15,7 @@ export const PATHS = AcLockObject({
   ACCESSIBILITY: '/toegankelijkheid',
   CONTACT: '/contact',
   COOKIES: 'https://www.tilburg.nl/cookies/',
-  FAQ: '/veelgestelde-vragen',
+  FAQ: '/contact',
   ORGANIZATION: '/organisatie-en-werkwijze',
   PRIVACY: 'https://www.tilburg.nl/privacystatement/',
   PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
@@ -23,7 +23,7 @@ export const PATHS = AcLockObject({
   REACH_OUT: 'https://www.tilburg.nl/contact/',
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
-  THEMES: '/onderwerpen',
+  // THEMES: '/onderwerpen',
   WEBSITE: 'https://www.tilburg.nl/',
   WOO: 'https://www.tilburg.nl/gemeente/wet-open-overheid-woo/',
 });
@@ -65,7 +65,7 @@ export const ROUTES = {
     id: AcUUID(),
     name: 'FAQ',
     label: TITLES.FAQ,
-    path: PATHS.ABOUT,
+    path: PATHS.FAQ,
     title: `${TITLES.BASE} | ${TITLES.FAQ}`,
   },
   HOME: {
@@ -113,14 +113,14 @@ export const ROUTES = {
     title: `${TITLES.BASE} | ${TITLES.SEARCH}`,
     component: AcSearch,
   },
-  THEMES: {
-    id: AcUUID(),
-    name: 'Themes',
-    label: TITLES.THEMES,
-    path: PATHS.THEMES,
-    title: `${TITLES.BASE} | ${TITLES.THEMES}`,
-    component: AcThemes,
-  },
+  // THEMES: {
+  //   id: AcUUID(),
+  //   name: 'Themes',
+  //   label: TITLES.THEMES,
+  //   path: PATHS.THEMES,
+  //   title: `${TITLES.BASE} | ${TITLES.THEMES}`,
+  //   component: AcThemes,
+  // },
   WEBSITE: {
     id: AcUUID(),
     name: 'Website',
@@ -152,7 +152,7 @@ export const NAVIGATION_ITEMS = [ROUTES.HOME];
 export const FOOTER_PRIMARY_ABOUT = [
   ROUTES.ABOUT,
   ROUTES.SEARCH,
-  ROUTES.THEMES,
+  // ROUTES.THEMES,
   ROUTES.ORGANIZATION,
   ROUTES.FAQ,
   ROUTES.CONTACT,
