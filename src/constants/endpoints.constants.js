@@ -11,7 +11,9 @@ const THEMES = '/themes';
 const CATEGORIES = '/categories';
 const TERMS = '/terms';
 
+// For Conduction API, so publications/themes
 const API_CONDUCTION = '';
+
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
     SEARCH: `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}`, // GET
