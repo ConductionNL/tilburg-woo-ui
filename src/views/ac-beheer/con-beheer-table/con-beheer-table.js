@@ -86,6 +86,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
         break;
 
       case 'organisaties':
+      case 'organisatie':
         config.navigateView = (id) => navigate(`/beheer/organisaties/${id}`);
         config.schemaSlug = 'organisatie';
         config.extend = [['_extend[]', 'contactgegevens']];

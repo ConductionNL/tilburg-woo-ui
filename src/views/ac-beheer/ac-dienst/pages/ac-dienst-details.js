@@ -86,6 +86,7 @@ const AcBeheerDienstDetails = ({ id }) => {
     setUsesLoading(true);
     const response = await makeRequest(`${BASE_URL}/apps/${endpoint}/${id}/uses`, [
       ['_extend[]', '@self.schema'],
+      ['_extend[]', 'all'],
     ]);
     if (!response.ok) {
       console.error('Error fetching uses:', response.statusText);
@@ -210,7 +211,8 @@ const AcBeheerDienstDetails = ({ id }) => {
                                 .map((metadata, idx) => {
                                   const schemaId = metadata.schema.id;
                                   const schemaSlug = metadata.schema.slug;
-                                  const schemaProperties = metadata.schema.properties;
+                                  const schemaProperties =
+                                    metadata.schema.properties;
 
                                   return (
                                     <AcTabPanel selected={tabIndex === idx + 1}>
