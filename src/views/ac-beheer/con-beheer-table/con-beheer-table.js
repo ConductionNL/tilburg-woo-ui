@@ -332,8 +332,12 @@ const BeheerTable = forwardRef((props, ref) => {
     if (generatedHeaders.length > 0) {
       setTableHeaders(
         generatedHeaders.filter(
-          // if no defaultHeaders could be found, show all headers
-          (header) => config?.defaultHeaders?.includes(header.id) ?? true
+          // Show all headers if:
+          // 1. No defaultHeaders exist in config
+          // 2. defaultHeaders is an empty array
+          (header) =>
+            !config.defaultHeaders?.length ||
+            config.defaultHeaders.includes(header.id)
         )
       );
     }

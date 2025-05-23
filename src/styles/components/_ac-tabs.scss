@@ -152,6 +152,11 @@
   border-style: var(--conduction-tabs-tab-panel-border-style);
   border-color: var(--conduction-tabs-tab-panel-border-color);
   border-top: var(--conduction-tabs-tab-panel-border-top);
+  /* === added by AI === (so I have no clue if it'll break, but it works for now) */
+  width: 100%;
+  overflow-x: auto;
+  min-width: 0; /* Allows grid items to shrink below their minimum content size */
+  /* =================== */
 }
 
 .ac-tab-scrollButton {
@@ -165,10 +170,18 @@
 
 .ac-tab-container {
   position: relative;
+  /* === added by AI === */
+  width: 100%;
+  overflow-x: hidden;
+  /* =================== */
 }
 
 .ac-tab-wrapper {
-  overflow-x: scroll;
+  /* overflow-x: auto; */
+  /* === added by AI === */
+  overflow-x: auto;
+  width: 100%;
+  /* =================== */
   display: flex;
 }
 .ac-tab-wrapperTouchscreen {
@@ -196,4 +209,11 @@
 .ac-tab-wrapper {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.ac-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  overflow-x: hidden;
 }
