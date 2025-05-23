@@ -150,10 +150,6 @@ const GET_CONFIG = (type, metadata, navigate) => {
  * @returns
  */
 const BeheerTable = forwardRef((props, ref) => {
-  if (!type && !metadata) {
-    throw new Error('Either type or metadata (@self) must be provided');
-  }
-
   const {
     type,
     metadata,
@@ -171,6 +167,10 @@ const BeheerTable = forwardRef((props, ref) => {
     getConfig = () => {},
     tableProps = {},
   } = props;
+
+  if (!type && !metadata) {
+    throw new Error('Either type or metadata (@self) must be provided');
+  }
 
   const navigate = useNavigate();
   const { makeRequest } = useNextcloudRequests();
