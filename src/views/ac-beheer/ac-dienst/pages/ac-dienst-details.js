@@ -19,8 +19,7 @@ import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
-import ConTable from '../../con-table';
-import { NAVIGATE_TO } from '@src/constants/routes.constants';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -207,26 +206,23 @@ const AcBeheerDienstDetails = ({ id }) => {
                           <>
                             {uses &&
                               _.uniqBy(uses, (use) => use['@self'].schema.id)
-                                .map((use) => use['@self'].schema.id)
-                                .map((schemaId, idx) => (
-                                  <AcTabPanel selected={tabIndex === idx + 1}>
-                                    <ConTable
-                                      data={uses.filter(
-                                        (use) => use['@self'].schema.id === schemaId
-                                      )}
-                                      tableHeaders={[
-                                        ...Object.keys(
-                                          uses.find(
-                                            (use) =>
-                                              use['@self'].schema.id === schemaId
-                                          )?.['@self'].schema.properties || {}
-                                        ).map((key) => ({
-                                          id: key,
-                                          label: _.startCase(key),
-                                          key: key,
-                                        })),
-                                        // base actions
-                                        {
+                                .map((use) => use['@self'])
+                                .map((metadata, idx) => {
+                                  const schemaId = metadata.schema.id;
+                                  const schemaSlug = metadata.schema.slug;
+                                  const schemaProperties = metadata.schema.properties;
+
+                                  return (
+                                    <AcTabPanel selected={tabIndex === idx + 1}>
+                                      <BeheerTable
+                                        type={schemaSlug}
+                                        metadata={metadata}
+                                        data={uses.filter(
+                                          (use) =>
+                                            use['@self'].schema.id === schemaId
+                                        )}
+                                        dataProperties={schemaProperties}
+                                        actionButtons={(config) => ({
                                           id: 'actions',
                                           label: 'Acties',
                                           key: '',
@@ -235,30 +231,24 @@ const AcBeheerDienstDetails = ({ id }) => {
                                               <button
                                                 className='utrecht-button slim'
                                                 variant='secondary'
-                                                onClick={() => {
-                                                  navigate(
-                                                    NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                                                      'diensten',
-                                                      row.id
-                                                    )
-                                                  );
-                                                }}
+                                                onClick={() =>
+                                                  config.navigateView(row.id)
+                                                }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
                                                 Bekijken
                                               </button>
                                             </AcFlex>
                                           ),
-                                        },
-                                      ]}
-                                      ref={(ref) =>
-                                        (tableRefs.current[schemaId] = ref)
-                                      }
-                                      truncateLines={2}
-                                      showSortButtons
-                                    />
-                                  </AcTabPanel>
-                                ))}
+                                        })}
+                                        tableProps={{
+                                          renderSelectRowButtons: false,
+                                          truncateLines: 1,
+                                        }}
+                                      />
+                                    </AcTabPanel>
+                                  );
+                                })}
                           </>
                         )}
                       </AcTabs>

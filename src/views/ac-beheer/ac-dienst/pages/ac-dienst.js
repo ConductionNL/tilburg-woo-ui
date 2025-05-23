@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
-import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
-import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import { AcBeheerError } from '@views/ac-beheer';
 import { SecondaryActionButton } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
-import ConTable from '../../con-table';
 import AcDienstFormModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
@@ -18,9 +16,8 @@ import { AcButton } from '@src/molecules';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
-import BeheerTable from '../../generic-beheer-table';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -157,10 +154,6 @@ const AcBeheerDienst = () => {
     return <AcBeheerError title='Beheer Dienst' error={error.message} />;
   }
 
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Dienst' />;
-  }
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -235,11 +228,12 @@ const AcBeheerDienst = () => {
             type='voorzieningaanboden'
             getSelectedRows={setSelectedRows}
             getSingleSelectedRow={setSingleSelectedRow}
-            getModalValue={setOpenModal}
-            headerOverrides={customHeaders}
-            getHeaders={setUnfilteredHeaders}
-            setHeaders={filteredHeaders}
-            getDefaultHeaders={setDefaultHeaders}
+            getModalValue={setOpenModal} // get the modal value so that we can know which modal to show
+            getLoading={setLoading}
+            headerOverrides={customHeaders} // custom header overrides
+            getHeaders={setUnfilteredHeaders} // get the unfiltered headers to pass to the header filter component
+            getDefaultHeaders={setDefaultHeaders} // get the default headers to pass to the header filter component
+            headers={filteredHeaders} // set the headers to be used in the table from the header filter component, this overrides the headers within the component
           />
 
           {/* modals */}
@@ -274,6 +268,7 @@ const AcBeheerDienst = () => {
 
           <ConFilterHeadersDrawer
             ref={filterHeadersDrawerRef}
+            loading={loading}
             headers={unfilteredHeaders}
             defaultHeaders={defaultHeaders}
             onChange={setFilteredHeaders}
