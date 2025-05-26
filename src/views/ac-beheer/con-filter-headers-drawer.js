@@ -23,43 +23,38 @@ const ConFilterHeadersDrawer = forwardRef(
   ({ headers, defaultHeaders = [], onChange, loading = false }, ref) => {
     const drawerRef = useRef(null);
     const [touched, setTouched] = useState(false);
-
-    // Track checked header IDs
     const [checkedIds, setCheckedIds] = useState(() => new Set(defaultHeaders));
 
-    // check if defaultHeaders changed
+    // Update checkedIds when defaultHeaders changes and component hasn't been touched
     useEffect(() => {
       if (!touched) setCheckedIds(new Set(defaultHeaders));
-    }, [defaultHeaders]);
+    }, [defaultHeaders, touched]);
 
-    // Expose show/close methods of the underlying AcDrawer
     useImperativeHandle(
       ref,
       () => ({
         showModal: () => drawerRef.current?.showModal(),
         close: () => drawerRef.current?.close(),
-        test: () => console.log('test', headers, checkedIds),
         getCheckedHeaders: () => headers.filter((h) => checkedIds.has(h.id)),
         getCheckedIds: () => Array.from(checkedIds),
       }),
-      [headers, checkedIds, drawerRef]
+      [headers, checkedIds]
     );
 
-    // Toggle a header by its ID
     const toggleHeader = (id) => {
       setTouched(true);
-
       setCheckedIds((prev) => {
         const next = new Set(prev);
         if (next.has(id)) next.delete(id);
         else next.add(id);
         return next;
       });
+      // Call onChange directly here instead of in a separate useEffect
+      const selected = headers.filter((h) =>
+        id === h.id ? !checkedIds.has(h.id) : checkedIds.has(h.id)
+      );
+      onChange?.(selected);
     };
-
-    useEffect(() => {
-      onChange?.(headers.filter((h) => checkedIds.has(h.id)));
-    }, [headers, checkedIds, onChange]);
 
     if (loading)
       return (
