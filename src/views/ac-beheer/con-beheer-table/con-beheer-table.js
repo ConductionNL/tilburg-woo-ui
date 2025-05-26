@@ -164,7 +164,7 @@ const BeheerTable = forwardRef((props, ref) => {
     getHeaders = () => [],
     headers: providedHeaders = [],
     getDefaultHeaders = () => [],
-    actionButtons: overrideActionButtons = (config) => false,
+    actionButtons: overrideActionButtons = null,
     getConfig = () => {},
     tableProps = {},
   } = props;
@@ -345,47 +345,52 @@ const BeheerTable = forwardRef((props, ref) => {
   }, [generatedHeaders]);
 
   // if no overrideActionButtons are provided, use the default action buttons
-  const actionButtons = overrideActionButtons(config) || {
-    id: 'actions',
-    label: 'Acties',
-    key: '',
-    customContent: (row) => (
-      <AcFlex column spacing='xs'>
-        {config.navigateView && (
-          <button
-            className='utrecht-button slim'
-            variant='secondary'
-            onClick={() => {
-              config.navigateView(row.id);
-            }}
-          >
-            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-          </button>
-        )}
-        <button
-          className='utrecht-button slim'
-          variant='secondary'
-          onClick={() => {
-            getSingleSelectedRow?.(row);
-            getModalValue?.('edit');
-          }}
-        >
-          <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-        </button>
-        <button
-          className='utrecht-button slim'
-          variant='secondary'
-          Object
-          onClick={() => {
-            getSingleSelectedRow?.(row);
-            getModalValue?.('delete');
-          }}
-        >
-          <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-        </button>
-      </AcFlex>
-    ),
-  };
+  const overrideActionsIsValid =
+    !!overrideActionButtons && typeof overrideActionButtons === 'function';
+
+  const actionButtons = overrideActionsIsValid
+    ? overrideActionButtons(config)
+    : {
+        id: 'actions',
+        label: 'Acties',
+        key: '',
+        customContent: (row) => (
+          <AcFlex column spacing='xs'>
+            {config.navigateView && (
+              <button
+                className='utrecht-button slim'
+                variant='secondary'
+                onClick={() => {
+                  config.navigateView(row.id);
+                }}
+              >
+                <VISUALS.EYE className='ac-button__icon' /> Bekijken
+              </button>
+            )}
+            <button
+              className='utrecht-button slim'
+              variant='secondary'
+              onClick={() => {
+                getSingleSelectedRow?.(row);
+                getModalValue?.('edit');
+              }}
+            >
+              <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+            </button>
+            <button
+              className='utrecht-button slim'
+              variant='secondary'
+              Object
+              onClick={() => {
+                getSingleSelectedRow?.(row);
+                getModalValue?.('delete');
+              }}
+            >
+              <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+            </button>
+          </AcFlex>
+        ),
+      };
 
   return (
     <ConTable
