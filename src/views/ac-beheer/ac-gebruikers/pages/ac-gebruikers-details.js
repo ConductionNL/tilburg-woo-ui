@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { LANGUAGES, VISUALS } from '@constants';
@@ -11,7 +11,9 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
+import { BASE_URL } from '../../ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcGebruikersFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikersModal from '../modals/ac-delete-gebruikers-modal';
@@ -21,27 +23,47 @@ import _ from 'lodash';
 const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { makeRequest } = useNextcloudRequests();
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const hostname = window.location.hostname;
-      const baseUrl =
-        hostname === 'vng.test.opencatalogi.nl'
-          ? 'https://vng.test.commonground.nu/apps'
-          : 'https://vng.accept.commonground.nu/apps';
-      const response = await fetch(
-        baseUrl + `/openconnector/api/endpoint/gebruikers/${id}`
-      );
 
-      if (!response.ok) {
+      const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
+      const schemaSlug = 'gebruiker';
+
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}/${id}`,
+          null,
+          null,
+          `/beheer/gebruikers/${id}`
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          null,
+          null,
+          `/beheer/gebruikers/${id}`
+        ),
+      ]);
+
+      if (!response.ok || !schemaResponse.ok) {
         throw new Error('Failed to fetch data');
       }
 
-      const data = await response.json();
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
+
+      const data = jsonResponse;
+      const dataProperties = schemaJsonResponse.properties;
+
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
