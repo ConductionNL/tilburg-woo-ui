@@ -16,11 +16,11 @@ export const PATHS = AcLockObject({
   CONTACT: '/contact',
   COOKIES: 'https://www.tilburg.nl/cookies/',
   FAQ: '/contact',
-  ORGANIZATION: '/organisatie-en-werkwijze',
+  ORGANIZATION: 'https://www.werkenvoortilburg.nl/over-ons/afdelingen/',
   PRIVACY: 'https://www.tilburg.nl/privacystatement/',
   PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
   PUBLICATION: '/publicatie/:id',
-  REACH_OUT: 'https://www.tilburg.nl/contact/',
+  REACH_OUT: '/contact/',
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   // THEMES: '/onderwerpen',
@@ -80,7 +80,8 @@ export const ROUTES = {
     id: AcUUID(),
     name: 'Organization',
     label: LABELS.ORGANIZATION,
-    path: PATHS.ABOUT,
+    href: PATHS.ORGANIZATION,
+    isExternal: true,
     title: `${TITLES.BASE} | ${TITLES.ORGANIZATION}`,
   },
   PRIVACY: {
@@ -153,12 +154,16 @@ export const FOOTER_PRIMARY_ABOUT = [
   ROUTES.ABOUT,
   ROUTES.SEARCH,
   // ROUTES.THEMES,
-  ROUTES.ORGANIZATION,
   ROUTES.FAQ,
   ROUTES.CONTACT,
 ];
 
-export const FOOTER_PRIMARY_QUICK = [ROUTES.WEBSITE, ROUTES.WOO, ROUTES.REACH_OUT];
+export const FOOTER_PRIMARY_QUICK = [
+  ROUTES.WEBSITE,
+  ROUTES.WOO,
+  ROUTES.REACH_OUT,
+  ROUTES.ORGANIZATION,
+];
 
 export const FOOTER_SECONDARY = [
   ROUTES.ACCESSIBILITY,
