@@ -12,7 +12,7 @@ export const TITLES = AcLockObject({
   PRIVACY: 'Privacy',
   PROCLAIMER: 'Proclaimer',
   PUBLICATION: 'Publicatie',
-  REACH_OUT: 'Beschikbaarheidsgegevens',
+  REACH_OUT: 'Bereikbaarheidsgegevens',
   SEARCH: 'Zoeken',
   THEMES: 'Onderwerpen',
   WEBSITE: 'www.tilburg.nl',

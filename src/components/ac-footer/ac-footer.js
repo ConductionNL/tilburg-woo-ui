@@ -37,9 +37,14 @@ const AcFooter = () => {
           </nav>
           <div className='ac-footer__logo'>
             <VISUALS.LOGO />
-            <span>
-              <span>Gemeente</span>
-              <span>Éen plek voor alle publicaties van de Gemeente</span>
+            <span className='ac-footer__logo-container'>
+              <span className='ac-footer__logo-title'>
+                PUBLICATIES GEMEENTE TILBURG
+              </span>
+              <span className='ac-footer__logo-description'>
+                In de komende maanden worden op deze website steeds meer openbare
+                documenten geplaatst.
+              </span>
             </span>
           </div>
         </AcContainer>

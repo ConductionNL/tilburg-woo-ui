@@ -68,15 +68,20 @@
       flex-shrink: 0;
     }
 
-    span {
+    .ac-footer__logo-container {
       display: flex;
       flex-direction: column;
-      gap: var(--tilburg-space-column-rat);
-      max-inline-size: 30ch;
+      gap: var(--tilburg-space-column-snail);
 
-      span:first-of-type {
-        font-size: var(--tilburg-typography-font-size-xl);
+      .ac-footer__logo-title {
+        font-size: var(--tilburg-typography-font-size-lg);
         font-weight: var(--tilburg-typography-font-weight-bold);
+        text-transform: uppercase;
+      }
+
+      .ac-footer__logo-description {
+        max-inline-size: 30ch;
+        line-height: 1.5;
       }
     }
   }
