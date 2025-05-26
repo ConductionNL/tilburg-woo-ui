@@ -26,10 +26,9 @@ const AcRegister = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            'kvk-nummer': kvkNumber,
-            organisatienaam: name,
-            email,
-            id: '1',
+            kvkNummer: kvkNumber,
+            naam: name,
+            'e-mailadres': email,
           }),
         }
       );
