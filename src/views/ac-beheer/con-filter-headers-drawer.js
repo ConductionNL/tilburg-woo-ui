@@ -49,12 +49,11 @@ const ConFilterHeadersDrawer = forwardRef(
         else next.add(id);
         return next;
       });
-      // Call onChange directly here instead of in a separate useEffect
-      const selected = headers.filter((h) =>
-        id === h.id ? !checkedIds.has(h.id) : checkedIds.has(h.id)
-      );
-      onChange?.(selected);
     };
+
+    useEffect(() => {
+      onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+    }, [Array.from(checkedIds).join(',')]);
 
     if (loading)
       return (
