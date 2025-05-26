@@ -55,8 +55,8 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
           <AcColumn gap='rat'>
             <Heading level={2}>Welke documenten vind je hier binnenkort?</Heading>
             <Paragraph>
-              In de komende maanden zijn op deze website alle openbare documenten van
-              de gemeente Tilburg te vinden.
+              In de komende maanden worden op deze website steeds meer openbare
+              documenten geplaatst.
             </Paragraph>
           </AcColumn>
           <br />

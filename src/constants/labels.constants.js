@@ -63,7 +63,7 @@ export const LABELS = {
   ABOUT_CATEGORIES: 'Over categorieën',
 
   // Navigation & Footer Labels
-  ORGANIZATION: 'Werken voor Tilburg',
+  ORGANIZATION: 'Organisatie en werkwijze',
   EXTERNAL_LINK: 'Opent in een nieuw tabblad',
 };
 
