@@ -22,7 +22,8 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
   const pathnames = location.pathname.split('/');
 
   // pretify the pathname
-  const prettifyPathname = (name) => name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  const prettifyPathname = (name) =>
+    name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
   const getBreadcrumbs = useMemo(() => {
     if (location.pathname.startsWith('/zoeken')) {
@@ -54,7 +55,13 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
     }
 
     if (location.pathname.startsWith(`/beheer/${pathnames[2]}`)) {
-      return BREADCRUMBS.BEHEER_LIST(pathnames[2], pathnames[3]);
+      const detailPathName = pathnames[3]?.match(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      )
+        ? 'Details'
+        : prettifyPathname(pathnames[3]);
+
+      return BREADCRUMBS.BEHEER_LIST(pathnames[2], detailPathName);
     }
 
     if (location.pathname.startsWith('/beheer')) {
