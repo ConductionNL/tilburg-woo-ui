@@ -136,6 +136,7 @@ import clsx from 'clsx';
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
+ * @param {boolean} props.loading - Whether to show a loading state.
  *
  * @returns {React.ReactElement} The rendered table component.
  *
@@ -154,6 +155,7 @@ const ConTable = (
     getSelectedRows,
     truncateLines = 0,
     showSortButtons = false,
+    loading = false,
   },
   ref
 ) => {
@@ -402,6 +404,18 @@ const ConTable = (
   ]);
 
   const tableRows = useMemo(() => {
+    if (loading) {
+      return (
+        <TableRow>
+          <TableCell
+            colSpan={tableHeaders.length + Number(!!renderSelectRowButtons)}
+          >
+            Loading...
+          </TableCell>
+        </TableRow>
+      );
+    }
+
     if (sortedData.length === 0) {
       return (
         <TableRow>

@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
-import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
-import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import { AcBeheerError } from '@views/ac-beheer';
 import { SecondaryActionButton } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
-import ConTable from '../../con-table';
 import AcDienstFormModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
@@ -18,8 +16,8 @@ import { AcButton } from '@src/molecules';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -28,8 +26,6 @@ const AcBeheerDienst = () => {
   const voorzieningId = searchParams.get('voorzieningId');
 
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
-  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -37,9 +33,13 @@ const AcBeheerDienst = () => {
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  const [unfilteredHeaders, setUnfilteredHeaders] = useState([]);
+  const [filteredHeaders, setFilteredHeaders] = useState([]);
+  const [defaultHeaders, setDefaultHeaders] = useState([]);
+  const { downloadObjectList } = useNextcloudRequests();
 
   const filterHeadersDrawerRef = useRef(null);
+  const tableRef = useRef(null);
 
   useEffect(() => {
     if (showCreateModal) {
@@ -49,66 +49,10 @@ const AcBeheerDienst = () => {
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningaanbod';
-  const openConnectorSlug = 'voorzieningaanboden';
-  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
-
-  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
-
-  const extend = [
-    ['_extend[]', 'voorziening'],
-    ['_extend[]', 'leverancier'],
-    ['_extend[]', 'ondersteundeStandaarden'],
-  ];
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          extend,
-          null,
-          '/beheer/diensten'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/diensten'
-        ),
-      ]);
-
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
-
-      setLoading(false);
-
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
-
-      const errorResponse = jsonResponse.error;
-
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(dataProperties);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
   }, []);
-
-  const tableRef = useRef(null);
 
   // Custom header overrides for special cases
   const customHeaders = useMemo(
@@ -201,65 +145,12 @@ const AcBeheerDienst = () => {
     []
   );
 
-  // Generate headers from dataProperties schema
-  const headers = useMemo(() => {
-    if (!dataProperties) return [];
-
-    const schemaHeaders = Object.entries(dataProperties)
-      .filter(([key, value]) => value.visible !== false)
-      .map(([key, value]) => {
-        // leverancier is a special case as its referenced twice
-        if (key === 'leverancier') {
-          return [
-            customHeaders['leverancier_naam'],
-            customHeaders['leverancier_email'],
-          ];
-        }
-
-        // Check if we have a custom override for this header
-        if (customHeaders[key]) {
-          return customHeaders[key];
-        }
-
-        // Generate standard header from schema
-        return {
-          id: key,
-          label: _.upperFirst(key),
-          key: key,
-        };
-      })
-      .flat(); // flatten the array of arrays
-
-    return schemaHeaders;
-  }, [dataProperties, customHeaders]);
-
-  const defaultHeaders = [
-    'name',
-    'voorzieningName',
-    'email',
-    'ondersteundeStandaarden',
-  ];
-
-  const [tableHeaders, setTableHeaders] = useState([]);
-
-  useEffect(() => {
-    if (headers.length > 0) {
-      setTableHeaders(
-        headers.filter((header) => defaultHeaders.includes(header.id))
-      );
-    }
-  }, [headers]);
-
   const handleMultipleDelete = () => {
     setOpenModal('delete');
   };
 
   if (error) {
     return <AcBeheerError title='Beheer Dienst' error={error.message} />;
-  }
-
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Dienst' />;
   }
 
   return (
@@ -331,56 +222,17 @@ const AcBeheerDienst = () => {
             </AcFlex>
           </AcFlex>
 
-          <ConTable
-            data={data}
-            tableHeaders={[
-              ...tableHeaders,
-              {
-                id: 'actions',
-                label: 'Acties',
-                key: '',
-                customContent: (row) => (
-                  <AcFlex column spacing='xs'>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('diensten', row.id)
-                        );
-                      }}
-                    >
-                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                    </button>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedRow(row);
-                        setOpenModal('edit');
-                      }}
-                    >
-                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-                    </button>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedRow(row);
-                        setOpenModal('delete');
-                      }}
-                    >
-                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-                    </button>
-                  </AcFlex>
-                ),
-              },
-            ]}
-            getSelectedRows={setSelectedRows}
-            renderSelectRowButtons
+          <BeheerTable
             ref={tableRef}
-            truncateLines={3}
-            showSortButtons
+            type='voorzieningaanboden'
+            getSelectedRows={setSelectedRows}
+            getSingleSelectedRow={setSingleSelectedRow}
+            getModalValue={setOpenModal} // get the modal value so that we can know which modal to show
+            getLoading={setLoading}
+            headerOverrides={customHeaders} // custom header overrides
+            getHeaders={setUnfilteredHeaders} // get the unfiltered headers to pass to the header filter component
+            getDefaultHeaders={setDefaultHeaders} // get the default headers to pass to the header filter component
+            headers={filteredHeaders} // set the headers to be used in the table from the header filter component, this overrides the headers within the component
           />
 
           {/* modals */}
@@ -415,9 +267,10 @@ const AcBeheerDienst = () => {
 
           <ConFilterHeadersDrawer
             ref={filterHeadersDrawerRef}
-            headers={headers}
+            loading={loading}
+            headers={unfilteredHeaders}
             defaultHeaders={defaultHeaders}
-            onChange={setTableHeaders}
+            onChange={setFilteredHeaders}
           />
         </AcColumn>
       </AcFlex>

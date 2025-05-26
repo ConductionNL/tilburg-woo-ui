@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcButton } from '@src/molecules';
 import { AcSideNav, AcLoader } from '@components';
 import {
   Heading,
@@ -17,10 +16,10 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcEditDienstModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
-import { getCookie } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -28,15 +27,17 @@ const AcBeheerDienstDetails = ({ id }) => {
   const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [uses, setUses] = useState(null);
+  const [usesLoading, setUsesLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
+
+  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
+  const schemaSlug = 'voorzieningaanbod';
 
   const fetchData = async () => {
     try {
       setLoading(true);
-
-      const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
-      const schemaSlug = 'voorzieningaanbod';
 
       const extend = [
         ['_extend[]', 'voorziening'],
@@ -81,12 +82,31 @@ const AcBeheerDienstDetails = ({ id }) => {
     }
   };
 
+  const fetchUses = async () => {
+    setUsesLoading(true);
+    const response = await makeRequest(`${BASE_URL}/apps/${endpoint}/${id}/uses`, [
+      ['_extend[]', '@self.schema'],
+      ['_extend[]', 'all'],
+    ]);
+    if (!response.ok) {
+      console.error('Error fetching uses:', response.statusText);
+      setUsesLoading(false);
+      return;
+    }
+    const data = await response.json();
+    setUses(data.results);
+    setUsesLoading(false);
+  };
+
   useEffect(() => {
     fetchData();
+    fetchUses();
   }, []);
 
-  const [versionTabIndex, setVersionTabIndex] = useState(0);
+  const [tabIndex, setTabIndex] = useState(0);
   const [openModal, setOpenModal] = useState(null);
+
+  const tableRefs = useRef({});
 
   if (error) {
     return <AcBeheerError error={error.message} />;
@@ -115,9 +135,6 @@ const AcBeheerDienstDetails = ({ id }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                        Toevoegen
-                      </ConActionMenu.Button>
                       <ConActionMenu.Button
                         icon={<VISUALS.PENCIL />}
                         onClick={() => setOpenModal('edit')}
@@ -156,18 +173,86 @@ const AcBeheerDienstDetails = ({ id }) => {
 
                     <div>
                       <AcTabs
-                        selectedIndex={versionTabIndex}
-                        onSelect={(index) => setVersionTabIndex(index)}
+                        selectedIndex={tabIndex}
+                        onSelect={(index) => setTabIndex(index)}
                       >
                         <AcTabList>
-                          <AcTab selected={versionTabIndex === 0}>Versies</AcTab>
+                          <AcTab selected={tabIndex === 0}>Versies</AcTab>
+
+                          {uses && uses.length > 0 && (
+                            <>
+                              {uses &&
+                                // show unique headers
+                                _.uniqBy(uses, (use) => use['@self'].schema.id).map(
+                                  (use, idx) => (
+                                    <AcTab selected={tabIndex === idx + 1}>
+                                      <span>{use['@self'].schema.title}</span>
+                                    </AcTab>
+                                  )
+                                )}
+                            </>
+                          )}
                         </AcTabList>
 
-                        <AcTabPanel selected={versionTabIndex === 0}>
+                        <AcTabPanel selected={tabIndex === 0}>
                           {data.versies?.map((versie, index) => (
                             <Paragraph key={index}>{versie}</Paragraph>
                           ))}
                         </AcTabPanel>
+
+                        {uses && uses.length > 0 && (
+                          <>
+                            {uses &&
+                              _.uniqBy(uses, (use) => use['@self'].schema.id)
+                                .map((use) => use['@self'])
+                                .map((metadata, idx) => {
+                                  const schemaId = metadata.schema.id;
+                                  const schemaSlug = metadata.schema.slug;
+                                  const schemaProperties =
+                                    metadata.schema.properties;
+
+                                  return (
+                                    <AcTabPanel selected={tabIndex === idx + 1}>
+                                      <BeheerTable
+                                        type={schemaSlug}
+                                        metadata={metadata}
+                                        data={uses.filter(
+                                          (use) =>
+                                            use['@self'].schema.id === schemaId
+                                        )}
+                                        dataProperties={schemaProperties}
+                                        actionButtons={(config) =>
+                                          // check if all necessary properties for the actions are defined.
+                                          !!config.navigateView && {
+                                            id: 'actions',
+                                            label: 'Acties',
+                                            key: '',
+                                            customContent: (row) => (
+                                              <AcFlex column spacing='xs'>
+                                                <button
+                                                  className='utrecht-button slim'
+                                                  variant='secondary'
+                                                  onClick={() =>
+                                                    config.navigateView(row.id)
+                                                  }
+                                                >
+                                                  <VISUALS.EYE className='ac-button__icon' />{' '}
+                                                  Bekijken
+                                                </button>
+                                              </AcFlex>
+                                            ),
+                                          }
+                                        }
+                                        tableProps={{
+                                          renderSelectRowButtons: false,
+                                          truncateLines: 1,
+                                        }}
+                                      />
+                                    </AcTabPanel>
+                                  );
+                                })}
+                          </>
+                        )}
                       </AcTabs>
                     </div>
                   </AcFlex>

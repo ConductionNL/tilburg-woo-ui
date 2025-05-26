@@ -1,5 +1,11 @@
-import React, { forwardRef, useState, useImperativeHandle } from 'react';
-import { AcDrawer } from '@components';
+import React, {
+  forwardRef,
+  useState,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
+import { AcDrawer, AcLoader } from '@components';
 import { AcCheckbox } from '@src/molecules';
 import AcColumn from '@src/atoms/ac-column/ac-column';
 
@@ -13,43 +19,74 @@ import AcColumn from '@src/atoms/ac-column/ac-column';
  * @param {(selected: Array<Object>) => void} props.onChange - Callback when selection changes
  * @param {React.Ref} ref - Forwarded ref to control the drawer
  */
-const ConFilterHeadersDrawer = forwardRef(({ headers, defaultHeaders = [], onChange }, ref) => {
-  // Track checked header IDs
-  const [checkedIds, setCheckedIds] = useState(() => new Set(defaultHeaders));
+const ConFilterHeadersDrawer = forwardRef(
+  ({ headers, defaultHeaders = [], onChange, loading = false }, ref) => {
+    const drawerRef = useRef(null);
+    const [touched, setTouched] = useState(false);
+    const [checkedIds, setCheckedIds] = useState(() => new Set(defaultHeaders));
 
-  // Expose show/close methods of the underlying AcDrawer
-  useImperativeHandle(ref, () => ({
-    showModal: () => ref.current?.showModal(),
-    close: () => ref.current?.close(),
-  }), [ref]);
+    // Update checkedIds when defaultHeaders changes and component hasn't been touched
+    useEffect(() => {
+      if (!touched) setCheckedIds(new Set(defaultHeaders));
+    }, [defaultHeaders, touched]);
 
-  // Toggle a header by its ID
-  const toggleHeader = (id) => {
-    setCheckedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      // Notify parent with full header objects
-      const selected = headers.filter(h => next.has(h.id));
-      onChange?.(selected);
-      return next;
-    });
-  };
+    useImperativeHandle(
+      ref,
+      () => ({
+        showModal: () => drawerRef.current?.showModal(),
+        close: () => drawerRef.current?.close(),
+        getCheckedHeaders: () => headers.filter((h) => checkedIds.has(h.id)),
+        getCheckedIds: () => Array.from(checkedIds),
+      }),
+      [headers, checkedIds]
+    );
 
-  return (
-    <AcDrawer removeBackdrop id="concepts-drawer" title="Header filters" ref={ref}>
-      <AcColumn gap="sm">
-        {headers.map(({ id, label, key }) => (
-          <AcCheckbox
-            key={id}
-            label={label || key}
-            checked={checkedIds.has(id)}
-            onChange={() => toggleHeader(id)}
-          />
-        ))}
-      </AcColumn>
-    </AcDrawer>
-  );
-});
+    const toggleHeader = (id) => {
+      setTouched(true);
+      setCheckedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    };
+
+    useEffect(() => {
+      onChange?.(headers.filter((h) => checkedIds.has(h.id)));
+    }, [Array.from(checkedIds).join(',')]);
+
+    if (loading)
+      return (
+        <AcDrawer
+          removeBackdrop
+          id='concepts-drawer'
+          title='Header filters'
+          ref={drawerRef}
+        >
+          <AcLoader />
+        </AcDrawer>
+      );
+
+    return (
+      <AcDrawer
+        removeBackdrop
+        id='concepts-drawer'
+        title='Header filters'
+        ref={drawerRef}
+      >
+        <AcColumn gap='sm'>
+          {headers.map(({ id, label, key }) => (
+            <AcCheckbox
+              key={id}
+              label={label || key}
+              checked={checkedIds.has(id)}
+              onChange={() => toggleHeader(id)}
+            />
+          ))}
+        </AcColumn>
+      </AcDrawer>
+    );
+  }
+);
 
 export default ConFilterHeadersDrawer;
