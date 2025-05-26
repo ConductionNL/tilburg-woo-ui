@@ -351,15 +351,17 @@ const BeheerTable = forwardRef((props, ref) => {
     key: '',
     customContent: (row) => (
       <AcFlex column spacing='xs'>
-        <button
-          className='utrecht-button slim'
-          variant='secondary'
-          onClick={() => {
-            config.navigateView(row.id);
-          }}
-        >
-          <VISUALS.EYE className='ac-button__icon' /> Bekijken
-        </button>
+        {config.navigateView && (
+          <button
+            className='utrecht-button slim'
+            variant='secondary'
+            onClick={() => {
+              config.navigateView(row.id);
+            }}
+          >
+            <VISUALS.EYE className='ac-button__icon' /> Bekijken
+          </button>
+        )}
         <button
           className='utrecht-button slim'
           variant='secondary'
