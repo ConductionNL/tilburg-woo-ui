@@ -98,7 +98,12 @@ const AcHome = ({ store: { pages, publications, themes, categories } }) => {
         </AcContainer>
       </AcSection> */}
 
-      <AcFeatured publications={latest_publications} isLoading={is_loading_latest} />
+      {latest_publications?.length > 0 && (
+        <AcFeatured
+          publications={latest_publications}
+          isLoading={is_loading_latest}
+        />
+      )}
 
       <AcAbout
         title={AcRemoveTags(contents[0]?.data?.content)}
