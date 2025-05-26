@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { toJS } from 'mobx';
 
 import { AcCard, AcContainer, AcFlex } from '@atoms';
@@ -21,6 +21,7 @@ import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
 import { StatusBadge } from '@utrecht/component-library-react';
 import _ from 'lodash';
+import { NAVIGATE_TO } from '@constants/routes.constants';
 
 const AcPublication = observer(({ store: { publications, terms } }) => {
   const { id } = useParams();
@@ -174,10 +175,6 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
   useEffect(() => {
     document.title = get_single?.title || 'Gemeente | Publicatie';
   }, [get_single]);
-
-  if (loading.status || !get_single || !attachments) {
-    return <AcLoader />;
-  }
 
   const openDrawer = () => {
     drawerRef.current?.showModal();
@@ -336,6 +333,22 @@ const AcPublication = observer(({ store: { publications, terms } }) => {
       </AcFlex>
     );
   }, [attachments]);
+
+  if (loading.status) {
+    return <AcLoader />;
+  }
+
+  if (!loading.status && !get_single) {
+    return (
+      <AcContainer compact margin='xl'>
+        <Heading>Publicatie niet gevonden</Heading>
+        <Paragraph>
+          We konden de publicatie niet vinden. Ga terug naar{' '}
+          <Link to={getSearchPageURL()}>de zoekpagina</Link> om verder te zoeken.
+        </Paragraph>
+      </AcContainer>
+    );
+  }
 
   return (
     <>
