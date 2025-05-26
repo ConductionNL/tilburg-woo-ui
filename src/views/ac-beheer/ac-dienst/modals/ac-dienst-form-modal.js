@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
-import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { VISUALS } from '@constants';
@@ -12,6 +11,8 @@ import { BASE_URL } from '../../ac-beheer';
 import licenses from '@assets/licenses/licenses.json';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import clsx from 'clsx';
+import _ from 'lodash';
+
 const AcDienstFormModal = ({
   dienst,
   showModal = false,
@@ -33,6 +34,8 @@ const AcDienstFormModal = ({
     ondersteundeStandaarden: '',
     licentie: '',
     hostingopties: [],
+    contact: '',
+    laag: '',
   };
 
   const hostingOptions = [
@@ -42,12 +45,23 @@ const AcDienstFormModal = ({
     { label: 'hybride', value: 'hybride' },
   ];
 
+  const laagOptions = [
+    { label: '(0) Hosting', value: 'Hosting' },
+    { label: '(1) Data', value: 'Data' },
+    { label: '(2) Services', value: 'Services' },
+    { label: '(3) Integratie', value: 'Integratie' },
+    { label: '(4) Processen', value: 'Processen' },
+    { label: '(5) Interactie', value: 'Interactie' },
+  ];
+
   const [dienstFormData, setDienstFormData] = useState({});
 
   const [voorzieningOptions, setVoorzieningOptions] = useState([]);
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
   const [leverancierOptions, setLeverancierOptions] = useState([]);
   const [leveranciersLoading, setLeveranciersLoading] = useState(false);
+  const [gebruikersOptions, setGebruikersOptions] = useState([]);
+  const [gebruikersLoading, setGebruikersLoading] = useState(false);
 
   const [licenseOptions, setLicenseOptions] = useState([]);
   useEffect(() => {
@@ -101,9 +115,26 @@ const AcDienstFormModal = ({
       }
     };
 
+    const fetchGebruikers = async () => {
+      setGebruikersLoading(true);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
+      ).finally(() => setGebruikersLoading(false));
+
+      const data = await response.json();
+
+      setGebruikersOptions(
+        data.results.map((item) => ({
+          value: item.username,
+          label: item.username,
+        }))
+      );
+    };
+
     if (showModal) {
       fetchVoorzieningen();
       fetchLeveranciers();
+      fetchGebruikers();
     }
   }, [showModal]);
 
@@ -114,7 +145,7 @@ const AcDienstFormModal = ({
     // if dienst is provided, set the form data to the dienst data
     setDienstFormData({
       // initial data
-      ...initialData,
+      ..._.cloneDeep(initialData),
       // custom props and state
       ...(preSelectedVoorziening && { voorziening: preSelectedVoorziening }),
       // data to edit (only if data is provided and isEdit is true)
@@ -132,6 +163,7 @@ const AcDienstFormModal = ({
           ondersteundeStandaarden: collapseExtendedObjects(
             dienst.ondersteundeStandaarden
           ),
+          contact: collapseExtendedObjects(dienst.contact, 'username'),
         }),
     });
   }, [dienst, showModal]);
@@ -316,8 +348,8 @@ const AcDienstFormModal = ({
           <ReactSelect
             placeholder='Selecteer een hostingoptie'
             className='ac-beheer-select'
-            value={hostingOptions?.filter(
-              (option) => dienstFormData?.hostingopties?.includes(option.value)
+            value={hostingOptions?.filter((option) =>
+              dienstFormData?.hostingopties?.includes(option.value)
             )}
             onChange={(e) => {
               setDienstFormData((prev) => ({
@@ -328,6 +360,46 @@ const AcDienstFormModal = ({
             options={hostingOptions}
             closeMenuOnSelect={false}
             isMulti
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Contact</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een contact'
+            value={gebruikersOptions?.find(
+              (option) => option.value === dienstFormData.contact
+            )}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                contact: e.value,
+              }));
+            }}
+            loading={gebruikersLoading}
+            options={gebruikersOptions}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Laag</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een laag'
+            className='ac-beheer-select'
+            value={laagOptions?.filter(
+              (option) => dienstFormData?.laag === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                laag: e.value,
+              }));
+            }}
+            isLoading={false}
+            options={laagOptions}
           />
         </div>
       </AcGrid>

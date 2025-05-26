@@ -24,7 +24,6 @@ const AcBeheerDienst = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const showCreateModal = searchParams.get('showCreateModal');
   const voorzieningId = searchParams.get('voorzieningId');
-  console.log(showCreateModal, voorzieningId);
 
   const navigate = useNavigate();
   const [error, setError] = useState(null);

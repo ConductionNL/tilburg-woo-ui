@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -7,7 +7,6 @@ import {
   Heading,
   SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
@@ -19,35 +18,63 @@ import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
+import { BASE_URL } from '../../ac-beheer';
+import { AcButton } from '@src/molecules';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+  const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+
   const filterHeadersDrawerRef = useRef(null);
+
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'gebruiker';
+  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
+
+  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // TODO: a gebruiker endpoint is missing
-      //   const response = await fetch(
-      //     //   config.authentication.baseURL +
-      //     'https://vng.test.commonground.nu/apps' +
-      //       '/openregister/api/objects/gebruiker/gebruiker'
-      //   ).finally(() => setLoading(false));
-      //   const jsonResponse = await response.json();
+      const [response, schemaResponse] = await Promise.all([
+        makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          null,
+          null,
+          '/beheer/diensten'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          null,
+          null,
+          '/beheer/diensten'
+        ),
+      ]);
 
-      //   const data = jsonResponse.results;
-      const data = [];
+      const [jsonResponse, schemaJsonResponse] = await Promise.all([
+        response.json(),
+        schemaResponse.json(),
+      ]);
 
-      //   const errorResponse = jsonResponse.error;
-      const errorResponse = null;
+      const data = jsonResponse.results;
+      const dataProperties = schemaJsonResponse.properties;
+
+      const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
+      setDataProperties(dataProperties);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -60,93 +87,78 @@ const AcBeheerGebruikers = () => {
     fetchData();
   }, []);
 
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
+  const downloadData = useCallback(async (type = 'csv') => {
+    await downloadObjectList(registerSlug, schemaSlug, type);
+  }, []);
 
   const tableRef = useRef(null);
 
-  const headers = [
-    {
-      id: 'name',
-      label: 'Naam',
-      key: 'voornaam',
-      customContent: (row) => `${row.voornaam} ${row.achternaam}`,
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      key: 'actief',
-      customContent: (row) => <span>{row.actief ? 'Actief' : 'Inactief'}</span>,
-    },
-    {
-      id: 'active',
-      label: 'Actief',
-      key: 'actief',
-    },
-    {
-      id: 'lastActivity',
-      label: 'Laatste activiteit',
-      key: 'laatsteInlogdatum',
-    },
-    {
-      id: 'email',
-      label: 'Email',
-      key: 'email',
-    },
-    {
-      id: 'phoneNumber',
-      label: 'Telefoonnummer',
-      key: 'telefoonnummer',
-    },
-    {
-      id: 'username',
-      label: 'Username',
-      key: 'username',
-    },
-    {
-      id: 'functie',
-      label: 'Functie',
-      key: 'functie',
-    },
-    {
-      id: 'organisatie',
-      label: 'Organisatie',
-      key: 'organisatie',
-    },
-    {
-      id: 'preferences',
-      label: 'Voorkeuren',
-      key: 'voorkeuren',
-      customContent: (row) => {
-        if (!row?.voorkeuren) return '-';
-        return `Taal: ${row.voorkeuren.taal}, Thema: ${row.voorkeuren.thema}`;
+  // Custom header overrides for special cases
+  const customHeaders = useMemo(
+    () => ({
+      voornaam: {
+        id: 'name',
+        label: 'Naam',
+        key: 'voornaam',
+        customContent: (row) => `${row.voornaam} ${row.achternaam}`,
       },
-      sortComparator: (a, b, direction) => {
-        if (direction === null) return 0;
-        return ConSorterLogic(a?.voorkeuren?.taal, b?.voorkeuren?.taal, direction);
+      actief: {
+        id: 'status',
+        label: 'Status',
+        key: 'actief',
+        customContent: (row) => <span>{row.actief ? 'Actief' : 'Inactief'}</span>,
       },
-    },
-    {
-      id: 'rollen',
-      label: 'Rollen',
-      key: 'rollen',
-    },
-    {
-      id: 'createdAt',
-      label: 'Aanmaakdatum',
-      key: 'aanmaakdatum',
-    },
-    {
-      id: 'updatedAt',
-      label: 'Wijzigingsdatum',
-      key: 'wijzigingsdatum',
-    },
-  ];
-  const defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
-  const [tableHeaders, setTableHeaders] = useState(
-    headers.filter((header) => defaultHeaders.includes(header.id))
+      voorkeuren: {
+        id: 'preferences',
+        label: 'Voorkeuren',
+        key: 'voorkeuren',
+        customContent: (row) => {
+          if (!row?.voorkeuren) return '-';
+          return `Taal: ${row.voorkeuren.taal}, Thema: ${row.voorkeuren.thema}`;
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          return ConSorterLogic(a?.voorkeuren?.taal, b?.voorkeuren?.taal, direction);
+        },
+      },
+    }),
+    []
   );
+
+  // Generate headers from dataProperties schema
+  const headers = useMemo(() => {
+    if (!dataProperties) return [];
+
+    const schemaHeaders = Object.entries(dataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // Check if we have a custom override for this header
+        if (customHeaders[key]) {
+          return customHeaders[key];
+        }
+
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      })
+      .flat(); // flatten the array of arrays
+
+    return schemaHeaders;
+  }, [dataProperties, customHeaders]);
+
+  const defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
+  const [tableHeaders, setTableHeaders] = useState([]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -179,9 +191,13 @@ const AcBeheerGebruikers = () => {
                 <VISUALS.FILTER />
               </SecondaryActionButton>
 
-              <PrimaryActionButton onClick={() => setOpenModal('add')}>
-                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
-              </PrimaryActionButton>
+              <AcButton
+                style='button'
+                icon={<VISUALS.PLUS />}
+                onClick={() => setOpenModal('add')}
+              >
+                Toevoegen
+              </AcButton>
 
               <ConActionMenu>
                 <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -199,13 +215,15 @@ const AcBeheerGebruikers = () => {
 
                   <ConActionMenu.SubMenu
                     label='Download'
-                    disabled={selectedRows.length === 0}
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
-                    <ConActionMenu.Button disabled>Als CSV</ConActionMenu.Button>
-                    <ConActionMenu.Button disabled>Als XML</ConActionMenu.Button>
-                    <ConActionMenu.Button disabled>Als AFML</ConActionMenu.Button>
+                    <ConActionMenu.Button onClick={() => downloadData('csv')}>
+                      Als CSV
+                    </ConActionMenu.Button>
+                    <ConActionMenu.Button onClick={() => downloadData('excel')}>
+                      Als Excel
+                    </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
 
                   <ConActionMenu.Divider />
