@@ -9,6 +9,7 @@ import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -17,16 +18,19 @@ const AcApplicatiesFormModal = ({
   onSuccess,
   isEdit = false,
 }) => {
-  const [applicatieFormData, setApplicatieFormData] = useState({
+  const initialData = {
     name: '',
     description: '',
     category: '',
-    functionalities: '',
+    functionalities: '[]',
     targetGroups: [],
     referenceComponents: [],
     standards: [],
     voorzieningstype: '',
-  });
+    contact: '',
+  };
+
+  const [applicatieFormData, setApplicatieFormData] = useState({});
 
   const modalRef = useRef(null);
 
@@ -37,6 +41,8 @@ const AcApplicatiesFormModal = ({
     useState(false);
   const [standaardenOptions, setStandaardenOptions] = useState([]);
   const [standaardenLoading, setStandaardenLoading] = useState(false);
+  const [gebruikersOptions, setGebruikersOptions] = useState([]);
+  const [gebruikersLoading, setGebruikersLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -58,8 +64,25 @@ const AcApplicatiesFormModal = ({
       );
     };
 
+    const fetchGebruikers = async () => {
+      setGebruikersLoading(true);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
+      ).finally(() => setGebruikersLoading(false));
+
+      const data = await response.json();
+
+      setGebruikersOptions(
+        data.results.map((item) => ({
+          value: item.username,
+          label: item.username,
+        }))
+      );
+    };
+
     if (showModal) {
       fetchVoorzieningsTypes();
+      fetchGebruikers();
     }
   }, [showModal]);
 
@@ -141,38 +164,28 @@ const AcApplicatiesFormModal = ({
 
   // load applicatie data into the form
   useEffect(() => {
-    if (applicatie && isEdit) {
-      setApplicatieFormData((prev) => ({
-        ...prev,
-        ...applicatie,
-        id: applicatie.id,
-        name: applicatie.naam,
-        description: applicatie.beschrijving,
-        category: applicatie.categorie,
-        functionalities: Array.isArray(applicatie.functionaliteiten)
-          ? applicatie.functionaliteiten.join(', ')
-          : applicatie.functionaliteiten,
-        targetGroups: applicatie.doelgroep,
-        referenceComponents: smartSplit(
-          collapseExtendedObjects(applicatie.referentieComponenten)
-        ),
-        standards: smartSplit(collapseExtendedObjects(applicatie.standaarden)),
-        voorzieningstype: applicatie.voorzieningstype,
-      }));
-    }
-    if (!applicatie && !isEdit) {
-      setApplicatieFormData(() => ({
-        name: '',
-        description: '',
-        category: '',
-        functionalities: '',
-        targetGroups: [],
-        referenceComponents: [],
-        standards: [],
-        voorzieningstype: '',
-      }));
-    }
-  }, [applicatie, isEdit]);
+    setApplicatieFormData({
+      // initial data
+      ..._.cloneDeep(initialData),
+      // data to edit (only if data is provided and isEdit is true)
+      ...(applicatie &&
+        isEdit && {
+          ...applicatie,
+          id: applicatie.id,
+          name: applicatie.naam,
+          description: applicatie.beschrijving,
+          category: applicatie.categorie,
+          functionalities: applicatie.functionaliteiten,
+          targetGroups: JSON.parse(applicatie.doelgroep),
+          referenceComponents: smartSplit(
+            collapseExtendedObjects(applicatie.referentieComponenten)
+          ),
+          standards: smartSplit(collapseExtendedObjects(applicatie.standaarden)),
+          voorzieningstype: applicatie.voorzieningstype,
+          contact: collapseExtendedObjects(applicatie.contact, 'username'),
+        }),
+    });
+  }, [applicatie, showModal]);
 
   const handleEditApplicatieOpenModal = () => modalRef?.current?.showModal();
 
@@ -197,11 +210,12 @@ const AcApplicatiesFormModal = ({
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
+          ...applicatieFormData,
           naam: applicatieFormData.name,
           beschrijving: applicatieFormData.description,
           categorie: applicatieFormData.category,
-          functionaliteiten: smartSplit(applicatieFormData.functionalities),
-          doelgroep: applicatieFormData.targetGroups,
+          functionaliteiten: JSON.parse(applicatieFormData.functionalities),
+          doelgroep: JSON.stringify(applicatieFormData.targetGroups),
           referentieComponenten: applicatieFormData.referenceComponents,
           standaarden: applicatieFormData.standards,
           voorzieningstype: applicatieFormData.voorzieningstype,
@@ -270,7 +284,7 @@ const AcApplicatiesFormModal = ({
           <ReactSelect
             placeholder='Selecteer een applicatie type'
             value={voorzieningsTypes?.find(
-              (option) => option.id === applicatieFormData.voorzieningstype
+              (option) => option.id === applicatieFormData?.voorzieningstype
             )}
             className='ac-beheer-select'
             onChange={(e) => {
@@ -307,7 +321,7 @@ const AcApplicatiesFormModal = ({
             placeholder='Selecteer een doelgroep'
             className='ac-beheer-select'
             isMulti
-            value={applicatieFormData.targetGroups.map((targetGroup) => ({
+            value={(applicatieFormData?.targetGroups || []).map((targetGroup) => ({
               value: targetGroup,
               label: targetGroup,
             }))}
@@ -364,9 +378,29 @@ const AcApplicatiesFormModal = ({
             }}
             isLoading={standaardenLoading}
             options={standaardenOptions}
-            isDisabled={!applicatieFormData?.referenceComponents.length}
+            isDisabled={!applicatieFormData?.referenceComponents?.length}
             closeMenuOnSelect={false}
             isMulti
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Contact</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een contact'
+            value={gebruikersOptions?.find(
+              (option) => option.value === applicatieFormData.contact
+            )}
+            className='ac-beheer-select'
+            onChange={(e) => {
+              setApplicatieFormData((prev) => ({
+                ...prev,
+                contact: e.value,
+              }));
+            }}
+            loading={gebruikersLoading}
+            options={gebruikersOptions}
           />
         </div>
       </AcFlex>
