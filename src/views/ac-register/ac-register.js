@@ -29,7 +29,6 @@ const AcRegister = () => {
             kvkNummer: kvkNumber,
             naam: name,
             'e-mailadres': email,
-            id: '1',
           }),
         }
       );
