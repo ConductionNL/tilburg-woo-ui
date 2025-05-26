@@ -120,7 +120,6 @@ const AcGebruikenFormModal = ({
           `${BASE_URL}/apps/openregister/api/schemas/voorzieninggebruik`
         );
         const data = await response.json();
-        console.log(data);
         setSchema(data);
       } catch (error) {
         console.error(error);
@@ -456,11 +455,11 @@ const AcGebruikenFormModal = ({
           <ReactSelect
             placeholder='Selecteer een contact'
             value={gebruikersOptions?.find(
-              (option) => option.value === applicatieFormData.contact
+              (option) => option.value === gebruikFormData.contact
             )}
             className='ac-beheer-select'
             onChange={(e) => {
-              setApplicatieFormData((prev) => ({
+              setGebruikFormData((prev) => ({
                 ...prev,
                 contact: e.value,
               }));
