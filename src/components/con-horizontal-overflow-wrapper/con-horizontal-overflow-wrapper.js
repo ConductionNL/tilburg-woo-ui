@@ -27,20 +27,28 @@ const ConHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
   const checkScrollDirections = React.useCallback(() => {
     if (!wrapperRef.current || !contentRef.current) return;
 
-    const hasHorizontalOverflow =
-      contentRef.current.scrollWidth > wrapperRef.current.clientWidth;
+    requestAnimationFrame(() => {
+      const hasHorizontalOverflow =
+        contentRef.current.scrollWidth > wrapperRef.current.clientWidth;
 
-    setCanScrollRight(
-      hasHorizontalOverflow &&
-        wrapperRef.current.scrollLeft + wrapperRef.current.clientWidth <
-          contentRef.current.scrollWidth
-    );
-    setCanScrollLeft(wrapperRef.current.scrollLeft > 0);
+      setCanScrollRight(
+        hasHorizontalOverflow &&
+          wrapperRef.current.scrollLeft + wrapperRef.current.clientWidth <
+            contentRef.current.scrollWidth
+      );
+      setCanScrollLeft(wrapperRef.current.scrollLeft > 0);
+    });
   }, []);
 
   React.useEffect(() => {
+    let rafId;
     const resizeObserver = new ResizeObserver(() => {
-      checkScrollDirections();
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+      rafId = requestAnimationFrame(() => {
+        checkScrollDirections();
+      });
     });
 
     if (wrapperRef.current && contentRef.current) {
@@ -48,7 +56,12 @@ const ConHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
       resizeObserver.observe(contentRef.current);
     }
 
-    return () => resizeObserver.disconnect();
+    return () => {
+      resizeObserver.disconnect();
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, [checkScrollDirections]);
 
   return (
