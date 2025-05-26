@@ -11,15 +11,19 @@ const THEMES = '/themes';
 const CATEGORIES = '/categories';
 const TERMS = '/terms';
 
+// For Conduction API, so publications/themes
+const API_CONDUCTION = '';
+
 export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
-    SEARCH: `${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SEARCH: `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}`, // GET
     SINGLE: (_id) =>
-      `${API}${SEARCH}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog`, // GET
-    ATTACHMENTS: (_id) => `${API}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+      `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}/${_id}?extend%5B%5D=themes&extend%5B%5D=catalog`, // GET
+    ATTACHMENTS: (_id) =>
+      `${API_CONDUCTION}${SEARCH}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
   },
   THEMES: {
-    INDEX: `${API}${SEARCH}${THEMES}`,
+    INDEX: `${API_CONDUCTION}${SEARCH}${THEMES}`,
   },
   FAQS: {
     INDEX: `${API}${PUBLIC}${FAQS}`, // GET
