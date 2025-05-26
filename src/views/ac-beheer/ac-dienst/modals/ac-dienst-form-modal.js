@@ -35,6 +35,7 @@ const AcDienstFormModal = ({
     licentie: '',
     hostingopties: [],
     contact: '',
+    laag: '',
   };
 
   const hostingOptions = [
@@ -42,6 +43,15 @@ const AcDienstFormModal = ({
     { label: 'SaaS', value: 'SaaS' },
     { label: 'PaaS', value: 'PaaS' },
     { label: 'hybride', value: 'hybride' },
+  ];
+
+  const laagOptions = [
+    { label: '(0) Hosting', value: 'Hosting' },
+    { label: '(1) Data', value: 'Data' },
+    { label: '(2) Services', value: 'Services' },
+    { label: '(3) Integratie', value: 'Integratie' },
+    { label: '(4) Processen', value: 'Processen' },
+    { label: '(5) Interactie', value: 'Interactie' },
   ];
 
   const [dienstFormData, setDienstFormData] = useState({});
@@ -370,6 +380,26 @@ const AcDienstFormModal = ({
             }}
             loading={gebruikersLoading}
             options={gebruikersOptions}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Laag</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een laag'
+            className='ac-beheer-select'
+            value={laagOptions?.filter(
+              (option) => dienstFormData?.laag === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                laag: e.value,
+              }));
+            }}
+            isLoading={false}
+            options={laagOptions}
           />
         </div>
       </AcGrid>
