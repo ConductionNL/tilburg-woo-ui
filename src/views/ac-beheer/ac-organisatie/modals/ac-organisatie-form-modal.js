@@ -28,6 +28,7 @@ const AcOrganisatieFormModal = ({
     website: '',
     beschrijving: '',
   });
+  const [schema, setSchema] = useState(null);
 
   const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
@@ -40,6 +41,20 @@ const AcOrganisatieFormModal = ({
     const data = (await response.json()).results;
     setOrganisaties(data);
   }, []);
+
+  useEffect(() => {
+    const fetchSchema = async () => {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/schemas/organisatie`
+      );
+      const data = await response.json();
+      setSchema(data);
+    };
+
+    if (showModal) {
+      fetchSchema();
+    }
+  }, [showModal]);
 
   // load organisatie data into the form
   useEffect(() => {
@@ -143,30 +158,50 @@ const AcOrganisatieFormModal = ({
           type='text'
           onBlur={handleEditOrganisatieFieldChange('kvk-nummer')}
           value={organisatieFormData['kvk-nummer']}
+          {...(schema?.properties?.kvkNummer?.required && {
+            hasError: !organisatieFormData['kvk-nummer'],
+            required: true,
+          })}
         />
         <AcFormField
           label='Organisatienaam'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('organisatienaam')}
           value={organisatieFormData.organisatienaam}
+          {...(schema?.properties?.organisatienaam?.required && {
+            hasError: !organisatieFormData.organisatienaam,
+            required: true,
+          })}
         />
         <AcFormField
           label='Contactgegevens'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('contactgegevens')}
           value={organisatieFormData.contactgegevens}
+          {...(schema?.properties?.contactgegevens?.required && {
+            hasError: !organisatieFormData.contactgegevens,
+            required: true,
+          })}
         />
         <AcFormField
           label='Website'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('website')}
           value={organisatieFormData.website}
+          {...(schema?.properties?.website?.required && {
+            hasError: !organisatieFormData.website,
+            required: true,
+          })}
         />
         <AcFormField
           label='Beschrijving'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('beschrijving')}
           value={organisatieFormData.beschrijving}
+          {...(schema?.properties?.beschrijving?.required && {
+            hasError: !organisatieFormData.beschrijving,
+            required: true,
+          })}
         />
       </AcFlex>
     </AcModal>

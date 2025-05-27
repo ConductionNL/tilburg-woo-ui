@@ -30,6 +30,8 @@ const AcVoorzieningVersieFormModal = ({
     kwetsbaarheden: '',
   });
 
+  const [schema, setSchema] = useState(null);
+
   useEffect(() => {
     if (voorziening && isEdit) {
       setVoorzieningFormData((prev) => ({
@@ -52,6 +54,20 @@ const AcVoorzieningVersieFormModal = ({
       }));
     }
   }, [voorziening, isEdit]);
+
+  useEffect(() => {
+    const fetchSchema = async () => {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/schemas/voorzieningversie`
+      );
+      const data = await response.json();
+      setSchema(data);
+    };
+
+    if (showModal) {
+      fetchSchema();
+    }
+  }, [showModal]);
 
   const handleEditVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
@@ -129,42 +145,70 @@ const AcVoorzieningVersieFormModal = ({
           type='text'
           onBlur={handleEditVoorzieningFieldChange('voorzieningaanbod')}
           value={voorzieningFormData.voorzieningaanbod}
+          {...(schema?.properties?.voorzieningaanbod?.required && {
+            hasError: !voorzieningFormData?.voorzieningaanbod,
+            required: true,
+          })}
         />
         <AcFormField
           label='Versie Nummer'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('versienummer')}
           value={voorzieningFormData.versienummer}
+          {...(schema?.properties?.versienummer?.required && {
+            hasError: !voorzieningFormData?.versienummer,
+            required: true,
+          })}
         />
         <AcFormField
           label='Release Notes'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('releaseNotes')}
           value={voorzieningFormData.releaseNotes}
+          {...(schema?.properties?.releaseNotes?.required && {
+            hasError: !voorzieningFormData?.releaseNotes,
+            required: true,
+          })}
         />
         <AcFormField
           label='Release Datum'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('releaseDatum')}
           value={voorzieningFormData.releaseDatum}
+          {...(schema?.properties?.releaseDatum?.required && {
+            hasError: !voorzieningFormData?.releaseDatum,
+            required: true,
+          })}
         />
         <AcFormField
           label='Eind Datum Ondersteuning'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('eindDatumOndersteuning')}
           value={voorzieningFormData.eindDatumOndersteuning}
+          {...(schema?.properties?.eindDatumOndersteuning?.required && {
+            hasError: !voorzieningFormData?.eindDatumOndersteuning,
+            required: true,
+          })}
         />
         <AcFormField
           label='Systeem Vereisten'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('systeemvereisten')}
           value={voorzieningFormData.systeemvereisten}
+          {...(schema?.properties?.systeemvereisten?.required && {
+            hasError: !voorzieningFormData?.systeemvereisten,
+            required: true,
+          })}
         />
         <AcFormField
           label='Kwetsbaarheden'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('kwetsbaarheden')}
           value={voorzieningFormData.kwetsbaarheden}
+          {...(schema?.properties?.kwetsbaarheden?.required && {
+            hasError: !voorzieningFormData?.kwetsbaarheden,
+            required: true,
+          })}
         />
       </AcFlex>
     </AcModal>

@@ -41,6 +41,8 @@ const AcOvereenkomstFormModal = ({
     opmerkingen: '',
   });
 
+  const [schema, setSchema] = useState(null);
+
   const { makeRequest } = useNextcloudRequests();
 
   const contractTypes = [
@@ -117,6 +119,25 @@ const AcOvereenkomstFormModal = ({
       }));
     }
   }, [overeenkomst, isEdit]);
+
+  useEffect(() => {
+    const fetchSchema = async () => {
+      try {
+        setSchemaLoading(true);
+        const response = await makeRequest(
+          `${BASE_URL}/apps/openregister/api/schemas/contract`
+        );
+        const data = await response.json();
+        setSchema(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if (showModal) {
+      fetchSchema();
+    }
+  }, [showModal]);
 
   const handleEditOvereenkomstOpenModal = () => modalRef?.current?.showModal();
 
@@ -223,30 +244,50 @@ const AcOvereenkomstFormModal = ({
           type='text'
           onBlur={handleEditOvereenkomstFieldChange('voorzieningAanbod')}
           value={overeenkomstFormData.voorzieningAanbod}
+          {...(schema?.properties?.voorzieningAanbod?.required && {
+            hasError: !overeenkomstFormData.voorzieningAanbod,
+            required: true,
+          })}
         />
         <AcFormField
           label='Voorziening Gebruik'
           type='text'
           onBlur={handleEditOvereenkomstFieldChange('voorzieningGebruik')}
           value={overeenkomstFormData.voorzieningGebruik}
+          {...(schema?.properties?.voorzieningGebruik?.required && {
+            hasError: !overeenkomstFormData.voorzieningGebruik,
+            required: true,
+          })}
         />
         <AcFormField
           label='Startdatum'
           type='date'
           onBlur={handleEditOvereenkomstFieldChange('startDatum')}
           value={overeenkomstFormData.startDatum}
+          {...(schema?.properties?.startDatum?.required && {
+            hasError: !overeenkomstFormData.startDatum,
+            required: true,
+          })}
         />
         <AcFormField
           label='Einddatum'
           type='date'
           onBlur={handleEditOvereenkomstFieldChange('eindDatum')}
           value={overeenkomstFormData.eindDatum}
+          {...(schema?.properties?.eindDatum?.required && {
+            hasError: !overeenkomstFormData.eindDatum,
+            required: true,
+          })}
         />
         <AcFormField
           label='Contract Nummer'
           type='text'
           onBlur={handleEditOvereenkomstFieldChange('contractNummer')}
           value={overeenkomstFormData.contractNummer}
+          {...(schema?.properties?.contractNummer?.required && {
+            hasError: !overeenkomstFormData.contractNummer,
+            required: true,
+          })}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -261,7 +302,7 @@ const AcOvereenkomstFormModal = ({
             onChange={(e) => {
               setOvereenkomstFormData((prev) => ({
                 ...prev,
-                contractType: e.value,
+                contractType: e?.value ?? e,
               }));
             }}
             loading={contractTypes?.length === 0}
@@ -269,6 +310,12 @@ const AcOvereenkomstFormModal = ({
               value: type.id,
               label: type.label,
             }))}
+            {...(schema?.properties?.contractType?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.contractType?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <AcFormField
@@ -276,6 +323,10 @@ const AcOvereenkomstFormModal = ({
           type='number'
           onBlur={handleEditOvereenkomstFieldChange('kosten')}
           value={overeenkomstFormData.kosten}
+          {...(schema?.properties?.kosten?.required && {
+            hasError: !overeenkomstFormData.kosten,
+            required: true,
+          })}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -290,7 +341,7 @@ const AcOvereenkomstFormModal = ({
             onChange={(e) => {
               setOvereenkomstFormData((prev) => ({
                 ...prev,
-                kostenPeriode: e.value,
+                kostenPeriode: e?.value ?? e,
               }));
             }}
             loading={kostenPeriodes?.length === 0}
@@ -298,6 +349,12 @@ const AcOvereenkomstFormModal = ({
               value: periode.id,
               label: periode.label,
             }))}
+            {...(schema?.properties?.kostenPeriode?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.kostenPeriode?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -314,6 +371,10 @@ const AcOvereenkomstFormModal = ({
                 'naam'
               )}
               value={overeenkomstFormData.contactpersoonAanbieder.naam}
+              {...(schema?.properties?.contactpersoonAanbieder?.naam?.required && {
+                hasError: !overeenkomstFormData.contactpersoonAanbieder.naam,
+                required: true,
+              })}
             />
             <AcFormField
               headingLevel={5}
@@ -324,6 +385,10 @@ const AcOvereenkomstFormModal = ({
                 'email'
               )}
               value={overeenkomstFormData.contactpersoonAanbieder.email}
+              {...(schema?.properties?.contactpersoonAanbieder?.email?.required && {
+                hasError: !overeenkomstFormData.contactpersoonAanbieder.email,
+                required: true,
+              })}
             />
           </AcFlex>
         </div>
@@ -341,6 +406,10 @@ const AcOvereenkomstFormModal = ({
                 'naam'
               )}
               value={overeenkomstFormData.contactpersoonGebruiker.naam}
+              {...(schema?.properties?.contactpersoonGebruiker?.naam?.required && {
+                hasError: !overeenkomstFormData.contactpersoonGebruiker.naam,
+                required: true,
+              })}
             />
             <AcFormField
               headingLevel={5}
@@ -351,6 +420,10 @@ const AcOvereenkomstFormModal = ({
                 'email'
               )}
               value={overeenkomstFormData.contactpersoonGebruiker.email}
+              {...(schema?.properties?.contactpersoonGebruiker?.email?.required && {
+                hasError: !overeenkomstFormData.contactpersoonGebruiker.email,
+                required: true,
+              })}
             />
           </AcFlex>
         </div>
@@ -359,6 +432,10 @@ const AcOvereenkomstFormModal = ({
           type='text'
           onBlur={handleEditOvereenkomstFieldChange('documentReferentie')}
           value={overeenkomstFormData.documentReferentie}
+          {...(schema?.properties?.documentReferentie?.required && {
+            hasError: !overeenkomstFormData.documentReferentie,
+            required: true,
+          })}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -373,7 +450,7 @@ const AcOvereenkomstFormModal = ({
             onChange={(e) => {
               setOvereenkomstFormData((prev) => ({
                 ...prev,
-                status: e.value,
+                status: e?.value ?? e,
               }));
             }}
             loading={statuses?.length === 0}
@@ -381,6 +458,12 @@ const AcOvereenkomstFormModal = ({
               value: status.id,
               label: status.label,
             }))}
+            {...(schema?.properties?.status?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.status?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <AcFormField
@@ -388,6 +471,10 @@ const AcOvereenkomstFormModal = ({
           type='text'
           onBlur={handleEditOvereenkomstFieldChange('opmerkingen')}
           value={overeenkomstFormData.opmerkingen}
+          {...(schema?.properties?.opmerkingen?.required && {
+            hasError: !overeenkomstFormData.opmerkingen,
+            required: true,
+          })}
         />
       </AcFlex>
     </AcModal>
