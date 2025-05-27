@@ -20,7 +20,7 @@ export const PATHS = AcLockObject({
   PRIVACY: 'https://www.tilburg.nl/privacystatement/',
   PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
   PUBLICATION: '/publicatie/:id',
-  REACH_OUT: '/contact/',
+  REACH_OUT: 'https://www.tilburg.nl/contact/',
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   // THEMES: '/onderwerpen',
