@@ -117,7 +117,7 @@ const AcBeheerGebruiken = () => {
         customContent: (row) => {
           return (
             <AcColumn key={row.id}>
-              <span>{row?.organisatieId?.organisatienaam ?? '-'}</span>
+              <span>{row?.organisatieId?.naam ?? '-'}</span>
             </AcColumn>
           );
         },

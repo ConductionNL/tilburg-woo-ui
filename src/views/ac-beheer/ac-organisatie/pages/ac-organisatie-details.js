@@ -98,7 +98,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam || data.organisatienaam}</Heading>
+                  <Heading>{data.naam ?? data.id}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>

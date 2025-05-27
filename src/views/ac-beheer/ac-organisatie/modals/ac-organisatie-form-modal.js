@@ -23,7 +23,7 @@ const AcOrganisatieFormModal = ({
 
   const [organisatieFormData, setOrganisatieFormData] = useState({
     'kvk-nummer': '',
-    organisatienaam: '',
+    naam: '',
     contactgegevens: '',
     website: '',
     beschrijving: '',
@@ -68,7 +68,7 @@ const AcOrganisatieFormModal = ({
     if (!organisatie && !isEdit) {
       setOrganisatieFormData(() => ({
         'kvk-nummer': '',
-        organisatienaam: '',
+        naam: '',
         contactgegevens: '',
         website: '',
         beschrijving: '',
@@ -164,12 +164,12 @@ const AcOrganisatieFormModal = ({
           })}
         />
         <AcFormField
-          label='Organisatienaam'
+          label='naam'
           type='text'
-          onBlur={handleEditOrganisatieFieldChange('organisatienaam')}
-          value={organisatieFormData.organisatienaam}
-          {...(schema?.properties?.organisatienaam?.required && {
-            hasError: !organisatieFormData.organisatienaam,
+          onBlur={handleEditOrganisatieFieldChange('naam')}
+          value={organisatieFormData.naam}
+          {...(schema?.properties?.naam?.required && {
+            hasError: !organisatieFormData.naam,
             required: true,
           })}
         />

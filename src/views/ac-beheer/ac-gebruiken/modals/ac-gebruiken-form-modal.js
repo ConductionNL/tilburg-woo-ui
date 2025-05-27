@@ -83,7 +83,7 @@ const AcGebruikenFormModal = ({
         const data = (await response.json()).results;
         setOrganisatieOptions(
           data.map((item) => ({
-            label: item.organisatienaam,
+            label: item.naam ?? item.id,
             value: item.id,
           }))
         );

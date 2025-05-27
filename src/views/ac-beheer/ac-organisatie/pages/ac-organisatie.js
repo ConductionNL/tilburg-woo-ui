@@ -99,17 +99,17 @@ const AcBeheerOrganisaties = () => {
   // Custom header overrides for special cases
   const customHeaders = useMemo(
     () => ({
-      organisatienaam: {
+      naam: {
         id: 'organizationName',
         label: 'Naam',
-        key: 'organisatienaam',
+        key: 'naam',
         customContent: (row) => {
-          return row.organisatienaam || row.naam || '-';
+          return row.naam || row.naam || '-';
         },
         sortComparator: (a, b, direction) => {
           if (direction === null) return 0;
-          const aName = a.organisatienaam || a.naam || undefined;
-          const bName = b.organisatienaam || b.naam || undefined;
+          const aName = a.naam || a.naam || undefined;
+          const bName = b.naam || b.naam || undefined;
           return ConSorterLogic(aName, bName, direction);
         },
       },
