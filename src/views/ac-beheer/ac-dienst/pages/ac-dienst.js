@@ -80,7 +80,7 @@ const AcBeheerDienst = () => {
         customContent: (row) => {
           return (
             <AcColumn key={row.id}>
-              <span>{row?.leverancier?.organisatienaam ?? '-'}</span>
+              <span>{row?.leverancier?.naam ?? '-'}</span>
             </AcColumn>
           );
         },

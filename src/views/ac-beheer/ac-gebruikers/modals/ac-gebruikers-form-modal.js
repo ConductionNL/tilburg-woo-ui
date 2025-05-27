@@ -51,9 +51,24 @@ const AcGebruikersFormModal = ({
 
   // form data
   const [gebruikerFormData, setGebruikerFormData] = useState({});
+  const [schema, setSchema] = useState(null);
 
   // nextcloud requests
   const { makeRequest } = useNextcloudRequests();
+
+  useEffect(() => {
+    const fetchSchema = async () => {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/schemas/gebruiker`
+      );
+      const data = await response.json();
+      setSchema(data);
+    };
+
+    if (showModal) {
+      fetchSchema();
+    }
+  }, [showModal]);
 
   useEffect(() => {
     // Set the form data in 1 go
@@ -173,42 +188,70 @@ const AcGebruikersFormModal = ({
           type='text'
           onBlur={handleEditGebruikerFieldChange('username')}
           value={gebruikerFormData.username}
+          {...(schema?.properties?.username?.required && {
+            hasError: !gebruikerFormData?.username,
+            required: true,
+          })}
         />
         <AcFormField
           label='E-mail'
           type='email'
           onBlur={handleEditGebruikerFieldChange('email')}
           value={gebruikerFormData.email}
+          {...(schema?.properties?.email?.required && {
+            hasError: !gebruikerFormData?.email,
+            required: true,
+          })}
         />
         <AcFormField
           label='Voornaam'
           type='text'
           onBlur={handleEditGebruikerFieldChange('voornaam')}
           value={gebruikerFormData.voornaam}
+          {...(schema?.properties?.voornaam?.required && {
+            hasError: !gebruikerFormData?.voornaam,
+            required: true,
+          })}
         />
         <AcFormField
           label='Achternaam'
           type='text'
           onBlur={handleEditGebruikerFieldChange('achternaam')}
           value={gebruikerFormData.achternaam}
+          {...(schema?.properties?.achternaam?.required && {
+            hasError: !gebruikerFormData?.achternaam,
+            required: true,
+          })}
         />
         <AcFormField
           label='Functie'
           type='text'
           onBlur={handleEditGebruikerFieldChange('functie')}
           value={gebruikerFormData.functie}
+          {...(schema?.properties?.functie?.required && {
+            hasError: !gebruikerFormData?.functie,
+            required: true,
+          })}
         />
         <AcFormField
           label='Organisatie'
           type='text'
           onBlur={handleEditGebruikerFieldChange('organisatie')}
           value={gebruikerFormData.organisatie}
+          {...(schema?.properties?.organisatie?.required && {
+            hasError: !gebruikerFormData?.organisatie,
+            required: true,
+          })}
         />
         <AcFormField
           label='Telefoonnummer'
           type='tel'
           onBlur={handleEditGebruikerFieldChange('telefoonnummer')}
           value={gebruikerFormData.telefoonnummer}
+          {...(schema?.properties?.telefoonnummer?.required && {
+            hasError: !gebruikerFormData?.telefoonnummer,
+            required: true,
+          })}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -229,6 +272,12 @@ const AcGebruikersFormModal = ({
             options={rollenOptions}
             closeMenuOnSelect={false}
             isMulti
+            {...(schema?.properties?.rollen?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.rollen?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <AcCheckbox
@@ -251,13 +300,17 @@ const AcGebruikersFormModal = ({
               )
             )}
             className='ac-beheer-select'
-            onChange={(selectedOption) => {
-              handleEditGebruikerFieldChange('voorkeuren.taal')(
-                selectedOption?.value || ''
-              );
+            onChange={(e) => {
+              handleEditGebruikerFieldChange('voorkeuren.taal')(e?.value ?? e);
             }}
             loading={LANGUAGES?.length === 0}
             options={LANGUAGES?.map(mapLanguageToValue)}
+            {...(schema?.properties?.voorkeuren?.taal?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorkeuren?.taal?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -271,16 +324,20 @@ const AcGebruikersFormModal = ({
               value: gebruikerFormData?.voorkeuren?.thema,
             }}
             className='ac-beheer-select'
-            onChange={(selectedOption) => {
-              handleEditGebruikerFieldChange('voorkeuren.thema')(
-                selectedOption?.value || ''
-              );
+            onChange={(e) => {
+              handleEditGebruikerFieldChange('voorkeuren.thema')(e?.value ?? e);
             }}
             options={[
               { label: 'Licht', value: 'licht' },
               { label: 'Donker', value: 'donker' },
               { label: 'Systeem', value: 'systeem' },
             ]}
+            {...(schema?.properties?.voorkeuren?.thema?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorkeuren?.thema?.required && {
+              isClearable: true,
+            })}
           />
         </div>
       </AcFlex>
