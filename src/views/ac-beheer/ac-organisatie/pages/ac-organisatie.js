@@ -161,7 +161,7 @@ const AcBeheerOrganisaties = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['organizationName', 'logo', 'contactDetails'];
+  const defaultHeaders = ['organizationName', 'status', 'logo', 'contactDetails'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
