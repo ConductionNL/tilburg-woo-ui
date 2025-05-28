@@ -7,13 +7,38 @@ import { AcContainer, AcSection } from '@src/atoms';
 import { LABELS, VISUALS } from '@src/constants';
 import { AcFormField, AcButton } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
+import ReactSelect from 'react-select';
+import { Heading1 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcRegister = () => {
-  const [kvkNumber, setKvkNumber] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const organizationTypes = [
+    { id: 'leverancier', label: 'Leverancier' },
+    { id: 'gemeente', label: 'Gemeente' },
+    { id: 'samenwerking', label: 'Samenwerking' },
+    { id: 'community', label: 'Community' },
+  ];
+
+  const organization = {
+    contactPersons: [
+      {
+        name: '',
+        phone: '',
+        email: '',
+      },
+    ],
+    name: '',
+    kvkNumber: '',
+    organizationType: 'leverancier',
+    summary: '',
+    description: '',
+  };
+
+  const setOrganizationData = (key, value) => {
+    setOrganizationData({ ...organization, [key]: value });
+  };
 
   const handleRegister = async () => {
     setLoading(true);
@@ -26,9 +51,18 @@ const AcRegister = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            kvkNummer: kvkNumber,
-            naam: name,
-            'e-mailadres': email,
+            kvkNummer: organization.kvkNumber,
+            naam: organization.name,
+            type: organization.organizationType,
+            beschrijvingKort: organization.summary,
+            beschrijvingLang: organization.description,
+            contactpersonen: [
+              {
+                naam: organization.contactPerson.name,
+                telefoonnummer: organization.contactPerson.phone,
+                'e-mailadres': organization.contactPerson.email,
+              },
+            ],
           }),
         }
       );
@@ -60,33 +94,74 @@ const AcRegister = () => {
         <AcColumn gap='tiger'>
           {!registerCallBack && (
             <>
-              <Heading>{LABELS.REGISTER}</Heading>
-
+              <Heading1>Registratie</Heading1>
               <AcColumn gap='sm'>
+                <div>
+                  <h4 className='utrecht-heading-4'>Organisatie type *</h4>
+                  <ReactSelect
+                    placeholder='Selecteer een applicatie type'
+                    value={organizationTypes?.find(
+                      (option) => option.id === organization.organizationType
+                    )}
+                    className='ac-beheer-select'
+                    loading={organizationTypes?.length === 0}
+                    options={organizationTypes?.map((organizationType) => ({
+                      value: organizationType.id,
+                      label: organizationType.label,
+                    }))}
+                  />
+                </div>
                 <AcFormField
                   label='Naam *'
                   placeholder='John Doe'
-                  value={name}
-                  hasError={!name}
-                  onChange={setName}
+                  value={organization.name}
+                  hasError={!organization.name}
                   disabled={loading}
                 />
                 <AcFormField
-                  label='Email adres *'
-                  placeholder='john.doe@example.com'
-                  value={email}
-                  onChange={setEmail}
-                  type='email'
-                  hasError={!validateEmail(email)}
-                  id='email-field'
+                  label='Beschrijving kort'
+                  placeholder='John Doe'
+                  value={organization.description}
                   disabled={loading}
                 />
+
+                <div>
+                  <h3 className='utrecht-heading-3'>Contactpersoon</h3>
+                  <AcFormField
+                    label='Naam *'
+                    placeholder='John'
+                    value={organization.contactPersons[0].name}
+                    type='text'
+                    hasError={!organization.contactPersons[0].name}
+                    id='name-field'
+                    disabled={loading}
+                  />
+
+                  <AcFormField
+                    label='Telefoonnummer *'
+                    placeholder='06 12345678'
+                    value={organization.contactPersons[0].phone}
+                    type='tel'
+                    hasError={!organization.contactPersons[0].phone}
+                    id='phone-field'
+                    disabled={loading}
+                  />
+
+                  <AcFormField
+                    label='Email adres *'
+                    placeholder='john.doe@example.com'
+                    value={organization.contactPersons[0].email}
+                    type='email'
+                    hasError={!validateEmail(organization.contactPersons[0].email)}
+                    id='email-field'
+                    disabled={loading}
+                  />
+                </div>
 
                 <AcFormField
                   label='KvK nummer'
                   placeholder='12345678'
-                  value={kvkNumber}
-                  onChange={setKvkNumber}
+                  value={organization.kvkNumber}
                   disabled={loading}
                 />
 
@@ -94,7 +169,12 @@ const AcRegister = () => {
                   style='button'
                   icon={<VISUALS.ARROW_RIGHT />}
                   onClick={handleRegister}
-                  disabled={!name || !email || !validateEmail(email) || loading}
+                  disabled={
+                    !organization.name ||
+                    !organization.contactPersons[0].email ||
+                    !validateEmail(organization.contactPersons[0].email) ||
+                    loading
+                  }
                 >
                   {LABELS.REGISTER}
                 </AcButton>
