@@ -40,7 +40,7 @@ const AcBeheerDienstDetails = ({ id }) => {
       setLoading(true);
 
       const extend = [
-        ['_extend[]', 'voorziening'],
+        // ['_extend[]', 'voorziening'],
         ['_extend[]', 'leverancier'],
         ['_extend[]', 'ondersteundeStandaarden'],
       ];
@@ -86,7 +86,6 @@ const AcBeheerDienstDetails = ({ id }) => {
     setUsesLoading(true);
     const response = await makeRequest(`${BASE_URL}/apps/${endpoint}/${id}/uses`, [
       ['_extend[]', '@self.schema'],
-      ['_extend[]', 'all'],
     ]);
     if (!response.ok) {
       console.error('Error fetching uses:', response.statusText);
@@ -156,16 +155,38 @@ const AcBeheerDienstDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
-                        .filter(([key]) => !['id', 'naam', 'versies'].includes(key))
+                        .filter(
+                          ([key]) =>
+                            ![
+                              'id',
+                              'naam',
+                              'versies',
+                              'voorziening',
+                              'leverancier',
+                              'ondersteundeStandaarden',
+                            ].includes(key)
+                        )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>
                             <Paragraph>
-                              {formatBySchema(schemaProperties, data, key, {
-                                include: ['naam'],
-                                includeUnknown: true,
-                                inline: true,
-                              })}
+                              {(() => {
+                                try {
+                                  return formatBySchema(
+                                    schemaProperties,
+                                    data,
+                                    key,
+                                    {
+                                      include: ['naam'],
+                                      includeUnknown: true,
+                                      inline: true,
+                                    }
+                                  );
+                                } catch (error) {
+                                  console.error('Error formatting value:', error);
+                                  return <span>Error displaying value</span>;
+                                }
+                              })()}
                             </Paragraph>
                           </div>
                         ))}
