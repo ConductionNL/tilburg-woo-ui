@@ -26,6 +26,7 @@ import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
 import AcDienstFormModal from '../ac-beheer/ac-dienst/modals/ac-dienst-form-modal';
 import { getCookie } from '@src/utilities';
+import ConActionMenu from '../ac-beheer/con-action-menu';
 
 const AcPublication = observer(({ store: { publications }, schema }) => {
   const { id } = useParams();
@@ -300,17 +301,33 @@ const AcPublication = observer(({ store: { publications }, schema }) => {
             }
 
             {isVoorziening && isLoggedIn && (
-              <div>
-                <PrimaryActionButton
-                  onClick={() =>
-                    navigate(
-                      `/beheer/diensten?showCreateModal=true&voorzieningId=${id}`
-                    )
-                  }
-                >
-                  Dienst toevoegen
-                </PrimaryActionButton>
-              </div>
+              <ConActionMenu>
+                <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                  Acties
+                </ConActionMenu.Trigger>
+
+                <ConActionMenu.Menu position='right'>
+                  <ConActionMenu.Button
+                    onClick={() =>
+                      navigate(
+                        `/beheer/diensten?showCreateModal=true&voorzieningId=${id}`
+                      )
+                    }
+                  >
+                    Dienst toevoegen
+                  </ConActionMenu.Button>
+
+                  <ConActionMenu.Button
+                    onClick={() =>
+                      navigate(
+                        `/beheer/gebruiken?showCreateModal=true&voorzieningId=${id}`
+                      )
+                    }
+                  >
+                    Gebruik toevoegen
+                  </ConActionMenu.Button>
+                </ConActionMenu.Menu>
+              </ConActionMenu>
             )}
           </AcFlex>
           <AcTable header={headers} rows={rows} />{' '}

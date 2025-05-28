@@ -24,6 +24,10 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 
 const AcBeheerGebruiken = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const showCreateModal = searchParams.get('showCreateModal');
+  const voorzieningId = searchParams.get('voorzieningId');
+
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
@@ -32,7 +36,18 @@ const AcBeheerGebruiken = () => {
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
   const filterHeadersDrawerRef = useRef(null);
+  const tableRef = useRef(null);
+
+  useEffect(() => {
+    if (showCreateModal) {
+      setOpenModal('add');
+    }
+  }, [showCreateModal]);
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieninggebruik';
@@ -92,12 +107,6 @@ const AcBeheerGebruiken = () => {
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
   }, []);
-
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
-
-  const tableRef = useRef(null);
 
   // Custom header overrides for special cases
   const customHeaders = useMemo(
@@ -315,6 +324,7 @@ const AcBeheerGebruiken = () => {
           <AcGebruikenFormModal
             gebruik={singleSelectedRow}
             isEdit={openModal === 'edit'}
+            preSelectedVoorzieningId={voorzieningId}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
               setOpenModal(null);
