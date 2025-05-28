@@ -21,6 +21,7 @@ import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -115,6 +116,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+                      {data.status !== 'Actief' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.CHECK />}
+                          onClick={() => setOpenModal('accept')}
+                        >
+                          Accepteren
+                        </ConActionMenu.Button>
+                      )}
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -151,6 +160,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   organisatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
+                  }}
+                />
+
+                <AcAcceptOrganizationModal
+                  organization={data}
+                  showModal={openModal === 'accept'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
