@@ -153,6 +153,10 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         return [key, childSchema];
       });
 
+      if (entries.length === 0) {
+        return <span>-</span>;
+      }
+
       if (currentOptions?.inline) {
         return (
           <span>
@@ -162,9 +166,13 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                   formatBySchema(childSchema, value, key, currentOptions)
                 ) : (
                   <span>
-                    {typeof value[key] === 'object'
-                      ? JSON.stringify(value[key])
-                      : value[key]}
+                    {value[key] === undefined || value[key] === null ? (
+                      '-'
+                    ) : typeof value[key] === 'object' ? (
+                      JSON.stringify(value[key])
+                    ) : (
+                      value[key]
+                    )}
                   </span>
                 )}
                 {idx < entries.length - 1 ? ', ' : ''}
@@ -183,6 +191,8 @@ function formatBySchema(schema, data, dataKey, options = {}) {
               </strong>
               {childSchema ? (
                 formatBySchema(childSchema, value, key, currentOptions)
+              ) : value[key] === undefined || value[key] === null ? (
+                <span>-</span>
               ) : typeof value[key] === 'object' ? (
                 <pre>{JSON.stringify(value[key], null, 2)}</pre>
               ) : (

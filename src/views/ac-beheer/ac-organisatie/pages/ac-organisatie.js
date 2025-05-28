@@ -22,6 +22,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
+import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -280,6 +281,18 @@ const AcBeheerOrganisaties = () => {
                     >
                       <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
                     </button>
+                    {row.status !== 'Actief' && (
+                      <button
+                        className='utrecht-button slim'
+                        variant='secondary'
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('accept');
+                        }}
+                      >
+                        <VISUALS.CHECK className='ac-button__icon' /> Accepteren
+                      </button>
+                    )}
                     <button
                       className='utrecht-button slim'
                       variant='secondary'
@@ -297,7 +310,7 @@ const AcBeheerOrganisaties = () => {
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons
             ref={tableRef}
-            truncateLines={3}
+            truncateLines={4}
             showSortButtons
           />
 
@@ -326,6 +339,18 @@ const AcBeheerOrganisaties = () => {
             }}
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
+              fetchData();
+              setOpenModal(null);
+            }}
+          />
+
+          <AcAcceptOrganizationModal
+            organization={singleSelectedRow}
+            showModal={openModal === 'accept'}
+            onClose={() => {
+              setOpenModal(null);
+            }}
+            onSuccess={() => {
               fetchData();
               setOpenModal(null);
             }}
