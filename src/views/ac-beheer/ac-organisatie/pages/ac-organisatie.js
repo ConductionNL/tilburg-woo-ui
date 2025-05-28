@@ -17,7 +17,7 @@ import ConTable from '../../con-table';
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
-import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import ConFilterHeadersDrawer from '../organisatie-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
@@ -30,6 +30,7 @@ const AcBeheerOrganisaties = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(null);
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
@@ -41,51 +42,60 @@ const AcBeheerOrganisaties = () => {
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'contactgegevens']];
+  const fetchSchema = useCallback(async () => {
+    try {
+      const schemaResponse = await makeRequest(
+        `${BASE_URL}/apps/${schemaEndpoint}`,
+        null,
+        null,
+        '/beheer/organisaties'
+      );
+
+      const schemaJsonResponse = await schemaResponse.json();
+      const dataProperties = schemaJsonResponse.properties;
+      setDataProperties(dataProperties);
+    } catch (err) {
+      console.error('Error fetching schema:', err);
+      setError(err);
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          extend,
-          null,
-          '/beheer/organisaties'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/organisaties'
-        ),
-      ]);
+      const extend = [['_extend[]', 'contactgegevens']];
+      if (statusFilter) extend.push(['status', statusFilter]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/${endpoint}`,
+        extend,
+        null,
+        '/beheer/organisaties'
+      );
 
-      setLoading(false);
-
+      const jsonResponse = await response.json();
       const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
-
       const errorResponse = jsonResponse.error;
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
-      setDataProperties(dataProperties);
+      setLoading(false);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
     }
-  }, []);
+  }, [statusFilter, setError, setData, setLoading, makeRequest, endpoint, BASE_URL]);
 
   useEffect(() => {
-    fetchData();
+    fetchSchema();
   }, []);
+
+  // recall fetchData when statusFilter changes
+  // also gets called on first render, which is why you dont see it up there with fetchSchema
+  useEffect(() => {
+    fetchData();
+  }, [statusFilter]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
@@ -179,10 +189,6 @@ const AcBeheerOrganisaties = () => {
 
   if (error) {
     return <AcBeheerError title='Beheer Organisaties' error={error.message} />;
-  }
-
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Organisaties' />;
   }
 
   return (
@@ -312,6 +318,7 @@ const AcBeheerOrganisaties = () => {
             ref={tableRef}
             truncateLines={4}
             showSortButtons
+            loading={loading}
           />
 
           {/* modals */}
@@ -361,6 +368,7 @@ const AcBeheerOrganisaties = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
+            getStatus={setStatusFilter}
           />
         </AcColumn>
       </AcFlex>
