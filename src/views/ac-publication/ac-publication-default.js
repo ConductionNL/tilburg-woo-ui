@@ -27,7 +27,7 @@ import { Heading2, Heading3 } from '@utrecht/component-library-react';
 import AcDienstFormModal from '../ac-beheer/ac-dienst/modals/ac-dienst-form-modal';
 import { getCookie } from '@src/utilities';
 import ConActionMenu from '../ac-beheer/con-action-menu';
-
+import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 const AcPublication = observer(({ store: { publications }, schema }) => {
   const { id } = useParams();
   const {
@@ -331,6 +331,46 @@ const AcPublication = observer(({ store: { publications }, schema }) => {
             )}
           </AcFlex>
           <AcTable header={headers} rows={rows} />{' '}
+          {/* Show only when there are primary attachments */}
+          {getFilteredAttachments(true)?.length > 0 && (
+            <div>
+              <Heading level={2}>{LABELS.DOCUMENTS_PRIMARY}</Heading>
+              <AcFlex spacing={'xs'} className='notice'>
+                <VISUALS.INFO />
+                Documenten worden in een nieuw tabblad geopend.
+              </AcFlex>
+              <AcTable
+                header={[LABELS.DOCUMENT, LABELS.TYPE, LABELS.DATE]}
+                rows={getFilteredAttachments(true)?.map((attachment) =>
+                  AcMappedAttachmentRow(attachment, true)
+                )}
+              />
+            </div>
+          )}
+          {/* Show only if there are secondary attachments */}
+          {getFilteredAttachments()?.length > 0 && (
+            <div>
+              <Heading level={2}>{LABELS.DOCUMENTS_SECONDARY}</Heading>
+              <AcFlex spacing={'md'} column>
+                <AcTable
+                  header={[LABELS.DOCUMENT]}
+                  rows={getFilteredAttachments(
+                    false,
+                    attachmentPagination.page
+                  )?.map((attachment) => AcMappedAttachmentRow(attachment))}
+                />
+                {getFilteredAttachments()?.length > attachmentPagination.perPage && (
+                  <Pagination
+                    totalPages={getFilteredAttachments().length}
+                    page={1}
+                    nextLabel=''
+                    previousLabel=''
+                    onPageChange={(page) => setAttachmentsPage(page)}
+                  />
+                )}
+              </AcFlex>
+            </div>
+          )}
         </AcFlex>
       </AcContainer>
     </>
