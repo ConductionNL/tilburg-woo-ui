@@ -8,6 +8,8 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from './con-file-dropzone';
+import { Heading } from '@amsterdam/design-system-react';
+import ConTable from '../con-table';
 
 /**
  * modal to import data from a file
@@ -17,7 +19,7 @@ import { ConFileDropZone } from './con-file-dropzone';
  * @param {function} onClose - function to call when the modal is closed
  * @returns {React.JSX.Element} - modal to import data from a file
  */
-const AcImportModal = ({
+const AcBeheerImportModal = ({
   register,
   schema,
   showModal = false,
@@ -93,9 +95,8 @@ const AcImportModal = ({
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        <Paragraph>
-          Importeer een bestand met de data die je wilt importeren.
-        </Paragraph>
+        <Paragraph>Importeer bestanden naar {schema}</Paragraph>
+
         <ConFileDropZone
           files={files}
           onFilesChange={(e) => {
@@ -103,6 +104,71 @@ const AcImportModal = ({
             setFiles(e);
           }}
         />
+
+        {files.length > 0 && (
+          <AcFlex column spacing='sm'>
+            <ConTable
+              tableHeaders={[
+                {
+                  id: 'filename',
+                  label: 'Bestand',
+                  key: 'name',
+                  customContent: (row) => {
+                    // truncate length of the filename to 20 characters
+                    const truncatedName =
+                      row.name.length > 20
+                        ? row.name.slice(0, 20) + '...'
+                        : row.name;
+                    return truncatedName
+                  },
+                },
+                {
+                  id: 'type',
+                  label: 'Type',
+                  key: 'type',
+                },
+                {
+                  id: 'size',
+                  label: 'Grootte',
+                  key: 'size',
+                  customContent: (row) => {
+                    // format the size to a single human readable format
+                    const size = row.size;
+                    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                    let formattedSize = size;
+                    let unitIndex = 0;
+
+                    while (formattedSize >= 1024 && unitIndex < units.length - 1) {
+                      formattedSize /= 1024;
+                      unitIndex++;
+                    }
+                    // return a div with the formatted size and the unit and no wrapping
+                    return (
+                      <div style={{ whiteSpace: 'nowrap' }}>{`${
+                        Math.round(formattedSize * 100) / 100
+                      } ${units[unitIndex]}`}</div>
+                    );
+                  },
+                  doNotTruncate: true,
+                },
+                {
+                  id: 'status',
+                  label: 'Status',
+                  key: 'status',
+                },
+              ]}
+              data={files.map((file) => ({
+                name: file.name,
+                size: file.size,
+                status: file.status,
+                type: file.type,
+              }))}
+              truncateLines={1}
+              removeOverflowWrapper
+              showSortButtons
+            />
+          </AcFlex>
+        )}
       </AcFlex>
     </AcModal>
   );
@@ -110,4 +176,4 @@ const AcImportModal = ({
   return renderImportModal;
 };
 
-export default withStore(observer(AcImportModal));
+export default withStore(observer(AcBeheerImportModal));

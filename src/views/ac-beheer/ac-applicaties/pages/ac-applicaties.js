@@ -21,7 +21,7 @@ import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
-import AcImportModal from '../../import-modal/ac-import-modal';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -328,7 +328,7 @@ const AcBeheerApplicaties = () => {
             onChange={setTableHeaders}
           />
 
-          <AcImportModal
+          <AcBeheerImportModal
             register={registerSlug}
             schema={schemaSlug}
             showModal={openModal === 'import'}
