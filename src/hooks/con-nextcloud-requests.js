@@ -29,8 +29,13 @@ export default function useNextcloudRequests() {
       ...fetchOptions,
       method: fetchOptions?.method || 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        // if the set content type is not null or undefined, set it to application/json
+        ...(fetchOptions?.headers?.['Content-Type'] !== null &&
+          fetchOptions?.headers?.['Content-Type'] !== undefined && {
+            'Content-Type': 'application/json',
+          }),
         Authorization: `Bearer ${accessToken}`,
+        // set / overwrite all headers
         ...fetchOptions?.headers,
       },
       body: fetchOptions?.body,
@@ -76,6 +81,39 @@ export default function useNextcloudRequests() {
     window.URL.revokeObjectURL(downloadUrl);
   };
 
+  const makeUploadRequest = async (
+    url,
+    file,
+    queryParams,
+    fetchOptions = {},
+    redirectUrl
+  ) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await makeRequest(
+      url,
+      queryParams,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': null, // Let browser set correct multipart boundary
+          ...fetchOptions?.headers,
+        },
+        body: formData,
+        ...fetchOptions,
+      },
+      redirectUrl
+    );
+
+    if (!response.ok) {
+      console.error('Failed to upload file', response.status, response.statusText);
+      throw new Error(`Upload failed with status ${response.status}`);
+    }
+
+    return response;
+  };
+
   /**
    * Download an object from the Nextcloud API
    * @param {string} register - The register to download
@@ -106,5 +144,5 @@ export default function useNextcloudRequests() {
     );
   };
 
-  return { makeRequest, makeDownloadRequest, downloadObjectList };
+  return { makeRequest, makeDownloadRequest, downloadObjectList, makeUploadRequest };
 }
