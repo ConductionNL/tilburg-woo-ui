@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcLoader, AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from './con-file-dropzone';
-import { Heading } from '@amsterdam/design-system-react';
 import ConTable from '../con-table';
+import { AcButton } from '@src/molecules';
+import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
 
 /**
  * modal to import data from a file
@@ -36,6 +37,16 @@ const AcBeheerImportModal = ({
 
   const [files, setFiles] = useState([]);
   const [successfulFiles, setSuccessfulFiles] = useState([]);
+  const updateFileStatus = (file, status) => {
+    setFiles((prevFiles) =>
+      prevFiles.map((f) => {
+        if (f.id === file.id) {
+          f.status = status;
+        }
+        return f;
+      })
+    );
+  };
 
   const modalRef = useRef(null);
 
@@ -55,17 +66,40 @@ const AcBeheerImportModal = ({
         null
       );
 
+      // if upload is successful, set the status to success and move the file to the successful files
+      updateFileStatus(file, 'success');
+
+      setSuccessfulFiles([...successfulFiles, file]);
+      setFiles(files.filter((f) => f.id !== file.id));
+
       onSuccess?.();
     } catch (err) {
+      updateFileStatus(file, 'error');
       console.error(err);
       setError(err);
     }
   };
 
-  const handleFilesChange = (files) => {
-    setFiles(files);
-    if (files.length > 0) {
-      importFile(files[0]);
+  const handleFilesChange = (newFiles) => {
+    // Filter out files that are already uploading or have been uploaded
+    const uniqueFiles = newFiles.filter((newFile) => {
+      const isAlreadyUploading = files.some(
+        (existingFile) =>
+          (existingFile.id === newFile.id || existingFile.hash === newFile.hash) &&
+          ['uploading', 'pending', 'success'].includes(existingFile.status)
+      );
+      const isAlreadySuccessful = successfulFiles.some(
+        (successFile) =>
+          successFile.id === newFile.id || successFile.hash === newFile.hash
+      );
+      return !isAlreadyUploading && !isAlreadySuccessful;
+    });
+
+    if (uniqueFiles.length > 0) {
+      setFiles((prevFiles) => [...prevFiles, ...uniqueFiles]);
+      uniqueFiles.forEach((file) => {
+        importFile(file);
+      });
     }
   };
 
@@ -94,6 +128,9 @@ const AcBeheerImportModal = ({
       ref={modalRef}
       id='import-modal'
       title={`Importeren`}
+      style={{
+        inlineSize: 'min(80%, 500px)',
+      }}
       buttons={[
         {
           label: 'annuleren',
@@ -159,6 +196,41 @@ const AcBeheerImportModal = ({
                   id: 'status',
                   label: 'Status',
                   key: 'status',
+                  customContent: (row) => {
+                    switch (row.status) {
+                      case 'pending':
+                        return <SpinLoader />;
+                      case 'loading':
+                        return <SpinLoader />;
+                      case 'success':
+                        return <VISUALS.CHECK style={{ color: 'green' }} />;
+                      case 'error':
+                        return (
+                          <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'red' }} />
+                        );
+                      default:
+                        return <div>{row.status}</div>;
+                    }
+                  },
+                  sortComparator: (a, b, direction) => {
+                    if (direction === null) return 0;
+
+                    const statusPriority = {
+                      success: 1,
+                      error: 2,
+                      uploading: 3,
+                      pending: 4,
+                    };
+
+                    const getPriority = (status) => statusPriority[status] || 5;
+
+                    const priorityA = getPriority(a.status);
+                    const priorityB = getPriority(b.status);
+
+                    return direction === 'asc'
+                      ? priorityA - priorityB
+                      : priorityB - priorityA;
+                  },
                 },
               ]}
               data={files.map((file) => ({

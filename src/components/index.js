@@ -45,6 +45,9 @@ const ConHorizontalOverflowWrapper = loadable(() =>
     '@components/con-horizontal-overflow-wrapper/con-horizontal-overflow-wrapper'
   )
 );
+const ConSpinLoader = loadable(() =>
+  import('@src/components/con-spin-loader/con-spin-loader')
+);
 
 export {
   AcAbout,
@@ -69,4 +72,5 @@ export {
   AcTabList,
   AcSideNav,
   ConHorizontalOverflowWrapper,
+  ConSpinLoader,
 };

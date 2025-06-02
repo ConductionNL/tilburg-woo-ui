@@ -115,6 +115,10 @@ const CIRCLE_CHECK = loadable(() =>
   import('-!svg-react-loader!@assets/images/circle-check.svg')
 );
 
+const CIRCLE_EXCLAMATION = loadable(() =>
+  import('-!svg-react-loader!@assets/images/circle-exclamation.svg')
+);
+
 const HAND_SHAKE = loadable(() =>
   import('-!svg-react-loader!@assets/images/handshake.svg')
 );
@@ -211,6 +215,7 @@ export const VISUALS = {
   UPLOAD,
   CLOUD,
   CIRCLE_CHECK,
+  CIRCLE_EXCLAMATION,
   HAND_SHAKE,
   SAVE,
   TRASHCAN,
