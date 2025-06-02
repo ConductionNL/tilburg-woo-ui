@@ -60,10 +60,8 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
         throw new Error('Failed to fetch data');
       }
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       const data = jsonResponse;
       const dataProperties = schemaJsonResponse.properties;
@@ -189,7 +187,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     setOpenModal(null);
                   }}
                   onSuccess={async (e) => {
-                    const gebruik = await e.json();
+                    const gebruik = e.data;
                     navigate(`/beheer/gebruiken/${gebruik.id}`);
                   }}
                 />
@@ -200,7 +198,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     setOpenModal(null);
                   }}
                   onSuccess={async (e) => {
-                    const data = await e.json();
+                    const data = e.data;
                     navigate(`/beheer/diensten/${data.id}`);
                   }}
                   preSelectedVoorziening={data.id}

@@ -60,7 +60,7 @@ const AcVoorzieningVersieFormModal = ({
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/schemas/voorzieningversie`
       );
-      const data = await response.json();
+      const data = response.data;
       setSchema(data);
     };
 

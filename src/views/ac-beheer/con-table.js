@@ -28,6 +28,7 @@ import clsx from 'clsx';
  * - Automatic handling of common data types (arrays, objects, primitives)
  * - Communication with parent components via refs
  * - Column sorting with ascending/descending/none states
+ * - Overflow wrapper for horizontal scrolling
  *
  * **Automatic Data Handling:**
  * - Arrays: joined with commas
@@ -119,13 +120,15 @@ import clsx from 'clsx';
  * @param {boolean} props.renderSelectRowButtons - Whether to render the select row buttons.
  * @param {number} props.truncateLines - The number of lines to truncate the text to. Default is 0 (no truncation).
  * @param {(selectedRows: any[]) => void} props.getSelectedRows - The function to call when the selected rows change.
+ * @param {boolean} props.removeOverflowWrapper - Whether to remove the overflow wrapper. (default: false)
  * @param {{
  *      id: string,
  *      label?: string,
  *      key?: string,
  *      customHeader?: React.ReactElement | string | (() => React.ReactElement | string),
  *      customContent?: React.ReactElement | string | ((row: any) => React.ReactElement | string),
- *      sortComparator?: (a: any, b: any, direction: boolean | null) => number
+ *      sortComparator?: (a: any, b: any, direction: boolean | null) => number,
+ *      doNotTruncate?: boolean
  * }[]} props.tableHeaders - The headers to display in the table. (array of objects)
  * @param props.tableHeaders.id - The unique identifier for the header. Required.
  * @param props.tableHeaders.label - The label to display in the table header.
@@ -133,6 +136,7 @@ import clsx from 'clsx';
  * @param props.tableHeaders.customHeader - The custom header to display in the table cell.
  * @param props.tableHeaders.customContent - The custom content to display in the table cell.
  * @param props.tableHeaders.sortComparator - The custom sort function to display in the table cell. for direction true = ascending, false = descending, null = no sort
+ * @param props.tableHeaders.doNotTruncate - Whether to not truncate the text in the table cell. (default: false)
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
@@ -156,6 +160,7 @@ const ConTable = (
     truncateLines = 0,
     showSortButtons = false,
     loading = false,
+    removeOverflowWrapper = false,
   },
   ref
 ) => {
@@ -461,7 +466,10 @@ const ConTable = (
               }
               key={header.id}
             >
-              <div id={`table-cell-${headerIndex}`} style={getTruncateStyle()}>
+              <div
+                id={`table-cell-${headerIndex}`}
+                style={header.doNotTruncate ? {} : getTruncateStyle()}
+              >
                 {handleDataCellRender(header, row)}
               </div>
             </TableCell>
@@ -479,7 +487,7 @@ const ConTable = (
     handleDataCellRender,
   ]);
 
-  return (
+  return !removeOverflowWrapper ? (
     <ConHorizontalOverflowWrapper
       ariaLabels={{
         scrollLeftButton: 'Scroll left',
@@ -491,6 +499,13 @@ const ConTable = (
         <TableBody>{tableRows}</TableBody>
       </Table>
     </ConHorizontalOverflowWrapper>
+  ) : (
+    <div style={{ overflowX: 'auto' }}>
+      <Table>
+        {tableHeader}
+        <TableBody>{tableRows}</TableBody>
+      </Table>
+    </div>
   );
 };
 

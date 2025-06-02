@@ -60,10 +60,8 @@ const AcBeheerKwetsbaarheden = () => {
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       setLoading(false);
 

@@ -51,7 +51,7 @@ const AcBeheerOrganisaties = () => {
         '/beheer/organisaties'
       );
 
-      const schemaJsonResponse = await schemaResponse.json();
+      const schemaJsonResponse = schemaResponse.data;
       const dataProperties = schemaJsonResponse.properties;
       setDataProperties(dataProperties);
     } catch (err) {
@@ -74,7 +74,7 @@ const AcBeheerOrganisaties = () => {
         '/beheer/organisaties'
       );
 
-      const jsonResponse = await response.json();
+      const jsonResponse = response.data;
       const data = jsonResponse.results;
       const errorResponse = jsonResponse.error;
 

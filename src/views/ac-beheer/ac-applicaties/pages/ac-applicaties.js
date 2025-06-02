@@ -21,6 +21,7 @@ import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -59,12 +60,8 @@ const AcBeheerApplicaties = () => {
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
-
-      setLoading(false);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       const data = jsonResponse.results;
       const dataProperties = schemaJsonResponse.properties;
@@ -77,6 +74,8 @@ const AcBeheerApplicaties = () => {
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -217,6 +216,13 @@ const AcBeheerApplicaties = () => {
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
 
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
+
                   <ConActionMenu.Divider />
 
                   <ConActionMenu.Button
@@ -318,6 +324,14 @@ const AcBeheerApplicaties = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>
