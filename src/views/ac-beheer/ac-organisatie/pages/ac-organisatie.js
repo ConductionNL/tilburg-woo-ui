@@ -23,6 +23,7 @@ import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -241,6 +242,13 @@ const AcBeheerOrganisaties = () => {
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
 
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
+
                   <ConActionMenu.Divider />
 
                   <ConActionMenu.Button
@@ -369,6 +377,14 @@ const AcBeheerOrganisaties = () => {
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
             getStatus={setStatusFilter}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>
