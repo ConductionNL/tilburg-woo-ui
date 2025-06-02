@@ -1,13 +1,8 @@
-@import '@utrecht/components/link/css';
-@import '@utrecht/components/paragraph/css';
-@import '@utrecht/components/ordered-list/css';
-@import '@utrecht/components/unordered-list/css';
-@import '@utrecht/components/heading-1/css';
-@import '@utrecht/components/heading-2/css';
-@import '@utrecht/components/heading-3/css';
-@import '@utrecht/components/heading-4/css';
-@import '@utrecht/components/heading-5/css';
-@import '@utrecht/components/heading-6/css';
+@import '@utrecht/button-css';
+@import '@utrecht/paragraph-css';
+@import '@utrecht/ordered-list-css';
+@import '@utrecht/unordered-list-css';
+
 @import '../atoms/ac-usps';
 
 .ac-rich-text {
