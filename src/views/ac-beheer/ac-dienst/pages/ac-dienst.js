@@ -18,6 +18,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -207,6 +208,13 @@ const AcBeheerDienst = () => {
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
 
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
+
                   <ConActionMenu.Divider />
 
                   <ConActionMenu.Button
@@ -271,6 +279,14 @@ const AcBeheerDienst = () => {
             headers={unfilteredHeaders}
             defaultHeaders={defaultHeaders}
             onChange={setFilteredHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>
