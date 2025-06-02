@@ -24,6 +24,8 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
+import { useLaterEffect } from '@src/utilities';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -32,6 +34,13 @@ const AcBeheerOrganisaties = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
@@ -70,7 +79,7 @@ const AcBeheerOrganisaties = () => {
 
       const response = await makeRequest(
         `${BASE_URL}/apps/${endpoint}`,
-        extend,
+        [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
         null,
         '/beheer/organisaties'
       );
@@ -78,6 +87,13 @@ const AcBeheerOrganisaties = () => {
       const jsonResponse = response.data;
       const data = jsonResponse.results;
       const errorResponse = jsonResponse.error;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
@@ -89,14 +105,18 @@ const AcBeheerOrganisaties = () => {
   }, [statusFilter, setError, setData, setLoading, makeRequest, endpoint, BASE_URL]);
 
   useEffect(() => {
+    fetchData();
     fetchSchema();
   }, []);
 
   // recall fetchData when statusFilter changes
-  // also gets called on first render, which is why you dont see it up there with fetchSchema
-  useEffect(() => {
+  useLaterEffect(() => {
     fetchData();
   }, [statusFilter]);
+
+  useLaterEffect(() => {
+    fetchData();
+  }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
@@ -327,6 +347,20 @@ const AcBeheerOrganisaties = () => {
             truncateLines={4}
             showSortButtons
             loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}

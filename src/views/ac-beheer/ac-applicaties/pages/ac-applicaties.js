@@ -22,6 +22,8 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
+import { useLaterEffect } from '@src/utilities';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -29,6 +31,13 @@ const AcBeheerApplicaties = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
@@ -48,7 +57,7 @@ const AcBeheerApplicaties = () => {
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          extend,
+          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
           null,
           '/beheer/applicaties'
         ),
@@ -62,6 +71,13 @@ const AcBeheerApplicaties = () => {
 
       const jsonResponse = response.data;
       const schemaJsonResponse = schemaResponse.data;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       const data = jsonResponse.results;
       const dataProperties = schemaJsonResponse.properties;
@@ -86,6 +102,10 @@ const AcBeheerApplicaties = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useLaterEffect(() => {
+    fetchData();
+  }, [pagination.page, pagination.limit]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -160,10 +180,6 @@ const AcBeheerApplicaties = () => {
 
   if (error) {
     return <AcBeheerError title='Beheer Applicaties' error={error.message} />;
-  }
-
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Applicaties' />;
   }
 
   return (
@@ -288,6 +304,21 @@ const AcBeheerApplicaties = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}

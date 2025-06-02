@@ -22,6 +22,8 @@ import { BASE_URL } from '../../ac-beheer';
 import { AcButton } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
+import { useLaterEffect } from '@src/utilities';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
@@ -29,6 +31,13 @@ const AcBeheerGebruikers = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -52,7 +61,10 @@ const AcBeheerGebruikers = () => {
         makeRequest(`${BASE_URL}/apps/${endpoint}`, null, null, '/beheer/diensten'),
         makeRequest(
           `${BASE_URL}/apps/${schemaEndpoint}`,
-          null,
+          [
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+          ],
           null,
           '/beheer/diensten'
         ),
@@ -60,6 +72,13 @@ const AcBeheerGebruikers = () => {
 
       const jsonResponse = response.data;
       const schemaJsonResponse = schemaResponse.data;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       const data = jsonResponse.results;
       const dataProperties = schemaJsonResponse.properties;
@@ -80,6 +99,10 @@ const AcBeheerGebruikers = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useLaterEffect(() => {
+    fetchData();
+  }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
@@ -160,10 +183,6 @@ const AcBeheerGebruikers = () => {
 
   if (error) {
     return <AcBeheerError title='Beheer Gebruikers' error={error.message} />;
-  }
-
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Gebruikers' />;
   }
 
   return (
@@ -292,6 +311,21 @@ const AcBeheerGebruikers = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}

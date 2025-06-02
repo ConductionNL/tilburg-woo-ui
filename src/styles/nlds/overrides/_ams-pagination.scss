@@ -1,4 +1,7 @@
 .ams-pagination {
+  display: flex;
+  align-items: center;
+
   background-color: var(--ams-pagination-background-color);
   padding-block-start: var(--ams-pagination-padding-block-start);
   padding-block-end: var(--ams-pagination-padding-block-end);
@@ -34,6 +37,10 @@
   }
 
   &__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
     background-color: var(--ams-pagination-button-background-color);
     border-color: var(--ams-pagination-button-border-color);
     border-radius: var(--ams-pagination-button-border-radius);
