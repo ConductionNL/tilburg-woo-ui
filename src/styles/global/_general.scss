@@ -73,6 +73,10 @@ $grid-gutter-size: 1.6rem;
 
   &__panel {
     padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
+
+    p {
+      line-height: 1.5;
+    }
   }
 }
 

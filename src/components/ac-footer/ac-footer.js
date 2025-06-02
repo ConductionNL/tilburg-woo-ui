@@ -42,8 +42,7 @@ const AcFooter = () => {
                 PUBLICATIES GEMEENTE TILBURG
               </span>
               <span className='ac-footer__logo-description'>
-                In de komende maanden worden op deze website steeds meer openbare
-                documenten geplaatst.
+                Éen plek voor alle publicaties van Gemeente Tilburg
               </span>
             </span>
           </div>
