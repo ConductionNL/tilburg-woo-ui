@@ -1093,7 +1093,7 @@
   --utrecht-separator-color: var(--tilburg-line-border-color);
 
   --tilburg-header-background-color: #ffffff;
-  --tilburg-header-logo-color: var(--horst-aan-de-maas-primary-color);
+  --tilburg-header-logo-text-color: var(--horst-aan-de-maas-primary-color);
   --tilburg-footer-background-color: #0b2f51;
   --tilburg-footer-color: #ffffff;
   --tilburg-footer-link-text-decoration: underline;
@@ -1103,6 +1103,8 @@
   --tilburg-search-card-hover-border-color: var(
     --horst-aan-de-maas-primary-hover-color
   );
+  --tilburg-search-card-border-color: var(--tilburg-color-gray-200);
+
   --tilburg-navigation-font-weight: 700;
   --tilburg-navigation-background-color: var(--horst-aan-de-maas-primary-color);
   --tilburg-navigation-color: #ffffff;
