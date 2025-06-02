@@ -82,7 +82,7 @@ const AcDienstFormModal = ({
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/schemas/voorzieningaanbod`
       );
-      const data = await response.json();
+      const data = response.data;
       setSchema(data);
     };
 
@@ -92,7 +92,7 @@ const AcDienstFormModal = ({
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
         );
-        const data = (await response.json()).results;
+        const data = response.data.results;
         const options = data.map((voorziening) => ({
           label: voorziening.naam,
           value: voorziening.id,
@@ -111,7 +111,7 @@ const AcDienstFormModal = ({
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
         );
-        const data = (await response.json()).results;
+        const data = response.data.results;
         const options = data.map((leverancier) => ({
           label: leverancier.naam ?? leverancier.organisatienaam ?? leverancier.id,
           value: leverancier.id,
@@ -130,10 +130,10 @@ const AcDienstFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
       ).finally(() => setGebruikersLoading(false));
 
-      const data = await response.json();
+      const data = response.data.results;
 
       setGebruikersOptions(
-        data.results.map((item) => ({
+        data.map((item) => ({
           value: item.username,
           label: item.username,
         }))

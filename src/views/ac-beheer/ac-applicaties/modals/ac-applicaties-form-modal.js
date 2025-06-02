@@ -53,7 +53,7 @@ const AcApplicatiesFormModal = ({
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/schemas/voorziening`
       );
-      const data = await response.json();
+      const data = await response.data;
       setSchema(data);
     };
 
@@ -63,7 +63,7 @@ const AcApplicatiesFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
       ).finally(() => setReferentieComponentenLoading(false));
 
-      const data = await response.json();
+      const data = await response.data;
 
       setReferentieComponentenOptions(
         data.results.map((item) => ({
@@ -79,7 +79,7 @@ const AcApplicatiesFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
       ).finally(() => setGebruikersLoading(false));
 
-      const data = await response.json();
+      const data = await response.data;
 
       setGebruikersOptions(
         data.results.map((item) => ({
@@ -116,7 +116,7 @@ const AcApplicatiesFormModal = ({
       `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`,
       voorzieningQueryParams
     );
-    const voorzieningData = (await voorzieningResponse.json()).results;
+    const voorzieningData = voorzieningResponse.data.results;
 
     // flatten the voorziening standaarden array
     const voorzieningStandaarden = [
@@ -141,7 +141,7 @@ const AcApplicatiesFormModal = ({
       standaardenQueryParams
     ).finally(() => setStandaardenLoading(false));
 
-    const standaardenData = (await standaardenResponse.json()).results;
+    const standaardenData = standaardenResponse.data.results;
 
     // set the standaarden options
     setStandaardenOptions(

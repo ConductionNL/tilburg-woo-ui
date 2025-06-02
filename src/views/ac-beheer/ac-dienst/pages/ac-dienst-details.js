@@ -64,10 +64,8 @@ const AcBeheerDienstDetails = ({ id }) => {
         throw new Error('Failed to fetch data');
       }
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       const data = jsonResponse;
       const dataProperties = schemaJsonResponse.properties;
@@ -92,7 +90,7 @@ const AcBeheerDienstDetails = ({ id }) => {
       setUsesLoading(false);
       return;
     }
-    const data = await response.json();
+    const data = response.data;
     setUses(data.results);
     setUsesLoading(false);
   };

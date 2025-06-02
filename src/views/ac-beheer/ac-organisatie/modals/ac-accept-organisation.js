@@ -49,7 +49,7 @@ const AcAcceptOrganizationModal = ({
         modalRef?.current?.close();
       } else {
         const status = response.status;
-        const errorMessage = (await response.json()).error;
+        const errorMessage = response.data.error;
         setError(`${status}: ${errorMessage}`);
       }
     } catch (err) {

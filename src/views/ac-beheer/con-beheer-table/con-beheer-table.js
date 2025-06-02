@@ -255,12 +255,12 @@ const BeheerTable = forwardRef((props, ref) => {
 
         if (responseIndex !== -1) {
           jsonResponseIndex = jsonPromises.length;
-          jsonPromises.push(responses[responseIndex].json());
+          jsonPromises.push(responses[responseIndex].data);
         }
 
         if (schemaResponseIndex !== -1) {
           schemaJsonResponseIndex = jsonPromises.length;
-          jsonPromises.push(responses[schemaResponseIndex].json());
+          jsonPromises.push(responses[schemaResponseIndex].data);
         }
 
         const jsonResponses = await Promise.all(jsonPromises);

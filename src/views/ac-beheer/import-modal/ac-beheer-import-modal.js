@@ -35,6 +35,7 @@ const AcBeheerImportModal = ({
   }, [showModal]);
 
   const [files, setFiles] = useState([]);
+  const [successfulFiles, setSuccessfulFiles] = useState([]);
 
   const modalRef = useRef(null);
 
@@ -45,15 +46,13 @@ const AcBeheerImportModal = ({
   const endpoint = `openregister/api/objects/${register}/${schema}/import`;
 
   const [error, setError] = useState(null);
-  const handleImport = async () => {
+  const importFile = async (file) => {
     try {
       const response = await makeUploadRequest(
         `${BASE_URL}/apps/${endpoint}`,
         file,
         null,
-        {
-          method: 'POST',
-        }
+        null
       );
 
       onSuccess?.();
@@ -63,9 +62,20 @@ const AcBeheerImportModal = ({
     }
   };
 
+  const handleFilesChange = (files) => {
+    setFiles(files);
+    if (files.length > 0) {
+      importFile(files[0]);
+    }
+  };
+
   useEffect(() => {
     if (showModal) {
       handleOpenModal();
+    }
+    if (!showModal) {
+      setFiles([]);
+      setSuccessfulFiles([]);
     }
   }, [showModal]);
 
@@ -97,13 +107,7 @@ const AcBeheerImportModal = ({
       <AcFlex column spacing='sm'>
         <Paragraph>Importeer bestanden naar {schema}</Paragraph>
 
-        <ConFileDropZone
-          files={files}
-          onFilesChange={(e) => {
-            console.log(e);
-            setFiles(e);
-          }}
-        />
+        <ConFileDropZone files={files} onFilesChange={handleFilesChange} />
 
         {files.length > 0 && (
           <AcFlex column spacing='sm'>
@@ -119,7 +123,7 @@ const AcBeheerImportModal = ({
                       row.name.length > 20
                         ? row.name.slice(0, 20) + '...'
                         : row.name;
-                    return truncatedName
+                    return truncatedName;
                   },
                 },
                 {

@@ -38,7 +38,7 @@ const AcOrganisatieFormModal = ({
   useEffect(async () => {
     const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, extend);
 
-    const data = (await response.json()).results;
+    const data = response.data.results;
     setOrganisaties(data);
   }, []);
 
@@ -47,7 +47,7 @@ const AcOrganisatieFormModal = ({
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/schemas/organisatie`
       );
-      const data = await response.json();
+      const data = response.data;
       setSchema(data);
     };
 

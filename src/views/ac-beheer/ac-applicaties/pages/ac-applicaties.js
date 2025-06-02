@@ -60,12 +60,8 @@ const AcBeheerApplicaties = () => {
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
-
-      setLoading(false);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       const data = jsonResponse.results;
       const dataProperties = schemaJsonResponse.properties;
@@ -78,6 +74,8 @@ const AcBeheerApplicaties = () => {
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 

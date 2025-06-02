@@ -70,7 +70,7 @@ const AcKwetsbaarheidFormModal = ({
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/schemas/kwetsbaarheid`
       );
-      const data = await response.json();
+      const data = response.data;
       setSchema(data);
     };
 
