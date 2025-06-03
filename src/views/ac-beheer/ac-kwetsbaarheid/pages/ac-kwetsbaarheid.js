@@ -22,7 +22,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
-import { useLaterEffect } from '@src/utilities';
+import { useLaterEffect } from '@src/hooks';
 import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerKwetsbaarheden = () => {

@@ -5,7 +5,7 @@ import { AcFlex } from '@src/atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
-import { useLaterEffect } from '@src/utilities';
+import { useLaterEffect } from '@src/hooks';
 
 const GET_CONFIG = (type, metadata, navigate) => {
   let typeGetFailed = false;

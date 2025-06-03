@@ -23,7 +23,7 @@ import { AcButton } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
-import { useLaterEffect } from '@src/utilities';
+import { useLaterEffect } from '@src/hooks';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();

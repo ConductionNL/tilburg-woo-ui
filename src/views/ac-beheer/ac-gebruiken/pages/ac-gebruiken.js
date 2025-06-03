@@ -23,7 +23,7 @@ import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
-import { useLaterEffect } from '@src/utilities';
+import { useLaterEffect } from '@src/hooks';
 import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerGebruiken = () => {

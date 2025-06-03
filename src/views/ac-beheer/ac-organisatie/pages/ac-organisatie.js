@@ -25,7 +25,7 @@ import _ from 'lodash';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
-import { useLaterEffect } from '@src/utilities';
+import { useLaterEffect } from '@src/hooks';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
