@@ -157,7 +157,7 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
 
   return (
     <AcFlex column spacing='sm'>
-      <Heading level={4}>Labels</Heading>
+      <Heading level={4}>Bestanden toevoegen</Heading>
       <CreatableSelect
         placeholder='Labels toevoegen of aanmaken'
         isMulti
