@@ -23,24 +23,28 @@ const generateFileHash = async (file) => {
  * @param {File[]} files
  * @param {Function} onFilesChange
  * @param {boolean} [multiple=false] Whether to allow multiple file uploads
+ * @param {boolean} [disabled=false] Whether the dropzone is disabled
  * @returns {JSX.Element}
  */
-export function ConFileDropZone({ files, onFilesChange, multiple = false }) {
+export function ConFileDropZone({ files, onFilesChange, multiple = false, label, disabled = false }) {
   const dropRef = useRef(null);
 
   const id = useId();
 
   const handleDragOver = (e) => {
+    if (disabled) return;
     e.preventDefault();
     dropRef.current.style.background = '#f0f0f0';
   };
 
   const handleDragLeave = (e) => {
+    if (disabled) return;
     e.preventDefault();
     dropRef.current.style.background = 'white';
   };
 
   const setFiles = async (newFiles) => {
+    if (disabled) return;
     // If multiple is false, only take the first file
     const filesToProcess = multiple ? newFiles : [newFiles[0]];
 
@@ -68,6 +72,7 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false }) {
   };
 
   const handleDrop = (e) => {
+    if (disabled) return;
     e.preventDefault();
     dropRef.current.style.background = 'white';
 
@@ -78,6 +83,7 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false }) {
   };
 
   const handleFileSelect = (e) => {
+    if (disabled) return;
     const selected = Array.from(e.target.files);
     const realFiles = selected.filter((f) => f.size > 0);
 
@@ -94,18 +100,20 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false }) {
         border: '1.5px dashed var(--utrecht-button-secondary-action-border-color)',
         padding: '40px 0',
         textAlign: 'center',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         borderRadius: 'var(--utrecht-select-border-radius)',
+        opacity: disabled ? 0.5 : 1,
       }}
-      onClick={() => document.getElementById(`fileInput-${id}`).click()}
+      onClick={() => !disabled && document.getElementById(`fileInput-${id}`).click()}
     >
-      <p>Drag & drop files here or click to select</p>
+      <p>{label || 'Drag & drop files here or click to select'}</p>
       <input
         id={`fileInput-${id}`}
         type='file'
         multiple={multiple}
         style={{ display: 'none' }}
         onChange={handleFileSelect}
+        disabled={disabled}
       />
     </div>
   );
