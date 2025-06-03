@@ -21,7 +21,7 @@ const apiUrl = () => {
       return 'https://nextcloud.open-regels.nl/index.php/apps';
     case 'open-dimpact.accept.commonground.nu':
     case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps';
+      return 'https://directory.opencatalogi.nl/apps';
     case 'open-rotterdam.accept.commonground.nu':
       return 'https://directory.opencatalogi.nl/apps';
     case 'open-migrato.accept.commonground.nu':
