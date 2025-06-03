@@ -24,6 +24,7 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import { format } from 'date-fns';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
@@ -31,6 +32,13 @@ const AcBeheerOvereenkomsten = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
@@ -51,7 +59,7 @@ const AcBeheerOvereenkomsten = () => {
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          extend,
+          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
           null,
           '/beheer/overeenkomsten'
         ),
@@ -65,6 +73,13 @@ const AcBeheerOvereenkomsten = () => {
 
       const jsonResponse = response.data;
       const schemaJsonResponse = schemaResponse.data;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       setLoading(false);
 
@@ -84,7 +99,7 @@ const AcBeheerOvereenkomsten = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
@@ -204,10 +219,6 @@ const AcBeheerOvereenkomsten = () => {
 
   if (error) {
     return <AcBeheerError title='Beheer Overeenkomsten' error={error.message} />;
-  }
-
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Overeenkomsten' />;
   }
 
   return (
@@ -332,6 +343,21 @@ const AcBeheerOvereenkomsten = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}

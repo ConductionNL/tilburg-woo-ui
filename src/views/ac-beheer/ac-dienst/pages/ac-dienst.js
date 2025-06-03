@@ -19,6 +19,7 @@ import { ConSorterLogic } from '@src/utilities/con-sorter';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -29,6 +30,13 @@ const AcBeheerDienst = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -241,6 +249,22 @@ const AcBeheerDienst = () => {
             getHeaders={setUnfilteredHeaders} // get the unfiltered headers to pass to the header filter component
             getDefaultHeaders={setDefaultHeaders} // get the default headers to pass to the header filter component
             headers={filteredHeaders} // set the headers to be used in the table from the header filter component, this overrides the headers within the component
+            pagination={pagination}
+            setPagination={setPagination}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}
