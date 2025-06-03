@@ -25,7 +25,6 @@ import _ from 'lodash';
 import { format } from 'date-fns';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
-import { useLaterEffect } from '@src/hooks';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -102,10 +101,6 @@ const AcBeheerVoorzieningenVersie = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useLaterEffect(() => {
     fetchData();
   }, [pagination.page, pagination.limit]);
 

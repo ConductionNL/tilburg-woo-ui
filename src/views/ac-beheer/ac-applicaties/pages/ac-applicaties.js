@@ -23,7 +23,6 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
-import { useLaterEffect } from '@src/hooks';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -100,10 +99,6 @@ const AcBeheerApplicaties = () => {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useLaterEffect(() => {
     fetchData();
   }, [pagination.page, pagination.limit]);
 
