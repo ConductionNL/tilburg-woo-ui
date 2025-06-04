@@ -11,6 +11,7 @@ import { AcButton } from '@src/molecules';
 import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
 import CreatableSelect from 'react-select/creatable';
 import { Heading } from '@amsterdam/design-system-react';
+import ConConfirmFileDeletionModal from './con-confirm-file-deletion-modal';
 
 // create select funcs
 const createOption = (label) => ({
@@ -41,6 +42,8 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
   const [uploadLoading, setUploadLoading] = useState(false);
   const [labelOptions, setLabelOptions] = useState([createOption('Geen label')]);
   const [selectedLabels, setSelectedLabels] = useState([]);
+  const [showModal, setShowModal] = useState('');
+  const [singleSelectedFile, setSingleSelectedFile] = useState(null);
 
   const { makeMultipartUploadRequest, makeRequest } = useNextcloudRequests();
 
@@ -89,11 +92,6 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
   };
 
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    console.log(files);
-    console.log(files.map((f) => typeof f));
-  }, [files]);
 
   const uploadFile = async (file) => {
     try {
@@ -156,150 +154,186 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
   };
 
   return (
-    <AcFlex column spacing='sm'>
-      <Heading level={4}>Bestanden toevoegen</Heading>
-      <CreatableSelect
-        placeholder='Labels toevoegen of aanmaken'
-        isMulti
-        isClearable
-        onChange={(newValue) => setSelectedLabels(newValue)}
-        onCreateOption={
-          selectedLabels?.[0]?.value === 'Geen label' ? undefined : handleCreate
-        }
-        options={labelOptions.map((option) => ({
-          ...option,
-          isDisabled:
-            option.value === 'Geen label' &&
-            selectedLabels?.length &&
-            selectedLabels[0].value !== 'Geen label',
-        }))}
-        value={selectedLabels}
-        isValidNewOption={(inputValue) =>
-          selectedLabels?.[0]?.value !== 'Geen label' &&
-          inputValue !== '' &&
-          inputValue.toLowerCase() !== 'geen label'
-        }
+    <>
+      <AcFlex column spacing='sm'>
+        <Heading level={4}>Bestanden toevoegen</Heading>
+        <CreatableSelect
+          placeholder='Labels toevoegen of aanmaken'
+          isMulti
+          isClearable
+          onChange={(newValue) => setSelectedLabels(newValue)}
+          onCreateOption={
+            selectedLabels?.[0]?.value === 'Geen label' ? undefined : handleCreate
+          }
+          options={labelOptions.map((option) => ({
+            ...option,
+            isDisabled:
+              option.value === 'Geen label' &&
+              selectedLabels?.length &&
+              selectedLabels[0].value !== 'Geen label',
+          }))}
+          value={selectedLabels}
+          isValidNewOption={(inputValue) =>
+            selectedLabels?.[0]?.value !== 'Geen label' &&
+            inputValue !== '' &&
+            inputValue.toLowerCase() !== 'geen label'
+          }
+        />
+
+        <ConFileDropZone
+          disabled={!selectedLabels.length || uploadLoading}
+          files={files}
+          onFilesChange={handleFilesChange}
+          multiple
+        />
+
+        <ConTable
+          loading={loading && files.length === 0}
+          data={[
+            ...files
+              .filter((f) => ['pending', 'loading', 'error'].includes(f.status))
+              .map((f) => ({
+                // map the file since file objects in javascript are not serializable (god dammit javascript...)
+                ...f,
+                size: f.size || 0,
+                title: f.name || '',
+                type: f.type || '',
+              })),
+            ...(onlineFiles?.results || []),
+          ]}
+          tableHeaders={[
+            {
+              id: 'title',
+              label: 'Titel',
+              key: '',
+              customContent: (row) => {
+                return <div>{row.title || '-'}</div>;
+              },
+              sortComparator: (a, b, direction) => {
+                if (direction === null) return 0;
+                const aTitle = a.title || '';
+                const bTitle = b.title || '';
+                return direction
+                  ? aTitle.localeCompare(bTitle)
+                  : bTitle.localeCompare(aTitle);
+              },
+            },
+            {
+              id: 'labels',
+              label: 'Labels',
+              key: 'labels',
+            },
+            {
+              id: 'type',
+              label: 'Type',
+              key: 'type',
+            },
+            {
+              id: 'size',
+              label: 'Grootte',
+              key: 'size',
+              customContent: (row) => {
+                // format the size to a single human readable format
+                const size = row.size;
+                const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                let formattedSize = size;
+                let unitIndex = 0;
+
+                while (formattedSize >= 1024 && unitIndex < units.length - 1) {
+                  formattedSize /= 1024;
+                  unitIndex++;
+                }
+                // return a div with the formatted size and the unit and no wrapping
+                return (
+                  <div style={{ whiteSpace: 'nowrap' }}>{`${
+                    Math.round(formattedSize * 100) / 100
+                  } ${units[unitIndex]}`}</div>
+                );
+              },
+              doNotTruncate: true,
+            },
+            {
+              id: 'status',
+              label: 'Status',
+              key: 'status',
+              customContent: (row) => {
+                if (!row.isNew) return <VISUALS.CHECK style={{ color: 'green' }} />;
+                switch (row.status) {
+                  case 'pending':
+                    return <SpinLoader />;
+                  case 'loading':
+                    return <SpinLoader />;
+                  case 'success':
+                    return <VISUALS.CHECK style={{ color: 'green' }} />;
+                  case 'error':
+                    return <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'red' }} />;
+                  default:
+                    return <div>{row.status || '-'}</div>;
+                }
+              },
+              sortComparator: (a, b, direction) => {
+                if (direction === null) return 0;
+
+                // add support for sorting on online files
+                if (!a.isNew) a.status = 'success';
+                if (!b.isNew) b.status = 'success';
+
+                const statusPriority = {
+                  success: 1,
+                  error: 2,
+                  uploading: 3,
+                  pending: 4,
+                };
+
+                const getPriority = (status) => statusPriority[status] || 5;
+
+                const priorityA = getPriority(a.status);
+                const priorityB = getPriority(b.status);
+
+                return direction ? priorityA - priorityB : priorityB - priorityA;
+              },
+            },
+            {
+              id: 'actions',
+              label: 'Acties',
+              key: '',
+              customContent: (row) => {
+                if (row.isNew) return null;
+                return (
+                  <AcFlex column spacing='xs'>
+                    <button
+                      className='utrecht-button slim'
+                      variant='secondary'
+                      onClick={() => {
+                        setSingleSelectedFile(row);
+                        setShowModal('delete');
+                      }}
+                    >
+                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
+                    </button>
+                  </AcFlex>
+                );
+              },
+            },
+          ]}
+          truncateLines={1}
+          removeOverflowWrapper
+          showSortButtons
+        />
+      </AcFlex>
+
+      <ConConfirmFileDeletionModal
+        register={register}
+        schema={schema}
+        file={singleSelectedFile}
+        showModal={showModal === 'delete'}
+        onClose={() => setShowModal('')}
+        onSuccess={() => {
+          fetchOnlineFiles();
+          setSingleSelectedFile(null);
+        }}
       />
-
-      <ConFileDropZone
-        disabled={!selectedLabels.length || uploadLoading}
-        files={files}
-        onFilesChange={handleFilesChange}
-        multiple
-      />
-
-      <ConTable
-        loading={loading && files.length === 0}
-        data={[
-          ...files
-            .filter((f) => ['pending', 'loading', 'error'].includes(f.status))
-            .map((f) => ({
-              // map the file since file objects in javascript are not serializable (god dammit javascript...)
-              ...f,
-              size: f.size || 0,
-              title: f.name || '',
-              type: f.type || '',
-            })),
-          ...(onlineFiles?.results || []),
-        ]}
-        tableHeaders={[
-          {
-            id: 'title',
-            label: 'Titel',
-            key: '',
-            customContent: (row) => {
-              return <div>{row.title || '-'}</div>;
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-              const aTitle = a.title || '';
-              const bTitle = b.title || '';
-              return direction
-                ? aTitle.localeCompare(bTitle)
-                : bTitle.localeCompare(aTitle);
-            },
-          },
-          {
-            id: 'labels',
-            label: 'Labels',
-            key: 'labels',
-          },
-          {
-            id: 'type',
-            label: 'Type',
-            key: 'type',
-          },
-          {
-            id: 'size',
-            label: 'Grootte',
-            key: 'size',
-            customContent: (row) => {
-              // format the size to a single human readable format
-              const size = row.size;
-              const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-              let formattedSize = size;
-              let unitIndex = 0;
-
-              while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-                formattedSize /= 1024;
-                unitIndex++;
-              }
-              // return a div with the formatted size and the unit and no wrapping
-              return (
-                <div style={{ whiteSpace: 'nowrap' }}>{`${
-                  Math.round(formattedSize * 100) / 100
-                } ${units[unitIndex]}`}</div>
-              );
-            },
-            doNotTruncate: true,
-          },
-          {
-            id: 'status',
-            label: 'Status',
-            key: 'status',
-            customContent: (row) => {
-              if (!row.isNew) return <VISUALS.CHECK style={{ color: 'green' }} />;
-              switch (row.status) {
-                case 'pending':
-                  return <SpinLoader />;
-                case 'loading':
-                  return <SpinLoader />;
-                case 'success':
-                  return <VISUALS.CHECK style={{ color: 'green' }} />;
-                case 'error':
-                  return <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'red' }} />;
-                default:
-                  return <div>{row.status || '-'}</div>;
-              }
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-
-              // add support for sorting on online files
-              if (!a.isNew) a.status = 'success';
-              if (!b.isNew) b.status = 'success';
-
-              const statusPriority = {
-                success: 1,
-                error: 2,
-                uploading: 3,
-                pending: 4,
-              };
-
-              const getPriority = (status) => statusPriority[status] || 5;
-
-              const priorityA = getPriority(a.status);
-              const priorityB = getPriority(b.status);
-
-              return direction ? priorityA - priorityB : priorityB - priorityA;
-            },
-          },
-        ]}
-        truncateLines={1}
-        removeOverflowWrapper
-        showSortButtons
-      />
-    </AcFlex>
+    </>
   );
 };
 
