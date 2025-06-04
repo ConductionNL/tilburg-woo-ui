@@ -325,6 +325,7 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
       <ConConfirmFileDeletionModal
         register={register}
         schema={schema}
+        id={id}
         file={singleSelectedFile}
         showModal={showModal === 'delete'}
         onClose={() => setShowModal('')}

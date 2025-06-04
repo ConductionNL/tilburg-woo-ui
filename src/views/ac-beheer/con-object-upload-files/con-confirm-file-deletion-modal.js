@@ -12,6 +12,8 @@ import { VISUALS } from '@constants';
  * modal to confirm the deletion of a file
  * @param {object} register - register object
  * @param {object} schema - schema object
+ * @param {string} id - id of the object
+ * @param {object} file - file object
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
  * @returns {React.JSX.Element} - modal to confirm the deletion of a file
@@ -19,6 +21,7 @@ import { VISUALS } from '@constants';
 const ConConfirmFileDeletionModal = ({
   register,
   schema,
+  id,
   file,
   showModal = false,
   onClose = () => {},
@@ -26,9 +29,9 @@ const ConConfirmFileDeletionModal = ({
 }) => {
   useEffect(() => {
     // if you open the modal without a register or schema, throw an error
-    if ((!register || !schema || !file) && showModal) {
-      console.error('register, schema and file are required');
-      throw new Error('register, schema and file are required');
+    if ((!register || !schema || !id || !file) && showModal) {
+      console.error('register, schema, id and file are required');
+      throw new Error('register, schema, id and file are required');
     }
   }, [showModal]);
 
@@ -40,7 +43,7 @@ const ConConfirmFileDeletionModal = ({
 
   const handleDeleteFile = async () => {
     try {
-      const endpoint = `openregister/api/objects/${register}/${schema}/files/${file.title}`;
+      const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}`;
 
       const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
         method: 'DELETE',
