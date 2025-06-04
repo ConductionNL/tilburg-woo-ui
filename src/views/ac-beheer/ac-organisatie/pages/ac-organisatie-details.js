@@ -21,6 +21,7 @@ import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
 import { getCookie } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -59,10 +60,8 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
         throw new Error('Failed to fetch data');
       }
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       const data = jsonResponse;
       const dataProperties = schemaJsonResponse.properties;
@@ -98,7 +97,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam || data.organisatienaam}</Heading>
+                  <Heading>{data.naam ?? data.id}</Heading>
 
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
@@ -115,6 +114,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+                      {data.status !== 'Actief' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.CHECK />}
+                          onClick={() => setOpenModal('accept')}
+                        >
+                          Accepteren
+                        </ConActionMenu.Button>
+                      )}
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -151,6 +158,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   organisatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
+                  }}
+                />
+
+                <AcAcceptOrganizationModal
+                  organization={data}
+                  showModal={openModal === 'accept'}
                   onClose={() => {
                     setOpenModal(null);
                   }}

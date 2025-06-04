@@ -20,6 +20,8 @@ const AcFormField = ({
   fullWidth,
   headingLevel = 4,
   disabled,
+  minLength,
+  maxLength,
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -51,6 +53,8 @@ const AcFormField = ({
         onKeyDown={onKeyDown}
         onChange={onChangeHandler}
         value={value}
+        minLength={minLength}
+        maxLength={maxLength}
       />
     </FormField>
   );

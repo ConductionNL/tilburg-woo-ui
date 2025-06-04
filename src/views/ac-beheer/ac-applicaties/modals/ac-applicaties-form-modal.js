@@ -31,6 +31,7 @@ const AcApplicatiesFormModal = ({
   };
 
   const [applicatieFormData, setApplicatieFormData] = useState({});
+  const [schema, setSchema] = useState(null);
 
   const modalRef = useRef(null);
 
@@ -48,13 +49,21 @@ const AcApplicatiesFormModal = ({
 
   // get referentie componenten when modal is opened
   useEffect(() => {
+    const fetchSchema = async () => {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/schemas/voorziening`
+      );
+      const data = await response.data;
+      setSchema(data);
+    };
+
     const fetchVoorzieningsTypes = async () => {
       setReferentieComponentenLoading(true);
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
       ).finally(() => setReferentieComponentenLoading(false));
 
-      const data = await response.json();
+      const data = await response.data;
 
       setReferentieComponentenOptions(
         data.results.map((item) => ({
@@ -70,7 +79,7 @@ const AcApplicatiesFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
       ).finally(() => setGebruikersLoading(false));
 
-      const data = await response.json();
+      const data = await response.data;
 
       setGebruikersOptions(
         data.results.map((item) => ({
@@ -81,6 +90,7 @@ const AcApplicatiesFormModal = ({
     };
 
     if (showModal) {
+      fetchSchema();
       fetchVoorzieningsTypes();
       fetchGebruikers();
     }
@@ -106,7 +116,7 @@ const AcApplicatiesFormModal = ({
       `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`,
       voorzieningQueryParams
     );
-    const voorzieningData = (await voorzieningResponse.json()).results;
+    const voorzieningData = voorzieningResponse.data.results;
 
     // flatten the voorziening standaarden array
     const voorzieningStandaarden = [
@@ -131,7 +141,7 @@ const AcApplicatiesFormModal = ({
       standaardenQueryParams
     ).finally(() => setStandaardenLoading(false));
 
-    const standaardenData = (await standaardenResponse.json()).results;
+    const standaardenData = standaardenResponse.data.results;
 
     // set the standaarden options
     setStandaardenOptions(
@@ -270,12 +280,20 @@ const AcApplicatiesFormModal = ({
           type='text'
           onBlur={handleEditApplicatieFieldChange('name')}
           value={applicatieFormData.name}
+          {...(schema?.properties?.naam?.required && {
+            hasError: !applicatieFormData?.name,
+            required: true,
+          })}
         />
         <AcFormField
           label='Beschrijving'
           type='text'
           onBlur={handleEditApplicatieFieldChange('description')}
           value={applicatieFormData.description}
+          {...(schema?.properties?.beschrijving?.required && {
+            hasError: !applicatieFormData?.description,
+            required: true,
+          })}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -290,7 +308,7 @@ const AcApplicatiesFormModal = ({
             onChange={(e) => {
               setApplicatieFormData((prev) => ({
                 ...prev,
-                voorzieningstype: e.value,
+                voorzieningstype: e?.value ?? e,
               }));
             }}
             loading={voorzieningsTypes?.length === 0}
@@ -298,6 +316,12 @@ const AcApplicatiesFormModal = ({
               value: voorzieningstype.id,
               label: voorzieningstype.label,
             }))}
+            {...(schema?.properties?.voorzieningstype?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorzieningstype?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <AcFormField
@@ -305,12 +329,20 @@ const AcApplicatiesFormModal = ({
           type='text'
           onBlur={handleEditApplicatieFieldChange('category')}
           value={applicatieFormData.category}
+          {...(schema?.properties?.categorie?.required && {
+            hasError: !applicatieFormData?.category,
+            required: true,
+          })}
         />
         <AcFormField
           label='Functionaliteiten'
           type='text'
           onBlur={handleEditApplicatieFieldChange('functionalities')}
           value={applicatieFormData.functionalities}
+          {...(schema?.properties?.functionaliteiten?.required && {
+            hasError: !applicatieFormData?.functionalities,
+            required: true,
+          })}
         />
 
         <div>
@@ -336,6 +368,12 @@ const AcApplicatiesFormModal = ({
               value: targetGroup,
               label: targetGroup,
             }))}
+            {...(schema?.properties?.doelgroep?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.doelgroep?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -358,6 +396,12 @@ const AcApplicatiesFormModal = ({
             options={referentieComponentenOptions}
             closeMenuOnSelect={false}
             isMulti
+            {...(schema?.properties?.referentieComponenten?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.referentieComponenten?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -381,6 +425,12 @@ const AcApplicatiesFormModal = ({
             isDisabled={!applicatieFormData?.referenceComponents?.length}
             closeMenuOnSelect={false}
             isMulti
+            {...(schema?.properties?.standaarden?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.standaarden?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -396,11 +446,17 @@ const AcApplicatiesFormModal = ({
             onChange={(e) => {
               setApplicatieFormData((prev) => ({
                 ...prev,
-                contact: e.value,
+                contact: e?.value ?? e,
               }));
             }}
             loading={gebruikersLoading}
             options={gebruikersOptions}
+            {...(schema?.properties?.contact?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.contact?.required && {
+              isClearable: true,
+            })}
           />
         </div>
       </AcFlex>

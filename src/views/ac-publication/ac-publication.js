@@ -51,10 +51,10 @@ const AcPublication = observer(({ store: { publications } }) => {
     return () => resetRelations();
   }, [get_single]);
 
-  // useEffect(() => {
-  //   get_single?.id && fetchAttachments(get_single.id);
-  //   return () => resetAttachments();
-  // }, [get_single]);
+  useEffect(() => {
+    get_single?.id && fetchAttachments(get_single.id);
+    return () => resetAttachments();
+  }, [get_single]);
 
   if (loading.status || !get_single || !all_attachments) {
     return <AcLoader />;

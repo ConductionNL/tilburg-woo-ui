@@ -18,6 +18,8 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -28,6 +30,13 @@ const AcBeheerDienst = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -80,7 +89,7 @@ const AcBeheerDienst = () => {
         customContent: (row) => {
           return (
             <AcColumn key={row.id}>
-              <span>{row?.leverancier?.organisatienaam ?? '-'}</span>
+              <span>{row?.leverancier?.naam ?? '-'}</span>
             </AcColumn>
           );
         },
@@ -207,6 +216,13 @@ const AcBeheerDienst = () => {
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
 
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
+
                   <ConActionMenu.Divider />
 
                   <ConActionMenu.Button
@@ -233,6 +249,22 @@ const AcBeheerDienst = () => {
             getHeaders={setUnfilteredHeaders} // get the unfiltered headers to pass to the header filter component
             getDefaultHeaders={setDefaultHeaders} // get the default headers to pass to the header filter component
             headers={filteredHeaders} // set the headers to be used in the table from the header filter component, this overrides the headers within the component
+            pagination={pagination}
+            setPagination={setPagination}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}
@@ -271,6 +303,14 @@ const AcBeheerDienst = () => {
             headers={unfilteredHeaders}
             defaultHeaders={defaultHeaders}
             onChange={setFilteredHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>

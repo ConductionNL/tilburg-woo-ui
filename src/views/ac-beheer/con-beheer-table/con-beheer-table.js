@@ -5,6 +5,7 @@ import { AcFlex } from '@src/atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
+import { useLaterEffect } from '@src/hooks';
 
 const GET_CONFIG = (type, metadata, navigate) => {
   let typeGetFailed = false;
@@ -167,6 +168,8 @@ const BeheerTable = forwardRef((props, ref) => {
     actionButtons: overrideActionButtons = null,
     getConfig = () => {},
     tableProps = {},
+    pagination = {},
+    setPagination = () => {},
   } = props;
 
   if (!type && !metadata) {
@@ -196,7 +199,51 @@ const BeheerTable = forwardRef((props, ref) => {
     getDefaultHeaders?.(config.defaultHeaders);
   }, [config.defaultHeaders, getDefaultHeaders]);
 
-  useEffect(() => {
+  const fetchObjectData = async () => {
+    const response = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
+      [
+        ...config.extend,
+        ['_limit', pagination?.limit || 9999],
+        ['_page', pagination?.page || 1],
+      ],
+      null,
+      '/beheer/diensten'
+    );
+
+    const data = response.data;
+    if (data.error) {
+      setError({ message: data.error });
+    } else {
+      setData(data.results);
+      setPagination((prev) => ({
+        ...prev,
+        total: data.total,
+        pages: data.pages,
+        offset: data.offset,
+      }));
+    }
+    return data;
+  };
+
+  const fetchSchemaData = async () => {
+    const response = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/schemas/${config.schemaSlug}`,
+      null,
+      null,
+      '/beheer/diensten'
+    );
+
+    const data = response.data;
+    if (data.error) {
+      setError({ message: data.error });
+    } else {
+      setDataProperties(data.properties);
+    }
+    return data;
+  };
+
+  useEffect(async () => {
     // Set provided data if it exists
     if (!shouldFetchData) {
       setData(providedData);
@@ -211,89 +258,41 @@ const BeheerTable = forwardRef((props, ref) => {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        getLoading?.(true);
+    try {
+      setLoading(true);
+      getLoading?.(true);
 
-        // Build array of promises to execute
-        const promises = [];
-        let responseIndex = -1;
-        let schemaResponseIndex = -1;
-
-        if (shouldFetchData) {
-          responseIndex = promises.length; // needs to happen before the promise is pushed
-          promises.push(
-            makeRequest(
-              `${BASE_URL}/apps/openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
-              config.extend,
-              null,
-              '/beheer/diensten'
-            )
-          );
-        }
-
-        if (shouldFetchDataProperties) {
-          schemaResponseIndex = promises.length; // needs to happen before the promise is pushed
-          promises.push(
-            makeRequest(
-              `${BASE_URL}/apps/openregister/api/schemas/${config.schemaSlug}`,
-              null,
-              null,
-              '/beheer/diensten'
-            )
-          );
-        }
-
-        // Execute promises
-        const responses = await Promise.all(promises);
-
-        // Parse responses
-        const jsonPromises = [];
-        let jsonResponseIndex = -1;
-        let schemaJsonResponseIndex = -1;
-
-        if (responseIndex !== -1) {
-          jsonResponseIndex = jsonPromises.length;
-          jsonPromises.push(responses[responseIndex].json());
-        }
-
-        if (schemaResponseIndex !== -1) {
-          schemaJsonResponseIndex = jsonPromises.length;
-          jsonPromises.push(responses[schemaResponseIndex].json());
-        }
-
-        const jsonResponses = await Promise.all(jsonPromises);
-
-        // Handle responses
-        if (jsonResponseIndex !== -1) {
-          const jsonResponse = jsonResponses[jsonResponseIndex];
-          if (jsonResponse.error) {
-            setError({ message: jsonResponse.error });
-          } else {
-            setData(jsonResponse.results);
-          }
-        }
-
-        if (schemaJsonResponseIndex !== -1) {
-          const schemaJsonResponse = jsonResponses[schemaJsonResponseIndex];
-          if (schemaJsonResponse.error) {
-            setError({ message: schemaJsonResponse.error });
-          } else {
-            setDataProperties(schemaJsonResponse.properties);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err);
-      } finally {
-        setLoading(false);
-        getLoading?.(false);
+      if (shouldFetchData) {
+        await fetchObjectData();
       }
-    };
-
-    fetchData();
+      if (shouldFetchDataProperties) {
+        await fetchSchemaData();
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+      getLoading?.(false);
+    }
   }, []);
+
+  useLaterEffect(async () => {
+    if (!shouldFetchData) return;
+
+    try {
+      setLoading(true);
+      getLoading?.(true);
+
+      await fetchObjectData();
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+      getLoading?.(false);
+    }
+  }, [pagination.page, pagination.limit]);
 
   // Generate headers from dataProperties schema
   const generatedHeaders = useMemo(() => {

@@ -21,6 +21,8 @@ import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
 import { AcButton } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
@@ -28,6 +30,13 @@ const AcBeheerGebruikers = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -48,24 +57,27 @@ const AcBeheerGebruikers = () => {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          null,
-          null,
-          '/beheer/diensten'
-        ),
+        makeRequest(`${BASE_URL}/apps/${endpoint}`, null, null, '/beheer/diensten'),
         makeRequest(
           `${BASE_URL}/apps/${schemaEndpoint}`,
-          null,
+          [
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+          ],
           null,
           '/beheer/diensten'
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       const data = jsonResponse.results;
       const dataProperties = schemaJsonResponse.properties;
@@ -85,7 +97,7 @@ const AcBeheerGebruikers = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
@@ -168,10 +180,6 @@ const AcBeheerGebruikers = () => {
     return <AcBeheerError title='Beheer Gebruikers' error={error.message} />;
   }
 
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Gebruikers' />;
-  }
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -225,6 +233,13 @@ const AcBeheerGebruikers = () => {
                       Als Excel
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
+
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
 
@@ -291,6 +306,21 @@ const AcBeheerGebruikers = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}
@@ -327,6 +357,14 @@ const AcBeheerGebruikers = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>

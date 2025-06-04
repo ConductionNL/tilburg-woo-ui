@@ -21,6 +21,8 @@ import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -28,6 +30,13 @@ const AcBeheerApplicaties = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
@@ -47,7 +56,7 @@ const AcBeheerApplicaties = () => {
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          extend,
+          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
           null,
           '/beheer/applicaties'
         ),
@@ -59,12 +68,15 @@ const AcBeheerApplicaties = () => {
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
-      setLoading(false);
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       const data = jsonResponse.results;
       const dataProperties = schemaJsonResponse.properties;
@@ -77,6 +89,8 @@ const AcBeheerApplicaties = () => {
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -86,7 +100,7 @@ const AcBeheerApplicaties = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -163,10 +177,6 @@ const AcBeheerApplicaties = () => {
     return <AcBeheerError title='Beheer Applicaties' error={error.message} />;
   }
 
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Applicaties' />;
-  }
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -216,6 +226,13 @@ const AcBeheerApplicaties = () => {
                       Als Excel
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
+
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
 
@@ -282,6 +299,21 @@ const AcBeheerApplicaties = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}
@@ -318,6 +350,14 @@ const AcBeheerApplicaties = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>

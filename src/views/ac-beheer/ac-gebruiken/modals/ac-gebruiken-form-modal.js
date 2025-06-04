@@ -59,6 +59,7 @@ const AcGebruikenFormModal = ({
   ];
 
   const [gebruikFormData, setGebruikFormData] = useState({});
+  const [schema, setSchema] = useState(null);
 
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
@@ -68,7 +69,6 @@ const AcGebruikenFormModal = ({
   const [versiesLoading, setVersiesLoading] = useState(false);
   const [gebruikersOptions, setGebruikersOptions] = useState([]);
   const [gebruikersLoading, setGebruikersLoading] = useState(false);
-  const [schema, setSchema] = useState(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
@@ -80,10 +80,10 @@ const AcGebruikenFormModal = ({
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
         );
-        const data = (await response.json()).results;
+        const data = response.data.results;
         setOrganisatieOptions(
           data.map((item) => ({
-            label: item.organisatienaam,
+            label: item.naam ?? item.id,
             value: item.id,
           }))
         );
@@ -100,7 +100,7 @@ const AcGebruikenFormModal = ({
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
         );
-        const data = (await response.json()).results;
+        const data = response.data.results;
         const voorzieningenOptions = data.map((item) => ({
           label: item.naam,
           value: item.id,
@@ -119,7 +119,7 @@ const AcGebruikenFormModal = ({
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/schemas/voorzieninggebruik`
         );
-        const data = await response.json();
+        const data = response.data;
         setSchema(data);
       } catch (error) {
         console.error(error);
@@ -134,10 +134,10 @@ const AcGebruikenFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
       ).finally(() => setGebruikersLoading(false));
 
-      const data = await response.json();
+      const data = response.data.results;
 
       setGebruikersOptions(
-        data.results.map((item) => ({
+        data.map((item) => ({
           value: item.username,
           label: item.username,
         }))
@@ -159,7 +159,7 @@ const AcGebruikenFormModal = ({
       const aanbodResponse = await makeRequest(
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningaanbod?voorziening=${gebruikFormData.voorzieningId}`
       );
-      const data = (await aanbodResponse.json()).results;
+      const data = aanbodResponse.data.results;
       const aanbodIds = data.map((item) => item.id);
 
       if (!aanbodIds.length) {
@@ -171,7 +171,7 @@ const AcGebruikenFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
         aanbodIds.map((id) => ['voorzieningaanbod[]', id])
       );
-      const versies = (await versieResponse.json()).results;
+      const versies = versieResponse.data.results;
 
       setVersiesOptions(
         versies.map((item) => ({
@@ -290,12 +290,18 @@ const AcGebruikenFormModal = ({
             onChange={(e) => {
               setGebruikFormData((prev) => ({
                 ...prev,
-                organisatieId: e.value,
+                organisatieId: e?.value ?? e,
               }));
             }}
             isLoading={organisatieLoading}
             options={organisatieOptions}
             isDisabled={preSelectedOrganisatieId}
+            {...(schema?.properties?.organisatie?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.organisatie?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -314,12 +320,18 @@ const AcGebruikenFormModal = ({
             onChange={(e) => {
               setGebruikFormData((prev) => ({
                 ...prev,
-                voorzieningId: e.value,
+                voorzieningId: e?.value ?? e,
               }));
             }}
             isLoading={voorzieningenLoading}
             options={voorzieningenOptions}
             isDisabled={preSelectedVoorzieningId}
+            {...(schema?.properties?.voorzieningId?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorzieningId?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -341,7 +353,7 @@ const AcGebruikenFormModal = ({
             onChange={(e) => {
               setGebruikFormData((prev) => ({
                 ...prev,
-                status: e.value,
+                status: e?.value ?? e,
               }));
             }}
             isLoading={schemaLoading}
@@ -349,6 +361,12 @@ const AcGebruikenFormModal = ({
               label: item,
               value: item,
             }))}
+            {...(schema?.properties?.status?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.status?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -364,12 +382,18 @@ const AcGebruikenFormModal = ({
             onChange={(e) => {
               setGebruikFormData((prev) => ({
                 ...prev,
-                versieId: e.value,
+                versieId: e?.value ?? e,
               }));
             }}
             isLoading={versiesLoading}
             options={versiesOptions}
             isDisabled={!gebruikFormData.voorzieningId}
+            {...(schema?.properties?.versieId?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.versieId?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -380,9 +404,12 @@ const AcGebruikenFormModal = ({
             className='ac-beheer-date-input'
             onChange={(e) =>
               handleEditGebruikFieldChange('startDatum')(
-                new Date(e.target.value).toISOString()
+                e.target.value && new Date(e.target.value).toISOString()
               )
             }
+            {...(schema?.properties?.startDatum?.required && {
+              required: true,
+            })}
           />
         </div>
         <div>
@@ -393,9 +420,12 @@ const AcGebruikenFormModal = ({
             className='ac-beheer-date-input'
             onChange={(e) =>
               handleEditGebruikFieldChange('eindDatum')(
-                new Date(e.target.value).toISOString()
+                e.target.value && new Date(e.target.value).toISOString()
               )
             }
+            {...(schema?.properties?.eindDatum?.required && {
+              required: true,
+            })}
           />
         </div>
         <AcFormField
@@ -403,18 +433,30 @@ const AcGebruikenFormModal = ({
           type='text'
           onBlur={handleEditGebruikFieldChange('bbnScore')}
           value={gebruikFormData.bbnScore}
+          {...(schema?.properties?.bbnScore?.required && {
+            hasError: !gebruikFormData?.bbnScore,
+            required: true,
+          })}
         />
         <AcFormField
           label='IBP Score'
           type='text'
           onBlur={handleEditGebruikFieldChange('ibpScore')}
           value={gebruikFormData.ibpScore}
+          {...(schema?.properties?.ibpScore?.required && {
+            hasError: !gebruikFormData?.ibpScore,
+            required: true,
+          })}
         />
         <AcFormField
           label='Opmerkingen'
           type='text'
           onBlur={handleEditGebruikFieldChange('opmerkingen')}
           value={gebruikFormData.opmerkingen}
+          {...(schema?.properties?.opmerkingen?.required && {
+            hasError: !gebruikFormData?.opmerkingen,
+            required: true,
+          })}
         />
         <div className='ac-modal-grid-checkboxes'>
           <AcCheckbox
@@ -441,11 +483,17 @@ const AcGebruikenFormModal = ({
             onChange={(e) => {
               setGebruikFormData((prev) => ({
                 ...prev,
-                hosting: e.value,
+                hosting: e?.value ?? e,
               }));
             }}
             isLoading={organisatieLoading}
             options={hostingOptions}
+            {...(schema?.properties?.hosting?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.hosting?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -461,11 +509,17 @@ const AcGebruikenFormModal = ({
             onChange={(e) => {
               setGebruikFormData((prev) => ({
                 ...prev,
-                contact: e.value,
+                contact: e?.value ?? e,
               }));
             }}
             loading={gebruikersLoading}
             options={gebruikersOptions}
+            {...(schema?.properties?.contact?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.contact?.required && {
+              isClearable: true,
+            })}
           />
         </div>
       </AcGrid>

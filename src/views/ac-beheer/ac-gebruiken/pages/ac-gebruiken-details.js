@@ -58,10 +58,8 @@ const AcBeheerGebruikenDetails = ({ id }) => {
         throw new Error('Failed to fetch data');
       }
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
 
       const data = jsonResponse;
       const dataProperties = schemaJsonResponse.properties;

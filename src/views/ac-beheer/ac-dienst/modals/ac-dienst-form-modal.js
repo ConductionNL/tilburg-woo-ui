@@ -55,6 +55,7 @@ const AcDienstFormModal = ({
   ];
 
   const [dienstFormData, setDienstFormData] = useState({});
+  const [schema, setSchema] = useState(null);
 
   const [voorzieningOptions, setVoorzieningOptions] = useState([]);
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
@@ -77,13 +78,21 @@ const AcDienstFormModal = ({
 
   //   fetch voorzieningen
   useEffect(() => {
+    const fetchSchema = async () => {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/schemas/voorzieningaanbod`
+      );
+      const data = response.data;
+      setSchema(data);
+    };
+
     const fetchVoorzieningen = async () => {
       try {
         setVoorzieningenLoading(true);
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
         );
-        const data = (await response.json()).results;
+        const data = response.data.results;
         const options = data.map((voorziening) => ({
           label: voorziening.naam,
           value: voorziening.id,
@@ -102,9 +111,9 @@ const AcDienstFormModal = ({
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
         );
-        const data = (await response.json()).results;
+        const data = response.data.results;
         const options = data.map((leverancier) => ({
-          label: leverancier.organisatienaam,
+          label: leverancier.naam ?? leverancier.organisatienaam ?? leverancier.id,
           value: leverancier.id,
         }));
         setLeverancierOptions(options);
@@ -121,10 +130,10 @@ const AcDienstFormModal = ({
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
       ).finally(() => setGebruikersLoading(false));
 
-      const data = await response.json();
+      const data = response.data.results;
 
       setGebruikersOptions(
-        data.results.map((item) => ({
+        data.map((item) => ({
           value: item.username,
           label: item.username,
         }))
@@ -132,6 +141,7 @@ const AcDienstFormModal = ({
     };
 
     if (showModal) {
+      fetchSchema();
       fetchVoorzieningen();
       fetchLeveranciers();
       fetchGebruikers();
@@ -264,12 +274,18 @@ const AcDienstFormModal = ({
             onChange={(e) => {
               setDienstFormData((prev) => ({
                 ...prev,
-                voorziening: e.value,
+                voorziening: e?.value ?? e,
               }));
             }}
             isLoading={voorzieningenLoading}
             options={voorzieningOptions}
             isDisabled={preSelectedVoorziening}
+            {...(schema?.properties?.voorziening?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorziening?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -285,11 +301,17 @@ const AcDienstFormModal = ({
             onChange={(e) => {
               setDienstFormData((prev) => ({
                 ...prev,
-                leverancier: e.value,
+                leverancier: e?.value ?? e,
               }));
             }}
             isLoading={leveranciersLoading}
             options={leverancierOptions}
+            {...(schema?.properties?.leverancier?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.leverancier?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <AcFormField
@@ -297,30 +319,50 @@ const AcDienstFormModal = ({
           type='text'
           onBlur={handleEditDienstFieldChange('productpagina')}
           value={dienstFormData.productpagina}
+          {...(schema?.properties?.productpagina?.required && {
+            hasError: !dienstFormData?.productpagina,
+            required: true,
+          })}
         />
         <AcFormField
           label='Ondersteuningsopties'
           type='text'
           onBlur={handleEditDienstFieldChange('ondersteuningsopties')}
           value={dienstFormData.ondersteuningsopties}
+          {...(schema?.properties?.ondersteuningsopties?.required && {
+            hasError: !dienstFormData?.ondersteuningsopties,
+            required: true,
+          })}
         />
         <AcFormField
           label='Ondersteunde standaarden'
           type='text'
           onBlur={handleEditDienstFieldChange('ondersteundeStandaarden')}
           value={dienstFormData.ondersteundeStandaarden}
+          {...(schema?.properties?.ondersteundeStandaarden?.required && {
+            hasError: !dienstFormData?.ondersteundeStandaarden,
+            required: true,
+          })}
         />
         <AcFormField
           label='Certificeringen'
           type='text'
           onBlur={handleEditDienstFieldChange('certificeringen')}
           value={dienstFormData.certificeringen}
+          {...(schema?.properties?.certificeringen?.required && {
+            hasError: !dienstFormData?.certificeringen,
+            required: true,
+          })}
         />
         <AcFormField
           label='Prijsmodel'
           type='text'
           onBlur={handleEditDienstFieldChange('prijsmodel')}
           value={dienstFormData.prijsmodel}
+          {...(schema?.properties?.prijsmodel?.required && {
+            hasError: !dienstFormData?.prijsmodel,
+            required: true,
+          })}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -335,10 +377,16 @@ const AcDienstFormModal = ({
             onChange={(e) => {
               setDienstFormData((prev) => ({
                 ...prev,
-                licentie: e.value,
+                licentie: e?.value ?? e,
               }));
             }}
             options={licenseOptions}
+            {...(schema?.properties?.licentie?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.licentie?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -360,6 +408,12 @@ const AcDienstFormModal = ({
             options={hostingOptions}
             closeMenuOnSelect={false}
             isMulti
+            {...(schema?.properties?.hostingopties?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.hostingopties?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -375,11 +429,17 @@ const AcDienstFormModal = ({
             onChange={(e) => {
               setDienstFormData((prev) => ({
                 ...prev,
-                contact: e.value,
+                contact: e?.value ?? e,
               }));
             }}
             loading={gebruikersLoading}
             options={gebruikersOptions}
+            {...(schema?.properties?.contact?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.contact?.required && {
+              isClearable: true,
+            })}
           />
         </div>
         <div>
@@ -395,11 +455,17 @@ const AcDienstFormModal = ({
             onChange={(e) => {
               setDienstFormData((prev) => ({
                 ...prev,
-                laag: e.value,
+                laag: e?.value ?? e,
               }));
             }}
             isLoading={false}
             options={laagOptions}
+            {...(schema?.properties?.laag?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.laag?.required && {
+              isClearable: true,
+            })}
           />
         </div>
       </AcGrid>

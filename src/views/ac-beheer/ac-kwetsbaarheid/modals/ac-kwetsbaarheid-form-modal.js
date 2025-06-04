@@ -32,6 +32,7 @@ const AcKwetsbaarheidFormModal = ({
     mitigatie: '',
     referenties: '',
   });
+  const [schema, setSchema] = useState(null);
 
   // load kwetsbaarheid data into the form
   useEffect(() => {
@@ -63,6 +64,20 @@ const AcKwetsbaarheidFormModal = ({
       }));
     }
   }, [kwetsbaarheid, isEdit]);
+
+  useEffect(() => {
+    const fetchSchema = async () => {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/schemas/kwetsbaarheid`
+      );
+      const data = response.data;
+      setSchema(data);
+    };
+
+    if (showModal) {
+      fetchSchema();
+    }
+  }, [showModal]);
 
   const handleEditKwetsbaarheidOpenModal = () => modalRef?.current?.showModal();
 
@@ -140,60 +155,100 @@ const AcKwetsbaarheidFormModal = ({
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('voorzieningversieId')}
           value={kwetsbaarheidFormData.voorzieningversieId}
+          {...(schema?.properties?.voorzieningversieId?.required && {
+            hasError: !kwetsbaarheidFormData?.voorzieningversieId,
+            required: true,
+          })}
         />
         <AcFormField
           label='CVE nummer'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('cveNummer')}
           value={kwetsbaarheidFormData.cveNummer}
+          {...(schema?.properties?.cveNummer?.required && {
+            hasError: !kwetsbaarheidFormData?.cveNummer,
+            required: true,
+          })}
         />
         <AcFormField
           label='Titel'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('titel')}
           value={kwetsbaarheidFormData.titel}
+          {...(schema?.properties?.titel?.required && {
+            hasError: !kwetsbaarheidFormData?.titel,
+            required: true,
+          })}
         />
         <AcFormField
           label='Beschrijving'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('beschrijving')}
           value={kwetsbaarheidFormData.beschrijving}
+          {...(schema?.properties?.beschrijving?.required && {
+            hasError: !kwetsbaarheidFormData?.beschrijving,
+            required: true,
+          })}
         />
         <AcFormField
           label='Ernst'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('ernst')}
           value={kwetsbaarheidFormData.ernst}
+          {...(schema?.properties?.ernst?.required && {
+            hasError: !kwetsbaarheidFormData?.ernst,
+            required: true,
+          })}
         />
         <AcFormField
           label='Ontdekt op'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('ontdektOp')}
           value={kwetsbaarheidFormData.ontdektOp}
+          {...(schema?.properties?.ontdektOp?.required && {
+            hasError: !kwetsbaarheidFormData?.ontdektOp,
+            required: true,
+          })}
         />
         <AcFormField
           label='Gepubliceerd op'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('gepubliceerdOp')}
           value={kwetsbaarheidFormData.gepubliceerdOp}
+          {...(schema?.properties?.gepubliceerdOp?.required && {
+            hasError: !kwetsbaarheidFormData?.gepubliceerdOp,
+            required: true,
+          })}
         />
         <AcFormField
           label='Opgelost in'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('opgelostIn')}
           value={kwetsbaarheidFormData.opgelostIn}
+          {...(schema?.properties?.opgelostIn?.required && {
+            hasError: !kwetsbaarheidFormData?.opgelostIn,
+            required: true,
+          })}
         />
         <AcFormField
           label='Mitigatie'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('mitigatie')}
           value={kwetsbaarheidFormData.mitigatie}
+          {...(schema?.properties?.mitigatie?.required && {
+            hasError: !kwetsbaarheidFormData?.mitigatie,
+            required: true,
+          })}
         />
         <AcFormField
           label='Referenties'
           type='text'
           onBlur={handleEditKwetsbaarheidFieldChange('referenties')}
           value={kwetsbaarheidFormData.referenties}
+          {...(schema?.properties?.referenties?.required && {
+            hasError: !kwetsbaarheidFormData?.referenties,
+            required: true,
+          })}
         />
       </AcFlex>
     </AcModal>

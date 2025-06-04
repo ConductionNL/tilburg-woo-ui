@@ -22,17 +22,41 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerGebruiken = () => {
+  const searchParams = new URLSearchParams(window.location.search);
+  const showCreateModal = searchParams.get('showCreateModal');
+  const voorzieningId = searchParams.get('voorzieningId');
+
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
   const filterHeadersDrawerRef = useRef(null);
+  const tableRef = useRef(null);
+
+  useEffect(() => {
+    if (showCreateModal) {
+      setOpenModal('add');
+    }
+  }, [showCreateModal]);
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieninggebruik';
@@ -52,7 +76,7 @@ const AcBeheerGebruiken = () => {
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          extend,
+          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
           null,
           '/beheer/gebruiken'
         ),
@@ -64,10 +88,15 @@ const AcBeheerGebruiken = () => {
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       setLoading(false);
 
@@ -87,17 +116,11 @@ const AcBeheerGebruiken = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
   }, []);
-
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [singleSelectedRow, setSingleSelectedRow] = useState(null);
-  const [openModal, setOpenModal] = useState(null);
-
-  const tableRef = useRef(null);
 
   // Custom header overrides for special cases
   const customHeaders = useMemo(
@@ -117,7 +140,7 @@ const AcBeheerGebruiken = () => {
         customContent: (row) => {
           return (
             <AcColumn key={row.id}>
-              <span>{row?.organisatieId?.organisatienaam ?? '-'}</span>
+              <span>{row?.organisatieId?.naam ?? '-'}</span>
             </AcColumn>
           );
         },
@@ -190,10 +213,6 @@ const AcBeheerGebruiken = () => {
     return <AcBeheerError title='Beheer Gebruiken' error={error.message} />;
   }
 
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Gebruiken' />;
-  }
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -243,6 +262,13 @@ const AcBeheerGebruiken = () => {
                       Als Excel
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
+
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
 
@@ -309,12 +335,28 @@ const AcBeheerGebruiken = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}
           <AcGebruikenFormModal
             gebruik={singleSelectedRow}
             isEdit={openModal === 'edit'}
+            preSelectedVoorzieningId={voorzieningId}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
               setOpenModal(null);
@@ -345,6 +387,14 @@ const AcBeheerGebruiken = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>

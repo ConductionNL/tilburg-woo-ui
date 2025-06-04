@@ -23,6 +23,8 @@ import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import { format } from 'date-fns';
+import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
+import { Pagination } from '@amsterdam/design-system-react';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -30,6 +32,13 @@ const AcBeheerVoorzieningenVersie = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    pages: 0,
+    limit: 5,
+    offset: 0,
+  });
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
@@ -53,7 +62,7 @@ const AcBeheerVoorzieningenVersie = () => {
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          extend,
+          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
           null,
           '/beheer/voorzieningen-versie'
         ),
@@ -65,10 +74,15 @@ const AcBeheerVoorzieningenVersie = () => {
         ),
       ]);
 
-      const [jsonResponse, schemaJsonResponse] = await Promise.all([
-        response.json(),
-        schemaResponse.json(),
-      ]);
+      const jsonResponse = response.data;
+      const schemaJsonResponse = schemaResponse.data;
+
+      setPagination((prev) => ({
+        ...prev,
+        total: jsonResponse.total,
+        pages: jsonResponse.pages,
+        offset: jsonResponse.offset,
+      }));
 
       setLoading(false);
 
@@ -88,7 +102,7 @@ const AcBeheerVoorzieningenVersie = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
@@ -167,10 +181,6 @@ const AcBeheerVoorzieningenVersie = () => {
     );
   }
 
-  if (loading) {
-    return <AcBeheerLoading title='Beheer Voorzieningen Versie' />;
-  }
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -220,6 +230,13 @@ const AcBeheerVoorzieningenVersie = () => {
                       Als Excel
                     </ConActionMenu.Button>
                   </ConActionMenu.SubMenu>
+
+                  <ConActionMenu.Button
+                    icon={<VISUALS.UPLOAD />}
+                    onClick={() => setOpenModal('import')}
+                  >
+                    Importeren
+                  </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
 
@@ -289,6 +306,21 @@ const AcBeheerVoorzieningenVersie = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            loading={loading}
+          />
+
+          <Pagination
+            totalPages={pagination?.pages}
+            page={parseInt(pagination?.page, 10)}
+            onPageChange={(page) => {
+              setPagination((prev) => ({
+                ...prev,
+                page,
+              }));
+            }}
+            nextLabel=''
+            previousLabel=''
+            maxVisiblePages={7}
           />
 
           {/* modals */}
@@ -325,6 +357,14 @@ const AcBeheerVoorzieningenVersie = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
+          />
+
+          <AcBeheerImportModal
+            register={registerSlug}
+            schema={schemaSlug}
+            showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
           />
         </AcColumn>
       </AcFlex>
