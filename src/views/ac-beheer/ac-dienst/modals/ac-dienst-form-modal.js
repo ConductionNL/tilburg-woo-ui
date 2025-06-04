@@ -133,10 +133,18 @@ const AcDienstFormModal = ({
       const data = response.data.results;
 
       setGebruikersOptions(
-        data.map((item) => ({
-          value: item.username,
-          label: item.username,
-        }))
+        data.map((item) => {
+          const nameParts = [
+            item.voornaam,
+            item.tussenvoegsel,
+            item.achternaam
+          ].filter(Boolean);
+
+          return {
+            value: item.username,
+            label: nameParts.join(' ')
+          };
+        })
       );
     };
 

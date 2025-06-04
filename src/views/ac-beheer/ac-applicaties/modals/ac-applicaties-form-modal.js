@@ -82,10 +82,18 @@ const AcApplicatiesFormModal = ({
       const data = await response.data;
 
       setGebruikersOptions(
-        data.results.map((item) => ({
-          value: item.username,
-          label: item.username,
-        }))
+        data.results.map((item) => {
+          const nameParts = [
+            item.voornaam,
+            item.tussenvoegsel,
+            item.achternaam,
+          ].filter(Boolean);
+
+          return {
+            value: item.username,
+            label: nameParts.join(' '),
+          };
+        })
       );
     };
 
