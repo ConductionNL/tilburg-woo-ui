@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcButton } from '@src/molecules';
 import { AcSideNav, AcLoader } from '@components';
 import {
   Heading,
@@ -19,9 +18,9 @@ import _ from 'lodash';
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
-import { getCookie } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
+import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -29,15 +28,18 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [tabIndex, setTabIndex] = useState(0);
 
   const { makeRequest } = useNextcloudRequests();
+
+  const registerSlug = 'voorzieningen';
+  const schemaSlug = 'organisatie';
 
   const fetchData = async () => {
     try {
       setLoading(true);
 
-      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
-      const schemaSlug = 'organisatie';
+      const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
       const extend = [['_extend[]', 'contactgegevens']];
 
@@ -149,6 +151,25 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             </Paragraph>
                           </div>
                         ))}
+                    </div>
+
+                    <div>
+                      <AcTabs
+                        selectedIndex={tabIndex}
+                        onSelect={(index) => setTabIndex(index)}
+                      >
+                        <AcTabList>
+                          <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                        </AcTabList>
+
+                        <AcTabPanel selected={tabIndex === 0}>
+                          <AcObjectUploadFiles
+                            register={registerSlug}
+                            schema={schemaSlug}
+                            id={data.id}
+                          />
+                        </AcTabPanel>
+                      </AcTabs>
                     </div>
                   </AcFlex>
                 </AcColumn>

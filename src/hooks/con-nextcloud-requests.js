@@ -196,6 +196,53 @@ export default function useNextcloudRequests() {
   };
 
   /**
+   * Upload a file to the Nextcloud API
+   *
+   * this is literally the same as the makeUploadRequest, but you use 'files' instead of 'file'.
+   * So no, it does not support multiple files.
+   *
+   * @param {string} url - The URL to upload to
+   * @param {File} file - The file to upload
+   * @param {string[]} tags - The tags to add to the file
+   * @param {boolean} share - Whether to share the file
+   * @param {string[][]} queryParams - The query parameters
+   * @param {Object} fetchOptions - The fetch options
+   * @param {string} redirectUrl - The redirect URL
+   */
+  const makeMultipartUploadRequest = async (
+    url,
+    file,
+    tags = [],
+    share = false,
+    queryParams,
+    fetchOptions = {},
+    redirectUrl
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append('files', file);
+      formData.append('tags', tags);
+      formData.append('share', share);
+
+      const response = await nextcloudApi({
+        url,
+        method: 'POST',
+        params: mapQueryParams(queryParams),
+        data: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...fetchOptions?.headers,
+        },
+      });
+
+      return response;
+    } catch (error) {
+      console.error('Failed to upload file', error);
+      throw error;
+    }
+  };
+
+  /**
    * Download an object list from the Nextcloud API
    * @param {string} register - The register to download
    * @param {string} schema - The schema to download
@@ -230,5 +277,11 @@ export default function useNextcloudRequests() {
     );
   };
 
-  return { makeRequest, makeDownloadRequest, downloadObjectList, makeUploadRequest };
+  return {
+    makeRequest,
+    makeDownloadRequest,
+    downloadObjectList,
+    makeUploadRequest,
+    makeMultipartUploadRequest,
+  };
 }
