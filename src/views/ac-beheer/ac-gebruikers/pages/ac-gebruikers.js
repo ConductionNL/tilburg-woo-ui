@@ -23,6 +23,7 @@ import { AcButton } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
@@ -86,7 +87,7 @@ const AcBeheerGebruikers = () => {
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
-      setDataProperties(dataProperties);
+      setDataProperties(sortPropertiesByOrder(dataProperties));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);

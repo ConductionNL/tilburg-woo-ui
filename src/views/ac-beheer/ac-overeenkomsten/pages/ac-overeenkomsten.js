@@ -25,6 +25,7 @@ import _ from 'lodash';
 import { format } from 'date-fns';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ const AcBeheerOvereenkomsten = () => {
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
-      setDataProperties(dataProperties);
+      setDataProperties(sortPropertiesByOrder(dataProperties));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
