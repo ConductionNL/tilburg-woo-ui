@@ -23,6 +23,7 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 const AcBeheerApplicaties = () => {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const AcBeheerApplicaties = () => {
 
       errorResponse && setError({ message: errorResponse });
       setData(data);
-      setDataProperties(dataProperties);
+      setDataProperties(sortPropertiesByOrder(dataProperties));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);

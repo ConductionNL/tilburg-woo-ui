@@ -6,6 +6,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 const GET_CONFIG = (type, metadata, navigate) => {
   let typeGetFailed = false;
@@ -237,9 +238,10 @@ const BeheerTable = forwardRef((props, ref) => {
     const data = response.data;
     if (data.error) {
       setError({ message: data.error });
-    } else {
-      setDataProperties(data.properties);
+      return data;
     }
+
+    setDataProperties(sortPropertiesByOrder(data.properties));
     return data;
   };
 
