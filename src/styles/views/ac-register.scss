@@ -16,8 +16,9 @@
   flex: 1;
 }
 
-.utrecht-heading-3 {
-  margin-bottom: var(--tilburg-space-block-tiger);
+.ac-register-form-heading {
+  margin-block-end: var(--tilburg-space-block-rat) !important;
+  margin-inline-start: calc(22% + var(--tilburg-space-block-cat));
 }
 
 .ac-register-form-section {

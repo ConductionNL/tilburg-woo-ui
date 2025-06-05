@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
@@ -13,10 +13,10 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import clsx from 'clsx';
 
 const organizationTypes = [
-  { id: 'leverancier', label: 'Leverancier' },
-  { id: 'gemeente', label: 'Gemeente' },
-  { id: 'samenwerking', label: 'Samenwerking' },
-  { id: 'community', label: 'Community' },
+  { value: 'leverancier', label: 'Leverancier' },
+  { value: 'gemeente', label: 'Gemeente' },
+  { value: 'samenwerking', label: 'Samenwerking' },
+  { value: 'community', label: 'Community' },
 ];
 
 const OrganizationForm = memo(({ organization, setOrganizationData, loading }) => {
@@ -26,14 +26,11 @@ const OrganizationForm = memo(({ organization, setOrganizationData, loading }) =
         <div>
           <h4 className='utrecht-heading-4'>Organisatie type *</h4>
           <ReactSelect
-            placeholder='Selecteer een applicatie type'
+            placeholder='Selecteer een organisatie type'
             defaultValue={organizationTypes[0]}
             className='ac-beheer-select'
             loading={organizationTypes?.length === 0}
-            options={organizationTypes?.map((organizationType) => ({
-              value: organizationType.id,
-              label: organizationType.label,
-            }))}
+            options={organizationTypes}
             onChange={(selected) =>
               setOrganizationData('organizationType', selected.value)
             }
@@ -55,11 +52,32 @@ const OrganizationForm = memo(({ organization, setOrganizationData, loading }) =
           disabled={loading}
         />
 
+        {organization.organizationType === 'leverancier' && (
+          <AcFormField
+            label='KvK nummer'
+            placeholder='12345678'
+            value={organization.kvkNumber}
+            onBlur={(e) => setOrganizationData('kvkNumber', e)}
+            disabled={loading}
+          />
+        )}
+
+        {(organization.organizationType === 'gemeente' ||
+          organization.organizationType === 'samenwerking') && (
+          <AcFormField
+            label='OIN'
+            placeholder='00000001002564440000'
+            value={organization.oin}
+            onBlur={(e) => setOrganizationData('oin', e)}
+            disabled={loading}
+          />
+        )}
+
         <AcFormField
-          label='KvK nummer'
-          placeholder='12345678'
-          value={organization.kvkNumber}
-          onBlur={(e) => setOrganizationData('kvkNumber', e)}
+          label='Logo'
+          placeholder='https://www.example.com/logo.png'
+          value={organization.logo}
+          onBlur={(e) => setOrganizationData('logo', e)}
           disabled={loading}
         />
       </div>
@@ -189,9 +207,17 @@ const ReviewForm = memo(({ organization }) => {
         <p>
           <strong>Naam:</strong> {organization.name}
         </p>
-        <p>
-          <strong>KvK nummer:</strong> {organization.kvkNumber}
-        </p>
+        {organization.organizationType === 'leverancier' && (
+          <p>
+            <strong>KvK nummer:</strong> {organization.kvkNumber}
+          </p>
+        )}
+        {(organization.organizationType === 'gemeente' ||
+          organization.organizationType === 'samenwerking') && (
+          <p>
+            <strong>OIN:</strong> {organization.oin}
+          </p>
+        )}
         <p>
           <strong>Type organisatie:</strong> {organization.organizationType}
         </p>
@@ -448,7 +474,11 @@ const AcRegister = () => {
             <>
               <Heading1>Registratie</Heading1>
               <div>
-                <h3 className='utrecht-heading-3'>{currentStepName(currentStep)}</h3>
+                <h3
+                  className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
+                >
+                  {currentStepName(currentStep)}
+                </h3>
                 <AcColumn gap='sm'>
                   <div className='ac-register-container'>
                     <div className='ac-register-process-steps'>
@@ -523,7 +553,7 @@ const AcRegister = () => {
                         {currentStep === 3 && (
                           <AcButton
                             style='button'
-                            icon={<VISUALS.ARROW_RIGHT />}
+                            icon={<VISUALS.MAIL_SENT />}
                             onClick={handleRegister}
                             disabled={loading}
                           >
