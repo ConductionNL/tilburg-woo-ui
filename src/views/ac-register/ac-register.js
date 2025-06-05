@@ -2,16 +2,18 @@ import { useState, useCallback, memo, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
-import AcColumn from '@src/atoms/ac-column/ac-column';
 import { AcContainer, AcSection } from '@src/atoms';
 import { LABELS, VISUALS } from '@src/constants';
 import { AcFormField, AcButton } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
-import ReactSelect from 'react-select';
-import { Heading1 } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading1,
+  Separator,
+} from '@utrecht/component-library-react/dist/css-module';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
+import ReactSelect from 'react-select';
 import clsx from 'clsx';
-import { Separator } from '@utrecht/component-library-react/dist/css-module';
+import AcColumn from '@src/atoms/ac-column/ac-column';
 
 const organizationTypes = [
   { value: 'leverancier', label: 'Leverancier' },
@@ -308,8 +310,8 @@ const ReviewForm = memo(({ organization }) => {
           <Separator className='ac-register-review__separator' />
           <div className='ac-register-review__field'>
             <strong>Naam:</strong>
-            {organization.contactPersons[0].firstName || '-'}
-            {organization.contactPersons[0].middleName || '-'}
+            {organization.contactPersons[0].firstName || '-'}{' '}
+            {organization.contactPersons[0].middleName || ' '}
             {organization.contactPersons[0].lastName || '-'}
           </div>
           <div className='ac-register-review__field'>
@@ -342,6 +344,23 @@ const ReviewForm = memo(({ organization }) => {
     </div>
   );
 });
+
+const escapeSvgDataUrl = (url) => {
+  if (!url) return '';
+
+  // Check if it's an SVG data URL
+  if (url.startsWith('data:image/svg+xml')) {
+    return url
+      .replace(/'/g, '"') // Replace single quotes with double quotes
+      .replace(/"/g, '\\"') // Escape double quotes
+      .replace(/>/g, '%3E') // Encode >
+      .replace(/</g, '%3C') // Encode <
+      .replace(/\//g, '%2F'); // Encode /
+  }
+
+  // If it's not an SVG, return the original URL
+  return url;
+};
 
 const AcRegister = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
@@ -388,9 +407,60 @@ const AcRegister = () => {
     }
   }, []);
 
+  const escapeSvgDataUrl = (url) => {
+    if (!url) return '';
+
+    // Check if it's an SVG data URL
+    if (url.startsWith('data:image/svg+xml')) {
+      try {
+        // Extract the SVG content
+        const svgContent = url.split(',')[1];
+
+        // Create a properly formatted data URL
+        return `data:image/svg+xml;base64,${btoa(decodeURIComponent(svgContent))}`;
+      } catch (error) {
+        console.error('Error processing SVG:', error);
+        return url;
+      }
+    }
+
+    // If it's not an SVG, return the original URL
+    return url;
+  };
+
   const handleRegister = async () => {
     setLoading(true);
     try {
+      // Create a copy of the organization data
+      const organizationData = {
+        naam: organization.name,
+        website: organization.website,
+        links: organization.links,
+        oin: organization.oin,
+        cbs: organization.cbs,
+        telefoonnummer: organization.phone,
+        rol: organization.role,
+        beschrijvingKort: organization.summary,
+        contactpersonen: [
+          {
+            voornaam: organization.contactPersons[0].firstName,
+            tussenvoegsel: organization.contactPersons[0].middleName,
+            achternaam: organization.contactPersons[0].lastName,
+            telefoon: organization.contactPersons[0].phone,
+            email: organization.contactPersons[0].email,
+            functie: organization.contactPersons[0].function,
+          },
+        ],
+        type: organization.organizationType,
+        kvkNummer: organization.kvkNumber,
+        'e-mailadres': organization.email,
+      };
+
+      // Handle the logo separately
+      if (organization.logo) {
+        organizationData.logo = escapeSvgDataUrl(organization.logo);
+      }
+
       const response = await fetch(
         `${BASE_URL}/apps/openconnector/api/endpoint/register`,
         {
@@ -398,34 +468,14 @@ const AcRegister = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            naam: organization.name,
-            website: organization.website,
-            links: organization.links,
-            oin: organization.oin,
-            logo: organization.logo,
-            cbs: organization.cbs,
-            telefoonnummer: organization.phone,
-            rol: organization.role,
-            beschrijvingKort: organization.summary,
-            contactpersonen: [
-              {
-                voornaam: organization.contactPersons[0].firstName,
-                tussenvoegsel: organization.contactPersons[0].middleName,
-                achternaam: organization.contactPersons[0].lastName,
-                telefoon: organization.contactPersons[0].phone,
-                email: organization.contactPersons[0].email,
-                functie: organization.contactPersons[0].function,
-              },
-            ],
-            type: organization.organizationType,
-            kvkNummer: organization.kvkNumber,
-            'e-mailadres': organization.email,
-          }),
+          body: JSON.stringify(organizationData),
         }
       );
+
       if (response.ok) {
         setRegisterCallBack('success');
+      } else {
+        throw new Error('Registration failed');
       }
     } catch (error) {
       setRegisterCallBack('error');
@@ -660,7 +710,7 @@ const AcRegister = () => {
               <p>Beste {organization.name},</p>
               <p>
                 Uw registratie voor de SoftwareCatalogus is succesvol ontvangen. We
-                hebben een bevestigingsmail gestuurd naar
+                hebben een bevestigingsmail gestuurd naar{' '}
                 <b>{organization.contactPersons[0].email}</b>. Controleer uw inbox
                 (en eventueel uw spam folder) voor deze bevestiging.
               </p>
