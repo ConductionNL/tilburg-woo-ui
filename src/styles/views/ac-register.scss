@@ -74,12 +74,20 @@
     position: relative;
   }
 
-  &__heading {
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    .utrecht-heading-4 {
+      color: var(--tilburg-color-gray-900);
+      margin: 0;
+      padding: 0;
+    }
+  }
+
+  .utrecht-heading-4 {
     color: var(--tilburg-color-gray-900);
-    margin-bottom: var(--tilburg-space-block-mouse) !important;
-    padding-bottom: var(--tilburg-space-block-mouse);
-    border-bottom: 1px solid var(--tilburg-color-gray-300);
-    padding-right: 220px;
+    margin-bottom: var(--tilburg-space-block-mouse);
   }
 
   &__field {
@@ -92,26 +100,31 @@
     &:last-child {
       margin-bottom: 0;
     }
+
+    strong {
+      color: var(--tilburg-color-gray-700);
+      font-weight: 600;
+    }
   }
 
-  strong {
-    color: var(--tilburg-color-gray-700);
-    display: inline-block;
-    min-width: 140px;
-    font-weight: 600;
+  .utrecht-separator.ac-register-review__separator {
+    margin-block-end: var(--tilburg-space-block-cat);
+    margin-inline: 0;
   }
 
   &__logo {
-    position: absolute;
-    top: var(--tilburg-space-block-cat);
-    right: var(--tilburg-space-block-cat);
-    width: 200px;
+    width: auto;
+    max-width: 200px;
+    height: 40px;
+    margin-left: var(--tilburg-space-block-cat);
+    display: flex;
+    align-items: center;
 
     img {
-      width: 100%;
-      height: auto;
-      max-height: 100px;
+      width: auto;
+      height: 100%;
       object-fit: contain;
+      display: block;
     }
 
     span {

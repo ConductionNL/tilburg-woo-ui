@@ -105,6 +105,16 @@
   --utrecht-accordion-panel-border-color: transparent;
   --utrecht-accordion-section-border-width: auto;
   --utrecht-accordion-border-radius: 0px;
+
+  --utrecht-separator-color: var(--tilburg-color-gray-300);
+  --utrecht-separator-width: 100%;
+  --utrecht-separator-block-size: 1px;
+  --utrecht-separator-block-start: 0;
+  --utrecht-separator-block-end: 0;
+  --utrecht-separator-margin-block-start: var(--tilburg-space-block-cat);
+  --utrecht-separator-margin-block-end: var(--tilburg-space-block-cat);
+  
+
   --tilburg-status-badge-border-color: transparent;
   --tilburg-status-badge-warning-border-color: transparent;
   --tilburg-status-badge-negative-border-color: transparent;
@@ -1075,11 +1085,6 @@
     --tilburg-form-control-accent-color
   );
   --utrecht-table-cell-line-height: var(--tilburg-typography-line-height-md);
-
-  --utrecht-separator-margin-block-start: var(--tilburg-space-block-snail);
-  --utrecht-separator-margin-block-end: var(--tilburg-space-block-snail);
-  --utrecht-separator-block-size: var(--tilburg-size-4xs);
-  --utrecht-separator-color: var(--tilburg-line-border-color);
 
   --tilburg-header-background-color: #ffffff;
   --tilburg-footer-background-color: #004589;

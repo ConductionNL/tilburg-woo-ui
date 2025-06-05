@@ -11,6 +11,7 @@ import ReactSelect from 'react-select';
 import { Heading1 } from '@utrecht/component-library-react/dist/css-module';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import clsx from 'clsx';
+import { Separator } from '@utrecht/component-library-react/dist/css-module';
 
 const organizationTypes = [
   { value: 'leverancier', label: 'Leverancier' },
@@ -264,81 +265,77 @@ const ReviewForm = memo(({ organization }) => {
     <div className='ac-register-form-section'>
       <div className='ac-register-review'>
         <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4 ac-register-review__heading'>
-            Organisatiegegevens
-          </h4>
-          {organization.logo && (
-            <LogoPreview
-              logoUrl={organization.logo}
-              className='ac-register-review__logo'
-            />
-          )}
+          <div className='ac-register-review__header'>
+            <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
+            {organization.logo && (
+              <LogoPreview
+                logoUrl={organization.logo}
+                className='ac-register-review__logo'
+              />
+            )}
+          </div>
+          <Separator className='ac-register-review__separator' />
           <div className='ac-register-review__field'>
             <strong>Naam:</strong>
-            <span>{organization.name}</span>
+            <span>{organization.name || '-'}</span>
           </div>
           {organization.organizationType === 'leverancier' && (
             <div className='ac-register-review__field'>
               <strong>KvK nummer:</strong>
-              <span>{organization.kvkNumber}</span>
+              <span>{organization.kvkNumber || '-'}</span>
             </div>
           )}
           {(organization.organizationType === 'gemeente' ||
             organization.organizationType === 'samenwerking') && (
             <div className='ac-register-review__field'>
               <strong>OIN:</strong>
-              <span>{organization.oin}</span>
+              <span>{organization.oin || '-'}</span>
             </div>
           )}
           <div className='ac-register-review__field'>
             <strong>Type organisatie:</strong>
-            <span>{organization.organizationType}</span>
+            <span>{organization.organizationType || '-'}</span>
           </div>
 
           <div className='ac-register-review__field'>
             <strong>Korte beschrijving:</strong>
-            <span>{organization.summary}</span>
-          </div>
-
-          <div className='ac-register-review__field'>
-            <strong>Uitgebreide beschrijving:</strong>
-            <span>{organization.description}</span>
+            <span>{organization.summary || '-'}</span>
           </div>
         </div>
 
         <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4 ac-register-review__heading'>
-            Contactpersoon
-          </h4>
+          <h4 className='utrecht-heading-4'>Contactpersoon</h4>
+          <Separator className='ac-register-review__separator' />
           <div className='ac-register-review__field'>
             <strong>Naam:</strong>
-            {organization.contactPersons[0].firstName}{' '}
-            {organization.contactPersons[0].middleName}{' '}
-            {organization.contactPersons[0].lastName}
+            {organization.contactPersons[0].firstName || '-'}
+            {organization.contactPersons[0].middleName || '-'}
+            {organization.contactPersons[0].lastName || '-'}
           </div>
           <div className='ac-register-review__field'>
-            <strong>Telefoonnummer:</strong> {organization.contactPersons[0].phone}
+            <strong>Telefoonnummer:</strong>
+            {organization.contactPersons[0].phone || '-'}
           </div>
           <div className='ac-register-review__field'>
-            <strong>Email:</strong> {organization.contactPersons[0].email}
+            <strong>Email:</strong> {organization.contactPersons[0].email || '-'}
           </div>
           <div className='ac-register-review__field'>
-            <strong>Functie:</strong> {organization.contactPersons[0].function}
+            <strong>Functie:</strong>
+            {organization.contactPersons[0].function || '-'}
           </div>
         </div>
 
         <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4 ac-register-review__heading'>
-            Contact informatie
-          </h4>
+          <h4 className='utrecht-heading-4'>Contact informatie</h4>
+          <Separator className='ac-register-review__separator' />
           <div className='ac-register-review__field'>
-            <strong>Website:</strong> {organization.website}
+            <strong>Website:</strong> {organization.website || '-'}
           </div>
           <div className='ac-register-review__field'>
-            <strong>Telefoonnummer:</strong> {organization.phone}
+            <strong>Telefoonnummer:</strong> {organization.phone || '-'}
           </div>
           <div className='ac-register-review__field'>
-            <strong>Email:</strong> {organization.email}
+            <strong>Email:</strong> {organization.email || '-'}
           </div>
         </div>
       </div>
@@ -355,13 +352,11 @@ const AcRegister = () => {
     website: '',
     links: '',
     oin: '',
-    status: '',
     logo: '',
     cbs: '',
     phone: '',
     role: '',
     summary: '',
-    description: '',
     contactPersons: [
       {
         firstName: '',
@@ -413,7 +408,6 @@ const AcRegister = () => {
             telefoonnummer: organization.phone,
             rol: organization.role,
             beschrijvingKort: organization.summary,
-            beschrijvingLang: organization.description,
             contactpersonen: [
               {
                 voornaam: organization.contactPersons[0].firstName,
@@ -454,7 +448,6 @@ const AcRegister = () => {
       phone: '',
       role: '',
       summary: '',
-      description: '',
       contactPersons: [
         {
           firstName: '',
@@ -646,7 +639,7 @@ const AcRegister = () => {
                         {currentStep === 3 && (
                           <AcButton
                             style='button'
-                            icon={<VISUALS.MAIL_SENT />}
+                            icon={<VISUALS.CLIPBOARD_CHECK />}
                             onClick={handleRegister}
                             disabled={loading}
                           >
@@ -667,7 +660,7 @@ const AcRegister = () => {
               <p>Beste {organization.name},</p>
               <p>
                 Uw registratie voor de SoftwareCatalogus is succesvol ontvangen. We
-                hebben een bevestigingsmail gestuurd naar{' '}
+                hebben een bevestigingsmail gestuurd naar
                 <b>{organization.contactPersons[0].email}</b>. Controleer uw inbox
                 (en eventueel uw spam folder) voor deze bevestiging.
               </p>

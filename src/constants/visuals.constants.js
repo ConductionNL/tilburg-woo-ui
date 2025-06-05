@@ -169,8 +169,8 @@ const SORT_DOWN = loadable(() =>
   import('-!svg-react-loader!@assets/images/sort-down.svg')
 );
 
-const MAIL_SENT = loadable(() =>
-  import('-!svg-react-loader!@assets/images/mail-sent.svg')
+const CLIPBOARD_CHECK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/clipboard-check.svg')
 );
 
 export const VISUALS = {
@@ -235,7 +235,7 @@ export const VISUALS = {
   SORT,
   SORT_UP,
   SORT_DOWN,
-  MAIL_SENT,
+  CLIPBOARD_CHECK,
 };
 
 export default {};
