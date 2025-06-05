@@ -169,6 +169,10 @@ const SORT_DOWN = loadable(() =>
   import('-!svg-react-loader!@assets/images/sort-down.svg')
 );
 
+const CLIPBOARD_CHECK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/clipboard-check.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -231,6 +235,7 @@ export const VISUALS = {
   SORT,
   SORT_UP,
   SORT_DOWN,
+  CLIPBOARD_CHECK,
 };
 
 export default {};
