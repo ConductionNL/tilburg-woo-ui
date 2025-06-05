@@ -47,8 +47,8 @@ const OrganizationForm = memo(({ organization, setOrganizationData, loading }) =
         <AcFormField
           label='Beschrijving kort'
           placeholder='Een korte beschrijving van de organisatie'
-          value={organization.description}
-          onBlur={(e) => setOrganizationData('description', e)}
+          value={organization.summary}
+          onBlur={(e) => setOrganizationData('summary', e)}
           disabled={loading}
         />
 
@@ -198,59 +198,149 @@ const ContactInformationForm = memo(
   }
 );
 
+const LogoPreview = memo(({ logoUrl, className }) => {
+  const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Reset states when URL changes
+    setIsValid(false);
+    setIsLoading(true);
+
+    if (!logoUrl) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if URL is potentially safe
+    try {
+      // Handle data URLs
+      if (logoUrl.startsWith('data:')) {
+        const isImageData = logoUrl.startsWith('data:image/');
+        if (!isImageData) {
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // For regular URLs, check protocol
+        const url = new URL(logoUrl);
+        if (!['http:', 'https:', 'data:'].includes(url.protocol)) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Verify it's actually an image by loading it
+      const img = new Image();
+      img.onload = () => {
+        setIsValid(true);
+        setIsLoading(false);
+      };
+      img.onerror = () => {
+        setIsValid(false);
+        setIsLoading(false);
+      };
+      img.src = logoUrl;
+    } catch (e) {
+      setIsLoading(false);
+    }
+  }, [logoUrl]);
+
+  return (
+    <div className={className}>
+      {logoUrl && (
+        <>
+          {isLoading && <span>(Validating...)</span>}
+          {!isLoading && isValid && <img src={logoUrl} alt='Organization logo' />}
+          {!isLoading && !isValid && <span>(Invalid image URL)</span>}
+        </>
+      )}
+    </div>
+  );
+});
+
 const ReviewForm = memo(({ organization }) => {
   return (
     <div className='ac-register-form-section'>
-      <h3 className='utrecht-heading-3'>Review</h3>
       <div className='ac-register-review'>
-        <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
-        <p>
-          <strong>Naam:</strong> {organization.name}
-        </p>
-        {organization.organizationType === 'leverancier' && (
-          <p>
-            <strong>KvK nummer:</strong> {organization.kvkNumber}
-          </p>
-        )}
-        {(organization.organizationType === 'gemeente' ||
-          organization.organizationType === 'samenwerking') && (
-          <p>
-            <strong>OIN:</strong> {organization.oin}
-          </p>
-        )}
-        <p>
-          <strong>Type organisatie:</strong> {organization.organizationType}
-        </p>
-        <p>
-          <strong>Korte beschrijving:</strong> {organization.summary}
-        </p>
-        <p>
-          <strong>Uitgebreide beschrijving:</strong> {organization.description}
-        </p>
+        <div className='ac-register-review__section'>
+          <h4 className='utrecht-heading-4 ac-register-review__heading'>
+            Organisatiegegevens
+          </h4>
+          {organization.logo && (
+            <LogoPreview
+              logoUrl={organization.logo}
+              className='ac-register-review__logo'
+            />
+          )}
+          <div className='ac-register-review__field'>
+            <strong>Naam:</strong>
+            <span>{organization.name}</span>
+          </div>
+          {organization.organizationType === 'leverancier' && (
+            <div className='ac-register-review__field'>
+              <strong>KvK nummer:</strong>
+              <span>{organization.kvkNumber}</span>
+            </div>
+          )}
+          {(organization.organizationType === 'gemeente' ||
+            organization.organizationType === 'samenwerking') && (
+            <div className='ac-register-review__field'>
+              <strong>OIN:</strong>
+              <span>{organization.oin}</span>
+            </div>
+          )}
+          <div className='ac-register-review__field'>
+            <strong>Type organisatie:</strong>
+            <span>{organization.organizationType}</span>
+          </div>
 
-        <h4 className='utrecht-heading-4'>Contactpersoon</h4>
-        <p>
-          <strong>Naam:</strong> {organization.contactPersons[0].firstName}{' '}
-          {organization.contactPersons[0].middleName}{' '}
-          {organization.contactPersons[0].lastName}
-        </p>
-        <p>
-          <strong>Telefoonnummer:</strong> {organization.contactPersons[0].phone}
-        </p>
-        <p>
-          <strong>Email:</strong> {organization.contactPersons[0].email}
-        </p>
+          <div className='ac-register-review__field'>
+            <strong>Korte beschrijving:</strong>
+            <span>{organization.summary}</span>
+          </div>
 
-        <h4 className='utrecht-heading-4'>Contact informatie</h4>
-        <p>
-          <strong>Website:</strong> {organization.website}
-        </p>
-        <p>
-          <strong>Telefoonnummer:</strong> {organization.phone}
-        </p>
-        <p>
-          <strong>Email:</strong> {organization.email}
-        </p>
+          <div className='ac-register-review__field'>
+            <strong>Uitgebreide beschrijving:</strong>
+            <span>{organization.description}</span>
+          </div>
+        </div>
+
+        <div className='ac-register-review__section'>
+          <h4 className='utrecht-heading-4 ac-register-review__heading'>
+            Contactpersoon
+          </h4>
+          <div className='ac-register-review__field'>
+            <strong>Naam:</strong>
+            {organization.contactPersons[0].firstName}{' '}
+            {organization.contactPersons[0].middleName}{' '}
+            {organization.contactPersons[0].lastName}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Telefoonnummer:</strong> {organization.contactPersons[0].phone}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Email:</strong> {organization.contactPersons[0].email}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Functie:</strong> {organization.contactPersons[0].function}
+          </div>
+        </div>
+
+        <div className='ac-register-review__section'>
+          <h4 className='utrecht-heading-4 ac-register-review__heading'>
+            Contact informatie
+          </h4>
+          <div className='ac-register-review__field'>
+            <strong>Website:</strong> {organization.website}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Telefoonnummer:</strong> {organization.phone}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Email:</strong> {organization.email}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -314,9 +404,14 @@ const AcRegister = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            kvkNummer: organization.kvkNumber,
             naam: organization.name,
-            type: organization.organizationType,
+            website: organization.website,
+            links: organization.links,
+            oin: organization.oin,
+            logo: organization.logo,
+            cbs: organization.cbs,
+            telefoonnummer: organization.phone,
+            rol: organization.role,
             beschrijvingKort: organization.summary,
             beschrijvingLang: organization.description,
             contactpersonen: [
@@ -329,9 +424,8 @@ const AcRegister = () => {
                 functie: organization.contactPersons[0].function,
               },
             ],
-
-            website: organization.website,
-            telefoonnummer: organization.phone,
+            type: organization.organizationType,
+            kvkNummer: organization.kvkNumber,
             'e-mailadres': organization.email,
           }),
         }
@@ -355,7 +449,6 @@ const AcRegister = () => {
       website: '',
       links: '',
       oin: '',
-      status: '',
       logo: '',
       cbs: '',
       phone: '',

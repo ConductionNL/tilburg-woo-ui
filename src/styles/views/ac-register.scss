@@ -62,3 +62,62 @@
 .ac-register-form-next-button {
   float: right;
 }
+
+.ac-register-review {
+  display: grid;
+  gap: var(--tilburg-space-block-cat);
+
+  &__section {
+    background-color: var(--tilburg-color-gray-50);
+    border-radius: 4px;
+    padding: var(--tilburg-space-block-cat);
+    position: relative;
+  }
+
+  &__heading {
+    color: var(--tilburg-color-gray-900);
+    margin-bottom: var(--tilburg-space-block-mouse) !important;
+    padding-bottom: var(--tilburg-space-block-mouse);
+    border-bottom: 1px solid var(--tilburg-color-gray-300);
+    padding-right: 220px;
+  }
+
+  &__field {
+    margin-bottom: var(--tilburg-space-block-snail);
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: var(--tilburg-space-block-mouse);
+    align-items: baseline;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  strong {
+    color: var(--tilburg-color-gray-700);
+    display: inline-block;
+    min-width: 140px;
+    font-weight: 600;
+  }
+
+  &__logo {
+    position: absolute;
+    top: var(--tilburg-space-block-cat);
+    right: var(--tilburg-space-block-cat);
+    width: 200px;
+
+    img {
+      width: 100%;
+      height: auto;
+      max-height: 100px;
+      object-fit: contain;
+    }
+
+    span {
+      display: block;
+      text-align: right;
+      color: var(--tilburg-color-gray-700);
+    }
+  }
+}
