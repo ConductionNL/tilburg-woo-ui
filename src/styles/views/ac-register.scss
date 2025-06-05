@@ -5,6 +5,7 @@
 .ac-register-container {
   display: flex;
   justify-content: space-between;
+  gap: var(--tilburg-space-block-otter);
 }
 
 .ac-register-form-container {
@@ -13,4 +14,50 @@
 
 .ac-register-process-steps {
   flex: 1;
+}
+
+.utrecht-heading-3 {
+  margin-bottom: var(--tilburg-space-block-tiger);
+}
+
+.ac-register-form-section {
+  flex: 3;
+}
+
+.ac-register-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tilburg-space-block-rat);
+}
+
+.form-group {
+  margin-bottom: var(--tilburg-space-block-rat);
+}
+
+// Style for form labels to match the design
+.utrecht-heading-4,
+.ac-form-field__label {
+  margin-bottom: var(--tilburg-space-block-mouse);
+  font-weight: 500;
+}
+
+// Ensure inputs and selects have consistent styling
+.ac-beheer-select,
+.ac-form-field__input {
+  width: 100%;
+  min-height: 40px;
+  border-radius: 4px;
+}
+
+.ac-register-form-buttons {
+  margin-block-start: var(--tilburg-space-block-rat);
+}
+
+.ac-register-form-buttons-not-first-step {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ac-register-form-next-button {
+  float: right;
 }
