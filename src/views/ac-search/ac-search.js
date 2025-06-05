@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -12,6 +12,7 @@ import {
   Alert,
   Heading,
   Paragraph,
+  SkipLink,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
@@ -52,8 +53,6 @@ const AcSearch = ({ store: { publications } }) => {
   }, []);
 
   useEffect(() => {
-    console.log(getSearchPageURL());
-    console.log(location.pathname + location.search);
     if (getSearchPageURL() === location.pathname + location.search) {
       return;
     }
@@ -63,10 +62,6 @@ const AcSearch = ({ store: { publications } }) => {
 
   // On GET params change.
   useEffect(() => {
-    console.group('LOCATION PARAMS CHANGED');
-    console.log([location.search]);
-    console.groupEnd();
-
     setQuery();
     fetchPublications();
   }, [location.search]);
@@ -103,10 +98,14 @@ const AcSearch = ({ store: { publications } }) => {
       return LABELS.SEARCH_RESULTS_LOADING;
     }
 
-    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
-      all_publications?.length
-    )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_publications?.length]);
+    // Make sure count is defined before using it
+    const count = all_publications?.length || 0;
+    const resultText = LABELS_DYNAMIC.RESULTS(count);
+
+    return `${
+      LABELS.SEARCH_RESULTS_LOADED
+    }. ${count} ${resultText.toLowerCase()} ${LABELS.FOUND.toLowerCase()}.`;
+  }, [is_loading, all_publications?.length, location.search]);
 
   const renderPublications = useMemo(() => {
     if (is_loading) {
@@ -137,25 +136,32 @@ const AcSearch = ({ store: { publications } }) => {
   return (
     <>
       <AcContainer spacing='lg'>
-        <AcCard blue padding='md'>
+        <Heading level={1}>Zoeken in publicaties</Heading>
+        <AcCard blue>
           <AcSearchBox
             page='search'
             onSubmitCallback={onSearchSubmit}
-            label={LABELS.SEARCH}
+            label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
             defaultValue={search_query._search}
           />
         </AcCard>
       </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
+        <SkipLink href={`${location.pathname}#search-results`}>
+          Ga direct naar zoekresultaten
+        </SkipLink>
         <AcFlex spacing='xl' className='ac-search-results'>
           <AcSearchFilters />
           <AcFlex column grow spacing='xs'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
               {screenReaderText}
             </div>
-            <AcFlex column spacing='sm' margin='sm'>
+            <AcFlex id='search-results' column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
-                <Heading level={2}>{LABELS.SEARCH_RESULTS}</Heading>
+                <Heading level={2}>
+                  {all_publications?.length}{' '}
+                  {LABELS_DYNAMIC.RESULTS(all_publications?.length).toLowerCase()}
+                </Heading>
                 <div className='desktop-sorting'>
                   <AcSearchSort type='alt' />
                 </div>

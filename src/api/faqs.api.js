@@ -1,5 +1,5 @@
 // Imports => Constants
-import { ENDPOINTS } from '@constants';
+import { ENDPOINTS } from '@constants/endpoints.constants';
 
 export class FaqsAPI {
   constructor(Instance) {

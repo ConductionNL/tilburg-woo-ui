@@ -76,9 +76,7 @@ export class AuthStore {
   @computed
   get current_last_activity() {
     const sharedLastActivity = AcGetState(KEYS.LAST_ACTIVITY);
-    console.log('sharedLastActivity', sharedLastActivity);
     if (sharedLastActivity) return parseInt(sharedLastActivity);
-    console.log('this.last_activity', this.last_activity);
     return toJS(this.last_activity);
   }
 
@@ -102,19 +100,10 @@ export class AuthStore {
     let expired = true;
 
     if (expires_at) {
-      // expires_at = new Date(expires_at);
       expired = expires_at && dayjs(expires_at, 'x').isBefore(now);
     }
 
-    console.group('[store] Auth => Is Authorized');
-    console.log('Expires_at: ', dayjs(expires_at, 'x').format('LLLL'));
-    console.log('Now:', dayjs(now).format('LLLL'));
-    console.log('Is Expired: ', expired);
-
     authorized = AcIsSet(access_token) && !expired ? true : false;
-
-    console.log('Authorized: ', authorized);
-    console.groupEnd();
 
     return authorized === true;
   }
@@ -143,8 +132,6 @@ export class AuthStore {
 
   @action
   handleAuthentication = (response) => {
-    console.log('response', response);
-
     return new Promise((resolve) => {
       if (response?.access_token) {
         this.set(KEYS.ACCESS_TOKEN, response.access_token);
@@ -161,8 +148,6 @@ export class AuthStore {
         this.set(KEYS.EXPIRES_IN, expires_in);
         this.set(KEYS.EXPIRES_AT, expires_at);
       }
-
-      console.groupEnd();
 
       resolve();
     });

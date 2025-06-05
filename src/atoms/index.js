@@ -11,4 +11,15 @@ const AcRichText = loadable(() => import('@atoms/ac-rich-text/ac-rich-text'));
 const AcRow = loadable(() => import('@atoms/ac-row/ac-row'));
 const AcSection = loadable(() => import('@atoms/ac-section/ac-section'));
 
-export { AcCard, AcContainer, AcDataList, AcFlex, AcImage, AcRichText, AcSection };
+export {
+  AcCard,
+  AcContainer,
+  AcColumn,
+  AcGrid,
+  AcDataList,
+  AcFlex,
+  AcImage,
+  AcRichText,
+  AcRow,
+  AcSection,
+};

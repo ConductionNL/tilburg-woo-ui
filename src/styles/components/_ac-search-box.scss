@@ -23,7 +23,7 @@
   &--home {
     flex-direction: column;
     align-items: flex-start;
-    gap: var(--tilburg-space-block-rabbit);
+    gap: var(--tilburg-space-block-mouse);
 
     .utrecht-text-box {
       max-inline-size: unset;
@@ -51,7 +51,9 @@
 
   &--search {
     h2 {
-      margin-inline-end: calc(var(--tilburg-space-column-elephant) + var(--tilburg-space-block-cat));
+      margin-inline-end: calc(
+        var(--tilburg-space-column-elephant) + var(--tilburg-space-block-cat)
+      );
     }
 
     @include respond-max($screen-md) {
@@ -69,15 +71,17 @@
     gap: var(--tilburg-space-block-mouse);
     inline-size: 100%;
 
-    @include respond-max($screen-md) {
+    @include respond-max($screen-sm) {
+      flex-direction: column;
       justify-content: space-between;
 
       input {
         max-inline-size: 100%;
       }
 
-      button span {
-        @include sr-only;
+      button {
+        inline-size: 100%;
+        max-inline-size: 100%;
       }
     }
 

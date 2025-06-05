@@ -1,17 +1,11 @@
-@import '@utrecht/components/link/css';
-@import '@utrecht/components/paragraph/css';
-@import '@utrecht/components/ordered-list/css';
-@import '@utrecht/components/unordered-list/css';
-@import '@utrecht/components/heading-1/css';
-@import '@utrecht/components/heading-2/css';
-@import '@utrecht/components/heading-3/css';
-@import '@utrecht/components/heading-4/css';
-@import '@utrecht/components/heading-5/css';
-@import '@utrecht/components/heading-6/css';
+@import '@utrecht/button-css';
+@import '@utrecht/paragraph-css';
+@import '@utrecht/ordered-list-css';
+@import '@utrecht/unordered-list-css';
+
 @import '../atoms/ac-usps';
 
 .ac-rich-text {
-
   a {
     @extend .utrecht-link !optional;
     display: inline;
@@ -38,7 +32,8 @@
 
     li {
       @extend .utrecht-unordered-list__item !optional;
-      display:block;
+      padding-inline-start: 0;
+      display: block;
 
       p {
         display: inline;
@@ -70,4 +65,19 @@
     @extend .utrecht-heading-6 !optional;
   }
 
+  &.space-content {
+    > * + * {
+      margin-block-start: var(--tilburg-space-column-mouse);
+    }
+
+    > h2,
+    > h3,
+    > h4,
+    > h5,
+    > h6 {
+      &:not(:first-child) {
+        margin-block-start: var(--tilburg-space-column-cat);
+      }
+    }
+  }
 }

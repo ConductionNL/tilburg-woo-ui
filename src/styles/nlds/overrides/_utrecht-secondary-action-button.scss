@@ -1,0 +1,25 @@
+.utrecht-button--secondary-action {
+  color: var(--tilburg-color-blue-400) !important;
+  border-color: var(--tilburg-color-blue-400) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:not(:hover, :focus-visible) {
+    background-color: transparent !important;
+  }
+
+  &:where(:hover, :focus-visible) {
+    text-decoration: underline;
+  }
+
+  &.animate {
+    svg {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:where(:hover, :focus-visible) {
+      svg {
+        transform: translateX(4px);
+      }
+    }
+  }
+}

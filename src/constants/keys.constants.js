@@ -91,7 +91,7 @@ export const KEYS = AcLockObject({
 	SCROLLER: 'ac-scroller',
 	SESSION: 'session',
 	SUBTLE: 'subtle',
-	SUPPORT_EMAIL_ADDRESS: 'contact@tilburg.nl',
+	SUPPORT_EMAIL_ADDRESS: 'contact@acato.nl.nl',
 	TITLE: 'title',
 	TODAY: 'today',
 	TYPE: 'type',

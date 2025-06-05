@@ -1,0 +1,37 @@
+.ac-search-filter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tilburg-space-column-mouse);
+  inline-size: 100%;
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tilburg-space-column-snail);
+  }
+
+  input {
+    block-size: 48px;
+  }
+
+  .utrecht-button--primary-action {
+    block-size: 48px;
+  }
+
+  &__results {
+    font-size: var(--tilburg-typography-font-size-sm);
+
+    button {
+      display: block;
+      margin-block-start: var(--tilburg-space-column-beetle);
+      padding: 0;
+      color: var(--tilburg-color-pink-300);
+      text-decoration: underline;
+      border: none;
+
+      &:where(:hover, :focus-visible) {
+        text-decoration: none;
+      }
+    }
+  }
+}

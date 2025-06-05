@@ -6,13 +6,14 @@ import { makeObservable, observable, computed, action, runInAction } from 'mobx'
 import API from '@api';
 
 // Imports => Stores
-
 import AuthStore from '@stores/auth.store';
 import ToastersStore from '@stores/toasters.store';
 import FaqsStore from '@stores/faqs.store';
 import PagesStore from '@stores/pages.store';
 import PublicationsStore from '@stores/publications.store';
 import ThemesStore from '@stores/themes.store';
+import CategoriesStore from '@stores/categories.store';
+import TermsStore from '@stores/terms.store';
 
 class Store {
   constructor(config) {
@@ -28,6 +29,13 @@ class Store {
     this.pages = new PagesStore(this);
     this.toasters = new ToastersStore(this);
     this.themes = new ThemesStore(this);
+    this.categories = new CategoriesStore(this);
+
+    try {
+      this.terms = new TermsStore(this);
+    } catch (error) {
+      console.error('Error creating TermsStore:', error);
+    }
 
     window.addEventListener(
       'swFreshContentReady',

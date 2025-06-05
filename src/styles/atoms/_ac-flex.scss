@@ -1,5 +1,6 @@
 .ac-flex {
   display: flex;
+  width: 100%;
 
   &--align-items {
     &-center {
@@ -61,6 +62,10 @@
 
     &-xxl {
       gap: var(--tilburg-space-block-pig);
+    }
+
+    &-snail {
+      gap: var(--tilburg-space-block-snail);
     }
   }
 

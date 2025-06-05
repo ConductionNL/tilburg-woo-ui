@@ -1,10 +1,17 @@
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 
-const AcLink = ({ href, type = 'link', children, ...restProps }) => {
+const AcLink = ({
+  href,
+  type = 'link',
+  animate = false,
+  children,
+  ...restProps
+}) => {
   const _CLASSES = clsx(
     type === 'link' && 'utrecht-link utrecht-link--html-a',
-    type === 'button' && 'utrecht-button'
+    type === 'button' && 'utrecht-button utrecht-button--secondary-action',
+    animate && 'animate'
   );
 
   return (

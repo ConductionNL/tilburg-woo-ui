@@ -1,8 +1,16 @@
+@use '../../global/breakpoints' as *;
+@use '../../global/mixins/respond' as *;
+
 .utrecht-link {
   display: flex;
   align-items: center;
-  gap: var(--utrecht-link-icon-margin-inline);
+  gap: var(--tilburg-space-inline-beetle);
+
   svg {
     flex-shrink: 0;
+  }
+
+  &:not(.ac-button) {
+    font-size: var(--tilburg-typography-font-size-lg);
   }
 }

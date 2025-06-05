@@ -13,4 +13,41 @@
   @include respond-max($screen-sm) {
     grid-template-columns: 1fr;
   }
+
+  // Add support for controlling the number of grid columns
+  &--2 {
+    grid-template-columns: repeat(2, 1fr);
+
+    @include respond-max($screen-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &--3 {
+    grid-template-columns: repeat(3, 1fr);
+
+    @include respond-max($screen-md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include respond-max($screen-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &--4 {
+    grid-template-columns: repeat(4, 1fr);
+
+    @include respond-max($screen-lg) {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    @include respond-max($screen-md) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include respond-max($screen-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
 }

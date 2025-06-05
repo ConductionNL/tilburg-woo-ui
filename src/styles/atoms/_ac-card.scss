@@ -13,6 +13,19 @@
     display: flex;
     flex-direction: column;
     gap: var(--tilburg-space-block-snail);
+
+    .utrecht-paragraph {
+      font-size: var(--tilburg-typography-font-size-md);
+
+      &--small {
+        font-size: var(--tilburg-typography-font-size-sm);
+      }
+    }
+
+    .utrecht-badge-status {
+      font-size: var(--tilburg-typography-font-size-sm);
+      padding-block: 0.5rem;
+    }
   }
 
   img {
@@ -25,6 +38,27 @@
   &--blue {
     background-color: var(--tilburg-color-blue-100);
     border: 0;
+
+    .utrecht-paragraph {
+      font-size: var(--tilburg-typography-font-size-lg);
+
+      @include respond-max($screen-md) {
+        font-size: var(--tilburg-typography-font-size-md);
+      }
+    }
+
+    .utrecht-button--secondary-action {
+      font-size: var(--tilburg-typography-font-size-md);
+    }
+
+    @include respond-max($screen-sm) {
+      margin-inline-start: calc(-1 * var(--tilburg-space-column-rat));
+      inline-size: calc(100% + (2 * var(--tilburg-space-column-rat)));
+
+      &.ac-card--padding-default .ac-card__content {
+        padding: var(--tilburg-space-column-rat);
+      }
+    }
   }
 
   &--category,
@@ -44,6 +78,7 @@
       }
 
       svg {
+        flex-shrink: 0;
         transition: translate 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
@@ -59,9 +94,15 @@
     }
   }
 
+  &--category {
+    > div:first-child > div svg path {
+      fill: var(--tilburg-color-blue-500);
+    }
+  }
+
   &--search-result {
     a {
-     &:where(:hover, :focus-visible) {
+      &:where(:hover, :focus-visible) {
         &:after {
           box-shadow: var(--tilburg-box-shadow-md);
         }
@@ -121,11 +162,11 @@
         &:before {
           transform: translateX(-100%);
           background-image: linear-gradient(
-                          90deg,
-                          rgba(#fff, 0) 0,
-                          rgba(#fff, 0.2) 20%,
-                          rgba(#fff, 0.5) 60%,
-                          rgba(#fff, 0)
+            90deg,
+            rgba(#fff, 0) 0,
+            rgba(#fff, 0.2) 20%,
+            rgba(#fff, 0.5) 60%,
+            rgba(#fff, 0)
           );
           animation: shimmer 1.5s infinite;
           z-index: 1;
@@ -133,15 +174,30 @@
       }
 
       > h3:after {
-        background-image: linear-gradient(90deg, var(--tilburg-color-gray-200), var(--tilburg-color-gray-200) 60%, var(--tilburg-color-white) 60%);
+        background-image: linear-gradient(
+          90deg,
+          var(--tilburg-color-gray-200),
+          var(--tilburg-color-gray-200) 60%,
+          var(--tilburg-color-white) 60%
+        );
       }
 
       > p:after {
-        background-image: linear-gradient(90deg, var(--tilburg-color-gray-200), var(--tilburg-color-gray-200) 80%, var(--tilburg-color-white) 80%);
+        background-image: linear-gradient(
+          90deg,
+          var(--tilburg-color-gray-200),
+          var(--tilburg-color-gray-200) 80%,
+          var(--tilburg-color-white) 80%
+        );
       }
 
       > div:after {
-        background-image: linear-gradient(90deg, var(--tilburg-color-gray-200), var(--tilburg-color-gray-200) 40%, var(--tilburg-color-white) 40%);
+        background-image: linear-gradient(
+          90deg,
+          var(--tilburg-color-gray-200),
+          var(--tilburg-color-gray-200) 40%,
+          var(--tilburg-color-white) 40%
+        );
       }
     }
   }

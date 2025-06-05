@@ -1,16 +1,19 @@
 export const LABELS = {
-  APP_NAME: 'Open Tilburg',
+  APP_NAME: 'Publicaties Gemeente Tilburg',
   CLOSE: 'Sluiten',
   CLOSE_SINGULAR: 'Sluit',
+  CONCEPTS_LIST: 'Begrippenlijst',
   ENTER_QUERY: 'Vul je zoekterm in',
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
-  SEARCH_EXTENSIVE: 'Uitgebreid zoeken',
+  SEARCH_EXTENSIVE: 'Zoeken',
   SEARCH_RESULTS: 'Resultaten',
   CATEGORY: 'Categorie',
-  CATEGORIES: 'Categorieën',
-  CATEGORIES_EXPLAIN: 'Bekijk de verschillende categorieën',
+  SOURCE: 'Bron',
+  CATEGORIES: 'Welke documenten vind je hier?',
+  CATEGORIES_EXPLAIN:
+    'Op deze website zijn alle openbare documenten van de gemeente Tilburg te vinden.',
   TO_MAIN_CONTENT: 'Direct naar de inhoud',
   HIGHLIGHTED: 'Uitgelicht',
   SUBJECTS: 'Onderwerpen',
@@ -33,22 +36,35 @@ export const LABELS = {
   DOCUMENT: 'Document',
   TYPE: 'Type',
   DATE: 'Datum',
+  SIZE: 'Grootte',
   DOCUMENTS: 'Documenten',
   DOCUMENTS_EXPLAIN: 'Bekijk alle documenten',
   SEARCH_RESULTS_LOADING: 'Zoekresultaten worden geladen',
-  SEARCH_RESULTS_LOADED: 'Zoekresulten geladen',
+  SEARCH_RESULTS_LOADED: 'Zoekresultaten geladen',
+  SEARCH_DATE_FILTER: 'Zoek op gekozen datum',
+  SEARCH_DATE: 'Publicatiedatum',
   FOUND: 'Gevonden',
   RESULT: 'Resultaat',
   RESULTS: 'Resultaten',
-
-  VIEW_ALL_THEMES: 'Bekijk alle onderwerpen',
+  SHARE: 'Link naar publicatie delen',
+  SHARE_MODAL: 'Link kopiëren',
+  COPY_LINK: 'Kopieer link',
+  COPY_LINK_SUCCESS: 'Link gekopieerd!',
+  COPY_LINK_ERROR: 'Kopiëren mislukt',
+  VIEW_ALL_THEMES: 'Toon alle onderwerpen',
 
   THIS_WEBSITE: 'Deze website',
   QUICK_LINKS: 'Snel naar',
   SHOW_ALL_SUBJECTS: 'Toon alle onderwerpen',
   VIEW_DOCUMENTS: 'Bekijk de documenten',
 
-  THEMES: 'Onderwerpen',
+  THEMES: 'Zoeken op onderwerp',
+  THEMES_BUTTON: 'Onderwerpen',
+  ABOUT_CATEGORIES: 'Over categorieën',
+
+  // Navigation & Footer Labels
+  ORGANIZATION: 'Organisatie en werkwijze',
+  EXTERNAL_LINK: 'Opent in een nieuw tabblad',
 };
 
 export const LABELS_DYNAMIC = {

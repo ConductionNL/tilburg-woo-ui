@@ -1,7 +1,7 @@
 @use '../global/breakpoints' as *;
 @use '../global/mixins/respond' as *;
 
-@import '@utrecht/components/link/css';
+@import '@utrecht/link-css';
 @import '../atoms/ac-usps';
 
 .ac-about {
@@ -18,10 +18,12 @@
 
   a {
     @extend .utrecht-link !optional;
+    display: inline;
   }
 
   ul {
     @extend .ac-usps !optional;
+
     li {
       display: block;
     }

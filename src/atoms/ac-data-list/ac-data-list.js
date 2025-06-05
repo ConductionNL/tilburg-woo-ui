@@ -8,30 +8,37 @@ import {
 import { VISUALS } from '@constants';
 const AcDataList = ({ rows = [] }) => {
   const renderDataListValue = (row) => {
-    return row.url ? (
-      <Link href={row.url} target='_blank' rel='noreferrer'>
-        {row.label}
-        <VISUALS.EXTERNAL_LINK_PINK />
-      </Link>
-    ) : (
-      row.label
+    return (
+      <>
+        {row.description && <p className='utrecht-paragraph'>{row.description}</p>}
+        {row.url ? (
+          <Link href={row.url} target='_blank' rel='noreferrer'>
+            {row.label}
+            <VISUALS.EXTERNAL_LINK_PINK />
+          </Link>
+        ) : (
+          row.label
+        )}
+      </>
     );
   };
 
   return (
     <>
-      <Table>
-        <TableBody>
-          {rows.map((row, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <b>{row.text}</b>
-              </TableCell>
-              <TableCell>{renderDataListValue(row)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className='utrecht-table-container'>
+        <Table>
+          <TableBody>
+            {rows.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <b>{row.text}</b>
+                </TableCell>
+                <TableCell>{renderDataListValue(row)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </>
   );
 };

@@ -3,46 +3,46 @@ $action-drawer-size: 8rem;
 
 html,
 body {
-	position: relative;
-	min-height: 100%;
-	margin: 0;
-	padding: 0;
-	background: $color-white;
-	//overflow: auto;
-	-webkit-overflow-scrolling: touch;
+  position: relative;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: $color-white;
+  //overflow: auto;
+  -webkit-overflow-scrolling: touch;
 
-	@include font-body();
-	font-size: 10px; //1rem = 10px;
-	color: $color-pitch;
+  @include font-body();
+  font-size: 10px; //1rem = 10px;
+  color: $color-pitch;
 
-	-moz-osx-font-smoothing: grayscale;
-	-webkit-font-smoothing: antialiased;
-	text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-	width: 100%;
+  width: 100%;
 
-	@include font-size(1.6rem);
-	@include font-weight-regular();
+  @include font-size(1.6rem);
+  @include font-weight-regular();
 
-	* {
-		-moz-osx-font-smoothing: grayscale;
-		-webkit-font-smoothing: antialiased;
-		text-rendering: optimizeLegibility;
-	}
+  * {
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 
-	form {
-		flex: 1;
-	}
+  form {
+    flex: 1;
+  }
 
-	main[role='main'] {
-		min-height: var(--window-size);
-	}
+  main[role='main'] {
+    min-height: var(--window-size);
+  }
 
-	// yet another react lightbox css variables overrides
-	--yarl__portal_zindex: 100000;
-	--yarl__color_backdrop: rgba(0, 0, 0, 0.666);
+  // yet another react lightbox css variables overrides
+  --yarl__portal_zindex: 100000;
+  --yarl__color_backdrop: rgba(0, 0, 0, 0.666);
 }
 
 $header-size: 8rem;
@@ -50,52 +50,79 @@ $footer-size: 19rem;
 $grid-gutter-size: 1.6rem;
 
 :root {
-	--window-size: 100vh;
-	--header-size: 8rem;
-	--footer-size: 19rem;
-	--conversations-sidebar-size: 100vh;
+  --window-size: 100vh;
+  --header-size: 8rem;
+  --footer-size: 19rem;
+  --conversations-sidebar-size: 100vh;
 
-	@include respond-max($screen-xs-max) {
-		--conversations-sidebar-size: calc(100vh - 10rem);
-	}
+  @include respond-max($screen-xs-max) {
+    --conversations-sidebar-size: calc(100vh - 10rem);
+  }
 }
 
 // accordion styles conform Figma design
 .utrecht-accordion {
-	&__button-icon {
-		margin-block-start: var(--tilburg-space-column-ant);
-		margin-inline-end: var(--tilburg-space-column-mouse);
+  &__button-icon {
+    margin-block-start: var(--tilburg-space-column-ant);
+    margin-inline-end: var(--tilburg-space-column-mouse);
 
-		svg {
-			fill: var(--tilburg-color-pink-300);
-		}
-	}
+    svg {
+      fill: var(--tilburg-color-pink-300);
+    }
+  }
 
-	&__panel {
-		padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
-	}
+  &__panel {
+    padding: var(--tilburg-space-column-cat) var(--tilburg-space-column-rat) !important;
+
+    p {
+      line-height: 1.5;
+    }
+  }
 }
 
 // breadcrumb styles conform Figma design
 .utrecht-link.utrecht-breadcrumb-nav__link--disabled {
-	color: var(--utrecht-breadcrumb-nav-link-disabled-color);
+  color: var(--utrecht-breadcrumb-nav-link-disabled-color);
+  font-weight: 400;
 }
 
 // custom error styles for date input on search page
 .error {
-	&-input {
-		border-color: var(--tilburg-color-red-400) !important;
-	}
+  &-input {
+    border-color: var(--tilburg-color-red-400) !important;
+  }
 
-	&-message {
-		margin-block-start: -10px;
-		color: var(--tilburg-color-red-400);
-		font-size: 1.4rem;
-	}
+  &-message {
+    margin-block-start: -10px;
+    color: var(--tilburg-color-red-400);
+    font-size: 1.4rem;
+  }
 }
 
 // notice element styles conform Figma design
 .notice {
-	margin-block: var(--tilburg-space-column-mouse);
-	color: var(--tilburg-color-gray-600);
+  margin-block: var(--tilburg-space-column-mouse);
+  color: var(--tilburg-color-gray-600);
+}
+
+header,
+main,
+footer {
+  h1 {
+    text-transform: uppercase;
+    font-family: 'Roboto Condensed', arial, sans-serif;
+    color: var(--tilburg-color-blue-400) !important;
+    margin-block-end: var(--tilburg-space-column-rat) !important;
+  }
+
+  a {
+    font-family: var(--tilburg-typography-font-family-primary);
+    font-weight: 700;
+  }
+}
+
+p > a.utrecht-link:not(.ac-button) {
+  @include respond-max($screen-sm) {
+    font-size: var(--tilburg-typography-font-size-md);
+  }
 }

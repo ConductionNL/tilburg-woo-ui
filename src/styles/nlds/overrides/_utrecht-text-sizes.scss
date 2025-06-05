@@ -1,0 +1,43 @@
+.utrecht-paragraph:has(.utrecht-form-label) {
+  line-height: 1;
+}
+
+.utrecht-form-label:has(.utrecht-paragraph) {
+  .utrecht-paragraph {
+    font-size: var(--tilburg-typography-font-size-md);
+  }
+}
+
+.utrecht-form-field,
+.utrecht-form-label,
+.utrecht-textbox,
+.utrecht-select,
+.utrecht-breadcrumb-nav__item .utrecht-link,
+.utrecht-table * {
+  font-size: var(--tilburg-typography-font-size-md) !important;
+}
+
+.utrecht-accordion__button {
+  font-size: var(--tilburg-typography-font-size-md) !important;
+  text-transform: initial !important;
+}
+
+.utrecht-accordion__panel {
+  ul {
+    padding-inline-start: 1.5rem;
+  }
+
+  &--expanded {
+    display: flex;
+    flex-direction: column;
+    gap: var(--tilburg-space-block-snail);
+  }
+
+  a {
+    color: var(--tilburg-color-pink-300);
+  }
+}
+
+h1:has(.utrecht-accordion__button) {
+  margin-block-end: 0 !important;
+}

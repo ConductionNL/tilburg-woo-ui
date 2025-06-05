@@ -29,11 +29,17 @@ const AcNavigation = () => {
             </Link>
           </li>
           <li>
-            <Link to='/onderwerpen'>
-              <VISUALS.LIST />
-              Onderwerpen
+            <Link to='/zoeken'>
+              <VISUALS.SEARCH />
+              Zoeken
             </Link>
           </li>
+          {/* <li>
+            <Link to='/onderwerpen'>
+              <VISUALS.THEMES />
+              Onderwerpen
+            </Link>
+          </li> */}
           <li>
             <Link to='/contact'>
               <VISUALS.CONTACT />
