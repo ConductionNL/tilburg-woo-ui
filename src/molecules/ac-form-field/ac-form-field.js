@@ -22,6 +22,7 @@ const AcFormField = ({
   disabled,
   minLength,
   maxLength,
+  ...restProps
 }) => {
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
@@ -55,6 +56,7 @@ const AcFormField = ({
         value={value}
         minLength={minLength}
         maxLength={maxLength}
+        {...restProps}
       />
     </FormField>
   );
