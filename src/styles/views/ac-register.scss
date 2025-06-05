@@ -1,0 +1,16 @@
+.ac-register__error-list {
+  margin-inline: var(--tilburg-space-column-rat);
+}
+
+.ac-register-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ac-register-form-container {
+  flex: 3;
+}
+
+.ac-register-process-steps {
+  flex: 1;
+}
