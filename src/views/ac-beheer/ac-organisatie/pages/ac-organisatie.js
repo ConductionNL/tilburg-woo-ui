@@ -26,6 +26,7 @@ import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ const AcBeheerOrganisaties = () => {
 
       const schemaJsonResponse = schemaResponse.data;
       const dataProperties = schemaJsonResponse.properties;
-      setDataProperties(dataProperties);
+      setDataProperties(sortPropertiesByOrder(dataProperties));
     } catch (err) {
       console.error('Error fetching schema:', err);
       setError(err);

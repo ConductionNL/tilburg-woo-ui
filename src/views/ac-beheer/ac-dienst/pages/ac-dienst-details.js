@@ -20,6 +20,7 @@ import { BASE_URL } from '../../ac-beheer';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
+import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -32,8 +33,9 @@ const AcBeheerDienstDetails = ({ id }) => {
 
   const { makeRequest } = useNextcloudRequests();
 
-  const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
+  const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningaanbod';
+  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
   const fetchData = async () => {
     try {
@@ -197,6 +199,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                       >
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Versies</AcTab>
+                          <AcTab selected={tabIndex === 1}>Bestanden</AcTab>
 
                           {uses && uses.length > 0 && (
                             <>
@@ -204,7 +207,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                                 // show unique headers
                                 _.uniqBy(uses, (use) => use['@self'].schema.id).map(
                                   (use, idx) => (
-                                    <AcTab selected={tabIndex === idx + 1}>
+                                    <AcTab selected={tabIndex === idx + 2}>
                                       <span>{use['@self'].schema.title}</span>
                                     </AcTab>
                                   )
@@ -219,6 +222,14 @@ const AcBeheerDienstDetails = ({ id }) => {
                           ))}
                         </AcTabPanel>
 
+                        <AcTabPanel selected={tabIndex === 1}>
+                          <AcObjectUploadFiles
+                            register={registerSlug}
+                            schema={schemaSlug}
+                            id={data.id}
+                          />
+                        </AcTabPanel>
+
                         {uses && uses.length > 0 && (
                           <>
                             {uses &&
@@ -231,7 +242,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                                     metadata.schema.properties;
 
                                   return (
-                                    <AcTabPanel selected={tabIndex === idx + 1}>
+                                    <AcTabPanel selected={tabIndex === idx + 2}>
                                       <BeheerTable
                                         type={schemaSlug}
                                         metadata={metadata}

@@ -468,7 +468,7 @@ const ConTable = (
             >
               <div
                 id={`table-cell-${headerIndex}`}
-                style={header.doNotTruncate ? {} : getTruncateStyle()}
+                style={header?.doNotTruncate ? {} : getTruncateStyle()}
               >
                 {handleDataCellRender(header, row)}
               </div>
