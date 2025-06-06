@@ -30,13 +30,11 @@ const AcAcceptOrganizationModal = ({
   const [error, setError] = useState(null);
   const handleAcceptOrganization = async () => {
     try {
-
-      
-      let endpoint = ""
+      let endpoint = '';
       if (BASE_URL.includes('test')) {
         endpoint = `openregister/api/objects/14/37`;
       } else {
-        endpoint = `openregister/api/objects/voorzieningen/organisatie`;
+        endpoint = `openregister/api/objects/14/37`;
       }
 
       const response = await makeRequest(
@@ -83,9 +81,10 @@ const AcAcceptOrganizationModal = ({
 
   const errorStyle = {
     // the goal is to convert a value like #e53e3e to something like #fff5f5
-    backgroundColor: 'color-mix(in srgb, var(--utrecht-form-field-error-message-color, #e53e3e) 5%, #ffffff)',
+    backgroundColor:
+      'color-mix(in srgb, var(--utrecht-form-field-error-message-color, #e53e3e) 5%, #ffffff)',
     border: '1px solid var(--utrecht-form-field-error-message-color, #e53e3e)',
-    borderRadius: '4px', 
+    borderRadius: '4px',
     color: 'var(--utrecht-form-field-error-message-color, #e53e3e)',
     fontSize: 'var(--utrecht-form-field-error-message-font-size, 1rem)',
     fontWeight: 'var(--utrecht-form-field-error-message-font-weight, 400)',
