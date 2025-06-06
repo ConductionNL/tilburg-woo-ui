@@ -63,7 +63,6 @@
   float: right;
 }
 
-
 .ac-register-button--loading {
   animation-name: ckw;
   animation-duration: 1s;
@@ -144,4 +143,11 @@
       color: var(--tilburg-color-gray-700);
     }
   }
+}
+
+.ac-register-form-field-error {
+  color: var(--tilburg-color-red-400);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
 }
