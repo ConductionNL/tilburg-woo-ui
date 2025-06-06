@@ -22,6 +22,7 @@ const AcFormField = ({
   disabled,
   minLength,
   maxLength,
+  required,
   ...restProps
 }) => {
   const onBlurHandler = (e) => {
@@ -39,7 +40,17 @@ const AcFormField = ({
   return (
     <FormField type={type}>
       <FormLabel htmlFor={id}>
-        <Heading level={headingLevel}>{label}</Heading>
+        <Heading level={headingLevel}>
+          {label}
+          {required && (
+            <>
+              <span className='required-indicator' aria-hidden='true'>
+                *
+              </span>
+              <span className='sr-only'>(verplicht)</span>
+            </>
+          )}
+        </Heading>
       </FormLabel>
       <Textbox
         id={id}
