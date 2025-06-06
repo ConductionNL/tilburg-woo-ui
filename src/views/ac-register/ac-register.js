@@ -6,14 +6,16 @@ import { AcContainer, AcSection } from '@src/atoms';
 import { LABELS, VISUALS } from '@src/constants';
 import { AcFormField, AcButton } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
+import { ProcessSteps } from '@gemeente-denhaag/components-react';
+import { AcColumn } from '@src/atoms';
 import {
   Heading1,
   Separator,
+  UnorderedList,
+  UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
-import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
-import AcColumn from '@src/atoms/ac-column/ac-column';
 
 const organizationTypes = [
   { value: 'leverancier', label: 'Leverancier' },
@@ -428,6 +430,8 @@ const AcRegister = () => {
     return url;
   };
 
+  const [error, setError] = useState({ message: null, errors: null });
+
   const handleRegister = async () => {
     setLoading(true);
     try {
@@ -459,6 +463,7 @@ const AcRegister = () => {
       // Handle the logo separately
       if (organization.logo) {
         organizationData.logo = escapeSvgDataUrl(organization.logo);
+        // organizationData.logo = organization.logo;
       }
 
       const response = await fetch(
@@ -473,8 +478,17 @@ const AcRegister = () => {
       );
 
       if (response.ok) {
-        setRegisterCallBack('success');
+        const data = await response.json();
+
+        if (data.status === 'error') {
+          setRegisterCallBack('error');
+          console.log({ data });
+          setError({ message: data.message, errors: data.errors });
+        } else {
+          setRegisterCallBack('success');
+        }
       } else {
+        setRegisterCallBack('error');
         throw new Error('Registration failed');
       }
     } catch (error) {
@@ -669,6 +683,7 @@ const AcRegister = () => {
                             style='button'
                             icon={<VISUALS.ARROW_LEFT />}
                             onClick={() => setCurrentStep(currentStep - 1)}
+                            disabled={loading}
                           >
                             Terug
                           </AcButton>
@@ -680,7 +695,7 @@ const AcRegister = () => {
                               currentStep === 0 && 'ac-register-form-next-button'
                             )}
                             icon={<VISUALS.ARROW_RIGHT />}
-                            disabled={getDisabledStatus(currentStep)}
+                            disabled={getDisabledStatus(currentStep) || loading}
                             onClick={() => setCurrentStep(currentStep + 1)}
                           >
                             Volgende
@@ -689,7 +704,13 @@ const AcRegister = () => {
                         {currentStep === 3 && (
                           <AcButton
                             style='button'
-                            icon={<VISUALS.CLIPBOARD_CHECK />}
+                            icon={
+                              loading ? (
+                                <VISUALS.SPINNER className='ac-register-button--loading' />
+                              ) : (
+                                <VISUALS.CLIPBOARD_CHECK />
+                              )
+                            }
                             onClick={handleRegister}
                             disabled={loading}
                           >
@@ -739,12 +760,33 @@ const AcRegister = () => {
               <p>Beste {organization.name},</p>
               <p>
                 Er is helaas een fout opgetreden bij het verwerken van uw registratie
-                voor de SoftwareCatalogus. Dit kan verschillende oorzaken hebben:
+                voor de SoftwareCatalogus.{' '}
+                {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
-              <ul className='ac-register__error-list'>
-                <li>Een tijdelijk probleem met onze servers</li>
-                <li>Een probleem met uw internetverbinding</li>
-              </ul>
+              {!error.errors && !error.message && (
+                <UnorderedList>
+                  <UnorderedListItem>
+                    Een tijdelijk probleem met onze servers
+                  </UnorderedListItem>
+                  <UnorderedListItem>
+                    Een probleem met uw internetverbinding
+                  </UnorderedListItem>
+                </UnorderedList>
+              )}
+              {(error.errors || error.message) && (
+                <>
+                  {error.message && <b>{error.message}</b>}
+                  {error.errors && (
+                    <UnorderedList>
+                      {error.errors.map((error) => (
+                        <UnorderedListItem key={error.message || error}>
+                          {error.message || error}
+                        </UnorderedListItem>
+                      ))}
+                    </UnorderedList>
+                  )}
+                </>
+              )}
               <p>
                 Probeer het later nogmaals of neem contact op met onze helpdesk via
                 support@softwarecatalogus.nl als het probleem blijft bestaan.
@@ -753,7 +795,10 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={() => resetForm()}
+                onClick={() => {
+                  setRegisterCallBack(null);
+                  setCurrentStep(3);
+                }}
               >
                 Terug naar registratie
               </AcButton>

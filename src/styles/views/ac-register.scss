@@ -5,7 +5,7 @@
 .ac-register-container {
   display: flex;
   justify-content: space-between;
-  gap: var(--tilburg-space-block-otter);
+  gap: 10px;
 }
 
 .ac-register-form-container {
@@ -18,7 +18,7 @@
 
 .ac-register-form-heading {
   margin-block-end: var(--tilburg-space-block-rat) !important;
-  margin-inline-start: calc(22% + var(--tilburg-space-block-cat));
+  margin-inline-start: calc(22.7% + var(--tilburg-space-block-cat));
 }
 
 .ac-register-form-section {
@@ -61,6 +61,17 @@
 
 .ac-register-form-next-button {
   float: right;
+}
+
+
+.ac-register-button--loading {
+  animation-name: ckw;
+  animation-duration: 1s;
+  /* Things added */
+  animation-iteration-count: infinite;
+  transform-origin: 50% 50%;
+  display: inline-block;
+  /* <--- */
 }
 
 .ac-register-review {
