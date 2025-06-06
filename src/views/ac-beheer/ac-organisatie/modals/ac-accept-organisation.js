@@ -30,7 +30,14 @@ const AcAcceptOrganizationModal = ({
   const [error, setError] = useState(null);
   const handleAcceptOrganization = async () => {
     try {
-      const endpoint = `openregister/api/objects/voorzieningen/organisatie`;
+
+      
+      let endpoint = ""
+      if (BASE_URL.includes('test')) {
+        endpoint = `openregister/api/objects/14/37`;
+      } else {
+        endpoint = `openregister/api/objects/voorzieningen/organisatie`;
+      }
 
       const response = await makeRequest(
         `${BASE_URL}/apps/${endpoint}/${organization.id}`,
