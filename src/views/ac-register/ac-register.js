@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useEffect } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
@@ -16,6 +16,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
+import ConLogoPreview from './con-logo-preview';
 
 const organizationTypes = [
   { value: 'leverancier', label: 'Leverancier' },
@@ -24,349 +25,11 @@ const organizationTypes = [
   { value: 'community', label: 'Community' },
 ];
 
-const OrganizationForm = memo(({ organization, setOrganizationData, loading }) => {
-  return (
-    <div className='ac-register-form-section'>
-      <div className='ac-register-form-grid'>
-        <div>
-          <h4 className='utrecht-heading-4'>Organisatie type *</h4>
-          <ReactSelect
-            placeholder='Selecteer een organisatie type'
-            defaultValue={organizationTypes[0]}
-            className='ac-beheer-select'
-            loading={organizationTypes?.length === 0}
-            options={organizationTypes}
-            onChange={(selected) =>
-              setOrganizationData('organizationType', selected.value)
-            }
-          />
-        </div>
-        <AcFormField
-          label='Naam *'
-          placeholder='Voorbeeld: Gemeente Amsterdam'
-          value={organization.name}
-          onBlur={(e) => setOrganizationData('name', e)}
-          hasError={!organization.name}
-          disabled={loading}
-        />
-        <AcFormField
-          label='Beschrijving kort'
-          placeholder='Een korte beschrijving van de organisatie'
-          value={organization.summary}
-          onBlur={(e) => setOrganizationData('summary', e)}
-          disabled={loading}
-        />
-
-        {organization.organizationType === 'leverancier' && (
-          <AcFormField
-            label='KvK nummer'
-            placeholder='12345678'
-            value={organization.kvkNumber}
-            onBlur={(e) => setOrganizationData('kvkNumber', e)}
-            disabled={loading}
-          />
-        )}
-
-        {(organization.organizationType === 'gemeente' ||
-          organization.organizationType === 'samenwerking') && (
-          <AcFormField
-            label='OIN'
-            placeholder='00000001002564440000'
-            value={organization.oin}
-            onBlur={(e) => setOrganizationData('oin', e)}
-            disabled={loading}
-          />
-        )}
-
-        <AcFormField
-          label='Logo'
-          placeholder='https://www.example.com/logo.png'
-          value={organization.logo}
-          onBlur={(e) => setOrganizationData('logo', e)}
-          disabled={loading}
-        />
-      </div>
-    </div>
-  );
-});
-
-const ContactPersonForm = memo(
-  ({ organization, setOrganizationData, loading, validateEmail }) => {
-    return (
-      <div className='ac-register-form-section'>
-        <div className='ac-register-form-grid'>
-          <AcFormField
-            label='Voornaam *'
-            placeholder='John'
-            value={organization.contactPersons[0].firstName}
-            type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.firstName', e)}
-            hasError={!organization.contactPersons[0].firstName}
-            id='name-field'
-            disabled={loading}
-          />
-          <AcFormField
-            label='Tussenvoegsel'
-            placeholder='van'
-            value={organization.contactPersons[0].middleName}
-            type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.middleName', e)}
-            id='name-field'
-            disabled={loading}
-          />
-          <AcFormField
-            label='Achternaam *'
-            placeholder='Doe'
-            value={organization.contactPersons[0].lastName}
-            type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.lastName', e)}
-            hasError={!organization.contactPersons[0].lastName}
-            id='name-field'
-            disabled={loading}
-          />
-
-          <AcFormField
-            label='Telefoonnummer *'
-            placeholder='06 12345678'
-            value={organization.contactPersons[0].phone}
-            type='tel'
-            onBlur={(e) => setOrganizationData('contactPersons.phone', e)}
-            hasError={!organization.contactPersons[0].phone}
-            id='phone-field'
-            disabled={loading}
-          />
-
-          <AcFormField
-            label='Email adres *'
-            placeholder='john.doe@example.com'
-            value={organization.contactPersons[0].email}
-            type='email'
-            onBlur={(e) => setOrganizationData('contactPersons.email', e)}
-            hasError={!validateEmail(organization.contactPersons[0].email)}
-            id='email-field'
-            disabled={loading}
-          />
-
-          <AcFormField
-            label='Functie'
-            placeholder='Sales Manager'
-            value={organization.contactPersons[0].function}
-            type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.function', e)}
-            id='name-field'
-            disabled={loading}
-          />
-        </div>
-      </div>
-    );
-  }
-);
-
-const ContactInformationForm = memo(
-  ({ organization, setOrganizationData, loading, validateEmail }) => {
-    return (
-      <div className='ac-register-form-section'>
-        <div className='ac-register-form-grid'>
-          <AcFormField
-            label='Website'
-            placeholder='https://www.example.com'
-            value={organization.website}
-            type='text'
-            onBlur={(e) => setOrganizationData('website', e)}
-            id='website-field'
-            disabled={loading}
-          />
-
-          <AcFormField
-            label='Telefoonnummer'
-            placeholder='06 12345678'
-            value={organization.phone}
-            type='tel'
-            onBlur={(e) => setOrganizationData('phone', e)}
-            id='phone-field'
-            disabled={loading}
-          />
-
-          <AcFormField
-            label='Email adres'
-            placeholder='john.doe@example.com'
-            value={organization.email}
-            type='email'
-            onBlur={(e) => setOrganizationData('email', e)}
-            hasError={organization.email && !validateEmail(organization.email)}
-            id='email-field'
-            disabled={loading}
-          />
-        </div>
-      </div>
-    );
-  }
-);
-
-const LogoPreview = memo(({ logoUrl, className }) => {
-  const [isValid, setIsValid] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Reset states when URL changes
-    setIsValid(false);
-    setIsLoading(true);
-
-    if (!logoUrl) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Check if URL is potentially safe
-    try {
-      // Handle data URLs
-      if (logoUrl.startsWith('data:')) {
-        const isImageData = logoUrl.startsWith('data:image/');
-        if (!isImageData) {
-          setIsLoading(false);
-          return;
-        }
-      } else {
-        // For regular URLs, check protocol
-        const url = new URL(logoUrl);
-        if (!['http:', 'https:', 'data:'].includes(url.protocol)) {
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // Verify it's actually an image by loading it
-      const img = new Image();
-      img.onload = () => {
-        setIsValid(true);
-        setIsLoading(false);
-      };
-      img.onerror = () => {
-        setIsValid(false);
-        setIsLoading(false);
-      };
-      img.src = logoUrl;
-    } catch (e) {
-      setIsLoading(false);
-    }
-  }, [logoUrl]);
-
-  return (
-    <div className={className}>
-      {logoUrl && (
-        <>
-          {isLoading && <span>(Validating...)</span>}
-          {!isLoading && isValid && <img src={logoUrl} alt='Organization logo' />}
-          {!isLoading && !isValid && <span>(Invalid image URL)</span>}
-        </>
-      )}
-    </div>
-  );
-});
-
-const ReviewForm = memo(({ organization }) => {
-  return (
-    <div className='ac-register-form-section'>
-      <div className='ac-register-review'>
-        <div className='ac-register-review__section'>
-          <div className='ac-register-review__header'>
-            <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
-            {organization.logo && (
-              <LogoPreview
-                logoUrl={organization.logo}
-                className='ac-register-review__logo'
-              />
-            )}
-          </div>
-          <Separator className='ac-register-review__separator' />
-          <div className='ac-register-review__field'>
-            <strong>Naam:</strong>
-            <span>{organization.name || '-'}</span>
-          </div>
-          {organization.organizationType === 'leverancier' && (
-            <div className='ac-register-review__field'>
-              <strong>KvK nummer:</strong>
-              <span>{organization.kvkNumber || '-'}</span>
-            </div>
-          )}
-          {(organization.organizationType === 'gemeente' ||
-            organization.organizationType === 'samenwerking') && (
-            <div className='ac-register-review__field'>
-              <strong>OIN:</strong>
-              <span>{organization.oin || '-'}</span>
-            </div>
-          )}
-          <div className='ac-register-review__field'>
-            <strong>Type organisatie:</strong>
-            <span>{organization.organizationType || '-'}</span>
-          </div>
-
-          <div className='ac-register-review__field'>
-            <strong>Korte beschrijving:</strong>
-            <span>{organization.summary || '-'}</span>
-          </div>
-        </div>
-
-        <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4'>Contactpersoon</h4>
-          <Separator className='ac-register-review__separator' />
-          <div className='ac-register-review__field'>
-            <strong>Naam:</strong>
-            {organization.contactPersons[0].firstName || '-'}{' '}
-            {organization.contactPersons[0].middleName || ' '}
-            {organization.contactPersons[0].lastName || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Telefoonnummer:</strong>
-            {organization.contactPersons[0].phone || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Email:</strong> {organization.contactPersons[0].email || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Functie:</strong>
-            {organization.contactPersons[0].function || '-'}
-          </div>
-        </div>
-
-        <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4'>Contact informatie</h4>
-          <Separator className='ac-register-review__separator' />
-          <div className='ac-register-review__field'>
-            <strong>Website:</strong> {organization.website || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Telefoonnummer:</strong> {organization.phone || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Email:</strong> {organization.email || '-'}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-const escapeSvgDataUrl = (url) => {
-  if (!url) return '';
-
-  // Check if it's an SVG data URL
-  if (url.startsWith('data:image/svg+xml')) {
-    return url
-      .replace(/'/g, '"') // Replace single quotes with double quotes
-      .replace(/"/g, '\\"') // Escape double quotes
-      .replace(/>/g, '%3E') // Encode >
-      .replace(/</g, '%3C') // Encode <
-      .replace(/\//g, '%2F'); // Encode /
-  }
-
-  // If it's not an SVG, return the original URL
-  return url;
-};
-
 const AcRegister = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState({ message: null, errors: null });
+  const [currentStep, setCurrentStep] = useState(0);
   const [organization, setOrganization] = useState({
     name: '',
     contactInformation: {},
@@ -393,10 +56,6 @@ const AcRegister = () => {
     email: '',
   });
 
-  const validateEmail = useCallback((email) => {
-    return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
-  }, []);
-
   const setOrganizationData = useCallback((key, value) => {
     if (key.includes('contactPersons')) {
       const field = key.split('.')[1];
@@ -407,6 +66,10 @@ const AcRegister = () => {
     } else {
       setOrganization((prev) => ({ ...prev, [key]: value }));
     }
+  }, []);
+
+  const validateEmail = useCallback((email) => {
+    return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   }, []);
 
   const escapeSvgDataUrl = (url) => {
@@ -429,8 +92,6 @@ const AcRegister = () => {
     // If it's not an SVG, return the original URL
     return url;
   };
-
-  const [error, setError] = useState({ message: null, errors: null });
 
   const handleRegister = async () => {
     setLoading(true);
@@ -561,7 +222,6 @@ const AcRegister = () => {
         return <ReviewForm organization={organization} />;
     }
   };
-  const [currentStep, setCurrentStep] = useState(0);
 
   const getStatus = (currentStep, step) => {
     if (currentStep === step) {
@@ -809,5 +469,267 @@ const AcRegister = () => {
     </AcSection>
   );
 };
+
+const OrganizationForm = memo(({ organization, setOrganizationData, loading }) => {
+  return (
+    <div className='ac-register-form-section'>
+      <div className='ac-register-form-grid'>
+        <div>
+          <h4 className='utrecht-heading-4'>Organisatie type *</h4>
+          <ReactSelect
+            placeholder='Selecteer een organisatie type'
+            defaultValue={organizationTypes[0]}
+            className='ac-beheer-select'
+            loading={organizationTypes?.length === 0}
+            options={organizationTypes}
+            onChange={(selected) =>
+              setOrganizationData('organizationType', selected.value)
+            }
+          />
+        </div>
+        <AcFormField
+          label='Naam *'
+          placeholder='Voorbeeld: Gemeente Amsterdam'
+          value={organization.name}
+          onBlur={(e) => setOrganizationData('name', e)}
+          hasError={!organization.name}
+          disabled={loading}
+        />
+        <AcFormField
+          label='Beschrijving kort'
+          placeholder='Een korte beschrijving van de organisatie'
+          value={organization.summary}
+          onBlur={(e) => setOrganizationData('summary', e)}
+          disabled={loading}
+        />
+
+        {organization.organizationType === 'leverancier' && (
+          <AcFormField
+            label='KvK nummer'
+            placeholder='12345678'
+            value={organization.kvkNumber}
+            onBlur={(e) => setOrganizationData('kvkNumber', e)}
+            disabled={loading}
+          />
+        )}
+
+        {(organization.organizationType === 'gemeente' ||
+          organization.organizationType === 'samenwerking') && (
+          <AcFormField
+            label='OIN'
+            placeholder='00000001002564440000'
+            value={organization.oin}
+            onBlur={(e) => setOrganizationData('oin', e)}
+            disabled={loading}
+          />
+        )}
+
+        <AcFormField
+          label='Logo'
+          placeholder='https://www.example.com/logo.png'
+          value={organization.logo}
+          onBlur={(e) => setOrganizationData('logo', e)}
+          disabled={loading}
+        />
+      </div>
+    </div>
+  );
+});
+
+const ContactPersonForm = memo(
+  ({ organization, setOrganizationData, loading, validateEmail }) => {
+    return (
+      <div className='ac-register-form-section'>
+        <div className='ac-register-form-grid'>
+          <AcFormField
+            label='Voornaam *'
+            placeholder='John'
+            value={organization.contactPersons[0].firstName}
+            type='text'
+            onBlur={(e) => setOrganizationData('contactPersons.firstName', e)}
+            hasError={!organization.contactPersons[0].firstName}
+            id='name-field'
+            disabled={loading}
+          />
+          <AcFormField
+            label='Tussenvoegsel'
+            placeholder='van'
+            value={organization.contactPersons[0].middleName}
+            type='text'
+            onBlur={(e) => setOrganizationData('contactPersons.middleName', e)}
+            id='name-field'
+            disabled={loading}
+          />
+          <AcFormField
+            label='Achternaam *'
+            placeholder='Doe'
+            value={organization.contactPersons[0].lastName}
+            type='text'
+            onBlur={(e) => setOrganizationData('contactPersons.lastName', e)}
+            hasError={!organization.contactPersons[0].lastName}
+            id='name-field'
+            disabled={loading}
+          />
+
+          <AcFormField
+            label='Telefoonnummer *'
+            placeholder='06 12345678'
+            value={organization.contactPersons[0].phone}
+            type='tel'
+            onBlur={(e) => setOrganizationData('contactPersons.phone', e)}
+            hasError={!organization.contactPersons[0].phone}
+            id='phone-field'
+            disabled={loading}
+          />
+
+          <AcFormField
+            label='Email adres *'
+            placeholder='john.doe@example.com'
+            value={organization.contactPersons[0].email}
+            type='email'
+            onBlur={(e) => setOrganizationData('contactPersons.email', e)}
+            hasError={!validateEmail(organization.contactPersons[0].email)}
+            id='email-field'
+            disabled={loading}
+          />
+
+          <AcFormField
+            label='Functie'
+            placeholder='Sales Manager'
+            value={organization.contactPersons[0].function}
+            type='text'
+            onBlur={(e) => setOrganizationData('contactPersons.function', e)}
+            id='name-field'
+            disabled={loading}
+          />
+        </div>
+      </div>
+    );
+  }
+);
+
+const ContactInformationForm = memo(
+  ({ organization, setOrganizationData, loading, validateEmail }) => {
+    return (
+      <div className='ac-register-form-section'>
+        <div className='ac-register-form-grid'>
+          <AcFormField
+            label='Website'
+            placeholder='https://www.example.com'
+            value={organization.website}
+            type='text'
+            onBlur={(e) => setOrganizationData('website', e)}
+            id='website-field'
+            disabled={loading}
+          />
+
+          <AcFormField
+            label='Telefoonnummer'
+            placeholder='06 12345678'
+            value={organization.phone}
+            type='tel'
+            onBlur={(e) => setOrganizationData('phone', e)}
+            id='phone-field'
+            disabled={loading}
+          />
+
+          <AcFormField
+            label='Email adres'
+            placeholder='john.doe@example.com'
+            value={organization.email}
+            type='email'
+            onBlur={(e) => setOrganizationData('email', e)}
+            hasError={organization.email && !validateEmail(organization.email)}
+            id='email-field'
+            disabled={loading}
+          />
+        </div>
+      </div>
+    );
+  }
+);
+
+const ReviewForm = memo(({ organization }) => {
+  return (
+    <div className='ac-register-form-section'>
+      <div className='ac-register-review'>
+        <div className='ac-register-review__section'>
+          <div className='ac-register-review__header'>
+            <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
+            {organization.logo && (
+              <ConLogoPreview
+                logoUrl={organization.logo}
+                className='ac-register-review__logo'
+              />
+            )}
+          </div>
+          <Separator className='ac-register-review__separator' />
+          <div className='ac-register-review__field'>
+            <strong>Naam:</strong>
+            <span>{organization.name || '-'}</span>
+          </div>
+          {organization.organizationType === 'leverancier' && (
+            <div className='ac-register-review__field'>
+              <strong>KvK nummer:</strong>
+              <span>{organization.kvkNumber || '-'}</span>
+            </div>
+          )}
+          {(organization.organizationType === 'gemeente' ||
+            organization.organizationType === 'samenwerking') && (
+            <div className='ac-register-review__field'>
+              <strong>OIN:</strong>
+              <span>{organization.oin || '-'}</span>
+            </div>
+          )}
+          <div className='ac-register-review__field'>
+            <strong>Type organisatie:</strong>
+            <span>{organization.organizationType || '-'}</span>
+          </div>
+
+          <div className='ac-register-review__field'>
+            <strong>Korte beschrijving:</strong>
+            <span>{organization.summary || '-'}</span>
+          </div>
+        </div>
+
+        <div className='ac-register-review__section'>
+          <h4 className='utrecht-heading-4'>Contactpersoon</h4>
+          <Separator className='ac-register-review__separator' />
+          <div className='ac-register-review__field'>
+            <strong>Naam:</strong>
+            {organization.contactPersons[0].firstName || '-'}{' '}
+            {organization.contactPersons[0].middleName || ' '}
+            {organization.contactPersons[0].lastName || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Telefoonnummer:</strong>
+            {organization.contactPersons[0].phone || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Email:</strong> {organization.contactPersons[0].email || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Functie:</strong>
+            {organization.contactPersons[0].function || '-'}
+          </div>
+        </div>
+
+        <div className='ac-register-review__section'>
+          <h4 className='utrecht-heading-4'>Contact informatie</h4>
+          <Separator className='ac-register-review__separator' />
+          <div className='ac-register-review__field'>
+            <strong>Website:</strong> {organization.website || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Telefoonnummer:</strong> {organization.phone || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Email:</strong> {organization.email || '-'}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export default withStore(observer(AcRegister));
