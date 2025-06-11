@@ -44,6 +44,15 @@ const AcDienstFormModal = ({
     { label: 'hybride', value: 'hybride' },
   ];
 
+  const ondersteuningsoptiesOptions = [
+    { label: 'Functioneel beheer', value: 'Functioneel beheer' },
+    { label: 'Applicatiebeheer', value: 'Applicatiebeheer' },
+    { label: 'Technisch beheer', value: 'Technisch beheer' },
+    { label: 'Implementatieondersteuning', value: 'Implementatieondersteuning' },
+    { label: 'Opleidingen', value: 'Opleidingen' },
+    { label: 'Licentiereseller', value: 'Licentiereseller' },
+  ];
+
   const [dienstFormData, setDienstFormData] = useState({});
   const [schema, setSchema] = useState(null);
 
@@ -322,16 +331,31 @@ const AcDienstFormModal = ({
             required: true,
           })}
         />
-        <AcFormField
-          label='Ondersteuningsopties'
-          type='text'
-          onBlur={handleEditDienstFieldChange('ondersteuningsopties')}
-          value={dienstFormData.ondersteuningsopties}
-          {...(schema?.properties?.ondersteuningsopties?.required && {
-            hasError: !dienstFormData?.ondersteuningsopties,
-            required: true,
-          })}
-        />
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Type ondersteuning</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een ondersteunings type'
+            className={clsx('ac-beheer-select')}
+            value={ondersteuningsoptiesOptions?.filter(
+              (option) => dienstFormData?.ondersteuningsopties === option.value
+            )}
+            onChange={(e) => {
+              setDienstFormData((prev) => ({
+                ...prev,
+                ondersteuningsopties: e?.value ?? e,
+              }));
+            }}
+            options={ondersteuningsoptiesOptions}
+            {...(schema?.properties?.voorziening?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorziening?.required && {
+              isClearable: true,
+            })}
+          />
+        </div>
         <AcFormField
           label='Ondersteunde standaarden'
           type='text'
