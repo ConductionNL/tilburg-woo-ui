@@ -33,6 +33,24 @@
   --ams-pagination-relative-link-background-color: transparent;
   --ams-pagination-relative-link-padding-inline-end: 0px;
   --ams-pagination-relative-link-padding-inline-start: 0px;
+  --utrecht-textarea-background-color: var(--tilburg-form-control-background-color);
+  --utrecht-textarea-border-color: var(--tilburg-form-control-border-color);
+  --utrecht-textarea-border-width: var(--tilburg-form-control-border-width);
+  --utrecht-textarea-color: var(--tilburg-form-control-color);
+  --utrecht-textarea-font-family: var(--tilburg-document-font-family);
+  --utrecht-textarea-font-size: var(--tilburg-document-font-size);
+  --utrecht-textarea-font-weight: var(--tilburg-document-font-weight);
+  --utrecht-textarea-padding-block-end: var(--tilburg-space-block-snail);
+  --utrecht-textarea-padding-block-start: var(--tilburg-space-block-snail);
+  --utrecht-textarea-padding-inline-end: var(--tilburg-space-inline-snail);
+  --utrecht-textarea-padding-inline-start: var(--tilburg-space-inline-snail);
+  --utrecht-textarea-border-radius: var(--tilburg-border-radius-md);
+  --utrecht-textarea-placeholder-color: var(
+    --tilburg-form-control-placeholder-color
+  );
+  --utrecht-textarea-max-inline-size: 400px;
+  --utrecht-textarea-border-block-end-width: var(--utrecht-textarea-border-width);
+
   --utrecht-textbox-border-block-end-width: auto;
   --utrecht-textbox-max-inline-size: 400px;
   --utrecht-table-row-background-color: transparent;
@@ -113,7 +131,6 @@
   --utrecht-separator-block-end: 0;
   --utrecht-separator-margin-block-start: var(--tilburg-space-block-cat);
   --utrecht-separator-margin-block-end: var(--tilburg-space-block-cat);
-  
 
   --tilburg-status-badge-border-color: transparent;
   --tilburg-status-badge-warning-border-color: transparent;

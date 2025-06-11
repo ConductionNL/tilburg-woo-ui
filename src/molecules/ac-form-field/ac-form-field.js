@@ -5,12 +5,15 @@ import {
   FormLabel,
   Heading,
   Textbox,
+  Textarea,
 } from '@utrecht/component-library-react/dist/css-module';
 import clsx from 'clsx';
 
 const AcFormField = ({
   label,
+  customLabelPart,
   type = 'text',
+  inputType = 'text',
   onBlur,
   defaultValue,
   placeholder,
@@ -25,6 +28,7 @@ const AcFormField = ({
   minLength,
   maxLength,
   required,
+  customInput,
   tooltip,
   ...restProps
 }) => {
@@ -40,12 +44,27 @@ const AcFormField = ({
     if (onChange instanceof Function) onChange(e.target.value);
   };
 
+  const getInput = (inputType, props) => {
+    const { customInput, ...inputProps } = props;
+
+    if (customInput) {
+      return customInput;
+    } else if (inputType === 'textarea') {
+      return <Textarea {...inputProps} />;
+    } else {
+      return <Textbox {...inputProps} />;
+    }
+  };
+
   return (
     <FormField type={type}>
-      <FormLabel htmlFor={id}>
+      <FormLabel htmlFor={id} className={clsx({ 'ac-form-field-label-with-custom-part': customLabelPart })}>
         <Heading
           level={headingLevel}
-          className={clsx({ 'ac-form-field-header-info': tooltip })}
+          className={clsx({
+            'ac-form-field-header-info': tooltip,
+            'ac-form-field-header-info-with-custom-part': customLabelPart,
+          })}
         >
           {label}
           {required && (
@@ -70,24 +89,26 @@ const AcFormField = ({
             </>
           )}
         </Heading>
+        {customLabelPart && customLabelPart}
       </FormLabel>
-      <Textbox
-        id={id}
-        className={clsx(
+      {getInput(inputType, {
+        id: id,
+        className: clsx(
           { 'error-input': hasError },
           fullWidth && 'ac-form-field--full-width'
-        )}
-        defaultValue={defaultValue}
-        placeholder={placeholder}
-        onBlur={onBlurHandler}
-        disabled={disabled}
-        onKeyDown={onKeyDown}
-        onChange={onChangeHandler}
-        value={value}
-        minLength={minLength}
-        maxLength={maxLength}
-        {...restProps}
-      />
+        ),
+        defaultValue: defaultValue,
+        placeholder: placeholder,
+        customInput: customInput,
+        onBlur: onBlurHandler,
+        disabled: disabled,
+        onKeyDown: onKeyDown,
+        onChange: onChangeHandler,
+        value: value,
+        minLength: minLength,
+        maxLength: maxLength,
+        ...restProps,
+      })}
     </FormField>
   );
 };

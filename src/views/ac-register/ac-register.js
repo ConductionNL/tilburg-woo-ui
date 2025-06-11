@@ -1,9 +1,9 @@
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
 import { AcContainer, AcSection } from '@src/atoms';
-import {  VISUALS } from '@src/constants';
+import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
@@ -19,6 +19,7 @@ import { validateAndProcessLogoUrl } from './con-logo-preview';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
+import ReactMarkdown from 'react-markdown';
 
 const organizationTypes = [
   { value: 'leverancier', label: 'Leverancier' },
@@ -33,9 +34,9 @@ const AcRegister = () => {
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
   const [organization, setOrganization] = useState({
-    name: '',
+    name: 'Conduction',
     contactInformation: {},
-    website: '',
+    website: 'https://www.conduction.nl',
     links: '',
     oin: '',
     logo: '',
@@ -257,7 +258,7 @@ const AcRegister = () => {
 
   const renderStep = (step) => {
     switch (step) {
-      case 0:
+      case 1:
         return (
           <OrganizationRequiredForm
             {...{
@@ -269,7 +270,7 @@ const AcRegister = () => {
             }}
           />
         );
-      case 1:
+      case 0:
         return (
           <OrganizationOptionalForm
             {...{
@@ -317,7 +318,7 @@ const AcRegister = () => {
   };
 
   const getStatusMultiStep = (currentStep, step) => {
-    if (currentStep === 1 || currentStep === 2) {
+    if (currentStep === 0 || currentStep === 1) {
       return 'current';
     } else if (currentStep < step) {
       return 'not-checked';
@@ -335,7 +336,7 @@ const AcRegister = () => {
       case 2:
         return 'Contactgegevens';
       case 3:
-        return 'Review';
+        return 'Controleren';
     }
   };
 
@@ -487,7 +488,7 @@ const AcRegister = () => {
                             id: 'l2m3n4o5-6p7q-8r9s-0t1u-2v3w4x5y6z7a',
                             marker: 3,
                             status: getStatus(currentStep, 3),
-                            title: 'Review',
+                            title: 'Controleren',
                           },
                         ]}
                       />
@@ -761,17 +762,108 @@ const OrganizationOptionalForm = memo(
     validatePhone,
     logoValidation,
   }) => {
+    const [preview, setPreview] = useState(false);
+    const [dimensions, setDimensions] = useState({ width: '100%', height: '150px' });
+    const lastKnownDimensions = useRef(dimensions);
+    const counterRef = useRef(null);
+    let localSummary = organization.summary || '';
+
+    const handlePreviewClick = () => {
+      if (!preview) {
+        // Switching to preview - save current dimensions
+        const textarea = document.querySelector('.utrecht-textarea');
+        if (textarea) {
+          const newDimensions = {
+            width: `${textarea.offsetWidth}px`,
+            height: `${textarea.offsetHeight}px`,
+          };
+          setDimensions(newDimensions);
+          lastKnownDimensions.current = newDimensions;
+        }
+      } else {
+        // Switching back to edit - use last known dimensions
+        setDimensions(lastKnownDimensions.current);
+      }
+      setPreview(!preview);
+    };
+
+    const updateCounter = (value) => {
+      if (counterRef.current) {
+        counterRef.current.textContent = `${
+          255 - (value?.length || 0)
+        } karakters over`;
+      }
+    };
+
     return (
       <div className='ac-register-form-section'>
         <div className='ac-register-form-grid'>
-          <AcFormField
-            label='Korte beschrijving'
-            placeholder='Een korte beschrijving van de organisatie'
-            tooltip='Een korte beschrijving van de organisatie'
-            value={organization.summary}
-            onBlur={(e) => setOrganizationData('summary', e)}
-            disabled={loading}
-          />
+          <div>
+            {preview ? (
+              <>
+                <AcFormField
+                  customInput={
+                    <div
+                      className='markdown-preview'
+                      style={{
+                        height: dimensions.height,
+                        width: dimensions.width,
+                      }}
+                    >
+                      <ReactMarkdown>{organization.summary || ''}</ReactMarkdown>
+                    </div>
+                  }
+                  label='Korte beschrijving'
+                  customLabelPart={
+                    <button
+                      onClick={handlePreviewClick}
+                      className={`preview-button ${preview ? 'active' : ''}`}
+                    >
+                      {preview ? 'Edit' : 'Preview'}
+                    </button>
+                  }
+                  tooltip='Een korte beschrijving van de organisatie'
+                />
+                <span ref={counterRef} className='character-count'>
+                  {255 - (localSummary?.length || 0)} karakters over
+                </span>
+              </>
+            ) : (
+              <>
+                <AcFormField
+                  fullWidth={true}
+                  inputType='textarea'
+                  label='Korte beschrijving'
+                  customLabelPart={
+                    <button
+                      onClick={handlePreviewClick}
+                      className={`preview-button ${preview ? 'active' : ''}`}
+                    >
+                      {preview ? 'Edit' : 'Preview'}
+                    </button>
+                  }
+                  placeholder='Een korte beschrijving van de organisatie'
+                  tooltip='Een korte beschrijving van de organisatie'
+                  value={organization.summary}
+                  onChange={(e) => {
+                    localSummary = e;
+                    updateCounter(e);
+                  }}
+                  onBlur={(e) => setOrganizationData('summary', e)}
+                  disabled={loading}
+                  maxLength={255}
+                  className='textarea-with-dimensions'
+                  style={{
+                    '--textarea-height': dimensions.height,
+                    '--textarea-width': dimensions.width,
+                  }}
+                />
+                <span ref={counterRef} className='character-count'>
+                  {255 - (localSummary?.length || 0)} karakters over
+                </span>
+              </>
+            )}
+          </div>
 
           {organization.organizationType === 'leverancier' && (
             <AcFormField

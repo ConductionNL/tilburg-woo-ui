@@ -10,6 +10,7 @@ import {
 import clsx from 'clsx';
 import { AcButton, AcCheckbox } from '@src/molecules';
 import { VISUALS } from '@src/constants';
+import { Separator } from '@utrecht/component-library-react/dist/css-module';
 
 // Context for the ConActionMenu component
 const ConActionMenuContext = createContext(null);
@@ -352,10 +353,10 @@ ConActionMenu.Item = ({ children, className, ...props }) => {
 };
 
 /**
- * A sub-component of ConActionMenu that renders a horizontal divider.
+ * A sub-component of ConActionMenu that renders a horizontal divider using the Utrecht Separator component.
  *
  * @function
- * @returns {JSX.Element} The rendered divider (\<hr>).
+ * @returns {JSX.Element} The rendered Utrecht Separator component.
  *
  * @example
  * <ConActionMenu.Menu>
@@ -365,7 +366,7 @@ ConActionMenu.Item = ({ children, className, ...props }) => {
  * </ConActionMenu.Menu>
  */
 ConActionMenu.Divider = () => {
-  return <hr className='con-action-divider' />;
+  return <Separator className='con-action-divider' />;
 };
 
 /**

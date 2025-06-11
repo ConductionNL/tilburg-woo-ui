@@ -205,3 +205,57 @@
   flex-direction: column;
   gap: 5px;
 }
+
+.preview-button {
+  padding: 8px 16px;
+  border-radius: var(--tilburg-border-radius-md);
+  border: 1px solid var(--tilburg-form-control-border-color);
+  background: var(--tilburg-form-control-background-color);
+  cursor: pointer;
+
+  &.active {
+    background: var(--tilburg-form-control-border-color);
+    color: var(--tilburg-form-control-background-color);
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.markdown-preview {
+  padding: var(--tilburg-space-block-snail);
+  border: 1px solid var(--tilburg-form-control-border-color);
+  border-radius: var(--tilburg-border-radius-md);
+  background: var(--tilburg-form-control-background-color);
+  overflow-y: auto;
+  line-height: 1.5;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.textarea-with-dimensions.utrecht-textarea {
+  height: var(--textarea-height);
+  width: var(--textarea-width);
+  resize: vertical !important;
+  overflow: auto;
+}
+
+.form-field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.preview-button {
+  font-size: 14px;
+  padding: 4px 8px;
+}
+
+.character-count {
+  display: block;
+  font-size: 0.875rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
