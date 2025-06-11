@@ -15,7 +15,7 @@ import {
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
 import { isValidPhoneNumber } from 'libphonenumber-js';
-import { validateLogoUrl } from './con-logo-preview';
+import { validateAndProcessLogoUrl } from './con-logo-preview';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
@@ -78,7 +78,7 @@ const AcRegister = () => {
     }
 
     setLogoValidation({ isValidating: true, isValid: true });
-    const isValid = await validateLogoUrl(url);
+    const isValid = await validateAndProcessLogoUrl(url);
     setLogoValidation({ isValidating: false, isValid });
   }, []);
 
