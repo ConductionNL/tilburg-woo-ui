@@ -30,6 +30,26 @@ const AcAcceptOrganizationModal = ({
   const [error, setError] = useState(null);
   const handleAcceptOrganization = async () => {
     try {
+      const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
+
+      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        method: 'POST',
+        body: JSON.stringify({
+          username: `${organization.contactpersonen[0].voornaam} ${organization.contactpersonen[0].tussenvoegsel} ${organization.contactpersonen[0].achternaam}`,
+          email: organization.contactpersonen[0].email,
+          voornaam: organization.contactpersonen[0].voornaam,
+          achternaam: organization.contactpersonen[0].achternaam,
+          organisatie: organization.naam,
+          functie: organization.contactpersonen[0].functie,
+          telefoonnummer: organization.contactpersonen[0].telefoon,
+        }),
+      });
+    } catch (err) {
+      console.error(err);
+      setError(err);
+    }
+
+    try {
       let endpoint = '';
       if (BASE_URL.includes('test')) {
         endpoint = `openregister/api/objects/14/37`;

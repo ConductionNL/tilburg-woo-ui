@@ -1,3 +1,5 @@
+import { VISUALS } from '@src/constants';
+import { TOOLTIP_ID } from '@src/index.web';
 import {
   FormField,
   FormLabel,
@@ -23,6 +25,7 @@ const AcFormField = ({
   minLength,
   maxLength,
   required,
+  tooltip,
   ...restProps
 }) => {
   const onBlurHandler = (e) => {
@@ -40,7 +43,10 @@ const AcFormField = ({
   return (
     <FormField type={type}>
       <FormLabel htmlFor={id}>
-        <Heading level={headingLevel}>
+        <Heading
+          level={headingLevel}
+          className={clsx({ 'ac-form-field-header-info': tooltip })}
+        >
           {label}
           {required && (
             <>
@@ -48,6 +54,19 @@ const AcFormField = ({
                 *
               </span>
               <span className='sr-only'>(verplicht)</span>
+            </>
+          )}
+          {tooltip && (
+            <>
+              <span
+                data-tooltip-id={TOOLTIP_ID}
+                data-tooltip-content={tooltip}
+                className='info-indicator'
+                role='img'
+                aria-label={tooltip}
+              >
+                <VISUALS.INFO />
+              </span>
             </>
           )}
         </Heading>

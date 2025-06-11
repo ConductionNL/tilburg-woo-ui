@@ -5,3 +5,9 @@
 .ac-form-field_label__required {
   display: flex;
 }
+
+.ac-form-field-header-info {
+  display: flex;
+  align-items: center;
+  gap: var(--tilburg-space-inline-beetle);
+}
