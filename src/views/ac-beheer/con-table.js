@@ -17,6 +17,7 @@ import { TOOLTIP_ID } from '@src/index.web';
 import { ConHorizontalOverflowWrapper } from '@components';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
+import ConLogoPreview from '../ac-register/con-logo-preview';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -304,6 +305,15 @@ const ConTable = (
 
       if (!row[header.key]) {
         return '-';
+      }
+
+      if (header.key === 'logo') {
+        return (
+          <ConLogoPreview
+            logoUrl={row[header.key]}
+            className='ac-register-review__logo'
+          />
+        );
       }
 
       if (Array.isArray(row[header.key])) {

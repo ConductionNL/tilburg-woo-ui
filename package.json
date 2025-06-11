@@ -54,7 +54,7 @@
     "@conduction/archimate-diagram-engine": "^1.0.5",
     "@conduction/theme": "1.1.47",
     "@emotion/react": "^11.11.1",
-    "@gemeente-denhaag/components-react": "^0.1.5",
+    "@gemeente-denhaag/components-react": "^2.0.15",
     "@joint/core": "^4.1.2",
     "@loadable/component": "^5.15.3",
     "@lottiefiles/react-lottie-player": "^3.5.3",

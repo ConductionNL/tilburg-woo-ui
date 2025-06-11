@@ -16,13 +16,17 @@ const AcTab = loadable(() => import('@src/atoms/tab/ac-tab/ac-tab'));
 const AcTabPanel = loadable(() => import('@src/atoms/tab/ac-tabPanel/ac-tabPanel'));
 const ConLogo = loadable(() => import('@src/atoms/con-logo/con-logo'));
 
+
 export {
   AcCard,
   AcContainer,
+  AcColumn,
+  AcGrid,
   AcDataList,
   AcFlex,
   AcImage,
   AcRichText,
+  AcRow,
   AcSection,
   AcTabs,
   AcTabList,

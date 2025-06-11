@@ -3,14 +3,16 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { VISUALS, LANGUAGES } from '@constants';
-import { AcFlex } from '@atoms';
 import { AcCheckbox, AcFormField } from '@src/molecules';
-import { getCookie } from '@src/utilities';
 import ReactSelect from 'react-select';
 import _ from 'lodash';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import clsx from 'clsx';
+import AcGrid from '@src/atoms/ac-grid/ac-grid';
+import AcColumn from '@src/atoms/ac-column/ac-column';
+import { AcFlex } from '@src/atoms';
+import { Switch } from '@amsterdam/design-system-react';
 
 // create option for creatable select
 const createOption = (label) => ({
@@ -171,6 +173,7 @@ const AcGebruikersFormModal = ({
       ref={modalRef}
       id='edit-gebruiker-modal'
       title={isEdit ? 'Gebruiker bewerken' : 'Gebruiker toevoegen'}
+      layoutClassName='wide-content'
       buttons={[
         { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
@@ -182,7 +185,7 @@ const AcGebruikersFormModal = ({
       ]}
       disableDefaultButton
     >
-      <AcFlex column spacing='sm'>
+      <AcGrid columns={2}>
         <AcFormField
           label='Gebruikersnaam'
           type='text'
@@ -280,67 +283,77 @@ const AcGebruikersFormModal = ({
             })}
           />
         </div>
-        <AcCheckbox
-          label='Actief'
-          onChange={handleEditGebruikerFieldChange('actief')}
-          checked={gebruikerFormData.actief}
-        />
-        <div>
+        <div style={{ gridColumn: 'span 2' }}>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Voorkeur</h4>
           </label>
-          <label className='utrecht-form-label'>
-            <h5 className='utrecht-heading-5'>Taal</h5>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een taal'
-            value={mapLanguageToValue(
-              LANGUAGES?.find(
-                (language) => language.code === gebruikerFormData?.voorkeuren?.taal
-              )
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              handleEditGebruikerFieldChange('voorkeuren.taal')(e?.value ?? e);
-            }}
-            loading={LANGUAGES?.length === 0}
-            options={LANGUAGES?.map(mapLanguageToValue)}
-            {...(schema?.properties?.voorkeuren?.taal?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorkeuren?.taal?.required && {
-              isClearable: true,
-            })}
-          />
+          <AcGrid columns={2}>
+            <div>
+              <label className='utrecht-form-label'>
+                <h5 className='utrecht-heading-5'>Taal</h5>
+              </label>
+              <ReactSelect
+                placeholder='Selecteer een taal'
+                value={mapLanguageToValue(
+                  LANGUAGES?.find(
+                    (language) =>
+                      language.code === gebruikerFormData?.voorkeuren?.taal
+                  )
+                )}
+                className='ac-beheer-select'
+                onChange={(e) => {
+                  handleEditGebruikerFieldChange('voorkeuren.taal')(e?.value ?? e);
+                }}
+                loading={LANGUAGES?.length === 0}
+                options={LANGUAGES?.map(mapLanguageToValue)}
+                {...(schema?.properties?.voorkeuren?.taal?.required && {
+                  required: true,
+                })}
+                {...(!schema?.properties?.voorkeuren?.taal?.required && {
+                  isClearable: true,
+                })}
+              />
+            </div>
+            <div>
+              <label className='utrecht-form-label'>
+                <h5 className='utrecht-heading-5'>Thema</h5>
+              </label>
+              <ReactSelect
+                placeholder='Selecteer een thema'
+                value={{
+                  label: _.upperFirst(gebruikerFormData?.voorkeuren?.thema),
+                  value: gebruikerFormData?.voorkeuren?.thema,
+                }}
+                className='ac-beheer-select'
+                onChange={(e) => {
+                  handleEditGebruikerFieldChange('voorkeuren.thema')(e?.value ?? e);
+                }}
+                options={[
+                  { label: 'Licht', value: 'licht' },
+                  { label: 'Donker', value: 'donker' },
+                  { label: 'Systeem', value: 'systeem' },
+                ]}
+                {...(schema?.properties?.voorkeuren?.thema?.required && {
+                  required: true,
+                })}
+                {...(!schema?.properties?.voorkeuren?.thema?.required && {
+                  isClearable: true,
+                })}
+              />
+            </div>
+          </AcGrid>
         </div>
         <div>
           <label className='utrecht-form-label'>
-            <h5 className='utrecht-heading-5'>Thema</h5>
+            <h4 className='utrecht-heading-4'>Actief</h4>
           </label>
-          <ReactSelect
-            placeholder='Selecteer een thema'
-            value={{
-              label: _.upperFirst(gebruikerFormData?.voorkeuren?.thema),
-              value: gebruikerFormData?.voorkeuren?.thema,
-            }}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              handleEditGebruikerFieldChange('voorkeuren.thema')(e?.value ?? e);
-            }}
-            options={[
-              { label: 'Licht', value: 'licht' },
-              { label: 'Donker', value: 'donker' },
-              { label: 'Systeem', value: 'systeem' },
-            ]}
-            {...(schema?.properties?.voorkeuren?.thema?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorkeuren?.thema?.required && {
-              isClearable: true,
-            })}
+          <AcCheckbox
+            // label='Actief'
+            onChange={handleEditGebruikerFieldChange('actief')}
+            checked={gebruikerFormData.actief}
           />
         </div>
-      </AcFlex>
+      </AcGrid>
     </AcModal>
   );
 

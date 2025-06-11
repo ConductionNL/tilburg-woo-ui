@@ -71,7 +71,7 @@ const ConFilterHeadersDrawer = forwardRef(
         <AcDrawer
           removeBackdrop
           id='concepts-drawer'
-          title='Header filters'
+          title='Kolommen'
           ref={drawerRef}
         >
           <AcLoader />
@@ -82,7 +82,7 @@ const ConFilterHeadersDrawer = forwardRef(
       <AcDrawer
         removeBackdrop
         id='concepts-drawer'
-        title='Header filters'
+        title='Kolommen'
         ref={drawerRef}
       >
         <AcColumn gap='tiger'>
