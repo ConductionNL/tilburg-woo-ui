@@ -105,6 +105,16 @@
   --utrecht-accordion-panel-border-color: transparent;
   --utrecht-accordion-section-border-width: auto;
   --utrecht-accordion-border-radius: 0px;
+
+  --utrecht-separator-color: var(--tilburg-color-gray-300);
+  --utrecht-separator-width: 100%;
+  --utrecht-separator-block-size: 1px;
+  --utrecht-separator-block-start: 0;
+  --utrecht-separator-block-end: 0;
+  --utrecht-separator-margin-block-start: var(--tilburg-space-block-cat);
+  --utrecht-separator-margin-block-end: var(--tilburg-space-block-cat);
+  
+
   --tilburg-status-badge-border-color: transparent;
   --tilburg-status-badge-warning-border-color: transparent;
   --tilburg-status-badge-negative-border-color: transparent;
@@ -1076,11 +1086,6 @@
   );
   --utrecht-table-cell-line-height: var(--tilburg-typography-line-height-md);
 
-  --utrecht-separator-margin-block-start: var(--tilburg-space-block-snail);
-  --utrecht-separator-margin-block-end: var(--tilburg-space-block-snail);
-  --utrecht-separator-block-size: var(--tilburg-size-4xs);
-  --utrecht-separator-color: var(--tilburg-line-border-color);
-
   --tilburg-header-background-color: #ffffff;
   --tilburg-footer-background-color: #004589;
   --tilburg-footer-color: #ffffff;
@@ -1275,4 +1280,110 @@
   --conduction-tooltip-padding-block-start: 8px;
   --conduction-tooltip-color: var(--tilburg-color-white);
   --conduction-tooltip-background-color: var(--tilburg-color-black);
+
+  --denhaag-process-steps-line-height: 24px;
+  --denhaag-process-steps-step-header-align-items: center;
+  --denhaag-process-steps-step-collapse-icon-size: 16px;
+  --denhaag-process-steps-step-collapse-icon-padding: 4px;
+  --denhaag-process-steps-step-content-margin: 12px;
+  --denhaag-process-steps-step-padding-block-end: 0;
+  --denhaag-process-steps-step-padding-block-start: 0;
+  --denhaag-process-steps-step-meta-font-size: 16px;
+  --denhaag-process-steps-step-meta-date-font-size: 20px;
+  --denhaag-step-marker-border-width: 2px;
+  --denhaag-step-marker-font-weight: 400;
+  --denhaag-step-marker-margin: 0;
+  --denhaag-step-marker-padding: 12px;
+  --denhaag-step-marker-size: 32px;
+  --denhaag-step-marker-icon-size: 20px;
+  --denhaag-step-marker-nested-size: 16px;
+  --denhaag-step-marker-nested-icon-size: 10px;
+  --denhaag-step-marker-connector-outline-width: 1px;
+
+  --denhaag-process-steps-font-family: var(--tilburg-typography-font-family-primary);
+  --denhaag-process-steps-font-size: var(--tilburg-document-font-size);
+  --denhaag-process-steps-step-heading-color: var(--tilburg-color-gray-700);
+  --denhaag-process-steps-step-heading-font-size: var(--tilburg-document-font-size);
+  --denhaag-process-steps-step-heading-font-weight: var(
+    --tilburg-typography-font-weight-bold
+  );
+  --denhaag-process-steps-step-heading-line-height: var(
+    --tilburg-document-line-height
+  );
+
+  --denhaag-process-steps-step-heading-checked-font-size: var(
+    --tilburg-document-font-size
+  );
+  --denhaag-process-steps-step-heading-checked-font-weight: var(
+    --tilburg-typography-font-weight-bold
+  );
+  --denhaag-process-steps-step-heading-checked-line-height: var(
+    --tilburg-document-line-height
+  );
+
+  --denhaag-process-steps-step-heading-current-color: #034591;
+  --denhaag-process-steps-step-heading-current-font-size: var(
+    --tilburg-document-font-size
+  );
+  --denhaag-process-steps-step-heading-current-font-weight: var(
+    --tilburg-typography-font-weight-bold
+  );
+  --denhaag-process-steps-step-heading-current-line-height: var(
+    --tilburg-document-line-height
+  );
+
+  --denhaag-process-steps-step-heading-warning-color: var(
+    --tilburg-color-orange-300
+  );
+  --denhaag-process-steps-step-heading-error-color: var(--tilburg-color-red-300);
+  --denhaag-process-steps-step-content-color: var(--tilburg-color-gray-700);
+
+  --denhaag-step-marker-font-family: var(--tilburg-typography-font-family-primary);
+  --denhaag-step-marker-font-size: var(--tilburg-typography-font-size-sm);
+
+  --denhaag-step-marker-checked-background-color: var(--tilburg-color-white);
+  --denhaag-step-marker-checked-border-color: var(--tilburg-color-green-400);
+  --denhaag-step-marker-checked-color: var(--tilburg-color-green-400);
+
+  --denhaag-step-marker-current-background-color: #034591;
+  --denhaag-step-marker-current-border-color: #034591;
+  --denhaag-step-marker-current-color: var(--tilburg-color-white);
+  --denhaag-step-marker-current-nested-color: #034591;
+
+  --denhaag-step-marker-default-background-color: var(--tilburg-color-gray-200);
+  --denhaag-step-marker-default-border-color: var(--tilburg-color-gray-200);
+  --denhaag-step-marker-default-color: var(--tilburg-color-white);
+  --denhaag-step-marker-default-nested-color: var(--tilburg-color-gray-200);
+
+  --denhaag-step-marker-disabled-background-color: var(--tilburg-color-gray-100);
+  --denhaag-step-marker-disabled-border-color: var(--tilburg-color-gray-100);
+  --denhaag-step-marker-disabled-color: var(--tilburg-color-gray-400);
+
+  --denhaag-step-marker-not-checked-background-color: var(--tilburg-color-white);
+  --denhaag-step-marker-not-checked-border-color: var(--tilburg-color-gray-200);
+  --denhaag-step-marker-not-checked-color: var(--tilburg-color-gray-400);
+
+  --denhaag-step-marker-warning-background-color: var(--tilburg-color-orange-300);
+  --denhaag-step-marker-warning-border-color: var(--tilburg-color-orange-300);
+  --denhaag-step-marker-warning-color: var(--tilburg-color-white);
+  --denhaag-step-marker-warning-nested-background-color: var(--tilburg-color-white);
+  --denhaag-step-marker-warning-nested-border-color: var(--tilburg-color-orange-300);
+
+  --denhaag-step-marker-error-background-color: var(--tilburg-color-red-300);
+  --denhaag-step-marker-error-border-color: var(--tilburg-color-red-300);
+  --denhaag-step-marker-error-color: var(--tilburg-color-white);
+
+  --denhaag-step-marker-connector-not-checked-outline-color: var(
+    --tilburg-color-gray-200
+  );
+  --denhaag-step-marker-connector-checked-outline-color: var(
+    --tilburg-color-green-400
+  );
+  --denhaag-step-marker-connector-warning-outline-color: var(
+    --tilburg-color-orange-300
+  );
+  --denhaag-step-marker-connector-error-outline-color: var(--tilburg-color-red-300);
+  --denhaag-step-marker-connector-default-outline-color: var(
+    --tilburg-color-gray-200
+  );
 }

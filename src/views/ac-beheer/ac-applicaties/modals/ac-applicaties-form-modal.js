@@ -28,6 +28,7 @@ const AcApplicatiesFormModal = ({
     standards: [],
     voorzieningstype: '',
     contact: '',
+    laag: '',
   };
 
   const [applicatieFormData, setApplicatieFormData] = useState({});
@@ -178,6 +179,14 @@ const AcApplicatiesFormModal = ({
     'Uitvoeringsorganisatie',
     'Samenwerkingsverband',
     'Leverancier',
+  ];
+  const laagOptions = [
+    { label: '(0) Hosting', value: 'Hosting' },
+    { label: '(1) Data', value: 'Data' },
+    { label: '(2) Services', value: 'Services' },
+    { label: '(3) Integratie', value: 'Integratie' },
+    { label: '(4) Processen', value: 'Processen' },
+    { label: '(5) Interactie', value: 'Interactie' },
   ];
 
   // load applicatie data into the form
@@ -463,6 +472,31 @@ const AcApplicatiesFormModal = ({
               required: true,
             })}
             {...(!schema?.properties?.contact?.required && {
+              isClearable: true,
+            })}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Laag</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een laag'
+            className='ac-beheer-select'
+            value={laagOptions?.filter(
+              (option) => applicatieFormData?.laag === option.value
+            )}
+            onChange={(e) => {
+              setApplicatieFormData((prev) => ({
+                ...prev,
+                laag: e?.value ?? e,
+              }));
+            }}
+            options={laagOptions}
+            {...(schema?.properties?.laag?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.laag?.required && {
               isClearable: true,
             })}
           />

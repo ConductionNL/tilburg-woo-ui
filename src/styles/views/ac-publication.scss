@@ -41,11 +41,32 @@
 
       .particles-inner {
         @media (prefers-reduced-motion: no-preference) {
-          animation: particle-burst 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          animation: particle-burst 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)
+            forwards;
         }
       }
     }
   }
+}
+
+.ac-publication-logo-container {
+  display: flex;
+  height: 100px;
+
+  // Default width for rectangular images
+  width: 100%;
+
+  // For square images
+  &:has(> img[width='1'][height='1']),
+  &:has(> img[width=''][height='']) {
+    width: 160px;
+  }
+}
+
+.ac-publication-logo-container > img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 @keyframes pop-in {
