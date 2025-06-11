@@ -33,23 +33,15 @@ const AcDeleteApplicatiesModal = ({
 
   const handleDeleteApplicatie = async () => {
     try {
-      let deletePromises = [];
+      const deletePromises = applicaties.map((applicatie) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${applicatie.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      applicaties.forEach(async (applicatie) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${applicatie.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
+      const responses = await Promise.all(deletePromises);
 
-        deletePromises.push(response);
-      });
-
-      await Promise.all(deletePromises);
-
-      if (deletePromises.some((response) => response.ok)) {
+      if (responses.some((response) => response.ok)) {
         onSuccess?.();
         modalRef?.current?.close();
       }
