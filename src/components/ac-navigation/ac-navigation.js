@@ -109,7 +109,7 @@ const AcNavigation = ({ store: { menu } }) => {
                   <li>
                     <Link to='/login'>
                       <VISUALS.PERSON_ADD />
-                      Registreren
+                      Aanmelden
                     </Link>
                   </li>
                   <li>

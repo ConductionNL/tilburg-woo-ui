@@ -3,8 +3,8 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
 import { AcContainer, AcSection } from '@src/atoms';
-import { LABELS, VISUALS } from '@src/constants';
-import { AcFormField, AcButton } from '@src/molecules';
+import {  VISUALS } from '@src/constants';
+import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { AcColumn } from '@src/atoms';
@@ -70,6 +70,10 @@ const AcRegister = () => {
     isValidating: false,
     isValid: true,
   });
+  const [confirmationCheckbox, setConfirmationCheckbox] = useState({
+    privacy: false,
+    terms: false,
+  });
 
   const handleLogoValidation = useCallback(async (url) => {
     if (!url) {
@@ -113,6 +117,10 @@ const AcRegister = () => {
 
   const validateEmail = useCallback((email) => {
     return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
+  }, []);
+
+  const validateWebsite = useCallback((website) => {
+    return website && website.match(/^https?:\/\/[^\s]+$/);
   }, []);
 
   const validatePhone = useCallback((phone) => {
@@ -251,39 +259,50 @@ const AcRegister = () => {
     switch (step) {
       case 0:
         return (
-          <OrganizationForm
-            organization={organization}
-            setOrganizationData={setOrganizationData}
-            loading={loading}
-            touched={touched}
-            logoValidation={logoValidation}
+          <OrganizationRequiredForm
+            {...{
+              organization,
+              setOrganizationData,
+              loading,
+              touched,
+              validateWebsite,
+            }}
           />
         );
       case 1:
         return (
-          <ContactPersonForm
-            organization={organization}
-            setOrganizationData={setOrganizationData}
-            loading={loading}
-            validateEmail={validateEmail}
-            validatePhone={validatePhone}
-            touched={touched}
+          <OrganizationOptionalForm
+            {...{
+              organization,
+              setOrganizationData,
+              loading,
+              validateEmail,
+              validatePhone,
+              touched,
+              logoValidation,
+            }}
           />
         );
       case 2:
         return (
           <ContactInformationForm
-            organization={organization}
-            setOrganizationData={setOrganizationData}
-            loading={loading}
-            validateEmail={validateEmail}
-            validatePhone={validatePhone}
-            touched={touched}
-            setTouched={setTouched}
+            {...{
+              organization,
+              setOrganizationData,
+              loading,
+              validateEmail,
+              validatePhone,
+              touched,
+              setTouched,
+            }}
           />
         );
       case 3:
-        return <ReviewForm organization={organization} />;
+        return (
+          <ReviewForm
+            {...{ organization, confirmationCheckbox, setConfirmationCheckbox }}
+          />
+        );
     }
   };
 
@@ -297,7 +316,7 @@ const AcRegister = () => {
     }
   };
 
-  const getStatusTwo = (currentStep, step) => {
+  const getStatusMultiStep = (currentStep, step) => {
     if (currentStep === 1 || currentStep === 2) {
       return 'current';
     } else if (currentStep < step) {
@@ -310,11 +329,11 @@ const AcRegister = () => {
   const currentStepName = (currentStep) => {
     switch (currentStep) {
       case 0:
-        return 'Organisatiegegevens';
+        return 'Verplichte gegevens';
       case 1:
-        return 'Contactpersoon';
+        return 'Optionele gegevens';
       case 2:
-        return 'Contactinformatie (Optioneel)';
+        return 'Contactgegevens';
       case 3:
         return 'Review';
     }
@@ -325,19 +344,24 @@ const AcRegister = () => {
       return (
         !organization.name ||
         !organization.organizationType ||
-        (organization.logo && !logoValidation.isValid)
+        !organization.website ||
+        (organization.website && !validateWebsite(organization.website))
       );
     }
     if (currentStep === 1) {
+      return (
+        (organization.logo && !logoValidation.isValid) ||
+        (organization.email && !validateEmail(organization.email)) ||
+        (organization.phone && !validatePhone(organization.phone))
+      );
+    }
+    if (currentStep === 2) {
       return (
         !organization.contactPersons[0].firstName ||
         !organization.contactPersons[0].lastName ||
         !validatePhone(organization.contactPersons[0].phone) ||
         !validateEmail(organization.contactPersons[0].email)
       );
-    }
-    if (currentStep === 2) {
-      return false;
     }
     if (currentStep === 3) {
       return false;
@@ -355,17 +379,31 @@ const AcRegister = () => {
       const missing = [];
       if (!organization.name) missing.push('Naam');
       if (!organization.organizationType) missing.push('Organisatie type');
+      if (!organization.website) missing.push('Website');
       const messages = [];
       if (missing.length > 0) {
         messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
       }
-      if (organization.logo && !logoValidation.isValid) {
-        messages.push('Ongeldig logo URL. Gebruik een geldige afbeelding URL');
+      if (organization.website && !validateWebsite(organization.website)) {
+        messages.push('Ongeldig websiteadres');
       }
       return messages.join('\n');
     }
 
     if (currentStep === 1) {
+      const messages = [];
+      if (organization.logo && !logoValidation.isValid) {
+        messages.push('Ongeldig logo URL. Gebruik een geldige afbeelding URL');
+      }
+      if (organization.email && !validateEmail(organization.email)) {
+        messages.push('Ongeldig e-mailadres');
+      }
+      if (organization.phone && !validatePhone(organization.phone)) {
+        messages.push('Ongeldig telefoonnummer');
+      }
+      return messages.join('\n');
+    }
+    if (currentStep === 2) {
       const missing = [];
       if (!organization.contactPersons[0].firstName) missing.push('Voornaam');
       if (!organization.contactPersons[0].lastName) missing.push('Achternaam');
@@ -379,9 +417,24 @@ const AcRegister = () => {
       } else if (!validateEmail(organization.contactPersons[0].email)) {
         return 'Ongeldig e-mailadres';
       }
-      return missing.length > 0
-        ? `Verplichte velden nog niet ingevuld: ${missing.join(', ')}`
-        : '';
+
+      const messages = [];
+      if (missing.length > 0) {
+        messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
+      }
+      if (
+        organization.contactPersons[0].phone &&
+        !validatePhone(organization.contactPersons[0].phone)
+      ) {
+        messages.push('Ongeldig telefoonnummer');
+      }
+      if (
+        organization.contactPersons[0].email &&
+        !validateEmail(organization.contactPersons[0].email)
+      ) {
+        messages.push('Ongeldig e-mailadres');
+      }
+      return messages.join('\n');
     }
 
     return '';
@@ -393,7 +446,7 @@ const AcRegister = () => {
         <AcColumn gap='tiger'>
           {!registerCallBack && (
             <>
-              <Heading1>Registratie</Heading1>
+              <Heading1>Aanmelden</Heading1>
               <div>
                 <h3
                   className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
@@ -406,28 +459,28 @@ const AcRegister = () => {
                       <ProcessSteps
                         steps={[
                           {
-                            id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
-                            marker: 1,
-                            status: getStatus(currentStep, 0),
-                            title: 'Organisatiegegevens',
-                          },
-                          {
                             id: '4p5q6r7s-8t9u-0v1w-2x3y-4z5a6b7c8d9e',
-                            marker: 2,
-                            status: getStatusTwo(currentStep, 1),
-                            title: 'Contactgegevens',
+                            marker: 1,
+                            status: getStatusMultiStep(currentStep, 0),
+                            title: 'Organisatiegegevens',
                             steps: [
                               {
                                 id: 'v6w7x8y9-0z1a-2b3c-4d5e-6f7g8h9i0j1k',
-                                status: getStatus(currentStep, 1),
-                                title: 'Contactpersoon',
+                                status: getStatus(currentStep, 0),
+                                title: 'Verplichte gegevens',
                               },
                               {
                                 id: 'f0g1h2i3-4j5k-6l7m-8n9o-0p1q2r3s4t5u',
-                                status: getStatus(currentStep, 2),
-                                title: 'Contactinformatie (Optioneel)',
+                                status: getStatus(currentStep, 1),
+                                title: 'Optionele gegevens',
                               },
                             ],
+                          },
+                          {
+                            id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
+                            marker: 2,
+                            status: getStatus(currentStep, 2),
+                            title: 'Contactgegevens',
                           },
 
                           {
@@ -503,9 +556,13 @@ const AcRegister = () => {
                               )
                             }
                             onClick={handleRegister}
-                            disabled={loading}
+                            disabled={
+                              loading ||
+                              !confirmationCheckbox.terms ||
+                              !confirmationCheckbox.privacy
+                            }
                           >
-                            {LABELS.REGISTER}
+                            Aanmelden
                           </AcButton>
                         )}
                       </div>
@@ -518,16 +575,16 @@ const AcRegister = () => {
 
           {registerCallBack === 'success' && (
             <AcColumn gap='sm'>
-              <Heading level={2}>Registratie succesvol!</Heading>
+              <Heading level={2}>Aanmelding succesvol!</Heading>
               <p>Beste {organization.name},</p>
               <p>
-                Uw registratie voor de SoftwareCatalogus is succesvol ontvangen. We
+                Uw aanmelding voor de SoftwareCatalogus is succesvol ontvangen. We
                 hebben een bevestigingsmail gestuurd naar{' '}
                 <b>{organization.contactPersons[0].email}</b>. Controleer uw inbox
                 (en eventueel uw spam folder) voor deze bevestiging.
               </p>
               <p>
-                Een beheerder zal uw registratie beoordelen. Zodra uw registratie is
+                Een beheerder zal uw aanmelding beoordelen. Zodra uw aanmelding is
                 goedgekeurd, ontvangt u een nieuwe e-mail met daarin uw inloggegevens
                 en verdere instructies voor het gebruik van de SoftwareCatalogus.
               </p>
@@ -541,7 +598,7 @@ const AcRegister = () => {
                 icon={<VISUALS.ARROW_LEFT />}
                 onClick={() => resetForm()}
               >
-                Terug naar registratie
+                Terug naar aanmelden
               </AcButton>
             </AcColumn>
           )}
@@ -550,7 +607,7 @@ const AcRegister = () => {
               <Heading level={2}>Er is iets misgegaan</Heading>
               <p>Beste {organization.name},</p>
               <p>
-                Er is helaas een fout opgetreden bij het verwerken van uw registratie
+                Er is helaas een fout opgetreden bij het verwerken van uw aanmelding
                 voor de SoftwareCatalogus.{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
@@ -591,7 +648,7 @@ const AcRegister = () => {
                   setCurrentStep(3);
                 }}
               >
-                Terug naar registratie
+                Terug naar aanmelden
               </AcButton>
             </AcColumn>
           )}
@@ -601,8 +658,8 @@ const AcRegister = () => {
   );
 };
 
-const OrganizationForm = memo(
-  ({ organization, setOrganizationData, loading, touched, logoValidation }) => {
+const OrganizationRequiredForm = memo(
+  ({ organization, setOrganizationData, loading, touched, validateWebsite }) => {
     return (
       <div
         className='ac-register-form-section'
@@ -610,7 +667,7 @@ const OrganizationForm = memo(
         aria-labelledby='organization-section-title'
       >
         <h2 id='organization-section-title' className='sr-only'>
-          Organisatiegegevens
+          Verplichte gegevens
         </h2>
         <div className='ac-register-form-grid'>
           <div>
@@ -658,9 +715,59 @@ const OrganizationForm = memo(
               </span>
             )}
           </div>
+          <div>
+            <AcFormField
+              label='Website'
+              placeholder='https://www.example.com'
+              value={organization.website}
+              required={true}
+              hasError={
+                (touched.website && !organization.website) ||
+                (organization.website && !validateWebsite(organization.website))
+              }
+              type='text'
+              onBlur={(e) => setOrganizationData('website', e)}
+              id='website-field'
+              aria-describedby={
+                touched.website && !organization.website
+                  ? 'website-error'
+                  : undefined
+              }
+              disabled={loading}
+            />
+            {touched.website &&
+              (!organization.website || !validateWebsite(organization.website)) && (
+                <span className='ac-register-form-field-error'>
+                  {touched.website && !organization.website
+                    ? 'Dit veld is verplicht'
+                    : organization.website &&
+                      !validateWebsite(organization.website) &&
+                      'Ongeldig websiteadres'}
+                </span>
+              )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+const OrganizationOptionalForm = memo(
+  ({
+    organization,
+    setOrganizationData,
+    loading,
+    validateEmail,
+    validatePhone,
+    logoValidation,
+  }) => {
+    return (
+      <div className='ac-register-form-section'>
+        <div className='ac-register-form-grid'>
           <AcFormField
             label='Korte beschrijving'
             placeholder='Een korte beschrijving van de organisatie'
+            tooltip='Een korte beschrijving van de organisatie'
             value={organization.summary}
             onBlur={(e) => setOrganizationData('summary', e)}
             disabled={loading}
@@ -721,13 +828,49 @@ const OrganizationForm = memo(
                 </span>
               )}
           </div>
+
+          <div>
+            <AcFormField
+              label='Telefoonnummer'
+              placeholder='06 12345678'
+              value={organization.phone}
+              type='tel'
+              onBlur={(e) => setOrganizationData('phone', e)}
+              hasError={organization.phone && !validatePhone(organization.phone)}
+              id='phone-field'
+              disabled={loading}
+            />
+            <span className='ac-register-form-field-error'>
+              {organization.phone &&
+                !validatePhone(organization.phone) &&
+                'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
+            </span>
+          </div>
+
+          <div>
+            <AcFormField
+              label='E-mailadres'
+              placeholder='john.doe@example.com'
+              value={organization.email}
+              type='email'
+              onBlur={(e) => setOrganizationData('email', e)}
+              hasError={organization.email && !validateEmail(organization.email)}
+              id='email-field'
+              disabled={loading}
+            />
+            <span className='ac-register-form-field-error'>
+              {organization.email &&
+                !validateEmail(organization.email) &&
+                'Ongeldig e-mailadres'}
+            </span>
+          </div>
         </div>
       </div>
     );
   }
 );
 
-const ContactPersonForm = memo(
+const ContactInformationForm = memo(
   ({
     organization,
     setOrganizationData,
@@ -855,143 +998,139 @@ const ContactPersonForm = memo(
   }
 );
 
-const ContactInformationForm = memo(
-  ({ organization, setOrganizationData, loading, validateEmail, validatePhone }) => {
+const ReviewForm = memo(
+  ({ organization, confirmationCheckbox, setConfirmationCheckbox }) => {
     return (
       <div className='ac-register-form-section'>
-        <div className='ac-register-form-grid'>
-          <AcFormField
-            label='Website'
-            placeholder='https://www.example.com'
-            value={organization.website}
-            type='text'
-            onBlur={(e) => setOrganizationData('website', e)}
-            id='website-field'
-            disabled={loading}
+        <div className='ac-register-review'>
+          <div className='ac-register-review__section'>
+            <div className='ac-register-review__header'>
+              <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
+              {organization.logo && (
+                <ConLogoPreview
+                  logoUrl={organization.logo}
+                  className='ac-register-review__logo'
+                />
+              )}
+            </div>
+            <Separator className='ac-register-review-header__separator' />
+            <div className='ac-register-review__field'>
+              <strong>Naam:</strong>
+              <span>{organization.name || '-'}</span>
+            </div>
+
+            <div className='ac-register-review__field'>
+              <strong>Type organisatie:</strong>
+              <span>{organization.organizationType || '-'}</span>
+            </div>
+
+            <div className='ac-register-review__field'>
+              <strong>Website:</strong> {organization.website || '-'}
+            </div>
+
+            <Separator className='ac-register-review__separator' />
+
+            <div className='ac-register-review__field'>
+              <strong>Korte beschrijving:</strong>
+              <span>{organization.summary || '-'}</span>
+            </div>
+
+            {organization.organizationType === 'leverancier' && (
+              <div className='ac-register-review__field'>
+                <strong>KvK nummer:</strong>
+                <span>{organization.kvkNumber || '-'}</span>
+              </div>
+            )}
+            {(organization.organizationType === 'gemeente' ||
+              organization.organizationType === 'samenwerking') && (
+              <div className='ac-register-review__field'>
+                <strong>OIN:</strong>
+                <span>{organization.oin || '-'}</span>
+              </div>
+            )}
+
+            <div className='ac-register-review__field'>
+              <strong>Telefoonnummer:</strong> {organization.phone || '-'}
+            </div>
+            <div className='ac-register-review__field'>
+              <strong>Email:</strong> {organization.email || '-'}
+            </div>
+          </div>
+
+          <div className='ac-register-review__section'>
+            <h4 className='utrecht-heading-4'>Contactpersoon</h4>
+            <Separator className='ac-register-review-header__separator' />
+            <div className='ac-register-review__field'>
+              <strong>Naam:</strong>
+              {organization.contactPersons[0].firstName || '-'}{' '}
+              {organization.contactPersons[0].middleName || ' '}
+              {organization.contactPersons[0].lastName || '-'}
+            </div>
+            <div className='ac-register-review__field'>
+              <strong>Telefoonnummer:</strong>
+              {organization.contactPersons[0].phone || '-'}
+            </div>
+            <div className='ac-register-review__field'>
+              <strong>Email:</strong> {organization.contactPersons[0].email || '-'}
+            </div>
+            <div className='ac-register-review__field'>
+              <strong>Functie:</strong>
+              {organization.contactPersons[0].function || '-'}
+            </div>
+          </div>
+        </div>
+
+        <div className='ac-register-form-checkbox-wrapper'>
+          <AcCheckbox
+            label={
+              <>
+                Ik ga akkoord met de{' '}
+                <AcLink
+                  to='/algemene-voorwaarden'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  style={{ display: 'inline' }}
+                >
+                  algemene voorwaarden
+                </AcLink>
+              </>
+            }
+            value='Ik ga akkoord met de algemene voorwaarden'
+            checked={confirmationCheckbox.terms}
+            onChange={() =>
+              setConfirmationCheckbox({
+                ...confirmationCheckbox,
+                terms: !confirmationCheckbox.terms,
+              })
+            }
           />
-
-          <div>
-            <AcFormField
-              label='Telefoonnummer'
-              placeholder='06 12345678'
-              value={organization.phone}
-              type='tel'
-              onBlur={(e) => setOrganizationData('phone', e)}
-              hasError={organization.phone && !validatePhone(organization.phone)}
-              id='phone-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {organization.phone &&
-                !validatePhone(organization.phone) &&
-                'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
-            </span>
-          </div>
-
-          <div>
-            <AcFormField
-              label='E-mailadres'
-              placeholder='john.doe@example.com'
-              value={organization.email}
-              type='email'
-              onBlur={(e) => setOrganizationData('email', e)}
-              hasError={organization.email && !validateEmail(organization.email)}
-              id='email-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {organization.email &&
-                !validateEmail(organization.email) &&
-                'Ongeldig e-mailadres'}
-            </span>
-          </div>
+          <AcCheckbox
+            label={
+              <>
+                Ik ga akkoord met de{' '}
+                <AcLink
+                  to='/privacyverklaring'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  style={{ display: 'inline' }}
+                >
+                  privacyverklaring
+                </AcLink>
+              </>
+            }
+            value='Ik ga akkoord met de privacyverklaring'
+            checked={confirmationCheckbox.privacy}
+            onChange={() =>
+              setConfirmationCheckbox({
+                ...confirmationCheckbox,
+                privacy: !confirmationCheckbox.privacy,
+              })
+            }
+          />
         </div>
       </div>
     );
   }
 );
-
-const ReviewForm = memo(({ organization }) => {
-  return (
-    <div className='ac-register-form-section'>
-      <div className='ac-register-review'>
-        <div className='ac-register-review__section'>
-          <div className='ac-register-review__header'>
-            <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
-            {organization.logo && (
-              <ConLogoPreview
-                logoUrl={organization.logo}
-                className='ac-register-review__logo'
-              />
-            )}
-          </div>
-          <Separator className='ac-register-review__separator' />
-          <div className='ac-register-review__field'>
-            <strong>Naam:</strong>
-            <span>{organization.name || '-'}</span>
-          </div>
-          {organization.organizationType === 'leverancier' && (
-            <div className='ac-register-review__field'>
-              <strong>KvK nummer:</strong>
-              <span>{organization.kvkNumber || '-'}</span>
-            </div>
-          )}
-          {(organization.organizationType === 'gemeente' ||
-            organization.organizationType === 'samenwerking') && (
-            <div className='ac-register-review__field'>
-              <strong>OIN:</strong>
-              <span>{organization.oin || '-'}</span>
-            </div>
-          )}
-          <div className='ac-register-review__field'>
-            <strong>Type organisatie:</strong>
-            <span>{organization.organizationType || '-'}</span>
-          </div>
-
-          <div className='ac-register-review__field'>
-            <strong>Korte beschrijving:</strong>
-            <span>{organization.summary || '-'}</span>
-          </div>
-        </div>
-
-        <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4'>Contactpersoon</h4>
-          <Separator className='ac-register-review__separator' />
-          <div className='ac-register-review__field'>
-            <strong>Naam:</strong>
-            {organization.contactPersons[0].firstName || '-'}{' '}
-            {organization.contactPersons[0].middleName || ' '}
-            {organization.contactPersons[0].lastName || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Telefoonnummer:</strong>
-            {organization.contactPersons[0].phone || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Email:</strong> {organization.contactPersons[0].email || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Functie:</strong>
-            {organization.contactPersons[0].function || '-'}
-          </div>
-        </div>
-
-        <div className='ac-register-review__section'>
-          <h4 className='utrecht-heading-4'>Contact informatie</h4>
-          <Separator className='ac-register-review__separator' />
-          <div className='ac-register-review__field'>
-            <strong>Website:</strong> {organization.website || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Telefoonnummer:</strong> {organization.phone || '-'}
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Email:</strong> {organization.email || '-'}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
 
 export default withStore(observer(AcRegister));
