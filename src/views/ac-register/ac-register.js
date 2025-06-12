@@ -34,9 +34,9 @@ const AcRegister = () => {
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
   const [organization, setOrganization] = useState({
-    name: 'Conduction',
+    name: '',
     contactInformation: {},
-    website: 'https://www.conduction.nl',
+    website: '',
     links: '',
     oin: '',
     logo: '',
@@ -258,7 +258,7 @@ const AcRegister = () => {
 
   const renderStep = (step) => {
     switch (step) {
-      case 1:
+      case 0:
         return (
           <OrganizationRequiredForm
             {...{
@@ -270,7 +270,7 @@ const AcRegister = () => {
             }}
           />
         );
-      case 0:
+      case 1:
         return (
           <OrganizationOptionalForm
             {...{
@@ -1124,7 +1124,9 @@ const ReviewForm = memo(
 
             <div className='ac-register-review__field'>
               <strong>Korte beschrijving:</strong>
-              <span>{organization.summary || '-'}</span>
+              <div>
+                <ReactMarkdown>{organization.summary || ''}</ReactMarkdown>
+              </div>
             </div>
 
             {organization.organizationType === 'leverancier' && (
