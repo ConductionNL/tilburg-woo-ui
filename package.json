@@ -80,6 +80,7 @@
     "preact": "^10.15.1",
     "react-css-transition-replace": "^4.0.5",
     "react-focus-lock": "^2.12.1",
+    "react-markdown": "^10.1.0",
     "react-router": "6.13.0",
     "react-router-dom": "6.13.0",
     "react-select": "5.8.0",

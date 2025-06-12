@@ -128,12 +128,9 @@ $action-border-radius: var(
 // .con-action-divider
 // ---------------------------------------------
 .con-action-divider {
-  border: 0;
-  background-color: var(--utrecht-separator-color, var(--tilburg-color-gray-200));
-  height: var(--utrecht-separator-width, 1px);
   width: 90%;
-  margin-block-start: var(--utrecht-separator-margin-block-start);
-  margin-block-end: var(--utrecht-separator-margin-block-end);
+  margin-block-start: var(--utrecht-separator-margin-block-start) !important;
+  margin-block-end: var(--utrecht-separator-margin-block-end) !important;
   margin-inline-start: auto;
   margin-inline-end: auto;
 }

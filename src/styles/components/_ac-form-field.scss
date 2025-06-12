@@ -11,3 +11,10 @@
   align-items: center;
   gap: var(--tilburg-space-inline-beetle);
 }
+
+.ac-form-field-label-with-custom-part {
+  display: flex;
+  justify-content: space-between;
+  max-width: 400px;
+  margin-block-end: 3px;
+}
