@@ -130,7 +130,9 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
-                        .filter(([key]) => !['id'].includes(key))
+                        .filter(
+                          ([key]) => !['id', 'ibpScore', 'bbnScore'].includes(key)
+                        )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>

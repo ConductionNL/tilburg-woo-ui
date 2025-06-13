@@ -127,7 +127,7 @@ const AcVoorzieningVersieFormModal = ({
     <AcModal
       ref={modalRef}
       id='edit-voorziening-versie-modal'
-      title={isEdit ? 'Voorziening versie bewerken' : 'Voorziening versie toevoegen'}
+      title={isEdit ? 'Applicatie versie bewerken' : 'Applicatie versie toevoegen'}
       buttons={[
         { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
@@ -190,26 +190,7 @@ const AcVoorzieningVersieFormModal = ({
             required: true,
           })}
         />
-        <AcFormField
-          label='Systeem Vereisten'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('systeemvereisten')}
-          value={voorzieningFormData.systeemvereisten}
-          {...(schema?.properties?.systeemvereisten?.required && {
-            hasError: !voorzieningFormData?.systeemvereisten,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Kwetsbaarheden'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('kwetsbaarheden')}
-          value={voorzieningFormData.kwetsbaarheden}
-          {...(schema?.properties?.kwetsbaarheden?.required && {
-            hasError: !voorzieningFormData?.kwetsbaarheden,
-            required: true,
-          })}
-        />
+            
       </AcFlex>
     </AcModal>
   );

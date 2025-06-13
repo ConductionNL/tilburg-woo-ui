@@ -19,7 +19,6 @@ import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-m
 import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -40,10 +39,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
 
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
-      const extend = [
-        ['_extend[]', 'voorzieningaanbod'],
-        ['_extend[]', 'kwetsbaarheden'],
-      ];
+      const extend = [['_extend[]', 'voorzieningaanbod']];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
@@ -135,7 +131,15 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
-                        .filter(([key]) => !['id', 'naam'].includes(key))
+                        .filter(
+                          ([key]) =>
+                            ![
+                              'id',
+                              'naam',
+                              'kwetsbaarheden',
+                              'systeemvereisten',
+                            ].includes(key)
+                        )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>
@@ -148,25 +152,6 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                             </Paragraph>
                           </div>
                         ))}
-                    </div>
-
-                    <div>
-                      <AcTabs
-                        selectedIndex={tabIndex}
-                        onSelect={(index) => setTabIndex(index)}
-                      >
-                        <AcTabList>
-                          <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
-                        </AcTabList>
-
-                        <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
-                            register={registerSlug}
-                            schema={schemaSlug}
-                            id={data.id}
-                          />
-                        </AcTabPanel>
-                      </AcTabs>
                     </div>
                   </AcFlex>
                 </AcColumn>
