@@ -35,7 +35,6 @@ const AcGebruikenFormModal = ({
       functie: '',
     },
     startDatum: '',
-    eindDatum: '',
     status: '',
     opmerkingen: '',
     bbnScore: '',
@@ -234,7 +233,13 @@ const AcGebruikenFormModal = ({
     try {
       const response = await makeRequest(url, null, {
         method: method,
-        body: JSON.stringify(gebruikFormData),
+        body: JSON.stringify({
+          ...gebruikFormData,
+          ...(gebruikFormData.status &&
+            gebruikFormData.status !== (gebruik?.status || initialData.status) && {
+              [`startDatum${gebruikFormData.status}`]: new Date().toISOString(),
+            }),
+        }),
       });
 
       if (response.ok) {
@@ -416,22 +421,6 @@ const AcGebruikenFormModal = ({
               )
             }
             {...(schema?.properties?.startDatum?.required && {
-              required: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Einddatum</h4>
-          </label>
-          <DateInput
-            className='ac-beheer-date-input'
-            onChange={(e) =>
-              handleEditGebruikFieldChange('eindDatum')(
-                e.target.value && new Date(e.target.value).toISOString()
-              )
-            }
-            {...(schema?.properties?.eindDatum?.required && {
               required: true,
             })}
           />
