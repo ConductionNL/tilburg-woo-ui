@@ -122,6 +122,11 @@ $action-border-radius: var(
       padding: var(--tilburg-space-column-rat) var(--tilburg-space-column-rabbit);
     }
   }
+
+  // Make all icons take max-content width to avoid sizing issues in limited space
+  .ac-button__icon {
+    width: max-content;
+  }
 }
 
 // ---------------------------------------------
