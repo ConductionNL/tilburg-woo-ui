@@ -294,51 +294,59 @@ const AcBeheerOrganisaties = () => {
                 label: 'Acties',
                 key: '',
                 customContent: (row) => (
-                  <AcFlex column spacing='xs'>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id)
-                        );
-                      }}
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
                     >
-                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                    </button>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedRow(row);
-                        setOpenModal('edit');
-                      }}
-                    >
-                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-                    </button>
-                    {row.status !== 'Actief' && (
-                      <button
-                        className='utrecht-button slim'
-                        variant='secondary'
+                      Acties
+                    </ConActionMenu.Trigger>
+
+                    <ConActionMenu.Menu position='right'>
+                      <ConActionMenu.Button
+                        icon={<VISUALS.EYE />}
                         onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('accept');
+                          navigate(
+                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', row.id)
+                          );
                         }}
                       >
-                        <VISUALS.CHECK className='ac-button__icon' /> Accepteren
-                      </button>
-                    )}
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedRow(row);
-                        setOpenModal('delete');
-                      }}
-                    >
-                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-                    </button>
-                  </AcFlex>
+                        Bekijken
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PENCIL />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('edit');
+                        }}
+                      >
+                        Bewerken
+                      </ConActionMenu.Button>
+
+                      {row.status !== 'Actief' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.CHECK />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('accept');
+                          }}
+                        >
+                          Accepteren
+                        </ConActionMenu.Button>
+                      )}
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.TRASHCAN />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('delete');
+                        }}
+                      >
+                        Verwijderen
+                      </ConActionMenu.Button>
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
                 ),
               },
             ]}

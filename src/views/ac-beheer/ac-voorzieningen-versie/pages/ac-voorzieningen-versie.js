@@ -263,42 +263,50 @@ const AcBeheerVoorzieningenVersie = () => {
                 label: 'Acties',
                 key: '',
                 customContent: (row) => (
-                  <AcFlex column spacing='xs'>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        navigate(
-                          NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                            'voorzieningen-versie',
-                            row.id
-                          )
-                        );
-                      }}
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
                     >
-                      <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                    </button>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedRow(row);
-                        setOpenModal('edit');
-                      }}
-                    >
-                      <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-                    </button>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedRow(row);
-                        setOpenModal('delete');
-                      }}
-                    >
-                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-                    </button>
-                  </AcFlex>
+                      Acties
+                    </ConActionMenu.Trigger>
+
+                    <ConActionMenu.Menu position='right'>
+                      <ConActionMenu.Button
+                        icon={<VISUALS.EYE />}
+                        onClick={() => {
+                          navigate(
+                            NAVIGATE_TO.BEHEER_TYPE_DETAILS(
+                              'voorzieningen-versie',
+                              row.id
+                            )
+                          );
+                        }}
+                      >
+                        Bekijken
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PENCIL />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('edit');
+                        }}
+                      >
+                        Bewerken
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.TRASHCAN />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('delete');
+                        }}
+                      >
+                        Verwijderen
+                      </ConActionMenu.Button>
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
                 ),
               },
             ]}
