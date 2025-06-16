@@ -46,7 +46,7 @@ export const ENDPOINTS = AcLockObject({
   PUBLICATIONS: {
     SEARCH: `${OPENCATALOGI}${API}${PUBLICATIONS}`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI}${API}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization`, // GET
+      `${OPENCATALOGI}${API}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
     RELATIONS: (_uri) =>
       `${OPENCATALOGI}${API}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) =>

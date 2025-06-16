@@ -101,3 +101,13 @@
     transform: translate(-50%, -50%) scale(0);
   }
 }
+
+.ellipsis-cell {
+  max-width: 50ch; /* About 50 characters wide */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: bottom;
+  cursor: pointer;
+}

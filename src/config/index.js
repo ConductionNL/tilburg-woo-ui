@@ -35,7 +35,7 @@ const apiUrl = () => {
   }
 };
 
-const commongroundApiUrl = () => {
+export const commongroundApiUrl = () => {
   switch (hostname) {
     case 'vng.opencatalogi.nl':
       return 'https://vng.accept.commonground.nu/apps';
