@@ -445,16 +445,6 @@ const AcGebruikenFormModal = ({
             required: true,
           })}
         />
-        <AcFormField
-          label='Opmerkingen'
-          type='text'
-          onBlur={handleEditGebruikFieldChange('opmerkingen')}
-          value={gebruikFormData.opmerkingen}
-          {...(schema?.properties?.opmerkingen?.required && {
-            hasError: !gebruikFormData?.opmerkingen,
-            required: true,
-          })}
-        />
         <div className='ac-modal-grid-checkboxes'>
           <AcCheckbox
             label='BedrijfsKritisch'
