@@ -36,7 +36,6 @@ const AcGebruikenFormModal = ({
     },
     startDatum: '',
     status: '',
-    opmerkingen: '',
     bbnScore: '',
     ibpScore: '',
     bivClassificatie: {
