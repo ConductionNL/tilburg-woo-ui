@@ -47,7 +47,7 @@ $action-border-radius: var(
   margin-right: var(--tilburg-space-column-rat);
 }
 
-// Mixin for the “floating” menu container style
+// Mixin for the "floating" menu container style
 @mixin floating-menu-base {
   position: absolute;
   min-width: 200px;
@@ -77,26 +77,16 @@ $action-border-radius: var(
   height: fit-content;
 
   &__menu {
-    @include floating-menu-base;
-    top: 100%;
-    transform: translateY(4px);
-    // default to left
-    left: 0;
+    min-width: 200px;
+    background-color: var(--tilburg-color-white);
+    border: 1px solid var(--utrecht-separator-color, var(--tilburg-color-gray-200));
+    border-radius: $action-border-radius;
+    z-index: 1000;
 
-    &--left {
-      left: 0;
-      right: auto;
-    }
-
-    &--center {
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
-    &--right {
-      left: auto;
-      right: 0;
-    }
+    // this is done in stages due to limitations in SCSS.
+    --stage1: var(--utrecht-separator-color, #000000);
+    --stage2: rgb(from var(--stage1) r g b / 0.2);
+    box-shadow: 0 2px 4px 2px var(--stage2);
   }
 
   &__item {
@@ -134,8 +124,8 @@ $action-border-radius: var(
 // ---------------------------------------------
 .con-action-divider {
   width: 90%;
-  margin-block-start: var(--utrecht-separator-margin-block-start) !important;
-  margin-block-end: var(--utrecht-separator-margin-block-end) !important;
+  margin-block-start: calc(var(--utrecht-separator-margin-block-start) / 2) !important;
+  margin-block-end: calc(var(--utrecht-separator-margin-block-end) / 2) !important;
   margin-inline-start: auto;
   margin-inline-end: auto;
 }

@@ -260,7 +260,10 @@ const AcBeheerApplicaties = () => {
                 key: '',
                 customContent: (row) => (
                   <ConActionMenu>
-                    <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
+                    >
                       Acties
                     </ConActionMenu.Trigger>
 
