@@ -291,14 +291,12 @@ const AcBeheerApplicaties = () => {
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
-                        disabled={selectedRows.length === 0}
                         onClick={() => {
                           setSingleSelectedRow(row);
                           setOpenModal('delete');
                         }}
                       >
-                        Delete {selectedRows.length}{' '}
-                        {selectedRows.length === 1 ? 'item' : 'items'}
+                        Verwijderen
                       </ConActionMenu.Button>
                     </ConActionMenu.Menu>
                   </ConActionMenu>
