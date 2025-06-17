@@ -18,6 +18,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
     schemaSlug: null,
     extend: [],
     defaultHeaders: [],
+    removeHeaders: [],
   };
 
   if (type) {
@@ -37,20 +38,16 @@ const GET_CONFIG = (type, metadata, navigate) => {
         break;
 
       case 'voorzieningaanboden':
+      case 'voorzieningaanbod':
       case 'diensten':
         config.navigateView = (id) => navigate(`/beheer/diensten/${id}`);
         config.schemaSlug = 'voorzieningaanbod';
         config.extend = [
           ['_extend[]', 'voorziening'],
           ['_extend[]', 'leverancier'],
-          ['_extend[]', 'ondersteundeStandaarden'],
         ];
-        config.defaultHeaders = [
-          'name',
-          'voorzieningName',
-          'email',
-          'ondersteundeStandaarden',
-        ];
+        config.defaultHeaders = ['name', 'voorzieningName', 'email'];
+        config.removeHeaders = ['ondersteundeStandaarden'];
         break;
 
       case 'voorzieninggebruiken':
@@ -181,8 +178,8 @@ const BeheerTable = forwardRef((props, ref) => {
   const navigate = useNavigate();
   const { makeRequest } = useNextcloudRequests();
 
-  const shouldFetchData = providedData.length === 0;
-  const shouldFetchDataProperties = providedDataProperties.length === 0;
+  const shouldFetchData = !providedData?.length;
+  const shouldFetchDataProperties = !providedDataProperties?.length;
 
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
@@ -323,10 +320,12 @@ const BeheerTable = forwardRef((props, ref) => {
           label: _.upperFirst(key),
           key: key,
         };
-      });
+      })
+      // Filter out headers that are in the removeHeaders config
+      .filter((header) => !config.removeHeaders?.includes(header.id));
 
     return schemaHeaders;
-  }, [dataProperties, headerOverrides]);
+  }, [dataProperties, headerOverrides, config.removeHeaders]);
 
   useEffect(() => {
     getHeaders?.(generatedHeaders);
