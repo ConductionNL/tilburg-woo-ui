@@ -33,16 +33,8 @@ const AcDienstFormModal = ({
     certificeringen: '',
     ondersteundeStandaarden: '',
     licentie: '',
-    hostingopties: [],
     contact: '',
   };
-
-  const hostingOptions = [
-    { label: 'On-premises', value: 'on-premises' },
-    { label: 'SaaS', value: 'SaaS' },
-    { label: 'PaaS', value: 'PaaS' },
-    { label: 'hybride', value: 'hybride' },
-  ];
 
   const ondersteuningsoptiesOptions = [
     { label: 'Functioneel beheer', value: 'Functioneel beheer' },
@@ -407,33 +399,6 @@ const AcDienstFormModal = ({
               required: true,
             })}
             {...(!schema?.properties?.licentie?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Hostingopties</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een hostingoptie'
-            className='ac-beheer-select'
-            value={hostingOptions?.filter((option) =>
-              dienstFormData?.hostingopties?.includes(option.value)
-            )}
-            onChange={(e) => {
-              setDienstFormData((prev) => ({
-                ...prev,
-                hostingopties: e.map((item) => item.value),
-              }));
-            }}
-            options={hostingOptions}
-            closeMenuOnSelect={false}
-            isMulti
-            {...(schema?.properties?.hostingopties?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.hostingopties?.required && {
               isClearable: true,
             })}
           />

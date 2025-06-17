@@ -118,38 +118,6 @@ const AcBeheerDienst = () => {
           return ConSorterLogic(emailA, emailB, direction);
         },
       },
-      ondersteundeStandaarden: {
-        id: 'ondersteundeStandaarden',
-        label: 'Ondersteunende standaard',
-        key: 'ondersteundeStandaarden',
-        customContent: (row) => {
-          if (!row?.ondersteundeStandaarden) return 'N/A';
-          if (!row?.ondersteundeStandaarden?.length) return '-';
-          if (
-            row?.ondersteundeStandaarden &&
-            typeof row?.ondersteundeStandaarden === 'string'
-          ) {
-            return <AcColumn key={row.id}>Data invalid</AcColumn>;
-          }
-          return row?.ondersteundeStandaarden?.map((standaard) => {
-            return (
-              <AcColumn key={standaard.id}>
-                <span>
-                  {standaard.naam} / {standaard.status}
-                </span>
-              </AcColumn>
-            );
-          });
-        },
-        sortComparator: (a, b, direction) => {
-          if (direction === null) return 0;
-
-          const aName = a.ondersteundeStandaarden[0].naam;
-          const bName = b.ondersteundeStandaarden[0].naam;
-
-          return ConSorterLogic(aName, bName, direction);
-        },
-      },
     }),
     []
   );
@@ -240,7 +208,7 @@ const AcBeheerDienst = () => {
 
           <BeheerTable
             ref={tableRef}
-            type='voorzieningaanboden'
+            type={schemaSlug}
             getSelectedRows={setSelectedRows}
             getSingleSelectedRow={setSingleSelectedRow}
             getModalValue={setOpenModal} // get the modal value so that we can know which modal to show

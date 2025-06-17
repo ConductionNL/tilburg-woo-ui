@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
@@ -21,6 +21,9 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import { useLaterEffect } from '@src/hooks';
+import { ConSorterLogic } from '@src/utilities/con-sorter';
+import { BEHEER_RENAMES } from '../../beheer-renames';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -30,6 +33,9 @@ const AcBeheerDienstDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [uses, setUses] = useState(null);
   const [usesLoading, setUsesLoading] = useState(false);
+  const [dienstenByOrganisatie, setDienstenByOrganisatie] = useState(null);
+  const [dienstenByOrganisatieLoading, setDienstenByOrganisatieLoading] =
+    useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -97,15 +103,103 @@ const AcBeheerDienstDetails = ({ id }) => {
     setUsesLoading(false);
   };
 
+  const fetchDienstenByOrganisatie = async (organisatieId) => {
+    if (!organisatieId) {
+      setDienstenByOrganisatie([]);
+      return;
+    }
+
+    setDienstenByOrganisatieLoading(true);
+    const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, [
+      ['leverancier', organisatieId],
+      ['_extend[]', 'voorziening'],
+      ['_extend[]', 'leverancier'],
+      ['_extend[]', 'ondersteundeStandaarden'],
+    ]);
+    if (!response.ok) {
+      console.error('Error fetching diensten by organisatie:', response.statusText);
+      setDienstenByOrganisatieLoading(false);
+      return;
+    }
+    const data = response.data?.results || [];
+    setDienstenByOrganisatie(data);
+    setDienstenByOrganisatieLoading(false);
+  };
+
   useEffect(() => {
     fetchData();
     fetchUses();
   }, []);
 
+  useLaterEffect(() => {
+    // disabled due to lack of backend organisation support
+    // This is supposed to get diensted by organisatie, based on the organisatie from the logged in user
+    // fetchDienstenByOrganisatie(data?.leverancier);
+  }, [data?.id]);
+
   const [tabIndex, setTabIndex] = useState(0);
   const [openModal, setOpenModal] = useState(null);
 
   const tableRefs = useRef({});
+
+  // Custom header overrides for special cases
+  const dienstenTableCustomHeaders = useMemo(
+    () => ({
+      voorziening: {
+        id: 'voorzieningName',
+        label: 'Voorziening naam',
+        key: 'voorziening',
+        customContent: (row) => {
+          return row?.voorziening?.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+
+          const nameA = a?.voorziening?.naam || '';
+          const nameB = b?.voorziening?.naam || '';
+
+          return ConSorterLogic(nameA, nameB, direction);
+        },
+      },
+      leverancier_naam: {
+        id: 'leverancier',
+        label: 'Leverancier',
+        key: '',
+        customContent: (row) => {
+          return (
+            <AcColumn key={row.id}>
+              <span>{row?.leverancier?.naam ?? '-'}</span>
+            </AcColumn>
+          );
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+
+          const idA = a?.leverancier?.id || '';
+          const idB = b?.leverancier?.id || '';
+
+          return ConSorterLogic(idA, idB, direction);
+        },
+      },
+      leverancier_email: {
+        id: 'email',
+        label: 'Email',
+        key: '',
+        customContent: (row) => {
+          return row?.leverancier?.contactgegevens?.email || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+
+          const emailA = a?.leverancier?.contactgegevens?.email || '';
+          const emailB = b?.leverancier?.contactgegevens?.email || '';
+
+          return ConSorterLogic(emailA, emailB, direction);
+        },
+      },
+    }),
+    []
+  );
 
   if (error) {
     return <AcBeheerError error={error.message} />;
@@ -200,6 +294,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Versies</AcTab>
                           <AcTab selected={tabIndex === 1}>Bestanden</AcTab>
+                          {/* <AcTab selected={tabIndex === 2}>Diensten</AcTab> */}
 
                           {uses && uses.length > 0 && (
                             <>
@@ -207,8 +302,13 @@ const AcBeheerDienstDetails = ({ id }) => {
                                 // show unique headers
                                 _.uniqBy(uses, (use) => use['@self'].schema.id).map(
                                   (use, idx) => (
-                                    <AcTab selected={tabIndex === idx + 2}>
-                                      <span>{use['@self'].schema.title}</span>
+                                    <AcTab selected={tabIndex === idx + 3}>
+                                      <span>
+                                        {_.upperFirst(
+                                          BEHEER_RENAMES[use['@self'].schema.slug] ||
+                                            use['@self'].schema.title
+                                        )}
+                                      </span>
                                     </AcTab>
                                   )
                                 )}
@@ -230,6 +330,43 @@ const AcBeheerDienstDetails = ({ id }) => {
                           />
                         </AcTabPanel>
 
+                        {/* <AcTabPanel selected={tabIndex === 2}>
+                          {dienstenByOrganisatieLoading ? (
+                            <AcLoader style={{ height: '100px' }} />
+                          ) : (
+                            <BeheerTable
+                              type={schemaSlug}
+                              data={dienstenByOrganisatie}
+                              dataProperties={dataProperties}
+                              headerOverrides={dienstenTableCustomHeaders}
+                              actionButtons={(config) =>
+                                // check if all necessary properties for the actions are defined.
+                                !!config.navigateView && {
+                                  id: 'actions',
+                                  label: 'Acties',
+                                  key: '',
+                                  customContent: (row) => (
+                                    <AcFlex column spacing='xs'>
+                                      <button
+                                        className='utrecht-button slim'
+                                        variant='secondary'
+                                        onClick={() => config.navigateView(row.id)}
+                                      >
+                                        <VISUALS.EYE className='ac-button__icon' />{' '}
+                                        Bekijken
+                                      </button>
+                                    </AcFlex>
+                                  ),
+                                }
+                              }
+                              tableProps={{
+                                renderSelectRowButtons: false,
+                                truncateLines: 1,
+                              }}
+                            />
+                          )}
+                        </AcTabPanel> */}
+
                         {uses && uses.length > 0 && (
                           <>
                             {uses &&
@@ -242,7 +379,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                                     metadata.schema.properties;
 
                                   return (
-                                    <AcTabPanel selected={tabIndex === idx + 2}>
+                                    <AcTabPanel selected={tabIndex === idx + 3}>
                                       <BeheerTable
                                         type={schemaSlug}
                                         metadata={metadata}
