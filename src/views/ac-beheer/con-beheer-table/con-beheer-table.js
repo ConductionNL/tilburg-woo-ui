@@ -7,6 +7,7 @@ import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
+import ConActionMenu from '../con-action-menu';
 
 const GET_CONFIG = (type, metadata, navigate) => {
   let typeGetFailed = false;
@@ -356,40 +357,45 @@ const BeheerTable = forwardRef((props, ref) => {
         label: 'Acties',
         key: '',
         customContent: (row) => (
-          <AcFlex column spacing='xs'>
-            {config.navigateView && (
-              <button
-                className='utrecht-button slim'
-                variant='secondary'
+          <ConActionMenu>
+            <ConActionMenu.Trigger
+              icon={<VISUALS.ELLIPSIS />}
+              buttonType='secondary'
+            >
+              Acties
+            </ConActionMenu.Trigger>
+
+            <ConActionMenu.Menu position='right'>
+              <ConActionMenu.Button
+                icon={<VISUALS.EYE />}
                 onClick={() => {
                   config.navigateView(row.id);
                 }}
               >
-                <VISUALS.EYE className='ac-button__icon' /> Bekijken
-              </button>
-            )}
-            <button
-              className='utrecht-button slim'
-              variant='secondary'
-              onClick={() => {
-                getSingleSelectedRow?.(row);
-                getModalValue?.('edit');
-              }}
-            >
-              <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-            </button>
-            <button
-              className='utrecht-button slim'
-              variant='secondary'
-              Object
-              onClick={() => {
-                getSingleSelectedRow?.(row);
-                getModalValue?.('delete');
-              }}
-            >
-              <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-            </button>
-          </AcFlex>
+                Bekijken
+              </ConActionMenu.Button>
+
+              <ConActionMenu.Button
+                icon={<VISUALS.PENCIL />}
+                onClick={() => {
+                  getSingleSelectedRow?.(row);
+                  getModalValue?.('edit');
+                }}
+              >
+                Bewerken
+              </ConActionMenu.Button>
+
+              <ConActionMenu.Button
+                icon={<VISUALS.TRASHCAN />}
+                onClick={() => {
+                  getSingleSelectedRow?.(row);
+                  getModalValue?.('delete');
+                }}
+              >
+                Verwijderen
+              </ConActionMenu.Button>
+            </ConActionMenu.Menu>
+          </ConActionMenu>
         ),
       };
 

@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
 } from 'react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { AcButton, AcCheckbox } from '@src/molecules';
 import { VISUALS } from '@src/constants';
@@ -23,17 +24,20 @@ const useConActionMenuContext = () => {
 };
 
 // A small custom hook to handle clicks outside a ref
-function useOnClickOutside(ref, handler) {
+function useOnClickOutside(refs, handler) {
   useEffect(() => {
     function listener(e) {
-      if (!ref.current || ref.current.contains(e.target)) return;
+      const isInside = refs.some(
+        (ref) => ref.current && ref.current.contains(e.target)
+      );
+      if (isInside) return;
       handler(e);
     }
     document.addEventListener('mousedown', listener);
     return () => {
       document.removeEventListener('mousedown', listener);
     };
-  }, [ref, handler]);
+  }, [refs, handler]);
 }
 
 /**
@@ -101,8 +105,10 @@ function useOnClickOutside(ref, handler) {
 const ConActionMenu = ({ children, className }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
+  const triggerRef = useRef(null);
+  const portalRef = useRef(null);
 
-  useOnClickOutside(menuRef, () => setIsOpen(false));
+  useOnClickOutside([menuRef, portalRef], () => setIsOpen(false));
 
   const handleToggle = useCallback(() => {
     setIsOpen((prev) => !prev);
@@ -114,6 +120,8 @@ const ConActionMenu = ({ children, className }) => {
       isOpen,
       setIsOpen,
       handleToggle,
+      triggerRef,
+      portalRef,
     }),
     [isOpen, handleToggle]
   );
@@ -140,12 +148,14 @@ const ConActionMenu = ({ children, className }) => {
  * <ConActionMenu.Trigger>Options</ConActionMenu.Trigger>
  */
 ConActionMenu.Trigger = ({ children, ...props }) => {
-  const { handleToggle } = useConActionMenuContext();
+  const { handleToggle, triggerRef } = useConActionMenuContext();
 
   return (
-    <AcButton onClick={handleToggle} style='button' {...props}>
-      {children}
-    </AcButton>
+    <div ref={triggerRef}>
+      <AcButton onClick={handleToggle} style='button' {...props}>
+        {children}
+      </AcButton>
+    </div>
   );
 };
 
@@ -166,20 +176,60 @@ ConActionMenu.Trigger = ({ children, ...props }) => {
  * </ConActionMenu.Menu>
  */
 ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
-  const { isOpen } = useConActionMenuContext();
+  const { isOpen, triggerRef, portalRef } = useConActionMenuContext();
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
-  return (
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const scrollTop = window.scrollY;
+      const scrollLeft = window.scrollX;
+
+      let left = 0;
+      switch (position) {
+        case 'right':
+          left = triggerRect.right;
+          break;
+        case 'center':
+          left = triggerRect.left + triggerRect.width / 2;
+          break;
+        case 'left':
+        default:
+          left = triggerRect.left;
+          break;
+      }
+
+      setMenuPosition({
+        top: triggerRect.bottom + scrollTop + 4, // 4px offset from trigger
+        left: left,
+      });
+    }
+  }, [isOpen, position]);
+
+  if (!isOpen) return null;
+
+  const menuContent = (
     <div
-      className={clsx(
-        'con-action-menu__menu',
-        isOpen && 'con-action-menu__menu--open',
-        `con-action-menu__menu--${position}`
-      )}
+      ref={portalRef}
+      className={clsx('con-action-menu__menu', `con-action-menu__menu--${position}`)}
+      style={{
+        position: 'absolute',
+        top: `${menuPosition.top}px`,
+        left: `${menuPosition.left}px`,
+        transform:
+          position === 'center'
+            ? 'translateX(-50%)'
+            : position === 'right'
+            ? 'translateX(-100%)'
+            : 'none',
+      }}
       {...props}
     >
       {children}
     </div>
   );
+
+  return createPortal(menuContent, document.body);
 };
 
 /**
