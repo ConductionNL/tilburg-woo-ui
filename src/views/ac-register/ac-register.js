@@ -2,7 +2,7 @@ import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
-import { AcContainer, AcSection } from '@src/atoms';
+import { AcContainer, AcSection, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
@@ -13,6 +13,8 @@ import {
   Separator,
   UnorderedList,
   UnorderedListItem,
+  Alert,
+  Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { validateAndProcessLogoUrl } from './con-logo-preview';
@@ -200,13 +202,14 @@ const AcRegister = () => {
 
         if (data.status === 'error') {
           setRegisterCallBack('error');
-          console.log({ data });
           setError({ message: data.message, errors: data.errors });
         } else {
           setRegisterCallBack('success');
         }
       } else {
+        const data = await response.json();
         setRegisterCallBack('error');
+        setError({ message: data.message, errors: data.errors });
         throw new Error('Registration failed');
       }
     } catch (error) {
@@ -521,31 +524,32 @@ const AcRegister = () => {
                             Terug
                           </AcButton>
                         )}
-                        {currentStep !== 3 && (
-                          <div className='ac-register-button-wrapper'>
-                            <AcButton
-                              style='button'
-                              className={clsx(
-                                currentStep === 0 && 'ac-register-form-next-button'
-                              )}
-                              icon={<VISUALS.ARROW_RIGHT />}
-                              disabled={getDisabledStatus(currentStep) || loading}
-                              onClick={() => setCurrentStep(currentStep + 1)}
-                              title={
-                                getDisabledStatus(currentStep)
-                                  ? getDisabledTooltip(
-                                      currentStep,
-                                      organization,
-                                      validateEmail,
-                                      validatePhone
-                                    )
-                                  : ''
-                              }
-                            >
-                              Volgende
-                            </AcButton>
-                          </div>
-                        )}
+                        {currentStep !== 3 &&
+                          organization.organizationType !== 'gemeente' && (
+                            <div className='ac-register-button-wrapper'>
+                              <AcButton
+                                style='button'
+                                className={clsx(
+                                  currentStep === 0 && 'ac-register-form-next-button'
+                                )}
+                                icon={<VISUALS.ARROW_RIGHT />}
+                                disabled={getDisabledStatus(currentStep) || loading}
+                                onClick={() => setCurrentStep(currentStep + 1)}
+                                title={
+                                  getDisabledStatus(currentStep)
+                                    ? getDisabledTooltip(
+                                        currentStep,
+                                        organization,
+                                        validateEmail,
+                                        validatePhone
+                                      )
+                                    : ''
+                                }
+                              >
+                                Volgende
+                              </AcButton>
+                            </div>
+                          )}
                         {currentStep === 3 && (
                           <AcButton
                             style='button'
@@ -606,10 +610,14 @@ const AcRegister = () => {
           {registerCallBack === 'error' && (
             <AcColumn gap='sm'>
               <Heading level={2}>Er is iets misgegaan</Heading>
-              <p>Beste {organization.name},</p>
               <p>
-                Er is helaas een fout opgetreden bij het verwerken van uw aanmelding
-                voor de SoftwareCatalogus.{' '}
+                Beste {organization.contactPersons[0].firstName}{' '}
+                {organization.contactPersons[0].middleName}{' '}
+                {organization.contactPersons[0].lastName} van {organization.name},
+              </p>
+              <p>
+                Er ging iets mis bij het verwerken van je registratie voor de
+                Softwarecatalogus. .{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
               {!error.errors && !error.message && (
@@ -628,8 +636,8 @@ const AcRegister = () => {
                   {error.errors && (
                     <UnorderedList>
                       {error.errors.map((error) => (
-                        <UnorderedListItem key={error.message || error}>
-                          {error.message || error}
+                        <UnorderedListItem key={error.message || JSON.stringify(error)}>
+                          {error.message || JSON.stringify(error)}
                         </UnorderedListItem>
                       ))}
                     </UnorderedList>
@@ -637,9 +645,11 @@ const AcRegister = () => {
                 </>
               )}
               <p>
-                Probeer het later nogmaals of neem contact op met onze helpdesk via
-                support@softwarecatalogus.nl als het probleem blijft bestaan.
+                Probeer het later nog eens. Blijft het probleem zich voordoen? Neem
+                dan gerust contact op via softwarecatalogus@vng.nl en voeg er de
+                foutmelding toe. We helpen je graag verder.
               </p>
+              <p>Met vriendelijke groet, Het team van de Softwarecatalogus</p>
               <br />
               <AcButton
                 style='button'
@@ -692,62 +702,88 @@ const OrganizationRequiredForm = memo(
               aria-required='true'
             />
           </div>
-          <div>
-            <AcFormField
-              label='Naam'
-              required={true}
-              placeholder='Voorbeeld: Gemeente Amsterdam'
-              value={organization.name}
-              onBlur={(e) => setOrganizationData('name', e)}
-              hasError={touched.name && !organization.name}
-              disabled={loading}
-              id='org-name'
-              aria-describedby={
-                touched.name && !organization.name ? 'name-error' : undefined
-              }
-            />
-            {touched.name && !organization.name && (
-              <span
-                className='ac-register-form-field-error'
-                id='name-error'
-                role='alert'
-              >
-                Dit veld is verplicht
-              </span>
-            )}
-          </div>
-          <div>
-            <AcFormField
-              label='Website'
-              placeholder='https://www.example.com'
-              value={organization.website}
-              required={true}
-              hasError={
-                (touched.website && !organization.website) ||
-                (organization.website && !validateWebsite(organization.website))
-              }
-              type='text'
-              onBlur={(e) => setOrganizationData('website', e)}
-              id='website-field'
-              aria-describedby={
-                touched.website && !organization.website
-                  ? 'website-error'
-                  : undefined
-              }
-              disabled={loading}
-            />
-            {touched.website &&
-              (!organization.website || !validateWebsite(organization.website)) && (
-                <span className='ac-register-form-field-error'>
-                  {touched.website && !organization.website
-                    ? 'Dit veld is verplicht'
-                    : organization.website &&
-                      !validateWebsite(organization.website) &&
-                      'Ongeldig websiteadres'}
-                </span>
-              )}
-          </div>
+          {organization.organizationType !== 'gemeente' && (
+            <>
+              <div>
+                <AcFormField
+                  label='Naam'
+                  required={true}
+                  placeholder='Voorbeeld: Gemeente Amsterdam'
+                  value={organization.name}
+                  onBlur={(e) => setOrganizationData('name', e)}
+                  hasError={touched.name && !organization.name}
+                  disabled={loading}
+                  id='org-name'
+                  aria-describedby={
+                    touched.name && !organization.name ? 'name-error' : undefined
+                  }
+                />
+                {touched.name && !organization.name && (
+                  <span
+                    className='ac-register-form-field-error'
+                    id='name-error'
+                    role='alert'
+                  >
+                    Dit veld is verplicht
+                  </span>
+                )}
+              </div>
+              <div>
+                <AcFormField
+                  label='Website'
+                  placeholder='https://www.example.com'
+                  value={organization.website}
+                  required={true}
+                  hasError={
+                    (touched.website && !organization.website) ||
+                    (organization.website && !validateWebsite(organization.website))
+                  }
+                  type='text'
+                  onBlur={(e) => setOrganizationData('website', e)}
+                  id='website-field'
+                  aria-describedby={
+                    touched.website && !organization.website
+                      ? 'website-error'
+                      : undefined
+                  }
+                  disabled={loading}
+                />
+                {touched.website &&
+                  (!organization.website ||
+                    !validateWebsite(organization.website)) && (
+                    <span className='ac-register-form-field-error'>
+                      {touched.website && !organization.website
+                        ? 'Dit veld is verplicht'
+                        : organization.website &&
+                          !validateWebsite(organization.website) &&
+                          'Ongeldig websiteadres'}
+                    </span>
+                  )}
+              </div>
+            </>
+          )}
         </div>
+        {organization.organizationType === 'gemeente' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>Gemeenten zijn al geregistreerd</Heading>
+                  <Paragraph>
+                    Alle Nederlandse gemeenten zijn reeds opgenomen in de
+                    SoftwareCatalogus. Voor meer informatie of vragen kunt u contact
+                    opnemen met{' '}
+                    <a href='mailto:softwarecatalogus@vng.nl'>
+                      softwarecatalogus@vng.nl
+                    </a>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
       </div>
     );
   }
