@@ -8,6 +8,8 @@ import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+import ReactSelect from 'react-select';
+import _ from 'lodash';
 
 const AcVoorzieningVersieFormModal = ({
   voorziening,
@@ -18,42 +20,46 @@ const AcVoorzieningVersieFormModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  const statusOptions = [
+    { label: 'Ontwikkeling', value: 'ontwikkeling' },
+    { label: 'Actief', value: 'actief' },
+    { label: 'Onderhoud', value: 'onderhoud' },
+    { label: 'Einde Ondersteuning', value: 'einde-ondersteuning' },
+  ];
+
   const { makeRequest } = useNextcloudRequests();
 
-  const [voorzieningFormData, setVoorzieningFormData] = useState({
+  const initialData = {
     voorzieningaanbod: '',
     versienummer: '',
     releaseNotes: '',
     releaseDatum: '',
     eindDatumOndersteuning: '',
-    systeemvereisten: '',
-    kwetsbaarheden: '',
-  });
+    status: '',
+    inDatumOntwikkeling: '',
+    uitDatumOntwikkeling: '',
+    inDatumActief: '',
+    uitDatumActief: '',
+    inDatumEindeOndersteuning: '',
+    uitDatumEindeOndersteuning: '',
+    inDatumOnderhoud: '',
+    uitDatumOnderhoud: '',
+  };
+
+  const [voorzieningFormData, setVoorzieningFormData] = useState({});
 
   const [schema, setSchema] = useState(null);
 
   useEffect(() => {
-    if (voorziening && isEdit) {
-      setVoorzieningFormData((prev) => ({
-        ...prev,
-        ...voorziening,
-        voorzieningaanbod: collapseExtendedObjects(voorziening.voorzieningaanbod),
-        kwetsbaarheden: collapseExtendedObjects(voorziening.kwetsbaarheden),
-      }));
-    }
-
-    if (!voorziening && !isEdit) {
-      setVoorzieningFormData(() => ({
-        voorzieningaanbod: '',
-        versienummer: '',
-        releaseNotes: '',
-        releaseDatum: '',
-        eindDatumOndersteuning: '',
-        systeemvereisten: '',
-        kwetsbaarheden: '',
-      }));
-    }
-  }, [voorziening, isEdit]);
+    setVoorzieningFormData({
+      ..._.cloneDeep(initialData),
+      ...(voorziening &&
+        isEdit && {
+          ...voorziening,
+          voorzieningaanbod: collapseExtendedObjects(voorziening.voorzieningaanbod),
+        }),
+    });
+  }, [voorziening, showModal]);
 
   useEffect(() => {
     const fetchSchema = async () => {
@@ -89,11 +95,66 @@ const AcVoorzieningVersieFormModal = ({
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;
 
     try {
+      const currentDate = new Date().toISOString();
+
+      // Initialize with existing dates from voorzieningFormData
+      const statusDates = {
+        inDatumActief: voorzieningFormData.inDatumActief || null,
+        uitDatumActief: voorzieningFormData.uitDatumActief || null,
+        inDatumEindeOndersteuning:
+          voorzieningFormData.inDatumEindeOndersteuning || null,
+        uitDatumEindeOndersteuning:
+          voorzieningFormData.uitDatumEindeOndersteuning || null,
+        inDatumOnderhoud: voorzieningFormData.inDatumOnderhoud || null,
+        uitDatumOnderhoud: voorzieningFormData.uitDatumOnderhoud || null,
+        inDatumOntwikkeling: voorzieningFormData.inDatumOntwikkeling || null,
+        uitDatumOntwikkeling: voorzieningFormData.uitDatumOntwikkeling || null,
+      };
+
+      // if status has changed from a previously defined status, set the end date of the old status to the current date
+      if (voorziening?.status && voorziening.status !== voorzieningFormData.status) {
+        switch (voorziening.status) {
+          case 'actief':
+            statusDates.uitDatumActief = currentDate;
+            break;
+          case 'einde-ondersteuning':
+            statusDates.uitDatumEindeOndersteuning = currentDate;
+            break;
+          case 'onderhoud':
+            statusDates.uitDatumOnderhoud = currentDate;
+            break;
+          case 'ontwikkeling':
+            statusDates.uitDatumOntwikkeling = currentDate;
+            break;
+        }
+      }
+
+      // if status has changed to a new status, set the start date of the new status to the current date
+      if (
+        voorzieningFormData.status &&
+        voorzieningFormData.status !== (voorziening?.status || initialData?.status)
+      ) {
+        switch (voorzieningFormData.status) {
+          case 'actief':
+            statusDates.inDatumActief = currentDate;
+            break;
+          case 'einde-ondersteuning':
+            statusDates.inDatumEindeOndersteuning = currentDate;
+            break;
+          case 'onderhoud':
+            statusDates.inDatumOnderhoud = currentDate;
+            break;
+          case 'ontwikkeling':
+            statusDates.inDatumOntwikkeling = currentDate;
+            break;
+        }
+      }
+
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
           ...voorzieningFormData,
-          kwetsbaarheden: smartSplit(voorzieningFormData.kwetsbaarheden),
+          ...statusDates,
         }),
       });
 
@@ -115,6 +176,7 @@ const AcVoorzieningVersieFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditVoorzieningCloseModal = () => {
+    setVoorzieningFormData(initialData);
     onClose?.();
   };
 
@@ -190,7 +252,31 @@ const AcVoorzieningVersieFormModal = ({
             required: true,
           })}
         />
-            
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Status</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een status'
+            className='ac-beheer-select'
+            value={statusOptions?.filter(
+              (option) => voorzieningFormData?.status === option.value
+            )}
+            onChange={(e) => {
+              setVoorzieningFormData((prev) => ({
+                ...prev,
+                status: e && e.value,
+              }));
+            }}
+            options={statusOptions}
+            {...(schema?.properties?.status?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.status?.required && {
+              isClearable: true,
+            })}
+          />
+        </div>
       </AcFlex>
     </AcModal>
   );
