@@ -8,10 +8,17 @@ import { AcSideNav, AcLoader } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
 import { AcFormField } from '@molecules';
 import { BASE_URL } from '../../ac-beheer';
+import { ConHorizontalOverflowWrapper } from '@components';
 import {
   Heading,
   Paragraph,
   Button,
+  Table,
+  TableBody,
+  TableHeader,
+  TableRow,
+  TableCell,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -50,7 +57,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
-      const extend = [['_extend[]', 'contactgegevens']];
+      const extend = [
+        ['_extend[]', 'contactgegevens'],
+        ['_extend[]', 'samenwerkingen'],
+      ];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
@@ -236,7 +246,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         </div>
                       ) : (
                         <div className='ac-description-row'>
-                          <p>{data.beschrijvingKort}</p>
+                          {data.beschrijvingKort ? (
+                            <p>{data.beschrijvingKort}</p>
+                          ) : (
+                            <span className='ac-description-row-empty'>
+                              Geen korte beschrijving
+                            </span>
+                          )}
                           <Button
                             className='ac-description-edit-btn'
                             appearance='subtle-button'
@@ -254,76 +270,106 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                     <AcFlex spacing='sm' alignItems='center'>
                       {isEditingLang ? (
-                        <div className='ac-organisatie-detail-form'>
-                          <div className='ac-organisatie-detail-form-label-row'>
-                            <span className='ac-form-field__label-with-icon'>
-                              Lange beschrijving
-                              <span
-                                className='ac-form-field__tooltip'
-                                title='Een uitgebreide beschrijving van de organisatie'
-                              >
-                                <VISUALS.INFO />
+                        <div className='ac-organisatie-detail-form-wrapper'>
+                          <div className='ac-organisatie-detail-form'>
+                            <div className='ac-organisatie-detail-form-label-row'>
+                              <span className='ac-form-field__label-with-icon'>
+                                Lange beschrijving
+                                <span
+                                  className='ac-form-field__tooltip'
+                                  title='Een uitgebreide beschrijving van de organisatie'
+                                >
+                                  <VISUALS.INFO />
+                                </span>
                               </span>
+                            </div>
+                            <div className='ac-organisatie-detail-form-flex'>
+                              <div className='ac-organisatie-detail-form-textarea'>
+                                <AcFormField
+                                  fullWidth={true}
+                                  inputType='textarea'
+                                  value={tempBeschrijvingLang}
+                                  onChange={handleBeschrijvingLangChange}
+                                  disabled={loading}
+                                  maxLength={2000}
+                                  className='ac-organisatie-detail-textarea'
+                                  placeholder='Een uitgebreide beschrijving van de organisatie'
+                                />
+                              </div>
+                              <div className='ac-organisatie-detail-preview markdown-preview'>
+                                <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
+                              </div>
+                            </div>
+                            <span className='character-count'>
+                              {2000 - charCountLang} karakters over
                             </span>
-                          </div>
-                          <div className='ac-organisatie-detail-form-flex'>
-                            <div className='ac-organisatie-detail-form-textarea'>
-                              <AcFormField
-                                fullWidth={true}
-                                inputType='textarea'
-                                value={tempBeschrijvingLang}
-                                onChange={handleBeschrijvingLangChange}
-                                disabled={loading}
-                                maxLength={2000}
-                                className='ac-organisatie-detail-textarea'
-                                placeholder='Een uitgebreide beschrijving van de organisatie'
-                              />
+                            <div className='ac-organisatie-detail-form-buttons'>
+                              <Button
+                                appearance='primary-action-button'
+                                onClick={() => handleSaveDescription('lang')}
+                              >
+                                Opslaan
+                              </Button>
+                              <Button
+                                appearance='secondary-action-button'
+                                onClick={() => {
+                                  setIsEditingLang(false);
+                                  setTempBeschrijvingLang(data.beschrijvingLang);
+                                  setCharCountLang(
+                                    data.beschrijvingLang?.length || 0
+                                  );
+                                }}
+                              >
+                                Annuleren
+                              </Button>
                             </div>
-                            <div className='ac-organisatie-detail-preview markdown-preview'>
-                              <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
-                            </div>
-                          </div>
-                          <span className='character-count'>
-                            {2000 - charCountLang} karakters over
-                          </span>
-                          <div className='ac-organisatie-detail-form-buttons'>
-                            <Button
-                              appearance='primary-action-button'
-                              onClick={() => handleSaveDescription('lang')}
-                            >
-                              Opslaan
-                            </Button>
-                            <Button
-                              appearance='secondary-action-button'
-                              onClick={() => {
-                                setIsEditingLang(false);
-                                setTempBeschrijvingLang(data.beschrijvingLang);
-                                setCharCountLang(data.beschrijvingLang?.length || 0);
-                              }}
-                            >
-                              Annuleren
-                            </Button>
                           </div>
                         </div>
                       ) : (
                         <div className='ac-description-row'>
-                          <AcFlex>
-                            <div className='ac-organisatie-detail-preview '>
-                              <ReactMarkdown>
-                                {JSON.parse(data.beschrijvingLang)}
-                              </ReactMarkdown>
-                            </div>
-                          </AcFlex>
+                          <div>
+                            {(() => {
+                              try {
+                                return (
+                                  <ReactMarkdown>
+                                    {JSON.parse(data.beschrijvingLang)}
+                                  </ReactMarkdown>
+                                );
+                              } catch {
+                                return (
+                                  <span className='ac-description-row-empty'>
+                                    Geen uitgebreide beschrijving
+                                  </span>
+                                );
+                              }
+                            })()}
+                          </div>
                           <Button
                             className='ac-description-edit-btn'
                             appearance='subtle-button'
                             onClick={() => {
                               setIsEditingLang(true);
                               setTempBeschrijvingLang(
-                                JSON.parse(data.beschrijvingLang)
+                                data.beschrijvingLang
+                                  ? (() => {
+                                    try {
+                                      return JSON.parse(data.beschrijvingLang );
+                                    } catch {
+                                      return '';
+                                    }
+                                  })()
+                                  : ''
                               );
                               setCharCountLang(
-                                JSON.parse(data.beschrijvingLang)?.length || 0
+                                data.beschrijvingLang
+                                  ? (() => {
+                                      try {
+                                        return JSON.parse(data.beschrijvingLang)?.length || 0;
+                                      } catch {
+                                        return 0;
+                                      }
+                                    })()
+                                  : 0
                               );
                             }}
                           >
@@ -375,6 +421,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       >
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                          <AcTab selected={tabIndex === 1}>Contactpersonen</AcTab>
+                          <AcTab selected={tabIndex === 2}>
+                            Mijn samenwerkingen
+                          </AcTab>
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
@@ -383,6 +433,87 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             schema={schemaSlug}
                             id={data.id}
                           />
+                        </AcTabPanel>
+                        <AcTabPanel selected={tabIndex === 1}>
+                          <ConHorizontalOverflowWrapper
+                            ariaLabels={{
+                              scrollLeftButton: 'Scroll left',
+                              scrollRightButton: 'Scroll right',
+                            }}
+                          >
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableCell>Naam</TableCell>
+                                  <TableCell>Email</TableCell>
+                                  <TableCell>Telefoonnummer</TableCell>
+                                  <TableCell>Functie</TableCell>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {data?.contactpersonen?.map((contact) => (
+                                  <TableRow key={contact.id}>
+                                    <TableCell>
+                                      {contact.voornaam} {contact.tussenvoegsel}{' '}
+                                      {contact.achternaam}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Link href={`mailto:${contact.email}`}>
+                                        {contact.email}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Link href={`tel:${contact.telefoon}`}>
+                                        {contact.telefoon}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell>{contact.functie}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </ConHorizontalOverflowWrapper>
+                        </AcTabPanel>
+                        <AcTabPanel selected={tabIndex === 2}>
+                          <ConHorizontalOverflowWrapper
+                            ariaLabels={{
+                              scrollLeftButton: 'Scroll left',
+                              scrollRightButton: 'Scroll right',
+                            }}
+                          >
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableCell>Samenwerking</TableCell>
+                                  <TableCell>Website</TableCell>
+                                  <TableCell>Contactpersonen</TableCell>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {data?.samenwerkingen?.map((samenwerking) => (
+                                  <TableRow key={samenwerking.id}>
+                                    <TableCell>{samenwerking.naam}</TableCell>
+                                    <TableCell>
+                                      <Link href={samenwerking.website}>
+                                        {samenwerking.website}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                      {samenwerking.contactpersonen.map(
+                                        (contact) => (
+                                          <div key={contact.id}>
+                                            {contact.voornaam}{' '}
+                                            {contact.tussenvoegsel}{' '}
+                                            {contact.achternaam}
+                                          </div>
+                                        )
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </ConHorizontalOverflowWrapper>
                         </AcTabPanel>
                       </AcTabs>
                     </div>

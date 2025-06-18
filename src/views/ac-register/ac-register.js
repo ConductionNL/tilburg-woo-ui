@@ -35,6 +35,7 @@ const AcRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
+  const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
     name: '',
     contactInformation: {},
@@ -298,6 +299,8 @@ const AcRegister = () => {
               validatePhone,
               touched,
               setTouched,
+              showAlert,
+              setShowAlert,
             }}
           />
         );
@@ -457,6 +460,7 @@ const AcRegister = () => {
                 >
                   {currentStepName(currentStep)}
                 </h3>
+
                 <AcColumn gap='sm'>
                   <div className='ac-register-container'>
                     <div className='ac-register-process-steps'>
@@ -636,7 +640,9 @@ const AcRegister = () => {
                   {error.errors && (
                     <UnorderedList>
                       {error.errors.map((error) => (
-                        <UnorderedListItem key={error.message || JSON.stringify(error)}>
+                        <UnorderedListItem
+                          key={error.message || JSON.stringify(error)}
+                        >
                           {error.message || JSON.stringify(error)}
                         </UnorderedListItem>
                       ))}
@@ -1006,9 +1012,38 @@ const ContactInformationForm = memo(
     validateEmail,
     validatePhone,
     touched,
+    showAlert,
+    setShowAlert,
   }) => {
     return (
       <div className='ac-register-form-section'>
+        <div style={{ position: 'relative' }}>
+          {showAlert && (
+            <div className='ac-register-form-alert'>
+              <Alert type='info'>
+                <button
+                  className='ac-register-form-alert-close-btn'
+                  onClick={() => setShowAlert(false)}
+                  aria-label='Sluiten'
+                  type='button'
+                >
+                  &times;
+                </button>
+                <AcFlex spacing='sm'>
+                  <VISUALS.INFO_BLUE />
+                  <AcFlex column spacing='xs'>
+                    <Heading level={3}>Contactpersoon</Heading>
+                    <Paragraph>
+                      Het Contactpersoon dat U invult, zal gebruikt worden voor
+                      communicatie met de organisatie.
+                    </Paragraph>
+                  </AcFlex>
+                </AcFlex>
+              </Alert>
+            </div>
+          )}
+        </div>
+
         <div className='ac-register-form-grid'>
           <div>
             <AcFormField
