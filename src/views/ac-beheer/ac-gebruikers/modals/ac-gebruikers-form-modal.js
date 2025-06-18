@@ -272,7 +272,7 @@ const AcGebruikersFormModal = ({
           })}
         />
         <AcFormField
-          disabled
+          // disabled
           label='Organisatie'
           type='text'
           onBlur={handleEditGebruikerFieldChange('organisatie')}
