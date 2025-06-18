@@ -42,7 +42,7 @@ const AcGebruikersFormModal = ({
     laatsteInlogdatum: '', // as date
     aanmaakdatum: '', // as date
     wijzigingsdatum: '', // as date
-    voorkeuren: { taal: '', thema: '' },
+    voorkeuren: { taal: 'NL-nl', thema: 'licht' },
   };
 
   const rollenOptions = [
@@ -283,7 +283,7 @@ const AcGebruikersFormModal = ({
             })}
           />
         </div>
-        <div style={{ gridColumn: 'span 2' }}>
+        {/* <div style={{ gridColumn: 'span 2' }}>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Voorkeur</h4>
           </label>
@@ -342,7 +342,7 @@ const AcGebruikersFormModal = ({
               />
             </div>
           </AcGrid>
-        </div>
+        </div> */}
         <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Actief</h4>
