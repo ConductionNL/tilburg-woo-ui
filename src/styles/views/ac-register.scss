@@ -259,3 +259,22 @@
   color: #666;
   margin-top: 0.5rem;
 }
+
+.ac-register-form-alert {
+  margin-bottom: var(--tilburg-space-block-rat);
+}
+
+// Add a close (X) button for alerts
+.ac-register-form-alert-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--tilburg-color-gray-700);
+  z-index: 2;
+  padding: 3px;
+}
