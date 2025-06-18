@@ -13,6 +13,7 @@ import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import AcColumn from '@src/atoms/ac-column/ac-column';
 import { AcFlex } from '@src/atoms';
 import { Switch } from '@amsterdam/design-system-react';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 // create option for creatable select
 const createOption = (label) => ({
@@ -220,6 +221,16 @@ const AcGebruikersFormModal = ({
       ]}
       disableDefaultButton
     >
+      <div className='ac-gebruikers-form-modal__alert'>
+        <Alert type='info'>
+          <AcFlex spacing='sm'>
+            <VISUALS.INFO_BLUE />
+            <Paragraph>
+              Verplichte gegevens zijn zichtbaar voor andere gebruikers.
+            </Paragraph>
+          </AcFlex>
+        </Alert>
+      </div>
       <AcGrid columns={2}>
         <AcFormField
           label='Gebruikersnaam'
