@@ -13,6 +13,7 @@ import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import AcColumn from '@src/atoms/ac-column/ac-column';
 import { AcFlex } from '@src/atoms';
 import { Switch } from '@amsterdam/design-system-react';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 // create option for creatable select
 const createOption = (label) => ({
@@ -42,7 +43,8 @@ const AcGebruikersFormModal = ({
     laatsteInlogdatum: '', // as date
     aanmaakdatum: '', // as date
     wijzigingsdatum: '', // as date
-    voorkeuren: { taal: '', thema: '' },
+    voorkeuren: { taal: 'NL-nl', thema: 'licht' },
+    aanspreekPunt: false,
   };
 
   const rollenOptions = [
@@ -168,6 +170,35 @@ const AcGebruikersFormModal = ({
     };
   }, []);
 
+  const validateRequiredFields = useCallback(() => {
+    if (!schema?.properties) return true;
+
+    // Check each property in the schema
+    for (const [field, value] of Object.entries(schema.properties)) {
+      if (value?.required) {
+        // Handle nested properties like voorkeuren.taal
+        if (field.includes('.')) {
+          const [parent, child] = field.split('.');
+          if (!gebruikerFormData?.[parent]?.[child]) {
+            return false;
+          }
+        } else {
+          // Handle top level properties
+          if (!gebruikerFormData?.[field]) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // Special case - telefoon required if aanspreekPunt is true
+    if (gebruikerFormData.aanspreekPunt && !gebruikerFormData.telefoonnummer) {
+      return false;
+    }
+
+    return true;
+  }, [schema?.properties, gebruikerFormData]);
+
   const renderGebruikerFormModal = (
     <AcModal
       ref={modalRef}
@@ -175,16 +206,31 @@ const AcGebruikersFormModal = ({
       title={isEdit ? 'Gebruiker bewerken' : 'Gebruiker toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !validateRequiredFields(),
+        },
       ]}
       disableDefaultButton
     >
+      <div className='ac-gebruikers-form-modal__alert'>
+        <Alert type='info'>
+          <AcFlex spacing='sm'>
+            <VISUALS.INFO_BLUE />
+            <Paragraph>
+              Verplichte gegevens zijn zichtbaar voor andere gebruikers.
+            </Paragraph>
+          </AcFlex>
+        </Alert>
+      </div>
       <AcGrid columns={2}>
         <AcFormField
           label='Gebruikersnaam'
@@ -237,6 +283,7 @@ const AcGebruikersFormModal = ({
           })}
         />
         <AcFormField
+          // disabled
           label='Organisatie'
           type='text'
           onBlur={handleEditGebruikerFieldChange('organisatie')}
@@ -251,7 +298,8 @@ const AcGebruikersFormModal = ({
           type='tel'
           onBlur={handleEditGebruikerFieldChange('telefoonnummer')}
           value={gebruikerFormData.telefoonnummer}
-          {...(schema?.properties?.telefoonnummer?.required && {
+          {...((schema?.properties?.telefoonnummer?.required ||
+            gebruikerFormData.aanspreekPunt) && {
             hasError: !gebruikerFormData?.telefoonnummer,
             required: true,
           })}
@@ -283,7 +331,7 @@ const AcGebruikersFormModal = ({
             })}
           />
         </div>
-        <div style={{ gridColumn: 'span 2' }}>
+        {/* <div style={{ gridColumn: 'span 2' }}>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Voorkeur</h4>
           </label>
@@ -342,7 +390,7 @@ const AcGebruikersFormModal = ({
               />
             </div>
           </AcGrid>
-        </div>
+        </div> */}
         <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Actief</h4>
@@ -351,6 +399,15 @@ const AcGebruikersFormModal = ({
             // label='Actief'
             onChange={handleEditGebruikerFieldChange('actief')}
             checked={gebruikerFormData.actief}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>AanspreekPunt</h4>
+          </label>
+          <AcCheckbox
+            checked={gebruikerFormData.aanspreekPunt}
+            onChange={handleEditGebruikerFieldChange('aanspreekPunt')}
           />
         </div>
       </AcGrid>

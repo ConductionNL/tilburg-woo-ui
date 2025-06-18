@@ -15,6 +15,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcGebruikerFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
+import AcGebruikersUitnodigenModal from '../modals/ac-gebruikers-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
@@ -242,6 +243,14 @@ const AcBeheerGebruikers = () => {
                     Importeren
                   </ConActionMenu.Button>
 
+                  <ConActionMenu.Button
+                    icon={<VISUALS.PAPER_PLANE />}
+                    disabled={selectedRows.length === 0}
+                    onClick={() => setOpenModal('invite')}
+                  >
+                    Uitnodigen
+                  </ConActionMenu.Button>
+
                   <ConActionMenu.Divider />
 
                   <ConActionMenu.Button
@@ -294,6 +303,16 @@ const AcBeheerGebruikers = () => {
                         }}
                       >
                         Bewerken
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PAPER_PLANE />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('invite');
+                        }}
+                      >
+                        Uitnodigen
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Button
@@ -351,6 +370,19 @@ const AcBeheerGebruikers = () => {
           <AcDeleteGebruikerModal
             gebruikers={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
+          />
+
+          <AcGebruikersUitnodigenModal
+            gebruikers={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+            showModal={openModal === 'invite'}
             onClose={() => {
               setOpenModal(null);
               setSingleSelectedRow(null);

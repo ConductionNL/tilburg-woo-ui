@@ -173,6 +173,10 @@ const CLIPBOARD_CHECK = loadable(() =>
   import('-!svg-react-loader!@assets/images/clipboard-check.svg')
 );
 
+const PAPER_PLANE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/paper-plane.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -236,6 +240,7 @@ export const VISUALS = {
   SORT_UP,
   SORT_DOWN,
   CLIPBOARD_CHECK,
+  PAPER_PLANE,
 };
 
 export default {};
