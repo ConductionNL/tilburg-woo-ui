@@ -332,7 +332,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               try {
                                 return (
                                   <ReactMarkdown>
-                                    {JSON.parse(data.beschrijvingLang || '')}
+                                    {JSON.parse(data.beschrijvingLang)}
                                   </ReactMarkdown>
                                 );
                               } catch {
@@ -351,13 +351,24 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               setIsEditingLang(true);
                               setTempBeschrijvingLang(
                                 data.beschrijvingLang
-                                  ? JSON.parse(data.beschrijvingLang || '')
+                                  ? (() => {
+                                    try {
+                                      return JSON.parse(data.beschrijvingLang );
+                                    } catch {
+                                      return '';
+                                    }
+                                  })()
                                   : ''
                               );
                               setCharCountLang(
                                 data.beschrijvingLang
-                                  ? JSON.parse(data.beschrijvingLang || '')
-                                      ?.length || 0
+                                  ? (() => {
+                                      try {
+                                        return JSON.parse(data.beschrijvingLang)?.length || 0;
+                                      } catch {
+                                        return 0;
+                                      }
+                                    })()
                                   : 0
                               );
                             }}
