@@ -156,3 +156,8 @@
   opacity: 1;
   pointer-events: auto;
 }
+
+.ac-description-row-empty {
+  opacity: 0.5;
+  color: var(--tilburg-color-gray-600);
+}

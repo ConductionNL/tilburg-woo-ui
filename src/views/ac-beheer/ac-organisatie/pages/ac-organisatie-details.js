@@ -8,10 +8,17 @@ import { AcSideNav, AcLoader } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
 import { AcFormField } from '@molecules';
 import { BASE_URL } from '../../ac-beheer';
+import { ConHorizontalOverflowWrapper } from '@components';
 import {
   Heading,
   Paragraph,
   Button,
+  Table,
+  TableBody,
+  TableHeader,
+  TableRow,
+  TableCell,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -50,7 +57,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
-      const extend = [['_extend[]', 'contactgegevens']];
+      const extend = [
+        ['_extend[]', 'contactgegevens'],
+        ['_extend[]', 'samenwerkingen'],
+      ];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
@@ -236,7 +246,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         </div>
                       ) : (
                         <div className='ac-description-row'>
-                          <p>{data.beschrijvingKort}</p>
+                          {data.beschrijvingKort ? (
+                            <p>{data.beschrijvingKort}</p>
+                          ) : (
+                            <span className='ac-description-row-empty'>
+                              Geen korte beschrijving
+                            </span>
+                          )}
                           <Button
                             className='ac-description-edit-btn'
                             appearance='subtle-button'
@@ -308,11 +324,21 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       ) : (
                         <div className='ac-description-row'>
                           <AcFlex>
-                            <div className='ac-organisatie-detail-preview '>
-                              <ReactMarkdown>
-                                {JSON.parse(data.beschrijvingLang)}
-                              </ReactMarkdown>
-                            </div>
+                            {(() => {
+                              try {
+                                return (
+                                  <ReactMarkdown>
+                                    {JSON.parse(data.beschrijvingLang || '')}
+                                  </ReactMarkdown>
+                                );
+                              } catch {
+                                return (
+                                  <span className='ac-description-row-empty'>
+                                    Geen uitgebreide beschrijving
+                                  </span>
+                                );
+                              }
+                            })()}
                           </AcFlex>
                           <Button
                             className='ac-description-edit-btn'
@@ -320,10 +346,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             onClick={() => {
                               setIsEditingLang(true);
                               setTempBeschrijvingLang(
-                                JSON.parse(data.beschrijvingLang)
+                                data.beschrijvingLang
+                                  ? JSON.parse(data.beschrijvingLang || '')
+                                  : ''
                               );
                               setCharCountLang(
-                                JSON.parse(data.beschrijvingLang)?.length || 0
+                                data.beschrijvingLang
+                                  ? JSON.parse(data.beschrijvingLang || '')?.length || 0
+                                  : 0
                               );
                             }}
                           >
@@ -375,6 +405,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       >
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                          <AcTab selected={tabIndex === 1}>Contactpersonen</AcTab>
+                          <AcTab selected={tabIndex === 2}>
+                            Mijn samenwerkingen
+                          </AcTab>
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
@@ -383,6 +417,87 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             schema={schemaSlug}
                             id={data.id}
                           />
+                        </AcTabPanel>
+                        <AcTabPanel selected={tabIndex === 1}>
+                          <ConHorizontalOverflowWrapper
+                            ariaLabels={{
+                              scrollLeftButton: 'Scroll left',
+                              scrollRightButton: 'Scroll right',
+                            }}
+                          >
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableCell>Naam</TableCell>
+                                  <TableCell>Email</TableCell>
+                                  <TableCell>Telefoonnummer</TableCell>
+                                  <TableCell>Functie</TableCell>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {data?.contactpersonen?.map((contact) => (
+                                  <TableRow key={contact.id}>
+                                    <TableCell>
+                                      {contact.voornaam} {contact.tussenvoegsel}{' '}
+                                      {contact.achternaam}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Link href={`mailto:${contact.email}`}>
+                                        {contact.email}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Link href={`tel:${contact.telefoon}`}>
+                                        {contact.telefoon}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell>{contact.functie}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </ConHorizontalOverflowWrapper>
+                        </AcTabPanel>
+                        <AcTabPanel selected={tabIndex === 2}>
+                          <ConHorizontalOverflowWrapper
+                            ariaLabels={{
+                              scrollLeftButton: 'Scroll left',
+                              scrollRightButton: 'Scroll right',
+                            }}
+                          >
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableCell>Samenwerking</TableCell>
+                                  <TableCell>Website</TableCell>
+                                  <TableCell>Contactpersonen</TableCell>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {data?.samenwerkingen?.map((samenwerking) => (
+                                  <TableRow key={samenwerking.id}>
+                                    <TableCell>{samenwerking.naam}</TableCell>
+                                    <TableCell>
+                                      <Link href={samenwerking.website}>
+                                        {samenwerking.website}
+                                      </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                      {samenwerking.contactpersonen.map(
+                                        (contact) => (
+                                          <div key={contact.id}>
+                                            {contact.voornaam}{' '}
+                                            {contact.tussenvoegsel}{' '}
+                                            {contact.achternaam}
+                                          </div>
+                                        )
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </ConHorizontalOverflowWrapper>
                         </AcTabPanel>
                       </AcTabs>
                     </div>
