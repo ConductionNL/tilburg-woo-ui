@@ -261,7 +261,8 @@
 }
 
 .ac-register-form-alert {
-  margin-bottom: var(--tilburg-space-block-rat);
+  margin-block-start: var(--tilburg-space-block-rat);
+  margin-block-end: var(--tilburg-space-block-rat);
 }
 
 // Add a close (X) button for alerts
