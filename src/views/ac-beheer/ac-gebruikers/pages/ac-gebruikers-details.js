@@ -192,25 +192,6 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                         </Paragraph>
                       </div>
                     </div>
-
-                    <div>
-                      <AcTabs
-                        selectedIndex={tabIndex}
-                        onSelect={(index) => setTabIndex(index)}
-                      >
-                        <AcTabList>
-                          <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
-                        </AcTabList>
-
-                        <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
-                            register={registerSlug}
-                            schema={schemaSlug}
-                            id={data.id}
-                          />
-                        </AcTabPanel>
-                      </AcTabs>
-                    </div>
                   </AcFlex>
                 </AcColumn>
 
