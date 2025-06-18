@@ -327,7 +327,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         </div>
                       ) : (
                         <div className='ac-description-row'>
-                          <AcFlex>
+                          <div>
                             {(() => {
                               try {
                                 return (
@@ -343,7 +343,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 );
                               }
                             })()}
-                          </AcFlex>
+                          </div>
                           <Button
                             className='ac-description-edit-btn'
                             appearance='subtle-button'
