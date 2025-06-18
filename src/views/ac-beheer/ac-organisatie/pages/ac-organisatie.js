@@ -307,7 +307,7 @@ const AcBeheerOrganisaties = () => {
                         icon={<VISUALS.EYE />}
                         onClick={() => {
                           navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', row.id)
+                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id)
                           );
                         }}
                       >

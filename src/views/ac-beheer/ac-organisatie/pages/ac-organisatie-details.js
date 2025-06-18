@@ -5,22 +5,25 @@ import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader } from '@components';
+import { AcBeheerError } from '@views/ac-beheer';
+import { AcFormField } from '@molecules';
+import { BASE_URL } from '../../ac-beheer';
 import {
   Heading,
   Paragraph,
+  Button,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer';
+import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
-import _ from 'lodash';
-
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
-import { BASE_URL } from '../../ac-beheer';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConLogoPreview from '../../../ac-register/con-logo-preview';
+import ReactMarkdown from 'react-markdown';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -29,6 +32,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
+  const [isEditingKort, setIsEditingKort] = useState(false);
+  const [isEditingLang, setIsEditingLang] = useState(false);
+  const [tempBeschrijvingKort, setTempBeschrijvingKort] = useState('');
+  const [tempBeschrijvingLang, setTempBeschrijvingLang] = useState('');
+  const [charCountKort, setCharCountKort] = useState(0);
+  const [charCountLang, setCharCountLang] = useState(0);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -82,11 +91,64 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (data) {
+      setCharCountKort(data.beschrijvingKort?.length || 0);
+      setCharCountLang(data.beschrijvingLang?.length || 0);
+    }
+  }, [data]);
+
   if (error) {
     return <AcBeheerError error={error.message} />;
   }
 
   const [openModal, setOpenModal] = useState(null);
+
+  const handleSaveDescription = async (type) => {
+    try {
+      const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}`;
+      const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
+      const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
+
+      const response = await makeRequest(
+        `${BASE_URL}/apps/${endpoint}`,
+        null,
+        { [field]: JSON.stringify(value) },
+        `/beheer/organisaties/${id}`,
+        'PATCH'
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update description');
+      }
+
+      // Update local state
+      setData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+
+      // Reset edit mode
+      if (type === 'kort') {
+        setIsEditingKort(false);
+      } else {
+        setIsEditingLang(false);
+      }
+    } catch (err) {
+      console.error('Error updating description:', err);
+      // You might want to show an error message to the user here
+    }
+  };
+
+  const handleBeschrijvingKortChange = (value) => {
+    setTempBeschrijvingKort(value);
+    setCharCountKort(value.length);
+  };
+
+  const handleBeschrijvingLangChange = (value) => {
+    setTempBeschrijvingLang(value);
+    setCharCountLang(value.length);
+  };
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -98,57 +160,210 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
             {!loading && !data && <Heading>Er is een fout opgetreden</Heading>}
             {!loading && data && (
               <AcFlex column spacing='xl'>
-                <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data.naam ?? data.id}</Heading>
+                <AcFlex column spacing='md'>
+                  <div className='ac-header-row'>
+                    <Heading>{data.naam ?? data.id}</Heading>
+                    <ConActionMenu>
+                      <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                        Acties
+                      </ConActionMenu.Trigger>
 
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
-                      Acties
-                    </ConActionMenu.Trigger>
-
-                    <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                        Toevoegen
-                      </ConActionMenu.Button>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PENCIL />}
-                        onClick={() => setOpenModal('edit')}
-                      >
-                        Bijwerken
-                      </ConActionMenu.Button>
-                      {data.status !== 'Actief' && (
-                        <ConActionMenu.Button
-                          icon={<VISUALS.CHECK />}
-                          onClick={() => setOpenModal('accept')}
-                        >
-                          Accepteren
+                      <ConActionMenu.Menu position='right'>
+                        <ConActionMenu.Button icon={<VISUALS.PLUS />}>
+                          Toevoegen
                         </ConActionMenu.Button>
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PENCIL />}
+                          onClick={() => setOpenModal('edit')}
+                        >
+                          Bijwerken
+                        </ConActionMenu.Button>
+                        {data.status !== 'Actief' && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.CHECK />}
+                            onClick={() => setOpenModal('accept')}
+                          >
+                            Accepteren
+                          </ConActionMenu.Button>
+                        )}
+                        <ConActionMenu.Divider />
+                        <ConActionMenu.Button
+                          icon={<VISUALS.TRASHCAN />}
+                          onClick={() => setOpenModal('delete')}
+                        >
+                          Verwijderen
+                        </ConActionMenu.Button>
+                      </ConActionMenu.Menu>
+                    </ConActionMenu>
+                  </div>
+                  <AcFlex column spacing='sm'>
+                    <AcFlex spacing='sm' alignItems='center'>
+                      {isEditingKort ? (
+                        <div className='ac-organisatie-detail-form ac-organisatie-detail-form--full'>
+                          <AcFormField
+                            fullWidth={true}
+                            inputType='textarea'
+                            label='Korte beschrijving'
+                            placeholder='Een korte beschrijving van de organisatie'
+                            tooltip='Een korte beschrijving van de organisatie'
+                            value={tempBeschrijvingKort}
+                            onChange={handleBeschrijvingKortChange}
+                            disabled={loading}
+                            maxLength={255}
+                            className='textarea-with-dimensions'
+                          />
+                          <span className='character-count'>
+                            {255 - charCountKort} karakters over
+                          </span>
+                          <div className='ac-organisatie-detail-form-buttons'>
+                            <Button
+                              appearance='primary-action-button'
+                              onClick={() => handleSaveDescription('kort')}
+                            >
+                              Opslaan
+                            </Button>
+                            <Button
+                              appearance='secondary-action-button'
+                              onClick={() => {
+                                setIsEditingKort(false);
+                                setTempBeschrijvingKort(data.beschrijvingKort);
+                                setCharCountKort(data.beschrijvingKort?.length || 0);
+                              }}
+                            >
+                              Annuleren
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className='ac-description-row'>
+                          <p>{data.beschrijvingKort}</p>
+                          <Button
+                            className='ac-description-edit-btn'
+                            appearance='subtle-button'
+                            onClick={() => {
+                              setIsEditingKort(true);
+                              setTempBeschrijvingKort(data.beschrijvingKort);
+                              setCharCountKort(data.beschrijvingKort?.length || 0);
+                            }}
+                          >
+                            <VISUALS.PENCIL />
+                          </Button>
+                        </div>
                       )}
-                      <ConActionMenu.Divider />
-                      <ConActionMenu.Button
-                        icon={<VISUALS.TRASHCAN />}
-                        onClick={() => setOpenModal('delete')}
-                      >
-                        Verwijderen
-                      </ConActionMenu.Button>
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
+                    </AcFlex>
+
+                    <AcFlex spacing='sm' alignItems='center'>
+                      {isEditingLang ? (
+                        <div className='ac-organisatie-detail-form'>
+                          <div className='ac-organisatie-detail-form-label-row'>
+                            <span className='ac-form-field__label-with-icon'>
+                              Lange beschrijving
+                              <span
+                                className='ac-form-field__tooltip'
+                                title='Een uitgebreide beschrijving van de organisatie'
+                              >
+                                <VISUALS.INFO />
+                              </span>
+                            </span>
+                          </div>
+                          <div className='ac-organisatie-detail-form-flex'>
+                            <div className='ac-organisatie-detail-form-textarea'>
+                              <AcFormField
+                                fullWidth={true}
+                                inputType='textarea'
+                                value={tempBeschrijvingLang}
+                                onChange={handleBeschrijvingLangChange}
+                                disabled={loading}
+                                maxLength={2000}
+                                className='ac-organisatie-detail-textarea'
+                                placeholder='Een uitgebreide beschrijving van de organisatie'
+                              />
+                            </div>
+                            <div className='ac-organisatie-detail-preview markdown-preview'>
+                              <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
+                            </div>
+                          </div>
+                          <span className='character-count'>
+                            {2000 - charCountLang} karakters over
+                          </span>
+                          <div className='ac-organisatie-detail-form-buttons'>
+                            <Button
+                              appearance='primary-action-button'
+                              onClick={() => handleSaveDescription('lang')}
+                            >
+                              Opslaan
+                            </Button>
+                            <Button
+                              appearance='secondary-action-button'
+                              onClick={() => {
+                                setIsEditingLang(false);
+                                setTempBeschrijvingLang(data.beschrijvingLang);
+                                setCharCountLang(data.beschrijvingLang?.length || 0);
+                              }}
+                            >
+                              Annuleren
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className='ac-description-row'>
+                          <AcFlex>
+                            <div className='ac-organisatie-detail-preview '>
+                              <ReactMarkdown>
+                                {JSON.parse(data.beschrijvingLang)}
+                              </ReactMarkdown>
+                            </div>
+                          </AcFlex>
+                          <Button
+                            className='ac-description-edit-btn'
+                            appearance='subtle-button'
+                            onClick={() => {
+                              setIsEditingLang(true);
+                              setTempBeschrijvingLang(
+                                JSON.parse(data.beschrijvingLang)
+                              );
+                              setCharCountLang(
+                                JSON.parse(data.beschrijvingLang)?.length || 0
+                              );
+                            }}
+                          >
+                            <VISUALS.PENCIL />
+                          </Button>
+                        </div>
+                      )}
+                    </AcFlex>
+                  </AcFlex>
                 </AcFlex>
 
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
-                        .filter(([key]) => !['id', 'naam'].includes(key))
+                        .filter(
+                          ([key]) =>
+                            ![
+                              'id',
+                              'naam',
+                              'beschrijvingKort',
+                              'beschrijvingLang',
+                            ].includes(key)
+                        )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>
-                            <Paragraph>
-                              {formatBySchema(schemaProperties, data, key, {
-                                exclude: ['@self'],
-                                includeUnknown: true,
-                              })}
-                            </Paragraph>
+                            {key === 'logo' ? (
+                              <ConLogoPreview
+                                logoUrl={data[key]}
+                                className='ac-register-review__logo'
+                              />
+                            ) : (
+                              <Paragraph>
+                                {formatBySchema(schemaProperties, data, key, {
+                                  exclude: ['@self'],
+                                  includeUnknown: true,
+                                })}
+                              </Paragraph>
+                            )}
                           </div>
                         ))}
                     </div>
