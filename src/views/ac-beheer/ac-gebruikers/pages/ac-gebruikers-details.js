@@ -16,9 +16,9 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcGebruikersFormModal from '../modals/ac-gebruikers-form-modal';
 import AcDeleteGebruikersModal from '../modals/ac-delete-gebruikers-modal';
+import AcGebruikersUitnodigenModal from '../modals/ac-gebruikers-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -116,6 +116,12 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PAPER_PLANE />}
+                        onClick={() => setOpenModal('invite')}
+                      >
+                        Uitnodigen
+                      </ConActionMenu.Button>
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -192,25 +198,6 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                         </Paragraph>
                       </div>
                     </div>
-
-                    <div>
-                      <AcTabs
-                        selectedIndex={tabIndex}
-                        onSelect={(index) => setTabIndex(index)}
-                      >
-                        <AcTabList>
-                          <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
-                        </AcTabList>
-
-                        <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
-                            register={registerSlug}
-                            schema={schemaSlug}
-                            id={data.id}
-                          />
-                        </AcTabPanel>
-                      </AcTabs>
-                    </div>
                   </AcFlex>
                 </AcColumn>
 
@@ -235,6 +222,17 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                   }}
                   onSuccess={() => {
                     navigate('/beheer/gebruikers');
+                  }}
+                />
+
+                <AcGebruikersUitnodigenModal
+                  gebruikers={[data]}
+                  showModal={openModal === 'invite'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
                   }}
                 />
               </AcFlex>
