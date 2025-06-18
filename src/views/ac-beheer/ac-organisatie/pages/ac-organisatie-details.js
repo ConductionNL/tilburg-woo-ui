@@ -270,55 +270,59 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                     <AcFlex spacing='sm' alignItems='center'>
                       {isEditingLang ? (
-                        <div className='ac-organisatie-detail-form'>
-                          <div className='ac-organisatie-detail-form-label-row'>
-                            <span className='ac-form-field__label-with-icon'>
-                              Lange beschrijving
-                              <span
-                                className='ac-form-field__tooltip'
-                                title='Een uitgebreide beschrijving van de organisatie'
-                              >
-                                <VISUALS.INFO />
+                        <div className='ac-organisatie-detail-form-wrapper'>
+                          <div className='ac-organisatie-detail-form'>
+                            <div className='ac-organisatie-detail-form-label-row'>
+                              <span className='ac-form-field__label-with-icon'>
+                                Lange beschrijving
+                                <span
+                                  className='ac-form-field__tooltip'
+                                  title='Een uitgebreide beschrijving van de organisatie'
+                                >
+                                  <VISUALS.INFO />
+                                </span>
                               </span>
+                            </div>
+                            <div className='ac-organisatie-detail-form-flex'>
+                              <div className='ac-organisatie-detail-form-textarea'>
+                                <AcFormField
+                                  fullWidth={true}
+                                  inputType='textarea'
+                                  value={tempBeschrijvingLang}
+                                  onChange={handleBeschrijvingLangChange}
+                                  disabled={loading}
+                                  maxLength={2000}
+                                  className='ac-organisatie-detail-textarea'
+                                  placeholder='Een uitgebreide beschrijving van de organisatie'
+                                />
+                              </div>
+                              <div className='ac-organisatie-detail-preview markdown-preview'>
+                                <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
+                              </div>
+                            </div>
+                            <span className='character-count'>
+                              {2000 - charCountLang} karakters over
                             </span>
-                          </div>
-                          <div className='ac-organisatie-detail-form-flex'>
-                            <div className='ac-organisatie-detail-form-textarea'>
-                              <AcFormField
-                                fullWidth={true}
-                                inputType='textarea'
-                                value={tempBeschrijvingLang}
-                                onChange={handleBeschrijvingLangChange}
-                                disabled={loading}
-                                maxLength={2000}
-                                className='ac-organisatie-detail-textarea'
-                                placeholder='Een uitgebreide beschrijving van de organisatie'
-                              />
+                            <div className='ac-organisatie-detail-form-buttons'>
+                              <Button
+                                appearance='primary-action-button'
+                                onClick={() => handleSaveDescription('lang')}
+                              >
+                                Opslaan
+                              </Button>
+                              <Button
+                                appearance='secondary-action-button'
+                                onClick={() => {
+                                  setIsEditingLang(false);
+                                  setTempBeschrijvingLang(data.beschrijvingLang);
+                                  setCharCountLang(
+                                    data.beschrijvingLang?.length || 0
+                                  );
+                                }}
+                              >
+                                Annuleren
+                              </Button>
                             </div>
-                            <div className='ac-organisatie-detail-preview markdown-preview'>
-                              <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
-                            </div>
-                          </div>
-                          <span className='character-count'>
-                            {2000 - charCountLang} karakters over
-                          </span>
-                          <div className='ac-organisatie-detail-form-buttons'>
-                            <Button
-                              appearance='primary-action-button'
-                              onClick={() => handleSaveDescription('lang')}
-                            >
-                              Opslaan
-                            </Button>
-                            <Button
-                              appearance='secondary-action-button'
-                              onClick={() => {
-                                setIsEditingLang(false);
-                                setTempBeschrijvingLang(data.beschrijvingLang);
-                                setCharCountLang(data.beschrijvingLang?.length || 0);
-                              }}
-                            >
-                              Annuleren
-                            </Button>
                           </div>
                         </div>
                       ) : (
@@ -352,7 +356,8 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               );
                               setCharCountLang(
                                 data.beschrijvingLang
-                                  ? JSON.parse(data.beschrijvingLang || '')?.length || 0
+                                  ? JSON.parse(data.beschrijvingLang || '')
+                                      ?.length || 0
                                   : 0
                               );
                             }}
