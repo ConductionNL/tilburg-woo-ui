@@ -13,6 +13,7 @@ const AcModal = React.forwardRef(
       disableDefaultButton,
       buttonType,
       buttons,
+      buttonPosition = 'start',
       children,
       onClose,
       layoutClassName,
@@ -56,7 +57,7 @@ const AcModal = React.forwardRef(
         </div>
         <div className='ac-modal__content'>{children}</div>
         <div className='ac-modal__footer'>
-          <AcFlex spacing='sm'>
+          <AcFlex spacing='sm' justifyContent={buttonPosition}>
             {!disableDefaultButton && (
               <AcButton
                 style='button'

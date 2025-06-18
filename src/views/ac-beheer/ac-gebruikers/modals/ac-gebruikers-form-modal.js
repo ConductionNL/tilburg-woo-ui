@@ -43,6 +43,7 @@ const AcGebruikersFormModal = ({
     aanmaakdatum: '', // as date
     wijzigingsdatum: '', // as date
     voorkeuren: { taal: 'NL-nl', thema: 'licht' },
+    aanspreekPunt: false,
   };
 
   const rollenOptions = [
@@ -168,6 +169,35 @@ const AcGebruikersFormModal = ({
     };
   }, []);
 
+  const validateRequiredFields = useCallback(() => {
+    if (!schema?.properties) return true;
+
+    // Check each property in the schema
+    for (const [field, value] of Object.entries(schema.properties)) {
+      if (value?.required) {
+        // Handle nested properties like voorkeuren.taal
+        if (field.includes('.')) {
+          const [parent, child] = field.split('.');
+          if (!gebruikerFormData?.[parent]?.[child]) {
+            return false;
+          }
+        } else {
+          // Handle top level properties
+          if (!gebruikerFormData?.[field]) {
+            return false;
+          }
+        }
+      }
+    }
+
+    // Special case - telefoon required if aanspreekPunt is true
+    if (gebruikerFormData.aanspreekPunt && !gebruikerFormData.telefoonnummer) {
+      return false;
+    }
+
+    return true;
+  }, [schema?.properties, gebruikerFormData]);
+
   const renderGebruikerFormModal = (
     <AcModal
       ref={modalRef}
@@ -175,7 +205,12 @@ const AcGebruikersFormModal = ({
       title={isEdit ? 'Gebruiker bewerken' : 'Gebruiker toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !validateRequiredFields(),
+        },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
@@ -237,6 +272,7 @@ const AcGebruikersFormModal = ({
           })}
         />
         <AcFormField
+          disabled
           label='Organisatie'
           type='text'
           onBlur={handleEditGebruikerFieldChange('organisatie')}
@@ -251,7 +287,8 @@ const AcGebruikersFormModal = ({
           type='tel'
           onBlur={handleEditGebruikerFieldChange('telefoonnummer')}
           value={gebruikerFormData.telefoonnummer}
-          {...(schema?.properties?.telefoonnummer?.required && {
+          {...((schema?.properties?.telefoonnummer?.required ||
+            gebruikerFormData.aanspreekPunt) && {
             hasError: !gebruikerFormData?.telefoonnummer,
             required: true,
           })}
@@ -351,6 +388,15 @@ const AcGebruikersFormModal = ({
             // label='Actief'
             onChange={handleEditGebruikerFieldChange('actief')}
             checked={gebruikerFormData.actief}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>AanspreekPunt</h4>
+          </label>
+          <AcCheckbox
+            checked={gebruikerFormData.aanspreekPunt}
+            onChange={handleEditGebruikerFieldChange('aanspreekPunt')}
           />
         </div>
       </AcGrid>
