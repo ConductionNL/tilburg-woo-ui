@@ -1,22 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader } from '@components';
+import { AcBeheerError } from '@views/ac-beheer';
+import { BASE_URL } from '../../ac-beheer';
+import { sortPropertiesByOrder } from '@src/utilities';
+import { AcCheckbox } from '@molecules';
+import { ConFileDropZone } from '../../import-modal/con-file-dropzone';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
-
 import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
 import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
@@ -31,6 +40,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
   const [files, setFiles] = useState([]);
+  const [tableHeaders, setTableHeaders] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [standardsDataProperties, setStandardsDataProperties] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -39,7 +51,11 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
   const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
-  const extend = [];
+  const extend = [
+    ['_extend[]', 'standaarden'],
+    ['_extend[]', 'standaarden.@self.schema'],
+    ['_extend[]', 'referentieComponenten'],
+  ];
 
   const fetchData = async () => {
     try {
@@ -69,9 +85,12 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
       const data = jsonResponse;
       const dataProperties = schemaJsonResponse.properties;
+      const standardsDataProperties =
+        response.data.standaarden?.[0]?.['@self']?.schema?.properties;
 
       setData(data);
       setDataProperties(dataProperties);
+      setStandardsDataProperties(sortPropertiesByOrder(standardsDataProperties));
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
@@ -83,6 +102,33 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const tableRef = useRef(null);
+
+  const defaultHeaders = ['naam', 'beschrijving', 'standaardtype', 'versie'];
+
+  const headers = useMemo(() => {
+    if (!standardsDataProperties) return [];
+
+    return Object.entries(standardsDataProperties)
+      .filter(([key, value]) => value.visible !== false)
+      .map(([key, value]) => {
+        // Generate standard header from schema
+        return {
+          id: key,
+          label: _.upperFirst(key),
+          key: key,
+        };
+      });
+  }, [standardsDataProperties]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setTableHeaders(
+        headers.filter((header) => defaultHeaders.includes(header.id))
+      );
+    }
+  }, [headers]);
 
   const [versionTabIndex, setVersionTabIndex] = useState(0);
 
@@ -111,8 +157,13 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                        Toevoegen
+                      <ConActionMenu.Button
+                        icon={<VISUALS.EYE />}
+                        onClick={() => {
+                          window.open(`/publicatie/${data.id}`, '_blank');
+                        }}
+                      >
+                        Bekijk in catalogus
                       </ConActionMenu.Button>
                       <ConActionMenu.Button
                         icon={<VISUALS.PENCIL />}
@@ -147,7 +198,15 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
-                        .filter(([key]) => !['id', 'naam'].includes(key))
+                        .filter(
+                          ([key]) =>
+                            ![
+                              'id',
+                              'naam',
+                              'standaarden',
+                              'referentieComponent',
+                            ].includes(key)
+                        )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>
@@ -165,6 +224,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                       >
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                          <AcTab selected={tabIndex === 1}>Standaarden</AcTab>
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
@@ -173,6 +233,39 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                             schema={schemaSlug}
                             id={data.id}
                           />
+                        </AcTabPanel>
+                        <AcTabPanel selected={tabIndex === 1}>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableCell>Naam</TableCell>
+                                <TableCell>ReferentieComponent</TableCell>
+                                <TableCell>Compliancy</TableCell>
+                                <TableCell>Testrapport</TableCell>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {data.standaarden.map((standard) => (
+                                <TableRow className='ac-applicaties-details--table-row' key={standard.id}>
+                                  <TableCell>{standard.naam}</TableCell>
+                                  <TableCell>
+                                    {data.referentieComponenten[0].name}
+                                  </TableCell>
+                                  <TableCell className='ac-applicaties-details--compliance-checkbox'>
+                                    <AcCheckbox />
+                                  </TableCell>
+                                  <TableCell>
+                                    <ConFileDropZone
+                                      className='ac-applicaties-details--file-dropzone'
+                                      disabled={true}
+                                      files={[]}
+                                      onFilesChange={() => {}}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
                         </AcTabPanel>
                       </AcTabs>
                     </div>
