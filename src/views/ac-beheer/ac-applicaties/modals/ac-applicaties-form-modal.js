@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { VISUALS } from '@constants';
-import { AcFlex } from '@atoms';
+import { AcFlex, AcGrid } from '@atoms';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
@@ -280,6 +280,7 @@ const AcApplicatiesFormModal = ({
       ref={modalRef}
       id='edit-applicatie-modal'
       title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
+      layoutClassName='wide-content'
       buttons={[
         { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
@@ -291,7 +292,7 @@ const AcApplicatiesFormModal = ({
       ]}
       disableDefaultButton
     >
-      <AcFlex column spacing='sm'>
+      <AcGrid columns={2}>
         <AcFormField
           label='Naam'
           type='text'
@@ -501,7 +502,7 @@ const AcApplicatiesFormModal = ({
             })}
           />
         </div>
-      </AcFlex>
+      </AcGrid>
     </AcModal>
   );
 
