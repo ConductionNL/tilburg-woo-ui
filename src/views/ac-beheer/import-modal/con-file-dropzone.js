@@ -26,7 +26,7 @@ const generateFileHash = async (file) => {
  * @param {boolean} [disabled=false] Whether the dropzone is disabled
  * @returns {JSX.Element}
  */
-export function ConFileDropZone({ files, onFilesChange, multiple = false, label, disabled = false }) {
+export function ConFileDropZone({ files, onFilesChange, multiple = false, label, disabled = false, className }) {
   const dropRef = useRef(null);
 
   const id = useId();
@@ -92,6 +92,7 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false, label,
 
   return (
     <div
+      className={className}
       ref={dropRef}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
