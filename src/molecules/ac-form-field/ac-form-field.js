@@ -50,7 +50,11 @@ const AcFormField = ({
     if (customInput) {
       return customInput;
     } else if (inputType === 'textarea') {
-      return <Textarea {...inputProps} />;
+      return (
+        <div className={clsx(fullWidth && 'ac-form-field-textarea--full-width')}>
+          <Textarea {...inputProps} />
+        </div>
+      );
     } else {
       return <Textbox {...inputProps} />;
     }
@@ -58,7 +62,10 @@ const AcFormField = ({
 
   return (
     <FormField type={type}>
-      <FormLabel htmlFor={id} className={clsx({ 'ac-form-field-label-with-custom-part': customLabelPart })}>
+      <FormLabel
+        htmlFor={id}
+        className={clsx({ 'ac-form-field-label-with-custom-part': customLabelPart })}
+      >
         <Heading
           level={headingLevel}
           className={clsx({

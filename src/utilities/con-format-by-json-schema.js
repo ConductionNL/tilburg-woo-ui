@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * Render a value according to its JSON-Schema definition.
@@ -57,9 +58,9 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         case 'uri': {
           // render as clickable link
           return (
-            <a href={value} target='_blank' rel='noopener noreferrer'>
+            <Link href={value} target='_blank' rel='noopener noreferrer'>
               {value}
-            </a>
+            </Link>
           );
         }
         // passthrough formats:

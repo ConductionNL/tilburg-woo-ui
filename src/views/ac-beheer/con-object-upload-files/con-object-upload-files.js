@@ -223,35 +223,35 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
               label: 'Labels',
               key: 'labels',
             },
-            {
-              id: 'type',
-              label: 'Type',
-              key: 'type',
-            },
-            {
-              id: 'size',
-              label: 'Grootte',
-              key: 'size',
-              customContent: (row) => {
-                // format the size to a single human readable format
-                const size = row.size;
-                const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-                let formattedSize = size;
-                let unitIndex = 0;
+            // {
+            //   id: 'type',
+            //   label: 'Type',
+            //   key: 'type',
+            // },
+            // {
+            //   id: 'size',
+            //   label: 'Grootte',
+            //   key: 'size',
+            //   customContent: (row) => {
+            //     // format the size to a single human readable format
+            //     const size = row.size;
+            //     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            //     let formattedSize = size;
+            //     let unitIndex = 0;
 
-                while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-                  formattedSize /= 1024;
-                  unitIndex++;
-                }
-                // return a div with the formatted size and the unit and no wrapping
-                return (
-                  <div style={{ whiteSpace: 'nowrap' }}>{`${
-                    Math.round(formattedSize * 100) / 100
-                  } ${units[unitIndex]}`}</div>
-                );
-              },
-              doNotTruncate: true,
-            },
+            //     while (formattedSize >= 1024 && unitIndex < units.length - 1) {
+            //       formattedSize /= 1024;
+            //       unitIndex++;
+            //     }
+            //     // return a div with the formatted size and the unit and no wrapping
+            //     return (
+            //       <div style={{ whiteSpace: 'nowrap' }}>{`${
+            //         Math.round(formattedSize * 100) / 100
+            //       } ${units[unitIndex]}`}</div>
+            //     );
+            //   },
+            //   doNotTruncate: true,
+            // },
             {
               id: 'status',
               label: 'Status',
