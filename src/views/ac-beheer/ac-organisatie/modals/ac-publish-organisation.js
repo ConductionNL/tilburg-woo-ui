@@ -30,15 +30,8 @@ const AcPublishOrganizationModal = ({
   const [error, setError] = useState(null);
   const handlePublishOrganization = async () => {
     try {
-      let endpoint = '';
-      if (BASE_URL.includes('test')) {
-        endpoint = `openregister/api/objects/14/37`;
-      } else {
-        endpoint = `openregister/api/objects/14/37`;
-      }
-
       const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}/${organization.id}/publish`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}/publish`,
         null,
         {
           body: JSON.stringify(organization),
