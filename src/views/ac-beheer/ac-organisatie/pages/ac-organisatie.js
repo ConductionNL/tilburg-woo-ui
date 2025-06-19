@@ -27,6 +27,7 @@ import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
+import AcPublishOrganizationModal from '../modals/ac-publish-organisation';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -336,6 +337,18 @@ const AcBeheerOrganisaties = () => {
                         </ConActionMenu.Button>
                       )}
 
+                      {!row['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('publish');
+                          }}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => {
@@ -428,6 +441,14 @@ const AcBeheerOrganisaties = () => {
             showModal={openModal === 'import'}
             onClose={() => setOpenModal(null)}
             onSuccess={() => {}}
+          />
+
+          <AcPublishOrganizationModal
+            organization={singleSelectedRow}
+            showModal={openModal === 'publish'}
+            onClose={() => {
+              setOpenModal(null);
+            }}
           />
         </AcColumn>
       </AcFlex>

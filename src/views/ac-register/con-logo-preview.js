@@ -83,7 +83,7 @@ export const validateAndProcessLogoUrl = (logoUrl) => {
   });
 };
 
-const ConLogoPreview = ({ logoUrl, className }) => {
+const ConLogoPreview = ({ logoUrl, className, style }) => {
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [processedUrl, setProcessedUrl] = useState(null);
@@ -100,7 +100,7 @@ const ConLogoPreview = ({ logoUrl, className }) => {
   }, [logoUrl]);
 
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       {logoUrl && (
         <>
           {isLoading && <span>(Validating...)</span>}

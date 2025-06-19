@@ -34,7 +34,6 @@ const AcOrganisatieFormModal = ({
     logo: '',
     cbs: '',
     telefoonnummer: '',
-    rol: '',
     beschrijvingKort: '',
     beschrijvingLang: '',
     contactpersonen: '',
@@ -318,16 +317,6 @@ const AcOrganisatieFormModal = ({
           autocomplete='off'
         />
         <AcFormField
-          label='Rol'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('rol')}
-          value={organisatieFormData.rol}
-          {...(schema?.properties?.rol?.required && {
-            hasError: !organisatieFormData.rol,
-            required: true,
-          })}
-        />
-        <AcFormField
           label='Beschrijving kort'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('beschrijvingKort')}
@@ -351,7 +340,8 @@ const AcOrganisatieFormModal = ({
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Contactpersonen</h4>
           </label>
-          <CreatableSelect
+          WIP - currently broken, should fix, no clue what this is supposed to be (as in data type)
+          {/* <CreatableSelect
             placeholder='Voeg een contactpersoon toe'
             className='ac-beheer-select'
             isMulti
@@ -376,7 +366,7 @@ const AcOrganisatieFormModal = ({
             {...(!schema?.properties?.contactpersonen?.required && {
               isClearable: true,
             })}
-          />
+          /> */}
         </div>
         <div>
           <label className='utrecht-form-label'>
