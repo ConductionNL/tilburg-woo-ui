@@ -704,6 +704,33 @@ const OrganizationRequiredForm = memo(
           Verplichte gegevens
         </h2>
         <div className='ac-register-form-grid'>
+          {organization.organizationType !== 'gemeente' && (
+            <div style={{ gridColumn: 'span 2' }}>
+              <AcFormField
+                label='Naam'
+                required={true}
+                placeholder='Voorbeeld: Gemeente Amsterdam'
+                value={organization.name}
+                onBlur={(e) => setOrganizationData('name', e)}
+                hasError={touched.name && !organization.name}
+                disabled={loading}
+                id='org-name'
+                aria-describedby={
+                  touched.name && !organization.name ? 'name-error' : undefined
+                }
+                className='ac-register-form-field__no-width-limit'
+              />
+              {touched.name && !organization.name && (
+                <span
+                  className='ac-register-form-field-error'
+                  id='name-error'
+                  role='alert'
+                >
+                  Dit veld is verplicht
+                </span>
+              )}
+            </div>
+          )}
           <div>
             <h4 className='utrecht-heading-4' id='org-type-label'>
               Organisatietype
@@ -714,8 +741,10 @@ const OrganizationRequiredForm = memo(
             </h4>
             <ReactSelect
               placeholder='Selecteer een organisatietype'
-              defaultValue={organizationTypes[0]}
-              className='ac-beheer-select'
+              value={organizationTypes.find(
+                (type) => type.value === organization.organizationType
+              )}
+              className='ac-beheer-select ac-register-form-field__no-width-limit'
               loading={organizationTypes?.length === 0}
               options={organizationTypes}
               onChange={(selected) =>
@@ -726,64 +755,39 @@ const OrganizationRequiredForm = memo(
             />
           </div>
           {organization.organizationType !== 'gemeente' && (
-            <>
-              <div>
-                <AcFormField
-                  label='Naam'
-                  required={true}
-                  placeholder='Voorbeeld: Gemeente Amsterdam'
-                  value={organization.name}
-                  onBlur={(e) => setOrganizationData('name', e)}
-                  hasError={touched.name && !organization.name}
-                  disabled={loading}
-                  id='org-name'
-                  aria-describedby={
-                    touched.name && !organization.name ? 'name-error' : undefined
-                  }
-                />
-                {touched.name && !organization.name && (
-                  <span
-                    className='ac-register-form-field-error'
-                    id='name-error'
-                    role='alert'
-                  >
-                    Dit veld is verplicht
+            <div>
+              <AcFormField
+                label='Website'
+                placeholder='https://www.example.com'
+                value={organization.website}
+                required={true}
+                hasError={
+                  (touched.website && !organization.website) ||
+                  (organization.website && !validateWebsite(organization.website))
+                }
+                type='text'
+                onBlur={(e) => setOrganizationData('website', e)}
+                id='website-field'
+                aria-describedby={
+                  touched.website && !organization.website
+                    ? 'website-error'
+                    : undefined
+                }
+                disabled={loading}
+                className='ac-register-form-field__no-width-limit'
+              />
+              {touched.website &&
+                (!organization.website ||
+                  !validateWebsite(organization.website)) && (
+                  <span className='ac-register-form-field-error'>
+                    {touched.website && !organization.website
+                      ? 'Dit veld is verplicht'
+                      : organization.website &&
+                        !validateWebsite(organization.website) &&
+                        'Ongeldig websiteadres'}
                   </span>
                 )}
-              </div>
-              <div>
-                <AcFormField
-                  label='Website'
-                  placeholder='https://www.example.com'
-                  value={organization.website}
-                  required={true}
-                  hasError={
-                    (touched.website && !organization.website) ||
-                    (organization.website && !validateWebsite(organization.website))
-                  }
-                  type='text'
-                  onBlur={(e) => setOrganizationData('website', e)}
-                  id='website-field'
-                  aria-describedby={
-                    touched.website && !organization.website
-                      ? 'website-error'
-                      : undefined
-                  }
-                  disabled={loading}
-                />
-                {touched.website &&
-                  (!organization.website ||
-                    !validateWebsite(organization.website)) && (
-                    <span className='ac-register-form-field-error'>
-                      {touched.website && !organization.website
-                        ? 'Dit veld is verplicht'
-                        : organization.website &&
-                          !validateWebsite(organization.website) &&
-                          'Ongeldig websiteadres'}
-                    </span>
-                  )}
-              </div>
-            </>
+            </div>
           )}
         </div>
         {organization.organizationType === 'gemeente' && (
