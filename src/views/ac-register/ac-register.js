@@ -15,6 +15,7 @@ import {
   UnorderedListItem,
   Alert,
   Paragraph,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { validateAndProcessLogoUrl } from './con-logo-preview';
@@ -780,9 +781,12 @@ const OrganizationRequiredForm = memo(
                     Alle Nederlandse gemeenten zijn reeds opgenomen in de
                     SoftwareCatalogus. Voor meer informatie of vragen kunt u contact
                     opnemen met{' '}
-                    <a href='mailto:softwarecatalogus@vng.nl'>
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
                       softwarecatalogus@vng.nl
-                    </a>
+                    </Link>
                     .
                   </Paragraph>
                 </AcFlex>
