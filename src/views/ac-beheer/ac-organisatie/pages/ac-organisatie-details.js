@@ -28,6 +28,7 @@ import {
   TableRow,
   TableCell,
   Link,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -235,25 +236,31 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                   <div>
                     {data.status === 'concept' && (
-                      <div className='ac-organisatie-info-message'>
-                        <div style={{ flexShrink: 0 }}>
-                          <VISUALS.INFO />
-                        </div>
-                        <span>
-                          Deze organisatie bevindt zich nog in de conceptfase en moet
-                          eerst door VNG worden goedgekeurd voordat deze zichtbaar
-                          wordt voor anderen.
-                        </span>
-                      </div>
+                      <Alert type='info'>
+                        <AcFlex spacing='sm'>
+                          <VISUALS.INFO_BLUE />
+                          <AcFlex column spacing='xs'>
+                            <Paragraph>
+                              Deze organisatie bevindt zich nog in de conceptfase en
+                              moet eerst door VNG worden goedgekeurd voordat deze
+                              zichtbaar wordt voor anderen.
+                            </Paragraph>
+                          </AcFlex>
+                        </AcFlex>
+                      </Alert>
                     )}
 
                     {!data['@self'].published && (
-                      <div className='ac-organisatie-warning-message'>
-                        <div style={{ flexShrink: 0 }}>
+                    <Alert type='warning'>
+                        <AcFlex spacing='sm'>
                           <VISUALS.TRIANGLE_EXCLAMATION />
-                        </div>
-                        <span>Deze organisatie is nog niet gepubliceerd.</span>
-                      </div>
+                          <AcFlex column spacing='xs'>
+                            <Paragraph>
+                              Deze organisatie is nog niet gepubliceerd
+                            </Paragraph>
+                          </AcFlex>
+                        </AcFlex>
+                      </Alert>
                     )}
                   </div>
 
