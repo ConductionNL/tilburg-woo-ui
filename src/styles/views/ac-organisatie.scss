@@ -1,0 +1,32 @@
+.ac-organisatie {
+  &-contactgegevens {
+    &__container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--tilburg-search-card-background-color, var(--tilburg-color-white));
+      border-radius: var(--tilburg-search-card-border-radius, var(--tilburg-border-radius-md));
+      border: var(--tilburg-search-card-border-width, 2px) var(--tilburg-search-card-border-style, solid) var(--tilburg-search-card-border-color, #e5e7eb);
+      padding-inline-start: var(--tilburg-search-card-padding-inline-start);
+      padding-inline-end: var(--tilburg-search-card-padding-inline-end);
+      padding-block-start: var(--tilburg-search-card-padding-block-start);
+      padding-block-end: var(--tilburg-search-card-padding-block-end);
+    }
+
+    &__content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--tilburg-search-card-content-gap, var(--tilburg-space-block-snail));
+      padding: var(--tilburg-search-card-padding-md, var(--tilburg-space-block-rabbit));
+    }
+
+    &__grid {
+      grid-template-columns: min-content 1fr !important;
+      gap: 0.5rem;
+    }
+
+    &__label {
+      font-weight: 500;
+    }
+  }
+}
