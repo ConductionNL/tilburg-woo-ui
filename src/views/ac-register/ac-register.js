@@ -79,6 +79,23 @@ const AcRegister = () => {
     terms: false,
   });
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orgType = params.get('organisatieType');
+
+    if (orgType) {
+      const matchingType = organizationTypes.find(
+        (type) => type.value.toLowerCase() === orgType.toLowerCase()
+      );
+      if (matchingType) {
+        setOrganization((prev) => ({
+          ...prev,
+          organizationType: matchingType.value,
+        }));
+      }
+    }
+  }, []);
+
   const handleLogoValidation = useCallback(async (url) => {
     if (!url) {
       setLogoValidation({ isValidating: false, isValid: true });
