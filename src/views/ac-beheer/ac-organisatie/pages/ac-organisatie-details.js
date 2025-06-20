@@ -40,7 +40,7 @@ import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
-import AcPublishOrganizationModal from '../modals/ac-publish-organisation';
+import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -212,6 +212,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             onClick={() => setOpenModal('publish')}
                           >
                             Publiceren
+                          </ConActionMenu.Button>
+                        )}
+                        {data['@self'].published && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PAPER_PLANE />}
+                            onClick={() => setOpenModal('depublish')}
+                          >
+                            Depubliceren
                           </ConActionMenu.Button>
                         )}
                         <ConActionMenu.Divider />
@@ -646,9 +654,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcPublishOrganizationModal
+                <AcPublishDepublishOrganizationModal
                   organization={data}
-                  showModal={openModal === 'publish'}
+                  showModal={openModal === 'publish' || openModal === 'depublish'}
+                  publish={openModal === 'publish'}
                   onClose={() => {
                     setOpenModal(null);
                   }}

@@ -9,14 +9,16 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 
 /**
- * Modal to publish an organization by calling the publish endpoint
- * @param {object} organization - The organization to publish
+ * Modal to publish or depublish an organization by calling the publish/depublish endpoint
+ * @param {object} organization - The organization to publish/depublish
+ * @param {boolean} publish - Whether to publish (true) or depublish (false)
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
- * @returns {React.JSX.Element} - modal to publish an organization
+ * @returns {React.JSX.Element} - modal to publish/depublish an organization
  */
-const AcPublishOrganizationModal = ({
+const AcPublishDepublishOrganizationModal = ({
   organization,
+  publish = true,
   showModal = false,
   onClose,
   onSuccess,
@@ -25,16 +27,17 @@ const AcPublishOrganizationModal = ({
 
   const { makeRequest } = useNextcloudRequests();
 
-  const handlePublishOrganizationOpenModal = () => modalRef?.current?.showModal();
+  const handleModalOpen = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const handlePublishOrganization = async () => {
+  const handlePublishDepublish = async () => {
     try {
+      const endpoint = publish ? 'publish' : 'depublish';
+
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}/publish`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}/${endpoint}`,
         null,
         {
-          body: JSON.stringify(organization),
           method: 'POST',
         }
       );
@@ -49,27 +52,29 @@ const AcPublishOrganizationModal = ({
       }
     } catch (err) {
       console.error(err);
-      setError(err);
+      setError(
+        err.message ||
+          `Er is een fout opgetreden bij het ${
+            publish ? 'publiceren' : 'depubliceren'
+          }`
+      );
     }
   };
 
   useEffect(() => {
     if (showModal) {
-      handlePublishOrganizationOpenModal();
+      handleModalOpen();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handlePublishOrganizationCloseModal = () => {
+  const handleModalClose = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener(
-      'close',
-      handlePublishOrganizationCloseModal
-    );
+    modalRef?.current?.addEventListener('close', handleModalClose);
   }, [modalRef.current]);
 
   const errorStyle = {
@@ -88,16 +93,16 @@ const AcPublishOrganizationModal = ({
     fontFamily: 'var(--utrecht-form-field-error-message-font-family)',
   };
 
-  const renderPublishOrganizationModal = (
+  const renderModal = (
     <AcModal
       ref={modalRef}
-      id='publish-organization-modal'
-      title='Organisatie publiceren'
+      id={`${publish ? 'publish' : 'depublish'}-organization-modal`}
+      title={`Organisatie ${publish ? 'publiceren' : 'depubliceren'}`}
       buttons={[
         {
-          label: 'publiceren',
+          label: publish ? 'publiceren' : 'depubliceren',
           icon: <VISUALS.PAPER_PLANE />,
-          onClick: handlePublishOrganization,
+          onClick: handlePublishDepublish,
         },
         {
           label: 'annuleren',
@@ -110,13 +115,14 @@ const AcPublishOrganizationModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
-        Weet je zeker dat je deze organisatie wilt publiceren?
+        Weet je zeker dat je deze organisatie wilt{' '}
+        {publish ? 'publiceren' : 'depubliceren'}?
         <Paragraph>{organization?.naam ?? organization?.id}</Paragraph>
       </AcFlex>
     </AcModal>
   );
 
-  return renderPublishOrganizationModal;
+  return renderModal;
 };
 
-export default withStore(observer(AcPublishOrganizationModal));
+export default withStore(observer(AcPublishDepublishOrganizationModal));
