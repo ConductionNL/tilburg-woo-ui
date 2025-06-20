@@ -15,7 +15,7 @@ import {
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
-import { AcFormField } from '@molecules';
+import { AcFormField, AcLink } from '@molecules';
 import { BASE_URL } from '../../ac-beheer';
 import { ConHorizontalOverflowWrapper } from '@components';
 import {
@@ -170,77 +170,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     setCharCountLang(value.length);
   };
 
-  const infoStyle = {
-    backgroundColor:
-      'color-mix(in srgb, var(--utrecht-form-field-info-message-color, #004699) 5%, #ffffff)',
-    border: '1px solid var(--utrecht-form-field-info-message-color, #004699)',
-    borderRadius: '4px',
-    color: 'var(--utrecht-form-field-info-message-color, #004699)',
-    fontSize: 'var(--utrecht-form-field-info-message-font-size, 1rem)',
-    fontWeight: 'var(--utrecht-form-field-info-message-font-weight, 400)',
-    padding: '1rem',
-    margin: '0 0 1rem 0',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontFamily: 'var(--utrecht-form-field-info-message-font-family)',
-  };
-
-  const warningStyle = {
-    backgroundColor:
-      'color-mix(in srgb, var(--utrecht-form-field-warning-message-color, #FFB612) 2%, #ffffff)',
-    border: '1px solid var(--utrecht-form-field-warning-message-color, #FFB612)',
-    borderRadius: '4px',
-    color: 'var(--utrecht-form-field-warning-message-color, #FFB612)',
-    fontSize: 'var(--utrecht-form-field-warning-message-font-size, 1rem)',
-    fontWeight: 'var(--utrecht-form-field-warning-message-font-weight, 400)',
-    padding: '1rem',
-    margin: '0 0 1rem 0',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    fontFamily: 'var(--utrecht-form-field-warning-message-font-family)',
-  };
-
-  const contactgegevensStyles = {
-    container: {
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor:
-        'var(--tilburg-search-card-background-color, var(--tilburg-color-white))',
-      borderRadius:
-        'var(--tilburg-search-card-border-radius, var(--tilburg-border-radius-md))',
-      border:
-        'var(--tilburg-search-card-border-width, 2px) var(--tilburg-search-card-border-style, solid) var(--tilburg-search-card-border-color, #e5e7eb)',
-      paddingInlineStart: 'var(--tilburg-search-card-padding-inline-start)',
-      paddingInlineEnd: 'var(--tilburg-search-card-padding-inline-end)',
-      paddingBlockStart: 'var(--tilburg-search-card-padding-block-start)',
-      paddingBlockEnd: 'var(--tilburg-search-card-padding-block-end)',
-    },
-    content: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 'var(--tilburg-search-card-content-gap, var(--tilburg-space-block-snail))',
-      padding:
-        'var(--tilburg-search-card-padding-md, var(--tilburg-space-block-rabbit))',
-    },
-    grid: {
-      gridTemplateColumns: 'min-content 1fr',
-      gap: '0.5rem',
-    },
-    label: {
-      fontWeight: '500',
-    },
-    link: {
-      color: '#004699',
-      textDecoration: 'none',
-      ':hover': {
-        textDecoration: 'underline',
-      },
-    },
-  };
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -298,7 +227,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                   <div>
                     {data.status === 'concept' && (
-                      <div style={infoStyle}>
+                      <div className='ac-organisatie-info-message'>
                         <div style={{ flexShrink: 0 }}>
                           <VISUALS.INFO />
                         </div>
@@ -311,7 +240,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                     )}
 
                     {!data['@self'].published && (
-                      <div style={warningStyle}>
+                      <div className='ac-organisatie-warning-message'>
                         <div style={{ flexShrink: 0 }}>
                           <VISUALS.TRIANGLE_EXCLAMATION />
                         </div>
@@ -319,53 +248,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       </div>
                     )}
                   </div>
-
-                  {data.contactgegevens && (
-                    <div style={contactgegevensStyles.container}>
-                      <div style={contactgegevensStyles.content}>
-                        <Heading level={3}>Contactgegevens</Heading>
-                        <Paragraph>
-                          {[
-                            data.contactgegevens.voornaam,
-                            data.contactgegevens.tussenvoegsel,
-                            data.contactgegevens.achternaam,
-                          ]
-                            .filter(Boolean)
-                            .join(' ')}
-                        </Paragraph>
-                        <AcFlex justifyContent='between' className='meta'>
-                          <AcGrid columns={2} style={contactgegevensStyles.grid}>
-                            {data.contactgegevens.email && (
-                              <>
-                                <span style={contactgegevensStyles.label}>
-                                  Email:
-                                </span>
-                                <a
-                                  href={`mailto:${data.contactgegevens.email}`}
-                                  style={contactgegevensStyles.link}
-                                >
-                                  {data.contactgegevens.email}
-                                </a>
-                              </>
-                            )}
-                            {data.contactgegevens.telefoon && (
-                              <>
-                                <span style={contactgegevensStyles.label}>
-                                  Telefoon:
-                                </span>
-                                <a
-                                  href={`tel:${data.contactgegevens.telefoon}`}
-                                  style={contactgegevensStyles.link}
-                                >
-                                  {data.contactgegevens.telefoon}
-                                </a>
-                              </>
-                            )}
-                          </AcGrid>
-                        </AcFlex>
-                      </div>
-                    </div>
-                  )}
 
                   <AcFlex column spacing='sm'>
                     <AcFlex spacing='sm' alignItems='center'>
@@ -544,6 +426,50 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                     </AcFlex>
                   </AcFlex>
                 </AcFlex>
+
+                {data.contactgegevens && (
+                  <div className='ac-organisatie-contactgegevens__container'>
+                    <div className='ac-organisatie-contactgegevens__content'>
+                      <Heading level={3}>Contactgegevens</Heading>
+                      <Paragraph>
+                        {[
+                          data.contactgegevens.voornaam,
+                          data.contactgegevens.tussenvoegsel,
+                          data.contactgegevens.achternaam,
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      </Paragraph>
+                      <AcFlex justifyContent='between' className='meta'>
+                        <AcGrid
+                          columns={2}
+                          className='ac-organisatie-contactgegevens__grid'
+                        >
+                          {data.contactgegevens.email && (
+                            <>
+                              <span className='ac-organisatie-contactgegevens__label'>
+                                Email:
+                              </span>
+                              <AcLink href={`mailto:${data.contactgegevens.email}`}>
+                                {data.contactgegevens.email}
+                              </AcLink>
+                            </>
+                          )}
+                          {data.contactgegevens.telefoon && (
+                            <>
+                              <span className='ac-organisatie-contactgegevens__label'>
+                                Telefoon:
+                              </span>
+                              <AcLink href={`tel:${data.contactgegevens.telefoon}`}>
+                                {data.contactgegevens.telefoon}
+                              </AcLink>
+                            </>
+                          )}
+                        </AcGrid>
+                      </AcFlex>
+                    </div>
+                  </div>
+                )}
 
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>

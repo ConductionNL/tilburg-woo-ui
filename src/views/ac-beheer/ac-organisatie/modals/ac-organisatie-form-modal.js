@@ -336,12 +336,11 @@ const AcOrganisatieFormModal = ({
             required: true,
           })}
         />
-        <div>
+        {/* <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Contactpersonen</h4>
           </label>
-          WIP - currently broken, should fix, no clue what this is supposed to be (as in data type)
-          {/* <CreatableSelect
+          <CreatableSelect
             placeholder='Voeg een contactpersoon toe'
             className='ac-beheer-select'
             isMulti
@@ -366,8 +365,8 @@ const AcOrganisatieFormModal = ({
             {...(!schema?.properties?.contactpersonen?.required && {
               isClearable: true,
             })}
-          /> */}
-        </div>
+          />
+        </div> */}
         <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Samenwerkingen</h4>
