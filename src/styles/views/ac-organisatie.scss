@@ -1,34 +1,4 @@
 .ac-organisatie {
-  &-info-message {
-    background-color: color-mix(in srgb, var(--utrecht-form-field-info-message-color, #004699) 5%, #ffffff);
-    border: 1px solid var(--utrecht-form-field-info-message-color, #004699);
-    border-radius: 4px;
-    color: var(--utrecht-form-field-info-message-color, #004699);
-    font-size: var(--utrecht-form-field-info-message-font-size, 1rem);
-    font-weight: var(--utrecht-form-field-info-message-font-weight, 400);
-    padding: 1rem;
-    margin: 0 0 1rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--utrecht-form-field-info-message-font-family);
-  }
-
-  &-warning-message {
-    background-color: color-mix(in srgb, var(--utrecht-form-field-warning-message-color, #FFB612) 2%, #ffffff);
-    border: 1px solid var(--utrecht-form-field-warning-message-color, #FFB612);
-    border-radius: 4px;
-    color: var(--utrecht-form-field-warning-message-color, #FFB612);
-    font-size: var(--utrecht-form-field-warning-message-font-size, 1rem);
-    font-weight: var(--utrecht-form-field-warning-message-font-weight, 400);
-    padding: 1rem;
-    margin: 0 0 1rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: var(--utrecht-form-field-warning-message-font-family);
-  }
-
   &-contactgegevens {
     &__container {
       position: relative;
