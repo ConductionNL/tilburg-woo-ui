@@ -251,11 +251,11 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                     )}
 
                     {!data['@self'].published && (
-                    <Alert type='warning'>
+                      <Alert type='warning'>
                         <AcFlex spacing='sm'>
                           <VISUALS.TRIANGLE_EXCLAMATION />
                           <AcFlex column spacing='xs'>
-                            <Paragraph>
+                            <Paragraph className='ac-organisatie-details-alert-paragraph'>
                               Deze organisatie is nog niet gepubliceerd
                             </Paragraph>
                           </AcFlex>

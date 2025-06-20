@@ -1009,11 +1009,9 @@
   --utrecht-badge-counter-font-family: var(--tilburg-document-font-family);
   --utrecht-badge-counter-font-weight: var(--tilburg-document-strong-font-weight);
   --utrecht-badge-counter-line-height: var(--tilburg-document-line-height);
-  --utrecht-alert-warning-color: var(--tilburg-document-color);
-  --utrecht-alert-warning-border-color: var(--tilburg-feedback-warning-border-color);
-  --utrecht-alert-warning-background-color: var(
-    --tilburg-feedback-warning-background-color
-  );
+  --utrecht-alert-warning-color: #FFB612;
+  --utrecht-alert-warning-border-color: #FFB612;
+  --utrecht-alert-warning-background-color: #fffefa;
   --utrecht-alert-positive-color: var(--tilburg-document-color);
   --utrecht-alert-positive-border-color: var(
     --tilburg-feedback-positive-border-color
@@ -1029,7 +1027,7 @@
     --tilburg-feedback-negative-background-color
   );
   --utrecht-alert-icon-size: var(--tilburg-icon-functional-size);
-  --utrecht-alert-icon-warning-color: var(--tilburg-feedback-warning-color);
+  --utrecht-alert-icon-warning-color: #FFB612;
   --utrecht-alert-icon-negative-color: var(--tilburg-feedback-negative-color);
   --utrecht-alert-icon-positive-color: var(--tilburg-feedback-positive-color);
   --utrecht-alert-icon-informative-color: var(--tilburg-feedback-informative-color);
