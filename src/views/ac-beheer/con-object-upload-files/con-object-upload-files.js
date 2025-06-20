@@ -12,6 +12,8 @@ import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
 import CreatableSelect from 'react-select/creatable';
 import { Heading } from '@amsterdam/design-system-react';
 import ConConfirmFileDeletionModal from './con-confirm-file-deletion-modal';
+import ConActionMenu from '../con-action-menu';
+import ConPublishDepublishFileModal from './con-publish-depublish-file-modal';
 
 // create select funcs
 const createOption = (label) => ({
@@ -300,18 +302,51 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
               customContent: (row) => {
                 if (row.isNew) return null;
                 return (
-                  <AcFlex column spacing='xs'>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedFile(row);
-                        setShowModal('delete');
-                      }}
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
+                      style='buttonSlim'
                     >
-                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-                    </button>
-                  </AcFlex>
+                      Acties
+                    </ConActionMenu.Trigger>
+
+                    <ConActionMenu.Menu position='right'>
+                      {!row.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedFile(row);
+                            setShowModal('publish');
+                          }}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+
+                      {row.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedFile(row);
+                            setShowModal('depublish');
+                          }}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.TRASHCAN />}
+                        onClick={() => {
+                          setSingleSelectedFile(row);
+                          setShowModal('delete');
+                        }}
+                      >
+                        Verwijderen
+                      </ConActionMenu.Button>
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
                 );
               },
             },
@@ -328,6 +363,20 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
         id={id}
         file={singleSelectedFile}
         showModal={showModal === 'delete'}
+        onClose={() => setShowModal('')}
+        onSuccess={() => {
+          fetchOnlineFiles();
+          setSingleSelectedFile(null);
+        }}
+      />
+
+      <ConPublishDepublishFileModal
+        register={register}
+        schema={schema}
+        id={id}
+        file={singleSelectedFile}
+        showModal={showModal === 'publish' || showModal === 'depublish'}
+        publish={showModal === 'publish'}
         onClose={() => setShowModal('')}
         onSuccess={() => {
           fetchOnlineFiles();
