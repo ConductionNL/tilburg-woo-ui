@@ -10,6 +10,12 @@
   border: 0;
 }
 
+.ac-register-form-field {
+  &__no-width-limit {
+    max-inline-size: none !important;
+  }
+}
+
 .required-indicator {
   color: var(--tilburg-color-red-400);
   margin-left: 0.25rem;

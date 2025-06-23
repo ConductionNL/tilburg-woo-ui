@@ -2,7 +2,7 @@ import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
-import { AcContainer, AcSection, AcFlex } from '@src/atoms';
+import { AcContainer, AcSection, AcFlex, AcGrid } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '../ac-beheer/ac-beheer';
@@ -78,6 +78,23 @@ const AcRegister = () => {
     privacy: false,
     terms: false,
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const orgType = params.get('organisatieType');
+
+    if (orgType) {
+      const matchingType = organizationTypes.find(
+        (type) => type.value.toLowerCase() === orgType.toLowerCase()
+      );
+      if (matchingType) {
+        setOrganization((prev) => ({
+          ...prev,
+          organizationType: matchingType.value,
+        }));
+      }
+    }
+  }, []);
 
   const handleLogoValidation = useCallback(async (url) => {
     if (!url) {
@@ -340,7 +357,7 @@ const AcRegister = () => {
       case 1:
         return 'Optionele gegevens';
       case 2:
-        return 'Contactgegevens';
+        return 'Contactpersoon';
       case 3:
         return 'Controleren';
     }
@@ -488,7 +505,7 @@ const AcRegister = () => {
                             id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
                             marker: 2,
                             status: getStatus(currentStep, 2),
-                            title: 'Contactgegevens',
+                            title: 'Contactpersoon',
                           },
 
                           {
@@ -605,9 +622,9 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={() => resetForm()}
+                onClick={() => navigate('/')}
               >
-                Terug naar aanmelden
+                Terug naar homepage
               </AcButton>
             </AcColumn>
           )}
@@ -687,6 +704,33 @@ const OrganizationRequiredForm = memo(
           Verplichte gegevens
         </h2>
         <div className='ac-register-form-grid'>
+          {organization.organizationType !== 'gemeente' && (
+            <div style={{ gridColumn: 'span 2' }}>
+              <AcFormField
+                label='Naam'
+                required={true}
+                placeholder='Voorbeeld: Gemeente Amsterdam'
+                value={organization.name}
+                onBlur={(e) => setOrganizationData('name', e)}
+                hasError={touched.name && !organization.name}
+                disabled={loading}
+                id='org-name'
+                aria-describedby={
+                  touched.name && !organization.name ? 'name-error' : undefined
+                }
+                className='ac-register-form-field__no-width-limit'
+              />
+              {touched.name && !organization.name && (
+                <span
+                  className='ac-register-form-field-error'
+                  id='name-error'
+                  role='alert'
+                >
+                  Dit veld is verplicht
+                </span>
+              )}
+            </div>
+          )}
           <div>
             <h4 className='utrecht-heading-4' id='org-type-label'>
               Organisatietype
@@ -697,8 +741,10 @@ const OrganizationRequiredForm = memo(
             </h4>
             <ReactSelect
               placeholder='Selecteer een organisatietype'
-              defaultValue={organizationTypes[0]}
-              className='ac-beheer-select'
+              value={organizationTypes.find(
+                (type) => type.value === organization.organizationType
+              )}
+              className='ac-beheer-select ac-register-form-field__no-width-limit'
               loading={organizationTypes?.length === 0}
               options={organizationTypes}
               onChange={(selected) =>
@@ -709,64 +755,39 @@ const OrganizationRequiredForm = memo(
             />
           </div>
           {organization.organizationType !== 'gemeente' && (
-            <>
-              <div>
-                <AcFormField
-                  label='Naam'
-                  required={true}
-                  placeholder='Voorbeeld: Gemeente Amsterdam'
-                  value={organization.name}
-                  onBlur={(e) => setOrganizationData('name', e)}
-                  hasError={touched.name && !organization.name}
-                  disabled={loading}
-                  id='org-name'
-                  aria-describedby={
-                    touched.name && !organization.name ? 'name-error' : undefined
-                  }
-                />
-                {touched.name && !organization.name && (
-                  <span
-                    className='ac-register-form-field-error'
-                    id='name-error'
-                    role='alert'
-                  >
-                    Dit veld is verplicht
+            <div>
+              <AcFormField
+                label='Website'
+                placeholder='https://www.example.com'
+                value={organization.website}
+                required={true}
+                hasError={
+                  (touched.website && !organization.website) ||
+                  (organization.website && !validateWebsite(organization.website))
+                }
+                type='text'
+                onBlur={(e) => setOrganizationData('website', e)}
+                id='website-field'
+                aria-describedby={
+                  touched.website && !organization.website
+                    ? 'website-error'
+                    : undefined
+                }
+                disabled={loading}
+                className='ac-register-form-field__no-width-limit'
+              />
+              {touched.website &&
+                (!organization.website ||
+                  !validateWebsite(organization.website)) && (
+                  <span className='ac-register-form-field-error'>
+                    {touched.website && !organization.website
+                      ? 'Dit veld is verplicht'
+                      : organization.website &&
+                        !validateWebsite(organization.website) &&
+                        'Ongeldig websiteadres'}
                   </span>
                 )}
-              </div>
-              <div>
-                <AcFormField
-                  label='Website'
-                  placeholder='https://www.example.com'
-                  value={organization.website}
-                  required={true}
-                  hasError={
-                    (touched.website && !organization.website) ||
-                    (organization.website && !validateWebsite(organization.website))
-                  }
-                  type='text'
-                  onBlur={(e) => setOrganizationData('website', e)}
-                  id='website-field'
-                  aria-describedby={
-                    touched.website && !organization.website
-                      ? 'website-error'
-                      : undefined
-                  }
-                  disabled={loading}
-                />
-                {touched.website &&
-                  (!organization.website ||
-                    !validateWebsite(organization.website)) && (
-                    <span className='ac-register-form-field-error'>
-                      {touched.website && !organization.website
-                        ? 'Dit veld is verplicht'
-                        : organization.website &&
-                          !validateWebsite(organization.website) &&
-                          'Ongeldig websiteadres'}
-                    </span>
-                  )}
-              </div>
-            </>
+            </div>
           )}
         </div>
         {organization.organizationType === 'gemeente' && (
@@ -804,30 +825,9 @@ const OrganizationOptionalForm = memo(
     validatePhone,
     logoValidation,
   }) => {
-    const [preview, setPreview] = useState(false);
-    const [dimensions, setDimensions] = useState({ width: '100%', height: '150px' });
-    const lastKnownDimensions = useRef(dimensions);
+    const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
     let localSummary = organization.summary || '';
-
-    const handlePreviewClick = () => {
-      if (!preview) {
-        // Switching to preview - save current dimensions
-        const textarea = document.querySelector('.utrecht-textarea');
-        if (textarea) {
-          const newDimensions = {
-            width: `${textarea.offsetWidth}px`,
-            height: `${textarea.offsetHeight}px`,
-          };
-          setDimensions(newDimensions);
-          lastKnownDimensions.current = newDimensions;
-        }
-      } else {
-        // Switching back to edit - use last known dimensions
-        setDimensions(lastKnownDimensions.current);
-      }
-      setPreview(!preview);
-    };
 
     const updateCounter = (value) => {
       if (counterRef.current) {
@@ -839,166 +839,127 @@ const OrganizationOptionalForm = memo(
 
     return (
       <div className='ac-register-form-section'>
-        <div className='ac-register-form-grid'>
+        <AcGrid columns={2}>
           <div>
-            {preview ? (
-              <>
-                <AcFormField
-                  customInput={
-                    <div
-                      className='markdown-preview'
-                      style={{
-                        height: dimensions.height,
-                        width: dimensions.width,
-                      }}
-                    >
-                      <ReactMarkdown>{organization.summary || ''}</ReactMarkdown>
-                    </div>
-                  }
-                  label='Korte beschrijving'
-                  customLabelPart={
-                    <button
-                      onClick={handlePreviewClick}
-                      className={`preview-button ${preview ? 'active' : ''}`}
-                    >
-                      {preview ? 'Edit' : 'Preview'}
-                    </button>
-                  }
-                  tooltip='Een korte beschrijving van de organisatie'
-                />
-                <span ref={counterRef} className='character-count'>
-                  {255 - (localSummary?.length || 0)} karakters over
-                </span>
-              </>
-            ) : (
-              <>
-                <AcFormField
-                  fullWidth={true}
-                  inputType='textarea'
-                  label='Korte beschrijving'
-                  customLabelPart={
-                    <button
-                      onClick={handlePreviewClick}
-                      className={`preview-button ${preview ? 'active' : ''}`}
-                    >
-                      {preview ? 'Edit' : 'Preview'}
-                    </button>
-                  }
-                  placeholder='Een korte beschrijving van de organisatie'
-                  tooltip='Een korte beschrijving van de organisatie'
-                  value={organization.summary}
-                  onChange={(e) => {
-                    localSummary = e;
-                    updateCounter(e);
-                  }}
-                  onBlur={(e) => setOrganizationData('summary', e)}
-                  disabled={loading}
-                  maxLength={255}
-                  className='textarea-with-dimensions'
-                  style={{
-                    '--textarea-height': dimensions.height,
-                    '--textarea-width': dimensions.width,
-                  }}
-                />
-                <span ref={counterRef} className='character-count'>
-                  {255 - (localSummary?.length || 0)} karakters over
-                </span>
-              </>
-            )}
+            <AcFormField
+              fullWidth={true}
+              inputType='textarea'
+              label='Korte beschrijving'
+              placeholder='Een korte beschrijving van de organisatie'
+              tooltip='Een korte beschrijving van de organisatie'
+              value={organization.summary}
+              onChange={(e) => {
+                localSummary = e;
+                updateCounter(e);
+              }}
+              onBlur={(e) => setOrganizationData('summary', e)}
+              disabled={loading}
+              maxLength={255}
+              className='textarea-with-dimensions'
+              style={{
+                '--textarea-height': dimensions.height,
+                '--textarea-width': dimensions.width,
+              }}
+            />
+            <span ref={counterRef} className='character-count'>
+              {255 - (localSummary?.length || 0)} karakters over
+            </span>
           </div>
 
-          {organization.organizationType === 'leverancier' && (
-            <AcFormField
-              label='KvK nummer'
-              placeholder='12345678'
-              value={organization.kvkNumber}
-              onBlur={(e) => setOrganizationData('kvkNumber', e)}
-              disabled={loading}
-            />
-          )}
-
-          {(organization.organizationType === 'gemeente' ||
-            organization.organizationType === 'samenwerking') && (
-            <AcFormField
-              label='OIN'
-              placeholder='00000001002564440000'
-              value={organization.oin}
-              onBlur={(e) => setOrganizationData('oin', e)}
-              disabled={loading}
-            />
-          )}
-
-          <div>
-            <AcFormField
-              label='Logo'
-              placeholder='https://www.example.com/logo.png'
-              value={organization.logo}
-              onBlur={(e) => setOrganizationData('logo', e)}
-              hasError={organization.logo && !logoValidation.isValid}
-              disabled={loading}
-              id='org-logo'
-              aria-describedby={
-                logoValidation.isValidating
-                  ? 'logo-validating'
-                  : organization.logo && !logoValidation.isValid
-                  ? 'logo-error'
-                  : undefined
-              }
-            />
-            {logoValidation.isValidating && (
-              <span className='ac-register-form-field-info' id='logo-validating'>
-                Logo URL wordt gevalideerd...
-              </span>
+          <AcFlex column spacing='sm'>
+            {organization.organizationType === 'leverancier' && (
+              <AcFormField
+                label='KvK nummer'
+                placeholder='12345678'
+                value={organization.kvkNumber}
+                onBlur={(e) => setOrganizationData('kvkNumber', e)}
+                disabled={loading}
+              />
             )}
-            {!logoValidation.isValidating &&
-              organization.logo &&
-              !logoValidation.isValid && (
-                <span
-                  className='ac-register-form-field-error'
-                  id='logo-error'
-                  role='alert'
-                >
-                  Ongeldig logo URL. Gebruik een geldige afbeelding URL
+
+            {(organization.organizationType === 'gemeente' ||
+              organization.organizationType === 'samenwerking') && (
+              <AcFormField
+                label='OIN'
+                placeholder='00000001002564440000'
+                value={organization.oin}
+                onBlur={(e) => setOrganizationData('oin', e)}
+                disabled={loading}
+              />
+            )}
+
+            <div>
+              <AcFormField
+                label='Logo'
+                placeholder='https://www.example.com/logo.png'
+                value={organization.logo}
+                onBlur={(e) => setOrganizationData('logo', e)}
+                hasError={organization.logo && !logoValidation.isValid}
+                disabled={loading}
+                id='org-logo'
+                aria-describedby={
+                  logoValidation.isValidating
+                    ? 'logo-validating'
+                    : organization.logo && !logoValidation.isValid
+                    ? 'logo-error'
+                    : undefined
+                }
+              />
+              {logoValidation.isValidating && (
+                <span className='ac-register-form-field-info' id='logo-validating'>
+                  Logo URL wordt gevalideerd...
                 </span>
               )}
-          </div>
+              {!logoValidation.isValidating &&
+                organization.logo &&
+                !logoValidation.isValid && (
+                  <span
+                    className='ac-register-form-field-error'
+                    id='logo-error'
+                    role='alert'
+                  >
+                    Ongeldig logo URL. Gebruik een geldige afbeelding URL
+                  </span>
+                )}
+            </div>
 
-          <div>
-            <AcFormField
-              label='Telefoonnummer'
-              placeholder='06 12345678'
-              value={organization.phone}
-              type='tel'
-              onBlur={(e) => setOrganizationData('phone', e)}
-              hasError={organization.phone && !validatePhone(organization.phone)}
-              id='phone-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {organization.phone &&
-                !validatePhone(organization.phone) &&
-                'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
-            </span>
-          </div>
+            <div>
+              <AcFormField
+                label='Telefoonnummer (organisatie)'
+                placeholder='06 12345678'
+                value={organization.phone}
+                type='tel'
+                onBlur={(e) => setOrganizationData('phone', e)}
+                hasError={organization.phone && !validatePhone(organization.phone)}
+                id='phone-field'
+                disabled={loading}
+              />
+              <span className='ac-register-form-field-error'>
+                {organization.phone &&
+                  !validatePhone(organization.phone) &&
+                  'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
+              </span>
+            </div>
 
-          <div>
-            <AcFormField
-              label='E-mailadres'
-              placeholder='john.doe@example.com'
-              value={organization.email}
-              type='email'
-              onBlur={(e) => setOrganizationData('email', e)}
-              hasError={organization.email && !validateEmail(organization.email)}
-              id='email-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {organization.email &&
-                !validateEmail(organization.email) &&
-                'Ongeldig e-mailadres'}
-            </span>
-          </div>
-        </div>
+            <div>
+              <AcFormField
+                label='E-mailadres (organisatie)'
+                placeholder='john.doe@example.com'
+                value={organization.email}
+                type='email'
+                onBlur={(e) => setOrganizationData('email', e)}
+                hasError={organization.email && !validateEmail(organization.email)}
+                id='email-field'
+                disabled={loading}
+              />
+              <span className='ac-register-form-field-error'>
+                {organization.email &&
+                  !validateEmail(organization.email) &&
+                  'Ongeldig e-mailadres'}
+              </span>
+            </div>
+          </AcFlex>
+        </AcGrid>
       </div>
     );
   }
@@ -1066,15 +1027,6 @@ const ContactInformationForm = memo(
                 'Dit veld is verplicht'}
             </span>
           </div>
-          <AcFormField
-            label='Tussenvoegsel'
-            placeholder='van'
-            value={organization.contactPersons[0].middleName}
-            type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.middleName', e)}
-            id='name-field'
-            disabled={loading}
-          />
           <div>
             <AcFormField
               label='Achternaam'
