@@ -19,7 +19,7 @@ import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -151,7 +151,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}

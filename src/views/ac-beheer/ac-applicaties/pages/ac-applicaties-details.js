@@ -30,7 +30,7 @@ import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
 import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -228,7 +228,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}
@@ -246,7 +246,10 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                             </TableHeader>
                             <TableBody>
                               {data.standaarden.map((standard) => (
-                                <TableRow className='ac-applicaties-details--table-row' key={standard.id}>
+                                <TableRow
+                                  className='ac-applicaties-details--table-row'
+                                  key={standard.id}
+                                >
                                   <TableCell>{standard.naam}</TableCell>
                                   <TableCell>
                                     {data.referentieComponenten[0].name}
