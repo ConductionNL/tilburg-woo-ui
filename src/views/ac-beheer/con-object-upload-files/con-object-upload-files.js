@@ -301,14 +301,14 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
               key: '',
               customContent: (row) => {
                 if (row.isNew) return null;
-                if (row['@self']?.published) return <VISUALS.CHECK style={{ color: 'green' }} />;
+                if (row.published) return <VISUALS.CHECK style={{ color: 'green' }} />;
                 return <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'orange' }} />;
               },
               sortComparator: (a, b, direction) => {
                 if (direction === null) return 0;
 
-                const publishedA = a['@self']?.published;
-                const publishedB = b['@self']?.published;
+                const publishedA = a.published;
+                const publishedB = b.published;
 
                 // Handle cases where one or both values are null
                 if (publishedA === null && publishedB === null) return 0;
