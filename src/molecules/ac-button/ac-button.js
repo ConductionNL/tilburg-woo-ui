@@ -20,6 +20,12 @@ const AcButton = ({
     style === 'button' &&
       buttonType === 'secondary' &&
       'utrecht-button utrecht-button--secondary-action',
+    style === 'buttonSlim' &&
+      buttonType === 'primary' &&
+      'utrecht-button utrecht-button--primary-action utrecht-button--slim',
+    style === 'buttonSlim' &&
+      buttonType === 'secondary' &&
+      'utrecht-button utrecht-button--secondary-action utrecht-button--slim',
     animate && 'ac-button--animate',
     'ac-button',
     className,

@@ -9,6 +9,13 @@
     }
   }
 
+  &.utrecht-button--slim {
+    padding: 0 var(--tilburg-space-column-snail);
+    font-size: var(--tilburg-font-size-sm);
+    line-height: 1.2;
+    min-height: auto;
+  }
+
   &__icon {
     display: inline-flex;
     align-items: center;
