@@ -300,8 +300,11 @@ const AcBeheerDienstDetails = ({ id }) => {
                             <>
                               {uses &&
                                 // show unique headers
-                                _.uniqBy(uses, (use) => use['@self'].schema.id).map(
-                                  (use, idx) => (
+                                _.uniqBy(uses, (use) => use['@self'].schema.id)
+                                  .filter(
+                                    (use) => use['@self'].schema.slug !== 'standaard'
+                                  )
+                                  .map((use, idx) => (
                                     <AcTab selected={tabIndex === idx + 3}>
                                       <span>
                                         {_.upperFirst(
@@ -310,8 +313,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                                         )}
                                       </span>
                                     </AcTab>
-                                  )
-                                )}
+                                  ))}
                             </>
                           )}
                         </AcTabList>
@@ -371,6 +373,9 @@ const AcBeheerDienstDetails = ({ id }) => {
                           <>
                             {uses &&
                               _.uniqBy(uses, (use) => use['@self'].schema.id)
+                                .filter(
+                                  (use) => use['@self'].schema.slug !== 'standaard'
+                                )
                                 .map((use) => use['@self'])
                                 .map((metadata, idx) => {
                                   const schemaId = metadata.schema.id;
