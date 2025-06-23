@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex, AcGrid } from '@atoms';
 import { AcFormField } from '@src/molecules';
@@ -125,6 +125,7 @@ const AcApplicatiesFormModal = ({
       `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`,
       voorzieningQueryParams
     );
+
     const voorzieningData = voorzieningResponse.data.results;
 
     // flatten the voorziening standaarden array
@@ -293,215 +294,80 @@ const AcApplicatiesFormModal = ({
       disableDefaultButton
     >
       <AcGrid columns={2}>
-        <AcFormField
-          label='Naam'
-          type='text'
-          onBlur={handleEditApplicatieFieldChange('name')}
-          value={applicatieFormData.name}
-          {...(schema?.properties?.naam?.required && {
-            hasError: !applicatieFormData?.name,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Beschrijving'
-          type='text'
-          onBlur={handleEditApplicatieFieldChange('description')}
-          value={applicatieFormData.description}
-          {...(schema?.properties?.beschrijving?.required && {
-            hasError: !applicatieFormData?.description,
-            required: true,
-          })}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Applicatie type</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een applicatie type'
-            value={voorzieningsTypes?.find(
-              (option) => option.id === applicatieFormData?.voorzieningstype
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setApplicatieFormData((prev) => ({
-                ...prev,
-                voorzieningstype: e?.value ?? e,
-              }));
-            }}
-            loading={voorzieningsTypes?.length === 0}
-            options={voorzieningsTypes?.map((voorzieningstype) => ({
-              value: voorzieningstype.id,
-              label: voorzieningstype.label,
-            }))}
-            {...(schema?.properties?.voorzieningstype?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorzieningstype?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Categorie'
-          type='text'
-          onBlur={handleEditApplicatieFieldChange('category')}
-          value={applicatieFormData.category}
-          {...(schema?.properties?.categorie?.required && {
-            hasError: !applicatieFormData?.category,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Functionaliteiten'
-          type='text'
-          onBlur={handleEditApplicatieFieldChange('functionalities')}
-          value={applicatieFormData.functionalities}
-          {...(schema?.properties?.functionaliteiten?.required && {
-            hasError: !applicatieFormData?.functionalities,
-            required: true,
-          })}
-        />
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            naam: applicatieFormData.name,
+            beschrijving: applicatieFormData.description,
+            voorzieningstype: applicatieFormData.voorzieningstype,
+            referentieComponenten: applicatieFormData.referenceComponents,
+            standaarden: applicatieFormData.standards,
+            contact: applicatieFormData.contact,
+            diensten: applicatieFormData.diensten,
+            omvat: applicatieFormData.omvat,
+            organisatie: applicatieFormData.organisatie,
+            rol: applicatieFormData.rol,
+            logo: applicatieFormData.logo,
+            licentietype: applicatieFormData.licentietype,
+            hosting: applicatieFormData.hosting,
+            status: applicatieFormData.status,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              naam: 'name',
+              beschrijving: 'description',
+              voorzieningstype: 'voorzieningstype',
+              referentieComponenten: 'referenceComponents',
+              standaarden: 'standards',
+              contact: 'contact',
+              diensten: 'diensten',
+              omvat: 'omvat',
+              organisatie: 'organisatie',
+              rol: 'rol',
+              logo: 'logo',
+              licentietype: 'licentietype',
+              hosting: 'hosting',
+              status: 'status',
+            };
 
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Doelgroepen</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een doelgroep'
-            className='ac-beheer-select'
-            isMulti
-            value={(applicatieFormData?.targetGroups || []).map((targetGroup) => ({
-              value: targetGroup,
-              label: targetGroup,
-            }))}
-            onChange={(e) => {
-              setApplicatieFormData((prev) => ({
-                ...prev,
-                targetGroups: e.map((item) => item.value),
-              }));
-            }}
-            loading={targetGroups?.length === 0}
-            options={targetGroups?.map((targetGroup) => ({
-              value: targetGroup,
-              label: targetGroup,
-            }))}
-            {...(schema?.properties?.doelgroep?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.doelgroep?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Referentie componenten</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een referentie component'
-            className='ac-beheer-select'
-            value={referentieComponentenOptions?.filter((option) =>
-              applicatieFormData?.referenceComponents?.includes(option.value)
-            )}
-            onChange={(e) => {
-              setApplicatieFormData((prev) => ({
-                ...prev,
-                referenceComponents: e.map((item) => item.value),
-              }));
-            }}
-            isLoading={referentieComponentenLoading}
-            options={referentieComponentenOptions}
-            closeMenuOnSelect={false}
-            isMulti
-            {...(schema?.properties?.referentieComponenten?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.referentieComponenten?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Standaarden</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een standaard'
-            className='ac-beheer-select'
-            value={standaardenOptions?.filter((option) =>
-              applicatieFormData?.standards?.includes(option.value)
-            )}
-            onChange={(e) => {
-              setApplicatieFormData((prev) => ({
-                ...prev,
-                standards: e.map((item) => item.value),
-              }));
-            }}
-            isLoading={standaardenLoading}
-            options={standaardenOptions}
-            isDisabled={!applicatieFormData?.referenceComponents?.length}
-            closeMenuOnSelect={false}
-            isMulti
-            {...(schema?.properties?.standaarden?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.standaarden?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contact</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een contact'
-            value={gebruikersOptions?.find(
-              (option) => option.value === applicatieFormData.contact
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setApplicatieFormData((prev) => ({
-                ...prev,
-                contact: e?.value ?? e,
-              }));
-            }}
-            loading={gebruikersLoading}
-            options={gebruikersOptions}
-            {...(schema?.properties?.contact?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.contact?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Laag</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een laag'
-            className='ac-beheer-select'
-            value={laagOptions?.filter(
-              (option) => applicatieFormData?.laag === option.value
-            )}
-            onChange={(e) => {
-              setApplicatieFormData((prev) => ({
-                ...prev,
-                laag: e?.value ?? e,
-              }));
-            }}
-            options={laagOptions}
-            {...(schema?.properties?.laag?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.laag?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setApplicatieFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          optionsProviders={{
+            voorzieningstype: voorzieningsTypes?.map((type) => ({
+              value: type.id,
+              label: type.label,
+            })),
+            referentieComponenten: referentieComponentenOptions,
+            standaarden: standaardenOptions,
+            contact: gebruikersOptions,
+            diensten: [
+              'Functioneel beheer',
+              'Applicatie beheer',
+              'Technisch beheer',
+              'Implementatieondersteuning',
+              'Opleidingen',
+              'Reseller',
+            ].map((service) => ({
+              value: service,
+              label: service,
+            })),
+            omvat: [], // This would need to be populated with available applications
+          }}
+          loadingStates={{
+            referentieComponenten: referentieComponentenLoading,
+            standaarden: standaardenLoading,
+            contact: gebruikersLoading,
+          }}
+          disabledStates={{
+            standaarden: (formData) => !formData?.referentieComponenten?.length,
+          }}
+        />
       </AcGrid>
     </AcModal>
   );

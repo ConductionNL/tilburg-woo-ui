@@ -196,7 +196,7 @@ const AcOrganisatieFormModal = ({
     >
       <AcGrid columns={2}>
         <AcFormField
-          label='naam'
+          label='Naam'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('naam')}
           value={organisatieFormData.naam}
