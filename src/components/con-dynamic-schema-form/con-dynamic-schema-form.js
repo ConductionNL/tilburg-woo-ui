@@ -1,4 +1,5 @@
 import React from 'react';
+import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
@@ -128,7 +129,12 @@ const ConDynamicSchemaForm = ({
     if (!fieldConfig.visible) return null;
 
     const value = formData[propertyName];
-    const options = getFieldOptions(propertyName);
+    const options = fieldConfig.options
+      ? fieldConfig.options.map((option) => ({
+          value: option.value,
+          label: option.label,
+        }))
+      : getFieldOptions(propertyName);
     const isLoading = getFieldLoading(propertyName);
     const isDisabled = getFieldDisabled(propertyName);
     const validation = getFieldValidation(propertyName, fieldConfig);
@@ -159,7 +165,10 @@ const ConDynamicSchemaForm = ({
           <ReactSelect
             placeholder={fieldConfig.placeholder}
             value={selectValue}
-            className='ac-beheer-select'
+            className={clsx(
+              'ac-beheer-select',
+              isDisabled && 'ac-beheer-select--disabled'
+            )}
             onChange={handleFieldChange(propertyName, fieldConfig)}
             options={options}
             isLoading={isLoading}
