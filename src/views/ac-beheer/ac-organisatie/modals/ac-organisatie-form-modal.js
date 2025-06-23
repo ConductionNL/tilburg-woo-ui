@@ -34,7 +34,6 @@ const AcOrganisatieFormModal = ({
     logo: '',
     cbs: '',
     telefoonnummer: '',
-    rol: '',
     beschrijvingKort: '',
     beschrijvingLang: '',
     contactpersonen: '',
@@ -318,16 +317,6 @@ const AcOrganisatieFormModal = ({
           autocomplete='off'
         />
         <AcFormField
-          label='Rol'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('rol')}
-          value={organisatieFormData.rol}
-          {...(schema?.properties?.rol?.required && {
-            hasError: !organisatieFormData.rol,
-            required: true,
-          })}
-        />
-        <AcFormField
           label='Beschrijving kort'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('beschrijvingKort')}
@@ -347,7 +336,7 @@ const AcOrganisatieFormModal = ({
             required: true,
           })}
         />
-        <div>
+        {/* <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Contactpersonen</h4>
           </label>
@@ -377,7 +366,7 @@ const AcOrganisatieFormModal = ({
               isClearable: true,
             })}
           />
-        </div>
+        </div> */}
         <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Samenwerkingen</h4>

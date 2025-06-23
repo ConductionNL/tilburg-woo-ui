@@ -109,3 +109,4 @@ export { ConSorter } from './con-sorter';
 export { collapseExtendedObjects } from './con-collapse-extended-objects';
 export { smartSplit } from './con-smart-split';
 export { sortPropertiesByOrder } from './con-sort-properties-by-order';
+export { isJsonString } from './con-is-json-string';

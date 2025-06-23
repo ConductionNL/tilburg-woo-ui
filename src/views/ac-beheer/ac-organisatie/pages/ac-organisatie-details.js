@@ -2,11 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
-import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
+import {
+  AcCard,
+  AcFlex,
+  AcGrid,
+  AcSection,
+  AcTab,
+  AcTabList,
+  AcTabPanel,
+  AcTabs,
+} from '@atoms';
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
-import { AcFormField } from '@molecules';
+import { AcFormField, AcLink } from '@molecules';
 import { BASE_URL } from '../../ac-beheer';
 import { ConHorizontalOverflowWrapper } from '@components';
 import {
@@ -19,6 +28,7 @@ import {
   TableRow,
   TableCell,
   Link,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -31,6 +41,7 @@ import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
+import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -196,6 +207,22 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             Accepteren
                           </ConActionMenu.Button>
                         )}
+                        {!data['@self'].published && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PAPER_PLANE />}
+                            onClick={() => setOpenModal('publish')}
+                          >
+                            Publiceren
+                          </ConActionMenu.Button>
+                        )}
+                        {data['@self'].published && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PAPER_PLANE />}
+                            onClick={() => setOpenModal('depublish')}
+                          >
+                            Depubliceren
+                          </ConActionMenu.Button>
+                        )}
                         <ConActionMenu.Divider />
                         <ConActionMenu.Button
                           icon={<VISUALS.TRASHCAN />}
@@ -206,6 +233,37 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       </ConActionMenu.Menu>
                     </ConActionMenu>
                   </div>
+
+                  <div>
+                    {data.status === 'concept' && (
+                      <Alert type='info'>
+                        <AcFlex spacing='sm'>
+                          <VISUALS.INFO_BLUE />
+                          <AcFlex column spacing='xs'>
+                            <Paragraph>
+                              Deze organisatie bevindt zich nog in de conceptfase en
+                              moet eerst door VNG worden goedgekeurd voordat deze
+                              zichtbaar wordt voor anderen.
+                            </Paragraph>
+                          </AcFlex>
+                        </AcFlex>
+                      </Alert>
+                    )}
+
+                    {!data['@self'].published && (
+                      <Alert type='warning'>
+                        <AcFlex spacing='sm'>
+                          <VISUALS.TRIANGLE_EXCLAMATION />
+                          <AcFlex column spacing='xs'>
+                            <Paragraph className='ac-organisatie-details-alert-paragraph'>
+                              Deze organisatie is nog niet gepubliceerd
+                            </Paragraph>
+                          </AcFlex>
+                        </AcFlex>
+                      </Alert>
+                    )}
+                  </div>
+
                   <AcFlex column spacing='sm'>
                     <AcFlex spacing='sm' alignItems='center'>
                       {isEditingKort ? (
@@ -352,19 +410,22 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               setTempBeschrijvingLang(
                                 data.beschrijvingLang
                                   ? (() => {
-                                    try {
-                                      return JSON.parse(data.beschrijvingLang );
-                                    } catch {
-                                      return '';
-                                    }
-                                  })()
+                                      try {
+                                        return JSON.parse(data.beschrijvingLang);
+                                      } catch {
+                                        return '';
+                                      }
+                                    })()
                                   : ''
                               );
                               setCharCountLang(
                                 data.beschrijvingLang
                                   ? (() => {
                                       try {
-                                        return JSON.parse(data.beschrijvingLang)?.length || 0;
+                                        return (
+                                          JSON.parse(data.beschrijvingLang)
+                                            ?.length || 0
+                                        );
                                       } catch {
                                         return 0;
                                       }
@@ -381,6 +442,50 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   </AcFlex>
                 </AcFlex>
 
+                {data.contactgegevens && (
+                  <div className='ac-organisatie-contactgegevens__container'>
+                    <div className='ac-organisatie-contactgegevens__content'>
+                      <Heading level={3}>Contactgegevens</Heading>
+                      <Paragraph>
+                        {[
+                          data.contactgegevens.voornaam,
+                          data.contactgegevens.tussenvoegsel,
+                          data.contactgegevens.achternaam,
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      </Paragraph>
+                      <AcFlex justifyContent='between' className='meta'>
+                        <AcGrid
+                          columns={2}
+                          className='ac-organisatie-contactgegevens__grid'
+                        >
+                          {data.contactgegevens.email && (
+                            <>
+                              <span className='ac-organisatie-contactgegevens__label'>
+                                Email:
+                              </span>
+                              <AcLink href={`mailto:${data.contactgegevens.email}`}>
+                                {data.contactgegevens.email}
+                              </AcLink>
+                            </>
+                          )}
+                          {data.contactgegevens.telefoon && (
+                            <>
+                              <span className='ac-organisatie-contactgegevens__label'>
+                                Telefoon:
+                              </span>
+                              <AcLink href={`tel:${data.contactgegevens.telefoon}`}>
+                                {data.contactgegevens.telefoon}
+                              </AcLink>
+                            </>
+                          )}
+                        </AcGrid>
+                      </AcFlex>
+                    </div>
+                  </div>
+                )}
+
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
@@ -392,6 +497,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               'naam',
                               'beschrijvingKort',
                               'beschrijvingLang',
+                              'contactgegevens',
                             ].includes(key)
                         )
                         .map(([key, schemaProperties]) => (
@@ -552,6 +658,18 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                   onSuccess={() => {
                     navigate('/beheer/organisaties');
+                  }}
+                />
+
+                <AcPublishDepublishOrganizationModal
+                  organization={data}
+                  showModal={openModal === 'publish' || openModal === 'depublish'}
+                  publish={openModal === 'publish'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
                   }}
                 />
               </AcFlex>
