@@ -69,7 +69,7 @@ const AcDeleteGebruikersModal = ({
     <AcModal
       ref={modalRef}
       id='delete-gebruiker-modal'
-      title={`${gebruikers.length === 1 ? 'Gebruiker' : 'Gebruikers'} verwijderen`}
+      title={`${gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} verwijderen`}
       buttons={[
         {
           label: 'verwijderen',
@@ -87,7 +87,7 @@ const AcDeleteGebruikersModal = ({
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {gebruikers.length === 1 ? 'gebruiker' : 'gebruikers'} wilt verwijderen?
+        {gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt verwijderen?
         {gebruikers.map((gebruiker) => (
           <Paragraph key={gebruiker.id}>
             {gebruiker.voornaam} {gebruiker.achternaam} ({gebruiker.email})

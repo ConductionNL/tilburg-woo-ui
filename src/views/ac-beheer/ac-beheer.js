@@ -87,7 +87,7 @@ const AcBeheer = () => {
         return <AcBeheerOrganisaties />;
       case 'kwetsbaarheden':
         return <AcBeheerKwetsbaarheden />;
-      case 'gebruikers':
+      case 'contactpersonen':
         return <AcBeheerGebruikers />;
       default:
         return wrongPage();
@@ -109,7 +109,7 @@ const AcBeheer = () => {
       return <AcBeheerOrganisatieDetails id={id} />;
     case 'kwetsbaarheden':
       return <AcBeheerKwetsbaarheidDetails id={id} />;
-    case 'gebruikers':
+    case 'contactpersonen':
       return <AcBeheerGebruikerDetails id={id} />;
     default:
       return wrongPage();

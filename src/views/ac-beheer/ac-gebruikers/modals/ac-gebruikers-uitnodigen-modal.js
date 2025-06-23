@@ -75,7 +75,7 @@ const AcGebruikersUitnodigenModal = ({
     <AcModal
       ref={modalRef}
       id='invite-gebruikers-modal'
-      title={`${gebruikers.length === 1 ? 'Gebruiker' : 'Gebruikers'} uitnodigen`}
+      title={`${gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} uitnodigen`}
       buttons={[
         {
           label: 'annuleren',
@@ -96,7 +96,7 @@ const AcGebruikersUitnodigenModal = ({
       <AcFlex column spacing='sm'>
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
           Weet je zeker dat je deze{' '}
-          {gebruikers.length === 1 ? 'gebruiker' : 'gebruikers'} wilt uitnodigen?
+          {gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt uitnodigen?
         </Paragraph>
         <div>
           {gebruikers.map((gebruiker) => (

@@ -203,7 +203,7 @@ const AcGebruikersFormModal = ({
     <AcModal
       ref={modalRef}
       id='edit-gebruiker-modal'
-      title={isEdit ? 'Gebruiker bewerken' : 'Gebruiker toevoegen'}
+      title={isEdit ? 'Contactpersoon bewerken' : 'Contactpersoon toevoegen'}
       layoutClassName='wide-content'
       buttons={[
         {

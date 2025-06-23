@@ -179,7 +179,7 @@ const AcBeheerGebruikers = () => {
   };
 
   if (error) {
-    return <AcBeheerError title='Beheer Gebruikers' error={error.message} />;
+    return <AcBeheerError title='Beheer Contactpersonen' error={error.message} />;
   }
 
   return (
@@ -193,7 +193,7 @@ const AcBeheerGebruikers = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Gebruikers</Heading>
+            <Heading>Beheer Contactpersonen</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -288,7 +288,7 @@ const AcBeheerGebruikers = () => {
                         icon={<VISUALS.EYE />}
                         onClick={() => {
                           navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruikers', row.id)
+                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('contactpersonen', row.id)
                           );
                         }}
                       >
