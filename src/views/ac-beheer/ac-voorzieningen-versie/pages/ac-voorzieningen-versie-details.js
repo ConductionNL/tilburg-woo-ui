@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcSideNav, AcLoader } from '@components';
+import { AcSideNav, AcLoader, ConSpinLoader } from '@components';
 import {
   Heading,
   Paragraph,
@@ -27,6 +27,8 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
+  const [voorziening, setVoorziening] = useState(null);
+  const [voorzieningLoading, setVoorzieningLoading] = useState(true);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -39,7 +41,10 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
 
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
-      const extend = [['_extend[]', 'voorzieningaanbod']];
+      const extend = [
+        ['_extend[]', 'voorzieningaanbod'],
+        ['_extend[]', 'voorziening'],
+      ];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
@@ -68,12 +73,26 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
 
       setData(data);
       setDataProperties(dataProperties);
+
+      if (data?.voorzieningaanbod?.voorziening) {
+        fetchVoorziening(data.voorzieningaanbod.voorziening);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchVoorziening = async (id) => {
+    setVoorzieningLoading(true);
+    const response = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening/${id}`
+    );
+    const voorziening = response.data;
+    setVoorziening(voorziening);
+    setVoorzieningLoading(false);
   };
 
   useEffect(() => {
@@ -130,28 +149,87 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      {Object.entries(dataProperties)
-                        .filter(
+                      {[
+                        // Insert custom Voorziening naam property first
+                        [
+                          'voorziening_naam',
+                          {
+                            type: 'string',
+                            title: 'Voorziening naam',
+                          },
+                        ],
+                        // Then spread the filtered dataProperties
+                        ...Object.entries(dataProperties).filter(
                           ([key]) =>
                             ![
                               'id',
                               'naam',
                               'kwetsbaarheden',
                               'systeemvereisten',
+                              'inDatumOntwikkeling',
+                              //   'uitDatumOntwikkeling',
+                              'inDatumActief',
+                              //   'uitDatumActief',
+                              'inDatumEindeOndersteuning',
+                              //   'uitDatumEindeOndersteuning',
+                              'inDatumOnderhoud',
+                              //   'uitDatumOnderhoud',
                             ].includes(key)
-                        )
-                        .map(([key, schemaProperties]) => (
+                        ),
+                        // loop over the array we just made
+                      ].map(([key, schemaProperties]) => {
+                        // Define custom property renderers
+                        const customPropertyRenderers = {
+                          voorziening_naam: {
+                            render: () => (
+                              <a href={`/beheer/applicaties/${voorziening?.id}`}>
+                                {voorziening?.naam}
+                              </a>
+                            ),
+                            loading: voorzieningLoading,
+                          },
+                          voorzieningaanbod: {
+                            render: () => (
+                              <a
+                                href={`/beheer/diensten/${data.voorzieningaanbod.id}`}
+                              >
+                                {data.voorzieningaanbod.naam ||
+                                  data.voorzieningaanbod.id}
+                              </a>
+                            ),
+                          },
+                        };
+
+                        const customRenderer = customPropertyRenderers[key];
+
+                        return (
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>
                             <Paragraph>
-                              {formatBySchema(schemaProperties, data, key, {
-                                include: ['id'],
-                                includeUnknown: true,
-                                inline: true,
-                              })}
+                              {customRenderer ? (
+                                customRenderer.loading ? (
+                                  <ConSpinLoader />
+                                ) : (
+                                  customRenderer.render()
+                                )
+                              ) : (
+                                formatBySchema(schemaProperties, data, key, {
+                                  include: ['id'],
+                                  includeUnknown: true,
+                                  inline: true,
+                                  profile: {
+                                    voorzieningaanbod: {
+                                      include: ['id'],
+                                      includeUnknown: true,
+                                      inline: true,
+                                    },
+                                  },
+                                })
+                              )}
                             </Paragraph>
                           </div>
-                        ))}
+                        );
+                      })}
                     </div>
                   </AcFlex>
                 </AcColumn>
