@@ -38,7 +38,7 @@ import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
 import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
 import ConActionMenu from '../../con-action-menu';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
@@ -534,7 +534,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}

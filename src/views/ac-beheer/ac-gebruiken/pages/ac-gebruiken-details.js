@@ -19,7 +19,7 @@ import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
 import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerGebruikenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -156,7 +156,7 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}

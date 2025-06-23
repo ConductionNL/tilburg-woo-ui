@@ -20,7 +20,7 @@ import { BASE_URL } from '../../ac-beheer';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import { useLaterEffect } from '@src/hooks';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BEHEER_RENAMES } from '../../beheer-renames';
@@ -325,7 +325,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                         </AcTabPanel>
 
                         <AcTabPanel selected={tabIndex === 1}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}

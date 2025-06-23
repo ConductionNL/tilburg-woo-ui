@@ -19,7 +19,7 @@ import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 
 const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -171,7 +171,7 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}
