@@ -99,7 +99,7 @@ const AcBeheerVoorzieningenVersie = () => {
       console.error('Error fetching data:', err);
       setError(err);
     }
-  }, []);
+  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
 
   useEffect(() => {
     fetchData();

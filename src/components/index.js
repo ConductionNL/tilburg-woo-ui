@@ -48,6 +48,10 @@ const ConHorizontalOverflowWrapper = loadable(() =>
 const ConSpinLoader = loadable(() =>
   import('@src/components/con-spin-loader/con-spin-loader')
 );
+const ConDynamicSchemaForm = loadable(() =>
+  import('@src/components/con-dynamic-schema-form/con-dynamic-schema-form')
+);
+
 
 export {
   AcAbout,
@@ -73,4 +77,5 @@ export {
   AcSideNav,
   ConHorizontalOverflowWrapper,
   ConSpinLoader,
+  ConDynamicSchemaForm,
 };

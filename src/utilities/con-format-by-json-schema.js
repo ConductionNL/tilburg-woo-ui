@@ -2,6 +2,17 @@ import React from 'react';
 import { Link } from '@utrecht/component-library-react/dist/css-module';
 
 /**
+ * Helper function to determine the actual runtime type of a value
+ * @param {*} value - The value to check
+ * @returns {string} - The actual type of the value
+ */
+function getActualType(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  return typeof value;
+}
+
+/**
  * Render a value according to its JSON-Schema definition.
  *
  * @param {object} schema             The schema for this property (must include `type`, may include `format`, `items`, `properties`, `enum`, `description`).
@@ -22,7 +33,10 @@ function formatBySchema(schema, data, dataKey, options = {}) {
     return <span>-</span>;
   }
 
-  switch (schema.type) {
+  // Get the actual runtime type of the value, as the schema type is in practice not always the actual type
+  const actualType = getActualType(value);
+
+  switch (actualType) {
     case 'string': {
       // handle enums first
       if (schema.enum) {
@@ -43,7 +57,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           return <time dateTime={value}>{d.toLocaleTimeString()}</time>;
         }
         case 'duration': {
-          // basic ISO 8601 duration → “PT1H30M” → “1 h 30 m”
+          // basic ISO 8601 duration → "PT1H30M" → "1 h 30 m"
           const [, hours, mins] = /^PT(?:(\d+)H)?(?:(\d+)M)?/.exec(value) || [];
           const parts = [];
           if (hours) parts.push(`${hours} h`);
@@ -167,13 +181,11 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                   formatBySchema(childSchema, value, key, currentOptions)
                 ) : (
                   <span>
-                    {value[key] === undefined || value[key] === null ? (
-                      '-'
-                    ) : typeof value[key] === 'object' ? (
-                      JSON.stringify(value[key])
-                    ) : (
-                      value[key]
-                    )}
+                    {value[key] === undefined || value[key] === null
+                      ? '-'
+                      : typeof value[key] === 'object'
+                      ? JSON.stringify(value[key])
+                      : value[key]}
                   </span>
                 )}
                 {idx < entries.length - 1 ? ', ' : ''}
@@ -206,7 +218,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
     }
 
     default:
-      return <code>Unsupported type "{schema.type}"</code>;
+      return <code>Unsupported type "{actualType}"</code>;
   }
 }
 

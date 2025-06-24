@@ -93,7 +93,7 @@ const AcBeheerApplicaties = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
