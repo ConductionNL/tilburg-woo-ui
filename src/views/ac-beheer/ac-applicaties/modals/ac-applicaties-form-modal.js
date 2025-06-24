@@ -109,7 +109,7 @@ const AcApplicatiesFormModal = ({
       setOrganisatiesOptions(
         data.results.map((item) => ({
           value: item.id,
-          label: item.naam ?? item.id,
+          label: item.naam || item.id,
         }))
       );
     };
