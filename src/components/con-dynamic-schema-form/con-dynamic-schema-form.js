@@ -214,10 +214,21 @@ const ConDynamicSchemaForm = ({
   };
 
   // Get options for a field
-  const getFieldOptions = (propertyName) => {
+  const getFieldOptions = (propertyName, propertySchema) => {
+    // Priority 1: Schema enum takes highest priority
+    if (propertySchema.enum) {
+      return propertySchema.enum.map((option) => ({
+        value: option,
+        label: option,
+      }));
+    }
+
+    // Priority 2: OptionsProviders if no enum in schema
     if (optionsProviders[propertyName]) {
       return optionsProviders[propertyName];
     }
+
+    // Priority 3: No options
     return [];
   };
 
@@ -270,12 +281,7 @@ const ConDynamicSchemaForm = ({
     if (!fieldConfig.visible) return null;
 
     const value = formData[propertyName];
-    const options = fieldConfig.options
-      ? fieldConfig.options.map((option) => ({
-          value: option.value,
-          label: option.label,
-        }))
-      : getFieldOptions(propertyName);
+    const options = getFieldOptions(propertyName, propertySchema);
     const isLoading = getFieldLoading(propertyName);
     const isDisabled = getFieldDisabled(propertyName);
     const validation = getFieldValidation(propertyName, fieldConfig);
