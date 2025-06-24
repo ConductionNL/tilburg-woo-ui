@@ -50,13 +50,6 @@
 
   &__icon {
     flex-shrink: 0;
-
-    &__check {
-      color: var(--utrecht-alert-icon-positive-color);
-    }
-    &__exclamation {
-      color: var(--utrecht-alert-icon-warning-color);
-    }
   }
   &__name {
     white-space: normal;

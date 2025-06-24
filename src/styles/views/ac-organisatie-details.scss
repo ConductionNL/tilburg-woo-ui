@@ -101,7 +101,7 @@
 .ac-organisatie-detail-form-flex {
   display: flex;
   gap: 2rem;
-  align-items: stretch; // Ensures both children have equal height
+  align-items: flex-start; // or stretch
 }
 
 .ac-organisatie-detail-form-textarea,
@@ -147,9 +147,8 @@
 }
 
 .ac-description-edit-btn {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
+  opacity: 1; // Always visible
+  pointer-events: auto; // Always clickable
 }
 
 .ac-description-row:hover .ac-description-edit-btn {
@@ -168,4 +167,16 @@
 
 .ac-organisatie-details-alert-paragraph {
   color: var(--utrecht-alert-warning-color) !important;
+}
+
+.ac-organisatie-detail-form-preview {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  margin-bottom: 0; // Remove extra space if needed
+
+  .ac-form-field__label-with-icon {
+    margin-bottom: 0.5rem;
+  }
 }
