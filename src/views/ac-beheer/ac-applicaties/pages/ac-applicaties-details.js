@@ -300,7 +300,11 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                                       >
                                         <TableCell>{version.versienummer}</TableCell>
                                         <TableCell>{version.status}</TableCell>
-                                        <TableCell>{new Date(version.releaseDatum).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                          {/^\d{4}-\d{2}-\d{2}$/.test(version.releaseDatum) 
+                                            ? version.releaseDatum
+                                            : new Date(version.releaseDatum).toLocaleDateString()}
+                                        </TableCell>
                                         <TableCell>{version.releaseNotes}</TableCell>
                                         <TableCell>
                                           <SecondaryActionButton
