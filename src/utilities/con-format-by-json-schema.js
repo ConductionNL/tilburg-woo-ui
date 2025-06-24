@@ -2,6 +2,17 @@ import React from 'react';
 import { Link } from '@utrecht/component-library-react/dist/css-module';
 
 /**
+ * Helper function to determine the actual runtime type of a value
+ * @param {*} value - The value to check
+ * @returns {string} - The actual type of the value
+ */
+function getActualType(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  return typeof value;
+}
+
+/**
  * Render a value according to its JSON-Schema definition.
  *
  * @param {object} schema             The schema for this property (must include `type`, may include `format`, `items`, `properties`, `enum`, `description`).
@@ -13,10 +24,7 @@ import { Link } from '@utrecht/component-library-react/dist/css-module';
  * - inline: boolean, if true render object as inline text (default: false)
  * - includeUnknown: boolean, if true render object properties not defined in schema (default: false)
  * - profile: object mapping property keys to per-key option overrides
- * - extended: boolean, if true render object properties not defined in schema (default: false). When true, will attempt to display a human readable value from common fields like title, name, id etc.
- * - extendedFields: array of strings, custom fields to check for human readable values when extended is true (default: ['title', 'titel', 'name', 'naam', 'id'])
  */
- 
 function formatBySchema(schema, data, dataKey, options = {}) {
   // if dataKey is passed, grab that property; otherwise data itself is the value
   const value = dataKey != null ? data[dataKey] : data;
@@ -25,18 +33,14 @@ function formatBySchema(schema, data, dataKey, options = {}) {
     return <span>-</span>;
   }
 
-  switch (schema.type) {
+  // Get the actual runtime type of the value, as the schema type is in practice not always the actual type
+  const actualType = getActualType(value);
+
+  switch (actualType) {
     case 'string': {
       // handle enums first
       if (schema.enum) {
         return <span>{value}</span>;
-      }
-      if (options.extended) {
-        return (
-          <span>
-            {value.title || value.titel || value.name || value.naam || value.id}
-          </span>
-        );
       }
       switch (schema.format) {
         // custom date formatting
@@ -53,7 +57,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           return <time dateTime={value}>{d.toLocaleTimeString()}</time>;
         }
         case 'duration': {
-          // basic ISO 8601 duration → “PT1H30M” → “1 h 30 m”
+          // basic ISO 8601 duration → "PT1H30M" → "1 h 30 m"
           const [, hours, mins] = /^PT(?:(\d+)H)?(?:(\d+)M)?/.exec(value) || [];
           const parts = [];
           if (hours) parts.push(`${hours} h`);
@@ -214,7 +218,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
     }
 
     default:
-      return <code>Unsupported type "{schema.type}"</code>;
+      return <code>Unsupported type "{actualType}"</code>;
   }
 }
 
