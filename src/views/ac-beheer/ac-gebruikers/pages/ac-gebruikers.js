@@ -116,6 +116,13 @@ const AcBeheerGebruikers = () => {
         key: 'voornaam',
         customContent: (row) => `${row.voornaam} ${row.achternaam}`,
       },
+      organisatie: {
+        id: 'organisatie',
+        label: 'Organisatie',
+        key: 'organisatie',
+        customContent: (row) => `${row.organisatie.naam}`,
+      },
+
       actief: {
         id: 'status',
         label: 'Status',
@@ -160,10 +167,18 @@ const AcBeheerGebruikers = () => {
       })
       .flat(); // flatten the array of arrays
 
+    // Temporary header for organisatie until we have a proper schema
+    schemaHeaders.push({
+      id: 'organisatie',
+      label: 'Organisatie',
+      key: 'organisatie',
+      customContent: (row) => `${row.organisatie}`,
+    });
+
     return schemaHeaders;
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
+  const defaultHeaders = ['name', 'status', 'lastActivity', 'email', 'organisatie'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {

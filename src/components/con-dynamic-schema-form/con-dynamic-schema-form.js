@@ -185,6 +185,19 @@ const ConDynamicSchemaForm = ({
       };
     }
 
+    // Check if options are provided externally for string fields
+    if (
+      propertySchema.type === 'string' &&
+      optionsProviders[propertyName]?.length > 0
+    ) {
+      return {
+        ...baseConfig,
+        type: 'select',
+        component: 'ReactSelect',
+        placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
+      };
+    }
+
     if (propertySchema.type === 'string') {
       return {
         ...baseConfig,
