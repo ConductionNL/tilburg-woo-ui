@@ -195,7 +195,7 @@ const AcBeheerOrganisaties = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['organizationName', 'status', 'logo', 'contactDetails'];
+  const defaultHeaders = ['name', 'status', 'logo', 'contactDetails'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
@@ -289,6 +289,25 @@ const AcBeheerOrganisaties = () => {
           <ConTable
             data={data}
             tableHeaders={[
+              {
+                id: 'name',
+                label: 'Naam',
+                key: 'name',
+                customContent: (row) => (
+                  <div className='ac-beheer-organisaties-name-container'>
+                    <div className='ac-beheer-organisaties-name-container__icon'>
+                      {row['@self'].published ? (
+                        <VISUALS.CIRCLE_CHECK className='ac-beheer-organisaties-name-container__icon__check' />
+                      ) : (
+                        <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-organisaties-name-container__icon__exclamation' />
+                      )}
+                    </div>
+                    <div className='ac-beheer-organisaties-name-container__name'>
+                      {row.naam || '-'}
+                    </div>
+                  </div>
+                ),
+              },
               ...tableHeaders,
               {
                 id: 'actions',
