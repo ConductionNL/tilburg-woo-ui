@@ -10,6 +10,7 @@ import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import ReactSelect from 'react-select';
 import _ from 'lodash';
+import clsx from 'clsx';
 
 const AcVoorzieningVersieFormModal = ({
   voorziening,
@@ -31,6 +32,7 @@ const AcVoorzieningVersieFormModal = ({
 
   const initialData = {
     naam: '',
+    voorziening: '',
     voorzieningaanbod: '',
     versienummer: '',
     releaseNotes: '',
@@ -48,19 +50,26 @@ const AcVoorzieningVersieFormModal = ({
   };
 
   const [voorzieningFormData, setVoorzieningFormData] = useState({});
-
   const [schema, setSchema] = useState(null);
+  const [voorzieningOptions, setVoorzieningOptions] = useState([]);
+  const [voorzieningAanbodOptions, setVoorzieningAanbodOptions] = useState([]);
+  const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
+  const [voorzieningAanbodLoading, setVoorzieningAanbodLoading] = useState(false);
 
   useEffect(() => {
     setVoorzieningFormData({
       ..._.cloneDeep(initialData),
-      ...(voorziening &&
-        isEdit && {
-          ...voorziening,
-          voorzieningaanbod: collapseExtendedObjects(voorziening.voorzieningaanbod),
-        }),
+      ...(voorziening && {
+        ...voorziening,
+        voorziening: isEdit
+          ? collapseExtendedObjects(voorziening.voorziening)
+          : voorziening.id,
+        voorzieningaanbod: isEdit
+          ? collapseExtendedObjects(voorziening.voorzieningaanbod)
+          : voorziening.voorzieningaanbod || '',
+      }),
     });
-  }, [voorziening, showModal]);
+  }, [voorziening, showModal, isEdit]);
 
   useEffect(() => {
     const fetchSchema = async () => {
@@ -71,8 +80,48 @@ const AcVoorzieningVersieFormModal = ({
       setSchema(data);
     };
 
+    const fetchVoorzieningen = async () => {
+      try {
+        setVoorzieningenLoading(true);
+        const response = await makeRequest(
+          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
+        );
+        const data = response.data.results;
+        const options = data.map((voorziening) => ({
+          label: voorziening.naam,
+          value: voorziening.id,
+        }));
+        setVoorzieningOptions(options);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setVoorzieningenLoading(false);
+      }
+    };
+
+    const fetchVoorzieningAanbod = async () => {
+      try {
+        setVoorzieningAanbodLoading(true);
+        const response = await makeRequest(
+          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningaanbod`
+        );
+        const data = response.data.results;
+        const options = data.map((aanbod) => ({
+          label: aanbod.naam || aanbod.id,
+          value: aanbod.id,
+        }));
+        setVoorzieningAanbodOptions(options);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setVoorzieningAanbodLoading(false);
+      }
+    };
+
     if (showModal) {
       fetchSchema();
+      fetchVoorzieningen();
+      fetchVoorzieningAanbod();
     }
   }, [showModal]);
 
@@ -203,21 +252,66 @@ const AcVoorzieningVersieFormModal = ({
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Applicatie</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een applicatie'
+            className={clsx('ac-beheer-select', {
+              'ac-beheer-select--disabled': !isEdit && voorziening?.id,
+            })}
+            value={voorzieningOptions?.filter(
+              (option) => voorzieningFormData?.voorziening === option.value
+            )}
+            onChange={(e) => {
+              setVoorzieningFormData((prev) => ({
+                ...prev,
+                voorziening: e && e.value,
+              }));
+            }}
+            options={voorzieningOptions}
+            isLoading={voorzieningenLoading}
+            isDisabled={!isEdit && voorziening?.id}
+            {...(schema?.properties?.voorziening?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorziening?.required && {
+              isClearable: true,
+            })}
+          />
+        </div>
+        <div>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Aanbod</h4>
+          </label>
+          <ReactSelect
+            placeholder='Selecteer een aanbod'
+            className='ac-beheer-select'
+            value={voorzieningAanbodOptions?.filter(
+              (option) => voorzieningFormData?.voorzieningaanbod === option.value
+            )}
+            onChange={(e) => {
+              setVoorzieningFormData((prev) => ({
+                ...prev,
+                voorzieningaanbod: e && e.value,
+              }));
+            }}
+            options={voorzieningAanbodOptions}
+            isLoading={voorzieningAanbodLoading}
+            {...(schema?.properties?.voorzieningaanbod?.required && {
+              required: true,
+            })}
+            {...(!schema?.properties?.voorzieningaanbod?.required && {
+              isClearable: true,
+            })}
+          />
+        </div>
         <AcFormField
           label='Voorziening naam'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('naam')}
           value={voorzieningFormData.naam}
-        />
-        <AcFormField
-          label='Voorziening Aanbod ID'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('voorzieningaanbod')}
-          value={voorzieningFormData.voorzieningaanbod}
-          {...(schema?.properties?.voorzieningaanbod?.required && {
-            hasError: !voorzieningFormData?.voorzieningaanbod,
-            required: true,
-          })}
         />
         <AcFormField
           label='Versie Nummer'

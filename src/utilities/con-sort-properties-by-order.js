@@ -8,6 +8,8 @@
  * @returns {Object} New object with properties sorted according to the rules
  */
 export const sortPropertiesByOrder = (properties) => {
+  if (!properties) return {};
+
   return Object.entries(properties)
     .sort(([keyA, defA], [keyB, defB]) => {
       const orderA = defA.order;

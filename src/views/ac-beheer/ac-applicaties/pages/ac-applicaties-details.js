@@ -13,6 +13,8 @@ import { ConFileDropZone } from '../../import-modal/con-file-dropzone';
 import {
   Heading,
   Paragraph,
+  SecondaryActionButton,
+  PrimaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import {
   Table,
@@ -31,6 +33,7 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
 import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import AcVoorzieningVersieFormModal from '../../ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -43,6 +46,8 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   const [tableHeaders, setTableHeaders] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [standardsDataProperties, setStandardsDataProperties] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -99,9 +104,34 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
     }
   };
 
+  const fetchVersions = async () => {
+    try {
+      setVersionsLoading(true);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
+        [['voorziening', id]]
+      );
+
+      if (response.ok) {
+        const versionsData = response.data.results || [];
+        setVersions(versionsData);
+      }
+    } catch (err) {
+      console.error('Error fetching versions:', err);
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (data?.id) {
+      fetchVersions();
+    }
+  }, [data?.id]);
 
   const tableRef = useRef(null);
 
@@ -183,6 +213,12 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                       >
                         Dienst toevoegen
                       </ConActionMenu.Button>
+                      <ConActionMenu.Button
+                        icon={<VISUALS.INFO />}
+                        onClick={() => setOpenModal('addVersion')}
+                      >
+                        Versie toevoegen
+                      </ConActionMenu.Button>
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -224,7 +260,8 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                       >
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
-                          <AcTab selected={tabIndex === 1}>Standaarden</AcTab>
+                          <AcTab selected={tabIndex === 1}>Versies</AcTab>
+                          <AcTab selected={tabIndex === 2}>Standaarden</AcTab>
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
@@ -235,6 +272,61 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                           />
                         </AcTabPanel>
                         <AcTabPanel selected={tabIndex === 1}>
+                          {versionsLoading ? (
+                            <AcLoader />
+                          ) : (
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableCell>Versie Nummer</TableCell>
+                                    <TableCell>Status</TableCell>
+                                    <TableCell>Release Datum</TableCell>
+                                    <TableCell>Release Notes</TableCell>
+                                    <TableCell>Acties</TableCell>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {versions.length === 0 ? (
+                                    <TableRow>
+                                      <TableCell colSpan={5}>
+                                        Geen versies gevonden voor deze applicatie
+                                      </TableCell>
+                                    </TableRow>
+                                  ) : (
+                                    versions.map((version) => (
+                                      <TableRow
+                                        className='ac-applicaties-details--table-row'
+                                        key={version.id}
+                                      >
+                                        <TableCell>{version.versienummer}</TableCell>
+                                        <TableCell>{version.status}</TableCell>
+                                        <TableCell>
+                                          {/^\d{4}-\d{2}-\d{2}$/.test(version.releaseDatum) 
+                                            ? version.releaseDatum
+                                            : new Date(version.releaseDatum).toLocaleDateString()}
+                                        </TableCell>
+                                        <TableCell>{version.releaseNotes}</TableCell>
+                                        <TableCell>
+                                          <SecondaryActionButton
+                                            onClick={() =>
+                                              navigate(
+                                                `/beheer/voorzieningen-versie/${version.id}`
+                                              )
+                                            }
+                                          >
+                                            <VISUALS.EYE className='ac-button__icon' />
+                                            Bekijk
+                                          </SecondaryActionButton>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))
+                                  )}
+                                </TableBody>
+                              </Table>
+                            
+                          )}
+                        </AcTabPanel>
+                        <AcTabPanel selected={tabIndex === 2}>
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -245,7 +337,14 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {data.standaarden.map((standard) => (
+                            {data.standaarden.length === 0 ? (
+                                    <TableRow>
+                                      <TableCell colSpan={4}>
+                                        Geen standaarden gevonden voor deze applicatie
+                                      </TableCell>
+                                    </TableRow>
+                                  ) : (
+                              data.standaarden.map((standard) => (
                                 <TableRow
                                   className='ac-applicaties-details--table-row'
                                   key={standard.id}
@@ -266,7 +365,8 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                                     />
                                   </TableCell>
                                 </TableRow>
-                              ))}
+                              ))
+                            )}
                             </TableBody>
                           </Table>
                         </AcTabPanel>
@@ -321,6 +421,18 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     navigate(`/beheer/diensten/${data.id}`);
                   }}
                   preSelectedVoorziening={data.id}
+                />
+
+                <AcVoorzieningVersieFormModal
+                  voorziening={{ id: data?.id, naam: data?.naam }}
+                  showModal={openModal === 'addVersion'}
+                  isEdit={false}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchVersions();
+                  }}
                 />
               </AcFlex>
             )}
