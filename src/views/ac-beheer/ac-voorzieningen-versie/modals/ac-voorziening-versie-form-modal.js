@@ -31,6 +31,7 @@ const AcVoorzieningVersieFormModal = ({
   const { makeRequest } = useNextcloudRequests();
 
   const initialData = {
+    naam: '',
     voorziening: '',
     voorzieningaanbod: '',
     versienummer: '',
@@ -307,6 +308,12 @@ const AcVoorzieningVersieFormModal = ({
           />
         </div>
         <AcFormField
+          label='Voorziening naam'
+          type='text'
+          onBlur={handleEditVoorzieningFieldChange('naam')}
+          value={voorzieningFormData.naam}
+        />
+        <AcFormField
           label='Versie Nummer'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('versienummer')}
@@ -346,7 +353,7 @@ const AcVoorzieningVersieFormModal = ({
             required: true,
           })}
         />
-        <div>
+        {/* <div>
           <label className='utrecht-form-label'>
             <h4 className='utrecht-heading-4'>Status</h4>
           </label>
@@ -370,7 +377,7 @@ const AcVoorzieningVersieFormModal = ({
               isClearable: true,
             })}
           />
-        </div>
+        </div> */}
       </AcFlex>
     </AcModal>
   );

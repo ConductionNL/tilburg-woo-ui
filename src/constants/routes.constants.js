@@ -49,6 +49,7 @@ export const PATHS = AcLockObject({
   BEHEER_TYPE: '/beheer/:type',
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
   REGISTER: '/register',
+  AANMELDEN: '/aanmelden',
   VIEWS: '/views/:id',
 });
 
@@ -293,12 +294,24 @@ export const ROUTES = {
     title: 'Beheer Type Details',
     component: AcBeheer,
   },
+  AANMELDEN: {
+    id: AcUUID(),
+    name: 'Aanmelden',
+    label: LABELS.REGISTER,
+    path: PATHS.AANMELDEN,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Aanmelden`,
+    component: AcRegister,
+  },
   REGISTER: {
     id: AcUUID(),
-    name: 'Register',
+    name: 'Aanmelden',
     label: LABELS.REGISTER,
     path: PATHS.REGISTER,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Register`,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Aanmelden`,
     component: AcRegister,
   },
   VIEWS: {

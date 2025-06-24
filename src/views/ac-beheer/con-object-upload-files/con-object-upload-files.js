@@ -12,6 +12,8 @@ import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
 import CreatableSelect from 'react-select/creatable';
 import { Heading } from '@amsterdam/design-system-react';
 import ConConfirmFileDeletionModal from './con-confirm-file-deletion-modal';
+import ConActionMenu from '../con-action-menu';
+import ConPublishDepublishFileModal from './con-publish-depublish-file-modal';
 
 // create select funcs
 const createOption = (label) => ({
@@ -27,7 +29,7 @@ const createOption = (label) => ({
  * @param {function} onSuccess - function to call when adding files is successful
  * @returns {React.JSX.Element} - component to add files to a register/schema
  */
-const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => {
+const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => {
   useEffect(() => {
     // if you open the modal without a register or schema, throw an error
     if (!register || !schema || !id) {
@@ -294,24 +296,84 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
               },
             },
             {
+              id: 'published',
+              label: 'Is gepubliceerd',
+              key: '',
+              customContent: (row) => {
+                if (row.isNew) return null;
+                if (row.published) return <VISUALS.CHECK style={{ color: 'green' }} />;
+                return <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'orange' }} />;
+              },
+              sortComparator: (a, b, direction) => {
+                if (direction === null) return 0;
+
+                const publishedA = a.published;
+                const publishedB = b.published;
+
+                // Handle cases where one or both values are null
+                if (publishedA === null && publishedB === null) return 0;
+                if (publishedA === null) return direction ? 1 : -1;
+                if (publishedB === null) return direction ? -1 : 1;
+
+                // Compare dates
+                const dateA = new Date(publishedA);
+                const dateB = new Date(publishedB);
+
+                return direction ? dateA - dateB : dateB - dateA;
+              },
+            },
+            {
               id: 'actions',
               label: 'Acties',
               key: '',
               customContent: (row) => {
                 if (row.isNew) return null;
                 return (
-                  <AcFlex column spacing='xs'>
-                    <button
-                      className='utrecht-button slim'
-                      variant='secondary'
-                      onClick={() => {
-                        setSingleSelectedFile(row);
-                        setShowModal('delete');
-                      }}
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
+                      style='buttonSlim'
                     >
-                      <VISUALS.TRASHCAN className='ac-button__icon' /> Verwijderen
-                    </button>
-                  </AcFlex>
+                      Acties
+                    </ConActionMenu.Trigger>
+
+                    <ConActionMenu.Menu position='right'>
+                      {!row.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedFile(row);
+                            setShowModal('publish');
+                          }}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+
+                      {row.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedFile(row);
+                            setShowModal('depublish');
+                          }}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.TRASHCAN />}
+                        onClick={() => {
+                          setSingleSelectedFile(row);
+                          setShowModal('delete');
+                        }}
+                      >
+                        Verwijderen
+                      </ConActionMenu.Button>
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
                 );
               },
             },
@@ -334,8 +396,22 @@ const AcObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => 
           setSingleSelectedFile(null);
         }}
       />
+
+      <ConPublishDepublishFileModal
+        register={register}
+        schema={schema}
+        id={id}
+        file={singleSelectedFile}
+        showModal={showModal === 'publish' || showModal === 'depublish'}
+        publish={showModal === 'publish'}
+        onClose={() => setShowModal('')}
+        onSuccess={() => {
+          fetchOnlineFiles();
+          setSingleSelectedFile(null);
+        }}
+      />
     </>
   );
 };
 
-export default withStore(observer(AcObjectUploadFiles));
+export default withStore(observer(ConObjectUploadFiles));

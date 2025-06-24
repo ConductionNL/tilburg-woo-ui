@@ -24,7 +24,7 @@ import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
-import { sortPropertiesByOrder } from '@src/utilities';
+import { isJsonString, sortPropertiesByOrder } from '@src/utilities';
 
 const AcBeheerGebruiken = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -163,11 +163,28 @@ const AcBeheerGebruiken = () => {
         label: 'Beheerder naam',
         key: 'beheerder',
         customContent: (row) => {
+          if (typeof row.beheerder === 'string' && isJsonString(row.beheerder)) {
+            return JSON.parse(row.beheerder)?.naam || '-';
+          }
+          if (typeof row.beheerder === 'string' && !isJsonString(row.beheerder)) {
+            return row.beheerder || '-';
+          }
           return row?.beheerder?.naam || '-';
         },
         sortComparator: (a, b, direction) => {
           if (direction === null) return 0;
-          return ConSorterLogic(a?.beheerder?.naam, b?.beheerder?.naam, direction);
+
+          const newA = _.cloneDeep(a);
+          const newB = _.cloneDeep(b);
+
+          if (typeof newA.beheerder === 'string' && isJsonString(newA.beheerder)) {
+            newA.beheerder = JSON.parse(newA.beheerder);
+          }
+          if (typeof newB.beheerder === 'string' && !isJsonString(newB.beheerder)) {
+            newB.beheerder = JSON.parse(newB.beheerder);
+          }
+          
+          return ConSorterLogic(newA?.beheerder?.naam, newB?.beheerder?.naam, direction);
         },
       },
     }),
@@ -195,7 +212,7 @@ const AcBeheerGebruiken = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['id', 'versionId', 'eindDatum', 'status'];
+  const defaultHeaders = ['voorzieningId', 'diensten', 'status', 'beheerderNaam'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {

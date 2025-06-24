@@ -177,6 +177,10 @@ const PAPER_PLANE = loadable(() =>
   import('-!svg-react-loader!@assets/images/paper-plane.svg')
 );
 
+const XMARK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/xmark.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -241,6 +245,7 @@ export const VISUALS = {
   SORT_DOWN,
   CLIPBOARD_CHECK,
   PAPER_PLANE,
+  XMARK,
 };
 
 export default {};

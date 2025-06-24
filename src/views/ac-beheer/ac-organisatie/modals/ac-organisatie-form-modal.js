@@ -28,7 +28,6 @@ const AcOrganisatieFormModal = ({
   const initialFormData = {
     contactgegevens: '',
     website: '',
-    links: '',
     oin: '',
     status: '',
     logo: '',
@@ -49,7 +48,6 @@ const AcOrganisatieFormModal = ({
   const [organisatieFormData, setOrganisatieFormData] = useState({});
   const [schema, setSchema] = useState(null);
 
-  const [linksOptions, setLinksOptions] = useState([]);
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
 
@@ -161,15 +159,6 @@ const AcOrganisatieFormModal = ({
     []
   );
 
-  const handleCreateLinkOption = (inputValue) => {
-    const newOption = createOption(inputValue);
-    setLinksOptions((prev) => [...prev, newOption]);
-    setOrganisatieFormData((prev) => ({
-      ...prev,
-      links: [...prev.links, inputValue],
-    }));
-  };
-
   const handleCreateVerklaringOption = (inputValue) => {
     const newOption = createOption(inputValue);
     setVerklaringenOptions((prev) => [...prev, newOption]);
@@ -236,35 +225,6 @@ const AcOrganisatieFormModal = ({
             required: true,
           })}
         />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Links</h4>
-          </label>
-          <CreatableSelect
-            placeholder='Voeg een link toe'
-            className='ac-beheer-select'
-            isMulti
-            closeMenuOnSelect={false}
-            value={(organisatieFormData?.links || []).map((link) => ({
-              value: link,
-              label: link,
-            }))}
-            onChange={(e) => {
-              setOrganisatieFormData((prev) => ({
-                ...prev,
-                links: e.map((item) => item.value),
-              }));
-            }}
-            onCreateOption={handleCreateLinkOption}
-            options={linksOptions}
-            {...(schema?.properties?.links?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.links?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
         <AcFormField
           label='OIN'
           type='text'

@@ -32,7 +32,7 @@ import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
 import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
-import AcObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import AcVoorzieningVersieFormModal from '../../ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
@@ -265,7 +265,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
-                          <AcObjectUploadFiles
+                          <ConObjectUploadFiles
                             register={registerSlug}
                             schema={schemaSlug}
                             id={data.id}
