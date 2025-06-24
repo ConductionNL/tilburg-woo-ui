@@ -141,7 +141,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                               'id',
                               'naam',
                               'kwetsbaarheden',
-                              'systeemvereisten',  
+                              'systeemvereisten',
                               'inDatumOntwikkeling',
                               //   'uitDatumOntwikkeling',
                               'inDatumActief',
@@ -160,9 +160,18 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                                 include: ['id'],
                                 includeUnknown: true,
                                 inline: true,
-                                extended:
-                                  key === 'voorziening' ||
-                                  key === 'voorzieningaanbod',
+                                profile: {
+                                  voorziening: {
+                                    include: ['name'],
+                                    includeUnknown: true,
+                                    inline: true,
+                                  },
+                                  voorzieningaanbod: {
+                                    include: ['name'],
+                                    includeUnknown: true,
+                                    inline: true,
+                                  },
+                                },
                               })}
                             </Paragraph>
                           </div>
