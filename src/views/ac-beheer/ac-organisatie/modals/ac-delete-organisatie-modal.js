@@ -80,17 +80,18 @@ const AcDeleteOrganisatiesModal = ({
       } verwijderen`}
       buttons={[
         {
-          label: 'verwijderen',
-          icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteOrganisatie,
-        },
-        {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'verwijderen',
+          icon: <VISUALS.TRASHCAN />,
+          onClick: handleDeleteOrganisatie,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

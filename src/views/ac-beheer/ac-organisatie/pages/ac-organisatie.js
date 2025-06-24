@@ -28,6 +28,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
+import AcAddDeelnameModal from '../modals/ac-add-deelname';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -362,6 +363,16 @@ const AcBeheerOrganisaties = () => {
                       )}
 
                       <ConActionMenu.Button
+                        icon={<VISUALS.PLUS />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('addDeelname');
+                        }}
+                      >
+                        Deelname toevoegen
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => {
                           setSingleSelectedRow(row);
@@ -460,6 +471,18 @@ const AcBeheerOrganisaties = () => {
             showModal={openModal === 'publish' || openModal === 'depublish'}
             publish={openModal === 'publish'}
             onClose={() => {
+              setOpenModal(null);
+            }}
+          />
+
+          <AcAddDeelnameModal
+            organization={singleSelectedRow}
+            showModal={openModal === 'addDeelname'}
+            onClose={() => {
+              setOpenModal(null);
+            }}
+            onSuccess={() => {
+              fetchData();
               setOpenModal(null);
             }}
           />
