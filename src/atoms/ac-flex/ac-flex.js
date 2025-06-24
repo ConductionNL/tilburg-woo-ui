@@ -24,6 +24,7 @@ const AcFlex = ({
   wrap,
   grow,
   className,
+  style,
 }) => {
   const _CLASSES = clsx(
     'ac-flex',
@@ -37,7 +38,11 @@ const AcFlex = ({
     className
   );
 
-  return <div className={_CLASSES}>{children}</div>;
+  return (
+    <div className={_CLASSES} style={style}>
+      {children}
+    </div>
+  );
 };
 
 export default AcFlex;

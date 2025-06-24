@@ -10,6 +10,8 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
+import { ConFileDropZone } from '../../import-modal/con-file-dropzone';
+import { AcFlex } from '@src/atoms';
 
 const createOption = (label) => ({
   label,
@@ -50,6 +52,8 @@ const AcOrganisatieFormModal = ({
 
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
+
+  const [logoFile, setLogoFile] = useState(null);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -122,6 +126,9 @@ const AcOrganisatieFormModal = ({
         body: JSON.stringify({
           ...organisatieFormData,
           contactgegevens: smartSplit(organisatieFormData.contactgegevens),
+          logo: logoFile
+            ? await logoFile.getDataUrl()
+            : organisatieFormData.logo || null,
         }),
       });
 
@@ -177,6 +184,25 @@ const AcOrganisatieFormModal = ({
     }));
   };
 
+  const handleLogoFileSelect = (e) => {
+    if (!e.target.files.length) {
+      setLogoFile(null);
+      return;
+    }
+
+    const file = e.target.files[0];
+    file.getDataUrl = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
+
+    setLogoFile(file);
+  };
+
   const renderOrganisatieFormModal = (
     <AcModal
       ref={modalRef}
@@ -184,14 +210,15 @@ const AcOrganisatieFormModal = ({
       title={isEdit ? 'Organisatie bewerken' : 'Organisatie toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcGrid columns={2}>
@@ -245,7 +272,7 @@ const AcOrganisatieFormModal = ({
             required: true,
           })}
         />
-        <AcFormField
+        {/* <AcFormField
           label='Logo'
           type='text'
           onBlur={handleEditOrganisatieFieldChange('logo')}
@@ -254,7 +281,54 @@ const AcOrganisatieFormModal = ({
             hasError: !organisatieFormData.logo,
             required: true,
           })}
-        />
+        /> */}
+        <AcFlex column>
+          <label className='utrecht-form-label'>
+            <h4 className='utrecht-heading-4'>Logo</h4>
+          </label>
+
+          <input
+            id='fileInput-logo'
+            type='file'
+            accept={[
+              'image/png',
+              'image/jpeg',
+              'image/jpg',
+              'image/webp',
+              'image/svg+xml',
+            ].join(',')}
+            multiple={false}
+            onChange={handleLogoFileSelect}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid var(--utrecht-textbox-border-color)',
+              borderRadius: 'var(--utrecht-select-border-radius)',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontSize: '1em',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: '#f0f0f0',
+                borderColor: 'var(--utrecht-button-primary-action-border-color)',
+              },
+            }}
+          />
+
+          <small
+            style={{
+              display: 'block',
+              marginTop: '0.5em',
+              color: 'var(--utrecht-paragraph-color)',
+              fontSize: '0.85em',
+              fontStyle: 'italic',
+              opacity: 0.85,
+              userSelect: 'none',
+            }}
+          >
+            Toegestane bestandstypen: png, jpeg, jpg, webp, svg
+          </small>
+        </AcFlex>
         <AcFormField
           label='CBS'
           type='text'

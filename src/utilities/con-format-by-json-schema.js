@@ -114,7 +114,12 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           {value.length === 0 && <span>-</span>}
           {value.map((item, i) => (
             <li style={{ marginInlineStart: '16px' }} key={i}>
-              {formatBySchema(schema.items, item, undefined, options)}
+              {formatBySchema(
+                schema.items,
+                item,
+                null,
+                options.profile[dataKey] || options
+              )}
             </li>
           ))}
         </ul>
