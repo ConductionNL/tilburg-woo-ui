@@ -19,6 +19,7 @@ import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-m
 import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -39,7 +40,10 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
 
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
-      const extend = [['_extend[]', 'voorzieningaanbod']];
+      const extend = [
+        ['_extend[]', 'voorziening'],
+        ['_extend[]', 'voorzieningaanbod'],
+      ];
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
@@ -130,12 +134,12 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      {Object.entries(dataProperties)
+                      {Object.entries(sortPropertiesByOrder(dataProperties))
                         .filter(
                           ([key]) =>
                             ![
                               'id',
-                              'naam',
+                              'naam', 
                               'kwetsbaarheden',
                               'systeemvereisten',
                             ].includes(key)
@@ -148,6 +152,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                                 include: ['id'],
                                 includeUnknown: true,
                                 inline: true,
+                                extended: key === 'voorziening' || key === 'voorzieningaanbod',
                               })}
                             </Paragraph>
                           </div>

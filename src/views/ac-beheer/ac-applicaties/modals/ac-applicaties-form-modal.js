@@ -22,8 +22,6 @@ const AcApplicatiesFormModal = ({
     name: '',
     description: '',
     category: '',
-    functionalities: '[]',
-    targetGroups: [],
     referenceComponents: [],
     standards: [],
     voorzieningstype: '',
@@ -203,8 +201,6 @@ const AcApplicatiesFormModal = ({
           name: applicatie.naam,
           description: applicatie.beschrijving,
           category: applicatie.categorie,
-          functionalities: applicatie.functionaliteiten,
-          targetGroups: JSON.parse(applicatie.doelgroep),
           referenceComponents: smartSplit(
             collapseExtendedObjects(applicatie.referentieComponenten)
           ),
@@ -242,8 +238,6 @@ const AcApplicatiesFormModal = ({
           naam: applicatieFormData.name,
           beschrijving: applicatieFormData.description,
           categorie: applicatieFormData.category,
-          functionaliteiten: JSON.parse(applicatieFormData.functionalities),
-          doelgroep: JSON.stringify(applicatieFormData.targetGroups),
           referentieComponenten: applicatieFormData.referenceComponents,
           standaarden: applicatieFormData.standards,
           voorzieningstype: applicatieFormData.voorzieningstype,
@@ -251,6 +245,40 @@ const AcApplicatiesFormModal = ({
       });
 
       if (response.ok) {
+        // If this is a new application (not edit), create a version automatically
+        if (!isEdit) {
+          try {
+            const applicatieData = await response.data;
+            const currentDate = new Date().toISOString();
+
+            // Create version 0.0.1 for the new application
+            const versionResponse = await makeRequest(
+              `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
+              null,
+              {
+                method: 'POST',
+                body: JSON.stringify({
+                  voorziening: applicatieData.id,
+                  versienummer: '0.0.1',
+                  releaseDatum: currentDate,
+                  status: applicatieData.status,
+                  inDatumOntwikkeling: currentDate,
+                }),
+              }
+            );
+
+            if (!versionResponse.ok) {
+              console.warn(
+                'Failed to create initial version for application:',
+                versionResponse
+              );
+            }
+          } catch (versionError) {
+            console.error('Error creating initial version:', versionError);
+            // Don't fail the entire operation if version creation fails
+          }
+        }
+
         onSuccess?.();
         modalRef?.current?.close();
       }

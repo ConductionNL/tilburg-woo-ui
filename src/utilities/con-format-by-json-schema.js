@@ -13,7 +13,10 @@ import { Link } from '@utrecht/component-library-react/dist/css-module';
  * - inline: boolean, if true render object as inline text (default: false)
  * - includeUnknown: boolean, if true render object properties not defined in schema (default: false)
  * - profile: object mapping property keys to per-key option overrides
+ * - extended: boolean, if true render object properties not defined in schema (default: false). When true, will attempt to display a human readable value from common fields like title, name, id etc.
+ * - extendedFields: array of strings, custom fields to check for human readable values when extended is true (default: ['title', 'titel', 'name', 'naam', 'id'])
  */
+ 
 function formatBySchema(schema, data, dataKey, options = {}) {
   // if dataKey is passed, grab that property; otherwise data itself is the value
   const value = dataKey != null ? data[dataKey] : data;
@@ -27,6 +30,13 @@ function formatBySchema(schema, data, dataKey, options = {}) {
       // handle enums first
       if (schema.enum) {
         return <span>{value}</span>;
+      }
+      if (options.extended) {
+        return (
+          <span>
+            {value.title || value.titel || value.name || value.naam || value.id}
+          </span>
+        );
       }
       switch (schema.format) {
         // custom date formatting
@@ -167,13 +177,11 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                   formatBySchema(childSchema, value, key, currentOptions)
                 ) : (
                   <span>
-                    {value[key] === undefined || value[key] === null ? (
-                      '-'
-                    ) : typeof value[key] === 'object' ? (
-                      JSON.stringify(value[key])
-                    ) : (
-                      value[key]
-                    )}
+                    {value[key] === undefined || value[key] === null
+                      ? '-'
+                      : typeof value[key] === 'object'
+                      ? JSON.stringify(value[key])
+                      : value[key]}
                   </span>
                 )}
                 {idx < entries.length - 1 ? ', ' : ''}
