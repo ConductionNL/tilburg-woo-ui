@@ -297,9 +297,9 @@ const AcBeheerOrganisaties = () => {
                   <div className='ac-beheer-organisaties-name-container'>
                     <div className='ac-beheer-organisaties-name-container__icon'>
                       {row['@self'].published ? (
-                        <VISUALS.CIRCLE_CHECK className='ac-beheer-organisaties-name-container__icon__check' />
+                        <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
                       ) : (
-                        <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-organisaties-name-container__icon__exclamation' />
+                        <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
                       )}
                     </div>
                     <div className='ac-beheer-organisaties-name-container__name'>

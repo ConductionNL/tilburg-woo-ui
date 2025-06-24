@@ -29,6 +29,8 @@ import {
   TableCell,
   Link,
   Alert,
+  PrimaryActionButton,
+  SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -284,22 +286,20 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             {255 - charCountKort} karakters over
                           </span>
                           <div className='ac-organisatie-detail-form-buttons'>
-                            <Button
-                              appearance='primary-action-button'
+                            <PrimaryActionButton
                               onClick={() => handleSaveDescription('kort')}
                             >
-                              Opslaan
-                            </Button>
-                            <Button
-                              appearance='secondary-action-button'
+                              <VISUALS.SAVE className='ac-button__icon' /> Opslaan
+                            </PrimaryActionButton>
+                            <SecondaryActionButton
                               onClick={() => {
                                 setIsEditingKort(false);
                                 setTempBeschrijvingKort(data.beschrijvingKort);
                                 setCharCountKort(data.beschrijvingKort?.length || 0);
                               }}
                             >
-                              Annuleren
-                            </Button>
+                              <VISUALS.CLOSE className='ac-button__icon' /> Annuleren
+                            </SecondaryActionButton>
                           </div>
                         </div>
                       ) : (
@@ -320,7 +320,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               setCharCountKort(data.beschrijvingKort?.length || 0);
                             }}
                           >
-                            <VISUALS.PENCIL />
+                            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
                           </Button>
                         </div>
                       )}
@@ -362,14 +362,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               {2000 - charCountLang} karakters over
                             </span>
                             <div className='ac-organisatie-detail-form-buttons'>
-                              <Button
-                                appearance='primary-action-button'
+                              <PrimaryActionButton
                                 onClick={() => handleSaveDescription('lang')}
                               >
-                                Opslaan
-                              </Button>
-                              <Button
-                                appearance='secondary-action-button'
+                                <VISUALS.SAVE className='ac-button__icon' /> Opslaan
+                              </PrimaryActionButton>
+                              <SecondaryActionButton
                                 onClick={() => {
                                   setIsEditingLang(false);
                                   setTempBeschrijvingLang(data.beschrijvingLang);
@@ -378,8 +376,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                   );
                                 }}
                               >
+                                <VISUALS.CLOSE className='ac-button__icon' />{' '}
                                 Annuleren
-                              </Button>
+                              </SecondaryActionButton>
                             </div>
                           </div>
                         </div>
@@ -434,7 +433,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               );
                             }}
                           >
-                            <VISUALS.PENCIL />
+                            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
                           </Button>
                         </div>
                       )}
