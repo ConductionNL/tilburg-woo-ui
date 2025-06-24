@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import {
-  AcCard,
   AcFlex,
   AcGrid,
   AcSection,
@@ -44,6 +43,8 @@ import ConObjectUploadFiles from '../../con-object-upload-files/con-object-uploa
 import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
+import AcAddDeelnameModal from '../modals/ac-add-deelname';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [dataProperties, setDataProperties] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [usedBy, setUsedBy] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
   const [isEditingKort, setIsEditingKort] = useState(false);
   const [isEditingLang, setIsEditingLang] = useState(false);
@@ -58,6 +60,22 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [tempBeschrijvingLang, setTempBeschrijvingLang] = useState('');
   const [charCountKort, setCharCountKort] = useState(0);
   const [charCountLang, setCharCountLang] = useState(0);
+
+  const uniqueUsedBySchemas = useMemo(() => {
+    if (!usedBy) return [];
+    // get a list of unique usedBy based on the schema id
+    const uniqueUsedBy = _.uniqBy(usedBy, (item) => item['@self'].schema.id);
+    // return the schema object for each unique usedBy
+    return uniqueUsedBy.map((item) => item['@self'].schema);
+  }, [usedBy]);
+
+  const getUsedByFromSchemaId = useCallback(
+    (schemaId) => {
+      if (!usedBy) return [];
+      return usedBy.filter((item) => item['@self'].schema.id === schemaId);
+    },
+    [usedBy]
+  );
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -73,6 +91,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       const extend = [
         ['_extend[]', 'contactgegevens'],
         ['_extend[]', 'samenwerkingen'],
+        ['_extend[]', 'deelnames'],
       ];
 
       const [response, schemaResponse] = await Promise.all([
@@ -110,12 +129,28 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     }
   };
 
+  const fetchUsedBy = async (registerSlug, schemaSlug, id) => {
+    const response = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      [['_extend[]', '@self.schema']],
+      null,
+      `/beheer/organisaties/${id}`
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch used by');
+    }
+
+    setUsedBy(response.data.results);
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
     if (data) {
+      fetchUsedBy(registerSlug, schemaSlug, id);
       setCharCountKort(data.beschrijvingKort?.length || 0);
       setCharCountLang(data.beschrijvingLang?.length || 0);
     }
@@ -183,7 +218,16 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
               <AcFlex column spacing='xl'>
                 <AcFlex column spacing='md'>
                   <div className='ac-header-row'>
-                    <Heading>{data.naam ?? data.id}</Heading>
+                    <AcFlex spacing='sm'>
+                      {data.logo && (
+                        <ConLogoPreview
+                          logoUrl={data.logo}
+                          className='ac-register-review__logo'
+                          style={{ margin: 0 }}
+                        />
+                      )}
+                      <Heading>{data.naam ?? data.id}</Heading>
+                    </AcFlex>
                     <ConActionMenu>
                       <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                         Acties
@@ -197,7 +241,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           icon={<VISUALS.PENCIL />}
                           onClick={() => setOpenModal('edit')}
                         >
-                          Bijwerken
+                          Bewerken
                         </ConActionMenu.Button>
                         {data.status !== 'Actief' && (
                           <ConActionMenu.Button
@@ -223,7 +267,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             Depubliceren
                           </ConActionMenu.Button>
                         )}
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PLUS />}
+                          onClick={() => setOpenModal('addDeelname')}
+                        >
+                          Deelname toevoegen
+                        </ConActionMenu.Button>
+
                         <ConActionMenu.Divider />
+
                         <ConActionMenu.Button
                           icon={<VISUALS.TRASHCAN />}
                           onClick={() => setOpenModal('delete')}
@@ -519,6 +571,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 {formatBySchema(schemaProperties, data, key, {
                                   exclude: ['@self'],
                                   includeUnknown: true,
+                                  profile: {
+                                    deelnames: {
+                                      include: ['naam'],
+                                      includeUnknown: true,
+                                      inline: true,
+                                    },
+                                  },
                                 })}
                               </Paragraph>
                             )}
@@ -537,6 +596,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           <AcTab selected={tabIndex === 2}>
                             Mijn samenwerkingen
                           </AcTab>
+
+                          {uniqueUsedBySchemas.map((schema) => (
+                            <AcTab key={schema.id} selected={tabIndex === schema.id}>
+                              {schema.title || schema.id}
+                            </AcTab>
+                          ))}
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
@@ -563,7 +628,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {data?.contactpersonen?.map((contact) => (
+                                {data?.contactpersonen?.map?.((contact) => (
                                   <TableRow key={contact.id}>
                                     <TableCell>
                                       {contact.voornaam} {contact.tussenvoegsel}{' '}
@@ -602,7 +667,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {data?.samenwerkingen?.map((samenwerking) => (
+                                {data?.samenwerkingen?.map?.((samenwerking) => (
                                   <TableRow key={samenwerking.id}>
                                     <TableCell>{samenwerking.naam}</TableCell>
                                     <TableCell>
@@ -627,6 +692,64 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             </Table>
                           </ConHorizontalOverflowWrapper>
                         </AcTabPanel>
+
+                        {uniqueUsedBySchemas.map((schema) => {
+                          const data = getUsedByFromSchemaId(schema.id);
+                          const metadata = data?.[0]?.['@self'];
+
+                          // this should not trigger, if it does call a dev to fix it.
+                          if (!metadata) {
+                            return (
+                              <AcTabPanel
+                                key={schema.id}
+                                selected={tabIndex === schema.id}
+                              >
+                                <Alert type='error'>
+                                  Er is een fout opgetreden bij het laden van deze
+                                  gegevens.
+                                </Alert>
+                              </AcTabPanel>
+                            );
+                          }
+
+                          return (
+                            <AcTabPanel
+                              key={schema.id}
+                              selected={tabIndex === schema.id}
+                            >
+                              <BeheerTable
+                                type={schema.slug}
+                                metadata={metadata}
+                                data={data}
+                                dataProperties={schema.properties}
+                                actionButtons={(config) =>
+                                  // check if all necessary properties for the actions are defined.
+                                  !!config.navigateView && {
+                                    id: 'actions',
+                                    label: 'Acties',
+                                    key: '',
+                                    customContent: (row) => (
+                                      <AcFlex column spacing='xs'>
+                                        <button
+                                          className='utrecht-button slim'
+                                          variant='secondary'
+                                          onClick={() => config.navigateView(row.id)}
+                                        >
+                                          <VISUALS.EYE className='ac-button__icon' />{' '}
+                                          Bekijken
+                                        </button>
+                                      </AcFlex>
+                                    ),
+                                  }
+                                }
+                                tableProps={{
+                                  renderSelectRowButtons: false,
+                                  truncateLines: 1,
+                                }}
+                              />
+                            </AcTabPanel>
+                          );
+                        })}
                       </AcTabs>
                     </div>
                   </AcFlex>
@@ -671,6 +794,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   organization={data}
                   showModal={openModal === 'publish' || openModal === 'depublish'}
                   publish={openModal === 'publish'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
+                  }}
+                />
+
+                <AcAddDeelnameModal
+                  organization={data}
+                  showModal={openModal === 'addDeelname'}
                   onClose={() => {
                     setOpenModal(null);
                   }}

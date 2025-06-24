@@ -22,11 +22,22 @@ const generateFileHash = async (file) => {
  * Files are controlled by the parent component.
  * @param {File[]} files
  * @param {Function} onFilesChange
+ * @param {string[]} [allowedFileTypes=[]] The allowed file types
+ * @param {string} [label] The label of the dropzone (replace the text in the middle of the dropzone)
  * @param {boolean} [multiple=false] Whether to allow multiple file uploads
  * @param {boolean} [disabled=false] Whether the dropzone is disabled
  * @returns {JSX.Element}
  */
-export function ConFileDropZone({ files, onFilesChange, multiple = false, label, disabled = false, className }) {
+export function ConFileDropZone({
+  files,
+  onFilesChange,
+  allowedFileTypes = [],
+  multiple = false,
+  label,
+  disabled = false,
+  className,
+  style,
+}) {
   const dropRef = useRef(null);
 
   const id = useId();
@@ -43,17 +54,33 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false, label,
     dropRef.current.style.background = 'white';
   };
 
+  const validateFileType = (file) => {
+    if (!allowedFileTypes.length) return true;
+    return allowedFileTypes.some((type) => file.type.startsWith(type));
+  };
+
   const setFiles = async (newFiles) => {
     if (disabled) return;
     // If multiple is false, only take the first file
     const filesToProcess = multiple ? newFiles : [newFiles[0]];
 
+    // Filter files by allowed types
+    const allowedFiles = filesToProcess.filter(validateFileType);
+
     // add a random uuid to the files
     const fileArray = await Promise.all(
-      filesToProcess.map(async (file) => {
+      allowedFiles.map(async (file) => {
         file.hash = (await generateFileHash(file)) ?? null;
         file.id = AcUUID('file');
         file.status = 'pending';
+        file.getDataUrl = async () => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+            reader.readAsDataURL(file);
+          });
+        };
         return file;
       })
     );
@@ -90,6 +117,15 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false, label,
     if (!!realFiles.length) setFiles(realFiles);
   };
 
+  const acceptedTypes = allowedFileTypes.join(',') || undefined;
+
+  const getAllowedFileTypesText = () => {
+    const allowedFileTypesText = allowedFileTypes
+      .map((type) => type.split(/[\/\+]/g)[1])
+      .join(', ');
+    return `Toegestane bestandstypen: ${allowedFileTypesText}`;
+  };
+
   return (
     <div
       className={className}
@@ -104,13 +140,34 @@ export function ConFileDropZone({ files, onFilesChange, multiple = false, label,
         cursor: disabled ? 'not-allowed' : 'pointer',
         borderRadius: 'var(--utrecht-select-border-radius)',
         opacity: disabled ? 0.5 : 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...style,
       }}
       onClick={() => !disabled && document.getElementById(`fileInput-${id}`).click()}
     >
-      <p>{label || 'Drag & drop files here or click to select'}</p>
+      <p>
+        {label || 'Drag & drop files here or click to select'}
+        {allowedFileTypes.length > 0 && (
+          <small
+            style={{
+              display: 'block',
+              marginTop: '0.75em',
+              color: 'var(--utrecht-paragraph-color)',
+              fontSize: '0.85em',
+              fontStyle: 'italic',
+              opacity: 0.85,
+            }}
+          >
+            {getAllowedFileTypesText()}
+          </small>
+        )}
+      </p>
       <input
         id={`fileInput-${id}`}
         type='file'
+        accept={acceptedTypes}
         multiple={multiple}
         style={{ display: 'none' }}
         onChange={handleFileSelect}

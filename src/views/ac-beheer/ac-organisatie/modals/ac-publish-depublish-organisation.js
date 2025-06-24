@@ -100,17 +100,18 @@ const AcPublishDepublishOrganizationModal = ({
       title={`Organisatie ${publish ? 'publiceren' : 'depubliceren'}`}
       buttons={[
         {
-          label: publish ? 'publiceren' : 'depubliceren',
-          icon: <VISUALS.PAPER_PLANE />,
-          onClick: handlePublishDepublish,
-        },
-        {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: publish ? 'publiceren' : 'depubliceren',
+          icon: <VISUALS.PAPER_PLANE />,
+          onClick: handlePublishDepublish,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
