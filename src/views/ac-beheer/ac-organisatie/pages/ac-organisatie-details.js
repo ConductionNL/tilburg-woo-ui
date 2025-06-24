@@ -209,7 +209,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         )}
                         {!data['@self'].published && (
                           <ConActionMenu.Button
-                            icon={<VISUALS.PAPER_PLANE />}
+                            icon={<VISUALS.PUBLISH />}
                             onClick={() => setOpenModal('publish')}
                           >
                             Publiceren
@@ -217,7 +217,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         )}
                         {data['@self'].published && (
                           <ConActionMenu.Button
-                            icon={<VISUALS.PAPER_PLANE />}
+                            icon={<VISUALS.PUBLISH_OFF />}
                             onClick={() => setOpenModal('depublish')}
                           >
                             Depubliceren

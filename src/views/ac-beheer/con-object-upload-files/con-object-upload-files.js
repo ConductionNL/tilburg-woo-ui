@@ -341,7 +341,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
                     <ConActionMenu.Menu position='right'>
                       {!row.published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH />}
                           onClick={() => {
                             setSingleSelectedFile(row);
                             setShowModal('publish');
@@ -353,7 +353,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
                       {row.published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH_OFF />}
                           onClick={() => {
                             setSingleSelectedFile(row);
                             setShowModal('depublish');
