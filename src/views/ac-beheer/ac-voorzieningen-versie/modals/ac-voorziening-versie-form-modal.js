@@ -308,12 +308,6 @@ const AcVoorzieningVersieFormModal = ({
           />
         </div>
         <AcFormField
-          label='Voorziening naam'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('naam')}
-          value={voorzieningFormData.naam}
-        />
-        <AcFormField
           label='Versie Nummer'
           type='text'
           onBlur={handleEditVoorzieningFieldChange('versienummer')}

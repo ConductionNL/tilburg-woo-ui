@@ -43,6 +43,8 @@ const AcApplicatiesFormModal = ({
   const [standaardenLoading, setStandaardenLoading] = useState(false);
   const [gebruikersOptions, setGebruikersOptions] = useState([]);
   const [gebruikersLoading, setGebruikersLoading] = useState(false);
+  const [organisatiesOptions, setOrganisatiesOptions] = useState([]);
+  const [organisatiesLoading, setOrganisatiesLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -96,10 +98,27 @@ const AcApplicatiesFormModal = ({
       );
     };
 
+    const fetchOrganisaties = async () => {
+      setOrganisatiesLoading(true);
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+      ).finally(() => setOrganisatiesLoading(false));
+
+      const data = await response.data;
+
+      setOrganisatiesOptions(
+        data.results.map((item) => ({
+          value: item.id,
+          label: item.naam || item.id,
+        }))
+      );
+    };
+
     if (showModal) {
       fetchSchema();
       fetchVoorzieningsTypes();
       fetchGebruikers();
+      fetchOrganisaties();
     }
   }, [showModal]);
 
@@ -207,6 +226,7 @@ const AcApplicatiesFormModal = ({
           standards: smartSplit(collapseExtendedObjects(applicatie.standaarden)),
           voorzieningstype: applicatie.voorzieningstype,
           contact: collapseExtendedObjects(applicatie.contact, 'username'),
+          organisatie: collapseExtendedObjects(applicatie.organisatie, 'id'),
         }),
     });
   }, [applicatie, showModal]);
@@ -374,6 +394,7 @@ const AcApplicatiesFormModal = ({
             referentieComponenten: referentieComponentenOptions,
             standaarden: standaardenOptions,
             contact: gebruikersOptions,
+            organisatie: organisatiesOptions,
             diensten: [
               'Functioneel beheer',
               'Applicatie beheer',
@@ -391,6 +412,7 @@ const AcApplicatiesFormModal = ({
             referentieComponenten: referentieComponentenLoading,
             standaarden: standaardenLoading,
             contact: gebruikersLoading,
+            organisatie: organisatiesLoading,
           }}
           disabledStates={{
             standaarden: (formData) => !formData?.referentieComponenten?.length,

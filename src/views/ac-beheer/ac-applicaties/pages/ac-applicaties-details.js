@@ -60,6 +60,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
     ['_extend[]', 'standaarden'],
     ['_extend[]', 'standaarden.@self.schema'],
     ['_extend[]', 'referentieComponenten'],
+    ['_extend[]', 'organisatie'],
   ];
 
   const fetchData = async () => {
@@ -247,7 +248,15 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                           <div key={key}>
                             <strong>{_.startCase(key)}:</strong>
                             <Paragraph>
-                              {formatBySchema(schemaProperties, data, key)}
+                              {formatBySchema(schemaProperties, data, key, {
+                                profile: {
+                                  organisatie: {
+                                    include: ['naam'],
+                                    includeUnknown: true,
+                                    inline: true,
+                                  },
+                                },
+                              })}
                             </Paragraph>
                           </div>
                         ))}
@@ -275,55 +284,61 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                           {versionsLoading ? (
                             <AcLoader />
                           ) : (
-                              <Table>
-                                <TableHeader>
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableCell>Versie Nummer</TableCell>
+                                  <TableCell>Status</TableCell>
+                                  <TableCell>Release Datum</TableCell>
+                                  <TableCell>Release Notes</TableCell>
+                                  <TableCell>Acties</TableCell>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {versions.length === 0 ? (
                                   <TableRow>
-                                    <TableCell>Versie Nummer</TableCell>
-                                    <TableCell>Status</TableCell>
-                                    <TableCell>Release Datum</TableCell>
-                                    <TableCell>Release Notes</TableCell>
-                                    <TableCell>Acties</TableCell>
+                                    <TableCell colSpan={5}>
+                                      Geen versies gevonden voor deze applicatie
+                                    </TableCell>
                                   </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {versions.length === 0 ? (
-                                    <TableRow>
-                                      <TableCell colSpan={5}>
-                                        Geen versies gevonden voor deze applicatie
+                                ) : (
+                                  versions.map((version) => (
+                                    <TableRow
+                                      className='ac-applicaties-details--table-row'
+                                      key={version.id}
+                                    >
+                                      <TableCell>{version.versienummer}</TableCell>
+                                      <TableCell>{version.status}</TableCell>
+                                      <TableCell>
+                                        {(() => {
+                                          if (!version.releaseDatum) return '-';
+                                          return !isNaN(
+                                            new Date(version.releaseDatum).getTime()
+                                          )
+                                            ? new Date(
+                                                version.releaseDatum
+                                              ).toLocaleDateString()
+                                            : '-';
+                                        })()}
+                                      </TableCell>
+                                      <TableCell>{version.releaseNotes}</TableCell>
+                                      <TableCell>
+                                        <SecondaryActionButton
+                                          onClick={() =>
+                                            navigate(
+                                              `/beheer/voorzieningen-versie/${version.id}`
+                                            )
+                                          }
+                                        >
+                                          <VISUALS.EYE className='ac-button__icon' />
+                                          Bekijk
+                                        </SecondaryActionButton>
                                       </TableCell>
                                     </TableRow>
-                                  ) : (
-                                    versions.map((version) => (
-                                      <TableRow
-                                        className='ac-applicaties-details--table-row'
-                                        key={version.id}
-                                      >
-                                        <TableCell>{version.versienummer}</TableCell>
-                                        <TableCell>{version.status}</TableCell>
-                                        <TableCell>
-                                          {/^\d{4}-\d{2}-\d{2}$/.test(version.releaseDatum) 
-                                            ? version.releaseDatum
-                                            : new Date(version.releaseDatum).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>{version.releaseNotes}</TableCell>
-                                        <TableCell>
-                                          <SecondaryActionButton
-                                            onClick={() =>
-                                              navigate(
-                                                `/beheer/voorzieningen-versie/${version.id}`
-                                              )
-                                            }
-                                          >
-                                            <VISUALS.EYE className='ac-button__icon' />
-                                            Bekijk
-                                          </SecondaryActionButton>
-                                        </TableCell>
-                                      </TableRow>
-                                    ))
-                                  )}
-                                </TableBody>
-                              </Table>
-                            
+                                  ))
+                                )}
+                              </TableBody>
+                            </Table>
                           )}
                         </AcTabPanel>
                         <AcTabPanel selected={tabIndex === 2}>
@@ -337,36 +352,36 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                            {data.standaarden.length === 0 ? (
-                                    <TableRow>
-                                      <TableCell colSpan={4}>
-                                        Geen standaarden gevonden voor deze applicatie
-                                      </TableCell>
-                                    </TableRow>
-                                  ) : (
-                              data.standaarden.map((standard) => (
-                                <TableRow
-                                  className='ac-applicaties-details--table-row'
-                                  key={standard.id}
-                                >
-                                  <TableCell>{standard.naam}</TableCell>
-                                  <TableCell>
-                                    {data.referentieComponenten[0].name}
-                                  </TableCell>
-                                  <TableCell className='ac-applicaties-details--compliance-checkbox'>
-                                    <AcCheckbox />
-                                  </TableCell>
-                                  <TableCell>
-                                    <ConFileDropZone
-                                      className='ac-applicaties-details--file-dropzone'
-                                      disabled={true}
-                                      files={[]}
-                                      onFilesChange={() => {}}
-                                    />
+                              {data.standaarden.length === 0 ? (
+                                <TableRow>
+                                  <TableCell colSpan={4}>
+                                    Geen standaarden gevonden voor deze applicatie
                                   </TableCell>
                                 </TableRow>
-                              ))
-                            )}
+                              ) : (
+                                data.standaarden.map((standard) => (
+                                  <TableRow
+                                    className='ac-applicaties-details--table-row'
+                                    key={standard.id}
+                                  >
+                                    <TableCell>{standard.naam}</TableCell>
+                                    <TableCell>
+                                      {data.referentieComponenten[0].name}
+                                    </TableCell>
+                                    <TableCell className='ac-applicaties-details--compliance-checkbox'>
+                                      <AcCheckbox />
+                                    </TableCell>
+                                    <TableCell>
+                                      <ConFileDropZone
+                                        className='ac-applicaties-details--file-dropzone'
+                                        disabled={true}
+                                        files={[]}
+                                        onFilesChange={() => {}}
+                                      />
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              )}
                             </TableBody>
                           </Table>
                         </AcTabPanel>
