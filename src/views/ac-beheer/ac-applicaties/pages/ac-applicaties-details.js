@@ -310,13 +310,16 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                                       <TableCell>{version.versienummer}</TableCell>
                                       <TableCell>{version.status}</TableCell>
                                       <TableCell>
-                                        {/^\d{4}-\d{2}-\d{2}$/.test(
-                                          version.releaseDatum
-                                        )
-                                          ? version.releaseDatum
-                                          : new Date(
-                                              version.releaseDatum
-                                            ).toLocaleDateString()}
+                                        {(() => {
+                                          if (!version.releaseDatum) return '-';
+                                          return !isNaN(
+                                            new Date(version.releaseDatum).getTime()
+                                          )
+                                            ? new Date(
+                                                version.releaseDatum
+                                              ).toLocaleDateString()
+                                            : '-';
+                                        })()}
                                       </TableCell>
                                       <TableCell>{version.releaseNotes}</TableCell>
                                       <TableCell>
