@@ -3,6 +3,8 @@ import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
+import { Tooltip } from 'react-tooltip';
+import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * A dynamic form component that automatically generates form fields based on a JSON schema.
@@ -289,7 +291,9 @@ const ConDynamicSchemaForm = ({
     if (fieldConfig.component === 'AcFormField') {
       return (
         <AcFormField
+          tooltip={fieldConfig.description}
           key={propertyName}
+          id={`dynamic-form-field-${propertyName}`}
           label={fieldConfig.label}
           type={fieldConfig.type}
           onBlur={handleFieldChange(propertyName, fieldConfig)}
@@ -344,6 +348,9 @@ const ConDynamicSchemaForm = ({
       {Object.entries(sortedProperties).map(([propertyName, propertySchema]) =>
         renderField(propertyName, propertySchema)
       )}
+      {/* Tooltip needs to be loaded again because the dialog is rendered in a portal at #top-layer */}
+      <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />
+     
     </>
   );
 };
