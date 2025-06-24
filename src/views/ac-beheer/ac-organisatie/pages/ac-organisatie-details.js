@@ -133,13 +133,11 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        null,
-        { [field]: JSON.stringify(value) },
-        `/beheer/organisaties/${id}`,
-        'PATCH'
-      );
+      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        method: 'PATCH',
+        body: JSON.stringify({ [field]: JSON.stringify(value) }),
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       if (!response.ok) {
         throw new Error('Failed to update description');
@@ -148,7 +146,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       // Update local state
       setData((prev) => ({
         ...prev,
-        [field]: value,
+        [field]: JSON.stringify(value),
       }));
 
       // Reset edit mode
@@ -331,7 +329,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         <div className='ac-organisatie-detail-form-wrapper'>
                           <div className='ac-organisatie-detail-form'>
                             <div className='ac-organisatie-detail-form-label-row'>
-                              <span className='ac-form-field__label-with-icon'>
+                              <Heading
+                                level={3}
+                                className='ac-form-field__label-with-icon'
+                              >
                                 Lange beschrijving
                                 <span
                                   className='ac-form-field__tooltip'
@@ -339,11 +340,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 >
                                   <VISUALS.INFO />
                                 </span>
-                              </span>
+                              </Heading>
                             </div>
                             <div className='ac-organisatie-detail-form-flex'>
                               <div className='ac-organisatie-detail-form-textarea'>
                                 <AcFormField
+                                  label='Invoerveld'
                                   fullWidth={true}
                                   inputType='textarea'
                                   value={tempBeschrijvingLang}
@@ -354,8 +356,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                   placeholder='Een uitgebreide beschrijving van de organisatie'
                                 />
                               </div>
-                              <div className='ac-organisatie-detail-preview markdown-preview'>
-                                <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
+                              <div className='ac-organisatie-detail-form-preview'>
+                                <Heading level={4}>Preview</Heading>
+                                <div className='ac-organisatie-detail-preview markdown-preview'>
+                                  <ReactMarkdown>
+                                    {tempBeschrijvingLang}
+                                  </ReactMarkdown>
+                                </div>
                               </div>
                             </div>
                             <span className='character-count'>
