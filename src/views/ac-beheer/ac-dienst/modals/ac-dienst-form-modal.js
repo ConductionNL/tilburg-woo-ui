@@ -259,10 +259,10 @@ const AcDienstFormModal = ({
       <AcGrid columns={2}>
         <div>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Voorziening</h4>
+            <h4 className='utrecht-heading-4'>Applicatie</h4>
           </label>
           <ReactSelect
-            placeholder='Selecteer een voorziening'
+            placeholder='Selecteer een applicatie'
             className={clsx(
               'ac-beheer-select',
               preSelectedVoorziening && 'ac-beheer-select--disabled'

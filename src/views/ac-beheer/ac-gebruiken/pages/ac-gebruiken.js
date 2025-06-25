@@ -148,7 +148,7 @@ const AcBeheerGebruiken = () => {
       },
       voorzieningId: {
         id: 'voorzieningId',
-        label: 'Voorziening',
+        label: 'Applicatie',
         key: 'voorzieningId',
         customContent: (row) => {
           return (
