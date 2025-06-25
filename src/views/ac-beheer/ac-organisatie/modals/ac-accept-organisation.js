@@ -123,13 +123,13 @@ const AcAcceptOrganizationModal = ({
       title='Organisatie accepteren'
       buttons={[
         {
-          label: 'annuleren',
+          label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
         {
-          label: 'accepteren',
+          label: 'Accepteren',
           icon: <VISUALS.CHECK />,
           onClick: handleAcceptOrganization,
         },
