@@ -619,6 +619,21 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 logoUrl={data[key]}
                                 className='ac-register-review__logo'
                               />
+                            ) : key === 'deelnames' ? (
+                              <ul>
+                                {data[key]?.map?.((deelname) => (
+                                  <li key={deelname.id} style={{ marginInlineStart: '16px' }}>
+                                    <Link href={`/publicatie/${deelname.id}`}>
+                                      {deelname.naam}
+                                    </Link>
+                                  </li>
+                                ))}
+                                {!data[key]?.length && (
+                                  <li>
+                                    <span>-</span>
+                                  </li>
+                                )}
+                              </ul>
                             ) : (
                               <Paragraph>
                                 {formatBySchema(schemaProperties, data, key, {
