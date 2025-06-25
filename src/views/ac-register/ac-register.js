@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useRef, useEffect } from 'react';
+import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
@@ -18,7 +18,6 @@ import {
   Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { isValidPhoneNumber } from 'libphonenumber-js';
-import { validateAndProcessLogoUrl } from './con-logo-preview';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
@@ -26,10 +25,10 @@ import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 
 const organizationTypes = [
-  { value: 'leverancier', label: 'Leverancier' },
-  { value: 'gemeente', label: 'Gemeente' },
-  { value: 'samenwerking', label: 'Samenwerking' },
-  { value: 'community', label: 'Community' },
+  { value: 'Leverancier', label: 'Leverancier' },
+  { value: 'Gemeente', label: 'Gemeente' },
+  { value: 'Samenwerking', label: 'Samenwerking' },
+  { value: 'Community', label: 'Community' },
 ];
 
 const AcRegister = () => {
@@ -59,10 +58,12 @@ const AcRegister = () => {
         function: '',
       },
     ],
-    organizationType: 'leverancier',
+    organizationType: 'Leverancier',
     kvkNumber: '',
     email: '',
   });
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
     contactPersons: {
@@ -72,17 +73,12 @@ const AcRegister = () => {
       email: false,
     },
   });
-  const [logoValidation, setLogoValidation] = useState({
-    isValidating: false,
-    isValid: true,
-  });
   const [confirmationCheckbox, setConfirmationCheckbox] = useState({
     privacy: false,
     terms: false,
   });
 
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -101,45 +97,71 @@ const AcRegister = () => {
     }
   }, []);
 
-  const handleLogoValidation = useCallback(async (url) => {
-    if (!url) {
-      setLogoValidation({ isValidating: false, isValid: true });
-      return;
-    }
+  const acceptedLogoFileTypes = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/webp',
+    'image/svg+xml',
+  ];
 
-    setLogoValidation({ isValidating: true, isValid: true });
-    const isValid = await validateAndProcessLogoUrl(url);
-    setLogoValidation({ isValidating: false, isValid });
-  }, []);
+  const handleLogoFileSelect = useCallback(
+    (e) => {
+      if (!e.target.files.length) {
+        setLogoFile(null);
+        setLogoDataUrl(null);
+        return;
+      }
 
-  const setOrganizationData = useCallback(
-    (key, value) => {
-      if (key === 'logo') {
-        handleLogoValidation(value);
+      const file = e.target.files[0];
+
+      if (!acceptedLogoFileTypes.includes(file.type)) {
+        setLogoFile(null);
+        setLogoDataUrl(null);
+        return;
       }
-      if (key.includes('contactPersons')) {
-        const field = key.split('.')[1];
-        setOrganization((prev) => ({
-          ...prev,
-          contactPersons: [{ ...prev.contactPersons[0], [field]: value }],
-        }));
-        setTouched((prev) => ({
-          ...prev,
-          contactPersons: {
-            ...prev.contactPersons,
-            [field]: true,
-          },
-        }));
-      } else {
-        setOrganization((prev) => ({ ...prev, [key]: value }));
-        setTouched((prev) => ({
-          ...prev,
-          [key]: true,
-        }));
-      }
+
+      file.getDataUrl = async () => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(file);
+        });
+      };
+
+      setLogoFile(file);
+
+      (async () => {
+        const dataUrl = await file.getDataUrl();
+        setLogoDataUrl(dataUrl);
+      })();
     },
-    [handleLogoValidation]
+    [setLogoFile]
   );
+
+  const setOrganizationData = useCallback((key, value) => {
+    if (key.includes('contactPersons')) {
+      const field = key.split('.')[1];
+      setOrganization((prev) => ({
+        ...prev,
+        contactPersons: [{ ...prev.contactPersons[0], [field]: value }],
+      }));
+      setTouched((prev) => ({
+        ...prev,
+        contactPersons: {
+          ...prev.contactPersons,
+          [field]: true,
+        },
+      }));
+    } else {
+      setOrganization((prev) => ({ ...prev, [key]: value }));
+      setTouched((prev) => ({
+        ...prev,
+        [key]: true,
+      }));
+    }
+  }, []);
 
   const validateEmail = useCallback((email) => {
     return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
@@ -154,27 +176,6 @@ const AcRegister = () => {
     return isValidPhoneNumber(phone, 'NL');
   }, []);
 
-  const escapeSvgDataUrl = (url) => {
-    if (!url) return '';
-
-    // Check if it's an SVG data URL
-    if (url.startsWith('data:image/svg+xml')) {
-      try {
-        // Extract the SVG content
-        const svgContent = url.split(',')[1];
-
-        // Create a properly formatted data URL
-        return `data:image/svg+xml;base64,${btoa(decodeURIComponent(svgContent))}`;
-      } catch (error) {
-        console.error('Error processing SVG:', error);
-        return url;
-      }
-    }
-
-    // If it's not an SVG, return the original URL
-    return url;
-  };
-
   const handleRegister = async () => {
     setLoading(true);
     try {
@@ -188,6 +189,7 @@ const AcRegister = () => {
         telefoonnummer: organization.phone,
         rol: organization.role,
         beschrijvingKort: organization.summary,
+        logo: logoDataUrl,
         contactpersonen: [
           {
             voornaam: organization.contactPersons[0].firstName,
@@ -202,12 +204,6 @@ const AcRegister = () => {
         kvkNummer: organization.kvkNumber,
         'e-mailadres': organization.email,
       };
-
-      // Handle the logo separately
-      if (organization.logo) {
-        organizationData.logo = escapeSvgDataUrl(organization.logo);
-        // organizationData.logo = organization.logo;
-      }
 
       const response = await fetch(
         `${BASE_URL}/apps/openconnector/api/endpoint/register`,
@@ -266,7 +262,7 @@ const AcRegister = () => {
           function: '',
         },
       ],
-      organizationType: 'leverancier',
+      organizationType: 'Leverancier',
       kvkNumber: '',
       email: '',
     });
@@ -279,6 +275,7 @@ const AcRegister = () => {
         email: false,
       },
     });
+    setLogoFile(null);
     setCurrentStep(0);
   };
 
@@ -306,7 +303,7 @@ const AcRegister = () => {
               validateEmail,
               validatePhone,
               touched,
-              logoValidation,
+              handleLogoFileSelect,
             }}
           />
         );
@@ -329,7 +326,12 @@ const AcRegister = () => {
       case 3:
         return (
           <ReviewForm
-            {...{ organization, confirmationCheckbox, setConfirmationCheckbox }}
+            {...{
+              organization,
+              logoDataUrl,
+              confirmationCheckbox,
+              setConfirmationCheckbox,
+            }}
           />
         );
     }
@@ -379,7 +381,6 @@ const AcRegister = () => {
     }
     if (currentStep === 1) {
       return (
-        (organization.logo && !logoValidation.isValid) ||
         (organization.email && !validateEmail(organization.email)) ||
         (organization.phone && !validatePhone(organization.phone))
       );
@@ -421,9 +422,6 @@ const AcRegister = () => {
 
     if (currentStep === 1) {
       const messages = [];
-      if (organization.logo && !logoValidation.isValid) {
-        messages.push('Ongeldig logo URL. Gebruik een geldige afbeelding URL');
-      }
       if (organization.email && !validateEmail(organization.email)) {
         messages.push('Ongeldig e-mailadres');
       }
@@ -828,7 +826,7 @@ const OrganizationOptionalForm = memo(
     loading,
     validateEmail,
     validatePhone,
-    logoValidation,
+    handleLogoFileSelect,
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
@@ -872,7 +870,7 @@ const OrganizationOptionalForm = memo(
           </div>
 
           <AcFlex column spacing='sm'>
-            {organization.organizationType === 'leverancier' && (
+            {organization.organizationType === 'Leverancier' && (
               <AcFormField
                 label='KvK nummer'
                 placeholder='12345678'
@@ -882,8 +880,8 @@ const OrganizationOptionalForm = memo(
               />
             )}
 
-            {(organization.organizationType === 'gemeente' ||
-              organization.organizationType === 'samenwerking') && (
+            {(organization.organizationType === 'Gemeente' ||
+              organization.organizationType === 'Samenwerking') && (
               <AcFormField
                 label='OIN'
                 placeholder='00000001002564440000'
@@ -893,40 +891,53 @@ const OrganizationOptionalForm = memo(
               />
             )}
 
-            <div>
-              <AcFormField
-                label='Logo'
-                placeholder='https://www.example.com/logo.png'
-                value={organization.logo}
-                onBlur={(e) => setOrganizationData('logo', e)}
-                hasError={organization.logo && !logoValidation.isValid}
-                disabled={loading}
-                id='org-logo'
-                aria-describedby={
-                  logoValidation.isValidating
-                    ? 'logo-validating'
-                    : organization.logo && !logoValidation.isValid
-                    ? 'logo-error'
-                    : undefined
-                }
+            <AcFlex column>
+              <label className='utrecht-form-label'>
+                <h4 className='utrecht-heading-4'>Logo</h4>
+              </label>
+
+              <input
+                id='fileInput-logo'
+                type='file'
+                accept={[
+                  'image/png',
+                  'image/jpeg',
+                  'image/jpg',
+                  'image/webp',
+                  'image/svg+xml',
+                ].join(',')}
+                multiple={false}
+                onChange={handleLogoFileSelect}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid var(--utrecht-textbox-border-color)',
+                  borderRadius: 'var(--utrecht-select-border-radius)',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                  fontSize: '1em',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: '#f0f0f0',
+                    borderColor: 'var(--utrecht-button-primary-action-border-color)',
+                  },
+                }}
               />
-              {logoValidation.isValidating && (
-                <span className='ac-register-form-field-info' id='logo-validating'>
-                  Logo URL wordt gevalideerd...
-                </span>
-              )}
-              {!logoValidation.isValidating &&
-                organization.logo &&
-                !logoValidation.isValid && (
-                  <span
-                    className='ac-register-form-field-error'
-                    id='logo-error'
-                    role='alert'
-                  >
-                    Ongeldig logo URL. Gebruik een geldige afbeelding URL
-                  </span>
-                )}
-            </div>
+
+              <small
+                style={{
+                  display: 'block',
+                  marginTop: '0.5em',
+                  color: 'var(--utrecht-paragraph-color)',
+                  fontSize: '0.85em',
+                  fontStyle: 'italic',
+                  opacity: 0.85,
+                  userSelect: 'none',
+                }}
+              >
+                Toegestane bestandstypen: png, jpeg, jpg, webp, svg
+              </small>
+            </AcFlex>
 
             <div>
               <AcFormField
@@ -1119,16 +1130,16 @@ const ContactInformationForm = memo(
 );
 
 const ReviewForm = memo(
-  ({ organization, confirmationCheckbox, setConfirmationCheckbox }) => {
+  ({ organization, logoDataUrl, confirmationCheckbox, setConfirmationCheckbox }) => {
     return (
       <div className='ac-register-form-section'>
         <div className='ac-register-review'>
           <div className='ac-register-review__section'>
             <div className='ac-register-review__header'>
               <h4 className='utrecht-heading-4'>Organisatiegegevens</h4>
-              {organization.logo && (
+              {logoDataUrl && (
                 <ConLogoPreview
-                  logoUrl={organization.logo}
+                  logoUrl={logoDataUrl}
                   className='ac-register-review__logo'
                 />
               )}
@@ -1157,14 +1168,14 @@ const ReviewForm = memo(
               </div>
             </div>
 
-            {organization.organizationType === 'leverancier' && (
+            {organization.organizationType === 'Leverancier' && (
               <div className='ac-register-review__field'>
                 <strong>KvK nummer:</strong>
                 <span>{organization.kvkNumber || '-'}</span>
               </div>
             )}
-            {(organization.organizationType === 'gemeente' ||
-              organization.organizationType === 'samenwerking') && (
+            {(organization.organizationType === 'Gemeente' ||
+              organization.organizationType === 'Samenwerking') && (
               <div className='ac-register-review__field'>
                 <strong>OIN:</strong>
                 <span>{organization.oin || '-'}</span>
