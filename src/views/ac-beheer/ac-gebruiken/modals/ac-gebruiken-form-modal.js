@@ -318,10 +318,10 @@ const AcGebruikenFormModal = ({
         </div>
         <div>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Voorziening</h4>
+            <h4 className='utrecht-heading-4'>Applicatie</h4>
           </label>
           <ReactSelect
-            placeholder='Selecteer een voorziening'
+            placeholder='Selecteer een applicatie'
             className={clsx(
               'ac-beheer-select',
               preSelectedVoorzieningId && 'ac-beheer-select--disabled'
