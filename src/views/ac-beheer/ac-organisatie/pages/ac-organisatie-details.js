@@ -681,14 +681,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             ) : key === 'deelnames' ? (
                               <ul>
                                 {data[key]?.map?.((deelname) => (
-                                  <li key={deelname.id} style={{ marginInlineStart: '16px' }}>
+                                  <li
+                                    key={deelname.id}
+                                    style={{ marginInlineStart: '16px' }}
+                                  >
                                     <Link href={`/publicatie/${deelname.id}`}>
                                       {deelname.naam}
                                     </Link>
                                   </li>
                                 ))}
                                 {!data[key]?.length && (
-                                  <li>
+                                  <li style={{ marginInlineStart: '16px' }}>
                                     <span>-</span>
                                   </li>
                                 )}
