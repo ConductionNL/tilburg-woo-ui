@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex } from '@atoms';
@@ -46,8 +46,15 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
   const [selectedLabels, setSelectedLabels] = useState([]);
   const [showModal, setShowModal] = useState('');
   const [singleSelectedFile, setSingleSelectedFile] = useState(null);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const tableRef = useRef();
 
   const { makeMultipartUploadRequest, makeRequest } = useNextcloudRequests();
+
+  const [deletingFiles, setDeletingFiles] = useState(new Set());
+  const [uploadingFiles, setUploadingFiles] = useState(new Set());
+  const [publishingFiles, setPublishingFiles] = useState(new Set());
+  const [depublishingFiles, setDepublishingFiles] = useState(new Set());
 
   const fetchOnlineFiles = async () => {
     try {
@@ -95,10 +102,149 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
   const [error, setError] = useState(null);
 
+  const handleDeleteMultiple = async () => {
+    if (selectedRows.length === 0) return;
+
+    // Filter out files that are still uploading (isNew files)
+    const filesToDelete = selectedRows.filter((file) => !file.isNew);
+
+    if (filesToDelete.length === 0) {
+      console.warn(
+        'No files available for deletion (all selected files are still uploading)'
+      );
+      return;
+    }
+
+    try {
+      // Track which files are being deleted
+      const fileIds = filesToDelete.map((file) => file.title);
+      setDeletingFiles(new Set(fileIds));
+
+      // Delete files one by one using the same pattern as the existing delete function
+      for (const file of filesToDelete) {
+        const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}`;
+
+        const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+          method: 'DELETE',
+        });
+
+        if (response.status !== 200) {
+          throw new Error(
+            `Failed to delete file ${file.title}: ${response.statusText}`
+          );
+        }
+      }
+
+      // Reset selection and refresh files
+      tableRef.current?.resetSelectedRows();
+      fetchOnlineFiles();
+      onSuccess?.();
+    } catch (error) {
+      console.error('Error deleting files:', error);
+    } finally {
+      setDeletingFiles(new Set());
+    }
+  };
+
+  const handlePublishMultiple = async () => {
+    if (selectedRows.length === 0) return;
+
+    // Filter out files that are still uploading (isNew files) and only get unpublished files
+    const filesToPublish = selectedRows.filter(
+      (file) => !file.isNew && !file.published
+    );
+
+    if (filesToPublish.length === 0) {
+      console.warn(
+        'No files available for publishing (all selected files are either uploading or already published)'
+      );
+      return;
+    }
+
+    try {
+      // Track which files are being published
+      const fileIds = filesToPublish.map((file) => file.title);
+      setPublishingFiles(new Set(fileIds));
+
+      // Publish files one by one using the same pattern as the existing publish function
+      for (const file of filesToPublish) {
+        const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/publish`;
+
+        const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+          method: 'POST',
+        });
+
+        if (response.status !== 200) {
+          throw new Error(
+            `Failed to publish file ${file.title}: ${response.statusText}`
+          );
+        }
+      }
+
+      // Reset selection and refresh files
+      tableRef.current?.resetSelectedRows();
+      fetchOnlineFiles();
+      onSuccess?.();
+    } catch (error) {
+      console.error('Error publishing files:', error);
+    } finally {
+      setPublishingFiles(new Set());
+    }
+  };
+
+  const handleDepublishMultiple = async () => {
+    if (selectedRows.length === 0) return;
+
+    // Filter out files that are still uploading (isNew files) and only get published files
+    const filesToDepublish = selectedRows.filter(
+      (file) => !file.isNew && file.published
+    );
+
+    if (filesToDepublish.length === 0) {
+      console.warn(
+        'No files available for depublishing (all selected files are either uploading or not published)'
+      );
+      return;
+    }
+
+    try {
+      // Track which files are being depublished
+      const fileIds = filesToDepublish.map((file) => file.title);
+      setDepublishingFiles(new Set(fileIds));
+
+      // Depublish files one by one using the same pattern as the existing depublish function
+      for (const file of filesToDepublish) {
+        const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/depublish`;
+
+        const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+          method: 'POST',
+        });
+
+        if (response.status !== 200) {
+          throw new Error(
+            `Failed to depublish file ${file.title}: ${response.statusText}`
+          );
+        }
+      }
+
+      // Reset selection and refresh files
+      tableRef.current?.resetSelectedRows();
+      fetchOnlineFiles();
+      onSuccess?.();
+    } catch (error) {
+      console.error('Error depublishing files:', error);
+    } finally {
+      setDepublishingFiles(new Set());
+    }
+  };
+
   const uploadFile = async (file) => {
     try {
       setUploadLoading(true);
       updateFileStatus(file, 'loading');
+
+      // Add to uploading files set
+      setUploadingFiles((prev) => new Set([...prev, file.id]));
 
       const response = await makeMultipartUploadRequest(
         `${BASE_URL}/apps/openregister/api/objects/${register}/${schema}/${id}/filesMultipart`,
@@ -109,9 +255,13 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
         null
       );
 
-      // if upload is successful, remove the file from the list and refetch the online files
-      setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
-      fetchOnlineFiles();
+      // Show success state briefly before removing
+      updateFileStatus(file, 'success');
+      // setTimeout(() => {
+      //   // if upload is successful, remove the file from the list and refetch the online files
+      //   setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
+      //   fetchOnlineFiles();
+      // }, 1000); // Show checkmark for 1 second
 
       onSuccess?.();
     } catch (err) {
@@ -121,6 +271,12 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       setError(err);
     } finally {
       setUploadLoading(false);
+      // Remove from uploading files set
+      setUploadingFiles((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(file.id);
+        return newSet;
+      });
     }
   };
 
@@ -154,6 +310,167 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
     setLabelOptions((prev) => [...prev, newOption]);
     setSelectedLabels((prev) => [...prev, newOption]);
   };
+
+  // Helper functions to calculate counts for action buttons
+  const getPublishableFilesCount = () => {
+    return selectedRows.filter((file) => !file.isNew && !file.published).length;
+  };
+
+  const getDepublishableFilesCount = () => {
+    return selectedRows.filter((file) => !file.isNew && file.published).length;
+  };
+
+  const getDeletableFilesCount = () => {
+    return selectedRows.filter((file) => !file.isNew).length;
+  };
+
+  // Helper function to get plural form
+  const getPluralForm = (count) => {
+    return count > 1 ? 'en' : '';
+  };
+
+  // Memoize the table data to prevent unnecessary re-renders
+  const tableData = useMemo(() => {
+    const localFiles = files
+      .filter((f) => ['pending', 'loading', 'error'].includes(f.status))
+      .map((f) => ({
+        // map the file since file objects in javascript are not serializable (god dammit javascript...)
+        ...f,
+        size: f.size || 0,
+        title: f.name || '',
+        type: f.type || '',
+      }));
+
+    const onlineFilesData = onlineFiles?.results || [];
+
+    return [...localFiles, ...onlineFilesData];
+  }, [files, onlineFiles]);
+
+  // Update the title column to show loading states
+  const getTitleContent = (row) => {
+    const isUploading = uploadingFiles.has(row.id);
+    const isDeleting = deletingFiles.has(row.title);
+    const isPublishing = publishingFiles.has(row.title);
+    const isDepublishing = depublishingFiles.has(row.title);
+    const isSuccess = row.status === 'success';
+    const isError = row.status === 'error';
+
+    return (
+      <div className='ac-beheer-organisaties-name-container'>
+        <div className='ac-beheer-organisaties-name-container__icon'>
+          {isUploading && <SpinLoader />}
+          {isDeleting && <SpinLoader />}
+          {isPublishing && <SpinLoader />}
+          {isDepublishing && <SpinLoader />}
+          {isSuccess && <VISUALS.CHECK style={{ color: 'green' }} />}
+          {isError && <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'red' }} />}
+          {!isUploading &&
+            !isDeleting &&
+            !isPublishing &&
+            !isDepublishing &&
+            !isSuccess &&
+            !isError &&
+            !row.isNew &&
+            (row.published ? (
+              <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
+            ) : (
+              <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
+            ))}
+        </div>
+        <div className='ac-beheer-organisaties-name-container__name'>
+          {row.title || '-'}
+        </div>
+      </div>
+    );
+  };
+
+  // Update the actions column to disable actions for files being processed
+  const getActionsContent = (row) => {
+    if (
+      row.isNew ||
+      deletingFiles.has(row.title) ||
+      publishingFiles.has(row.title) ||
+      depublishingFiles.has(row.title)
+    )
+      return null;
+
+    return (
+      <ConActionMenu>
+        <ConActionMenu.Trigger
+          icon={<VISUALS.ELLIPSIS />}
+          buttonType='secondary'
+          style='buttonSlim'
+        >
+          Acties
+        </ConActionMenu.Trigger>
+
+        <ConActionMenu.Menu position='right'>
+          {!row.published && (
+            <ConActionMenu.Button
+              icon={<VISUALS.PUBLISH />}
+              onClick={() => {
+                setSingleSelectedFile(row);
+                setShowModal('publish');
+              }}
+            >
+              Publiceren
+            </ConActionMenu.Button>
+          )}
+
+          {row.published && (
+            <ConActionMenu.Button
+              icon={<VISUALS.PUBLISH_OFF />}
+              onClick={() => {
+                setSingleSelectedFile(row);
+                setShowModal('depublish');
+              }}
+            >
+              Depubliceren
+            </ConActionMenu.Button>
+          )}
+
+          <ConActionMenu.Button
+            icon={<VISUALS.TRASHCAN />}
+            onClick={() => {
+              setSingleSelectedFile(row);
+              setShowModal('delete');
+            }}
+          >
+            Verwijderen
+          </ConActionMenu.Button>
+        </ConActionMenu.Menu>
+      </ConActionMenu>
+    );
+  };
+
+  // Update the table headers to remove status column and use new title content
+  const tableHeaders = [
+    {
+      id: 'title',
+      label: 'Titel',
+      key: '',
+      customContent: getTitleContent,
+      sortComparator: (a, b, direction) => {
+        if (direction === null) return 0;
+        const aTitle = a.title || '';
+        const bTitle = b.title || '';
+        return direction
+          ? aTitle.localeCompare(bTitle)
+          : bTitle.localeCompare(aTitle);
+      },
+    },
+    {
+      id: 'labels',
+      label: 'Labels',
+      key: 'labels',
+    },
+    {
+      id: 'actions',
+      label: 'Acties',
+      key: '',
+      customContent: getActionsContent,
+    },
+  ];
 
   return (
     <>
@@ -189,182 +506,55 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
           multiple
         />
 
+        <AcFlex justifyContent='end'>
+          <ConActionMenu>
+            <ConActionMenu.Trigger
+              icon={<VISUALS.ELLIPSIS />}
+              buttonType='primary'
+              style='buttonSlim'
+              disabled={selectedRows.length === 0}
+            >
+              Acties {selectedRows.length > 0 && `(${selectedRows.length})`}
+            </ConActionMenu.Trigger>
+
+            <ConActionMenu.Menu position='right'>
+              <ConActionMenu.Button
+                icon={<VISUALS.TRASHCAN />}
+                onClick={handleDeleteMultiple}
+                disabled={getDeletableFilesCount() === 0}
+              >
+                Verwijder {getDeletableFilesCount()} bestand
+                {getPluralForm(getDeletableFilesCount())}
+              </ConActionMenu.Button>
+
+              <ConActionMenu.Button
+                icon={<VISUALS.PUBLISH />}
+                onClick={handlePublishMultiple}
+                disabled={getPublishableFilesCount() === 0}
+              >
+                Publiceer {getPublishableFilesCount()} bestand
+                {getPluralForm(getPublishableFilesCount())}
+              </ConActionMenu.Button>
+
+              <ConActionMenu.Button
+                icon={<VISUALS.PUBLISH_OFF />}
+                onClick={handleDepublishMultiple}
+                disabled={getDepublishableFilesCount() === 0}
+              >
+                Depubliceer {getDepublishableFilesCount()} bestand
+                {getPluralForm(getDepublishableFilesCount())}
+              </ConActionMenu.Button>
+            </ConActionMenu.Menu>
+          </ConActionMenu>
+        </AcFlex>
+
         <ConTable
-          loading={loading && files.length === 0}
-          data={[
-            ...files
-              .filter((f) => ['pending', 'loading', 'error'].includes(f.status))
-              .map((f) => ({
-                // map the file since file objects in javascript are not serializable (god dammit javascript...)
-                ...f,
-                size: f.size || 0,
-                title: f.name || '',
-                type: f.type || '',
-              })),
-            ...(onlineFiles?.results || []),
-          ]}
-          tableHeaders={[
-            {
-              id: 'title',
-              label: 'Titel',
-              key: '',
-              customContent: (row) => {
-                return (
-                  <div className='ac-beheer-organisaties-name-container'>
-                    <div className='ac-beheer-organisaties-name-container__icon'>
-                      {row.published ? (
-                        <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
-                      ) : (
-                        <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
-                      )}
-                    </div>
-                    <div className='ac-beheer-organisaties-name-container__name'>
-                      {row.title || '-'}
-                    </div>
-                  </div>
-                );
-              },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aTitle = a.title || '';
-                const bTitle = b.title || '';
-                return direction
-                  ? aTitle.localeCompare(bTitle)
-                  : bTitle.localeCompare(aTitle);
-              },
-            },
-            {
-              id: 'labels',
-              label: 'Labels',
-              key: 'labels',
-            },
-            // {
-            //   id: 'type',
-            //   label: 'Type',
-            //   key: 'type',
-            // },
-            // {
-            //   id: 'size',
-            //   label: 'Grootte',
-            //   key: 'size',
-            //   customContent: (row) => {
-            //     // format the size to a single human readable format
-            //     const size = row.size;
-            //     const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-            //     let formattedSize = size;
-            //     let unitIndex = 0;
-
-            //     while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-            //       formattedSize /= 1024;
-            //       unitIndex++;
-            //     }
-            //     // return a div with the formatted size and the unit and no wrapping
-            //     return (
-            //       <div style={{ whiteSpace: 'nowrap' }}>{`${
-            //         Math.round(formattedSize * 100) / 100
-            //       } ${units[unitIndex]}`}</div>
-            //     );
-            //   },
-            //   doNotTruncate: true,
-            // },
-            {
-              id: 'status',
-              label: 'Status',
-              key: 'status',
-              customContent: (row) => {
-                if (!row.isNew) return <VISUALS.CHECK style={{ color: 'green' }} />;
-                switch (row.status) {
-                  case 'pending':
-                    return <SpinLoader />;
-                  case 'loading':
-                    return <SpinLoader />;
-                  case 'success':
-                    return <VISUALS.CHECK style={{ color: 'green' }} />;
-                  case 'error':
-                    return <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'red' }} />;
-                  default:
-                    return <div>{row.status || '-'}</div>;
-                }
-              },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-
-                // add support for sorting on online files
-                if (!a.isNew) a.status = 'success';
-                if (!b.isNew) b.status = 'success';
-
-                const statusPriority = {
-                  success: 1,
-                  error: 2,
-                  uploading: 3,
-                  pending: 4,
-                };
-
-                const getPriority = (status) => statusPriority[status] || 5;
-
-                const priorityA = getPriority(a.status);
-                const priorityB = getPriority(b.status);
-
-                return direction ? priorityA - priorityB : priorityB - priorityA;
-              },
-            },
-
-            {
-              id: 'actions',
-              label: 'Acties',
-              key: '',
-              customContent: (row) => {
-                if (row.isNew) return null;
-                return (
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger
-                      icon={<VISUALS.ELLIPSIS />}
-                      buttonType='secondary'
-                      style='buttonSlim'
-                    >
-                      Acties
-                    </ConActionMenu.Trigger>
-
-                    <ConActionMenu.Menu position='right'>
-                      {!row.published && (
-                        <ConActionMenu.Button
-                          icon={<VISUALS.PUBLISH />}
-                          onClick={() => {
-                            setSingleSelectedFile(row);
-                            setShowModal('publish');
-                          }}
-                        >
-                          Publiceren
-                        </ConActionMenu.Button>
-                      )}
-
-                      {row.published && (
-                        <ConActionMenu.Button
-                          icon={<VISUALS.PUBLISH_OFF />}
-                          onClick={() => {
-                            setSingleSelectedFile(row);
-                            setShowModal('depublish');
-                          }}
-                        >
-                          Depubliceren
-                        </ConActionMenu.Button>
-                      )}
-
-                      <ConActionMenu.Button
-                        icon={<VISUALS.TRASHCAN />}
-                        onClick={() => {
-                          setSingleSelectedFile(row);
-                          setShowModal('delete');
-                        }}
-                      >
-                        Verwijderen
-                      </ConActionMenu.Button>
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
-                );
-              },
-            },
-          ]}
+          ref={tableRef}
+          loading={false}
+          data={tableData}
+          tableHeaders={tableHeaders}
+          renderSelectRowButtons={true}
+          getSelectedRows={setSelectedRows}
           truncateLines={1}
           removeOverflowWrapper
           showSortButtons

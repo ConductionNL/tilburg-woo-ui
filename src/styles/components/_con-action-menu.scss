@@ -45,6 +45,7 @@ $action-border-radius: var(
 @mixin menu-item-icon {
   width: 20px;
   margin-right: var(--tilburg-space-column-rat);
+  flex-shrink: 0;
 }
 
 // Mixin for the "floating" menu container style
