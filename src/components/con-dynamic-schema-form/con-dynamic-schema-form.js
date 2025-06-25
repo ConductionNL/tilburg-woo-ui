@@ -348,9 +348,8 @@ const ConDynamicSchemaForm = ({
       {Object.entries(sortedProperties).map(([propertyName, propertySchema]) =>
         renderField(propertyName, propertySchema)
       )}
-      {/* Tooltip needs to be loaded again because the dialog is rendered in a portal at #top-layer */}
+      {/* Tooltip needs to be rendered again because the dialog is rendered in a portal at #top-layer */}
       <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />
-     
     </>
   );
 };
