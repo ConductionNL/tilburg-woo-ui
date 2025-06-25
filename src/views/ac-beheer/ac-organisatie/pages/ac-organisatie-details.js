@@ -28,6 +28,8 @@ import {
   TableCell,
   Link,
   Alert,
+  PrimaryActionButton,
+  SecondaryActionButton,
 } from '@utrecht/component-library-react/dist/css-module';
 import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -43,6 +45,7 @@ import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcContactPersonForm from '../modals/ac-contact-person-form';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -58,6 +61,18 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [tempBeschrijvingLang, setTempBeschrijvingLang] = useState('');
   const [charCountKort, setCharCountKort] = useState(0);
   const [charCountLang, setCharCountLang] = useState(0);
+  const [selectedContactPerson, setSelectedContactPerson] = useState(null);
+  const [openModal, setOpenModal] = useState(null);
+
+  // Memoized contact persons with UUIDs
+  const contactPersons = useMemo(() => {
+    if (!data?.contactpersonen) return [];
+
+    return data.contactpersonen.map((contact) => ({
+      ...contact,
+      uuid: contact.uuid || crypto.randomUUID(),
+    }));
+  }, [data?.contactpersonen]);
 
   const uniqueUsedBySchemas = useMemo(() => {
     if (!usedBy) return [];
@@ -158,21 +173,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     return <AcBeheerError error={error.message} />;
   }
 
-  const [openModal, setOpenModal] = useState(null);
-
   const handleSaveDescription = async (type) => {
     try {
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}`;
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        null,
-        { [field]: JSON.stringify(value) },
-        `/beheer/organisaties/${id}`,
-        'PATCH'
-      );
+      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        method: 'PATCH',
+        body: JSON.stringify({ [field]: JSON.stringify(value) }),
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       if (!response.ok) {
         throw new Error('Failed to update description');
@@ -181,7 +192,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       // Update local state
       setData((prev) => ({
         ...prev,
-        [field]: value,
+        [field]: JSON.stringify(value),
       }));
 
       // Reset edit mode
@@ -206,6 +217,47 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     setCharCountLang(value.length);
   };
 
+  const handleDeleteContactPerson = async (contactPersonUuid) => {
+    try {
+      // Remove the contact person from the contactPersons array
+      const updatedContactPersons = contactPersons.filter(
+        (contact) => contact.uuid !== contactPersonUuid
+      );
+
+      // Remove UUIDs from the array before sending to API
+      const contactPersonsForApi = updatedContactPersons.map(
+        ({ uuid, ...contact }) => contact
+      );
+
+      // Update the organization with PATCH request
+      const endpoint = `openregister/api/objects/voorzieningen/organisatie/${id}`;
+      const updateResponse = await makeRequest(
+        `${BASE_URL}/apps/${endpoint}`,
+        null,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            contactpersonen: contactPersonsForApi,
+          }),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to delete contact person');
+      }
+
+      // Update local state instead of refetching
+      setData((prev) => ({
+        ...prev,
+        contactpersonen: contactPersonsForApi,
+      }));
+    } catch (err) {
+      console.error('Error deleting contact person:', err);
+      // You might want to show an error message to the user here
+    }
+  };
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -218,7 +270,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
               <AcFlex column spacing='xl'>
                 <AcFlex column spacing='md'>
                   <div className='ac-header-row'>
-                    <AcFlex spacing='sm'>
+                    <AcFlex spacing='sm' className='ac-header-row__logo-container'>
                       {data.logo && (
                         <ConLogoPreview
                           logoUrl={data.logo}
@@ -253,7 +305,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         )}
                         {!data['@self'].published && (
                           <ConActionMenu.Button
-                            icon={<VISUALS.PAPER_PLANE />}
+                            icon={<VISUALS.PUBLISH />}
                             onClick={() => setOpenModal('publish')}
                           >
                             Publiceren
@@ -261,7 +313,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         )}
                         {data['@self'].published && (
                           <ConActionMenu.Button
-                            icon={<VISUALS.PAPER_PLANE />}
+                            icon={<VISUALS.PUBLISH_OFF />}
                             onClick={() => setOpenModal('depublish')}
                           >
                             Depubliceren
@@ -336,22 +388,20 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             {255 - charCountKort} karakters over
                           </span>
                           <div className='ac-organisatie-detail-form-buttons'>
-                            <Button
-                              appearance='primary-action-button'
+                            <PrimaryActionButton
                               onClick={() => handleSaveDescription('kort')}
                             >
-                              Opslaan
-                            </Button>
-                            <Button
-                              appearance='secondary-action-button'
+                              <VISUALS.SAVE className='ac-button__icon' /> Opslaan
+                            </PrimaryActionButton>
+                            <SecondaryActionButton
                               onClick={() => {
                                 setIsEditingKort(false);
                                 setTempBeschrijvingKort(data.beschrijvingKort);
                                 setCharCountKort(data.beschrijvingKort?.length || 0);
                               }}
                             >
-                              Annuleren
-                            </Button>
+                              <VISUALS.CLOSE className='ac-button__icon' /> Annuleren
+                            </SecondaryActionButton>
                           </div>
                         </div>
                       ) : (
@@ -372,7 +422,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               setCharCountKort(data.beschrijvingKort?.length || 0);
                             }}
                           >
-                            <VISUALS.PENCIL />
+                            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
                           </Button>
                         </div>
                       )}
@@ -383,7 +433,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         <div className='ac-organisatie-detail-form-wrapper'>
                           <div className='ac-organisatie-detail-form'>
                             <div className='ac-organisatie-detail-form-label-row'>
-                              <span className='ac-form-field__label-with-icon'>
+                              <Heading
+                                level={3}
+                                className='ac-form-field__label-with-icon'
+                              >
                                 Lange beschrijving
                                 <span
                                   className='ac-form-field__tooltip'
@@ -391,11 +444,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 >
                                   <VISUALS.INFO />
                                 </span>
-                              </span>
+                              </Heading>
                             </div>
                             <div className='ac-organisatie-detail-form-flex'>
                               <div className='ac-organisatie-detail-form-textarea'>
                                 <AcFormField
+                                  label='Invoerveld'
                                   fullWidth={true}
                                   inputType='textarea'
                                   value={tempBeschrijvingLang}
@@ -406,22 +460,25 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                   placeholder='Een uitgebreide beschrijving van de organisatie'
                                 />
                               </div>
-                              <div className='ac-organisatie-detail-preview markdown-preview'>
-                                <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
+                              <div className='ac-organisatie-detail-form-preview'>
+                                <Heading level={4}>Preview</Heading>
+                                <div className='ac-organisatie-detail-preview markdown-preview'>
+                                  <ReactMarkdown>
+                                    {tempBeschrijvingLang}
+                                  </ReactMarkdown>
+                                </div>
                               </div>
                             </div>
                             <span className='character-count'>
                               {2000 - charCountLang} karakters over
                             </span>
                             <div className='ac-organisatie-detail-form-buttons'>
-                              <Button
-                                appearance='primary-action-button'
+                              <PrimaryActionButton
                                 onClick={() => handleSaveDescription('lang')}
                               >
-                                Opslaan
-                              </Button>
-                              <Button
-                                appearance='secondary-action-button'
+                                <VISUALS.SAVE className='ac-button__icon' /> Opslaan
+                              </PrimaryActionButton>
+                              <SecondaryActionButton
                                 onClick={() => {
                                   setIsEditingLang(false);
                                   setTempBeschrijvingLang(data.beschrijvingLang);
@@ -430,8 +487,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                   );
                                 }}
                               >
+                                <VISUALS.CLOSE className='ac-button__icon' />
                                 Annuleren
-                              </Button>
+                              </SecondaryActionButton>
                             </div>
                           </div>
                         </div>
@@ -486,7 +544,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               );
                             }}
                           >
-                            <VISUALS.PENCIL />
+                            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
                           </Button>
                         </div>
                       )}
@@ -550,6 +608,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               'beschrijvingKort',
                               'beschrijvingLang',
                               'contactgegevens',
+                              'contactpersonen',
                             ].includes(key)
                         )
                         .map(([key, schemaProperties]) => (
@@ -606,6 +665,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           />
                         </AcTabPanel>
                         <AcTabPanel selected={tabIndex === 1}>
+                          <AcFlex justifyContent='between'>
+                            <Heading level={3}>Contactpersonen</Heading>
+                            <PrimaryActionButton
+                              onClick={() => setOpenModal('addContact')}
+                            >
+                              <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
+                            </PrimaryActionButton>
+                          </AcFlex>
                           <ConHorizontalOverflowWrapper
                             ariaLabels={{
                               scrollLeftButton: 'Scroll left',
@@ -619,11 +686,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                   <TableCell>Email</TableCell>
                                   <TableCell>Telefoonnummer</TableCell>
                                   <TableCell>Functie</TableCell>
+                                  <TableCell>Acties</TableCell>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {data?.contactpersonen?.map?.((contact) => (
-                                  <TableRow key={contact.id}>
+                                {contactPersons?.map?.((contact) => (
+                                  <TableRow key={contact.uuid}>
                                     <TableCell>
                                       {contact.voornaam} {contact.tussenvoegsel}{' '}
                                       {contact.achternaam}
@@ -639,6 +707,39 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                       </Link>
                                     </TableCell>
                                     <TableCell>{contact.functie}</TableCell>
+                                    <TableCell>
+                                      <ConActionMenu>
+                                        <ConActionMenu.Trigger
+                                          buttonType='secondary'
+                                          style='buttonSlim'
+                                          icon={<VISUALS.ELLIPSIS />}
+                                        >
+                                          Acties
+                                        </ConActionMenu.Trigger>
+
+                                        <ConActionMenu.Menu position='right'>
+                                          <ConActionMenu.Button
+                                            icon={<VISUALS.PENCIL />}
+                                            onClick={() => {
+                                              setSelectedContactPerson(contact);
+                                              setOpenModal('editContact');
+                                            }}
+                                          >
+                                            Bewerken
+                                          </ConActionMenu.Button>
+                                          <ConActionMenu.Button
+                                            icon={<VISUALS.TRASHCAN />}
+                                            onClick={() => {
+                                              handleDeleteContactPerson(
+                                                contact.uuid
+                                              );
+                                            }}
+                                          >
+                                            Verwijderen
+                                          </ConActionMenu.Button>
+                                        </ConActionMenu.Menu>
+                                      </ConActionMenu>
+                                    </TableCell>
                                   </TableRow>
                                 ))}
                               </TableBody>
@@ -801,6 +902,23 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   showModal={openModal === 'addDeelname'}
                   onClose={() => {
                     setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
+                  }}
+                />
+
+                <AcContactPersonForm
+                  organizationId={data.id}
+                  contactPersons={contactPersons}
+                  selectedContactPersonUuid={selectedContactPerson?.uuid}
+                  showModal={
+                    openModal === 'addContact' || openModal === 'editContact'
+                  }
+                  isEdit={openModal === 'editContact'}
+                  onClose={() => {
+                    setOpenModal(null);
+                    setSelectedContactPerson(null);
                   }}
                   onSuccess={() => {
                     fetchData();

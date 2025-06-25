@@ -209,7 +209,20 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
               label: 'Titel',
               key: '',
               customContent: (row) => {
-                return <div>{row.title || '-'}</div>;
+                return (
+                  <div className='ac-beheer-organisaties-name-container'>
+                    <div className='ac-beheer-organisaties-name-container__icon'>
+                      {row.published ? (
+                        <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
+                      ) : (
+                        <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
+                      )}
+                    </div>
+                    <div className='ac-beheer-organisaties-name-container__name'>
+                      {row.title || '-'}
+                    </div>
+                  </div>
+                );
               },
               sortComparator: (a, b, direction) => {
                 if (direction === null) return 0;
@@ -295,33 +308,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
                 return direction ? priorityA - priorityB : priorityB - priorityA;
               },
             },
-            {
-              id: 'published',
-              label: 'Is gepubliceerd',
-              key: '',
-              customContent: (row) => {
-                if (row.isNew) return null;
-                if (row.published) return <VISUALS.CHECK style={{ color: 'green' }} />;
-                return <VISUALS.CIRCLE_EXCLAMATION style={{ color: 'orange' }} />;
-              },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
 
-                const publishedA = a.published;
-                const publishedB = b.published;
-
-                // Handle cases where one or both values are null
-                if (publishedA === null && publishedB === null) return 0;
-                if (publishedA === null) return direction ? 1 : -1;
-                if (publishedB === null) return direction ? -1 : 1;
-
-                // Compare dates
-                const dateA = new Date(publishedA);
-                const dateB = new Date(publishedB);
-
-                return direction ? dateA - dateB : dateB - dateA;
-              },
-            },
             {
               id: 'actions',
               label: 'Acties',
@@ -341,7 +328,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
                     <ConActionMenu.Menu position='right'>
                       {!row.published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH />}
                           onClick={() => {
                             setSingleSelectedFile(row);
                             setShowModal('publish');
@@ -353,7 +340,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
                       {row.published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH_OFF />}
                           onClick={() => {
                             setSingleSelectedFile(row);
                             setShowModal('depublish');

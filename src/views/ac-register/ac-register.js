@@ -23,6 +23,7 @@ import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
 import ReactMarkdown from 'react-markdown';
+import { useNavigate } from 'react-router-dom';
 
 const organizationTypes = [
   { value: 'leverancier', label: 'Leverancier' },
@@ -79,6 +80,9 @@ const AcRegister = () => {
     privacy: false,
     terms: false,
   });
+
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -678,10 +682,7 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={() => {
-                  setRegisterCallBack(null);
-                  setCurrentStep(3);
-                }}
+                onClick={() => navigate('/')}
               >
                 Terug naar aanmelden
               </AcButton>

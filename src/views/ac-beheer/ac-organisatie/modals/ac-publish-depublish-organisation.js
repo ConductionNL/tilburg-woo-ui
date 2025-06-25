@@ -100,14 +100,18 @@ const AcPublishDepublishOrganizationModal = ({
       title={`Organisatie ${publish ? 'publiceren' : 'depubliceren'}`}
       buttons={[
         {
-          label: 'annuleren',
+          label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
         {
-          label: publish ? 'publiceren' : 'depubliceren',
-          icon: <VISUALS.PAPER_PLANE />,
+          label: publish ? 'Publiceren' : 'Depubliceren',
+          icon: publish ? (
+            <VISUALS.PUBLISH className='ac-publish-depublish-icon' />
+          ) : (
+            <VISUALS.PUBLISH_OFF className='ac-publish-depublish-icon' />
+          ),
           onClick: handlePublishDepublish,
         },
       ]}
