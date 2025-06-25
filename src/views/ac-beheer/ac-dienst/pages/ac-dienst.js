@@ -68,7 +68,7 @@ const AcBeheerDienst = () => {
     () => ({
       voorziening: {
         id: 'voorzieningName',
-        label: 'Voorziening naam',
+        label: 'Applicatie',
         key: 'voorziening',
         customContent: (row) => {
           return row?.voorziening?.naam || '-';

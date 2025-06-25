@@ -768,58 +768,64 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {contactPersons?.map?.((contact) => (
-                                  <TableRow key={contact.uuid}>
-                                    <TableCell>
-                                      {contact.voornaam} {contact.tussenvoegsel}{' '}
-                                      {contact.achternaam}
-                                    </TableCell>
-                                    <TableCell>
-                                      <Link href={`mailto:${contact.email}`}>
-                                        {contact.email}
-                                      </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Link href={`tel:${contact.telefoon}`}>
-                                        {contact.telefoon}
-                                      </Link>
-                                    </TableCell>
-                                    <TableCell>{contact.functie}</TableCell>
-                                    <TableCell>
-                                      <ConActionMenu>
-                                        <ConActionMenu.Trigger
-                                          buttonType='secondary'
-                                          style='buttonSlim'
-                                          icon={<VISUALS.ELLIPSIS />}
-                                        >
-                                          Acties
-                                        </ConActionMenu.Trigger>
+                                {contactPersons?.length > 0 ? (
+                                  contactPersons.map((contact) => (
+                                    <TableRow key={contact.uuid}>
+                                      <TableCell>
+                                        {contact.voornaam} {contact.tussenvoegsel}{' '}
+                                        {contact.achternaam}
+                                      </TableCell>
+                                      <TableCell>
+                                        <Link href={`mailto:${contact.email}`}>
+                                          {contact.email}
+                                        </Link>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Link href={`tel:${contact.telefoon}`}>
+                                          {contact.telefoon}
+                                        </Link>
+                                      </TableCell>
+                                      <TableCell>{contact.functie}</TableCell>
+                                      <TableCell>
+                                        <ConActionMenu>
+                                          <ConActionMenu.Trigger
+                                            buttonType='secondary'
+                                            style='buttonSlim'
+                                            icon={<VISUALS.ELLIPSIS />}
+                                          >
+                                            Acties
+                                          </ConActionMenu.Trigger>
 
-                                        <ConActionMenu.Menu position='right'>
-                                          <ConActionMenu.Button
-                                            icon={<VISUALS.PENCIL />}
-                                            onClick={() => {
-                                              setSelectedContactPerson(contact);
-                                              setOpenModal('editContact');
-                                            }}
-                                          >
-                                            Bewerken
-                                          </ConActionMenu.Button>
-                                          <ConActionMenu.Button
-                                            icon={<VISUALS.TRASHCAN />}
-                                            onClick={() => {
-                                              handleDeleteContactPerson(
-                                                contact.uuid
-                                              );
-                                            }}
-                                          >
-                                            Verwijderen
-                                          </ConActionMenu.Button>
-                                        </ConActionMenu.Menu>
-                                      </ConActionMenu>
-                                    </TableCell>
+                                          <ConActionMenu.Menu position='right'>
+                                            <ConActionMenu.Button
+                                              icon={<VISUALS.PENCIL />}
+                                              onClick={() => {
+                                                setSelectedContactPerson(contact);
+                                                setOpenModal('editContact');
+                                              }}
+                                            >
+                                              Bewerken
+                                            </ConActionMenu.Button>
+                                            <ConActionMenu.Button
+                                              icon={<VISUALS.TRASHCAN />}
+                                              onClick={() => {
+                                                handleDeleteContactPerson(
+                                                  contact.uuid
+                                                );
+                                              }}
+                                            >
+                                              Verwijderen
+                                            </ConActionMenu.Button>
+                                          </ConActionMenu.Menu>
+                                        </ConActionMenu>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))
+                                ) : (
+                                  <TableRow>
+                                    <TableCell colSpan={5}>Geen contactpersonen gevonden</TableCell>
                                   </TableRow>
-                                ))}
+                                )}
                               </TableBody>
                             </Table>
                           </ConHorizontalOverflowWrapper>
@@ -852,49 +858,55 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {data?.deelnames?.map?.((deelname) => (
-                                  <TableRow key={deelname.id}>
-                                    <TableCell>{deelname.naam}</TableCell>
-                                    <TableCell>
-                                      <Link href={deelname.website}>
-                                        {deelname.website}
-                                      </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                      {deelname?.contactpersonen?.length > 0
-                                        ? deelname.contactpersonen.map((contact) => (
-                                            <div key={contact.id}>
-                                              {contact.voornaam}{' '}
-                                              {contact.tussenvoegsel}{' '}
-                                              {contact.achternaam}
-                                            </div>
-                                          ))
-                                        : '-'}
-                                    </TableCell>
-                                    <TableCell>
-                                      <ConActionMenu>
-                                        <ConActionMenu.Trigger
-                                          buttonType='secondary'
-                                          style='buttonSlim'
-                                          icon={<VISUALS.ELLIPSIS />}
-                                        >
-                                          Acties
-                                        </ConActionMenu.Trigger>
-
-                                        <ConActionMenu.Menu position='right'>
-                                          <ConActionMenu.Button
-                                            icon={<VISUALS.TRASHCAN />}
-                                            onClick={() => {
-                                              handleDeleteDeelname(deelname.id);
-                                            }}
+                                {data?.deelnames?.length > 0 ? (
+                                  data.deelnames.map((deelname) => (
+                                    <TableRow key={deelname.id}>
+                                      <TableCell>{deelname.naam}</TableCell>
+                                      <TableCell>
+                                        <Link href={deelname.website}>
+                                          {deelname.website}
+                                        </Link>
+                                      </TableCell>
+                                      <TableCell>
+                                        {deelname?.contactpersonen?.length > 0
+                                          ? deelname.contactpersonen.map((contact) => (
+                                              <div key={contact.id}>
+                                                {contact.voornaam}{' '}
+                                                {contact.tussenvoegsel}{' '}
+                                                {contact.achternaam}
+                                              </div>
+                                            ))
+                                          : '-'}
+                                      </TableCell>
+                                      <TableCell>
+                                        <ConActionMenu>
+                                          <ConActionMenu.Trigger
+                                            buttonType='secondary'
+                                            style='buttonSlim'
+                                            icon={<VISUALS.ELLIPSIS />}
                                           >
-                                            Verwijderen
-                                          </ConActionMenu.Button>
-                                        </ConActionMenu.Menu>
-                                      </ConActionMenu>
-                                    </TableCell>
+                                            Acties
+                                          </ConActionMenu.Trigger>
+
+                                          <ConActionMenu.Menu position='right'>
+                                            <ConActionMenu.Button
+                                              icon={<VISUALS.TRASHCAN />}
+                                              onClick={() => {
+                                                handleDeleteDeelname(deelname.id);
+                                              }}
+                                            >
+                                              Verwijderen
+                                            </ConActionMenu.Button>
+                                          </ConActionMenu.Menu>
+                                        </ConActionMenu>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))
+                                ) : (
+                                  <TableRow>
+                                    <TableCell colSpan={4}>Geen deelnames gevonden</TableCell>
                                   </TableRow>
-                                ))}
+                                )}
                               </TableBody>
                             </Table>
                           </ConHorizontalOverflowWrapper>
