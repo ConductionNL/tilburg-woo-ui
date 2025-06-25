@@ -5,7 +5,8 @@ import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
 import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
-
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 /**
  * A dynamic form component that automatically generates form fields based on a JSON schema.
  *
@@ -17,6 +18,7 @@ import { TOOLTIP_ID } from '@src/index.web';
  * - Loading and disabled states per field
  * - Built-in validation with custom validation support
  * - Property ordering support via the `sortPropertiesByOrder` utility
+ * - Dynamic visibility support based on form data and external context
  *
  * **Automatic Field Type Detection:**
  * - **Arrays**: Automatically rendered as multi-select dropdowns
@@ -31,7 +33,7 @@ import { TOOLTIP_ID } from '@src/index.web';
  *   propertyName: {
  *     label: "Custom Label",
  *     required: true,
- *     visible: true,
+ *     visible: true, // or function: (formData) => boolean
  *     description: "Field description",
  *     type: "text|select|multiSelect",
  *     component: "AcFormField|ReactSelect",
@@ -39,6 +41,16 @@ import { TOOLTIP_ID } from '@src/index.web';
  *     isMulti: false,
  *     closeMenuOnSelect: true,
  *     placeholder: "Custom placeholder"
+ *   }
+ * }}
+ * ```
+ *
+ * **Dynamic Visibility:**
+ * The `visible` property can be a boolean or a function that receives the current form data and context:
+ * ```jsx
+ * fieldConfigs={{
+ *   fieldName: {
+ *     visible: (formData, context) => context.isEdit === false
  *   }
  * }}
  * ```
@@ -98,7 +110,10 @@ import { TOOLTIP_ID } from '@src/index.web';
  *   formData={{ name: "Test", category: "option1" }}
  *   onFieldChange={(field, value) => console.log(field, value)}
  *   fieldConfigs={{
- *     name: { label: "Product Name" }
+ *     name: { label: "Product Name" },
+ *     category: {
+ *       visible: (formData) => formData.type === 'active'
+ *     }
  *   }}
  *   optionsProviders={{
  *     tags: [
@@ -123,11 +138,12 @@ import { TOOLTIP_ID } from '@src/index.web';
  * @param {object} props.validationStates - Custom validation states for individual fields.
  * @param {number} props.columns - Number of columns for the form layout (currently not implemented).
  * @param {string} props.className - Additional CSS classes for the form container.
+ * @param {object} props.context - Additional context object passed to visibility functions.
  *
  * @returns {React.ReactElement|null} The rendered dynamic form component or null if no schema properties exist.
  *
  * @note The component automatically capitalizes property names for labels if no custom label is provided.
- * @note Fields with `visible: false` in their configuration are not rendered.
+ * @note Fields with `visible: false` or `visible: (formData) => false` in their configuration are not rendered.
  * @note Multi-select fields automatically convert selected values to arrays of values.
  * @note Required fields without values will show validation errors.
  * @note The `columns` prop is currently not implemented in the component.
@@ -145,26 +161,31 @@ const ConDynamicSchemaForm = ({
   validationStates = {},
   columns = 2,
   className = '',
+  context = {},
 }) => {
   if (!schema?.properties) return null;
 
+  // Get the top-level required array, default to []
+  const topLevelRequired = Array.isArray(schema.required) ? schema.required : [];
+
   // Get field configuration for a specific property
   const getFieldConfig = (propertyName, propertySchema) => {
-    // Use custom field config if provided
-    if (fieldConfigs[propertyName]) {
-      return fieldConfigs[propertyName];
-    }
+    // Check if this property is required at the top level
+    const isRequired =
+      topLevelRequired.includes(propertyName) || propertySchema.required === true;
 
     const baseConfig = {
       label: propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
-      required: propertySchema.required || false,
+      required: isRequired,
       visible: propertySchema.visible !== false,
       description: propertySchema.description,
     };
 
     // Handle different field types based on schema
+    let schemaConfig = baseConfig;
+
     if (propertySchema.type === 'array') {
-      return {
+      schemaConfig = {
         ...baseConfig,
         type: 'multiSelect',
         component: 'ReactSelect',
@@ -172,10 +193,8 @@ const ConDynamicSchemaForm = ({
         closeMenuOnSelect: false,
         placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
       };
-    }
-
-    if (propertySchema.enum) {
-      return {
+    } else if (propertySchema.enum) {
+      schemaConfig = {
         ...baseConfig,
         type: 'select',
         component: 'ReactSelect',
@@ -185,34 +204,56 @@ const ConDynamicSchemaForm = ({
         })),
         placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
       };
-    }
-
-    // Check if options are provided externally for string fields
-    if (
+    } else if (
       propertySchema.type === 'string' &&
       optionsProviders[propertyName]?.length > 0
     ) {
-      return {
+      schemaConfig = {
         ...baseConfig,
         type: 'select',
         component: 'ReactSelect',
         placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
       };
-    }
-
-    if (propertySchema.type === 'string') {
-      return {
+    } else if (
+      propertySchema.type === 'string' &&
+      propertySchema.format === 'text'
+    ) {
+      schemaConfig = {
+        ...baseConfig,
+        type: 'text',
+        component: 'AcTextarea',
+      };
+    } else if (propertySchema.type === 'string') {
+      schemaConfig = {
+        ...baseConfig,
+        type: 'text',
+        component: 'AcFormField',
+      };
+    } else {
+      schemaConfig = {
         ...baseConfig,
         type: 'text',
         component: 'AcFormField',
       };
     }
 
-    return {
-      ...baseConfig,
-      type: 'text',
-      component: 'AcFormField',
-    };
+    // Merge custom field config with schema config
+    if (fieldConfigs[propertyName]) {
+      return {
+        ...schemaConfig,
+        ...fieldConfigs[propertyName],
+      };
+    }
+
+    return schemaConfig;
+  };
+
+  // Get visibility state for a field
+  const getFieldVisibility = (propertyName, fieldConfig) => {
+    if (typeof fieldConfig.visible === 'function') {
+      return fieldConfig.visible(formData, context);
+    }
+    return fieldConfig.visible !== false;
   };
 
   // Get options for a field
@@ -255,7 +296,18 @@ const ConDynamicSchemaForm = ({
 
     const isRequired = fieldConfig.required;
     const value = formData[propertyName];
-    const hasError = isRequired && !value;
+
+    // Better validation logic that handles different value types
+    let hasError = false;
+    if (isRequired) {
+      if (fieldConfig.isMulti) {
+        // For multi-select, check if array exists and has items
+        hasError = !Array.isArray(value) || value.length === 0;
+      } else {
+        // For single select and text fields, check if value exists and is not empty
+        hasError = value === undefined || value === null || value === '';
+      }
+    }
 
     return {
       hasError,
@@ -280,7 +332,9 @@ const ConDynamicSchemaForm = ({
   // Render individual field
   const renderField = (propertyName, propertySchema) => {
     const fieldConfig = getFieldConfig(propertyName, propertySchema);
-    if (!fieldConfig.visible) return null;
+
+    // Check visibility - support both boolean and function
+    if (!getFieldVisibility(propertyName, fieldConfig)) return null;
 
     const value = formData[propertyName];
     const options = getFieldOptions(propertyName, propertySchema);
@@ -303,6 +357,22 @@ const ConDynamicSchemaForm = ({
       );
     }
 
+    if (fieldConfig.component === 'AcTextarea') {
+      return (
+        <AcFormField
+          tooltip={fieldConfig.description}
+          key={propertyName}
+          inputClassName='textarea'
+          id={`dynamic-form-field-${propertyName}`}
+          label={fieldConfig.label}
+          type={fieldConfig.type}
+          onBlur={handleFieldChange(propertyName, fieldConfig)}
+          value={value || ''}
+          {...validation}
+        />
+      );
+    }
+
     if (fieldConfig.component === 'ReactSelect') {
       const selectValue = fieldConfig.isMulti
         ? options?.filter((option) => value?.includes(option.value)) || []
@@ -311,7 +381,37 @@ const ConDynamicSchemaForm = ({
       return (
         <div key={propertyName}>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>{fieldConfig.label}</h4>
+            <Heading
+              level={4}
+              className={clsx({
+                'ac-form-field-header-info': fieldConfig.description,
+              })}
+            >
+              <div>
+                {fieldConfig.label}
+                {validation.required && (
+                  <>
+                    <span className='required-indicator' aria-hidden='true'>
+                      *
+                    </span>
+                    <span className='sr-only'>(verplicht)</span>
+                  </>
+                )}
+              </div>
+              {fieldConfig.description && (
+                <>
+                  <span
+                    data-tooltip-id={TOOLTIP_ID}
+                    data-tooltip-content={fieldConfig.description}
+                    className='info-indicator'
+                    role='img'
+                    aria-label={fieldConfig.description}
+                  >
+                    <VISUALS.INFO />
+                  </span>
+                </>
+              )}
+            </Heading>
           </label>
           <ReactSelect
             placeholder={fieldConfig.placeholder}

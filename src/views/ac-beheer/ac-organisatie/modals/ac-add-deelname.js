@@ -39,8 +39,12 @@ const AcAddDeelnameModal = ({
 
       if (response.ok) {
         const orgs = response.data.results;
+        const existingDeelnameIds = Array.isArray(organization.deelnames)
+          ? organization.deelnames.map((d) => (typeof d === 'object' ? d.id : d))
+          : [];
+
         const filteredOrgs = orgs
-          .filter((org) => !(organization.deelnames || []).includes(org.id))
+          .filter((org) => !existingDeelnameIds.includes(org.id))
           .filter(
             (org) =>
               (org.type?.toLowerCase() === 'samenwerking' ||
@@ -68,6 +72,10 @@ const AcAddDeelnameModal = ({
     }
 
     try {
+      const existingDeelnameIds = Array.isArray(organization.deelnames)
+        ? organization.deelnames
+        : organization.deelnames?.map((deelname) => deelname.id) || [];
+
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}`,
         null,
@@ -75,7 +83,10 @@ const AcAddDeelnameModal = ({
           method: 'PUT',
           body: JSON.stringify({
             ...organization,
-            deelnames: [...(organization.deelnames || []), selectedDeelname.value],
+            deelnames: [
+              ...existingDeelnameIds.map((d) => (typeof d === 'object' ? d.id : d)),
+              selectedDeelname.value,
+            ].map(String),
           }),
         }
       );
@@ -128,6 +139,7 @@ const AcAddDeelnameModal = ({
       ref={modalRef}
       id='add-deelname-modal'
       title='Deelname toevoegen'
+      layoutClassName='wide-content'
       buttons={[
         {
           label: 'annuleren',

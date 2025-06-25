@@ -342,6 +342,7 @@ const ConTable = (
             <TableCell>
               <div className='con-table-checkbox'>
                 <AcCheckbox
+                  id='select-all'
                   checked={selectedAll}
                   onChange={handleSelectAll}
                   disabled={sortedData.length === 0}
@@ -448,9 +449,10 @@ const ConTable = (
     return sortedData.map((row, index) => (
       <TableRow key={index}>
         {renderSelectRowButtons && (
-          <TableCell>
+          <TableCell className='con-table-checkbox-cell'>
             <div className='con-table-checkbox'>
               <AcCheckbox
+                id={`select-row-${row[uniqueSymbol]}`}
                 checked={
                   selectedRows.find(
                     (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
