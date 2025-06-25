@@ -6,20 +6,22 @@ import {
   Checkbox,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcCheckbox = ({ label, value, checked, onChange }) => {
-  const id = useMemo(() => `${label}_${value}`, [label, value]);
+const AcCheckbox = ({ label, value, checked, onChange, className, id }) => {
+
+
+  const _id = id || useMemo(() => `${label}_${value}`, [label, value]);
 
   const onChangeHandler = (e) => {
     if (onChange instanceof Function) onChange(e.target.checked);
   };
 
   return (
-    <FormField type='checkbox'>
+    <FormField type='checkbox' className={className}>
       <Paragraph className='utrecht-form-field__label utrecht-form-field__label--checkbox'>
-        <FormLabel type='checkbox' for={id}>
+        <FormLabel type='checkbox' for={_id}>
           <Checkbox
-            id={id}
-            className='utrecht-form-field__input'
+            id={_id}
+            className={`utrecht-form-field__input ${className || ''}`}
             checked={checked}
             name={label}
             value={value}

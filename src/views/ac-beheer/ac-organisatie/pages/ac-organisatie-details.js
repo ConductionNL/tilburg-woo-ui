@@ -103,7 +103,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
       const extend = [
         ['_extend[]', 'contactgegevens'],
-        ['_extend[]', 'samenwerkingen'],
         ['_extend[]', 'deelnames'],
       ];
 
@@ -139,6 +138,26 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       setError(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const excludePropertiesBasedOnType = () => {
+    if (!data?.type) {
+      return [];
+    }
+
+    const type = data.type.toLowerCase();
+
+    switch (type) {
+      case 'leverancier':
+        return ['oin', 'cbs'];
+      case 'samenwerking':
+      case 'community':
+        return ['kvkNummer', 'oin', 'cbs'];
+      case 'gemeente':
+        return ['kvkNummer'];
+      default:
+        return [];
     }
   };
 
@@ -258,6 +277,42 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     }
   };
 
+  const handleDeleteDeelname = async (deelnameId) => {
+    try {
+      // Remove the deelname from the deelnames array
+      const updatedDeelnames = data.deelnames.filter(
+        (deelname) => deelname.id !== deelnameId
+      );
+
+      // Update the organization with PATCH request
+      const endpoint = `openregister/api/objects/voorzieningen/organisatie/${id}`;
+      const updateResponse = await makeRequest(
+        `${BASE_URL}/apps/${endpoint}`,
+        null,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({
+            deelnames: updatedDeelnames.map((deelname) => deelname.id),
+          }),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      if (!updateResponse.ok) {
+        throw new Error('Failed to delete deelname');
+      }
+
+      // Update local state instead of refetching
+      setData((prev) => ({
+        ...prev,
+        deelnames: updatedDeelnames,
+      }));
+    } catch (err) {
+      console.error('Error deleting deelname:', err);
+      // You might want to show an error message to the user here
+    }
+  };
+
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
@@ -360,7 +415,8 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           <VISUALS.TRIANGLE_EXCLAMATION />
                           <AcFlex column spacing='xs'>
                             <Paragraph className='ac-organisatie-details-alert-paragraph'>
-                              Deze organisatie is nog niet gepubliceerd
+                              Deze organisatie is nog niet gepubliceerd en dus niet
+                              zichtbaar voor anderen.
                             </Paragraph>
                           </AcFlex>
                         </AcFlex>
@@ -609,6 +665,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               'beschrijvingLang',
                               'contactgegevens',
                               'contactpersonen',
+                              'deelnames',
+                              'logo',
+                              ...excludePropertiesBasedOnType(),
                             ].includes(key)
                         )
                         .map(([key, schemaProperties]) => (
@@ -622,14 +681,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             ) : key === 'deelnames' ? (
                               <ul>
                                 {data[key]?.map?.((deelname) => (
-                                  <li key={deelname.id} style={{ marginInlineStart: '16px' }}>
+                                  <li
+                                    key={deelname.id}
+                                    style={{ marginInlineStart: '16px' }}
+                                  >
                                     <Link href={`/publicatie/${deelname.id}`}>
                                       {deelname.naam}
                                     </Link>
                                   </li>
                                 ))}
                                 {!data[key]?.length && (
-                                  <li>
+                                  <li style={{ marginInlineStart: '16px' }}>
                                     <span>-</span>
                                   </li>
                                 )}
@@ -661,9 +723,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
                           <AcTab selected={tabIndex === 1}>Contactpersonen</AcTab>
-                          <AcTab selected={tabIndex === 2}>
-                            Mijn samenwerkingen
-                          </AcTab>
+                          <AcTab selected={tabIndex === 2}>Deelnames</AcTab>
 
                           {uniqueUsedBySchemas.map((schema) => (
                             <AcTab key={schema.id} selected={tabIndex === schema.id}>
@@ -680,7 +740,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           />
                         </AcTabPanel>
                         <AcTabPanel selected={tabIndex === 1}>
-                          <AcFlex justifyContent='between'>
+                          <AcFlex
+                            justifyContent='between'
+                            className='ac-organisatie-tab-header'
+                          >
                             <Heading level={3}>Contactpersonen</Heading>
                             <PrimaryActionButton
                               onClick={() => setOpenModal('addContact')}
@@ -762,6 +825,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           </ConHorizontalOverflowWrapper>
                         </AcTabPanel>
                         <AcTabPanel selected={tabIndex === 2}>
+                          <AcFlex
+                            justifyContent='between'
+                            className='ac-organisatie-tab-header'
+                          >
+                            <Heading level={3}>Deelnames</Heading>
+                            <PrimaryActionButton
+                              onClick={() => setOpenModal('addDeelname')}
+                            >
+                              <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
+                            </PrimaryActionButton>
+                          </AcFlex>
                           <ConHorizontalOverflowWrapper
                             ariaLabels={{
                               scrollLeftButton: 'Scroll left',
@@ -771,30 +845,53 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableCell>Samenwerking</TableCell>
+                                  <TableCell>Deelname</TableCell>
                                   <TableCell>Website</TableCell>
                                   <TableCell>Contactpersonen</TableCell>
+                                  <TableCell>Acties</TableCell>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
-                                {data?.samenwerkingen?.map?.((samenwerking) => (
-                                  <TableRow key={samenwerking.id}>
-                                    <TableCell>{samenwerking.naam}</TableCell>
+                                {data?.deelnames?.map?.((deelname) => (
+                                  <TableRow key={deelname.id}>
+                                    <TableCell>{deelname.naam}</TableCell>
                                     <TableCell>
-                                      <Link href={samenwerking.website}>
-                                        {samenwerking.website}
+                                      <Link href={deelname.website}>
+                                        {deelname.website}
                                       </Link>
                                     </TableCell>
                                     <TableCell>
-                                      {samenwerking.contactpersonen.map(
-                                        (contact) => (
-                                          <div key={contact.id}>
-                                            {contact.voornaam}{' '}
-                                            {contact.tussenvoegsel}{' '}
-                                            {contact.achternaam}
-                                          </div>
-                                        )
-                                      )}
+                                      {deelname?.contactpersonen?.length > 0
+                                        ? deelname.contactpersonen.map((contact) => (
+                                            <div key={contact.id}>
+                                              {contact.voornaam}{' '}
+                                              {contact.tussenvoegsel}{' '}
+                                              {contact.achternaam}
+                                            </div>
+                                          ))
+                                        : '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                      <ConActionMenu>
+                                        <ConActionMenu.Trigger
+                                          buttonType='secondary'
+                                          style='buttonSlim'
+                                          icon={<VISUALS.ELLIPSIS />}
+                                        >
+                                          Acties
+                                        </ConActionMenu.Trigger>
+
+                                        <ConActionMenu.Menu position='right'>
+                                          <ConActionMenu.Button
+                                            icon={<VISUALS.TRASHCAN />}
+                                            onClick={() => {
+                                              handleDeleteDeelname(deelname.id);
+                                            }}
+                                          >
+                                            Verwijderen
+                                          </ConActionMenu.Button>
+                                        </ConActionMenu.Menu>
+                                      </ConActionMenu>
                                     </TableCell>
                                   </TableRow>
                                 ))}
