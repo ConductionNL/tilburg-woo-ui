@@ -197,4 +197,7 @@
 .ac-publish-depublish-icon {
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
+  min-width: 24px;
+  min-height: 24px;
 }

@@ -45,7 +45,9 @@ const ConPublishDepublishFileModal = ({
 
   const handlePublishDepublish = async () => {
     try {
-      const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/${publish ? 'publish' : 'depublish'}`;
+      const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${
+        file.title
+      }/${publish ? 'publish' : 'depublish'}`;
 
       const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
         method: 'POST',
@@ -63,8 +65,13 @@ const ConPublishDepublishFileModal = ({
       const errorMessage =
         err.response?.data?.message ||
         err.message ||
-        `Er is een fout opgetreden bij het ${publish ? 'publiceren' : 'depubliceren'} van het bestand`;
-      console.error(`Error ${publish ? 'publishing' : 'depublishing'} file:`, errorMessage);
+        `Er is een fout opgetreden bij het ${
+          publish ? 'publiceren' : 'depubliceren'
+        } van het bestand`;
+      console.error(
+        `Error ${publish ? 'publishing' : 'depublishing'} file:`,
+        errorMessage
+      );
       setError(errorMessage);
     }
   };
@@ -116,12 +123,12 @@ const ConPublishDepublishFileModal = ({
       title={`Bestand ${publish ? 'publiceren' : 'depubliceren'}`}
       buttons={[
         {
-          label: publish ? 'publiceren' : 'depubliceren',
-          icon: <VISUALS.PAPER_PLANE />,
+          label: publish ? 'Publiceren' : 'Depubliceren',
+          icon: publish ? <VISUALS.PUBLISH /> : <VISUALS.PUBLISH_OFF />,
           onClick: handlePublishDepublish,
         },
         {
-          label: 'annuleren',
+          label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: handleCloseModal,
           buttonType: 'secondary',
