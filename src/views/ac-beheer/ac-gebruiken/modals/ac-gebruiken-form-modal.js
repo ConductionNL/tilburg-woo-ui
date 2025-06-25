@@ -28,12 +28,14 @@ const AcGebruikenFormModal = ({
     organisatieId: '',
     voorzieningId: '',
     versieId: '',
-    beheerder: {
-      naam: '',
-      email: '',
-      telefoon: '',
-      functie: '',
-    },
+    // beheerder: {
+    //   naam: '',
+    //   email: '',
+    //   telefoon: '',
+    //   functie: '',
+    // },
+    beheerder: '',
+    eigenaar: '',
     startDatum: '',
     status: '',
     bbnScore: '',
@@ -508,6 +510,26 @@ const AcGebruikenFormModal = ({
             })}
           />
         </div>
+        <AcFormField
+          label='Beheerder'
+          type='text'
+          onBlur={handleEditGebruikFieldChange('beheerder')}
+          value={gebruikFormData.beheerder}
+          {...(schema?.properties?.beheerder?.required && {
+            hasError: !gebruikFormData?.beheerder,
+            required: true,
+          })}
+        />
+        <AcFormField
+          label='Eigenaar'
+          type='text'
+          onBlur={handleEditGebruikFieldChange('eigenaar')}
+          value={gebruikFormData.eigenaar}
+          {...(schema?.properties?.eigenaar?.required && {
+            hasError: !gebruikFormData?.eigenaar,
+            required: true,
+          })}
+        />
       </AcGrid>
     </AcModal>
   );
