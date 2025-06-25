@@ -142,6 +142,26 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     }
   };
 
+  const excludePropertiesBasedOnType = () => {
+    if (!data?.type) {
+      return [];
+    }
+
+    const type = data.type.toLowerCase();
+
+    switch (type) {
+      case 'leverancier':
+        return ['oin', 'cbs'];
+      case 'samenwerking':
+      case 'community':
+        return ['kvk', 'oin', 'cbs'];
+      case 'gemeente':
+        return ['kvk'];
+      default:
+        return [];
+    }
+  };
+
   const fetchUsedBy = async (registerSlug, schemaSlug, id) => {
     const response = await makeRequest(
       `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
@@ -609,6 +629,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               'beschrijvingLang',
                               'contactgegevens',
                               'contactpersonen',
+                              ...excludePropertiesBasedOnType(),
                             ].includes(key)
                         )
                         .map(([key, schemaProperties]) => (
