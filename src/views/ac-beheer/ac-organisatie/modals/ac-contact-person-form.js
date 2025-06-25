@@ -12,7 +12,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 /**
  * Modal for adding or editing a contact person to an organization
  * @param {Object} props - Component props
- * @param {Object} props.organization - Organization data
+ * @param {string} props.organizationId - Organization ID
  * @param {Array} props.contactPersons - Array of all contact persons with UUIDs
  * @param {string} props.selectedContactPersonUuid - UUID of the contact person to edit (optional)
  * @param {boolean} props.showModal - Controls modal visibility
@@ -22,7 +22,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
  * @returns {JSX.Element} Contact person modal
  */
 const AcContactPersonForm = ({
-  organization,
+  organizationId,
   contactPersons = [],
   selectedContactPersonUuid,
   showModal = false,
@@ -164,7 +164,7 @@ const AcContactPersonForm = ({
       );
 
       // Update the organization with PATCH request
-      const endpoint = `openregister/api/objects/voorzieningen/organisatie/${organization.id}`;
+      const endpoint = `openregister/api/objects/voorzieningen/organisatie/${organizationId}`;
       const updateResponse = await makeRequest(
         `${BASE_URL}/apps/${endpoint}`,
         null,

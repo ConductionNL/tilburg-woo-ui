@@ -911,7 +911,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                 />
 
                 <AcContactPersonForm
-                  organization={data}
+                  organizationId={data.id}
                   contactPersons={contactPersons}
                   selectedContactPersonUuid={selectedContactPerson?.uuid}
                   showModal={
