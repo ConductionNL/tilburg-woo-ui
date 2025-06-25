@@ -64,8 +64,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [selectedContactPerson, setSelectedContactPerson] = useState(null);
   const [openModal, setOpenModal] = useState(null);
 
-  // Generate simple UUID utility function
-
   // Memoized contact persons with UUIDs
   const contactPersons = useMemo(() => {
     if (!data?.contactpersonen) return [];
