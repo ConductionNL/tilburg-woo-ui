@@ -48,12 +48,6 @@ nextcloudApi.interceptors.response.use(
     ok: response.status >= 200 && response.status < 300,
   }),
   (error) => {
-    if (error.response?.status === 401) {
-      // Handle unauthorized access
-      const navigate = useNavigate();
-      const currentPath = window.location.pathname;
-      navigate(`/login?redirect_url=${currentPath}`);
-    }
     return Promise.reject(error);
   }
 );
