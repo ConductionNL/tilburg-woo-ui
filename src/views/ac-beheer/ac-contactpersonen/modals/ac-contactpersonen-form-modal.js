@@ -21,7 +21,7 @@ const createOption = (label) => ({
   value: label.toLowerCase().replace(/\W/g, ''),
 });
 
-const AcGebruikersFormModal = ({
+const AcContactpersoonFormModal = ({
   gebruiker,
   showModal = false,
   onClose,
@@ -431,4 +431,4 @@ const AcGebruikersFormModal = ({
   return renderGebruikerFormModal;
 };
 
-export default withStore(observer(AcGebruikersFormModal));
+export default withStore(observer(AcContactpersoonFormModal));

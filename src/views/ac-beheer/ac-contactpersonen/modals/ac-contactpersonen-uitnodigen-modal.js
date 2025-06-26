@@ -16,7 +16,7 @@ import { VISUALS } from '@constants';
  * @param {function} onSuccess - function to call when invitation is successful
  * @returns {React.JSX.Element} - modal to invite users
  */
-const AcGebruikersUitnodigenModal = ({
+const AcContactpersonenUitnodigenModal = ({
   gebruikers,
   showModal = false,
   onClose,
@@ -138,4 +138,4 @@ const AcGebruikersUitnodigenModal = ({
   return renderInviteModal;
 };
 
-export default withStore(observer(AcGebruikersUitnodigenModal));
+export default withStore(observer(AcContactpersonenUitnodigenModal));

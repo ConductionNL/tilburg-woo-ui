@@ -9,13 +9,13 @@ import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 
 /**
- * modal to delete 1 or multiple gebruikers
- * @param {object[]} gebruikers - array of gebruikers
+ * modal to delete 1 or multiple contactpersonen
+ * @param {object[]} contactpersonen - array of contactpersonen
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
- * @returns {React.JSX.Element} - modal to delete 1 or multiple gebruikers
+ * @returns {React.JSX.Element} - modal to delete 1 or multiple contactpersonen
  */
-const AcDeleteGebruikersModal = ({
+const AcDeleteContactpersonenModal = ({
   gebruikers,
   showModal = false,
   onClose,
@@ -100,4 +100,4 @@ const AcDeleteGebruikersModal = ({
   return renderDeleteGebruikerModal;
 };
 
-export default withStore(observer(AcDeleteGebruikersModal));
+export default withStore(observer(AcDeleteContactpersonenModal));

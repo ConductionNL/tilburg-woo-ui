@@ -6,6 +6,7 @@ import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms'
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader } from '@components';
 import {
+  Alert,
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
@@ -14,12 +15,13 @@ import { BASE_URL } from '../../ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
-import AcGebruikersFormModal from '../modals/ac-contactpersonen-form-modal';
-import AcDeleteGebruikersModal from '../modals/ac-delete-contactpersonen-modal';
-import AcGebruikersUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
+import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
+import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
+import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
 
 const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -153,7 +155,26 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                       >
                         Uitnodigen
                       </ConActionMenu.Button>
+
+                      {!data['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH />}
+                          onClick={() => setOpenModal('publish')}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+                      {data['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH_OFF />}
+                          onClick={() => setOpenModal('depublish')}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
+
                       <ConActionMenu.Divider />
+
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => setOpenModal('delete')}
@@ -166,6 +187,33 @@ const AcBeheerGebruikerDetails = ({ id }) => {
 
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
+                    <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>
+                      {!data.gebruiker && (
+                        <Alert type='info'>
+                          <AcFlex spacing='sm'>
+                            <VISUALS.INFO_BLUE />
+                            <AcFlex column spacing='xs'>
+                              <Paragraph>
+                                Deze contactpersoon heeft geen gebruiker.
+                              </Paragraph>
+                            </AcFlex>
+                          </AcFlex>
+                        </Alert>
+                      )}
+                      {!data['@self'].published && (
+                        <Alert type='warning'>
+                          <AcFlex spacing='sm'>
+                            <VISUALS.TRIANGLE_EXCLAMATION />
+                            <AcFlex column spacing='xs'>
+                              <Paragraph>
+                                Deze contactpersoon is nog niet gepubliceerd.
+                              </Paragraph>
+                            </AcFlex>
+                          </AcFlex>
+                        </Alert>
+                      )}
+                    </AcFlex>
+
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
                         .filter(
@@ -265,7 +313,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcGebruikersFormModal
+                <AcContactpersonenFormModal
                   gebruiker={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -277,7 +325,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteGebruikersModal
+                <AcDeleteContactpersonenModal
                   gebruikers={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
@@ -288,9 +336,21 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                   }}
                 />
 
-                <AcGebruikersUitnodigenModal
+                <AcContactpersonenUitnodigenModal
                   gebruikers={[data]}
                   showModal={openModal === 'invite'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
+                  }}
+                />
+
+                <AcPublishDepublishContactpersoonModal
+                  contactpersoon={data}
+                  publish={openModal === 'publish'}
+                  showModal={openModal === 'publish' || openModal === 'depublish'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
