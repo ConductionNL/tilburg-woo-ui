@@ -21,7 +21,7 @@ const createOption = (label) => ({
   value: label.toLowerCase().replace(/\W/g, ''),
 });
 
-const AcGebruikersFormModal = ({
+const AcContactpersoonFormModal = ({
   gebruiker,
   showModal = false,
   onClose,
@@ -48,17 +48,30 @@ const AcGebruikersFormModal = ({
   };
 
   const rollenOptions = [
-    { label: 'Admin', value: 'admin' },
-    { label: 'Editor', value: 'editor' },
-    { label: 'Viewer', value: 'viewer' },
+    // { label: 'Admin', value: 'admin' },
+    // { label: 'Editor', value: 'editor' },
+    // { label: 'Viewer', value: 'viewer' },
+    { label: 'Aanbod-beheerder', value: 'aanbod-beheerder' },
+    { label: 'Gebruik-beheerder', value: 'gebruik-beheerder' },
+    { label: 'Gebruik-raadpleger', value: 'gebruik-raadpleger' },
+    { label: 'Functioneel beheerder', value: 'functioneel beheerder' },
+    { label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
+    { label: 'Bezoeker', value: 'Bezoeker' },
   ];
 
   // form data
   const [gebruikerFormData, setGebruikerFormData] = useState({});
   const [schema, setSchema] = useState(null);
 
+  const [userInfo, setUserInfo] = useState(null);
+
   // nextcloud requests
-  const { makeRequest } = useNextcloudRequests();
+  const { makeRequest, getUser } = useNextcloudRequests();
+
+  const fetchUserInfo = async () => {
+    const user = await getUser();
+    setUserInfo(user.data);
+  };
 
   useEffect(() => {
     const fetchSchema = async () => {
@@ -71,6 +84,7 @@ const AcGebruikersFormModal = ({
 
     if (showModal) {
       fetchSchema();
+      fetchUserInfo();
     }
   }, [showModal]);
 
@@ -203,7 +217,7 @@ const AcGebruikersFormModal = ({
     <AcModal
       ref={modalRef}
       id='edit-gebruiker-modal'
-      title={isEdit ? 'Gebruiker bewerken' : 'Gebruiker toevoegen'}
+      title={isEdit ? 'Contactpersoon bewerken' : 'Contactpersoon toevoegen'}
       layoutClassName='wide-content'
       buttons={[
         {
@@ -283,7 +297,7 @@ const AcGebruikersFormModal = ({
           })}
         />
         <AcFormField
-          // disabled
+          disabled={userInfo ? !userInfo?.groups?.includes('admin') : true}
           label='Organisatie'
           type='text'
           onBlur={handleEditGebruikerFieldChange('organisatie')}
@@ -417,4 +431,4 @@ const AcGebruikersFormModal = ({
   return renderGebruikerFormModal;
 };
 
-export default withStore(observer(AcGebruikersFormModal));
+export default withStore(observer(AcContactpersoonFormModal));

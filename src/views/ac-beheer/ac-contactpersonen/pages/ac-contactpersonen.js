@@ -13,9 +13,9 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcGebruikerFormModal from '../modals/ac-gebruikers-form-modal';
-import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
-import AcGebruikersUitnodigenModal from '../modals/ac-gebruikers-uitnodigen-modal';
+import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
+import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
+import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
@@ -25,6 +25,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
+import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
 
 const AcBeheerGebruikers = () => {
   const navigate = useNavigate();
@@ -120,7 +121,7 @@ const AcBeheerGebruikers = () => {
         id: 'organisatie',
         label: 'Organisatie',
         key: 'organisatie',
-        customContent: (row) => `${row.organisatie.naam}`,
+        customContent: (row) => row.organisatie?.naam || row.organisatie || '-',
       },
 
       actief: {
@@ -167,14 +168,6 @@ const AcBeheerGebruikers = () => {
       })
       .flat(); // flatten the array of arrays
 
-    // Temporary header for organisatie until we have a proper schema
-    schemaHeaders.push({
-      id: 'organisatie',
-      label: 'Organisatie',
-      key: 'organisatie',
-      customContent: (row) => `${row.organisatie}`,
-    });
-
     return schemaHeaders;
   }, [dataProperties, customHeaders]);
 
@@ -194,7 +187,7 @@ const AcBeheerGebruikers = () => {
   };
 
   if (error) {
-    return <AcBeheerError title='Beheer Gebruikers' error={error.message} />;
+    return <AcBeheerError title='Beheer Contactpersonen' error={error.message} />;
   }
 
   return (
@@ -208,7 +201,7 @@ const AcBeheerGebruikers = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Gebruikers</Heading>
+            <Heading>Beheer Contactpersonen</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -303,7 +296,10 @@ const AcBeheerGebruikers = () => {
                         icon={<VISUALS.EYE />}
                         onClick={() => {
                           navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruikers', row.id)
+                            NAVIGATE_TO.BEHEER_TYPE_DETAILS(
+                              'contactpersonen',
+                              row.id
+                            )
                           );
                         }}
                       >
@@ -329,6 +325,30 @@ const AcBeheerGebruikers = () => {
                       >
                         Uitnodigen
                       </ConActionMenu.Button>
+
+                      {!row['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('publish');
+                          }}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+
+                      {row['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PAPER_PLANE />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('depublish');
+                          }}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -367,7 +387,7 @@ const AcBeheerGebruikers = () => {
           />
 
           {/* modals */}
-          <AcGebruikerFormModal
+          <AcContactpersonenFormModal
             gebruiker={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
@@ -382,7 +402,7 @@ const AcBeheerGebruikers = () => {
             }}
           />
 
-          <AcDeleteGebruikerModal
+          <AcDeleteContactpersonenModal
             gebruikers={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
@@ -395,7 +415,7 @@ const AcBeheerGebruikers = () => {
             }}
           />
 
-          <AcGebruikersUitnodigenModal
+          <AcContactpersonenUitnodigenModal
             gebruikers={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'invite'}
             onClose={() => {
@@ -421,6 +441,20 @@ const AcBeheerGebruikers = () => {
             showModal={openModal === 'import'}
             onClose={() => setOpenModal(null)}
             onSuccess={() => {}}
+          />
+
+          <AcPublishDepublishContactpersoonModal
+            contactpersoon={singleSelectedRow}
+            publish={openModal === 'publish'}
+            showModal={openModal === 'publish' || openModal === 'depublish'}
+            onClose={() => {
+              setOpenModal(null);
+              setSingleSelectedRow(null);
+            }}
+            onSuccess={() => {
+              tableRef.current.resetSelectedRows();
+              fetchData();
+            }}
           />
         </AcColumn>
       </AcFlex>

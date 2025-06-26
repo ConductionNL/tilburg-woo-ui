@@ -16,7 +16,7 @@ import { VISUALS } from '@constants';
  * @param {function} onSuccess - function to call when invitation is successful
  * @returns {React.JSX.Element} - modal to invite users
  */
-const AcGebruikersUitnodigenModal = ({
+const AcContactpersonenUitnodigenModal = ({
   gebruikers,
   showModal = false,
   onClose,
@@ -75,7 +75,7 @@ const AcGebruikersUitnodigenModal = ({
     <AcModal
       ref={modalRef}
       id='invite-gebruikers-modal'
-      title={`${gebruikers.length === 1 ? 'Gebruiker' : 'Gebruikers'} uitnodigen`}
+      title={`${gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} uitnodigen`}
       buttons={[
         {
           label: 'annuleren',
@@ -96,7 +96,7 @@ const AcGebruikersUitnodigenModal = ({
       <AcFlex column spacing='sm'>
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
           Weet je zeker dat je deze{' '}
-          {gebruikers.length === 1 ? 'gebruiker' : 'gebruikers'} wilt uitnodigen?
+          {gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt uitnodigen?
         </Paragraph>
         <div>
           {gebruikers.map((gebruiker) => (
@@ -138,4 +138,4 @@ const AcGebruikersUitnodigenModal = ({
   return renderInviteModal;
 };
 
-export default withStore(observer(AcGebruikersUitnodigenModal));
+export default withStore(observer(AcContactpersonenUitnodigenModal));

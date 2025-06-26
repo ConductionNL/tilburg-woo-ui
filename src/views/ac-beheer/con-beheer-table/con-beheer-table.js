@@ -99,9 +99,9 @@ const GET_CONFIG = (type, metadata, navigate) => {
         config.defaultHeaders = ['titel', 'ernst', 'detectedOn', 'status'];
         break;
 
-      case 'gebruikers':
-        config.navigateView = (id) => navigate(`/beheer/gebruikers/${id}`);
-        config.schemaSlug = 'gebruiker';
+      case 'contactpersonen':
+        config.navigateView = (id) => navigate(`/beheer/contactpersonen/${id}`);
+        config.schemaSlug = 'contactpersoon';
         config.defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
         break;
 
@@ -135,6 +135,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
  * | 'organisaties'
  * | 'kwetsbaarheden'
  * | 'gebruikers'
+ * | 'contactpersonen'
  * } type
  */
 

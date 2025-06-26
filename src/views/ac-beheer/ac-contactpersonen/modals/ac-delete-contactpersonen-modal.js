@@ -9,13 +9,13 @@ import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 
 /**
- * modal to delete 1 or multiple gebruikers
- * @param {object[]} gebruikers - array of gebruikers
+ * modal to delete 1 or multiple contactpersonen
+ * @param {object[]} contactpersonen - array of contactpersonen
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
- * @returns {React.JSX.Element} - modal to delete 1 or multiple gebruikers
+ * @returns {React.JSX.Element} - modal to delete 1 or multiple contactpersonen
  */
-const AcDeleteGebruikersModal = ({
+const AcDeleteContactpersonenModal = ({
   gebruikers,
   showModal = false,
   onClose,
@@ -69,7 +69,7 @@ const AcDeleteGebruikersModal = ({
     <AcModal
       ref={modalRef}
       id='delete-gebruiker-modal'
-      title={`${gebruikers.length === 1 ? 'Gebruiker' : 'Gebruikers'} verwijderen`}
+      title={`${gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} verwijderen`}
       buttons={[
         {
           label: 'verwijderen',
@@ -87,7 +87,7 @@ const AcDeleteGebruikersModal = ({
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {gebruikers.length === 1 ? 'gebruiker' : 'gebruikers'} wilt verwijderen?
+        {gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt verwijderen?
         {gebruikers.map((gebruiker) => (
           <Paragraph key={gebruiker.id}>
             {gebruiker.voornaam} {gebruiker.achternaam} ({gebruiker.email})
@@ -100,4 +100,4 @@ const AcDeleteGebruikersModal = ({
   return renderDeleteGebruikerModal;
 };
 
-export default withStore(observer(AcDeleteGebruikersModal));
+export default withStore(observer(AcDeleteContactpersonenModal));
