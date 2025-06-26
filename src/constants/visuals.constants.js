@@ -181,6 +181,14 @@ const XMARK = loadable(() =>
   import('-!svg-react-loader!@assets/images/xmark.svg')
 );
 
+const PUBLISH = loadable(() =>
+  import('-!svg-react-loader!@assets/images/publish.svg')
+);
+
+const PUBLISH_OFF = loadable(() =>
+  import('-!svg-react-loader!@assets/images/publish-off.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -246,6 +254,8 @@ export const VISUALS = {
   CLIPBOARD_CHECK,
   PAPER_PLANE,
   XMARK,
+  PUBLISH,
+  PUBLISH_OFF,
 };
 
 export default {};

@@ -28,6 +28,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
+import AcAddDeelnameModal from '../modals/ac-add-deelname';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -195,7 +196,7 @@ const AcBeheerOrganisaties = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['organizationName', 'status', 'logo', 'contactDetails'];
+  const defaultHeaders = ['name', 'status', 'logo', 'contactDetails'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
@@ -289,6 +290,25 @@ const AcBeheerOrganisaties = () => {
           <ConTable
             data={data}
             tableHeaders={[
+              {
+                id: 'name',
+                label: 'Naam',
+                key: 'name',
+                customContent: (row) => (
+                  <div className='ac-beheer-organisaties-name-container'>
+                    <div className='ac-beheer-organisaties-name-container__icon'>
+                      {row['@self'].published ? (
+                        <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
+                      ) : (
+                        <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
+                      )}
+                    </div>
+                    <div className='ac-beheer-organisaties-name-container__name'>
+                      {row.naam || '-'}
+                    </div>
+                  </div>
+                ),
+              },
               ...tableHeaders,
               {
                 id: 'actions',
@@ -360,6 +380,16 @@ const AcBeheerOrganisaties = () => {
                           Depubliceren
                         </ConActionMenu.Button>
                       )}
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PLUS />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('addDeelname');
+                        }}
+                      >
+                        Deelname toevoegen
+                      </ConActionMenu.Button>
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -460,6 +490,18 @@ const AcBeheerOrganisaties = () => {
             showModal={openModal === 'publish' || openModal === 'depublish'}
             publish={openModal === 'publish'}
             onClose={() => {
+              setOpenModal(null);
+            }}
+          />
+
+          <AcAddDeelnameModal
+            organization={singleSelectedRow}
+            showModal={openModal === 'addDeelname'}
+            onClose={() => {
+              setOpenModal(null);
+            }}
+            onSuccess={() => {
+              fetchData();
               setOpenModal(null);
             }}
           />

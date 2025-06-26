@@ -18,6 +18,7 @@ import { ConHorizontalOverflowWrapper } from '@components';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 import ConLogoPreview from '../ac-register/con-logo-preview';
+import { AcCheckbox } from '@molecules';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -239,16 +240,16 @@ const ConTable = (
   }, []);
 
   const handleSelectAll = useMemo(() => {
-    return (e) => {
-      setSelectedAll(e.target.checked);
-      setSelectedRows(e.target.checked ? sortedData : []);
+    return (checked) => {
+      setSelectedAll(checked);
+      setSelectedRows(checked ? sortedData : []);
     };
   }, [sortedData]);
 
   const handleSelectRow = useMemo(() => {
-    return (e, row) => {
+    return (checked, row) => {
       setSelectedRows(
-        e.target.checked
+        checked
           ? [...selectedRows, row]
           : selectedRows.filter(
               (selectedRow) => selectedRow[uniqueSymbol] !== row[uniqueSymbol]
@@ -339,12 +340,14 @@ const ConTable = (
         <TableRow>
           {renderSelectRowButtons && (
             <TableCell>
-              <input
-                disabled={sortedData.length === 0}
-                checked={selectedAll}
-                onChange={handleSelectAll}
-                type='checkbox'
-              />
+              <div className='con-table-checkbox'>
+                <AcCheckbox
+                  id='select-all'
+                  checked={selectedAll}
+                  onChange={handleSelectAll}
+                  disabled={sortedData.length === 0}
+                />
+              </div>
             </TableCell>
           )}
           {tableHeaders.map((header, index) => {
@@ -446,16 +449,18 @@ const ConTable = (
     return sortedData.map((row, index) => (
       <TableRow key={index}>
         {renderSelectRowButtons && (
-          <TableCell>
-            <input
-              checked={
-                selectedRows.find(
-                  (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
-                ) || false
-              }
-              onChange={(e) => handleSelectRow(e, row)}
-              type='checkbox'
-            />
+          <TableCell className='con-table-checkbox-cell'>
+            <div className='con-table-checkbox'>
+              <AcCheckbox
+                id={`select-row-${row[uniqueSymbol]}`}
+                checked={
+                  selectedRows.find(
+                    (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
+                  ) || false
+                }
+                onChange={(checked) => handleSelectRow(checked, row)}
+              />
+            </div>
           </TableCell>
         )}
         {tableHeaders.map((header, headerIndex) => {

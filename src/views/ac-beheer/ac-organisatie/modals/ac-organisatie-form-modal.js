@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
@@ -10,6 +10,9 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
+import { ConFileDropZone } from '../../import-modal/con-file-dropzone';
+import { AcFlex } from '@src/atoms';
+import _ from 'lodash';
 
 const createOption = (label) => ({
   label,
@@ -51,6 +54,8 @@ const AcOrganisatieFormModal = ({
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
 
+  const [logoFile, setLogoFile] = useState(null);
+
   const { makeRequest } = useNextcloudRequests();
 
   const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
@@ -89,7 +94,7 @@ const AcOrganisatieFormModal = ({
   useEffect(() => {
     setOrganisatieFormData({
       // initial data
-      ...initialFormData,
+      ..._.cloneDeep(initialFormData),
       // data to edit (only if data is provided and isEdit is true)
       ...(organisatie &&
         isEdit && {
@@ -122,6 +127,9 @@ const AcOrganisatieFormModal = ({
         body: JSON.stringify({
           ...organisatieFormData,
           contactgegevens: smartSplit(organisatieFormData.contactgegevens),
+          logo: logoFile
+            ? await logoFile.getDataUrl()
+            : organisatieFormData.logo || null,
         }),
       });
 
@@ -177,6 +185,25 @@ const AcOrganisatieFormModal = ({
     }));
   };
 
+  const handleLogoFileSelect = (e) => {
+    if (!e.target.files.length) {
+      setLogoFile(null);
+      return;
+    }
+
+    const file = e.target.files[0];
+    file.getDataUrl = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
+
+    setLogoFile(file);
+  };
+
   const renderOrganisatieFormModal = (
     <AcModal
       ref={modalRef}
@@ -184,248 +211,136 @@ const AcOrganisatieFormModal = ({
       title={isEdit ? 'Organisatie bewerken' : 'Organisatie toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
-          label: 'annuleren',
+          label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'Opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcGrid columns={2}>
-        <AcFormField
-          label='naam'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('naam')}
-          value={organisatieFormData.naam}
-          {...(schema?.properties?.naam?.required && {
-            hasError: !organisatieFormData.naam,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Contactgegevens'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('contactgegevens')}
-          value={organisatieFormData.contactgegevens}
-          {...(schema?.properties?.contactgegevens?.required && {
-            hasError: !organisatieFormData.contactgegevens,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Website'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('website')}
-          value={organisatieFormData.website}
-          {...(schema?.properties?.website?.required && {
-            hasError: !organisatieFormData.website,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='OIN'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('oin')}
-          value={organisatieFormData.oin}
-          {...(schema?.properties?.oin?.required && {
-            hasError: !organisatieFormData.oin,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Status'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('status')}
-          value={organisatieFormData.status}
-          {...(schema?.properties?.status?.required && {
-            hasError: !organisatieFormData.status,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Logo'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('logo')}
-          value={organisatieFormData.logo}
-          {...(schema?.properties?.logo?.required && {
-            hasError: !organisatieFormData.logo,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='CBS'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('cbs')}
-          value={organisatieFormData.cbs}
-          {...(schema?.properties?.cbs?.required && {
-            hasError: !organisatieFormData.cbs,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Telefoonnummer'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('telefoonnummer')}
-          value={organisatieFormData.telefoonnummer}
-          {...(schema?.properties?.telefoonnummer?.required && {
-            hasError: !organisatieFormData.telefoonnummer,
-            required: true,
-          })}
-          autocomplete='off'
-        />
-        <AcFormField
-          label='Beschrijving kort'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('beschrijvingKort')}
-          value={organisatieFormData.beschrijvingKort}
-          {...(schema?.properties?.beschrijvingKort?.required && {
-            hasError: !organisatieFormData.beschrijvingKort,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Beschrijving lang'
-          type='text'
-          onChange={handleEditOrganisatieFieldChange('beschrijvingLang')}
-          value={organisatieFormData.beschrijvingLang}
-          {...(schema?.properties?.beschrijvingLang?.required && {
-            hasError: !organisatieFormData.beschrijvingLang,
-            required: true,
-          })}
-        />
-        {/* <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contactpersonen</h4>
-          </label>
-          <CreatableSelect
-            placeholder='Voeg een contactpersoon toe'
-            className='ac-beheer-select'
-            isMulti
-            closeMenuOnSelect={false}
-            value={(organisatieFormData?.contactpersonen || []).map(
-              (contactpersoon) => ({
-                value: contactpersoon,
-                label: contactpersoon,
-              })
-            )}
-            onChange={(e) => {
-              setOrganisatieFormData((prev) => ({
-                ...prev,
-                contactpersonen: e.map((item) => item.value),
-              }));
-            }}
-            onCreateOption={handleCreateContactpersoonOption}
-            options={contactpersonenOptions}
-            {...(schema?.properties?.contactpersonen?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.contactpersonen?.required && {
-              isClearable: true,
-            })}
-          />
-        </div> */}
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Samenwerkingen</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een samenwerking'
-            className='ac-beheer-select'
-            isMulti
-            closeMenuOnSelect={false}
-            value={(organisatieFormData?.samenwerkingen || []).map(
-              (samenwerkingId) => {
-                const samenwerking = samenwerkingenData.find(
-                  (org) => org.id === samenwerkingId
-                );
-                if (!samenwerking) return;
-                return {
-                  value: samenwerking.id,
-                  label: samenwerking.naam,
-                };
-              }
-            )}
-            onChange={(e) => {
-              setOrganisatieFormData((prev) => ({
-                ...prev,
-                samenwerkingen: e.map((item) => item.value),
-              }));
-            }}
-            options={samenwerkingenData?.map((organisatie) => ({
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            naam: organisatieFormData.naam,
+            contactgegevens: organisatieFormData.contactgegevens,
+            website: organisatieFormData.website,
+            telefoonnummer: organisatieFormData.telefoonnummer,
+            samenwerkingen: Array.isArray(organisatieFormData.samenwerkingen)
+              ? organisatieFormData.samenwerkingen.map((s) => s.id || s)
+              : [],
+            verklaringen: organisatieFormData.verklaringen,
+            'e-mailadres': organisatieFormData['e-mailadres'],
+            type: organisatieFormData.type, // Include type in formData
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              naam: 'naam',
+              contactgegevens: 'contactgegevens',
+              website: 'website',
+              telefoonnummer: 'telefoonnummer',
+              samenwerkingen: 'samenwerkingen',
+              verklaringen: 'verklaringen',
+              'e-mailadres': 'e-mailadres',
+              type: 'type',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setOrganisatieFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Only hide the fields we don't want to show
+            id: { visible: false },
+            status: { visible: false },
+            beschrijvingKort: { visible: false },
+            beschrijvingLang: { visible: false },
+            logo: { visible: false }, // Hide the default logo field since we have a custom one
+            type: { visible: !isEdit }, // Only show type field when adding new organisation
+            oin: { visible: organisatieFormData.type?.toLowerCase() === 'gemeente' },
+            cbs: { visible: organisatieFormData.type?.toLowerCase() === 'gemeente' },
+            samenwerkingen: {
+              visible: false,
+            },
+            deelnames: {
+              visible: false,
+            },
+            deelnemers: {
+              visible: false,
+            },
+            kvkNummer: {
+              visible: organisatieFormData.type?.toLowerCase() === 'leverancier',
+            },
+            contactpersonen: { visible: false },
+          }}
+          optionsProviders={{
+            samenwerkingen: samenwerkingenData?.map((organisatie) => ({
               value: organisatie.id,
               label: organisatie.naam,
-            }))}
-            {...(schema?.properties?.samenwerkingen?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.samenwerkingen?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
+            })),
+            verklaringen: verklaringenOptions,
+            contactpersonen: contactpersonenOptions,
+          }}
+          loadingStates={{}}
+          disabledStates={{}}
+        />
+
+        {/* Custom Logo Field */}
+        <AcFlex column>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Verklaringen</h4>
+            <h4 className='utrecht-heading-4'>Logo</h4>
           </label>
-          <CreatableSelect
-            placeholder='Voeg een verklaring toe'
-            className='ac-beheer-select'
-            isMulti
-            closeMenuOnSelect={false}
-            value={(organisatieFormData?.verklaringen || []).map((verklaring) => ({
-              value: verklaring,
-              label: verklaring,
-            }))}
-            onChange={(e) => {
-              setOrganisatieFormData((prev) => ({
-                ...prev,
-                verklaringen: e.map((item) => item.value),
-              }));
+
+          <input
+            id='fileInput-logo'
+            type='file'
+            accept={[
+              'image/png',
+              'image/jpeg',
+              'image/jpg',
+              'image/webp',
+              'image/svg+xml',
+            ].join(',')}
+            multiple={false}
+            onChange={handleLogoFileSelect}
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid var(--utrecht-textbox-border-color)',
+              borderRadius: 'var(--utrecht-select-border-radius)',
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontSize: '1em',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: '#f0f0f0',
+                borderColor: 'var(--utrecht-button-primary-action-border-color)',
+              },
             }}
-            onCreateOption={handleCreateVerklaringOption}
-            options={verklaringenOptions}
-            {...(schema?.properties?.verklaringen?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.verklaringen?.required && {
-              isClearable: true,
-            })}
           />
-        </div>
-        <AcFormField
-          label='Type'
-          type='text'
-          onChange={handleEditOrganisatieFieldChange('type')}
-          value={organisatieFormData.type}
-          {...(schema?.properties?.type?.required && {
-            hasError: !organisatieFormData.type,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='KvK nummer'
-          type='text'
-          onBlur={handleEditOrganisatieFieldChange('kvkNummer')}
-          value={organisatieFormData.kvkNummer}
-          {...(schema?.properties?.kvkNummer?.required && {
-            hasError: !organisatieFormData.kvkNummer,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='E-mailadres'
-          type='text'
-          onChange={handleEditOrganisatieFieldChange('e-mailadres')}
-          value={organisatieFormData['e-mailadres']}
-          {...(schema?.properties?.['e-mailadres']?.required && {
-            hasError: !organisatieFormData['e-mailadres'],
-            required: true,
-          })}
-          autocomplete='off'
-        />
+
+          <small
+            style={{
+              display: 'block',
+              marginTop: '0.5em',
+              color: 'var(--utrecht-paragraph-color)',
+              fontSize: '0.85em',
+              fontStyle: 'italic',
+              opacity: 0.85,
+              userSelect: 'none',
+            }}
+          >
+            Toegestane bestandstypen: png, jpeg, jpg, webp, svg
+          </small>
+        </AcFlex>
       </AcGrid>
     </AcModal>
   );

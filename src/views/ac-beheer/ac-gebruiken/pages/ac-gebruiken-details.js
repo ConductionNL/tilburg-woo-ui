@@ -40,10 +40,15 @@ const AcBeheerGebruikenDetails = ({ id }) => {
     try {
       setLoading(true);
 
+      const extend = [
+        ['_extend[]', 'voorzieningId'],
+        ['_extend[]', 'organisatieId'],
+      ];
+
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}/${id}`,
-          null,
+          extend,
           null,
           `/beheer/gebruiken/${id}`
         ),
@@ -133,17 +138,30 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                         .filter(
                           ([key]) => !['id', 'ibpScore', 'bbnScore'].includes(key)
                         )
-                        .map(([key, schemaProperties]) => (
-                          <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
-                            <Paragraph>
-                              {formatBySchema(schemaProperties, data, key, {
-                                include: ['naam'],
-                                inline: true,
-                              })}
-                            </Paragraph>
-                          </div>
-                        ))}
+                        .map(([key, schemaProperties]) => {
+                          // Custom label mapping
+                          let label = _.startCase(key);
+                          if (key === 'voorzieningId') {
+                            label = 'Applicatie';
+                          } else if (key === 'organisatieId') {
+                            label = 'Organisatie';
+                          }
+
+                          return (
+                            <div key={key}>
+                              <strong>{label}:</strong>
+                              <Paragraph>
+                                {key === 'voorzieningId' || key === 'organisatieId' 
+                                  ? data[key]?.naam || '-'
+                                  : formatBySchema(schemaProperties, data, key, {
+                                      include: ['naam'],
+                                      inline: true,
+                                    })
+                                }
+                              </Paragraph>
+                            </div>
+                          );
+                        })}
                     </div>
 
                     <div>

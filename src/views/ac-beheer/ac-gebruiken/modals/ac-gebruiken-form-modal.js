@@ -28,12 +28,14 @@ const AcGebruikenFormModal = ({
     organisatieId: '',
     voorzieningId: '',
     versieId: '',
-    beheerder: {
-      naam: '',
-      email: '',
-      telefoon: '',
-      functie: '',
-    },
+    // beheerder: {
+    //   naam: '',
+    //   email: '',
+    //   telefoon: '',
+    //   functie: '',
+    // },
+    beheerder: '',
+    eigenaar: '',
     startDatum: '',
     status: '',
     bbnScore: '',
@@ -318,10 +320,10 @@ const AcGebruikenFormModal = ({
         </div>
         <div>
           <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Voorziening</h4>
+            <h4 className='utrecht-heading-4'>Applicatie</h4>
           </label>
           <ReactSelect
-            placeholder='Selecteer een voorziening'
+            placeholder='Selecteer een applicatie'
             className={clsx(
               'ac-beheer-select',
               preSelectedVoorzieningId && 'ac-beheer-select--disabled'
@@ -508,6 +510,26 @@ const AcGebruikenFormModal = ({
             })}
           />
         </div>
+        <AcFormField
+          label='Beheerder'
+          type='text'
+          onBlur={handleEditGebruikFieldChange('beheerder')}
+          value={gebruikFormData.beheerder}
+          {...(schema?.properties?.beheerder?.required && {
+            hasError: !gebruikFormData?.beheerder,
+            required: true,
+          })}
+        />
+        <AcFormField
+          label='Eigenaar'
+          type='text'
+          onBlur={handleEditGebruikFieldChange('eigenaar')}
+          value={gebruikFormData.eigenaar}
+          {...(schema?.properties?.eigenaar?.required && {
+            hasError: !gebruikFormData?.eigenaar,
+            required: true,
+          })}
+        />
       </AcGrid>
     </AcModal>
   );

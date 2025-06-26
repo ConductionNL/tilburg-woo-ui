@@ -73,15 +73,17 @@ const AcFormField = ({
             'ac-form-field-header-info-with-custom-part': customLabelPart,
           })}
         >
-          {label}
-          {required && (
-            <>
-              <span className='required-indicator' aria-hidden='true'>
-                *
-              </span>
-              <span className='sr-only'>(verplicht)</span>
-            </>
-          )}
+          <div>
+            {label}
+            {required && (
+              <>
+                <span className='required-indicator' aria-hidden='true'>
+                  *
+                </span>
+                <span className='sr-only'>(verplicht)</span>
+              </>
+            )}
+          </div>
           {tooltip && (
             <>
               <span

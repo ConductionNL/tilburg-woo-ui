@@ -4,9 +4,17 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      background-color: var(--tilburg-search-card-background-color, var(--tilburg-color-white));
-      border-radius: var(--tilburg-search-card-border-radius, var(--tilburg-border-radius-md));
-      border: var(--tilburg-search-card-border-width, 2px) var(--tilburg-search-card-border-style, solid) var(--tilburg-search-card-border-color, #e5e7eb);
+      background-color: var(
+        --tilburg-search-card-background-color,
+        var(--tilburg-color-white)
+      );
+      border-radius: var(
+        --tilburg-search-card-border-radius,
+        var(--tilburg-border-radius-md)
+      );
+      border: var(--tilburg-search-card-border-width, 2px)
+        var(--tilburg-search-card-border-style, solid)
+        var(--tilburg-search-card-border-color, #e5e7eb);
       padding-inline-start: var(--tilburg-search-card-padding-inline-start);
       padding-inline-end: var(--tilburg-search-card-padding-inline-end);
       padding-block-start: var(--tilburg-search-card-padding-block-start);
@@ -17,7 +25,10 @@
       display: flex;
       flex-direction: column;
       gap: var(--tilburg-search-card-content-gap, var(--tilburg-space-block-snail));
-      padding: var(--tilburg-search-card-padding-md, var(--tilburg-space-block-rabbit));
+      padding: var(
+        --tilburg-search-card-padding-md,
+        var(--tilburg-space-block-rabbit)
+      );
     }
 
     &__grid {
@@ -28,5 +39,22 @@
     &__label {
       font-weight: 500;
     }
+  }
+}
+
+.ac-beheer-organisaties-name-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  max-width: 100%;
+
+  &__icon {
+    flex-shrink: 0;
+  }
+  &__name {
+    white-space: normal;
+    overflow-wrap: break-word;
+    flex: 1 1 0%;
+    min-width: 0;
   }
 }

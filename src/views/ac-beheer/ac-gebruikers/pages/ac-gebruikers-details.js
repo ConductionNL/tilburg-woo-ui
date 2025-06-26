@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { LANGUAGES, VISUALS } from '@constants';
@@ -24,9 +24,11 @@ const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [dataProperties, setDataProperties] = useState(null);
+  const [usedBy, setUsedBy] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
+
   const { makeRequest } = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
@@ -73,9 +75,37 @@ const AcBeheerGebruikerDetails = ({ id }) => {
     }
   };
 
+  const fetchUsedBy = async () => {
+    const usedByResponse = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      null,
+      null,
+      `/beheer/gebruikers/${id}`
+    );
+    const usedByData = usedByResponse?.data;
+    setUsedBy(usedByData?.results);
+  };
+
   useEffect(() => {
     fetchData();
+    fetchUsedBy();
   }, []);
+
+  const uniqueUsedBySchemas = useMemo(() => {
+    if (!usedBy) return [];
+    // get a list of unique usedBy based on the schema id
+    const uniqueUsedBy = _.uniqBy(usedBy, (item) => item['@self'].schema.id);
+    // return the schema object for each unique usedBy
+    return uniqueUsedBy.map((item) => item['@self'].schema);
+  }, [usedBy]);
+
+  const getUsedByFromSchemaId = useCallback(
+    (schemaId) => {
+      if (!usedBy) return [];
+      return usedBy.filter((item) => item['@self'].schema.id === schemaId);
+    },
+    [usedBy]
+  );
 
   if (error) {
     return <AcBeheerError error={error.message} />;
@@ -197,6 +227,79 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                           Thema: {_.upperFirst(data.voorkeuren?.thema) || '-'}
                         </Paragraph>
                       </div>
+                    </div>
+
+                    <div>
+                      <AcTabs
+                        selectedIndex={tabIndex}
+                        onSelect={(index) => setTabIndex(index)}
+                      >
+                        <AcTabList>
+                          {uniqueUsedBySchemas.map((schema) => (
+                            <AcTab key={schema.id} selected={tabIndex === schema.id}>
+                              {schema.title || schema.id}
+                            </AcTab>
+                          ))}
+                        </AcTabList>
+
+                        {uniqueUsedBySchemas.map((schema) => {
+                          const data = getUsedByFromSchemaId(schema.id);
+                          const metadata = data?.[0]?.['@self'];
+
+                          // this should not trigger, if it does call a dev to fix it.
+                          if (!metadata) {
+                            return (
+                              <AcTabPanel
+                                key={schema.id}
+                                selected={tabIndex === schema.id}
+                              >
+                                <Alert type='error'>
+                                  Er is een fout opgetreden bij het laden van deze
+                                  gegevens.
+                                </Alert>
+                              </AcTabPanel>
+                            );
+                          }
+
+                          return (
+                            <AcTabPanel
+                              key={schema.id}
+                              selected={tabIndex === schema.id}
+                            >
+                              <BeheerTable
+                                type={schema.slug}
+                                metadata={metadata}
+                                data={data}
+                                dataProperties={schema.properties}
+                                actionButtons={(config) =>
+                                  // check if all necessary properties for the actions are defined.
+                                  !!config.navigateView && {
+                                    id: 'actions',
+                                    label: 'Acties',
+                                    key: '',
+                                    customContent: (row) => (
+                                      <AcFlex column spacing='xs'>
+                                        <button
+                                          className='utrecht-button slim'
+                                          variant='secondary'
+                                          onClick={() => config.navigateView(row.id)}
+                                        >
+                                          <VISUALS.EYE className='ac-button__icon' />{' '}
+                                          Bekijken
+                                        </button>
+                                      </AcFlex>
+                                    ),
+                                  }
+                                }
+                                tableProps={{
+                                  renderSelectRowButtons: false,
+                                  truncateLines: 1,
+                                }}
+                              />
+                            </AcTabPanel>
+                          );
+                        })}
+                      </AcTabs>
                     </div>
                   </AcFlex>
                 </AcColumn>

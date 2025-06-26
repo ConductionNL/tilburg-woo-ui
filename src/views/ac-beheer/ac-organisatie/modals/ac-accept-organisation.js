@@ -123,17 +123,18 @@ const AcAcceptOrganizationModal = ({
       title='Organisatie accepteren'
       buttons={[
         {
-          label: 'accepteren',
-          icon: <VISUALS.CHECK />,
-          onClick: handleAcceptOrganization,
-        },
-        {
-          label: 'annuleren',
+          label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'Accepteren',
+          icon: <VISUALS.CHECK />,
+          onClick: handleAcceptOrganization,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
