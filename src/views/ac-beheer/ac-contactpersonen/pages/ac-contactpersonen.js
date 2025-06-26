@@ -120,7 +120,7 @@ const AcBeheerGebruikers = () => {
         id: 'organisatie',
         label: 'Organisatie',
         key: 'organisatie',
-        customContent: (row) => `${row.organisatie.naam}`,
+        customContent: (row) => row.organisatie?.naam || row.organisatie || '-',
       },
 
       actief: {
@@ -166,14 +166,6 @@ const AcBeheerGebruikers = () => {
         };
       })
       .flat(); // flatten the array of arrays
-
-    // Temporary header for organisatie until we have a proper schema
-    schemaHeaders.push({
-      id: 'organisatie',
-      label: 'Organisatie',
-      key: 'organisatie',
-      customContent: (row) => `${row.organisatie}`,
-    });
 
     return schemaHeaders;
   }, [dataProperties, customHeaders]);

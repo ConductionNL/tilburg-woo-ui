@@ -271,11 +271,30 @@ export default function useNextcloudRequests() {
     );
   };
 
+  /**
+   * Get current logged in user using the /me endpoint.
+   *
+   * for security purposes this should NEVER be stored inside the browser as a cookie (or another form of storage)
+   *
+   * @returns {Promise<Object>} - The user object
+   */
+  const getUser = async () => {
+    const response = await makeRequest(
+      `${BASE_URL}/apps/openconnector/api/user/me`,
+      null,
+      null,
+      window.location.pathname
+    );
+
+    return response;
+  };
+
   return {
     makeRequest,
     makeDownloadRequest,
     downloadObjectList,
     makeUploadRequest,
     makeMultipartUploadRequest,
+    getUser,
   };
 }

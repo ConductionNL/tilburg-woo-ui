@@ -19,6 +19,7 @@ import AcDeleteGebruikersModal from '../modals/ac-delete-contactpersonen-modal';
 import AcGebruikersUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
 
 const AcBeheerGebruikerDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -166,67 +167,26 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Gebruikersnaam:</strong>
-                        <Paragraph>{data.username || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>E-mail:</strong>
-                        <Paragraph>{data.email || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Functie:</strong>
-                        <Paragraph>{data.functie || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatie:</strong>
-                        <Paragraph>{data.organisatie || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Telefoonnummer:</strong>
-                        <Paragraph>{data.telefoonnummer || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Rollen:</strong>
-                        <Paragraph>{data.rollen?.join(', ') || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.actief ? 'Actief' : 'Inactief'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Laatste inlog:</strong>
-                        <Paragraph>{formatDate(data.laatsteInlogdatum)}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Aangemaakt op:</strong>
-                        <Paragraph>{formatDate(data.aanmaakdatum)}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Laatst gewijzigd:</strong>
-                        <Paragraph>{formatDate(data.wijzigingsdatum)}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorkeuren:</strong>
-                        <Paragraph>
-                          Taal:{' '}
-                          {LANGUAGES.find(
-                            (language) => language.code === data.voorkeuren?.taal
-                          )?.name || '-'}
-                          <br />
-                          Thema: {_.upperFirst(data.voorkeuren?.thema) || '-'}
-                        </Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(
+                          ([key]) => !['id', 'voornaam', 'achternaam'].includes(key)
+                        )
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong>{_.startCase(key)}:</strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                profile: {
+                                  organisatie: {
+                                    include: ['naam'],
+                                    includeUnknown: true,
+                                    inline: true,
+                                  },
+                                },
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
 
                     <div>
