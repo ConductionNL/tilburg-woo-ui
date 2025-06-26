@@ -280,6 +280,7 @@ const AcOrganisatieFormModal = ({
               visible: organisatieFormData.type?.toLowerCase() === 'leverancier',
             },
             contactpersonen: { visible: false },
+            verklaringen: { visible: false },
           }}
           optionsProviders={{
             samenwerkingen: samenwerkingenData?.map((organisatie) => ({
