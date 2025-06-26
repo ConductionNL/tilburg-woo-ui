@@ -350,7 +350,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         >
                           Bewerken
                         </ConActionMenu.Button>
-                        {data.status !== 'Actief' && (
+                        {data.beoordeling !== 'Actief' && (
                           <ConActionMenu.Button
                             icon={<VISUALS.CHECK />}
                             onClick={() => setOpenModal('accept')}
@@ -394,7 +394,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   </div>
 
                   <div>
-                    {data.status === 'concept' && (
+                    {data.beoordeling === 'concept' && (
                       <Alert type='info'>
                         <AcFlex spacing='sm'>
                           <VISUALS.INFO_BLUE />

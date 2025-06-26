@@ -6,7 +6,7 @@ import clsx from 'clsx';
 
 import { AcFlex } from '@atoms';
 import { withStore } from '@stores';
-import { AcButton } from '@molecules';
+import { AcButton, ConFacetsFilters } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcSearchCategories, AcSearchDate, AcSearchSubjects } from '@components';
 
@@ -102,6 +102,8 @@ const AcSearchFilters = ({ store: { publications } }) => {
           <AcFlex column spacing='xs' className='ac-search-filters__subjects'>
             <AcSearchSubjects />
           </AcFlex>
+
+          <ConFacetsFilters />
         </AcFlex>
         {mobileFiltersOpen && (
           <div

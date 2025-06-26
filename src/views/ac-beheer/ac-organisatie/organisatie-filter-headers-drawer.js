@@ -28,7 +28,7 @@ const ConFilterHeadersDrawer = forwardRef(
       defaultHeaders = [],
       onChange,
       loading = false,
-      getStatus = () => {},
+      getBeoordeling = () => {},
     },
     ref
   ) => {
@@ -88,13 +88,13 @@ const ConFilterHeadersDrawer = forwardRef(
         <AcColumn gap='tiger'>
           <div>
             <label className='utrecht-form-label'>
-              <h4 className='utrecht-heading-4'>Status</h4>
+              <h4 className='utrecht-heading-4'>Beoordeling</h4>
             </label>
             <ReactSelect
-              placeholder='Selecteer een status'
+              placeholder='Selecteer een beoordeling'
               className={clsx('ac-beheer-select')}
               onChange={(e) => {
-                getStatus?.(e?.value ?? e);
+                getBeoordeling?.(e?.value ?? e);
               }}
               options={[
                 { label: 'Concept', value: 'concept' },
