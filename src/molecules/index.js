@@ -20,6 +20,9 @@ const AcSearchFilters = loadable(() =>
 const AcCheckbox = loadable(() => import('@molecules/ac-checkbox/ac-checkbox'));
 const AcSelect = loadable(() => import('@molecules/ac-select/ac-select'));
 const AcTable = loadable(() => import('@molecules/ac-table/ac-table'));
+const ConFacetsFilters = loadable(() =>
+  import('@molecules/con-facets-filters/con-facets-filters')
+);
 
 export {
   AcBreadcrumbs,
@@ -34,4 +37,5 @@ export {
   AcSelect,
   AcFormField,
   AcTable,
+  ConFacetsFilters,
 };

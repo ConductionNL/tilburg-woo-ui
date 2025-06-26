@@ -10,6 +10,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
+import licenses from '@assets/licenses/licenses.json';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -45,6 +46,15 @@ const AcApplicatiesFormModal = ({
   const [gebruikersLoading, setGebruikersLoading] = useState(false);
   const [organisatiesOptions, setOrganisatiesOptions] = useState([]);
   const [organisatiesLoading, setOrganisatiesLoading] = useState(false);
+  const [licenseOptions, setLicenseOptions] = useState([]);
+  useEffect(() => {
+    setLicenseOptions(
+      licenses.map((license) => ({
+        label: license.name,
+        value: license['SPDX ID'],
+      }))
+    );
+  }, []);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -358,8 +368,14 @@ const AcApplicatiesFormModal = ({
             rol: applicatieFormData.rol,
             logo: applicatieFormData.logo,
             licentietype: applicatieFormData.licentietype,
+            licentie: applicatieFormData.licentie,
             hosting: applicatieFormData.hosting,
             status: applicatieFormData.status,
+          }}
+          fieldConfigs={{
+            licentie: {
+              visible: (formData) => formData.licentietype === 'Open Source',
+            },
           }}
           onFieldChange={(fieldName, value) => {
             // Map schema property names back to form data field names
@@ -391,6 +407,7 @@ const AcApplicatiesFormModal = ({
               value: type.id,
               label: type.label,
             })),
+            licentie: licenseOptions,
             referentieComponenten: referentieComponentenOptions,
             standaarden: standaardenOptions,
             contact: gebruikersOptions,
