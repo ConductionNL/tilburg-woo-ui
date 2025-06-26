@@ -36,7 +36,7 @@ const AcBeheerOrganisaties = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [statusFilter, setStatusFilter] = useState(null);
+  const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -78,7 +78,7 @@ const AcBeheerOrganisaties = () => {
       setLoading(true);
 
       const extend = [['_extend[]', 'contactgegevens']];
-      if (statusFilter) extend.push(['status', statusFilter]);
+      if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
       const response = await makeRequest(
         `${BASE_URL}/apps/${endpoint}`,
@@ -105,17 +105,17 @@ const AcBeheerOrganisaties = () => {
       console.error('Error fetching data:', err);
       setError(err);
     }
-  }, [statusFilter, setError, setData, setLoading, makeRequest, endpoint, BASE_URL]);
+  }, [beoordelingFilter, setError, setData, setLoading, makeRequest, endpoint, BASE_URL]);
 
   useEffect(() => {
     fetchData();
     fetchSchema();
   }, []);
 
-  // recall fetchData when statusFilter changes
+  // recall fetchData when beoordelingFilter changes
   useLaterEffect(() => {
     fetchData();
-  }, [statusFilter]);
+  }, [beoordelingFilter]);
 
   useLaterEffect(() => {
     fetchData();
@@ -196,7 +196,7 @@ const AcBeheerOrganisaties = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['name', 'status', 'logo', 'contactDetails'];
+  const defaultHeaders = ['name', 'beoordeling', 'logo', 'contactDetails'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
@@ -345,7 +345,7 @@ const AcBeheerOrganisaties = () => {
                         Bewerken
                       </ConActionMenu.Button>
 
-                      {row.status !== 'Actief' && (
+                      {row.beoordeling !== 'Actief' && (
                         <ConActionMenu.Button
                           icon={<VISUALS.CHECK />}
                           onClick={() => {
@@ -474,7 +474,7 @@ const AcBeheerOrganisaties = () => {
             headers={headers}
             defaultHeaders={defaultHeaders}
             onChange={setTableHeaders}
-            getStatus={setStatusFilter}
+            getBeoordeling={setBeoordelingFilter}
           />
 
           <AcBeheerImportModal
