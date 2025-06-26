@@ -14,9 +14,9 @@ import { BASE_URL } from '../../ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
-import AcGebruikersFormModal from '../modals/ac-gebruikers-form-modal';
-import AcDeleteGebruikersModal from '../modals/ac-delete-gebruikers-modal';
-import AcGebruikersUitnodigenModal from '../modals/ac-gebruikers-uitnodigen-modal';
+import AcGebruikersFormModal from '../modals/ac-contactpersonen-form-modal';
+import AcDeleteGebruikersModal from '../modals/ac-delete-contactpersonen-modal';
+import AcGebruikersUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 

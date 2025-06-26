@@ -34,7 +34,7 @@ const AcBeheerApplicaties = loadable(() =>
   import('@src/views/ac-beheer/ac-applicaties/pages/ac-applicaties')
 );
 const AcBeheerGebruikers = loadable(() =>
-  import('@src/views/ac-beheer/ac-gebruikers/pages/ac-gebruikers')
+  import('@src/views/ac-beheer/ac-contactpersonen/pages/ac-contactpersonen')
 );
 
 // detail pages
@@ -62,7 +62,7 @@ const AcBeheerKwetsbaarheidDetails = loadable(() =>
   import('@src/views/ac-beheer/ac-kwetsbaarheid/pages/ac-kwetsbaarheid-details')
 );
 const AcBeheerGebruikerDetails = loadable(() =>
-  import('@src/views/ac-beheer/ac-gebruikers/pages/ac-gebruikers-details')
+  import('@src/views/ac-beheer/ac-contactpersonen/pages/ac-contactpersonen-details')
 );
 
 export {

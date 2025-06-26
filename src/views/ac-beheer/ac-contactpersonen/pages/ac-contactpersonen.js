@@ -13,9 +13,9 @@ import { AcSideNav } from '@components';
 import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
-import AcGebruikerFormModal from '../modals/ac-gebruikers-form-modal';
-import AcDeleteGebruikerModal from '../modals/ac-delete-gebruikers-modal';
-import AcGebruikersUitnodigenModal from '../modals/ac-gebruikers-uitnodigen-modal';
+import AcGebruikerFormModal from '../modals/ac-contactpersonen-form-modal';
+import AcDeleteGebruikerModal from '../modals/ac-delete-contactpersonen-modal';
+import AcGebruikersUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
@@ -303,7 +303,10 @@ const AcBeheerGebruikers = () => {
                         icon={<VISUALS.EYE />}
                         onClick={() => {
                           navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('contactpersonen', row.id)
+                            NAVIGATE_TO.BEHEER_TYPE_DETAILS(
+                              'contactpersonen',
+                              row.id
+                            )
                           );
                         }}
                       >
