@@ -9,7 +9,7 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 
 /**
- * Modal to accept an organization by changing its status to Actief
+ * Modal to accept an organization by changing its beoordeling to Actief
  * @param {object} organization - The organization to accept
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
@@ -64,7 +64,7 @@ const AcAcceptOrganizationModal = ({
           method: 'PUT',
           body: JSON.stringify({
             ...organization,
-            status: 'Actief',
+            beoordeling: 'Actief',
           }),
         }
       );
