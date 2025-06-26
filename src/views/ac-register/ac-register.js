@@ -1012,7 +1012,8 @@ const ContactInformationForm = memo(
                     <Heading level={3}>Contactpersoon</Heading>
                     <Paragraph>
                       Het Contactpersoon dat U invult, zal gebruikt worden voor
-                      communicatie met de organisatie.
+                      communicatie met de organisatie. <br />
+                      verdere text wordt aangeleverd door Peter
                     </Paragraph>
                   </AcFlex>
                 </AcFlex>
