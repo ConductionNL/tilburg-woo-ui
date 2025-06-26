@@ -13,15 +13,48 @@ const ConFacetsFilters = ({ store: { publications } }) => {
   const [facets, setFacets] = useState(null);
   const { theme_checked, toggleSearchArrayValue } = publications;
 
-  const facetsQueries = [
-    ['type', 'terms'],
-    [['@self', 'schema'], 'terms'],
-  ];
+  // Function to build facetsQueries from available facets
+  const buildFacetsQueries = (availableFacets) => {
+    const queries = [];
+
+    // Handle @self facets
+    if (availableFacets['@self']) {
+      Object.entries(availableFacets['@self']).forEach(([key, config]) => {
+        if (key !== 'catalog' && config.facet_types && config.facet_types.includes('terms')) {
+          queries.push([['@self', key], 'terms']);
+        }
+      });
+    }
+
+    // Handle object_fields facets
+    if (availableFacets.object_fields) {
+      Object.entries(availableFacets.object_fields).forEach(([key, config]) => {
+        if (config.facet_types && config.facet_types.includes('terms')) {
+          queries.push([key, 'terms']);
+        }
+      });
+    }
+
+    return queries;
+  };
 
   useEffect(() => {
+    const fetchAvailableFacets = async () => {
+      const response = await fetch(
+        `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true`
+      );
+      const data = await response.json();
+      return data.facetable;
+    };
+
     const fetchFacets = async () => {
+      const availableFacets = await fetchAvailableFacets();
+
+      // Build dynamic facetsQueries
+      const dynamicFacetsQueries = buildFacetsQueries(availableFacets);
+
       try {
-        const queryParams = facetsQueries
+        const queryParams = dynamicFacetsQueries
           .map(([key, value]) => {
             if (Array.isArray(key)) {
               const brackets = key.map((val) => `[${val}]`).join('');
@@ -61,7 +94,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
               {console.log({ value })}
               {Object.entries(value).map(([_key, _value]) => (
                 <AcFlex
-                  key={key}
+                  key={`${key}-${_key}`}
                   column
                   spacing='xs'
                   className='ac-search-filters__subjects'
