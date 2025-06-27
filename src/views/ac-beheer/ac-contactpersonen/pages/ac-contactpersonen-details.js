@@ -332,7 +332,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/gebruikers');
+                    navigate('/beheer/contactpersonen');
                   }}
                 />
 

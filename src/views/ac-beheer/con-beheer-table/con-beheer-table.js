@@ -99,10 +99,39 @@ const GET_CONFIG = (type, metadata, navigate) => {
         config.defaultHeaders = ['titel', 'ernst', 'detectedOn', 'status'];
         break;
 
+      case 'gebruiker':
       case 'contactpersonen':
         config.navigateView = (id) => navigate(`/beheer/contactpersonen/${id}`);
-        config.schemaSlug = 'contactpersoon';
-        config.defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
+        config.schemaSlug = 'gebruiker';
+        config.defaultHeaders = [
+          'name',
+          'status',
+          'lastActivity',
+          'email',
+          'organisatie',
+        ];
+        config.headerOverrides = {
+          voornaam: {
+            id: 'name',
+            label: 'Naam',
+            key: 'voornaam',
+            customContent: (row) => `${row.voornaam} ${row.achternaam}`,
+          },
+          organisatie: {
+            id: 'organisatie',
+            label: 'Organisatie',
+            key: 'organisatie',
+            customContent: (row) => row.organisatie?.naam || row.organisatie || '-',
+          },
+          actief: {
+            id: 'status',
+            label: 'Status',
+            key: 'actief',
+            customContent: (row) => (
+              <span>{row.actief ? 'Actief' : 'Inactief'}</span>
+            ),
+          },
+        };
         break;
 
       default:
@@ -245,15 +274,6 @@ const BeheerTable = forwardRef((props, ref) => {
   };
 
   useEffect(async () => {
-    // Set provided data if it exists
-    if (!shouldFetchData) {
-      setData(providedData);
-    }
-
-    if (!shouldFetchDataProperties) {
-      setDataProperties(providedDataProperties);
-    }
-
     // Return early if no fetching needed
     if (!shouldFetchData && !shouldFetchDataProperties) {
       return;
@@ -277,6 +297,18 @@ const BeheerTable = forwardRef((props, ref) => {
       getLoading?.(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!shouldFetchData) {
+      setData(providedData);
+    }
+  }, [providedData]);
+
+  useEffect(() => {
+    if (!shouldFetchDataProperties) {
+      setDataProperties(providedDataProperties);
+    }
+  }, [providedDataProperties]);
 
   useLaterEffect(async () => {
     if (!shouldFetchData) return;
@@ -313,6 +345,11 @@ const BeheerTable = forwardRef((props, ref) => {
         // Check if we have a custom override for this header
         if (headerOverrides?.[key]) {
           return headerOverrides[key];
+        }
+
+        // Try config.headerOverrides if headerOverrides doesn't exist
+        if (config.headerOverrides?.[key]) {
+          return config.headerOverrides[key];
         }
 
         // Generate standard header from schema
