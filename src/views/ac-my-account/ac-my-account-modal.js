@@ -22,7 +22,13 @@ const AcMyAccountModal = ({
   const modalRef = useRef(null);
   const { updateUser } = useNextcloudRequests();
 
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState({
+    displayName: '',
+    email: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+  });
   const [touched, setTouched] = useState({
     displayName: false,
     email: false,
@@ -35,8 +41,10 @@ const AcMyAccountModal = ({
 
   useEffect(() => {
     if (showModal) {
-      setFormData(initialFormData);
-      setTouched(initialTouched);
+      setFormData({
+        ...formData,
+        ...initialFormData,
+      });
       setAlert(null);
       modalRef?.current?.showModal();
     }
