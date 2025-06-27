@@ -65,16 +65,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [selectedContactPerson, setSelectedContactPerson] = useState(null);
   const [openModal, setOpenModal] = useState(null);
 
-  // Memoized contact persons with UUIDs
-  const contactPersons = useMemo(() => {
-    if (!data?.contactpersonen) return [];
-
-    return data.contactpersonen.map((contact) => ({
-      ...contact,
-      uuid: contact.uuid || crypto.randomUUID(),
-    }));
-  }, [data?.contactpersonen]);
-
   const uniqueUsedBySchemas = useMemo(() => {
     if (!usedBy) return [];
     // get a list of unique usedBy based on the schema id
