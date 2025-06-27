@@ -16,7 +16,7 @@ import { VISUALS } from '@constants';
  * @returns {React.JSX.Element} - modal to delete 1 or multiple contactpersonen
  */
 const AcDeleteContactpersonenModal = ({
-  gebruikers,
+  contactpersonen,
   showModal = false,
   onClose,
   onSuccess,
@@ -25,16 +25,16 @@ const AcDeleteContactpersonenModal = ({
 
   const { makeRequest } = useNextcloudRequests();
 
-  const handleDeleteGebruikerOpenModal = () => modalRef?.current?.showModal();
+  const handleDeleteContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
-  const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
+  const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
   const [error, setError] = useState(null);
-  const handleDeleteGebruiker = async () => {
+  const handleDeleteContactpersoon = async () => {
     try {
-      gebruikers.forEach(async (gebruiker) => {
+      contactpersonen.forEach(async (contactpersoon) => {
         const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${gebruiker.id}`,
+          `${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`,
           null,
           {
             method: 'DELETE',
@@ -51,30 +51,30 @@ const AcDeleteContactpersonenModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleDeleteGebruikerOpenModal();
+      handleDeleteContactpersoonOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleDeleteGebruikerCloseModal = () => {
+  const handleDeleteContactpersoonCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteGebruikerCloseModal);
+    modalRef?.current?.addEventListener('close', handleDeleteContactpersoonCloseModal);
   }, [modalRef.current]);
 
-  const renderDeleteGebruikerModal = (
+  const renderDeleteContactpersoonModal = (
     <AcModal
       ref={modalRef}
-      id='delete-gebruiker-modal'
-      title={`${gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} verwijderen`}
+      id='delete-contactpersoon-modal'
+      title={`${contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} verwijderen`}
       buttons={[
         {
           label: 'verwijderen',
           icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteGebruiker,
+          onClick: handleDeleteContactpersoon,
         },
         {
           label: 'annuleren',
@@ -87,17 +87,17 @@ const AcDeleteContactpersonenModal = ({
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt verwijderen?
-        {gebruikers.map((gebruiker) => (
-          <Paragraph key={gebruiker.id}>
-            {gebruiker.voornaam} {gebruiker.achternaam} ({gebruiker.email})
+        {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt verwijderen?
+        {contactpersonen.map((contactpersoon) => (
+          <Paragraph key={contactpersoon.id}>
+            {contactpersoon.voornaam} {contactpersoon.achternaam} ({contactpersoon.email})
           </Paragraph>
         ))}
       </AcFlex>
     </AcModal>
   );
 
-  return renderDeleteGebruikerModal;
+  return renderDeleteContactpersoonModal;
 };
 
 export default withStore(observer(AcDeleteContactpersonenModal));

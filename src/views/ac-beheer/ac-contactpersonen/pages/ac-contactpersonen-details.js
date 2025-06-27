@@ -23,7 +23,7 @@ import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
 
-const AcBeheerGebruikerDetails = ({ id }) => {
+const AcBeheerContactpersoonDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [dataProperties, setDataProperties] = useState(null);
@@ -35,7 +35,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
   const { makeRequest } = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
-  const schemaSlug = 'gebruiker';
+  const schemaSlug = 'contactpersoon';
 
   const fetchData = async () => {
     try {
@@ -48,13 +48,13 @@ const AcBeheerGebruikerDetails = ({ id }) => {
           `${BASE_URL}/apps/${endpoint}/${id}`,
           null,
           null,
-          `/beheer/gebruikers/${id}`
+          `/beheer/contactpersonen/${id}`
         ),
         makeRequest(
           `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
           null,
           null,
-          `/beheer/gebruikers/${id}`
+          `/beheer/contactpersonen/${id}`
         ),
       ]);
 
@@ -83,7 +83,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
       `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       null,
       null,
-      `/beheer/gebruikers/${id}`
+      `/beheer/contactpersonen/${id}`
     );
     const usedByData = usedByResponse?.data;
     setUsedBy(usedByData?.results);
@@ -314,7 +314,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
 
                 {/* modals */}
                 <AcContactpersonenFormModal
-                  gebruiker={data}
+                  contactpersoon={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -326,7 +326,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                 />
 
                 <AcDeleteContactpersonenModal
-                  gebruikers={[data]}
+                  contactpersonen={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
@@ -337,7 +337,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                 />
 
                 <AcContactpersonenUitnodigenModal
-                  gebruikers={[data]}
+                  contactpersonen={[data]}
                   showModal={openModal === 'invite'}
                   onClose={() => {
                     setOpenModal(null);
@@ -367,4 +367,4 @@ const AcBeheerGebruikerDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerGebruikerDetails));
+export default withStore(observer(AcBeheerContactpersoonDetails));

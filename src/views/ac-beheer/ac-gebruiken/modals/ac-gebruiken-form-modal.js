@@ -67,8 +67,8 @@ const AcGebruikenFormModal = ({
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
   const [versiesOptions, setVersiesOptions] = useState([]); // based on selected voorziening
   const [versiesLoading, setVersiesLoading] = useState(false);
-  const [gebruikersOptions, setGebruikersOptions] = useState([]);
-  const [gebruikersLoading, setGebruikersLoading] = useState(false);
+  const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
+  const [contactpersonenLoading, setContactpersonenLoading] = useState(false);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
@@ -128,15 +128,15 @@ const AcGebruikenFormModal = ({
       }
     };
 
-    const fetchGebruikers = async () => {
-      setGebruikersLoading(true);
+    const fetchContactpersonen = async () => {
+      setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
-      ).finally(() => setGebruikersLoading(false));
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+      ).finally(() => setContactpersonenLoading(false));
 
       const data = response.data.results;
 
-      setGebruikersOptions(
+      setContactpersonenOptions(
         data.map((item) => {
           const nameParts = [
             item.voornaam,
@@ -156,7 +156,7 @@ const AcGebruikenFormModal = ({
       fetchOrganisaties();
       fetchVoorzieningen();
       fetchSchema();
-      fetchGebruikers();
+      fetchContactpersonen();
     }
   }, [showModal]);
 
@@ -490,7 +490,7 @@ const AcGebruikenFormModal = ({
           </label>
           <ReactSelect
             placeholder='Selecteer een contact'
-            value={gebruikersOptions?.find(
+            value={contactpersonenOptions?.find(
               (option) => option.value === gebruikFormData.contact
             )}
             className='ac-beheer-select'
@@ -500,8 +500,8 @@ const AcGebruikenFormModal = ({
                 contact: e?.value ?? e,
               }));
             }}
-            loading={gebruikersLoading}
-            options={gebruikersOptions}
+            loading={contactpersonenLoading}
+            options={contactpersonenOptions}
             {...(schema?.properties?.contact?.required && {
               required: true,
             })}

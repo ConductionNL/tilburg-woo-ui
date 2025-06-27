@@ -22,7 +22,7 @@ const createOption = (label) => ({
 });
 
 const AcContactpersoonFormModal = ({
-  gebruiker,
+  contactpersoon,
   showModal = false,
   onClose,
   onSuccess,
@@ -60,7 +60,7 @@ const AcContactpersoonFormModal = ({
   ];
 
   // form data
-  const [gebruikerFormData, setGebruikerFormData] = useState({});
+  const [contactpersoonFormData, setContactpersoonFormData] = useState({});
   const [schema, setSchema] = useState(null);
 
   const [userInfo, setUserInfo] = useState(null);
@@ -76,7 +76,7 @@ const AcContactpersoonFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/gebruiker`
+        `${BASE_URL}/apps/openregister/api/schemas/contactpersoon`
       );
       const data = response.data;
       setSchema(data);
@@ -93,24 +93,24 @@ const AcContactpersoonFormModal = ({
     // This is a simple and compact way to conditionally set the form data
     // if preSelectedVoorziening is provided, set the voorziening to the preSelectedVoorziening
     // if dienst is provided, set the form data to the dienst data
-    setGebruikerFormData({
+    setContactpersoonFormData({
       // initial data
       ..._.cloneDeep(initialData),
       // data to edit (only if data is provided and isEdit is true)
-      ...(gebruiker &&
+      ...(contactpersoon &&
         isEdit && {
-          ...gebruiker,
+          ...contactpersoon,
         }),
     });
-  }, [gebruiker, showModal]);
+  }, [contactpersoon, showModal]);
 
-  const handleEditGebruikerOpenModal = () => modalRef?.current?.showModal();
+  const handleEditContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditGebruikerFieldChange = (field) => (value) => {
+  const handleEditContactpersoonFieldChange = (field) => (value) => {
     if (field.includes('.')) {
       // Handle nested object updates
       const parts = field.split('.');
-      setGebruikerFormData((prev) => {
+      setContactpersoonFormData((prev) => {
         let current = { ...prev };
         let temp = current;
 
@@ -126,7 +126,7 @@ const AcContactpersoonFormModal = ({
         return current;
       });
     } else {
-      setGebruikerFormData((prev) => ({
+      setContactpersoonFormData((prev) => ({
         ...prev,
         [field]: value,
       }));
@@ -135,18 +135,18 @@ const AcContactpersoonFormModal = ({
 
   const [error, setError] = useState(null);
 
-  const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
+  const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
   const handleSubmit = async () => {
     const baseUrl = `${BASE_URL}/apps/${endpoint}`;
     const method = isEdit ? 'PUT' : 'POST';
-    const url = isEdit ? `${baseUrl}/${gebruikerFormData.id}` : baseUrl;
+    const url = isEdit ? `${baseUrl}/${contactpersoonFormData.id}` : baseUrl;
 
     try {
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
-          ...gebruikerFormData,
+          ...contactpersoonFormData,
         }),
       });
 
@@ -162,18 +162,18 @@ const AcContactpersoonFormModal = ({
 
   useEffect(() => {
     if (showModal) {
-      handleEditGebruikerOpenModal();
+      handleEditContactpersoonOpenModal();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleEditGebruikerCloseModal = () => {
+  const handleEditContactpersoonCloseModal = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleEditGebruikerCloseModal);
+    modalRef?.current?.addEventListener('close', handleEditContactpersoonCloseModal);
   }, [modalRef.current]);
 
   const mapLanguageToValue = useCallback((language) => {
@@ -193,12 +193,12 @@ const AcContactpersoonFormModal = ({
         // Handle nested properties like voorkeuren.taal
         if (field.includes('.')) {
           const [parent, child] = field.split('.');
-          if (!gebruikerFormData?.[parent]?.[child]) {
+          if (!contactpersoonFormData?.[parent]?.[child]) {
             return false;
           }
         } else {
           // Handle top level properties
-          if (!gebruikerFormData?.[field]) {
+          if (!contactpersoonFormData?.[field]) {
             return false;
           }
         }
@@ -206,17 +206,17 @@ const AcContactpersoonFormModal = ({
     }
 
     // Special case - telefoon required if aanspreekPunt is true
-    if (gebruikerFormData.aanspreekPunt && !gebruikerFormData.telefoonnummer) {
+    if (contactpersoonFormData.aanspreekPunt && !contactpersoonFormData.telefoonnummer) {
       return false;
     }
 
     return true;
-  }, [schema?.properties, gebruikerFormData]);
+  }, [schema?.properties, contactpersoonFormData]);
 
-  const renderGebruikerFormModal = (
+  const renderContactpersoonFormModal = (
     <AcModal
       ref={modalRef}
-      id='edit-gebruiker-modal'
+      id='edit-contactpersoon-modal'
       title={isEdit ? 'Contactpersoon bewerken' : 'Contactpersoon toevoegen'}
       layoutClassName='wide-content'
       buttons={[
@@ -235,12 +235,12 @@ const AcContactpersoonFormModal = ({
       ]}
       disableDefaultButton
     >
-      <div className='ac-gebruikers-form-modal__alert'>
+      <div className='ac-contactpersonen-form-modal__alert'>
         <Alert type='info'>
           <AcFlex spacing='sm'>
             <VISUALS.INFO_BLUE />
             <Paragraph>
-              Verplichte gegevens zijn zichtbaar voor andere gebruikers.
+              Verplichte gegevens zijn zichtbaar voor andere contactpersonen.
             </Paragraph>
           </AcFlex>
         </Alert>
@@ -249,50 +249,50 @@ const AcContactpersoonFormModal = ({
         <AcFormField
           label='Gebruikersnaam'
           type='text'
-          onBlur={handleEditGebruikerFieldChange('username')}
-          value={gebruikerFormData.username}
+          onBlur={handleEditContactpersoonFieldChange('username')}
+          value={contactpersoonFormData.username}
           {...(schema?.properties?.username?.required && {
-            hasError: !gebruikerFormData?.username,
+            hasError: !contactpersoonFormData?.username,
             required: true,
           })}
         />
         <AcFormField
           label='E-mail'
           type='email'
-          onBlur={handleEditGebruikerFieldChange('email')}
-          value={gebruikerFormData.email}
+          onBlur={handleEditContactpersoonFieldChange('email')}
+          value={contactpersoonFormData.email}
           {...(schema?.properties?.email?.required && {
-            hasError: !gebruikerFormData?.email,
+            hasError: !contactpersoonFormData?.email,
             required: true,
           })}
         />
         <AcFormField
           label='Voornaam'
           type='text'
-          onBlur={handleEditGebruikerFieldChange('voornaam')}
-          value={gebruikerFormData.voornaam}
+          onBlur={handleEditContactpersoonFieldChange('voornaam')}
+          value={contactpersoonFormData.voornaam}
           {...(schema?.properties?.voornaam?.required && {
-            hasError: !gebruikerFormData?.voornaam,
+            hasError: !contactpersoonFormData?.voornaam,
             required: true,
           })}
         />
         <AcFormField
           label='Achternaam'
           type='text'
-          onBlur={handleEditGebruikerFieldChange('achternaam')}
-          value={gebruikerFormData.achternaam}
+          onBlur={handleEditContactpersoonFieldChange('achternaam')}
+          value={contactpersoonFormData.achternaam}
           {...(schema?.properties?.achternaam?.required && {
-            hasError: !gebruikerFormData?.achternaam,
+            hasError: !contactpersoonFormData?.achternaam,
             required: true,
           })}
         />
         <AcFormField
           label='Functie'
           type='text'
-          onBlur={handleEditGebruikerFieldChange('functie')}
-          value={gebruikerFormData.functie}
+          onBlur={handleEditContactpersoonFieldChange('functie')}
+          value={contactpersoonFormData.functie}
           {...(schema?.properties?.functie?.required && {
-            hasError: !gebruikerFormData?.functie,
+            hasError: !contactpersoonFormData?.functie,
             required: true,
           })}
         />
@@ -300,21 +300,21 @@ const AcContactpersoonFormModal = ({
           disabled={userInfo ? !userInfo?.groups?.includes('admin') : true}
           label='Organisatie'
           type='text'
-          onBlur={handleEditGebruikerFieldChange('organisatie')}
-          value={gebruikerFormData.organisatie}
+          onBlur={handleEditContactpersoonFieldChange('organisatie')}
+          value={contactpersoonFormData.organisatie}
           {...(schema?.properties?.organisatie?.required && {
-            hasError: !gebruikerFormData?.organisatie,
+            hasError: !contactpersoonFormData?.organisatie,
             required: true,
           })}
         />
         <AcFormField
           label='Telefoonnummer'
           type='tel'
-          onBlur={handleEditGebruikerFieldChange('telefoonnummer')}
-          value={gebruikerFormData.telefoonnummer}
+          onBlur={handleEditContactpersoonFieldChange('telefoonnummer')}
+          value={contactpersoonFormData.telefoonnummer}
           {...((schema?.properties?.telefoonnummer?.required ||
-            gebruikerFormData.aanspreekPunt) && {
-            hasError: !gebruikerFormData?.telefoonnummer,
+            contactpersoonFormData.aanspreekPunt) && {
+            hasError: !contactpersoonFormData?.telefoonnummer,
             required: true,
           })}
         />
@@ -326,10 +326,10 @@ const AcContactpersoonFormModal = ({
             placeholder='Selecteer of maak een rol aan'
             className={clsx('ac-beheer-select')}
             value={rollenOptions.filter((option) =>
-              gebruikerFormData?.rollen?.includes(option.value)
+              contactpersoonFormData?.rollen?.includes(option.value)
             )}
             onChange={(e) => {
-              setGebruikerFormData((prev) => ({
+              setContactpersoonFormData((prev) => ({
                 ...prev,
                 rollen: e.map((option) => option.value),
               }));
@@ -359,12 +359,12 @@ const AcContactpersoonFormModal = ({
                 value={mapLanguageToValue(
                   LANGUAGES?.find(
                     (language) =>
-                      language.code === gebruikerFormData?.voorkeuren?.taal
+                      language.code === contactpersoonFormData?.voorkeuren?.taal
                   )
                 )}
                 className='ac-beheer-select'
                 onChange={(e) => {
-                  handleEditGebruikerFieldChange('voorkeuren.taal')(e?.value ?? e);
+                  handleEditContactpersoonFieldChange('voorkeuren.taal')(e?.value ?? e);
                 }}
                 loading={LANGUAGES?.length === 0}
                 options={LANGUAGES?.map(mapLanguageToValue)}
@@ -383,12 +383,12 @@ const AcContactpersoonFormModal = ({
               <ReactSelect
                 placeholder='Selecteer een thema'
                 value={{
-                  label: _.upperFirst(gebruikerFormData?.voorkeuren?.thema),
-                  value: gebruikerFormData?.voorkeuren?.thema,
+                  label: _.upperFirst(contactpersoonFormData?.voorkeuren?.thema),
+                  value: contactpersoonFormData?.voorkeuren?.thema,
                 }}
                 className='ac-beheer-select'
                 onChange={(e) => {
-                  handleEditGebruikerFieldChange('voorkeuren.thema')(e?.value ?? e);
+                  handleEditContactpersoonFieldChange('voorkeuren.thema')(e?.value ?? e);
                 }}
                 options={[
                   { label: 'Licht', value: 'licht' },
@@ -411,8 +411,8 @@ const AcContactpersoonFormModal = ({
           </label>
           <AcCheckbox
             // label='Actief'
-            onChange={handleEditGebruikerFieldChange('actief')}
-            checked={gebruikerFormData.actief}
+            onChange={handleEditContactpersoonFieldChange('actief')}
+            checked={contactpersoonFormData.actief}
           />
         </div>
         <div>
@@ -420,15 +420,15 @@ const AcContactpersoonFormModal = ({
             <h4 className='utrecht-heading-4'>AanspreekPunt</h4>
           </label>
           <AcCheckbox
-            checked={gebruikerFormData.aanspreekPunt}
-            onChange={handleEditGebruikerFieldChange('aanspreekPunt')}
+            checked={contactpersoonFormData.aanspreekPunt}
+            onChange={handleEditContactpersoonFieldChange('aanspreekPunt')}
           />
         </div>
       </AcGrid>
     </AcModal>
   );
 
-  return renderGebruikerFormModal;
+  return renderContactpersoonFormModal;
 };
 
 export default withStore(observer(AcContactpersoonFormModal));

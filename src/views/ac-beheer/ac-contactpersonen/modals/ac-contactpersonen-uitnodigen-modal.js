@@ -10,14 +10,14 @@ import { VISUALS } from '@constants';
 
 /**
  * Modal to invite users to join the organization
- * @param {object[]} gebruikers - array of users to invite
+ * @param {object[]} contactpersonen - array of users to invite
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
  * @param {function} onSuccess - function to call when invitation is successful
  * @returns {React.JSX.Element} - modal to invite users
  */
 const AcContactpersonenUitnodigenModal = ({
-  gebruikers,
+  contactpersonen,
   showModal = false,
   onClose,
   onSuccess,
@@ -30,14 +30,14 @@ const AcContactpersonenUitnodigenModal = ({
   const handleOpenModal = () => modalRef?.current?.showModal();
 
   // I think this is good possible endpoint, but the function is not implemented yet
-  const endpoint = 'openregister/api/objects/voorzieningen/gebruiker/invite';
+  const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon/invite';
 
   const handleInviteUsers = async () => {
     try {
       const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
         method: 'POST',
         body: JSON.stringify({
-          users: gebruikers.map((user) => ({
+          users: contactpersonen.map((user) => ({
             email: user.email,
             voornaam: user.voornaam,
             achternaam: user.achternaam,
@@ -74,8 +74,8 @@ const AcContactpersonenUitnodigenModal = ({
   const renderInviteModal = (
     <AcModal
       ref={modalRef}
-      id='invite-gebruikers-modal'
-      title={`${gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} uitnodigen`}
+      id='invite-contactpersonen-modal'
+      title={`${contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} uitnodigen`}
       buttons={[
         {
           label: 'annuleren',
@@ -96,12 +96,12 @@ const AcContactpersonenUitnodigenModal = ({
       <AcFlex column spacing='sm'>
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
           Weet je zeker dat je deze{' '}
-          {gebruikers.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt uitnodigen?
+          {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt uitnodigen?
         </Paragraph>
         <div>
-          {gebruikers.map((gebruiker) => (
+          {contactpersonen.map((contactpersoon) => (
             <Paragraph
-              key={gebruiker.id}
+              key={contactpersoon.id}
               style={{
                 padding: '0.75rem',
                 backgroundColor: '#f5f5f5',
@@ -110,10 +110,10 @@ const AcContactpersonenUitnodigenModal = ({
               }}
             >
               <strong>
-                {gebruiker.voornaam} {gebruiker.achternaam}
+                {contactpersoon.voornaam} {contactpersoon.achternaam}
               </strong>
               <span style={{ color: '#666', marginLeft: '0.5rem' }}>
-                ({gebruiker.email})
+                ({contactpersoon.email})
               </span>
             </Paragraph>
           ))}

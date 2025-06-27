@@ -30,7 +30,7 @@ const AcAcceptOrganizationModal = ({
   const [error, setError] = useState(null);
   const handleAcceptOrganization = async () => {
     try {
-      const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
+      const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
       const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
         method: 'POST',

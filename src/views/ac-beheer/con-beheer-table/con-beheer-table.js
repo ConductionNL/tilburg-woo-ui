@@ -100,9 +100,10 @@ const GET_CONFIG = (type, metadata, navigate) => {
         break;
 
       case 'gebruiker':
+      case 'contactpersoon':
       case 'contactpersonen':
         config.navigateView = (id) => navigate(`/beheer/contactpersonen/${id}`);
-        config.schemaSlug = 'gebruiker';
+        config.schemaSlug = 'contactpersoon';
         config.defaultHeaders = [
           'name',
           'status',
@@ -164,6 +165,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
  * | 'organisaties'
  * | 'kwetsbaarheden'
  * | 'gebruikers'
+ * | 'contactpersoon'
  * | 'contactpersonen'
  * } type
  */

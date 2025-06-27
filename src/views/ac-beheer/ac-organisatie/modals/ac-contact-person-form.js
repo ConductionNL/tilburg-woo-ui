@@ -113,7 +113,7 @@ const AcContactPersonForm = ({
       setError(null);
 
       // Update the organization with PATCH request
-      const endpoint = `openregister/api/objects/voorzieningen/gebruiker`;
+      const endpoint = `openregister/api/objects/voorzieningen/contactpersoon`;
       const updateResponse = await makeRequest(
         `${BASE_URL}/apps/${endpoint}`,
         null,

@@ -52,8 +52,8 @@ const AcDienstFormModal = ({
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
   const [leverancierOptions, setLeverancierOptions] = useState([]);
   const [leveranciersLoading, setLeveranciersLoading] = useState(false);
-  const [gebruikersOptions, setGebruikersOptions] = useState([]);
-  const [gebruikersLoading, setGebruikersLoading] = useState(false);
+  const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
+  const [contactpersonenLoading, setContactpersonenLoading] = useState(false);
 
   const [licenseOptions, setLicenseOptions] = useState([]);
   useEffect(() => {
@@ -115,15 +115,15 @@ const AcDienstFormModal = ({
       }
     };
 
-    const fetchGebruikers = async () => {
-      setGebruikersLoading(true);
+    const fetchContactpersonen = async () => {
+      setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
-      ).finally(() => setGebruikersLoading(false));
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+      ).finally(() => setContactpersonenLoading(false));
 
       const data = response.data.results;
 
-      setGebruikersOptions(
+      setContactpersonenOptions(
         data.map((item) => {
           const nameParts = [
             item.voornaam,
@@ -143,7 +143,7 @@ const AcDienstFormModal = ({
       fetchSchema();
       fetchVoorzieningen();
       fetchLeveranciers();
-      fetchGebruikers();
+      fetchContactpersonen();
     }
   }, [showModal]);
 
@@ -409,7 +409,7 @@ const AcDienstFormModal = ({
           </label>
           <ReactSelect
             placeholder='Selecteer een contact'
-            value={gebruikersOptions?.find(
+            value={contactpersonenOptions?.find(
               (option) => option.value === dienstFormData.contact
             )}
             className='ac-beheer-select'
@@ -419,8 +419,8 @@ const AcDienstFormModal = ({
                 contact: e?.value ?? e,
               }));
             }}
-            loading={gebruikersLoading}
-            options={gebruikersOptions}
+            loading={contactpersonenLoading}
+            options={contactpersonenOptions}
             {...(schema?.properties?.contact?.required && {
               required: true,
             })}

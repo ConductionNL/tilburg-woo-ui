@@ -3,5 +3,4 @@ export const BEHEER_RENAMES = {
   voorzieningaanbod: 'dienst',
   voorzieninggebruik: 'gebruik',
   contract: 'overeenkomst',
-  gebruiker: 'contactpersoon',
 };

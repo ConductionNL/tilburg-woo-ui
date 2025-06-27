@@ -27,7 +27,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
 
-const AcBeheerGebruikers = () => {
+const AcBeheerContactpersonen = () => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
@@ -50,7 +50,7 @@ const AcBeheerGebruikers = () => {
   const filterHeadersDrawerRef = useRef(null);
 
   const registerSlug = 'voorzieningen';
-  const schemaSlug = 'gebruiker';
+  const schemaSlug = 'contactpersoon';
   const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
@@ -388,7 +388,7 @@ const AcBeheerGebruikers = () => {
 
           {/* modals */}
           <AcContactpersonenFormModal
-            gebruiker={singleSelectedRow}
+            contactpersoon={singleSelectedRow}
             isEdit={openModal === 'edit'}
             showModal={openModal === 'edit' || openModal === 'add'}
             onClose={() => {
@@ -403,7 +403,7 @@ const AcBeheerGebruikers = () => {
           />
 
           <AcDeleteContactpersonenModal
-            gebruikers={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+            contactpersonen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'delete'}
             onClose={() => {
               setOpenModal(null);
@@ -416,7 +416,7 @@ const AcBeheerGebruikers = () => {
           />
 
           <AcContactpersonenUitnodigenModal
-            gebruikers={singleSelectedRow ? [singleSelectedRow] : selectedRows}
+            contactpersonen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
             showModal={openModal === 'invite'}
             onClose={() => {
               setOpenModal(null);
@@ -462,4 +462,4 @@ const AcBeheerGebruikers = () => {
   );
 };
 
-export default withStore(observer(AcBeheerGebruikers));
+export default withStore(observer(AcBeheerContactpersonen));

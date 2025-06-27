@@ -42,8 +42,8 @@ const AcApplicatiesFormModal = ({
     useState(false);
   const [standaardenOptions, setStandaardenOptions] = useState([]);
   const [standaardenLoading, setStandaardenLoading] = useState(false);
-  const [gebruikersOptions, setGebruikersOptions] = useState([]);
-  const [gebruikersLoading, setGebruikersLoading] = useState(false);
+  const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
+  const [contactpersonenLoading, setContactpersonenLoading] = useState(false);
   const [organisatiesOptions, setOrganisatiesOptions] = useState([]);
   const [organisatiesLoading, setOrganisatiesLoading] = useState(false);
   const [licenseOptions, setLicenseOptions] = useState([]);
@@ -84,15 +84,15 @@ const AcApplicatiesFormModal = ({
       );
     };
 
-    const fetchGebruikers = async () => {
-      setGebruikersLoading(true);
+    const fetchContactpersonen = async () => {
+      setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
-      ).finally(() => setGebruikersLoading(false));
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+      ).finally(() => setContactpersonenLoading(false));
 
       const data = await response.data;
 
-      setGebruikersOptions(
+      setContactpersonenOptions(
         data.results.map((item) => {
           const nameParts = [
             item.voornaam,
@@ -127,7 +127,7 @@ const AcApplicatiesFormModal = ({
     if (showModal) {
       fetchSchema();
       fetchVoorzieningsTypes();
-      fetchGebruikers();
+      fetchContactpersonen();
       fetchOrganisaties();
     }
   }, [showModal]);
@@ -410,7 +410,7 @@ const AcApplicatiesFormModal = ({
             licentie: licenseOptions,
             referentieComponenten: referentieComponentenOptions,
             standaarden: standaardenOptions,
-            contact: gebruikersOptions,
+            contact: contactpersonenOptions,
             organisatie: organisatiesOptions,
             diensten: [
               'Functioneel beheer',
@@ -428,7 +428,7 @@ const AcApplicatiesFormModal = ({
           loadingStates={{
             referentieComponenten: referentieComponentenLoading,
             standaarden: standaardenLoading,
-            contact: gebruikersLoading,
+            contact: contactpersonenLoading,
             organisatie: organisatiesLoading,
           }}
           disabledStates={{

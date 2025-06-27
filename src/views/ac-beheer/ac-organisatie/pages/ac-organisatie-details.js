@@ -865,7 +865,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               key={schema.id}
                               selected={tabIndex === schema.id}
                             >
-                              {schema.slug === 'gebruiker' && (
+                              {schema.slug === 'contactpersoon' && (
                                 <AcFlex justifyContent='between' alignItems='center'>
                                   <Heading level={3}>Contactpersonen</Heading>
 
