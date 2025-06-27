@@ -249,47 +249,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     setCharCountLang(value.length);
   };
 
-  const handleDeleteContactPerson = async (contactPersonUuid) => {
-    try {
-      // Remove the contact person from the contactPersons array
-      const updatedContactPersons = contactPersons.filter(
-        (contact) => contact.uuid !== contactPersonUuid
-      );
-
-      // Remove UUIDs from the array before sending to API
-      const contactPersonsForApi = updatedContactPersons.map(
-        ({ uuid, ...contact }) => contact
-      );
-
-      // Update the organization with PATCH request
-      const endpoint = `openregister/api/objects/voorzieningen/organisatie/${id}`;
-      const updateResponse = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        null,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            contactpersonen: contactPersonsForApi,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      if (!updateResponse.ok) {
-        throw new Error('Failed to delete contact person');
-      }
-
-      // Update local state instead of refetching
-      setData((prev) => ({
-        ...prev,
-        contactpersonen: contactPersonsForApi,
-      }));
-    } catch (err) {
-      console.error('Error deleting contact person:', err);
-      // You might want to show an error message to the user here
-    }
-  };
-
   const handleDeleteDeelname = async (deelnameId) => {
     try {
       // Remove the deelname from the deelnames array

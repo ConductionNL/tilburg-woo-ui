@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import ConTable from '../con-table';
-import { AcFlex } from '@src/atoms';
+import { AcColumn, AcFlex } from '@src/atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
@@ -48,6 +48,60 @@ const GET_CONFIG = (type, metadata, navigate) => {
         ];
         config.defaultHeaders = ['name', 'voorzieningName', 'email'];
         config.removeHeaders = ['ondersteundeStandaarden'];
+        config.headerOverrides = {
+          voorziening: {
+            id: 'voorzieningName',
+            label: 'Applicatie',
+            key: 'voorziening',
+            customContent: (row) => {
+              return row?.voorziening?.naam || '-';
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+
+              const nameA = a?.voorziening?.naam || '';
+              const nameB = b?.voorziening?.naam || '';
+
+              return ConSorterLogic(nameA, nameB, direction);
+            },
+          },
+          leverancier_naam: {
+            id: 'leverancier',
+            label: 'Leverancier',
+            key: '',
+            customContent: (row) => {
+              return (
+                <AcColumn key={row.id}>
+                  <span>{row?.leverancier?.naam ?? '-'}</span>
+                </AcColumn>
+              );
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+
+              const idA = a?.leverancier?.id || '';
+              const idB = b?.leverancier?.id || '';
+
+              return ConSorterLogic(idA, idB, direction);
+            },
+          },
+          leverancier_email: {
+            id: 'email',
+            label: 'Email',
+            key: '',
+            customContent: (row) => {
+              return row?.leverancier?.contactgegevens?.email || '-';
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+
+              const emailA = a?.leverancier?.contactgegevens?.email || '';
+              const emailB = b?.leverancier?.contactgegevens?.email || '';
+
+              return ConSorterLogic(emailA, emailB, direction);
+            },
+          },
+        };
         break;
 
       case 'voorzieninggebruiken':
@@ -62,6 +116,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
         break;
 
       case 'voorzieningversies':
+      case 'voorzieningversie':
       case 'versies':
         config.navigateView = (id) => navigate(`/beheer/voorzieningen-versie/${id}`);
         config.schemaSlug = 'voorzieningversie';
@@ -70,6 +125,40 @@ const GET_CONFIG = (type, metadata, navigate) => {
           ['_extend[]', 'kwetsbaarheden'],
         ];
         config.defaultHeaders = ['name', 'versienummer', 'releaseDatum', 'status'];
+        config.headerOverrides = {
+          kwetsbaarheden: {
+            id: 'kwetsbaarheden',
+            label: 'Kwetsbaarheden',
+            key: '',
+            customContent: (row) => {
+              return (
+                row?.kwetsbaarheden
+                  ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
+                  .join(', ') || '-'
+              );
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+              const aTitle = a?.kwetsbaarheden?.[0]?.titel;
+              const bTitle = b?.kwetsbaarheden?.[0]?.titel;
+              return ConSorterLogic(aTitle, bTitle, direction);
+            },
+          },
+          voorziening: {
+            id: 'voorziening',
+            label: 'Applicatie',
+            key: '',
+            customContent: (row) => {
+              return row?.voorziening?.naam || '-';
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+              const aTitle = a?.voorziening?.naam || '';
+              const bTitle = b?.voorziening?.naam || '';
+              return ConSorterLogic(aTitle, bTitle, direction);
+            },
+          },
+        };
         break;
 
       case 'contracten':

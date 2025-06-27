@@ -34,6 +34,8 @@ import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-mo
 import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import AcVoorzieningVersieFormModal from '../../ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
+import { BEHEER_RENAMES } from '../../beheer-renames';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -43,11 +45,42 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
   const [files, setFiles] = useState([]);
+  const [usedBy, setUsedBy] = useState(null);
   const [tableHeaders, setTableHeaders] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [standardsDataProperties, setStandardsDataProperties] = useState(null);
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
+
+  const uniqueUsedBySchemas = useMemo(() => {
+    if (!usedBy) return [];
+    // get a list of unique usedBy based on the schema id
+    const uniqueUsedBy = _.uniqBy(usedBy, (item) => item['@self'].schema.id);
+    // return the schema object for each unique usedBy
+    return uniqueUsedBy.map((item) => item['@self'].schema);
+  }, [usedBy]);
+
+  // sort schemas based on their id
+  const sortedSchemas = useMemo(() => {
+    return (uniqueUsedBySchemas || []).sort((a, b) =>
+      String(a.id).localeCompare(String(b.id))
+    );
+  }, [uniqueUsedBySchemas]);
+
+  // Memoize the data for each schema to prevent unnecessary re-renders
+  const memoizedSchemaData = useMemo(() => {
+    if (!usedBy || !sortedSchemas) return new Map();
+
+    const dataMap = new Map();
+    sortedSchemas.forEach((schema) => {
+      const schemaData = usedBy.filter(
+        (item) => item['@self'].schema.id === schema.id
+      );
+      dataMap.set(schema.id, schemaData);
+    });
+
+    return dataMap;
+  }, [usedBy, sortedSchemas]);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -124,8 +157,24 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
     }
   };
 
+  const fetchUsedBy = async () => {
+    const usedByResponse = await makeRequest(
+      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      [
+        ['_extend[]', '@self.schema'],
+        ['_extend[]', 'voorziening'],
+        ['_extend[]', 'leverancier'],
+      ],
+      null,
+      `/beheer/contactpersonen/${id}`
+    );
+    const usedByData = usedByResponse?.data;
+    setUsedBy(usedByData?.results);
+  };
+
   useEffect(() => {
     fetchData();
+    fetchUsedBy();
   }, []);
 
   useEffect(() => {
@@ -271,6 +320,16 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
                           <AcTab selected={tabIndex === 1}>Versies</AcTab>
                           <AcTab selected={tabIndex === 2}>Standaarden</AcTab>
+
+                          {sortedSchemas.map((schema) => (
+                            <AcTab key={schema.id} selected={tabIndex === schema.id}>
+                              {_.upperFirst(
+                                BEHEER_RENAMES[schema.slug] ||
+                                  schema.title ||
+                                  schema.id
+                              )}
+                            </AcTab>
+                          ))}
                         </AcTabList>
 
                         <AcTabPanel selected={tabIndex === 0}>
@@ -385,6 +444,64 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                             </TableBody>
                           </Table>
                         </AcTabPanel>
+
+                        {sortedSchemas.map((schema) => {
+                          const data = memoizedSchemaData.get(schema.id) || [];
+                          const metadata = data?.[0]?.['@self'];
+
+                          // this should not trigger, if it does call a dev to fix it.
+                          if (!metadata) {
+                            return (
+                              <AcTabPanel
+                                key={schema.id}
+                                selected={tabIndex === schema.id}
+                              >
+                                <Alert type='error'>
+                                  Er is een fout opgetreden bij het laden van deze
+                                  gegevens.
+                                </Alert>
+                              </AcTabPanel>
+                            );
+                          }
+
+                          return (
+                            <AcTabPanel
+                              key={schema.id}
+                              selected={tabIndex === schema.id}
+                            >
+                              <BeheerTable
+                                type={schema.slug}
+                                metadata={metadata}
+                                data={data}
+                                dataProperties={schema.properties}
+                                actionButtons={(config) =>
+                                  // check if all necessary properties for the actions are defined.
+                                  !!config.navigateView && {
+                                    id: 'actions',
+                                    label: 'Acties',
+                                    key: '',
+                                    customContent: (row) => (
+                                      <AcFlex column spacing='xs'>
+                                        <button
+                                          className='utrecht-button slim'
+                                          variant='secondary'
+                                          onClick={() => config.navigateView(row.id)}
+                                        >
+                                          <VISUALS.EYE className='ac-button__icon' />{' '}
+                                          Bekijken
+                                        </button>
+                                      </AcFlex>
+                                    ),
+                                  }
+                                }
+                                tableProps={{
+                                  renderSelectRowButtons: false,
+                                  truncateLines: 1,
+                                }}
+                              />
+                            </AcTabPanel>
+                          );
+                        })}
                       </AcTabs>
                     </div>
                   </AcFlex>

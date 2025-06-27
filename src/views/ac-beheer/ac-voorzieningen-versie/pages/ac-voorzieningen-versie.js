@@ -136,6 +136,20 @@ const AcBeheerVoorzieningenVersie = () => {
           return ConSorterLogic(aTitle, bTitle, direction);
         },
       },
+      voorzieningName: {
+        id: 'voorzieningName',
+        label: 'Applicatie',
+        key: '',
+        customContent: (row) => {
+          return row?.voorziening?.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aTitle = a?.voorziening?.naam || '';
+          const bTitle = b?.voorziening?.naam || '';
+          return ConSorterLogic(aTitle, bTitle, direction);
+        },
+      },
     }),
     []
   );
