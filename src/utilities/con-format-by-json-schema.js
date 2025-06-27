@@ -39,10 +39,10 @@ function formatBySchema(schema, data, dataKey, options = {}) {
   switch (actualType) {
     case 'string': {
       // handle enums first
-      if (schema.enum) {
+      if (schema?.enum) {
         return <span>{value}</span>;
       }
-      switch (schema.format) {
+      switch (schema?.format) {
         // custom date formatting
         case 'date': {
           const d = new Date(value);
