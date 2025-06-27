@@ -80,6 +80,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
       return BREADCRUMBS.CONTENT(get_single_page.name);
     }
 
+    if (location.pathname.startsWith('/account')) {
+      return BREADCRUMBS.MY_ACCOUNT;
+    }
+
     return [];
   }, [get_single_document, get_single_page, location, single_view]);
 

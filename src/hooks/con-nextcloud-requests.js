@@ -289,6 +289,29 @@ export default function useNextcloudRequests() {
     return response;
   };
 
+  /**
+   * Update current logged in user information using the /me endpoint.
+   *
+   * @param {Object} userData - The user data to update
+   * @returns {Promise<Object>} - The response from the update request
+   */
+  const updateUser = async (userData) => {
+    const response = await makeRequest(
+      `${BASE_URL}/apps/openconnector/api/user/me`,
+      null,
+      {
+        method: 'PUT',
+        body: JSON.stringify(userData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+      window.location.pathname
+    );
+
+    return response;
+  };
+
   return {
     makeRequest,
     makeDownloadRequest,
@@ -296,5 +319,6 @@ export default function useNextcloudRequests() {
     makeUploadRequest,
     makeMultipartUploadRequest,
     getUser,
+    updateUser,
   };
 }

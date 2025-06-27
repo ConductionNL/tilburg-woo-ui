@@ -71,6 +71,9 @@ export const LABELS = {
   NEXTCLOUD_LOGIN: 'Nextcloud Login',
   NEXTCLOUD_AUTHORIZATION: 'Nextcloud Autorisatie',
 
+  // Beheer Account
+  MIJN_ACCOUNT: 'Mijn account',
+
   // Beheer labels
   BEHEER: 'Beheer',
   BEHEER_TYPE: 'Beheer Type',
