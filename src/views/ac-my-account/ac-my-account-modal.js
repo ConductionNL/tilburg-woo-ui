@@ -23,7 +23,13 @@ const AcMyAccountModal = ({
   const { updateUser } = useNextcloudRequests();
 
   const [formData, setFormData] = useState(initialFormData);
-  const [touched, setTouched] = useState(initialTouched);
+  const [touched, setTouched] = useState({
+    displayName: false,
+    email: false,
+    firstName: false,
+    middleName: false,
+    lastName: false,
+  });
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState(null);
 

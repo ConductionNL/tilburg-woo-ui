@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection } from '@atoms';
@@ -8,14 +7,11 @@ import { AcLoader } from '@components';
 import {
   Heading,
   Paragraph,
-  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import AcFormField from '@molecules/ac-form-field/ac-form-field';
 import AcButton from '@molecules/ac-button/ac-button';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { useLaterEffect } from '@src/hooks';
 import AcMyAccountModal from './ac-my-account-modal';
 
 const AcMyAccount = () => {
@@ -27,19 +23,12 @@ const AcMyAccount = () => {
     middleName: '',
     lastName: '',
   });
-  const [touched, setTouched] = useState({
-    displayName: false,
-    email: false,
-    firstName: false,
-    middleName: false,
-    lastName: false,
-  });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   const navigate = useNavigate();
-  const { getUser, updateUser } = useNextcloudRequests();
+  const { getUser } = useNextcloudRequests();
 
   // Email validation function
   const validateEmail = useCallback((email) => {
@@ -84,79 +73,6 @@ const AcMyAccount = () => {
       setLoading(false);
     }
   }, []);
-
-  // Handle form field changes
-  const handleFieldChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-
-    // Mark field as touched
-    setTouched((prev) => ({
-      ...prev,
-      [field]: true,
-    }));
-  };
-
-  // Validate form
-  const validateForm = () => {
-    const errors = {};
-
-    if (!formData.displayName?.trim()) {
-      errors.displayName = 'Weergavenaam is verplicht';
-    }
-
-    if (!formData.email?.trim()) {
-      errors.email = 'E-mailadres is verplicht';
-    } else if (!validateEmail(formData.email)) {
-      errors.email = 'Ongeldig e-mailadres';
-    }
-
-    return errors;
-  };
-
-  // Handle form submission
-  const handleSubmit = async () => {
-    const errors = validateForm();
-
-    if (Object.keys(errors).length > 0) {
-      return;
-    }
-
-    try {
-      const updateData = {
-        displayName: formData.displayName.trim(),
-        email: formData.email.trim(),
-        firstName: formData.firstName.trim() || null,
-        middleName: formData.middleName.trim() || null,
-        lastName: formData.lastName.trim() || null,
-      };
-
-      await updateUser(updateData);
-
-      // Update local user data
-      setUserData((prev) => ({
-        ...prev,
-        ...updateData,
-      }));
-      setFormData((prev) => ({
-        ...prev,
-        ...updateData,
-      }));
-    } catch (err) {
-      if (err.response?.status === 401) {
-        // User needs to log in again
-        navigate(
-          '/login?redirect_url=' + encodeURIComponent(window.location.pathname)
-        );
-      } else {
-        setError(
-          err.message || 'Er is een fout opgetreden bij het opslaan van uw gegevens.'
-        );
-      }
-    }
-  };
 
   if (error) {
     return <AcBeheerError error={error} />;
@@ -372,7 +288,6 @@ const AcMyAccount = () => {
           onClose={() => setShowModal(false)}
           onSuccess={fetchUserData}
           formData={formData}
-          touched={touched}
           validateEmail={validateEmail}
         />
       </AcColumn>
