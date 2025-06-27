@@ -8,13 +8,14 @@ import { AcSideNav, AcLoader } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
 import { BASE_URL } from '../../ac-beheer';
 import { sortPropertiesByOrder } from '@src/utilities';
-import { AcCheckbox } from '@molecules';
+import { AcCheckbox, AcFormField } from '@molecules';
 import { ConFileDropZone } from '../../import-modal/con-file-dropzone';
 import {
   Heading,
   Paragraph,
   SecondaryActionButton,
   PrimaryActionButton,
+  Button,
 } from '@utrecht/component-library-react/dist/css-module';
 import {
   Table,
@@ -33,6 +34,7 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
 import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import ReactMarkdown from 'react-markdown';
 import AcVoorzieningVersieFormModal from '../../ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
 import { BEHEER_RENAMES } from '../../beheer-renames';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
@@ -51,6 +53,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   const [standardsDataProperties, setStandardsDataProperties] = useState(null);
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
+  const [isEditingBeschrijving, setIsEditingBeschrijving] = useState(false);
+  const [tempBeschrijving, setTempBeschrijving] = useState('');
+  const [charCountBeschrijving, setCharCountBeschrijving] = useState(0);
 
   const uniqueUsedBySchemas = useMemo(() => {
     if (!usedBy) return [];
@@ -180,8 +185,42 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   useEffect(() => {
     if (data?.id) {
       fetchVersions();
+      setCharCountBeschrijving(data.beschrijving?.length || 0);
     }
   }, [data?.id]);
+
+  const handleSaveDescription = async () => {
+    try {
+      const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}`;
+
+      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        method: 'PATCH',
+        body: JSON.stringify({ beschrijving: JSON.stringify(tempBeschrijving) }),
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update description');
+      }
+
+      // Update local state
+      setData((prev) => ({
+        ...prev,
+        beschrijving: JSON.stringify(tempBeschrijving),
+      }));
+
+      // Reset edit mode
+      setIsEditingBeschrijving(false);
+    } catch (err) {
+      console.error('Error updating description:', err);
+      // You might want to show an error message to the user here
+    }
+  };
+
+  const handleBeschrijvingLangChange = (value) => {
+    setTempBeschrijving(value);
+    setCharCountBeschrijving(value.length);
+  };
 
   const tableRef = useRef(null);
 
@@ -280,6 +319,130 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   </ConActionMenu>
                 </AcFlex>
 
+                <AcFlex column spacing='sm'>
+                    <AcFlex spacing='sm' alignItems='center'>
+                      {isEditingBeschrijving ? (
+                        <div className='ac-organisatie-detail-form-wrapper'>
+                          <div className='ac-organisatie-detail-form'>
+                            <div className='ac-organisatie-detail-form-label-row'>
+                              <Heading
+                                level={3}
+                                className='ac-form-field__label-with-icon'
+                              >
+                                Beschrijving
+                                <span
+                                  className='ac-form-field__tooltip'
+                                  title='Een uitgebreide beschrijving van de applicatie'
+                                >
+                                  <VISUALS.INFO />
+                                </span>
+                              </Heading>
+                            </div>
+                            <div className='ac-organisatie-detail-form-flex'>
+                              <div className='ac-organisatie-detail-form-textarea'>
+                                <AcFormField
+                                  label='Invoerveld'
+                                  fullWidth={true}
+                                  inputType='textarea'
+                                  value={tempBeschrijving}
+                                  onChange={handleBeschrijvingLangChange}
+                                  disabled={loading}
+                                  maxLength={2000}
+                                  className='ac-organisatie-detail-textarea'
+                                  placeholder='Een uitgebreide beschrijving van de organisatie'
+                                />
+                              </div>
+                              <div className='ac-organisatie-detail-form-preview'>
+                                <Heading level={4}>Preview</Heading>
+                                <div className='ac-organisatie-detail-preview markdown-preview'>
+                                  <ReactMarkdown>
+                                    {tempBeschrijving}
+                                  </ReactMarkdown>
+                                </div>
+                              </div>
+                            </div>
+                            <span className='character-count'>
+                              {2000 - charCountBeschrijving} karakters over
+                            </span>
+                            <div className='ac-organisatie-detail-form-buttons'>
+                              <PrimaryActionButton
+                                onClick={() => handleSaveDescription()}
+                              >
+                                <VISUALS.SAVE className='ac-button__icon' /> Opslaan
+                              </PrimaryActionButton>
+                              <SecondaryActionButton
+                                onClick={() => {
+                                  setIsEditingBeschrijving(false);
+                                  setTempBeschrijving(data.beschrijving);
+                                  setCharCountBeschrijving(
+                                    data.beschrijving?.length || 0
+                                  );
+                                }}
+                              >
+                                <VISUALS.CLOSE className='ac-button__icon' />
+                                Annuleren
+                              </SecondaryActionButton>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className='ac-description-row'>
+                          <div>
+                            {(() => {
+                              try {
+                                return (
+                                  <ReactMarkdown>
+                                    {JSON.parse(data.beschrijving)}
+                                  </ReactMarkdown>
+                                );
+                              } catch {
+                                return (
+                                  <span className='ac-description-row-empty'>
+                                    Geen uitgebreide beschrijving
+                                  </span>
+                                );
+                              }
+                            })()}
+                          </div>
+                          <Button
+                            className='ac-description-edit-btn'
+                            appearance='subtle-button'
+                            onClick={() => {
+                              setIsEditingBeschrijving(true);
+                              setTempBeschrijving(
+                                data.beschrijving
+                                  ? (() => {
+                                      try {
+                                        return JSON.parse(data.beschrijving);
+                                      } catch {
+                                        return '';
+                                      }
+                                    })()
+                                  : ''
+                              );
+                              setCharCountBeschrijving(
+                                data.beschrijving
+                                  ? (() => {
+                                      try {
+                                        return (
+                                          JSON.parse(data.beschrijving)
+                                            ?.length || 0
+                                        );
+                                      } catch {
+                                        return 0;
+                                      }
+                                    })()
+                                  : 0
+                              );
+                            }}
+                          >
+                            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                          </Button>
+                        </div>
+                      )}
+                    </AcFlex>
+                  </AcFlex>
+
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
@@ -291,6 +454,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                               'naam',
                               'standaarden',
                               'referentieComponent',
+                              'beschrijving',
                             ].includes(key)
                         )
                         .map(([key, schemaProperties]) => (
