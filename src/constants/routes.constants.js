@@ -19,6 +19,7 @@ import {
   AcBeheer,
   AcRegister,
   AcViews,
+  AcMyAccount,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -51,6 +52,7 @@ export const PATHS = AcLockObject({
   REGISTER: '/register',
   AANMELDEN: '/aanmelden',
   VIEWS: '/views/:id',
+  MY_ACCOUNT: '/account',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -321,6 +323,14 @@ export const ROUTES = {
     path: PATHS.VIEWS,
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
     component: AcViews,
+  },
+  ACCOUNT: {
+    id: AcUUID(),
+    name: 'Beheer Mijn Account',
+    label: LABELS.MIJN_ACCOUNT,
+    path: PATHS.MY_ACCOUNT,
+    title: 'Mijn account',
+    component: AcMyAccount,
   },
 };
 
