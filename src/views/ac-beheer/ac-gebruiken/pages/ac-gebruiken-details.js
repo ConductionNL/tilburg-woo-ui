@@ -137,7 +137,13 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
                         .filter(
-                          ([key]) => !['id', 'ibpScore', 'bbnScore'].includes(key)
+                          ([key]) =>
+                            ![
+                              'id',
+                              'ibpScore',
+                              'bbnScore',
+                              'interneAantekening',
+                            ].includes(key)
                         )
                         .map(([key, schemaProperties]) => {
                           // Custom label mapping
