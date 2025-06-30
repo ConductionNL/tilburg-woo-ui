@@ -47,6 +47,7 @@ import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcAddDeelnameModal from '../modals/ac-add-deelname';
 import AcContactPersonForm from '../modals/ac-contact-person-form';
 import { BEHEER_RENAMES } from '../../beheer-renames';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -83,13 +84,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   // Memoize the data for each schema to prevent unnecessary re-renders
   const memoizedSchemaData = useMemo(() => {
     if (!usedBy || !sortedSchemas) return new Map();
-    
+
     const dataMap = new Map();
     sortedSchemas.forEach((schema) => {
-      const schemaData = usedBy.filter((item) => item['@self'].schema.id === schema.id);
+      const schemaData = usedBy.filter(
+        (item) => item['@self'].schema.id === schema.id
+      );
       dataMap.set(schema.id, schemaData);
     });
-    
+
     return dataMap;
   }, [usedBy, sortedSchemas]);
 
@@ -634,7 +637,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             {key === 'logo' ? (
                               <ConLogoPreview
                                 logoUrl={data[key]}

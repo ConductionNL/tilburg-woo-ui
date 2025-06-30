@@ -38,6 +38,7 @@ import ReactMarkdown from 'react-markdown';
 import AcVoorzieningVersieFormModal from '../../ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
 import { BEHEER_RENAMES } from '../../beheer-renames';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerApplicatiesDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -133,7 +134,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
         response.data.standaarden?.[0]?.['@self']?.schema?.properties;
 
       setData(data);
-      setDataProperties(dataProperties);
+      setDataProperties(sortPropertiesByOrder(dataProperties));
       setStandardsDataProperties(sortPropertiesByOrder(standardsDataProperties));
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -320,128 +321,125 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                 </AcFlex>
 
                 <AcFlex column spacing='sm'>
-                    <AcFlex spacing='sm' alignItems='center'>
-                      {isEditingBeschrijving ? (
-                        <div className='ac-organisatie-detail-form-wrapper'>
-                          <div className='ac-organisatie-detail-form'>
-                            <div className='ac-organisatie-detail-form-label-row'>
-                              <Heading
-                                level={3}
-                                className='ac-form-field__label-with-icon'
+                  <AcFlex spacing='sm' alignItems='center'>
+                    {isEditingBeschrijving ? (
+                      <div className='ac-organisatie-detail-form-wrapper'>
+                        <div className='ac-organisatie-detail-form'>
+                          <div className='ac-organisatie-detail-form-label-row'>
+                            <Heading
+                              level={3}
+                              className='ac-form-field__label-with-icon'
+                            >
+                              Beschrijving
+                              <span
+                                className='ac-form-field__tooltip'
+                                title='Een uitgebreide beschrijving van de applicatie'
                               >
-                                Beschrijving
-                                <span
-                                  className='ac-form-field__tooltip'
-                                  title='Een uitgebreide beschrijving van de applicatie'
-                                >
-                                  <VISUALS.INFO />
+                                <VISUALS.INFO />
+                              </span>
+                            </Heading>
+                          </div>
+                          <div className='ac-organisatie-detail-form-flex'>
+                            <div className='ac-organisatie-detail-form-textarea'>
+                              <AcFormField
+                                label='Invoerveld'
+                                fullWidth={true}
+                                inputType='textarea'
+                                value={tempBeschrijving}
+                                onChange={handleBeschrijvingLangChange}
+                                disabled={loading}
+                                maxLength={2000}
+                                className='ac-organisatie-detail-textarea'
+                                placeholder='Een uitgebreide beschrijving van de organisatie'
+                              />
+                            </div>
+                            <div className='ac-organisatie-detail-form-preview'>
+                              <Heading level={4}>Preview</Heading>
+                              <div className='ac-organisatie-detail-preview markdown-preview'>
+                                <ReactMarkdown>{tempBeschrijving}</ReactMarkdown>
+                              </div>
+                            </div>
+                          </div>
+                          <span className='character-count'>
+                            {2000 - charCountBeschrijving} karakters over
+                          </span>
+                          <div className='ac-organisatie-detail-form-buttons'>
+                            <PrimaryActionButton
+                              onClick={() => handleSaveDescription()}
+                            >
+                              <VISUALS.SAVE className='ac-button__icon' /> Opslaan
+                            </PrimaryActionButton>
+                            <SecondaryActionButton
+                              onClick={() => {
+                                setIsEditingBeschrijving(false);
+                                setTempBeschrijving(data.beschrijving);
+                                setCharCountBeschrijving(
+                                  data.beschrijving?.length || 0
+                                );
+                              }}
+                            >
+                              <VISUALS.CLOSE className='ac-button__icon' />
+                              Annuleren
+                            </SecondaryActionButton>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className='ac-description-row'>
+                        <div>
+                          {(() => {
+                            try {
+                              return (
+                                <ReactMarkdown>
+                                  {JSON.parse(data.beschrijving)}
+                                </ReactMarkdown>
+                              );
+                            } catch {
+                              return (
+                                <span className='ac-description-row-empty'>
+                                  Geen uitgebreide beschrijving
                                 </span>
-                              </Heading>
-                            </div>
-                            <div className='ac-organisatie-detail-form-flex'>
-                              <div className='ac-organisatie-detail-form-textarea'>
-                                <AcFormField
-                                  label='Invoerveld'
-                                  fullWidth={true}
-                                  inputType='textarea'
-                                  value={tempBeschrijving}
-                                  onChange={handleBeschrijvingLangChange}
-                                  disabled={loading}
-                                  maxLength={2000}
-                                  className='ac-organisatie-detail-textarea'
-                                  placeholder='Een uitgebreide beschrijving van de organisatie'
-                                />
-                              </div>
-                              <div className='ac-organisatie-detail-form-preview'>
-                                <Heading level={4}>Preview</Heading>
-                                <div className='ac-organisatie-detail-preview markdown-preview'>
-                                  <ReactMarkdown>
-                                    {tempBeschrijving}
-                                  </ReactMarkdown>
-                                </div>
-                              </div>
-                            </div>
-                            <span className='character-count'>
-                              {2000 - charCountBeschrijving} karakters over
-                            </span>
-                            <div className='ac-organisatie-detail-form-buttons'>
-                              <PrimaryActionButton
-                                onClick={() => handleSaveDescription()}
-                              >
-                                <VISUALS.SAVE className='ac-button__icon' /> Opslaan
-                              </PrimaryActionButton>
-                              <SecondaryActionButton
-                                onClick={() => {
-                                  setIsEditingBeschrijving(false);
-                                  setTempBeschrijving(data.beschrijving);
-                                  setCharCountBeschrijving(
-                                    data.beschrijving?.length || 0
-                                  );
-                                }}
-                              >
-                                <VISUALS.CLOSE className='ac-button__icon' />
-                                Annuleren
-                              </SecondaryActionButton>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className='ac-description-row'>
-                          <div>
-                            {(() => {
-                              try {
-                                return (
-                                  <ReactMarkdown>
-                                    {JSON.parse(data.beschrijving)}
-                                  </ReactMarkdown>
-                                );
-                              } catch {
-                                return (
-                                  <span className='ac-description-row-empty'>
-                                    Geen uitgebreide beschrijving
-                                  </span>
-                                );
-                              }
-                            })()}
-                          </div>
-                          <Button
-                            className='ac-description-edit-btn'
-                            appearance='subtle-button'
-                            onClick={() => {
-                              setIsEditingBeschrijving(true);
-                              setTempBeschrijving(
-                                data.beschrijving
-                                  ? (() => {
-                                      try {
-                                        return JSON.parse(data.beschrijving);
-                                      } catch {
-                                        return '';
-                                      }
-                                    })()
-                                  : ''
                               );
-                              setCharCountBeschrijving(
-                                data.beschrijving
-                                  ? (() => {
-                                      try {
-                                        return (
-                                          JSON.parse(data.beschrijving)
-                                            ?.length || 0
-                                        );
-                                      } catch {
-                                        return 0;
-                                      }
-                                    })()
-                                  : 0
-                              );
-                            }}
-                          >
-                            <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
-                          </Button>
+                            }
+                          })()}
                         </div>
-                      )}
-                    </AcFlex>
+                        <Button
+                          className='ac-description-edit-btn'
+                          appearance='subtle-button'
+                          onClick={() => {
+                            setIsEditingBeschrijving(true);
+                            setTempBeschrijving(
+                              data.beschrijving
+                                ? (() => {
+                                    try {
+                                      return JSON.parse(data.beschrijving);
+                                    } catch {
+                                      return '';
+                                    }
+                                  })()
+                                : ''
+                            );
+                            setCharCountBeschrijving(
+                              data.beschrijving
+                                ? (() => {
+                                    try {
+                                      return (
+                                        JSON.parse(data.beschrijving)?.length || 0
+                                      );
+                                    } catch {
+                                      return 0;
+                                    }
+                                  })()
+                                : 0
+                            );
+                          }}
+                        >
+                          <VISUALS.PENCIL className='ac-button__icon' /> Bewerken
+                        </Button>
+                      </div>
+                    )}
                   </AcFlex>
+                </AcFlex>
 
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
@@ -459,7 +457,17 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                         )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             <Paragraph>
                               {formatBySchema(schemaProperties, data, key, {
                                 profile: {

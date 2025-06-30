@@ -20,6 +20,7 @@ import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal'
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -133,7 +134,17 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                         .filter(([key]) => !['id', 'titel'].includes(key))
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             <Paragraph>
                               {formatBySchema(schemaProperties, data, key)}
                             </Paragraph>

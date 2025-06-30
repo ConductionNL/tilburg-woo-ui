@@ -20,6 +20,7 @@ import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerGebruikenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -149,15 +150,24 @@ const AcBeheerGebruikenDetails = ({ id }) => {
 
                           return (
                             <div key={key}>
-                              <strong>{label}:</strong>
+                              <strong
+                                {...(schemaProperties?.description
+                                  ? {
+                                      'data-tooltip-id': TOOLTIP_ID,
+                                      'data-tooltip-content':
+                                        schemaProperties.description,
+                                    }
+                                  : {})}
+                              >
+                                {label}:
+                              </strong>
                               <Paragraph>
-                                {key === 'voorzieningId' || key === 'organisatieId' 
+                                {key === 'voorzieningId' || key === 'organisatieId'
                                   ? data[key]?.naam || '-'
                                   : formatBySchema(schemaProperties, data, key, {
                                       include: ['naam'],
                                       inline: true,
-                                    })
-                                }
+                                    })}
                               </Paragraph>
                             </div>
                           );

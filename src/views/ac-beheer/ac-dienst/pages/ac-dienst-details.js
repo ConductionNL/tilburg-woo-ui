@@ -24,6 +24,7 @@ import ConObjectUploadFiles from '../../con-object-upload-files/con-object-uploa
 import { useLaterEffect } from '@src/hooks';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BEHEER_RENAMES } from '../../beheer-renames';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -262,7 +263,17 @@ const AcBeheerDienstDetails = ({ id }) => {
                         )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             <Paragraph>
                               {(() => {
                                 try {

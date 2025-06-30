@@ -20,6 +20,7 @@ import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-moda
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -138,7 +139,17 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
                         .filter(([key]) => !['id', 'contractNummer'].includes(key))
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             <Paragraph>
                               {formatBySchema(schemaProperties, data, key, {
                                 include: ['naam'],

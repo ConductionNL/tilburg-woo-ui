@@ -183,8 +183,12 @@ const AcBeheerGebruiken = () => {
           if (typeof newB.beheerder === 'string' && !isJsonString(newB.beheerder)) {
             newB.beheerder = JSON.parse(newB.beheerder);
           }
-          
-          return ConSorterLogic(newA?.beheerder?.naam, newB?.beheerder?.naam, direction);
+
+          return ConSorterLogic(
+            newA?.beheerder?.naam,
+            newB?.beheerder?.naam,
+            direction
+          );
         },
       },
     }),
@@ -212,7 +216,7 @@ const AcBeheerGebruiken = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['voorzieningId', 'diensten', 'status', 'beheerderNaam'];
+  const defaultHeaders = ['voorzieningId', 'diensten', 'status', 'contact'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {

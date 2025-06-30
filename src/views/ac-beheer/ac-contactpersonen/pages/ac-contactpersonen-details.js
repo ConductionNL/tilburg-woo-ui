@@ -22,6 +22,7 @@ import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerContactpersoonDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -221,7 +222,17 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                         )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             <Paragraph>
                               {formatBySchema(schemaProperties, data, key, {
                                 profile: {
