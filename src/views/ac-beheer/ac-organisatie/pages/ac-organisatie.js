@@ -30,6 +30,7 @@ import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import AcAddDeelnameModal from '../modals/ac-add-deelname';
 import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -205,7 +206,13 @@ const AcBeheerOrganisaties = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['name', 'beoordeling', 'logo', 'contactDetails'];
+  const defaultHeaders = [
+    'organizationName',
+    'website',
+    'beoordeling',
+    'e-mailadres',
+    'type',
+  ];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
@@ -300,23 +307,27 @@ const AcBeheerOrganisaties = () => {
             data={data}
             tableHeaders={[
               {
-                id: 'name',
-                label: 'Naam',
-                key: 'name',
+                id: 'status-icon',
+                label: '',
+                key: '',
                 customContent: (row) => (
                   <div className='ac-beheer-organisaties-name-container'>
-                    <div className='ac-beheer-organisaties-name-container__icon'>
+                    <div
+                      className='ac-beheer-organisaties-name-container__icon'
+                      data-tooltip-id={TOOLTIP_ID}
+                      data-tooltip-content={
+                        row['@self'].published ? 'Gepubliceerd' : 'Niet gepubliceerd'
+                      }
+                    >
                       {row['@self'].published ? (
                         <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
                       ) : (
                         <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
                       )}
                     </div>
-                    <div className='ac-beheer-organisaties-name-container__name'>
-                      {row.naam || '-'}
-                    </div>
                   </div>
                 ),
+                customHeader: <div style={{ width: '18px' }}></div>,
               },
               ...tableHeaders,
               {
