@@ -177,7 +177,7 @@ const ConDynamicSchemaForm = ({
       topLevelRequired.includes(propertyName) || propertySchema.required === true;
 
     const baseConfig = {
-      label: propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
+      label: propertySchema.title || propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
       required: isRequired,
       visible: propertySchema.visible !== false,
       description: propertySchema.description,
