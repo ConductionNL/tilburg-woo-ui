@@ -290,7 +290,7 @@ const AcBeheerOrganisaties = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.SubMenu
-                    label='Download'
+                    label='Export'
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
@@ -306,7 +306,7 @@ const AcBeheerOrganisaties = () => {
                     icon={<VISUALS.UPLOAD />}
                     onClick={() => setOpenModal('import')}
                   >
-                    Importeren
+                    Import
                   </ConActionMenu.Button>
 
                   <ConActionMenu.Divider />
