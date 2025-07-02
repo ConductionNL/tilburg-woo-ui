@@ -26,6 +26,7 @@ import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
+import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerContactpersonen = () => {
   const navigate = useNavigate();
@@ -37,7 +38,7 @@ const AcBeheerContactpersonen = () => {
     total: 0,
     page: 1,
     pages: 0,
-    limit: 5,
+    limit: 20,
     offset: 0,
   });
 
@@ -372,19 +373,29 @@ const AcBeheerContactpersonen = () => {
             loading={loading}
           />
 
-          <Pagination
-            totalPages={pagination?.pages}
-            page={parseInt(pagination?.page, 10)}
-            onPageChange={(page) => {
-              setPagination((prev) => ({
-                ...prev,
-                page,
-              }));
-            }}
-            nextLabel=''
-            previousLabel=''
-            maxVisiblePages={7}
-          />
+          <AcFlex justifyContent='between'>
+            <Pagination
+              totalPages={pagination?.pages}
+              page={parseInt(pagination?.page, 10)}
+              onPageChange={(page) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }));
+              }}
+              nextLabel=''
+              previousLabel=''
+              maxVisiblePages={7}
+            />
+
+            <ConPaginationLimitSelector
+              objectType='contactpersonen'
+              value={pagination.limit}
+              onChange={(limit) => {
+                setPagination((prev) => ({ ...prev, limit }));
+              }}
+            />
+          </AcFlex>
 
           {/* modals */}
           <AcContactpersonenFormModal

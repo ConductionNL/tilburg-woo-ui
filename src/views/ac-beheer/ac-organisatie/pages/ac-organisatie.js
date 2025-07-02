@@ -29,6 +29,7 @@ import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ const AcBeheerOrganisaties = () => {
     total: 0,
     page: 1,
     pages: 0,
-    limit: 5,
+    limit: 20,
     offset: 0,
   });
 
@@ -105,7 +106,15 @@ const AcBeheerOrganisaties = () => {
       console.error('Error fetching data:', err);
       setError(err);
     }
-  }, [beoordelingFilter, setError, setData, setLoading, makeRequest, endpoint, BASE_URL]);
+  }, [
+    beoordelingFilter,
+    setError,
+    setData,
+    setLoading,
+    makeRequest,
+    endpoint,
+    BASE_URL,
+  ]);
 
   useEffect(() => {
     fetchData();
@@ -413,19 +422,29 @@ const AcBeheerOrganisaties = () => {
             loading={loading}
           />
 
-          <Pagination
-            totalPages={pagination?.pages}
-            page={parseInt(pagination?.page, 10)}
-            onPageChange={(page) => {
-              setPagination((prev) => ({
-                ...prev,
-                page,
-              }));
-            }}
-            nextLabel=''
-            previousLabel=''
-            maxVisiblePages={7}
-          />
+          <AcFlex justifyContent='between'>
+            <Pagination
+              totalPages={pagination?.pages}
+              page={parseInt(pagination?.page, 10)}
+              onPageChange={(page) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }));
+              }}
+              nextLabel=''
+              previousLabel=''
+              maxVisiblePages={7}
+            />
+
+            <ConPaginationLimitSelector
+              objectType='organisaties'
+              value={pagination.limit}
+              onChange={(limit) => {
+                setPagination((prev) => ({ ...prev, limit }));
+              }}
+            />
+          </AcFlex>
 
           {/* modals */}
           <AcOrganisatieFormModal
