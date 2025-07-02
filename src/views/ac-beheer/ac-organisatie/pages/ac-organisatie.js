@@ -365,28 +365,32 @@ const AcBeheerOrganisaties = () => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.EYE />}
-                        onClick={() => {
-                          navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id)
-                          );
-                        }}
-                      >
-                        Bekijken
-                      </ConActionMenu.Button>
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.EYE />}
+                          onClick={() => {
+                            navigate(
+                              NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id)
+                            );
+                          }}
+                        >
+                          Bekijken
+                        </ConActionMenu.Button>
+                      )}
 
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PENCIL />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('edit');
-                        }}
-                      >
-                        Bewerken
-                      </ConActionMenu.Button>
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PENCIL />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('edit');
+                          }}
+                        >
+                          Bewerken
+                        </ConActionMenu.Button>
+                      )}
 
-                      {row.beoordeling !== 'Actief' && (
+                      {row.beoordeling?.toLowerCase?.() !== 'actief' && (
                         <ConActionMenu.Button
                           icon={<VISUALS.CHECK />}
                           onClick={() => {
@@ -398,39 +402,43 @@ const AcBeheerOrganisaties = () => {
                         </ConActionMenu.Button>
                       )}
 
-                      {!row['@self'].published && (
+                      {!row['@self'].published &&
+                        row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PAPER_PLANE />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('publish');
+                            }}
+                          >
+                            Publiceren
+                          </ConActionMenu.Button>
+                        )}
+
+                      {row['@self'].published &&
+                        row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PAPER_PLANE />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('depublish');
+                            }}
+                          >
+                            Depubliceren
+                          </ConActionMenu.Button>
+                        )}
+
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PLUS />}
                           onClick={() => {
                             setSingleSelectedRow(row);
-                            setOpenModal('publish');
+                            setOpenModal('addDeelname');
                           }}
                         >
-                          Publiceren
+                          Deelname toevoegen
                         </ConActionMenu.Button>
                       )}
-
-                      {row['@self'].published && (
-                        <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
-                          onClick={() => {
-                            setSingleSelectedRow(row);
-                            setOpenModal('depublish');
-                          }}
-                        >
-                          Depubliceren
-                        </ConActionMenu.Button>
-                      )}
-
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PLUS />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('addDeelname');
-                        }}
-                      >
-                        Deelname toevoegen
-                      </ConActionMenu.Button>
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
