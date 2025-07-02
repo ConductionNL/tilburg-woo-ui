@@ -32,19 +32,25 @@ const AcAcceptOrganizationModal = ({
   const [error, setError] = useState(null);
   const handleActivateDeactivate = async () => {
     try {
-      if (activate) {
+      if (activate && organization.contactpersonen?.length > 0) {
         const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
+
+        const contactpersoon = organization.contactpersonen[0];
 
         await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
           method: 'POST',
           body: JSON.stringify({
-            username: `${organization.contactpersonen[0].voornaam} ${organization.contactpersonen[0].tussenvoegsel} ${organization.contactpersonen[0].achternaam}`,
-            email: organization.contactpersonen[0].email,
-            voornaam: organization.contactpersonen[0].voornaam,
-            achternaam: organization.contactpersonen[0].achternaam,
+            username: `${contactpersoon?.voornaam ?? ''} ${
+              contactpersoon?.tussenvoegsel ?? ''
+            } ${contactpersoon?.achternaam ?? ''}`
+              .trim()
+              .replace(/\s+/g, ' '),
+            email: contactpersoon?.email ?? '',
+            voornaam: contactpersoon?.voornaam ?? '',
+            achternaam: contactpersoon?.achternaam ?? '',
             organisatie: organization.naam,
-            functie: organization.contactpersonen[0].functie,
-            telefoonnummer: organization.contactpersonen[0].telefoon,
+            functie: contactpersoon?.functie ?? '',
+            telefoonnummer: contactpersoon?.telefoon ?? '',
           }),
         });
       }
