@@ -395,10 +395,22 @@ const AcBeheerOrganisaties = () => {
                           icon={<VISUALS.CHECK />}
                           onClick={() => {
                             setSingleSelectedRow(row);
-                            setOpenModal('accept');
+                            setOpenModal('activate');
                           }}
                         >
                           Activeren
+                        </ConActionMenu.Button>
+                      )}
+
+                      {row.beoordeling?.toLowerCase?.() === 'actief' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.CLOSE />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('deactivate');
+                          }}
+                        >
+                          Deactiveren
                         </ConActionMenu.Button>
                       )}
 
@@ -518,7 +530,8 @@ const AcBeheerOrganisaties = () => {
 
           <AcAcceptOrganizationModal
             organization={singleSelectedRow}
-            showModal={openModal === 'accept'}
+            showModal={openModal === 'activate' || openModal === 'deactivate'}
+            activate={openModal === 'activate'}
             onClose={() => {
               setOpenModal(null);
             }}
