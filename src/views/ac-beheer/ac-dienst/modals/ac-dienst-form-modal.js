@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { VISUALS } from '@constants';
@@ -47,6 +47,7 @@ const AcDienstFormModal = ({
 
   const [dienstFormData, setDienstFormData] = useState({});
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   const [voorzieningOptions, setVoorzieningOptions] = useState([]);
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
@@ -128,12 +129,12 @@ const AcDienstFormModal = ({
           const nameParts = [
             item.voornaam,
             item.tussenvoegsel,
-            item.achternaam
+            item.achternaam,
           ].filter(Boolean);
 
           return {
             value: item.username,
-            label: nameParts.join(' ')
+            label: nameParts.join(' '),
           };
         })
       );
@@ -185,6 +186,11 @@ const AcDienstFormModal = ({
       ...dienstFormData,
       [field]: value,
     });
+  };
+
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
   };
 
   const [error, setError] = useState(null);
@@ -246,7 +252,12 @@ const AcDienstFormModal = ({
       title={isEdit ? 'Dienst bewerken' : 'Dienst toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
@@ -257,182 +268,71 @@ const AcDienstFormModal = ({
       disableDefaultButton
     >
       <AcGrid columns={2}>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Applicatie</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een applicatie'
-            className={clsx(
-              'ac-beheer-select',
-              preSelectedVoorziening && 'ac-beheer-select--disabled'
-            )}
-            value={voorzieningOptions?.filter(
-              (option) => dienstFormData?.voorziening === option.value
-            )}
-            onChange={(e) => {
-              setDienstFormData((prev) => ({
-                ...prev,
-                voorziening: e?.value ?? e,
-              }));
-            }}
-            isLoading={voorzieningenLoading}
-            options={voorzieningOptions}
-            isDisabled={preSelectedVoorziening}
-            {...(schema?.properties?.voorziening?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorziening?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Leverancier</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een leverancier'
-            className='ac-beheer-select'
-            value={leverancierOptions?.filter(
-              (option) => dienstFormData?.leverancier === option.value
-            )}
-            onChange={(e) => {
-              setDienstFormData((prev) => ({
-                ...prev,
-                leverancier: e?.value ?? e,
-              }));
-            }}
-            isLoading={leveranciersLoading}
-            options={leverancierOptions}
-            {...(schema?.properties?.leverancier?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.leverancier?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Productpagina'
-          type='text'
-          onBlur={handleEditDienstFieldChange('productpagina')}
-          value={dienstFormData.productpagina}
-          {...(schema?.properties?.productpagina?.required && {
-            hasError: !dienstFormData?.productpagina,
-            required: true,
-          })}
-          placeholder={schema?.properties?.productpagina?.example}
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            voorziening: dienstFormData.voorziening,
+            leverancier: dienstFormData.leverancier,
+            productpagina: dienstFormData.productpagina,
+            ondersteuningsopties: dienstFormData.ondersteuningsopties,
+            prijsmodel: dienstFormData.prijsmodel,
+            certificeringen: dienstFormData.certificeringen,
+            ondersteundeStandaarden: dienstFormData.ondersteundeStandaarden,
+            licentie: dienstFormData.licentie,
+            contact: dienstFormData.contact,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              voorziening: 'voorziening',
+              leverancier: 'leverancier',
+              productpagina: 'productpagina',
+              ondersteuningsopties: 'ondersteuningsopties',
+              prijsmodel: 'prijsmodel',
+              certificeringen: 'certificeringen',
+              ondersteundeStandaarden: 'ondersteundeStandaarden',
+              licentie: 'licentie',
+              contact: 'contact',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setDienstFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Hide fields that are not in the current form
+            id: { visible: false },
+            naam: { visible: false },
+            status: { visible: false },
+            laag: { visible: false },
+            verklaringen: { visible: false },
+            hosting: { visible: false },
+            versies: { visible: false },
+            omvat: { visible: false },
+            // Disable voorziening field if preSelectedVoorziening is provided
+            voorziening: {
+              visible: true,
+              disabled: preSelectedVoorziening,
+            },
+          }}
+          optionsProviders={{
+            voorziening: voorzieningOptions,
+            leverancier: leverancierOptions,
+            ondersteuningsopties: ondersteuningsoptiesOptions,
+            licentie: licenseOptions,
+            contact: contactpersonenOptions,
+          }}
+          loadingStates={{
+            voorziening: voorzieningenLoading,
+            leverancier: leveranciersLoading,
+            contact: contactpersonenLoading,
+          }}
+          disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Type ondersteuning</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een ondersteunings type'
-            className={clsx('ac-beheer-select')}
-            value={ondersteuningsoptiesOptions?.filter(
-              (option) => dienstFormData?.ondersteuningsopties === option.value
-            )}
-            onChange={(e) => {
-              setDienstFormData((prev) => ({
-                ...prev,
-                ondersteuningsopties: e?.value ?? e,
-              }));
-            }}
-            options={ondersteuningsoptiesOptions}
-            {...(schema?.properties?.voorziening?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorziening?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Ondersteunde standaarden'
-          type='text'
-          onBlur={handleEditDienstFieldChange('ondersteundeStandaarden')}
-          value={dienstFormData.ondersteundeStandaarden}
-          {...(schema?.properties?.ondersteundeStandaarden?.required && {
-            hasError: !dienstFormData?.ondersteundeStandaarden,
-            required: true,
-          })}
-          placeholder={schema?.properties?.ondersteundeStandaarden?.example}
-        />
-        <AcFormField
-          label='Certificeringen'
-          type='text'
-          onBlur={handleEditDienstFieldChange('certificeringen')}
-          value={dienstFormData.certificeringen}
-          {...(schema?.properties?.certificeringen?.required && {
-            hasError: !dienstFormData?.certificeringen,
-            required: true,
-          })}
-          placeholder={schema?.properties?.certificeringen?.example}
-        />
-        <AcFormField
-          label='Prijsmodel'
-          type='text'
-          onBlur={handleEditDienstFieldChange('prijsmodel')}
-          value={dienstFormData.prijsmodel}
-          {...(schema?.properties?.prijsmodel?.required && {
-            hasError: !dienstFormData?.prijsmodel,
-            required: true,
-          })}
-          placeholder={schema?.properties?.prijsmodel?.example}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>licentie</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een licentie'
-            className='ac-beheer-select'
-            value={licenseOptions?.filter(
-              (option) => dienstFormData?.licentie === option.value
-            )}
-            onChange={(e) => {
-              setDienstFormData((prev) => ({
-                ...prev,
-                licentie: e?.value ?? e,
-              }));
-            }}
-            options={licenseOptions}
-            {...(schema?.properties?.licentie?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.licentie?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contact</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een contact'
-            value={contactpersonenOptions?.find(
-              (option) => option.value === dienstFormData.contact
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setDienstFormData((prev) => ({
-                ...prev,
-                contact: e?.value ?? e,
-              }));
-            }}
-            loading={contactpersonenLoading}
-            options={contactpersonenOptions}
-            {...(schema?.properties?.contact?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.contact?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
       </AcGrid>
     </AcModal>
   );

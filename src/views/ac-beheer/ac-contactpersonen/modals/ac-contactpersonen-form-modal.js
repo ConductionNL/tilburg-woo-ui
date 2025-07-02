@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS, LANGUAGES } from '@constants';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
@@ -62,6 +62,7 @@ const AcContactpersoonFormModal = ({
   // form data
   const [contactpersoonFormData, setContactpersoonFormData] = useState({});
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   const [userInfo, setUserInfo] = useState(null);
 
@@ -131,6 +132,11 @@ const AcContactpersoonFormModal = ({
         [field]: value,
       }));
     }
+  };
+
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
   };
 
   const [error, setError] = useState(null);
@@ -206,7 +212,10 @@ const AcContactpersoonFormModal = ({
     }
 
     // Special case - telefoon required if aanspreekPunt is true
-    if (contactpersoonFormData.aanspreekPunt && !contactpersoonFormData.telefoonnummer) {
+    if (
+      contactpersoonFormData.aanspreekPunt &&
+      !contactpersoonFormData.telefoonnummer
+    ) {
       return false;
     }
 
@@ -230,7 +239,7 @@ const AcContactpersoonFormModal = ({
           label: 'opslaan',
           icon: <VISUALS.SAVE />,
           onClick: handleSubmit,
-          disabled: !validateRequiredFields(),
+          disabled: !isValid,
         },
       ]}
       disableDefaultButton
@@ -246,191 +255,67 @@ const AcContactpersoonFormModal = ({
         </Alert>
       </div>
       <AcGrid columns={2}>
-        <AcFormField
-          label='Gebruikersnaam'
-          type='text'
-          onBlur={handleEditContactpersoonFieldChange('username')}
-          value={contactpersoonFormData.username}
-          {...(schema?.properties?.username?.required && {
-            hasError: !contactpersoonFormData?.username,
-            required: true,
-          })}
-          placeholder={schema?.properties?.username?.example}
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            username: contactpersoonFormData.username,
+            email: contactpersoonFormData.email,
+            voornaam: contactpersoonFormData.voornaam,
+            achternaam: contactpersoonFormData.achternaam,
+            functie: contactpersoonFormData.functie,
+            organisatie: contactpersoonFormData.organisatie,
+            telefoonnummer: contactpersoonFormData.telefoonnummer,
+            rollen: contactpersoonFormData.rollen,
+            actief: contactpersoonFormData.actief,
+            aanspreekPunt: contactpersoonFormData.aanspreekPunt,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              username: 'username',
+              email: 'email',
+              voornaam: 'voornaam',
+              achternaam: 'achternaam',
+              functie: 'functie',
+              organisatie: 'organisatie',
+              telefoonnummer: 'telefoonnummer',
+              rollen: 'rollen',
+              actief: 'actief',
+              aanspreekPunt: 'aanspreekPunt',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setContactpersoonFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Hide fields that are not in the current form
+            id: { visible: false },
+            laatsteInlogdatum: { visible: false },
+            aanmaakdatum: { visible: false },
+            wijzigingsdatum: { visible: false },
+            voorkeuren: { visible: false },
+            // Disable organisatie field for non-admin users
+            organisatie: {
+              visible: true,
+              disabled: userInfo ? !userInfo?.groups?.includes('admin') : true,
+            },
+            // Make telefoonnummer required when aanspreekPunt is true
+            telefoonnummer: {
+              visible: true,
+              required: contactpersoonFormData.aanspreekPunt,
+            },
+          }}
+          optionsProviders={{
+            rollen: rollenOptions,
+          }}
+          loadingStates={{}}
+          disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
-        <AcFormField
-          label='E-mail'
-          type='email'
-          onBlur={handleEditContactpersoonFieldChange('email')}
-          value={contactpersoonFormData.email}
-          {...(schema?.properties?.email?.required && {
-            hasError: !contactpersoonFormData?.email,
-            required: true,
-          })}
-          placeholder={schema?.properties?.email?.example}
-        />
-        <AcFormField
-          label='Voornaam'
-          type='text'
-          onBlur={handleEditContactpersoonFieldChange('voornaam')}
-          value={contactpersoonFormData.voornaam}
-          {...(schema?.properties?.voornaam?.required && {
-            hasError: !contactpersoonFormData?.voornaam,
-            required: true,
-          })}
-          placeholder={schema?.properties?.voornaam?.example}
-        />
-        <AcFormField
-          label='Achternaam'
-          type='text'
-          onBlur={handleEditContactpersoonFieldChange('achternaam')}
-          value={contactpersoonFormData.achternaam}
-          {...(schema?.properties?.achternaam?.required && {
-            hasError: !contactpersoonFormData?.achternaam,
-            required: true,
-          })}
-          placeholder={schema?.properties?.achternaam?.example}
-        />
-        <AcFormField
-          label='Functie'
-          type='text'
-          onBlur={handleEditContactpersoonFieldChange('functie')}
-          value={contactpersoonFormData.functie}
-          {...(schema?.properties?.functie?.required && {
-            hasError: !contactpersoonFormData?.functie,
-            required: true,
-          })}
-          placeholder={schema?.properties?.functie?.example}
-        />
-        <AcFormField
-          disabled={userInfo ? !userInfo?.groups?.includes('admin') : true}
-          label='Organisatie'
-          type='text'
-          onBlur={handleEditContactpersoonFieldChange('organisatie')}
-          value={contactpersoonFormData.organisatie}
-          {...(schema?.properties?.organisatie?.required && {
-            hasError: !contactpersoonFormData?.organisatie,
-            required: true,
-          })}
-          placeholder={schema?.properties?.organisatie?.example}
-        />
-        <AcFormField
-          label='Telefoonnummer'
-          type='tel'
-          onBlur={handleEditContactpersoonFieldChange('telefoonnummer')}
-          value={contactpersoonFormData.telefoonnummer}
-          {...((schema?.properties?.telefoonnummer?.required ||
-            contactpersoonFormData.aanspreekPunt) && {
-            hasError: !contactpersoonFormData?.telefoonnummer,
-            required: true,
-          })}
-          placeholder={schema?.properties?.telefoonnummer?.example}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Rollen</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer of maak een rol aan'
-            className={clsx('ac-beheer-select')}
-            value={rollenOptions.filter((option) =>
-              contactpersoonFormData?.rollen?.includes(option.value)
-            )}
-            onChange={(e) => {
-              setContactpersoonFormData((prev) => ({
-                ...prev,
-                rollen: e.map((option) => option.value),
-              }));
-            }}
-            options={rollenOptions}
-            closeMenuOnSelect={false}
-            isMulti
-            {...(schema?.properties?.rollen?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.rollen?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        {/* <div style={{ gridColumn: 'span 2' }}>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Voorkeur</h4>
-          </label>
-          <AcGrid columns={2}>
-            <div>
-              <label className='utrecht-form-label'>
-                <h5 className='utrecht-heading-5'>Taal</h5>
-              </label>
-              <ReactSelect
-                placeholder='Selecteer een taal'
-                value={mapLanguageToValue(
-                  LANGUAGES?.find(
-                    (language) =>
-                      language.code === contactpersoonFormData?.voorkeuren?.taal
-                  )
-                )}
-                className='ac-beheer-select'
-                onChange={(e) => {
-                  handleEditContactpersoonFieldChange('voorkeuren.taal')(e?.value ?? e);
-                }}
-                loading={LANGUAGES?.length === 0}
-                options={LANGUAGES?.map(mapLanguageToValue)}
-                {...(schema?.properties?.voorkeuren?.taal?.required && {
-                  required: true,
-                })}
-                {...(!schema?.properties?.voorkeuren?.taal?.required && {
-                  isClearable: true,
-                })}
-              />
-            </div>
-            <div>
-              <label className='utrecht-form-label'>
-                <h5 className='utrecht-heading-5'>Thema</h5>
-              </label>
-              <ReactSelect
-                placeholder='Selecteer een thema'
-                value={{
-                  label: _.upperFirst(contactpersoonFormData?.voorkeuren?.thema),
-                  value: contactpersoonFormData?.voorkeuren?.thema,
-                }}
-                className='ac-beheer-select'
-                onChange={(e) => {
-                  handleEditContactpersoonFieldChange('voorkeuren.thema')(e?.value ?? e);
-                }}
-                options={[
-                  { label: 'Licht', value: 'licht' },
-                  { label: 'Donker', value: 'donker' },
-                  { label: 'Systeem', value: 'systeem' },
-                ]}
-                {...(schema?.properties?.voorkeuren?.thema?.required && {
-                  required: true,
-                })}
-                {...(!schema?.properties?.voorkeuren?.thema?.required && {
-                  isClearable: true,
-                })}
-              />
-            </div>
-          </AcGrid>
-        </div> */}
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Actief</h4>
-          </label>
-          <AcCheckbox
-            // label='Actief'
-            onChange={handleEditContactpersoonFieldChange('actief')}
-            checked={contactpersoonFormData.actief}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>AanspreekPunt</h4>
-          </label>
-          <AcCheckbox
-            checked={contactpersoonFormData.aanspreekPunt}
-            onChange={handleEditContactpersoonFieldChange('aanspreekPunt')}
-          />
-        </div>
       </AcGrid>
     </AcModal>
   );
