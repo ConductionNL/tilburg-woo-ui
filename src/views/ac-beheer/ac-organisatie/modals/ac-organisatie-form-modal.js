@@ -275,7 +275,9 @@ const AcOrganisatieFormModal = ({
             beschrijvingLang: { visible: false },
             logo: { visible: false }, // Hide the default logo field since we have a custom one
             type: { visible: !isEdit }, // Only show type field when adding new organisation
-            oin: { visible: organisatieFormData.type?.toLowerCase() === 'gemeente' },
+            links: { visible: false },
+            oin: { visible: false },
+            rol: { visible: false },
             cbs: { visible: organisatieFormData.type?.toLowerCase() === 'gemeente' },
             samenwerkingen: {
               visible: false,
