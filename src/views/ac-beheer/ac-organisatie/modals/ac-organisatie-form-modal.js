@@ -271,7 +271,6 @@ const AcOrganisatieFormModal = ({
           fieldConfigs={{
             // Only hide the fields we don't want to show
             id: { visible: false },
-            beoordeling: { visible: false },
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             logo: { visible: false }, // Hide the default logo field since we have a custom one
