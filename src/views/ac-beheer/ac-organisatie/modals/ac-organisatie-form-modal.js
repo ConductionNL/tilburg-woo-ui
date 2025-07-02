@@ -50,6 +50,7 @@ const AcOrganisatieFormModal = ({
 
   const [organisatieFormData, setOrganisatieFormData] = useState({});
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
@@ -111,6 +112,11 @@ const AcOrganisatieFormModal = ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
   };
 
   const [error, setError] = useState(null);
@@ -217,7 +223,12 @@ const AcOrganisatieFormModal = ({
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
-        { label: 'Opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'Opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
       ]}
       buttonPosition='end'
       disableDefaultButton
@@ -292,6 +303,7 @@ const AcOrganisatieFormModal = ({
           }}
           loadingStates={{}}
           disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
 
         {/* Custom Logo Field */}
