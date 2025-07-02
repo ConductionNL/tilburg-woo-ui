@@ -320,7 +320,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             icon={<VISUALS.CHECK />}
                             onClick={() => setOpenModal('accept')}
                           >
-                            Accepteren
+                            Activeren
                           </ConActionMenu.Button>
                         )}
                         {!data['@self'].published && (

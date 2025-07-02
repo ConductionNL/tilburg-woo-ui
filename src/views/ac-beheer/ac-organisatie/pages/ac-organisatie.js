@@ -394,7 +394,7 @@ const AcBeheerOrganisaties = () => {
                             setOpenModal('accept');
                           }}
                         >
-                          Accepteren
+                          Activeren
                         </ConActionMenu.Button>
                       )}
 

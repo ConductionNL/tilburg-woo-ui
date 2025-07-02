@@ -120,7 +120,7 @@ const AcAcceptOrganizationModal = ({
     <AcModal
       ref={modalRef}
       id='accept-organization-modal'
-      title='Organisatie accepteren'
+      title='Organisatie activeren'
       buttons={[
         {
           label: 'Annuleren',
@@ -129,7 +129,7 @@ const AcAcceptOrganizationModal = ({
           buttonType: 'secondary',
         },
         {
-          label: 'Accepteren',
+          label: 'Activeren',
           icon: <VISUALS.CHECK />,
           onClick: handleAcceptOrganization,
         },
@@ -139,7 +139,7 @@ const AcAcceptOrganizationModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
-        Weet je zeker dat je deze organisatie wilt accepteren?
+        Weet je zeker dat je deze organisatie wilt activeren?
         <Paragraph>{organization?.naam ?? organization?.id}</Paragraph>
       </AcFlex>
     </AcModal>
