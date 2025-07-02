@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
@@ -139,6 +139,7 @@ import { VISUALS } from '@src/constants';
  * @param {number} props.columns - Number of columns for the form layout (currently not implemented).
  * @param {string} props.className - Additional CSS classes for the form container.
  * @param {object} props.context - Additional context object passed to visibility functions.
+ * @param {(isValid: boolean) => void} props.getIsValid - Callback function that receives the form validation state.
  *
  * @returns {React.ReactElement|null} The rendered dynamic form component or null if no schema properties exist.
  *
@@ -162,6 +163,7 @@ const ConDynamicSchemaForm = ({
   columns = 2,
   className = '',
   context = {},
+  getIsValid = () => {},
 }) => {
   if (!schema?.properties) return null;
 
@@ -175,10 +177,11 @@ const ConDynamicSchemaForm = ({
       topLevelRequired.includes(propertyName) || propertySchema.required === true;
 
     const baseConfig = {
-      label: propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
+      label: propertySchema.title || propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
       required: isRequired,
       visible: propertySchema.visible !== false,
       description: propertySchema.description,
+      placeholder: propertySchema.example || undefined,
     };
 
     // Handle different field types based on schema
@@ -315,6 +318,29 @@ const ConDynamicSchemaForm = ({
     };
   };
 
+  // Check if all required fields are valid
+  const validateForm = () => {
+    const sortedProperties = sortPropertiesByOrder(schema.properties);
+
+    for (const [propertyName, propertySchema] of Object.entries(sortedProperties)) {
+      const fieldConfig = getFieldConfig(propertyName, propertySchema);
+
+      // Skip validation for invisible fields
+      if (!getFieldVisibility(propertyName, fieldConfig)) continue;
+
+      const validation = getFieldValidation(propertyName, fieldConfig);
+      if (validation.hasError) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Update form validity whenever form data changes
+  useEffect(() => {
+    getIsValid?.(validateForm());
+  }, [formData]);
+
   // Handle field change
   const handleFieldChange = (propertyName, fieldConfig) => (value) => {
     let processedValue = value;
@@ -352,6 +378,7 @@ const ConDynamicSchemaForm = ({
           type={fieldConfig.type}
           onBlur={handleFieldChange(propertyName, fieldConfig)}
           value={value || ''}
+          placeholder={fieldConfig.placeholder}
           {...validation}
         />
       );
@@ -368,6 +395,7 @@ const ConDynamicSchemaForm = ({
           type={fieldConfig.type}
           onBlur={handleFieldChange(propertyName, fieldConfig)}
           value={value || ''}
+          placeholder={fieldConfig.placeholder}
           {...validation}
         />
       );

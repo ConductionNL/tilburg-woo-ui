@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
@@ -33,6 +33,7 @@ const AcKwetsbaarheidFormModal = ({
     referenties: '',
   });
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   // load kwetsbaarheid data into the form
   useEffect(() => {
@@ -88,6 +89,11 @@ const AcKwetsbaarheidFormModal = ({
     }));
   };
 
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
+  };
+
   const [error, setError] = useState(null);
 
   const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
@@ -139,7 +145,12 @@ const AcKwetsbaarheidFormModal = ({
       id='edit-kwetsbaarheid-modal'
       title={isEdit ? 'Kwetsbaarheid bewerken' : 'Kwetsbaarheid toevoegen'}
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
@@ -150,105 +161,57 @@ const AcKwetsbaarheidFormModal = ({
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        <AcFormField
-          label='Voorziening versie ID'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('voorzieningversieId')}
-          value={kwetsbaarheidFormData.voorzieningversieId}
-          {...(schema?.properties?.voorzieningversieId?.required && {
-            hasError: !kwetsbaarheidFormData?.voorzieningversieId,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='CVE nummer'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('cveNummer')}
-          value={kwetsbaarheidFormData.cveNummer}
-          {...(schema?.properties?.cveNummer?.required && {
-            hasError: !kwetsbaarheidFormData?.cveNummer,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Titel'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('titel')}
-          value={kwetsbaarheidFormData.titel}
-          {...(schema?.properties?.titel?.required && {
-            hasError: !kwetsbaarheidFormData?.titel,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Beschrijving'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('beschrijving')}
-          value={kwetsbaarheidFormData.beschrijving}
-          {...(schema?.properties?.beschrijving?.required && {
-            hasError: !kwetsbaarheidFormData?.beschrijving,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Ernst'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('ernst')}
-          value={kwetsbaarheidFormData.ernst}
-          {...(schema?.properties?.ernst?.required && {
-            hasError: !kwetsbaarheidFormData?.ernst,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Ontdekt op'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('ontdektOp')}
-          value={kwetsbaarheidFormData.ontdektOp}
-          {...(schema?.properties?.ontdektOp?.required && {
-            hasError: !kwetsbaarheidFormData?.ontdektOp,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Gepubliceerd op'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('gepubliceerdOp')}
-          value={kwetsbaarheidFormData.gepubliceerdOp}
-          {...(schema?.properties?.gepubliceerdOp?.required && {
-            hasError: !kwetsbaarheidFormData?.gepubliceerdOp,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Opgelost in'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('opgelostIn')}
-          value={kwetsbaarheidFormData.opgelostIn}
-          {...(schema?.properties?.opgelostIn?.required && {
-            hasError: !kwetsbaarheidFormData?.opgelostIn,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Mitigatie'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('mitigatie')}
-          value={kwetsbaarheidFormData.mitigatie}
-          {...(schema?.properties?.mitigatie?.required && {
-            hasError: !kwetsbaarheidFormData?.mitigatie,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Referenties'
-          type='text'
-          onBlur={handleEditKwetsbaarheidFieldChange('referenties')}
-          value={kwetsbaarheidFormData.referenties}
-          {...(schema?.properties?.referenties?.required && {
-            hasError: !kwetsbaarheidFormData?.referenties,
-            required: true,
-          })}
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            voorzieningversieId: kwetsbaarheidFormData.voorzieningversieId,
+            cveNummer: kwetsbaarheidFormData.cveNummer,
+            titel: kwetsbaarheidFormData.titel,
+            beschrijving: kwetsbaarheidFormData.beschrijving,
+            ernst: kwetsbaarheidFormData.ernst,
+            ontdektOp: kwetsbaarheidFormData.ontdektOp,
+            gepubliceerdOp: kwetsbaarheidFormData.gepubliceerdOp,
+            opgelostIn: kwetsbaarheidFormData.opgelostIn,
+            mitigatie: kwetsbaarheidFormData.mitigatie,
+            referenties: kwetsbaarheidFormData.referenties,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              voorzieningversieId: 'voorzieningversieId',
+              cveNummer: 'cveNummer',
+              titel: 'titel',
+              beschrijving: 'beschrijving',
+              ernst: 'ernst',
+              ontdektOp: 'ontdektOp',
+              gepubliceerdOp: 'gepubliceerdOp',
+              opgelostIn: 'opgelostIn',
+              mitigatie: 'mitigatie',
+              referenties: 'referenties',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setKwetsbaarheidFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Hide fields that are not in the current form
+            id: { visible: false },
+          }}
+          optionsProviders={{
+            ernst: [
+              { label: 'Laag', value: 'laag' },
+              { label: 'Gemiddeld', value: 'gemiddeld' },
+              { label: 'Hoog', value: 'hoog' },
+              { label: 'Kritiek', value: 'kritiek' },
+            ],
+          }}
+          loadingStates={{}}
+          disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
       </AcFlex>
     </AcModal>

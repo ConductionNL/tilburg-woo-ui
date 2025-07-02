@@ -24,6 +24,7 @@ import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
+import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerKwetsbaarheden = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const AcBeheerKwetsbaarheden = () => {
     total: 0,
     page: 1,
     pages: 0,
-    limit: 5,
+    limit: 20,
     offset: 0,
   });
 
@@ -312,19 +313,29 @@ const AcBeheerKwetsbaarheden = () => {
             loading={loading}
           />
 
-          <Pagination
-            totalPages={pagination?.pages}
-            page={parseInt(pagination?.page, 10)}
-            onPageChange={(page) => {
-              setPagination((prev) => ({
-                ...prev,
-                page,
-              }));
-            }}
-            nextLabel=''
-            previousLabel=''
-            maxVisiblePages={7}
-          />
+          <AcFlex justifyContent='between'>
+            <Pagination
+              totalPages={pagination?.pages}
+              page={parseInt(pagination?.page, 10)}
+              onPageChange={(page) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }));
+              }}
+              nextLabel=''
+              previousLabel=''
+              maxVisiblePages={7}
+            />
+
+            <ConPaginationLimitSelector
+              objectType='kwetsbaarheden'
+              value={pagination.limit}
+              onChange={(limit) => {
+                setPagination((prev) => ({ ...prev, limit }));
+              }}
+            />
+          </AcFlex>
 
           {/* modals */}
           <AcKwetsbaarheidFormModal

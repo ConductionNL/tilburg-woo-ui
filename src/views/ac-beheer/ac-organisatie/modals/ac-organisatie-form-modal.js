@@ -50,6 +50,7 @@ const AcOrganisatieFormModal = ({
 
   const [organisatieFormData, setOrganisatieFormData] = useState({});
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
@@ -111,6 +112,11 @@ const AcOrganisatieFormModal = ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
   };
 
   const [error, setError] = useState(null);
@@ -217,7 +223,12 @@ const AcOrganisatieFormModal = ({
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
-        { label: 'Opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'Opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
       ]}
       buttonPosition='end'
       disableDefaultButton
@@ -260,12 +271,13 @@ const AcOrganisatieFormModal = ({
           fieldConfigs={{
             // Only hide the fields we don't want to show
             id: { visible: false },
-            beoordeling: { visible: false },
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             logo: { visible: false }, // Hide the default logo field since we have a custom one
             type: { visible: !isEdit }, // Only show type field when adding new organisation
-            oin: { visible: organisatieFormData.type?.toLowerCase() === 'gemeente' },
+            links: { visible: false },
+            oin: { visible: false },
+            rol: { visible: false },
             cbs: { visible: organisatieFormData.type?.toLowerCase() === 'gemeente' },
             samenwerkingen: {
               visible: false,
@@ -292,6 +304,7 @@ const AcOrganisatieFormModal = ({
           }}
           loadingStates={{}}
           disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
 
         {/* Custom Logo Field */}

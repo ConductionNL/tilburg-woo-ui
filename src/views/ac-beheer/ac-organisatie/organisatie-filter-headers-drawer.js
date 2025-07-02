@@ -97,7 +97,7 @@ const ConFilterHeadersDrawer = forwardRef(
                 getBeoordeling?.(e?.value ?? e);
               }}
               options={[
-                { label: 'Concept', value: 'concept' },
+                { label: 'Concept', value: 'Concept' },
                 { label: 'Actief', value: 'Actief' },
               ]}
               isClearable

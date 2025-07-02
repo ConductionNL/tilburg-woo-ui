@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcCheckbox, AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
@@ -60,6 +60,7 @@ const AcGebruikenFormModal = ({
 
   const [gebruikFormData, setGebruikFormData] = useState({});
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
@@ -221,6 +222,11 @@ const AcGebruikenFormModal = ({
     }));
   };
 
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
+  };
+
   const [error, setError] = useState(null);
 
   const endpoint = 'openregister/api/objects/voorzieningen/voorzieninggebruik';
@@ -277,7 +283,12 @@ const AcGebruikenFormModal = ({
       title={isEdit ? 'Gebruik bewerken' : 'Gebruik toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
@@ -288,247 +299,109 @@ const AcGebruikenFormModal = ({
       disableDefaultButton
     >
       <AcGrid columns={2}>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Organisatie</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een organisatie'
-            className={clsx(
-              'ac-beheer-select',
-              preSelectedOrganisatieId && 'ac-beheer-select--disabled'
-            )}
-            value={organisatieOptions?.filter(
-              (option) => gebruikFormData?.organisatieId === option.value
-            )}
-            onChange={(e) => {
-              setGebruikFormData((prev) => ({
-                ...prev,
-                organisatieId: e?.value ?? e,
-              }));
-            }}
-            isLoading={organisatieLoading}
-            options={organisatieOptions}
-            isDisabled={preSelectedOrganisatieId}
-            {...(schema?.properties?.organisatie?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.organisatie?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Applicatie</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een applicatie'
-            className={clsx(
-              'ac-beheer-select',
-              preSelectedVoorzieningId && 'ac-beheer-select--disabled'
-            )}
-            value={voorzieningenOptions?.filter(
-              (option) => gebruikFormData?.voorzieningId === option.value
-            )}
-            onChange={(e) => {
-              setGebruikFormData((prev) => ({
-                ...prev,
-                voorzieningId: e?.value ?? e,
-              }));
-            }}
-            isLoading={voorzieningenLoading}
-            options={voorzieningenOptions}
-            isDisabled={preSelectedVoorzieningId}
-            {...(schema?.properties?.voorzieningId?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorzieningId?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Status</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een status'
-            className={clsx('ac-beheer-select')}
-            value={
-              gebruikFormData?.status &&
-              schema?.properties?.status?.enum?.includes(
-                gebruikFormData?.status
-              ) && {
-                label: gebruikFormData?.status,
-                value: gebruikFormData?.status,
-              }
-            }
-            onChange={(e) => {
-              setGebruikFormData((prev) => ({
-                ...prev,
-                status: e?.value ?? e,
-              }));
-            }}
-            isLoading={schemaLoading}
-            options={(schema?.properties?.status?.enum || []).map((item) => ({
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            organisatieId: gebruikFormData.organisatieId,
+            voorzieningId: gebruikFormData.voorzieningId,
+            versieId: gebruikFormData.versieId,
+            beheerder: gebruikFormData.beheerder,
+            eigenaar: gebruikFormData.eigenaar,
+            startDatum: gebruikFormData.startDatum,
+            status: gebruikFormData.status,
+            bbnScore: gebruikFormData.bbnScore,
+            ibpScore: gebruikFormData.ibpScore,
+            bivClassificatie: gebruikFormData.bivClassificatie,
+            bedrijfsKritisch: gebruikFormData.bedrijfsKritisch,
+            privacyGevoelig: gebruikFormData.privacyGevoelig,
+            hosting: gebruikFormData.hosting,
+            contact: gebruikFormData.contact,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              organisatieId: 'organisatieId',
+              voorzieningId: 'voorzieningId',
+              versieId: 'versieId',
+              beheerder: 'beheerder',
+              eigenaar: 'eigenaar',
+              startDatum: 'startDatum',
+              status: 'status',
+              bbnScore: 'bbnScore',
+              ibpScore: 'ibpScore',
+              bivClassificatie: 'bivClassificatie',
+              bedrijfsKritisch: 'bedrijfsKritisch',
+              privacyGevoelig: 'privacyGevoelig',
+              hosting: 'hosting',
+              contact: 'contact',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setGebruikFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Hide fields that are not in the current form
+            id: { visible: false },
+            deelneming: { visible: false },
+            startDatumActief: { visible: false },
+            startDatumGepland: { visible: false },
+            startDatumBeëindigd: { visible: false },
+            interneAantekening: { visible: false },
+            // Disable organisatieId field if preSelectedOrganisatieId is provided
+            organisatieId: {
+              visible: true,
+              disabled: preSelectedOrganisatieId,
+            },
+            // Disable voorzieningId field if preSelectedVoorzieningId is provided
+            voorzieningId: {
+              visible: true,
+              disabled: preSelectedVoorzieningId,
+            },
+            // Disable versieId field if no voorzieningId is selected
+            versieId: {
+              visible: true,
+              disabled: !gebruikFormData.voorzieningId,
+            },
+          }}
+          optionsProviders={{
+            organisatieId: organisatieOptions,
+            voorzieningId: voorzieningenOptions,
+            versieId: versiesOptions,
+            status: (schema?.properties?.status?.enum || []).map((item) => ({
               label: item,
               value: item,
-            }))}
-            {...(schema?.properties?.status?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.status?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Versie</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een versie'
-            className={clsx('ac-beheer-select')}
-            value={versiesOptions?.filter(
-              (option) => gebruikFormData?.versieId === option.value
-            )}
-            onChange={(e) => {
-              setGebruikFormData((prev) => ({
-                ...prev,
-                versieId: e?.value ?? e,
-              }));
-            }}
-            isLoading={versiesLoading}
-            options={versiesOptions}
-            isDisabled={!gebruikFormData.voorzieningId}
-            {...(schema?.properties?.versieId?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.versieId?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Startdatum</h4>
-          </label>
-          <DateInput
-            className='ac-beheer-date-input'
-            onChange={(e) =>
-              handleEditGebruikFieldChange('startDatum')(
-                e.target.value && new Date(e.target.value).toISOString()
-              )
-            }
-            {...(schema?.properties?.startDatum?.required && {
-              required: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='BBN Score'
-          type='text'
-          onBlur={handleEditGebruikFieldChange('bbnScore')}
-          value={gebruikFormData.bbnScore}
-          {...(schema?.properties?.bbnScore?.required && {
-            hasError: !gebruikFormData?.bbnScore,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='IBP Score'
-          type='text'
-          onBlur={handleEditGebruikFieldChange('ibpScore')}
-          value={gebruikFormData.ibpScore}
-          {...(schema?.properties?.ibpScore?.required && {
-            hasError: !gebruikFormData?.ibpScore,
-            required: true,
-          })}
-        />
-        <div className='ac-modal-grid-checkboxes'>
-          <AcCheckbox
-            label='BedrijfsKritisch'
-            checked={gebruikFormData.bedrijfsKritisch}
-            onChange={handleEditGebruikFieldChange('bedrijfsKritisch')}
-          />
-          <AcCheckbox
-            label='Privacy Gevoelig'
-            checked={gebruikFormData.privacyGevoelig}
-            onChange={handleEditGebruikFieldChange('privacyGevoelig')}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Hosting</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een hosting'
-            className={clsx('ac-beheer-select')}
-            value={hostingOptions?.filter(
-              (option) => gebruikFormData?.hosting === option.value
-            )}
-            onChange={(e) => {
-              setGebruikFormData((prev) => ({
-                ...prev,
-                hosting: e?.value ?? e,
-              }));
-            }}
-            isLoading={organisatieLoading}
-            options={hostingOptions}
-            {...(schema?.properties?.hosting?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.hosting?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contact</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een contact'
-            value={contactpersonenOptions?.find(
-              (option) => option.value === gebruikFormData.contact
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setGebruikFormData((prev) => ({
-                ...prev,
-                contact: e?.value ?? e,
-              }));
-            }}
-            loading={contactpersonenLoading}
-            options={contactpersonenOptions}
-            {...(schema?.properties?.contact?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.contact?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Beheerder'
-          type='text'
-          onBlur={handleEditGebruikFieldChange('beheerder')}
-          value={gebruikFormData.beheerder}
-          {...(schema?.properties?.beheerder?.required && {
-            hasError: !gebruikFormData?.beheerder,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Eigenaar'
-          type='text'
-          onBlur={handleEditGebruikFieldChange('eigenaar')}
-          value={gebruikFormData.eigenaar}
-          {...(schema?.properties?.eigenaar?.required && {
-            hasError: !gebruikFormData?.eigenaar,
-            required: true,
-          })}
+            })),
+            hosting: hostingOptions,
+            contact: contactpersonenOptions,
+            'bivClassificatie.beschikbaarheid': [
+              { label: 'Laag', value: 'Laag' },
+              { label: 'Midden', value: 'Midden' },
+              { label: 'Hoog', value: 'Hoog' },
+            ],
+            'bivClassificatie.integriteit': [
+              { label: 'Laag', value: 'Laag' },
+              { label: 'Midden', value: 'Midden' },
+              { label: 'Hoog', value: 'Hoog' },
+            ],
+            'bivClassificatie.vertrouwelijkheid': [
+              { label: 'Laag', value: 'Laag' },
+              { label: 'Midden', value: 'Midden' },
+              { label: 'Hoog', value: 'Hoog' },
+            ],
+          }}
+          loadingStates={{
+            organisatieId: organisatieLoading,
+            voorzieningId: voorzieningenLoading,
+            versieId: versiesLoading,
+            status: schemaLoading,
+            contact: contactpersonenLoading,
+          }}
+          disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
       </AcGrid>
     </AcModal>
