@@ -316,6 +316,7 @@ const AcVoorzieningVersieFormModal = ({
             hasError: !voorzieningFormData?.versienummer,
             required: true,
           })}
+          placeholder={schema?.properties?.versienummer?.example}
         />
         <AcFormField
           label='Release Notes'
@@ -326,6 +327,7 @@ const AcVoorzieningVersieFormModal = ({
             hasError: !voorzieningFormData?.releaseNotes,
             required: true,
           })}
+          placeholder={schema?.properties?.releaseNotes?.example}
         />
         <AcFormField
           label='Release Datum'
@@ -336,6 +338,7 @@ const AcVoorzieningVersieFormModal = ({
             hasError: !voorzieningFormData?.releaseDatum,
             required: true,
           })}
+          placeholder={schema?.properties?.releaseDatum?.example}
         />
         <AcFormField
           label='Eind Datum Ondersteuning'
@@ -346,6 +349,7 @@ const AcVoorzieningVersieFormModal = ({
             hasError: !voorzieningFormData?.eindDatumOndersteuning,
             required: true,
           })}
+          placeholder={schema?.properties?.eindDatumOndersteuning?.example}
         />
         {/* <div>
           <label className='utrecht-form-label'>

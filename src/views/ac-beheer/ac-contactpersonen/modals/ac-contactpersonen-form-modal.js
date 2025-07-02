@@ -255,6 +255,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.username,
             required: true,
           })}
+          placeholder={schema?.properties?.username?.example}
         />
         <AcFormField
           label='E-mail'
@@ -265,6 +266,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.email,
             required: true,
           })}
+          placeholder={schema?.properties?.email?.example}
         />
         <AcFormField
           label='Voornaam'
@@ -275,6 +277,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.voornaam,
             required: true,
           })}
+          placeholder={schema?.properties?.voornaam?.example}
         />
         <AcFormField
           label='Achternaam'
@@ -285,6 +288,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.achternaam,
             required: true,
           })}
+          placeholder={schema?.properties?.achternaam?.example}
         />
         <AcFormField
           label='Functie'
@@ -295,6 +299,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.functie,
             required: true,
           })}
+          placeholder={schema?.properties?.functie?.example}
         />
         <AcFormField
           disabled={userInfo ? !userInfo?.groups?.includes('admin') : true}
@@ -306,6 +311,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.organisatie,
             required: true,
           })}
+          placeholder={schema?.properties?.organisatie?.example}
         />
         <AcFormField
           label='Telefoonnummer'
@@ -317,6 +323,7 @@ const AcContactpersoonFormModal = ({
             hasError: !contactpersoonFormData?.telefoonnummer,
             required: true,
           })}
+          placeholder={schema?.properties?.telefoonnummer?.example}
         />
         <div>
           <label className='utrecht-form-label'>

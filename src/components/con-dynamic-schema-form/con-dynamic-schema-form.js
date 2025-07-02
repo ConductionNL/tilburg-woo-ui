@@ -181,6 +181,7 @@ const ConDynamicSchemaForm = ({
       required: isRequired,
       visible: propertySchema.visible !== false,
       description: propertySchema.description,
+      placeholder: propertySchema.example || undefined,
     };
 
     // Handle different field types based on schema
@@ -320,13 +321,13 @@ const ConDynamicSchemaForm = ({
   // Check if all required fields are valid
   const validateForm = () => {
     const sortedProperties = sortPropertiesByOrder(schema.properties);
-    
+
     for (const [propertyName, propertySchema] of Object.entries(sortedProperties)) {
       const fieldConfig = getFieldConfig(propertyName, propertySchema);
-      
+
       // Skip validation for invisible fields
       if (!getFieldVisibility(propertyName, fieldConfig)) continue;
-      
+
       const validation = getFieldValidation(propertyName, fieldConfig);
       if (validation.hasError) {
         return false;
@@ -377,6 +378,7 @@ const ConDynamicSchemaForm = ({
           type={fieldConfig.type}
           onBlur={handleFieldChange(propertyName, fieldConfig)}
           value={value || ''}
+          placeholder={fieldConfig.placeholder}
           {...validation}
         />
       );
@@ -393,6 +395,7 @@ const ConDynamicSchemaForm = ({
           type={fieldConfig.type}
           onBlur={handleFieldChange(propertyName, fieldConfig)}
           value={value || ''}
+          placeholder={fieldConfig.placeholder}
           {...validation}
         />
       );

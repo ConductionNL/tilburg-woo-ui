@@ -322,6 +322,7 @@ const AcDienstFormModal = ({
             hasError: !dienstFormData?.productpagina,
             required: true,
           })}
+          placeholder={schema?.properties?.productpagina?.example}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -357,6 +358,7 @@ const AcDienstFormModal = ({
             hasError: !dienstFormData?.ondersteundeStandaarden,
             required: true,
           })}
+          placeholder={schema?.properties?.ondersteundeStandaarden?.example}
         />
         <AcFormField
           label='Certificeringen'
@@ -367,6 +369,7 @@ const AcDienstFormModal = ({
             hasError: !dienstFormData?.certificeringen,
             required: true,
           })}
+          placeholder={schema?.properties?.certificeringen?.example}
         />
         <AcFormField
           label='Prijsmodel'
@@ -377,6 +380,7 @@ const AcDienstFormModal = ({
             hasError: !dienstFormData?.prijsmodel,
             required: true,
           })}
+          placeholder={schema?.properties?.prijsmodel?.example}
         />
         <div>
           <label className='utrecht-form-label'>

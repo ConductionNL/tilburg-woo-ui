@@ -248,6 +248,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.voorzieningAanbod,
             required: true,
           })}
+          placeholder={schema?.properties?.voorzieningAanbod?.example}
         />
         <AcFormField
           label='Voorziening Gebruik'
@@ -258,6 +259,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.voorzieningGebruik,
             required: true,
           })}
+          placeholder={schema?.properties?.voorzieningGebruik?.example}
         />
         <AcFormField
           label='Startdatum'
@@ -268,6 +270,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.startDatum,
             required: true,
           })}
+          placeholder={schema?.properties?.startDatum?.example}
         />
         <AcFormField
           label='Einddatum'
@@ -278,6 +281,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.eindDatum,
             required: true,
           })}
+          placeholder={schema?.properties?.eindDatum?.example}
         />
         <AcFormField
           label='Contract Nummer'
@@ -288,6 +292,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.contractNummer,
             required: true,
           })}
+          placeholder={schema?.properties?.contractNummer?.example}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -327,6 +332,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.kosten,
             required: true,
           })}
+          placeholder={schema?.properties?.kosten?.example}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -375,6 +381,7 @@ const AcOvereenkomstFormModal = ({
                 hasError: !overeenkomstFormData.contactpersoonAanbieder.naam,
                 required: true,
               })}
+              placeholder={schema?.properties?.contactpersoonAanbieder?.email?.example}
             />
             <AcFormField
               headingLevel={5}
@@ -389,6 +396,7 @@ const AcOvereenkomstFormModal = ({
                 hasError: !overeenkomstFormData.contactpersoonAanbieder.email,
                 required: true,
               })}
+              placeholder={schema?.properties?.contactpersoonAanbieder?.email?.example}
             />
           </AcFlex>
         </div>
@@ -410,6 +418,7 @@ const AcOvereenkomstFormModal = ({
                 hasError: !overeenkomstFormData.contactpersoonGebruiker.naam,
                 required: true,
               })}
+              placeholder={schema?.properties?.contactpersoonGebruiker?.email?.example}
             />
             <AcFormField
               headingLevel={5}
@@ -424,6 +433,7 @@ const AcOvereenkomstFormModal = ({
                 hasError: !overeenkomstFormData.contactpersoonGebruiker.email,
                 required: true,
               })}
+              placeholder={schema?.properties?.contactpersoonGebruiker?.email?.example}
             />
           </AcFlex>
         </div>
@@ -436,6 +446,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.documentReferentie,
             required: true,
           })}
+          placeholder={schema?.properties?.documentReferentie?.example}
         />
         <div>
           <label className='utrecht-form-label'>
@@ -475,6 +486,7 @@ const AcOvereenkomstFormModal = ({
             hasError: !overeenkomstFormData.opmerkingen,
             required: true,
           })}
+          placeholder={schema?.properties?.opmerkingen?.example}
         />
       </AcFlex>
     </AcModal>

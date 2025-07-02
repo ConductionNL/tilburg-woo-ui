@@ -159,6 +159,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.voorzieningversieId,
             required: true,
           })}
+          placeholder={schema?.properties?.voorzieningversieId?.example}
         />
         <AcFormField
           label='CVE nummer'
@@ -169,6 +170,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.cveNummer,
             required: true,
           })}
+          placeholder={schema?.properties?.cveNummer?.example}
         />
         <AcFormField
           label='Titel'
@@ -179,6 +181,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.titel,
             required: true,
           })}
+          placeholder={schema?.properties?.titel?.example}
         />
         <AcFormField
           label='Beschrijving'
@@ -189,6 +192,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.beschrijving,
             required: true,
           })}
+          placeholder={schema?.properties?.beschrijving?.example}
         />
         <AcFormField
           label='Ernst'
@@ -199,6 +203,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.ernst,
             required: true,
           })}
+          placeholder={schema?.properties?.ernst?.example}
         />
         <AcFormField
           label='Ontdekt op'
@@ -209,6 +214,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.ontdektOp,
             required: true,
           })}
+          placeholder={schema?.properties?.ontdektOp?.example}
         />
         <AcFormField
           label='Gepubliceerd op'
@@ -219,6 +225,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.gepubliceerdOp,
             required: true,
           })}
+          placeholder={schema?.properties?.gepubliceerdOp?.example}
         />
         <AcFormField
           label='Opgelost in'
@@ -229,6 +236,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.opgelostIn,
             required: true,
           })}
+          placeholder={schema?.properties?.opgelostIn?.example}
         />
         <AcFormField
           label='Mitigatie'
@@ -239,6 +247,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.mitigatie,
             required: true,
           })}
+          placeholder={schema?.properties?.mitigatie?.example}
         />
         <AcFormField
           label='Referenties'
@@ -249,6 +258,7 @@ const AcKwetsbaarheidFormModal = ({
             hasError: !kwetsbaarheidFormData?.referenties,
             required: true,
           })}
+          placeholder={schema?.properties?.referenties?.example}
         />
       </AcFlex>
     </AcModal>

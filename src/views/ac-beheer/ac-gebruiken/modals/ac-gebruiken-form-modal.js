@@ -435,6 +435,7 @@ const AcGebruikenFormModal = ({
             hasError: !gebruikFormData?.bbnScore,
             required: true,
           })}
+          placeholder={schema?.properties?.bbnScore?.example}
         />
         <AcFormField
           label='IBP Score'
@@ -445,6 +446,7 @@ const AcGebruikenFormModal = ({
             hasError: !gebruikFormData?.ibpScore,
             required: true,
           })}
+          placeholder={schema?.properties?.ibpScore?.example}
         />
         <div className='ac-modal-grid-checkboxes'>
           <AcCheckbox
@@ -519,6 +521,7 @@ const AcGebruikenFormModal = ({
             hasError: !gebruikFormData?.beheerder,
             required: true,
           })}
+          placeholder={schema?.properties?.beheerder?.example}
         />
         <AcFormField
           label='Eigenaar'
@@ -529,6 +532,7 @@ const AcGebruikenFormModal = ({
             hasError: !gebruikFormData?.eigenaar,
             required: true,
           })}
+          placeholder={schema?.properties?.eigenaar?.example}
         />
       </AcGrid>
     </AcModal>
