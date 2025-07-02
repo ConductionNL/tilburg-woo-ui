@@ -181,6 +181,27 @@ const AcBeheerOrganisaties = () => {
           return ConSorterLogic(aName, bName, direction);
         },
       },
+      website: {
+        id: 'website',
+        label: 'Website',
+        key: 'website',
+        customContent: (row) => {
+          if (!row.website) {
+            return '-';
+          }
+
+          try {
+            const url = new URL(row.website);
+            return (
+              <a href={url.href} target='_blank' rel='noopener noreferrer'>
+                {url.href}
+              </a>
+            );
+          } catch {
+            return row.website;
+          }
+        },
+      },
     }),
     []
   );
