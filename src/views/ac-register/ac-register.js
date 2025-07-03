@@ -23,6 +23,7 @@ import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
+import { useDebouncedInput } from '@src/hooks/index';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -38,9 +39,9 @@ const AcRegister = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
-    name: '',
+    name: 'Conduction',
     contactInformation: {},
-    website: '',
+    website: 'https://conduction.nl',
     links: '',
     oin: '',
     logo: '',
@@ -168,12 +169,22 @@ const AcRegister = () => {
   }, []);
 
   const validateWebsite = useCallback((website) => {
-    return website && website.match(/^https?:\/\/[^\s]+$/);
+    return (
+      website &&
+      website.match(/^(?:https:\/\/|www\.)[^\s]+\.[a-z]{2,}(?:\/[^\s]*)?$/i)
+    );
   }, []);
 
   const validatePhone = useCallback((phone) => {
     if (!phone) return false;
-    return isValidPhoneNumber(phone, 'NL');
+    const trimmed = phone.replace(/\s+/g, '');
+    if (trimmed.startsWith('+')) {
+      return isValidPhoneNumber(trimmed);
+    }
+    if (trimmed.startsWith('06')) {
+      return isValidPhoneNumber(trimmed, 'NL');
+    }
+    return false;
   }, []);
 
   const handleRegister = async () => {
@@ -415,7 +426,12 @@ const AcRegister = () => {
         messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
       }
       if (organization.website && !validateWebsite(organization.website)) {
-        messages.push('Ongeldig websiteadres');
+        messages.push(
+          !organization.website.startsWith('https://') &&
+            !organization.website.startsWith('www.')
+            ? 'Website moet beginnen met https:// of www.'
+            : 'Ongeldig Websiteadres'
+        );
       }
       return messages.join('\n');
     }
@@ -607,7 +623,7 @@ const AcRegister = () => {
               <Heading level={2}>Aanmelding succesvol!</Heading>
               <p>Beste {organization.name},</p>
               <p>
-                Uw aanmelding voor de SoftwareCatalogus is succesvol ontvangen. We
+                Uw aanmelding voor de Softwarecatalogus is succesvol ontvangen. We
                 hebben een bevestigingsmail gestuurd naar{' '}
                 <b>{organization.contactPersons[0].email}</b>. Controleer uw inbox
                 (en eventueel uw spam folder) voor deze bevestiging.
@@ -615,7 +631,7 @@ const AcRegister = () => {
               <p>
                 Een beheerder zal uw aanmelding beoordelen. Zodra uw aanmelding is
                 goedgekeurd, ontvangt u een nieuwe e-mail met daarin uw inloggegevens
-                en verdere instructies voor het gebruik van de SoftwareCatalogus.
+                en verdere instructies voor het gebruik van de Softwarecatalogus.
               </p>
               <p>
                 Heeft u vragen? Neem dan contact op met onze helpdesk via
@@ -694,6 +710,16 @@ const AcRegister = () => {
 
 const OrganizationRequiredForm = memo(
   ({ organization, setOrganizationData, loading, touched, validateWebsite }) => {
+    const debouncedSetWebsite = useDebouncedInput(
+      (value) => setOrganizationData('website', value),
+      500
+    );
+
+    const debouncedSetName = useDebouncedInput(
+      (value) => setOrganizationData('name', value),
+      500
+    );
+
     return (
       <div
         className='ac-register-form-section'
@@ -711,7 +737,7 @@ const OrganizationRequiredForm = memo(
                 required={true}
                 placeholder='Voorbeeld: Gemeente Amsterdam'
                 value={organization.name}
-                onBlur={(e) => setOrganizationData('name', e)}
+                onChange={(e) => debouncedSetName(e)}
                 hasError={touched.name && !organization.name}
                 disabled={loading}
                 id='org-name'
@@ -766,7 +792,7 @@ const OrganizationRequiredForm = memo(
                   (organization.website && !validateWebsite(organization.website))
                 }
                 type='text'
-                onBlur={(e) => setOrganizationData('website', e)}
+                onChange={(e) => debouncedSetWebsite(e)}
                 id='website-field'
                 aria-describedby={
                   touched.website && !organization.website
@@ -784,7 +810,10 @@ const OrganizationRequiredForm = memo(
                       ? 'Dit veld is verplicht'
                       : organization.website &&
                         !validateWebsite(organization.website) &&
-                        'Ongeldig websiteadres'}
+                        !organization.website.startsWith('https://') &&
+                        !organization.website.startsWith('www.')
+                      ? 'Website moet beginnen met https:// of www.'
+                      : 'Ongeldig Websiteadres'}
                   </span>
                 )}
             </div>
@@ -799,7 +828,7 @@ const OrganizationRequiredForm = memo(
                   <Heading level={3}>Gemeenten zijn al geregistreerd</Heading>
                   <Paragraph>
                     Alle Nederlandse gemeenten zijn reeds opgenomen in de
-                    SoftwareCatalogus. Voor meer informatie of vragen kunt u contact
+                    Softwarecatalogus. Voor meer informatie of vragen kunt u contact
                     opnemen met{' '}
                     <Link
                       className='ac-register-form-alert-link'
@@ -832,13 +861,45 @@ const OrganizationOptionalForm = memo(
     const counterRef = useRef(null);
     let localSummary = organization.summary || '';
 
+    // Debounced functions for all optional fields
+    const debouncedSetSummary = useDebouncedInput(
+      (value) => setOrganizationData('summary', value),
+      500
+    );
+
+    const debouncedSetKvkNumber = useDebouncedInput(
+      (value) => setOrganizationData('kvkNumber', value),
+      500
+    );
+
+    const debouncedSetOin = useDebouncedInput(
+      (value) => setOrganizationData('oin', value),
+      500
+    );
+
+    const debouncedSetPhone = useDebouncedInput(
+      (value) => setOrganizationData('phone', value),
+      500
+    );
+
+    const debouncedSetEmail = useDebouncedInput(
+      (value) => setOrganizationData('email', value),
+      500
+    );
+
+    // Update counter with correct singular/plural
     const updateCounter = (value) => {
+      const remaining = 255 - (value?.length || 0);
+      const label = remaining === 1 ? 'karakter over' : 'karakters over';
       if (counterRef.current) {
-        counterRef.current.textContent = `${
-          255 - (value?.length || 0)
-        } karakters over`;
+        counterRef.current.textContent = `${remaining} ${label}`;
       }
     };
+
+    // Update counter on mount and when summary changes
+    useEffect(() => {
+      updateCounter(organization.summary || '');
+    }, [organization.summary]);
 
     return (
       <div className='ac-register-form-section'>
@@ -854,8 +915,8 @@ const OrganizationOptionalForm = memo(
               onChange={(e) => {
                 localSummary = e;
                 updateCounter(e);
+                debouncedSetSummary(e);
               }}
-              onBlur={(e) => setOrganizationData('summary', e)}
               disabled={loading}
               maxLength={255}
               className='textarea-with-dimensions'
@@ -864,9 +925,7 @@ const OrganizationOptionalForm = memo(
                 '--textarea-width': dimensions.width,
               }}
             />
-            <span ref={counterRef} className='character-count'>
-              {255 - (localSummary?.length || 0)} karakters over
-            </span>
+            <span ref={counterRef} className='character-count' />
           </div>
 
           <AcFlex column spacing='sm'>
@@ -875,7 +934,7 @@ const OrganizationOptionalForm = memo(
                 label='KvK nummer'
                 placeholder='12345678'
                 value={organization.kvkNumber}
-                onBlur={(e) => setOrganizationData('kvkNumber', e)}
+                onChange={(e) => debouncedSetKvkNumber(e)}
                 disabled={loading}
               />
             )}
@@ -886,7 +945,7 @@ const OrganizationOptionalForm = memo(
                 label='OIN'
                 placeholder='00000001002564440000'
                 value={organization.oin}
-                onBlur={(e) => setOrganizationData('oin', e)}
+                onChange={(e) => debouncedSetOin(e)}
                 disabled={loading}
               />
             )}
@@ -945,7 +1004,7 @@ const OrganizationOptionalForm = memo(
                 placeholder='06 12345678'
                 value={organization.phone}
                 type='tel'
-                onBlur={(e) => setOrganizationData('phone', e)}
+                onChange={(e) => debouncedSetPhone(e)}
                 hasError={organization.phone && !validatePhone(organization.phone)}
                 id='phone-field'
                 disabled={loading}
@@ -953,7 +1012,7 @@ const OrganizationOptionalForm = memo(
               <span className='ac-register-form-field-error'>
                 {organization.phone &&
                   !validatePhone(organization.phone) &&
-                  'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
+                  'Ongeldig telefoonnummer. Gebruik een Nederlands mobiel nummer (bijv. 06 1234 5678) of internationaal nummer (bijv. +31 6 1234 5678)'}
               </span>
             </div>
 
@@ -963,7 +1022,7 @@ const OrganizationOptionalForm = memo(
                 placeholder='john.doe@example.com'
                 value={organization.email}
                 type='email'
-                onBlur={(e) => setOrganizationData('email', e)}
+                onChange={(e) => debouncedSetEmail(e)}
                 hasError={organization.email && !validateEmail(organization.email)}
                 id='email-field'
                 disabled={loading}
@@ -992,6 +1051,32 @@ const ContactInformationForm = memo(
     showAlert,
     setShowAlert,
   }) => {
+    // Debounced functions for all contact person fields
+    const debouncedSetFirstName = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.firstName', value),
+      500
+    );
+
+    const debouncedSetLastName = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.lastName', value),
+      500
+    );
+
+    const debouncedSetContactPhone = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.phone', value),
+      500
+    );
+
+    const debouncedSetContactEmail = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.email', value),
+      500
+    );
+
+    const debouncedSetFunction = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.function', value),
+      500
+    );
+
     return (
       <div className='ac-register-form-section'>
         <div style={{ position: 'relative' }}>
@@ -1030,7 +1115,7 @@ const ContactInformationForm = memo(
               placeholder='John'
               value={organization.contactPersons[0].firstName}
               type='text'
-              onBlur={(e) => setOrganizationData('contactPersons.firstName', e)}
+              onChange={(e) => debouncedSetFirstName(e)}
               hasError={
                 touched.contactPersons.firstName &&
                 !organization.contactPersons[0].firstName
@@ -1051,7 +1136,7 @@ const ContactInformationForm = memo(
               placeholder='Doe'
               value={organization.contactPersons[0].lastName}
               type='text'
-              onBlur={(e) => setOrganizationData('contactPersons.lastName', e)}
+              onChange={(e) => debouncedSetLastName(e)}
               hasError={
                 touched.contactPersons.lastName &&
                 !organization.contactPersons[0].lastName
@@ -1072,7 +1157,7 @@ const ContactInformationForm = memo(
               placeholder='06 12345678'
               value={organization.contactPersons[0].phone}
               type='tel'
-              onBlur={(e) => setOrganizationData('contactPersons.phone', e)}
+              onChange={(e) => debouncedSetContactPhone(e)}
               hasError={
                 (touched.contactPersons.phone &&
                   !organization.contactPersons[0].phone) ||
@@ -1087,7 +1172,7 @@ const ContactInformationForm = memo(
                 ? 'Dit veld is verplicht'
                 : organization.contactPersons[0].phone &&
                   !validatePhone(organization.contactPersons[0].phone) &&
-                  'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
+                  'Ongeldig telefoonnummer. Gebruik een Nederlands mobiel nummer (bijv. 06 1234 5678) of internationaal nummer (bijv. +31 6 1234 5678)'}
             </span>
           </div>
           <div>
@@ -1097,7 +1182,7 @@ const ContactInformationForm = memo(
               placeholder='john.doe@example.com'
               value={organization.contactPersons[0].email}
               type='email'
-              onBlur={(e) => setOrganizationData('contactPersons.email', e)}
+              onChange={(e) => debouncedSetContactEmail(e)}
               hasError={
                 (touched.contactPersons.email &&
                   !organization.contactPersons[0].email) ||
@@ -1120,7 +1205,7 @@ const ContactInformationForm = memo(
             placeholder='Sales Manager'
             value={organization.contactPersons[0].function}
             type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.function', e)}
+            onChange={(e) => debouncedSetFunction(e)}
             id='name-field'
             disabled={loading}
           />
