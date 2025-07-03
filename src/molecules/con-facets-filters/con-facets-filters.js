@@ -22,10 +22,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     // Handle @self facets
     if (availableFacets['@self']) {
       Object.entries(availableFacets['@self']).forEach(([key, config]) => {
-        if (
-          config.facet_types &&
-          config.facet_types.includes('terms')
-        ) {
+        if (config.facet_types && config.facet_types.includes('terms')) {
           queries.push([['@self', key], 'terms']);
         }
       });
@@ -81,7 +78,27 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         }
 
         const data = await response.json();
-        setFacets(data.facets);
+
+        // Add titles to facets from available facets
+        const facetsWithTitles = {};
+        for (const [key, value] of Object.entries(data.facets)) {
+          if (key === '@self') {
+            facetsWithTitles[key] = {};
+            for (const [subKey, subValue] of Object.entries(value)) {
+              facetsWithTitles[key][subKey] = {
+                ...subValue,
+                title: availableFacets?.object_fields?.[subKey]?.title || subKey,
+              };
+            }
+          } else {
+            facetsWithTitles[key] = {
+              ...value,
+              title: availableFacets?.object_fields?.[key]?.title || key,
+            };
+          }
+        }
+
+        setFacets(facetsWithTitles);
       } catch (error) {
         console.error('Error fetching facets:', error);
       } finally {
@@ -112,7 +129,11 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                       spacing='xs'
                       className='ac-search-filters__subjects'
                     >
-                      <Heading level={4}>{_.upperFirst(_key)}</Heading>
+                      <Heading level={4}>
+                        {_key === 'schema'
+                          ? 'Type'
+                          : _.upperFirst(_value.title ?? _key)}
+                      </Heading>
                       {_value.buckets.map((bucket) => (
                         <AcCheckbox
                           key={bucket.key}
@@ -136,7 +157,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                 spacing='xs'
                 className='ac-search-filters__subjects'
               >
-                <Heading level={4}>{_.upperFirst(key)}</Heading>
+                <Heading level={4}>{_.upperFirst(value.title ?? key)}</Heading>
                 {value.buckets.map((value) => (
                   <AcCheckbox
                     key={value.key}

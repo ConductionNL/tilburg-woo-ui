@@ -29,6 +29,7 @@
       overflow-y: scroll;
       overscroll-behavior-y: contain;
       z-index: 2;
+      padding-block-end: var(--tilburg-space-row-elephant);
 
       > div:first-of-type {
         position: relative;
@@ -82,12 +83,6 @@
 
     button {
       margin-block-end: var(--tilburg-space-block-beetle);
-    }
-  }
-
-  &__subjects {
-    @include respond-max($screen-md) {
-      padding-block-end: var(--tilburg-space-row-elephant);
     }
   }
 
