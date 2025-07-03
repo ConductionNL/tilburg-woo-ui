@@ -93,15 +93,6 @@ const AcSearchFilters = ({ store: { publications } }) => {
               <AcSearchSort />
             </AcFlex>
           )}
-          <AcSearchDate />
-          {all_categories?.length > 0 && (
-            <AcFlex column spacing='xs' className='ac-search-filters__category'>
-              <AcSearchCategories categories={all_categories} />
-            </AcFlex>
-          )}
-          <AcFlex column spacing='xs' className='ac-search-filters__subjects'>
-            <AcSearchSubjects />
-          </AcFlex>
 
           <ConFacetsFilters />
         </AcFlex>
