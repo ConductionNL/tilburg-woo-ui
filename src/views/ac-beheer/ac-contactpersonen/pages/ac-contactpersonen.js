@@ -26,7 +26,9 @@ import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
-import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerContactpersonen = () => {
   const navigate = useNavigate();
@@ -34,19 +36,27 @@ const AcBeheerContactpersonen = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('contactpersonen');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 20,
+    limit,
     offset: 0,
   });
+
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
-
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
   const filterHeadersDrawerRef = useRef(null);
 
@@ -61,13 +71,18 @@ const AcBeheerContactpersonen = () => {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(`${BASE_URL}/apps/${endpoint}`, null, null, '/beheer/diensten'),
         makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
+          `${BASE_URL}/apps/${endpoint}`,
           [
             ['_page', pagination.page],
             ['_limit', pagination.limit],
           ],
+          null,
+          '/beheer/diensten'
+        ),
+        makeRequest(
+          `${BASE_URL}/apps/${schemaEndpoint}`,
+          null,
           null,
           '/beheer/diensten'
         ),
@@ -97,7 +112,7 @@ const AcBeheerContactpersonen = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint]);
 
   useEffect(() => {
     fetchData();
@@ -390,10 +405,8 @@ const AcBeheerContactpersonen = () => {
 
             <ConPaginationLimitSelector
               objectType='contactpersonen'
-              value={pagination.limit}
-              onChange={(limit) => {
-                setPagination((prev) => ({ ...prev, limit }));
-              }}
+              value={limit}
+              onChange={setLimit}
             />
           </AcFlex>
 
