@@ -20,7 +20,9 @@ import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
-import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -31,13 +33,21 @@ const AcBeheerDienst = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('diensten');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 20,
+    limit,
     offset: 0,
   });
+
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -239,10 +249,8 @@ const AcBeheerDienst = () => {
 
             <ConPaginationLimitSelector
               objectType='diensten'
-              value={pagination.limit}
-              onChange={(limit) => {
-                setPagination((prev) => ({ ...prev, limit }));
-              }}
+              value={limit}
+              onChange={setLimit}
             />
           </AcFlex>
 
