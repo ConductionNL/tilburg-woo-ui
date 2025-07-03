@@ -55,8 +55,6 @@ const AcOrganisatieFormModal = ({
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
 
-  const [logoFile, setLogoFile] = useState(null);
-
   const { makeRequest } = useNextcloudRequests();
 
   const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
@@ -128,14 +126,21 @@ const AcOrganisatieFormModal = ({
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;
 
+      // Handle logo file conversion
+      let logoValue = organisatieFormData.logo || null;
+      if (
+        organisatieFormData.logo &&
+        typeof organisatieFormData.logo.getDataUrl === 'function'
+      ) {
+        logoValue = await organisatieFormData.logo.getDataUrl();
+      }
+
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
           ...organisatieFormData,
           contactgegevens: smartSplit(organisatieFormData.contactgegevens),
-          logo: logoFile
-            ? await logoFile.getDataUrl()
-            : organisatieFormData.logo || null,
+          logo: logoValue || null,
         }),
       });
 
@@ -191,25 +196,6 @@ const AcOrganisatieFormModal = ({
     }));
   };
 
-  const handleLogoFileSelect = (e) => {
-    if (!e.target.files.length) {
-      setLogoFile(null);
-      return;
-    }
-
-    const file = e.target.files[0];
-    file.getDataUrl = async () => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
-      });
-    };
-
-    setLogoFile(file);
-  };
-
   const renderOrganisatieFormModal = (
     <AcModal
       ref={modalRef}
@@ -248,6 +234,7 @@ const AcOrganisatieFormModal = ({
             verklaringen: organisatieFormData.verklaringen,
             'e-mailadres': organisatieFormData['e-mailadres'],
             type: organisatieFormData.type, // Include type in formData
+            logo: organisatieFormData.logo, // Include logo in formData
           }}
           onFieldChange={(fieldName, value) => {
             // Map schema property names back to form data field names
@@ -260,6 +247,7 @@ const AcOrganisatieFormModal = ({
               verklaringen: 'verklaringen',
               'e-mailadres': 'e-mailadres',
               type: 'type',
+              logo: 'logo',
             };
 
             const formFieldName = fieldMappings[fieldName] || fieldName;
@@ -273,7 +261,6 @@ const AcOrganisatieFormModal = ({
             id: { visible: false },
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
-            logo: { visible: false }, // Hide the default logo field since we have a custom one
             type: { visible: !isEdit }, // Only show type field when adding new organisation
             links: { visible: false },
             oin: { visible: false },
@@ -294,6 +281,9 @@ const AcOrganisatieFormModal = ({
             contactpersonen: { visible: false },
             verklaringen: { visible: false },
           }}
+          customFieldComponents={{
+            logo: LogoUploadField,
+          }}
           optionsProviders={{
             samenwerkingen: samenwerkingenData?.map((organisatie) => ({
               value: organisatie.id,
@@ -306,55 +296,6 @@ const AcOrganisatieFormModal = ({
           disabledStates={{}}
           getIsValid={handleFormValidCheck}
         />
-
-        {/* Custom Logo Field */}
-        <AcFlex column>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Logo</h4>
-          </label>
-
-          <input
-            id='fileInput-logo'
-            type='file'
-            accept={[
-              'image/png',
-              'image/jpeg',
-              'image/jpg',
-              'image/webp',
-              'image/svg+xml',
-            ].join(',')}
-            multiple={false}
-            onChange={handleLogoFileSelect}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid var(--utrecht-textbox-border-color)',
-              borderRadius: 'var(--utrecht-select-border-radius)',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontSize: '1em',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                backgroundColor: '#f0f0f0',
-                borderColor: 'var(--utrecht-button-primary-action-border-color)',
-              },
-            }}
-          />
-
-          <small
-            style={{
-              display: 'block',
-              marginTop: '0.5em',
-              color: 'var(--utrecht-paragraph-color)',
-              fontSize: '0.85em',
-              fontStyle: 'italic',
-              opacity: 0.85,
-              userSelect: 'none',
-            }}
-          >
-            Toegestane bestandstypen: png, jpeg, jpg, webp, svg
-          </small>
-        </AcFlex>
       </AcGrid>
     </AcModal>
   );
@@ -363,3 +304,95 @@ const AcOrganisatieFormModal = ({
 };
 
 export default withStore(observer(AcOrganisatieFormModal));
+
+// Custom Logo Upload Component
+const LogoUploadField = ({
+  fieldConfig,
+  value,
+  onChange,
+  validation,
+  propertyName,
+}) => {
+  const [logoFile, setLogoFile] = useState(null);
+
+  const handleLogoFileSelect = (e) => {
+    if (!e.target.files.length) {
+      setLogoFile(null);
+      onChange(null);
+      return;
+    }
+
+    const file = e.target.files[0];
+    file.getDataUrl = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
+
+    setLogoFile(file);
+    onChange(file);
+  };
+
+  return (
+    <AcFlex column>
+      <label className='utrecht-form-label'>
+        <h4 className='utrecht-heading-4'>
+          {fieldConfig.label}
+          {validation.required && (
+            <>
+              <span className='required-indicator' aria-hidden='true'>
+                *
+              </span>
+              <span className='sr-only'>(verplicht)</span>
+            </>
+          )}
+        </h4>
+      </label>
+
+      <input
+        id={`fileInput-${propertyName}`}
+        type='file'
+        accept={[
+          'image/png',
+          'image/jpeg',
+          'image/jpg',
+          'image/webp',
+          'image/svg+xml',
+        ].join(',')}
+        multiple={false}
+        onChange={handleLogoFileSelect}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          border: '1px solid var(--utrecht-textbox-border-color)',
+          borderRadius: 'var(--utrecht-select-border-radius)',
+          backgroundColor: 'white',
+          cursor: 'pointer',
+          fontSize: '1em',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: '#f0f0f0',
+            borderColor: 'var(--utrecht-button-primary-action-border-color)',
+          },
+        }}
+      />
+
+      <small
+        style={{
+          display: 'block',
+          marginTop: '0.5em',
+          color: 'var(--utrecht-paragraph-color)',
+          fontSize: '0.85em',
+          fontStyle: 'italic',
+          opacity: 0.85,
+          userSelect: 'none',
+        }}
+      >
+        Toegestane bestandstypen: png, jpeg, jpg, webp, svg
+      </small>
+    </AcFlex>
+  );
+};

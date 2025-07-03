@@ -14,6 +14,7 @@ import { VISUALS } from '@src/constants';
  * - Automatic field generation from JSON schema properties
  * - Support for multiple field types (text, select, multi-select)
  * - Custom field configurations and overrides
+ * - Custom field components for special cases (file uploads, etc.)
  * - Dynamic options providers for select fields
  * - Loading and disabled states per field
  * - Built-in validation with custom validation support
@@ -42,6 +43,22 @@ import { VISUALS } from '@src/constants';
  *     closeMenuOnSelect: true,
  *     placeholder: "Custom placeholder"
  *   }
+ * }}
+ * ```
+ *
+ * **Custom Field Components:**
+ * For special cases like file uploads, you can provide custom React components:
+ * ```jsx
+ * customFieldComponents={{
+ *   propertyName: ({ fieldConfig, value, onChange, validation, isLoading, isDisabled }) => (
+ *     <CustomFileUpload
+ *       value={value}
+ *       onChange={onChange}
+ *       label={fieldConfig.label}
+ *       required={fieldConfig.required}
+ *       {...validation}
+ *     />
+ *   )
  * }}
  * ```
  *
@@ -101,7 +118,8 @@ import { VISUALS } from '@src/constants';
  *       enum: ["option1", "option2"],
  *       order: 1
  *     },
- *     tags: { type: "array", order: 2 }
+ *     tags: { type: "array", order: 2 },
+ *     logo: { type: "string", order: 3 }
  *   }
  * };
  *
@@ -114,6 +132,17 @@ import { VISUALS } from '@src/constants';
  *     category: {
  *       visible: (formData) => formData.type === 'active'
  *     }
+ *   }}
+ *   customFieldComponents={{
+ *     logo: ({ fieldConfig, value, onChange, validation }) => (
+ *       <FileUpload
+ *         value={value}
+ *         onChange={onChange}
+ *         label={fieldConfig.label}
+ *         required={fieldConfig.required}
+ *         {...validation}
+ *       />
+ *     )
  *   }}
  *   optionsProviders={{
  *     tags: [
@@ -132,6 +161,7 @@ import { VISUALS } from '@src/constants';
  * @param {object} props.formData - The current form data object containing field values.
  * @param {(fieldName: string, value: any) => void} props.onFieldChange - Callback function called when a field value changes.
  * @param {object} props.fieldConfigs - Custom field configurations to override automatic field generation.
+ * @param {object} props.customFieldComponents - Custom React components for specific fields, keyed by property name.
  * @param {object} props.optionsProviders - Dynamic options for select fields, keyed by property name.
  * @param {object} props.loadingStates - Loading states for individual fields, keyed by property name.
  * @param {object|Function} props.disabledStates - Disabled states for individual fields. Can be boolean or function receiving formData.
@@ -148,6 +178,7 @@ import { VISUALS } from '@src/constants';
  * @note Multi-select fields automatically convert selected values to arrays of values.
  * @note Required fields without values will show validation errors.
  * @note The `columns` prop is currently not implemented in the component.
+ * @note Custom field components receive all necessary props and should handle their own value changes.
  *
  * @author [Author Name]
  */
@@ -156,6 +187,7 @@ const ConDynamicSchemaForm = ({
   formData,
   onFieldChange,
   fieldConfigs = {},
+  customFieldComponents = {},
   optionsProviders = {},
   loadingStates = {},
   disabledStates = {},
@@ -177,7 +209,9 @@ const ConDynamicSchemaForm = ({
       topLevelRequired.includes(propertyName) || propertySchema.required === true;
 
     const baseConfig = {
-      label: propertySchema.title || propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
+      label:
+        propertySchema.title ||
+        propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
       required: isRequired,
       visible: propertySchema.visible !== false,
       description: propertySchema.description,
@@ -367,6 +401,25 @@ const ConDynamicSchemaForm = ({
     const isLoading = getFieldLoading(propertyName);
     const isDisabled = getFieldDisabled(propertyName);
     const validation = getFieldValidation(propertyName, fieldConfig);
+
+    // Check if there's a custom component for this field
+    const CustomComponent = customFieldComponents[propertyName];
+    if (CustomComponent) {
+      return (
+        <CustomComponent
+          key={propertyName}
+          fieldConfig={fieldConfig}
+          value={value}
+          onChange={handleFieldChange(propertyName, fieldConfig)}
+          validation={validation}
+          isLoading={isLoading}
+          isDisabled={isDisabled}
+          options={options}
+          propertyName={propertyName}
+          context={context}
+        />
+      );
+    }
 
     if (fieldConfig.component === 'AcFormField') {
       return (
