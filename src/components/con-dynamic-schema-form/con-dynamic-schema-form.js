@@ -570,7 +570,7 @@ const ConDynamicSchemaForm = ({
   };
 
   /**
-   * Renders a single form field based on its configuration and current state.eturns {React.ReactElement|null} The rendered field component or null if field is not visible
+   * Renders a single form field based on its configuration and current state.returns {React.ReactElement|null} The rendered field component or null if field is not visible
    *
    * @example
    * renderField({ path: "bivClassificatie.beschikbaarheid", schema: {...}, required: true })
