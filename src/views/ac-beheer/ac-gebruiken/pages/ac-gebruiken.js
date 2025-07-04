@@ -81,14 +81,19 @@ const AcBeheerGebruiken = () => {
     ['_extend[]', 'organisatieId'],
   ];
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
+          [
+            ...extend,
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+            ...Object.entries(searchParams),
+          ],
           null,
           '/beheer/gebruiken'
         ),
@@ -320,6 +325,7 @@ const AcBeheerGebruiken = () => {
 
           <ConTable
             data={data}
+            dataProperties={dataProperties}
             tableHeaders={[
               ...tableHeaders,
               {
@@ -377,6 +383,10 @@ const AcBeheerGebruiken = () => {
             truncateLines={3}
             showSortButtons
             loading={loading}
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
           />
 
           <AcFlex justifyContent='between'>

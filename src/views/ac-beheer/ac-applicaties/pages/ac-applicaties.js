@@ -71,7 +71,7 @@ const AcBeheerApplicaties = () => {
           [
             ...extend,
             ['_page', pagination.page],
-            ['_limit', 5],
+            ['_limit', pagination.limit],
             ...Object.entries(params)
           ],
           null,

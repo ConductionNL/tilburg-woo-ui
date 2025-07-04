@@ -39,6 +39,10 @@
   justify-content: space-between;
 }
 
+.con-table-header-content__label:hover {
+  cursor: pointer;
+}
+
 .con-table-header-sort-button-container {
   display: flex;
 

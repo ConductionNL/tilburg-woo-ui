@@ -67,14 +67,19 @@ const AcBeheerVoorzieningenVersie = () => {
     ['_extend[]', 'kwetsbaarheden'],
   ];
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
+          [
+            ...extend,
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+            ...Object.entries(searchParams),
+          ],
           null,
           '/beheer/voorzieningen-versie'
         ),
@@ -341,6 +346,11 @@ const AcBeheerVoorzieningenVersie = () => {
             truncateLines={3}
             showSortButtons
             loading={loading}
+            dataProperties={dataProperties}
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
           />
 
           <AcFlex justifyContent='between'>

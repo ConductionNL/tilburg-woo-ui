@@ -66,7 +66,7 @@ const AcBeheerContactpersonen = () => {
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (searchParams = {}) => {
     try {
       setLoading(true);
 
@@ -76,6 +76,7 @@ const AcBeheerContactpersonen = () => {
           [
             ['_page', pagination.page],
             ['_limit', pagination.limit],
+            ...Object.entries(searchParams),
           ],
           null,
           '/beheer/diensten'
@@ -386,6 +387,11 @@ const AcBeheerContactpersonen = () => {
             truncateLines={3}
             showSortButtons
             loading={loading}
+            dataProperties={dataProperties}
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
           />
 
           <AcFlex justifyContent='between'>

@@ -388,11 +388,21 @@ const ConTable = (
       setSearchValues(newSearchValues);
 
       if (typeof onHeaderSearch === 'function') {
-        // Send all current search values, not just the changed one
-        onHeaderSearch(newSearchValues);
+        // ✅ Convert search values to use header keys instead of IDs
+        const searchValuesWithKeys = {};
+        Object.entries(newSearchValues).forEach(([id, value]) => {
+          const header = tableHeaders.find((h) => h.id === id);
+          if (header && header.key) {
+            // Use the header key as the key instead of the ID
+            searchValuesWithKeys[header.key] = value;
+          }
+        });
+
+        // Send search values with keys as keys
+        onHeaderSearch(searchValuesWithKeys);
       }
     },
-    [searchValues, onHeaderSearch]
+    [searchValues, onHeaderSearch, tableHeaders]
   );
 
   const debouncedSetSearchValue = useDebouncedInput(
@@ -453,6 +463,10 @@ const ConTable = (
             const isSearching = searchingHeaderIds.has(header.id);
             const currentSearchValue = searchValues[header.id] || '';
 
+            // Add check to prevent actions header from being searchable
+            const isActionsHeader = header.id === 'actions';
+            const isSearchable = !isActionsHeader;
+
             // Check if this header has enum values from schema properties
             const headerSchema = dataProperties[header.id];
             const isEnumHeader =
@@ -494,6 +508,7 @@ const ConTable = (
                         }}
                         isClearable
                         isSearchable
+                        autoFocus
                       />
                     ) : (
                       <input
@@ -506,6 +521,7 @@ const ConTable = (
                         type='text'
                         value={currentSearchValue}
                         onChange={(e) => debouncedSearchForHeader(e.target.value)}
+                        autoFocus
                       />
                     )}
                     <VISUALS.CLOSE
@@ -525,8 +541,16 @@ const ConTable = (
                 ) : (
                   <div className={clsx('con-table-header-content')}>
                     <div
-                      className='con-table-header-content-label'
+                      className={clsx(
+                        'con-table-header-content-label',
+                        // Add conditional styling to show actions header is not clickable
+                        !isSearchable &&
+                          'con-table-header-content-label--not-searchable'
+                      )}
                       onClick={() => {
+                        // Only allow search if the header is searchable
+                        if (!isSearchable) return;
+
                         setSearchingHeaderIds((prev) => {
                           const newSet = new Set(prev);
                           newSet.add(header.id);
@@ -534,7 +558,7 @@ const ConTable = (
                         });
                       }}
                     >
-                      <span>
+                      <span className={header.label !== 'Acties' ? 'con-table-header-content__label' : undefined}>
                         <b>{header.label}</b>
                       </span>
                     </div>
