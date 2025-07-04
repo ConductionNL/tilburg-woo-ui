@@ -11,6 +11,7 @@ import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import licenses from '@assets/licenses/licenses.json';
+import { LogoUploadField } from '../../ac-organisatie/modals/ac-organisatie-form-modal';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -261,6 +262,17 @@ const AcApplicatiesFormModal = ({
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;
 
     try {
+      // Handle logo file conversion
+      let logoValue = applicatieFormData.logo || null;
+      if (
+        applicatieFormData.logo &&
+        typeof applicatieFormData.logo.getDataUrl === 'function'
+      ) {
+        logoValue = await applicatieFormData.logo.getDataUrl();
+      } else {
+        logoValue = null;
+      }
+
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
@@ -271,6 +283,7 @@ const AcApplicatiesFormModal = ({
           referentieComponenten: applicatieFormData.referenceComponents,
           standaarden: applicatieFormData.standards,
           voorzieningstype: applicatieFormData.voorzieningstype,
+          logo: logoValue || null,
         }),
       });
 
@@ -401,6 +414,9 @@ const AcApplicatiesFormModal = ({
               ...prev,
               [formFieldName]: value,
             }));
+          }}
+          customFieldComponents={{
+            logo: LogoUploadField,
           }}
           optionsProviders={{
             voorzieningstype: voorzieningsTypes?.map((type) => ({
