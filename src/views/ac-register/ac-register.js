@@ -240,13 +240,20 @@ const AcRegister = () => {
         const data = await response.json();
         setRegisterCallBack('error');
         setError({ message: data.message, errors: data.errors });
-        throw new Error('Registration failed');
+        throw new Error('Aanmelden mislukt');
       }
     } catch (error) {
       setRegisterCallBack('error');
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const focusForm = () => {
+    const form = document.querySelector('#formStart');
+    if (form) {
+      form.focus();
     }
   };
 
@@ -545,6 +552,8 @@ const AcRegister = () => {
                       >
                         {currentStepName(currentStep)}
                       </div>
+                      <div tabindex='-1' id='formStart'></div>
+
                       {renderStep(currentStep)}
 
                       <div
@@ -574,7 +583,10 @@ const AcRegister = () => {
                                 )}
                                 icon={<VISUALS.ARROW_RIGHT />}
                                 disabled={getDisabledStatus(currentStep) || loading}
-                                onClick={() => setCurrentStep(currentStep + 1)}
+                                onClick={() => {
+                                  focusForm();
+                                  setCurrentStep(currentStep + 1);
+                                }}
                                 title={
                                   getDisabledStatus(currentStep)
                                     ? getDisabledTooltip(
@@ -643,7 +655,7 @@ const AcRegister = () => {
                 icon={<VISUALS.ARROW_LEFT />}
                 onClick={() => navigate('/')}
               >
-                Terug naar homepage
+                Terug naar de homepage
               </AcButton>
             </AcColumn>
           )}
@@ -656,7 +668,7 @@ const AcRegister = () => {
                 {organization.contactPersons[0].lastName} van {organization.name},
               </p>
               <p>
-                Er ging iets mis bij het verwerken van je registratie voor de
+                Er ging iets mis bij het verwerken van je aanmelding voor de
                 Softwarecatalogus. .{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
@@ -693,10 +705,12 @@ const AcRegister = () => {
               </p>
               <p>Met vriendelijke groet, Het team van de Softwarecatalogus</p>
               <br />
+              <br />
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={() => navigate('/')}
+                // onClick={() => navigate('/')}
+                onClick={() => resetForm()}
               >
                 Terug naar aanmelden
               </AcButton>
@@ -825,7 +839,7 @@ const OrganizationRequiredForm = memo(
               <AcFlex spacing='sm'>
                 <VISUALS.INFO_BLUE />
                 <AcFlex column spacing='xs'>
-                  <Heading level={3}>Gemeenten zijn al geregistreerd</Heading>
+                  <Heading level={3}>Gemeenten zijn al aangemeld</Heading>
                   <Paragraph>
                     Alle Nederlandse gemeenten zijn reeds opgenomen in de
                     Softwarecatalogus. Voor meer informatie of vragen kunt u contact
