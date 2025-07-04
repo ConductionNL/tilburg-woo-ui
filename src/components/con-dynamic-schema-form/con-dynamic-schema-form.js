@@ -126,7 +126,7 @@ import { VISUALS } from '@src/constants';
  *       order: 1
  *     },
  *     tags: { type: "array", order: 2 },
- *     logo: { type: "string", order: 3 },
+ *     logo: { type: "string", order: 3, immutable: true },
  *     biv: {
  *       type: "object",
  *       properties: {
@@ -136,7 +136,8 @@ import { VISUALS } from '@src/constants';
  *         },
  *         integriteit: {
  *           type: "string",
- *           enum: ["Laag", "Midden", "Hoog"]
+ *           enum: ["Laag", "Midden", "Hoog"],
+ *           immutable: true
  *         }
  *       }
  *     }
@@ -172,6 +173,7 @@ import { VISUALS } from '@src/constants';
  *   }}
  *   loadingStates={{ tags: true }}
  *   disabledStates={{ category: true }}
+ *   honorImmutable={true}
  * />
  * ```
  *
@@ -190,6 +192,7 @@ import { VISUALS } from '@src/constants';
  * @param {string} props.className - Additional CSS classes for the form container.
  * @param {object} props.context - Additional context object passed to visibility functions.
  * @param {(isValid: boolean) => void} props.getIsValid - Callback function that receives the form validation state.
+ * @param {boolean} props.honorImmutable - When true, fields with `immutable: true` in their schema will be disabled.
  *
  * @returns {React.ReactElement|null} The rendered dynamic form component or null if no schema properties exist.
  *
@@ -200,6 +203,7 @@ import { VISUALS } from '@src/constants';
  * @note The `columns` prop is currently not implemented in the component.
  * @note Custom field components receive all necessary props and should handle their own value changes.
  * @note Nested object properties are flattened into individual form fields with dot notation paths.
+ * @note When `honorImmutable` is true, fields with `immutable: true` in their schema will be automatically disabled.
  *
  * @author [Author Name]
  */
@@ -217,6 +221,7 @@ const ConDynamicSchemaForm = ({
   className = '',
   context = {},
   getIsValid = () => {},
+  honorImmutable = false,
 }) => {
   if (!schema?.properties) return null;
 
@@ -443,7 +448,13 @@ const ConDynamicSchemaForm = ({
    * getFieldDisabled("status")
    * // Returns: true if disabledStates["status"] is true or returns true when called with formData
    */
-  const getFieldDisabled = (propertyPath) => {
+  const getFieldDisabled = (propertyPath, propertySchema) => {
+    // Check if field should be disabled due to immutable property
+    if (honorImmutable && propertySchema?.immutable === true) {
+      return true;
+    }
+
+    // Check custom disabled states
     if (typeof disabledStates[propertyPath] === 'function') {
       return disabledStates[propertyPath](formData);
     }
@@ -586,7 +597,7 @@ const ConDynamicSchemaForm = ({
     const value = getNestedValue(path, formData);
     const options = getFieldOptions(path, propertySchema);
     const isLoading = getFieldLoading(path);
-    const isDisabled = getFieldDisabled(path);
+    const isDisabled = getFieldDisabled(path, propertySchema);
     const validation = getFieldValidation(path, fieldConfig);
 
     // Check if there's a custom component for this field
@@ -619,6 +630,7 @@ const ConDynamicSchemaForm = ({
           onBlur={handleFieldChange(path, fieldConfig)}
           value={value || ''}
           placeholder={fieldConfig.placeholder}
+          disabled={isDisabled}
           {...validation}
         />
       );
@@ -636,6 +648,7 @@ const ConDynamicSchemaForm = ({
           onBlur={handleFieldChange(path, fieldConfig)}
           value={value || ''}
           placeholder={fieldConfig.placeholder}
+          disabled={isDisabled}
           {...validation}
         />
       );

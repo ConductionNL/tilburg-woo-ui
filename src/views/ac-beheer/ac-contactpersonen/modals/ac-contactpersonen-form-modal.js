@@ -331,6 +331,7 @@ const AcContactpersoonFormModal = ({
           loadingStates={{}}
           disabledStates={{}}
           getIsValid={handleFormValidCheck}
+          honorImmutable={isEdit}
         />
       </AcGrid>
     </AcModal>
