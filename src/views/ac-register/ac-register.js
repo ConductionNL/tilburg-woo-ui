@@ -703,8 +703,9 @@ const AcRegister = () => {
                 dan gerust contact op via softwarecatalogus@vng.nl en voeg er de
                 foutmelding toe. We helpen je graag verder.
               </p>
-              <p>Met vriendelijke groet, Het team van de Softwarecatalogus</p>
+              <p>Met vriendelijke groet,</p>
               <br />
+              <p>Het team van de Softwarecatalogus</p>
               <br />
               <AcButton
                 style='button'
