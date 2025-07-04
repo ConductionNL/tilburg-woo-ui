@@ -709,8 +709,7 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                // onClick={() => navigate('/')}
-                onClick={() => resetForm()}
+                onClick={() => setCurrentStep(0)}
               >
                 Terug naar aanmelden
               </AcButton>

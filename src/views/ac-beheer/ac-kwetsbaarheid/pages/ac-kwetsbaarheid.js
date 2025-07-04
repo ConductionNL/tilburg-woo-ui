@@ -175,12 +175,12 @@ const AcBeheerKwetsbaarheden = () => {
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
-    if (headers.length > 0) {
+    if (headers.length > 0 && tableHeaders.length === 0) {
       setTableHeaders(
         headers.filter((header) => defaultHeaders.includes(header.id))
       );
     }
-  }, [headers]);
+  }, [headers, tableHeaders.length]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
