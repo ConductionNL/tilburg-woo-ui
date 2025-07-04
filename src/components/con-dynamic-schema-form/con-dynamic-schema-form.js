@@ -445,16 +445,21 @@ const ConDynamicSchemaForm = ({
    * Gets the disabled state for a specific field from the disabledStates prop.
    *
    * @example
-   * getFieldDisabled("status")
-   * // Returns: true if disabledStates["status"] is true or returns true when called with formData
+   * getFieldDisabled("status", { disabled: true })
+   * // Returns: true if fieldConfig.disabled is true, or from disabledStates
    */
-  const getFieldDisabled = (propertyPath, propertySchema) => {
-    // Check if field should be disabled due to immutable property
+  const getFieldDisabled = (propertyPath, propertySchema, fieldConfig) => {
+    // Priority 1: Check fieldConfig.disabled first (highest priority)
+    if (fieldConfig?.disabled !== undefined) {
+      return fieldConfig.disabled;
+    }
+
+    // Priority 2: Check if field should be disabled due to immutable property
     if (honorImmutable && propertySchema?.immutable === true) {
       return true;
     }
 
-    // Check custom disabled states
+    // Priority 3: Check custom disabled states
     if (typeof disabledStates[propertyPath] === 'function') {
       return disabledStates[propertyPath](formData);
     }
@@ -597,7 +602,7 @@ const ConDynamicSchemaForm = ({
     const value = getNestedValue(path, formData);
     const options = getFieldOptions(path, propertySchema);
     const isLoading = getFieldLoading(path);
-    const isDisabled = getFieldDisabled(path, propertySchema);
+    const isDisabled = getFieldDisabled(path, propertySchema, fieldConfig);
     const validation = getFieldValidation(path, fieldConfig);
 
     // Check if there's a custom component for this field

@@ -36,7 +36,7 @@ const AcContactpersoonFormModal = ({
     voornaam: '',
     achternaam: '',
     functie: '',
-    organisatie: '',
+    organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7', // Always set to this value
     telefoonnummer: '',
     rollen: [], // as array
     actief: true,
@@ -116,6 +116,8 @@ const AcContactpersoonFormModal = ({
       ...(contactpersoon &&
         isEdit && {
           ...contactpersoon,
+          // Always ensure organisatie is set to the required value
+          organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7',
         }),
     });
   }, [contactpersoon, showModal]);
@@ -316,7 +318,7 @@ const AcContactpersoonFormModal = ({
             // Disable organisatie field for non-admin users
             organisatie: {
               visible: true,
-              disabled: userInfo ? !userInfo?.groups?.includes('admin') : true,
+              disabled: true, // Always disabled
             },
             // Make telefoonnummer required when aanspreekPunt is true
             telefoonnummer: {
