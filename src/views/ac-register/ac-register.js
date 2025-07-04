@@ -574,7 +574,7 @@ const AcRegister = () => {
                           </AcButton>
                         )}
                         {currentStep !== 3 &&
-                          organization.organizationType !== 'gemeente' && (
+                          organization.organizationType !== 'Gemeente' && (
                             <div className='ac-register-button-wrapper'>
                               <AcButton
                                 style='button'
@@ -744,7 +744,7 @@ const OrganizationRequiredForm = memo(
           Verplichte gegevens
         </h2>
         <div className='ac-register-form-grid'>
-          {organization.organizationType !== 'gemeente' && (
+          {organization.organizationType !== 'Gemeente' && (
             <div style={{ gridColumn: 'span 2' }}>
               <AcFormField
                 label='Naam'
@@ -794,7 +794,7 @@ const OrganizationRequiredForm = memo(
               aria-required='true'
             />
           </div>
-          {organization.organizationType !== 'gemeente' && (
+          {organization.organizationType !== 'Gemeente' && (
             <div>
               <AcFormField
                 label='Website'
@@ -833,7 +833,7 @@ const OrganizationRequiredForm = memo(
             </div>
           )}
         </div>
-        {organization.organizationType === 'gemeente' && (
+        {organization.organizationType === 'Gemeente' && (
           <div className='ac-register-form-alert'>
             <Alert type='info'>
               <AcFlex spacing='sm'>
