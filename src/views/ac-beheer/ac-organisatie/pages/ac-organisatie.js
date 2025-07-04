@@ -31,6 +31,7 @@ import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-
 import AcAddDeelnameModal from '../modals/ac-add-deelname';
 import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 import { TOOLTIP_ID } from '@src/index.web';
+import { AcLink } from '@molecules';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -193,9 +194,9 @@ const AcBeheerOrganisaties = () => {
           try {
             const url = new URL(row.website);
             return (
-              <a href={url.href} target='_blank' rel='noopener noreferrer'>
+              <AcLink href={url.href} target='_blank'>
                 {url.href}
-              </a>
+              </AcLink>
             );
           } catch {
             return row.website;

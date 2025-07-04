@@ -51,14 +51,19 @@ const AcBeheerApplicaties = () => {
 
   const extend = [['_extend[]', 'standaarden']];
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (params = {}) => {
     try {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
           `${BASE_URL}/apps/${endpoint}`,
-          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
+          [
+            ...extend,
+            ['_page', pagination.page],
+            ['_limit', 5],
+            ...Object.entries(params)
+          ],
           null,
           '/beheer/applicaties'
         ),
@@ -309,10 +314,15 @@ const AcBeheerApplicaties = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
+            dataProperties={dataProperties} // Schema properties with enum definitions
             loading={loading}
           />
 
-          <AcFlex justifyContent='between'>
+          <AcFlex justifyContent='between' alignItems='center'>
             <Pagination
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
@@ -326,6 +336,12 @@ const AcBeheerApplicaties = () => {
               previousLabel=''
               maxVisiblePages={7}
             />
+
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
 
             <ConPaginationLimitSelector
               objectType='applicaties'

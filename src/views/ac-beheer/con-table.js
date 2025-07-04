@@ -19,6 +19,8 @@ import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { AcCheckbox } from '@molecules';
+import { useDebouncedInput } from '@src/hooks/index';
+import ReactSelect from 'react-select';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -31,6 +33,9 @@ import { AcCheckbox } from '@molecules';
  * - Communication with parent components via refs
  * - Column sorting with ascending/descending/none states
  * - Overflow wrapper for horizontal scrolling
+ * - Header search functionality with debounced callbacks
+ * - Multiple simultaneous header searches
+ * - Enum support with dropdown selects from schema properties
  *
  * **Automatic Data Handling:**
  * - Arrays: joined with commas
@@ -64,6 +69,21 @@ import { AcCheckbox } from '@molecules';
  *   }
  *   ```
  *
+ * **Header Search:**
+ * - Click on header labels to open search input
+ * - Multiple headers can have search inputs open simultaneously
+ * - Search inputs stay open until explicitly closed with the X button
+ * - Search is debounced (500ms default)
+ * - Callback receives all active search values: `onHeaderSearch({ headerId1: value1, headerId2: value2 })`
+ * - Each header maintains its own search value independently
+ * - Enum headers automatically show dropdown selects instead of text inputs
+ *
+ * **Enum Support:**
+ * - Headers with enum values in the schema properties will show a dropdown select instead of a text input
+ * - Enum values are automatically detected from `dataProperties[headerId].enum`
+ * - Dropdowns are searchable and clearable
+ * - Values are debounced just like text inputs
+ *
  * **Custom Headers and Content:**
  * 1. **Custom Headers**
  *    - Accepts either a React element or a function returning a React element
@@ -90,7 +110,12 @@ import { AcCheckbox } from '@molecules';
  * @example
  * ```jsx
  * <ConTable
- *   data={[{ name: "John", age: 30 }]}
+ *   data={[{ name: "John", age: 30, status: "active" }]}
+ *   dataProperties={{
+ *     name: { type: "string" },
+ *     age: { type: "number" },
+ *     status: { type: "string", enum: ["active", "inactive", "pending"] }
+ *   }}
  *   tableHeaders={[
  *     {
  *       id: "name",
@@ -99,21 +124,24 @@ import { AcCheckbox } from '@molecules';
  *     },
  *     {
  *       id: "age",
- *       label: "", // not needed with a customHeader
- *       key: "age",
- *       customHeader: <div className="age-header">Age (years)</div>
+ *       label: "Age",
+ *       key: "age"
  *     },
  *     {
- *       id: "actions",
- *       label: "Actions",
- *       key: "", // not needed with a customContent
- *       customContent: (row) => <button onClick={() => edit(row)}>Edit</button>
+ *       id: "status",
+ *       label: "Status",
+ *       key: "status"
  *     }
  *   ]}
  *   renderSelectRowButtons
  *   getSelectedRows={(selected) => console.log(selected)}
  *   truncateLines={2}
  *   showSortButtons
+ *   onHeaderSearch={(searchValues) => {
+ *     // searchValues will be: { name: "John", status: "active" } if both headers are searching
+ *     // The status header will show a dropdown with ["active", "inactive", "pending"] options
+ *     fetchData(searchValues);
+ *   }}
  * />
  * ```
  *
@@ -139,10 +167,12 @@ import { AcCheckbox } from '@molecules';
  * @param props.tableHeaders.customContent - The custom content to display in the table cell.
  * @param props.tableHeaders.sortComparator - The custom sort function to display in the table cell. for direction true = ascending, false = descending, null = no sort
  * @param props.tableHeaders.doNotTruncate - Whether to not truncate the text in the table cell. (default: false)
+ * @param {Object} props.dataProperties - Schema properties object containing field definitions with enum values.
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
  * @param {boolean} props.loading - Whether to show a loading state.
+ * @param {(searchValues: { [headerId: string]: string }) => void} props.onHeaderSearch - Callback function called when any header search value changes. Receives an object with all current search values as parameters.
  *
  * @returns {React.ReactElement} The rendered table component.
  *
@@ -163,6 +193,8 @@ const ConTable = (
     showSortButtons = false,
     loading = false,
     removeOverflowWrapper = false,
+    onHeaderSearch,
+    dataProperties = {},
   },
   ref
 ) => {
@@ -334,6 +366,60 @@ const ConTable = (
     [renderCustomElement, removeUniqueSymbol]
   );
 
+  const [searchingHeaderIds, setSearchingHeaderIds] = useState(new Set());
+  const [searchValues, setSearchValues] = useState({});
+
+  const handleSearchValueChange = useCallback(
+    (headerId, value) => {
+      let newSearchValues;
+
+      if (value === '') {
+        // Only remove the value if it's explicitly empty (user deleted it)
+        newSearchValues = { ...searchValues };
+        delete newSearchValues[headerId];
+      } else {
+        // Add or update the value
+        newSearchValues = {
+          ...searchValues,
+          [headerId]: value,
+        };
+      }
+
+      setSearchValues(newSearchValues);
+
+      if (typeof onHeaderSearch === 'function') {
+        // Send all current search values, not just the changed one
+        onHeaderSearch(newSearchValues);
+      }
+    },
+    [searchValues, onHeaderSearch]
+  );
+
+  const debouncedSetSearchValue = useDebouncedInput(
+    (value) => {
+      // We need to get the current headerId from the closure
+      // This will be handled by creating individual debounced functions per header
+    },
+    500,
+    {
+      disableInstantValidation: true,
+    }
+  );
+
+  // Create individual debounced functions for each header
+  const getDebouncedSearchFunction = useCallback(
+    (headerId) => {
+      return useDebouncedInput(
+        (value) => handleSearchValueChange(headerId, value),
+        500,
+        {
+          disableInstantValidation: true,
+        }
+      );
+    },
+    [handleSearchValueChange]
+  );
+
   const tableHeader = useMemo(() => {
     return (
       <thead>
@@ -364,48 +450,131 @@ const ConTable = (
               (!!header.sortComparator &&
                 typeof header.sortComparator === 'function');
 
+            const isSearching = searchingHeaderIds.has(header.id);
+            const currentSearchValue = searchValues[header.id] || '';
+
+            // Check if this header has enum values from schema properties
+            const headerSchema = dataProperties[header.id];
+            const isEnumHeader =
+              headerSchema?.enum && Array.isArray(headerSchema.enum);
+            const enumOptions = isEnumHeader
+              ? headerSchema.enum.map((option) => ({ value: option, label: option }))
+              : [];
+
+            // Create debounced function for this specific header
+            const debouncedSearchForHeader = getDebouncedSearchFunction(header.id);
+
             return (
               <TableCell key={header.id}>
-                <div
-                  className={clsx(
-                    'con-table-header-content',
-                    isSortable &&
-                      showSortButtons &&
-                      'con-table-header-content-sortable'
-                  )}
-                  onClick={() => {
-                    if (!isSortable || !showSortButtons) return;
-
-                    if (headerSort[0] !== header.id || headerSort[1] === null) {
-                      setHeaderSort([header.id, true]);
-                    } else if (headerSort[1] === true) {
-                      setHeaderSort([header.id, false]);
-                    } else {
-                      setHeaderSort([header.id, null]);
-                    }
-                  }}
-                >
-                  <span>
-                    {header.customHeader ? (
-                      renderCustomElement(header.customHeader)
+                {isSearching ? (
+                  <div className={clsx('con-table-header-search')}>
+                    {isEnumHeader ? (
+                      <ReactSelect
+                        className={clsx(
+                          'con-table-header-sort-button-container',
+                          isSortable &&
+                            showSortButtons &&
+                            'con-table-header-sort-button-container-sortable'
+                        )}
+                        placeholder={`Selecteer ${
+                          header.label?.toLowerCase() || 'optie'
+                        }`}
+                        value={
+                          currentSearchValue
+                            ? {
+                                value: currentSearchValue,
+                                label: currentSearchValue,
+                              }
+                            : null
+                        }
+                        options={enumOptions}
+                        onChange={(selected) => {
+                          const value = selected?.value || '';
+                          debouncedSearchForHeader(value);
+                        }}
+                        isClearable
+                        isSearchable
+                      />
                     ) : (
-                      <b>{header.label}</b>
+                      <input
+                        className={clsx(
+                          'con-table-header-sort-button-container',
+                          isSortable &&
+                            showSortButtons &&
+                            'con-table-header-sort-button-container-sortable'
+                        )}
+                        type='text'
+                        value={currentSearchValue}
+                        onChange={(e) => debouncedSearchForHeader(e.target.value)}
+                      />
                     )}
-                  </span>
-                  {showSortButtons && isSortable && (
-                    <span className='con-table-header-content__sort-button-container'>
-                      {(headerSort[0] !== header.id || headerSort[1] === null) && (
-                        <VISUALS.SORT className='con-table-sort-icon-non' />
+                    <VISUALS.CLOSE
+                      onClick={() => {
+                        setSearchingHeaderIds((prev) => {
+                          const newSet = new Set(prev);
+                          newSet.delete(header.id);
+                          return newSet;
+                        });
+
+                        // Don't remove the search value when closing, only hide the input
+                        // The search value will remain in searchValues and continue to be used
+                        // Only remove it if the user explicitly deletes the content
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className={clsx('con-table-header-content')}>
+                    <div
+                      className='con-table-header-content-label'
+                      onClick={() => {
+                        setSearchingHeaderIds((prev) => {
+                          const newSet = new Set(prev);
+                          newSet.add(header.id);
+                          return newSet;
+                        });
+                      }}
+                    >
+                      <span>
+                        <b>{header.label}</b>
+                      </span>
+                    </div>
+                    <div
+                      className={clsx(
+                        'con-table-header-sort-button-container',
+                        isSortable &&
+                          showSortButtons &&
+                          'con-table-header-sort-button-container-sortable'
                       )}
-                      {headerSort[0] === header.id && headerSort[1] === true && (
-                        <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
+                      onClick={() => {
+                        if (!isSortable || !showSortButtons) return;
+
+                        if (headerSort[0] !== header.id || headerSort[1] === null) {
+                          setHeaderSort([header.id, true]);
+                        } else if (headerSort[1] === true) {
+                          setHeaderSort([header.id, false]);
+                        } else {
+                          setHeaderSort([header.id, null]);
+                        }
+                      }}
+                    >
+                      {showSortButtons && isSortable && (
+                        <span className='con-table-header-content__sort-button-container'>
+                          {(headerSort[0] !== header.id ||
+                            headerSort[1] === null) && (
+                            <VISUALS.SORT className='con-table-sort-icon-non' />
+                          )}
+                          {headerSort[0] === header.id && headerSort[1] === true && (
+                            <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
+                          )}
+                          {headerSort[0] === header.id &&
+                            headerSort[1] === false && (
+                              <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
+                            )}
+                        </span>
                       )}
-                      {headerSort[0] === header.id && headerSort[1] === false && (
-                        <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
-                      )}
-                    </span>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
               </TableCell>
             );
           })}
@@ -419,6 +588,11 @@ const ConTable = (
     handleSelectAll,
     tableHeaders,
     renderCustomElement,
+    searchingHeaderIds,
+    searchValues,
+    getDebouncedSearchFunction,
+    onHeaderSearch,
+    dataProperties,
   ]);
 
   const tableRows = useMemo(() => {
