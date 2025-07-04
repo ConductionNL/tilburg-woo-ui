@@ -39,9 +39,9 @@ const AcRegister = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
-    name: 'Conduction',
+    name: '',
     contactInformation: {},
-    website: 'https://conduction.nl',
+    website: '',
     links: '',
     oin: '',
     logo: '',
