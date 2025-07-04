@@ -13,7 +13,9 @@ import { VISUALS } from '@src/constants';
  * **Key Features:**
  * - Automatic field generation from JSON schema properties
  * - Support for multiple field types (text, select, multi-select)
+ * - Support for nested object properties with recursive field generation
  * - Custom field configurations and overrides
+ * - Custom field components for special cases (file uploads, etc.)
  * - Dynamic options providers for select fields
  * - Loading and disabled states per field
  * - Built-in validation with custom validation support
@@ -23,8 +25,14 @@ import { VISUALS } from '@src/constants';
  * **Automatic Field Type Detection:**
  * - **Arrays**: Automatically rendered as multi-select dropdowns
  * - **Enums**: Automatically rendered as single-select dropdowns
+ * - **Objects**: Recursively rendered as individual fields for each nested property
  * - **Strings**: Rendered as text input fields
  * - **Other types**: Default to text input fields
+ *
+ * **Nested Object Support:**
+ * When a property has `type: "object"` and contains a `properties` object, the component
+ * will recursively generate form fields for each nested property. The field names will
+ * use dot notation (e.g., "parent.child") for nested paths.
  *
  * **Field Configuration:**
  * Each field can be customized through the `fieldConfigs` prop:
@@ -45,12 +53,28 @@ import { VISUALS } from '@src/constants';
  * }}
  * ```
  *
+ * **Custom Field Components:**
+ * For special cases like file uploads, you can provide custom React components:
+ * ```jsx
+ * customFieldComponents={{
+ *   propertyName: ({ fieldConfig, value, onChange, validation, isLoading, isDisabled }) => (
+ *     <CustomFileUpload
+ *       value={value}
+ *       onChange={onChange}
+ *       label={fieldConfig.label}
+ *       required={fieldConfig.required}
+ *       {...validation}
+ *     />
+ *   )
+ * }}
+ * ```
+ *
  * **Dynamic Visibility:**
  * The `visible` property can be a boolean or a function that receives the current form data and context:
  * ```jsx
  * fieldConfigs={{
  *   fieldName: {
- *     visible: (formData, context) => context.isEdit === false
+ *     visible: (formData) => context.isEdit === false
  *   }
  * }}
  * ```
@@ -101,19 +125,44 @@ import { VISUALS } from '@src/constants';
  *       enum: ["option1", "option2"],
  *       order: 1
  *     },
- *     tags: { type: "array", order: 2 }
+ *     tags: { type: "array", order: 2 },
+ *     logo: { type: "string", order: 3 },
+ *     biv: {
+ *       type: "object",
+ *       properties: {
+ *         beschikbaarheid: {
+ *           type: "string",
+ *           enum: ["Laag", "Midden", "Hoog"]
+ *         },
+ *         integriteit: {
+ *           type: "string",
+ *           enum: ["Laag", "Midden", "Hoog"]
+ *         }
+ *       }
+ *     }
  *   }
  * };
  *
  * <ConDynamicSchemaForm
  *   schema={schema}
- *   formData={{ name: "Test", category: "option1" }}
+ *   formData={{ name: "Test", category: "option1", biv: { beschikbaarheid: "Midden" } }}
  *   onFieldChange={(field, value) => console.log(field, value)}
  *   fieldConfigs={{
  *     name: { label: "Product Name" },
  *     category: {
  *       visible: (formData) => formData.type === 'active'
  *     }
+ *   }}
+ *   customFieldComponents={{
+ *     logo: ({ fieldConfig, value, onChange, validation }) => (
+ *       <FileUpload
+ *         value={value}
+ *         onChange={onChange}
+ *         label={fieldConfig.label}
+ *         required={fieldConfig.required}
+ *         {...validation}
+ *       />
+ *     )
  *   }}
  *   optionsProviders={{
  *     tags: [
@@ -132,6 +181,7 @@ import { VISUALS } from '@src/constants';
  * @param {object} props.formData - The current form data object containing field values.
  * @param {(fieldName: string, value: any) => void} props.onFieldChange - Callback function called when a field value changes.
  * @param {object} props.fieldConfigs - Custom field configurations to override automatic field generation.
+ * @param {object} props.customFieldComponents - Custom React components for specific fields, keyed by property name.
  * @param {object} props.optionsProviders - Dynamic options for select fields, keyed by property name.
  * @param {object} props.loadingStates - Loading states for individual fields, keyed by property name.
  * @param {object|Function} props.disabledStates - Disabled states for individual fields. Can be boolean or function receiving formData.
@@ -148,6 +198,8 @@ import { VISUALS } from '@src/constants';
  * @note Multi-select fields automatically convert selected values to arrays of values.
  * @note Required fields without values will show validation errors.
  * @note The `columns` prop is currently not implemented in the component.
+ * @note Custom field components receive all necessary props and should handle their own value changes.
+ * @note Nested object properties are flattened into individual form fields with dot notation paths.
  *
  * @author [Author Name]
  */
@@ -156,6 +208,7 @@ const ConDynamicSchemaForm = ({
   formData,
   onFieldChange,
   fieldConfigs = {},
+  customFieldComponents = {},
   optionsProviders = {},
   loadingStates = {},
   disabledStates = {},
@@ -170,14 +223,95 @@ const ConDynamicSchemaForm = ({
   // Get the top-level required array, default to []
   const topLevelRequired = Array.isArray(schema.required) ? schema.required : [];
 
-  // Get field configuration for a specific property
-  const getFieldConfig = (propertyName, propertySchema) => {
-    // Check if this property is required at the top level
-    const isRequired =
-      topLevelRequired.includes(propertyName) || propertySchema.required === true;
+  /**
+   * Safely retrieves a nested value from an object using dot notation path.
+   */
+  const getNestedValue = (path, data) => {
+    return path.split('.').reduce((obj, key) => obj?.[key], data);
+  };
 
+  /**
+   * Sets a nested value in an object using dot notation path, creating intermediate objects as needed.
+   */
+  const setNestedValue = (path, data, value) => {
+    const keys = path.split('.');
+    const lastKey = keys.pop();
+    const target = keys.reduce((obj, key) => {
+      if (!obj[key]) obj[key] = {};
+      return obj[key];
+    }, data);
+    target[lastKey] = value;
+    return data;
+  };
+
+  /**
+   * Recursively flattens nested object properties into a flat list with dot notation paths.
+   * Used by validateForm() and the main render loop to process all form fields including nested ones.
+   *
+   * @param {object} properties - Object containing property definitions
+   * @param {string} parentPath - Current parent path for nested properties (default: '')
+   * @param {string[]} parentRequired - Array of required property names from parent (default: [])
+   * @returns {Array} Array of flattened property objects with path, name, schema, required, and parentPath
+   *
+   * @example
+   * Input: `{ bivClassificatie: { type: "object", properties: { beschikbaarheid: {...} } } }`
+   * Output: `[{ path: "bivClassificatie.beschikbaarheid", name: "beschikbaarheid", schema: {...}, required: false, parentPath: "bivClassificatie" }]`
+   */
+  const flattenProperties = (properties, parentPath = '', parentRequired = []) => {
+    const flattened = [];
+
+    for (const [propertyName, propertySchema] of Object.entries(properties)) {
+      const currentPath = parentPath
+        ? `${parentPath}.${propertyName}`
+        : propertyName;
+      const isRequired =
+        parentRequired.includes(propertyName) || propertySchema.required === true;
+
+      if (propertySchema.type === 'object' && propertySchema.properties) {
+        // Recursively flatten nested object properties
+        const nestedRequired = Array.isArray(propertySchema.required)
+          ? propertySchema.required
+          : [];
+        const nestedFlattened = flattenProperties(
+          propertySchema.properties,
+          currentPath,
+          nestedRequired
+        );
+        flattened.push(...nestedFlattened);
+      } else {
+        // Add the property with its full path
+        flattened.push({
+          path: currentPath,
+          name: propertyName,
+          schema: propertySchema,
+          required: isRequired,
+          parentPath,
+        });
+      }
+    }
+
+    return flattened;
+  };
+
+  /**
+   * Generates field configuration for a property based on its schema and custom overrides.
+   * Used by renderField() to determine field type, component, validation, and display options.
+   *
+   * @param {string} propertyPath - Dot notation path of the property (e.g., "bivClassificatie.beschikbaarheid")
+   * @param {object} propertySchema - The property's schema definition
+   * @param {boolean} isRequired - Whether the field is required
+   * @returns {object} Field configuration with type, component, label, placeholder, etc.
+   *
+   * @example
+   * getFieldConfig("bivClassificatie.beschikbaarheid", { type: "string", enum: ["Laag", "Midden", "Hoog"] }, true)
+   * // Returns: { type: "select", component: "ReactSelect", label: "Beschikbaarheid", required: true, ... }
+   */
+  const getFieldConfig = (propertyPath, propertySchema, isRequired) => {
     const baseConfig = {
-      label: propertySchema.title || propertyName.charAt(0).toUpperCase() + propertyName.slice(1),
+      label:
+        propertySchema.title ||
+        propertyPath.split('.').pop().charAt(0).toUpperCase() +
+          propertyPath.split('.').pop().slice(1),
       required: isRequired,
       visible: propertySchema.visible !== false,
       description: propertySchema.description,
@@ -209,7 +343,7 @@ const ConDynamicSchemaForm = ({
       };
     } else if (
       propertySchema.type === 'string' &&
-      optionsProviders[propertyName]?.length > 0
+      optionsProviders[propertyPath]?.length > 0
     ) {
       schemaConfig = {
         ...baseConfig,
@@ -241,26 +375,39 @@ const ConDynamicSchemaForm = ({
     }
 
     // Merge custom field config with schema config
-    if (fieldConfigs[propertyName]) {
+    if (fieldConfigs[propertyPath]) {
       return {
         ...schemaConfig,
-        ...fieldConfigs[propertyName],
+        ...fieldConfigs[propertyPath],
       };
     }
 
     return schemaConfig;
   };
 
-  // Get visibility state for a field
-  const getFieldVisibility = (propertyName, fieldConfig) => {
+  /**
+   * Determines if a field should be visible based on its configuration and current form data.
+   * Used by renderField() and validateForm() to conditionally show/hide fields.
+   *
+   * @example
+   * getFieldVisibility("status", { visible: (formData) => formData.type === 'active' })
+   * // Returns: true/false based on formData.type value
+   */
+  const getFieldVisibility = (propertyPath, fieldConfig) => {
     if (typeof fieldConfig.visible === 'function') {
       return fieldConfig.visible(formData, context);
     }
     return fieldConfig.visible !== false;
   };
 
-  // Get options for a field
-  const getFieldOptions = (propertyName, propertySchema) => {
+  /**
+   * Gets the options array for select/multi-select fields based on schema enum or optionsProviders.
+   *
+   * @example
+   * getFieldOptions("bivClassificatie.beschikbaarheid", { enum: ["Laag", "Midden", "Hoog"] })
+   * // Returns: [{ value: "Laag", label: "Laag" }, { value: "Midden", label: "Midden" }, ...]
+   */
+  const getFieldOptions = (propertyPath, propertySchema) => {
     // Priority 1: Schema enum takes highest priority
     if (propertySchema.enum) {
       return propertySchema.enum.map((option) => ({
@@ -270,35 +417,53 @@ const ConDynamicSchemaForm = ({
     }
 
     // Priority 2: OptionsProviders if no enum in schema
-    if (optionsProviders[propertyName]) {
-      return optionsProviders[propertyName];
+    if (optionsProviders[propertyPath]) {
+      return optionsProviders[propertyPath];
     }
 
     // Priority 3: No options
     return [];
   };
 
-  // Get loading state for a field
-  const getFieldLoading = (propertyName) => {
-    return loadingStates[propertyName] || false;
+  /**
+   * Gets the loading state for a specific field from the loadingStates prop.
+   *
+   * @example
+   * getFieldLoading("bivClassificatie.beschikbaarheid")
+   * // Returns: true if loadingStates["bivClassificatie.beschikbaarheid"] is true
+   */
+  const getFieldLoading = (propertyPath) => {
+    return loadingStates[propertyPath] || false;
   };
 
-  // Get disabled state for a field
-  const getFieldDisabled = (propertyName) => {
-    if (typeof disabledStates[propertyName] === 'function') {
-      return disabledStates[propertyName](formData);
+  /**
+   * Gets the disabled state for a specific field from the disabledStates prop.
+   *
+   * @example
+   * getFieldDisabled("status")
+   * // Returns: true if disabledStates["status"] is true or returns true when called with formData
+   */
+  const getFieldDisabled = (propertyPath) => {
+    if (typeof disabledStates[propertyPath] === 'function') {
+      return disabledStates[propertyPath](formData);
     }
-    return disabledStates[propertyName] || false;
+    return disabledStates[propertyPath] || false;
   };
 
-  // Get validation state for a field
-  const getFieldValidation = (propertyName, fieldConfig) => {
-    if (validationStates[propertyName]) {
-      return validationStates[propertyName];
+  /**
+   * Validates a field based on its configuration and current value.
+   *
+   * @example
+   * getFieldValidation("name", { required: true })
+   * // Returns: { hasError: true, required: true } if name is empty
+   */
+  const getFieldValidation = (propertyPath, fieldConfig) => {
+    if (validationStates[propertyPath]) {
+      return validationStates[propertyPath];
     }
 
     const isRequired = fieldConfig.required;
-    const value = formData[propertyName];
+    const value = getNestedValue(propertyPath, formData);
 
     // Better validation logic that handles different value types
     let hasError = false;
@@ -318,17 +483,32 @@ const ConDynamicSchemaForm = ({
     };
   };
 
-  // Check if all required fields are valid
+  /**
+   * Validates all visible required fields in the form.
+   *
+   * @example
+   * validateForm()
+   * // Returns: false if any required field is empty or invalid
+   */
   const validateForm = () => {
     const sortedProperties = sortPropertiesByOrder(schema.properties);
+    const flattenedProperties = flattenProperties(
+      sortedProperties,
+      '',
+      topLevelRequired
+    );
 
-    for (const [propertyName, propertySchema] of Object.entries(sortedProperties)) {
-      const fieldConfig = getFieldConfig(propertyName, propertySchema);
+    for (const property of flattenedProperties) {
+      const fieldConfig = getFieldConfig(
+        property.path,
+        property.schema,
+        property.required
+      );
 
       // Skip validation for invisible fields
-      if (!getFieldVisibility(propertyName, fieldConfig)) continue;
+      if (!getFieldVisibility(property.path, fieldConfig)) continue;
 
-      const validation = getFieldValidation(propertyName, fieldConfig);
+      const validation = getFieldValidation(property.path, fieldConfig);
       if (validation.hasError) {
         return false;
       }
@@ -341,8 +521,14 @@ const ConDynamicSchemaForm = ({
     getIsValid?.(validateForm());
   }, [formData]);
 
-  // Handle field change
-  const handleFieldChange = (propertyName, fieldConfig) => (value) => {
+  /**
+   * Handles field value changes and updates the form data accordingly.
+   *
+   * @example
+   * handleFieldChange("bivClassificatie.beschikbaarheid", { isMulti: false })("Midden")
+   * // Calls onFieldChange("bivClassificatie", { beschikbaarheid: "Midden", ... })
+   */
+  const handleFieldChange = (propertyPath, fieldConfig) => (value) => {
     let processedValue = value;
 
     // Handle multi-select values
@@ -352,31 +538,85 @@ const ConDynamicSchemaForm = ({
       processedValue = value?.value;
     }
 
-    onFieldChange(propertyName, processedValue);
+    // For nested properties, we need to handle the update differently
+    if (propertyPath.includes('.')) {
+      // Extract the top-level property name and the nested path
+      const [topLevelProperty, ...nestedPath] = propertyPath.split('.');
+
+      // Get the current value of the top-level property
+      const currentTopLevelValue = formData[topLevelProperty] || {};
+
+      // Create a new object with the updated nested value
+      const updatedTopLevelValue = { ...currentTopLevelValue };
+      let current = updatedTopLevelValue;
+
+      // Navigate to the parent of the target property
+      for (let i = 0; i < nestedPath.length - 1; i++) {
+        if (!current[nestedPath[i]]) {
+          current[nestedPath[i]] = {};
+        }
+        current = current[nestedPath[i]];
+      }
+
+      // Set the final value
+      current[nestedPath[nestedPath.length - 1]] = processedValue;
+
+      // Call onFieldChange with the top-level property name and the updated object
+      onFieldChange(topLevelProperty, updatedTopLevelValue);
+    } else {
+      // For non-nested properties, use the original behavior
+      onFieldChange(propertyPath, processedValue);
+    }
   };
 
-  // Render individual field
-  const renderField = (propertyName, propertySchema) => {
-    const fieldConfig = getFieldConfig(propertyName, propertySchema);
+  /**
+   * Renders a single form field based on its configuration and current state.returns {React.ReactElement|null} The rendered field component or null if field is not visible
+   *
+   * @example
+   * renderField({ path: "bivClassificatie.beschikbaarheid", schema: {...}, required: true })
+   * // Returns: ReactSelect component with proper configuration and validation
+   */
+  const renderField = (property) => {
+    const { path, schema: propertySchema, required } = property;
+    const fieldConfig = getFieldConfig(path, propertySchema, required);
 
     // Check visibility - support both boolean and function
-    if (!getFieldVisibility(propertyName, fieldConfig)) return null;
+    if (!getFieldVisibility(path, fieldConfig)) return null;
 
-    const value = formData[propertyName];
-    const options = getFieldOptions(propertyName, propertySchema);
-    const isLoading = getFieldLoading(propertyName);
-    const isDisabled = getFieldDisabled(propertyName);
-    const validation = getFieldValidation(propertyName, fieldConfig);
+    const value = getNestedValue(path, formData);
+    const options = getFieldOptions(path, propertySchema);
+    const isLoading = getFieldLoading(path);
+    const isDisabled = getFieldDisabled(path);
+    const validation = getFieldValidation(path, fieldConfig);
+
+    // Check if there's a custom component for this field
+    const CustomComponent = customFieldComponents[path];
+    if (CustomComponent) {
+      return (
+        <CustomComponent
+          key={path}
+          fieldConfig={fieldConfig}
+          value={value}
+          onChange={handleFieldChange(path, fieldConfig)}
+          validation={validation}
+          isLoading={isLoading}
+          isDisabled={isDisabled}
+          options={options}
+          propertyName={path}
+          context={context}
+        />
+      );
+    }
 
     if (fieldConfig.component === 'AcFormField') {
       return (
         <AcFormField
           tooltip={fieldConfig.description}
-          key={propertyName}
-          id={`dynamic-form-field-${propertyName}`}
+          key={path}
+          id={`dynamic-form-field-${path}`}
           label={fieldConfig.label}
           type={fieldConfig.type}
-          onBlur={handleFieldChange(propertyName, fieldConfig)}
+          onBlur={handleFieldChange(path, fieldConfig)}
           value={value || ''}
           placeholder={fieldConfig.placeholder}
           {...validation}
@@ -388,12 +628,12 @@ const ConDynamicSchemaForm = ({
       return (
         <AcFormField
           tooltip={fieldConfig.description}
-          key={propertyName}
+          key={path}
           inputClassName='textarea'
-          id={`dynamic-form-field-${propertyName}`}
+          id={`dynamic-form-field-${path}`}
           label={fieldConfig.label}
           type={fieldConfig.type}
-          onBlur={handleFieldChange(propertyName, fieldConfig)}
+          onBlur={handleFieldChange(path, fieldConfig)}
           value={value || ''}
           placeholder={fieldConfig.placeholder}
           {...validation}
@@ -407,7 +647,7 @@ const ConDynamicSchemaForm = ({
         : options?.find((option) => option.value === value);
 
       return (
-        <div key={propertyName}>
+        <div key={path}>
           <label className='utrecht-form-label'>
             <Heading
               level={4}
@@ -448,7 +688,7 @@ const ConDynamicSchemaForm = ({
               'ac-beheer-select',
               isDisabled && 'ac-beheer-select--disabled'
             )}
-            onChange={handleFieldChange(propertyName, fieldConfig)}
+            onChange={handleFieldChange(path, fieldConfig)}
             options={options}
             isLoading={isLoading}
             isDisabled={isDisabled}
@@ -468,14 +708,29 @@ const ConDynamicSchemaForm = ({
     return null;
   };
 
-  // Sort properties by order using the utility
+  // Sort top-level properties using the custom sorting logic, then flatten
   const sortedProperties = sortPropertiesByOrder(schema.properties);
+  const flattenedProperties = flattenProperties(
+    sortedProperties,
+    '',
+    topLevelRequired
+  );
 
+  /**
+   * Main render section that processes and renders all form fields.
+   *
+   * Process:
+   * 1. Sort top-level properties using custom sortPropertiesByOrder logic
+   * 2. Flatten nested object properties into individual fields with dot notation paths
+   * 3. Render each field using renderField() function
+   * 4. Include tooltip component for field descriptions
+   *
+   * The flattened properties maintain the original order from the sorted top-level properties,
+   * with nested properties appearing in their original order within their parent object.
+   */
   return (
     <>
-      {Object.entries(sortedProperties).map(([propertyName, propertySchema]) =>
-        renderField(propertyName, propertySchema)
-      )}
+      {flattenedProperties.map((property) => renderField(property))}
       {/* Tooltip needs to be rendered again because the dialog is rendered in a portal at #top-layer */}
       <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />
     </>

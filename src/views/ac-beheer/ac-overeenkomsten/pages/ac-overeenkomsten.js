@@ -26,7 +26,9 @@ import { format } from 'date-fns';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
-import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerOvereenkomsten = () => {
   const navigate = useNavigate();
@@ -34,15 +36,23 @@ const AcBeheerOvereenkomsten = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('overeenkomsten');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 20,
+    limit,
     offset: 0,
   });
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const filterHeadersDrawerRef = useRef(null);
 
@@ -97,7 +107,7 @@ const AcBeheerOvereenkomsten = () => {
       console.error('Error fetching data:', err);
       setError(err);
     }
-  }, []);
+  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
 
   useEffect(() => {
     fetchData();
@@ -373,10 +383,8 @@ const AcBeheerOvereenkomsten = () => {
 
             <ConPaginationLimitSelector
               objectType='overeenkomsten'
-              value={pagination.limit}
-              onChange={(limit) => {
-                setPagination((prev) => ({ ...prev, limit }));
-              }}
+              value={limit}
+              onChange={setLimit}
             />
           </AcFlex>
 

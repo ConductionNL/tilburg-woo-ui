@@ -29,7 +29,9 @@ import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import AcAddDeelnameModal from '../modals/ac-add-deelname';
-import ConPaginationLimitSelector from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 import { TOOLTIP_ID } from '@src/index.web';
 import { AcLink } from '@molecules';
 
@@ -40,15 +42,23 @@ const AcBeheerOrganisaties = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
+
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('organisaties');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 20,
+    limit,
     offset: 0,
   });
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const filterHeadersDrawerRef = useRef(null);
 
@@ -110,17 +120,17 @@ const AcBeheerOrganisaties = () => {
     }
   }, [
     beoordelingFilter,
-    setError,
-    setData,
-    setLoading,
+    pagination.page,
+    pagination.limit,
     makeRequest,
     endpoint,
     BASE_URL,
   ]);
 
+  // Fetch schema and data on component mount
   useEffect(() => {
-    fetchData();
     fetchSchema();
+    fetchData();
   }, []);
 
   // recall fetchData when beoordelingFilter changes
@@ -492,10 +502,8 @@ const AcBeheerOrganisaties = () => {
 
             <ConPaginationLimitSelector
               objectType='organisaties'
-              value={pagination.limit}
-              onChange={(limit) => {
-                setPagination((prev) => ({ ...prev, limit }));
-              }}
+              value={limit}
+              onChange={setLimit}
             />
           </AcFlex>
 
