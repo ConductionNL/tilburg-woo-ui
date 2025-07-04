@@ -62,50 +62,58 @@ const AcBeheerKwetsbaarheden = () => {
 
   const extend = [];
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
-          null,
-          '/beheer/kwetsbaarheden'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/kwetsbaarheden'
-        ),
-      ]);
+        const [response, schemaResponse] = await Promise.all([
+          makeRequest(
+            `${BASE_URL}/apps/${endpoint}`,
+            [
+              ...extend,
+              ['_page', pagination.page],
+              ['_limit', pagination.limit],
+              ...Object.entries(searchParams),
+            ],
+            null,
+            '/beheer/kwetsbaarheden'
+          ),
+          makeRequest(
+            `${BASE_URL}/apps/${schemaEndpoint}`,
+            extend,
+            null,
+            '/beheer/kwetsbaarheden'
+          ),
+        ]);
 
-      const jsonResponse = response.data;
-      const schemaJsonResponse = schemaResponse.data;
+        const jsonResponse = response.data;
+        const schemaJsonResponse = schemaResponse.data;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      setLoading(false);
+        setLoading(false);
 
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results;
+        const dataProperties = schemaJsonResponse.properties;
 
-      const errorResponse = jsonResponse.error;
+        const errorResponse = jsonResponse.error;
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(sortPropertiesByOrder(dataProperties));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setDataProperties(sortPropertiesByOrder(dataProperties));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
+  );
 
   useEffect(() => {
     fetchData();
@@ -320,6 +328,11 @@ const AcBeheerKwetsbaarheden = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
+            dataProperties={dataProperties} // Schema properties with enum definitions
             loading={loading}
           />
 

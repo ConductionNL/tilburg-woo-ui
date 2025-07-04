@@ -33,6 +33,7 @@ import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 import { TOOLTIP_ID } from '@src/index.web';
+import { AcLink } from '@molecules';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const AcBeheerOrganisaties = () => {
     }
   }, []);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (searchParams = {}  ) => {
     try {
       setLoading(true);
 
@@ -94,7 +95,12 @@ const AcBeheerOrganisaties = () => {
 
       const response = await makeRequest(
         `${BASE_URL}/apps/${endpoint}`,
-        [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
+        [
+          ...extend,
+          ['_page', pagination.page],
+          ['_limit', pagination.limit],
+          ...Object.entries(searchParams),
+        ],
         null,
         '/beheer/organisaties'
       );
@@ -203,9 +209,9 @@ const AcBeheerOrganisaties = () => {
           try {
             const url = new URL(row.website);
             return (
-              <a href={url.href} target='_blank' rel='noopener noreferrer'>
+              <AcLink href={url.href} target='_blank'>
                 {url.href}
-              </a>
+              </AcLink>
             );
           } catch {
             return row.website;
@@ -482,6 +488,11 @@ const AcBeheerOrganisaties = () => {
             truncateLines={4}
             showSortButtons
             loading={loading}
+            dataProperties={dataProperties}
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
           />
 
           <AcFlex justifyContent='between'>
