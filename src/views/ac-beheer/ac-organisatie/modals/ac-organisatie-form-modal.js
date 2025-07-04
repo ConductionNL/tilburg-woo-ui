@@ -306,7 +306,7 @@ const AcOrganisatieFormModal = ({
 export default withStore(observer(AcOrganisatieFormModal));
 
 // Custom Logo Upload Component
-const LogoUploadField = ({
+export const LogoUploadField = ({
   fieldConfig,
   value,
   onChange,
