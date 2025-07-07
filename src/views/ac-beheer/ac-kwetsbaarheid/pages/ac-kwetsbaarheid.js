@@ -236,7 +236,7 @@ const AcBeheerKwetsbaarheden = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.SubMenu
-                    label='Download'
+                    label='Exporteren'
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
