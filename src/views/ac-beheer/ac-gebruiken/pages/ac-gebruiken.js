@@ -28,6 +28,7 @@ import { isJsonString, sortPropertiesByOrder } from '@src/utilities';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import AcGebruikKoppelenModal from '../modals/ac-gebruik-koppelen';
 
 const AcBeheerGebruiken = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -81,55 +82,58 @@ const AcBeheerGebruiken = () => {
     ['_extend[]', 'organisatieId'],
   ];
 
-  const fetchData = useCallback(async (searchParams = {}) => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          [
-            ...extend,
-            ['_page', pagination.page],
-            ['_limit', pagination.limit],
-            ...Object.entries(searchParams),
-          ],
-          null,
-          '/beheer/gebruiken'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/gebruiken'
-        ),
-      ]);
+        const [response, schemaResponse] = await Promise.all([
+          makeRequest(
+            `${BASE_URL}/apps/${endpoint}`,
+            [
+              ...extend,
+              ['_page', pagination.page],
+              ['_limit', pagination.limit],
+              ...Object.entries(searchParams),
+            ],
+            null,
+            '/beheer/gebruiken'
+          ),
+          makeRequest(
+            `${BASE_URL}/apps/${schemaEndpoint}`,
+            extend,
+            null,
+            '/beheer/gebruiken'
+          ),
+        ]);
 
-      const jsonResponse = response.data;
-      const schemaJsonResponse = schemaResponse.data;
+        const jsonResponse = response.data;
+        const schemaJsonResponse = schemaResponse.data;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      setLoading(false);
+        setLoading(false);
 
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results;
+        const dataProperties = schemaJsonResponse.properties;
 
-      const errorResponse = jsonResponse.error;
+        const errorResponse = jsonResponse.error;
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(sortPropertiesByOrder(dataProperties));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setDataProperties(sortPropertiesByOrder(dataProperties));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
+  );
 
   useEffect(() => {
     fetchData();
@@ -364,6 +368,16 @@ const AcBeheerGebruiken = () => {
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Button
+                        icon={<VISUALS.LINK />}
+                        onClick={() => {
+                          setSingleSelectedRow(row);
+                          setOpenModal('koppelen');
+                        }}
+                      >
+                        Koppelen
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => {
                           setSingleSelectedRow(row);
@@ -452,6 +466,13 @@ const AcBeheerGebruiken = () => {
             register={registerSlug}
             schema={schemaSlug}
             showModal={openModal === 'import'}
+            onClose={() => setOpenModal(null)}
+            onSuccess={() => {}}
+          />
+
+          <AcGebruikKoppelenModal
+            gebruik={singleSelectedRow}
+            showModal={openModal === 'koppelen'}
             onClose={() => setOpenModal(null)}
             onSuccess={() => {}}
           />

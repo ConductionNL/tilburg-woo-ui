@@ -189,6 +189,10 @@ const PUBLISH_OFF = loadable(() =>
   import('-!svg-react-loader!@assets/images/publish-off.svg')
 );
 
+const LINK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/link.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -256,6 +260,7 @@ export const VISUALS = {
   XMARK,
   PUBLISH,
   PUBLISH_OFF,
+  LINK,
 };
 
 export default {};
