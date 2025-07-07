@@ -355,7 +355,6 @@ const AcBeheerOrganisaties = () => {
                       data-tooltip-content={
                         row['@self'].published ? 'Gepubliceerd' : 'Niet gepubliceerd'
                       }
-                      style={{ width: '1rem' }}
                     >
                       {row['@self'].published ? (
                         <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
@@ -365,7 +364,7 @@ const AcBeheerOrganisaties = () => {
                     </div>
                   </div>
                 ),
-                customHeader: <div style={{ width: '1rem' }}></div>,
+                customHeader: <div className='ac-beheer-organisaties-name-container__icon'></div>,
               },
               ...tableHeaders,
               {
