@@ -633,7 +633,10 @@ const AcRegister = () => {
           {registerCallBack === 'success' && (
             <AcColumn gap='sm'>
               <Heading level={2}>Aanmelding succesvol!</Heading>
-              <p>Beste {organization.name},</p>
+              <p>
+                Beste {organization.contactPersons[0].firstName}{' '}
+                {organization.contactPersons[0].lastName} van {organization.name},
+              </p>
               <p>
                 Uw aanmelding voor de Softwarecatalogus is succesvol ontvangen. We
                 hebben een bevestigingsmail gestuurd naar{' '}
@@ -647,7 +650,9 @@ const AcRegister = () => {
               </p>
               <p>
                 Heeft u vragen? Neem dan contact op met onze helpdesk via
-                support@softwarecatalogus.nl
+                <Link href='mailto:softwarecatalogus@vng.nl'>
+                  softwarecatalogus@vng.nl
+                </Link>
               </p>
               <br />
               <AcButton
@@ -743,6 +748,105 @@ const OrganizationRequiredForm = memo(
         <h2 id='organization-section-title' className='sr-only'>
           Verplichte gegevens
         </h2>
+
+        {organization.organizationType === 'Gemeente' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>Gemeenten zijn al aangemeld</Heading>
+                  <Paragraph>
+                    Alle Nederlandse gemeenten zijn al opgenomen in de
+                    Softwarecatalogus. Ook is voor elke gemeente een inlogaccount
+                    beschikbaar om het gemeentelijk applicatieportfolio te beheren.​
+                    Bent u gemeentemedewerker en heeft u zelf nog geen persoonlijk
+                    account? Vraag dan binnen uw gemeente na wie een beheeraccount
+                    heeft. Dit is vaak de informatiemanager of de coördinator I&A.
+                    Deze collega kan u eenvoudig toegang verlenen.​
+                  </Paragraph>
+                  <Paragraph>
+                    Heeft u vragen of komt u er niet uit? Neem dan gerust contact met
+                    ons op via{' '}
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
+                      softwarecatalogus@vng.nl
+                    </Link>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
+        {organization.organizationType === 'Samenwerking' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>
+                    Sommige samenwerkingen zijn al aangemeld
+                  </Heading>
+                  <Paragraph>
+                    Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
+                    Softwarecatalogus. Controleer daarom eerst de lijst "Alle
+                    samenwerkingsverbanden". Staat uw samenwerkingsverband ertussen?
+                    Vraag dan toegang aan bij de beheerder – vaak de
+                    ICT-verantwoordelijke.{' '}
+                  </Paragraph>
+                  <Paragraph>
+                    De samenwerking niet gevonden? Vul dan het aanmeldformulier in.
+                  </Paragraph>
+                  <Paragraph>
+                    Heeft u vragen? Mail ons via{' '}
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
+                      softwarecatalogus@vng.nl
+                    </Link>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
+        {organization.organizationType === 'Community' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>Sommige communities zijn al aangemeld</Heading>
+                  <Paragraph>
+                    Met een community wordt een samenwerkingsverband van gemeenten
+                    die gezamenlijk applicaties (door)ontwikkelen en de software
+                    beschikbaar stellen voor hergebruik bedoelt. Controleer eerst de
+                    lijst "Alle communities“ of de community al bestaat. Staat de
+                    community ertussen? Vraag dan toegang aan bij de beheerder.
+                  </Paragraph>
+                  <Paragraph>
+                    De community niet gevonden? Vul dan het aanmeldformulier in.
+                  </Paragraph>
+                  <Paragraph>
+                    Heeft u vragen? Mail ons via{' '}
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
+                      softwarecatalogus@vng.nl
+                    </Link>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
         <div className='ac-register-form-grid'>
           {organization.organizationType !== 'Gemeente' && (
             <div style={{ gridColumn: 'span 2' }}>
@@ -833,30 +937,6 @@ const OrganizationRequiredForm = memo(
             </div>
           )}
         </div>
-        {organization.organizationType === 'Gemeente' && (
-          <div className='ac-register-form-alert'>
-            <Alert type='info'>
-              <AcFlex spacing='sm'>
-                <VISUALS.INFO_BLUE />
-                <AcFlex column spacing='xs'>
-                  <Heading level={3}>Gemeenten zijn al aangemeld</Heading>
-                  <Paragraph>
-                    Alle Nederlandse gemeenten zijn reeds opgenomen in de
-                    Softwarecatalogus. Voor meer informatie of vragen kunt u contact
-                    opnemen met{' '}
-                    <Link
-                      className='ac-register-form-alert-link'
-                      href='mailto:softwarecatalogus@vng.nl'
-                    >
-                      softwarecatalogus@vng.nl
-                    </Link>
-                    .
-                  </Paragraph>
-                </AcFlex>
-              </AcFlex>
-            </Alert>
-          </div>
-        )}
       </div>
     );
   }
@@ -1026,7 +1106,7 @@ const OrganizationOptionalForm = memo(
               <span className='ac-register-form-field-error'>
                 {organization.phone &&
                   !validatePhone(organization.phone) &&
-                  'Ongeldig telefoonnummer. Gebruik een Nederlands mobiel nummer (bijv. 06 1234 5678) of internationaal nummer (bijv. +31 6 1234 5678)'}
+                  'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
               </span>
             </div>
 
@@ -1186,7 +1266,7 @@ const ContactInformationForm = memo(
                 ? 'Dit veld is verplicht'
                 : organization.contactPersons[0].phone &&
                   !validatePhone(organization.contactPersons[0].phone) &&
-                  'Ongeldig telefoonnummer. Gebruik een Nederlands mobiel nummer (bijv. 06 1234 5678) of internationaal nummer (bijv. +31 6 1234 5678)'}
+                  'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
             </span>
           </div>
           <div>
