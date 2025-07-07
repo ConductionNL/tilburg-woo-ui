@@ -13,7 +13,71 @@ import _ from 'lodash';
 const ConFacetsFilters = ({ store: { publications } }) => {
   const [facets, setFacets] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { theme_checked, toggleSearchArrayValue } = publications;
+  const { toggleSearchArrayValue, updateQuery } = publications;
+
+  // Custom function to handle nested facet toggling
+  const toggleNestedFacet = (facetKey, value) => {
+    const { query } = publications;
+
+    if (facetKey.includes('[') && facetKey.includes(']')) {
+      const [mainKey, subKey] = facetKey.split('[');
+      const cleanSubKey = subKey.replace(']', '');
+
+      // Get current nested structure
+      const currentNested = query[mainKey] || {};
+      const currentArray = currentNested[cleanSubKey] || [];
+
+      // Convert to array if it's a string
+      const arrayToCheck = Array.isArray(currentArray)
+        ? currentArray
+        : [currentArray];
+
+      // Toggle the value
+      let newArray;
+      if (arrayToCheck.includes(value)) {
+        newArray = arrayToCheck.filter((item) => item !== value);
+      } else {
+        newArray = [...arrayToCheck, value];
+      }
+
+      // Update the query with the new nested structure
+      const updatedQuery = {
+        ...query,
+        [mainKey]: {
+          ...currentNested,
+          [cleanSubKey]: newArray,
+        },
+      };
+
+      updateQuery(updatedQuery);
+    } else {
+      // Use the existing function for regular keys
+      toggleSearchArrayValue(facetKey, value);
+    }
+  };
+
+  // Generic function to check if a value is checked for any facet key
+  const isFacetChecked = (facetKey, value) => {
+    const { query } = publications;
+
+    // Handle nested keys like @self[schema]
+    if (facetKey.includes('[') && facetKey.includes(']')) {
+      const [mainKey, subKey] = facetKey.split('[');
+      const cleanSubKey = subKey.replace(']', '');
+
+      // Check if the nested structure exists and contains the value
+      const nestedValue = query[mainKey]?.[cleanSubKey];
+      if (Array.isArray(nestedValue)) {
+        return nestedValue.includes(value);
+      } else if (typeof nestedValue === 'string') {
+        return nestedValue === value;
+      }
+      return false;
+    }
+
+    // Handle regular keys
+    return query[facetKey]?.includes(value) || false;
+  };
 
   // Function to build facetsQueries from available facets
   const buildFacetsQueries = (availableFacets) => {
@@ -40,72 +104,72 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     return queries;
   };
 
-  useEffect(() => {
-    const fetchAvailableFacets = async () => {
-      const response = await fetch(
-        `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true`
-      );
-      const data = await response.json();
-      return data.facetable;
-    };
+  const fetchAvailableFacets = async () => {
+    const response = await fetch(
+      `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true`
+    );
+    const data = await response.json();
+    return data.facetable;
+  };
 
-    const fetchFacets = async () => {
-      setIsLoading(true);
-      try {
-        const availableFacets = await fetchAvailableFacets();
+  const fetchFacets = async () => {
+    setIsLoading(true);
+    try {
+      const availableFacets = await fetchAvailableFacets();
 
-        // Build dynamic facetsQueries
-        const dynamicFacetsQueries = buildFacetsQueries(availableFacets);
+      // Build dynamic facetsQueries
+      const dynamicFacetsQueries = buildFacetsQueries(availableFacets);
 
-        const queryParams = dynamicFacetsQueries
-          .map(([key, value]) => {
-            if (Array.isArray(key)) {
-              const brackets = key.map((val) => `[${val}]`).join('');
-              return `_facets${brackets}=${value}`;
-            } else {
-              return `_facets[${key}]=${value}`;
-            }
-          })
-          .join('&');
-
-        const response = await fetch(
-          `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true&${queryParams}`
-        );
-
-        if (!response.ok) {
-          console.error('Error fetching facets:', response.statusText);
-          return;
-        }
-
-        const data = await response.json();
-
-        // Add titles to facets from available facets
-        const facetsWithTitles = {};
-        for (const [key, value] of Object.entries(data.facets)) {
-          if (key === '@self') {
-            facetsWithTitles[key] = {};
-            for (const [subKey, subValue] of Object.entries(value)) {
-              facetsWithTitles[key][subKey] = {
-                ...subValue,
-                title: availableFacets?.object_fields?.[subKey]?.title || subKey,
-              };
-            }
+      const queryParams = dynamicFacetsQueries
+        .map(([key, value]) => {
+          if (Array.isArray(key)) {
+            const brackets = key.map((val) => `[${val}]`).join('');
+            return `_facets${brackets}=${value}`;
           } else {
-            facetsWithTitles[key] = {
-              ...value,
-              title: availableFacets?.object_fields?.[key]?.title || key,
+            return `_facets[${key}]=${value}`;
+          }
+        })
+        .join('&');
+
+      const response = await fetch(
+        `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true&${queryParams}`
+      );
+
+      if (!response.ok) {
+        console.error('Error fetching facets:', response.statusText);
+        return;
+      }
+
+      const data = await response.json();
+
+      // Add titles to facets from available facets
+      const facetsWithTitles = {};
+      for (const [key, value] of Object.entries(data.facets)) {
+        if (key === '@self') {
+          facetsWithTitles[key] = {};
+          for (const [subKey, subValue] of Object.entries(value)) {
+            facetsWithTitles[key][subKey] = {
+              ...subValue,
+              title: availableFacets?.object_fields?.[subKey]?.title || subKey,
             };
           }
+        } else {
+          facetsWithTitles[key] = {
+            ...value,
+            title: availableFacets?.object_fields?.[key]?.title || key,
+          };
         }
-
-        setFacets(facetsWithTitles);
-      } catch (error) {
-        console.error('Error fetching facets:', error);
-      } finally {
-        setIsLoading(false);
       }
-    };
 
+      setFacets(facetsWithTitles);
+    } catch (error) {
+      console.error('Error fetching facets:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchFacets();
   }, []);
 
@@ -139,10 +203,11 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                           key={bucket.key}
                           label={`${bucket.label ?? bucket.key} (${bucket.results})`}
                           value={bucket.key}
-                          checked={theme_checked(bucket.key)}
-                          onChange={() =>
-                            toggleSearchArrayValue(`${key}[${_key}]`, bucket.key)
-                          }
+                          checked={isFacetChecked(`${key}[${_key}]`, bucket.key)}
+                          onChange={() => {
+                            toggleNestedFacet(`${key}[${_key}]`, bucket.key);
+                            fetchFacets();
+                          }}
                         />
                       ))}
                     </AcFlex>
@@ -163,8 +228,11 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                     key={value.key}
                     label={`${value.label ?? value.key} (${value.results})`}
                     value={value.key}
-                    checked={theme_checked(value.key)}
-                    onChange={() => toggleSearchArrayValue(key, value.key)}
+                    checked={isFacetChecked(key, value.key)}
+                    onChange={() => {
+                      toggleSearchArrayValue(key, value.key);
+                      fetchFacets();
+                    }}
                   />
                 ))}
               </AcFlex>
