@@ -583,6 +583,10 @@ const AcBeheerOrganisaties = () => {
             onClose={() => {
               setOpenModal(null);
             }}
+            onSuccess={() => {
+              fetchData();
+              setOpenModal(null);
+            }}
           />
 
           <AcAddDeelnameModal

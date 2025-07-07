@@ -120,7 +120,7 @@ const AcPublishDepublishOrganizationModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
-        Weet je zeker dat je deze organisatie wilt{' '}
+        Weet je zeker dat je de volgende organisatie wilt{' '}
         {publish ? 'publiceren' : 'depubliceren'}?
         <Paragraph>{organization?.naam ?? organization?.id}</Paragraph>
       </AcFlex>
