@@ -183,7 +183,7 @@ const AcBeheerDienst = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.SubMenu
-                    label='Download'
+                    label='Exporteren'
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
