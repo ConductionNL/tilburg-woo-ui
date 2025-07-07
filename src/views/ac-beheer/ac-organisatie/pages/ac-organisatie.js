@@ -364,7 +364,7 @@ const AcBeheerOrganisaties = () => {
                     </div>
                   </div>
                 ),
-                customHeader: <div style={{ width: '18px' }}></div>,
+                customHeader: <div className='ac-beheer-organisaties-name-container__icon'></div>,
               },
               ...tableHeaders,
               {
