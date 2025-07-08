@@ -10,14 +10,16 @@ import { BASE_URL } from '../../ac-beheer';
 import ReactSelect from 'react-select';
 
 /**
- * Modal to add a deelname (participation) to an organization
- * @param {object} organization - The organization to add deelname to
+ * Modal to add or remove a deelname (participation) to/from an organization
+ * @param {object} organization - The organization to modify deelname for
+ * @param {boolean} remove - Whether to remove (true) or add (false) a deelname
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
- * @returns {React.JSX.Element} - modal to add deelname
+ * @returns {React.JSX.Element} - modal to add/remove deelname
  */
-const AcAddDeelnameModal = ({
+const AcAddRemoveDeelnameModal = ({
   organization,
+  remove = false,
   showModal = false,
   onClose,
   onSuccess,
@@ -39,20 +41,32 @@ const AcAddDeelnameModal = ({
 
       if (response.ok) {
         const orgs = response.data.results;
-        const existingDeelnameIds = Array.isArray(organization.deelnames)
-          ? organization.deelnames.map((d) => (typeof d === 'object' ? d.id : d))
+        const existingDeelnameIds = Array.isArray(organization?.deelnames)
+          ? organization?.deelnames?.map((d) => (typeof d === 'object' ? d.id : d))
           : [];
 
-        const filteredOrgs = orgs
-          .filter((org) => !existingDeelnameIds.includes(org.id))
-          .filter((org) => org.id !== organization.id);
-
-        setDeelnameOptions(
-          filteredOrgs.map((org) => ({
-            value: org.id,
-            label: org.naam || org.id,
-          }))
-        );
+        if (remove) {
+          // For remove, only show existing deelnames
+          setDeelnameOptions(
+            orgs
+              .filter((org) => existingDeelnameIds.includes(org.id))
+              .map((org) => ({
+                value: org.id,
+                label: org.naam || org.id,
+              }))
+          );
+        } else {
+          // For add, filter out existing deelnames
+          setDeelnameOptions(
+            orgs
+              .filter((org) => !existingDeelnameIds.includes(org.id))
+              .filter((org) => org.id !== organization.id)
+              .map((org) => ({
+                value: org.id,
+                label: org.naam || org.id,
+              }))
+          );
+        }
       }
     } catch (err) {
       console.error(err);
@@ -60,7 +74,7 @@ const AcAddDeelnameModal = ({
     }
   };
 
-  const handleAddDeelname = async () => {
+  const handleAddOrRemoveDeelname = async () => {
     if (!selectedDeelname) {
       setError('Selecteer eerst een organisatie');
       return;
@@ -68,8 +82,12 @@ const AcAddDeelnameModal = ({
 
     try {
       const existingDeelnameIds = Array.isArray(organization.deelnames)
-        ? organization.deelnames
-        : organization.deelnames?.map((deelname) => deelname.id) || [];
+        ? organization.deelnames.map((d) => (typeof d === 'object' ? d.id : d))
+        : [];
+
+      const updatedDeelnames = remove
+        ? existingDeelnameIds.filter((id) => id !== selectedDeelname.value)
+        : [...existingDeelnameIds, selectedDeelname.value];
 
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}`,
@@ -78,10 +96,7 @@ const AcAddDeelnameModal = ({
           method: 'PUT',
           body: JSON.stringify({
             ...organization,
-            deelnames: [
-              ...existingDeelnameIds.map((d) => (typeof d === 'object' ? d.id : d)),
-              selectedDeelname.value,
-            ].map(String),
+            deelnames: updatedDeelnames.map(String),
           }),
         }
       );
@@ -94,7 +109,11 @@ const AcAddDeelnameModal = ({
       }
     } catch (err) {
       console.error(err);
-      setError('Er is een fout opgetreden bij het toevoegen van de deelname');
+      setError(
+        `Er is een fout opgetreden bij het ${
+          remove ? 'verwijderen' : 'toevoegen'
+        } van de deelname`
+      );
     }
   };
 
@@ -129,12 +148,11 @@ const AcAddDeelnameModal = ({
     fontFamily: 'var(--utrecht-form-field-error-message-font-family)',
   };
 
-  const renderAddDeelnameModal = (
+  const renderModal = (
     <AcModal
       ref={modalRef}
-      id='add-deelname-modal'
-      title='Deelname toevoegen'
-      layoutClassName='wide-content'
+      id='add-remove-deelname-modal'
+      title={`Deelname ${remove ? 'verwijderen' : 'toevoegen'}`}
       buttons={[
         {
           label: 'annuleren',
@@ -143,9 +161,9 @@ const AcAddDeelnameModal = ({
           buttonType: 'secondary',
         },
         {
-          label: 'toevoegen',
-          icon: <VISUALS.PLUS />,
-          onClick: handleAddDeelname,
+          label: remove ? 'verwijderen' : 'toevoegen',
+          icon: remove ? <VISUALS.TRASHCAN /> : <VISUALS.PLUS />,
+          onClick: handleAddOrRemoveDeelname,
         },
       ]}
       buttonPosition='end'
@@ -154,8 +172,9 @@ const AcAddDeelnameModal = ({
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
         <Paragraph>
-          Selecteer een organisatie van de type samenwerking of community om aan toe
-          te voegen:
+          {remove
+            ? 'Selecteer een deelname om te verwijderen:'
+            : 'Selecteer een organisatie van de type samenwerking of community om aan toe te voegen:'}
         </Paragraph>
         <ReactSelect
           options={deelnameOptions}
@@ -167,7 +186,7 @@ const AcAddDeelnameModal = ({
     </AcModal>
   );
 
-  return renderAddDeelnameModal;
+  return renderModal;
 };
 
-export default withStore(observer(AcAddDeelnameModal));
+export default withStore(observer(AcAddRemoveDeelnameModal));

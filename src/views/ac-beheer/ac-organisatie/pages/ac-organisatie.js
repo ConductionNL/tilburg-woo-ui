@@ -28,7 +28,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
-import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
@@ -86,51 +86,54 @@ const AcBeheerOrganisaties = () => {
     }
   }, []);
 
-  const fetchData = useCallback(async (searchParams = {}  ) => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const extend = [['_extend[]', 'contactgegevens']];
-      if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
+        const extend = [['_extend[]', 'contactgegevens']];
+        if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        [
-          ...extend,
-          ['_page', pagination.page],
-          ['_limit', pagination.limit],
-          ...Object.entries(searchParams),
-        ],
-        null,
-        '/beheer/organisaties'
-      );
+        const response = await makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          [
+            ...extend,
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+            ...Object.entries(searchParams),
+          ],
+          null,
+          '/beheer/organisaties'
+        );
 
-      const jsonResponse = response.data;
-      const data = jsonResponse.results;
-      const errorResponse = jsonResponse.error;
+        const jsonResponse = response.data;
+        const data = jsonResponse.results;
+        const errorResponse = jsonResponse.error;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [
-    beoordelingFilter,
-    pagination.page,
-    pagination.limit,
-    makeRequest,
-    endpoint,
-    BASE_URL,
-  ]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [
+      beoordelingFilter,
+      pagination.page,
+      pagination.limit,
+      makeRequest,
+      endpoint,
+      BASE_URL,
+    ]
+  );
 
   // Fetch schema and data on component mount
   useEffect(() => {
@@ -364,7 +367,9 @@ const AcBeheerOrganisaties = () => {
                     </div>
                   </div>
                 ),
-                customHeader: <div className='ac-beheer-organisaties-name-container__icon'></div>,
+                customHeader: (
+                  <div className='ac-beheer-organisaties-name-container__icon'></div>
+                ),
               },
               ...tableHeaders,
               {
@@ -467,6 +472,22 @@ const AcBeheerOrganisaties = () => {
                           Deelname toevoegen
                         </ConActionMenu.Button>
                       )}
+
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' &&
+                        row?.deelnames &&
+                        row?.deelnames?.length > 0 && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.MINUS />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('removeDeelname');
+                            }}
+                          >
+                            Deelname verwijderen
+                          </ConActionMenu.Button>
+                        )}
+
+                      <ConActionMenu.Divider />
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -589,9 +610,10 @@ const AcBeheerOrganisaties = () => {
             }}
           />
 
-          <AcAddDeelnameModal
+          <AcAddRemoveDeelnameModal
             organization={singleSelectedRow}
-            showModal={openModal === 'addDeelname'}
+            showModal={openModal === 'addDeelname' || openModal === 'removeDeelname'}
+            remove={openModal === 'removeDeelname'}
             onClose={() => {
               setOpenModal(null);
             }}

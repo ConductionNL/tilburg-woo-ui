@@ -44,7 +44,7 @@ import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
-import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
 import AcContactPersonForm from '../modals/ac-contact-person-form';
 import { BEHEER_RENAMES } from '../../beheer-renames';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -345,6 +345,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         >
                           Deelname toevoegen
                         </ConActionMenu.Button>
+
+                        {data.deelnames && data.deelnames.length > 0 && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.MINUS />}
+                            onClick={() => setOpenModal('removeDeelname')}
+                          >
+                            Deelname verwijderen
+                          </ConActionMenu.Button>
+                        )}
 
                         <ConActionMenu.Divider />
 
@@ -925,9 +934,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcAddDeelnameModal
+                <AcAddRemoveDeelnameModal
                   organization={data}
-                  showModal={openModal === 'addDeelname'}
+                  showModal={
+                    openModal === 'addDeelname' || openModal === 'removeDeelname'
+                  }
+                  remove={openModal === 'removeDeelname'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
