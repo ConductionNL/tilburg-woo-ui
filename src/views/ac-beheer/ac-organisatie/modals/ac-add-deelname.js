@@ -34,7 +34,7 @@ const AcAddDeelnameModal = ({
   const fetchOrganisations = async () => {
     try {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie?type[]=samenwerking&type[]=community&_limit=300`
       );
 
       if (response.ok) {
@@ -45,12 +45,7 @@ const AcAddDeelnameModal = ({
 
         const filteredOrgs = orgs
           .filter((org) => !existingDeelnameIds.includes(org.id))
-          .filter(
-            (org) =>
-              (org.type?.toLowerCase() === 'samenwerking' ||
-                org.type?.toLowerCase() === 'community') &&
-              org.id !== organization.id
-          );
+          .filter((org) => org.id !== organization.id);
 
         setDeelnameOptions(
           filteredOrgs.map((org) => ({
