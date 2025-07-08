@@ -351,7 +351,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             icon={<VISUALS.MINUS />}
                             onClick={() => setOpenModal('removeDeelname')}
                           >
-                            Deelname verwijderen
+                            Deelname verlaten
                           </ConActionMenu.Button>
                         )}
 

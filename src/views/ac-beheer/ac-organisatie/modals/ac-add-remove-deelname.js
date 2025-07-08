@@ -111,7 +111,7 @@ const AcAddRemoveDeelnameModal = ({
       console.error(err);
       setError(
         `Er is een fout opgetreden bij het ${
-          remove ? 'verwijderen' : 'toevoegen'
+          remove ? 'verlaten' : 'toevoegen'
         } van de deelname`
       );
     }
@@ -152,7 +152,7 @@ const AcAddRemoveDeelnameModal = ({
     <AcModal
       ref={modalRef}
       id='add-remove-deelname-modal'
-      title={`Deelname ${remove ? 'verwijderen' : 'toevoegen'}`}
+      title={`Deelname ${remove ? 'verlaten' : 'toevoegen'}`}
       buttons={[
         {
           label: 'annuleren',
@@ -161,7 +161,7 @@ const AcAddRemoveDeelnameModal = ({
           buttonType: 'secondary',
         },
         {
-          label: remove ? 'verwijderen' : 'toevoegen',
+          label: remove ? 'verlaten' : 'toevoegen',
           icon: remove ? <VISUALS.TRASHCAN /> : <VISUALS.PLUS />,
           onClick: handleAddOrRemoveDeelname,
         },
@@ -173,7 +173,7 @@ const AcAddRemoveDeelnameModal = ({
         {error && <div style={errorStyle}>{error}</div>}
         <Paragraph>
           {remove
-            ? 'Selecteer een deelname om te verwijderen:'
+            ? 'Selecteer een deelname om te verlaten:'
             : 'Selecteer een organisatie van de type samenwerking of community om aan toe te voegen:'}
         </Paragraph>
         <ReactSelect

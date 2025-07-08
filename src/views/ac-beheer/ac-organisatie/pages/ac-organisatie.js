@@ -483,7 +483,7 @@ const AcBeheerOrganisaties = () => {
                               setOpenModal('removeDeelname');
                             }}
                           >
-                            Deelname verwijderen
+                            Deelname verlaten
                           </ConActionMenu.Button>
                         )}
 
