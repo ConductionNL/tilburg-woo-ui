@@ -18,8 +18,6 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
     return slug === window.location.pathname;
   };
 
-  const isLoggedIn = !!getCookie('nextcloud_user_id');
-
   return (
     <div className='ac-c-navigation__container'>
       <div className='ac-c-navigation__menu-toggle-container'>
@@ -88,28 +86,6 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
               </li>
             </Link>
           ))}
-          {/* Account button, only if logged in */}
-          {isLoggedIn && (
-            <Link to='/account' className='ac-c-navigation__link-container'>
-              <li
-                className={clsx(
-                  'ac-c-navigation__li',
-                  isCurrent('/account') && 'ac-c-navigation__current'
-                )}
-                key='account-link'
-              >
-                <div
-                  className={clsx(
-                    'ac-c-navigation__label',
-                    isCurrent('/account') && 'ac-c-navigation__current-link'
-                  )}
-                >
-                  {/* Optionally add an icon here */}
-                  Account
-                </div>
-              </li>
-            </Link>
-          )}
         </ul>
       </nav>
     </div>
