@@ -3,6 +3,7 @@ export const getTitle = () => {
 
   switch (hostname) {
     case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
       return 'Softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':

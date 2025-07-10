@@ -48,6 +48,7 @@ const App = ({ store }) => {
   const getTheme = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'acceptatie.softwarecatalogus.nl':
       case 'vng.test.opencatalogi.nl':
         return 'vng-theme';
       case 'open-tilburg.accept.commonground.nu':
@@ -80,6 +81,7 @@ const App = ({ store }) => {
   const setIcon = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'acceptatie.softwarecatalogus.nl':
       case 'vng.test.opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
