@@ -59,6 +59,7 @@ export const TITLES = AcLockObject({
   REACH_OUT: 'Beschikbaarheidsgegevens',
   SEARCH: 'Zoeken',
   THEMES: 'Onderwerpen',
+  DIRECTORY: 'Directory',
   WEBSITE: 'www.tilburg.nl',
   WOO: 'WOO verzoek indienen',
 });

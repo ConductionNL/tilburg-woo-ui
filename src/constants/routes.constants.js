@@ -21,6 +21,7 @@ import {
   AcViews,
   AcMyAccount,
   AcLogin,
+  ConDirectory,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -54,6 +55,7 @@ export const PATHS = AcLockObject({
   AANMELDEN: '/aanmelden',
   VIEWS: '/views/:id',
   MY_ACCOUNT: '/account',
+  DIRECTORY: '/directory',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -333,6 +335,14 @@ export const ROUTES = {
     path: PATHS.MY_ACCOUNT,
     title: 'Mijn account',
     component: AcMyAccount,
+  },
+  DIRECTORY: {
+    id: AcUUID(),
+    name: 'Directory',
+    label: LABELS.DIRECTORY,
+    path: PATHS.DIRECTORY,
+    title: 'Directory',
+    component: ConDirectory,
   },
 };
 
