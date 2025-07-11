@@ -23,7 +23,6 @@ const ConDirectory = ({ store: { publications, themes } }) => {
         `https://vng.test.commonground.nu/apps/opencatalogi/api/directory`
       );
       const data = await response.json();
-      console.log('API Response:', data); // Debug log to see the actual structure
       setDirectories(data.results || []);
     } catch (error) {
       console.error('Error fetching directories:', error);
@@ -59,8 +58,6 @@ const ConDirectory = ({ store: { publications, themes } }) => {
       key: 'version',
     },
   ];
-
-  console.log('Directories data:', directories); // Debug log to see what data we have
 
   return (
     <AcSection spacing>
