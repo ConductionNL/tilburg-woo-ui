@@ -20,6 +20,7 @@ import {
   AcRegister,
   AcViews,
   AcMyAccount,
+  AcLogin,
   ConDirectory,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
@@ -190,7 +191,7 @@ export const ROUTES = {
     label: LABELS.AUTHENTICATION,
     path: PATHS.AUTHENTICATION_STATIC,
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
-    component: AcAuthentication,
+    component: AcLogin,
   },
   MIJN_OMGEVING: {
     id: AcUUID(),
