@@ -20,6 +20,7 @@ import {
   AcRegister,
   AcViews,
   AcMyAccount,
+  AcLogin,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -188,7 +189,7 @@ export const ROUTES = {
     label: LABELS.AUTHENTICATION,
     path: PATHS.AUTHENTICATION_STATIC,
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
-    component: AcAuthentication,
+    component: AcLogin,
   },
   MIJN_OMGEVING: {
     id: AcUUID(),
