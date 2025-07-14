@@ -139,6 +139,7 @@ const AcMyAccountModal = ({
           icon: <VISUALS.SAVE />,
           onClick: handleSubmit,
           disabled: saving,
+          loading: saving,
         },
         {
           label: 'Annuleren',

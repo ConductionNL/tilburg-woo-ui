@@ -118,12 +118,9 @@ const AcAcceptOrganizationModal = ({
         },
         {
           label: activate ? 'Activeren' : 'Deactiveren',
-          icon: loading ? (
-            <VISUALS.SPINNER className='ac-register-button--loading' />
-          ) : (
-            <VISUALS.CHECK />
-          ),
+          icon: <VISUALS.CHECK />,
           onClick: handleActivateDeactivate,
+          loading,
           disabled: loading,
         },
       ]}
