@@ -605,14 +605,9 @@ const AcRegister = () => {
                         {currentStep === 3 && (
                           <AcButton
                             style='button'
-                            icon={
-                              loading ? (
-                                <VISUALS.SPINNER className='ac-register-button--loading' />
-                              ) : (
-                                <VISUALS.CLIPBOARD_CHECK />
-                              )
-                            }
+                            icon={<VISUALS.CLIPBOARD_CHECK />}
                             onClick={handleRegister}
+                            loading={loading}
                             disabled={
                               loading ||
                               !confirmationCheckbox.terms ||

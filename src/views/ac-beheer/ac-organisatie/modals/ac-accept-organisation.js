@@ -24,6 +24,7 @@ const AcAcceptOrganizationModal = ({
   onSuccess,
 }) => {
   const modalRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -31,6 +32,7 @@ const AcAcceptOrganizationModal = ({
 
   const [error, setError] = useState(null);
   const handleActivateDeactivate = async () => {
+    setLoading(true);
     try {
       const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
@@ -49,10 +51,12 @@ const AcAcceptOrganizationModal = ({
       if (response.ok) {
         onSuccess?.();
         modalRef?.current?.close();
+        setLoading(false);
       } else {
         const status = response.status;
         const errorMessage = response.data.error;
         setError(`${status}: ${errorMessage}`);
+        setLoading(false);
       }
     } catch (err) {
       console.error(err);
@@ -62,6 +66,7 @@ const AcAcceptOrganizationModal = ({
             activate ? 'activeren' : 'deactiveren'
           }`
       );
+      setLoading(false);
     }
   };
 
@@ -109,11 +114,14 @@ const AcAcceptOrganizationModal = ({
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
+          disabled: loading,
         },
         {
           label: activate ? 'Activeren' : 'Deactiveren',
           icon: <VISUALS.CHECK />,
           onClick: handleActivateDeactivate,
+          loading,
+          disabled: loading,
         },
       ]}
       buttonPosition='end'
