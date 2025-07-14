@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { AcLoader } from '@components';
 import { AcContainer, AcSection } from '@atoms';
 import ConTable from '@views/ac-beheer/con-table';
+import { commongroundApiUrl } from '@config';
 
 const ConDirectory = ({ store: { publications, themes } }) => {
   const { fetchPublications, is_loading, getSearchPageURL } = publications;
@@ -20,7 +21,7 @@ const ConDirectory = ({ store: { publications, themes } }) => {
     setIsLoadingDirectories(true);
     try {
       const response = await fetch(
-        `https://vng.test.commonground.nu/apps/opencatalogi/api/directory`
+        `${commongroundApiUrl()}/opencatalogi/api/directory`
       );
       const data = await response.json();
       setDirectories(data.results || []);
@@ -43,7 +44,7 @@ const ConDirectory = ({ store: { publications, themes } }) => {
   const tableHeaders = [
     {
       id: 'title',
-      label: 'Title',
+      label: 'Titel',
       key: 'title',
     },
     {
@@ -54,8 +55,14 @@ const ConDirectory = ({ store: { publications, themes } }) => {
     },
     {
       id: 'version',
-      label: 'Version',
+      label: 'Versie',
       key: 'version',
+    },
+    {
+      id: 'schemaCount',
+      label: "Aantal schema's",
+      key: 'schemaCount',
+      customContent: (row) => row.schemas.length || 'N/A',
     },
   ];
 
