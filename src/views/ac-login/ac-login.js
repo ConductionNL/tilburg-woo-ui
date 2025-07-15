@@ -11,6 +11,7 @@ import {
 import { VISUALS } from '@constants';
 import AcButton from '@molecules/ac-button/ac-button';
 import { useDebouncedInput } from '@src/hooks/index';
+import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcLogin = () => {
   const [nextcloudLogin, setNextcloudLogin] = useState(false);
@@ -23,6 +24,7 @@ const AcLogin = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const navigate = useNavigate();
+  const { login } = useNextcloudRequests();
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -46,39 +48,36 @@ const AcLogin = () => {
     e.preventDefault();
 
     setIsLoading(true);
+    setErrors({});
 
-    try {
-      const response = await fetch(
-        'https://vng.test.commonground.nu/apps/openconnector/api/user/login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            username: formData.email,
-            password: formData.password,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // Handle successful login
-        console.log('Login successful:', data);
-        // You can access user data via data.user
-        // Navigate to dashboard or handle session
-      } else {
-        const errorData = await response.json();
-        setErrors({
-          general: errorData.error || 'Inloggen mislukt. Controleer uw gegevens.',
-        });
+    const result = await login(
+      {
+        username: formData.email,
+        password: formData.password,
+      },
+      {
+        onSuccess: (data) => {
+          console.log('Login successful:', data);
+          // Handle successful login - you can access user data via data.user
+          // Navigate to dashboard or handle session
+        },
+        onError: (error, errorMessage) => {
+          setErrors({ general: errorMessage });
+        },
+        autoRedirect: false, // Don't auto redirect, handle it manually
       }
-    } catch (error) {
-      setErrors({ general: 'Inloggen mislukt. Controleer uw gegevens.' });
-    } finally {
-      setIsLoading(false);
+    );
+
+    if (result.success) {
+      // Handle successful login manually
+      // You can navigate to a specific page or handle session here
+      console.log('Login successful:', result.data);
+    } else {
+      // Error is already handled by onError callback
+      console.log('Login failed:', result.error);
     }
+
+    setIsLoading(false);
   };
 
   const handleNextcloudLogin = () => {

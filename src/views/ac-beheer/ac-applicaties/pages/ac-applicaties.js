@@ -19,7 +19,6 @@ import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
@@ -61,55 +60,54 @@ const AcBeheerApplicaties = () => {
 
   const extend = [['_extend[]', 'standaarden']];
 
-  const fetchData = useCallback(async (params = {}) => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (params = {}) => {
+      try {
+        setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          [
-            ...extend,
-            ['_page', pagination.page],
-            ['_limit', pagination.limit],
-            ...Object.entries(params)
-          ],
-          null,
-          '/beheer/applicaties'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/applicaties'
-        ),
-      ]);
+        const [response, schemaResponse] = await Promise.all([
+          makeRequest(`/apps/${endpoint}`, {
+            params: [
+              ...extend,
+              ['_page', pagination.page],
+              ['_limit', pagination.limit],
+              ...Object.entries(params),
+            ],
+            redirectPath: '/beheer/applicaties',
+          }),
+          makeRequest(`/apps/${schemaEndpoint}`, {
+            params: extend,
+            redirectPath: '/beheer/applicaties',
+          }),
+        ]);
 
-      const jsonResponse = response.data;
-      const schemaJsonResponse = schemaResponse.data;
+        const jsonResponse = response.data;
+        const schemaJsonResponse = schemaResponse.data;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results;
+        const dataProperties = schemaJsonResponse.properties;
 
-      const errorResponse = jsonResponse.error;
+        const errorResponse = jsonResponse.error;
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(sortPropertiesByOrder(dataProperties));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setDataProperties(sortPropertiesByOrder(dataProperties));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
+  );
 
   const downloadData = useCallback(async (type = 'csv') => {
     await downloadObjectList(registerSlug, schemaSlug, type);
