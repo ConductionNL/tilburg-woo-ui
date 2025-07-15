@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
-import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
@@ -23,29 +23,56 @@ const AcDeleteContactpersonenModal = ({
 }) => {
   const modalRef = useRef(null);
 
+  /** @type {[
+    { type: 'error' | 'info' | 'success', message: string } | null,
+    (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
+  ]} */
+  const [result, setResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const { makeRequest } = useNextcloudRequests();
 
   const handleDeleteContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
   const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
-  const [error, setError] = useState(null);
   const handleDeleteContactpersoon = async () => {
     try {
-      contactpersonen.forEach(async (contactpersoon) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      setIsLoading(true);
+      await Promise.all(
+        contactpersonen.map(async (contactpersoon) => {
+          const response = await makeRequest(
+            `${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`,
+            null,
+            {
+              method: 'DELETE',
+            }
+          );
+        })
+      );
 
       onSuccess?.();
+
+      setResult({
+        type: 'success',
+        message: 'Contactpersonen succesvol verwijderd',
+      });
+
+      setTimeout(() => {
+        setResult(null);
+        onClose?.();
+        modalRef?.current?.close();
+      }, 3000);
     } catch (err) {
       console.error(err);
-      setError(err);
+      setResult({
+        type: 'error',
+        message:
+          err.message ||
+          'Er is een fout opgetreden bij het verwijderen van de contactpersonen',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -62,19 +89,26 @@ const AcDeleteContactpersonenModal = ({
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteContactpersoonCloseModal);
+    modalRef?.current?.addEventListener(
+      'close',
+      handleDeleteContactpersoonCloseModal
+    );
   }, [modalRef.current]);
 
   const renderDeleteContactpersoonModal = (
     <AcModal
       ref={modalRef}
       id='delete-contactpersoon-modal'
-      title={`${contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} verwijderen`}
+      title={`${
+        contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
+      } verwijderen`}
       buttons={[
         {
           label: 'verwijderen',
           icon: <VISUALS.TRASHCAN />,
           onClick: handleDeleteContactpersoon,
+          disabled: isLoading || result?.type === 'success',
+          loading: isLoading,
         },
         {
           label: 'annuleren',
@@ -86,11 +120,22 @@ const AcDeleteContactpersonenModal = ({
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
+        {result && (
+          <Alert type={result.type === 'success' ? 'info' : result.type}>
+            <AcFlex spacing='sm'>
+              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              <Paragraph>{result.message}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+
         Weet je zeker dat je deze{' '}
-        {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt verwijderen?
+        {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt
+        verwijderen?
         {contactpersonen.map((contactpersoon) => (
           <Paragraph key={contactpersoon.id}>
-            {contactpersoon.voornaam} {contactpersoon.achternaam} ({contactpersoon.email})
+            {contactpersoon.voornaam} {contactpersoon.achternaam} (
+            {contactpersoon.email})
           </Paragraph>
         ))}
       </AcFlex>
