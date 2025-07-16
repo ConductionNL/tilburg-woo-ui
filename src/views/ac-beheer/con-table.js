@@ -558,7 +558,13 @@ const ConTable = (
                         });
                       }}
                     >
-                      <span className={header.label !== 'Acties' ? 'con-table-header-content__label' : undefined}>
+                      <span
+                        className={
+                          header.label !== 'Acties'
+                            ? 'con-table-header-content__label'
+                            : undefined
+                        }
+                      >
                         <b>{header.label}</b>
                       </span>
                     </div>
