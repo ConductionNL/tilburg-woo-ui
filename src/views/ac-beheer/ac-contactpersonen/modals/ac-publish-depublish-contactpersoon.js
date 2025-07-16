@@ -120,8 +120,9 @@ const AcPublishDepublishContactpersoonModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
-        Weet je zeker dat je deze contactpersoon wilt{' '}
-        {publish ? 'publiceren' : 'depubliceren'}?
+        Weet je zeker dat je de volgende gebruiker wilt{' '}
+        {publish ? 'publiceren' : 'depubliceren'}? Hiermee wordt deze gebruiker{' '}
+        {!publish && 'niet meer'} zichtbaar voor anderen.
         <Paragraph>{contactpersoon?.username ?? contactpersoon?.id}</Paragraph>
       </AcFlex>
     </AcModal>
