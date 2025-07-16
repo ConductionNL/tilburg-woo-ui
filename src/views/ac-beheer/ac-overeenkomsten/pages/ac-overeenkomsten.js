@@ -64,55 +64,58 @@ const AcBeheerOvereenkomsten = () => {
 
   const extend = [['_extend[]', 'all']];
 
-  const fetchData = useCallback(async (searchParams = {}) => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          [
-            ...extend,
-            ['_page', pagination.page],
-            ['_limit', pagination.limit],
-            ...Object.entries(searchParams),
-          ],
-          null,
-          '/beheer/overeenkomsten'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/overeenkomsten'
-        ),
-      ]);
+        const [response, schemaResponse] = await Promise.all([
+          makeRequest(
+            `${BASE_URL}/apps/${endpoint}`,
+            [
+              ...extend,
+              ['_page', pagination.page],
+              ['_limit', pagination.limit],
+              ...Object.entries(searchParams),
+            ],
+            null,
+            '/beheer/overeenkomsten'
+          ),
+          makeRequest(
+            `${BASE_URL}/apps/${schemaEndpoint}`,
+            extend,
+            null,
+            '/beheer/overeenkomsten'
+          ),
+        ]);
 
-      const jsonResponse = response.data;
-      const schemaJsonResponse = schemaResponse.data;
+        const jsonResponse = response.data;
+        const schemaJsonResponse = schemaResponse.data;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      setLoading(false);
+        setLoading(false);
 
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results;
+        const dataProperties = schemaJsonResponse.properties;
 
-      const errorResponse = jsonResponse.error;
+        const errorResponse = jsonResponse.error;
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(sortPropertiesByOrder(dataProperties));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setDataProperties(sortPropertiesByOrder(dataProperties));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
+  );
 
   useEffect(() => {
     fetchData();
@@ -390,6 +393,12 @@ const AcBeheerOvereenkomsten = () => {
               previousLabel=''
               maxVisiblePages={7}
             />
+
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
 
             <ConPaginationLimitSelector
               objectType='overeenkomsten'

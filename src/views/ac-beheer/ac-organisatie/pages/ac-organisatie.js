@@ -86,51 +86,54 @@ const AcBeheerOrganisaties = () => {
     }
   }, []);
 
-  const fetchData = useCallback(async (searchParams = {}  ) => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const extend = [['_extend[]', 'contactgegevens']];
-      if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
+        const extend = [['_extend[]', 'contactgegevens']];
+        if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        [
-          ...extend,
-          ['_page', pagination.page],
-          ['_limit', pagination.limit],
-          ...Object.entries(searchParams),
-        ],
-        null,
-        '/beheer/organisaties'
-      );
+        const response = await makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          [
+            ...extend,
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+            ...Object.entries(searchParams),
+          ],
+          null,
+          '/beheer/organisaties'
+        );
 
-      const jsonResponse = response.data;
-      const data = jsonResponse.results;
-      const errorResponse = jsonResponse.error;
+        const jsonResponse = response.data;
+        const data = jsonResponse.results;
+        const errorResponse = jsonResponse.error;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [
-    beoordelingFilter,
-    pagination.page,
-    pagination.limit,
-    makeRequest,
-    endpoint,
-    BASE_URL,
-  ]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [
+      beoordelingFilter,
+      pagination.page,
+      pagination.limit,
+      makeRequest,
+      endpoint,
+      BASE_URL,
+    ]
+  );
 
   // Fetch schema and data on component mount
   useEffect(() => {
@@ -364,7 +367,9 @@ const AcBeheerOrganisaties = () => {
                     </div>
                   </div>
                 ),
-                customHeader: <div className='ac-beheer-organisaties-name-container__icon'></div>,
+                customHeader: (
+                  <div className='ac-beheer-organisaties-name-container__icon'></div>
+                ),
               },
               ...tableHeaders,
               {
@@ -509,6 +514,12 @@ const AcBeheerOrganisaties = () => {
               previousLabel=''
               maxVisiblePages={7}
             />
+
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
 
             <ConPaginationLimitSelector
               objectType='organisaties'

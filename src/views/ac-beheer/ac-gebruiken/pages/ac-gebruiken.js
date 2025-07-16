@@ -418,6 +418,12 @@ const AcBeheerGebruiken = () => {
               maxVisiblePages={7}
             />
 
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
+
             <ConPaginationLimitSelector
               objectType='gebruiken'
               value={limit}
