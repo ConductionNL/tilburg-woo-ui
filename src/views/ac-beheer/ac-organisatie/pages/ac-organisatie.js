@@ -433,7 +433,7 @@ const AcBeheerOrganisaties = () => {
                       {!row['@self'].published &&
                         row?.beoordeling?.toLowerCase?.() !== 'concept' && (
                           <ConActionMenu.Button
-                            icon={<VISUALS.PAPER_PLANE />}
+                            icon={<VISUALS.PUBLISH />}
                             onClick={() => {
                               setSingleSelectedRow(row);
                               setOpenModal('publish');
@@ -446,7 +446,7 @@ const AcBeheerOrganisaties = () => {
                       {row['@self'].published &&
                         row?.beoordeling?.toLowerCase?.() !== 'concept' && (
                           <ConActionMenu.Button
-                            icon={<VISUALS.PAPER_PLANE />}
+                            icon={<VISUALS.PUBLISH_OFF />}
                             onClick={() => {
                               setSingleSelectedRow(row);
                               setOpenModal('depublish');

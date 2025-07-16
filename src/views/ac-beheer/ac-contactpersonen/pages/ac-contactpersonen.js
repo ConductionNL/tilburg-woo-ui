@@ -269,7 +269,7 @@ const AcBeheerContactpersonen = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.Button
-                    icon={<VISUALS.PAPER_PLANE />}
+                    icon={<VISUALS.ENVELOPES_BULK />}
                     disabled={selectedRows.length === 0}
                     onClick={() => setOpenModal('invite')}
                   >
@@ -334,7 +334,7 @@ const AcBeheerContactpersonen = () => {
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Button
-                        icon={<VISUALS.PAPER_PLANE />}
+                        icon={<VISUALS.ENVELOPE />}
                         onClick={() => {
                           setSingleSelectedRow(row);
                           setOpenModal('invite');
@@ -345,7 +345,7 @@ const AcBeheerContactpersonen = () => {
 
                       {!row['@self'].published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH />}
                           onClick={() => {
                             setSingleSelectedRow(row);
                             setOpenModal('publish');
@@ -357,7 +357,7 @@ const AcBeheerContactpersonen = () => {
 
                       {row['@self'].published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH_OFF />}
                           onClick={() => {
                             setSingleSelectedRow(row);
                             setOpenModal('depublish');

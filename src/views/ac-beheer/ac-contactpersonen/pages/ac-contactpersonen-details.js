@@ -151,7 +151,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                         Bijwerken
                       </ConActionMenu.Button>
                       <ConActionMenu.Button
-                        icon={<VISUALS.PAPER_PLANE />}
+                        icon={<VISUALS.ENVELOPE />}
                         onClick={() => setOpenModal('invite')}
                       >
                         Uitnodigen
