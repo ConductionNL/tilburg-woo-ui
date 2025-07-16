@@ -62,35 +62,43 @@ const AcDeleteContactpersonenModal = ({
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleDeleteContactpersoonCloseModal);
+    modalRef?.current?.addEventListener(
+      'close',
+      handleDeleteContactpersoonCloseModal
+    );
   }, [modalRef.current]);
 
   const renderDeleteContactpersoonModal = (
     <AcModal
       ref={modalRef}
       id='delete-contactpersoon-modal'
-      title={`${contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} verwijderen`}
+      title={`${
+        contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
+      } verwijderen`}
       buttons={[
-        {
-          label: 'verwijderen',
-          icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteContactpersoon,
-        },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'verwijderen',
+          icon: <VISUALS.TRASHCAN />,
+          onClick: handleDeleteContactpersoon,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
         Weet je zeker dat je deze{' '}
-        {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt verwijderen?
+        {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt
+        verwijderen?
         {contactpersonen.map((contactpersoon) => (
           <Paragraph key={contactpersoon.id}>
-            {contactpersoon.voornaam} {contactpersoon.achternaam} ({contactpersoon.email})
+            {contactpersoon.voornaam} {contactpersoon.achternaam} (
+            {contactpersoon.email})
           </Paragraph>
         ))}
       </AcFlex>

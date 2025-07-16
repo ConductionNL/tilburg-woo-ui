@@ -284,18 +284,19 @@ const AcGebruikenFormModal = ({
       layoutClassName='wide-content'
       buttons={[
         {
-          label: 'opslaan',
-          icon: <VISUALS.SAVE />,
-          onClick: handleSubmit,
-          disabled: !isValid,
-        },
-        {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcGrid columns={2}>

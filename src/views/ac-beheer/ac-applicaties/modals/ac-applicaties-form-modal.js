@@ -354,14 +354,15 @@ const AcApplicatiesFormModal = ({
       title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcGrid columns={2}>

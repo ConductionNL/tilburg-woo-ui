@@ -247,18 +247,19 @@ const AcContactpersoonFormModal = ({
       layoutClassName='wide-content'
       buttons={[
         {
-          label: 'annuleren',
-          icon: <VISUALS.CLOSE />,
-          onClick: () => modalRef?.current?.close(),
-          buttonType: 'secondary',
-        },
-        {
           label: 'opslaan',
           icon: <VISUALS.SAVE />,
           onClick: handleSubmit,
           disabled: !isValid,
         },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <div className='ac-contactpersonen-form-modal__alert'>
