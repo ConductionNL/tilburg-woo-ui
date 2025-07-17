@@ -32,17 +32,18 @@ const AcDeleteContactpersonenModal = ({
   const [error, setError] = useState(null);
   const handleDeleteContactpersoon = async () => {
     try {
-      contactpersonen.forEach(async (contactpersoon) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = contactpersonen.map((contactpersoon) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);

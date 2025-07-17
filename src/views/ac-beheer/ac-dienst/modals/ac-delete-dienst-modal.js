@@ -32,17 +32,18 @@ const AcDeleteDienstModal = ({
   const [error, setError] = useState(null);
   const handleDeleteDienst = async () => {
     try {
-      diensten.forEach(async (dienst) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${dienst.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = diensten.map((dienst) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${dienst.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);
