@@ -28,7 +28,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
-import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
@@ -473,6 +473,22 @@ const AcBeheerOrganisaties = () => {
                         </ConActionMenu.Button>
                       )}
 
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' &&
+                        row?.deelnames &&
+                        row?.deelnames?.length > 0 && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.MINUS />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('removeDeelname');
+                            }}
+                          >
+                            Deelname verlaten
+                          </ConActionMenu.Button>
+                        )}
+
+                      <ConActionMenu.Divider />
+
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => {
@@ -600,9 +616,10 @@ const AcBeheerOrganisaties = () => {
             }}
           />
 
-          <AcAddDeelnameModal
+          <AcAddRemoveDeelnameModal
             organization={singleSelectedRow}
-            showModal={openModal === 'addDeelname'}
+            showModal={openModal === 'addDeelname' || openModal === 'removeDeelname'}
+            remove={openModal === 'removeDeelname'}
             onClose={() => {
               setOpenModal(null);
             }}
