@@ -65,6 +65,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [charCountLang, setCharCountLang] = useState(0);
   const [selectedContactPerson, setSelectedContactPerson] = useState(null);
   const [openModal, setOpenModal] = useState(null);
+  const [deelnameToRemove, setDeelnameToRemove] = useState(null);
 
   const uniqueUsedBySchemas = useMemo(() => {
     if (!usedBy) return [];
@@ -785,12 +786,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                                           <ConActionMenu.Menu position='right'>
                                             <ConActionMenu.Button
-                                              icon={<VISUALS.TRASHCAN />}
+                                              icon={<VISUALS.MINUS />}
                                               onClick={() => {
-                                                handleDeleteDeelname(deelname.id);
+                                                setOpenModal('removeDeelname');
+                                                setDeelnameToRemove(deelname);
                                               }}
                                             >
-                                              Verwijderen
+                                              Verlaten
                                             </ConActionMenu.Button>
                                           </ConActionMenu.Menu>
                                         </ConActionMenu>
@@ -937,8 +939,10 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                     openModal === 'addDeelname' || openModal === 'removeDeelname'
                   }
                   remove={openModal === 'removeDeelname'}
+                  deelnameToRemove={deelnameToRemove}
                   onClose={() => {
                     setOpenModal(null);
+                    setDeelnameToRemove(null);
                   }}
                   onSuccess={() => {
                     fetchData();

@@ -15,6 +15,7 @@ import ReactSelect from 'react-select';
  * @param {boolean} remove - Whether to remove (true) or add (false) a deelname
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
+ * @param {object} [deelnameToRemove] - Optional pre-selected deelname to remove
  * @returns {React.JSX.Element} - modal to add/remove deelname
  */
 const AcAddRemoveDeelnameModal = ({
@@ -23,17 +24,25 @@ const AcAddRemoveDeelnameModal = ({
   showModal = false,
   onClose,
   onSuccess,
+  deelnameToRemove = null,
 }) => {
   const modalRef = useRef(null);
   const { makeRequest } = useNextcloudRequests();
 
   const [error, setError] = useState(null);
   const [deelnameOptions, setDeelnameOptions] = useState([]);
-  const [selectedDeelname, setSelectedDeelname] = useState(null);
+  const [selectedDeelname, setSelectedDeelname] = useState(
+    deelnameToRemove
+      ? { value: deelnameToRemove.id, label: deelnameToRemove.naam || deelnameToRemove.id }
+      : null
+  );
 
   const handleOpenModal = () => modalRef?.current?.showModal();
 
   const fetchOrganisations = async () => {
+    // Skip fetching if we have a predefined deelname to remove
+    if (remove && deelnameToRemove) return;
+
     try {
       const response = await makeRequest(
         `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie?type[]=samenwerking&type[]=community&_limit=300`
@@ -171,17 +180,25 @@ const AcAddRemoveDeelnameModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
-        <Paragraph>
-          {remove
-            ? 'Selecteer een deelname om te verlaten:'
-            : 'Selecteer een organisatie van de type samenwerking of community om aan toe te voegen:'}
-        </Paragraph>
-        <ReactSelect
-          options={deelnameOptions}
-          onChange={(selected) => setSelectedDeelname(selected)}
-          value={selectedDeelname}
-          placeholder='Selecteer een organisatie...'
-        />
+        {remove && deelnameToRemove ? (
+          <Paragraph>
+            Weet u zeker dat u de deelname "{deelnameToRemove.naam || deelnameToRemove.id}" wilt verlaten?
+          </Paragraph>
+        ) : (
+          <>
+            <Paragraph>
+              {remove
+                ? 'Selecteer een deelname om te verlaten:'
+                : 'Selecteer een organisatie van de type samenwerking of community om aan toe te voegen:'}
+            </Paragraph>
+            <ReactSelect
+              options={deelnameOptions}
+              onChange={(selected) => setSelectedDeelname(selected)}
+              value={selectedDeelname}
+              placeholder='Selecteer een organisatie...'
+            />
+          </>
+        )}
       </AcFlex>
     </AcModal>
   );
