@@ -19,7 +19,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
   };
 
   return (
-    <div className='ac-c-navigation__container'>
+    <div className={clsx('ac-c-navigation__container', layoutClassName && layoutClassName)}>
       <div className='ac-c-navigation__menu-toggle-container'>
         {mobileLogo}
 
