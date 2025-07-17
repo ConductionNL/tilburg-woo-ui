@@ -63,6 +63,8 @@ const AcContactpersoonFormModal = ({
   const [contactpersoonFormData, setContactpersoonFormData] = useState({});
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(null);
 
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
@@ -76,16 +78,22 @@ const AcContactpersoonFormModal = ({
   };
 
   const fetchOrganisationOptions = async () => {
-    const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
-    );
-    const data = response.data;
-    setOrganisatieOptions(
-      data.results.map((item) => ({
-        value: item.id,
-        label: item.naam || item.id,
-      }))
-    );
+    try {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+      );
+      const data = response.data;
+      setOrganisatieOptions(
+        data.results.map((item) => ({
+          value: item.id,
+          label: item.naam || item.id,
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to fetch organisation options:', error);
+      // Set empty array as fallback to prevent crashes
+      setOrganisatieOptions([]);
+    }
   };
 
   useEffect(() => {
@@ -161,6 +169,8 @@ const AcContactpersoonFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
   const handleSubmit = async () => {
+    setIsLoading(true);
+
     const baseUrl = `${BASE_URL}/apps/${endpoint}`;
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${contactpersoonFormData.id}` : baseUrl;
@@ -180,6 +190,8 @@ const AcContactpersoonFormModal = ({
     } catch (err) {
       console.error(err);
       setError(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -247,16 +259,17 @@ const AcContactpersoonFormModal = ({
       layoutClassName='wide-content'
       buttons={[
         {
-          label: 'opslaan',
-          icon: <VISUALS.SAVE />,
-          onClick: handleSubmit,
-          disabled: !isValid,
-        },
-        {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
+        },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid || isLoading,
+          loading: isLoading,
         },
       ]}
       buttonPosition='end'
@@ -275,40 +288,13 @@ const AcContactpersoonFormModal = ({
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
           schema={schema}
-          formData={{
-            // Map schema properties to form data fields
-            username: contactpersoonFormData.username,
-            email: contactpersoonFormData.email,
-            voornaam: contactpersoonFormData.voornaam,
-            achternaam: contactpersoonFormData.achternaam,
-            functie: contactpersoonFormData.functie,
-            organisatie: contactpersoonFormData.organisatie,
-            telefoonnummer: contactpersoonFormData.telefoonnummer,
-            rollen: contactpersoonFormData.rollen,
-            actief: contactpersoonFormData.actief,
-            aanspreekPunt: contactpersoonFormData.aanspreekPunt,
-          }}
-          onFieldChange={(fieldName, value) => {
-            // Map schema property names back to form data field names
-            const fieldMappings = {
-              username: 'username',
-              email: 'email',
-              voornaam: 'voornaam',
-              achternaam: 'achternaam',
-              functie: 'functie',
-              organisatie: 'organisatie',
-              telefoonnummer: 'telefoonnummer',
-              rollen: 'rollen',
-              actief: 'actief',
-              aanspreekPunt: 'aanspreekPunt',
-            };
-
-            const formFieldName = fieldMappings[fieldName] || fieldName;
+          formData={contactpersoonFormData}
+          onFieldChange={(fieldName, value) =>
             setContactpersoonFormData((prev) => ({
               ...prev,
-              [formFieldName]: value,
-            }));
-          }}
+              [fieldName]: value,
+            }))
+          }
           fieldConfigs={{
             // Hide fields that are not in the current form
             id: { visible: false },
