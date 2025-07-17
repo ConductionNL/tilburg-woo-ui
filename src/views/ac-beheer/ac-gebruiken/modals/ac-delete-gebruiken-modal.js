@@ -32,17 +32,18 @@ const AcDeleteGebruikenModal = ({
   const [error, setError] = useState(null);
   const handleDeleteGebruiken = async () => {
     try {
-      gebruiken.forEach(async (gebruik) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${gebruik.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = gebruiken.map((gebruik) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${gebruik.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);
