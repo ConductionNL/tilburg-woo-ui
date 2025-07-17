@@ -79,12 +79,7 @@ const ConFilterHeadersDrawer = forwardRef(
       );
 
     return (
-      <AcDrawer
-        removeBackdrop
-        id='concepts-drawer'
-        title='Kolommen'
-        ref={drawerRef}
-      >
+      <AcDrawer removeBackdrop id='concepts-drawer' title='Kolommen' ref={drawerRef}>
         <AcColumn gap='tiger'>
           <div>
             <label className='utrecht-form-label'>

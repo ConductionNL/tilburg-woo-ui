@@ -112,17 +112,18 @@ const ConConfirmFileDeletionModal = ({
       title='Verwijderen'
       buttons={[
         {
-          label: 'Verwijderen',
-          icon: <VISUALS.CHECK />,
-          onClick: handleDeleteFile,
-        },
-        {
           label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: handleCloseModal,
           buttonType: 'secondary',
         },
+        {
+          label: 'Verwijderen',
+          icon: <VISUALS.CHECK />,
+          onClick: handleDeleteFile,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

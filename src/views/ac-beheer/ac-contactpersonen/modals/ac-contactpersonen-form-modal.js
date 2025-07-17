@@ -205,19 +205,20 @@ const AcContactpersoonFormModal = ({
       layoutClassName='wide-content'
       buttons={[
         {
-          label: 'annuleren',
-          icon: <VISUALS.CLOSE />,
-          onClick: () => modalRef?.current?.close(),
-          buttonType: 'secondary',
-        },
-        {
           label: 'opslaan',
           icon: <VISUALS.SAVE />,
           onClick: handleSubmit,
           disabled: !isValid || isLoading || result?.type === 'success',
           loading: isLoading,
         },
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>

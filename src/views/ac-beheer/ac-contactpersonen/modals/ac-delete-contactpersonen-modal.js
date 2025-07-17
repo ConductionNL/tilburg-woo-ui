@@ -104,19 +104,18 @@ const AcDeleteContactpersonenModal = ({
       } verwijderen`}
       buttons={[
         {
-          label: 'verwijderen',
-          icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteContactpersoon,
-          disabled: isLoading || result?.type === 'success',
-          loading: isLoading,
-        },
-        {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'verwijderen',
+          icon: <VISUALS.TRASHCAN />,
+          onClick: handleDeleteContactpersoon,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

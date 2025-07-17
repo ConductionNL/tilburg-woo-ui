@@ -128,9 +128,16 @@ const AcContactpersonenUitnodigenModal = ({
         )}
 
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
-          Weet je zeker dat je deze{' '}
-          {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt
-          uitnodigen?
+          Weet je zeker dat je{' '}
+          {contactpersonen.length === 1
+            ? 'de volgende gebruiker'
+            : 'de volgende gebruikers'}{' '}
+          wilt uitnodigen? <br />
+          Hiermee{' '}
+          {contactpersonen.length === 1
+            ? 'krijgt deze gebruiker'
+            : 'krijgen deze gebruikers'}{' '}
+          toegang tot de Softwarecatalogus.
         </Paragraph>
         <div>
           {contactpersonen.map((contactpersoon) => (

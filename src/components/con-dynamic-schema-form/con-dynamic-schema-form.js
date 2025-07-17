@@ -610,6 +610,16 @@ const ConDynamicSchemaForm = ({
     if (CustomComponent) {
       return (
         <CustomComponent
+          // stop password managers (certain fields are called 'username' or 'email', causing unwanted interference from password managers)
+          data-1p-ignore='true' // 1Password
+          data-op-ignore='true' // 1Password
+          data-lpignore='true' // LastPass
+          data-protonpass-ignore='true' // ProtonPass
+          // KeepassXC does not support it - https://github.com/keepassxreboot/keepassxc-browser/issues/1921
+          data-form-type='other' // Dashlane (stops only prefilling)
+          data-bwignore='true' // Bitwarden
+          autocomplete='off' // rest
+          // =============
           key={path}
           fieldConfig={fieldConfig}
           value={value}
@@ -627,6 +637,16 @@ const ConDynamicSchemaForm = ({
     if (fieldConfig.component === 'AcFormField') {
       return (
         <AcFormField
+          // stop password managers (certain fields are called 'username' or 'email', causing unwanted interference from password managers)
+          data-1p-ignore='true' // 1Password
+          data-op-ignore='true' // 1Password
+          data-lpignore='true' // LastPass
+          data-protonpass-ignore='true' // ProtonPass
+          // KeepassXC does not support it - https://github.com/keepassxreboot/keepassxc-browser/issues/1921
+          data-form-type='other' // Dashlane (stops only prefilling)
+          data-bwignore='true' // Bitwarden
+          autocomplete='off' // rest
+          // =============
           tooltip={fieldConfig.description}
           key={path}
           id={`dynamic-form-field-${path}`}
@@ -644,6 +664,16 @@ const ConDynamicSchemaForm = ({
     if (fieldConfig.component === 'AcTextarea') {
       return (
         <AcFormField
+          // stop password managers (certain fields are called 'username' or 'email', causing unwanted interference from password managers)
+          data-1p-ignore='true' // 1Password
+          data-op-ignore='true' // 1Password
+          data-lpignore='true' // LastPass
+          data-protonpass-ignore='true' // ProtonPass
+          // KeepassXC does not support it - https://github.com/keepassxreboot/keepassxc-browser/issues/1921
+          data-form-type='other' // Dashlane (stops only prefilling)
+          data-bwignore='true' // Bitwarden
+          autocomplete='off' // rest
+          // =============
           tooltip={fieldConfig.description}
           key={path}
           inputClassName='textarea'
