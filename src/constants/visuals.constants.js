@@ -193,6 +193,10 @@ const LINK = loadable(() =>
   import('-!svg-react-loader!@assets/images/link.svg')
 );
 
+const MINUS = loadable(() =>
+  import('-!svg-react-loader!@assets/images/minus.svg')
+);
+
 const ENVELOPE = loadable(() =>
   import('-!svg-react-loader!@assets/images/envelope.svg')
 );
@@ -269,6 +273,7 @@ export const VISUALS = {
   PUBLISH,
   PUBLISH_OFF,
   LINK,
+  MINUS,
   ENVELOPE,
   ENVELOPES_BULK,
 };
