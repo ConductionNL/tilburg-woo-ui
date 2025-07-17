@@ -107,9 +107,6 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                        Toevoegen
-                      </ConActionMenu.Button>
                       <ConActionMenu.Button
                         icon={<VISUALS.PENCIL />}
                         onClick={() => setOpenModal('edit')}

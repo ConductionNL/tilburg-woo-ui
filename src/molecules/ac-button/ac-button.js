@@ -1,3 +1,4 @@
+import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 
 const AcButton = ({
@@ -34,7 +35,11 @@ const AcButton = ({
 
   return (
     <button className={_CLASSES} {...restProps}>
-      {icon && <span className='ac-button__icon'>{icon}</span>}
+      {icon && (
+        <span className='ac-button__icon'>
+          {loading ? <VISUALS.SPINNER className='ac-button__icon--loading' /> : icon}
+        </span>
+      )}
       {children}
 
       {sr && <span className='sr-only'>{sr}</span>}

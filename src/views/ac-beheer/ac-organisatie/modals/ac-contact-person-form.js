@@ -169,6 +169,7 @@ const AcContactPersonForm = ({
           label: 'Opslaan',
           icon: <VISUALS.SAVE />,
           onClick: handleSubmit,
+          loading: isSubmitting,
           disabled: isSubmitting || !isFormValid(),
         },
       ]}

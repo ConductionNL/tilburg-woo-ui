@@ -81,6 +81,9 @@ export const LABELS = {
 
   // Register labels
   REGISTER: 'Aanmelden',
+
+  // Directory labels
+  DIRECTORY: 'Directory',
 };
 
 export const LABELS_DYNAMIC = {

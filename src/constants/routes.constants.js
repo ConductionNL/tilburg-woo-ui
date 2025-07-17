@@ -20,6 +20,8 @@ import {
   AcRegister,
   AcViews,
   AcMyAccount,
+  AcLogin,
+  ConDirectory,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -53,6 +55,7 @@ export const PATHS = AcLockObject({
   AANMELDEN: '/aanmelden',
   VIEWS: '/views/:id',
   MY_ACCOUNT: '/account',
+  DIRECTORY: '/directory',
 });
 
 export const NAVIGATE_TO = AcLockObject({
@@ -68,6 +71,7 @@ const getTitle = () => {
 
   switch (hostname) {
     case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
       return 'Softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
@@ -187,7 +191,7 @@ export const ROUTES = {
     label: LABELS.AUTHENTICATION,
     path: PATHS.AUTHENTICATION_STATIC,
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
-    component: AcAuthentication,
+    component: AcLogin,
   },
   MIJN_OMGEVING: {
     id: AcUUID(),
@@ -331,6 +335,14 @@ export const ROUTES = {
     path: PATHS.MY_ACCOUNT,
     title: 'Mijn account',
     component: AcMyAccount,
+  },
+  DIRECTORY: {
+    id: AcUUID(),
+    name: 'Directory',
+    label: LABELS.DIRECTORY,
+    path: PATHS.DIRECTORY,
+    title: 'Directory',
+    component: ConDirectory,
   },
 };
 

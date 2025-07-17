@@ -21,6 +21,8 @@ const AcFallbackErrorPage = loadable(() =>
 const AcRegister = loadable(() => import('@views/ac-register/ac-register'));
 const AcViews = loadable(() => import('@views/ac-views/ac-views'));
 const AcMyAccount = loadable(() => import('@views/ac-my-account/ac-my-account'));
+const AcLogin = loadable(() => import('@views/ac-login/ac-login'));
+const ConDirectory = loadable(() => import('@views/con-directory/con-directory'));
 
 export {
   AcHome,
@@ -36,4 +38,6 @@ export {
   AcRegister,
   AcViews,
   AcMyAccount,
+  AcLogin,
+  ConDirectory,
 };

@@ -6,6 +6,7 @@ const getTitle = () => {
 
   switch (hostname) {
     case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
       return 'Softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
@@ -58,6 +59,7 @@ export const TITLES = AcLockObject({
   REACH_OUT: 'Beschikbaarheidsgegevens',
   SEARCH: 'Zoeken',
   THEMES: 'Onderwerpen',
+  DIRECTORY: 'Directory',
   WEBSITE: 'www.tilburg.nl',
   WOO: 'WOO verzoek indienen',
 });

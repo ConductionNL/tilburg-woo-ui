@@ -135,18 +135,20 @@ const AcMyAccountModal = ({
       layoutClassName='wide-content'
       buttons={[
         {
-          label: 'Opslaan',
-          icon: <VISUALS.SAVE />,
-          onClick: handleSubmit,
-          disabled: saving,
-        },
-        {
           label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'Opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: saving,
+          loading: saving,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcColumn gap='sm'>

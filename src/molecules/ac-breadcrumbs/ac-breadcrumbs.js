@@ -38,6 +38,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
       return BREADCRUMBS.THEMES;
     }
 
+    if (location.pathname.startsWith('/directory')) {
+      return BREADCRUMBS.DIRECTORY;
+    }
+
     if (location.pathname.startsWith('/login')) {
       return BREADCRUMBS.LOGIN;
     }

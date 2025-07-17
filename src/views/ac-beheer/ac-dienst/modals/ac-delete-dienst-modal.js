@@ -8,7 +8,6 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 
-
 /**
  * modal to delete 1 or multiple voorzieningen
  * @param {object[]} voorzieningen - array of voorzieningen
@@ -72,14 +71,15 @@ const AcDeleteDienstModal = ({
       id='delete-dienst-modal'
       title={`${diensten.length === 1 ? 'Dienst' : 'Diensten'} verwijderen`}
       buttons={[
-        { label: 'verwijderen', onClick: handleDeleteDienst },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'verwijderen', onClick: handleDeleteDienst },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

@@ -75,7 +75,9 @@ const AcContactpersonenUitnodigenModal = ({
     <AcModal
       ref={modalRef}
       id='invite-contactpersonen-modal'
-      title={`${contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} uitnodigen`}
+      title={`${
+        contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
+      } uitnodigen`}
       buttons={[
         {
           label: 'annuleren',
@@ -95,8 +97,16 @@ const AcContactpersonenUitnodigenModal = ({
     >
       <AcFlex column spacing='sm'>
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
-          Weet je zeker dat je deze{' '}
-          {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt uitnodigen?
+          Weet je zeker dat je{' '}
+          {contactpersonen.length === 1
+            ? 'de volgende gebruiker'
+            : 'de volgende gebruikers'}{' '}
+          wilt uitnodigen? <br />
+          Hiermee{' '}
+          {contactpersonen.length === 1
+            ? 'krijgt deze gebruiker'
+            : 'krijgen deze gebruikers'}{' '}
+          toegang tot de Softwarecatalogus.
         </Paragraph>
         <div>
           {contactpersonen.map((contactpersoon) => (

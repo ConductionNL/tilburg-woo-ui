@@ -123,17 +123,18 @@ const ConPublishDepublishFileModal = ({
       title={`Bestand ${publish ? 'publiceren' : 'depubliceren'}`}
       buttons={[
         {
-          label: publish ? 'Publiceren' : 'Depubliceren',
-          icon: publish ? <VISUALS.PUBLISH /> : <VISUALS.PUBLISH_OFF />,
-          onClick: handlePublishDepublish,
-        },
-        {
           label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: handleCloseModal,
           buttonType: 'secondary',
         },
+        {
+          label: publish ? 'Publiceren' : 'Depubliceren',
+          icon: publish ? <VISUALS.PUBLISH /> : <VISUALS.PUBLISH_OFF />,
+          onClick: handlePublishDepublish,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

@@ -86,17 +86,18 @@ const AcDeleteKwetsbaarhedenModal = ({
       } verwijderen`}
       buttons={[
         {
-          label: 'verwijderen',
-          icon: <VISUALS.TRASHCAN />,
-          onClick: handleDeleteKwetsbaarheid,
-        },
-        {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'verwijderen',
+          icon: <VISUALS.TRASHCAN />,
+          onClick: handleDeleteKwetsbaarheid,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
