@@ -5,7 +5,7 @@ import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-reac
 import acFormatDate from '@src/utilities/ac-format-date';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 
-const ConCardOrganisation = ({
+const ConCardDienst = ({
   skeleton,
   title,
   summary,
@@ -16,10 +16,12 @@ const ConCardOrganisation = ({
   id,
 }) => {
   return (
-    <AcCard organisation padding='md' skeleton={skeleton}>
+    <AcCard dienst padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
-          <VISUALS.BUILDING style={{ color: 'var(--tilburg-interaction-color)' }} />
+          <VISUALS.HAND_HOLDING
+            style={{ color: 'var(--tilburg-interaction-color)' }}
+          />
           <Heading level={3}>{title}</Heading>
         </AcFlex>
         <Paragraph className='organisation-card__updated'>

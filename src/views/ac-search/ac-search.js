@@ -15,7 +15,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
-import { ConCardOrganisation, ConCardApplication } from '@molecules/con-cards';
+import { ConCardOrganisation, ConCardApplication, ConCardDienst } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
@@ -149,6 +149,26 @@ const AcSearch = ({ store: { publications } }) => {
           return (
             <ConCardOrganisation
               {...publication}
+              updated={publication['@self'].updated}
+              published={publication['@self'].published}
+              category={publication['@self'].schema.title}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              summary={publication?.beschrijvingKort}
+              organisationData={publication?.organisatie}
+              key={index}
+            />
+          );
+        case 'voorzieningaanbod':
+          return (
+            <ConCardDienst
+              {...publication}
+              updated={publication['@self'].updated}
               published={publication['@self'].published}
               category={publication['@self'].schema.title}
               title={

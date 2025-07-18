@@ -241,8 +241,9 @@
 
 .organisation-card {
   &__updated {
+    align-self: flex-start;
     color: var(--tilburg-color-gray-500) !important;
-    font-size: 9px !important;
+    font-size: 10px !important;
     white-space: nowrap;
   }
 }
