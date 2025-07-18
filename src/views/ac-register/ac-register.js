@@ -259,31 +259,8 @@ const AcRegister = () => {
 
   const resetForm = () => {
     setRegisterCallBack(null);
-    setOrganization({
-      name: '',
-      contactInformation: {},
-      website: '',
-      links: '',
-      oin: '',
-      logo: '',
-      cbs: '',
-      phone: '',
-      role: '',
-      summary: '',
-      contactPersons: [
-        {
-          firstName: '',
-          middleName: '',
-          lastName: '',
-          phone: '',
-          email: '',
-          function: '',
-        },
-      ],
-      organizationType: 'Leverancier',
-      kvkNumber: '',
-      email: '',
-    });
+    setError({ message: null, errors: null });
+
     setTouched({
       name: false,
       contactPersons: {
@@ -710,7 +687,9 @@ const AcRegister = () => {
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={() => setCurrentStep(0)}
+                onClick={() => {
+                  resetForm();
+                }}
               >
                 Terug naar aanmelden
               </AcButton>
@@ -821,7 +800,7 @@ const OrganizationRequiredForm = memo(
                     Met een community wordt een samenwerkingsverband van gemeenten
                     die gezamenlijk applicaties (door)ontwikkelen en de software
                     beschikbaar stellen voor hergebruik bedoelt. Controleer eerst de
-                    lijst "Alle communities“ of de community al bestaat. Staat de
+                    lijst "Alle communities" of de community al bestaat. Staat de
                     community ertussen? Vraag dan toegang aan bij de beheerder.
                   </Paragraph>
                   <Paragraph>
