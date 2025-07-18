@@ -15,6 +15,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
+import { ConCardOrganisation, ConCardApplication } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
@@ -123,19 +124,63 @@ const AcSearch = ({ store: { publications } }) => {
       );
     }
 
-    return all_publications?.map((publication, index) => (
-      <AcSearchResult
-        {...publication}
-        title={
-          publication.title ??
-          publication.titel ??
-          publication.name ??
-          publication.naam ??
-          publication.id
-        }
-        key={index}
-      />
-    ));
+    return all_publications?.map((publication, index) => {
+      switch (publication['@self'].schema.slug) {
+        case 'voorziening':
+          return (
+            <ConCardApplication
+              {...publication}
+              updated={publication['@self'].updated}
+              category={publication.voorzieningstype}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              referenceComponents={publication?.referentieComponenten}
+              summary={publication?.beschrijvingKort}
+              organisationData={publication?.organisatie}
+              key={index}
+            />
+          );
+        case 'organisatie':
+          return (
+            <ConCardOrganisation
+              {...publication}
+              published={publication['@self'].published}
+              category={publication['@self'].schema.title}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              summary={publication?.beschrijvingKort}
+              organisationData={publication?.organisatie}
+              key={index}
+            />
+          );
+        default:
+          return (
+            <AcSearchResult
+              {...publication}
+              published={publication['@self'].published}
+              category={publication['@self'].schema.title}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              key={index}
+            />
+          );
+      }
+    });
   }, [is_loading, all_publications, pagination?.limit]);
 
   return (
