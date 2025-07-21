@@ -15,12 +15,6 @@ import { AcFlex } from '@src/atoms';
 import { Switch } from '@amsterdam/design-system-react';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-// create option for creatable select
-const createOption = (label) => ({
-  label,
-  value: label.toLowerCase().replace(/\W/g, ''),
-});
-
 const AcContactpersoonFormModal = ({
   contactpersoon,
   showModal = false,
@@ -61,6 +55,13 @@ const AcContactpersoonFormModal = ({
 
   // form data
   const [contactpersoonFormData, setContactpersoonFormData] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  /** @type {[
+    { type: 'error' | 'info' | 'success', message: string } | null,
+    (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
+  ]} */
+  const [result, setResult] = useState(null);
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,39 +133,10 @@ const AcContactpersoonFormModal = ({
 
   const handleEditContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditContactpersoonFieldChange = (field) => (value) => {
-    if (field.includes('.')) {
-      // Handle nested object updates
-      const parts = field.split('.');
-      setContactpersoonFormData((prev) => {
-        let current = { ...prev };
-        let temp = current;
-
-        // Navigate through all but last part
-        for (let i = 0; i < parts.length - 1; i++) {
-          temp[parts[i]] = { ...temp[parts[i]] };
-          temp = temp[parts[i]];
-        }
-
-        // Set value on deepest level
-        temp[parts[parts.length - 1]] = value;
-
-        return current;
-      });
-    } else {
-      setContactpersoonFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
-  };
-
   const handleFormValidCheck = (isValid) => {
     /* possibly also handle checks outside of the dynamic form factory */
     setIsValid(isValid);
   };
-
-  const [error, setError] = useState(null);
 
   const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
@@ -176,6 +148,8 @@ const AcContactpersoonFormModal = ({
     const url = isEdit ? `${baseUrl}/${contactpersoonFormData.id}` : baseUrl;
 
     try {
+      setIsLoading(true);
+
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
@@ -183,13 +157,35 @@ const AcContactpersoonFormModal = ({
         }),
       });
 
-      if (response.ok) {
-        onSuccess?.(response);
-        modalRef?.current?.close();
+      if (!response.ok) {
+        throw new Error(
+          response.statusText ||
+            'Er is een fout opgetreden bij het opslaan van de contactpersoon'
+        );
       }
+
+      onSuccess?.(response);
+
+      setResult({
+        type: 'success',
+        message: isEdit
+          ? 'Contactpersoon succesvol bijgewerkt'
+          : 'Contactpersoon succesvol toegevoegd',
+      });
+
+      setTimeout(() => {
+        setResult(null);
+        onClose?.();
+        modalRef?.current?.close();
+      }, 3000);
     } catch (err) {
       console.error(err);
-      setError(err);
+      setResult({
+        type: 'error',
+        message:
+          err.message ||
+          'Er is een fout opgetreden bij het opslaan van de contactpersoon',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -210,46 +206,6 @@ const AcContactpersoonFormModal = ({
   useEffect(() => {
     modalRef?.current?.addEventListener('close', handleEditContactpersoonCloseModal);
   }, [modalRef.current]);
-
-  const mapLanguageToValue = useCallback((language) => {
-    if (!language) return LANGUAGES.find((language) => language.code === 'NL-nl');
-    return {
-      label: language.name,
-      value: language.code,
-    };
-  }, []);
-
-  const validateRequiredFields = useCallback(() => {
-    if (!schema?.properties) return true;
-
-    // Check each property in the schema
-    for (const [field, value] of Object.entries(schema.properties)) {
-      if (value?.required) {
-        // Handle nested properties like voorkeuren.taal
-        if (field.includes('.')) {
-          const [parent, child] = field.split('.');
-          if (!contactpersoonFormData?.[parent]?.[child]) {
-            return false;
-          }
-        } else {
-          // Handle top level properties
-          if (!contactpersoonFormData?.[field]) {
-            return false;
-          }
-        }
-      }
-    }
-
-    // Special case - telefoon required if aanspreekPunt is true
-    if (
-      contactpersoonFormData.aanspreekPunt &&
-      !contactpersoonFormData.telefoonnummer
-    ) {
-      return false;
-    }
-
-    return true;
-  }, [schema?.properties, contactpersoonFormData]);
 
   const renderContactpersoonFormModal = (
     <AcModal
@@ -275,7 +231,7 @@ const AcContactpersoonFormModal = ({
       buttonPosition='end'
       disableDefaultButton
     >
-      <div className='ac-contactpersonen-form-modal__alert'>
+      <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>
         <Alert type='info'>
           <AcFlex spacing='sm'>
             <VISUALS.INFO_BLUE />
@@ -284,7 +240,17 @@ const AcContactpersoonFormModal = ({
             </Paragraph>
           </AcFlex>
         </Alert>
-      </div>
+
+        {result && (
+          <Alert type={result.type === 'success' ? 'info' : result.type}>
+            <AcFlex spacing='sm'>
+              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              <Paragraph>{result.message}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+      </AcFlex>
+
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
           schema={schema}

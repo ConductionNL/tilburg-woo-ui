@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 
@@ -29,9 +29,16 @@ const AcPublishDepublishContactpersoonModal = ({
 
   const handleModalOpen = () => modalRef?.current?.showModal();
 
-  const [error, setError] = useState(null);
+  /** @type {[
+    { type: 'error' | 'info' | 'success', message: string } | null,
+    (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
+  ]} */
+  const [result, setResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
   const handlePublishDepublish = async () => {
     try {
+      setIsLoading(true);
       const endpoint = publish ? 'publish' : 'depublish';
 
       const response = await makeRequest(
@@ -42,22 +49,36 @@ const AcPublishDepublishContactpersoonModal = ({
         }
       );
 
-      if (response.ok) {
-        onSuccess?.();
-        modalRef?.current?.close();
-      } else {
-        const status = response.status;
-        const errorMessage = response.data.error;
-        setError(`${status}: ${errorMessage}`);
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
+
+      onSuccess?.();
+
+      setResult({
+        type: 'success',
+        message: `Contactpersoon succesvol ${
+          publish ? 'gepubliceerd' : 'gedepubliceerd'
+        }`,
+      });
+
+      setTimeout(() => {
+        setResult(null);
+        onClose?.();
+        modalRef?.current?.close();
+      }, 3000);
     } catch (err) {
       console.error(err);
-      setError(
-        err.message ||
+      setResult({
+        type: 'error',
+        message:
+          err.message ||
           `Er is een fout opgetreden bij het ${
             publish ? 'publiceren' : 'depubliceren'
-          }`
-      );
+          } van de contactpersoon`,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,13 +134,22 @@ const AcPublishDepublishContactpersoonModal = ({
             <VISUALS.PUBLISH_OFF className='ac-publish-depublish-icon' />
           ),
           onClick: handlePublishDepublish,
+          disabled: isLoading || result?.type === 'success',
+          loading: isLoading,
         },
       ]}
       buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        {error && <div style={errorStyle}>{error}</div>}
+        {result && (
+          <Alert type={result.type === 'success' ? 'info' : result.type}>
+            <AcFlex spacing='sm'>
+              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              <Paragraph>{result.message}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
         Weet je zeker dat je de volgende gebruiker wilt{' '}
         {publish ? 'publiceren' : 'depubliceren'}? Hiermee wordt deze gebruiker{' '}
         {!publish && 'niet meer'} zichtbaar voor anderen.
