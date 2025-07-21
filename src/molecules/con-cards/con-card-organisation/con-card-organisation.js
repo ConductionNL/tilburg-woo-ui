@@ -4,6 +4,7 @@ import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { NAVIGATE_TO } from '@constants/routes.constants';
+import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 
 const ConCardOrganisation = ({
   skeleton,
@@ -14,6 +15,7 @@ const ConCardOrganisation = ({
   category,
   themes,
   id,
+  logo,
 }) => {
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
@@ -22,10 +24,19 @@ const ConCardOrganisation = ({
           <VISUALS.BUILDING style={{ color: 'var(--tilburg-interaction-color)' }} />
           <Heading level={3}>{title}</Heading>
         </AcFlex>
-        <Paragraph className='organisation-card__updated'>
-          Laatst bijgewerkt:{' '}
-          {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-        </Paragraph>
+        {logo && (
+          <ConLogoPreview
+            logoUrl={logo}
+            className='ac-register-review__logo'
+            style={{ margin: 0, aspectRatio: 'auto', height: '32px' }}
+          />
+        )}
+        {!logo && (
+          <Paragraph className='organisation-card__updated'>
+            Laatst bijgewerkt:{' '}
+            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+          </Paragraph>
+        )}
       </AcFlex>
       <Paragraph>
         {summary?.length > 100 ? `${summary.slice(0, 100)}...` : summary}

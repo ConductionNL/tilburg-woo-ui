@@ -161,6 +161,7 @@ const AcSearch = ({ store: { publications } }) => {
               }
               summary={publication?.beschrijvingKort}
               organisationData={publication?.organisatie}
+              logo={publication?.logo}
               key={index}
             />
           );
