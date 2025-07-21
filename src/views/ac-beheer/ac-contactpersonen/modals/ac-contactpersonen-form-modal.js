@@ -55,7 +55,6 @@ const AcContactpersoonFormModal = ({
 
   // form data
   const [contactpersoonFormData, setContactpersoonFormData] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
 
   /** @type {[
     { type: 'error' | 'info' | 'success', message: string } | null,
