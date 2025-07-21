@@ -30,25 +30,17 @@ const AcDeleteKwetsbaarhedenModal = ({
   const [error, setError] = useState(null);
   const handleDeleteKwetsbaarheid = async () => {
     try {
-      let deletePromises = [];
-
       const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
 
-      kwetsbaarheden.forEach(async (kwetsbaarheid) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${kwetsbaarheid.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
+      const deletePromises = kwetsbaarheden.map((kwetsbaarheid) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${kwetsbaarheid.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-        deletePromises.push(response);
-      });
+      const responses = await Promise.all(deletePromises);
 
-      await Promise.all(deletePromises);
-
-      if (deletePromises.some((response) => response.ok)) {
+      if (responses.some((response) => response.ok)) {
         onSuccess?.();
         modalRef?.current?.close();
       }

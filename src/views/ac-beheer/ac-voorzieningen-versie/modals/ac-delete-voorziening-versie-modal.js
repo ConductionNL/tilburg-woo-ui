@@ -33,17 +33,18 @@ const AcDeleteVoorzieningVersieModal = ({
 
   const handleDeleteVoorziening = async () => {
     try {
-      voorzieningen.forEach(async (voorziening) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${voorziening.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = voorzieningen.map((voorziening) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${voorziening.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);

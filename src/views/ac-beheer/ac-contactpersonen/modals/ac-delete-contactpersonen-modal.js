@@ -38,21 +38,15 @@ const AcDeleteContactpersonenModal = ({
 
   const handleDeleteContactpersoon = async () => {
     try {
-      setIsLoading(true);
-      await Promise.all(
-        contactpersonen.map(async (contactpersoon) => {
-          const response = await makeRequest(
-            `${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`,
-            null,
-            {
-              method: 'DELETE',
-            }
-          );
+      const deletePromises = contactpersonen.map((contactpersoon) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`, null, {
+          method: 'DELETE',
         })
       );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
 
+      onSuccess?.();
       setResult({
         type: 'success',
         message: 'Contactpersonen succesvol verwijderd',

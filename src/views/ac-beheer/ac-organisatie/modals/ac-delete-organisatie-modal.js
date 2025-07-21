@@ -29,21 +29,13 @@ const AcDeleteOrganisatiesModal = ({
   const [error, setError] = useState(null);
   const handleDeleteOrganisatie = async () => {
     try {
-      let deletePromises = [];
-
       const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
-      organisaties.forEach(async (organisatie) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${organisatie.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-
-        deletePromises.push(response);
-      });
+      const deletePromises = organisaties.map((organisatie) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${organisatie.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
       await Promise.all(deletePromises);
 
