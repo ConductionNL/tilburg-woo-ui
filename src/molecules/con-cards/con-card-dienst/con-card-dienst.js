@@ -30,7 +30,7 @@ const ConCardDienst = ({
         </Paragraph>
       </AcFlex>
       <Paragraph>
-        {summary?.length > 100 ? `${summary.slice(0, 100)}...` : summary}
+        {summary}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>

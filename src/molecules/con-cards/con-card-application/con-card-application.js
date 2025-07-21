@@ -28,17 +28,10 @@ const ConCardApplication = ({
           <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />
           <AcFlex alignItems='end' spacing='xs'>
             <Heading level={3}>{title}</Heading>
-            {organisationData && (
+            {organisationData && isObject(organisationData) && (
               <Paragraph small>
-                (Aangeboden door{' '}
-                {organisationData && isObject(organisationData) ? (
-                  <Link href={organisationData.website}>
-                    {organisationData.naam}
-                  </Link>
-                ) : (
-                  String(organisationData.naam)
-                )}
-                )
+                Aangeboden door{' '}
+                <Link href={organisationData.website}>{organisationData.naam}</Link>
               </Paragraph>
             )}
           </AcFlex>
@@ -50,7 +43,7 @@ const ConCardApplication = ({
       </AcFlex>
       {/* truncate to 100 characters */}
       <Paragraph>
-        {summary?.length > 100 ? `${summary.slice(0, 100)}...` : summary}
+        {summary}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
