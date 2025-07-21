@@ -51,6 +51,7 @@ const AcOrganisatieFormModal = ({
   const [organisatieFormData, setOrganisatieFormData] = useState({});
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
+  const formRef = useRef();
 
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
@@ -162,6 +163,14 @@ const AcOrganisatieFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditOrganisatieCloseModal = () => {
+    setOrganisatieFormData({
+      ..._.cloneDeep(initialFormData),
+    });
+    setVerklaringenOptions([]);
+    setContactpersonenOptions([]);
+    setIsValid(false);
+    setError(null);
+    formRef.current?.reset(); // Reset form using ref
     onClose?.();
   };
 
@@ -221,6 +230,7 @@ const AcOrganisatieFormModal = ({
     >
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields
