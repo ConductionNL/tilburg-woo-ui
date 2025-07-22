@@ -26,12 +26,11 @@ const ConCardApplication = ({
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />
-          <AcFlex alignItems='end' spacing='xs'>
+          <AcFlex alignItems='center' spacing='xs'>
             <Heading level={3}>{title}</Heading>
             {organisationData && isObject(organisationData) && (
               <Paragraph small>
-                Aangeboden door{' '}
-                <Link href={organisationData.website}>{organisationData.naam}</Link>
+                Aangeboden door {organisationData.naam}
               </Paragraph>
             )}
           </AcFlex>

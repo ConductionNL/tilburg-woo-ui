@@ -31,12 +31,6 @@ const ConCardOrganisation = ({
             style={{ margin: 0, aspectRatio: 'auto', height: '32px' }}
           />
         )}
-        {!logo && (
-          <Paragraph className='organisation-card__updated'>
-            Laatst bijgewerkt:{' '}
-            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-          </Paragraph>
-        )}
       </AcFlex>
       <Paragraph>
         {summary}

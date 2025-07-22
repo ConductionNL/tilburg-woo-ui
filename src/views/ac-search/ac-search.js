@@ -15,7 +15,11 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
-import { ConCardOrganisation, ConCardApplication, ConCardDienst } from '@molecules/con-cards';
+import {
+  ConCardOrganisation,
+  ConCardApplication,
+  ConCardDienst,
+} from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
@@ -28,29 +32,15 @@ const AcSearch = ({ store: { publications } }) => {
     setPage,
     updateQuery,
     setSearchQuery,
-    fetchAggregations,
     fetchPublications,
     is_loading,
     getSearchPageURL,
     all_publications,
-    resetSearchQuery,
-    resetAggregations,
   } = publications;
 
   const setQuery = () => {
     updateQuery(AcSearchParamsToObject(searchParams));
   };
-
-  useEffect(() => {
-    setQuery();
-
-    fetchAggregations();
-
-    return () => {
-      resetSearchQuery();
-      resetAggregations();
-    };
-  }, []);
 
   useEffect(() => {
     if (getSearchPageURL() === location.pathname + location.search) {
