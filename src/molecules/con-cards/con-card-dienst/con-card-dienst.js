@@ -54,4 +54,4 @@ const ConCardDienst = ({
   );
 };
 
-export default ConCardOrganisation;
+export default ConCardDienst;
