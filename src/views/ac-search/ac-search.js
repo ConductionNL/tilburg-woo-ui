@@ -132,6 +132,7 @@ const AcSearch = ({ store: { publications } }) => {
               referenceComponents={publication?.referentieComponenten}
               summary={publication?.beschrijvingKort}
               organisationData={publication?.organisatie}
+              logo={publication?.logo}
               key={index}
             />
           );

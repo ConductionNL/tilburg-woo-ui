@@ -5,6 +5,7 @@ import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-reac
 import acFormatDate from '@src/utilities/ac-format-date';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import { Link } from 'react-router-dom';
+import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 
 const isObject = (value) => {
   return typeof value === 'object' && value !== null;
@@ -20,6 +21,7 @@ const ConCardApplication = ({
   referenceComponents,
   organisationData,
   id,
+  logo,
 }) => {
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
@@ -33,10 +35,13 @@ const ConCardApplication = ({
             )}
           </AcFlex>
         </AcFlex>
-        <Paragraph className='organisation-card__updated'>
-          Laatst bijgewerkt:{' '}
-          {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-        </Paragraph>
+        {logo && (
+          <ConLogoPreview
+            logoUrl={logo}
+            className='ac-register-review__logo'
+            style={{ margin: 0, aspectRatio: 'auto', height: '32px' }}
+          />
+        )}
       </AcFlex>
       {/* truncate to 100 characters */}
       <Paragraph>{summary}</Paragraph>
@@ -49,8 +54,10 @@ const ConCardApplication = ({
                 <VISUALS.ELLIPSE />
               </>
             )}
-
-            <Paragraph small>Type: {category ?? '-'}</Paragraph>
+            <Paragraph className='organisation-card__updated'>
+              Laatst bijgewerkt:{' '}
+              {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+            </Paragraph>{' '}
           </AcFlex>
           {!!referenceComponents?.length && (
             <Paragraph small>
