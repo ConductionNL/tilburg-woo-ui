@@ -23,6 +23,7 @@ const AcApplicatiesFormModal = ({
   const initialData = {
     name: '',
     description: '',
+    summary: '',
     category: '',
     referenceComponents: [],
     standards: [],
@@ -229,7 +230,8 @@ const AcApplicatiesFormModal = ({
           ...applicatie,
           id: applicatie.id,
           name: applicatie.naam,
-          description: applicatie.beschrijving,
+          description: applicatie.beschrijvingLang,
+          summary: applicatie.beschrijvingKort,
           category: applicatie.categorie,
           referenceComponents: smartSplit(
             collapseExtendedObjects(applicatie.referentieComponenten)
@@ -371,7 +373,8 @@ const AcApplicatiesFormModal = ({
           formData={{
             // Map schema properties to form data fields
             naam: applicatieFormData.name,
-            beschrijving: applicatieFormData.description,
+            beschrijvingLang: applicatieFormData.description,
+            beschrijvingKort: applicatieFormData.summary,
             voorzieningstype: applicatieFormData.voorzieningstype,
             referentieComponenten: applicatieFormData.referenceComponents,
             standaarden: applicatieFormData.standards,
