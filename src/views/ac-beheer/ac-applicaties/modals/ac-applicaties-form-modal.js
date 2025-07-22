@@ -36,6 +36,7 @@ const AcApplicatiesFormModal = ({
   const [schema, setSchema] = useState(null);
 
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
     []
@@ -341,6 +342,8 @@ const AcApplicatiesFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditApplicatieCloseModal = () => {
+    setApplicatieFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -369,6 +372,7 @@ const AcApplicatiesFormModal = ({
     >
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields

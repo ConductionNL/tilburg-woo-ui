@@ -17,6 +17,7 @@ const AcOvereenkomstFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
   const [overeenkomstFormData, setOvereenkomstFormData] = useState({
     voorzieningAanbod: '', // extended object, as id
     voorzieningGebruik: '', // extended object, as id
@@ -219,6 +220,8 @@ const AcOvereenkomstFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditOvereenkomstCloseModal = () => {
+    setOvereenkomstFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -251,6 +254,7 @@ const AcOvereenkomstFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields

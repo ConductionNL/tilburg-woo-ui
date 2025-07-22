@@ -20,6 +20,7 @@ const AcVoorzieningVersieFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const statusOptions = [
     { label: 'Ontwikkeling', value: 'ontwikkeling' },
@@ -232,7 +233,8 @@ const AcVoorzieningVersieFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditVoorzieningCloseModal = () => {
-    setVoorzieningFormData(initialData);
+    setVoorzieningFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -265,6 +267,7 @@ const AcVoorzieningVersieFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields

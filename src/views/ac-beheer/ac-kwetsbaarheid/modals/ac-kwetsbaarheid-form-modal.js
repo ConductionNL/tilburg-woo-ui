@@ -17,6 +17,7 @@ const AcKwetsbaarheidFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -131,6 +132,8 @@ const AcKwetsbaarheidFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditKwetsbaarheidCloseModal = () => {
+    setKwetsbaarheidFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -163,6 +166,7 @@ const AcKwetsbaarheidFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields

@@ -23,6 +23,7 @@ const AcContactpersoonFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const initialData = {
     username: '',
@@ -197,6 +198,8 @@ const AcContactpersoonFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditContactpersoonCloseModal = () => {
+    setContactpersoonFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -251,6 +254,7 @@ const AcContactpersoonFormModal = ({
 
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={contactpersoonFormData}
           onFieldChange={(fieldName, value) =>
