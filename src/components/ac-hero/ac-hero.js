@@ -39,7 +39,10 @@ const AcHero = (contents) => {
       case 'open-migrato.accept.commonground.nu':
         return MigratoHeroImage();
       case 'horstadmaas.accept.opencatalogi.nl':
+      case 'verwerkingsregister.horstaandemaas.nl':
         return HorstAanDeMaasHeroImage();
+      case 'verwerkingsregister.venray.nl':
+        return 'https://www.venray.nl/_next/image?url=http%3A%2F%2Fdvg-backend-httpd%2Fsites%2Fvenray%2Ffiles%2Fstyles%2Fopen_online_17_4%2Fpublic%2F2025-03%2FLente.jpg%3Fh%3D51be3343%26itok%3Dc4c9hJm9&w=1920&q=85';
       default:
         return '/home-hero-background.png';
     }

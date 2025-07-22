@@ -29,9 +29,7 @@ const ConCardApplication = ({
           <AcFlex alignItems='center' spacing='xs'>
             <Heading level={3}>{title}</Heading>
             {organisationData && isObject(organisationData) && (
-              <Paragraph small>
-                Aangeboden door {organisationData.naam}
-              </Paragraph>
+              <Paragraph small>(Aangeboden door {organisationData.naam})</Paragraph>
             )}
           </AcFlex>
         </AcFlex>
@@ -41,9 +39,7 @@ const ConCardApplication = ({
         </Paragraph>
       </AcFlex>
       {/* truncate to 100 characters */}
-      <Paragraph>
-        {summary}
-      </Paragraph>
+      <Paragraph>{summary}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
           <AcFlex alignItems='center' spacing='sm'>
