@@ -104,9 +104,19 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     return queries;
   };
 
+  const getApiUrl = () => {
+    const hostname = window.location.hostname;
+    switch (hostname) {
+      case 'vng.test.opencatalogi.nl':
+        return 'https://vng.test.commonground.nu';
+      default:
+        return 'https://vng.accept.commonground.nu';
+    }
+  };
+
   const fetchAvailableFacets = async () => {
     const response = await fetch(
-      `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true`
+      `${getApiUrl()}/apps/opencatalogi/api/publications?_facetable=true`
     );
     const data = await response.json();
     return data.facetable;
@@ -132,7 +142,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         .join('&');
 
       const response = await fetch(
-        `https://vng.test.commonground.nu/apps/opencatalogi/api/publications?_facetable=true&${queryParams}`
+        `${getApiUrl()}/apps/opencatalogi/api/publications?_facetable=true&${queryParams}`
       );
 
       if (!response.ok) {
