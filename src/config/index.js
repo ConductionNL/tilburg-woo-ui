@@ -29,8 +29,12 @@ const apiUrl = () => {
       return 'https://migrato.accept.commonground.nu/apps';
     case 'horstadmaas.accept.opencatalogi.nl':
       return 'https://horstadmaas.accept.commonground.nu/apps';
+    case 'verwerkingsregister.horstaandemaas.nl':
+      return 'https://horstaandemaas.commonground.nu/apps';
+    case 'verwerkingsregister.venray.nl':
+      return 'https://venray.commonground.nu/apps';
     case 'localhost':
-      return 'http://localhost:8080/apps';
+      return 'https://vng.test.commonground.nu/apps';
     default:
       return process.env.API_URL;
   }
@@ -62,8 +66,12 @@ export const commongroundApiUrl = () => {
       return 'https://migrato.accept.commonground.nu/apps';
     case 'horstadmaas.accept.opencatalogi.nl':
       return 'https://horstadmaas.accept.commonground.nu/apps';
+    case 'verwerkingsregister.horstaandemaas.nl':
+      return 'https://horstaandemaas.commonground.nu/apps';
+    case 'verwerkingsregister.venray.nl':
+      return 'https://venray.commonground.nu/apps';
     case 'localhost':
-      return 'http://localhost:8080/apps';
+      return 'https://vng.test.commonground.nu/apps';
     default:
       return process.env.API_URL_COMMONGROUND;
   }

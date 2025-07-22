@@ -23,6 +23,10 @@ export const getTitle = () => {
       return 'OpenRegels';
     case 'horstadmaas.accept.opencatalogi.nl':
       return 'Horst aan de Maas';
+    case 'verwerkingsregister.horstaandemaas.nl':
+      return 'Horst aan de Maas';
+    case 'verwerkingsregister.venray.nl':
+      return 'Venray';
     case 'localhost':
       return 'Localhost catalogus';
     default:
