@@ -16,7 +16,7 @@ const ConCardDienst = ({
   id,
 }) => {
   return (
-    <AcCard dienst padding='md' skeleton={skeleton}>
+    <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           <VISUALS.HAND_HOLDING
