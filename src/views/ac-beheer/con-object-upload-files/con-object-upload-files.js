@@ -240,7 +240,6 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
   const uploadFile = async (file) => {
     try {
-      setUploadLoading(true);
       updateFileStatus(file, 'loading');
 
       // Add to uploading files set
@@ -257,20 +256,20 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
       // Show success state briefly before removing
       updateFileStatus(file, 'success');
-      // setTimeout(() => {
-      //   // if upload is successful, remove the file from the list and refetch the online files
-      //   setFiles((prevFiles) => prevFiles.filter((f) => f.id !== file.id));
-      //   fetchOnlineFiles();
-      // }, 1000); // Show checkmark for 1 second
 
-      onSuccess?.();
+      return {
+        success: true,
+        file: file,
+      };
     } catch (err) {
-      console.log('updating status to error');
       updateFileStatus(file, 'error');
       console.error(err);
       setError(err);
+      return {
+        success: false,
+        file: file,
+      };
     } finally {
-      setUploadLoading(false);
       // Remove from uploading files set
       setUploadingFiles((prev) => {
         const newSet = new Set(prev);
@@ -299,9 +298,31 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
     if (uniqueFiles.length > 0) {
       setFiles((prevFiles) => [...prevFiles, ...uniqueFiles]);
-      uniqueFiles.forEach((file) => {
-        uploadFile(file);
-      });
+
+      setUploadLoading(true);
+      Promise.allSettled(uniqueFiles.map((file) => uploadFile(file)))
+        .then(async (results) => {
+          await fetchOnlineFiles();
+
+          // Only remove files that were successfully uploaded
+          //
+          // due to there being no common identifiers between local and online files, we can only use the fact that the request succeeded to know we can delete it
+          // preferably we would check the ID or hash, but those are not the same for local and online files
+          const successfulFileIds = results
+            .filter(
+              (result) => result.status === 'fulfilled' && result.value?.success
+            )
+            .map((result) => result.value.file.id);
+
+          setFiles((prevFiles) =>
+            prevFiles.filter((f) => !successfulFileIds.includes(f.id))
+          );
+
+          onSuccess?.();
+        })
+        .finally(() => {
+          setUploadLoading(false);
+        });
     }
   };
 
@@ -332,7 +353,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
   // Memoize the table data to prevent unnecessary re-renders
   const tableData = useMemo(() => {
     const localFiles = files
-      .filter((f) => ['pending', 'loading', 'error'].includes(f.status))
+      .filter((f) => ['pending', 'loading', 'error', 'success'].includes(f.status))
       .map((f) => ({
         // map the file since file objects in javascript are not serializable (god dammit javascript...)
         ...f,
