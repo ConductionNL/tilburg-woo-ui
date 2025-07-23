@@ -15,12 +15,6 @@ import { AcFlex } from '@src/atoms';
 import { Switch } from '@amsterdam/design-system-react';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-// create option for creatable select
-const createOption = (label) => ({
-  label,
-  value: label.toLowerCase().replace(/\W/g, ''),
-});
-
 const AcContactpersoonFormModal = ({
   contactpersoon,
   showModal = false,
@@ -29,6 +23,7 @@ const AcContactpersoonFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const initialData = {
     username: '',
@@ -61,8 +56,16 @@ const AcContactpersoonFormModal = ({
 
   // form data
   const [contactpersoonFormData, setContactpersoonFormData] = useState({});
+
+  /** @type {[
+    { type: 'error' | 'info' | 'success', message: string } | null,
+    (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
+  ]} */
+  const [result, setResult] = useState(null);
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isError, setIsError] = useState(null);
 
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
@@ -76,16 +79,22 @@ const AcContactpersoonFormModal = ({
   };
 
   const fetchOrganisationOptions = async () => {
-    const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
-    );
-    const data = response.data;
-    setOrganisatieOptions(
-      data.results.map((item) => ({
-        value: item.id,
-        label: item.naam || item.id,
-      }))
-    );
+    try {
+      const response = await makeRequest(
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+      );
+      const data = response.data;
+      setOrganisatieOptions(
+        data.results.map((item) => ({
+          value: item.id,
+          label: item.naam || item.id,
+        }))
+      );
+    } catch (error) {
+      console.error('Failed to fetch organisation options:', error);
+      // Set empty array as fallback to prevent crashes
+      setOrganisatieOptions([]);
+    }
   };
 
   useEffect(() => {
@@ -105,67 +114,41 @@ const AcContactpersoonFormModal = ({
   }, [showModal]);
 
   useEffect(() => {
-    // Set the form data in 1 go
-    // This is a simple and compact way to conditionally set the form data
-    // if preSelectedVoorziening is provided, set the voorziening to the preSelectedVoorziening
-    // if dienst is provided, set the form data to the dienst data
-    setContactpersoonFormData({
-      // initial data
-      ..._.cloneDeep(initialData),
-      // data to edit (only if data is provided and isEdit is true)
-      ...(contactpersoon &&
-        isEdit && {
-          ...contactpersoon,
-          // Always ensure organisatie is set to the required value
-          organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7',
-        }),
-    });
-  }, [contactpersoon, showModal]);
+    // Only update form data when showModal changes to true
+    if (showModal) {
+      setContactpersoonFormData({
+        // initial data
+        ..._.cloneDeep(initialData),
+        // data to edit (only if data is provided and isEdit is true)
+        ...(contactpersoon &&
+          isEdit && {
+            ..._.cloneDeep(contactpersoon),
+            // Always ensure organisatie is set to the required value
+            organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7',
+          }),
+      });
+    }
+  }, [showModal]);
 
   const handleEditContactpersoonOpenModal = () => modalRef?.current?.showModal();
-
-  const handleEditContactpersoonFieldChange = (field) => (value) => {
-    if (field.includes('.')) {
-      // Handle nested object updates
-      const parts = field.split('.');
-      setContactpersoonFormData((prev) => {
-        let current = { ...prev };
-        let temp = current;
-
-        // Navigate through all but last part
-        for (let i = 0; i < parts.length - 1; i++) {
-          temp[parts[i]] = { ...temp[parts[i]] };
-          temp = temp[parts[i]];
-        }
-
-        // Set value on deepest level
-        temp[parts[parts.length - 1]] = value;
-
-        return current;
-      });
-    } else {
-      setContactpersoonFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
-  };
 
   const handleFormValidCheck = (isValid) => {
     /* possibly also handle checks outside of the dynamic form factory */
     setIsValid(isValid);
   };
 
-  const [error, setError] = useState(null);
-
   const endpoint = 'openregister/api/objects/voorzieningen/contactpersoon';
 
   const handleSubmit = async () => {
+    setIsLoading(true);
+
     const baseUrl = `${BASE_URL}/apps/${endpoint}`;
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${contactpersoonFormData.id}` : baseUrl;
 
     try {
+      setIsLoading(true);
+
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
@@ -173,13 +156,37 @@ const AcContactpersoonFormModal = ({
         }),
       });
 
-      if (response.ok) {
-        onSuccess?.(response);
-        modalRef?.current?.close();
+      if (!response.ok) {
+        throw new Error(
+          response.statusText ||
+            'Er is een fout opgetreden bij het opslaan van de contactpersoon'
+        );
       }
+
+      onSuccess?.(response);
+
+      setResult({
+        type: 'success',
+        message: isEdit
+          ? 'Contactpersoon succesvol bijgewerkt'
+          : 'Contactpersoon succesvol toegevoegd',
+      });
+
+      setTimeout(() => {
+        setResult(null);
+        onClose?.();
+        modalRef?.current?.close();
+      }, 3000);
     } catch (err) {
       console.error(err);
-      setError(err);
+      setResult({
+        type: 'error',
+        message:
+          err.message ||
+          'Er is een fout opgetreden bij het opslaan van de contactpersoon',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -191,6 +198,8 @@ const AcContactpersoonFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditContactpersoonCloseModal = () => {
+    setContactpersoonFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -198,46 +207,6 @@ const AcContactpersoonFormModal = ({
   useEffect(() => {
     modalRef?.current?.addEventListener('close', handleEditContactpersoonCloseModal);
   }, [modalRef.current]);
-
-  const mapLanguageToValue = useCallback((language) => {
-    if (!language) return LANGUAGES.find((language) => language.code === 'NL-nl');
-    return {
-      label: language.name,
-      value: language.code,
-    };
-  }, []);
-
-  const validateRequiredFields = useCallback(() => {
-    if (!schema?.properties) return true;
-
-    // Check each property in the schema
-    for (const [field, value] of Object.entries(schema.properties)) {
-      if (value?.required) {
-        // Handle nested properties like voorkeuren.taal
-        if (field.includes('.')) {
-          const [parent, child] = field.split('.');
-          if (!contactpersoonFormData?.[parent]?.[child]) {
-            return false;
-          }
-        } else {
-          // Handle top level properties
-          if (!contactpersoonFormData?.[field]) {
-            return false;
-          }
-        }
-      }
-    }
-
-    // Special case - telefoon required if aanspreekPunt is true
-    if (
-      contactpersoonFormData.aanspreekPunt &&
-      !contactpersoonFormData.telefoonnummer
-    ) {
-      return false;
-    }
-
-    return true;
-  }, [schema?.properties, contactpersoonFormData]);
 
   const renderContactpersoonFormModal = (
     <AcModal
@@ -256,12 +225,14 @@ const AcContactpersoonFormModal = ({
           label: 'opslaan',
           icon: <VISUALS.SAVE />,
           onClick: handleSubmit,
-          disabled: !isValid,
+          disabled: !isValid || isLoading,
+          loading: isLoading,
         },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
-      <div className='ac-contactpersonen-form-modal__alert'>
+      <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>
         <Alert type='info'>
           <AcFlex spacing='sm'>
             <VISUALS.INFO_BLUE />
@@ -270,44 +241,28 @@ const AcContactpersoonFormModal = ({
             </Paragraph>
           </AcFlex>
         </Alert>
-      </div>
+
+        {result && (
+          <Alert type={result.type === 'success' ? 'info' : result.type}>
+            <AcFlex spacing='sm'>
+              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              <Paragraph>{result.message}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+      </AcFlex>
+
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
-          formData={{
-            // Map schema properties to form data fields
-            username: contactpersoonFormData.username,
-            email: contactpersoonFormData.email,
-            voornaam: contactpersoonFormData.voornaam,
-            achternaam: contactpersoonFormData.achternaam,
-            functie: contactpersoonFormData.functie,
-            organisatie: contactpersoonFormData.organisatie,
-            telefoonnummer: contactpersoonFormData.telefoonnummer,
-            rollen: contactpersoonFormData.rollen,
-            actief: contactpersoonFormData.actief,
-            aanspreekPunt: contactpersoonFormData.aanspreekPunt,
-          }}
-          onFieldChange={(fieldName, value) => {
-            // Map schema property names back to form data field names
-            const fieldMappings = {
-              username: 'username',
-              email: 'email',
-              voornaam: 'voornaam',
-              achternaam: 'achternaam',
-              functie: 'functie',
-              organisatie: 'organisatie',
-              telefoonnummer: 'telefoonnummer',
-              rollen: 'rollen',
-              actief: 'actief',
-              aanspreekPunt: 'aanspreekPunt',
-            };
-
-            const formFieldName = fieldMappings[fieldName] || fieldName;
+          formData={contactpersoonFormData}
+          onFieldChange={(fieldName, value) =>
             setContactpersoonFormData((prev) => ({
               ...prev,
-              [formFieldName]: value,
-            }));
-          }}
+              [fieldName]: value,
+            }))
+          }
           fieldConfigs={{
             // Hide fields that are not in the current form
             id: { visible: false },

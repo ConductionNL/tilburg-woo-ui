@@ -5,6 +5,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  transition: var(--tilburg-search-card-transition);
   background-color: var(
     --tilburg-search-card-background-color,
     var(--tilburg-color-white)
@@ -59,7 +60,12 @@
   }
 
   &--category,
-  &--search-result {
+  &--search-result,
+  &--organisation {
+    &:hover {
+      background-color: var(--tilburg-search-card-hover-background-color, inherit);
+    }
+
     a {
       &:after {
         content: '';
@@ -101,7 +107,8 @@
     }
   }
 
-  &--search-result {
+  &--search-result,
+  &--organisation {
     a {
       &:where(:hover, :focus-visible) {
         &:after {
@@ -229,5 +236,14 @@
     100% {
       transform: translateX(100%);
     }
+  }
+}
+
+.organisation-card {
+  &__updated {
+    align-self: flex-start;
+    color: var(--tilburg-color-gray-500) !important;
+    font-size: 10px !important;
+    white-space: nowrap;
   }
 }

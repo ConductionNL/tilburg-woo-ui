@@ -32,17 +32,18 @@ const AcDeleteGebruikenModal = ({
   const [error, setError] = useState(null);
   const handleDeleteGebruiken = async () => {
     try {
-      gebruiken.forEach(async (gebruik) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${gebruik.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = gebruiken.map((gebruik) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${gebruik.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);
@@ -70,14 +71,16 @@ const AcDeleteGebruikenModal = ({
       ref={modalRef}
       id='delete-gebruik-modal'
       title={`${gebruiken.length === 1 ? 'Gebruik' : 'Gebruiken'} verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteGebruiken },
+      buttons={[
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'verwijderen', onClick: handleDeleteGebruiken },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

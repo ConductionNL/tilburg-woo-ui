@@ -15,6 +15,11 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
+import {
+  ConCardOrganisation,
+  ConCardApplication,
+  ConCardDienst,
+} from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
@@ -27,29 +32,15 @@ const AcSearch = ({ store: { publications } }) => {
     setPage,
     updateQuery,
     setSearchQuery,
-    fetchAggregations,
     fetchPublications,
     is_loading,
     getSearchPageURL,
     all_publications,
-    resetSearchQuery,
-    resetAggregations,
   } = publications;
 
   const setQuery = () => {
     updateQuery(AcSearchParamsToObject(searchParams));
   };
-
-  useEffect(() => {
-    setQuery();
-
-    fetchAggregations();
-
-    return () => {
-      resetSearchQuery();
-      resetAggregations();
-    };
-  }, []);
 
   useEffect(() => {
     if (getSearchPageURL() === location.pathname + location.search) {
@@ -123,19 +114,85 @@ const AcSearch = ({ store: { publications } }) => {
       );
     }
 
-    return all_publications?.map((publication, index) => (
-      <AcSearchResult
-        {...publication}
-        title={
-          publication.title ??
-          publication.titel ??
-          publication.name ??
-          publication.naam ??
-          publication.id
-        }
-        key={index}
-      />
-    ));
+    return all_publications?.map((publication, index) => {
+      switch (publication['@self'].schema.slug) {
+        case 'voorziening':
+          return (
+            <ConCardApplication
+              {...publication}
+              updated={publication['@self'].updated}
+              category={publication.voorzieningstype}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              referenceComponents={publication?.referentieComponenten}
+              summary={publication?.beschrijvingKort}
+              organisationData={publication?.organisatie}
+              logo={publication?.logo}
+              key={index}
+            />
+          );
+        case 'organisatie':
+          return (
+            <ConCardOrganisation
+              {...publication}
+              updated={publication['@self'].updated}
+              published={publication['@self'].published}
+              category={publication['@self'].schema.title}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              summary={publication?.beschrijvingKort}
+              organisationData={publication?.organisatie}
+              logo={publication?.logo}
+              key={index}
+            />
+          );
+        case 'voorzieningaanbod':
+          return (
+            <ConCardDienst
+              {...publication}
+              updated={publication['@self'].updated}
+              published={publication['@self'].published}
+              category={publication['@self'].schema.title}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              summary={publication?.beschrijvingKort}
+              organisationData={publication?.organisatie}
+              key={index}
+            />
+          );
+        default:
+          return (
+            <AcSearchResult
+              {...publication}
+              published={publication['@self'].published}
+              category={publication['@self'].schema.title}
+              title={
+                publication.title ??
+                publication.titel ??
+                publication.name ??
+                publication.naam ??
+                publication.id
+              }
+              key={index}
+            />
+          );
+      }
+    });
   }, [is_loading, all_publications, pagination?.limit]);
 
   return (

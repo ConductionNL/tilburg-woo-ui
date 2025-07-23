@@ -44,7 +44,7 @@ import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
-import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
 import AcContactPersonForm from '../modals/ac-contact-person-form';
 import { BEHEER_RENAMES } from '../../beheer-renames';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -65,6 +65,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [charCountLang, setCharCountLang] = useState(0);
   const [selectedContactPerson, setSelectedContactPerson] = useState(null);
   const [openModal, setOpenModal] = useState(null);
+  const [deelnameToRemove, setDeelnameToRemove] = useState(null);
 
   const uniqueUsedBySchemas = useMemo(() => {
     if (!usedBy) return [];
@@ -306,9 +307,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       </ConActionMenu.Trigger>
 
                       <ConActionMenu.Menu position='right'>
-                        <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                          Toevoegen
-                        </ConActionMenu.Button>
                         <ConActionMenu.Button
                           icon={<VISUALS.PENCIL />}
                           onClick={() => setOpenModal('edit')}
@@ -345,6 +343,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         >
                           Deelname toevoegen
                         </ConActionMenu.Button>
+
+                        {data.deelnames && data.deelnames.length > 0 && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.MINUS />}
+                            onClick={() => setOpenModal('removeDeelname')}
+                          >
+                            Deelname verlaten
+                          </ConActionMenu.Button>
+                        )}
 
                         <ConActionMenu.Divider />
 
@@ -779,12 +786,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                                           <ConActionMenu.Menu position='right'>
                                             <ConActionMenu.Button
-                                              icon={<VISUALS.TRASHCAN />}
+                                              icon={<VISUALS.MINUS />}
                                               onClick={() => {
-                                                handleDeleteDeelname(deelname.id);
+                                                setOpenModal('removeDeelname');
+                                                setDeelnameToRemove(deelname);
                                               }}
                                             >
-                                              Verwijderen
+                                              Verlaten
                                             </ConActionMenu.Button>
                                           </ConActionMenu.Menu>
                                         </ConActionMenu>
@@ -925,11 +933,16 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcAddDeelnameModal
+                <AcAddRemoveDeelnameModal
                   organization={data}
-                  showModal={openModal === 'addDeelname'}
+                  showModal={
+                    openModal === 'addDeelname' || openModal === 'removeDeelname'
+                  }
+                  remove={openModal === 'removeDeelname'}
+                  deelnameToRemove={deelnameToRemove}
                   onClose={() => {
                     setOpenModal(null);
+                    setDeelnameToRemove(null);
                   }}
                   onSuccess={() => {
                     fetchData();

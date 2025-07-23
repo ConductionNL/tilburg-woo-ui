@@ -3,10 +3,11 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
-import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
+import _ from 'lodash';
 
 /**
  * Modal to invite users to join the organization
@@ -25,7 +26,13 @@ const AcContactpersonenUitnodigenModal = ({
   const modalRef = useRef(null);
   const { makeRequest } = useNextcloudRequests();
 
-  const [error, setError] = useState(null);
+  /** @type {[
+    { type: 'error' | 'info' | 'success', message: string } | null,
+    (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
+  ]} */
+  const [result, setResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [contactpersonenCopy, setContactpersonenCopy] = useState([]);
 
   const handleOpenModal = () => modalRef?.current?.showModal();
 
@@ -34,31 +41,49 @@ const AcContactpersonenUitnodigenModal = ({
 
   const handleInviteUsers = async () => {
     try {
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
-        method: 'POST',
-        body: JSON.stringify({
-          users: contactpersonen.map((user) => ({
-            email: user.email,
-            voornaam: user.voornaam,
-            achternaam: user.achternaam,
-          })),
-          // organization would come from logged in user
-          organization: null,
-        }),
+      setIsLoading(true);
+
+      await Promise.all(
+        contactpersonenCopy.map(async (contactpersoon) => {
+          const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+            method: 'POST',
+            body: JSON.stringify({
+              users: [contactpersoon],
+              organization: null,
+            }),
+          });
+        })
+      );
+
+      onSuccess?.();
+
+      setResult({
+        type: 'success',
+        message: 'Contactpersonen succesvol uitgenodigd',
       });
 
-      if (response.ok) {
-        onSuccess?.();
+      setTimeout(() => {
+        setResult(null);
+        onClose?.();
         modalRef?.current?.close();
-      }
+      }, 3000);
     } catch (err) {
       console.error(err);
-      setError(err);
+      setResult({
+        type: 'error',
+        message:
+          err.message ||
+          'Er is een fout opgetreden bij het uitnodigen van de contactpersonen',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (showModal) {
+      // Create deep copy of contactpersonen when modal opens
+      setContactpersonenCopy(_.cloneDeep(contactpersonen));
       handleOpenModal();
     }
   }, [showModal]);
@@ -75,7 +100,9 @@ const AcContactpersonenUitnodigenModal = ({
     <AcModal
       ref={modalRef}
       id='invite-contactpersonen-modal'
-      title={`${contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} uitnodigen`}
+      title={`${
+        contactpersonenCopy.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
+      } uitnodigen`}
       buttons={[
         {
           label: 'annuleren',
@@ -87,19 +114,37 @@ const AcContactpersonenUitnodigenModal = ({
           label: 'uitnodigen',
           icon: <VISUALS.PAPER_PLANE />,
           onClick: handleInviteUsers,
-          disabled: true,
+          disabled: true || isLoading || result?.type === 'success',
+          loading: isLoading,
         },
       ]}
       buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
+        {result && (
+          <Alert type={result.type === 'success' ? 'info' : result.type}>
+            <AcFlex spacing='sm'>
+              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              <Paragraph>{result.message}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
-          Weet je zeker dat je deze{' '}
-          {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt uitnodigen?
+          Weet je zeker dat je{' '}
+          {contactpersonenCopy.length === 1
+            ? 'de volgende gebruiker'
+            : 'de volgende gebruikers'}{' '}
+          wilt uitnodigen? <br />
+          Hiermee{' '}
+          {contactpersonenCopy.length === 1
+            ? 'krijgt deze gebruiker'
+            : 'krijgen deze gebruikers'}{' '}
+          toegang tot de Softwarecatalogus.
         </Paragraph>
         <div>
-          {contactpersonen.map((contactpersoon) => (
+          {contactpersonenCopy.map((contactpersoon) => (
             <Paragraph
               key={contactpersoon.id}
               style={{
@@ -113,24 +158,11 @@ const AcContactpersonenUitnodigenModal = ({
                 {contactpersoon.voornaam} {contactpersoon.achternaam}
               </strong>
               <span style={{ color: '#666', marginLeft: '0.5rem' }}>
-                ({contactpersoon.email})
+                ({contactpersoon.email || 'geen email'})
               </span>
             </Paragraph>
           ))}
         </div>
-        {error && (
-          <Paragraph
-            className='error'
-            style={{
-              color: '#dc3545',
-              padding: '0.75rem',
-              backgroundColor: '#f8d7da',
-              borderRadius: '4px',
-            }}
-          >
-            Er is een fout opgetreden bij het versturen van de uitnodigingen.
-          </Paragraph>
-        )}
       </AcFlex>
     </AcModal>
   );

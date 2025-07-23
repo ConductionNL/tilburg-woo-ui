@@ -7,6 +7,7 @@
 @use 'tokens-migrato';
 @use 'tokens-horst-aan-de-maas';
 @use 'tokens-dimpact';
+@use 'tokens-venray';
 
 // Extends.
 @use 'extends';
@@ -21,4 +22,5 @@
 @import '@conduction/theme/municipalities/migrato-design-tokens/dist/index.css';
 @import '@conduction/theme/municipalities/dimpact-design-tokens/dist/index.css';
 @import '@conduction/theme/municipalities/oude-ijsselstreek-design-tokens/dist/index.css';
+@import '@conduction/theme/conduction-design-tokens/dist/index.css';
 @import '@nl-design-system-unstable/rotterdam-design-tokens/dist/index.css';

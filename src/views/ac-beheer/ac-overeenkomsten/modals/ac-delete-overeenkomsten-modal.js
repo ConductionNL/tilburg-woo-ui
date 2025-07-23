@@ -32,17 +32,18 @@ const AcDeleteOvereenkomstenModal = ({
 
   const handleDeleteOvereenkomst = async () => {
     try {
-      overeenkomsten.forEach(async (overeenkomst) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${overeenkomst.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = overeenkomsten.map((overeenkomst) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${overeenkomst.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);
@@ -72,14 +73,16 @@ const AcDeleteOvereenkomstenModal = ({
       title={`${
         overeenkomsten.length === 1 ? 'Overeenkomst' : 'Overeenkomsten'
       } verwijderen`}
-      buttons={[{ label: 'verwijderen', onClick: handleDeleteOvereenkomst },
+      buttons={[
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'verwijderen', onClick: handleDeleteOvereenkomst },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

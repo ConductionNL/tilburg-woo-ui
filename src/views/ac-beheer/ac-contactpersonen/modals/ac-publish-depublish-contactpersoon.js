@@ -4,9 +4,10 @@ import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 /**
  * Modal to publish or depublish a contact person by calling the publish/depublish endpoint
@@ -29,40 +30,64 @@ const AcPublishDepublishContactpersoonModal = ({
 
   const handleModalOpen = () => modalRef?.current?.showModal();
 
-  const [error, setError] = useState(null);
+  /** @type {[
+    { type: 'error' | 'info' | 'success', message: string } | null,
+    (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
+  ]} */
+  const [result, setResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [contactpersoonCopy, setContactpersoonCopy] = useState(null);
+
   const handlePublishDepublish = async () => {
     try {
+      setIsLoading(true);
       const endpoint = publish ? 'publish' : 'depublish';
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon/${contactpersoon.id}/${endpoint}`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
         null,
         {
           method: 'POST',
         }
       );
 
-      if (response.ok) {
-        onSuccess?.();
-        modalRef?.current?.close();
-      } else {
-        const status = response.status;
-        const errorMessage = response.data.error;
-        setError(`${status}: ${errorMessage}`);
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
+
+      onSuccess?.();
+
+      setResult({
+        type: 'success',
+        message: `Contactpersoon succesvol ${
+          publish ? 'gepubliceerd' : 'gedepubliceerd'
+        }`,
+      });
+
+      setTimeout(() => {
+        setResult(null);
+        onClose?.();
+        modalRef?.current?.close();
+      }, 3000);
     } catch (err) {
       console.error(err);
-      setError(
-        err.message ||
+      setResult({
+        type: 'error',
+        message:
+          err.message ||
           `Er is een fout opgetreden bij het ${
             publish ? 'publiceren' : 'depubliceren'
-          }`
-      );
+          } van de contactpersoon`,
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     if (showModal) {
+      // Create deep copy of contactpersoon when modal opens
+      setContactpersoonCopy(_.cloneDeep(contactpersoon));
       handleModalOpen();
     }
   }, [showModal]);
@@ -113,16 +138,28 @@ const AcPublishDepublishContactpersoonModal = ({
             <VISUALS.PUBLISH_OFF className='ac-publish-depublish-icon' />
           ),
           onClick: handlePublishDepublish,
+          disabled: isLoading || result?.type === 'success',
+          loading: isLoading,
         },
       ]}
       buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        {error && <div style={errorStyle}>{error}</div>}
-        Weet je zeker dat je deze contactpersoon wilt{' '}
-        {publish ? 'publiceren' : 'depubliceren'}?
-        <Paragraph>{contactpersoon?.username ?? contactpersoon?.id}</Paragraph>
+        {result && (
+          <Alert type={result.type === 'success' ? 'info' : result.type}>
+            <AcFlex spacing='sm'>
+              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              <Paragraph>{result.message}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+        Weet je zeker dat je de volgende gebruiker wilt{' '}
+        {publish ? 'publiceren' : 'depubliceren'}? Hiermee wordt deze gebruiker{' '}
+        {!publish && 'niet meer'} zichtbaar voor anderen.
+        <Paragraph>
+          {contactpersoonCopy?.username ?? contactpersoonCopy?.id}
+        </Paragraph>
       </AcFlex>
     </AcModal>
   );

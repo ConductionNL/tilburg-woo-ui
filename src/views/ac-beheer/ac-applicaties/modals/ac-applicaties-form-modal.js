@@ -23,6 +23,7 @@ const AcApplicatiesFormModal = ({
   const initialData = {
     name: '',
     description: '',
+    summary: '',
     category: '',
     referenceComponents: [],
     standards: [],
@@ -35,6 +36,7 @@ const AcApplicatiesFormModal = ({
   const [schema, setSchema] = useState(null);
 
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
     []
@@ -229,7 +231,8 @@ const AcApplicatiesFormModal = ({
           ...applicatie,
           id: applicatie.id,
           name: applicatie.naam,
-          description: applicatie.beschrijving,
+          description: applicatie.beschrijvingLang,
+          summary: applicatie.beschrijvingKort,
           category: applicatie.categorie,
           referenceComponents: smartSplit(
             collapseExtendedObjects(applicatie.referentieComponenten)
@@ -339,6 +342,8 @@ const AcApplicatiesFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditApplicatieCloseModal = () => {
+    setApplicatieFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -354,23 +359,26 @@ const AcApplicatiesFormModal = ({
       title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields
             naam: applicatieFormData.name,
-            beschrijving: applicatieFormData.description,
+            beschrijvingLang: applicatieFormData.description,
+            beschrijvingKort: applicatieFormData.summary,
             voorzieningstype: applicatieFormData.voorzieningstype,
             referentieComponenten: applicatieFormData.referenceComponents,
             standaarden: applicatieFormData.standards,

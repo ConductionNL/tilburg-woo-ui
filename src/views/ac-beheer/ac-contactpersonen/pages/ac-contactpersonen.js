@@ -66,54 +66,73 @@ const AcBeheerContactpersonen = () => {
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const fetchData = useCallback(async (searchParams = {}) => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          [
-            ['_page', pagination.page],
-            ['_limit', pagination.limit],
-            ...Object.entries(searchParams),
-          ],
-          null,
-          '/beheer/diensten'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          null,
-          null,
-          '/beheer/diensten'
-        ),
-      ]);
+        const [response, schemaResponse] = await Promise.all([
+          makeRequest(
+            `${BASE_URL}/apps/${endpoint}`,
+            [
+              ['_page', pagination.page],
+              ['_limit', pagination.limit],
+              ...Object.entries(searchParams),
+            ],
+            null,
+            '/beheer/diensten'
+          ),
+          makeRequest(
+            `${BASE_URL}/apps/${schemaEndpoint}`,
+            null,
+            null,
+            '/beheer/diensten'
+          ),
+        ]);
 
-      const jsonResponse = response.data;
-      const schemaJsonResponse = schemaResponse.data;
+        const jsonResponse = response.data;
+        const schemaJsonResponse = schemaResponse.data;
+
+      // Check if current page is higher than total pages
+      const totalPages = jsonResponse.pages;
+      const currentPage = pagination.page;
+      
+      if (currentPage > totalPages && totalPages > 0) {
+        // Reset to highest available page (this causes a refetch)
+        setPagination(prev => ({
+          ...prev,
+          page: totalPages,
+          total: jsonResponse.total,
+          pages: totalPages,
+          offset: jsonResponse.offset
+        }));
+        return;
+      }
 
       setPagination((prev) => ({
         ...prev,
         total: jsonResponse.total,
-        pages: jsonResponse.pages,
+        pages: totalPages,
         offset: jsonResponse.offset,
       }));
 
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results;
+        const dataProperties = schemaJsonResponse.properties;
 
-      const errorResponse = jsonResponse.error;
+        const errorResponse = jsonResponse.error;
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(sortPropertiesByOrder(dataProperties));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setDataProperties(sortPropertiesByOrder(dataProperties));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [pagination.page, pagination.limit, endpoint, schemaEndpoint]
+  );
 
   useEffect(() => {
     fetchData();
@@ -269,7 +288,7 @@ const AcBeheerContactpersonen = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.Button
-                    icon={<VISUALS.PAPER_PLANE />}
+                    icon={<VISUALS.ENVELOPES_BULK />}
                     disabled={selectedRows.length === 0}
                     onClick={() => setOpenModal('invite')}
                   >
@@ -334,7 +353,7 @@ const AcBeheerContactpersonen = () => {
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Button
-                        icon={<VISUALS.PAPER_PLANE />}
+                        icon={<VISUALS.ENVELOPE />}
                         onClick={() => {
                           setSingleSelectedRow(row);
                           setOpenModal('invite');
@@ -345,7 +364,7 @@ const AcBeheerContactpersonen = () => {
 
                       {!row['@self'].published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH />}
                           onClick={() => {
                             setSingleSelectedRow(row);
                             setOpenModal('publish');
@@ -357,7 +376,7 @@ const AcBeheerContactpersonen = () => {
 
                       {row['@self'].published && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PUBLISH_OFF />}
                           onClick={() => {
                             setSingleSelectedRow(row);
                             setOpenModal('depublish');
@@ -409,6 +428,12 @@ const AcBeheerContactpersonen = () => {
               maxVisiblePages={7}
             />
 
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
+
             <ConPaginationLimitSelector
               objectType='contactpersonen'
               value={limit}
@@ -428,7 +453,6 @@ const AcBeheerContactpersonen = () => {
             onSuccess={() => {
               tableRef.current.resetSelectedRows();
               fetchData();
-              setOpenModal(null);
             }}
           />
 

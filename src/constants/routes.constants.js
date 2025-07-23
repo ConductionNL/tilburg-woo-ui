@@ -92,7 +92,10 @@ const getTitle = () => {
     case 'localhost':
       return 'Localhost catalogus';
     case 'horstadmaas.accept.opencatalogi.nl':
+    case 'verwerkingsregister.horstaandemaas.nl':
       return 'Horst aan de Maas';
+    case 'verwerkingsregister.venray.nl':
+      return 'Venray';
     default:
       return 'Open Tilburg';
   }
