@@ -23,6 +23,7 @@ const AcContactpersoonFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const initialData = {
     username: '',
@@ -55,6 +56,7 @@ const AcContactpersoonFormModal = ({
 
   // form data
   const [contactpersoonFormData, setContactpersoonFormData] = useState({});
+
   /** @type {[
     { type: 'error' | 'info' | 'success', message: string } | null,
     (state: { type: 'error' | 'info' | 'success', message: string } | null) => void
@@ -112,22 +114,21 @@ const AcContactpersoonFormModal = ({
   }, [showModal]);
 
   useEffect(() => {
-    // Set the form data in 1 go
-    // This is a simple and compact way to conditionally set the form data
-    // if preSelectedVoorziening is provided, set the voorziening to the preSelectedVoorziening
-    // if dienst is provided, set the form data to the dienst data
-    setContactpersoonFormData({
-      // initial data
-      ..._.cloneDeep(initialData),
-      // data to edit (only if data is provided and isEdit is true)
-      ...(contactpersoon &&
-        isEdit && {
-          ...contactpersoon,
-          // Always ensure organisatie is set to the required value
-          organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7',
-        }),
-    });
-  }, [contactpersoon, showModal]);
+    // Only update form data when showModal changes to true
+    if (showModal) {
+      setContactpersoonFormData({
+        // initial data
+        ..._.cloneDeep(initialData),
+        // data to edit (only if data is provided and isEdit is true)
+        ...(contactpersoon &&
+          isEdit && {
+            ..._.cloneDeep(contactpersoon),
+            // Always ensure organisatie is set to the required value
+            organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7',
+          }),
+      });
+    }
+  }, [showModal]);
 
   const handleEditContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
@@ -197,6 +198,8 @@ const AcContactpersoonFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditContactpersoonCloseModal = () => {
+    setContactpersoonFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -251,6 +254,7 @@ const AcContactpersoonFormModal = ({
 
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={contactpersoonFormData}
           onFieldChange={(fieldName, value) =>

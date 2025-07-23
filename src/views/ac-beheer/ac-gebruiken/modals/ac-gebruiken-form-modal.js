@@ -23,6 +23,7 @@ const AcGebruikenFormModal = ({
   preSelectedVoorzieningId = '',
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const initialData = {
     organisatieId: '',
@@ -267,7 +268,8 @@ const AcGebruikenFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditGebruikCloseModal = () => {
-    setGebruikFormData(initialData);
+    setGebruikFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -301,6 +303,7 @@ const AcGebruikenFormModal = ({
     >
       <AcGrid columns={2}>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
           formData={{
             // Map schema properties to form data fields

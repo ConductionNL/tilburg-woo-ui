@@ -7,6 +7,7 @@ import { AcFlex } from '@atoms';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
+import _ from 'lodash';
 
 /**
  * Modal to publish or depublish a contact person by calling the publish/depublish endpoint
@@ -35,6 +36,7 @@ const AcPublishDepublishContactpersoonModal = ({
   ]} */
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [contactpersoonCopy, setContactpersoonCopy] = useState(null);
 
   const handlePublishDepublish = async () => {
     try {
@@ -42,7 +44,7 @@ const AcPublishDepublishContactpersoonModal = ({
       const endpoint = publish ? 'publish' : 'depublish';
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon/${contactpersoon.id}/${endpoint}`,
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
         null,
         {
           method: 'POST',
@@ -84,6 +86,8 @@ const AcPublishDepublishContactpersoonModal = ({
 
   useEffect(() => {
     if (showModal) {
+      // Create deep copy of contactpersoon when modal opens
+      setContactpersoonCopy(_.cloneDeep(contactpersoon));
       handleModalOpen();
     }
   }, [showModal]);
@@ -153,7 +157,9 @@ const AcPublishDepublishContactpersoonModal = ({
         Weet je zeker dat je de volgende gebruiker wilt{' '}
         {publish ? 'publiceren' : 'depubliceren'}? Hiermee wordt deze gebruiker{' '}
         {!publish && 'niet meer'} zichtbaar voor anderen.
-        <Paragraph>{contactpersoon?.username ?? contactpersoon?.id}</Paragraph>
+        <Paragraph>
+          {contactpersoonCopy?.username ?? contactpersoonCopy?.id}
+        </Paragraph>
       </AcFlex>
     </AcModal>
   );

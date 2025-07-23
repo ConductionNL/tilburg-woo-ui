@@ -319,55 +319,55 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                     </div>
                   </AcFlex>
                 </AcColumn>
-
-                {/* modals */}
-                <AcContactpersonenFormModal
-                  contactpersoon={data}
-                  showModal={openModal === 'edit' || openModal === 'add'}
-                  isEdit={openModal === 'edit'}
-                  onClose={() => {
-                    setOpenModal(null);
-                  }}
-                  onSuccess={() => {
-                    fetchData();
-                  }}
-                />
-
-                <AcDeleteContactpersonenModal
-                  contactpersonen={[data]}
-                  showModal={openModal === 'delete'}
-                  onClose={() => {
-                    setOpenModal(null);
-                  }}
-                  onSuccess={() => {
-                    navigate('/beheer/contactpersonen');
-                  }}
-                />
-
-                <AcContactpersonenUitnodigenModal
-                  contactpersonen={[data]}
-                  showModal={openModal === 'invite'}
-                  onClose={() => {
-                    setOpenModal(null);
-                  }}
-                  onSuccess={() => {
-                    fetchData();
-                  }}
-                />
-
-                <AcPublishDepublishContactpersoonModal
-                  contactpersoon={data}
-                  publish={openModal === 'publish'}
-                  showModal={openModal === 'publish' || openModal === 'depublish'}
-                  onClose={() => {
-                    setOpenModal(null);
-                  }}
-                  onSuccess={() => {
-                    fetchData();
-                  }}
-                />
               </AcFlex>
             )}
+
+            {/* modals */}
+            <AcContactpersonenFormModal
+              contactpersoon={data}
+              showModal={openModal === 'edit' || openModal === 'add'}
+              isEdit={openModal === 'edit'}
+              onClose={() => {
+                setOpenModal(null);
+              }}
+              onSuccess={() => {
+                fetchData();
+              }}
+            />
+
+            <AcDeleteContactpersonenModal
+              contactpersonen={[data]}
+              showModal={openModal === 'delete'}
+              onClose={() => {
+                setOpenModal(null);
+              }}
+              onSuccess={() => {
+                navigate('/beheer/contactpersonen');
+              }}
+            />
+
+            <AcContactpersonenUitnodigenModal
+              contactpersonen={[data]}
+              showModal={openModal === 'invite'}
+              onClose={() => {
+                setOpenModal(null);
+              }}
+              onSuccess={() => {
+                fetchData();
+              }}
+            />
+
+            <AcPublishDepublishContactpersoonModal
+              contactpersoon={data}
+              publish={openModal === 'publish'}
+              showModal={openModal === 'publish' || openModal === 'depublish'}
+              onClose={() => {
+                setOpenModal(null);
+              }}
+              onSuccess={() => {
+                fetchData();
+              }}
+            />
           </AcColumn>
         </div>
       </AcFlex>

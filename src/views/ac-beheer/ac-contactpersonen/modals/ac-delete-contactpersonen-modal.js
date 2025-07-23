@@ -7,6 +7,7 @@ import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-modu
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
+import _ from 'lodash';
 
 /**
  * modal to delete 1 or multiple contactpersonen
@@ -29,6 +30,7 @@ const AcDeleteContactpersonenModal = ({
   ]} */
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [contactpersonenCopy, setContactpersonenCopy] = useState([]);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -38,7 +40,7 @@ const AcDeleteContactpersonenModal = ({
 
   const handleDeleteContactpersoon = async () => {
     try {
-      const deletePromises = contactpersonen.map((contactpersoon) =>
+      const deletePromises = contactpersonenCopy.map((contactpersoon) =>
         makeRequest(`${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`, null, {
           method: 'DELETE',
         })
@@ -72,6 +74,8 @@ const AcDeleteContactpersonenModal = ({
 
   useEffect(() => {
     if (showModal) {
+      // Create deep copy of contactpersonen when modal opens
+      setContactpersonenCopy(_.cloneDeep(contactpersonen));
       handleDeleteContactpersoonOpenModal();
     }
   }, [showModal]);
@@ -94,7 +98,7 @@ const AcDeleteContactpersonenModal = ({
       ref={modalRef}
       id='delete-contactpersoon-modal'
       title={`${
-        contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
+        contactpersonenCopy.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
       } verwijderen`}
       buttons={[
         {
@@ -121,11 +125,10 @@ const AcDeleteContactpersonenModal = ({
             </AcFlex>
           </Alert>
         )}
-
         Weet je zeker dat je deze{' '}
-        {contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'} wilt
-        verwijderen?
-        {contactpersonen.map((contactpersoon) => (
+        {contactpersonenCopy.length === 1 ? 'Contactpersoon' : 'Contactpersonen'}{' '}
+        wilt verwijderen?
+        {contactpersonenCopy.map((contactpersoon) => (
           <Paragraph key={contactpersoon.id}>
             {contactpersoon.voornaam} {contactpersoon.achternaam} (
             {contactpersoon.email})

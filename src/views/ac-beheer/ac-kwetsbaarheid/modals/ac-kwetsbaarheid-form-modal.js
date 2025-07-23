@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
@@ -17,10 +16,11 @@ const AcKwetsbaarheidFormModal = ({
   isEdit = false,
 }) => {
   const modalRef = useRef(null);
+  const formRef = useRef(null);
 
   const { makeRequest } = useNextcloudRequests();
 
-  const [kwetsbaarheidFormData, setKwetsbaarheidFormData] = useState({
+  const initialData = {
     voorzieningversieId: '',
     cveNummer: '',
     titel: '',
@@ -31,39 +31,28 @@ const AcKwetsbaarheidFormModal = ({
     opgelostIn: '',
     mitigatie: '',
     referenties: '',
-  });
+  };
+
+  const [kwetsbaarheidFormData, setKwetsbaarheidFormData] = useState({});
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
 
   // load kwetsbaarheid data into the form
   useEffect(() => {
-    if (kwetsbaarheid && isEdit) {
-      setKwetsbaarheidFormData((prev) => ({
-        ...prev,
-        ...kwetsbaarheid,
-        voorzieningversieId: collapseExtendedObjects(
-          kwetsbaarheid.voorzieningversieId
-        ),
-        referenties: Array.isArray(kwetsbaarheid.referenties)
-          ? kwetsbaarheid.referenties.join(', ')
-          : kwetsbaarheid.referenties,
-      }));
-    }
-
-    if (!kwetsbaarheid && !isEdit) {
-      setKwetsbaarheidFormData(() => ({
-        voorzieningversieId: '',
-        cveNummer: '',
-        titel: '',
-        beschrijving: '',
-        ernst: '',
-        ontdektOp: '',
-        gepubliceerdOp: '',
-        opgelostIn: '',
-        mitigatie: '',
-        referenties: '',
-      }));
-    }
+    setKwetsbaarheidFormData({
+      ..._.cloneDeep(initialData),
+      // if edit modal
+      ...(kwetsbaarheid &&
+        isEdit && {
+          ...kwetsbaarheid,
+          voorzieningversieId: collapseExtendedObjects(
+            kwetsbaarheid.voorzieningversieId
+          ),
+          referenties: Array.isArray(kwetsbaarheid.referenties)
+            ? kwetsbaarheid.referenties.join(', ')
+            : kwetsbaarheid.referenties,
+        }),
+    });
   }, [kwetsbaarheid, isEdit]);
 
   useEffect(() => {
@@ -81,13 +70,6 @@ const AcKwetsbaarheidFormModal = ({
   }, [showModal]);
 
   const handleEditKwetsbaarheidOpenModal = () => modalRef?.current?.showModal();
-
-  const handleEditKwetsbaarheidFieldChange = (field) => (value) => {
-    setKwetsbaarheidFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
 
   const handleFormValidCheck = (isValid) => {
     /* possibly also handle checks outside of the dynamic form factory */
@@ -131,6 +113,8 @@ const AcKwetsbaarheidFormModal = ({
 
   // run the onClose function when the modal is closed
   const handleEditKwetsbaarheidCloseModal = () => {
+    setKwetsbaarheidFormData(_.cloneDeep(initialData));
+    formRef.current?.reset();
     onClose?.();
   };
 
@@ -163,41 +147,15 @@ const AcKwetsbaarheidFormModal = ({
     >
       <AcFlex column spacing='sm'>
         <ConDynamicSchemaForm
+          ref={formRef}
           schema={schema}
-          formData={{
-            // Map schema properties to form data fields
-            voorzieningversieId: kwetsbaarheidFormData.voorzieningversieId,
-            cveNummer: kwetsbaarheidFormData.cveNummer,
-            titel: kwetsbaarheidFormData.titel,
-            beschrijving: kwetsbaarheidFormData.beschrijving,
-            ernst: kwetsbaarheidFormData.ernst,
-            ontdektOp: kwetsbaarheidFormData.ontdektOp,
-            gepubliceerdOp: kwetsbaarheidFormData.gepubliceerdOp,
-            opgelostIn: kwetsbaarheidFormData.opgelostIn,
-            mitigatie: kwetsbaarheidFormData.mitigatie,
-            referenties: kwetsbaarheidFormData.referenties,
-          }}
-          onFieldChange={(fieldName, value) => {
-            // Map schema property names back to form data field names
-            const fieldMappings = {
-              voorzieningversieId: 'voorzieningversieId',
-              cveNummer: 'cveNummer',
-              titel: 'titel',
-              beschrijving: 'beschrijving',
-              ernst: 'ernst',
-              ontdektOp: 'ontdektOp',
-              gepubliceerdOp: 'gepubliceerdOp',
-              opgelostIn: 'opgelostIn',
-              mitigatie: 'mitigatie',
-              referenties: 'referenties',
-            };
-
-            const formFieldName = fieldMappings[fieldName] || fieldName;
+          formData={kwetsbaarheidFormData}
+          onFieldChange={(fieldName, value) =>
             setKwetsbaarheidFormData((prev) => ({
               ...prev,
-              [formFieldName]: value,
-            }));
-          }}
+              [fieldName]: value,
+            }))
+          }
           fieldConfigs={{
             // Hide fields that are not in the current form
             id: { visible: false },

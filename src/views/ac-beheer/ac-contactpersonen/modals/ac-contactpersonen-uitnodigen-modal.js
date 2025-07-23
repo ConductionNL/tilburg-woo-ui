@@ -7,6 +7,7 @@ import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-modu
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
+import _ from 'lodash';
 
 /**
  * Modal to invite users to join the organization
@@ -31,6 +32,7 @@ const AcContactpersonenUitnodigenModal = ({
   ]} */
   const [result, setResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [contactpersonenCopy, setContactpersonenCopy] = useState([]);
 
   const handleOpenModal = () => modalRef?.current?.showModal();
 
@@ -42,7 +44,7 @@ const AcContactpersonenUitnodigenModal = ({
       setIsLoading(true);
 
       await Promise.all(
-        contactpersonen.map(async (contactpersoon) => {
+        contactpersonenCopy.map(async (contactpersoon) => {
           const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
             method: 'POST',
             body: JSON.stringify({
@@ -80,6 +82,8 @@ const AcContactpersonenUitnodigenModal = ({
 
   useEffect(() => {
     if (showModal) {
+      // Create deep copy of contactpersonen when modal opens
+      setContactpersonenCopy(_.cloneDeep(contactpersonen));
       handleOpenModal();
     }
   }, [showModal]);
@@ -97,7 +101,7 @@ const AcContactpersonenUitnodigenModal = ({
       ref={modalRef}
       id='invite-contactpersonen-modal'
       title={`${
-        contactpersonen.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
+        contactpersonenCopy.length === 1 ? 'Contactpersoon' : 'Contactpersonen'
       } uitnodigen`}
       buttons={[
         {
@@ -129,18 +133,18 @@ const AcContactpersonenUitnodigenModal = ({
 
         <Paragraph style={{ fontSize: '1.1em', marginBottom: '1rem' }}>
           Weet je zeker dat je{' '}
-          {contactpersonen.length === 1
+          {contactpersonenCopy.length === 1
             ? 'de volgende gebruiker'
             : 'de volgende gebruikers'}{' '}
           wilt uitnodigen? <br />
           Hiermee{' '}
-          {contactpersonen.length === 1
+          {contactpersonenCopy.length === 1
             ? 'krijgt deze gebruiker'
             : 'krijgen deze gebruikers'}{' '}
           toegang tot de Softwarecatalogus.
         </Paragraph>
         <div>
-          {contactpersonen.map((contactpersoon) => (
+          {contactpersonenCopy.map((contactpersoon) => (
             <Paragraph
               key={contactpersoon.id}
               style={{
@@ -154,7 +158,7 @@ const AcContactpersonenUitnodigenModal = ({
                 {contactpersoon.voornaam} {contactpersoon.achternaam}
               </strong>
               <span style={{ color: '#666', marginLeft: '0.5rem' }}>
-                ({contactpersoon.email})
+                ({contactpersoon.email || 'geen email'})
               </span>
             </Paragraph>
           ))}
