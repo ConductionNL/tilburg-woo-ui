@@ -4,8 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { AcFormField } from '@src/molecules';
-import ReactSelect from 'react-select';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 
@@ -18,7 +16,8 @@ const AcOvereenkomstFormModal = ({
 }) => {
   const modalRef = useRef(null);
   const formRef = useRef(null);
-  const [overeenkomstFormData, setOvereenkomstFormData] = useState({
+
+  const initialData = {
     voorzieningAanbod: '', // extended object, as id
     voorzieningGebruik: '', // extended object, as id
     startDatum: '',
@@ -40,7 +39,9 @@ const AcOvereenkomstFormModal = ({
     documentReferentie: '',
     status: '',
     opmerkingen: '',
-  });
+  };
+
+  const [overeenkomstFormData, setOvereenkomstFormData] = useState({});
 
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
@@ -65,61 +66,18 @@ const AcOvereenkomstFormModal = ({
 
   // load overeenkomst (contract) data into the form
   useEffect(() => {
-    if (overeenkomst && isEdit) {
-      setOvereenkomstFormData((prev) => ({
-        ...prev,
-        ...overeenkomst,
-        id: overeenkomst.id,
-        // === convert extended objects to ids ================
-        voorzieningAanbod: overeenkomst.voorzieningAanbod?.id,
-        voorzieningGebruik: overeenkomst.voorzieningGebruik?.id,
-        // ====================================================
-        startDatum: overeenkomst.startDatum,
-        eindDatum: overeenkomst.eindDatum,
-        contractNummer: overeenkomst.contractNummer,
-        contractType: overeenkomst.contractType,
-        kosten: overeenkomst.kosten,
-        kostenPeriode: overeenkomst.kostenPeriode,
-        contactpersoonAanbieder: {
-          id: overeenkomst.contactPersoonAanbieder?.id,
-          naam: overeenkomst.contactPersoonAanbieder?.naam,
-          email: overeenkomst.contactPersoonAanbieder?.email,
-        },
-        contactpersoonGebruiker: {
-          id: overeenkomst.contactPersoonGebruiker?.id,
-          naam: overeenkomst.contactPersoonGebruiker?.naam,
-          email: overeenkomst.contactPersoonGebruiker?.email,
-        },
-        documentReferentie: overeenkomst.documentReferentie,
-        status: overeenkomst.status,
-        opmerkingen: overeenkomst.opmerkingen,
-      }));
-    }
-    if (!overeenkomst && !isEdit) {
-      setOvereenkomstFormData(() => ({
-        voorzieningAanbod: '',
-        voorzieningGebruik: '',
-        startDatum: '',
-        eindDatum: '',
-        contractNummer: '',
-        contractType: '',
-        kosten: 0,
-        kostenPeriode: '',
-        contactpersoonAanbieder: {
-          id: '',
-          naam: '',
-          email: '',
-        },
-        contactpersoonGebruiker: {
-          id: '',
-          naam: '',
-          email: '',
-        },
-        documentReferentie: '',
-        status: '',
-        opmerkingen: '',
-      }));
-    }
+    setOvereenkomstFormData({
+      ..._.cloneDeep(initialData),
+      // if edit modal
+      ...(overeenkomst &&
+        isEdit && {
+          ...overeenkomst,
+          voorzieningAanbod: collapseExtendedObjects(overeenkomst.voorzieningAanbod),
+          voorzieningGebruik: collapseExtendedObjects(
+            overeenkomst.voorzieningGebruik
+          ),
+        }),
+    });
   }, [overeenkomst, isEdit]);
 
   useEffect(() => {
@@ -141,23 +99,6 @@ const AcOvereenkomstFormModal = ({
   }, [showModal]);
 
   const handleEditOvereenkomstOpenModal = () => modalRef?.current?.showModal();
-
-  const handleEditOvereenkomstFieldChange = (field, subField) => (value) => {
-    if (subField) {
-      setOvereenkomstFormData((prev) => ({
-        ...prev,
-        [field]: {
-          ...prev[field],
-          [subField]: value,
-        },
-      }));
-    } else {
-      setOvereenkomstFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
-    }
-  };
 
   const handleFormValidCheck = (isValid) => {
     /* possibly also handle checks outside of the dynamic form factory */
@@ -256,46 +197,13 @@ const AcOvereenkomstFormModal = ({
         <ConDynamicSchemaForm
           ref={formRef}
           schema={schema}
-          formData={{
-            // Map schema properties to form data fields
-            voorzieningAanbod: overeenkomstFormData.voorzieningAanbod,
-            voorzieningGebruik: overeenkomstFormData.voorzieningGebruik,
-            startDatum: overeenkomstFormData.startDatum,
-            eindDatum: overeenkomstFormData.eindDatum,
-            contractNummer: overeenkomstFormData.contractNummer,
-            contractType: overeenkomstFormData.contractType,
-            kosten: overeenkomstFormData.kosten,
-            kostenPeriode: overeenkomstFormData.kostenPeriode,
-            contactpersoonAanbieder: overeenkomstFormData.contactpersoonAanbieder,
-            contactpersoonGebruiker: overeenkomstFormData.contactpersoonGebruiker,
-            documentReferentie: overeenkomstFormData.documentReferentie,
-            status: overeenkomstFormData.status,
-            opmerkingen: overeenkomstFormData.opmerkingen,
-          }}
-          onFieldChange={(fieldName, value) => {
-            // Map schema property names back to form data field names
-            const fieldMappings = {
-              voorzieningAanbod: 'voorzieningAanbod',
-              voorzieningGebruik: 'voorzieningGebruik',
-              startDatum: 'startDatum',
-              eindDatum: 'eindDatum',
-              contractNummer: 'contractNummer',
-              contractType: 'contractType',
-              kosten: 'kosten',
-              kostenPeriode: 'kostenPeriode',
-              contactpersoonAanbieder: 'contactpersoonAanbieder',
-              contactpersoonGebruiker: 'contactpersoonGebruiker',
-              documentReferentie: 'documentReferentie',
-              status: 'status',
-              opmerkingen: 'opmerkingen',
-            };
-
-            const formFieldName = fieldMappings[fieldName] || fieldName;
+          formData={overeenkomstFormData}
+          onFieldChange={(fieldName, value) =>
             setOvereenkomstFormData((prev) => ({
               ...prev,
-              [formFieldName]: value,
-            }));
-          }}
+              [fieldName]: value,
+            }))
+          }
           fieldConfigs={{
             // Hide fields that are not in the current form
             id: { visible: false },
