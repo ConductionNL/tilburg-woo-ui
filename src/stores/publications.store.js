@@ -317,7 +317,7 @@ export class PublicationsStore {
     // I spent more hours then i'd like to admit figuring out where the original extend is coming from, and I still dont know.
     const search_query = {
       ...this.search_query,
-      extend: ['@self.schema', this.search_query.extend],
+      extend: ['@self.schema', this.search_query.extend, 'organisatie', 'referentieComponenten'],
     };
 
     console.group('MAKING API CALL');

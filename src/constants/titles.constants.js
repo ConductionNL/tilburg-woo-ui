@@ -6,6 +6,7 @@ const getTitle = () => {
 
   switch (hostname) {
     case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
       return 'Softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
@@ -26,7 +27,10 @@ const getTitle = () => {
     case 'localhost':
       return 'Localhost catalogus';
     case 'horstadmaas.accept.opencatalogi.nl':
+    case 'verwerkingsregister.horstaandemaas.nl':
       return 'Horst aan de Maas';
+    case 'verwerkingsregister.venray.nl':
+      return 'Venray';
     default:
       return 'Open Tilburg';
   }
@@ -58,6 +62,7 @@ export const TITLES = AcLockObject({
   REACH_OUT: 'Beschikbaarheidsgegevens',
   SEARCH: 'Zoeken',
   THEMES: 'Onderwerpen',
+  DIRECTORY: 'Directory',
   WEBSITE: 'www.tilburg.nl',
   WOO: 'WOO verzoek indienen',
 });

@@ -20,6 +20,8 @@ import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
 import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
+import { TOOLTIP_ID } from '@src/index.web';
+import AcGebruikKoppelenModal from '../modals/ac-gebruik-koppelen';
 
 const AcBeheerGebruikenDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -111,16 +113,22 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                        Toevoegen
-                      </ConActionMenu.Button>
                       <ConActionMenu.Button
                         icon={<VISUALS.PENCIL />}
                         onClick={() => setOpenModal('edit')}
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.LINK />}
+                        onClick={() => setOpenModal('koppelen')}
+                      >
+                        Koppelen
+                      </ConActionMenu.Button>
+
                       <ConActionMenu.Divider />
+
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => setOpenModal('delete')}
@@ -136,7 +144,13 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
                         .filter(
-                          ([key]) => !['id', 'ibpScore', 'bbnScore'].includes(key)
+                          ([key]) =>
+                            ![
+                              'id',
+                              'ibpScore',
+                              'bbnScore',
+                              'interneAantekening',
+                            ].includes(key)
                         )
                         .map(([key, schemaProperties]) => {
                           // Custom label mapping
@@ -149,15 +163,24 @@ const AcBeheerGebruikenDetails = ({ id }) => {
 
                           return (
                             <div key={key}>
-                              <strong>{label}:</strong>
+                              <strong
+                                {...(schemaProperties?.description
+                                  ? {
+                                      'data-tooltip-id': TOOLTIP_ID,
+                                      'data-tooltip-content':
+                                        schemaProperties.description,
+                                    }
+                                  : {})}
+                              >
+                                {label}:
+                              </strong>
                               <Paragraph>
-                                {key === 'voorzieningId' || key === 'organisatieId' 
+                                {key === 'voorzieningId' || key === 'organisatieId'
                                   ? data[key]?.naam || '-'
                                   : formatBySchema(schemaProperties, data, key, {
                                       include: ['naam'],
                                       inline: true,
-                                    })
-                                }
+                                    })}
                               </Paragraph>
                             </div>
                           );
@@ -206,6 +229,17 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                   }}
                   onSuccess={() => {
                     navigate('/beheer/gebruiken');
+                  }}
+                />
+
+                <AcGebruikKoppelenModal
+                  gebruik={data}
+                  showModal={openModal === 'koppelen'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
                   }}
                 />
               </AcFlex>

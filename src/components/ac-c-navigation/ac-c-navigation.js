@@ -2,6 +2,7 @@ import * as React from 'react';
 import clsx from 'clsx';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router';
+import { getCookie } from '@src/utilities';
 
 const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -18,7 +19,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
   };
 
   return (
-    <div className='ac-c-navigation__container'>
+    <div className={clsx('ac-c-navigation__container', layoutClassName && layoutClassName)}>
       <div className='ac-c-navigation__menu-toggle-container'>
         {mobileLogo}
 

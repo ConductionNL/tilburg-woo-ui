@@ -32,6 +32,25 @@
   }
 }
 
+.con-table-header-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.con-table-header-content__label:hover {
+  cursor: pointer;
+}
+
+.con-table-header-sort-button-container {
+  display: flex;
+
+  &-sortable {
+    cursor: pointer;
+  }
+}
+
 .con-table-checkbox-cell {
   align-content: space-around;
 }

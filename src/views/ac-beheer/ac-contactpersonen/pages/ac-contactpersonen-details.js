@@ -6,6 +6,7 @@ import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms'
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader } from '@components';
 import {
+  Alert,
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
@@ -14,13 +15,16 @@ import { BASE_URL } from '../../ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
-import AcGebruikersFormModal from '../modals/ac-gebruikers-form-modal';
-import AcDeleteGebruikersModal from '../modals/ac-delete-gebruikers-modal';
-import AcGebruikersUitnodigenModal from '../modals/ac-gebruikers-uitnodigen-modal';
+import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
+import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
+import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
+import { TOOLTIP_ID } from '@src/index.web';
 
-const AcBeheerGebruikerDetails = ({ id }) => {
+const AcBeheerContactpersoonDetails = ({ id }) => {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [dataProperties, setDataProperties] = useState(null);
@@ -32,7 +36,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
   const { makeRequest } = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
-  const schemaSlug = 'gebruiker';
+  const schemaSlug = 'contactpersoon';
 
   const fetchData = async () => {
     try {
@@ -45,13 +49,13 @@ const AcBeheerGebruikerDetails = ({ id }) => {
           `${BASE_URL}/apps/${endpoint}/${id}`,
           null,
           null,
-          `/beheer/gebruikers/${id}`
+          `/beheer/contactpersonen/${id}`
         ),
         makeRequest(
           `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
           null,
           null,
-          `/beheer/gebruikers/${id}`
+          `/beheer/contactpersonen/${id}`
         ),
       ]);
 
@@ -80,7 +84,7 @@ const AcBeheerGebruikerDetails = ({ id }) => {
       `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       null,
       null,
-      `/beheer/gebruikers/${id}`
+      `/beheer/contactpersonen/${id}`
     );
     const usedByData = usedByResponse?.data;
     setUsedBy(usedByData?.results);
@@ -137,9 +141,6 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                        Toevoegen
-                      </ConActionMenu.Button>
                       <ConActionMenu.Button
                         icon={<VISUALS.PENCIL />}
                         onClick={() => setOpenModal('edit')}
@@ -147,12 +148,31 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                         Bijwerken
                       </ConActionMenu.Button>
                       <ConActionMenu.Button
-                        icon={<VISUALS.PAPER_PLANE />}
+                        icon={<VISUALS.ENVELOPE />}
                         onClick={() => setOpenModal('invite')}
                       >
                         Uitnodigen
                       </ConActionMenu.Button>
+
+                      {!data['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH />}
+                          onClick={() => setOpenModal('publish')}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+                      {data['@self'].published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH_OFF />}
+                          onClick={() => setOpenModal('depublish')}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
+
                       <ConActionMenu.Divider />
+
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
                         onClick={() => setOpenModal('delete')}
@@ -165,68 +185,64 @@ const AcBeheerGebruikerDetails = ({ id }) => {
 
                 <AcColumn gap='md'>
                   <AcFlex column spacing='sm'>
+                    <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>
+                      {!data.gebruiker && (
+                        <Alert type='info'>
+                          <AcFlex spacing='sm'>
+                            <VISUALS.INFO_BLUE />
+                            <AcFlex column spacing='xs'>
+                              <Paragraph>
+                                Deze contactpersoon heeft geen gebruiker.
+                              </Paragraph>
+                            </AcFlex>
+                          </AcFlex>
+                        </Alert>
+                      )}
+                      {!data['@self'].published && (
+                        <Alert type='warning'>
+                          <AcFlex spacing='sm'>
+                            <VISUALS.TRIANGLE_EXCLAMATION />
+                            <AcFlex column spacing='xs'>
+                              <Paragraph>
+                                Deze contactpersoon is nog niet gepubliceerd.
+                              </Paragraph>
+                            </AcFlex>
+                          </AcFlex>
+                        </Alert>
+                      )}
+                    </AcFlex>
+
                     <div className='ac-beheer-details--grid'>
-                      <div>
-                        <strong>Gebruikersnaam:</strong>
-                        <Paragraph>{data.username || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>E-mail:</strong>
-                        <Paragraph>{data.email || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Functie:</strong>
-                        <Paragraph>{data.functie || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Organisatie:</strong>
-                        <Paragraph>{data.organisatie || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Telefoonnummer:</strong>
-                        <Paragraph>{data.telefoonnummer || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Rollen:</strong>
-                        <Paragraph>{data.rollen?.join(', ') || '-'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Status:</strong>
-                        <Paragraph>{data.actief ? 'Actief' : 'Inactief'}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Laatste inlog:</strong>
-                        <Paragraph>{formatDate(data.laatsteInlogdatum)}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Aangemaakt op:</strong>
-                        <Paragraph>{formatDate(data.aanmaakdatum)}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Laatst gewijzigd:</strong>
-                        <Paragraph>{formatDate(data.wijzigingsdatum)}</Paragraph>
-                      </div>
-
-                      <div>
-                        <strong>Voorkeuren:</strong>
-                        <Paragraph>
-                          Taal:{' '}
-                          {LANGUAGES.find(
-                            (language) => language.code === data.voorkeuren?.taal
-                          )?.name || '-'}
-                          <br />
-                          Thema: {_.upperFirst(data.voorkeuren?.thema) || '-'}
-                        </Paragraph>
-                      </div>
+                      {Object.entries(dataProperties)
+                        .filter(
+                          ([key]) => !['id', 'voornaam', 'achternaam'].includes(key)
+                        )
+                        .map(([key, schemaProperties]) => (
+                          <div key={key}>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
+                            <Paragraph>
+                              {formatBySchema(schemaProperties, data, key, {
+                                profile: {
+                                  organisatie: {
+                                    include: ['naam'],
+                                    includeUnknown: true,
+                                    inline: true,
+                                  },
+                                },
+                              })}
+                            </Paragraph>
+                          </div>
+                        ))}
                     </div>
 
                     <div>
@@ -305,8 +321,8 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcGebruikersFormModal
-                  gebruiker={data}
+                <AcContactpersonenFormModal
+                  contactpersoon={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
                   onClose={() => {
@@ -317,20 +333,32 @@ const AcBeheerGebruikerDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteGebruikersModal
-                  gebruikers={[data]}
+                <AcDeleteContactpersonenModal
+                  contactpersonen={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
                   onSuccess={() => {
-                    navigate('/beheer/gebruikers');
+                    navigate('/beheer/contactpersonen');
                   }}
                 />
 
-                <AcGebruikersUitnodigenModal
-                  gebruikers={[data]}
+                <AcContactpersonenUitnodigenModal
+                  contactpersonen={[data]}
                   showModal={openModal === 'invite'}
+                  onClose={() => {
+                    setOpenModal(null);
+                  }}
+                  onSuccess={() => {
+                    fetchData();
+                  }}
+                />
+
+                <AcPublishDepublishContactpersoonModal
+                  contactpersoon={data}
+                  publish={openModal === 'publish'}
+                  showModal={openModal === 'publish' || openModal === 'depublish'}
                   onClose={() => {
                     setOpenModal(null);
                   }}
@@ -347,4 +375,4 @@ const AcBeheerGebruikerDetails = ({ id }) => {
   );
 };
 
-export default withStore(observer(AcBeheerGebruikerDetails));
+export default withStore(observer(AcBeheerContactpersoonDetails));

@@ -26,6 +26,9 @@ import { format } from 'date-fns';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerVoorzieningenVersie = () => {
   const navigate = useNavigate();
@@ -33,15 +36,23 @@ const AcBeheerVoorzieningenVersie = () => {
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('voorzieningen-versie');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 5,
+    limit,
     offset: 0,
   });
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const filterHeadersDrawerRef = useRef(null);
 
@@ -56,50 +67,58 @@ const AcBeheerVoorzieningenVersie = () => {
     ['_extend[]', 'kwetsbaarheden'],
   ];
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
-          [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
-          null,
-          '/beheer/voorzieningen-versie'
-        ),
-        makeRequest(
-          `${BASE_URL}/apps/${schemaEndpoint}`,
-          extend,
-          null,
-          '/beheer/voorzieningen-versie'
-        ),
-      ]);
+        const [response, schemaResponse] = await Promise.all([
+          makeRequest(
+            `${BASE_URL}/apps/${endpoint}`,
+            [
+              ...extend,
+              ['_page', pagination.page],
+              ['_limit', pagination.limit],
+              ...Object.entries(searchParams),
+            ],
+            null,
+            '/beheer/voorzieningen-versie'
+          ),
+          makeRequest(
+            `${BASE_URL}/apps/${schemaEndpoint}`,
+            extend,
+            null,
+            '/beheer/voorzieningen-versie'
+          ),
+        ]);
 
-      const jsonResponse = response.data;
-      const schemaJsonResponse = schemaResponse.data;
+        const jsonResponse = response.data;
+        const schemaJsonResponse = schemaResponse.data;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      setLoading(false);
+        setLoading(false);
 
-      const data = jsonResponse.results;
-      const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results;
+        const dataProperties = schemaJsonResponse.properties;
 
-      const errorResponse = jsonResponse.error;
+        const errorResponse = jsonResponse.error;
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setDataProperties(sortPropertiesByOrder(dataProperties));
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setDataProperties(sortPropertiesByOrder(dataProperties));
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
+  );
 
   useEffect(() => {
     fetchData();
@@ -136,6 +155,20 @@ const AcBeheerVoorzieningenVersie = () => {
           return ConSorterLogic(aTitle, bTitle, direction);
         },
       },
+      voorzieningName: {
+        id: 'voorzieningName',
+        label: 'Applicatie',
+        key: '',
+        customContent: (row) => {
+          return row?.voorziening?.naam || '-';
+        },
+        sortComparator: (a, b, direction) => {
+          if (direction === null) return 0;
+          const aTitle = a?.voorziening?.naam || '';
+          const bTitle = b?.voorziening?.naam || '';
+          return ConSorterLogic(aTitle, bTitle, direction);
+        },
+      },
     }),
     []
   );
@@ -165,12 +198,12 @@ const AcBeheerVoorzieningenVersie = () => {
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
-    if (headers.length > 0) {
+    if (headers.length > 0 && tableHeaders.length === 0) {
       setTableHeaders(
         headers.filter((header) => defaultHeaders.includes(header.id))
       );
     }
-  }, [headers]);
+  }, [headers, tableHeaders.length]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -220,7 +253,7 @@ const AcBeheerVoorzieningenVersie = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.SubMenu
-                    label='Download'
+                    label='Exporteren'
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
@@ -316,21 +349,40 @@ const AcBeheerVoorzieningenVersie = () => {
             truncateLines={3}
             showSortButtons
             loading={loading}
+            dataProperties={dataProperties}
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
           />
 
-          <Pagination
-            totalPages={pagination?.pages}
-            page={parseInt(pagination?.page, 10)}
-            onPageChange={(page) => {
-              setPagination((prev) => ({
-                ...prev,
-                page,
-              }));
-            }}
-            nextLabel=''
-            previousLabel=''
-            maxVisiblePages={7}
-          />
+          <AcFlex justifyContent='between'>
+            <Pagination
+              totalPages={pagination?.pages}
+              page={parseInt(pagination?.page, 10)}
+              onPageChange={(page) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }));
+              }}
+              nextLabel=''
+              previousLabel=''
+              maxVisiblePages={7}
+            />
+
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
+
+            <ConPaginationLimitSelector
+              objectType='voorzieningen-versie'
+              value={limit}
+              onChange={setLimit}
+            />
+          </AcFlex>
 
           {/* modals */}
           <AcEditVoorzieningAanbodModal

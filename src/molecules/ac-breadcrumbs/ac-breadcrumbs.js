@@ -38,6 +38,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
       return BREADCRUMBS.THEMES;
     }
 
+    if (location.pathname.startsWith('/directory')) {
+      return BREADCRUMBS.DIRECTORY;
+    }
+
     if (location.pathname.startsWith('/login')) {
       return BREADCRUMBS.LOGIN;
     }
@@ -78,6 +82,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
 
     if (get_single_page?.name) {
       return BREADCRUMBS.CONTENT(get_single_page.name);
+    }
+
+    if (location.pathname.startsWith('/account')) {
+      return BREADCRUMBS.MY_ACCOUNT;
     }
 
     return [];

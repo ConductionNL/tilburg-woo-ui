@@ -31,12 +31,6 @@ const AcSideNav = () => {
               Dashboard
             </SidenavLink>
           </SidenavItem>
-          {/* <SidenavItem>
-            <SidenavLink>
-              <VISUALS.USERS />
-              Gebruikers
-            </SidenavLink>
-          </SidenavItem> */}
           <SidenavItem>
             <SidenavLink
               onClick={() => navigate('/beheer/applicaties')}
@@ -104,11 +98,11 @@ const AcSideNav = () => {
           </SidenavItem>
           <SidenavItem>
             <SidenavLink
-              onClick={() => navigate('/beheer/gebruikers')}
-              current={window.location.pathname.startsWith('/beheer/gebruikers')}
+              onClick={() => navigate('/beheer/contactpersonen')}
+              current={window.location.pathname.startsWith('/beheer/contactpersonen')}
             >
               <VISUALS.USERS />
-              Gebruikers
+              Contactpersonen
             </SidenavLink>
           </SidenavItem>
         </SidenavList>

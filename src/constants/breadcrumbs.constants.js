@@ -17,6 +17,8 @@ export const BREADCRUMB_ITEMS = {
   }),
   REGISTER: { label: 'Aanmelden', href: '/register' },
   VIEWS: { label: 'Views' },
+  MY_ACCOUNT: { label: 'Mijn account' },
+  DIRECTORY: { label: 'Directory', href: '/directory' }
 };
 
 export const BREADCRUMBS = {
@@ -57,4 +59,6 @@ export const BREADCRUMBS = {
     }
     return items;
   },
+  MY_ACCOUNT: [BREADCRUMB_ITEMS.MY_ACCOUNT],
+  DIRECTORY: [BREADCRUMB_ITEMS.DIRECTORY]
 };

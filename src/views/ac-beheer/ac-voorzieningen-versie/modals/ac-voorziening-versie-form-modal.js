@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
@@ -51,6 +51,7 @@ const AcVoorzieningVersieFormModal = ({
 
   const [voorzieningFormData, setVoorzieningFormData] = useState({});
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
   const [voorzieningOptions, setVoorzieningOptions] = useState([]);
   const [voorzieningAanbodOptions, setVoorzieningAanbodOptions] = useState([]);
   const [voorzieningenLoading, setVoorzieningenLoading] = useState(false);
@@ -132,6 +133,11 @@ const AcVoorzieningVersieFormModal = ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
   };
 
   const [error, setError] = useState(null);
@@ -241,137 +247,101 @@ const AcVoorzieningVersieFormModal = ({
       id='edit-voorziening-versie-modal'
       title={isEdit ? 'Applicatie versie bewerken' : 'Applicatie versie toevoegen'}
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Applicatie</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een applicatie'
-            className={clsx('ac-beheer-select', {
-              'ac-beheer-select--disabled': !isEdit && voorziening?.id,
-            })}
-            value={voorzieningOptions?.filter(
-              (option) => voorzieningFormData?.voorziening === option.value
-            )}
-            onChange={(e) => {
-              setVoorzieningFormData((prev) => ({
-                ...prev,
-                voorziening: e && e.value,
-              }));
-            }}
-            options={voorzieningOptions}
-            isLoading={voorzieningenLoading}
-            isDisabled={!isEdit && voorziening?.id}
-            {...(schema?.properties?.voorziening?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorziening?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Aanbod</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een aanbod'
-            className='ac-beheer-select'
-            value={voorzieningAanbodOptions?.filter(
-              (option) => voorzieningFormData?.voorzieningaanbod === option.value
-            )}
-            onChange={(e) => {
-              setVoorzieningFormData((prev) => ({
-                ...prev,
-                voorzieningaanbod: e && e.value,
-              }));
-            }}
-            options={voorzieningAanbodOptions}
-            isLoading={voorzieningAanbodLoading}
-            {...(schema?.properties?.voorzieningaanbod?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.voorzieningaanbod?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Versie Nummer'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('versienummer')}
-          value={voorzieningFormData.versienummer}
-          {...(schema?.properties?.versienummer?.required && {
-            hasError: !voorzieningFormData?.versienummer,
-            required: true,
-          })}
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            voorziening: voorzieningFormData.voorziening,
+            voorzieningaanbod: voorzieningFormData.voorzieningaanbod,
+            versienummer: voorzieningFormData.versienummer,
+            releaseNotes: voorzieningFormData.releaseNotes,
+            releaseDatum: voorzieningFormData.releaseDatum,
+            eindDatumOndersteuning: voorzieningFormData.eindDatumOndersteuning,
+            status: voorzieningFormData.status,
+            inDatumOntwikkeling: voorzieningFormData.inDatumOntwikkeling,
+            uitDatumOntwikkeling: voorzieningFormData.uitDatumOntwikkeling,
+            inDatumActief: voorzieningFormData.inDatumActief,
+            uitDatumActief: voorzieningFormData.uitDatumActief,
+            inDatumEindeOndersteuning: voorzieningFormData.inDatumEindeOndersteuning,
+            uitDatumEindeOndersteuning:
+              voorzieningFormData.uitDatumEindeOndersteuning,
+            inDatumOnderhoud: voorzieningFormData.inDatumOnderhoud,
+            uitDatumOnderhoud: voorzieningFormData.uitDatumOnderhoud,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              voorziening: 'voorziening',
+              voorzieningaanbod: 'voorzieningaanbod',
+              versienummer: 'versienummer',
+              releaseNotes: 'releaseNotes',
+              releaseDatum: 'releaseDatum',
+              eindDatumOndersteuning: 'eindDatumOndersteuning',
+              status: 'status',
+              inDatumOntwikkeling: 'inDatumOntwikkeling',
+              uitDatumOntwikkeling: 'uitDatumOntwikkeling',
+              inDatumActief: 'inDatumActief',
+              uitDatumActief: 'uitDatumActief',
+              inDatumEindeOndersteuning: 'inDatumEindeOndersteuning',
+              uitDatumEindeOndersteuning: 'uitDatumEindeOndersteuning',
+              inDatumOnderhoud: 'inDatumOnderhoud',
+              uitDatumOnderhoud: 'uitDatumOnderhoud',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setVoorzieningFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Hide fields that are not in the current form
+            id: { visible: false },
+            naam: { visible: false },
+            // Hide all the date fields that were not visible in the original form
+            inDatumOntwikkeling: { visible: false },
+            uitDatumOntwikkeling: { visible: false },
+            inDatumActief: { visible: false },
+            uitDatumActief: { visible: false },
+            inDatumEindeOndersteuning: { visible: false },
+            uitDatumEindeOndersteuning: { visible: false },
+            inDatumOnderhoud: { visible: false },
+            uitDatumOnderhoud: { visible: false },
+            // Disable voorziening field if not editing and voorziening is provided
+            voorziening: {
+              visible: true,
+              disabled: !isEdit && voorziening?.id,
+            },
+          }}
+          optionsProviders={{
+            voorziening: voorzieningOptions,
+            voorzieningaanbod: voorzieningAanbodOptions,
+            status: statusOptions,
+          }}
+          loadingStates={{
+            voorziening: voorzieningenLoading,
+            voorzieningaanbod: voorzieningAanbodLoading,
+          }}
+          disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
-        <AcFormField
-          label='Release Notes'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('releaseNotes')}
-          value={voorzieningFormData.releaseNotes}
-          {...(schema?.properties?.releaseNotes?.required && {
-            hasError: !voorzieningFormData?.releaseNotes,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Release Datum'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('releaseDatum')}
-          value={voorzieningFormData.releaseDatum}
-          {...(schema?.properties?.releaseDatum?.required && {
-            hasError: !voorzieningFormData?.releaseDatum,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Eind Datum Ondersteuning'
-          type='text'
-          onBlur={handleEditVoorzieningFieldChange('eindDatumOndersteuning')}
-          value={voorzieningFormData.eindDatumOndersteuning}
-          {...(schema?.properties?.eindDatumOndersteuning?.required && {
-            hasError: !voorzieningFormData?.eindDatumOndersteuning,
-            required: true,
-          })}
-        />
-        {/* <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Status</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een status'
-            className='ac-beheer-select'
-            value={statusOptions?.filter(
-              (option) => voorzieningFormData?.status === option.value
-            )}
-            onChange={(e) => {
-              setVoorzieningFormData((prev) => ({
-                ...prev,
-                status: e && e.value,
-              }));
-            }}
-            options={statusOptions}
-            {...(schema?.properties?.status?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.status?.required && {
-              isClearable: true,
-            })}
-          />
-        </div> */}
       </AcFlex>
     </AcModal>
   );

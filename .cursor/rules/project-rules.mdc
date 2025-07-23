@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+---
+# Project Rules - Tilburg Woo UI Specific
+
+## Technology Stack Context
+- React/Preact with MobX state management
+- SCSS with NLDS design system
+- Webpack build system
+- Atomic design architecture
+- Multi-tenant theming system
+
+## Project-Specific Awareness
+- **Internationalization**: Dutch language should be used wherever content is visible to the end-user. Code should be done in English wherever applicable (this does not include API properties naturally in Dutch).
+- **Component Architecture**: Follow atomic design pattern (atoms, molecules, components, views)
+- **Styling Consistency**: Use established SCSS structure and NLDS design tokens
+- **API Integration**: Follow existing API patterns in src/api/ directory
+- **Theme System**: Consider multi-tenant theming based on hostname
+- **State Management**: Use MobX patterns consistently
+- **Routing**: Follow React Router patterns established in the app
+
+## File Organization & Naming Conventions
+- Use established directory structure
+- **Component Naming Prefixes**:
+  - `ac-` prefix: For existing components from Acato company
+  - `con-` prefix: For entirely new functionality/components from Conduction company, disconnected from existing functionality / patterns.
+  - Examples: `ac-header`, `ac-footer`, `con-table`, `con-horizontal-overflow-wrapper`
+- Maintain separation of concerns
+- Keep components focused and single-purpose
+- Follow the established pattern: `con-table.js`, `ac-header.js`, etc.
+
+## Import Paths
+- Use the defined path aliases from jsconfig.json
+- `@components`, `@utils`, `@stores`, `@views`, etc.
+- Avoid relative imports when path aliases are available
+
+## Styling Guidelines
+- Use NLDS design tokens for colors, spacing, typography
+- Follow the established SCSS structure in src/styles/
+- Use BEM methodology for CSS class naming
+- Consider responsive design patterns
+
+## State Management Patterns
+- Use MobX stores for global state
+- Follow the established store patterns in src/stores/
+- Use observer pattern for reactive components
+- Keep local state minimal when possible

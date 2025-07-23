@@ -33,8 +33,8 @@ const AcBeheerKwetsbaarheden = loadable(() =>
 const AcBeheerApplicaties = loadable(() =>
   import('@src/views/ac-beheer/ac-applicaties/pages/ac-applicaties')
 );
-const AcBeheerGebruikers = loadable(() =>
-  import('@src/views/ac-beheer/ac-gebruikers/pages/ac-gebruikers')
+const AcBeheerContactpersonen = loadable(() =>
+  import('@src/views/ac-beheer/ac-contactpersonen/pages/ac-contactpersonen')
 );
 
 // detail pages
@@ -61,8 +61,8 @@ const AcBeheerOrganisatieDetails = loadable(() =>
 const AcBeheerKwetsbaarheidDetails = loadable(() =>
   import('@src/views/ac-beheer/ac-kwetsbaarheid/pages/ac-kwetsbaarheid-details')
 );
-const AcBeheerGebruikerDetails = loadable(() =>
-  import('@src/views/ac-beheer/ac-gebruikers/pages/ac-gebruikers-details')
+const AcBeheerContactpersoonDetails = loadable(() =>
+  import('@src/views/ac-beheer/ac-contactpersonen/pages/ac-contactpersonen-details')
 );
 
 export {
@@ -76,7 +76,7 @@ export {
   AcBeheerError,
   AcBeheerLoading,
   AcBeheerApplicaties,
-  AcBeheerGebruikers,
+  AcBeheerContactpersonen,
   AcBeheerDienstDetails,
   AcBeheerApplicatiesDetails,
   AcBeheerVoorzieningenVersieDetails,
@@ -84,5 +84,5 @@ export {
   AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
-  AcBeheerGebruikerDetails,
+  AcBeheerContactpersoonDetails,
 };

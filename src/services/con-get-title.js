@@ -3,6 +3,7 @@ export const getTitle = () => {
 
   switch (hostname) {
     case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
     case 'vng.test.opencatalogi.nl':
       return 'Softwarecatalogus';
     case 'open-tilburg.accept.commonground.nu':
@@ -22,6 +23,10 @@ export const getTitle = () => {
       return 'OpenRegels';
     case 'horstadmaas.accept.opencatalogi.nl':
       return 'Horst aan de Maas';
+    case 'verwerkingsregister.horstaandemaas.nl':
+      return 'Horst aan de Maas';
+    case 'verwerkingsregister.venray.nl':
+      return 'Venray';
     case 'localhost':
       return 'Localhost catalogus';
     default:

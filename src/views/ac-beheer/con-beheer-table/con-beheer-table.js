@@ -1,7 +1,14 @@
-import { forwardRef, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from 'react';
 import { useNavigate } from 'react-router';
 import ConTable from '../con-table';
-import { AcFlex } from '@src/atoms';
+import { AcColumn, AcFlex } from '@src/atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
@@ -48,6 +55,60 @@ const GET_CONFIG = (type, metadata, navigate) => {
         ];
         config.defaultHeaders = ['name', 'voorzieningName', 'email'];
         config.removeHeaders = ['ondersteundeStandaarden'];
+        config.headerOverrides = {
+          voorziening: {
+            id: 'voorzieningName',
+            label: 'Applicatie',
+            key: 'voorziening',
+            customContent: (row) => {
+              return row?.voorziening?.naam || '-';
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+
+              const nameA = a?.voorziening?.naam || '';
+              const nameB = b?.voorziening?.naam || '';
+
+              return ConSorterLogic(nameA, nameB, direction);
+            },
+          },
+          leverancier_naam: {
+            id: 'leverancier',
+            label: 'Leverancier',
+            key: '',
+            customContent: (row) => {
+              return (
+                <AcColumn key={row.id}>
+                  <span>{row?.leverancier?.naam ?? '-'}</span>
+                </AcColumn>
+              );
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+
+              const idA = a?.leverancier?.id || '';
+              const idB = b?.leverancier?.id || '';
+
+              return ConSorterLogic(idA, idB, direction);
+            },
+          },
+          leverancier_email: {
+            id: 'email',
+            label: 'Email',
+            key: '',
+            customContent: (row) => {
+              return row?.leverancier?.contactgegevens?.email || '-';
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+
+              const emailA = a?.leverancier?.contactgegevens?.email || '';
+              const emailB = b?.leverancier?.contactgegevens?.email || '';
+
+              return ConSorterLogic(emailA, emailB, direction);
+            },
+          },
+        };
         break;
 
       case 'voorzieninggebruiken':
@@ -62,6 +123,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
         break;
 
       case 'voorzieningversies':
+      case 'voorzieningversie':
       case 'versies':
         config.navigateView = (id) => navigate(`/beheer/voorzieningen-versie/${id}`);
         config.schemaSlug = 'voorzieningversie';
@@ -70,6 +132,40 @@ const GET_CONFIG = (type, metadata, navigate) => {
           ['_extend[]', 'kwetsbaarheden'],
         ];
         config.defaultHeaders = ['name', 'versienummer', 'releaseDatum', 'status'];
+        config.headerOverrides = {
+          kwetsbaarheden: {
+            id: 'kwetsbaarheden',
+            label: 'Kwetsbaarheden',
+            key: '',
+            customContent: (row) => {
+              return (
+                row?.kwetsbaarheden
+                  ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
+                  .join(', ') || '-'
+              );
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+              const aTitle = a?.kwetsbaarheden?.[0]?.titel;
+              const bTitle = b?.kwetsbaarheden?.[0]?.titel;
+              return ConSorterLogic(aTitle, bTitle, direction);
+            },
+          },
+          voorziening: {
+            id: 'voorziening',
+            label: 'Applicatie',
+            key: '',
+            customContent: (row) => {
+              return row?.voorziening?.naam || '-';
+            },
+            sortComparator: (a, b, direction) => {
+              if (direction === null) return 0;
+              const aTitle = a?.voorziening?.naam || '';
+              const bTitle = b?.voorziening?.naam || '';
+              return ConSorterLogic(aTitle, bTitle, direction);
+            },
+          },
+        };
         break;
 
       case 'contracten':
@@ -99,10 +195,40 @@ const GET_CONFIG = (type, metadata, navigate) => {
         config.defaultHeaders = ['titel', 'ernst', 'detectedOn', 'status'];
         break;
 
-      case 'gebruikers':
-        config.navigateView = (id) => navigate(`/beheer/gebruikers/${id}`);
-        config.schemaSlug = 'gebruiker';
-        config.defaultHeaders = ['name', 'status', 'lastActivity', 'email'];
+      case 'gebruiker':
+      case 'contactpersoon':
+      case 'contactpersonen':
+        config.navigateView = (id) => navigate(`/beheer/contactpersonen/${id}`);
+        config.schemaSlug = 'contactpersoon';
+        config.defaultHeaders = [
+          'name',
+          'status',
+          'lastActivity',
+          'email',
+          'organisatie',
+        ];
+        config.headerOverrides = {
+          voornaam: {
+            id: 'name',
+            label: 'Naam',
+            key: 'voornaam',
+            customContent: (row) => `${row.voornaam} ${row.achternaam}`,
+          },
+          organisatie: {
+            id: 'organisatie',
+            label: 'Organisatie',
+            key: 'organisatie',
+            customContent: (row) => row.organisatie?.naam || row.organisatie || '-',
+          },
+          actief: {
+            id: 'status',
+            label: 'Status',
+            key: 'actief',
+            customContent: (row) => (
+              <span>{row.actief ? 'Actief' : 'Inactief'}</span>
+            ),
+          },
+        };
         break;
 
       default:
@@ -135,6 +261,8 @@ const GET_CONFIG = (type, metadata, navigate) => {
  * | 'organisaties'
  * | 'kwetsbaarheden'
  * | 'gebruikers'
+ * | 'contactpersoon'
+ * | 'contactpersonen'
  * } type
  */
 
@@ -148,6 +276,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
  * @param {function} props.getHeaders - gets the headers generated by the component
  * @param {function} props.headers - sets the headers to custom headers, takes precedence over the headers generated by the component
  * @param {function} props.getDefaultHeaders - gets the default headers from the specified type
+ * @param {(searchValues: { [headerId: string]: string }) => void} props.onHeaderSearch - Callback function called when any header search value changes. Receives an object with all current search values as parameters.
  * @returns
  */
 const BeheerTable = forwardRef((props, ref) => {
@@ -169,6 +298,7 @@ const BeheerTable = forwardRef((props, ref) => {
     tableProps = {},
     pagination = {},
     setPagination = () => {},
+    onHeaderSearch,
   } = props;
 
   if (!type && !metadata) {
@@ -182,7 +312,7 @@ const BeheerTable = forwardRef((props, ref) => {
   const shouldFetchDataProperties = !providedDataProperties?.length;
 
   const [data, setData] = useState([]);
-  const [dataProperties, setDataProperties] = useState([]);
+  const [dataProperties, setDataProperties] = useState({});
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -198,13 +328,35 @@ const BeheerTable = forwardRef((props, ref) => {
     getDefaultHeaders?.(config.defaultHeaders);
   }, [config.defaultHeaders, getDefaultHeaders]);
 
-  const fetchObjectData = async () => {
+  const fetchObjectData = async (searchParams = {}) => {
+    // ✅ Transform search parameters to handle extended properties
+    const transformedSearchParams = {};
+
+    Object.entries(searchParams).forEach(([key, value]) => {
+      // Check if this property is extended in the config
+      const isExtended = config.extend.some(([extendKey, extendValue]) => {
+        // Check if the extend value matches the property name
+        // e.g., ['_extend[]', 'voorziening'] would match 'voorziening'
+        return extendValue === key;
+      });
+
+      if (isExtended) {
+        // For extended properties, use the common field name (usually 'naam')
+        // You might want to make this configurable per property
+        transformedSearchParams[`${key}.naam`] = value;
+      } else {
+        // For non-extended properties, use the key as-is
+        transformedSearchParams[key] = value;
+      }
+    });
+
     const response = await makeRequest(
       `${BASE_URL}/apps/openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
       [
         ...config.extend,
         ['_limit', pagination?.limit || 9999],
         ['_page', pagination?.page || 1],
+        ...Object.entries(transformedSearchParams), // ✅ Use transformed search params
       ],
       null,
       '/beheer/diensten'
@@ -244,15 +396,6 @@ const BeheerTable = forwardRef((props, ref) => {
   };
 
   useEffect(async () => {
-    // Set provided data if it exists
-    if (!shouldFetchData) {
-      setData(providedData);
-    }
-
-    if (!shouldFetchDataProperties) {
-      setDataProperties(providedDataProperties);
-    }
-
     // Return early if no fetching needed
     if (!shouldFetchData && !shouldFetchDataProperties) {
       return;
@@ -276,6 +419,18 @@ const BeheerTable = forwardRef((props, ref) => {
       getLoading?.(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (!shouldFetchData) {
+      setData(providedData);
+    }
+  }, [providedData]);
+
+  useEffect(() => {
+    if (!shouldFetchDataProperties) {
+      setDataProperties(providedDataProperties);
+    }
+  }, [providedDataProperties]);
 
   useLaterEffect(async () => {
     if (!shouldFetchData) return;
@@ -312,6 +467,11 @@ const BeheerTable = forwardRef((props, ref) => {
         // Check if we have a custom override for this header
         if (headerOverrides?.[key]) {
           return headerOverrides[key];
+        }
+
+        // Try config.headerOverrides if headerOverrides doesn't exist
+        if (config.headerOverrides?.[key]) {
+          return config.headerOverrides[key];
         }
 
         // Generate standard header from schema
@@ -398,9 +558,26 @@ const BeheerTable = forwardRef((props, ref) => {
         ),
       };
 
+  // ✅ Add handler for header search
+  const handleHeaderSearch = useCallback(
+    (searchValues) => {
+      // Call the parent's onHeaderSearch callback if provided
+      if (typeof onHeaderSearch === 'function') {
+        onHeaderSearch(searchValues);
+      } else {
+        // If no parent callback, refetch data with search parameters
+        fetchObjectData(searchValues);
+      }
+    },
+    [onHeaderSearch]
+  );
+
+  console.log(dataProperties);
+
   return (
     <ConTable
       data={data}
+      dataProperties={dataProperties}
       // `providedHeaders` takes precedence over the tableHeaders generated by the component
       tableHeaders={[
         ...(!!providedHeaders?.length ? providedHeaders : tableHeaders),
@@ -412,6 +589,7 @@ const BeheerTable = forwardRef((props, ref) => {
       truncateLines={3}
       showSortButtons
       loading={loading}
+      onHeaderSearch={handleHeaderSearch}
       {...tableProps}
     />
   );

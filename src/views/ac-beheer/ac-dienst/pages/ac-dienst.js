@@ -20,6 +20,9 @@ import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
 
 const AcBeheerDienst = () => {
   // get the query params manually since useParams doesn't work with any query param
@@ -30,13 +33,21 @@ const AcBeheerDienst = () => {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('diensten');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 5,
+    limit,
     offset: 0,
   });
+
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -172,7 +183,7 @@ const AcBeheerDienst = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.SubMenu
-                    label='Download'
+                    label='Exporteren'
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
@@ -221,19 +232,33 @@ const AcBeheerDienst = () => {
             setPagination={setPagination}
           />
 
-          <Pagination
-            totalPages={pagination?.pages}
-            page={parseInt(pagination?.page, 10)}
-            onPageChange={(page) => {
-              setPagination((prev) => ({
-                ...prev,
-                page,
-              }));
-            }}
-            nextLabel=''
-            previousLabel=''
-            maxVisiblePages={7}
-          />
+          <AcFlex justifyContent='between'>
+            <Pagination
+              totalPages={pagination?.pages}
+              page={parseInt(pagination?.page, 10)}
+              onPageChange={(page) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }));
+              }}
+              nextLabel=''
+              previousLabel=''
+              maxVisiblePages={7}
+            />
+
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
+
+            <ConPaginationLimitSelector
+              objectType='diensten'
+              value={limit}
+              onChange={setLimit}
+            />
+          </AcFlex>
 
           {/* modals */}
           <AcDienstFormModal

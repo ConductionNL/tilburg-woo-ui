@@ -11,6 +11,7 @@ import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import licenses from '@assets/licenses/licenses.json';
+import { LogoUploadField } from '../../ac-organisatie/modals/ac-organisatie-form-modal';
 
 const AcApplicatiesFormModal = ({
   applicatie,
@@ -22,6 +23,7 @@ const AcApplicatiesFormModal = ({
   const initialData = {
     name: '',
     description: '',
+    summary: '',
     category: '',
     referenceComponents: [],
     standards: [],
@@ -42,8 +44,8 @@ const AcApplicatiesFormModal = ({
     useState(false);
   const [standaardenOptions, setStandaardenOptions] = useState([]);
   const [standaardenLoading, setStandaardenLoading] = useState(false);
-  const [gebruikersOptions, setGebruikersOptions] = useState([]);
-  const [gebruikersLoading, setGebruikersLoading] = useState(false);
+  const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
+  const [contactpersonenLoading, setContactpersonenLoading] = useState(false);
   const [organisatiesOptions, setOrganisatiesOptions] = useState([]);
   const [organisatiesLoading, setOrganisatiesLoading] = useState(false);
   const [licenseOptions, setLicenseOptions] = useState([]);
@@ -84,15 +86,15 @@ const AcApplicatiesFormModal = ({
       );
     };
 
-    const fetchGebruikers = async () => {
-      setGebruikersLoading(true);
+    const fetchContactpersonen = async () => {
+      setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/gebruiker`
-      ).finally(() => setGebruikersLoading(false));
+        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+      ).finally(() => setContactpersonenLoading(false));
 
       const data = await response.data;
 
-      setGebruikersOptions(
+      setContactpersonenOptions(
         data.results.map((item) => {
           const nameParts = [
             item.voornaam,
@@ -127,7 +129,7 @@ const AcApplicatiesFormModal = ({
     if (showModal) {
       fetchSchema();
       fetchVoorzieningsTypes();
-      fetchGebruikers();
+      fetchContactpersonen();
       fetchOrganisaties();
     }
   }, [showModal]);
@@ -228,7 +230,8 @@ const AcApplicatiesFormModal = ({
           ...applicatie,
           id: applicatie.id,
           name: applicatie.naam,
-          description: applicatie.beschrijving,
+          description: applicatie.beschrijvingLang,
+          summary: applicatie.beschrijvingKort,
           category: applicatie.categorie,
           referenceComponents: smartSplit(
             collapseExtendedObjects(applicatie.referentieComponenten)
@@ -261,6 +264,17 @@ const AcApplicatiesFormModal = ({
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;
 
     try {
+      // Handle logo file conversion
+      let logoValue = applicatieFormData.logo || null;
+      if (
+        applicatieFormData.logo &&
+        typeof applicatieFormData.logo.getDataUrl === 'function'
+      ) {
+        logoValue = await applicatieFormData.logo.getDataUrl();
+      } else {
+        logoValue = null;
+      }
+
       const response = await makeRequest(url, null, {
         method: method,
         body: JSON.stringify({
@@ -271,6 +285,7 @@ const AcApplicatiesFormModal = ({
           referentieComponenten: applicatieFormData.referenceComponents,
           standaarden: applicatieFormData.standards,
           voorzieningstype: applicatieFormData.voorzieningstype,
+          logo: logoValue || null,
         }),
       });
 
@@ -341,14 +356,15 @@ const AcApplicatiesFormModal = ({
       title={isEdit ? 'Applicatie bewerken' : 'Applicatie toevoegen'}
       layoutClassName='wide-content'
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcGrid columns={2}>
@@ -357,7 +373,8 @@ const AcApplicatiesFormModal = ({
           formData={{
             // Map schema properties to form data fields
             naam: applicatieFormData.name,
-            beschrijving: applicatieFormData.description,
+            beschrijvingLang: applicatieFormData.description,
+            beschrijvingKort: applicatieFormData.summary,
             voorzieningstype: applicatieFormData.voorzieningstype,
             referentieComponenten: applicatieFormData.referenceComponents,
             standaarden: applicatieFormData.standards,
@@ -402,6 +419,9 @@ const AcApplicatiesFormModal = ({
               [formFieldName]: value,
             }));
           }}
+          customFieldComponents={{
+            logo: LogoUploadField,
+          }}
           optionsProviders={{
             voorzieningstype: voorzieningsTypes?.map((type) => ({
               value: type.id,
@@ -410,7 +430,7 @@ const AcApplicatiesFormModal = ({
             licentie: licenseOptions,
             referentieComponenten: referentieComponentenOptions,
             standaarden: standaardenOptions,
-            contact: gebruikersOptions,
+            contact: contactpersonenOptions,
             organisatie: organisatiesOptions,
             diensten: [
               'Functioneel beheer',
@@ -428,7 +448,7 @@ const AcApplicatiesFormModal = ({
           loadingStates={{
             referentieComponenten: referentieComponentenLoading,
             standaarden: standaardenLoading,
-            contact: gebruikersLoading,
+            contact: contactpersonenLoading,
             organisatie: organisatiesLoading,
           }}
           disabledStates={{

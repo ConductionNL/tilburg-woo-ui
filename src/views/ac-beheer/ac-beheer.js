@@ -20,8 +20,8 @@ import {
   AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
-  AcBeheerGebruikers,
-  AcBeheerGebruikerDetails,
+  AcBeheerContactpersonen,
+  AcBeheerContactpersoonDetails,
   AcBeheerApplicaties,
   AcBeheerApplicatiesDetails,
 } from '@views/ac-beheer';
@@ -87,8 +87,8 @@ const AcBeheer = () => {
         return <AcBeheerOrganisaties />;
       case 'kwetsbaarheden':
         return <AcBeheerKwetsbaarheden />;
-      case 'gebruikers':
-        return <AcBeheerGebruikers />;
+      case 'contactpersonen':
+        return <AcBeheerContactpersonen />;
       default:
         return wrongPage();
     }
@@ -109,8 +109,8 @@ const AcBeheer = () => {
       return <AcBeheerOrganisatieDetails id={id} />;
     case 'kwetsbaarheden':
       return <AcBeheerKwetsbaarheidDetails id={id} />;
-    case 'gebruikers':
-      return <AcBeheerGebruikerDetails id={id} />;
+    case 'contactpersonen':
+      return <AcBeheerContactpersoonDetails id={id} />;
     default:
       return wrongPage();
   }

@@ -45,6 +45,7 @@ const AcFooter = ({ store: { menu } }) => {
 
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'acceptatie.softwarecatalogus.nl':
         return [
           VNG_FOOTER_ITEMS_SITEMAP,
           VNG_FOOTER_ITEMS_INFORMATIE,

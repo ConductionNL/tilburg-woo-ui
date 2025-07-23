@@ -23,6 +23,7 @@ import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
+import { useDebouncedInput } from '@src/hooks/index';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -168,12 +169,22 @@ const AcRegister = () => {
   }, []);
 
   const validateWebsite = useCallback((website) => {
-    return website && website.match(/^https?:\/\/[^\s]+$/);
+    return (
+      website &&
+      website.match(/^(?:https:\/\/|www\.)[^\s]+\.[a-z]{2,}(?:\/[^\s]*)?$/i)
+    );
   }, []);
 
   const validatePhone = useCallback((phone) => {
     if (!phone) return false;
-    return isValidPhoneNumber(phone, 'NL');
+    const trimmed = phone.replace(/\s+/g, '');
+    if (trimmed.startsWith('+')) {
+      return isValidPhoneNumber(trimmed);
+    }
+    if (trimmed.startsWith('06')) {
+      return isValidPhoneNumber(trimmed, 'NL');
+    }
+    return false;
   }, []);
 
   const handleRegister = async () => {
@@ -229,7 +240,7 @@ const AcRegister = () => {
         const data = await response.json();
         setRegisterCallBack('error');
         setError({ message: data.message, errors: data.errors });
-        throw new Error('Registration failed');
+        throw new Error('Aanmelden mislukt');
       }
     } catch (error) {
       setRegisterCallBack('error');
@@ -239,33 +250,17 @@ const AcRegister = () => {
     }
   };
 
+  const focusForm = () => {
+    const form = document.querySelector('#formStart');
+    if (form) {
+      form.focus();
+    }
+  };
+
   const resetForm = () => {
     setRegisterCallBack(null);
-    setOrganization({
-      name: '',
-      contactInformation: {},
-      website: '',
-      links: '',
-      oin: '',
-      logo: '',
-      cbs: '',
-      phone: '',
-      role: '',
-      summary: '',
-      contactPersons: [
-        {
-          firstName: '',
-          middleName: '',
-          lastName: '',
-          phone: '',
-          email: '',
-          function: '',
-        },
-      ],
-      organizationType: 'Leverancier',
-      kvkNumber: '',
-      email: '',
-    });
+    setError({ message: null, errors: null });
+
     setTouched({
       name: false,
       contactPersons: {
@@ -415,7 +410,12 @@ const AcRegister = () => {
         messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
       }
       if (organization.website && !validateWebsite(organization.website)) {
-        messages.push('Ongeldig websiteadres');
+        messages.push(
+          !organization.website.startsWith('https://') &&
+            !organization.website.startsWith('www.')
+            ? 'Website moet beginnen met https:// of www.'
+            : 'Ongeldig Websiteadres'
+        );
       }
       return messages.join('\n');
     }
@@ -529,6 +529,8 @@ const AcRegister = () => {
                       >
                         {currentStepName(currentStep)}
                       </div>
+                      <div tabindex='-1' id='formStart'></div>
+
                       {renderStep(currentStep)}
 
                       <div
@@ -549,7 +551,7 @@ const AcRegister = () => {
                           </AcButton>
                         )}
                         {currentStep !== 3 &&
-                          organization.organizationType !== 'gemeente' && (
+                          organization.organizationType !== 'Gemeente' && (
                             <div className='ac-register-button-wrapper'>
                               <AcButton
                                 style='button'
@@ -558,7 +560,10 @@ const AcRegister = () => {
                                 )}
                                 icon={<VISUALS.ARROW_RIGHT />}
                                 disabled={getDisabledStatus(currentStep) || loading}
-                                onClick={() => setCurrentStep(currentStep + 1)}
+                                onClick={() => {
+                                  focusForm();
+                                  setCurrentStep(currentStep + 1);
+                                }}
                                 title={
                                   getDisabledStatus(currentStep)
                                     ? getDisabledTooltip(
@@ -577,14 +582,9 @@ const AcRegister = () => {
                         {currentStep === 3 && (
                           <AcButton
                             style='button'
-                            icon={
-                              loading ? (
-                                <VISUALS.SPINNER className='ac-register-button--loading' />
-                              ) : (
-                                <VISUALS.CLIPBOARD_CHECK />
-                              )
-                            }
+                            icon={<VISUALS.CLIPBOARD_CHECK />}
                             onClick={handleRegister}
+                            loading={loading}
                             disabled={
                               loading ||
                               !confirmationCheckbox.terms ||
@@ -605,9 +605,12 @@ const AcRegister = () => {
           {registerCallBack === 'success' && (
             <AcColumn gap='sm'>
               <Heading level={2}>Aanmelding succesvol!</Heading>
-              <p>Beste {organization.name},</p>
               <p>
-                Uw aanmelding voor de SoftwareCatalogus is succesvol ontvangen. We
+                Beste {organization.contactPersons[0].firstName}{' '}
+                {organization.contactPersons[0].lastName} van {organization.name},
+              </p>
+              <p>
+                Uw aanmelding voor de Softwarecatalogus is succesvol ontvangen. We
                 hebben een bevestigingsmail gestuurd naar{' '}
                 <b>{organization.contactPersons[0].email}</b>. Controleer uw inbox
                 (en eventueel uw spam folder) voor deze bevestiging.
@@ -615,11 +618,13 @@ const AcRegister = () => {
               <p>
                 Een beheerder zal uw aanmelding beoordelen. Zodra uw aanmelding is
                 goedgekeurd, ontvangt u een nieuwe e-mail met daarin uw inloggegevens
-                en verdere instructies voor het gebruik van de SoftwareCatalogus.
+                en verdere instructies voor het gebruik van de Softwarecatalogus.
               </p>
               <p>
                 Heeft u vragen? Neem dan contact op met onze helpdesk via
-                support@softwarecatalogus.nl
+                <Link href='mailto:softwarecatalogus@vng.nl'>
+                  softwarecatalogus@vng.nl
+                </Link>
               </p>
               <br />
               <AcButton
@@ -627,7 +632,7 @@ const AcRegister = () => {
                 icon={<VISUALS.ARROW_LEFT />}
                 onClick={() => navigate('/')}
               >
-                Terug naar homepage
+                Terug naar de homepage
               </AcButton>
             </AcColumn>
           )}
@@ -640,7 +645,7 @@ const AcRegister = () => {
                 {organization.contactPersons[0].lastName} van {organization.name},
               </p>
               <p>
-                Er ging iets mis bij het verwerken van je registratie voor de
+                Er ging iets mis bij het verwerken van je aanmelding voor de
                 Softwarecatalogus. .{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
@@ -675,12 +680,16 @@ const AcRegister = () => {
                 dan gerust contact op via softwarecatalogus@vng.nl en voeg er de
                 foutmelding toe. We helpen je graag verder.
               </p>
-              <p>Met vriendelijke groet, Het team van de Softwarecatalogus</p>
+              <p>Met vriendelijke groet,</p>
+              <br />
+              <p>Het team van de Softwarecatalogus</p>
               <br />
               <AcButton
                 style='button'
                 icon={<VISUALS.ARROW_LEFT />}
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  resetForm();
+                }}
               >
                 Terug naar aanmelden
               </AcButton>
@@ -694,6 +703,16 @@ const AcRegister = () => {
 
 const OrganizationRequiredForm = memo(
   ({ organization, setOrganizationData, loading, touched, validateWebsite }) => {
+    const debouncedSetWebsite = useDebouncedInput(
+      (value) => setOrganizationData('website', value),
+      500
+    );
+
+    const debouncedSetName = useDebouncedInput(
+      (value) => setOrganizationData('name', value),
+      500
+    );
+
     return (
       <div
         className='ac-register-form-section'
@@ -703,15 +722,114 @@ const OrganizationRequiredForm = memo(
         <h2 id='organization-section-title' className='sr-only'>
           Verplichte gegevens
         </h2>
+
+        {organization.organizationType === 'Gemeente' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>Gemeenten zijn al aangemeld</Heading>
+                  <Paragraph>
+                    Alle Nederlandse gemeenten zijn al opgenomen in de
+                    Softwarecatalogus. Ook is voor elke gemeente een inlogaccount
+                    beschikbaar om het gemeentelijk applicatieportfolio te beheren.​
+                    Bent u gemeentemedewerker en heeft u zelf nog geen persoonlijk
+                    account? Vraag dan binnen uw gemeente na wie een beheeraccount
+                    heeft. Dit is vaak de informatiemanager of de coördinator I&A.
+                    Deze collega kan u eenvoudig toegang verlenen.​
+                  </Paragraph>
+                  <Paragraph>
+                    Heeft u vragen of komt u er niet uit? Neem dan gerust contact met
+                    ons op via{' '}
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
+                      softwarecatalogus@vng.nl
+                    </Link>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
+        {organization.organizationType === 'Samenwerking' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>
+                    Sommige samenwerkingen zijn al aangemeld
+                  </Heading>
+                  <Paragraph>
+                    Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
+                    Softwarecatalogus. Controleer daarom eerst de lijst "Alle
+                    samenwerkingsverbanden". Staat uw samenwerkingsverband ertussen?
+                    Vraag dan toegang aan bij de beheerder – vaak de
+                    ICT-verantwoordelijke.{' '}
+                  </Paragraph>
+                  <Paragraph>
+                    De samenwerking niet gevonden? Vul dan het aanmeldformulier in.
+                  </Paragraph>
+                  <Paragraph>
+                    Heeft u vragen? Mail ons via{' '}
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
+                      softwarecatalogus@vng.nl
+                    </Link>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
+        {organization.organizationType === 'Community' && (
+          <div className='ac-register-form-alert'>
+            <Alert type='info'>
+              <AcFlex spacing='sm'>
+                <VISUALS.INFO_BLUE />
+                <AcFlex column spacing='xs'>
+                  <Heading level={3}>Sommige communities zijn al aangemeld</Heading>
+                  <Paragraph>
+                    Met een community wordt een samenwerkingsverband van gemeenten
+                    die gezamenlijk applicaties (door)ontwikkelen en de software
+                    beschikbaar stellen voor hergebruik bedoelt. Controleer eerst de
+                    lijst "Alle communities" of de community al bestaat. Staat de
+                    community ertussen? Vraag dan toegang aan bij de beheerder.
+                  </Paragraph>
+                  <Paragraph>
+                    De community niet gevonden? Vul dan het aanmeldformulier in.
+                  </Paragraph>
+                  <Paragraph>
+                    Heeft u vragen? Mail ons via{' '}
+                    <Link
+                      className='ac-register-form-alert-link'
+                      href='mailto:softwarecatalogus@vng.nl'
+                    >
+                      softwarecatalogus@vng.nl
+                    </Link>
+                    .
+                  </Paragraph>
+                </AcFlex>
+              </AcFlex>
+            </Alert>
+          </div>
+        )}
         <div className='ac-register-form-grid'>
-          {organization.organizationType !== 'gemeente' && (
+          {organization.organizationType !== 'Gemeente' && (
             <div style={{ gridColumn: 'span 2' }}>
               <AcFormField
                 label='Naam'
                 required={true}
                 placeholder='Voorbeeld: Gemeente Amsterdam'
                 value={organization.name}
-                onBlur={(e) => setOrganizationData('name', e)}
+                onChange={(e) => debouncedSetName(e)}
                 hasError={touched.name && !organization.name}
                 disabled={loading}
                 id='org-name'
@@ -754,7 +872,7 @@ const OrganizationRequiredForm = memo(
               aria-required='true'
             />
           </div>
-          {organization.organizationType !== 'gemeente' && (
+          {organization.organizationType !== 'Gemeente' && (
             <div>
               <AcFormField
                 label='Website'
@@ -766,7 +884,7 @@ const OrganizationRequiredForm = memo(
                   (organization.website && !validateWebsite(organization.website))
                 }
                 type='text'
-                onBlur={(e) => setOrganizationData('website', e)}
+                onChange={(e) => debouncedSetWebsite(e)}
                 id='website-field'
                 aria-describedby={
                   touched.website && !organization.website
@@ -784,36 +902,15 @@ const OrganizationRequiredForm = memo(
                       ? 'Dit veld is verplicht'
                       : organization.website &&
                         !validateWebsite(organization.website) &&
-                        'Ongeldig websiteadres'}
+                        !organization.website.startsWith('https://') &&
+                        !organization.website.startsWith('www.')
+                      ? 'Website moet beginnen met https:// of www.'
+                      : 'Ongeldig Websiteadres'}
                   </span>
                 )}
             </div>
           )}
         </div>
-        {organization.organizationType === 'gemeente' && (
-          <div className='ac-register-form-alert'>
-            <Alert type='info'>
-              <AcFlex spacing='sm'>
-                <VISUALS.INFO_BLUE />
-                <AcFlex column spacing='xs'>
-                  <Heading level={3}>Gemeenten zijn al geregistreerd</Heading>
-                  <Paragraph>
-                    Alle Nederlandse gemeenten zijn reeds opgenomen in de
-                    SoftwareCatalogus. Voor meer informatie of vragen kunt u contact
-                    opnemen met{' '}
-                    <Link
-                      className='ac-register-form-alert-link'
-                      href='mailto:softwarecatalogus@vng.nl'
-                    >
-                      softwarecatalogus@vng.nl
-                    </Link>
-                    .
-                  </Paragraph>
-                </AcFlex>
-              </AcFlex>
-            </Alert>
-          </div>
-        )}
       </div>
     );
   }
@@ -832,13 +929,45 @@ const OrganizationOptionalForm = memo(
     const counterRef = useRef(null);
     let localSummary = organization.summary || '';
 
+    // Debounced functions for all optional fields
+    const debouncedSetSummary = useDebouncedInput(
+      (value) => setOrganizationData('summary', value),
+      500
+    );
+
+    const debouncedSetKvkNumber = useDebouncedInput(
+      (value) => setOrganizationData('kvkNumber', value),
+      500
+    );
+
+    const debouncedSetOin = useDebouncedInput(
+      (value) => setOrganizationData('oin', value),
+      500
+    );
+
+    const debouncedSetPhone = useDebouncedInput(
+      (value) => setOrganizationData('phone', value),
+      500
+    );
+
+    const debouncedSetEmail = useDebouncedInput(
+      (value) => setOrganizationData('email', value),
+      500
+    );
+
+    // Update counter with correct singular/plural
     const updateCounter = (value) => {
+      const remaining = 255 - (value?.length || 0);
+      const label = remaining === 1 ? 'karakter over' : 'karakters over';
       if (counterRef.current) {
-        counterRef.current.textContent = `${
-          255 - (value?.length || 0)
-        } karakters over`;
+        counterRef.current.textContent = `${remaining} ${label}`;
       }
     };
+
+    // Update counter on mount and when summary changes
+    useEffect(() => {
+      updateCounter(organization.summary || '');
+    }, [organization.summary]);
 
     return (
       <div className='ac-register-form-section'>
@@ -854,8 +983,8 @@ const OrganizationOptionalForm = memo(
               onChange={(e) => {
                 localSummary = e;
                 updateCounter(e);
+                debouncedSetSummary(e);
               }}
-              onBlur={(e) => setOrganizationData('summary', e)}
               disabled={loading}
               maxLength={255}
               className='textarea-with-dimensions'
@@ -864,9 +993,7 @@ const OrganizationOptionalForm = memo(
                 '--textarea-width': dimensions.width,
               }}
             />
-            <span ref={counterRef} className='character-count'>
-              {255 - (localSummary?.length || 0)} karakters over
-            </span>
+            <span ref={counterRef} className='character-count' />
           </div>
 
           <AcFlex column spacing='sm'>
@@ -875,7 +1002,7 @@ const OrganizationOptionalForm = memo(
                 label='KvK nummer'
                 placeholder='12345678'
                 value={organization.kvkNumber}
-                onBlur={(e) => setOrganizationData('kvkNumber', e)}
+                onChange={(e) => debouncedSetKvkNumber(e)}
                 disabled={loading}
               />
             )}
@@ -886,7 +1013,7 @@ const OrganizationOptionalForm = memo(
                 label='OIN'
                 placeholder='00000001002564440000'
                 value={organization.oin}
-                onBlur={(e) => setOrganizationData('oin', e)}
+                onChange={(e) => debouncedSetOin(e)}
                 disabled={loading}
               />
             )}
@@ -945,7 +1072,7 @@ const OrganizationOptionalForm = memo(
                 placeholder='06 12345678'
                 value={organization.phone}
                 type='tel'
-                onBlur={(e) => setOrganizationData('phone', e)}
+                onChange={(e) => debouncedSetPhone(e)}
                 hasError={organization.phone && !validatePhone(organization.phone)}
                 id='phone-field'
                 disabled={loading}
@@ -953,7 +1080,7 @@ const OrganizationOptionalForm = memo(
               <span className='ac-register-form-field-error'>
                 {organization.phone &&
                   !validatePhone(organization.phone) &&
-                  'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
+                  'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
               </span>
             </div>
 
@@ -963,7 +1090,7 @@ const OrganizationOptionalForm = memo(
                 placeholder='john.doe@example.com'
                 value={organization.email}
                 type='email'
-                onBlur={(e) => setOrganizationData('email', e)}
+                onChange={(e) => debouncedSetEmail(e)}
                 hasError={organization.email && !validateEmail(organization.email)}
                 id='email-field'
                 disabled={loading}
@@ -992,6 +1119,32 @@ const ContactInformationForm = memo(
     showAlert,
     setShowAlert,
   }) => {
+    // Debounced functions for all contact person fields
+    const debouncedSetFirstName = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.firstName', value),
+      500
+    );
+
+    const debouncedSetLastName = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.lastName', value),
+      500
+    );
+
+    const debouncedSetContactPhone = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.phone', value),
+      500
+    );
+
+    const debouncedSetContactEmail = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.email', value),
+      500
+    );
+
+    const debouncedSetFunction = useDebouncedInput(
+      (value) => setOrganizationData('contactPersons.function', value),
+      500
+    );
+
     return (
       <div className='ac-register-form-section'>
         <div style={{ position: 'relative' }}>
@@ -1030,7 +1183,7 @@ const ContactInformationForm = memo(
               placeholder='John'
               value={organization.contactPersons[0].firstName}
               type='text'
-              onBlur={(e) => setOrganizationData('contactPersons.firstName', e)}
+              onChange={(e) => debouncedSetFirstName(e)}
               hasError={
                 touched.contactPersons.firstName &&
                 !organization.contactPersons[0].firstName
@@ -1051,7 +1204,7 @@ const ContactInformationForm = memo(
               placeholder='Doe'
               value={organization.contactPersons[0].lastName}
               type='text'
-              onBlur={(e) => setOrganizationData('contactPersons.lastName', e)}
+              onChange={(e) => debouncedSetLastName(e)}
               hasError={
                 touched.contactPersons.lastName &&
                 !organization.contactPersons[0].lastName
@@ -1072,7 +1225,7 @@ const ContactInformationForm = memo(
               placeholder='06 12345678'
               value={organization.contactPersons[0].phone}
               type='tel'
-              onBlur={(e) => setOrganizationData('contactPersons.phone', e)}
+              onChange={(e) => debouncedSetContactPhone(e)}
               hasError={
                 (touched.contactPersons.phone &&
                   !organization.contactPersons[0].phone) ||
@@ -1087,7 +1240,7 @@ const ContactInformationForm = memo(
                 ? 'Dit veld is verplicht'
                 : organization.contactPersons[0].phone &&
                   !validatePhone(organization.contactPersons[0].phone) &&
-                  'Ongeldig telefoonnummer. Gebruik een Nederlands nummer (bijv. 06 1234 5678 of +31 6 1234 5678)'}
+                  'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
             </span>
           </div>
           <div>
@@ -1097,7 +1250,7 @@ const ContactInformationForm = memo(
               placeholder='john.doe@example.com'
               value={organization.contactPersons[0].email}
               type='email'
-              onBlur={(e) => setOrganizationData('contactPersons.email', e)}
+              onChange={(e) => debouncedSetContactEmail(e)}
               hasError={
                 (touched.contactPersons.email &&
                   !organization.contactPersons[0].email) ||
@@ -1120,7 +1273,7 @@ const ContactInformationForm = memo(
             placeholder='Sales Manager'
             value={organization.contactPersons[0].function}
             type='text'
-            onBlur={(e) => setOrganizationData('contactPersons.function', e)}
+            onChange={(e) => debouncedSetFunction(e)}
             id='name-field'
             disabled={loading}
           />

@@ -1,0 +1,40 @@
+.ac-mijn-omgeving-section {
+  .ac-register-form-section {
+    margin-block-start: var(--tilburg-space-block-rat);
+  }
+
+  .ac-register-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--tilburg-space-block-rat);
+  }
+
+  .ac-register-form-buttons {
+    margin-block-start: var(--tilburg-space-block-rat);
+  }
+
+  .ac-register-form-field-error {
+    display: block;
+    color: var(--tilburg-color-red-400);
+    font-size: 0.875rem;
+    margin-block-start: var(--tilburg-space-block-beetle);
+  }
+
+  .ac-alert-close-btn {
+    margin-left: var(--tilburg-space-inline-mouse);
+    padding: 0.25rem 0.5rem;
+    min-width: 32px;
+    min-height: 32px;
+    height: 32px;
+    width: 32px;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // Fix for alert content width so close button aligns right
+  .utrecht-alert__content {
+    width: 100%;
+  }
+}

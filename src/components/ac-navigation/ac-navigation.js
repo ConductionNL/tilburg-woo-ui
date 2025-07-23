@@ -128,6 +128,12 @@ const AcNavigation = ({ store: { menu } }) => {
                     </Link>
                   </li>
                   <li>
+                    <Link to='/account'>
+                      <VISUALS.USER />
+                      Account
+                    </Link>
+                  </li>
+                  <li>
                     <Link to='#' onClick={handleLogout}>
                       <VISUALS.RIGHT_FROM_BRACKET />
                       Logout

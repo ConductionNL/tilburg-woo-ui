@@ -28,7 +28,12 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
-import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
+import ConPaginationLimitSelector, {
+  usePaginationLimit,
+} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import { TOOLTIP_ID } from '@src/index.web';
+import { AcLink } from '@molecules';
 
 const AcBeheerOrganisaties = () => {
   const navigate = useNavigate();
@@ -37,15 +42,23 @@ const AcBeheerOrganisaties = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
+
+  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+
+  // Use the custom hook for pagination limit management
+  const [limit, setLimit] = usePaginationLimit('organisaties');
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
     pages: 0,
-    limit: 5,
+    limit,
     offset: 0,
   });
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  // Update pagination when limit changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, limit }));
+  }, [limit]);
 
   const filterHeadersDrawerRef = useRef(null);
 
@@ -73,43 +86,59 @@ const AcBeheerOrganisaties = () => {
     }
   }, []);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const fetchData = useCallback(
+    async (searchParams = {}) => {
+      try {
+        setLoading(true);
 
-      const extend = [['_extend[]', 'contactgegevens']];
-      if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
+        const extend = [['_extend[]', 'contactgegevens']];
+        if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
-      const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        [...extend, ['_page', pagination.page], ['_limit', pagination.limit]],
-        null,
-        '/beheer/organisaties'
-      );
+        const response = await makeRequest(
+          `${BASE_URL}/apps/${endpoint}`,
+          [
+            ...extend,
+            ['_page', pagination.page],
+            ['_limit', pagination.limit],
+            ...Object.entries(searchParams),
+          ],
+          null,
+          '/beheer/organisaties'
+        );
 
-      const jsonResponse = response.data;
-      const data = jsonResponse.results;
-      const errorResponse = jsonResponse.error;
+        const jsonResponse = response.data;
+        const data = jsonResponse.results;
+        const errorResponse = jsonResponse.error;
 
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: jsonResponse.pages,
-        offset: jsonResponse.offset,
-      }));
+        setPagination((prev) => ({
+          ...prev,
+          total: jsonResponse.total,
+          pages: jsonResponse.pages,
+          offset: jsonResponse.offset,
+        }));
 
-      errorResponse && setError({ message: errorResponse });
-      setData(data);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError(err);
-    }
-  }, [beoordelingFilter, setError, setData, setLoading, makeRequest, endpoint, BASE_URL]);
+        errorResponse && setError({ message: errorResponse });
+        setData(data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err);
+      }
+    },
+    [
+      beoordelingFilter,
+      pagination.page,
+      pagination.limit,
+      makeRequest,
+      endpoint,
+      BASE_URL,
+    ]
+  );
 
+  // Fetch schema and data on component mount
   useEffect(() => {
-    fetchData();
     fetchSchema();
+    fetchData();
   }, []);
 
   // recall fetchData when beoordelingFilter changes
@@ -171,6 +200,27 @@ const AcBeheerOrganisaties = () => {
           return ConSorterLogic(aName, bName, direction);
         },
       },
+      website: {
+        id: 'website',
+        label: 'Website',
+        key: 'website',
+        customContent: (row) => {
+          if (!row.website) {
+            return '-';
+          }
+
+          try {
+            const url = new URL(row.website);
+            return (
+              <AcLink href={url.href} target='_blank'>
+                {url.href}
+              </AcLink>
+            );
+          } catch {
+            return row.website;
+          }
+        },
+      },
     }),
     []
   );
@@ -196,16 +246,22 @@ const AcBeheerOrganisaties = () => {
       });
   }, [dataProperties, customHeaders]);
 
-  const defaultHeaders = ['name', 'beoordeling', 'logo', 'contactDetails'];
+  const defaultHeaders = [
+    'organizationName',
+    'website',
+    'beoordeling',
+    'e-mailadres',
+    'type',
+  ];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
-    if (headers.length > 0) {
+    if (headers.length > 0 && tableHeaders.length === 0) {
       setTableHeaders(
         headers.filter((header) => defaultHeaders.includes(header.id))
       );
     }
-  }, [headers]);
+  }, [headers, tableHeaders.length]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -253,7 +309,7 @@ const AcBeheerOrganisaties = () => {
                   </ConActionMenu.Button>
 
                   <ConActionMenu.SubMenu
-                    label='Download'
+                    label='Exporteren'
                     icon={<VISUALS.DOWNLOAD />}
                     position='left'
                   >
@@ -291,22 +347,28 @@ const AcBeheerOrganisaties = () => {
             data={data}
             tableHeaders={[
               {
-                id: 'name',
-                label: 'Naam',
-                key: 'name',
+                id: 'status-icon',
+                label: '',
+                key: '',
                 customContent: (row) => (
                   <div className='ac-beheer-organisaties-name-container'>
-                    <div className='ac-beheer-organisaties-name-container__icon'>
+                    <div
+                      className='ac-beheer-organisaties-name-container__icon'
+                      data-tooltip-id={TOOLTIP_ID}
+                      data-tooltip-content={
+                        row['@self'].published ? 'Gepubliceerd' : 'Niet gepubliceerd'
+                      }
+                    >
                       {row['@self'].published ? (
                         <VISUALS.CIRCLE_CHECK className='ac-beheer-publish-icon__check' />
                       ) : (
                         <VISUALS.CIRCLE_EXCLAMATION className='ac-beheer-publish-icon__exclamation' />
                       )}
                     </div>
-                    <div className='ac-beheer-organisaties-name-container__name'>
-                      {row.naam || '-'}
-                    </div>
                   </div>
+                ),
+                customHeader: (
+                  <div className='ac-beheer-organisaties-name-container__icon'></div>
                 ),
               },
               ...tableHeaders,
@@ -324,72 +386,108 @@ const AcBeheerOrganisaties = () => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.EYE />}
-                        onClick={() => {
-                          navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id)
-                          );
-                        }}
-                      >
-                        Bekijken
-                      </ConActionMenu.Button>
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.EYE />}
+                          onClick={() => {
+                            navigate(
+                              NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisaties', row.id)
+                            );
+                          }}
+                        >
+                          Bekijken
+                        </ConActionMenu.Button>
+                      )}
 
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PENCIL />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('edit');
-                        }}
-                      >
-                        Bewerken
-                      </ConActionMenu.Button>
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PENCIL />}
+                          onClick={() => {
+                            setSingleSelectedRow(row);
+                            setOpenModal('edit');
+                          }}
+                        >
+                          Bewerken
+                        </ConActionMenu.Button>
+                      )}
 
-                      {row.beoordeling !== 'Actief' && (
+                      {row.beoordeling?.toLowerCase?.() !== 'actief' && (
                         <ConActionMenu.Button
                           icon={<VISUALS.CHECK />}
                           onClick={() => {
                             setSingleSelectedRow(row);
-                            setOpenModal('accept');
+                            setOpenModal('activate');
                           }}
                         >
-                          Accepteren
+                          Activeren
                         </ConActionMenu.Button>
                       )}
 
-                      {!row['@self'].published && (
+                      {row.beoordeling?.toLowerCase?.() === 'actief' && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.CLOSE />}
                           onClick={() => {
                             setSingleSelectedRow(row);
-                            setOpenModal('publish');
+                            setOpenModal('deactivate');
                           }}
                         >
-                          Publiceren
+                          Deactiveren
                         </ConActionMenu.Button>
                       )}
 
-                      {row['@self'].published && (
+                      {!row['@self'].published &&
+                        row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PUBLISH />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('publish');
+                            }}
+                          >
+                            Publiceren
+                          </ConActionMenu.Button>
+                        )}
+
+                      {row['@self'].published &&
+                        row?.beoordeling?.toLowerCase?.() !== 'concept' && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PUBLISH_OFF />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('depublish');
+                            }}
+                          >
+                            Depubliceren
+                          </ConActionMenu.Button>
+                        )}
+
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' && (
                         <ConActionMenu.Button
-                          icon={<VISUALS.PAPER_PLANE />}
+                          icon={<VISUALS.PLUS />}
                           onClick={() => {
                             setSingleSelectedRow(row);
-                            setOpenModal('depublish');
+                            setOpenModal('addDeelname');
                           }}
                         >
-                          Depubliceren
+                          Deelname toevoegen
                         </ConActionMenu.Button>
                       )}
 
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PLUS />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('addDeelname');
-                        }}
-                      >
-                        Deelname toevoegen
-                      </ConActionMenu.Button>
+                      {row?.beoordeling?.toLowerCase?.() !== 'concept' &&
+                        row?.deelnames &&
+                        row?.deelnames?.length > 0 && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.MINUS />}
+                            onClick={() => {
+                              setSingleSelectedRow(row);
+                              setOpenModal('removeDeelname');
+                            }}
+                          >
+                            Deelname verlaten
+                          </ConActionMenu.Button>
+                        )}
+
+                      <ConActionMenu.Divider />
 
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -411,21 +509,40 @@ const AcBeheerOrganisaties = () => {
             truncateLines={4}
             showSortButtons
             loading={loading}
+            dataProperties={dataProperties}
+            onHeaderSearch={(searchValues) => {
+              // Refetch data with search parameters
+              fetchData(searchValues);
+            }}
           />
 
-          <Pagination
-            totalPages={pagination?.pages}
-            page={parseInt(pagination?.page, 10)}
-            onPageChange={(page) => {
-              setPagination((prev) => ({
-                ...prev,
-                page,
-              }));
-            }}
-            nextLabel=''
-            previousLabel=''
-            maxVisiblePages={7}
-          />
+          <AcFlex justifyContent='between'>
+            <Pagination
+              totalPages={pagination?.pages}
+              page={parseInt(pagination?.page, 10)}
+              onPageChange={(page) => {
+                setPagination((prev) => ({
+                  ...prev,
+                  page,
+                }));
+              }}
+              nextLabel=''
+              previousLabel=''
+              maxVisiblePages={7}
+            />
+
+            {pagination?.pages <= 1 && (
+              <span className='ac-beheer-pagination-single-page'>
+                Pagina 1 van 1
+              </span>
+            )}
+
+            <ConPaginationLimitSelector
+              objectType='organisaties'
+              value={limit}
+              onChange={setLimit}
+            />
+          </AcFlex>
 
           {/* modals */}
           <AcOrganisatieFormModal
@@ -459,7 +576,8 @@ const AcBeheerOrganisaties = () => {
 
           <AcAcceptOrganizationModal
             organization={singleSelectedRow}
-            showModal={openModal === 'accept'}
+            showModal={openModal === 'activate' || openModal === 'deactivate'}
+            activate={openModal === 'activate'}
             onClose={() => {
               setOpenModal(null);
             }}
@@ -492,11 +610,16 @@ const AcBeheerOrganisaties = () => {
             onClose={() => {
               setOpenModal(null);
             }}
+            onSuccess={() => {
+              fetchData();
+              setOpenModal(null);
+            }}
           />
 
-          <AcAddDeelnameModal
+          <AcAddRemoveDeelnameModal
             organization={singleSelectedRow}
-            showModal={openModal === 'addDeelname'}
+            showModal={openModal === 'addDeelname' || openModal === 'removeDeelname'}
+            remove={openModal === 'removeDeelname'}
             onClose={() => {
               setOpenModal(null);
             }}

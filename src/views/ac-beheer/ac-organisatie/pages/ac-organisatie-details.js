@@ -44,8 +44,10 @@ import ConLogoPreview from '../../../ac-register/con-logo-preview';
 import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
-import AcAddDeelnameModal from '../modals/ac-add-deelname';
+import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
 import AcContactPersonForm from '../modals/ac-contact-person-form';
+import { BEHEER_RENAMES } from '../../beheer-renames';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerOrganisatieDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -63,16 +65,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   const [charCountLang, setCharCountLang] = useState(0);
   const [selectedContactPerson, setSelectedContactPerson] = useState(null);
   const [openModal, setOpenModal] = useState(null);
-
-  // Memoized contact persons with UUIDs
-  const contactPersons = useMemo(() => {
-    if (!data?.contactpersonen) return [];
-
-    return data.contactpersonen.map((contact) => ({
-      ...contact,
-      uuid: contact.uuid || crypto.randomUUID(),
-    }));
-  }, [data?.contactpersonen]);
+  const [deelnameToRemove, setDeelnameToRemove] = useState(null);
 
   const uniqueUsedBySchemas = useMemo(() => {
     if (!usedBy) return [];
@@ -82,13 +75,27 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     return uniqueUsedBy.map((item) => item['@self'].schema);
   }, [usedBy]);
 
-  const getUsedByFromSchemaId = useCallback(
-    (schemaId) => {
-      if (!usedBy) return [];
-      return usedBy.filter((item) => item['@self'].schema.id === schemaId);
-    },
-    [usedBy]
-  );
+  // sort schemas based on their id
+  const sortedSchemas = useMemo(() => {
+    return (uniqueUsedBySchemas || []).sort((a, b) =>
+      String(a.id).localeCompare(String(b.id))
+    );
+  }, [uniqueUsedBySchemas]);
+
+  // Memoize the data for each schema to prevent unnecessary re-renders
+  const memoizedSchemaData = useMemo(() => {
+    if (!usedBy || !sortedSchemas) return new Map();
+
+    const dataMap = new Map();
+    sortedSchemas.forEach((schema) => {
+      const schemaData = usedBy.filter(
+        (item) => item['@self'].schema.id === schema.id
+      );
+      dataMap.set(schema.id, schemaData);
+    });
+
+    return dataMap;
+  }, [usedBy, sortedSchemas]);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -236,47 +243,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     setCharCountLang(value.length);
   };
 
-  const handleDeleteContactPerson = async (contactPersonUuid) => {
-    try {
-      // Remove the contact person from the contactPersons array
-      const updatedContactPersons = contactPersons.filter(
-        (contact) => contact.uuid !== contactPersonUuid
-      );
-
-      // Remove UUIDs from the array before sending to API
-      const contactPersonsForApi = updatedContactPersons.map(
-        ({ uuid, ...contact }) => contact
-      );
-
-      // Update the organization with PATCH request
-      const endpoint = `openregister/api/objects/voorzieningen/organisatie/${id}`;
-      const updateResponse = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
-        null,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            contactpersonen: contactPersonsForApi,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      if (!updateResponse.ok) {
-        throw new Error('Failed to delete contact person');
-      }
-
-      // Update local state instead of refetching
-      setData((prev) => ({
-        ...prev,
-        contactpersonen: contactPersonsForApi,
-      }));
-    } catch (err) {
-      console.error('Error deleting contact person:', err);
-      // You might want to show an error message to the user here
-    }
-  };
-
   const handleDeleteDeelname = async (deelnameId) => {
     try {
       // Remove the deelname from the deelnames array
@@ -341,9 +307,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       </ConActionMenu.Trigger>
 
                       <ConActionMenu.Menu position='right'>
-                        <ConActionMenu.Button icon={<VISUALS.PLUS />}>
-                          Toevoegen
-                        </ConActionMenu.Button>
                         <ConActionMenu.Button
                           icon={<VISUALS.PENCIL />}
                           onClick={() => setOpenModal('edit')}
@@ -355,7 +318,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             icon={<VISUALS.CHECK />}
                             onClick={() => setOpenModal('accept')}
                           >
-                            Accepteren
+                            Activeren
                           </ConActionMenu.Button>
                         )}
                         {!data['@self'].published && (
@@ -381,6 +344,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           Deelname toevoegen
                         </ConActionMenu.Button>
 
+                        {data.deelnames && data.deelnames.length > 0 && (
+                          <ConActionMenu.Button
+                            icon={<VISUALS.MINUS />}
+                            onClick={() => setOpenModal('removeDeelname')}
+                          >
+                            Deelname verlaten
+                          </ConActionMenu.Button>
+                        )}
+
                         <ConActionMenu.Divider />
 
                         <ConActionMenu.Button
@@ -394,7 +366,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   </div>
 
                   <div>
-                    {data.beoordeling === 'concept' && (
+                    {data.beoordeling === 'Concept' && (
                       <Alert type='info'>
                         <AcFlex spacing='sm'>
                           <VISUALS.INFO_BLUE />
@@ -672,7 +644,17 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                         )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             {key === 'logo' ? (
                               <ConLogoPreview
                                 logoUrl={data[key]}
@@ -722,12 +704,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                       >
                         <AcTabList>
                           <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
-                          <AcTab selected={tabIndex === 1}>Contactpersonen</AcTab>
                           <AcTab selected={tabIndex === 2}>Deelnames</AcTab>
 
-                          {uniqueUsedBySchemas.map((schema) => (
+                          {sortedSchemas.map((schema) => (
                             <AcTab key={schema.id} selected={tabIndex === schema.id}>
-                              {schema.title || schema.id}
+                              {_.upperFirst(
+                                BEHEER_RENAMES[schema.slug] ||
+                                  schema.title ||
+                                  schema.id
+                              )}
                             </AcTab>
                           ))}
                         </AcTabList>
@@ -738,97 +723,6 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             schema={schemaSlug}
                             id={data.id}
                           />
-                        </AcTabPanel>
-                        <AcTabPanel selected={tabIndex === 1}>
-                          <AcFlex
-                            justifyContent='between'
-                            className='ac-organisatie-tab-header'
-                          >
-                            <Heading level={3}>Contactpersonen</Heading>
-                            <PrimaryActionButton
-                              onClick={() => setOpenModal('addContact')}
-                            >
-                              <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
-                            </PrimaryActionButton>
-                          </AcFlex>
-                          <ConHorizontalOverflowWrapper
-                            ariaLabels={{
-                              scrollLeftButton: 'Scroll left',
-                              scrollRightButton: 'Scroll right',
-                            }}
-                          >
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableCell>Naam</TableCell>
-                                  <TableCell>Email</TableCell>
-                                  <TableCell>Telefoonnummer</TableCell>
-                                  <TableCell>Functie</TableCell>
-                                  <TableCell>Acties</TableCell>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {contactPersons?.length > 0 ? (
-                                  contactPersons.map((contact) => (
-                                    <TableRow key={contact.uuid}>
-                                      <TableCell>
-                                        {contact.voornaam} {contact.tussenvoegsel}{' '}
-                                        {contact.achternaam}
-                                      </TableCell>
-                                      <TableCell>
-                                        <Link href={`mailto:${contact.email}`}>
-                                          {contact.email}
-                                        </Link>
-                                      </TableCell>
-                                      <TableCell>
-                                        <Link href={`tel:${contact.telefoon}`}>
-                                          {contact.telefoon}
-                                        </Link>
-                                      </TableCell>
-                                      <TableCell>{contact.functie}</TableCell>
-                                      <TableCell>
-                                        <ConActionMenu>
-                                          <ConActionMenu.Trigger
-                                            buttonType='secondary'
-                                            style='buttonSlim'
-                                            icon={<VISUALS.ELLIPSIS />}
-                                          >
-                                            Acties
-                                          </ConActionMenu.Trigger>
-
-                                          <ConActionMenu.Menu position='right'>
-                                            <ConActionMenu.Button
-                                              icon={<VISUALS.PENCIL />}
-                                              onClick={() => {
-                                                setSelectedContactPerson(contact);
-                                                setOpenModal('editContact');
-                                              }}
-                                            >
-                                              Bewerken
-                                            </ConActionMenu.Button>
-                                            <ConActionMenu.Button
-                                              icon={<VISUALS.TRASHCAN />}
-                                              onClick={() => {
-                                                handleDeleteContactPerson(
-                                                  contact.uuid
-                                                );
-                                              }}
-                                            >
-                                              Verwijderen
-                                            </ConActionMenu.Button>
-                                          </ConActionMenu.Menu>
-                                        </ConActionMenu>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))
-                                ) : (
-                                  <TableRow>
-                                    <TableCell colSpan={5}>Geen contactpersonen gevonden</TableCell>
-                                  </TableRow>
-                                )}
-                              </TableBody>
-                            </Table>
-                          </ConHorizontalOverflowWrapper>
                         </AcTabPanel>
                         <AcTabPanel selected={tabIndex === 2}>
                           <AcFlex
@@ -869,13 +763,15 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                       </TableCell>
                                       <TableCell>
                                         {deelname?.contactpersonen?.length > 0
-                                          ? deelname.contactpersonen.map((contact) => (
-                                              <div key={contact.id}>
-                                                {contact.voornaam}{' '}
-                                                {contact.tussenvoegsel}{' '}
-                                                {contact.achternaam}
-                                              </div>
-                                            ))
+                                          ? deelname.contactpersonen.map(
+                                              (contact) => (
+                                                <div key={contact.id}>
+                                                  {contact.voornaam}{' '}
+                                                  {contact.tussenvoegsel}{' '}
+                                                  {contact.achternaam}
+                                                </div>
+                                              )
+                                            )
                                           : '-'}
                                       </TableCell>
                                       <TableCell>
@@ -890,12 +786,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                                           <ConActionMenu.Menu position='right'>
                                             <ConActionMenu.Button
-                                              icon={<VISUALS.TRASHCAN />}
+                                              icon={<VISUALS.MINUS />}
                                               onClick={() => {
-                                                handleDeleteDeelname(deelname.id);
+                                                setOpenModal('removeDeelname');
+                                                setDeelnameToRemove(deelname);
                                               }}
                                             >
-                                              Verwijderen
+                                              Verlaten
                                             </ConActionMenu.Button>
                                           </ConActionMenu.Menu>
                                         </ConActionMenu>
@@ -904,7 +801,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                                   ))
                                 ) : (
                                   <TableRow>
-                                    <TableCell colSpan={4}>Geen deelnames gevonden</TableCell>
+                                    <TableCell colSpan={4}>
+                                      Geen deelnames gevonden
+                                    </TableCell>
                                   </TableRow>
                                 )}
                               </TableBody>
@@ -912,8 +811,8 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                           </ConHorizontalOverflowWrapper>
                         </AcTabPanel>
 
-                        {uniqueUsedBySchemas.map((schema) => {
-                          const data = getUsedByFromSchemaId(schema.id);
+                        {sortedSchemas.map((schema) => {
+                          const data = memoizedSchemaData.get(schema.id) || [];
                           const metadata = data?.[0]?.['@self'];
 
                           // this should not trigger, if it does call a dev to fix it.
@@ -936,6 +835,19 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               key={schema.id}
                               selected={tabIndex === schema.id}
                             >
+                              {schema.slug === 'contactpersoon' && (
+                                <AcFlex justifyContent='between' alignItems='center'>
+                                  <Heading level={3}>Contactpersonen</Heading>
+
+                                  <PrimaryActionButton
+                                    onClick={() => setOpenModal('addContact')}
+                                  >
+                                    <VISUALS.PLUS className='ac-button__icon' />{' '}
+                                    Toevoegen
+                                  </PrimaryActionButton>
+                                </AcFlex>
+                              )}
+
                               <BeheerTable
                                 type={schema.slug}
                                 metadata={metadata}
@@ -1021,11 +933,16 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcAddDeelnameModal
+                <AcAddRemoveDeelnameModal
                   organization={data}
-                  showModal={openModal === 'addDeelname'}
+                  showModal={
+                    openModal === 'addDeelname' || openModal === 'removeDeelname'
+                  }
+                  remove={openModal === 'removeDeelname'}
+                  deelnameToRemove={deelnameToRemove}
                   onClose={() => {
                     setOpenModal(null);
+                    setDeelnameToRemove(null);
                   }}
                   onSuccess={() => {
                     fetchData();
@@ -1034,18 +951,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
                 <AcContactPersonForm
                   organizationId={data.id}
-                  contactPersons={contactPersons}
-                  selectedContactPersonUuid={selectedContactPerson?.uuid}
-                  showModal={
-                    openModal === 'addContact' || openModal === 'editContact'
-                  }
-                  isEdit={openModal === 'editContact'}
+                  showModal={openModal === 'addContact'}
                   onClose={() => {
                     setOpenModal(null);
                     setSelectedContactPerson(null);
                   }}
                   onSuccess={() => {
-                    fetchData();
+                    fetchUsedBy(registerSlug, schemaSlug, id);
                   }}
                 />
               </AcFlex>

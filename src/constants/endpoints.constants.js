@@ -30,6 +30,7 @@ const getGemmaEndpoint = () => {
       return 'https://vng.test.commonground.nu';
     case 'localhost':
     case 'vng.opencatalogi.nl':
+    case 'acceptatie.softwarecatalogus.nl':
       return 'https://vng.accept.commonground.nu';
     default:
       return 'https://vng.accept.commonground.nu';

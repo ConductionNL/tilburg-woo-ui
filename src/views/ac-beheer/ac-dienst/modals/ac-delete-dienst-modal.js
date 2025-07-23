@@ -8,7 +8,6 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 
-
 /**
  * modal to delete 1 or multiple voorzieningen
  * @param {object[]} voorzieningen - array of voorzieningen
@@ -33,17 +32,18 @@ const AcDeleteDienstModal = ({
   const [error, setError] = useState(null);
   const handleDeleteDienst = async () => {
     try {
-      diensten.forEach(async (dienst) => {
-        const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${dienst.id}`,
-          null,
-          {
-            method: 'DELETE',
-          }
-        );
-      });
+      const deletePromises = diensten.map((dienst) =>
+        makeRequest(`${BASE_URL}/apps/${endpoint}/${dienst.id}`, null, {
+          method: 'DELETE',
+        })
+      );
 
-      onSuccess?.();
+      const responses = await Promise.all(deletePromises);
+
+      if (responses.some((response) => response.ok)) {
+        onSuccess?.();
+        modalRef?.current?.close();
+      }
     } catch (err) {
       console.error(err);
       setError(err);
@@ -72,14 +72,15 @@ const AcDeleteDienstModal = ({
       id='delete-dienst-modal'
       title={`${diensten.length === 1 ? 'Dienst' : 'Diensten'} verwijderen`}
       buttons={[
-        { label: 'verwijderen', onClick: handleDeleteDienst },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        { label: 'verwijderen', onClick: handleDeleteDienst },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>

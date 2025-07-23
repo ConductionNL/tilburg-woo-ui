@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal } from '@components';
+import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { AcFormField } from '@src/molecules';
@@ -42,6 +42,7 @@ const AcOvereenkomstFormModal = ({
   });
 
   const [schema, setSchema] = useState(null);
+  const [isValid, setIsValid] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
@@ -123,7 +124,6 @@ const AcOvereenkomstFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       try {
-        setSchemaLoading(true);
         const response = await makeRequest(
           `${BASE_URL}/apps/openregister/api/schemas/contract`
         );
@@ -156,6 +156,11 @@ const AcOvereenkomstFormModal = ({
         [field]: value,
       }));
     }
+  };
+
+  const handleFormValidCheck = (isValid) => {
+    /* possibly also handle checks outside of the dynamic form factory */
+    setIsValid(isValid);
   };
 
   const [error, setError] = useState(null);
@@ -228,253 +233,86 @@ const AcOvereenkomstFormModal = ({
       id='edit-overeenkomst-modal'
       title={isEdit ? 'Overeenkomst bewerken' : 'Overeenkomst toevoegen'}
       buttons={[
-        { label: 'opslaan', icon: <VISUALS.SAVE />, onClick: handleSubmit },
         {
           label: 'annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
         },
+        {
+          label: 'opslaan',
+          icon: <VISUALS.SAVE />,
+          onClick: handleSubmit,
+          disabled: !isValid,
+        },
       ]}
+      buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        <AcFormField
-          label='Voorziening Aanbod'
-          type='text'
-          onBlur={handleEditOvereenkomstFieldChange('voorzieningAanbod')}
-          value={overeenkomstFormData.voorzieningAanbod}
-          {...(schema?.properties?.voorzieningAanbod?.required && {
-            hasError: !overeenkomstFormData.voorzieningAanbod,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Voorziening Gebruik'
-          type='text'
-          onBlur={handleEditOvereenkomstFieldChange('voorzieningGebruik')}
-          value={overeenkomstFormData.voorzieningGebruik}
-          {...(schema?.properties?.voorzieningGebruik?.required && {
-            hasError: !overeenkomstFormData.voorzieningGebruik,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Startdatum'
-          type='date'
-          onBlur={handleEditOvereenkomstFieldChange('startDatum')}
-          value={overeenkomstFormData.startDatum}
-          {...(schema?.properties?.startDatum?.required && {
-            hasError: !overeenkomstFormData.startDatum,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Einddatum'
-          type='date'
-          onBlur={handleEditOvereenkomstFieldChange('eindDatum')}
-          value={overeenkomstFormData.eindDatum}
-          {...(schema?.properties?.eindDatum?.required && {
-            hasError: !overeenkomstFormData.eindDatum,
-            required: true,
-          })}
-        />
-        <AcFormField
-          label='Contract Nummer'
-          type='text'
-          onBlur={handleEditOvereenkomstFieldChange('contractNummer')}
-          value={overeenkomstFormData.contractNummer}
-          {...(schema?.properties?.contractNummer?.required && {
-            hasError: !overeenkomstFormData.contractNummer,
-            required: true,
-          })}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contract type</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een contract type'
-            value={contractTypes?.find(
-              (option) => option.id === overeenkomstFormData.contractType
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setOvereenkomstFormData((prev) => ({
-                ...prev,
-                contractType: e?.value ?? e,
-              }));
-            }}
-            loading={contractTypes?.length === 0}
-            options={contractTypes?.map((type) => ({
+        <ConDynamicSchemaForm
+          schema={schema}
+          formData={{
+            // Map schema properties to form data fields
+            voorzieningAanbod: overeenkomstFormData.voorzieningAanbod,
+            voorzieningGebruik: overeenkomstFormData.voorzieningGebruik,
+            startDatum: overeenkomstFormData.startDatum,
+            eindDatum: overeenkomstFormData.eindDatum,
+            contractNummer: overeenkomstFormData.contractNummer,
+            contractType: overeenkomstFormData.contractType,
+            kosten: overeenkomstFormData.kosten,
+            kostenPeriode: overeenkomstFormData.kostenPeriode,
+            contactpersoonAanbieder: overeenkomstFormData.contactpersoonAanbieder,
+            contactpersoonGebruiker: overeenkomstFormData.contactpersoonGebruiker,
+            documentReferentie: overeenkomstFormData.documentReferentie,
+            status: overeenkomstFormData.status,
+            opmerkingen: overeenkomstFormData.opmerkingen,
+          }}
+          onFieldChange={(fieldName, value) => {
+            // Map schema property names back to form data field names
+            const fieldMappings = {
+              voorzieningAanbod: 'voorzieningAanbod',
+              voorzieningGebruik: 'voorzieningGebruik',
+              startDatum: 'startDatum',
+              eindDatum: 'eindDatum',
+              contractNummer: 'contractNummer',
+              contractType: 'contractType',
+              kosten: 'kosten',
+              kostenPeriode: 'kostenPeriode',
+              contactpersoonAanbieder: 'contactpersoonAanbieder',
+              contactpersoonGebruiker: 'contactpersoonGebruiker',
+              documentReferentie: 'documentReferentie',
+              status: 'status',
+              opmerkingen: 'opmerkingen',
+            };
+
+            const formFieldName = fieldMappings[fieldName] || fieldName;
+            setOvereenkomstFormData((prev) => ({
+              ...prev,
+              [formFieldName]: value,
+            }));
+          }}
+          fieldConfigs={{
+            // Hide fields that are not in the current form
+            id: { visible: false },
+          }}
+          optionsProviders={{
+            contractType: contractTypes.map((type) => ({
               value: type.id,
               label: type.label,
-            }))}
-            {...(schema?.properties?.contractType?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.contractType?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Kosten'
-          type='number'
-          onBlur={handleEditOvereenkomstFieldChange('kosten')}
-          value={overeenkomstFormData.kosten}
-          {...(schema?.properties?.kosten?.required && {
-            hasError: !overeenkomstFormData.kosten,
-            required: true,
-          })}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Kosten periode</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een contract type'
-            value={kostenPeriodes?.find(
-              (option) => option.id === overeenkomstFormData.kostenPeriode
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setOvereenkomstFormData((prev) => ({
-                ...prev,
-                kostenPeriode: e?.value ?? e,
-              }));
-            }}
-            loading={kostenPeriodes?.length === 0}
-            options={kostenPeriodes?.map((periode) => ({
+            })),
+            kostenPeriode: kostenPeriodes.map((periode) => ({
               value: periode.id,
               label: periode.label,
-            }))}
-            {...(schema?.properties?.kostenPeriode?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.kostenPeriode?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contactpersoon Aanbieder</h4>
-          </label>
-          <AcFlex column spacing='sm'>
-            <AcFormField
-              headingLevel={5}
-              label='Naam'
-              type='text'
-              onBlur={handleEditOvereenkomstFieldChange(
-                'contactpersoonAanbieder',
-                'naam'
-              )}
-              value={overeenkomstFormData.contactpersoonAanbieder.naam}
-              {...(schema?.properties?.contactpersoonAanbieder?.naam?.required && {
-                hasError: !overeenkomstFormData.contactpersoonAanbieder.naam,
-                required: true,
-              })}
-            />
-            <AcFormField
-              headingLevel={5}
-              label='Email'
-              type='text'
-              onBlur={handleEditOvereenkomstFieldChange(
-                'contactpersoonAanbieder',
-                'email'
-              )}
-              value={overeenkomstFormData.contactpersoonAanbieder.email}
-              {...(schema?.properties?.contactpersoonAanbieder?.email?.required && {
-                hasError: !overeenkomstFormData.contactpersoonAanbieder.email,
-                required: true,
-              })}
-            />
-          </AcFlex>
-        </div>
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Contactpersoon Gebruiker</h4>
-          </label>
-          <AcFlex column spacing='sm'>
-            <AcFormField
-              headingLevel={5}
-              label='Naam'
-              type='text'
-              onBlur={handleEditOvereenkomstFieldChange(
-                'contactpersoonGebruiker',
-                'naam'
-              )}
-              value={overeenkomstFormData.contactpersoonGebruiker.naam}
-              {...(schema?.properties?.contactpersoonGebruiker?.naam?.required && {
-                hasError: !overeenkomstFormData.contactpersoonGebruiker.naam,
-                required: true,
-              })}
-            />
-            <AcFormField
-              headingLevel={5}
-              label='Email'
-              type='text'
-              onBlur={handleEditOvereenkomstFieldChange(
-                'contactpersoonGebruiker',
-                'email'
-              )}
-              value={overeenkomstFormData.contactpersoonGebruiker.email}
-              {...(schema?.properties?.contactpersoonGebruiker?.email?.required && {
-                hasError: !overeenkomstFormData.contactpersoonGebruiker.email,
-                required: true,
-              })}
-            />
-          </AcFlex>
-        </div>
-        <AcFormField
-          label='Document Referentie'
-          type='text'
-          onBlur={handleEditOvereenkomstFieldChange('documentReferentie')}
-          value={overeenkomstFormData.documentReferentie}
-          {...(schema?.properties?.documentReferentie?.required && {
-            hasError: !overeenkomstFormData.documentReferentie,
-            required: true,
-          })}
-        />
-        <div>
-          <label className='utrecht-form-label'>
-            <h4 className='utrecht-heading-4'>Status</h4>
-          </label>
-          <ReactSelect
-            placeholder='Selecteer een contract type'
-            value={statuses?.find(
-              (option) => option.id === overeenkomstFormData.status
-            )}
-            className='ac-beheer-select'
-            onChange={(e) => {
-              setOvereenkomstFormData((prev) => ({
-                ...prev,
-                status: e?.value ?? e,
-              }));
-            }}
-            loading={statuses?.length === 0}
-            options={statuses?.map((status) => ({
+            })),
+            status: statuses.map((status) => ({
               value: status.id,
               label: status.label,
-            }))}
-            {...(schema?.properties?.status?.required && {
-              required: true,
-            })}
-            {...(!schema?.properties?.status?.required && {
-              isClearable: true,
-            })}
-          />
-        </div>
-        <AcFormField
-          label='Opmerkingen'
-          type='text'
-          onBlur={handleEditOvereenkomstFieldChange('opmerkingen')}
-          value={overeenkomstFormData.opmerkingen}
-          {...(schema?.properties?.opmerkingen?.required && {
-            hasError: !overeenkomstFormData.opmerkingen,
-            required: true,
-          })}
+            })),
+          }}
+          loadingStates={{}}
+          disabledStates={{}}
+          getIsValid={handleFormValidCheck}
         />
       </AcFlex>
     </AcModal>

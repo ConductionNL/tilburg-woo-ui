@@ -24,6 +24,7 @@ import ConObjectUploadFiles from '../../con-object-upload-files/con-object-uploa
 import { useLaterEffect } from '@src/hooks';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
 import { BEHEER_RENAMES } from '../../beheer-renames';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcBeheerDienstDetails = ({ id }) => {
   const navigate = useNavigate();
@@ -262,7 +263,17 @@ const AcBeheerDienstDetails = ({ id }) => {
                         )
                         .map(([key, schemaProperties]) => (
                           <div key={key}>
-                            <strong>{_.startCase(key)}:</strong>
+                            <strong
+                              {...(schemaProperties?.description
+                                ? {
+                                    'data-tooltip-id': TOOLTIP_ID,
+                                    'data-tooltip-content':
+                                      schemaProperties.description,
+                                  }
+                                : {})}
+                            >
+                              {_.startCase(key)}:
+                            </strong>
                             <Paragraph>
                               {(() => {
                                 try {
@@ -292,7 +303,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                         onSelect={(index) => setTabIndex(index)}
                       >
                         <AcTabList>
-                          <AcTab selected={tabIndex === 0}>Versies</AcTab>
+                          {/* <AcTab selected={tabIndex === 0}>Versies</AcTab> */}
                           <AcTab selected={tabIndex === 1}>Bestanden</AcTab>
                           {/* <AcTab selected={tabIndex === 2}>Diensten</AcTab> */}
 
@@ -318,11 +329,11 @@ const AcBeheerDienstDetails = ({ id }) => {
                           )}
                         </AcTabList>
 
-                        <AcTabPanel selected={tabIndex === 0}>
+                        {/* <AcTabPanel selected={tabIndex === 0}>
                           {data.versies?.map((versie, index) => (
                             <Paragraph key={index}>{versie}</Paragraph>
                           ))}
-                        </AcTabPanel>
+                        </AcTabPanel> */}
 
                         <AcTabPanel selected={tabIndex === 1}>
                           <ConObjectUploadFiles

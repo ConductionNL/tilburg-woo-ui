@@ -9,53 +9,32 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { BASE_URL } from '../../ac-beheer';
 
 /**
- * Modal to accept an organization by changing its beoordeling to Actief
- * @param {object} organization - The organization to accept
+ * Modal to activate or deactivate an organization by changing its beoordeling
+ * @param {object} organization - The organization to activate/deactivate
+ * @param {boolean} activate - Whether to activate (true) or deactivate (false)
  * @param {boolean} showModal - boolean to check if the modal is shown
  * @param {function} onClose - function to call when the modal is closed
- * @returns {React.JSX.Element} - modal to accept an organization
+ * @returns {React.JSX.Element} - modal to activate/deactivate an organization
  */
 const AcAcceptOrganizationModal = ({
   organization,
+  activate = true,
   showModal = false,
   onClose,
   onSuccess,
 }) => {
   const modalRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const { makeRequest } = useNextcloudRequests();
 
-  const handleAcceptOrganizationOpenModal = () => modalRef?.current?.showModal();
+  const handleModalOpen = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
-  const handleAcceptOrganization = async () => {
+  const handleActivateDeactivate = async () => {
+    setLoading(true);
     try {
-      const endpoint = 'openregister/api/objects/voorzieningen/gebruiker';
-
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
-        method: 'POST',
-        body: JSON.stringify({
-          username: `${organization.contactpersonen[0].voornaam} ${organization.contactpersonen[0].tussenvoegsel} ${organization.contactpersonen[0].achternaam}`,
-          email: organization.contactpersonen[0].email,
-          voornaam: organization.contactpersonen[0].voornaam,
-          achternaam: organization.contactpersonen[0].achternaam,
-          organisatie: organization.naam,
-          functie: organization.contactpersonen[0].functie,
-          telefoonnummer: organization.contactpersonen[0].telefoon,
-        }),
-      });
-    } catch (err) {
-      console.error(err);
-      setError(err);
-    }
-
-    try {
-      let endpoint = '';
-      if (BASE_URL.includes('test')) {
-        endpoint = `openregister/api/objects/14/37`;
-      } else {
-        endpoint = `openregister/api/objects/14/37`;
-      }
+      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
       const response = await makeRequest(
         `${BASE_URL}/apps/${endpoint}/${organization.id}`,
@@ -64,7 +43,7 @@ const AcAcceptOrganizationModal = ({
           method: 'PUT',
           body: JSON.stringify({
             ...organization,
-            beoordeling: 'Actief',
+            beoordeling: activate ? 'Actief' : 'Deactief',
           }),
         }
       );
@@ -72,31 +51,39 @@ const AcAcceptOrganizationModal = ({
       if (response.ok) {
         onSuccess?.();
         modalRef?.current?.close();
+        setLoading(false);
       } else {
         const status = response.status;
         const errorMessage = response.data.error;
         setError(`${status}: ${errorMessage}`);
+        setLoading(false);
       }
     } catch (err) {
       console.error(err);
-      setError(err);
+      setError(
+        err.message ||
+          `Er is een fout opgetreden bij het ${
+            activate ? 'activeren' : 'deactiveren'
+          }`
+      );
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (showModal) {
-      handleAcceptOrganizationOpenModal();
+      handleModalOpen();
     }
   }, [showModal]);
 
   // run the onClose function when the modal is closed
-  const handleAcceptOrganizationCloseModal = () => {
+  const handleModalClose = () => {
     onClose?.();
   };
 
   // add event listener to the modal when it is closed
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleAcceptOrganizationCloseModal);
+    modalRef?.current?.addEventListener('close', handleModalClose);
   }, [modalRef.current]);
 
   const errorStyle = {
@@ -116,22 +103,25 @@ const AcAcceptOrganizationModal = ({
     fontFamily: 'var(--utrecht-form-field-error-message-font-family)',
   };
 
-  const renderAcceptOrganizationModal = (
+  const renderModal = (
     <AcModal
       ref={modalRef}
-      id='accept-organization-modal'
-      title='Organisatie accepteren'
+      id={`${activate ? 'activate' : 'deactivate'}-organization-modal`}
+      title={`Organisatie ${activate ? 'activeren' : 'deactiveren'}`}
       buttons={[
         {
           label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
+          disabled: loading,
         },
         {
-          label: 'Accepteren',
+          label: activate ? 'Activeren' : 'Deactiveren',
           icon: <VISUALS.CHECK />,
-          onClick: handleAcceptOrganization,
+          onClick: handleActivateDeactivate,
+          loading,
+          disabled: loading,
         },
       ]}
       buttonPosition='end'
@@ -139,13 +129,14 @@ const AcAcceptOrganizationModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && <div style={errorStyle}>{error}</div>}
-        Weet je zeker dat je deze organisatie wilt accepteren?
+        Weet je zeker dat je de volgende organisatie wilt{' '}
+        {activate ? 'activeren' : 'deactiveren'}?
         <Paragraph>{organization?.naam ?? organization?.id}</Paragraph>
       </AcFlex>
     </AcModal>
   );
 
-  return renderAcceptOrganizationModal;
+  return renderModal;
 };
 
 export default withStore(observer(AcAcceptOrganizationModal));

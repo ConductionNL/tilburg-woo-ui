@@ -48,6 +48,7 @@ const App = ({ store }) => {
   const getTheme = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'acceptatie.softwarecatalogus.nl':
       case 'vng.test.opencatalogi.nl':
         return 'vng-theme';
       case 'open-tilburg.accept.commonground.nu':
@@ -68,6 +69,10 @@ const App = ({ store }) => {
         return 'vng-theme';
       case 'horstadmaas.accept.opencatalogi.nl':
         return 'horst-aan-de-maas-theme';
+      case 'verwerkingsregister.horstaandemaas.nl':
+        return 'horst-aan-de-maas-theme';
+      case 'verwerkingsregister.venray.nl':
+        return 'venray-theme';
       default:
         return 'tilburg-theme';
     }
@@ -80,6 +85,7 @@ const App = ({ store }) => {
   const setIcon = () => {
     switch (hostname) {
       case 'vng.opencatalogi.nl':
+      case 'acceptatie.softwarecatalogus.nl':
       case 'vng.test.opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
@@ -135,11 +141,19 @@ const App = ({ store }) => {
             'https://directory.opencatalogi.nl/core/preview?fileId=309&x=2048&y=1280&a=true&etag=bab799ba75481f8107c967e49e50c008')
         );
       case 'horstadmaas.accept.opencatalogi.nl':
+      case 'verwerkingsregister.horstaandemaas.nl':
         return (
           (document.getElementById('favicon').href =
             'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download'),
           (document.getElementById('faviconMeta').href =
             'https://horstadmaas.accept.commonground.nu/s/r6KETEADerdekdK/download')
+        );
+      case 'verwerkingsregister.venray.nl':
+        return (
+          (document.getElementById('favicon').href =
+            'https://www.venray.nl/images/favicon7bb51a2860262bb4.ico'),
+          (document.getElementById('faviconMeta').href =
+            'https://www.venray.nl/images/favicon7bb51a2860262bb4.ico')
         );
       default:
         return;
