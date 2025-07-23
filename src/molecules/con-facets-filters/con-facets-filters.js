@@ -207,7 +207,11 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             <>
               {Object.entries(value).map(
                 ([_key, _value]) =>
-                  _value.buckets.length > 0 && (
+                  _value.buckets.length > 0 &&
+                  // Filter out specific facets: Registers, Directory, Catalogs
+                  !['register', 'directory', 'catalogs'].includes(
+                    _key.toLowerCase()
+                  ) && (
                     <AcFlex
                       key={`${key}-${_key}`}
                       column

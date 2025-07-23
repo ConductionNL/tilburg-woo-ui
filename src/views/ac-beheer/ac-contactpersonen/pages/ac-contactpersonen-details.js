@@ -23,6 +23,7 @@ import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcPublishDepublishContactpersoonModal from '../modals/ac-publish-depublish-contactpersoon';
 import { TOOLTIP_ID } from '@src/index.web';
+import BeheerTable from '../../con-beheer-table/con-beheer-table';
 
 const AcBeheerContactpersoonDetails = ({ id }) => {
   const navigate = useNavigate();
