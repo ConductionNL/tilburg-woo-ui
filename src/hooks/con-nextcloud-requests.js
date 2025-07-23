@@ -1,6 +1,7 @@
 import { BASE_URL } from '@src/views/ac-beheer/ac-beheer';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
+import { getCookie } from '@src/utilities';
 
 // Utility: flatten array of [key, value] pairs into an object, supporting repeated keys as arrays
 const normalizeParams = (pairs = []) => {
@@ -19,11 +20,23 @@ const normalizeParams = (pairs = []) => {
 const nextcloudApi = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
-  withCredentials: true, // include cookies for authentication
+  //   withCredentials: true, // include cookies for authentication
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Add Authorization header interceptor for OAuth tokens
+nextcloudApi.interceptors.request.use(
+  (config) => {
+    const accessToken = getCookie('nextcloud_access_token');
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Global error handling: redirect on 401
 nextcloudApi.interceptors.response.use(
