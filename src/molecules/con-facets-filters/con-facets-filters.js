@@ -1,10 +1,11 @@
 import { observer } from 'mobx-react-lite';
 import { useEffect, useState } from 'react';
-
+import { buildPublicationsSearchQuery } from '@stores/publications.store';
 import { AcCheckbox } from '@molecules';
 import { LABELS } from '@constants';
 import { withStore } from '@stores';
 import { AcLoader } from '@components';
+import { AcBuildURLSearchParams } from '@utils';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@atoms';
@@ -108,6 +109,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     const hostname = window.location.hostname;
     switch (hostname) {
       case 'vng.test.opencatalogi.nl':
+      case 'localhost':
         return 'https://vng.test.commonground.nu';
       default:
         return 'https://vng.accept.commonground.nu';
@@ -141,8 +143,17 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         })
         .join('&');
 
+      // Get the current search query from the store (same as fetchPublications uses)
+      const currentSearchQuery = publications.search_query;
+
+      // Build the enhanced search query (same as fetchPublications does)
+      const enhancedSearchQuery = buildPublicationsSearchQuery(currentSearchQuery);
+
+      // Convert the enhanced search query to URL parameters
+      const searchQueryParams = AcBuildURLSearchParams(enhancedSearchQuery);
+
       const response = await fetch(
-        `${getApiUrl()}/apps/opencatalogi/api/publications?_facetable=true&${queryParams}`
+        `${getApiUrl()}/apps/opencatalogi/api/publications?_facetable=true&${queryParams}&${searchQueryParams}`
       );
 
       if (!response.ok) {
@@ -181,7 +192,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
   useEffect(() => {
     fetchFacets();
-  }, []);
+  }, [publications.search_query]); // Add dependency on search_query
 
   if (isLoading) {
     return <AcLoader style={{ height: '200px' }} />;
@@ -196,7 +207,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             <>
               {Object.entries(value).map(
                 ([_key, _value]) =>
-                  _value.buckets.length > 1 && (
+                  _value.buckets.length > 0 && (
                     <AcFlex
                       key={`${key}-${_key}`}
                       column
@@ -225,7 +236,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
               )}
             </>
           ) : (
-            value.buckets.length > 1 && (
+            value.buckets.length > 0 && (
               <AcFlex
                 key={key}
                 column
