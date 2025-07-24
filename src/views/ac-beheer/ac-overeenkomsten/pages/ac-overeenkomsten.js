@@ -92,10 +92,26 @@ const AcBeheerOvereenkomsten = () => {
         const jsonResponse = response.data;
         const schemaJsonResponse = schemaResponse.data;
 
+        // Check if current page is higher than total pages
+        const totalPages = jsonResponse.pages;
+        const currentPage = pagination.page;
+
+        if (currentPage > totalPages && totalPages > 0) {
+          // Reset to highest available page (this causes a refetch)
+          setPagination((prev) => ({
+            ...prev,
+            page: totalPages,
+            total: jsonResponse.total,
+            pages: totalPages,
+            offset: jsonResponse.offset,
+          }));
+          return;
+        }
+
         setPagination((prev) => ({
           ...prev,
           total: jsonResponse.total,
-          pages: jsonResponse.pages,
+          pages: totalPages,
           offset: jsonResponse.offset,
         }));
 

@@ -367,12 +367,28 @@ const BeheerTable = forwardRef((props, ref) => {
       setError({ message: data.error });
     } else {
       setData(data.results);
-      setPagination((prev) => ({
-        ...prev,
-        total: data.total,
-        pages: data.pages,
-        offset: data.offset,
-      }));
+
+      // Check if current page is higher than total pages
+      const totalPages = data.pages;
+      const currentPage = pagination.page;
+
+      if (currentPage > totalPages && totalPages > 0) {
+        // Reset to highest available page (this causes a refetch)
+        setPagination((prev) => ({
+          ...prev,
+          page: totalPages,
+          total: data.total,
+          pages: totalPages,
+          offset: data.offset,
+        }));
+      } else {
+        setPagination((prev) => ({
+          ...prev,
+          total: data.total,
+          pages: totalPages,
+          offset: data.offset,
+        }));
+      }
     }
     return data;
   };
@@ -571,8 +587,6 @@ const BeheerTable = forwardRef((props, ref) => {
     },
     [onHeaderSearch]
   );
-
-  console.log(dataProperties);
 
   return (
     <ConTable
