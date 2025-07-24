@@ -125,7 +125,11 @@ const AcContactpersonenUitnodigenModal = ({
         {result && (
           <Alert type={result.type === 'success' ? 'info' : result.type}>
             <AcFlex spacing='sm'>
-              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              {result.type === 'error' ? (
+                <VISUALS.CIRCLE_EXCLAMATION />
+              ) : (
+                <VISUALS.INFO_BLUE />
+              )}
               <Paragraph>{result.message}</Paragraph>
             </AcFlex>
           </Alert>
