@@ -93,9 +93,22 @@ const AcMyAccount = () => {
 
     try {
       setSwitchingOrg(true);
-      const response = await updateUser({
+
+      // Since the backend doesn't support PATCH, we need to send all user data
+      // along with the activeOrganisation field for the PUT request
+      const updateData = {
+        // ...userData,
+        displayName: userData.displayName,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        middleName: userData.middleName,
+        language: userData.language,
+        locale: userData.locale,
         activeOrganisation: selectedOption.value,
-      });
+      };
+
+      const response = await updateUser(updateData);
       const updatedUser = response.data;
 
       // Update organization data
