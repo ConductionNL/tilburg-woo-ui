@@ -3,9 +3,24 @@ import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 // Get ENV variables
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
+
 const hostname = window.location.hostname;
 
 const apiUrl = () => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getApiUrl) {
+    return containerConfig.getApiUrl();
+  }
+
+  // Fallback to hostname-based logic for production builds
   switch (hostname) {
     case 'vng.opencatalogi.nl':
     case 'acceptatie.softwarecatalogus.nl':
@@ -41,6 +56,12 @@ const apiUrl = () => {
 };
 
 export const commongroundApiUrl = () => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getCommongroundApiUrl) {
+    return containerConfig.getCommongroundApiUrl();
+  }
+
+  // Fallback to hostname-based logic for production builds
   switch (hostname) {
     case 'vng.opencatalogi.nl':
     case 'acceptatie.softwarecatalogus.nl':

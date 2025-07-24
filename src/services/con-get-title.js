@@ -1,4 +1,20 @@
+// Try to import container constants (generated at runtime)
+// Fall back to hostname-based logic if not available
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
+
 export const getTitle = () => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getTitle) {
+    return containerConfig.getTitle();
+  }
+
+  // Fallback to hostname-based logic for production builds
   const hostname = window.location.hostname;
 
   switch (hostname) {
@@ -28,7 +44,7 @@ export const getTitle = () => {
     case 'verwerkingsregister.venray.nl':
       return 'Venray';
     case 'localhost':
-      return 'Localhost catalogus';
+      return 'WATCH BUILD WORKING! 🚀';
     default:
       return 'Open Tilburg';
   }

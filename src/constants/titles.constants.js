@@ -25,7 +25,7 @@ const getTitle = () => {
     case 'opencatalogi.open-regels.nl':
       return 'OpenRegels';
     case 'localhost':
-      return 'Localhost catalogus';
+      return 'Development Catalogus - WATCH TEST';
     case 'horstadmaas.accept.opencatalogi.nl':
     case 'verwerkingsregister.horstaandemaas.nl':
       return 'Horst aan de Maas';

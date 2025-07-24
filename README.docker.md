@@ -9,33 +9,27 @@ This document explains how to run the Tilburg WOO UI application using Docker fo
 
 ## Local Development
 
-### Option 1: Production Build (Port 81)
-
+### Production Build (Port 81)
 To run the application exactly as it would run in production:
 
 ```bash
 # Build and run the production container
 docker-compose up --build
-
-# Or run in detached mode
-docker-compose up -d --build
 ```
-
 The application will be available at: `http://localhost:81`
 
-### Option 2: Development Mode (Port 3000)
-
-For development with hot reloading:
+### Development Mode
+For active development with live reloading, use the dedicated development setup:
 
 ```bash
-# Build and run the development container
-docker-compose --profile dev up --build
+# Watch build mode (recommended) - Port 81
+docker-compose -f docker-compose.dev.yml up --build
 
-# Or just the development service
-docker-compose up tilburg-woo-ui-dev --build
+# Hot reload mode - Port 3000
+docker-compose -f docker-compose.dev.yml --profile hot up --build
 ```
 
-The development server will be available at: `http://localhost:3000`
+**📖 For complete development instructions, see [developer.md](./developer.md)**
 
 ### Docker Commands
 
@@ -93,9 +87,11 @@ Both production and development containers include health checks:
 
 ```
 ├── Dockerfile              # Multi-stage production build
-├── Dockerfile.dev          # Development container
-├── docker-compose.yml      # Local development setup
+├── Dockerfile.dev          # Development container with watch builds
+├── docker-compose.yml      # Production-like local setup
+├── docker-compose.dev.yml  # Development setup with live reload
 ├── .dockerignore           # Docker build optimization
+├── developer.md            # Comprehensive development guide
 ├── .github/workflows/
 │   └── build-and-deploy.yml # GitHub Actions workflow
 └── README.docker.md        # This file

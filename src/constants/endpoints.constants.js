@@ -23,7 +23,22 @@ const ELEMENTS = '/elements';
 const VOORZIENING_GEBRUIK = '/voorzieninggebruiken';
 const HOSTNAME = window.location.hostname;
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
+
 const getGemmaEndpoint = () => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getGemmaEndpoint) {
+    return containerConfig.getGemmaEndpoint();
+  }
+
+  // Fallback to hostname-based logic for production builds
   switch (HOSTNAME) {
     // return 'http://localhost:8080';
     case 'vng.test.opencatalogi.nl':
