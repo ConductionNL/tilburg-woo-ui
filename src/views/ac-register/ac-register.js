@@ -21,9 +21,9 @@ import { isValidPhoneNumber } from 'libphonenumber-js';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
-import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
+import { ConMarkdown } from '@src/components';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -1318,7 +1318,7 @@ const ReviewForm = memo(
             <div className='ac-register-review__field'>
               <strong>Korte beschrijving:</strong>
               <div>
-                <ReactMarkdown>{organization.summary || ''}</ReactMarkdown>
+                <ConMarkdown>{organization.summary || ''}</ConMarkdown>
               </div>
             </div>
 
