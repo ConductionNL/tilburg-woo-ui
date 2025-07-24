@@ -30,10 +30,14 @@ export const CONTAINER_CONFIG = AcLockObject({
   ENABLE_GEMMA: true,
   ENABLE_DIRECTORY: true,
   ENABLE_ROLLBAR: false,
+  ENABLE_MOCK_THEMES: true,
   EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
   EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
   EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
+  HERO_IMAGE_URL: '/home-hero-background.png',
+  MENU_POSITION: 2,
+  FOOTER_STYLE: 'vng',
 });
 
 // Helper functions to replace hostname-based logic
@@ -76,6 +80,12 @@ export const getExternalUrls = () => ({
   proclaimer: CONTAINER_CONFIG.EXTERNAL_PROCLAIMER_URL,
 });
 
+export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
+
+export const getMenuPosition = () => CONTAINER_CONFIG.MENU_POSITION;
+
+export const getFooterStyle = () => CONTAINER_CONFIG.FOOTER_STYLE;
+
 export const isFeatureEnabled = (feature) => {
   switch (feature) {
     case 'authentication':
@@ -86,6 +96,8 @@ export const isFeatureEnabled = (feature) => {
       return CONTAINER_CONFIG.ENABLE_DIRECTORY;
     case 'rollbar':
       return CONTAINER_CONFIG.ENABLE_ROLLBAR;
+    case 'mock_themes':
+      return CONTAINER_CONFIG.ENABLE_MOCK_THEMES;
     default:
       return false;
   }
@@ -117,10 +129,14 @@ export const {
   ENABLE_GEMMA,
   ENABLE_DIRECTORY,
   ENABLE_ROLLBAR,
+  ENABLE_MOCK_THEMES,
   EXTERNAL_WEBSITE_URL,
   EXTERNAL_PRIVACY_URL,
   EXTERNAL_COOKIES_URL,
   EXTERNAL_PROCLAIMER_URL,
+  HERO_IMAGE_URL,
+  MENU_POSITION,
+  FOOTER_STYLE,
 } = CONTAINER_CONFIG;
 
 // Backwards compatibility

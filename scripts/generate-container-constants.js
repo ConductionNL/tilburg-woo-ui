@@ -48,12 +48,20 @@ const getEnvConfig = () => {
     ENABLE_GEMMA: process.env.ENABLE_GEMMA !== 'false', // Default true
     ENABLE_DIRECTORY: process.env.ENABLE_DIRECTORY !== 'false', // Default true
     ENABLE_ROLLBAR: process.env.ENABLE_ROLLBAR === 'true' || false,
+    ENABLE_MOCK_THEMES: process.env.ENABLE_MOCK_THEMES === 'true' || false,
 
     // External URLs (for different environments)
     EXTERNAL_WEBSITE_URL: process.env.EXTERNAL_WEBSITE_URL || 'https://www.tilburg.nl/',
     EXTERNAL_PRIVACY_URL: process.env.EXTERNAL_PRIVACY_URL || 'https://www.tilburg.nl/privacystatement/',
     EXTERNAL_COOKIES_URL: process.env.EXTERNAL_COOKIES_URL || 'https://www.tilburg.nl/cookies/',
     EXTERNAL_PROCLAIMER_URL: process.env.EXTERNAL_PROCLAIMER_URL || 'https://www.tilburg.nl/proclaimer/',
+    
+    // Visual Configuration
+    HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || '/home-hero-background.png',
+    
+    // Menu Configuration
+    MENU_POSITION: parseInt(process.env.MENU_POSITION) || 2,
+    FOOTER_STYLE: process.env.FOOTER_STYLE || 'vng', // vng, dimpact, etc.
   };
 };
 
@@ -124,6 +132,12 @@ export const getExternalUrls = () => ({
   proclaimer: CONTAINER_CONFIG.EXTERNAL_PROCLAIMER_URL,
 });
 
+export const getHeroImageUrl = () => CONTAINER_CONFIG.HERO_IMAGE_URL;
+
+export const getMenuPosition = () => CONTAINER_CONFIG.MENU_POSITION;
+
+export const getFooterStyle = () => CONTAINER_CONFIG.FOOTER_STYLE;
+
 export const isFeatureEnabled = (feature) => {
   switch (feature) {
     case 'authentication':
@@ -134,6 +148,8 @@ export const isFeatureEnabled = (feature) => {
       return CONTAINER_CONFIG.ENABLE_DIRECTORY;
     case 'rollbar':
       return CONTAINER_CONFIG.ENABLE_ROLLBAR;
+    case 'mock_themes':
+      return CONTAINER_CONFIG.ENABLE_MOCK_THEMES;
     default:
       return false;
   }
@@ -165,10 +181,14 @@ export const {
   ENABLE_GEMMA,
   ENABLE_DIRECTORY,
   ENABLE_ROLLBAR,
+  ENABLE_MOCK_THEMES,
   EXTERNAL_WEBSITE_URL,
   EXTERNAL_PRIVACY_URL,
   EXTERNAL_COOKIES_URL,
   EXTERNAL_PROCLAIMER_URL,
+  HERO_IMAGE_URL,
+  MENU_POSITION,
+  FOOTER_STYLE,
 } = CONTAINER_CONFIG;
 
 // Backwards compatibility

@@ -40,9 +40,38 @@ const AcFooter = ({ store: { menu } }) => {
     return <li key={item.id}>{linkContent}</li>;
   };
 
-  const getFooterItems = () => {
-    const hostname = window.location.hostname;
+  // Try to import container constants (generated at runtime)
+  let containerConfig;
+  try {
+    containerConfig = require('@constants/container.constants');
+  } catch (error) {
+    console.warn('Container constants not available, falling back to hostname-based logic');
+    containerConfig = null;
+  }
 
+  const getFooterItems = () => {
+    // Use container config if available
+    if (containerConfig && containerConfig.getFooterStyle) {
+      const footerStyle = containerConfig.getFooterStyle();
+      switch (footerStyle) {
+        case 'dimpact':
+          return [
+            DIMPACT_FOOTER_ITEMS_WHAT_WE_DO,
+            DIMPACT_FOOTER_ITEMS_WHO_WE_ARE,
+            DIMPACT_FOOTER_ITEMS_INFORMATION,
+          ];
+        case 'vng':
+        default:
+          return [
+            VNG_FOOTER_ITEMS_SITEMAP,
+            VNG_FOOTER_ITEMS_INFORMATIE,
+            VNG_FOOTER_ITEMS_BEDRIJVEN,
+          ];
+      }
+    }
+
+    // Fallback to hostname-based logic for production builds
+    const hostname = window.location.hostname;
     switch (hostname) {
       case 'vng.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
@@ -85,13 +114,18 @@ const AcFooter = ({ store: { menu } }) => {
     }
   };
 
-  const hostname = window.location.hostname;
+  const getFooterMenuPosition = () => {
+    // Use container config if available
+    if (containerConfig && containerConfig.getMenuPosition) {
+      return containerConfig.getMenuPosition();
+    }
 
-  const footerItems = all_menu_items.filter((item) =>
-    hostname === 'horstadmaas.accept.opencatalogi.nl'
-      ? item.position > 1
-      : item.position > 2
-  );
+    // Fallback to hostname-based logic for production builds
+    const hostname = window.location.hostname;
+    return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
+  };
+
+  const footerItems = all_menu_items.filter((item) => item.position > getFooterMenuPosition());
 
   return (
     <footer className='ac-footer'>

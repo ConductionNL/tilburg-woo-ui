@@ -52,11 +52,17 @@ services:
       - ENABLE_GEMMA=true
       - ENABLE_DIRECTORY=true
       - ENABLE_ROLLBAR=false
+      - ENABLE_MOCK_THEMES=true
       # External URLs
       - EXTERNAL_WEBSITE_URL=https://www.tilburg.nl/
       - EXTERNAL_PRIVACY_URL=https://www.tilburg.nl/privacystatement/
       - EXTERNAL_COOKIES_URL=https://www.tilburg.nl/cookies/
       - EXTERNAL_PROCLAIMER_URL=https://www.tilburg.nl/proclaimer/
+      # Visual Configuration
+      - HERO_IMAGE_URL=/home-hero-background.png
+      # Menu Configuration
+      - MENU_POSITION=2
+      - FOOTER_STYLE=vng
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/"]
       interval: 30s
@@ -73,10 +79,12 @@ services:
     container_name: tilburg-woo-ui-hot
     restart: unless-stopped
     volumes:
-      - ./src:/app/src:ro
+      # Mount source code for live updates (read-write for hot reload)
+      - ./src:/app/src
       - ./public:/app/public:ro
       - ./package.json:/app/package.json:ro
       - ./yarn.lock:/app/yarn.lock:ro
+      - ./scripts:/app/scripts:ro
     ports:
       - "3000:3000"
     environment:
@@ -113,11 +121,17 @@ services:
       - ENABLE_GEMMA=true
       - ENABLE_DIRECTORY=true
       - ENABLE_ROLLBAR=false
+      - ENABLE_MOCK_THEMES=true
       # External URLs
       - EXTERNAL_WEBSITE_URL=https://www.tilburg.nl/
       - EXTERNAL_PRIVACY_URL=https://www.tilburg.nl/privacystatement/
       - EXTERNAL_COOKIES_URL=https://www.tilburg.nl/cookies/
       - EXTERNAL_PROCLAIMER_URL=https://www.tilburg.nl/proclaimer/
+      # Visual Configuration
+      - HERO_IMAGE_URL=/home-hero-background.png
+      # Menu Configuration
+      - MENU_POSITION=2
+      - FOOTER_STYLE=vng
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/"]
       interval: 30s

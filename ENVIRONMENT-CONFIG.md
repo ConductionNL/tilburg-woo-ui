@@ -102,6 +102,7 @@ graph TD
 | `ENABLE_GEMMA` | boolean | `true` | Enable GEMMA integration | `false` |
 | `ENABLE_DIRECTORY` | boolean | `true` | Enable directory functionality | `false` |
 | `ENABLE_ROLLBAR` | boolean | `false` | Enable error monitoring | `true` |
+| `ENABLE_MOCK_THEMES` | boolean | `false` | Use mock themes when API unavailable | `true` |
 
 ### External URLs
 
@@ -111,6 +112,19 @@ graph TD
 | `EXTERNAL_PRIVACY_URL` | string | `https://www.tilburg.nl/privacystatement/` | Privacy policy | `https://example.com/privacy` |
 | `EXTERNAL_COOKIES_URL` | string | `https://www.tilburg.nl/cookies/` | Cookie policy | `https://example.com/cookies` |
 | `EXTERNAL_PROCLAIMER_URL` | string | `https://www.tilburg.nl/proclaimer/` | Proclaimer/disclaimer | `https://example.com/terms` |
+
+### Visual Configuration
+
+| Variable | Type | Default | Description | Example |
+|----------|------|---------|-------------|---------|
+| `HERO_IMAGE_URL` | string | `/home-hero-background.png` | Hero section background image | `/custom-hero.jpg` |
+
+### Menu Configuration
+
+| Variable | Type | Default | Description | Example |
+|----------|------|---------|-------------|---------|
+| `MENU_POSITION` | number | `2` | Menu position identifier for navigation | `1` |
+| `FOOTER_STYLE` | string | `vng` | Footer style variant | `dimpact` |
 
 ## Configuration Files
 
@@ -170,6 +184,11 @@ services:
       - API_URL=http://nextcloud.local/index.php/apps
       - ENABLE_AUTHENTICATION=false
       - ENABLE_ROLLBAR=false
+      
+      # Visual Configuration
+      - HERO_IMAGE_URL=/custom-dev-hero.jpg
+      - MENU_POSITION=2
+      - FOOTER_STYLE=vng
       
       # Connect to local backend
       - API_URL=http://host.docker.internal:3000/apps

@@ -94,6 +94,23 @@ The application now uses a modern environment-based configuration system that re
 3. **Application Integration**: Components import and use the generated configuration
 4. **Fallback Support**: Falls back to hostname-based logic if container constants aren't available
 
+### 🚀 Migration Status
+
+The following components have been successfully migrated from hostname-based to environment-based configuration:
+
+✅ **Site Configuration**: Site titles, descriptions, theme variants  
+✅ **API Configuration**: All API endpoints (Nextcloud.local defaults)  
+✅ **Visual Configuration**: Hero images, menu positions, footer styles  
+✅ **Feature Flags**: Authentication, GEMMA, directory, monitoring  
+✅ **External Links**: Website, privacy, cookies, disclaimer URLs  
+✅ **Header Component**: Dynamic menu positioning  
+✅ **Footer Component**: Dynamic footer styles and menu filtering  
+✅ **Hero Component**: Configurable background images  
+✅ **Title Services**: Dynamic site titles  
+✅ **Route Constants**: Environment-aware page titles  
+
+All changes maintain **backward compatibility** - the application works in production environments without the container constants system.
+
 ### Configuration Variables
 
 #### Site Configuration
@@ -143,6 +160,7 @@ The application now uses a modern environment-based configuration system that re
 | `ENABLE_GEMMA` | `true` | Enable GEMMA integration |
 | `ENABLE_DIRECTORY` | `true` | Enable directory functionality |
 | `ENABLE_ROLLBAR` | `false` | Enable Rollbar error monitoring |
+| `ENABLE_MOCK_THEMES` | `false` | Use mock themes data when API is unavailable |
 
 #### External URLs
 | Variable | Default | Description |
@@ -150,9 +168,36 @@ The application now uses a modern environment-based configuration system that re
 | `EXTERNAL_WEBSITE_URL` | `https://www.tilburg.nl/` | Main website URL |
 | `EXTERNAL_PRIVACY_URL` | `https://www.tilburg.nl/privacystatement/` | Privacy policy URL |
 | `EXTERNAL_COOKIES_URL` | `https://www.tilburg.nl/cookies/` | Cookie policy URL |
-| `EXTERNAL_PROCLAIMER_URL` | `https://www.tilburg.nl/proclaimer/` | Proclaimer URL |
+| `EXTERNAL_PROCLAIMER_URL` | `https://www.tilburg.nl/proclaimer/` | Proclaimer/disclaimer URL |
+
+#### Visual Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `HERO_IMAGE_URL` | `/home-hero-background.png` | Hero section background image |
+
+#### Menu Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MENU_POSITION` | `2` | Menu position identifier for navigation |
+| `FOOTER_STYLE` | `vng` | Footer style variant (`vng`, `dimpact`) |
 
 ### Using Environment Configuration
+
+#### Testing Your Configuration
+
+After updating environment variables, verify they're working:
+
+```bash
+# 1. Recreate containers to pick up new env vars
+docker-compose -f docker-compose.dev.yml down
+docker-compose -f docker-compose.dev.yml up -d
+
+# 2. Check if variables are loaded in the container
+docker exec tilburg-woo-ui-dev grep "HERO_IMAGE_URL\|MENU_POSITION\|FOOTER_STYLE" /app/src/constants/container.constants.js
+
+# 3. Verify container logs show the new configuration
+docker logs tilburg-woo-ui-dev --tail 10
+```
 
 #### Development Example
 Edit `docker-compose.dev.yml`:
@@ -186,6 +231,10 @@ environment:
   - API_URL=http://nextcloud.local/index.php/apps
   - ENABLE_AUTHENTICATION=false
   - ENABLE_ROLLBAR=false
+  # Visual Configuration
+  - HERO_IMAGE_URL=/custom-hero-image.jpg
+  - MENU_POSITION=2
+  - FOOTER_STYLE=vng
 ```
 
 **Staging Environment**:
@@ -451,6 +500,25 @@ docker run -d -p 81:81 \
 ## Troubleshooting
 
 ### Common Issues
+
+#### Themes API Error: "Cannot read properties of undefined (reading 'localeCompare')"
+
+**Problem**: Console error in `themes.store.js` when themes API is unavailable.
+
+**Solution**: Enable mock themes for local development:
+```yaml
+# docker-compose.dev.yml
+environment:
+  - ENABLE_MOCK_THEMES=true
+```
+
+**Why this happens**: The themes API endpoint may not exist at `nextcloud.local`, causing malformed data to be returned.
+
+**What mock themes provides**:
+- 4 sample themes with proper structure
+- Prevents console errors during development
+- Allows UI testing without backend API
+- Automatic fallback when real API fails
 
 #### Container Won't Start
 ```bash

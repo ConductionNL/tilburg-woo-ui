@@ -27,9 +27,23 @@ import {
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-const hostname = window.location.hostname;
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
 
 export const BASE_URL = (() => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getGemmaEndpoint) {
+    return containerConfig.getGemmaEndpoint();
+  }
+
+  // Fallback to hostname-based logic for production builds
+  const hostname = window.location.hostname;
   switch (hostname) {
     case 'vng.test.opencatalogi.nl':
     case 'localhost':
