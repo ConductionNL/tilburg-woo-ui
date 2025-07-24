@@ -12,7 +12,7 @@ import {
   AcTabs,
 } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcSideNav, AcLoader } from '@components';
+import { AcSideNav, AcLoader, ConMarkdown } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
 import { AcFormField, AcLink } from '@molecules';
 import { BASE_URL } from '../../ac-beheer';
@@ -41,7 +41,6 @@ import ConActionMenu from '../../con-action-menu';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import ConLogoPreview from '../../../ac-register/con-logo-preview';
-import ReactMarkdown from 'react-markdown';
 import AcPublishDepublishOrganizationModal from '../modals/ac-publish-depublish-organisation';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
 import AcAddRemoveDeelnameModal from '../modals/ac-add-remove-deelname';
@@ -491,9 +490,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                               <div className='ac-organisatie-detail-form-preview'>
                                 <Heading level={4}>Preview</Heading>
                                 <div className='ac-organisatie-detail-preview markdown-preview'>
-                                  <ReactMarkdown>
-                                    {tempBeschrijvingLang}
-                                  </ReactMarkdown>
+                                  <ConMarkdown>{tempBeschrijvingLang}</ConMarkdown>
                                 </div>
                               </div>
                             </div>
@@ -527,9 +524,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                             {(() => {
                               try {
                                 return (
-                                  <ReactMarkdown>
+                                  <ConMarkdown>
                                     {JSON.parse(data.beschrijvingLang)}
-                                  </ReactMarkdown>
+                                  </ConMarkdown>
                                 );
                               } catch {
                                 return (

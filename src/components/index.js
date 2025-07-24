@@ -51,7 +51,9 @@ const ConSpinLoader = loadable(() =>
 const ConDynamicSchemaForm = loadable(() =>
   import('@src/components/con-dynamic-schema-form/con-dynamic-schema-form')
 );
-
+const ConMarkdown = loadable(() =>
+  import('@src/components/con-markdown/con-markdown')
+);
 
 export {
   AcAbout,
@@ -78,4 +80,5 @@ export {
   ConHorizontalOverflowWrapper,
   ConSpinLoader,
   ConDynamicSchemaForm,
+  ConMarkdown,
 };
