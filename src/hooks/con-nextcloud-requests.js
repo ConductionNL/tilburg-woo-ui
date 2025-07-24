@@ -23,7 +23,7 @@ const mapQueryParams = (queryParams) => {
 // Create an axios instance with default config
 const nextcloudApi = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000, // 30 second timeout
+  timeout: 120000, // 120 second timeout
   headers: {
     'Content-Type': 'application/json',
   },
