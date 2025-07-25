@@ -10,7 +10,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   MODE: 'development',
   THEME_VARIANT: 'development',
   ENVIRONMENT_NAME: 'development',
-  BASE_URL: '/api/apps',
+  BASE_URL: 'https://vng.test.commonground.nu/apps',
   GRANT_TYPE: 'authorization_code',
   CLIENT_ID: '',
   CLIENT_SECRET: '',
