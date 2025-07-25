@@ -401,26 +401,38 @@ const AcDashboard = () => {
 
     setModelsLoading(true);
 
-    const response = await fetch(
-      `${BASE_URL}/apps/openconnector/api/endpoint/models`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-    const data = await response.json();
-    if (data?.results) {
-      setModels(
-        data.results.map((model) => ({
-          name: model.name['#text'] ?? model.name,
-          id: model.id,
-        }))
+    try {
+      const response = await fetch(
+        `${BASE_URL}/apps/openconnector/api/endpoint/models`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
+
+      if (!response.ok) {
+        console.error('Failed to fetch models:', response.status, response.statusText);
+        setModelsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      if (data?.results) {
+        setModels(
+          data.results.map((model) => ({
+            name: model.name['#text'] ?? model.name,
+            id: model.id,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error);
+    } finally {
+      setModelsLoading(false);
     }
-    setModelsLoading(false);
   };
 
   useEffect(() => {

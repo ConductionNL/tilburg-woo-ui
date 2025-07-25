@@ -45,8 +45,9 @@ export const BASE_URL = (() => {
   return containerConfig.getGemmaEndpoint();
 })();
 
-const AcBeheer = () => {
+const AcBeheer = ({ store }) => {
   const navigate = useMemo(() => useNavigate(), []);
+  const { user } = store;
 
   const wrongPage = () => (
     <AcSection spacing>
@@ -60,16 +61,27 @@ const AcBeheer = () => {
     </AcSection>
   );
 
-  const loggedIn = !!getCookie('nextcloud_user_id');
-  const loggedOut = getCookie('logout');
+  // Check authentication using the new UserStore
   useEffect(() => {
-    if (loggedOut) {
-      navigate('/');
-    }
-    if (!loggedIn) {
-      navigate(`/login?redirect_url=${window.location.pathname}`);
-    }
-  }, [loggedIn, loggedOut]);
+    const checkAuth = async () => {
+      // Check for legacy logout cookie
+      const loggedOut = getCookie('logout');
+      if (loggedOut) {
+        await user.logout();
+        navigate('/');
+        return;
+      }
+
+      // Check authentication status
+      const isAuthenticated = await user.checkAuthStatus();
+      
+      if (!isAuthenticated) {
+        navigate(`/login?redirect_url=${window.location.pathname}`);
+      }
+    };
+
+    checkAuth();
+  }, [user, navigate]);
 
   const { type, id } = useParams();
 

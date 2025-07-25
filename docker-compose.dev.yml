@@ -29,13 +29,22 @@ services:
       - MODE=development
       - THEME_VARIANT=development
       - ENVIRONMENT_NAME=development
-      # API Configuration
-      - API_URL=http://nextcloud.local/index.php/apps
-      - API_URL_COMMONGROUND=http://nextcloud.local/index.php/apps
+      # API Configuration (Updated to use /api instead of /api/nextcloud)
+      - API_URL=/api/index.php/apps
+      - API_URL_COMMONGROUND=/api/index.php/apps
       - API_URL_COMMONGROUND_TOKEN=
       - API_URL_COMMONGROUND_ORGANIZATION_OIN=
-      - GEMMA_ENDPOINT=http://nextcloud.local
-      - OPENCONNECTOR_API_URL=http://nextcloud.local/index.php/apps/openconnector/api
+      - GEMMA_ENDPOINT=/api
+      - OPENCONNECTOR_API_URL=/api/openconnector
+      
+      # Nextcloud/Target Configuration
+      - NEXTCLOUD_HOST=nextcloud.local
+      
+      # Nginx-specific environment variables (for tilburg-woo-ui-dev container)
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
@@ -99,13 +108,20 @@ services:
       - MODE=development
       - THEME_VARIANT=development
       - ENVIRONMENT_NAME=development
-      # API Configuration
-      - API_URL=http://nextcloud.local/index.php/apps
-      - API_URL_COMMONGROUND=http://nextcloud.local/index.php/apps
+      # API Configuration (Updated to use /api instead of /api/nextcloud)
+      - API_URL=/api/index.php/apps
+      - API_URL_COMMONGROUND=/api/index.php/apps
       - API_URL_COMMONGROUND_TOKEN=
       - API_URL_COMMONGROUND_ORGANIZATION_OIN=
-      - GEMMA_ENDPOINT=http://nextcloud.local
-      - OPENCONNECTOR_API_URL=http://nextcloud.local/index.php/apps/openconnector/api
+      - GEMMA_ENDPOINT=/api
+      - OPENCONNECTOR_API_URL=/api/openconnector
+      
+      # Nextcloud/Target Configuration  
+      - NEXTCLOUD_HOST=nextcloud.local
+      # Nginx Proxy Configuration
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=

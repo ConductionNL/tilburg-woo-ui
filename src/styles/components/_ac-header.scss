@@ -26,6 +26,19 @@
     background-color: var(--tilburg-header-background-color);
   }
 
+  &__navigation-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+
+  &__user-section {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-inline-end: 1rem;
+  }
+
   &__logo {
     > * {
       display: flex;
@@ -105,6 +118,48 @@
 
     &:has(.container:empty) {
       padding: 0;
+    }
+  }
+
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    
+    .ac-header__username {
+      font-weight: 500;
+      color: var(--utrecht-document-color, #000);
+    }
+    
+    .ac-header__logout-btn,
+    .ac-header__login-btn {
+      padding: 0.5rem 1rem;
+      background: var(--utrecht-button-primary-action-background-color, #007bc7);
+      color: var(--utrecht-button-primary-action-color, #fff);
+      border: none;
+      border-radius: 4px;
+      text-decoration: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      
+      &:hover {
+        background: var(--utrecht-button-primary-action-hover-background-color, #005a94);
+      }
+      
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+    
+    .ac-header__login-btn {
+      background: transparent;
+      color: var(--utrecht-button-secondary-action-color, #007bc7);
+      border: 1px solid var(--utrecht-button-secondary-action-border-color, #007bc7);
+      
+      &:hover {
+        background: var(--utrecht-button-secondary-action-hover-background-color, #f0f8ff);
+      }
     }
   }
 

@@ -21,11 +21,16 @@ try {
   containerConfig = null;
 }
 
-const AcHeader = ({ store: { menu } }) => {
+const AcHeader = ({ store: { menu, user } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
   const { all_menu_items } = menu;
+
+  // Debug user data structure
+  if (user.isAuthenticated && user.currentUser) {
+    console.log('Header - Current user data:', user.currentUser);
+  }
 
   const getMenuPosition = () => {
     // Use container config if available
@@ -37,8 +42,13 @@ const AcHeader = ({ store: { menu } }) => {
     const hostname = window.location.hostname;
     return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
   };
-
+  
   const menuItems = all_menu_items.find((item) => item.position === getMenuPosition());
+
+  const handleLogout = async () => {
+    await user.logout();
+    window.location.href = '/'; // Full page reload to ensure clean state
+  };
 
   return (
     <header className='ac-header'>
@@ -62,7 +72,36 @@ const AcHeader = ({ store: { menu } }) => {
             </>
           )}
         </div>
-        <AcNavigation />
+        <div className='ac-header__navigation-wrapper'>
+          <AcNavigation />
+        </div>
+        <div className='ac-header__user-section'>
+          {user.isAuthenticated && (
+            <div className='ac-header__user-info'>
+              <span className='ac-header__username'>
+                {user.currentUser?.displayName || 
+                 user.currentUser?.firstName || 
+                 user.currentUser?.username || 
+                 user.currentUser?.uid || 
+                 (user.currentUser ? 'Gebruiker' : 'Laden...')}
+              </span>
+              <button 
+                className='ac-header__logout-btn' 
+                onClick={handleLogout}
+                disabled={user.loading.status}
+              >
+                {user.loading.status ? 'Uitloggen...' : 'Uitloggen'}
+              </button>
+            </div>
+          )}
+          {!user.isAuthenticated && (
+            <div className='ac-header__user-info'>
+              <a href='/login' className='ac-header__login-btn'>
+                Inloggen
+              </a>
+            </div>
+          )}
+        </div>
       </div>
       {menuItems && menuItems.items.length > 0 && (
         <div className='ac-header__navigation-secondary'>

@@ -8,6 +8,7 @@ import API from '@api';
 // Imports => Stores
 
 import AuthStore from '@stores/auth.store';
+import UserStore from '@stores/user.store';
 import ToastersStore from '@stores/toasters.store';
 import FaqsStore from '@stores/faqs.store';
 import PagesStore from '@stores/pages.store';
@@ -27,6 +28,7 @@ class Store {
     this.api = new API(config, this);
 
     this.auth = new AuthStore(this);
+    this.user = new UserStore(this);
     this.publications = new PublicationsStore(this);
     this.faqs = new FaqsStore(this);
     this.pages = new PagesStore(this);
