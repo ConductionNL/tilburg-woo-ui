@@ -10,17 +10,16 @@ data:
   BASE_URL: {{ .Values.env.BASE_URL | quote }}
   BASE_URL_COMMONGROUND: {{ .Values.env.BASE_URL_COMMONGROUND | quote }}
   
-  # Nginx Configuration
-  NGINX_OPENCONNECTOR_UPSTREAM: {{ .Values.env.NGINX_OPENCONNECTOR_UPSTREAM | quote }}
-  NGINX_NEXTCLOUD_UPSTREAM: {{ .Values.env.NGINX_NEXTCLOUD_UPSTREAM | quote }}
-  # Auto-set domain from global.domain if not specified
+  # Nginx Configuration - minimal setup
+  NGINX_ROOT_DIR: {{ .Values.env.NGINX_ROOT_DIR | quote }}
+  {{- if .Values.global.domain }}
+  # Auto-set domain from global.domain only if specified
   {{- $domain := .Values.global.domain }}
   {{- if .Values.global.subdomain }}
   {{- $domain = printf "%s.%s" .Values.global.subdomain .Values.global.domain }}
   {{- end }}
-  NGINX_NEXTCLOUD_DOMAIN: {{ .Values.env.NGINX_NEXTCLOUD_DOMAIN | default $domain | quote }}
-  NGINX_TARGET_HOST: {{ .Values.env.NGINX_TARGET_HOST | default $domain | quote }}
-  NGINX_ROOT_DIR: {{ .Values.env.NGINX_ROOT_DIR | quote }}
+  NGINX_TARGET_HOST: {{ $domain | quote }}
+  {{- end }}
   
   {{- if .Values.development.enabled }}
   # Development specific configuration
