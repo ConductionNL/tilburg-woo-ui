@@ -35,11 +35,12 @@ spec:
     {{- end }}
   {{- end }}
   rules:
+    {{- if .Values.ingress.hosts }}
     {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ required "ingress.hosts[].host is required! Please provide via ArgoCD parameters." .host | quote }}
       http:
         paths:
-          {{- range .paths }}
+          {{- range $.Values.ingress.paths }}
           - path: {{ .path }}
             {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion) }}
             pathType: {{ .pathType }}
@@ -55,5 +56,8 @@ spec:
               servicePort: {{ $svcPort }}
               {{- end }}
           {{- end }}
+    {{- end }}
+    {{- else }}
+    {{- fail "ERROR: ingress.hosts is required! Please provide via ArgoCD parameters: ingress.hosts[0].host=your-domain.com" }}
     {{- end }}
 {{- end }} 
