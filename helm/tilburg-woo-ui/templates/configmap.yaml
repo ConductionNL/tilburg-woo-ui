@@ -13,8 +13,13 @@ data:
   # Nginx Configuration
   NGINX_OPENCONNECTOR_UPSTREAM: {{ .Values.env.NGINX_OPENCONNECTOR_UPSTREAM | quote }}
   NGINX_NEXTCLOUD_UPSTREAM: {{ .Values.env.NGINX_NEXTCLOUD_UPSTREAM | quote }}
-  NGINX_NEXTCLOUD_DOMAIN: {{ .Values.env.NGINX_NEXTCLOUD_DOMAIN | quote }}
-  NGINX_TARGET_HOST: {{ .Values.env.NGINX_TARGET_HOST | quote }}
+  # Auto-set domain from global.domain if not specified
+  {{- $domain := .Values.global.domain }}
+  {{- if .Values.global.subdomain }}
+  {{- $domain = printf "%s.%s" .Values.global.subdomain .Values.global.domain }}
+  {{- end }}
+  NGINX_NEXTCLOUD_DOMAIN: {{ .Values.env.NGINX_NEXTCLOUD_DOMAIN | default $domain | quote }}
+  NGINX_TARGET_HOST: {{ .Values.env.NGINX_TARGET_HOST | default $domain | quote }}
   NGINX_ROOT_DIR: {{ .Values.env.NGINX_ROOT_DIR | quote }}
   
   {{- if .Values.development.enabled }}
