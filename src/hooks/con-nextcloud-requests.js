@@ -19,8 +19,8 @@ const normalizeParams = (pairs = []) => {
 // Create axios instance configured for Nextcloud
 const nextcloudApi = axios.create({
   baseURL: BASE_URL,
-  timeout: 120_000, // 120 second timeout
-  //   withCredentials: true, // include cookies for authentication
+  timeout: 120_000,
+    withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
