@@ -295,6 +295,39 @@ export class UserStore {
     }
   };
 
+  // Update user profile data
+  @action
+  updateUser = async (userData) => {
+    try {
+      if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
+        console.warn('OpenConnector API URL not configured');
+        throw new Error('API URL not configured');
+      }
+
+      console.log('Updating user profile:', userData);
+      
+      // Use the authenticated request helper to update user data
+      const updatedUserData = await this.makeAuthenticatedRequest('/user/me', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      console.log('User profile updated successfully:', updatedUserData);
+      
+      // Update the local user state with the new data
+      this.setUser(updatedUserData);
+      
+      // Return the response in the expected format for compatibility
+      return { data: updatedUserData };
+    } catch (error) {
+      console.error('Failed to update user profile:', error);
+      throw error;
+    }
+  };
+
   // OAuth login (existing functionality)
   @action
   oauthLogin = async (credentials) => {
