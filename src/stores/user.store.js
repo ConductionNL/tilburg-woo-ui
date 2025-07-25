@@ -191,12 +191,16 @@ export class UserStore {
         
         // Store user data from login response
         if (data.user) {
+          console.log('Setting user from login response:', data.user);
           this.setUser(data.user);
           this.setAuthMethod('session');
+          console.log('After setUser - isAuthenticated:', this.isAuthenticated);
         }
         
         // Also fetch full user profile (/me endpoint)
+        console.log('Fetching user profile...');
         await this.fetchUserProfile();
+        console.log('After fetchUserProfile - isAuthenticated:', this.isAuthenticated, 'user:', this.user);
         
         this.setLoading(false);
         return { success: true, user: this.user };

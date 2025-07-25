@@ -39,7 +39,7 @@ const AcGemmaView = ({ store: { gemma } }) => {
   const getPropertyDefinitions = async () => {
     try {
       const response = await fetch(
-        `${BASE_URL}/apps/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
+        `${BASE_URL}/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
       );
       const data = await response.json();
 

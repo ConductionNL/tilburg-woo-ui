@@ -72,12 +72,18 @@ const AcBeheer = ({ store }) => {
         return;
       }
 
+      // TEMPORARILY DISABLED: Double auth check causing redirect loops
+      // TODO: Re-enable after fixing the auth timing issue
+      /*
       // Check authentication status
       const isAuthenticated = await user.checkAuthStatus();
       
       if (!isAuthenticated) {
         navigate(`/login?redirect_url=${window.location.pathname}`);
       }
+      */
+      
+      console.log('AcBeheer loaded, user:', user.user); // Debug log
     };
 
     checkAuth();
