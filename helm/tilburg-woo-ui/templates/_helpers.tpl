@@ -62,28 +62,6 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Get the image tag to use
-*/}}
-{{- define "tilburg-woo-ui.imageTag" -}}
-{{- if .Values.development.enabled }}
-{{- .Values.development.image.tag | default .Values.image.tag | default .Chart.AppVersion }}
-{{- else }}
-{{- .Values.image.tag | default .Chart.AppVersion }}
-{{- end }}
-{{- end }}
-
-{{/*
-Get the image repository to use
-*/}}
-{{- define "tilburg-woo-ui.imageRepository" -}}
-{{- if .Values.development.enabled }}
-{{- .Values.development.image.repository | default .Values.image.repository }}
-{{- else }}
-{{- .Values.image.repository }}
-{{- end }}
-{{- end }}
-
-{{/*
 Get the service port to use
 */}}
 {{- define "tilburg-woo-ui.servicePort" -}}
