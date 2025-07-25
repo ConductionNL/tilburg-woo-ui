@@ -6,25 +6,27 @@
 # These parameters MUST be provided via ArgoCD Parameters tab:
 #
 # ALWAYS REQUIRED:
-#   ingress.hosts[0].host: "your-domain.com"
-#
-# REQUIRED FOR PRODUCTION (when env.NODE_ENV=production):
-#   resources.limits.cpu: "500m"
-#   resources.limits.memory: "512Mi" 
-#   resources.requests.cpu: "250m"
-#   resources.requests.memory: "256Mi"
+#   global.domain: "your-domain.com"
 #
 # OPTIONAL:
-#   ingress.tls[0].secretName: "your-tls-secret"
+#   global.tls: true (for HTTPS)
+#   image.image: "your-custom-image"
 #   image.tag: "specific-version"
 # =================================
 
-replicaCount: 1
+# Global configuration (matches old helm pattern)
+global:
+  domain: ""  # REQUIRED: Set via ArgoCD parameters
+  tls: false  # Set to true for HTTPS
+  subdomain: ""  # Optional: prepends to domain (e.g. "app" -> app.domain.com)
+
+replicaCount: 2  # Default to 2 like old setup
 
 image:
+  # Support both new and old image patterns
   repository: ghcr.io/conductionnl/tilburg-woo-ui
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  image: ""  # Alternative: set image directly (overrides repository)
+  pullPolicy: Always  # Default to Always like old setup
   tag: "latest"
 
 imagePullSecrets: []
@@ -33,11 +35,10 @@ fullnameOverride: ""
 
 serviceAccount:
   # Specifies whether a service account should be created
-  create: true
+  create: false  # Default to false like old setup
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
   name: ""
 
 podAnnotations: {}
@@ -59,40 +60,26 @@ service:
   targetPort: 81
 
 ingress:
-  enabled: true  # Standaard aan!
-  className: "nginx"  # Default ingress class
+  enabled: true
+  className: "nginx"
   annotations:
     kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
-  hosts:
-    # REQUIRED: Must be provided via ArgoCD parameters!
-    # - host: "your-domain.com"
-    #   paths:
-    #     - path: /
-    #       pathType: Prefix
-  paths:
-    - path: /
-      pathType: Prefix
+  # Hosts are auto-generated from global.domain + global.subdomain
+  hosts: []  # Leave empty - generated automatically
+  path: "/"  # Single path (matching old setup)
+  pathType: "ImplementationSpecific"  # Default like old setup
   tls: []
-  #  - secretName: tilburg-woo-ui-tls
-  #    hosts:
-  #      - tilburg-woo-ui.local
 
-resources: {}
-  # REQUIRED FOR PRODUCTION: Resources must be specified for production deployments!
-  # Set via ArgoCD parameters:
-  #   resources.limits.cpu: "500m"
-  #   resources.limits.memory: "512Mi"
-  #   resources.requests.cpu: "250m" 
-  #   resources.requests.memory: "256Mi"
-  #
-  # Example:
+resources:
+  # Default resources (matching old setup)
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  # Optional limits (can be overridden)
   # limits:
   #   cpu: 500m
   #   memory: 512Mi
-  # requests:
-  #   cpu: 250m
-  #   memory: 256Mi
 
 autoscaling:
   enabled: false

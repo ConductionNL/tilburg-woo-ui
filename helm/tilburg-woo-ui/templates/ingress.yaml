@@ -24,8 +24,18 @@ spec:
   {{- if and .Values.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
   ingressClassName: {{ .Values.ingress.className }}
   {{- end }}
-  {{- if .Values.ingress.tls }}
+  {{- if or .Values.global.tls .Values.ingress.tls }}
   tls:
+    {{- if .Values.global.tls }}
+    {{- $domain := .Values.global.domain }}
+    {{- $host := $domain }}
+    {{- if .Values.global.subdomain }}
+    {{- $host = printf "%s.%s" .Values.global.subdomain $domain }}
+    {{- end }}
+    - hosts:
+        - {{ $host | quote }}
+      secretName: {{ printf "%s-tls" (include "tilburg-woo-ui.fullname" .) }}
+    {{- end }}
     {{- range .Values.ingress.tls }}
     - hosts:
         {{- range .hosts }}
@@ -35,18 +45,20 @@ spec:
     {{- end }}
   {{- end }}
   rules:
-    {{- if .Values.ingress.hosts }}
-    {{- range .Values.ingress.hosts }}
-    - host: {{ required "ingress.hosts[].host is required! Please provide via ArgoCD parameters." .host | quote }}
+    {{- $domain := required "global.domain is required! Please provide via ArgoCD parameters." .Values.global.domain }}
+    {{- $host := $domain }}
+    {{- if .Values.global.subdomain }}
+    {{- $host = printf "%s.%s" .Values.global.subdomain $domain }}
+    {{- end }}
+    - host: {{ $host | quote }}
       http:
         paths:
-          {{- range $.Values.ingress.paths }}
-          - path: {{ .path }}
-            {{- if and .pathType (semverCompare ">=1.18-0" $.Capabilities.KubeVersion.GitVersion) }}
-            pathType: {{ .pathType }}
+          - path: {{ .Values.ingress.path }}
+            {{- if and .Values.ingress.pathType (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+            pathType: {{ .Values.ingress.pathType }}
             {{- end }}
             backend:
-              {{- if semverCompare ">=1.19-0" $.Capabilities.KubeVersion.GitVersion }}
+              {{- if semverCompare ">=1.19-0" .Capabilities.KubeVersion.GitVersion }}
               service:
                 name: {{ $fullName }}
                 port:
@@ -55,9 +67,4 @@ spec:
               serviceName: {{ $fullName }}
               servicePort: {{ $svcPort }}
               {{- end }}
-          {{- end }}
-    {{- end }}
-    {{- else }}
-    {{- fail "ERROR: ingress.hosts is required! Please provide via ArgoCD parameters: ingress.hosts[0].host=your-domain.com" }}
-    {{- end }}
 {{- end }} 

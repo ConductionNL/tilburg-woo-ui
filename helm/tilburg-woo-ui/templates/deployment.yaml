@@ -80,13 +80,7 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           resources:
-            {{- if .Values.resources }}
             {{- toYaml .Values.resources | nindent 12 }}
-            {{- else if eq .Values.env.NODE_ENV "production" }}
-            {{- fail "ERROR: resources are required for production! Please set resources.limits and resources.requests via ArgoCD parameters." }}
-            {{- else }}
-            {} # Development - no resources required
-            {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
