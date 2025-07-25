@@ -21,9 +21,9 @@ import { isValidPhoneNumber } from 'libphonenumber-js';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from './con-logo-preview';
-import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
+import { ConMarkdown } from '@src/components';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -206,8 +206,8 @@ const AcRegister = () => {
             voornaam: organization.contactPersons[0].firstName,
             tussenvoegsel: organization.contactPersons[0].middleName,
             achternaam: organization.contactPersons[0].lastName,
-            telefoon: organization.contactPersons[0].phone,
-            email: organization.contactPersons[0].email,
+            telefoonnummer: organization.contactPersons[0].phone,
+            'e-mailadres': organization.contactPersons[0].email,
             functie: organization.contactPersons[0].function,
           },
         ],
@@ -217,7 +217,7 @@ const AcRegister = () => {
       };
 
       const response = await fetch(
-        `${BASE_URL}/apps/openconnector/api/endpoint/register`,
+        `${BASE_URL}/openconnector/api/endpoint/register`,
         {
           method: 'POST',
           headers: {
@@ -1318,7 +1318,7 @@ const ReviewForm = memo(
             <div className='ac-register-review__field'>
               <strong>Korte beschrijving:</strong>
               <div>
-                <ReactMarkdown>{organization.summary || ''}</ReactMarkdown>
+                <ConMarkdown>{organization.summary || ''}</ConMarkdown>
               </div>
             </div>
 

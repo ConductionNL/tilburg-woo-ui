@@ -16,8 +16,7 @@ const DEFAULT_QUERY = {
   extend: 'themes',
 };
 
-if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
-}
+
 
 export const buildPublicationsSearchQuery = (baseQuery) => {
   return {

@@ -63,8 +63,8 @@ const AcBeheerVoorzieningenVersie = () => {
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
   const extend = [
-    ['_extend[]', 'voorziening'],
-    ['_extend[]', 'kwetsbaarheden'],
+    // ['_extend[]', 'voorziening'], // Removed extends
+    // ['_extend[]', 'kwetsbaarheden'], // Removed extends
   ];
 
   const fetchData = useCallback(
@@ -74,7 +74,7 @@ const AcBeheerVoorzieningenVersie = () => {
 
         const [response, schemaResponse] = await Promise.all([
           makeRequest(
-            `${BASE_URL}/apps/${endpoint}`,
+            endpoint,
             [
               ...extend,
               ['_page', pagination.page],
@@ -85,7 +85,7 @@ const AcBeheerVoorzieningenVersie = () => {
             '/beheer/voorzieningen-versie'
           ),
           makeRequest(
-            `${BASE_URL}/apps/${schemaEndpoint}`,
+            schemaEndpoint,
             extend,
             null,
             '/beheer/voorzieningen-versie'

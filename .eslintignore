@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Build output
+public_html/
+build/
+dist/
+
+# Configuration files
+webpack.config.js
+*.config.js
+
+# Service worker
+registerServiceWorker.js
+
+# Generated constants
+src/constants/container.constants.js
+
+# External libraries
+src/assets/licenses/ 

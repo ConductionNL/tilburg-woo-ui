@@ -34,7 +34,7 @@ const AcDeleteApplicatiesModal = ({
   const handleDeleteApplicatie = async () => {
     try {
       const deletePromises = applicaties.map((applicatie) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${applicatie.id}`, null, {
+        makeRequest(`${endpoint}/${applicatie.id}`, null, {
           method: 'DELETE',
         })
       );

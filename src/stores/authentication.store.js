@@ -3,6 +3,7 @@ import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
 import { LABELS, LABELS_DYNAMIC } from '@constants';
 
+
 let app = {};
 
 const LIMIT = 7;
@@ -15,9 +16,6 @@ export const DEFAULT_SEARCH_QUERY = {
 const DEFAULT_QUERY = {
   extend: 'all',
 };
-
-if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
-}
 
 export class AuthenticationStore {
   constructor(store) {

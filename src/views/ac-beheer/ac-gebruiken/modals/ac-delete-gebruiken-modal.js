@@ -33,7 +33,7 @@ const AcDeleteGebruikenModal = ({
   const handleDeleteGebruiken = async () => {
     try {
       const deletePromises = gebruiken.map((gebruik) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${gebruik.id}`, null, {
+        makeRequest(`${BASE_URL}/${endpoint}/${gebruik.id}`, null, {
           method: 'DELETE',
         })
       );

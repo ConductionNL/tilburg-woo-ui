@@ -1,0 +1,68 @@
+# Development values for tilburg-woo-ui
+replicaCount: 1
+
+image:
+  repository: ghcr.io/conductionnl/tilburg-woo-ui
+  pullPolicy: Always
+  tag: "dev"
+
+service:
+  type: NodePort
+  port: 3000
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: tilburg-woo-ui.dev.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+
+# Development environment variables
+env:
+  NODE_ENV: "development"
+  BASE_URL: "/api/apps"
+  BASE_URL_COMMONGROUND: "/api/apps"
+  NGINX_OPENCONNECTOR_UPSTREAM: "http://host.docker.internal:80"
+  NGINX_NEXTCLOUD_UPSTREAM: "http://host.docker.internal:80"
+  NGINX_NEXTCLOUD_DOMAIN: "nextcloud.dev.local"
+  NGINX_TARGET_HOST: "nextcloud.dev.local"
+  NGINX_ROOT_DIR: "/usr/share/nginx/html"
+
+healthCheck:
+  enabled: true
+  path: "/"
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 5
+  successThreshold: 1
+
+# Enable development mode
+development:
+  enabled: true
+  image:
+    repository: ghcr.io/conductionnl/tilburg-woo-ui
+    tag: "dev"
+  service:
+    port: 3000
+    targetPort: 3000
+  env:
+    NODE_ENV: "development"
+    FAST_REFRESH: "true" 

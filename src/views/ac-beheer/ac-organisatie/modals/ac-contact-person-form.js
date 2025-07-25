@@ -115,7 +115,7 @@ const AcContactPersonForm = ({
       // Update the organization with PATCH request
       const endpoint = `openregister/api/objects/voorzieningen/contactpersoon`;
       const updateResponse = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
+        `${BASE_URL}/${endpoint}`,
         null,
         {
           method: 'POST',

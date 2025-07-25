@@ -3,78 +3,33 @@ import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
 // Get ENV variables
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
+
 const hostname = window.location.hostname;
 
 const apiUrl = () => {
-  switch (hostname) {
-    case 'vng.opencatalogi.nl':
-    case 'acceptatie.softwarecatalogus.nl':
-      return 'https://vng.accept.commonground.nu/apps';
-    case 'vng.test.opencatalogi.nl':
-      return 'https://vng.test.commonground.nu/apps';
-    case 'opencatalogi.nl':
-      return 'https://directory.opencatalogi.nl/apps';
-    case 'developer.opencatalogi.nl':
-      return 'https://opencatalogi.accept.commonground.nu/apps';
-    case 'test.opencatalogi.nl':
-      return 'https://opencatalogi.test.commonground.nu/apps';
-    case 'opencatalogi.open-regels.nl':
-      return 'https://nextcloud.open-regels.nl/index.php/apps';
-    case 'open-dimpact.accept.commonground.nu':
-    case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps';
-    case 'open-rotterdam.accept.commonground.nu':
-      return 'https://directory.opencatalogi.nl/apps';
-    case 'open-migrato.accept.commonground.nu':
-      return 'https://migrato.accept.commonground.nu/apps';
-    case 'horstadmaas.accept.opencatalogi.nl':
-      return 'https://horstadmaas.accept.commonground.nu/apps';
-    case 'verwerkingsregister.horstaandemaas.nl':
-      return 'https://horstaandemaas.commonground.nu/apps';
-    case 'verwerkingsregister.venray.nl':
-      return 'https://venray.commonground.nu/apps';
-    case 'localhost':
-      return 'https://vng.test.commonground.nu/apps';
-    default:
-      return process.env.API_URL;
+  // Always use container config - no hardcoded fallbacks in main codebase
+  if (!containerConfig || !containerConfig.getApiUrl) {
+    throw new Error('API URL not configured. Please check your environment setup.');
   }
+  
+  return containerConfig.getApiUrl();
 };
 
 export const commongroundApiUrl = () => {
-  switch (hostname) {
-    case 'vng.opencatalogi.nl':
-    case 'acceptatie.softwarecatalogus.nl':
-      return 'https://vng.accept.commonground.nu/apps';
-    case 'vng.test.opencatalogi.nl':
-      return 'https://vng.test.commonground.nu/apps';
-    case 'opencatalogi.nl':
-      return 'https://directory.opencatalogi.nl/apps';
-    case 'developer.opencatalogi.nl':
-      return 'https://opencatalogi.accept.commonground.nu/apps';
-    case 'test.opencatalogi.nl':
-      return 'https://opencatalogi.test.commonground.nu/apps';
-    case 'opencatalogi.open-regels.nl':
-      return 'https://nextcloud.open-regels.nl/index.php/apps';
-    case 'open-dimpact.accept.commonground.nu':
-    case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps';
-    case 'open-rotterdam.accept.commonground.nu':
-      return 'https://rotterdam.accept.commonground.nu/apps';
-    case 'open-tilburg.accept.commonground.nu':
-      return 'https://tilburg.accept.commonground.nu/apps';
-    case 'open-migrato.accept.commonground.nu':
-      return 'https://migrato.accept.commonground.nu/apps';
-    case 'horstadmaas.accept.opencatalogi.nl':
-      return 'https://horstadmaas.accept.commonground.nu/apps';
-    case 'verwerkingsregister.horstaandemaas.nl':
-      return 'https://horstaandemaas.commonground.nu/apps';
-    case 'verwerkingsregister.venray.nl':
-      return 'https://venray.commonground.nu/apps';
-    case 'localhost':
-      return 'https://vng.test.commonground.nu/apps';
-    default:
-      return process.env.API_URL_COMMONGROUND;
+  // Always use container config - no hardcoded fallbacks in main codebase
+  if (!containerConfig || !containerConfig.getCommongroundApiUrl) {
+    throw new Error('CommonGround API URL not configured. Please check your environment setup.');
   }
+  
+  return containerConfig.getCommongroundApiUrl();
 };
 
 // const _api_ = process.env.API_URL;
@@ -82,18 +37,10 @@ const _api_ = apiUrl();
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 const _api_commonground_ = commongroundApiUrl();
 
-const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
-const _api_commonground_organization_oin_ =
-  process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
-
 const _api_commonground_headers_ = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
 };
-
-if (_api_commonground_token_ && !ACIsHttps(_api_commonground_)) {
-  _api_commonground_headers_['Authorization'] = _api_commonground_token_;
-}
 
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;

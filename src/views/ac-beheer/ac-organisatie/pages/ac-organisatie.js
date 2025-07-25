@@ -71,7 +71,7 @@ const AcBeheerOrganisaties = () => {
   const fetchSchema = useCallback(async () => {
     try {
       const schemaResponse = await makeRequest(
-        `${BASE_URL}/apps/${schemaEndpoint}`,
+        schemaEndpoint,
         null,
         null,
         '/beheer/organisaties'
@@ -91,11 +91,13 @@ const AcBeheerOrganisaties = () => {
       try {
         setLoading(true);
 
-        const extend = [['_extend[]', 'contactgegevens']];
+        const extend = [
+          // ['_extend[]', 'contactgegevens'] // Removed extends
+        ];
         if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
         const response = await makeRequest(
-          `${BASE_URL}/apps/${endpoint}`,
+          endpoint,
           [
             ...extend,
             ['_page', pagination.page],

@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  tilburg-woo-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "81:81"
+    container_name: tilburg-woo-ui-local
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:81/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      - NODE_ENV=production
+      # API Configuration (nginx handles index.php)
+      - BASE_URL=/api/apps
+      - BASE_URL_COMMONGROUND=/api/apps
+      # Nginx Proxy Configuration
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/usr/share/nginx/html
+    networks:
+      - tilburg-network
+
+  # Optional: Add a development service that watches for changes
+  tilburg-woo-ui-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    ports:
+      - "3000:3000"
+    container_name: tilburg-woo-ui-dev
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - FAST_REFRESH=true
+    networks:
+      - tilburg-network
+    profiles:
+      - dev
+
+networks:
+  tilburg-network:
+    driver: bridge 

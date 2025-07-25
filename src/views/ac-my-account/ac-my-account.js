@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
+import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { AcFlex, AcGrid, AcSection } from '@atoms';
 import { useNavigate } from 'react-router';
@@ -11,12 +12,11 @@ import {
 import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcButton from '@molecules/ac-button/ac-button';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcMyAccountModal from './ac-my-account-modal';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 
-const AcMyAccount = () => {
+const AcMyAccount = ({ store }) => {
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
     displayName: '',
@@ -33,7 +33,7 @@ const AcMyAccount = () => {
   const [switchingOrg, setSwitchingOrg] = useState(false);
 
   const navigate = useNavigate();
-  const { getUser, updateUser } = useNextcloudRequests();
+  const { user } = store;
 
   // Email validation function
   const validateEmail = useCallback((email) => {
@@ -43,46 +43,46 @@ const AcMyAccount = () => {
   // Refetch logic
   const fetchUserData = async () => {
     try {
-      const response = await getUser();
-      const user = response.data;
-      setUserData(user);
+      // Use UserStore's fetchUserProfile method instead of direct API calls
+      await user.fetchUserProfile();
+      const userData = user.user;
+      
+      if (userData) {
+        setUserData(userData);
 
-      // Extract organization data
-      if (user.organisations) {
-        setOrganisations(user.organisations);
-        setActiveOrganisation(user.organisations.active);
+        // Extract organization data
+        if (userData.organisations) {
+          setOrganisations(userData.organisations);
+          setActiveOrganisation(userData.organisations.active);
+        }
+
+        setFormData({
+          displayName: userData.displayName || '',
+          email: userData.email || '',
+          firstName: userData.firstName || '',
+          middleName: userData.middleName || '',
+          lastName: userData.lastName || '',
+        });
       }
-
-      setFormData({
-        displayName: user.displayName || '',
-        email: user.email || '',
-        firstName: user.firstName || '',
-        middleName: user.middleName || '',
-        lastName: user.lastName || '',
-      });
     } catch (err) {
-      if (err.response?.status === 401) {
-        navigate(
-          '/login?redirect_url=' + encodeURIComponent(window.location.pathname)
-        );
-      } else {
-        console.error(err);
-        throw Error(
-          err.message || 'Er is een fout opgetreden bij het laden van uw gegevens.'
-        );
-      }
+      console.error('Error fetching user data:', err);
+      setError(new Error('Er is een fout opgetreden bij het laden van uw gegevens.'));
     }
   };
 
-  useEffect(async () => {
-    try {
-      setLoading(true);
-      await fetchUserData();
-    } catch (err) {
-      setError(err);
-    } finally {
-      setLoading(false);
-    }
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        await fetchUserData();
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
   }, []);
 
   // Handle organization switching using existing updateUser function
@@ -94,8 +94,6 @@ const AcMyAccount = () => {
     try {
       setSwitchingOrg(true);
 
-      // Since the backend doesn't support PATCH, we need to send all user data
-      // along with the activeOrganisation field for the PUT request
       const updateData = {
         // ...userData,
         displayName: userData.displayName,
@@ -110,6 +108,7 @@ const AcMyAccount = () => {
 
       const response = await updateUser(updateData);
       const updatedUser = response.data;
+      setUserData(updatedUser);
 
       // Update organization data
       if (updatedUser.organisations) {
@@ -117,17 +116,17 @@ const AcMyAccount = () => {
         setActiveOrganisation(updatedUser.organisations.active);
       }
 
-      // Show success message if there's an update message
-      if (updatedUser.update_message) {
-        // You can add a toast notification here
-        console.log('Organization switched:', updatedUser.update_message);
-      }
+      // Update form data with new user data
+      setFormData({
+        displayName: updatedUser.displayName || '',
+        email: updatedUser.email || '',
+        firstName: updatedUser.firstName || '',
+        middleName: updatedUser.middleName || '',
+        lastName: updatedUser.lastName || '',
+      });
     } catch (err) {
-      console.error('Failed to switch organization:', err);
-      // Handle error - you can add error state and display it
-      setError(
-        new Error('Er is een fout opgetreden bij het wisselen van organisatie.')
-      );
+      console.error('Error switching organization:', err);
+      setError(new Error('Er is een fout opgetreden bij het wisselen van organisatie.'));
     } finally {
       setSwitchingOrg(false);
     }
@@ -472,4 +471,4 @@ const AcMyAccount = () => {
   );
 };
 
-export default observer(AcMyAccount);
+export default withStore(observer(AcMyAccount));

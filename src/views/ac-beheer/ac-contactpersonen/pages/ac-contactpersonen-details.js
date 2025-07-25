@@ -17,7 +17,6 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
 import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
-import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
@@ -47,13 +46,13 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${endpoint}/${id}`,
           null,
           null,
           `/beheer/contactpersonen/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/contactpersonen/${id}`
@@ -82,7 +81,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
 
   const fetchUsedBy = async () => {
     const usedByResponse = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       null,
       null,
       `/beheer/contactpersonen/${id}`
@@ -148,12 +147,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.ENVELOPE />}
-                        onClick={() => setOpenModal('invite')}
-                      >
-                        Uitnodigen
-                      </ConActionMenu.Button>
+                     
 
                       {!data['@self'].published && (
                         <ConActionMenu.Button
@@ -344,17 +338,6 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
               }}
               onSuccess={() => {
                 navigate('/beheer/contactpersonen');
-              }}
-            />
-
-            <AcContactpersonenUitnodigenModal
-              contactpersonen={[data]}
-              showModal={openModal === 'invite'}
-              onClose={() => {
-                setOpenModal(null);
-              }}
-              onSuccess={() => {
-                fetchData();
               }}
             />
 

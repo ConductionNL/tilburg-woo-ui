@@ -45,7 +45,7 @@ const AcAddRemoveDeelnameModal = ({
 
     try {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie?type[]=samenwerking&type[]=community&_limit=300`
+        `openregister/api/objects/voorzieningen/organisatie?type[]=samenwerking&type[]=community&_limit=300`
       );
 
       if (response.ok) {
@@ -99,7 +99,7 @@ const AcAddRemoveDeelnameModal = ({
         : [...existingDeelnameIds, selectedDeelname.value];
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}`,
+        `openregister/api/objects/voorzieningen/organisatie/${organization.id}`,
         null,
         {
           method: 'PUT',

@@ -56,13 +56,13 @@ const AcBeheerDienstDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${BASE_URL}/${endpoint}/${id}`,
           extend,
           null,
           `/beheer/diensten/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/diensten/${id}`
@@ -91,7 +91,7 @@ const AcBeheerDienstDetails = ({ id }) => {
 
   const fetchUses = async () => {
     setUsesLoading(true);
-    const response = await makeRequest(`${BASE_URL}/apps/${endpoint}/${id}/uses`, [
+    const response = await makeRequest(`${BASE_URL}/${endpoint}/${id}/uses`, [
       ['_extend[]', '@self.schema'],
     ]);
     if (!response.ok) {
@@ -111,7 +111,7 @@ const AcBeheerDienstDetails = ({ id }) => {
     }
 
     setDienstenByOrganisatieLoading(true);
-    const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, [
+    const response = await makeRequest(`${BASE_URL}/${endpoint}`, [
       ['leverancier', organisatieId],
       ['_extend[]', 'voorziening'],
       ['_extend[]', 'leverancier'],
