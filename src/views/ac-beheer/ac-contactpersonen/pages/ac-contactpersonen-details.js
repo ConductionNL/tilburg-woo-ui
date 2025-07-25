@@ -17,7 +17,6 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
 import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
-import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
@@ -148,12 +147,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.ENVELOPE />}
-                        onClick={() => setOpenModal('invite')}
-                      >
-                        Uitnodigen
-                      </ConActionMenu.Button>
+                     
 
                       {!data['@self'].published && (
                         <ConActionMenu.Button
@@ -344,17 +338,6 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
               }}
               onSuccess={() => {
                 navigate('/beheer/contactpersonen');
-              }}
-            />
-
-            <AcContactpersonenUitnodigenModal
-              contactpersonen={[data]}
-              showModal={openModal === 'invite'}
-              onClose={() => {
-                setOpenModal(null);
-              }}
-              onSuccess={() => {
-                fetchData();
               }}
             />
 
