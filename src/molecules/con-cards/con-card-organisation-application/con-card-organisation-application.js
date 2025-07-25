@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import { AcLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
@@ -6,22 +7,35 @@ import acFormatDate from '@src/utilities/ac-format-date';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 
-const ConCardOrganisation = ({
+const ConCardOrganisationApplication = ({
   skeleton,
   title,
   summary,
-  published,
-  updated,
-  category,
-  themes,
+  type,
   id,
   logo,
+  cardType,
 }) => {
+  const icon = useMemo(() => {
+    switch (cardType) {
+      case 'voorziening':
+        return (
+          <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />
+        );
+      case 'organisatie':
+        return (
+          <VISUALS.BUILDING style={{ color: 'var(--tilburg-interaction-color)' }} />
+        );
+      default:
+        return null;
+    }
+  }, [cardType]);
+
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
-          <VISUALS.BUILDING style={{ color: 'var(--tilburg-interaction-color)' }} />
+          {icon}
           <Heading level={3}>{title}</Heading>
         </AcFlex>
         {logo && (
@@ -32,22 +46,13 @@ const ConCardOrganisation = ({
           />
         )}
       </AcFlex>
-      <Paragraph>
-        {summary}
-      </Paragraph>
+      <Paragraph>{summary}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
-          {themes?.length > 0 && (
-            <>
-              <StatusBadge>{themes[0]?.title}</StatusBadge>
-              <VISUALS.ELLIPSE />
-            </>
-          )}
-
-          <Paragraph small>{category}</Paragraph>
+          <Paragraph small>{type}</Paragraph>
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
-          <span class='sr-only'>
+          <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT} {title}
           </span>
           <VISUALS.ARROW_RIGHT />
@@ -57,4 +62,4 @@ const ConCardOrganisation = ({
   );
 };
 
-export default ConCardOrganisation;
+export default ConCardOrganisationApplication;

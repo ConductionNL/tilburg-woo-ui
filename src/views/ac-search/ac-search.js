@@ -15,11 +15,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
-import {
-  ConCardOrganisation,
-  ConCardApplication,
-  ConCardDienst,
-} from '@molecules/con-cards';
+import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications } }) => {
   const location = useLocation();
@@ -117,42 +113,15 @@ const AcSearch = ({ store: { publications } }) => {
     return all_publications?.map((publication, index) => {
       switch (publication['@self'].schema.slug) {
         case 'voorziening':
-          return (
-            <ConCardApplication
-              {...publication}
-              updated={publication['@self'].updated}
-              category={publication.voorzieningstype}
-              title={
-                publication.title ??
-                publication.titel ??
-                publication.name ??
-                publication.naam ??
-                publication.id
-              }
-              referenceComponents={publication?.referentieComponenten}
-              summary={publication?.beschrijvingKort}
-              organisationData={publication?.organisatie}
-              logo={publication?.logo}
-              key={index}
-            />
-          );
         case 'organisatie':
           return (
-            <ConCardOrganisation
+            <ConCardOrganisationApplication
               {...publication}
-              updated={publication['@self'].updated}
-              published={publication['@self'].published}
-              category={publication['@self'].schema.title}
-              title={
-                publication.title ??
-                publication.titel ??
-                publication.name ??
-                publication.naam ??
-                publication.id
-              }
-              summary={publication?.beschrijvingKort}
-              organisationData={publication?.organisatie}
-              logo={publication?.logo}
+              title={publication['@self'].name}
+              summary={publication['@self'].description}
+              logo={publication['@self'].logo}
+              cardType={publication['@self'].schema.slug}
+              type={publication['@self'].schema.type}
               key={index}
             />
           );
