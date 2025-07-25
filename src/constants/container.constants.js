@@ -17,6 +17,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   API_URL_COMMONGROUND_TOKEN: '',
   API_URL_COMMONGROUND_ORGANIZATION_OIN: '',
   GEMMA_ENDPOINT: 'http://nextcloud.local',
+  OPENCONNECTOR_API_URL: 'http://nextcloud.local/index.php/apps/openconnector/api',
   GRANT_TYPE: 'authorization_code',
   CLIENT_ID: '',
   CLIENT_SECRET: '',
@@ -53,6 +54,7 @@ export const getCommongroundApiUrl = () => CONTAINER_CONFIG.API_URL_COMMONGROUND
 export const getCommongroundToken = () => CONTAINER_CONFIG.API_URL_COMMONGROUND_TOKEN;
 export const getCommongroundOrganizationOin = () => CONTAINER_CONFIG.API_URL_COMMONGROUND_ORGANIZATION_OIN;
 export const getGemmaEndpoint = () => CONTAINER_CONFIG.GEMMA_ENDPOINT;
+export const getOpenconnectorApiUrl = () => CONTAINER_CONFIG.OPENCONNECTOR_API_URL;
 
 export const getAuthConfig = () => ({
   grantType: CONTAINER_CONFIG.GRANT_TYPE,
@@ -116,6 +118,7 @@ export const {
   API_URL_COMMONGROUND_TOKEN,
   API_URL_COMMONGROUND_ORGANIZATION_OIN,
   GEMMA_ENDPOINT,
+  OPENCONNECTOR_API_URL,
   GRANT_TYPE,
   CLIENT_ID,
   CLIENT_SECRET,

@@ -12,6 +12,15 @@ import { VISUALS } from '@constants';
 import AcButton from '@molecules/ac-button/ac-button';
 import { useDebouncedInput } from '@src/hooks/index';
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hardcoded URL');
+  containerConfig = null;
+}
+
 const AcLogin = () => {
   const [nextcloudLogin, setNextcloudLogin] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,8 +57,15 @@ const AcLogin = () => {
     setIsLoading(true);
 
     try {
+      // Always use container config - no hardcoded fallbacks in main codebase
+      if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
+        throw new Error('OpenConnector API URL not configured. Please check your environment setup.');
+      }
+
+      const loginUrl = `${containerConfig.getOpenconnectorApiUrl()}/user/login`;
+
       const response = await fetch(
-        'https://vng.test.commonground.nu/apps/openconnector/api/user/login',
+        loginUrl,
         {
           method: 'POST',
           headers: {

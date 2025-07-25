@@ -44,7 +44,7 @@ const AcHome = ({ store: { pages, publications, themes } }) => {
               <Heading>{LABELS.THEMES}</Heading>
               {AcCheckIfSpecificHostname() ? (
                 <Paragraph>
-                  ✨ HOT RELOAD ACTIVE! ✨ Bekijk het overzicht van onderwerpen die relevant zijn voor
+                  Bekijk het overzicht van onderwerpen die relevant zijn voor
                   gemeenten en leveranciers binnen het domein van gemeentelijke ICT.
                 </Paragraph>
               ) : (

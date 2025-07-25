@@ -64,11 +64,12 @@ graph TD
 
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
-| `API_URL` | string | `http://nextcloud.local/index.php/apps` | Primary API endpoint | `https://api.example.com/apps` |
-| `API_URL_COMMONGROUND` | string | `http://nextcloud.local/index.php/apps` | CommonGround API | `https://cg.example.com/apps` |
+| `API_URL` | string | `https://vng.test.commonground.nu/apps` | Primary API endpoint | `https://api.example.com/apps` |
+| `API_URL_COMMONGROUND` | string | `https://vng.test.commonground.nu/apps` | CommonGround API | `https://cg.example.com/apps` |
 | `API_URL_COMMONGROUND_TOKEN` | string | `` | API authentication token | `Bearer eyJ0eXAiOiJKV1...` |
 | `API_URL_COMMONGROUND_ORGANIZATION_OIN` | string | `` | Organization identifier | `00000001234567890000` |
-| `GEMMA_ENDPOINT` | string | `http://nextcloud.local` | GEMMA service URL | `https://gemma.example.com` |
+| `GEMMA_ENDPOINT` | string | `https://vng.test.commonground.nu` | GEMMA service URL | `https://gemma.example.com` |
+| `OPENCONNECTOR_API_URL` | string | `https://vng.test.commonground.nu/apps/openconnector/api` | OpenConnector API base URL | `https://oc.example.com/api` |
 
 ### Authentication Configuration
 

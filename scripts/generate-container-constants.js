@@ -22,11 +22,12 @@ const getEnvConfig = () => {
     ENVIRONMENT_NAME: process.env.ENVIRONMENT_NAME || 'development',
 
     // API Configuration
-    API_URL: process.env.API_URL || 'http://nextcloud.local/index.php/apps',
-    API_URL_COMMONGROUND: process.env.API_URL_COMMONGROUND || 'http://nextcloud.local/index.php/apps',
+    API_URL: process.env.API_URL || 'https://vng.test.commonground.nu/apps',
+    API_URL_COMMONGROUND: process.env.API_URL_COMMONGROUND || 'https://vng.test.commonground.nu/apps',
     API_URL_COMMONGROUND_TOKEN: process.env.API_URL_COMMONGROUND_TOKEN || '',
     API_URL_COMMONGROUND_ORGANIZATION_OIN: process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN || '',
-    GEMMA_ENDPOINT: process.env.GEMMA_ENDPOINT || 'http://nextcloud.local',
+    GEMMA_ENDPOINT: process.env.GEMMA_ENDPOINT || 'https://vng.test.commonground.nu',
+    OPENCONNECTOR_API_URL: process.env.OPENCONNECTOR_API_URL || 'https://vng.test.commonground.nu/apps/openconnector/api',
 
     // Authentication Configuration
     GRANT_TYPE: process.env.GRANT_TYPE || 'authorization_code',
@@ -105,6 +106,7 @@ export const getCommongroundApiUrl = () => CONTAINER_CONFIG.API_URL_COMMONGROUND
 export const getCommongroundToken = () => CONTAINER_CONFIG.API_URL_COMMONGROUND_TOKEN;
 export const getCommongroundOrganizationOin = () => CONTAINER_CONFIG.API_URL_COMMONGROUND_ORGANIZATION_OIN;
 export const getGemmaEndpoint = () => CONTAINER_CONFIG.GEMMA_ENDPOINT;
+export const getOpenconnectorApiUrl = () => CONTAINER_CONFIG.OPENCONNECTOR_API_URL;
 
 export const getAuthConfig = () => ({
   grantType: CONTAINER_CONFIG.GRANT_TYPE,
@@ -168,6 +170,7 @@ export const {
   API_URL_COMMONGROUND_TOKEN,
   API_URL_COMMONGROUND_ORGANIZATION_OIN,
   GEMMA_ENDPOINT,
+  OPENCONNECTOR_API_URL,
   GRANT_TYPE,
   CLIENT_ID,
   CLIENT_SECRET,

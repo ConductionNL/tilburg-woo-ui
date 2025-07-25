@@ -37,20 +37,12 @@ try {
 }
 
 export const BASE_URL = (() => {
-  // Use container config if available
-  if (containerConfig && containerConfig.getGemmaEndpoint) {
-    return containerConfig.getGemmaEndpoint();
+  // Always use container config - no hardcoded fallbacks in main codebase
+  if (!containerConfig || !containerConfig.getGemmaEndpoint) {
+    throw new Error('GEMMA endpoint not configured. Please check your environment setup.');
   }
-
-  // Fallback to hostname-based logic for production builds
-  const hostname = window.location.hostname;
-  switch (hostname) {
-    case 'vng.test.opencatalogi.nl':
-    case 'localhost':
-      return 'https://vng.test.commonground.nu';
-    default:
-      return 'https://vng.accept.commonground.nu';
-  }
+  
+  return containerConfig.getGemmaEndpoint();
 })();
 
 const AcBeheer = () => {

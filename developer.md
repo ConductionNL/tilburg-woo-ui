@@ -126,11 +126,12 @@ All changes maintain **backward compatibility** - the application works in produ
 #### API Configuration
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `API_URL` | `http://nextcloud.local/index.php/apps` | Primary API endpoint |
-| `API_URL_COMMONGROUND` | `http://nextcloud.local/index.php/apps` | CommonGround API endpoint |
+| `API_URL` | `https://vng.test.commonground.nu/apps` | Primary API endpoint |
+| `API_URL_COMMONGROUND` | `https://vng.test.commonground.nu/apps` | CommonGround API endpoint |
 | `API_URL_COMMONGROUND_TOKEN` | `` | Optional API authentication token |
 | `API_URL_COMMONGROUND_ORGANIZATION_OIN` | `` | Organization OIN for API |
-| `GEMMA_ENDPOINT` | `http://nextcloud.local` | GEMMA service endpoint |
+| `GEMMA_ENDPOINT` | `https://vng.test.commonground.nu` | GEMMA service endpoint |
+| `OPENCONNECTOR_API_URL` | `https://vng.test.commonground.nu/apps/openconnector/api` | OpenConnector API base URL |
 
 #### Authentication Configuration
 | Variable | Default | Description |
@@ -519,6 +520,30 @@ environment:
 - Prevents console errors during development
 - Allows UI testing without backend API
 - Automatic fallback when real API fails
+
+#### Hot Module Replacement (HMR) Not Working on Windows
+
+**Problem**: Changes to React components don't appear in browser at `localhost:3000` even though webpack compiles successfully.
+
+**Why this happens**: Docker + Windows + HMR websocket connection issues prevent browser from receiving hot updates.
+
+**Solutions**:
+
+1. **Use Watch Build (Recommended)**: Access `http://localhost:81` instead
+   - Full rebuild on file changes (slower but reliable)
+   - No websocket dependencies
+   - Works consistently on Windows
+
+2. **Force Browser Refresh**: `Ctrl+F5` after making changes
+   - Webpack still compiles in background
+   - Manual refresh picks up changes
+
+3. **Check Browser Console**: Look for websocket errors or HMR failures
+
+4. **Container Restart**: If persistent issues:
+   ```bash
+   docker-compose -f docker-compose.dev.yml restart tilburg-woo-ui-hot
+   ```
 
 #### Container Won't Start
 ```bash

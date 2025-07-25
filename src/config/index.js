@@ -15,87 +15,21 @@ try {
 const hostname = window.location.hostname;
 
 const apiUrl = () => {
-  // Use container config if available
-  if (containerConfig && containerConfig.getApiUrl) {
-    return containerConfig.getApiUrl();
+  // Always use container config - no hardcoded fallbacks in main codebase
+  if (!containerConfig || !containerConfig.getApiUrl) {
+    throw new Error('API URL not configured. Please check your environment setup.');
   }
-
-  // Fallback to hostname-based logic for production builds
-  switch (hostname) {
-    case 'vng.opencatalogi.nl':
-    case 'acceptatie.softwarecatalogus.nl':
-      return 'https://vng.accept.commonground.nu/apps';
-    case 'vng.test.opencatalogi.nl':
-      return 'https://vng.test.commonground.nu/apps';
-    case 'opencatalogi.nl':
-      return 'https://directory.opencatalogi.nl/apps';
-    case 'developer.opencatalogi.nl':
-      return 'https://opencatalogi.accept.commonground.nu/apps';
-    case 'test.opencatalogi.nl':
-      return 'https://opencatalogi.test.commonground.nu/apps';
-    case 'opencatalogi.open-regels.nl':
-      return 'https://nextcloud.open-regels.nl/index.php/apps';
-    case 'open-dimpact.accept.commonground.nu':
-    case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps';
-    case 'open-rotterdam.accept.commonground.nu':
-      return 'https://directory.opencatalogi.nl/apps';
-    case 'open-migrato.accept.commonground.nu':
-      return 'https://migrato.accept.commonground.nu/apps';
-    case 'horstadmaas.accept.opencatalogi.nl':
-      return 'https://horstadmaas.accept.commonground.nu/apps';
-    case 'verwerkingsregister.horstaandemaas.nl':
-      return 'https://horstaandemaas.commonground.nu/apps';
-    case 'verwerkingsregister.venray.nl':
-      return 'https://venray.commonground.nu/apps';
-    case 'localhost':
-      return 'https://vng.test.commonground.nu/apps';
-    default:
-      return process.env.API_URL;
-  }
+  
+  return containerConfig.getApiUrl();
 };
 
 export const commongroundApiUrl = () => {
-  // Use container config if available
-  if (containerConfig && containerConfig.getCommongroundApiUrl) {
-    return containerConfig.getCommongroundApiUrl();
+  // Always use container config - no hardcoded fallbacks in main codebase
+  if (!containerConfig || !containerConfig.getCommongroundApiUrl) {
+    throw new Error('CommonGround API URL not configured. Please check your environment setup.');
   }
-
-  // Fallback to hostname-based logic for production builds
-  switch (hostname) {
-    case 'vng.opencatalogi.nl':
-    case 'acceptatie.softwarecatalogus.nl':
-      return 'https://vng.accept.commonground.nu/apps';
-    case 'vng.test.opencatalogi.nl':
-      return 'https://vng.test.commonground.nu/apps';
-    case 'opencatalogi.nl':
-      return 'https://directory.opencatalogi.nl/apps';
-    case 'developer.opencatalogi.nl':
-      return 'https://opencatalogi.accept.commonground.nu/apps';
-    case 'test.opencatalogi.nl':
-      return 'https://opencatalogi.test.commonground.nu/apps';
-    case 'opencatalogi.open-regels.nl':
-      return 'https://nextcloud.open-regels.nl/index.php/apps';
-    case 'open-dimpact.accept.commonground.nu':
-    case 'dimpact.opencatalogi.nl':
-      return 'https://dimpact.commonground.nu/apps';
-    case 'open-rotterdam.accept.commonground.nu':
-      return 'https://rotterdam.accept.commonground.nu/apps';
-    case 'open-tilburg.accept.commonground.nu':
-      return 'https://tilburg.accept.commonground.nu/apps';
-    case 'open-migrato.accept.commonground.nu':
-      return 'https://migrato.accept.commonground.nu/apps';
-    case 'horstadmaas.accept.opencatalogi.nl':
-      return 'https://horstadmaas.accept.commonground.nu/apps';
-    case 'verwerkingsregister.horstaandemaas.nl':
-      return 'https://horstaandemaas.commonground.nu/apps';
-    case 'verwerkingsregister.venray.nl':
-      return 'https://venray.commonground.nu/apps';
-    case 'localhost':
-      return 'https://vng.test.commonground.nu/apps';
-    default:
-      return process.env.API_URL_COMMONGROUND;
-  }
+  
+  return containerConfig.getCommongroundApiUrl();
 };
 
 // const _api_ = process.env.API_URL;
