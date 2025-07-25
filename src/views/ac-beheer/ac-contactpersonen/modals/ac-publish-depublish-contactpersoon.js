@@ -44,7 +44,7 @@ const AcPublishDepublishContactpersoonModal = ({
       const endpoint = publish ? 'publish' : 'depublish';
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
+        `openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
         null,
         {
           method: 'POST',
@@ -149,7 +149,11 @@ const AcPublishDepublishContactpersoonModal = ({
         {result && (
           <Alert type={result.type === 'success' ? 'info' : result.type}>
             <AcFlex spacing='sm'>
-              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              {result.type === 'error' ? (
+                <VISUALS.CIRCLE_EXCLAMATION />
+              ) : (
+                <VISUALS.INFO_BLUE />
+              )}
               <Paragraph>{result.message}</Paragraph>
             </AcFlex>
           </Alert>

@@ -35,7 +35,7 @@ const AcPublishDepublishOrganizationModal = ({
       const endpoint = publish ? 'publish' : 'depublish';
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie/${organization.id}/${endpoint}`,
+        `openregister/api/objects/voorzieningen/organisatie/${organization.id}/${endpoint}`,
         null,
         {
           method: 'POST',

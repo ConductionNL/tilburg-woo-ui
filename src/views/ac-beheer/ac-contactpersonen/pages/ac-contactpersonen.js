@@ -73,7 +73,7 @@ const AcBeheerContactpersonen = () => {
 
         const [response, schemaResponse] = await Promise.all([
           makeRequest(
-            `${BASE_URL}/apps/${endpoint}`,
+            endpoint,
             [
               ['_page', pagination.page],
               ['_limit', pagination.limit],
@@ -83,7 +83,7 @@ const AcBeheerContactpersonen = () => {
             '/beheer/diensten'
           ),
           makeRequest(
-            `${BASE_URL}/apps/${schemaEndpoint}`,
+            schemaEndpoint,
             null,
             null,
             '/beheer/diensten'

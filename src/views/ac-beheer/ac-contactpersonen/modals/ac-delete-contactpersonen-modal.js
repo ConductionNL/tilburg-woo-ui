@@ -41,7 +41,7 @@ const AcDeleteContactpersonenModal = ({
   const handleDeleteContactpersoon = async () => {
     try {
       const deletePromises = contactpersonenCopy.map((contactpersoon) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`, null, {
+        makeRequest(`${endpoint}/${contactpersoon.id}`, null, {
           method: 'DELETE',
         })
       );
@@ -120,7 +120,7 @@ const AcDeleteContactpersonenModal = ({
         {result && (
           <Alert type={result.type === 'success' ? 'info' : result.type}>
             <AcFlex spacing='sm'>
-              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              {result.type === 'error' ? <VISUALS.CIRCLE_EXCLAMATION /> : <VISUALS.INFO_BLUE />}
               <Paragraph>{result.message}</Paragraph>
             </AcFlex>
           </Alert>

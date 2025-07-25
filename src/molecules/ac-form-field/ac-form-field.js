@@ -56,7 +56,8 @@ const AcFormField = ({
         </div>
       );
     } else {
-      return <Textbox {...inputProps} />;
+      // Pass the correct HTML input type to the Textbox component
+      return <Textbox {...inputProps} type={inputType} />;
     }
   };
 

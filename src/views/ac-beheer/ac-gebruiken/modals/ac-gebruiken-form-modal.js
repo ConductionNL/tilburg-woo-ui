@@ -80,7 +80,7 @@ const AcGebruikenFormModal = ({
       try {
         setOrganisatieLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+          `openregister/api/objects/voorzieningen/organisatie`
         );
         const data = response.data.results;
         setOrganisatieOptions(
@@ -100,7 +100,7 @@ const AcGebruikenFormModal = ({
       try {
         setVoorzieningenLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
+          `openregister/api/objects/voorzieningen/voorziening`
         );
         const data = response.data.results;
         const voorzieningenOptions = data.map((item) => ({
@@ -119,7 +119,7 @@ const AcGebruikenFormModal = ({
       try {
         setSchemaLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/voorzieninggebruik`
+          `openregister/api/schemas/voorzieninggebruik`
         );
         const data = response.data;
         setSchema(data);
@@ -133,7 +133,7 @@ const AcGebruikenFormModal = ({
     const fetchContactpersonen = async () => {
       setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+        `openregister/api/objects/voorzieningen/contactpersoon`
       ).finally(() => setContactpersonenLoading(false));
 
       const data = response.data.results;
@@ -167,7 +167,7 @@ const AcGebruikenFormModal = ({
     try {
       setVersiesLoading(true);
       const aanbodResponse = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningaanbod?voorziening=${gebruikFormData.voorzieningId}`
+                  `openregister/api/objects/voorzieningen/voorzieningaanbod?voorziening=${gebruikFormData.voorzieningId}`
       );
       const data = aanbodResponse.data.results;
       const aanbodIds = data.map((item) => item.id);
@@ -178,7 +178,7 @@ const AcGebruikenFormModal = ({
       }
 
       const versieResponse = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
+                  `openregister/api/objects/voorzieningen/voorzieningversie`,
         aanbodIds.map((id) => ['voorzieningaanbod[]', id])
       );
       const versies = versieResponse.data.results;
@@ -233,7 +233,7 @@ const AcGebruikenFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/voorzieninggebruik';
 
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${gebruikFormData.id}` : baseUrl;

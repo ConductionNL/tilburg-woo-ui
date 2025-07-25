@@ -1,7 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
+import { useSearchParams } from 'react-router-dom';
 import AcAuthentication from '../ac-authentication/ac-authentication';
 import { AcFormField } from '@molecules';
 import {
@@ -13,18 +14,35 @@ import AcButton from '@molecules/ac-button/ac-button';
 import { useDebouncedInput } from '@src/hooks/index';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
-const AcLogin = () => {
+const AcLogin = ({ store }) => {
   const [nextcloudLogin, setNextcloudLogin] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
-  const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false);
 
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = store;
   const { login } = useNextcloudRequests();
+
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect_url');
+
+  // Check if already authenticated on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuthenticated = await user.checkAuthStatus();
+      
+      if (isAuthenticated) {
+        // If there's a redirect URL, use it; otherwise go to dashboard
+        const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
+        navigate(targetUrl);
+      }
+    };
+    
+    checkAuth();
+  }, [user, navigate, redirectUrl]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -32,11 +50,8 @@ const AcLogin = () => {
       [field]: value,
     }));
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({
-        ...prev,
-        [field]: '',
-      }));
+    if (user.error) {
+      user.clearError();
     }
   };
 
@@ -84,13 +99,13 @@ const AcLogin = () => {
     setNextcloudLogin(true);
   };
 
-  const debouncedSetEmail = useDebouncedInput(
-    (value) => setFormData({ ...formData, email: value }),
+  const debouncedSetUsername = useDebouncedInput(
+    (value) => handleInputChange('username', value),
     500
   );
 
   const debouncedSetPassword = useDebouncedInput(
-    (value) => setFormData({ ...formData, password: value }),
+    (value) => handleInputChange('password', value),
     500
   );
 
@@ -104,32 +119,28 @@ const AcLogin = () => {
         <form className='ac-login-form' onSubmit={handleSubmit}>
           <div>
             <AcFormField
-              id='email'
-              label='E-mailadres'
-              type='email'
-              inputType='email'
-              value={formData.email}
-              onChange={(value) => debouncedSetEmail(value)}
-              placeholder='naam@voorbeeld.nl'
+              id='username'
+              label='Gebruikersnaam'
+              type='text'
+              inputType='text'
+              value={formData.username}
+              onChange={(value) => debouncedSetUsername(value)}
+              placeholder='Uw gebruikersnaam'
               required
-              hasError={formData.email && !validateEmail(formData.email)}
+              disabled={user.loading.status}
             />
-            {formData.email && !validateEmail(formData.email) && (
-              <span className='ac-login-form-field-error' role='alert'>
-                Ongeldig e-mailadres
-              </span>
-            )}
           </div>
           <div>
             <AcFormField
               id='password'
               label='Wachtwoord'
-              type={passwordVisible ? 'text' : 'password'}
+              type='password'
               inputType='password'
               value={formData.password}
               onChange={(value) => debouncedSetPassword(value)}
               placeholder='Uw wachtwoord'
               required
+              disabled={user.loading.status}
             />
           </div>
 
@@ -138,9 +149,9 @@ const AcLogin = () => {
             icon={<VISUALS.ARROW_RIGHT />}
             onClick={handleSubmit}
             className='ac-login-form-button'
-            disabled={isLoading}
+            disabled={user.loading.status}
           >
-            {isLoading ? 'Inloggen...' : 'Inloggen'}
+            {user.loading.status ? 'Inloggen...' : 'Inloggen'}
           </AcButton>
 
           <div className='ac-login-separator-row'>
@@ -154,13 +165,14 @@ const AcLogin = () => {
             buttonType='secondary'
             onClick={handleNextcloudLogin}
             className='ac-login-form-button'
+            disabled={user.loading.status}
           >
             Nextcloud
           </AcButton>
 
-          {errors.general && (
+          {user.error && (
             <span className='ac-login-form-field-error' role='alert'>
-              {errors.general}
+              {user.error}
             </span>
           )}
         </form>

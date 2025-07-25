@@ -84,7 +84,7 @@ const AcOvereenkomstFormModal = ({
     const fetchSchema = async () => {
       try {
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/contract`
+          `openregister/api/schemas/contract`
         );
         const data = response.data;
         setSchema(data);
@@ -110,7 +110,7 @@ const AcOvereenkomstFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/contract';
 
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${overeenkomstFormData.id}` : baseUrl;

@@ -45,7 +45,7 @@ const AcContactpersonenUitnodigenModal = ({
 
       await Promise.all(
         contactpersonenCopy.map(async (contactpersoon) => {
-          const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+          const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
             method: 'POST',
             body: JSON.stringify({
               users: [contactpersoon],
@@ -125,7 +125,11 @@ const AcContactpersonenUitnodigenModal = ({
         {result && (
           <Alert type={result.type === 'success' ? 'info' : result.type}>
             <AcFlex spacing='sm'>
-              {result.type === 'error' ? <VISUALS.ERROR /> : <VISUALS.INFO_BLUE />}
+              {result.type === 'error' ? (
+                <VISUALS.CIRCLE_EXCLAMATION />
+              ) : (
+                <VISUALS.INFO_BLUE />
+              )}
               <Paragraph>{result.message}</Paragraph>
             </AcFlex>
           </Alert>

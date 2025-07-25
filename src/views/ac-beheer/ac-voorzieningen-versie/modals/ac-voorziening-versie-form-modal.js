@@ -8,6 +8,7 @@ import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
 import { BASE_URL } from '../../ac-beheer';
+
 import ReactSelect from 'react-select';
 import _ from 'lodash';
 import clsx from 'clsx';
@@ -76,7 +77,7 @@ const AcVoorzieningVersieFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/voorzieningversie`
+        `openregister/api/schemas/voorzieningversie`
       );
       const data = response.data;
       setSchema(data);
@@ -86,7 +87,7 @@ const AcVoorzieningVersieFormModal = ({
       try {
         setVoorzieningenLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
+          `openregister/api/objects/voorzieningen/voorziening`
         );
         const data = response.data.results;
         const options = data.map((voorziening) => ({
@@ -105,7 +106,7 @@ const AcVoorzieningVersieFormModal = ({
       try {
         setVoorzieningAanbodLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningaanbod`
+          `openregister/api/objects/voorzieningen/voorzieningaanbod`
         );
         const data = response.data.results;
         const options = data.map((aanbod) => ({
@@ -146,7 +147,7 @@ const AcVoorzieningVersieFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/voorzieningversie';
 
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${voorzieningFormData.id}` : baseUrl;

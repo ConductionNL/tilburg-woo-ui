@@ -27,20 +27,29 @@ import {
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-const hostname = window.location.hostname;
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
 
 export const BASE_URL = (() => {
-  switch (hostname) {
-    case 'vng.test.opencatalogi.nl':
-    case 'localhost':
-      return 'https://vng.test.commonground.nu';
-    default:
-      return 'https://vng.accept.commonground.nu';
+  // Always use container config - no hardcoded fallbacks in main codebase
+  if (!containerConfig || !containerConfig.getApiUrl) {
+    throw new Error('API URL not configured. Please check your environment setup.');
   }
+  
+  // Return /api/apps so that code can use BASE_URL + "/opencatalogi/..." or BASE_URL + "/openregister/..."
+  // Nginx handles /api/apps/ -> /index.php/apps/ mapping
+  return containerConfig.getApiUrl();
 })();
 
-const AcBeheer = () => {
+const AcBeheer = ({ store }) => {
   const navigate = useMemo(() => useNavigate(), []);
+  const { user } = store;
 
   const wrongPage = () => (
     <AcSection spacing>
@@ -54,16 +63,33 @@ const AcBeheer = () => {
     </AcSection>
   );
 
-  const loggedIn = !!getCookie('nextcloud_user_id');
-  const loggedOut = getCookie('logout');
+  // Check authentication using the new UserStore
   useEffect(() => {
-    if (loggedOut) {
-      navigate('/');
-    }
-    if (!loggedIn) {
-      navigate(`/login?redirect_url=${window.location.pathname}`);
-    }
-  }, [loggedIn, loggedOut]);
+    const checkAuth = async () => {
+      // Check for legacy logout cookie
+      const loggedOut = getCookie('logout');
+      if (loggedOut) {
+        await user.logout();
+        navigate('/');
+        return;
+      }
+
+      // TEMPORARILY DISABLED: Double auth check causing redirect loops
+      // TODO: Re-enable after fixing the auth timing issue
+      /*
+      // Check authentication status
+      const isAuthenticated = await user.checkAuthStatus();
+      
+      if (!isAuthenticated) {
+        navigate(`/login?redirect_url=${window.location.pathname}`);
+      }
+      */
+      
+      console.log('AcBeheer loaded, user:', user.user); // Debug log
+    };
+
+    checkAuth();
+  }, [user, navigate]);
 
   const { type, id } = useParams();
 

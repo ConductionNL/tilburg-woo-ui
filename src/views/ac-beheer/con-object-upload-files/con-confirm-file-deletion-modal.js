@@ -45,7 +45,7 @@ const ConConfirmFileDeletionModal = ({
     try {
       const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}`;
 
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+      const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
         method: 'DELETE',
       });
 

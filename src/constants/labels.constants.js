@@ -19,7 +19,7 @@ export const LABELS = {
   CHOSEN_FILTERS: 'Gekozen filters',
   NO_RESULTS: 'Geen resultaten gevonden',
   REFINE_SEARCH: 'Probeer een andere zoekterm of pas de filters aan.',
-  WHAT_ARE_YOU_LOOKING_FOR: 'Waar ben je naar op zoek?',
+  WHAT_ARE_YOU_LOOKING_FOR: 'Waar bent u naar op zoek?',
   READ_MORE_ABOUT: 'Lees meer over',
   VIEW_RESULTS: 'Bekijk resultaten',
   ADDITIONAL_INFO: 'Aanvullende informatie',

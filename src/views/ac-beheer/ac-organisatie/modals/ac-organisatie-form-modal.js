@@ -70,7 +70,7 @@ const AcOrganisatieFormModal = ({
   }, [organisaties]);
 
   useEffect(async () => {
-    const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, extend);
+    const response = await makeRequest(endpoint, extend);
 
     const data = response.data.results;
     setOrganisaties(data);
@@ -79,7 +79,7 @@ const AcOrganisatieFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/organisatie`
+        `openregister/api/schemas/organisatie`
       );
       const data = response.data;
       setSchema(data);
@@ -122,7 +122,7 @@ const AcOrganisatieFormModal = ({
 
   const handleSubmit = async () => {
     try {
-      const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+      const baseUrl = endpoint;
 
       const method = isEdit ? 'PUT' : 'POST';
       const url = isEdit ? `${baseUrl}/${organisatieFormData.id}` : baseUrl;

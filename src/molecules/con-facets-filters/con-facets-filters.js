@@ -6,6 +6,7 @@ import { LABELS } from '@constants';
 import { withStore } from '@stores';
 import { AcLoader } from '@components';
 import { AcBuildURLSearchParams } from '@utils';
+import { BASE_URL } from '@views/ac-beheer/ac-beheer';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@atoms';
@@ -105,21 +106,10 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     return queries;
   };
 
-  const getApiUrl = () => {
-    const hostname = window.location.hostname;
-    switch (hostname) {
-      case 'vng.test.opencatalogi.nl':
-      case 'localhost':
-        return 'https://vng.test.commonground.nu';
-      default:
-        return 'https://vng.accept.commonground.nu';
-    }
-  };
-
-  const fetchAvailableFacets = async () => {
-    const response = await fetch(
-      `${getApiUrl()}/apps/opencatalogi/api/publications?_facetable=true`
-    );
+      const fetchAvailableFacets = async () => {
+      const response = await fetch(
+        `${BASE_URL}/opencatalogi/api/publications?_facetable=true`
+      );
     const data = await response.json();
     return data.facetable;
   };
@@ -152,9 +142,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
       // Convert the enhanced search query to URL parameters
       const searchQueryParams = AcBuildURLSearchParams(enhancedSearchQuery);
 
-      const response = await fetch(
-        `${getApiUrl()}/apps/opencatalogi/api/publications?_facetable=true&${queryParams}&${searchQueryParams}`
-      );
+              const response = await fetch(
+          `${BASE_URL}/opencatalogi/api/publications?_facetable=true&${queryParams}&${searchQueryParams}`
+        );
 
       if (!response.ok) {
         console.error('Error fetching facets:', response.statusText);
@@ -207,7 +197,11 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             <>
               {Object.entries(value).map(
                 ([_key, _value]) =>
-                  _value.buckets.length > 0 && (
+                  _value.buckets.length > 0 &&
+                  // Filter out specific facets: Registers, Directory, Catalogs
+                  !['register', 'directory', 'catalogs'].includes(
+                    _key.toLowerCase()
+                  ) && (
                     <AcFlex
                       key={`${key}-${_key}`}
                       column

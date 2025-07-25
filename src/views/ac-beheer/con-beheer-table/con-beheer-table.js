@@ -351,7 +351,7 @@ const BeheerTable = forwardRef((props, ref) => {
     });
 
     const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
+              `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
       [
         ...config.extend,
         ['_limit', pagination?.limit || 9999],
@@ -379,7 +379,7 @@ const BeheerTable = forwardRef((props, ref) => {
 
   const fetchSchemaData = async () => {
     const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/schemas/${config.schemaSlug}`,
+              `openregister/api/schemas/${config.schemaSlug}`,
       null,
       null,
       '/beheer/diensten'

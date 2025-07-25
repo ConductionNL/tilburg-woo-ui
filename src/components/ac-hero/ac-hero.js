@@ -5,7 +5,14 @@ import { AcSearchBox } from '@components';
 import { AcLink } from '@molecules';
 import { useNavigate } from 'react-router';
 
-const hostname = window.location.hostname;
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
 
 const AcHero = (contents) => {
   const _contents = contents.contents;
@@ -21,6 +28,13 @@ const AcHero = (contents) => {
   };
 
   const getHeroImage = () => {
+    // Use container config if available
+    if (containerConfig && containerConfig.getHeroImageUrl) {
+      return containerConfig.getHeroImageUrl();
+    }
+
+    // Fallback to hostname-based logic for production builds
+    const hostname = window.location.hostname;
     switch (hostname) {
       case 'vng.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':

@@ -95,7 +95,7 @@ const AcAuthentication = () => {
       sameSite: 'strict',
     });
 
-    const url = new URL(BASE_URL + '/apps/oauth2/authorize');
+    const url = new URL(BASE_URL + '/oauth2/authorize');
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('scope', 'api');
