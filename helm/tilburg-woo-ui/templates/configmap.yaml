@@ -10,16 +10,9 @@ data:
   BASE_URL: {{ .Values.env.BASE_URL | quote }}
   BASE_URL_COMMONGROUND: {{ .Values.env.BASE_URL_COMMONGROUND | quote }}
   
-  # Nginx Configuration - minimal setup
+  # Nginx static file server
   NGINX_ROOT_DIR: {{ .Values.env.NGINX_ROOT_DIR | quote }}
-  {{- if .Values.global.domain }}
-  # Auto-set domain from global.domain only if specified
-  {{- $domain := .Values.global.domain }}
-  {{- if .Values.global.subdomain }}
-  {{- $domain = printf "%s.%s" .Values.global.subdomain .Values.global.domain }}
-  {{- end }}
-  NGINX_TARGET_HOST: {{ $domain | quote }}
-  {{- end }}
+  # No upstream config needed - ingress handles all routing!
   
   {{- if .Values.development.enabled }}
   # Development specific configuration

@@ -125,15 +125,14 @@ additionalEnvVars: {}
 # Extra environment variables for ConfigMap
 extraEnvVars: {}
 
-# Environment variables - minimal working setup
+# Environment variables - static file server only
 env:
   NODE_ENV: "production"
   # API Configuration
   BASE_URL: "/api/apps"
   BASE_URL_COMMONGROUND: "/api/apps"
-  # Nginx Root Directory
+  # Nginx serves static files only - no upstream needed with ingress!
   NGINX_ROOT_DIR: "/usr/share/nginx/html"
-  # Only set domain/host if needed - removed problematic upstream configs
 
 # Health check configuration
 healthCheck:
