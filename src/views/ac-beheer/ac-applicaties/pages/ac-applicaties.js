@@ -59,7 +59,9 @@ const AcBeheerApplicaties = () => {
   const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'standaarden']];
+  const extend = [
+    // ['_extend[]', 'standaarden'] // Removed extends
+  ];
 
   const fetchData = useCallback(
     async (params = {}) => {

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tilburg-woo-ui.fullname" . }}
+  labels:
+    {{- include "tilburg-woo-ui.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ include "tilburg-woo-ui.servicePort" . }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "tilburg-woo-ui.selectorLabels" . | nindent 4 }} 

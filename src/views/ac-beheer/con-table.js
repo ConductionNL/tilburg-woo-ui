@@ -211,7 +211,10 @@ const ConTable = (
   const [headerSort, setHeaderSort] = useState([null, null]);
 
   // make a deepclone of the data to avoid mutating the original data
-  const data = useMemo(() => JSON.parse(JSON.stringify(_data)), [_data]);
+  const data = useMemo(() => {
+    if (!_data || !Array.isArray(_data)) return [];
+    return JSON.parse(JSON.stringify(_data));
+  }, [_data]);
   const sortedData = useMemo(() => {
     // if no id is set, do not sort
     if (!headerSort[0]) return data;
