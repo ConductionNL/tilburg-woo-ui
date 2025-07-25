@@ -7,6 +7,18 @@
 #
 # ALWAYS REQUIRED:
 #   global.domain: "your-domain.com"
+#   env.NGINX_NEXTCLOUD_DOMAIN: "nextcloud.yourdomain.com"
+#   env.NGINX_TARGET_HOST: "nextcloud.yourdomain.com"
+#
+# BACKEND URLs (choose ONE approach):
+#
+# OPTION A - External domains (most common):
+#   env.NGINX_OPENCONNECTOR_UPSTREAM: "https://nextcloud.yourdomain.com"
+#   env.NGINX_NEXTCLOUD_UPSTREAM: "https://nextcloud.yourdomain.com"
+#
+# OPTION B - Internal Kubernetes services:
+#   env.NGINX_OPENCONNECTOR_UPSTREAM: "http://openconnector-service.default.svc.cluster.local:80"
+#   env.NGINX_NEXTCLOUD_UPSTREAM: "http://nextcloud-service.default.svc.cluster.local:80"
 #
 # OPTIONAL:
 #   global.tls: true (for HTTPS)
@@ -125,14 +137,22 @@ additionalEnvVars: {}
 # Extra environment variables for ConfigMap
 extraEnvVars: {}
 
-# Environment variables - static file server only
+# Environment variables - nginx proxy to backend services
 env:
   NODE_ENV: "production"
   # API Configuration
   BASE_URL: "/api/apps"
   BASE_URL_COMMONGROUND: "/api/apps"
-  # Nginx serves static files only - no upstream needed with ingress!
+  
+  # Nginx configuration - IMPORTANT: Configure these for your backend!
   NGINX_ROOT_DIR: "/usr/share/nginx/html"
+  
+  # Backend URLs (REQUIRED for API proxy to work) - Choose ONE approach:
+  NGINX_OPENCONNECTOR_UPSTREAM: ""    # REQUIRED: External: "https://nextcloud.com" OR Internal: "http://service:80"
+  NGINX_NEXTCLOUD_UPSTREAM: ""        # REQUIRED: External: "https://nextcloud.com" OR Internal: "http://service:80"
+  NGINX_NEXTCLOUD_DOMAIN: ""          # REQUIRED: Domain name (e.g. "nextcloud.yourdomain.com")
+  NGINX_TARGET_HOST: ""               # REQUIRED: Target host (usually same as NGINX_NEXTCLOUD_DOMAIN)
+
 
 # Health check configuration
 healthCheck:
