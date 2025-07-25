@@ -45,7 +45,7 @@ const AcContactpersonenUitnodigenModal = ({
 
       await Promise.all(
         contactpersonenCopy.map(async (contactpersoon) => {
-          const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+          const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
             method: 'POST',
             body: JSON.stringify({
               users: [contactpersoon],

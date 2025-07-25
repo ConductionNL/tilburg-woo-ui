@@ -44,7 +44,7 @@ const AcPublishDepublishContactpersoonModal = ({
       const endpoint = publish ? 'publish' : 'depublish';
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
+        `openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
         null,
         {
           method: 'POST',

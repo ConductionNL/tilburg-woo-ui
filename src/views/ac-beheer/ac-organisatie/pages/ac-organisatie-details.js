@@ -114,13 +114,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${endpoint}/${id}`,
           extend,
           null,
           `/beheer/organisaties/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/organisaties/${id}`
@@ -169,7 +169,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
   const fetchUsedBy = async (registerSlug, schemaSlug, id) => {
     const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       [['_extend[]', '@self.schema']],
       null,
       `/beheer/organisaties/${id}`
@@ -204,7 +204,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+      const response = await makeRequest(endpoint, null, {
         method: 'PATCH',
         body: JSON.stringify({ [field]: JSON.stringify(value) }),
         headers: { 'Content-Type': 'application/json' },
@@ -252,7 +252,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       // Update the organization with PATCH request
       const endpoint = `openregister/api/objects/voorzieningen/organisatie/${id}`;
       const updateResponse = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}`,
+        endpoint,
         null,
         {
           method: 'PATCH',

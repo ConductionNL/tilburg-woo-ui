@@ -18,10 +18,21 @@ services:
     ports:
       - "81:81"
     environment:
-      - NODE_ENV=development
-      - GENERATE_SOURCEMAP=true
-      - BROWSER=none
-      - PORT=3000
+      - NODE_ENV=production
+      - BASE_URL=/api/apps
+      - GRANT_TYPE=authorization_code
+      - CLIENT_ID=
+      - CLIENT_SECRET=
+      - PROVIDER=nextcloud
+      - REGISTER_URL=
+      - DIRECTORY_BASE=https://directory.test.commonground.nl
+      - NEXTCLOUD_HOST=nextcloud.local
+      - NEXTCLOUD_PORT=80
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/app/public_html
       # Site Configuration
       - SITE_TITLE=Environment Config Test ✅
       - SITE_DESCRIPTION=Development instance of the software catalogus
@@ -29,13 +40,19 @@ services:
       - MODE=development
       - THEME_VARIANT=development
       - ENVIRONMENT_NAME=development
-      # API Configuration
-      - API_URL=http://nextcloud.local/index.php/apps
-      - API_URL_COMMONGROUND=http://nextcloud.local/index.php/apps
-      - API_URL_COMMONGROUND_TOKEN=
-      - API_URL_COMMONGROUND_ORGANIZATION_OIN=
-      - GEMMA_ENDPOINT=http://nextcloud.local
-      - OPENCONNECTOR_API_URL=http://nextcloud.local/index.php/apps/openconnector/api
+      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
+      - BASE_URL=/api/apps
+      - BASE_URL_COMMONGROUND=/api/apps
+      
+      # Nextcloud/Target Configuration
+      - NEXTCLOUD_HOST=nextcloud.local
+      
+      # Nginx-specific environment variables (for tilburg-woo-ui-dev container)
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/app/public_html
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
@@ -65,10 +82,11 @@ services:
       - MENU_POSITION=2
       - FOOTER_STYLE=vng
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:81/"]
+      test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
     networks:
       - dev-network
 
@@ -99,19 +117,26 @@ services:
       - MODE=development
       - THEME_VARIANT=development
       - ENVIRONMENT_NAME=development
-      # API Configuration
-      - API_URL=http://nextcloud.local/index.php/apps
-      - API_URL_COMMONGROUND=http://nextcloud.local/index.php/apps
-      - API_URL_COMMONGROUND_TOKEN=
-      - API_URL_COMMONGROUND_ORGANIZATION_OIN=
-      - GEMMA_ENDPOINT=http://nextcloud.local
-      - OPENCONNECTOR_API_URL=http://nextcloud.local/index.php/apps/openconnector/api
+      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
+      - BASE_URL=/api/apps
+      - BASE_URL_COMMONGROUND=/api/apps
+      
+      # Nextcloud/Target Configuration  
+      - NEXTCLOUD_HOST=nextcloud.local
+      - NEXTCLOUD_PORT=80
+      # Nginx Proxy Configuration
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/app/public
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
       - CLIENT_SECRET=
       - PROVIDER=nextcloud
       - REGISTER_URL=
+      - DIRECTORY_BASE=https://directory.test.commonground.nl
       # Session Configuration
       - AUTO_LOGOUT=false
       - AUTO_LOGOUT_TIME=3600
@@ -135,10 +160,11 @@ services:
       - MENU_POSITION=2
       - FOOTER_STYLE=vng
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
     networks:
       - dev-network
 

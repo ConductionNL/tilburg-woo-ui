@@ -17,6 +17,15 @@ services:
       start_period: 40s
     environment:
       - NODE_ENV=production
+      # API Configuration (nginx handles index.php)
+      - BASE_URL=/api/apps
+      - BASE_URL_COMMONGROUND=/api/apps
+      # Nginx Proxy Configuration
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/usr/share/nginx/html
     networks:
       - tilburg-network
 

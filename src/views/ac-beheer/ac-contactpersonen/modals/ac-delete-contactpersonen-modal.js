@@ -41,7 +41,7 @@ const AcDeleteContactpersonenModal = ({
   const handleDeleteContactpersoon = async () => {
     try {
       const deletePromises = contactpersonenCopy.map((contactpersoon) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${contactpersoon.id}`, null, {
+        makeRequest(`${endpoint}/${contactpersoon.id}`, null, {
           method: 'DELETE',
         })
       );

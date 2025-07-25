@@ -32,7 +32,7 @@ const AcDeleteOrganisatiesModal = ({
       const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
       const deletePromises = organisaties.map((organisatie) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${organisatie.id}`, null, {
+        makeRequest(`${endpoint}/${organisatie.id}`, null, {
           method: 'DELETE',
         })
       );

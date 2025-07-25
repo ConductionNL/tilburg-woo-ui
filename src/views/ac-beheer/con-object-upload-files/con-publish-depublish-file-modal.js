@@ -49,7 +49,7 @@ const ConPublishDepublishFileModal = ({
         file.title
       }/${publish ? 'publish' : 'depublish'}`;
 
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+      const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
         method: 'POST',
       });
 

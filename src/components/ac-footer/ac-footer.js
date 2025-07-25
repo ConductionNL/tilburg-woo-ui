@@ -45,7 +45,9 @@ const AcFooter = ({ store: { menu } }) => {
   try {
     containerConfig = require('@constants/container.constants');
   } catch (error) {
-    console.warn('Container constants not available, falling back to hostname-based logic');
+    console.warn(
+      'Container constants not available, falling back to hostname-based logic'
+    );
     containerConfig = null;
   }
 
@@ -125,7 +127,11 @@ const AcFooter = ({ store: { menu } }) => {
     return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
   };
 
-  const footerItems = all_menu_items.filter((item) => item.position > getFooterMenuPosition());
+  const footerItems = all_menu_items.filter(
+    (item) => item.position > getFooterMenuPosition()
+  );
+
+  const hostname = window.location.hostname;
 
   return (
     <footer className='ac-footer'>
@@ -150,6 +156,7 @@ const AcFooter = ({ store: { menu } }) => {
                             href={item.link}
                             target='_blank'
                             className='ac-footer__link'
+                            rel='noreferrer'
                           >
                             {hostname === 'open-dimpact.accept.commonground.nu' ||
                             hostname === 'dimpact.opencatalogi.nl' ? (
@@ -217,7 +224,7 @@ const AcFooter = ({ store: { menu } }) => {
               </nav>
             </>
           )}
-          <div class='ac-footer__logo'>
+          <div className='ac-footer__logo'>
             <ConLogo variant='footer' />
 
             {AcCheckIfSpecificHostname() ? (

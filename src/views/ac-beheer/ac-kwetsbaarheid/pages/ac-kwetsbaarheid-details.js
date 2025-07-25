@@ -43,13 +43,13 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${BASE_URL}/${endpoint}/${id}`,
           null,
           null,
           `/beheer/kwetsbaarheden/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/kwetsbaarheden/${id}`

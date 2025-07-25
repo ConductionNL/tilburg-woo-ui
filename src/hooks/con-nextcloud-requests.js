@@ -248,7 +248,7 @@ export default function useNextcloudRequests() {
    * - Maintains same interface
    */
   const downloadObjectList = async (register, schema, type = 'csv', redirectUrl) => {
-    const url = `${BASE_URL}/apps/openregister/api/objects/${register}/${schema}/export?type=${type}`;
+    const url = `openregister/api/objects/${register}/${schema}/export?type=${type}`;
 
     const extension = type === 'excel' ? 'xlsx' : 'csv';
     const currentDate = new Date().toISOString().split('T')[0];
@@ -272,21 +272,24 @@ export default function useNextcloudRequests() {
   };
 
   /**
-   * Get current logged in user using the /me endpoint.
+   * Get current logged in user information using the /me endpoint.
    *
-   * for security purposes this should NEVER be stored inside the browser as a cookie (or another form of storage)
-   *
-   * @returns {Promise<Object>} - The user object
+   * @returns {Promise<Object>} - The user object from the API response
    */
   const getUser = async () => {
-    const response = await makeRequest(
-      `${BASE_URL}/apps/openconnector/api/user/me`,
-      null,
-      null,
-      window.location.pathname
-    );
-
-    return response;
+    try {
+      return await makeRequest(
+        `openconnector/api/user/me`,
+        null, // no query params
+        {
+          method: 'GET',
+        },
+        window.location.pathname // redirect URL for auth failures
+      );
+    } catch (error) {
+      console.error('Failed to get user:', error);
+      throw error;
+    }
   };
 
   /**
@@ -296,20 +299,23 @@ export default function useNextcloudRequests() {
    * @returns {Promise<Object>} - The response from the update request
    */
   const updateUser = async (userData) => {
-    const response = await makeRequest(
-      `${BASE_URL}/apps/openconnector/api/user/me`,
-      null,
-      {
-        method: 'PUT',
-        body: JSON.stringify(userData),
-        headers: {
-          'Content-Type': 'application/json',
+    try {
+      return await makeRequest(
+        `openconnector/api/user/me`,
+        null, // no query params
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
         },
-      },
-      window.location.pathname
-    );
-
-    return response;
+        window.location.pathname // redirect URL for auth failures
+      );
+    } catch (error) {
+      console.error('Failed to update user:', error);
+      throw error;
+    }
   };
 
   return {

@@ -47,13 +47,13 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${endpoint}/${id}`,
           null,
           null,
           `/beheer/contactpersonen/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/contactpersonen/${id}`
@@ -82,7 +82,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
 
   const fetchUsedBy = async () => {
     const usedByResponse = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       null,
       null,
       `/beheer/contactpersonen/${id}`

@@ -38,15 +38,18 @@ try {
 
 export const BASE_URL = (() => {
   // Always use container config - no hardcoded fallbacks in main codebase
-  if (!containerConfig || !containerConfig.getGemmaEndpoint) {
-    throw new Error('GEMMA endpoint not configured. Please check your environment setup.');
+  if (!containerConfig || !containerConfig.getApiUrl) {
+    throw new Error('API URL not configured. Please check your environment setup.');
   }
   
-  return containerConfig.getGemmaEndpoint();
+  // Return /api/apps so that code can use BASE_URL + "/opencatalogi/..." or BASE_URL + "/openregister/..."
+  // Nginx handles /api/apps/ -> /index.php/apps/ mapping
+  return containerConfig.getApiUrl();
 })();
 
-const AcBeheer = () => {
+const AcBeheer = ({ store }) => {
   const navigate = useMemo(() => useNavigate(), []);
+  const { user } = store;
 
   const wrongPage = () => (
     <AcSection spacing>
@@ -60,16 +63,33 @@ const AcBeheer = () => {
     </AcSection>
   );
 
-  const loggedIn = !!getCookie('nextcloud_user_id');
-  const loggedOut = getCookie('logout');
+  // Check authentication using the new UserStore
   useEffect(() => {
-    if (loggedOut) {
-      navigate('/');
-    }
-    if (!loggedIn) {
-      navigate(`/login?redirect_url=${window.location.pathname}`);
-    }
-  }, [loggedIn, loggedOut]);
+    const checkAuth = async () => {
+      // Check for legacy logout cookie
+      const loggedOut = getCookie('logout');
+      if (loggedOut) {
+        await user.logout();
+        navigate('/');
+        return;
+      }
+
+      // TEMPORARILY DISABLED: Double auth check causing redirect loops
+      // TODO: Re-enable after fixing the auth timing issue
+      /*
+      // Check authentication status
+      const isAuthenticated = await user.checkAuthStatus();
+      
+      if (!isAuthenticated) {
+        navigate(`/login?redirect_url=${window.location.pathname}`);
+      }
+      */
+      
+      console.log('AcBeheer loaded, user:', user.user); // Debug log
+    };
+
+    checkAuth();
+  }, [user, navigate]);
 
   const { type, id } = useParams();
 

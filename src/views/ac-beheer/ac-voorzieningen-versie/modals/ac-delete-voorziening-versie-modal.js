@@ -34,7 +34,7 @@ const AcDeleteVoorzieningVersieModal = ({
   const handleDeleteVoorziening = async () => {
     try {
       const deletePromises = voorzieningen.map((voorziening) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${voorziening.id}`, null, {
+        makeRequest(`${BASE_URL}/${endpoint}/${voorziening.id}`, null, {
           method: 'DELETE',
         })
       );
