@@ -15,7 +15,6 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '../../con-table';
 import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
 import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
-import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
@@ -287,14 +286,6 @@ const AcBeheerContactpersonen = () => {
                     Importeren
                   </ConActionMenu.Button>
 
-                  <ConActionMenu.Button
-                    icon={<VISUALS.ENVELOPES_BULK />}
-                    disabled={selectedRows.length === 0}
-                    onClick={() => setOpenModal('invite')}
-                  >
-                    Uitnodigen
-                  </ConActionMenu.Button>
-
                   <ConActionMenu.Divider />
 
                   <ConActionMenu.Button
@@ -350,16 +341,6 @@ const AcBeheerContactpersonen = () => {
                         }}
                       >
                         Bewerken
-                      </ConActionMenu.Button>
-
-                      <ConActionMenu.Button
-                        icon={<VISUALS.ENVELOPE />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('invite');
-                        }}
-                      >
-                        Uitnodigen
                       </ConActionMenu.Button>
 
                       {!row['@self'].published && (
@@ -469,19 +450,7 @@ const AcBeheerContactpersonen = () => {
             }}
           />
 
-          <AcContactpersonenUitnodigenModal
-            contactpersonen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-            showModal={openModal === 'invite'}
-            onClose={() => {
-              setOpenModal(null);
-              setSingleSelectedRow(null);
-            }}
-            onSuccess={() => {
-              tableRef.current.resetSelectedRows();
-              fetchData();
-            }}
-          />
-
+      
           <ConFilterHeadersDrawer
             ref={filterHeadersDrawerRef}
             headers={headers}
