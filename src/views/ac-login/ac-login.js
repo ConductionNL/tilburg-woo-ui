@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import { useState, useCallback, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
@@ -16,6 +17,8 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcLogin = ({ store }) => {
   const [nextcloudLogin, setNextcloudLogin] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -33,14 +36,14 @@ const AcLogin = ({ store }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const isAuthenticated = await user.checkAuthStatus();
-      
+
       if (isAuthenticated) {
         // If there's a redirect URL, use it; otherwise go to dashboard
         const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
         navigate(targetUrl);
       }
     };
-    
+
     checkAuth();
   }, [user, navigate, redirectUrl]);
 
@@ -53,21 +56,47 @@ const AcLogin = ({ store }) => {
     if (user.error) {
       user.clearError();
     }
+    // Clear local errors when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: '',
+      }));
+    }
   };
 
   const validateEmail = useCallback((email) => {
     return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   }, []);
 
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.username) {
+      newErrors.username = 'Gebruikersnaam is verplicht';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Wachtwoord is verplicht';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     setIsLoading(true);
     setErrors({});
 
     const result = await login(
       {
-        username: formData.email,
+        username: formData.username,
         password: formData.password,
       },
       {
@@ -75,6 +104,8 @@ const AcLogin = ({ store }) => {
           console.log('Login successful:', data);
           // Handle successful login - you can access user data via data.user
           // Navigate to dashboard or handle session
+          const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
+          navigate(targetUrl);
         },
         onError: (error, errorMessage) => {
           setErrors({ general: errorMessage });
@@ -127,7 +158,8 @@ const AcLogin = ({ store }) => {
               onChange={(value) => debouncedSetUsername(value)}
               placeholder='Uw gebruikersnaam'
               required
-              disabled={user.loading.status}
+              disabled={isLoading || user.loading.status}
+              error={errors.username}
             />
           </div>
           <div>
@@ -140,7 +172,8 @@ const AcLogin = ({ store }) => {
               onChange={(value) => debouncedSetPassword(value)}
               placeholder='Uw wachtwoord'
               required
-              disabled={user.loading.status}
+              disabled={isLoading || user.loading.status}
+              error={errors.password}
             />
           </div>
 
@@ -149,9 +182,9 @@ const AcLogin = ({ store }) => {
             icon={<VISUALS.ARROW_RIGHT />}
             onClick={handleSubmit}
             className='ac-login-form-button'
-            disabled={user.loading.status}
+            disabled={isLoading || user.loading.status}
           >
-            {user.loading.status ? 'Inloggen...' : 'Inloggen'}
+            {isLoading || user.loading.status ? 'Inloggen...' : 'Inloggen'}
           </AcButton>
 
           <div className='ac-login-separator-row'>
@@ -165,14 +198,14 @@ const AcLogin = ({ store }) => {
             buttonType='secondary'
             onClick={handleNextcloudLogin}
             className='ac-login-form-button'
-            disabled={user.loading.status}
+            disabled={isLoading || user.loading.status}
           >
             Nextcloud
           </AcButton>
 
-          {user.error && (
+          {(user.error || errors.general) && (
             <span className='ac-login-form-field-error' role='alert'>
-              {user.error}
+              {user.error || errors.general}
             </span>
           )}
         </form>
