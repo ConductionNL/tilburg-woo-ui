@@ -1,35 +1,32 @@
-import { getCookie } from '@src/utilities';
 import { BASE_URL } from '@src/views/ac-beheer/ac-beheer';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
+import { getCookie } from '@src/utilities';
 
-const mapQueryParams = (queryParams) => {
-  return queryParams?.flat()?.length
-    ? queryParams.reduce((acc, [key, value]) => {
-        // If the key already exists, convert it to an array
-        if (key in acc) {
-          if (!Array.isArray(acc[key])) {
-            acc[key] = [acc[key]];
-          }
-          acc[key].push(value);
-        } else {
-          acc[key] = value;
-        }
-        return acc;
-      }, {})
-    : {};
+// Utility: flatten array of [key, value] pairs into an object, supporting repeated keys as arrays
+const normalizeParams = (pairs = []) => {
+  return pairs.reduce((acc, [key, value]) => {
+    if (!key) return acc;
+    if (key in acc) {
+      acc[key] = Array.isArray(acc[key]) ? [...acc[key], value] : [acc[key], value];
+    } else {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
 };
 
-// Create an axios instance with default config
+// Create axios instance configured for Nextcloud
 const nextcloudApi = axios.create({
   baseURL: BASE_URL,
   timeout: 120000, // 120 second timeout
+  //   withCredentials: true, // include cookies for authentication
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add request interceptor for authentication
+// Add Authorization header interceptor for OAuth tokens
 nextcloudApi.interceptors.request.use(
   (config) => {
     const accessToken = getCookie('nextcloud_access_token');
@@ -41,290 +38,225 @@ nextcloudApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add response interceptor for error handling
+// Global error handling: redirect on 401
 nextcloudApi.interceptors.response.use(
   (response) => ({
     ...response,
     ok: response.status >= 200 && response.status < 300,
   }),
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
+/**
+ * Hook providing Nextcloud API helpers
+ */
 export default function useNextcloudRequests() {
   const navigate = useNavigate();
 
   /**
-   * Make a request to the Nextcloud API
-   * @param {string} url - The URL to make the request to
-   * @param {string[][]} queryParams - The query parameters to add to the request, array of `[key, value]`
-   * @param {Object} fetchOptions - The fetch options to use
-   * @param {string} redirectUrl - The URL to redirect to if the user is not logged in
-   * @returns {Promise<Response>} - The response from the request
-   *
-   * Changes from original:
-   * - Uses axios instead of fetch
-   * - Automatically handles JSON parsing
-   * - Better error handling with axios interceptors
-   * - Maintains same interface for backward compatibility
+   * Generic request
+   * @param {string} path - API path (relative to BASE_URL)
+   * @param {object} options
+   * @param {string} [options.method='GET']
+   * @param {Array<[string, any]>} [options.params] - query parameters
+   * @param {object|FormData} [options.data]
+   * @param {object} [options.headers]
+   * @param {string} [options.redirectPath=current location]
    */
-  const makeRequest = async (url, queryParams, fetchOptions = {}, redirectUrl) => {
+  const request = async (
+    path,
+    {
+      method = 'GET',
+      params = [],
+      data = null,
+      headers = {},
+      responseType = 'json',
+      redirectPath = window.location.pathname,
+    } = {}
+  ) => {
     try {
-      // Handle array parameters correctly
-      const params = mapQueryParams(queryParams);
+      const config = {
+        url: path,
+        method,
+        params: normalizeParams(params),
+        data,
+        headers,
+        responseType,
+      };
 
-      const response = await nextcloudApi({
-        url,
-        method: fetchOptions?.method || 'GET',
-        params,
-        data: fetchOptions?.body,
-        headers: {
-          ...Object.fromEntries(
-            Object.entries(fetchOptions?.headers || {}).filter(
-              ([_, value]) => value !== null && value !== undefined
-            )
-          ),
-        },
-      });
-
-      return response;
-    } catch (error) {
-      if (error.response?.status === 401) {
-        navigate(`/login?redirect_url=${redirectUrl}`);
+      const res = await nextcloudApi.request(config);
+      return res;
+    } catch (err) {
+      if (err.response?.status === 401) {
+        navigate(`/login?redirect_url=${encodeURIComponent(redirectPath)}`);
       }
-      throw error;
+      throw err;
     }
   };
 
   /**
-   * Download a file from the Nextcloud API
-   * @param {string} url - The URL to download from
-   * @param {string[][]} queryParams - The query parameters
-   * @param {Object} fetchOptions - The fetch options
-   * @param {string} redirectUrl - The redirect URL
-   * @param {string} _filename - Optional filename override
-   *
-   * Changes from original:
-   * - Uses axios with responseType: 'blob'
-   * - Better error handling
-   * - Maintains same interface
+   * Download a file (blob)
    */
-  const makeDownloadRequest = async (
-    url,
-    queryParams,
-    fetchOptions = {},
-    redirectUrl,
-    _filename
+  const download = async (
+    path,
+    { params = [], headers = {}, filename = null, redirectPath } = {}
   ) => {
-    try {
-      const response = await nextcloudApi({
-        url,
-        method: fetchOptions?.method || 'GET',
-        params: mapQueryParams(queryParams),
-        headers: fetchOptions?.headers,
-        responseType: 'blob',
-      });
+    const res = await request(path, {
+      method: 'GET',
+      params,
+      headers,
+      responseType: 'blob',
+      redirectPath,
+    });
 
-      const contentDisposition = response.headers['content-disposition'];
-      const filename =
-        contentDisposition?.split('filename=')[1]?.replace(/["']/g, '') ||
-        _filename ||
-        url.split('/').pop();
+    const disposition = res.headers['content-disposition'];
+    const inferred = disposition?.match(/filename="?([^";]+)"?/)?.[1];
+    const finalName = inferred || filename || path.split('/').pop();
 
-      const blob = new Blob([response.data]);
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.error('Failed to download file', error);
-      throw error;
-    }
+    const blob = new Blob([res.data]);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = finalName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   /**
-   * Upload a file to the Nextcloud API
-   * @param {string} url - The URL to upload to
-   * @param {File} file - The file to upload
-   * @param {string[][]} queryParams - The query parameters
-   * @param {Object} fetchOptions - The fetch options
-   * @param {string} redirectUrl - The redirect URL
-   *
-   * Changes from original:
-   * - Uses axios with FormData
-   * - Better error handling
-   * - Maintains same interface
+   * Upload one or multiple files
    */
-  const makeUploadRequest = async (
-    url,
-    file,
-    queryParams,
-    fetchOptions = {},
-    redirectUrl
+  const upload = async (
+    path,
+    files,
+    { params = [], headers = {}, redirectPath } = {}
   ) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
+    const form = new FormData();
+    if (Array.isArray(files)) {
+      files.forEach((f) => form.append('file', f));
+    } else {
+      form.append('file', files);
+    }
 
-      const response = await nextcloudApi({
-        url,
+    const uploadHeaders = { 'Content-Type': 'multipart/form-data', ...headers };
+    const res = await request(path, {
+      method: 'POST',
+      params,
+      data: form,
+      headers: uploadHeaders,
+      redirectPath,
+    });
+    return res;
+  };
+
+  /**
+   * Export object list (csv or excel)
+   */
+  const exportObjects = (register, schema, type = 'csv') => {
+    const ext = type === 'excel' ? 'xlsx' : 'csv';
+    const now = new Date().toISOString();
+    const filename = `${register}_${schema}_${now}.${ext}`;
+    return download(`/apps/openregister/api/objects/${register}/${schema}/export`, {
+      params: [['type', type]],
+      filename,
+    });
+  };
+
+  /**
+   * Get current user
+   */
+  const getUser = () => request('/apps/openconnector/api/user/me');
+
+  /**
+   * Update current user
+   */
+  const updateUser = (userData) =>
+    request('/apps/openconnector/api/user/me', {
+      method: 'PUT',
+      data: userData,
+    });
+
+  /**
+   * Login user with flexible options
+   * @param {object} credentials - Login credentials
+   * @param {string} credentials.username - Username or email
+   * @param {string} credentials.password - Password
+   * @param {object} options - Login options
+   * @param {object} [options.headers] - Additional headers
+   * @param {function} [options.onSuccess] - Callback for successful login
+   * @param {function} [options.onError] - Callback for login errors
+   * @param {string} [options.redirectPath] - Path to redirect after successful login
+   * @param {boolean} [options.autoRedirect=true] - Whether to automatically redirect on success
+   * @returns {Promise<object>} Login response
+   */
+  const login = async (credentials, options = {}) => {
+    const {
+      headers = {},
+      onSuccess,
+      onError,
+      redirectPath,
+      autoRedirect = true,
+    } = options;
+
+    try {
+      const response = await request('/apps/openconnector/api/user/login', {
         method: 'POST',
-        params: mapQueryParams(queryParams),
-        data: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...fetchOptions?.headers,
+        data: {
+          username: credentials.username,
+          password: credentials.password,
         },
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers,
+        },
+        redirectPath: redirectPath || window.location.pathname,
       });
 
-      return response;
+      // Handle successful login
+      if (onSuccess) {
+        onSuccess(response.data);
+      }
+
+      // Auto redirect if enabled and path provided
+      if (autoRedirect && redirectPath) {
+        navigate(redirectPath);
+      }
+
+      return {
+        success: true,
+        data: response.data,
+        user: response.data.user,
+      };
     } catch (error) {
-      console.error('Failed to upload file', error);
-      throw error;
-    }
-  };
+      const errorMessage =
+        error.response?.data?.error || 'Inloggen mislukt. Controleer uw gegevens.';
 
-  /**
-   * Upload a file to the Nextcloud API
-   *
-   * this is literally the same as the makeUploadRequest, but you use 'files' instead of 'file'.
-   * So no, it does not support multiple files.
-   *
-   * @param {string} url - The URL to upload to
-   * @param {File} file - The file to upload
-   * @param {string[]} tags - The tags to add to the file
-   * @param {boolean} share - Whether to share the file
-   * @param {string[][]} queryParams - The query parameters
-   * @param {Object} fetchOptions - The fetch options
-   * @param {string} redirectUrl - The redirect URL
-   */
-  const makeMultipartUploadRequest = async (
-    url,
-    file,
-    tags = [],
-    share = false,
-    queryParams,
-    fetchOptions = {},
-    redirectUrl
-  ) => {
-    try {
-      const formData = new FormData();
-      formData.append('files', file);
-      formData.append('tags', tags);
-      formData.append('share', share);
+      if (onError) {
+        onError(error, errorMessage);
+      }
 
-      const response = await nextcloudApi({
-        url,
-        method: 'POST',
-        params: mapQueryParams(queryParams),
-        data: formData,
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          ...fetchOptions?.headers,
-        },
-      });
-
-      return response;
-    } catch (error) {
-      console.error('Failed to upload file', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Download an object list from the Nextcloud API
-   * @param {string} register - The register to download
-   * @param {string} schema - The schema to download
-   * @param {'csv' | 'excel'} type - The type to download (csv, excel)
-   * @param {string} redirectUrl - The redirect URL
-   *
-   * Changes from original:
-   * - Uses the new makeDownloadRequest implementation
-   * - Maintains same interface
-   */
-  const downloadObjectList = async (register, schema, type = 'csv', redirectUrl) => {
-    const url = `openregister/api/objects/${register}/${schema}/export?type=${type}`;
-
-    const extension = type === 'excel' ? 'xlsx' : 'csv';
-    const currentDate = new Date().toISOString().split('T')[0];
-    const currentTime = (() => {
-      const now = new Date();
-      const hh = String(now.getUTCHours()).padStart(2, '0');
-      const mm = String(now.getUTCMinutes()).padStart(2, '0');
-      const ss = String(now.getUTCSeconds()).padStart(2, '0');
-      return `${hh}${mm}${ss}`;
-    })();
-
-    const filename = `${register}_${schema}_${currentDate}_${currentTime}.${extension}`;
-
-    await makeDownloadRequest(
-      url,
-      null,
-      { method: 'GET', headers: { 'Content-Type': '*/*' } },
-      redirectUrl,
-      filename
-    );
-  };
-
-  /**
-   * Get current logged in user information using the /me endpoint.
-   *
-   * @returns {Promise<Object>} - The user object from the API response
-   */
-  const getUser = async () => {
-    try {
-      return await makeRequest(
-        `openconnector/api/user/me`,
-        null, // no query params
-        {
-          method: 'GET',
-        },
-        window.location.pathname // redirect URL for auth failures
-      );
-    } catch (error) {
-      console.error('Failed to get user:', error);
-      throw error;
-    }
-  };
-
-  /**
-   * Update current logged in user information using the /me endpoint.
-   *
-   * @param {Object} userData - The user data to update
-   * @returns {Promise<Object>} - The response from the update request
-   */
-  const updateUser = async (userData) => {
-    try {
-      return await makeRequest(
-        `openconnector/api/user/me`,
-        null, // no query params
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userData),
-        },
-        window.location.pathname // redirect URL for auth failures
-      );
-    } catch (error) {
-      console.error('Failed to update user:', error);
-      throw error;
+      return {
+        success: false,
+        error: errorMessage,
+        status: error.response?.status,
+        data: error.response?.data,
+      };
     }
   };
 
   return {
-    makeRequest,
-    makeDownloadRequest,
-    downloadObjectList,
-    makeUploadRequest,
-    makeMultipartUploadRequest,
+    request,
+    download,
+    upload,
+    exportObjects,
     getUser,
     updateUser,
+    login,
+    // backwards compatibility (ish (still need to redo the params where used))
+    makeRequest: request,
+    downloadObjectList: download,
+    uploadObjectList: upload,
+    exportObjectList: exportObjects,
   };
 }

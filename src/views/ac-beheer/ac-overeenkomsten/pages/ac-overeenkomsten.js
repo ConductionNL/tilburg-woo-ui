@@ -62,7 +62,9 @@ const AcBeheerOvereenkomsten = () => {
 
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'all']];
+  const extend = [
+    // ['_extend[]', 'all'] // Removed extends
+  ];
 
   const fetchData = useCallback(
     async (searchParams = {}) => {

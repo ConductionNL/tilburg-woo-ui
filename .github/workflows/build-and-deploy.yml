@@ -71,7 +71,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=commit-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/softwarecatalogus' }}
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
 

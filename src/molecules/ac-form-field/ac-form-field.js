@@ -117,6 +117,7 @@ const AcFormField = ({
         value: value,
         minLength: minLength,
         maxLength: maxLength,
+        type: inputType,
         ...restProps,
       })}
     </FormField>
