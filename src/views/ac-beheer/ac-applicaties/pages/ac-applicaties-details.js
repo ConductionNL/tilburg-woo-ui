@@ -111,13 +111,13 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${endpoint}/${id}`,
           extend,
           null,
           `/beheer/applicaties/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/applicaties/${id}`
@@ -151,7 +151,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
     try {
       setVersionsLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
+        `openregister/api/objects/voorzieningen/voorzieningversie`,
         [['voorziening', id]]
       );
 
@@ -168,7 +168,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
   const fetchUsedBy = async () => {
     const usedByResponse = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       [
         ['_extend[]', '@self.schema'],
         ['_extend[]', 'voorziening'],
@@ -200,7 +200,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+      const response = await makeRequest(endpoint, null, {
         method: 'PATCH',
         body: JSON.stringify({
           [field]: type === 'kort' ? value : JSON.stringify(value),

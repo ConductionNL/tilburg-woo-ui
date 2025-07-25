@@ -107,7 +107,7 @@ const AcNavigation = ({ store: { menu } }) => {
               {!pathname.includes('beheer') && !getCookie('nextcloud_user_id') ? (
                 <ul>
                   <li>
-                    <Link to='/login'>
+                    <Link to='/register'>
                       <VISUALS.PERSON_ADD />
                       Aanmelden
                     </Link>

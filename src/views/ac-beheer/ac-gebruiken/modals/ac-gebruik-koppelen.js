@@ -39,7 +39,7 @@ const AcGebruikKoppelenModal = ({
     setLoading(true);
     try {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieninggebruik`
+        `openregister/api/objects/voorzieningen/voorzieninggebruik`
       );
 
       if (response.ok) {
@@ -72,7 +72,7 @@ const AcGebruikKoppelenModal = ({
 
     try {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/koppeling`,
+        `openregister/api/objects/voorzieningen/koppeling`,
         null,
         {
           method: 'POST',

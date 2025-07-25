@@ -58,7 +58,7 @@ const AcKwetsbaarheidFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/kwetsbaarheid`
+        `openregister/api/schemas/kwetsbaarheid`
       );
       const data = response.data;
       setSchema(data);
@@ -81,7 +81,7 @@ const AcKwetsbaarheidFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
 
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${kwetsbaarheidFormData.id}` : baseUrl;

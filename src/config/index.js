@@ -37,18 +37,10 @@ const _api_ = apiUrl();
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
 const _api_commonground_ = commongroundApiUrl();
 
-const _api_commonground_token_ = process.env.API_URL_COMMONGROUND_TOKEN;
-const _api_commonground_organization_oin_ =
-  process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN;
-
 const _api_commonground_headers_ = {
   'Content-Type': 'application/json',
   Accept: 'application/json',
 };
-
-if (_api_commonground_token_ && !ACIsHttps(_api_commonground_)) {
-  _api_commonground_headers_['Authorization'] = _api_commonground_token_;
-}
 
 const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;

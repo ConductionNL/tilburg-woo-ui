@@ -81,7 +81,7 @@ const AcContactpersoonFormModal = ({
   const fetchOrganisationOptions = async () => {
     try {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+        `openregister/api/objects/voorzieningen/organisatie`
       );
       const data = response.data;
       setOrganisatieOptions(
@@ -100,7 +100,7 @@ const AcContactpersoonFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/contactpersoon`
+        `openregister/api/schemas/contactpersoon`
       );
       const data = response.data;
       setSchema(data);
@@ -142,7 +142,7 @@ const AcContactpersoonFormModal = ({
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${contactpersoonFormData.id}` : baseUrl;
 

@@ -17,11 +17,9 @@ services:
       start_period: 40s
     environment:
       - NODE_ENV=production
-      # API Configuration (update these to match your environment)
-      - API_URL=/api
-      - API_URL_COMMONGROUND=/api
-      - GEMMA_ENDPOINT=/api
-      - OPENCONNECTOR_API_URL=/api/openconnector
+      # API Configuration (nginx handles index.php)
+      - BASE_URL=/api/apps
+      - BASE_URL_COMMONGROUND=/api/apps
       # Nginx Proxy Configuration
       - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80

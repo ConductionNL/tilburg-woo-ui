@@ -37,7 +37,7 @@ const AcAcceptOrganizationModal = ({
       const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/${endpoint}/${organization.id}`,
+        `${BASE_URL}/${endpoint}/${organization.id}`,
         null,
         {
           method: 'PUT',

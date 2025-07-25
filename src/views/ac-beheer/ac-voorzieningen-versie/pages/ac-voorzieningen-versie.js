@@ -74,7 +74,7 @@ const AcBeheerVoorzieningenVersie = () => {
 
         const [response, schemaResponse] = await Promise.all([
           makeRequest(
-            `${BASE_URL}/apps/${endpoint}`,
+            endpoint,
             [
               ...extend,
               ['_page', pagination.page],
@@ -85,7 +85,7 @@ const AcBeheerVoorzieningenVersie = () => {
             '/beheer/voorzieningen-versie'
           ),
           makeRequest(
-            `${BASE_URL}/apps/${schemaEndpoint}`,
+            schemaEndpoint,
             extend,
             null,
             '/beheer/voorzieningen-versie'

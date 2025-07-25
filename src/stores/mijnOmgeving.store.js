@@ -16,8 +16,7 @@ const DEFAULT_QUERY = {
   extend: 'all',
 };
 
-if (process.env.API_URL_COMMONGROUND_ORGANIZATION_OIN) {
-}
+
 
 export class MijnOmgevingStore {
   constructor(store) {

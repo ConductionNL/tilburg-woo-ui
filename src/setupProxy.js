@@ -26,7 +26,29 @@ module.exports = function(app) {
     })
   );
 
-  // Proxy all other API requests to /api/ (was /api/nextcloud/)
+  // Proxy Nextcloud app API requests (adds index.php automatically)
+  app.use(
+    '/api/apps',
+    createProxyMiddleware({
+      target: 'http://host.docker.internal:80',
+      changeOrigin: true,
+      headers: {
+        'Host': targetHost  // Use configurable hostname
+      },
+      pathRewrite: {
+        '^/api/apps': '/index.php/apps',  // Add index.php for Nextcloud apps
+      },
+      onProxyReq: (proxyReq, req, res) => {
+        console.log('🔄 Webpack proxy - Apps:', req.method, req.url, '→', proxyReq.getHeader('host') + proxyReq.path);
+      },
+      onProxyRes: (proxyRes, req, res) => {
+        console.log('✅ Webpack proxy response:', proxyRes.statusCode, req.url);
+      },
+      logLevel: 'debug',
+    })
+  );
+
+  // Proxy all other API requests to /api/ (catch-all)
   app.use(
     '/api',
     createProxyMiddleware({

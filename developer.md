@@ -51,9 +51,9 @@ NGINX_TARGET_HOST=nextcloud.local
 
 #### API Endpoint Configuration
 ```bash
-# Frontend API endpoints (use proxy paths)
-API_URL=/api/index.php/apps
-API_URL_COMMONGROUND=/api/index.php/apps
+# Frontend API endpoints (nginx handles index.php automatically)
+API_URL=/api/apps
+API_URL_COMMONGROUND=/api/apps
 GEMMA_ENDPOINT=/api
 OPENCONNECTOR_API_URL=/api/openconnector
 ```
@@ -144,8 +144,8 @@ NGINX_NEXTCLOUD_DOMAIN=your-nextcloud-domain.com
 NGINX_TARGET_HOST=your-nextcloud-domain.com
 
 # Frontend API Configuration
-API_URL=/api
-API_URL_COMMONGROUND=/api
+API_URL=/api/apps
+API_URL_COMMONGROUND=/api/apps
 GEMMA_ENDPOINT=/api
 OPENCONNECTOR_API_URL=/api/openconnector
 

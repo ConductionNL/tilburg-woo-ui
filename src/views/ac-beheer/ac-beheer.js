@@ -38,11 +38,13 @@ try {
 
 export const BASE_URL = (() => {
   // Always use container config - no hardcoded fallbacks in main codebase
-  if (!containerConfig || !containerConfig.getGemmaEndpoint) {
-    throw new Error('GEMMA endpoint not configured. Please check your environment setup.');
+  if (!containerConfig || !containerConfig.getApiUrl) {
+    throw new Error('API URL not configured. Please check your environment setup.');
   }
   
-  return containerConfig.getGemmaEndpoint();
+  // Return /api/apps so that code can use BASE_URL + "/opencatalogi/..." or BASE_URL + "/openregister/..."
+  // Nginx handles /api/apps/ -> /index.php/apps/ mapping
+  return containerConfig.getApiUrl();
 })();
 
 const AcBeheer = ({ store }) => {

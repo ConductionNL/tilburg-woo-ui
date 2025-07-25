@@ -48,6 +48,10 @@ RUN echo '#!/bin/sh' > /start-dev.sh && \
     echo '# Generate container constants from environment variables' >> /start-dev.sh && \
     echo 'node scripts/generate-container-constants.js' >> /start-dev.sh && \
     echo '' >> /start-dev.sh && \
+    echo '# Run linting check on startup' >> /start-dev.sh && \
+    echo 'echo "Running linting checks..."' >> /start-dev.sh && \
+    echo 'yarn lint:check || echo "⚠️  Linting issues found - check output above"' >> /start-dev.sh && \
+    echo '' >> /start-dev.sh && \
     echo '# Watch for changes and rebuild' >> /start-dev.sh && \
     echo 'while true; do' >> /start-dev.sh && \
     echo '  echo "Building for development..."' >> /start-dev.sh && \
@@ -86,6 +90,10 @@ RUN echo '#!/bin/sh' > /start-hot.sh && \
     echo '' >> /start-hot.sh && \
     echo '# Generate container constants from environment variables' >> /start-hot.sh && \
     echo 'node scripts/generate-container-constants.js' >> /start-hot.sh && \
+    echo '' >> /start-hot.sh && \
+    echo '# Run linting check on startup' >> /start-hot.sh && \
+    echo 'echo "Running linting checks..."' >> /start-hot.sh && \
+    echo 'yarn lint:check || echo "⚠️  Linting issues found - check output above"' >> /start-hot.sh && \
     echo '' >> /start-hot.sh && \
     echo '# Start webpack dev server with hot reload' >> /start-hot.sh && \
     echo 'exec yarn start' >> /start-hot.sh
