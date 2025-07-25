@@ -40,7 +40,7 @@ RUN echo '#!/bin/sh' > /start-dev.sh && \
     echo 'echo "Nginx upstream: $NGINX_OPENCONNECTOR_UPSTREAM"' >> /start-dev.sh && \
     echo '' >> /start-dev.sh && \
     echo '# Substitute environment variables in nginx config' >> /start-dev.sh && \
-    echo 'envsubst '"'"'$NGINX_OPENCONNECTOR_UPSTREAM $NGINX_NEXTCLOUD_UPSTREAM $NGINX_NEXTCLOUD_DOMAIN $NGINX_TARGET_HOST'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /start-dev.sh && \
+    echo 'envsubst '"'"'$NGINX_OPENCONNECTOR_UPSTREAM $NGINX_NEXTCLOUD_UPSTREAM $NGINX_NEXTCLOUD_DOMAIN $NGINX_TARGET_HOST $NGINX_ROOT_DIR'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /start-dev.sh && \
     echo '' >> /start-dev.sh && \
     echo '# Start nginx' >> /start-dev.sh && \
     echo 'nginx &' >> /start-dev.sh && \

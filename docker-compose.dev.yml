@@ -45,6 +45,7 @@ services:
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/app/public_html
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
@@ -122,6 +123,8 @@ services:
       - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+      - NGINX_TARGET_HOST=nextcloud.local
+      - NGINX_ROOT_DIR=/app/public
       # Authentication Configuration
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=

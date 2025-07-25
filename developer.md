@@ -9,15 +9,53 @@ This guide provides comprehensive instructions for local development, configurat
 git clone <repository-url>
 cd tilburg-woo-ui
 
-# Start development environment (watch build on port 81)
+# Start development environment (watch build with nginx proxy on port 81)
 docker-compose -f docker-compose.dev.yml up -d
 
-# Or start hot reload development (live reload on port 3000)
+# Or start hot reload development (live reload with webpack proxy on port 3000)
 docker-compose -f docker-compose.dev.yml up tilburg-woo-ui-hot -d
 
 # Access your application
-# Watch build: http://localhost:81
-# Hot reload: http://localhost:3000
+# Watch build with nginx proxy: http://localhost:81
+# Hot reload with webpack proxy: http://localhost:3000
+```
+
+## Architecture Overview
+
+This application uses a **dual-proxy architecture** to handle API requests:
+
+### Development Setup
+- **Port 81**: Nginx proxy with production-like configuration
+- **Port 3000**: Webpack dev server with hot reload capabilities
+- Both environments proxy `/api/*` requests to your Nextcloud backend
+
+### Production Setup
+- **Port 81**: Nginx proxy serving static files and proxying API requests
+- Same proxy configuration as development for consistency
+
+## Environment Configuration
+
+### Required Environment Variables
+
+#### Nextcloud Backend Configuration
+```bash
+# The hostname of your Nextcloud instance
+NEXTCLOUD_HOST=nextcloud.local
+
+# Nginx proxy configuration (auto-configured for development)
+NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
+NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
+NGINX_TARGET_HOST=nextcloud.local
+```
+
+#### API Endpoint Configuration
+```bash
+# Frontend API endpoints (use proxy paths)
+API_URL=/api/index.php/apps
+API_URL_COMMONGROUND=/api/index.php/apps
+GEMMA_ENDPOINT=/api
+OPENCONNECTOR_API_URL=/api/openconnector
 ```
 
 ### Local Nextcloud Setup
@@ -49,7 +87,6 @@ volumes:
 
 networks:
   nextcloud-network:
-    driver: bridge
 ```
 
 #### Option 3: Override API URLs
@@ -81,6 +118,81 @@ docker-compose -f docker-compose.dev.yml up tilburg-woo-ui-dev -d
 
 ```bash
 docker-compose -f docker-compose.dev.yml up tilburg-woo-ui-hot -d
+```
+
+## Production Deployment
+
+### Quick Production Start
+
+```bash
+# Build and start production container
+docker-compose up -d
+
+# Access production application
+# Production build: http://localhost:81
+```
+
+### Production Environment Variables
+
+The production container supports the same proxy architecture as development. Configure these variables in your production environment:
+
+```bash
+# Required: Nextcloud Backend Configuration
+NGINX_OPENCONNECTOR_UPSTREAM=http://your-nextcloud-server:80
+NGINX_NEXTCLOUD_UPSTREAM=http://your-nextcloud-server:80  
+NGINX_NEXTCLOUD_DOMAIN=your-nextcloud-domain.com
+NGINX_TARGET_HOST=your-nextcloud-domain.com
+
+# Frontend API Configuration
+API_URL=/api
+API_URL_COMMONGROUND=/api
+GEMMA_ENDPOINT=/api
+OPENCONNECTOR_API_URL=/api/openconnector
+
+# Example production docker-compose.yml override
+services:
+  tilburg-woo-ui:
+    environment:
+      - NGINX_TARGET_HOST=nextcloud.example.com
+      - NGINX_OPENCONNECTOR_UPSTREAM=http://nextcloud-server:80
+      - NGINX_NEXTCLOUD_UPSTREAM=http://nextcloud-server:80
+      - NGINX_NEXTCLOUD_DOMAIN=nextcloud.example.com
+```
+
+### Production Features
+
+- ✅ **Nginx Proxy**: Same proxy configuration as development
+- ✅ **Static File Serving**: Optimized nginx static file serving
+- ✅ **Security Headers**: Production security headers enabled
+- ✅ **Gzip Compression**: Automatic compression for better performance
+- ✅ **SPA Routing**: Single-page application routing support
+- ✅ **Health Checks**: Built-in container health monitoring
+
+### Customizing for Your Environment
+
+#### 1. Custom Nextcloud Host
+```bash
+# In your production environment
+export NGINX_TARGET_HOST=my-nextcloud.company.com
+export NGINX_OPENCONNECTOR_UPSTREAM=http://nextcloud-container:80
+```
+
+#### 2. External Nextcloud Server
+```bash
+# For external Nextcloud servers
+export NGINX_TARGET_HOST=external-nextcloud.com
+export NGINX_OPENCONNECTOR_UPSTREAM=https://external-nextcloud.com
+export NGINX_NEXTCLOUD_UPSTREAM=https://external-nextcloud.com
+```
+
+#### 3. Load Balancer Integration
+The nginx proxy can work behind load balancers. Ensure your load balancer passes the correct headers:
+```nginx
+# In your load balancer config
+proxy_set_header Host $host;
+proxy_set_header X-Real-IP $remote_addr;
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
 ## Environment Configuration System ✨
@@ -549,14 +661,71 @@ environment:
 ```bash
 # Check container logs
 docker logs tilburg-woo-ui-dev
-
-# Check if ports are in use
-netstat -tulpn | grep :81
-
-# Remove and recreate container
-docker rm -f tilburg-woo-ui-dev
-docker-compose -f docker-compose.dev.yml up tilburg-woo-ui-dev -d
 ```
+
+#### API Proxy Issues
+
+**Problem**: Getting 404, 502, or CORS errors when accessing `/api/*` endpoints.
+
+**Debug Steps**:
+
+1. **Check Nginx Configuration**:
+   ```bash
+   # View generated nginx config
+   docker exec tilburg-woo-ui-dev cat /etc/nginx/nginx.conf
+   
+   # Check nginx status
+   docker exec tilburg-woo-ui-dev nginx -t
+   ```
+
+2. **Verify Environment Variables**:
+   ```bash
+   # Check if variables are set correctly
+   docker exec tilburg-woo-ui-dev env | grep NGINX
+   ```
+
+3. **Test Backend Connectivity**:
+   ```bash
+   # Test if Nextcloud is reachable from container
+   docker exec tilburg-woo-ui-dev curl -I http://host.docker.internal:80
+   ```
+
+4. **Check Proxy Logs**:
+   ```bash
+   # Monitor nginx access/error logs
+   docker exec tilburg-woo-ui-dev tail -f /var/log/nginx/access.log
+   docker exec tilburg-woo-ui-dev tail -f /var/log/nginx/error.log
+   ```
+
+**Common Solutions**:
+
+- **502 Bad Gateway**: Backend server is down or unreachable
+  ```bash
+  # Verify your Nextcloud is running on host port 80
+  curl -I http://localhost:80
+  ```
+
+- **CORS Errors**: Host header mismatch
+  ```bash
+  # Ensure NGINX_TARGET_HOST matches your Nextcloud domain
+  export NGINX_TARGET_HOST=nextcloud.local
+  ```
+
+- **404 for API calls**: Wrong upstream configuration
+  ```bash
+  # Verify upstream points to correct backend
+  export NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
+  ```
+
+#### Authentication Logout Loop
+
+**Problem**: User gets logged out immediately after successful login.
+
+**Cause**: Persistent `logout=true` cookie causing immediate logout.
+
+**Solution**: Fixed in user.store.js - logout cookie is now cleared during login.
+
+**Debug**: Check browser cookies for persistent `logout=true` value.
 
 #### Environment Variables Not Applied
 ```bash

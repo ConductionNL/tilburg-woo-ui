@@ -20,8 +20,13 @@ http {
 
     server {
         listen 81;
-        root /app/public_html;
+        root ${NGINX_ROOT_DIR};
         index index.html;
+
+        # Security headers
+        add_header X-Content-Type-Options nosniff always;
+        add_header X-Frame-Options DENY always;
+        add_header X-XSS-Protection "1; mode=block" always;
 
         # API Proxy to Nextcloud (all API requests through /api/)
         location /api/openconnector/ {
@@ -66,7 +71,7 @@ http {
             }
         }
 
-        # Static file serving
+        # Static file serving with SPA routing
         location / {
             try_files $uri $uri/ /index.html;
         }

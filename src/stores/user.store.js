@@ -169,6 +169,9 @@ export class UserStore {
         console.log('Login successful! Response data:', data);
         console.log('All cookies after login:', document.cookie);
         
+        // Clear any existing logout cookie that would cause immediate logout
+        document.cookie = 'logout=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        
         // Check for authentication tokens in the response
         if (data.access_token) {
           console.log('Found access token in login response:', data.access_token);
@@ -361,7 +364,8 @@ export class UserStore {
       'nextcloud_refresh_token', 
       'nextcloud_user_id',
       'nextcloud_client_id',
-      'nextcloud_secret_key'
+      'nextcloud_secret_key',
+      'logout'  // Clear the logout cookie that causes immediate logout
     ];
 
     cookiesToClear.forEach(cookieName => {
