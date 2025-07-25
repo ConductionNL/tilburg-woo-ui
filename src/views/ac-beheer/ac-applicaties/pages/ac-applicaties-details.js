@@ -4,7 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
-import { AcSideNav, AcLoader } from '@components';
+import { AcSideNav, AcLoader, ConMarkdown } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
 import { BASE_URL } from '../../ac-beheer';
 import { sortPropertiesByOrder } from '@src/utilities';
@@ -35,7 +35,6 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcGebruikenFormModal from '../../ac-gebruiken/modals/ac-gebruiken-form-modal';
 import AcDienstFormModal from '../../ac-dienst/modals/ac-dienst-form-modal';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
-import ReactMarkdown from 'react-markdown';
 import AcVoorzieningVersieFormModal from '../../ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
 import { BEHEER_RENAMES } from '../../beheer-renames';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
@@ -112,13 +111,13 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
       const [response, schemaResponse] = await Promise.all([
         makeRequest(
-          `${BASE_URL}/apps/${endpoint}/${id}`,
+          `${endpoint}/${id}`,
           extend,
           null,
           `/beheer/applicaties/${id}`
         ),
         makeRequest(
-          `${BASE_URL}/apps/openregister/api/schemas/${schemaSlug}`,
+          `openregister/api/schemas/${schemaSlug}`,
           null,
           null,
           `/beheer/applicaties/${id}`
@@ -152,7 +151,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
     try {
       setVersionsLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
+        `openregister/api/objects/voorzieningen/voorzieningversie`,
         [['voorziening', id]]
       );
 
@@ -169,7 +168,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
 
   const fetchUsedBy = async () => {
     const usedByResponse = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
+      `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
       [
         ['_extend[]', '@self.schema'],
         ['_extend[]', 'voorziening'],
@@ -201,7 +200,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+      const response = await makeRequest(endpoint, null, {
         method: 'PATCH',
         body: JSON.stringify({
           [field]: type === 'kort' ? value : JSON.stringify(value),
@@ -438,7 +437,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                             <div className='ac-organisatie-detail-form-preview'>
                               <Heading level={4}>Preview</Heading>
                               <div className='ac-organisatie-detail-preview markdown-preview'>
-                                <ReactMarkdown>{tempBeschrijvingLang}</ReactMarkdown>
+                                <ConMarkdown>{tempBeschrijvingLang}</ConMarkdown>
                               </div>
                             </div>
                           </div>
@@ -493,9 +492,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                           {(() => {
                             try {
                               return (
-                                <ReactMarkdown>
+                                <ConMarkdown>
                                   {JSON.parse(data.beschrijvingLang)}
-                                </ReactMarkdown>
+                                </ConMarkdown>
                               );
                             } catch {
                               return (

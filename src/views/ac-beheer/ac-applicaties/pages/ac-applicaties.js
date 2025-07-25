@@ -19,7 +19,6 @@ import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
@@ -59,7 +58,9 @@ const AcBeheerApplicaties = () => {
   const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
-  const extend = [['_extend[]', 'standaarden']];
+  const extend = [
+    // ['_extend[]', 'standaarden'] // Removed extends
+  ];
 
   const fetchData = useCallback(
     async (params = {}) => {
@@ -67,23 +68,19 @@ const AcBeheerApplicaties = () => {
         setLoading(true);
 
         const [response, schemaResponse] = await Promise.all([
-          makeRequest(
-            `${BASE_URL}/apps/${endpoint}`,
-            [
+          makeRequest(`/apps/${endpoint}`, {
+            params: [
               ...extend,
               ['_page', pagination.page],
               ['_limit', pagination.limit],
               ...Object.entries(params),
             ],
-            null,
-            '/beheer/applicaties'
-          ),
-          makeRequest(
-            `${BASE_URL}/apps/${schemaEndpoint}`,
-            extend,
-            null,
-            '/beheer/applicaties'
-          ),
+            redirectPath: '/beheer/applicaties',
+          }),
+          makeRequest(`/apps/${schemaEndpoint}`, {
+            params: extend,
+            redirectPath: '/beheer/applicaties',
+          }),
         ]);
 
         const jsonResponse = response.data;

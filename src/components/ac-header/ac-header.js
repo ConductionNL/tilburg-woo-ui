@@ -12,19 +12,33 @@ import { withStore } from '@stores';
 import { AcCNavigation } from '@components';
 import { getTitle } from '@services/con-get-title';
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
+
 const AcHeader = ({ store: { menu } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
   const { all_menu_items } = menu;
 
-  const hostname = window.location.hostname;
+  const getMenuPosition = () => {
+    // Use container config if available
+    if (containerConfig && containerConfig.getMenuPosition) {
+      return containerConfig.getMenuPosition();
+    }
 
-  const menuItems = all_menu_items.find((item) =>
-    hostname === 'horstadmaas.accept.opencatalogi.nl'
-      ? item.position === 1
-      : item.position === 2
-  );
+    // Fallback to hostname-based logic for production builds
+    const hostname = window.location.hostname;
+    return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
+  };
+
+  const menuItems = all_menu_items.find((item) => item.position === getMenuPosition());
 
   return (
     <header className='ac-header'>

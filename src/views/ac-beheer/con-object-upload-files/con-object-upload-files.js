@@ -61,7 +61,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       setLoading(true);
 
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/${register}/${schema}/${id}/files`
+        `openregister/api/objects/${register}/${schema}/${id}/files`
       );
 
       setOnlineFiles(response.data);
@@ -73,7 +73,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
   };
 
   const fetchLabels = async () => {
-    const response = await makeRequest(`${BASE_URL}/apps/openregister/api/tags`);
+    const response = await makeRequest(`openregister/api/tags`);
 
     setLabelOptions((prevLabelOptions) =>
       response.data
@@ -124,7 +124,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       for (const file of filesToDelete) {
         const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}`;
 
-        const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
           method: 'DELETE',
         });
 
@@ -170,7 +170,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       for (const file of filesToPublish) {
         const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/publish`;
 
-        const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
           method: 'POST',
         });
 
@@ -216,7 +216,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       for (const file of filesToDepublish) {
         const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/depublish`;
 
-        const response = await makeRequest(`${BASE_URL}/apps/${endpoint}`, null, {
+        const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
           method: 'POST',
         });
 
@@ -246,7 +246,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       setUploadingFiles((prev) => new Set([...prev, file.id]));
 
       const response = await makeMultipartUploadRequest(
-        `${BASE_URL}/apps/openregister/api/objects/${register}/${schema}/${id}/filesMultipart`,
+        `openregister/api/objects/${register}/${schema}/${id}/filesMultipart`,
         file,
         file.labels,
         file.share,

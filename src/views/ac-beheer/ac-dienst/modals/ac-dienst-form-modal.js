@@ -73,7 +73,7 @@ const AcDienstFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/voorzieningaanbod`
+        `openregister/api/schemas/voorzieningaanbod`
       );
       const data = response.data;
       setSchema(data);
@@ -83,7 +83,7 @@ const AcDienstFormModal = ({
       try {
         setVoorzieningenLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`
+          `openregister/api/objects/voorzieningen/voorziening`
         );
         const data = response.data.results;
         const options = data.map((voorziening) => ({
@@ -102,7 +102,7 @@ const AcDienstFormModal = ({
       try {
         setLeveranciersLoading(true);
         const response = await makeRequest(
-          `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+          `openregister/api/objects/voorzieningen/organisatie`
         );
         const data = response.data.results;
         const options = data.map((leverancier) => ({
@@ -120,7 +120,7 @@ const AcDienstFormModal = ({
     const fetchContactpersonen = async () => {
       setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+        `openregister/api/objects/voorzieningen/contactpersoon`
       ).finally(() => setContactpersonenLoading(false));
 
       const data = response.data.results;
@@ -199,7 +199,7 @@ const AcDienstFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/voorzieningaanbod';
 
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${dienstFormData.id}` : baseUrl;
 

@@ -33,7 +33,7 @@ const AcDeleteOvereenkomstenModal = ({
   const handleDeleteOvereenkomst = async () => {
     try {
       const deletePromises = overeenkomsten.map((overeenkomst) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${overeenkomst.id}`, null, {
+        makeRequest(`${BASE_URL}/${endpoint}/${overeenkomst.id}`, null, {
           method: 'DELETE',
         })
       );

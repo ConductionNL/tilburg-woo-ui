@@ -33,7 +33,7 @@ const AcDeleteDienstModal = ({
   const handleDeleteDienst = async () => {
     try {
       const deletePromises = diensten.map((dienst) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${dienst.id}`, null, {
+        makeRequest(`${BASE_URL}/${endpoint}/${dienst.id}`, null, {
           method: 'DELETE',
         })
       );

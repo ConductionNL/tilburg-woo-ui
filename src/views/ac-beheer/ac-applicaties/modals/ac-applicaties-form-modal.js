@@ -64,17 +64,20 @@ const AcApplicatiesFormModal = ({
   // get referentie componenten when modal is opened
   useEffect(() => {
     const fetchSchema = async () => {
-      const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/schemas/voorziening`
-      );
-      const data = await response.data;
-      setSchema(data);
+      try {
+        const response = await makeRequest(
+          `openregister/api/schemas/voorziening`
+        );
+        setSchema(response.data);
+      } catch (error) {
+        console.error('Error fetching schema:', error);
+      }
     };
 
     const fetchVoorzieningsTypes = async () => {
       setReferentieComponentenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
+        `openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
       ).finally(() => setReferentieComponentenLoading(false));
 
       const data = await response.data;
@@ -90,7 +93,7 @@ const AcApplicatiesFormModal = ({
     const fetchContactpersonen = async () => {
       setContactpersonenLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/contactpersoon`
+        `openregister/api/objects/voorzieningen/contactpersoon`
       ).finally(() => setContactpersonenLoading(false));
 
       const data = await response.data;
@@ -114,7 +117,7 @@ const AcApplicatiesFormModal = ({
     const fetchOrganisaties = async () => {
       setOrganisatiesLoading(true);
       const response = await makeRequest(
-        `${BASE_URL}/apps/openregister/api/objects/voorzieningen/organisatie`
+        `openregister/api/objects/voorzieningen/organisatie`
       ).finally(() => setOrganisatiesLoading(false));
 
       const data = await response.data;
@@ -152,7 +155,7 @@ const AcApplicatiesFormModal = ({
 
     // get the voorziening with the selected reference components in the data
     const voorzieningResponse = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorziening`,
+                `openregister/api/objects/voorzieningen/voorziening`,
       voorzieningQueryParams
     );
 
@@ -177,7 +180,7 @@ const AcApplicatiesFormModal = ({
 
     // get the standaarden with the same id as the voorziening standaarden
     const standaardenResponse = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/voorzieningen/standaard`,
+                `openregister/api/objects/voorzieningen/standaard`,
       standaardenQueryParams
     ).finally(() => setStandaardenLoading(false));
 
@@ -259,7 +262,7 @@ const AcApplicatiesFormModal = ({
   const endpoint = 'openregister/api/objects/voorzieningen/voorziening';
 
   const handleSubmit = async () => {
-    const baseUrl = `${BASE_URL}/apps/${endpoint}`;
+    const baseUrl = endpoint;
 
     const method = isEdit ? 'PUT' : 'POST';
     const url = isEdit ? `${baseUrl}/${applicatieFormData.id}` : baseUrl;
@@ -299,7 +302,7 @@ const AcApplicatiesFormModal = ({
 
             // Create version 0.0.1 for the new application
             const versionResponse = await makeRequest(
-              `${BASE_URL}/apps/openregister/api/objects/voorzieningen/voorzieningversie`,
+              `openregister/api/objects/voorzieningen/voorzieningversie`,
               null,
               {
                 method: 'POST',

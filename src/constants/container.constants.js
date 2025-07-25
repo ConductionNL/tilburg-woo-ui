@@ -1,0 +1,82 @@
+// Auto-generated container constants
+// This file is generated from environment variables during container startup
+// DO NOT EDIT MANUALLY - changes will be overwritten
+import { AcLockObject } from '@utils/ac-lock-object';
+// Container configuration
+export const CONTAINER_CONFIG = AcLockObject({
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
+  SITE: 'localhost',
+  MODE: 'development',
+  THEME_VARIANT: 'development',
+  ENVIRONMENT_NAME: 'development',
+  BASE_URL: 'https://vng.test.commonground.nu/apps',
+  GRANT_TYPE: 'authorization_code',
+  CLIENT_ID: '',
+  CLIENT_SECRET: '',
+  PROVIDER: 'nextcloud',
+  REGISTER_URL: '',
+  AUTO_LOGOUT: false,
+  AUTO_LOGOUT_TIME: 3600,
+  SESSION_TIMEOUT: 3600,
+  ACTIVITY_PING: false,
+  ROLLBAR_KEY: '',
+  ROLLBAR_ENVIRONMENT: 'development',
+  ENABLE_AUTHENTICATION: false,
+  ENABLE_GEMMA: true,
+  ENABLE_DIRECTORY: true,
+  ENABLE_ROLLBAR: false,
+  ENABLE_MOCK_THEMES: true,
+  ENABLE_BREADCRUMBS: false,
+  EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
+  EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
+  EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
+  EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
+  HERO_IMAGE_URL: '/home-hero-background.png',
+  MENU_POSITION: 2,
+  FOOTER_STYLE: 'vng',
+});
+// Helper functions to replace hostname-based logic
+export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
+export const getSiteDescription = () => CONTAINER_CONFIG.SITE_DESCRIPTION;
+export const getSite = () => CONTAINER_CONFIG.SITE;
+export const getMode = () => CONTAINER_CONFIG.MODE;
+export const getThemeVariant = () => CONTAINER_CONFIG.THEME_VARIANT;
+export const getEnvironmentName = () => CONTAINER_CONFIG.ENVIRONMENT_NAME;
+// All API URLs are now unified under BASE_URL
+export const getApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
+export const getCommongroundApiUrl = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
+export const getGemmaEndpoint = () => CONTAINER_CONFIG.BASE_URL || '/api/apps';
+export const getOpenconnectorApiUrl = () => '/api/openconnector';
+// Legacy aliases for backward compatibility
+export const getApiConfig = getApiUrl;
+export const getAuthConfig = () => ({
+  grantType: CONTAINER_CONFIG.GRANT_TYPE,
+  clientId: CONTAINER_CONFIG.CLIENT_ID,
+  clientSecret: CONTAINER_CONFIG.CLIENT_SECRET,
+  provider: CONTAINER_CONFIG.PROVIDER,
+  registerUrl: CONTAINER_CONFIG.REGISTER_URL,
+});
+export const getSessionConfig = () => ({
+  autoLogout: CONTAINER_CONFIG.AUTO_LOGOUT,
+  sessionTimeout: CONTAINER_CONFIG.SESSION_TIMEOUT,
+  activityPing: CONTAINER_CONFIG.ACTIVITY_PING,
+});
+export const getFeatureFlags = () => ({
+  enableBreadcrumbs: CONTAINER_CONFIG.ENABLE_BREADCRUMBS,
+  enableDirectory: CONTAINER_CONFIG.ENABLE_DIRECTORY,
+  enableRollbar: CONTAINER_CONFIG.ENABLE_ROLLBAR,
+  enableMockThemes: CONTAINER_CONFIG.ENABLE_MOCK_THEMES,
+});
+export const getExternalUrls = () => ({
+  website: CONTAINER_CONFIG.EXTERNAL_WEBSITE_URL,
+  privacy: CONTAINER_CONFIG.EXTERNAL_PRIVACY_URL,
+  cookies: CONTAINER_CONFIG.EXTERNAL_COOKIES_URL,
+  proclaimer: CONTAINER_CONFIG.EXTERNAL_PROCLAIMER_URL,
+});
+export const getVisualConfig = () => ({
+  heroImageUrl: CONTAINER_CONFIG.HERO_IMAGE_URL,
+  menuPosition: CONTAINER_CONFIG.MENU_POSITION,
+  footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
+});
+export const getDefaultConfig = () => CONTAINER_CONFIG;

@@ -34,7 +34,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
       case 'applicaties':
         config.navigateView = (id) => navigate(`/beheer/applicaties/${id}`);
         config.schemaSlug = 'voorziening';
-        config.extend = [['_extend[]', 'standaarden']];
+        // config.extend = [['_extend[]', 'standaarden']]; // Removed extends
         config.defaultHeaders = [
           'naam',
           'referentieComponenten',
@@ -49,10 +49,10 @@ const GET_CONFIG = (type, metadata, navigate) => {
       case 'diensten':
         config.navigateView = (id) => navigate(`/beheer/diensten/${id}`);
         config.schemaSlug = 'voorzieningaanbod';
-        config.extend = [
-          ['_extend[]', 'voorziening'],
-          ['_extend[]', 'leverancier'],
-        ];
+        // config.extend = [
+        //   ['_extend[]', 'voorziening'],
+        //   ['_extend[]', 'leverancier'],
+        // ]; // Removed extends
         config.defaultHeaders = ['name', 'voorzieningName', 'email'];
         config.removeHeaders = ['ondersteundeStandaarden'];
         config.headerOverrides = {
@@ -115,10 +115,6 @@ const GET_CONFIG = (type, metadata, navigate) => {
       case 'gebruiken':
         config.navigateView = (id) => navigate(`/beheer/gebruiken/${id}`);
         config.schemaSlug = 'voorzieninggebruik';
-        config.extend = [
-          ['_extend[]', 'voorzieningId'],
-          ['_extend[]', 'organisatieId'],
-        ];
         config.defaultHeaders = ['id', 'versionId', 'eindDatum', 'status'];
         break;
 
@@ -127,10 +123,6 @@ const GET_CONFIG = (type, metadata, navigate) => {
       case 'versies':
         config.navigateView = (id) => navigate(`/beheer/voorzieningen-versie/${id}`);
         config.schemaSlug = 'voorzieningversie';
-        config.extend = [
-          ['_extend[]', 'voorziening'],
-          ['_extend[]', 'kwetsbaarheden'],
-        ];
         config.defaultHeaders = ['name', 'versienummer', 'releaseDatum', 'status'];
         config.headerOverrides = {
           kwetsbaarheden: {
@@ -172,7 +164,6 @@ const GET_CONFIG = (type, metadata, navigate) => {
       case 'overeenkomsten':
         config.navigateView = (id) => navigate(`/beheer/overeenkomsten/${id}`);
         config.schemaSlug = 'contract';
-        config.extend = [['_extend[]', 'all']];
         config.defaultHeaders = [
           'name',
           'startDatum',
@@ -185,7 +176,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
       case 'organisatie':
         config.navigateView = (id) => navigate(`/beheer/organisaties/${id}`);
         config.schemaSlug = 'organisatie';
-        config.extend = [['_extend[]', 'contactgegevens']];
+        // config.extend = [['_extend[]', 'contactgegevens']]; // Removed extends
         config.defaultHeaders = ['organizationName', 'logo', 'contactDetails'];
         break;
 
@@ -239,7 +230,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
   if ((metadata && !type) || (metadata && typeGetFailed)) {
     config.registerSlug = metadata.register?.id ?? metadata.register;
     config.schemaSlug = metadata.schema?.id ?? metadata.schema;
-    config.extend = [['_extend[]', 'all']];
+    // config.extend = [['_extend[]', 'all']]; // Removed extends
   }
 
   return config;
@@ -333,27 +324,14 @@ const BeheerTable = forwardRef((props, ref) => {
     const transformedSearchParams = {};
 
     Object.entries(searchParams).forEach(([key, value]) => {
-      // Check if this property is extended in the config
-      const isExtended = config.extend.some(([extendKey, extendValue]) => {
-        // Check if the extend value matches the property name
-        // e.g., ['_extend[]', 'voorziening'] would match 'voorziening'
-        return extendValue === key;
-      });
-
-      if (isExtended) {
-        // For extended properties, use the common field name (usually 'naam')
-        // You might want to make this configurable per property
-        transformedSearchParams[`${key}.naam`] = value;
-      } else {
-        // For non-extended properties, use the key as-is
-        transformedSearchParams[key] = value;
-      }
+      // Since we removed extends, use the key as-is for all properties
+      transformedSearchParams[key] = value;
     });
 
     const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
+              `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
       [
-        ...config.extend,
+        // ...config.extend, // Removed extends
         ['_limit', pagination?.limit || 9999],
         ['_page', pagination?.page || 1],
         ...Object.entries(transformedSearchParams), // ✅ Use transformed search params
@@ -395,7 +373,7 @@ const BeheerTable = forwardRef((props, ref) => {
 
   const fetchSchemaData = async () => {
     const response = await makeRequest(
-      `${BASE_URL}/apps/openregister/api/schemas/${config.schemaSlug}`,
+              `openregister/api/schemas/${config.schemaSlug}`,
       null,
       null,
       '/beheer/diensten'

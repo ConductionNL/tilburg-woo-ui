@@ -8,7 +8,7 @@ import {
 import { AcFlex } from '@atoms';
 
 const AcSearchFilter = ({
-  placeholder = 'Waar ben je naar op zoek?',
+  placeholder = 'Waar bent u naar op zoek?',
   onSearch,
   initialValue = '',
   label = 'Zoek in begrippen',

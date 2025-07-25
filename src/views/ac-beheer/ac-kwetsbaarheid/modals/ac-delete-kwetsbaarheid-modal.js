@@ -33,7 +33,7 @@ const AcDeleteKwetsbaarhedenModal = ({
       const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
 
       const deletePromises = kwetsbaarheden.map((kwetsbaarheid) =>
-        makeRequest(`${BASE_URL}/apps/${endpoint}/${kwetsbaarheid.id}`, null, {
+        makeRequest(`${BASE_URL}/${endpoint}/${kwetsbaarheid.id}`, null, {
           method: 'DELETE',
         })
       );

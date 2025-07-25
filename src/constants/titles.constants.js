@@ -1,7 +1,22 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
+// Try to import container constants (generated at runtime)
+let containerConfig;
+try {
+  containerConfig = require('@constants/container.constants');
+} catch (error) {
+  console.warn('Container constants not available, falling back to hostname-based logic');
+  containerConfig = null;
+}
+
 const getTitle = () => {
+  // Use container config if available
+  if (containerConfig && containerConfig.getTitle) {
+    return containerConfig.getTitle();
+  }
+
+  // Fallback to hostname-based logic for production builds
   const hostname = window.location.hostname;
 
   switch (hostname) {
@@ -25,7 +40,7 @@ const getTitle = () => {
     case 'opencatalogi.open-regels.nl':
       return 'OpenRegels';
     case 'localhost':
-      return 'Localhost catalogus';
+      return 'Development Catalogus - WATCH TEST';
     case 'horstadmaas.accept.opencatalogi.nl':
     case 'verwerkingsregister.horstaandemaas.nl':
       return 'Horst aan de Maas';

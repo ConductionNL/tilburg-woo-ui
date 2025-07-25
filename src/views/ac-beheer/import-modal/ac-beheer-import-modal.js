@@ -60,7 +60,7 @@ const AcBeheerImportModal = ({
   const importFile = async (file) => {
     try {
       const response = await makeUploadRequest(
-        `${BASE_URL}/apps/${endpoint}`,
+        `${BASE_URL}/${endpoint}`,
         file,
         null,
         null

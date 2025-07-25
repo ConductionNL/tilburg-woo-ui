@@ -78,8 +78,8 @@ const AcBeheerGebruiken = () => {
   const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
 
   const extend = [
-    ['_extend[]', 'voorzieningId'],
-    ['_extend[]', 'organisatieId'],
+    // ['_extend[]', 'voorzieningId'], // Removed extends
+    // ['_extend[]', 'organisatieId'], // Removed extends
   ];
 
   const fetchData = useCallback(
@@ -89,7 +89,7 @@ const AcBeheerGebruiken = () => {
 
         const [response, schemaResponse] = await Promise.all([
           makeRequest(
-            `${BASE_URL}/apps/${endpoint}`,
+            endpoint,
             [
               ...extend,
               ['_page', pagination.page],
@@ -100,7 +100,7 @@ const AcBeheerGebruiken = () => {
             '/beheer/gebruiken'
           ),
           makeRequest(
-            `${BASE_URL}/apps/${schemaEndpoint}`,
+            schemaEndpoint,
             extend,
             null,
             '/beheer/gebruiken'
@@ -135,8 +135,8 @@ const AcBeheerGebruiken = () => {
 
         setLoading(false);
 
-        const data = jsonResponse.results;
-        const dataProperties = schemaJsonResponse.properties;
+        const data = jsonResponse.results || [];
+        const dataProperties = schemaJsonResponse.properties || {};
 
         const errorResponse = jsonResponse.error;
 
@@ -145,7 +145,9 @@ const AcBeheerGebruiken = () => {
         setDataProperties(sortPropertiesByOrder(dataProperties));
       } catch (err) {
         console.error('Error fetching data:', err);
+        setLoading(false);
         setError(err);
+        setData([]); // Ensure data remains an array even on error
       }
     },
     [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
