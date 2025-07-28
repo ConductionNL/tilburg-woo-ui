@@ -1,9 +1,20 @@
 #!/bin/bash
 
 # Tilburg WOO UI Deployment Script
-# Usage: ./deploy.sh [environment] [namespace] [release-name]
+# Usage: ./deploy.sh [environment] [namespace] [release-name] [--dry-run]
 
 set -e
+
+# Parse arguments
+DRY_RUN=false
+for arg in "$@"; do
+    case $arg in
+        --dry-run)
+        DRY_RUN=true
+        shift
+        ;;
+    esac
+done
 
 # Default values
 ENVIRONMENT=${1:-"production"}
@@ -39,6 +50,20 @@ fi
 # Check if kubectl is installed
 if ! command -v kubectl &> /dev/null; then
     print_error "kubectl is not installed. Please install kubectl first."
+    exit 1
+fi
+
+# Check Kubernetes connection
+if ! kubectl cluster-info &> /dev/null; then
+    print_error "Cannot connect to Kubernetes cluster. Please check your kubectl configuration."
+    exit 1
+fi
+
+# Validate Helm chart
+print_status "Validating Helm chart..."
+if ! helm lint "$CHART_PATH" &> /dev/null; then
+    print_error "Helm chart validation failed. Please fix the chart issues."
+    helm lint "$CHART_PATH"
     exit 1
 fi
 

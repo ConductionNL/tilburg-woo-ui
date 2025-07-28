@@ -38,6 +38,17 @@ spec:
               containerPort: {{ include "tilburg-woo-ui.serviceTargetPort" . }}
               protocol: TCP
           {{- if .Values.healthCheck.enabled }}
+          {{- if .Values.healthCheck.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .Values.healthCheck.path }}
+              port: http
+            initialDelaySeconds: {{ .Values.healthCheck.startup.initialDelaySeconds }}
+            periodSeconds: {{ .Values.healthCheck.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.healthCheck.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.healthCheck.startup.failureThreshold }}
+            successThreshold: {{ .Values.healthCheck.startup.successThreshold }}
+          {{- end }}
           livenessProbe:
             httpGet:
               path: {{ .Values.healthCheck.path }}
@@ -56,16 +67,17 @@ spec:
             failureThreshold: {{ .Values.healthCheck.failureThreshold }}
             successThreshold: {{ .Values.healthCheck.successThreshold }}
           {{- end }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "tilburg-woo-ui.fullname" . }}-config
+          {{- if .Values.secrets.enabled }}
+            - secretRef:
+                name: {{ include "tilburg-woo-ui.fullname" . }}-secrets
+          {{- end }}
           env:
-            {{- range $key, $value := .Values.env }}
+            {{- range $key, $value := .Values.additionalEnvVars }}
             - name: {{ $key }}
               value: {{ $value | quote }}
-            {{- end }}
-            {{- if .Values.development.enabled }}
-            {{- range $key, $value := .Values.development.env }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
-            {{- end }}
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
