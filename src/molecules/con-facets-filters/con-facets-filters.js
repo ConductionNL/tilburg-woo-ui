@@ -6,7 +6,7 @@ import { LABELS } from '@constants';
 import { withStore } from '@stores';
 import { AcLoader } from '@components';
 import { AcBuildURLSearchParams } from '@utils';
-import { BASE_URL } from '@views/ac-beheer/ac-beheer';
+import { BASE_URL } from '@views/ac-beheer/constants';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@atoms';
@@ -106,10 +106,10 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     return queries;
   };
 
-      const fetchAvailableFacets = async () => {
-      const response = await fetch(
-        `${BASE_URL}/opencatalogi/api/publications?_facetable=true`
-      );
+  const fetchAvailableFacets = async () => {
+    const response = await fetch(
+      `${BASE_URL}/opencatalogi/api/publications?_facetable=true`
+    );
     const data = await response.json();
     return data.facetable;
   };
@@ -142,9 +142,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
       // Convert the enhanced search query to URL parameters
       const searchQueryParams = AcBuildURLSearchParams(enhancedSearchQuery);
 
-              const response = await fetch(
-          `${BASE_URL}/opencatalogi/api/publications?_facetable=true&${queryParams}&${searchQueryParams}`
-        );
+      const response = await fetch(
+        `${BASE_URL}/opencatalogi/api/publications?_facetable=true&${queryParams}&${searchQueryParams}`
+      );
 
       if (!response.ok) {
         console.error('Error fetching facets:', response.statusText);

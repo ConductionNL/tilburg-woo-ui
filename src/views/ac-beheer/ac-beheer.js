@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from 'react';
+// eslint-disable-next-line import/no-unresolved
+import { useEffect } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { LABELS } from '@constants';
@@ -7,12 +8,6 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { useNavigate, useParams } from 'react-router';
 import { getCookie } from '@src/utilities';
 import {
-  AcBeheerDienst,
-  AcBeheerGebruiken,
-  AcBeheerVoorzieningenVersie,
-  AcBeheerOvereenkomsten,
-  AcBeheerOrganisaties,
-  AcBeheerKwetsbaarheden,
   AcDashboard,
   AcBeheerDienstDetails,
   AcBeheerGebruikenDetails,
@@ -20,35 +15,14 @@ import {
   AcBeheerOvereenkomstenDetails,
   AcBeheerOrganisatieDetails,
   AcBeheerKwetsbaarheidDetails,
-  AcBeheerContactpersonen,
   AcBeheerContactpersoonDetails,
-  AcBeheerApplicaties,
   AcBeheerApplicatiesDetails,
 } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-
-// Try to import container constants (generated at runtime)
-let containerConfig;
-try {
-  containerConfig = require('@constants/container.constants');
-} catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
-  containerConfig = null;
-}
-
-export const BASE_URL = (() => {
-  // Always use container config - no hardcoded fallbacks in main codebase
-  if (!containerConfig || !containerConfig.getApiUrl) {
-    throw new Error('API URL not configured. Please check your environment setup.');
-  }
-  
-  // Return /api/apps so that code can use BASE_URL + "/opencatalogi/..." or BASE_URL + "/openregister/..."
-  // Nginx handles /api/apps/ -> /index.php/apps/ mapping
-  return containerConfig.getApiUrl();
-})();
+import ConBeheerPageWrapper from './con-beheer-page-wrapper';
 
 const AcBeheer = ({ store }) => {
-  const navigate = useMemo(() => useNavigate(), []);
+  const navigate = useNavigate();
   const { user } = store;
 
   const wrongPage = () => (
@@ -84,7 +58,7 @@ const AcBeheer = ({ store }) => {
         navigate(`/login?redirect_url=${window.location.pathname}`);
       }
       */
-      
+
       console.log('AcBeheer loaded, user:', user.user); // Debug log
     };
 
@@ -100,21 +74,21 @@ const AcBeheer = ({ store }) => {
   if (!id) {
     switch (type) {
       case 'applicaties':
-        return <AcBeheerApplicaties />;
+        return <ConBeheerPageWrapper type='applicaties' />;
       case 'diensten':
-        return <AcBeheerDienst />;
+        return <ConBeheerPageWrapper type='diensten' />;
       case 'gebruiken':
-        return <AcBeheerGebruiken />;
+        return <ConBeheerPageWrapper type='gebruiken' />;
       case 'voorzieningen-versie':
-        return <AcBeheerVoorzieningenVersie />;
+        return <ConBeheerPageWrapper type='voorzieningen-versie' />;
       case 'overeenkomsten':
-        return <AcBeheerOvereenkomsten />;
+        return <ConBeheerPageWrapper type='overeenkomsten' />;
       case 'organisaties':
-        return <AcBeheerOrganisaties />;
+        return <ConBeheerPageWrapper type='organisaties' />;
       case 'kwetsbaarheden':
-        return <AcBeheerKwetsbaarheden />;
+        return <ConBeheerPageWrapper type='kwetsbaarheden' />;
       case 'contactpersonen':
-        return <AcBeheerContactpersonen />;
+        return <ConBeheerPageWrapper type='contactpersonen' />;
       default:
         return wrongPage();
     }

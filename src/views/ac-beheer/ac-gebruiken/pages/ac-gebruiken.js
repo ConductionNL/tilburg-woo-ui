@@ -20,7 +20,7 @@ import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { BASE_URL } from '../../ac-beheer';
+import { BASE_URL } from '../../constants';
 import _ from 'lodash';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
@@ -99,12 +99,7 @@ const AcBeheerGebruiken = () => {
             null,
             '/beheer/gebruiken'
           ),
-          makeRequest(
-            schemaEndpoint,
-            extend,
-            null,
-            '/beheer/gebruiken'
-          ),
+          makeRequest(schemaEndpoint, extend, null, '/beheer/gebruiken'),
         ]);
 
         const jsonResponse = response.data;

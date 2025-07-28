@@ -32,7 +32,7 @@ const AcDeleteContactpersonenModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [contactpersonenCopy, setContactpersonenCopy] = useState([]);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
@@ -41,7 +41,7 @@ const AcDeleteContactpersonenModal = ({
   const handleDeleteContactpersoon = async () => {
     try {
       const deletePromises = contactpersonenCopy.map((contactpersoon) =>
-        makeRequest(`${endpoint}/${contactpersoon.id}`, null, {
+        nextcloud.request(`${endpoint}/${contactpersoon.id}`, {
           method: 'DELETE',
         })
       );

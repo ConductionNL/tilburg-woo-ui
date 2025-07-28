@@ -34,7 +34,7 @@ const AcBeheerApplicaties = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   // Use the custom hook for pagination limit management
   const [limit, setLimit] = usePaginationLimit('applicaties');
@@ -68,7 +68,7 @@ const AcBeheerApplicaties = () => {
         setLoading(true);
 
         const [response, schemaResponse] = await Promise.all([
-          makeRequest(`/apps/${endpoint}`, {
+          nextcloud.request(endpoint, {
             params: [
               ...extend,
               ['_page', pagination.page],
@@ -77,7 +77,7 @@ const AcBeheerApplicaties = () => {
             ],
             redirectPath: '/beheer/applicaties',
           }),
-          makeRequest(`/apps/${schemaEndpoint}`, {
+          nextcloud.request(schemaEndpoint, {
             params: extend,
             redirectPath: '/beheer/applicaties',
           }),
@@ -112,7 +112,7 @@ const AcBeheerApplicaties = () => {
   );
 
   const downloadData = useCallback(async (type = 'csv') => {
-    await downloadObjectList(registerSlug, schemaSlug, type);
+    await nextcloud.exportObjects(registerSlug, schemaSlug, type);
   }, []);
 
   useEffect(() => {

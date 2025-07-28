@@ -91,7 +91,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
     return dataMap;
   }, [usedBy, sortedSchemas]);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorziening';
@@ -110,17 +110,13 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
+        nextcloud.request(
           `${endpoint}/${id}`,
-          extend,
-          null,
-          `/beheer/applicaties/${id}`
+          { params: extend, redirectPath: `/beheer/applicaties/${id}` }
         ),
-        makeRequest(
+        nextcloud.request(
           `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/applicaties/${id}`
+          { redirectPath: `/beheer/applicaties/${id}` }
         ),
       ]);
 
@@ -150,9 +146,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   const fetchVersions = async () => {
     try {
       setVersionsLoading(true);
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/voorzieningversie`,
-        [['voorziening', id]]
+        { params: [['voorziening', id]] }
       );
 
       if (response.ok) {
@@ -167,15 +163,16 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
   };
 
   const fetchUsedBy = async () => {
-    const usedByResponse = await makeRequest(
+    const usedByResponse = await nextcloud.request(
       `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
-      [
-        ['_extend[]', '@self.schema'],
-        ['_extend[]', 'voorziening'],
-        ['_extend[]', 'leverancier'],
-      ],
-      null,
-      `/beheer/contactpersonen/${id}`
+      {
+        params: [
+          ['_extend[]', '@self.schema'],
+          ['_extend[]', 'voorziening'],
+          ['_extend[]', 'leverancier'],
+        ],
+        redirectPath: `/beheer/contactpersonen/${id}`,
+      }
     );
     const usedByData = usedByResponse?.data;
     setUsedBy(usedByData?.results);
@@ -200,9 +197,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(endpoint, null, {
+      const response = await nextcloud.request(endpoint, {
         method: 'PATCH',
-        body: JSON.stringify({
+        data: JSON.stringify({
           [field]: type === 'kort' ? value : JSON.stringify(value),
         }),
         headers: { 'Content-Type': 'application/json' },

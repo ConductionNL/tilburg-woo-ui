@@ -18,7 +18,6 @@ import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-mo
 import ConActionMenu from '../../con-action-menu';
 import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
 import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { BASE_URL } from '../../ac-beheer';
 import { AcButton } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
@@ -36,7 +35,7 @@ const AcBeheerContactpersonen = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   // Use the custom hook for pagination limit management
   const [limit, setLimit] = usePaginationLimit('contactpersonen');
@@ -71,49 +70,44 @@ const AcBeheerContactpersonen = () => {
         setLoading(true);
 
         const [response, schemaResponse] = await Promise.all([
-          makeRequest(
-            endpoint,
-            [
+          nextcloud.request(endpoint, {
+            params: [
               ['_page', pagination.page],
               ['_limit', pagination.limit],
               ...Object.entries(searchParams),
             ],
-            null,
-            '/beheer/diensten'
-          ),
-          makeRequest(
-            schemaEndpoint,
-            null,
-            null,
-            '/beheer/diensten'
-          ),
+            redirectPath: '/beheer/diensten',
+          }),
+          nextcloud.request(schemaEndpoint, {
+            redirectPath: '/beheer/diensten',
+          }),
         ]);
 
         const jsonResponse = response.data;
         const schemaJsonResponse = schemaResponse.data;
 
-      // Check if current page is higher than total pages
-      const totalPages = jsonResponse.pages;
-      const currentPage = pagination.page;
-      
-      if (currentPage > totalPages && totalPages > 0) {
-        // Reset to highest available page (this causes a refetch)
-        setPagination(prev => ({
+        // Check if current page is higher than total pages
+        const totalPages = jsonResponse.pages;
+        const currentPage = pagination.page;
+
+        if (currentPage > totalPages && totalPages > 0) {
+          // Reset to highest available page (this causes a refetch)
+          setPagination((prev) => ({
+            ...prev,
+            page: totalPages,
+            total: jsonResponse.total,
+            pages: totalPages,
+            offset: jsonResponse.offset,
+          }));
+          return;
+        }
+
+        setPagination((prev) => ({
           ...prev,
-          page: totalPages,
           total: jsonResponse.total,
           pages: totalPages,
-          offset: jsonResponse.offset
+          offset: jsonResponse.offset,
         }));
-        return;
-      }
-
-      setPagination((prev) => ({
-        ...prev,
-        total: jsonResponse.total,
-        pages: totalPages,
-        offset: jsonResponse.offset,
-      }));
 
         const data = jsonResponse.results;
         const dataProperties = schemaJsonResponse.properties;
@@ -138,7 +132,7 @@ const AcBeheerContactpersonen = () => {
   }, [pagination.page, pagination.limit]);
 
   const downloadData = useCallback(async (type = 'csv') => {
-    await downloadObjectList(registerSlug, schemaSlug, type);
+    await nextcloud.exportObjects(registerSlug, schemaSlug, type);
   }, []);
 
   const tableRef = useRef(null);
@@ -450,7 +444,6 @@ const AcBeheerContactpersonen = () => {
             }}
           />
 
-      
           <ConFilterHeadersDrawer
             ref={filterHeadersDrawerRef}
             headers={headers}

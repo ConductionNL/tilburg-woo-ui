@@ -70,17 +70,16 @@ const AcContactpersoonFormModal = ({
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
 
-  // nextcloud requests
-  const { makeRequest, getUser } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const fetchUserInfo = async () => {
-    const user = await getUser();
+    const user = await nextcloud.getUser();
     setUserInfo(user.data);
   };
 
   const fetchOrganisationOptions = async () => {
     try {
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/organisatie`
       );
       const data = response.data;
@@ -99,7 +98,7 @@ const AcContactpersoonFormModal = ({
 
   useEffect(() => {
     const fetchSchema = async () => {
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/schemas/contactpersoon`
       );
       const data = response.data;
@@ -149,9 +148,9 @@ const AcContactpersoonFormModal = ({
     try {
       setIsLoading(true);
 
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...contactpersoonFormData,
         }),
       });

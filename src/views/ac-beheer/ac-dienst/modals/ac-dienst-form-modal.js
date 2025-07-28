@@ -7,7 +7,6 @@ import ReactSelect from 'react-select';
 import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
-import { BASE_URL } from '../../ac-beheer';
 import licenses from '@assets/licenses/licenses.json';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import clsx from 'clsx';
@@ -67,12 +66,12 @@ const AcDienstFormModal = ({
     );
   }, []);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   //   fetch voorzieningen
   useEffect(() => {
     const fetchSchema = async () => {
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/schemas/voorzieningaanbod`
       );
       const data = response.data;
@@ -82,7 +81,7 @@ const AcDienstFormModal = ({
     const fetchVoorzieningen = async () => {
       try {
         setVoorzieningenLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/objects/voorzieningen/voorziening`
         );
         const data = response.data.results;
@@ -101,7 +100,7 @@ const AcDienstFormModal = ({
     const fetchLeveranciers = async () => {
       try {
         setLeveranciersLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/objects/voorzieningen/organisatie`
         );
         const data = response.data.results;
@@ -119,7 +118,7 @@ const AcDienstFormModal = ({
 
     const fetchContactpersonen = async () => {
       setContactpersonenLoading(true);
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/contactpersoon`
       ).finally(() => setContactpersonenLoading(false));
 
@@ -204,9 +203,9 @@ const AcDienstFormModal = ({
     const url = isEdit ? `${baseUrl}/${dienstFormData.id}` : baseUrl;
 
     try {
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...dienstFormData,
           voorziening: dienstFormData.voorziening,
           leverancier: dienstFormData.leverancier,

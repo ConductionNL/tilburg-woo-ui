@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -5,7 +6,6 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 
 /**
@@ -23,7 +23,7 @@ const AcDeleteVoorzieningVersieModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteVoorzieningOpenModal = () => modalRef?.current?.showModal();
 
@@ -34,7 +34,7 @@ const AcDeleteVoorzieningVersieModal = ({
   const handleDeleteVoorziening = async () => {
     try {
       const deletePromises = voorzieningen.map((voorziening) =>
-        makeRequest(`${BASE_URL}/${endpoint}/${voorziening.id}`, null, {
+        nextcloud.request(`${endpoint}/${voorziening.id}`, {
           method: 'DELETE',
         })
       );

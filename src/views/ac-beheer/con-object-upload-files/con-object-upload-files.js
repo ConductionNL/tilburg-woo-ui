@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex } from '@atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../ac-beheer';
+import { BASE_URL } from '../constants';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from '../import-modal/con-file-dropzone';
 import ConTable from '../con-table';

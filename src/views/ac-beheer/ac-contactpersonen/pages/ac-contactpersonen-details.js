@@ -33,7 +33,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'contactpersoon';
@@ -45,17 +45,13 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
+        nextcloud.request(
           `${endpoint}/${id}`,
-          null,
-          null,
-          `/beheer/contactpersonen/${id}`
+          { redirectPath: `/beheer/contactpersonen/${id}` }
         ),
-        makeRequest(
+        nextcloud.request(
           `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/contactpersonen/${id}`
+          { redirectPath: `/beheer/contactpersonen/${id}` }
         ),
       ]);
 
@@ -80,11 +76,16 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
   };
 
   const fetchUsedBy = async () => {
-    const usedByResponse = await makeRequest(
+    const usedByResponse = await nextcloud.request(
       `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
-      null,
-      null,
-      `/beheer/contactpersonen/${id}`
+      {
+        params: [
+          ['_extend[]', '@self.schema'],
+          ['_extend[]', 'voorziening'],
+          ['_extend[]', 'leverancier'],
+        ],
+        redirectPath: `/beheer/contactpersonen/${id}`,
+      }
     );
     const usedByData = usedByResponse?.data;
     setUsedBy(usedByData?.results);

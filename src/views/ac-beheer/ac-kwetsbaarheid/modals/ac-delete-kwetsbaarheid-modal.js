@@ -6,7 +6,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 
 /**
  * modal to delete 1 or multiple voorzieningen
@@ -23,7 +22,7 @@ const AcDeleteKwetsbaarhedenModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteKwetsbaarheidOpenModal = () => modalRef?.current?.showModal();
 
@@ -33,7 +32,7 @@ const AcDeleteKwetsbaarhedenModal = ({
       const endpoint = 'openregister/api/objects/voorzieningen/kwetsbaarheid';
 
       const deletePromises = kwetsbaarheden.map((kwetsbaarheid) =>
-        makeRequest(`${BASE_URL}/${endpoint}/${kwetsbaarheid.id}`, null, {
+        nextcloud.request(`${endpoint}/${kwetsbaarheid.id}`, {
           method: 'DELETE',
         })
       );

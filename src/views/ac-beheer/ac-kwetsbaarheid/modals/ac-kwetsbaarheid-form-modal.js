@@ -6,7 +6,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
-import { BASE_URL } from '../../ac-beheer';
 
 const AcKwetsbaarheidFormModal = ({
   kwetsbaarheid,
@@ -18,7 +17,7 @@ const AcKwetsbaarheidFormModal = ({
   const modalRef = useRef(null);
   const formRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const initialData = {
     voorzieningversieId: '',
@@ -57,7 +56,7 @@ const AcKwetsbaarheidFormModal = ({
 
   useEffect(() => {
     const fetchSchema = async () => {
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/schemas/kwetsbaarheid`
       );
       const data = response.data;
@@ -87,9 +86,9 @@ const AcKwetsbaarheidFormModal = ({
     const url = isEdit ? `${baseUrl}/${kwetsbaarheidFormData.id}` : baseUrl;
 
     try {
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...kwetsbaarheidFormData,
           referenties: smartSplit(kwetsbaarheidFormData.referenties),
         }),

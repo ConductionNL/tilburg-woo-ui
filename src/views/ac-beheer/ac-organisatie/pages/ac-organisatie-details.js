@@ -15,7 +15,6 @@ import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader, ConMarkdown } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
 import { AcFormField, AcLink } from '@molecules';
-import { BASE_URL } from '../../ac-beheer';
 import { ConHorizontalOverflowWrapper } from '@components';
 import {
   Heading,
@@ -96,7 +95,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
     return dataMap;
   }, [usedBy, sortedSchemas]);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'organisatie';
@@ -113,18 +112,14 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       ];
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${endpoint}/${id}`,
-          extend,
-          null,
-          `/beheer/organisaties/${id}`
-        ),
-        makeRequest(
-          `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/organisaties/${id}`
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          params: extend,
+          redirectPath: `/beheer/organisaties/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          params: extend,
+          redirectPath: `/beheer/organisaties/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {
@@ -168,11 +163,12 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
   };
 
   const fetchUsedBy = async (registerSlug, schemaSlug, id) => {
-    const response = await makeRequest(
+    const response = await nextcloud.request(
       `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
-      [['_extend[]', '@self.schema']],
-      null,
-      `/beheer/organisaties/${id}`
+      {
+        params: [['_extend[]', '@self.schema']],
+        redirectPath: `/beheer/organisaties/${id}`,
+      }
     );
 
     if (!response.ok) {
@@ -204,9 +200,9 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
       const field = type === 'kort' ? 'beschrijvingKort' : 'beschrijvingLang';
       const value = type === 'kort' ? tempBeschrijvingKort : tempBeschrijvingLang;
 
-      const response = await makeRequest(endpoint, null, {
+      const response = await nextcloud.request(endpoint, {
         method: 'PATCH',
-        body: JSON.stringify({ [field]: JSON.stringify(value) }),
+        data: JSON.stringify({ [field]: JSON.stringify(value) }),
         headers: { 'Content-Type': 'application/json' },
       });
 
@@ -251,17 +247,13 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
 
       // Update the organization with PATCH request
       const endpoint = `openregister/api/objects/voorzieningen/organisatie/${id}`;
-      const updateResponse = await makeRequest(
-        endpoint,
-        null,
-        {
-          method: 'PATCH',
-          body: JSON.stringify({
-            deelnames: updatedDeelnames.map((deelname) => deelname.id),
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      const updateResponse = await nextcloud.request(endpoint, {
+        method: 'PATCH',
+        data: JSON.stringify({
+          deelnames: updatedDeelnames.map((deelname) => deelname.id),
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       if (!updateResponse.ok) {
         throw new Error('Failed to delete deelname');

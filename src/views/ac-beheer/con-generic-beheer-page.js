@@ -3,44 +3,51 @@ import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import {
-  Heading,
+  PrimaryActionButton,
   SecondaryActionButton,
-} from '@utrecht/component-library-react/dist/css-module';
-import { PrimaryActionButton } from '@utrecht/component-library-react';
+} from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
-import { AcBeheerError, AcBeheerLoading } from '@views/ac-beheer';
+import { AcBeheerError } from '@views/ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
-import ConTable from '../../con-table';
-import AcEditVoorzieningAanbodModal from '../modals/ac-voorziening-versie-form-modal';
-import AcDeleteVoorzieningAanbodModal from '../modals/ac-delete-voorziening-versie-modal';
-import ConActionMenu from '../../con-action-menu';
-import ConFilterHeadersDrawer from '../../con-filter-headers-drawer';
+import ConTable from './con-table';
+import ConActionMenu from './con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { ConSorterLogic } from '@src/utilities/con-sorter';
-import { BASE_URL } from '../../constants';
-import _ from 'lodash';
-import { format } from 'date-fns';
-import AcBeheerImportModal from '../../import-modal/ac-beheer-import-modal';
 import { Pagination } from '@amsterdam/design-system-react';
 import { sortPropertiesByOrder } from '@src/utilities';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
-} from '../../../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+} from '../../components/con-pagination-limit-selector/con-pagination-limit-selector';
+import BeheerModalFactory from './con-beheer-modal-factory';
+import FilterDrawerFactory from './con-filter-drawer-factory';
+import BeheerPageConfigFactory from './con-beheer-page-config-factory';
+import _ from 'lodash';
 
-const AcBeheerVoorzieningenVersie = () => {
+/**
+ * Generic Beheer Page Component
+ * This component can handle all beheer page types through configuration
+ */
+const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [beoordelingFilter, setBeoordelingFilter] = useState(null);
 
   const { makeRequest, downloadObjectList } = useNextcloudRequests();
 
+  // Get configuration for this type
+  const config = useMemo(() => {
+    const baseConfig = BeheerPageConfigFactory.createConfig(type);
+    return { ...baseConfig, ...configOverrides };
+  }, [type, configOverrides]);
+
   // Use the custom hook for pagination limit management
-  const [limit, setLimit] = usePaginationLimit('voorzieningen-versie');
+  const [limit, setLimit] = usePaginationLimit(config.paginationKey);
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -55,41 +62,32 @@ const AcBeheerVoorzieningenVersie = () => {
   }, [limit]);
 
   const filterHeadersDrawerRef = useRef(null);
+  const tableRef = useRef(null);
 
-  const registerSlug = 'voorzieningen';
-  const schemaSlug = 'voorzieningversie';
-  const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
-
-  const schemaEndpoint = `openregister/api/schemas/${schemaSlug}`;
-
-  const extend = [
-    // ['_extend[]', 'voorziening'], // Removed extends
-    // ['_extend[]', 'kwetsbaarheden'], // Removed extends
-  ];
+  const endpoint = `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`;
+  const schemaEndpoint = `openregister/api/schemas/${config.schemaSlug}`;
 
   const fetchData = useCallback(
     async (searchParams = {}) => {
       try {
         setLoading(true);
 
+        const extend = [...config.extend];
+        if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
+
         const [response, schemaResponse] = await Promise.all([
-          makeRequest(
-            endpoint,
-            [
+          makeRequest(endpoint, {
+            params: [
               ...extend,
               ['_page', pagination.page],
               ['_limit', pagination.limit],
               ...Object.entries(searchParams),
             ],
-            null,
-            '/beheer/voorzieningen-versie'
-          ),
-          makeRequest(
-            schemaEndpoint,
-            extend,
-            null,
-            '/beheer/voorzieningen-versie'
-          ),
+            redirectPath: `/beheer/${config.routeType}`,
+          }),
+          makeRequest(schemaEndpoint, {
+            redirectPath: `/beheer/${config.routeType}`,
+          }),
         ]);
 
         const jsonResponse = response.data;
@@ -102,8 +100,6 @@ const AcBeheerVoorzieningenVersie = () => {
           offset: jsonResponse.offset,
         }));
 
-        setLoading(false);
-
         const data = jsonResponse.results;
         const dataProperties = schemaJsonResponse.properties;
 
@@ -115,63 +111,55 @@ const AcBeheerVoorzieningenVersie = () => {
       } catch (err) {
         console.error('Error fetching data:', err);
         setError(err);
+      } finally {
+        setLoading(false);
       }
     },
-    [pagination.page, pagination.limit, endpoint, schemaEndpoint, extend]
+    [
+      pagination.page,
+      pagination.limit,
+      endpoint,
+      schemaEndpoint,
+      config.extend,
+      config.routeType,
+      beoordelingFilter,
+    ]
   );
+
+  const downloadData = useCallback(
+    async (type = 'csv') => {
+      await downloadObjectList(config.registerSlug, config.schemaSlug, type);
+    },
+    [config.registerSlug, config.schemaSlug]
+  );
+
+  // Reset pagination and refetch when type changes
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, page: 1 }));
+    setSelectedRows([]);
+    setSingleSelectedRow(null);
+    setOpenModal(null);
+    setBeoordelingFilter(null);
+    setTableHeaders([]);
+    setData([]);
+    setDataProperties([]);
+    setError(null);
+  }, [type]);
 
   useEffect(() => {
     fetchData();
-  }, [pagination.page, pagination.limit]);
+  }, [pagination.page, pagination.limit, fetchData]);
 
-  const downloadData = useCallback(async (type = 'csv') => {
-    await downloadObjectList(registerSlug, schemaSlug, type);
-  }, []);
+  // Refetch data when beoordelingFilter changes
+  useEffect(() => {
+    if (type === 'organisaties') {
+      fetchData();
+    }
+  }, [beoordelingFilter, fetchData]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
-
-  const tableRef = useRef(null);
-
-  // Custom header overrides for special cases
-  const customHeaders = useMemo(
-    () => ({
-      kwetsbaarheden: {
-        id: 'kwetsbaarheden',
-        label: 'Kwetsbaarheden',
-        key: '',
-        customContent: (row) => {
-          return (
-            row?.kwetsbaarheden
-              ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
-              .join(', ') || '-'
-          );
-        },
-        sortComparator: (a, b, direction) => {
-          if (direction === null) return 0;
-          const aTitle = a?.kwetsbaarheden?.[0]?.titel;
-          const bTitle = b?.kwetsbaarheden?.[0]?.titel;
-          return ConSorterLogic(aTitle, bTitle, direction);
-        },
-      },
-      voorzieningName: {
-        id: 'voorzieningName',
-        label: 'Applicatie',
-        key: '',
-        customContent: (row) => {
-          return row?.voorziening?.naam || '-';
-        },
-        sortComparator: (a, b, direction) => {
-          if (direction === null) return 0;
-          const aTitle = a?.voorziening?.naam || '';
-          const bTitle = b?.voorziening?.naam || '';
-          return ConSorterLogic(aTitle, bTitle, direction);
-        },
-      },
-    }),
-    []
-  );
 
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
@@ -181,8 +169,8 @@ const AcBeheerVoorzieningenVersie = () => {
       .filter(([key, value]) => value.visible !== false)
       .map(([key, value]) => {
         // Check if we have a custom override for this header
-        if (customHeaders[key]) {
-          return customHeaders[key];
+        if (config.customHeaders[key]) {
+          return config.customHeaders[key];
         }
 
         // Generate standard header from schema
@@ -192,28 +180,94 @@ const AcBeheerVoorzieningenVersie = () => {
           key: key,
         };
       });
-  }, [dataProperties, customHeaders]);
+  }, [dataProperties, config.customHeaders]);
 
-  const defaultHeaders = ['name', 'versienummer', 'releaseDatum', 'status'];
   const [tableHeaders, setTableHeaders] = useState([]);
 
   useEffect(() => {
-    if (headers.length > 0 && tableHeaders.length === 0) {
+    if (headers.length > 0) {
       setTableHeaders(
-        headers.filter((header) => defaultHeaders.includes(header.id))
+        headers.filter((header) => config.defaultHeaders.includes(header.id))
       );
     }
-  }, [headers, tableHeaders.length]);
+  }, [headers, config.defaultHeaders]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
   };
 
+  // Generate action buttons for table rows
+  const generateActionButtons = useCallback(
+    (row) => {
+      const baseActions = [
+        {
+          key: 'view',
+          label: 'Bekijken',
+          icon: <VISUALS.EYE />,
+          onClick: () => {
+            navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS(config.routeType, row.id));
+          },
+        },
+        {
+          key: 'edit',
+          label: 'Bewerken',
+          icon: <VISUALS.PENCIL />,
+          onClick: () => {
+            setSingleSelectedRow(row);
+            setOpenModal('edit');
+          },
+        },
+      ];
+
+      // Add unique actions based on configuration
+      const uniqueActions =
+        config.uniqueActions
+          ?.filter((action) => action.condition(row))
+          .map((action) => ({
+            key: action.key,
+            label: action.label,
+            icon: action.icon,
+            onClick: () => {
+              setSingleSelectedRow(row);
+              setOpenModal(action.action);
+            },
+          })) || [];
+
+      const deleteAction = {
+        key: 'delete',
+        label: 'Verwijderen',
+        icon: <VISUALS.TRASHCAN />,
+        onClick: () => {
+          setSingleSelectedRow(row);
+          setOpenModal('delete');
+        },
+      };
+
+      return [...baseActions, ...uniqueActions, deleteAction];
+    },
+    [config.routeType, config.uniqueActions, navigate]
+  );
+
   if (error) {
-    return (
-      <AcBeheerError title='Beheer Voorzieningen Versie' error={error.message} />
-    );
+    return <AcBeheerError title={config.title} error={error.message} />;
   }
+
+  // Build table headers with status icon if configured
+  const finalTableHeaders = useMemo(() => {
+    const headers = [...tableHeaders];
+
+    if (config.statusIcon) {
+      headers.unshift({
+        id: 'status-icon',
+        label: '',
+        key: '',
+        customContent: config.statusIcon.customContent,
+        customHeader: config.statusIcon.customHeader,
+      });
+    }
+
+    return headers;
+  }, [tableHeaders, config.statusIcon]);
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -226,7 +280,7 @@ const AcBeheerVoorzieningenVersie = () => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>Beheer Voorzieningen Versie</Heading>
+            <Heading>{config.title}</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
@@ -244,11 +298,7 @@ const AcBeheerVoorzieningenVersie = () => {
                 </ConActionMenu.Trigger>
 
                 <ConActionMenu.Menu position='right'>
-                  <ConActionMenu.Button
-                    icon={<VISUALS.EYE />}
-                    // disabled={selectedRows.length === 0}
-                    disabled={true}
-                  >
+                  <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
                     Weergeven als view
                   </ConActionMenu.Button>
 
@@ -290,7 +340,7 @@ const AcBeheerVoorzieningenVersie = () => {
           <ConTable
             data={data}
             tableHeaders={[
-              ...tableHeaders,
+              ...finalTableHeaders,
               {
                 id: 'actions',
                 label: 'Acties',
@@ -305,39 +355,15 @@ const AcBeheerVoorzieningenVersie = () => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.EYE />}
-                        onClick={() => {
-                          navigate(
-                            NAVIGATE_TO.BEHEER_TYPE_DETAILS(
-                              'voorzieningen-versie',
-                              row.id
-                            )
-                          );
-                        }}
-                      >
-                        Bekijken
-                      </ConActionMenu.Button>
-
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PENCIL />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('edit');
-                        }}
-                      >
-                        Bewerken
-                      </ConActionMenu.Button>
-
-                      <ConActionMenu.Button
-                        icon={<VISUALS.TRASHCAN />}
-                        onClick={() => {
-                          setSingleSelectedRow(row);
-                          setOpenModal('delete');
-                        }}
-                      >
-                        Verwijderen
-                      </ConActionMenu.Button>
+                      {generateActionButtons(row).map((action) => (
+                        <ConActionMenu.Button
+                          key={action.key}
+                          icon={action.icon}
+                          onClick={action.onClick}
+                        >
+                          {action.label}
+                        </ConActionMenu.Button>
+                      ))}
                     </ConActionMenu.Menu>
                   </ConActionMenu>
                 ),
@@ -348,15 +374,14 @@ const AcBeheerVoorzieningenVersie = () => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
-            loading={loading}
-            dataProperties={dataProperties}
             onHeaderSearch={(searchValues) => {
-              // Refetch data with search parameters
               fetchData(searchValues);
             }}
+            dataProperties={dataProperties}
+            loading={loading}
           />
 
-          <AcFlex justifyContent='between'>
+          <AcFlex justifyContent='between' alignItems='center'>
             <Pagination
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
@@ -378,59 +403,39 @@ const AcBeheerVoorzieningenVersie = () => {
             )}
 
             <ConPaginationLimitSelector
-              objectType='voorzieningen-versie'
+              objectType={config.paginationKey}
               value={limit}
               onChange={setLimit}
             />
           </AcFlex>
 
-          {/* modals */}
-          <AcEditVoorzieningAanbodModal
-            voorziening={singleSelectedRow}
-            isEdit={openModal === 'edit'}
-            showModal={openModal === 'edit' || openModal === 'add'}
-            onClose={() => {
-              setOpenModal(null);
-              setSingleSelectedRow(null);
-            }}
-            onSuccess={() => {
-              tableRef.current.resetSelectedRows();
-              fetchData();
-              setOpenModal(null);
-            }}
-          />
+          {/* Render modals based on configuration */}
+          {BeheerModalFactory.renderModals(type, {
+            singleSelectedRow,
+            selectedRows,
+            openModal,
+            setOpenModal,
+            setSingleSelectedRow,
+            tableRef,
+            fetchData,
+            config,
+            voorzieningId: new URLSearchParams(window.location.search).get(
+              'voorzieningId'
+            ),
+          })}
 
-          <AcDeleteVoorzieningAanbodModal
-            voorzieningen={singleSelectedRow ? [singleSelectedRow] : selectedRows}
-            showModal={openModal === 'delete'}
-            onClose={() => {
-              setOpenModal(null);
-              setSingleSelectedRow(null);
-            }}
-            onSuccess={() => {
-              tableRef.current.resetSelectedRows();
-              fetchData();
-            }}
-          />
-
-          <ConFilterHeadersDrawer
-            ref={filterHeadersDrawerRef}
-            headers={headers}
-            defaultHeaders={defaultHeaders}
-            onChange={setTableHeaders}
-          />
-
-          <AcBeheerImportModal
-            register={registerSlug}
-            schema={schemaSlug}
-            showModal={openModal === 'import'}
-            onClose={() => setOpenModal(null)}
-            onSuccess={() => {}}
-          />
+          {FilterDrawerFactory.renderFilterDrawer(type, {
+            filterHeadersDrawerRef,
+            headers,
+            defaultHeaders: config.defaultHeaders,
+            setTableHeaders,
+            loading,
+            setBeoordelingFilter,
+          })}
         </AcColumn>
       </AcFlex>
     </AcSection>
   );
 };
 
-export default withStore(observer(AcBeheerVoorzieningenVersie));
+export default withStore(observer(ConGenericBeheerPage));

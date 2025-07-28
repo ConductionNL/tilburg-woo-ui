@@ -23,7 +23,7 @@ const AcDeleteApplicatiesModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteApplicatieOpenModal = () => modalRef?.current?.showModal();
 
@@ -34,7 +34,7 @@ const AcDeleteApplicatiesModal = ({
   const handleDeleteApplicatie = async () => {
     try {
       const deletePromises = applicaties.map((applicatie) =>
-        makeRequest(`${endpoint}/${applicatie.id}`, null, {
+        nextcloud.request(`${endpoint}/${applicatie.id}`, {
           method: 'DELETE',
         })
       );

@@ -1,4 +1,4 @@
-import { BASE_URL } from '@src/views/ac-beheer/ac-beheer';
+import { BASE_URL } from '@src/views/ac-beheer/constants';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
 import { getCookie } from '@src/utilities';
