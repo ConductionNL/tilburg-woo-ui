@@ -340,7 +340,7 @@ const BeheerPageConfigFactory = {
             'addDeelname',
             'removeDeelname',
           ],
-          customFilterDrawer: 'organisatie',
+          customFilterDrawer: 'organisaties',
         };
 
       case 'kwetsbaarheden':

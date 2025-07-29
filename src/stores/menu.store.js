@@ -81,25 +81,10 @@ export class MenuStore {
                             itemText.includes('beheer') ||
                             itemText.includes('admin');
         
-        console.log(`Menu item analysis:`, {
-          name: item.name || item.label || item.title,
-          href: item.href || item.url || item.link,
-          isUserName,
-          isLogout,
-          isUserProfile,
-          isDashboard,
-          isAuthRelated,
-          isBeheerItem,
-          shouldKeep: !isUserName && !isLogout && !isUserProfile && !isDashboard && !isAuthRelated && !isBeheerItem
-        });
-        
         // Keep the item only if it's NOT user-specific or admin-related
         return !isUserName && !isLogout && !isUserProfile && !isDashboard && !isAuthRelated && !isBeheerItem;
       }) : []
     }));
-    
-    console.log('Menu filtering - Original items:', items);
-    console.log('Menu filtering - Filtered items:', filteredItems);
     
     this.items = filteredItems;
   };

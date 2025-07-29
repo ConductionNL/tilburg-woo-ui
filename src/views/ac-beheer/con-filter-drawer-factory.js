@@ -13,7 +13,7 @@ const FilterDrawerFactory = {
    */
   filterDrawerComponents: {
     default: ConFilterHeadersDrawer,
-    organisatie: OrganisatieFilterHeadersDrawer,
+    organisaties: OrganisatieFilterHeadersDrawer,
   },
 
   /**
