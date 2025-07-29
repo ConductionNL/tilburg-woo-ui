@@ -26,6 +26,7 @@ import FilterDrawerFactory from './con-filter-drawer-factory';
 import BeheerPageConfigFactory from './con-beheer-page-config-factory';
 import _ from 'lodash';
 import { CanceledError } from 'axios';
+import { AcButton } from '@molecules';
 
 /**
  * Generic Beheer Page Component
@@ -38,6 +39,7 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   const nextcloud = useNextcloudRequests();
 
@@ -178,6 +180,7 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
     setData([]);
     setDataProperties([]);
     setError(null);
+    setShowSearch(false);
   }, [type]);
 
   useEffect(() => {
@@ -316,6 +319,13 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
           >
             <Heading>{config.title}</Heading>
             <AcFlex spacing='sm' justifyContent='end'>
+              <AcButton
+                style='button'
+                buttonType={showSearch ? 'primary' : 'secondary'}
+                onClick={() => setShowSearch(!showSearch)}
+                icon={<VISUALS.SEARCH />}
+              />
+
               <SecondaryActionButton
                 onClick={() => filterHeadersDrawerRef.current.showModal()}
               >
@@ -411,6 +421,7 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
             onHeaderSearch={fetchData}
             dataProperties={dataProperties}
             loading={loading}
+            showSearch={showSearch}
           />
 
           <AcFlex justifyContent='between' alignItems='center'>

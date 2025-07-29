@@ -1,4 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
+// eslint-disable-next-line import/no-unresolved
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import { useDebouncedInput } from '@src/hooks/index';
 import ReactSelect from 'react-select';
 import { VISUALS } from '@src/constants';
@@ -16,6 +17,7 @@ import { AcFormField } from '@molecules';
  * - Automatic enum support for dropdown fields
  * - Maintains search state and provides clean callback interface
  * - Responsive design with proper accessibility
+ * - Automatic state reset when dataProperties change (e.g., when switching object types)
  *
  * **Search Flow:**
  * 1. User selects a field from dropdown (defaults to first available field)
@@ -33,6 +35,11 @@ import { AcFormField } from '@molecules';
  * - Uses `title` property from dataProperties if available
  * - Otherwise formats the key: camelCase -> "Camel Case", underscores -> spaces, dashes -> spaces
  *
+ * **State Reset:**
+ * - When available fields change (e.g., switching object types), all internal state is automatically reset
+ * - This prevents stale search parameters from being applied to new object types
+ * - The component uses a key based on available fields to detect actual changes, not just object reference changes
+ *
  * @example
  * ```jsx
  * <ConTableSearch
@@ -49,6 +56,7 @@ import { AcFormField } from '@molecules';
  * ```
  *
  * @param {object} props - Component props
+ * @param {boolean} [props.show=false] - Whether to show the search component
  * @param {Object} props.dataProperties - Schema properties object containing field definitions with enum values
  * @param {(searchParams: { [key: string]: string }) => void} props.onSearch - Callback function called when search parameters change
  * @param {number} [props.debounceDelay=500] - Debounce delay in milliseconds for search input
@@ -60,6 +68,7 @@ import { AcFormField } from '@molecules';
  * @author [Your Name]
  */
 const ConTableSearch = ({
+  show = false,
   dataProperties = {},
   onSearch,
   debounceDelay = 500,
@@ -93,8 +102,28 @@ const ConTableSearch = ({
     }));
   }, [dataProperties, formatFieldLabel]);
 
+  // Create a stable key based on available fields to detect actual changes
+  // This prevents unnecessary resets when dataProperties object reference changes but content stays the same
+  const fieldsKey = useMemo(() => {
+    return availableFields
+      .map((field) => field.key)
+      .sort()
+      .join(',');
+  }, [availableFields]);
+
+  // Clear active searches when available fields change (e.g., switching object types)
+  useEffect(() => {
+    // Always reset when fields change, regardless of active searches
+    setActiveSearches({});
+    setSearchQuery('');
+    setSelectedField(null);
+    // Don't call onSearch here as it would trigger unnecessary API calls
+    // The parent component will handle data fetching when switching object types
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fieldsKey]);
+
   // Set default selected field to first available field
-  useMemo(() => {
+  useEffect(() => {
     if (availableFields.length > 0 && !selectedField) {
       setSelectedField(availableFields[0]);
     }
@@ -224,12 +253,17 @@ const ConTableSearch = ({
     return null;
   }
 
+  if (!show) {
+    return null;
+  }
+
   return (
-    <div className='con-table-search'>
+    <div className='con-table-search' key={fieldsKey}>
       <AcFlex spacing='sm' alignItems='center' wrap>
         {/* Field Dropdown */}
         <div className='con-table-search__field-select'>
           <ReactSelect
+            key={fieldsKey}
             value={selectedField}
             onChange={handleFieldChange}
             options={fieldOptions}

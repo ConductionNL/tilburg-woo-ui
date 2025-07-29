@@ -36,6 +36,7 @@ import { ConTableSearch } from '@components';
  * - Header search functionality with debounced callbacks
  * - Multiple simultaneous header searches
  * - Enum support with dropdown selects from schema properties
+ * - Toggleable search interface
  *
  * **Automatic Data Handling:**
  * - Arrays: joined with commas
@@ -70,7 +71,7 @@ import { ConTableSearch } from '@components';
  *   ```
  *
  * **Table Search:**
- * - A dedicated search component is rendered above the table when `onHeaderSearch` is provided
+ * - A dedicated search component is rendered above the table when `onHeaderSearch` is provided and `showSearch` is true
  * - Dropdown to select which table field to search on
  * - Text input for search query with debounced updates
  * - Visual tags showing active searches with removal capability
@@ -136,6 +137,7 @@ import { ConTableSearch } from '@components';
  *   getSelectedRows={(selected) => console.log(selected)}
  *   truncateLines={2}
  *   showSortButtons
+ *   showSearch={true}
  *   onHeaderSearch={(searchValues) => {
  *     // searchValues will be: { name: "John", status: "active" } if both headers are searching
  *     // The status header will show a dropdown with ["active", "inactive", "pending"] options
@@ -168,6 +170,7 @@ import { ConTableSearch } from '@components';
  * @param props.tableHeaders.doNotTruncate - Whether to not truncate the text in the table cell. (default: false)
  * @param {Object} props.dataProperties - Schema properties object containing field definitions with enum values.
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
+ * @param {boolean} props.showSearch - Whether to show the search interface above the table. (default: false)
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
  * @param {boolean} props.loading - Whether to show a loading state.
@@ -194,6 +197,7 @@ const ConTable = (
     removeOverflowWrapper = false,
     onHeaderSearch,
     dataProperties = {},
+    showSearch = false,
   },
   ref
 ) => {
@@ -227,7 +231,7 @@ const ConTable = (
 
     // if no sort comparator is set, use the default sort comparator
     return ConSorter(data, h.key, headerSort[1]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, headerSort]);
 
   // list of selected rows as a full data object
@@ -246,7 +250,7 @@ const ConTable = (
     data.forEach((row) => {
       row[uniqueSymbol] = AcUUID('CD');
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const removeUniqueSymbol = useMemo(
@@ -274,7 +278,7 @@ const ConTable = (
       }
       return element;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectAll = useMemo(() => {
@@ -308,7 +312,7 @@ const ConTable = (
       const cleanSelectedRows = selectedRows.map(removeUniqueSymbol);
       getSelectedRows(cleanSelectedRows);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRows, getSelectedRows]);
 
   // control what the parent sees when it uses the child's ref.
@@ -458,7 +462,7 @@ const ConTable = (
         </TableRow>
       </thead>
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     renderSelectRowButtons,
     selectedAll,
@@ -539,7 +543,7 @@ const ConTable = (
         })}
       </TableRow>
     ));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     sortedData,
     tableHeaders,
@@ -554,7 +558,12 @@ const ConTable = (
     <>
       {/* Search Component */}
       {onHeaderSearch && (
-        <ConTableSearch dataProperties={dataProperties} onSearch={onHeaderSearch} />
+        // this is being done inside the component as to not lose state.
+        <ConTableSearch
+          show={showSearch}
+          dataProperties={dataProperties}
+          onSearch={onHeaderSearch}
+        />
       )}
 
       {/* Table */}
