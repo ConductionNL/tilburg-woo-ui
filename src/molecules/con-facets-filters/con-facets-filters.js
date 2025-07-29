@@ -1,8 +1,8 @@
-import { observer } from 'mobx-react-lite';
+// eslint-disable-next-line import/no-unresolved
 import { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { buildPublicationsSearchQuery } from '@stores/publications.store';
 import { AcCheckbox } from '@molecules';
-import { LABELS } from '@constants';
 import { withStore } from '@stores';
 import { AcLoader } from '@components';
 import { AcBuildURLSearchParams } from '@utils';
