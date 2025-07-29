@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcFlex, AcSection } from '@atoms';
+import { AcFlex, AcSection, AcContainer } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import {
   PrimaryActionButton,
   SecondaryActionButton,
 } from '@utrecht/component-library-react';
-import { VISUALS } from '@constants';
+import { VISUALS, LABELS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { AcSideNav } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
@@ -25,6 +25,7 @@ import BeheerModalFactory from './con-beheer-modal-factory';
 import FilterDrawerFactory from './con-filter-drawer-factory';
 import BeheerPageConfigFactory from './con-beheer-page-config-factory';
 import _ from 'lodash';
+import { CanceledError } from 'axios';
 
 /**
  * Generic Beheer Page Component
@@ -38,13 +39,33 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
   const [loading, setLoading] = useState(false);
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
 
-  const { makeRequest, downloadObjectList } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   // Get configuration for this type
   const config = useMemo(() => {
-    const baseConfig = BeheerPageConfigFactory.createConfig(type);
-    return { ...baseConfig, ...configOverrides };
+    try {
+      const baseConfig = BeheerPageConfigFactory.createConfig(type);
+      return { ...baseConfig, ...configOverrides };
+    } catch (err) {
+      // If configuration doesn't exist for this type, return null
+      return null;
+    }
   }, [type, configOverrides]);
+
+  // If no configuration exists for this type, show wrong page
+  if (!config) {
+    return (
+      <AcSection spacing>
+        <AcContainer>
+          <AcColumn gap='tiger'>
+            <AcColumn>
+              <Heading>{LABELS.WRONG_PAGE}</Heading>
+            </AcColumn>
+          </AcColumn>
+        </AcContainer>
+      </AcSection>
+    );
+  }
 
   // Use the custom hook for pagination limit management
   const [limit, setLimit] = usePaginationLimit(config.paginationKey);
@@ -75,8 +96,12 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
         const extend = [...config.extend];
         if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
+        // create the data request key
+        const dataRequestKey = `key_data_${config.routeType}`;
+        const schemaRequestKey = `key_schema_${config.schemaSlug}`;
+
         const [response, schemaResponse] = await Promise.all([
-          makeRequest(endpoint, {
+          nextcloud.request(endpoint, {
             params: [
               ...extend,
               ['_page', pagination.page],
@@ -84,9 +109,11 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
               ...Object.entries(searchParams),
             ],
             redirectPath: `/beheer/${config.routeType}`,
+            requestKey: dataRequestKey,
           }),
-          makeRequest(schemaEndpoint, {
+          nextcloud.request(schemaEndpoint, {
             redirectPath: `/beheer/${config.routeType}`,
+            requestKey: schemaRequestKey,
           }),
         ]);
 
@@ -109,6 +136,10 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
         setData(data);
         setDataProperties(sortPropertiesByOrder(dataProperties));
       } catch (err) {
+        // Don't set error if request was cancelled
+        if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
+          return;
+        }
         console.error('Error fetching data:', err);
         setError(err);
       } finally {
@@ -128,13 +159,16 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
 
   const downloadData = useCallback(
     async (type = 'csv') => {
-      await downloadObjectList(config.registerSlug, config.schemaSlug, type);
+      await nextcloud.exportObjects(config.registerSlug, config.schemaSlug, type);
     },
     [config.registerSlug, config.schemaSlug]
   );
 
-  // Reset pagination and refetch when type changes
+  // Cancel all requests and reset state when type changes
   useEffect(() => {
+    // Cancel all active requests when switching types
+    nextcloud.cancelAllRequests();
+
     setPagination((prev) => ({ ...prev, page: 1 }));
     setSelectedRows([]);
     setSingleSelectedRow(null);
@@ -148,14 +182,14 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
 
   useEffect(() => {
     fetchData();
-  }, [pagination.page, pagination.limit, fetchData]);
+  }, [pagination.page, pagination.limit]);
 
   // Refetch data when beoordelingFilter changes
   useEffect(() => {
     if (type === 'organisaties') {
       fetchData();
     }
-  }, [beoordelingFilter, fetchData]);
+  }, [beoordelingFilter]);
 
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
@@ -374,8 +408,8 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
-            onHeaderSearch={(searchValues) => {
-              fetchData(searchValues);
+            onHeaderSearch={(searchParams) => {
+              fetchData(searchParams);
             }}
             dataProperties={dataProperties}
             loading={loading}

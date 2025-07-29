@@ -1,35 +1,89 @@
 # Generic Beheer System
 
-This document explains the generic beheer system that has been created to replace the individual beheer pages with a single, configurable solution.
+This document explains how the generic beheer system works and how to work with it.
 
-## Overview
+## System Overview
 
-The generic beheer system consists of several key components:
+The generic beheer system replaces individual beheer pages with a single configurable component. It consists of:
 
-1. **ConGenericBeheerPage** - The main generic component that handles all beheer page functionality
-2. **BeheerPageConfigFactory** - Factory that creates configuration objects for different beheer types
-3. **BeheerModalFactory** - Factory that manages modal components for different beheer types
-4. **FilterDrawerFactory** - Factory that manages filter drawer components
-5. **ConBeheerPageWrapper** - Simple wrapper component for easy usage
+- **ConGenericBeheerPage** - Main component that handles all beheer functionality
+- **BeheerPageConfigFactory** - Creates configuration objects for different beheer types
+- **BeheerModalFactory** - Manages modal components and their props
+- **FilterDrawerFactory** - Manages filter drawer components
+- **ConBeheerPageWrapper** - Simple wrapper for easy usage
 
-## Architecture
+## How It Works
 
 ### Factory Pattern
 
-The system uses a factory pattern to manage different configurations and components:
+The system uses factories to manage different configurations:
 
-- **Configuration Factory**: Defines schemas, headers, actions, and other page-specific settings
-- **Modal Factory**: Manages modal components and their props for different beheer types
-- **Filter Factory**: Handles custom filter drawers (like the organisatie filter with beoordeling)
+```javascript
+// Configuration factory creates config objects
+const config = BeheerPageConfigFactory.createConfig('applicaties');
 
-### Key Features
+// Modal factory loads modal components
+const ModalComponent = BeheerModalFactory.getModalComponent('applicaties', 'add');
 
-1. **Unified Pagination**: All pages use the same `usePaginationLimit` hook with type-specific keys
-2. **Dynamic Headers**: Headers are generated from schema with custom overrides
-3. **Custom Actions**: Each beheer type can define unique action buttons
-4. **Modal Management**: Automatic modal loading and prop management
-5. **Filter Support**: Support for custom filter drawers (like organisatie's beoordeling filter)
-6. **Status Icons**: Support for status indicators (like organisatie's publish status)
+// Filter factory manages filter drawers
+const FilterComponent = FilterDrawerFactory.getFilterDrawerComponent('organisaties');
+```
+
+### Error Handling
+
+The generic page handles unknown types gracefully:
+
+```javascript
+// In ConGenericBeheerPage
+const config = useMemo(() => {
+  try {
+    const baseConfig = BeheerPageConfigFactory.createConfig(type);
+    return { ...baseConfig, ...configOverrides };
+  } catch (err) {
+    // If configuration doesn't exist for this type, return null
+    return null;
+  }
+}, [type, configOverrides]);
+
+// If no configuration exists for this type, show wrong page
+if (!config) {
+  return (
+    <AcSection spacing>
+      <AcContainer>
+        <AcColumn gap='tiger'>
+          <AcColumn>
+            <Heading>{LABELS.WRONG_PAGE}</Heading>
+          </AcColumn>
+        </AcColumn>
+      </AcContainer>
+    </AcSection>
+  );
+}
+```
+
+### Request Management
+
+The system cancels outdated requests to prevent race conditions:
+
+```javascript
+// When switching object types
+useEffect(() => {
+  nextcloud.cancelAllRequests(); // Cancel all active requests
+  // Reset state...
+}, [type]);
+
+// Each request gets a unique key
+const dataRequestKey = `key_data_${config.routeType}`;
+const schemaRequestKey = `key_schema_${config.schemaSlug}`;
+```
+
+### Pagination
+
+Uses a custom hook that loads limits synchronously:
+
+```javascript
+const [limit, setLimit] = usePaginationLimit('organisaties', 20);
+```
 
 ## Usage
 
@@ -63,24 +117,20 @@ const MyCustomBeheerPage = () => {
 };
 ```
 
-## Supported Beheer Types
+## Supported Types
 
-The system currently supports the following beheer types:
-
-1. **applicaties** - Application management
-2. **diensten** - Service management
-3. **voorzieningen-versie** - Service version management
-4. **organisaties** - Organization management (with custom filter)
-5. **kwetsbaarheden** - Vulnerability management
-6. **gebruiken** - Usage management
-7. **overeenkomsten** - Agreement management
-8. **contactpersonen** - Contact person management
+- **applicaties**
+- **diensten**
+- **voorzieningen-versie**
+- **organisaties**
+- **kwetsbaarheden**
+- **gebruiken**
+- **overeenkomsten**
+- **contactpersonen**
 
 ## Configuration
 
-### Base Configuration
-
-Each beheer type has a base configuration that includes:
+### Base Configuration Structure
 
 ```javascript
 {
@@ -105,7 +155,7 @@ Each beheer type has a base configuration that includes:
 
 ### Custom Headers
 
-Custom headers allow you to override how specific data is displayed:
+Override how specific data is displayed:
 
 ```javascript
 customHeaders: {
@@ -129,7 +179,7 @@ customHeaders: {
 
 ### Unique Actions
 
-Unique actions allow you to add custom action buttons for specific beheer types:
+Add custom action buttons for specific beheer types:
 
 ```javascript
 uniqueActions: [
@@ -153,7 +203,7 @@ uniqueActions: [
 
 ### Status Icons
 
-Status icons allow you to add visual indicators:
+Add visual indicators:
 
 ```javascript
 statusIcon: {
@@ -180,52 +230,162 @@ statusIcon: {
 }
 ```
 
+## Request Management
+
+### How Request Cancellation Works
+
+The system uses AbortController to cancel requests:
+
+```javascript
+// In useNextcloudRequests hook
+const controller = new AbortController();
+activeRequests.set(key, controller);
+
+// Request includes signal
+const config = {
+  signal: controller.signal,
+  // ... other config
+};
+
+// Cancel specific request
+const cancelRequest = (requestKey) => {
+  const controller = activeRequests.get(requestKey);
+  if (controller) {
+    controller.abort();
+    activeRequests.delete(requestKey);
+  }
+};
+```
+
+### Request Keys
+
+Each request gets a unique key for cancellation:
+
+```javascript
+// Data request key
+const dataRequestKey = `key_data_${config.routeType}`;
+
+// Schema request key
+const schemaRequestKey = `key_schema_${config.schemaSlug}`;
+```
+
+### Error Handling
+
+Cancelled requests are handled gracefully:
+
+```javascript
+try {
+  // Make request...
+} catch (err) {
+  // Don't set error if request was cancelled
+  if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
+    return;
+  }
+  // Handle other errors...
+}
+```
+
+## Pagination System
+
+### usePaginationLimit Hook
+
+The hook loads limits synchronously to prevent race conditions:
+
+```javascript
+// Synchronous loading prevents race conditions
+const [limit, setLimit] = usePaginationLimit('organisaties', 20);
+
+// The hook loads the limit synchronously during initialization
+// and updates it when the objectType changes
+```
+
+### How It Works
+
+```javascript
+export const usePaginationLimit = (objectType, defaultValue = 20) => {
+  // Load synchronously during initialization
+  const savedLimit = AcGetState(`pagination_limit_${objectType}`);
+  const initialLimit = savedLimit !== undefined ? savedLimit : defaultValue;
+
+  const [limit, setLimit] = useState(initialLimit);
+
+  // Update when objectType changes
+  useEffect(() => {
+    if (currentObjectTypeRef.current !== objectType) {
+      const newSavedLimit = AcGetState(`pagination_limit_${objectType}`);
+      const newLimit = newSavedLimit !== undefined ? newSavedLimit : defaultValue;
+      setLimit(newLimit);
+    }
+  }, [objectType, defaultValue]);
+
+  const updateLimit = (newLimit) => {
+    setLimit(newLimit);
+    AcSaveState(`pagination_limit_${objectType}`, newLimit);
+  };
+
+  return [limit, updateLimit];
+};
+```
+
 ## Modal System
 
-The modal system automatically handles:
+### How Modals Are Loaded
 
-1. **Component Loading**: Modals are loaded dynamically using `@loadable/component`
-2. **Prop Management**: Modal props are automatically generated based on type and action
-3. **State Management**: Modal state is managed by the generic component
+Modals are loaded dynamically using `@loadable/component`:
+
+```javascript
+// In BeheerModalFactory
+modalComponents: {
+  applicaties: {
+    add: loadable(() => import('./ac-applicaties/modals/ac-applicaties-form-modal')),
+    edit: loadable(() => import('./ac-applicaties/modals/ac-applicaties-form-modal')),
+    delete: loadable(() => import('./ac-applicaties/modals/ac-delete-applicaties-modal')),
+    import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
+  },
+}
+```
 
 ### Adding New Modals
 
-To add a new modal for a beheer type:
-
-1. Add the modal component to `BeheerModalFactory.modalComponents`
-2. Add the modal type to the configuration's `modals` array
+1. Add modal component to `BeheerModalFactory.modalComponents`
+2. Add modal type to configuration's `modals` array
 3. Add prop generation logic to `BeheerModalFactory.getModalProps`
 
 ## Filter System
 
-The filter system supports:
+### How Filters Work
 
-1. **Standard Filters**: Default column filtering
-2. **Custom Filters**: Special filters like organisatie's beoordeling filter
+The system supports standard and custom filters:
+
+```javascript
+// Standard filter
+const FilterDrawerComponent =
+  FilterDrawerFactory.getFilterDrawerComponent('default');
+
+// Custom filter (like organisatie's beoordeling filter)
+const OrganisatieFilterComponent =
+  FilterDrawerFactory.getFilterDrawerComponent('organisaties');
+```
 
 ### Adding Custom Filters
 
-To add a custom filter:
-
-1. Create a custom filter drawer component
-2. Add it to `FilterDrawerFactory.filterDrawerComponents`
+1. Create custom filter drawer component
+2. Add to `FilterDrawerFactory.filterDrawerComponents`
 3. Add prop generation logic to `FilterDrawerFactory.getFilterDrawerProps`
 
 ## Migration Guide
 
 ### From Individual Pages to Generic
 
-To migrate an existing beheer page:
-
-1. **Identify Configuration**: Extract the configuration from the existing page
-2. **Add to Factory**: Add the configuration to `BeheerPageConfigFactory`
+1. **Extract Configuration**: Get configuration from existing page
+2. **Add to Factory**: Add to `BeheerPageConfigFactory`
 3. **Add Modals**: Add modal components to `BeheerModalFactory`
 4. **Add Filters**: Add custom filters to `FilterDrawerFactory` if needed
-5. **Replace Component**: Replace the existing component with `ConBeheerPageWrapper`
+5. **Replace Component**: Replace with `ConBeheerPageWrapper`
 
 ### Example Migration
 
-**Before (Individual Page)**:
+**Before**:
 
 ```javascript
 // 413 lines of code with lots of duplication
@@ -234,7 +394,7 @@ const AcBeheerApplicaties = () => {
 };
 ```
 
-**After (Generic Page)**:
+**After**:
 
 ```javascript
 // 8 lines of code
@@ -243,37 +403,87 @@ const AcBeheerApplicaties = () => {
 };
 ```
 
-## Benefits
-
-1. **Reduced Code Duplication**: 90%+ reduction in boilerplate code
-2. **Consistent Behavior**: All pages behave consistently
-3. **Easy Maintenance**: Changes to common functionality only need to be made in one place
-4. **Type Safety**: Configuration-based approach reduces errors
-5. **Extensibility**: Easy to add new beheer types or modify existing ones
-
-## Future Enhancements
-
-1. **TypeScript Support**: Add TypeScript for better type safety
-2. **Advanced Filtering**: Support for more complex filtering scenarios
-3. **Bulk Operations**: Support for bulk operations across multiple rows
-4. **Real-time Updates**: Support for real-time data updates
-5. **Advanced Sorting**: Support for complex sorting scenarios
-
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Modal Not Loading**: Check that the modal component is properly imported in `BeheerModalFactory`
-2. **Headers Not Showing**: Check that the header ID is in the `defaultHeaders` array
-3. **Actions Not Working**: Check that the action is properly defined in `uniqueActions`
-4. **Filter Not Working**: Check that the filter drawer is properly configured in `FilterDrawerFactory`
+1. **Modal Not Loading**
 
-### Debug Mode
+   - Check modal component is imported in `BeheerModalFactory`
+   - Verify modal type is in configuration's `modals` array
 
-To enable debug mode, add `console.log` statements in the configuration factory:
+2. **Headers Not Showing**
 
-```javascript
-console.log('Config for type:', type, config);
+   - Check header ID is in `defaultHeaders` array
+   - Verify header exists in schema
+
+3. **Actions Not Working**
+
+   - Check action is defined in `uniqueActions`
+   - Verify condition function returns correct boolean
+
+4. **Filter Not Working**
+
+   - Check filter drawer is configured in `FilterDrawerFactory`
+   - Verify props are passed correctly
+
+5. **Race Conditions**
+
+   - Ensure `nextcloud.cancelAllRequests()` is called when switching types
+   - Check request keys are unique
+
+6. **Pagination Issues**
+   - Verify pagination key is unique for each object type
+   - Check `usePaginationLimit` is used correctly
+
+### Request Cancellation Issues
+
+1. **Requests Not Cancelling**
+
+   ```javascript
+   // Check this is called when switching types
+   useEffect(() => {
+     nextcloud.cancelAllRequests();
+     // Reset state...
+   }, [type]);
+   ```
+
+2. **Memory Leaks**
+
+   ```javascript
+   // Ensure cancelled requests are cleaned up
+   activeRequests.delete(key);
+   ```
+
+3. **Error Messages**
+   ```javascript
+   // Check cancelled request errors are handled
+   if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
+     return;
+   }
+   ```
+
+## File Structure
+
+```
+src/views/ac-beheer/
+├── ac-[object type]                    # folder containing object type specific components
+|   ├── modals                          # folder containing object type specific modals
+|   └── pages                           # folder containing object type specific pages (used to hold overview page until it was made generic)
+├── con-generic-beheer-page.js          # Main component
+├── con-beheer-page-wrapper.js          # Simple wrapper
+├── con-beheer-page-config-factory.js   # Configuration factory
+├── con-beheer-modal-factory.js         # Modal factory
+├── con-filter-drawer-factory.js        # Filter factory
+├── con-table.js                        # Table component
+├── con-action-menu.js                  # Action menu component
+└── GENERIC_BEHEER_README.md            # This documentation
 ```
 
-This will help identify configuration issues.
+## Key Dependencies
+
+- `useNextcloudRequests` - Request management with cancellation
+- `usePaginationLimit` - Pagination with session storage
+- `@loadable/component` - Dynamic modal loading
+- `mobx-react-lite` - State management
+- `react-router` - Navigation
