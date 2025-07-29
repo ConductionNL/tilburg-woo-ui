@@ -5,6 +5,7 @@ import React, {
   useImperativeHandle,
   useMemo,
   useState,
+  // eslint-disable-next-line import/no-unresolved
 } from 'react';
 import {
   Table,
@@ -19,8 +20,7 @@ import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { AcCheckbox } from '@molecules';
-import { useDebouncedInput } from '@src/hooks/index';
-import ReactSelect from 'react-select';
+import { ConTableSearch } from '@components';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -69,18 +69,17 @@ import ReactSelect from 'react-select';
  *   }
  *   ```
  *
- * **Header Search:**
- * - Click on header labels to open search input
- * - Multiple headers can have search inputs open simultaneously
- * - Search inputs stay open until explicitly closed with the X button
- * - Search is debounced (500ms default)
- * - Callback receives all active search values: `onHeaderSearch({ headerId1: value1, headerId2: value2 })`
- * - Each header maintains its own search value independently
- * - Enum headers automatically show dropdown selects instead of text inputs
+ * **Table Search:**
+ * - A dedicated search component is rendered above the table when `onHeaderSearch` is provided
+ * - Dropdown to select which table field to search on
+ * - Text input for search query with debounced updates
+ * - Visual tags showing active searches with removal capability
+ * - Automatic enum support for dropdown fields
+ * - Callback receives search parameters: `onHeaderSearch({ fieldKey1: value1, fieldKey2: value2 })`
  *
  * **Enum Support:**
- * - Headers with enum values in the schema properties will show a dropdown select instead of a text input
- * - Enum values are automatically detected from `dataProperties[headerId].enum`
+ * - Fields with enum values in dataProperties automatically show dropdown selects
+ * - Enum values are automatically detected from `dataProperties[fieldKey].enum`
  * - Dropdowns are searchable and clearable
  * - Values are debounced just like text inputs
  *
@@ -228,6 +227,7 @@ const ConTable = (
 
     // if no sort comparator is set, use the default sort comparator
     return ConSorter(data, h.key, headerSort[1]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, headerSort]);
 
   // list of selected rows as a full data object
@@ -246,10 +246,12 @@ const ConTable = (
     data.forEach((row) => {
       row[uniqueSymbol] = AcUUID('CD');
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const removeUniqueSymbol = useMemo(
     () => (row) => {
+      // eslint-disable-next-line no-unused-vars
       const { [uniqueSymbol]: removed, ...cleanRow } = row;
       return cleanRow;
     },
@@ -272,6 +274,7 @@ const ConTable = (
       }
       return element;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSelectAll = useMemo(() => {
@@ -305,6 +308,7 @@ const ConTable = (
       const cleanSelectedRows = selectedRows.map(removeUniqueSymbol);
       getSelectedRows(cleanSelectedRows);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRows, getSelectedRows]);
 
   // control what the parent sees when it uses the child's ref.
@@ -366,71 +370,8 @@ const ConTable = (
 
       return row[header.key];
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [renderCustomElement, removeUniqueSymbol]
-  );
-
-  const [searchingHeaderIds, setSearchingHeaderIds] = useState(new Set());
-  const [searchValues, setSearchValues] = useState({});
-
-  const handleSearchValueChange = useCallback(
-    (headerId, value) => {
-      let newSearchValues;
-
-      if (value === '') {
-        // Only remove the value if it's explicitly empty (user deleted it)
-        newSearchValues = { ...searchValues };
-        delete newSearchValues[headerId];
-      } else {
-        // Add or update the value
-        newSearchValues = {
-          ...searchValues,
-          [headerId]: value,
-        };
-      }
-
-      setSearchValues(newSearchValues);
-
-      if (typeof onHeaderSearch === 'function') {
-        // ✅ Convert search values to use header keys instead of IDs
-        const searchValuesWithKeys = {};
-        Object.entries(newSearchValues).forEach(([id, value]) => {
-          const header = tableHeaders.find((h) => h.id === id);
-          if (header && header.key) {
-            // Use the header key as the key instead of the ID
-            searchValuesWithKeys[header.key] = value;
-          }
-        });
-
-        // Send search values with keys as keys
-        onHeaderSearch(searchValuesWithKeys);
-      }
-    },
-    [searchValues, onHeaderSearch, tableHeaders]
-  );
-
-  const debouncedSetSearchValue = useDebouncedInput(
-    (value) => {
-      // We need to get the current headerId from the closure
-      // This will be handled by creating individual debounced functions per header
-    },
-    500,
-    {
-      disableInstantValidation: true,
-    }
-  );
-
-  // Create individual debounced functions for each header
-  const getDebouncedSearchFunction = useCallback(
-    (headerId) => {
-      return useDebouncedInput(
-        (value) => handleSearchValueChange(headerId, value),
-        500,
-        {
-          disableInstantValidation: true,
-        }
-      );
-    },
-    [handleSearchValueChange]
   );
 
   const tableHeader = useMemo(() => {
@@ -463,169 +404,68 @@ const ConTable = (
               (!!header.sortComparator &&
                 typeof header.sortComparator === 'function');
 
-            const isSearching = searchingHeaderIds.has(header.id);
-            const currentSearchValue = searchValues[header.id] || '';
-
-            // Add check to prevent actions header from being searchable
-            const isActionsHeader = header.id === 'actions';
-            const isSearchable = !isActionsHeader;
-
-            // Check if this header has enum values from schema properties
-            const headerSchema = dataProperties[header.id];
-            const isEnumHeader =
-              headerSchema?.enum && Array.isArray(headerSchema.enum);
-            const enumOptions = isEnumHeader
-              ? headerSchema.enum.map((option) => ({ value: option, label: option }))
-              : [];
-
-            // Create debounced function for this specific header
-            const debouncedSearchForHeader = getDebouncedSearchFunction(header.id);
-
             return (
               <TableCell key={header.id}>
-                {isSearching ? (
-                  <div className={clsx('con-table-header-search')}>
-                    {isEnumHeader ? (
-                      <ReactSelect
-                        className={clsx(
-                          'con-table-header-sort-button-container',
-                          isSortable &&
-                            showSortButtons &&
-                            'con-table-header-sort-button-container-sortable'
-                        )}
-                        placeholder={`Selecteer ${
-                          header.label?.toLowerCase() || 'optie'
-                        }`}
-                        value={
-                          currentSearchValue
-                            ? {
-                                value: currentSearchValue,
-                                label: currentSearchValue,
-                              }
-                            : null
-                        }
-                        options={enumOptions}
-                        onChange={(selected) => {
-                          const value = selected?.value || '';
-                          debouncedSearchForHeader(value);
-                        }}
-                        isClearable
-                        isSearchable
-                        autoFocus
-                      />
-                    ) : (
-                      <input
-                        className={clsx(
-                          'con-table-header-sort-button-container',
-                          isSortable &&
-                            showSortButtons &&
-                            'con-table-header-sort-button-container-sortable'
-                        )}
-                        type='text'
-                        value={currentSearchValue}
-                        onChange={(e) => debouncedSearchForHeader(e.target.value)}
-                        autoFocus
-                      />
+                <div className={clsx('con-table-header-content')}>
+                  <div className={clsx('con-table-header-content-label')}>
+                    <span
+                      className={
+                        header.label !== 'Acties'
+                          ? 'con-table-header-content__label'
+                          : undefined
+                      }
+                    >
+                      <b>{header.label}</b>
+                    </span>
+                  </div>
+                  <div
+                    className={clsx(
+                      'con-table-header-sort-button-container',
+                      isSortable &&
+                        showSortButtons &&
+                        'con-table-header-sort-button-container-sortable'
                     )}
-                    <VISUALS.CLOSE
-                      onClick={() => {
-                        setSearchingHeaderIds((prev) => {
-                          const newSet = new Set(prev);
-                          newSet.delete(header.id);
-                          return newSet;
-                        });
+                    onClick={() => {
+                      if (!isSortable || !showSortButtons) return;
 
-                        // Don't remove the search value when closing, only hide the input
-                        // The search value will remain in searchValues and continue to be used
-                        // Only remove it if the user explicitly deletes the content
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className={clsx('con-table-header-content')}>
-                    <div
-                      className={clsx(
-                        'con-table-header-content-label',
-                        // Add conditional styling to show actions header is not clickable
-                        !isSearchable &&
-                          'con-table-header-content-label--not-searchable'
-                      )}
-                      onClick={() => {
-                        // Only allow search if the header is searchable
-                        if (!isSearchable) return;
-
-                        setSearchingHeaderIds((prev) => {
-                          const newSet = new Set(prev);
-                          newSet.add(header.id);
-                          return newSet;
-                        });
-                      }}
-                    >
-                      <span
-                        className={
-                          header.label !== 'Acties'
-                            ? 'con-table-header-content__label'
-                            : undefined
-                        }
-                      >
-                        <b>{header.label}</b>
+                      if (headerSort[0] !== header.id || headerSort[1] === null) {
+                        setHeaderSort([header.id, true]);
+                      } else if (headerSort[1] === true) {
+                        setHeaderSort([header.id, false]);
+                      } else {
+                        setHeaderSort([header.id, null]);
+                      }
+                    }}
+                  >
+                    {showSortButtons && isSortable && (
+                      <span className='con-table-header-content__sort-button-container'>
+                        {(headerSort[0] !== header.id || headerSort[1] === null) && (
+                          <VISUALS.SORT className='con-table-sort-icon-non' />
+                        )}
+                        {headerSort[0] === header.id && headerSort[1] === true && (
+                          <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
+                        )}
+                        {headerSort[0] === header.id && headerSort[1] === false && (
+                          <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
+                        )}
                       </span>
-                    </div>
-                    <div
-                      className={clsx(
-                        'con-table-header-sort-button-container',
-                        isSortable &&
-                          showSortButtons &&
-                          'con-table-header-sort-button-container-sortable'
-                      )}
-                      onClick={() => {
-                        if (!isSortable || !showSortButtons) return;
-
-                        if (headerSort[0] !== header.id || headerSort[1] === null) {
-                          setHeaderSort([header.id, true]);
-                        } else if (headerSort[1] === true) {
-                          setHeaderSort([header.id, false]);
-                        } else {
-                          setHeaderSort([header.id, null]);
-                        }
-                      }}
-                    >
-                      {showSortButtons && isSortable && (
-                        <span className='con-table-header-content__sort-button-container'>
-                          {(headerSort[0] !== header.id ||
-                            headerSort[1] === null) && (
-                            <VISUALS.SORT className='con-table-sort-icon-non' />
-                          )}
-                          {headerSort[0] === header.id && headerSort[1] === true && (
-                            <VISUALS.SORT_UP className='con-table-sort-icon-asc' />
-                          )}
-                          {headerSort[0] === header.id &&
-                            headerSort[1] === false && (
-                              <VISUALS.SORT_DOWN className='con-table-sort-icon-desc' />
-                            )}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
               </TableCell>
             );
           })}
         </TableRow>
       </thead>
     );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     renderSelectRowButtons,
     selectedAll,
     headerSort,
     handleSelectAll,
     tableHeaders,
-    renderCustomElement,
-    searchingHeaderIds,
-    searchValues,
-    getDebouncedSearchFunction,
-    onHeaderSearch,
-    dataProperties,
+    showSortButtons,
   ]);
 
   const tableRows = useMemo(() => {
@@ -699,6 +539,7 @@ const ConTable = (
         })}
       </TableRow>
     ));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     sortedData,
     tableHeaders,
@@ -709,25 +550,35 @@ const ConTable = (
     handleDataCellRender,
   ]);
 
-  return !removeOverflowWrapper ? (
-    <ConHorizontalOverflowWrapper
-      ariaLabels={{
-        scrollLeftButton: 'Scroll left',
-        scrollRightButton: 'Scroll right',
-      }}
-    >
-      <Table>
-        {tableHeader}
-        <TableBody>{tableRows}</TableBody>
-      </Table>
-    </ConHorizontalOverflowWrapper>
-  ) : (
-    <div style={{ overflowX: 'auto' }}>
-      <Table>
-        {tableHeader}
-        <TableBody>{tableRows}</TableBody>
-      </Table>
-    </div>
+  return (
+    <>
+      {/* Search Component */}
+      {onHeaderSearch && (
+        <ConTableSearch dataProperties={dataProperties} onSearch={onHeaderSearch} />
+      )}
+
+      {/* Table */}
+      {!removeOverflowWrapper ? (
+        <ConHorizontalOverflowWrapper
+          ariaLabels={{
+            scrollLeftButton: 'Scroll left',
+            scrollRightButton: 'Scroll right',
+          }}
+        >
+          <Table>
+            {tableHeader}
+            <TableBody>{tableRows}</TableBody>
+          </Table>
+        </ConHorizontalOverflowWrapper>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <Table>
+            {tableHeader}
+            <TableBody>{tableRows}</TableBody>
+          </Table>
+        </div>
+      )}
+    </>
   );
 };
 

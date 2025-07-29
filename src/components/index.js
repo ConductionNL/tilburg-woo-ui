@@ -54,6 +54,9 @@ const ConDynamicSchemaForm = loadable(() =>
 const ConMarkdown = loadable(() =>
   import('@src/components/con-markdown/con-markdown')
 );
+const ConTableSearch = loadable(() =>
+  import('@src/components/con-table-search/con-table-search')
+);
 
 export {
   AcAbout,
@@ -81,4 +84,5 @@ export {
   ConSpinLoader,
   ConDynamicSchemaForm,
   ConMarkdown,
+  ConTableSearch,
 };

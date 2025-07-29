@@ -408,9 +408,7 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
             ref={tableRef}
             truncateLines={3}
             showSortButtons
-            onHeaderSearch={(searchParams) => {
-              fetchData(searchParams);
-            }}
+            onHeaderSearch={fetchData}
             dataProperties={dataProperties}
             loading={loading}
           />
