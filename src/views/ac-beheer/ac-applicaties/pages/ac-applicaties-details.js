@@ -6,7 +6,6 @@ import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms'
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader, ConMarkdown } from '@components';
 import { AcBeheerError } from '@views/ac-beheer';
-import { BASE_URL } from '../../ac-beheer';
 import { sortPropertiesByOrder } from '@src/utilities';
 import { AcCheckbox, AcFormField } from '@molecules';
 import { ConFileDropZone } from '../../import-modal/con-file-dropzone';

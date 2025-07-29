@@ -5,7 +5,6 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 import _ from 'lodash';
 

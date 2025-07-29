@@ -7,7 +7,6 @@ import { AcCheckbox, AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import _ from 'lodash';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import clsx from 'clsx';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import AcColumn from '@src/atoms/ac-column/ac-column';

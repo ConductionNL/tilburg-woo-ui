@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router';
 import ConTable from '../con-table';
 import { AcColumn, AcFlex } from '@src/atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../constants';
 import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
