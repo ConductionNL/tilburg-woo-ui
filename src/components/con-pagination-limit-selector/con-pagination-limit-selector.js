@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useState, useEffect, useMemo } from 'react';
 import CreatableSelect from 'react-select/creatable';
 import { AcGetState, AcSaveState } from '@src/utilities';
@@ -8,7 +9,7 @@ import clsx from 'clsx';
  * Given its a CreateSelect you can create your own value for the limit
  * Any custom values are stored indefinitely in the current session
  * Selected limit option is stored per objectType (e.g. 'applicaties', 'diensten') in the current session, so that different objects have different limits
- * 
+ *
  * @param {Object} props - Component props
  * @param {string} props.objectType - The type of object (e.g., 'organisaties', 'applicaties', 'diensten')
  * @param {number} props.value - The current limit value (controlled component)
@@ -16,22 +17,22 @@ import clsx from 'clsx';
  * @param {function} [props.onReady] - Callback function called when component is initialized
  * @param {string} [props.placeholder] - Placeholder text for the select input
  * @param {string} [props.className] - Additional CSS class names
- * 
+ *
  * @example
  * // Basic usage with controlled state
  * const [limit, setLimit] = useState(20);
- * 
+ *
  * <ConPaginationLimitSelector
  *   objectType="organisaties"
  *   value={limit}
  *   onChange={setLimit}
  * />
- * 
+ *
  * @example
  * // With onReady callback (legacy approach - use usePaginationLimit hook instead)
  * const [isInitialized, setIsInitialized] = useState(false);
  * const [pagination, setPagination] = useState({ limit: 20 });
- * 
+ *
  * <ConPaginationLimitSelector
  *   objectType="organisaties"
  *   value={pagination.limit}
@@ -43,11 +44,11 @@ import clsx from 'clsx';
  *     setIsInitialized(true);
  *   }}
  * />
- * 
+ *
  * @example
  * // Recommended approach using the usePaginationLimit hook
  * const [limit, setLimit] = usePaginationLimit('organisaties', 20);
- * 
+ *
  * <ConPaginationLimitSelector
  *   objectType="organisaties"
  *   value={limit}
@@ -63,14 +64,17 @@ const ConPaginationLimitSelector = ({
   className,
 }) => {
   // Default options for pagination limits
-  const defaultOptions = [
-    { label: '10', value: 10 },
-    { label: '20', value: 20 },
-    { label: '50', value: 50 },
-    { label: '100', value: 100 },
-    { label: '200', value: 200 },
-    { label: '500', value: 500 },
-  ];
+  const defaultOptions = useMemo(
+    () => [
+      { label: '10', value: 10 },
+      { label: '20', value: 20 },
+      { label: '50', value: 50 },
+      { label: '100', value: 100 },
+      { label: '200', value: 200 },
+      { label: '500', value: 500 },
+    ],
+    []
+  );
 
   // Get custom options from session storage
   const [customOptions, setCustomOptions] = useState([]);
@@ -227,14 +231,17 @@ const ConPaginationLimitSelector = ({
  * }, [limit]);
  */
 export const usePaginationLimit = (objectType, defaultValue = 20) => {
-  const [limit, setLimit] = useState(() => {
-    // Load synchronously during initialization
-    return AcGetState(`pagination_limit_${objectType}`) || defaultValue;
-  });
+  const [changeKey, setChangeKey] = useState(0);
+
+  const limit = useMemo(
+    () => AcGetState(`pagination_limit_${objectType}`) || defaultValue,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [objectType, defaultValue, changeKey]
+  );
 
   const updateLimit = (newLimit) => {
-    setLimit(newLimit);
     AcSaveState(`pagination_limit_${objectType}`, newLimit);
+    setChangeKey((prev) => prev + 1);
   };
 
   return [limit, updateLimit];

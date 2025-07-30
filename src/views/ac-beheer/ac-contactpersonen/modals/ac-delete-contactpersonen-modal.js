@@ -5,7 +5,6 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 import _ from 'lodash';
 
@@ -32,7 +31,7 @@ const AcDeleteContactpersonenModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [contactpersonenCopy, setContactpersonenCopy] = useState([]);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteContactpersoonOpenModal = () => modalRef?.current?.showModal();
 
@@ -41,7 +40,7 @@ const AcDeleteContactpersonenModal = ({
   const handleDeleteContactpersoon = async () => {
     try {
       const deletePromises = contactpersonenCopy.map((contactpersoon) =>
-        makeRequest(`${endpoint}/${contactpersoon.id}`, null, {
+        nextcloud.request(`${endpoint}/${contactpersoon.id}`, {
           method: 'DELETE',
         })
       );

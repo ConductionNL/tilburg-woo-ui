@@ -6,7 +6,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import ReactSelect from 'react-select';
 
 /**
@@ -27,13 +26,16 @@ const AcAddRemoveDeelnameModal = ({
   deelnameToRemove = null,
 }) => {
   const modalRef = useRef(null);
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const [error, setError] = useState(null);
   const [deelnameOptions, setDeelnameOptions] = useState([]);
   const [selectedDeelname, setSelectedDeelname] = useState(
     deelnameToRemove
-      ? { value: deelnameToRemove.id, label: deelnameToRemove.naam || deelnameToRemove.id }
+      ? {
+          value: deelnameToRemove.id,
+          label: deelnameToRemove.naam || deelnameToRemove.id,
+        }
       : null
   );
 
@@ -44,7 +46,7 @@ const AcAddRemoveDeelnameModal = ({
     if (remove && deelnameToRemove) return;
 
     try {
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/organisatie?type[]=samenwerking&type[]=community&_limit=300`
       );
 
@@ -98,12 +100,11 @@ const AcAddRemoveDeelnameModal = ({
         ? existingDeelnameIds.filter((id) => id !== selectedDeelname.value)
         : [...existingDeelnameIds, selectedDeelname.value];
 
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/organisatie/${organization.id}`,
-        null,
         {
           method: 'PUT',
-          body: JSON.stringify({
+          data: JSON.stringify({
             ...organization,
             deelnames: updatedDeelnames.map(String),
           }),
@@ -182,7 +183,8 @@ const AcAddRemoveDeelnameModal = ({
         {error && <div style={errorStyle}>{error}</div>}
         {remove && deelnameToRemove ? (
           <Paragraph>
-            Weet u zeker dat u de deelname "{deelnameToRemove.naam || deelnameToRemove.id}" wilt verlaten?
+            Weet u zeker dat u de deelname "
+            {deelnameToRemove.naam || deelnameToRemove.id}" wilt verlaten?
           </Paragraph>
         ) : (
           <>

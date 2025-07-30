@@ -3,14 +3,9 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
-import { AcFormField } from '@src/molecules';
-import ReactSelect from 'react-select';
-import CreatableSelect from 'react-select/creatable';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
-import { BASE_URL } from '../../ac-beheer';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
-import { ConFileDropZone } from '../../import-modal/con-file-dropzone';
 import { AcFlex } from '@src/atoms';
 import _ from 'lodash';
 
@@ -56,7 +51,7 @@ const AcOrganisatieFormModal = ({
   const [verklaringenOptions, setVerklaringenOptions] = useState([]);
   const [contactpersonenOptions, setContactpersonenOptions] = useState([]);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
@@ -70,7 +65,9 @@ const AcOrganisatieFormModal = ({
   }, [organisaties]);
 
   useEffect(async () => {
-    const response = await makeRequest(endpoint, extend);
+    const response = await nextcloud.request(endpoint, {
+      params: extend,
+    });
 
     const data = response.data.results;
     setOrganisaties(data);
@@ -78,9 +75,7 @@ const AcOrganisatieFormModal = ({
 
   useEffect(() => {
     const fetchSchema = async () => {
-      const response = await makeRequest(
-        `openregister/api/schemas/organisatie`
-      );
+      const response = await nextcloud.request(`openregister/api/schemas/organisatie`);
       const data = response.data;
       setSchema(data);
     };
@@ -136,9 +131,9 @@ const AcOrganisatieFormModal = ({
         logoValue = await organisatieFormData.logo.getDataUrl();
       }
 
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...organisatieFormData,
           contactgegevens: smartSplit(organisatieFormData.contactgegevens),
           logo: logoValue || null,

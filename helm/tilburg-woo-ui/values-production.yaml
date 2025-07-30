@@ -44,6 +44,17 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
   targetMemoryUtilizationPercentage: 80
 
+# Enable security features for production
+networkPolicy:
+  enabled: true
+  ingressNamespace: "ingress-nginx"
+  allowSameNamespace: true
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
 # Production environment variables
 env:
   NODE_ENV: "production"

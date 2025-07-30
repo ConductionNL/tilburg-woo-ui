@@ -7,7 +7,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 /**
  * modal to delete 1 or multiple applicaties
  * @param {object[]} applicaties - array of applicaties
@@ -23,7 +22,7 @@ const AcDeleteApplicatiesModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteApplicatieOpenModal = () => modalRef?.current?.showModal();
 
@@ -34,7 +33,7 @@ const AcDeleteApplicatiesModal = ({
   const handleDeleteApplicatie = async () => {
     try {
       const deletePromises = applicaties.map((applicatie) =>
-        makeRequest(`${endpoint}/${applicatie.id}`, null, {
+        nextcloud.request(`${endpoint}/${applicatie.id}`, {
           method: 'DELETE',
         })
       );

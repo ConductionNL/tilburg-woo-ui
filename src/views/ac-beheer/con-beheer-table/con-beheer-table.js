@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router';
 import ConTable from '../con-table';
 import { AcColumn, AcFlex } from '@src/atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../ac-beheer';
 import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
@@ -329,15 +328,16 @@ const BeheerTable = forwardRef((props, ref) => {
     });
 
     const response = await makeRequest(
-              `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
-      [
-        // ...config.extend, // Removed extends
-        ['_limit', pagination?.limit || 9999],
-        ['_page', pagination?.page || 1],
-        ...Object.entries(transformedSearchParams), // ✅ Use transformed search params
-      ],
-      null,
-      '/beheer/diensten'
+      `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
+      {
+        params: [
+          ...config.extend,
+          ['_limit', pagination?.limit || 9999],
+          ['_page', pagination?.page || 1],
+          ...Object.entries(transformedSearchParams),
+        ],
+        redirectPath: '/beheer/diensten',
+      }
     );
 
     const data = response.data;
@@ -373,10 +373,10 @@ const BeheerTable = forwardRef((props, ref) => {
 
   const fetchSchemaData = async () => {
     const response = await makeRequest(
-              `openregister/api/schemas/${config.schemaSlug}`,
-      null,
-      null,
-      '/beheer/diensten'
+      `openregister/api/schemas/${config.schemaSlug}`,
+      {
+        redirectPath: '/beheer/diensten',
+      }
     );
 
     const data = response.data;

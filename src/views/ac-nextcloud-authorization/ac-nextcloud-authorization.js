@@ -14,7 +14,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
 import config from '@src/config';
-import { BASE_URL } from '../ac-beheer/ac-beheer';
+import { BASE_URL } from '../ac-beheer/constants';
 
 /**
  * Sets a cookie with the specified name, value and options

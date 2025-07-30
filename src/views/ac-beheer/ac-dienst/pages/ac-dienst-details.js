@@ -16,7 +16,6 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import AcEditDienstModal from '../modals/ac-dienst-form-modal';
 import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
 import ConActionMenu from '../../con-action-menu';
-import { BASE_URL } from '../../ac-beheer';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 import BeheerTable from '../../con-beheer-table/con-beheer-table';
@@ -38,7 +37,7 @@ const AcBeheerDienstDetails = ({ id }) => {
   const [dienstenByOrganisatieLoading, setDienstenByOrganisatieLoading] =
     useState(false);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningaanbod';
@@ -55,18 +54,13 @@ const AcBeheerDienstDetails = ({ id }) => {
       ];
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/${endpoint}/${id}`,
-          extend,
-          null,
-          `/beheer/diensten/${id}`
-        ),
-        makeRequest(
-          `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/diensten/${id}`
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          params: extend,
+          redirectPath: `/beheer/diensten/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          redirectPath: `/beheer/diensten/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {
@@ -91,9 +85,9 @@ const AcBeheerDienstDetails = ({ id }) => {
 
   const fetchUses = async () => {
     setUsesLoading(true);
-    const response = await makeRequest(`${BASE_URL}/${endpoint}/${id}/uses`, [
-      ['_extend[]', '@self.schema'],
-    ]);
+    const response = await nextcloud.request(`${endpoint}/${id}/uses`, {
+      params: [['_extend[]', '@self.schema']],
+    });
     if (!response.ok) {
       console.error('Error fetching uses:', response.statusText);
       setUsesLoading(false);
@@ -111,12 +105,14 @@ const AcBeheerDienstDetails = ({ id }) => {
     }
 
     setDienstenByOrganisatieLoading(true);
-    const response = await makeRequest(`${BASE_URL}/${endpoint}`, [
-      ['leverancier', organisatieId],
-      ['_extend[]', 'voorziening'],
-      ['_extend[]', 'leverancier'],
-      ['_extend[]', 'ondersteundeStandaarden'],
-    ]);
+    const response = await nextcloud.request(`${endpoint}`, {
+      params: [
+        ['leverancier', organisatieId],
+        ['_extend[]', 'voorziening'],
+        ['_extend[]', 'leverancier'],
+        ['_extend[]', 'ondersteundeStandaarden'],
+      ],
+    });
     if (!response.ok) {
       console.error('Error fetching diensten by organisatie:', response.statusText);
       setDienstenByOrganisatieLoading(false);

@@ -1,16 +1,12 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
-import { AcCheckbox, AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects } from '@src/utilities';
-import { BASE_URL } from '../../ac-beheer';
-import ReactSelect from 'react-select';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
-import clsx from 'clsx';
-import { DateInput } from '@amsterdam/design-system-react';
 import _ from 'lodash';
 
 const AcGebruikenFormModal = ({
@@ -73,13 +69,13 @@ const AcGebruikenFormModal = ({
   const [contactpersonenLoading, setContactpersonenLoading] = useState(false);
   const [schemaLoading, setSchemaLoading] = useState(false);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   useEffect(() => {
     const fetchOrganisaties = async () => {
       try {
         setOrganisatieLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/objects/voorzieningen/organisatie`
         );
         const data = response.data.results;
@@ -99,7 +95,7 @@ const AcGebruikenFormModal = ({
     const fetchVoorzieningen = async () => {
       try {
         setVoorzieningenLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/objects/voorzieningen/voorziening`
         );
         const data = response.data.results;
@@ -118,7 +114,7 @@ const AcGebruikenFormModal = ({
     const fetchSchema = async () => {
       try {
         setSchemaLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/schemas/voorzieninggebruik`
         );
         const data = response.data;
@@ -132,9 +128,9 @@ const AcGebruikenFormModal = ({
 
     const fetchContactpersonen = async () => {
       setContactpersonenLoading(true);
-      const response = await makeRequest(
-        `openregister/api/objects/voorzieningen/contactpersoon`
-      ).finally(() => setContactpersonenLoading(false));
+      const response = await nextcloud
+        .request(`openregister/api/objects/voorzieningen/contactpersoon`)
+        .finally(() => setContactpersonenLoading(false));
 
       const data = response.data.results;
 
@@ -163,37 +159,41 @@ const AcGebruikenFormModal = ({
   }, [showModal]);
 
   // get versies
-  useEffect(async () => {
-    try {
-      setVersiesLoading(true);
-      const aanbodResponse = await makeRequest(
-                  `openregister/api/objects/voorzieningen/voorzieningaanbod?voorziening=${gebruikFormData.voorzieningId}`
-      );
-      const data = aanbodResponse.data.results;
-      const aanbodIds = data.map((item) => item.id);
+  useEffect(() => {
+    const fetchVersies = async () => {
+      try {
+        setVersiesLoading(true);
+        const aanbodResponse = await nextcloud.request(
+          `openregister/api/objects/voorzieningen/voorzieningaanbod?voorziening=${gebruikFormData.voorzieningId}`
+        );
+        const data = aanbodResponse.data.results;
+        const aanbodIds = data.map((item) => item.id);
 
-      if (!aanbodIds.length) {
+        if (!aanbodIds.length) {
+          setVersiesLoading(false);
+          return;
+        }
+
+        const versieResponse = await nextcloud.request(
+          `openregister/api/objects/voorzieningen/voorzieningversie`,
+          aanbodIds.map((id) => ['voorzieningaanbod[]', id])
+        );
+        const versies = versieResponse.data.results;
+
+        setVersiesOptions(
+          versies.map((item) => ({
+            label: item.versienummer,
+            value: item.id,
+          }))
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
         setVersiesLoading(false);
-        return;
       }
+    };
 
-      const versieResponse = await makeRequest(
-                  `openregister/api/objects/voorzieningen/voorzieningversie`,
-        aanbodIds.map((id) => ['voorzieningaanbod[]', id])
-      );
-      const versies = versieResponse.data.results;
-
-      setVersiesOptions(
-        versies.map((item) => ({
-          label: item.versienummer,
-          value: item.id,
-        }))
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setVersiesLoading(false);
-    }
+    fetchVersies();
   }, [gebruikFormData.voorzieningId]);
 
   useEffect(() => {
@@ -216,13 +216,6 @@ const AcGebruikenFormModal = ({
 
   const handleEditGebruikOpenModal = () => modalRef?.current?.showModal();
 
-  const handleEditGebruikFieldChange = (field) => (value) => {
-    setGebruikFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   const handleFormValidCheck = (isValid) => {
     /* possibly also handle checks outside of the dynamic form factory */
     setIsValid(isValid);
@@ -239,9 +232,9 @@ const AcGebruikenFormModal = ({
     const url = isEdit ? `${baseUrl}/${gebruikFormData.id}` : baseUrl;
 
     try {
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...gebruikFormData,
           ...(gebruikFormData.status &&
             gebruikFormData.status !== (gebruik?.status || initialData.status) && {

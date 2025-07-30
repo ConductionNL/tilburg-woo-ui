@@ -6,7 +6,6 @@ import { AcFormField } from '@src/molecules';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { isValidPhoneNumber } from 'libphonenumber-js';
-import { BASE_URL } from '../../ac-beheer';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
@@ -40,7 +39,7 @@ const AcContactPersonForm = ({
     functie: '',
   });
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   useEffect(() => {
     if (showModal) {
@@ -114,18 +113,14 @@ const AcContactPersonForm = ({
 
       // Update the organization with PATCH request
       const endpoint = `openregister/api/objects/voorzieningen/contactpersoon`;
-      const updateResponse = await makeRequest(
-        `${BASE_URL}/${endpoint}`,
-        null,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            organisatie: organizationId,
-            ...contactPerson,
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      const updateResponse = await nextcloud.request(`${endpoint}`, {
+        method: 'POST',
+        data: JSON.stringify({
+          organisatie: organizationId,
+          ...contactPerson,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       if (!updateResponse.ok) {
         throw new Error('Failed to add contact person');
