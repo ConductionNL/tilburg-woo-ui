@@ -20,7 +20,7 @@ const normalizeParams = (pairs = []) => {
 const nextcloudApi = axios.create({
   baseURL: BASE_URL,
   timeout: 120_000,
-    withCredentials: true,
+  // withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
