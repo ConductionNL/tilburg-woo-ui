@@ -1,26 +1,44 @@
 ---
 alwaysApply: true
 ---
-## 1. Core Stack & Patterns
+# Project Rules - Tilburg Woo UI Specific
 
-* **Framework:** React + MobX
-* **Styling:** SCSS + NLDS tokens (BEM for class names)
-* **Build:** Webpack
-* **Architecture:** Atomic design (atoms > molecules > components > views)
-* **Theming:** Hostname‑based multi‑tenant CSS variables
+## Technology Stack Context
+- React/Preact with MobX state management
+- SCSS with NLDS design system
+- Webpack build system
+- Atomic design architecture
+- Multi-tenant theming system
 
-## 2. Language & Naming
+## Project-Specific Awareness
+- **Internationalization**: Dutch language should be used wherever content is visible to the end-user. Code should be done in English wherever applicable (this does not include API properties naturally in Dutch).
+- **Component Architecture**: Follow atomic design pattern (atoms, molecules, components, views)
+- **Styling Consistency**: Use established SCSS structure and NLDS design tokens
+- **API Integration**: Follow existing API patterns in src/api/ directory
+- **Theme System**: Consider multi-tenant theming based on hostname
+- **State Management**: Use MobX patterns consistently
+- **Routing**: Follow React Router patterns established in the app
 
-* **Code vs. UI copy:**
+## File Organization & Naming Conventions
+- Use established directory structure
+- **Component Naming Prefixes**:
+  - `ac-` prefix: For existing components from Acato company
+  - `con-` prefix: For entirely new functionality/components from Conduction company, disconnected from existing functionality / patterns.
+  - Examples: `ac-header`, `ac-footer`, `con-table`, `con-horizontal-overflow-wrapper`
+- Maintain separation of concerns
+- Keep components focused and single-purpose
+- Follow the established pattern: `con-table.js`, `ac-header.js`, etc.
 
-  * Code identifiers, comments, etc. in English
-  * Visible text (labels, placeholders, etc.) in Dutch
-* **Component prefixes:**
+## Import Paths
+- Use the defined path aliases from jsconfig.json
+- `@components`, `@utils`, `@stores`, `@views`, etc.
+- Avoid relative imports when path aliases are available
 
-  * `ac-` = existing Acato UI
-  * `con-` = new Conduction UI
-  * more context:
-    * only entirely new functionality should be prefixed `con-`, that would mean logic which does not exist, a new modal does not count as entirely new functionality, thats a reuse of existing functionality.
+## Styling Guidelines
+- Use NLDS design tokens for colors, spacing, typography
+- Follow the established SCSS structure in src/styles/
+- Use BEM methodology for CSS class naming
+- Consider responsive design patterns
 
 ## State Management Patterns
 - Use MobX stores for global state
