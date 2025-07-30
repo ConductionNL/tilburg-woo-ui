@@ -4,7 +4,7 @@ import { withStore } from '@stores';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router';
-import { BASE_URL } from '../ac-beheer/ac-beheer';
+import { BASE_URL } from '../ac-beheer/constants';
 
 /**
  * Sets a cookie with the specified name, value and options
