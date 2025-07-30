@@ -11,13 +11,11 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcBeheerError } from '@views/ac-beheer';
-import { BASE_URL } from '../../ac-beheer';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
 import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
-import AcContactpersonenUitnodigenModal from '../modals/ac-contactpersonen-uitnodigen-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
@@ -34,7 +32,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'contactpersoon';
@@ -46,17 +44,13 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
+        nextcloud.request(
           `${endpoint}/${id}`,
-          null,
-          null,
-          `/beheer/contactpersonen/${id}`
+          { redirectPath: `/beheer/contactpersonen/${id}` }
         ),
-        makeRequest(
+        nextcloud.request(
           `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/contactpersonen/${id}`
+          { redirectPath: `/beheer/contactpersonen/${id}` }
         ),
       ]);
 
@@ -81,11 +75,16 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
   };
 
   const fetchUsedBy = async () => {
-    const usedByResponse = await makeRequest(
+    const usedByResponse = await nextcloud.request(
       `openregister/api/objects/${registerSlug}/${schemaSlug}/${id}/used`,
-      null,
-      null,
-      `/beheer/contactpersonen/${id}`
+      {
+        params: [
+          ['_extend[]', '@self.schema'],
+          ['_extend[]', 'voorziening'],
+          ['_extend[]', 'leverancier'],
+        ],
+        redirectPath: `/beheer/contactpersonen/${id}`,
+      }
     );
     const usedByData = usedByResponse?.data;
     setUsedBy(usedByData?.results);
@@ -148,12 +147,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.ENVELOPE />}
-                        onClick={() => setOpenModal('invite')}
-                      >
-                        Uitnodigen
-                      </ConActionMenu.Button>
+                     
 
                       {!data['@self'].published && (
                         <ConActionMenu.Button
@@ -344,17 +338,6 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
               }}
               onSuccess={() => {
                 navigate('/beheer/contactpersonen');
-              }}
-            />
-
-            <AcContactpersonenUitnodigenModal
-              contactpersonen={[data]}
-              showModal={openModal === 'invite'}
-              onClose={() => {
-                setOpenModal(null);
-              }}
-              onSuccess={() => {
-                fetchData();
               }}
             />
 

@@ -5,7 +5,6 @@ import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 
 const AcOvereenkomstFormModal = ({
   overeenkomst,
@@ -46,7 +45,7 @@ const AcOvereenkomstFormModal = ({
   const [schema, setSchema] = useState(null);
   const [isValid, setIsValid] = useState(false);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const contractTypes = [
     { id: 'SLA', label: 'SLA' },
@@ -83,11 +82,8 @@ const AcOvereenkomstFormModal = ({
   useEffect(() => {
     const fetchSchema = async () => {
       try {
-        const response = await makeRequest(
-          `openregister/api/schemas/contract`
-        );
-        const data = response.data;
-        setSchema(data);
+        const response = await nextcloud.request(`openregister/api/schemas/contract`);
+        setSchema(response.data);
       } catch (error) {
         console.error(error);
       }
@@ -116,9 +112,9 @@ const AcOvereenkomstFormModal = ({
     const url = isEdit ? `${baseUrl}/${overeenkomstFormData.id}` : baseUrl;
 
     try {
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           voorzieningAanbod: overeenkomstFormData.voorzieningAanbod,
           voorzieningGebruik: overeenkomstFormData.voorzieningGebruik,
           startDatum: overeenkomstFormData.startDatum,

@@ -5,7 +5,7 @@ import { AcLoader, AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../ac-beheer';
+import { BASE_URL } from '../constants';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from './con-file-dropzone';
 import ConTable from '../con-table';

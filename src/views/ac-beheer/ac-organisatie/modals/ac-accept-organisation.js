@@ -6,7 +6,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 
 /**
  * Modal to activate or deactivate an organization by changing its beoordeling
@@ -26,7 +25,7 @@ const AcAcceptOrganizationModal = ({
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleModalOpen = () => modalRef?.current?.showModal();
 
@@ -36,17 +35,13 @@ const AcAcceptOrganizationModal = ({
     try {
       const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
 
-      const response = await makeRequest(
-        `${BASE_URL}/${endpoint}/${organization.id}`,
-        null,
-        {
-          method: 'PUT',
-          body: JSON.stringify({
-            ...organization,
-            beoordeling: activate ? 'Actief' : 'Deactief',
-          }),
-        }
-      );
+      const response = await nextcloud.request(`${endpoint}/${organization.id}`, {
+        method: 'PUT',
+        data: JSON.stringify({
+          ...organization,
+          beoordeling: activate ? 'Actief' : 'Deactief',
+        }),
+      });
 
       if (response.ok) {
         onSuccess?.();

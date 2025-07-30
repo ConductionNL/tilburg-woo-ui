@@ -1,0 +1,80 @@
+# Production values for tilburg-woo-ui
+replicaCount: 3
+
+image:
+  repository: ghcr.io/conductionnl/tilburg-woo-ui
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 81
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: tilburg-woo.production.domain.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: tilburg-woo-ui-tls
+      hosts:
+        - tilburg-woo.production.domain.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Enable security features for production
+networkPolicy:
+  enabled: true
+  ingressNamespace: "ingress-nginx"
+  allowSameNamespace: true
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Production environment variables
+env:
+  NODE_ENV: "production"
+  BASE_URL: "/api/apps"
+  BASE_URL_COMMONGROUND: "/api/apps"
+  NGINX_OPENCONNECTOR_UPSTREAM: "http://openconnector-service:80"
+  NGINX_NEXTCLOUD_UPSTREAM: "http://nextcloud-service:80"
+  NGINX_NEXTCLOUD_DOMAIN: "nextcloud.production.domain.com"
+  NGINX_TARGET_HOST: "nextcloud.production.domain.com"
+  NGINX_ROOT_DIR: "/usr/share/nginx/html"
+
+healthCheck:
+  enabled: true
+  path: "/"
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+
+# Disable development mode
+development:
+  enabled: false 

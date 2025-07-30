@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -6,7 +7,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 
 /**
@@ -26,7 +26,7 @@ const AcPublishDepublishContactpersoonModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleModalOpen = () => modalRef?.current?.showModal();
 
@@ -43,9 +43,8 @@ const AcPublishDepublishContactpersoonModal = ({
       setIsLoading(true);
       const endpoint = publish ? 'publish' : 'depublish';
 
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/contactpersoon/${contactpersoonCopy.id}/${endpoint}`,
-        null,
         {
           method: 'POST',
         }

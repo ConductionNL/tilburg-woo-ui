@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useRef,
+// eslint-disable-next-line import/no-unresolved
 } from 'react';
 import { AcDrawer, AcLoader } from '@components';
 import { AcCheckbox } from '@src/molecules';
@@ -83,5 +84,7 @@ const ConFilterHeadersDrawer = forwardRef(
     );
   }
 );
+
+ConFilterHeadersDrawer.displayName = 'ConFilterHeadersDrawer';
 
 export default ConFilterHeadersDrawer;

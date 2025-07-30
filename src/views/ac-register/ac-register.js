@@ -5,7 +5,7 @@ import { Heading } from '@amsterdam/design-system-react';
 import { AcContainer, AcSection, AcFlex, AcGrid } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
-import { BASE_URL } from '../ac-beheer/ac-beheer';
+import { BASE_URL } from '../ac-beheer/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { AcColumn } from '@src/atoms';
 import {
@@ -206,8 +206,8 @@ const AcRegister = () => {
             voornaam: organization.contactPersons[0].firstName,
             tussenvoegsel: organization.contactPersons[0].middleName,
             achternaam: organization.contactPersons[0].lastName,
-            telefoon: organization.contactPersons[0].phone,
-            email: organization.contactPersons[0].email,
+            telefoonnummer: organization.contactPersons[0].phone,
+            'e-mailadres': organization.contactPersons[0].email,
             functie: organization.contactPersons[0].function,
           },
         ],

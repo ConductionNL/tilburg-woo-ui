@@ -18,7 +18,6 @@ import _ from 'lodash';
 import AcOvereenkomstFormModal from '../modals/ac-overeenkomst-form-modal';
 import AcDeleteOvereenkomstenModal from '../modals/ac-delete-overeenkomsten-modal';
 import ConActionMenu from '../../con-action-menu';
-import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import { TOOLTIP_ID } from '@src/index.web';
 
@@ -30,7 +29,7 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'contract';
@@ -47,18 +46,14 @@ const AcBeheerOvereenkomstenDetails = ({ id }) => {
       ];
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/${endpoint}/${id}`,
-          extend,
-          null,
-          `/beheer/contracten/${id}`
-        ),
-        makeRequest(
-          `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/contracten/${id}`
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          params: extend,
+          redirectPath: `/beheer/contracten/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          params: extend,
+          redirectPath: `/beheer/contracten/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {

@@ -18,7 +18,6 @@ import _ from 'lodash';
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
 import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
 import ConActionMenu from '../../con-action-menu';
-import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import { TOOLTIP_ID } from '@src/index.web';
 
@@ -30,7 +29,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'kwetsbaarheid';
@@ -42,18 +41,12 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/${endpoint}/${id}`,
-          null,
-          null,
-          `/beheer/kwetsbaarheden/${id}`
-        ),
-        makeRequest(
-          `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/kwetsbaarheden/${id}`
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          redirectPath: `/beheer/kwetsbaarheden/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          redirectPath: `/beheer/kwetsbaarheden/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {
@@ -79,8 +72,6 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const [versionTabIndex, setVersionTabIndex] = useState(0);
 
   if (error) {
     return <AcBeheerError error={error.message} />;

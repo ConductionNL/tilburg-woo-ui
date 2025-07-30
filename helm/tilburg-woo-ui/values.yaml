@@ -1,0 +1,186 @@
+# Default values for tilburg-woo-ui
+#
+# =================================
+# REQUIRED PARAMETERS FOR ARGOCD
+# =================================
+# These parameters MUST be provided via ArgoCD Parameters tab:
+#
+# ALWAYS REQUIRED:
+#   global.domain: "your-domain.com"
+#   env.NGINX_NEXTCLOUD_DOMAIN: "nextcloud.yourdomain.com"
+#   env.NGINX_TARGET_HOST: "nextcloud.yourdomain.com"
+#
+# BACKEND URLs (choose ONE approach):
+#
+# OPTION A - External domains (most common):
+#   env.NGINX_OPENCONNECTOR_UPSTREAM: "https://nextcloud.yourdomain.com"
+#   env.NGINX_NEXTCLOUD_UPSTREAM: "https://nextcloud.yourdomain.com"
+#
+# OPTION B - Internal Kubernetes services:
+#   env.NGINX_OPENCONNECTOR_UPSTREAM: "http://openconnector-service.default.svc.cluster.local:80"
+#   env.NGINX_NEXTCLOUD_UPSTREAM: "http://nextcloud-service.default.svc.cluster.local:80"
+#
+# OPTIONAL:
+#   global.tls: true (for HTTPS)
+#   image.image: "your-custom-image"
+#   image.tag: "specific-version"
+# =================================
+
+# Global configuration (matches old helm pattern)
+global:
+  domain: ""  # REQUIRED: Set via ArgoCD parameters
+  tls: false  # Set to true for HTTPS
+  subdomain: ""  # Optional: prepends to domain (e.g. "app" -> app.domain.com)
+
+replicaCount: 2  # Default to 2 like old setup
+
+image:
+  # Support both new and old image patterns
+  repository: ghcr.io/conductionnl/tilburg-woo-ui
+  image: ""  # Alternative: set image directly (overrides repository)
+  pullPolicy: Always  # Default to Always like old setup
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false  # Default to false like old setup
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 81
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Auto HTTPS certificates
+  # Hosts are auto-generated from global.domain + global.subdomain
+  hosts: []  # Leave empty - generated automatically
+  path: "/"  # Single path (matching old setup)
+  pathType: "ImplementationSpecific"  # Default like old setup
+  tls: []
+
+resources:
+  # Default resources (matching old setup)
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  # Optional limits (can be overridden)
+  # limits:
+  #   cpu: 500m
+  #   memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: false
+  # minAvailable: 1
+  maxUnavailable: 1
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Network Policy Configuration
+networkPolicy:
+  enabled: false
+  ingressNamespace: "ingress-nginx"
+  allowSameNamespace: true
+  additionalIngressRules: []
+  additionalEgressRules: []
+
+# Secrets Configuration
+secrets:
+  enabled: false
+  data: {}
+    # Example: API keys, certificates, etc. (base64 encoded)
+    # api-key: "your-base64-encoded-secret"
+  stringData: {}
+    # Example: Plain text secrets
+    # database-password: "your-plain-text-password"
+
+# Additional environment variables (not in ConfigMap)
+additionalEnvVars: {}
+
+# Extra environment variables for ConfigMap
+extraEnvVars: {}
+
+# Environment variables - nginx proxy to backend services
+env:
+  NODE_ENV: "production"
+  # API Configuration
+  BASE_URL: "/api/apps"
+  BASE_URL_COMMONGROUND: "/api/apps"
+  
+  # Nginx configuration - IMPORTANT: Configure these for your backend!
+  NGINX_ROOT_DIR: "/usr/share/nginx/html"
+  
+  # Backend URLs (REQUIRED for API proxy to work) - Choose ONE approach:
+  NGINX_OPENCONNECTOR_UPSTREAM: ""    # REQUIRED: External: "https://nextcloud.com" OR Internal: "http://service:80"
+  NGINX_NEXTCLOUD_UPSTREAM: ""        # REQUIRED: External: "https://nextcloud.com" OR Internal: "http://service:80"
+  NGINX_NEXTCLOUD_DOMAIN: ""          # REQUIRED: Domain name (e.g. "nextcloud.yourdomain.com")
+  NGINX_TARGET_HOST: ""               # REQUIRED: Target host (usually same as NGINX_NEXTCLOUD_DOMAIN)
+
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  path: "/"
+  initialDelaySeconds: 40
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+  # Startup probe for slow-starting containers
+  startup:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+    successThreshold: 1
+
+# Development mode configuration
+development:
+  enabled: false
+  image:
+    repository: ghcr.io/conductionnl/tilburg-woo-ui
+    tag: "dev"
+  service:
+    port: 3000
+    targetPort: 3000
+  env:
+    NODE_ENV: "development"
+    FAST_REFRESH: "true" 

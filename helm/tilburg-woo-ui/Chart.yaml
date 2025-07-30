@@ -1,0 +1,18 @@
+apiVersion: v2
+name: tilburg-woo-ui
+description: A Helm chart for Tilburg WOO UI application with enhanced security and reliability features
+type: application
+version: 0.2.0
+appVersion: "latest"
+home: https://github.com/ConductionNL/tilburg-woo-ui
+sources:
+  - https://github.com/ConductionNL/tilburg-woo-ui
+maintainers:
+  - name: ConductionNL
+    url: https://github.com/ConductionNL
+keywords:
+  - woo
+  - tilburg
+  - ui
+  - frontend
+  - react 

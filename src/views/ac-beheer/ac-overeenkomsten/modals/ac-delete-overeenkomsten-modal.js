@@ -5,7 +5,6 @@ import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import { VISUALS } from '@constants';
 
 /**
@@ -23,7 +22,7 @@ const AcDeleteOvereenkomstenModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleDeleteOvereenkomstOpenModal = () => modalRef?.current?.showModal();
 
@@ -33,7 +32,7 @@ const AcDeleteOvereenkomstenModal = ({
   const handleDeleteOvereenkomst = async () => {
     try {
       const deletePromises = overeenkomsten.map((overeenkomst) =>
-        makeRequest(`${BASE_URL}/${endpoint}/${overeenkomst.id}`, null, {
+        nextcloud.request(`${endpoint}/${overeenkomst.id}`, {
           method: 'DELETE',
         })
       );
