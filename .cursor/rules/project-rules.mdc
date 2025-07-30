@@ -46,3 +46,14 @@ alwaysApply: true
 - Use observer pattern for reactive components
 - Keep local state minimal when possible
 - when using hooks with dependencies such as useEffect, only add values you actually want to react on in the dependencies, not every value / function used within the effect.
+
+## Development Workflow Rules
+- **Docker Container Management**: Always restart containers after making significant changes to ensure a clean state:
+  ```bash
+  # Before testing changes
+  docker-compose -f docker-compose.dev.yml down
+  docker-compose -f docker-compose.dev.yml up -d
+  ```
+- **Environment Configuration**: After updating environment variables or container constants, restart containers to apply changes
+- **Authentication Testing**: Restart containers when testing authentication flows to ensure clean session state
+- **File Watching**: If hot reload isn't working as expected, restart containers to reinitialize file watchers 
