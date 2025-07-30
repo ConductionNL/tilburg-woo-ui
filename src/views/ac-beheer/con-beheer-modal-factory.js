@@ -1,5 +1,18 @@
 import loadable from '@loadable/component';
 
+// Load the generic delete modal once and reuse it
+const GenericDeleteModal = loadable(() =>
+  import('./ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal')
+);
+
+/**
+ * Base modal configuration that all beheer types inherit from
+ */
+const baseModalConfig = {
+  delete: GenericDeleteModal,
+  import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
+};
+
 /**
  * Modal Factory for Beheer Pages
  * This factory manages the loading and rendering of modal components
@@ -10,46 +23,36 @@ const BeheerModalFactory = {
    */
   modalComponents: {
     applicaties: {
+      ...baseModalConfig,
       add: loadable(() =>
         import('./ac-applicaties/modals/ac-applicaties-form-modal')
       ),
       edit: loadable(() =>
         import('./ac-applicaties/modals/ac-applicaties-form-modal')
       ),
-      delete: loadable(() =>
-        import('./ac-applicaties/modals/ac-delete-applicaties-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
     },
     diensten: {
+      ...baseModalConfig,
       add: loadable(() => import('./ac-dienst/modals/ac-dienst-form-modal')),
       edit: loadable(() => import('./ac-dienst/modals/ac-dienst-form-modal')),
-      delete: loadable(() => import('./ac-dienst/modals/ac-delete-dienst-modal')),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
     },
     'voorzieningen-versie': {
+      ...baseModalConfig,
       add: loadable(() =>
         import('./ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal')
       ),
       edit: loadable(() =>
         import('./ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal')
       ),
-      delete: loadable(() =>
-        import('./ac-voorzieningen-versie/modals/ac-delete-voorziening-versie-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
     },
     organisaties: {
+      ...baseModalConfig,
       add: loadable(() =>
         import('./ac-organisatie/modals/ac-organisatie-form-modal')
       ),
       edit: loadable(() =>
         import('./ac-organisatie/modals/ac-organisatie-form-modal')
       ),
-      delete: loadable(() =>
-        import('./ac-organisatie/modals/ac-delete-organisatie-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
       activate: loadable(() =>
         import('./ac-organisatie/modals/ac-accept-organisation')
       ),
@@ -70,49 +73,37 @@ const BeheerModalFactory = {
       ),
     },
     kwetsbaarheden: {
+      ...baseModalConfig,
       add: loadable(() =>
         import('./ac-kwetsbaarheid/modals/ac-kwetsbaarheid-form-modal')
       ),
       edit: loadable(() =>
         import('./ac-kwetsbaarheid/modals/ac-kwetsbaarheid-form-modal')
       ),
-      delete: loadable(() =>
-        import('./ac-kwetsbaarheid/modals/ac-delete-kwetsbaarheid-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
     },
     gebruiken: {
+      ...baseModalConfig,
       add: loadable(() => import('./ac-gebruiken/modals/ac-gebruiken-form-modal')),
       edit: loadable(() => import('./ac-gebruiken/modals/ac-gebruiken-form-modal')),
-      delete: loadable(() =>
-        import('./ac-gebruiken/modals/ac-delete-gebruiken-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
       koppelen: loadable(() => import('./ac-gebruiken/modals/ac-gebruik-koppelen')),
     },
     overeenkomsten: {
+      ...baseModalConfig,
       add: loadable(() =>
         import('./ac-overeenkomsten/modals/ac-overeenkomst-form-modal')
       ),
       edit: loadable(() =>
         import('./ac-overeenkomsten/modals/ac-overeenkomst-form-modal')
       ),
-      delete: loadable(() =>
-        import('./ac-overeenkomsten/modals/ac-delete-overeenkomsten-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
     },
     contactpersonen: {
+      ...baseModalConfig,
       add: loadable(() =>
         import('./ac-contactpersonen/modals/ac-contactpersonen-form-modal')
       ),
       edit: loadable(() =>
         import('./ac-contactpersonen/modals/ac-contactpersonen-form-modal')
       ),
-      delete: loadable(() =>
-        import('./ac-contactpersonen/modals/ac-delete-contactpersonen-modal')
-      ),
-      import: loadable(() => import('./import-modal/ac-beheer-import-modal')),
       publish: loadable(() =>
         import('./ac-contactpersonen/modals/ac-publish-depublish-contactpersoon')
       ),
@@ -164,6 +155,24 @@ const BeheerModalFactory = {
       },
     };
 
+    // Generic delete props - works for all types
+    if (modalType === 'delete') {
+      return {
+        ...baseProps,
+        objects: singleSelectedRow ? [singleSelectedRow] : selectedRows,
+      };
+    }
+
+    // Generic import props - works for all types
+    if (modalType === 'import') {
+      return {
+        ...baseProps,
+        register: config.registerSlug,
+        schema: config.schemaSlug,
+      };
+    }
+
+    // Type-specific props
     switch (type) {
       case 'applicaties':
         switch (modalType) {
@@ -173,17 +182,6 @@ const BeheerModalFactory = {
               ...baseProps,
               applicatie: singleSelectedRow,
               isEdit: modalType === 'edit',
-            };
-          case 'delete':
-            return {
-              ...baseProps,
-              applicaties: singleSelectedRow ? [singleSelectedRow] : selectedRows,
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
             };
           default:
             return baseProps;
@@ -199,17 +197,6 @@ const BeheerModalFactory = {
               preSelectedVoorziening: params.voorzieningId,
               isEdit: modalType === 'edit',
             };
-          case 'delete':
-            return {
-              ...baseProps,
-              diensten: singleSelectedRow ? [singleSelectedRow] : selectedRows,
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
-            };
           default:
             return baseProps;
         }
@@ -223,17 +210,6 @@ const BeheerModalFactory = {
               voorziening: singleSelectedRow,
               isEdit: modalType === 'edit',
             };
-          case 'delete':
-            return {
-              ...baseProps,
-              voorzieningen: singleSelectedRow ? [singleSelectedRow] : selectedRows,
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
-            };
           default:
             return baseProps;
         }
@@ -246,11 +222,6 @@ const BeheerModalFactory = {
               ...baseProps,
               organisatie: singleSelectedRow,
               isEdit: modalType === 'edit',
-            };
-          case 'delete':
-            return {
-              ...baseProps,
-              organisaties: singleSelectedRow ? [singleSelectedRow] : selectedRows,
             };
           case 'activate':
           case 'deactivate':
@@ -273,12 +244,6 @@ const BeheerModalFactory = {
               organization: singleSelectedRow,
               remove: modalType === 'removeDeelname',
             };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
-            };
           default:
             return baseProps;
         }
@@ -291,17 +256,6 @@ const BeheerModalFactory = {
               ...baseProps,
               kwetsbaarheid: singleSelectedRow,
               isEdit: modalType === 'edit',
-            };
-          case 'delete':
-            return {
-              ...baseProps,
-              kwetsbaarheden: singleSelectedRow ? [singleSelectedRow] : selectedRows,
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
             };
           default:
             return baseProps;
@@ -317,21 +271,10 @@ const BeheerModalFactory = {
               preSelectedVoorzieningId: params.voorzieningId,
               isEdit: modalType === 'edit',
             };
-          case 'delete':
-            return {
-              ...baseProps,
-              gebruiken: singleSelectedRow ? [singleSelectedRow] : selectedRows,
-            };
           case 'koppelen':
             return {
               ...baseProps,
               gebruik: singleSelectedRow,
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
             };
           default:
             return baseProps;
@@ -346,17 +289,6 @@ const BeheerModalFactory = {
               overeenkomst: singleSelectedRow,
               isEdit: modalType === 'edit',
             };
-          case 'delete':
-            return {
-              ...baseProps,
-              overeenkomsten: singleSelectedRow ? [singleSelectedRow] : selectedRows,
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
-            };
           default:
             return baseProps;
         }
@@ -370,25 +302,12 @@ const BeheerModalFactory = {
               contactpersoon: singleSelectedRow,
               isEdit: modalType === 'edit',
             };
-          case 'delete':
-            return {
-              ...baseProps,
-              contactpersonen: singleSelectedRow
-                ? [singleSelectedRow]
-                : selectedRows,
-            };
           case 'publish':
           case 'depublish':
             return {
               ...baseProps,
               contactpersoon: singleSelectedRow,
               publish: modalType === 'publish',
-            };
-          case 'import':
-            return {
-              ...baseProps,
-              register: config.registerSlug,
-              schema: config.schemaSlug,
             };
           default:
             return baseProps;
