@@ -19,8 +19,8 @@ const normalizeParams = (pairs = []) => {
 // Create axios instance configured for Nextcloud
 const nextcloudApi = axios.create({
   baseURL: BASE_URL,
-  timeout: 120000, // 120 second timeout
-  //   withCredentials: true, // include cookies for authentication
+  timeout: 120_000,
+  // withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -222,7 +222,7 @@ export default function useNextcloudRequests() {
     const ext = type === 'excel' ? 'xlsx' : 'csv';
     const now = new Date().toISOString();
     const filename = `${register}_${schema}_${now}.${ext}`;
-    return download(`/apps/openregister/api/objects/${register}/${schema}/export`, {
+    return download(`/openregister/api/objects/${register}/${schema}/export`, {
       params: [['type', type]],
       filename,
       requestKey: `export_${register}_${schema}_${type}`,
@@ -232,13 +232,13 @@ export default function useNextcloudRequests() {
   /**
    * Get current user
    */
-  const getUser = () => request('/apps/openconnector/api/user/me');
+  const getUser = () => request('/openconnector/api/user/me');
 
   /**
    * Update current user
    */
   const updateUser = (userData) =>
-    request('/apps/openconnector/api/user/me', {
+    request('/openconnector/api/user/me', {
       method: 'PUT',
       data: userData,
     });
@@ -266,7 +266,7 @@ export default function useNextcloudRequests() {
     } = options;
 
     try {
-      const response = await request('/apps/openconnector/api/user/login', {
+      const response = await request('/openconnector/api/user/login', {
         method: 'POST',
         data: {
           username: credentials.username,
