@@ -18,7 +18,6 @@ import _ from 'lodash';
 import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-modal';
 import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
 import ConActionMenu from '../../con-action-menu';
-import { BASE_URL } from '../../ac-beheer';
 import { sortPropertiesByOrder } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 
@@ -30,7 +29,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
   const [error, setError] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieningversie';
@@ -47,18 +46,14 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
       ];
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/${endpoint}/${id}`,
-          extend,
-          null,
-          `/beheer/voorzieningen-versie/${id}`
-        ),
-        makeRequest(
-          `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/voorzieningen-versie/${id}`
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          params: extend,
+          redirectPath: `/beheer/voorzieningen-versie/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          params: extend,
+          redirectPath: `/beheer/voorzieningen-versie/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {

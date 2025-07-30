@@ -6,7 +6,6 @@ import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 
 /**
  * Modal to publish or depublish an organization by calling the publish/depublish endpoint
@@ -25,7 +24,7 @@ const AcPublishDepublishOrganizationModal = ({
 }) => {
   const modalRef = useRef(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const handleModalOpen = () => modalRef?.current?.showModal();
 
@@ -34,9 +33,8 @@ const AcPublishDepublishOrganizationModal = ({
     try {
       const endpoint = publish ? 'publish' : 'depublish';
 
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/objects/voorzieningen/organisatie/${organization.id}/${endpoint}`,
-        null,
         {
           method: 'POST',
         }

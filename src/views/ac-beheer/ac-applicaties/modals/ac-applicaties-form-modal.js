@@ -3,12 +3,9 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
-import { AcFlex, AcGrid } from '@atoms';
-import { AcFormField } from '@src/molecules';
-import ReactSelect from 'react-select';
+import { AcGrid } from '@atoms';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { collapseExtendedObjects, smartSplit } from '@src/utilities';
-import { BASE_URL } from '../../ac-beheer';
 import _ from 'lodash';
 import licenses from '@assets/licenses/licenses.json';
 import { LogoUploadField } from '../../ac-organisatie/modals/ac-organisatie-form-modal';
@@ -59,13 +56,13 @@ const AcApplicatiesFormModal = ({
     );
   }, []);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   // get referentie componenten when modal is opened
   useEffect(() => {
     const fetchSchema = async () => {
       try {
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/schemas/voorziening`
         );
         setSchema(response.data);
@@ -76,9 +73,11 @@ const AcApplicatiesFormModal = ({
 
     const fetchVoorzieningsTypes = async () => {
       setReferentieComponentenLoading(true);
-      const response = await makeRequest(
-        `openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
-      ).finally(() => setReferentieComponentenLoading(false));
+      const response = await nextcloud
+        .request(
+          `openregister/api/objects/vng-gemma/element?properties.value=Referentiecomponent&_limit=1000`
+        )
+        .finally(() => setReferentieComponentenLoading(false));
 
       const data = await response.data;
 
@@ -92,9 +91,9 @@ const AcApplicatiesFormModal = ({
 
     const fetchContactpersonen = async () => {
       setContactpersonenLoading(true);
-      const response = await makeRequest(
-        `openregister/api/objects/voorzieningen/contactpersoon`
-      ).finally(() => setContactpersonenLoading(false));
+      const response = await nextcloud
+        .request(`openregister/api/objects/voorzieningen/contactpersoon`)
+        .finally(() => setContactpersonenLoading(false));
 
       const data = await response.data;
 
@@ -116,9 +115,9 @@ const AcApplicatiesFormModal = ({
 
     const fetchOrganisaties = async () => {
       setOrganisatiesLoading(true);
-      const response = await makeRequest(
-        `openregister/api/objects/voorzieningen/organisatie`
-      ).finally(() => setOrganisatiesLoading(false));
+      const response = await nextcloud
+        .request(`openregister/api/objects/voorzieningen/organisatie`)
+        .finally(() => setOrganisatiesLoading(false));
 
       const data = await response.data;
 
@@ -154,9 +153,9 @@ const AcApplicatiesFormModal = ({
     );
 
     // get the voorziening with the selected reference components in the data
-    const voorzieningResponse = await makeRequest(
-                `openregister/api/objects/voorzieningen/voorziening`,
-      voorzieningQueryParams
+    const voorzieningResponse = await nextcloud.request(
+      `openregister/api/objects/voorzieningen/voorziening`,
+      { params: voorzieningQueryParams }
     );
 
     const voorzieningData = voorzieningResponse.data.results;
@@ -179,10 +178,12 @@ const AcApplicatiesFormModal = ({
     }
 
     // get the standaarden with the same id as the voorziening standaarden
-    const standaardenResponse = await makeRequest(
-                `openregister/api/objects/voorzieningen/standaard`,
-      standaardenQueryParams
-    ).finally(() => setStandaardenLoading(false));
+    const standaardenResponse = await nextcloud
+      .request(
+        `openregister/api/objects/voorzieningen/standaard`,
+        { params: standaardenQueryParams }
+      )
+      .finally(() => setStandaardenLoading(false));
 
     const standaardenData = standaardenResponse.data.results;
 
@@ -279,9 +280,9 @@ const AcApplicatiesFormModal = ({
         logoValue = null;
       }
 
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...applicatieFormData,
           naam: applicatieFormData.name,
           beschrijving: applicatieFormData.description,
@@ -301,12 +302,11 @@ const AcApplicatiesFormModal = ({
             const currentDate = new Date().toISOString();
 
             // Create version 0.0.1 for the new application
-            const versionResponse = await makeRequest(
+            const versionResponse = await nextcloud.request(
               `openregister/api/objects/voorzieningen/voorzieningversie`,
-              null,
               {
                 method: 'POST',
-                body: JSON.stringify({
+                data: JSON.stringify({
                   voorziening: applicatieData.id,
                   versienummer: '0.0.1',
                   releaseDatum: currentDate,

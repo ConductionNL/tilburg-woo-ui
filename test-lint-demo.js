@@ -1,8 +1,6 @@
 // Demo bestand om linting te testen
 // Dit simuleert de situatie die we hadden met useNavigate
 
-import { getCookie } from '@src/utilities';
-import { BASE_URL } from '@src/views/ac-beheer/ac-beheer';
 // import { useNavigate } from 'react-router'; // Deze import ontbreekt!
 import axios from 'axios';
 
@@ -23,4 +21,4 @@ export default function useNextcloudRequestsDemo() {
   };
 
   return { makeRequest };
-} 
+}

@@ -45,7 +45,13 @@ const AcModal = React.forwardRef(
     );
 
     return (
-      <dialog id={id} className={_CLASSES} ref={ref} onClick={onBackdropClick} style={style}>
+      <dialog
+        id={id}
+        className={_CLASSES}
+        ref={ref}
+        onClick={onBackdropClick}
+        style={style}
+      >
         <div className='ac-modal__header'>
           <AcFlex justifyContent='between' alignItems='center'>
             <Heading level={2}>{title}</Heading>

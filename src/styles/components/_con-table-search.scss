@@ -1,0 +1,122 @@
+.con-table-search {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: var(--tilburg-color-gray-50);
+  border: 1px solid var(--tilburg-color-gray-200);
+  border-radius: var(--tilburg-border-radius-md);
+
+  &__field-select {
+    min-width: 200px;
+  }
+
+  &__input-container {
+    flex: auto;
+    min-width: 250px;
+  }
+
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background-color: var(--tilburg-color-blue-300);
+    color: white;
+    border-radius: var(--tilburg-border-radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+
+    &-label {
+      white-space: nowrap;
+    }
+
+    &-remove {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+
+  &__clear-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: none;
+    border: 1px solid var(--tilburg-color-gray-200);
+    border-radius: var(--tilburg-border-radius-sm);
+    color: var(--tilburg-color-gray-600);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--tilburg-color-gray-50);
+      border-color: var(--tilburg-color-red-300);
+      color: var(--tilburg-color-red-300);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 1px var(--tilburg-color-red-300);
+    }
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .con-table-search {
+    padding: 0.75rem;
+
+    &__field-select {
+      min-width: 150px;
+    }
+
+    &__input-container {
+      min-width: 200px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .con-table-search {
+    &__field-select,
+    &__input-container {
+      min-width: 100%;
+      width: 100%;
+    }
+
+    .ac-flex {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+}

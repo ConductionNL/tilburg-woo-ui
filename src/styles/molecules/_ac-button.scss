@@ -16,14 +16,6 @@
     min-height: auto;
   }
 
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-inline-end: var(--tilburg-space-column-snail);
-    max-width: unset;
-  }
-
   &--loading {
     &:has(svg) {
       svg {

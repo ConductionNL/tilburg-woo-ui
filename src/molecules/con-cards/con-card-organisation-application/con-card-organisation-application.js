@@ -1,9 +1,9 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useMemo } from 'react';
 import { AcLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
-import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
-import acFormatDate from '@src/utilities/ac-format-date';
+import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 

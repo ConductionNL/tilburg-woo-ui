@@ -1,8 +1,10 @@
+// eslint-disable-next-line import/no-unresolved
+import React from 'react';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
+import { AcFlex } from '@atoms';
 
 const AcButton = ({
-  href,
   style = 'link',
   buttonType = 'primary',
   animate,
@@ -35,14 +37,18 @@ const AcButton = ({
 
   return (
     <button className={_CLASSES} {...restProps}>
-      {icon && (
-        <span className='ac-button__icon'>
-          {loading ? <VISUALS.SPINNER className='ac-button__icon--loading' /> : icon}
-        </span>
-      )}
-      {children}
+      <AcFlex spacing='xs' alignItems='center'>
+        {icon &&
+          (loading ? (
+            <VISUALS.SPINNER className='ac-button__icon--loading' />
+          ) : (
+            icon
+          ))}
 
-      {sr && <span className='sr-only'>{sr}</span>}
+        {children}
+
+        {sr && <span className='sr-only'>{sr}</span>}
+      </AcFlex>
     </button>
   );
 };

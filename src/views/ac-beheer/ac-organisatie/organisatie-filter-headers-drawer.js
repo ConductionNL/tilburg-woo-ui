@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useRef,
+  // eslint-disable-next-line import/no-unresolved
 } from 'react';
 import { AcDrawer, AcLoader } from '@components';
 import { AcCheckbox } from '@src/molecules';
@@ -21,7 +22,7 @@ import clsx from 'clsx';
  * @param {(selected: Array<Object>) => void} props.onChange - Callback when selection changes
  * @param {React.Ref} ref - Forwarded ref to control the drawer
  */
-const ConFilterHeadersDrawer = forwardRef(
+const OrganisatieFilterHeadersDrawer = forwardRef(
   (
     {
       headers,
@@ -35,6 +36,7 @@ const ConFilterHeadersDrawer = forwardRef(
     const drawerRef = useRef(null);
     const [touched, setTouched] = useState(false);
     const [checkedIds, setCheckedIds] = useState(() => new Set(defaultHeaders));
+    const [selectedBeoordeling, setSelectedBeoordeling] = useState(null);
 
     // Update checkedIds when defaultHeaders changes and component hasn't been touched
     useEffect(() => {
@@ -88,7 +90,9 @@ const ConFilterHeadersDrawer = forwardRef(
             <ReactSelect
               placeholder='Selecteer een beoordeling'
               className={clsx('ac-beheer-select')}
+              value={selectedBeoordeling}
               onChange={(e) => {
+                setSelectedBeoordeling(e);
                 getBeoordeling?.(e?.value ?? e);
               }}
               options={[
@@ -115,4 +119,6 @@ const ConFilterHeadersDrawer = forwardRef(
   }
 );
 
-export default ConFilterHeadersDrawer;
+OrganisatieFilterHeadersDrawer.displayName = 'OrganisatieFilterHeadersDrawer';
+
+export default OrganisatieFilterHeadersDrawer;

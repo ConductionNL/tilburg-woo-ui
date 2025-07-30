@@ -4,14 +4,10 @@ import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { AcFormField } from '@src/molecules';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { collapseExtendedObjects, smartSplit } from '@src/utilities';
-import { BASE_URL } from '../../ac-beheer';
+import { collapseExtendedObjects } from '@src/utilities';
 
-import ReactSelect from 'react-select';
 import _ from 'lodash';
-import clsx from 'clsx';
 
 const AcVoorzieningVersieFormModal = ({
   voorziening,
@@ -30,7 +26,7 @@ const AcVoorzieningVersieFormModal = ({
     { label: 'Einde Ondersteuning', value: 'einde-ondersteuning' },
   ];
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const initialData = {
     naam: '',
@@ -76,7 +72,7 @@ const AcVoorzieningVersieFormModal = ({
 
   useEffect(() => {
     const fetchSchema = async () => {
-      const response = await makeRequest(
+      const response = await nextcloud.request(
         `openregister/api/schemas/voorzieningversie`
       );
       const data = response.data;
@@ -86,7 +82,7 @@ const AcVoorzieningVersieFormModal = ({
     const fetchVoorzieningen = async () => {
       try {
         setVoorzieningenLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/objects/voorzieningen/voorziening`
         );
         const data = response.data.results;
@@ -105,7 +101,7 @@ const AcVoorzieningVersieFormModal = ({
     const fetchVoorzieningAanbod = async () => {
       try {
         setVoorzieningAanbodLoading(true);
-        const response = await makeRequest(
+        const response = await nextcloud.request(
           `openregister/api/objects/voorzieningen/voorzieningaanbod`
         );
         const data = response.data.results;
@@ -208,9 +204,9 @@ const AcVoorzieningVersieFormModal = ({
         }
       }
 
-      const response = await makeRequest(url, null, {
+      const response = await nextcloud.request(url, {
         method: method,
-        body: JSON.stringify({
+        data: JSON.stringify({
           ...voorzieningFormData,
           ...statusDates,
         }),

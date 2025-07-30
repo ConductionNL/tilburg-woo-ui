@@ -18,7 +18,6 @@ import _ from 'lodash';
 import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
 import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
 import ConActionMenu from '../../con-action-menu';
-import { BASE_URL } from '../../ac-beheer';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import { TOOLTIP_ID } from '@src/index.web';
 import AcGebruikKoppelenModal from '../modals/ac-gebruik-koppelen';
@@ -32,7 +31,7 @@ const AcBeheerGebruikenDetails = ({ id }) => {
 
   const [tabIndex, setTabIndex] = useState(0);
 
-  const { makeRequest } = useNextcloudRequests();
+  const nextcloud = useNextcloudRequests();
 
   const registerSlug = 'voorzieningen';
   const schemaSlug = 'voorzieninggebruik';
@@ -48,18 +47,13 @@ const AcBeheerGebruikenDetails = ({ id }) => {
       ];
 
       const [response, schemaResponse] = await Promise.all([
-        makeRequest(
-          `${BASE_URL}/${endpoint}/${id}`,
-          extend,
-          null,
-          `/beheer/gebruiken/${id}`
-        ),
-        makeRequest(
-          `openregister/api/schemas/${schemaSlug}`,
-          null,
-          null,
-          `/beheer/gebruiken/${id}`
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          params: extend,
+          redirectPath: `/beheer/gebruiken/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          redirectPath: `/beheer/gebruiken/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {
@@ -85,8 +79,6 @@ const AcBeheerGebruikenDetails = ({ id }) => {
   useEffect(() => {
     fetchData();
   }, []);
-
-  const [versionTabIndex, setVersionTabIndex] = useState(0);
 
   if (error) {
     return <AcBeheerError error={error.message} />;

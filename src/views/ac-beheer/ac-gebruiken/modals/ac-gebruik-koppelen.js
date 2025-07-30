@@ -4,7 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '../../ac-beheer';
 import ReactSelect from 'react-select';
 import AcGrid from '@src/atoms/ac-grid/ac-grid';
 import _ from 'lodash';

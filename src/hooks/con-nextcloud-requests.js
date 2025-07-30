@@ -1,4 +1,4 @@
-import { BASE_URL } from '@src/views/ac-beheer/ac-beheer';
+import { BASE_URL } from '@src/views/ac-beheer/constants';
 import { useNavigate } from 'react-router';
 import axios from 'axios';
 import { getCookie } from '@src/utilities';
@@ -48,13 +48,49 @@ nextcloudApi.interceptors.response.use(
 );
 
 /**
- * Hook providing Nextcloud API helpers
+ * Hook providing Nextcloud API helpers with request cancellation support
  */
 export default function useNextcloudRequests() {
   const navigate = useNavigate();
 
+  // Track active requests for cancellation
+  const activeRequests = new Map();
+
   /**
-   * Generic request
+   * Cancel all active requests
+   */
+  const cancelAllRequests = () => {
+    activeRequests.forEach((controller) => {
+      controller.abort();
+    });
+    activeRequests.clear();
+  };
+
+  /**
+   * Cancel specific request by key
+   * @param {string} requestKey - Unique key identifying the request
+   */
+  const cancelRequest = (requestKey) => {
+    const controller = activeRequests.get(requestKey);
+    if (controller) {
+      controller.abort();
+      activeRequests.delete(requestKey);
+    }
+  };
+
+  /**
+   * Generate a unique request key based on parameters
+   * @param {string} path - API path
+   * @param {Array<[string, any]>} params - Query parameters
+   * @returns {string} Unique request key
+   */
+  const generateRequestKey = (path, params = []) => {
+    const sortedParams = params.sort(([a], [b]) => a.localeCompare(b));
+    return `${path}?${sortedParams.map(([k, v]) => `${k}=${v}`).join('&')}`;
+  };
+
+  /**
+   * Generic request with cancellation support
    * @param {string} path - API path (relative to BASE_URL)
    * @param {object} options
    * @param {string} [options.method='GET']
@@ -62,6 +98,7 @@ export default function useNextcloudRequests() {
    * @param {object|FormData} [options.data]
    * @param {object} [options.headers]
    * @param {string} [options.redirectPath=current location]
+   * @param {string} [options.requestKey] - Optional custom request key for cancellation
    */
   const request = async (
     path,
@@ -72,8 +109,19 @@ export default function useNextcloudRequests() {
       headers = {},
       responseType = 'json',
       redirectPath = window.location.pathname,
+      requestKey = null,
     } = {}
   ) => {
+    // Generate request key if not provided
+    const key = requestKey || generateRequestKey(path, params);
+
+    // Cancel any existing request with the same key
+    cancelRequest(key);
+
+    // Create new AbortController for this request
+    const controller = new AbortController();
+    activeRequests.set(key, controller);
+
     try {
       const config = {
         url: path,
@@ -82,15 +130,24 @@ export default function useNextcloudRequests() {
         data,
         headers,
         responseType,
+        signal: controller.signal,
       };
 
       const res = await nextcloudApi.request(config);
+
       return res;
     } catch (err) {
+      // Don't throw if request was cancelled
+      if (err.name === 'AbortError') {
+        throw new Error('Request cancelled');
+      }
+
       if (err.response?.status === 401) {
         navigate(`/login?redirect_url=${encodeURIComponent(redirectPath)}`);
       }
       throw err;
+    } finally {
+      activeRequests.delete(key);
     }
   };
 
@@ -99,7 +156,13 @@ export default function useNextcloudRequests() {
    */
   const download = async (
     path,
-    { params = [], headers = {}, filename = null, redirectPath } = {}
+    {
+      params = [],
+      headers = {},
+      filename = null,
+      redirectPath,
+      requestKey = null,
+    } = {}
   ) => {
     const res = await request(path, {
       method: 'GET',
@@ -107,6 +170,7 @@ export default function useNextcloudRequests() {
       headers,
       responseType: 'blob',
       redirectPath,
+      requestKey,
     });
 
     const disposition = res.headers['content-disposition'];
@@ -130,7 +194,7 @@ export default function useNextcloudRequests() {
   const upload = async (
     path,
     files,
-    { params = [], headers = {}, redirectPath } = {}
+    { params = [], headers = {}, redirectPath, requestKey = null } = {}
   ) => {
     const form = new FormData();
     if (Array.isArray(files)) {
@@ -146,6 +210,7 @@ export default function useNextcloudRequests() {
       data: form,
       headers: uploadHeaders,
       redirectPath,
+      requestKey,
     });
     return res;
   };
@@ -160,6 +225,7 @@ export default function useNextcloudRequests() {
     return download(`/apps/openregister/api/objects/${register}/${schema}/export`, {
       params: [['type', type]],
       filename,
+      requestKey: `export_${register}_${schema}_${type}`,
     });
   };
 
@@ -211,6 +277,7 @@ export default function useNextcloudRequests() {
           ...headers,
         },
         redirectPath: redirectPath || window.location.pathname,
+        requestKey: 'login',
       });
 
       // Handle successful login
@@ -253,10 +320,12 @@ export default function useNextcloudRequests() {
     getUser,
     updateUser,
     login,
+    cancelAllRequests,
+    cancelRequest,
     // backwards compatibility (ish (still need to redo the params where used))
     makeRequest: request,
-    downloadObjectList: download,
+    downloadObjectList: exportObjects,
     uploadObjectList: upload,
-    exportObjectList: exportObjects,
+    exportObjectList: download,
   };
 }
