@@ -39,7 +39,7 @@ class Store {
     this.authentication = new AuthenticationStore(this);
     this.mijnOmgeving = new MijnOmgevingStore(this);
     this.gemma = new GemmaStore(this);
-    this.objects = new ObjectStore(this);
+    this.object = new ObjectStore(this);
 
     window.addEventListener(
       'swFreshContentReady',
