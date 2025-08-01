@@ -39,7 +39,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'applicaties',
           title: 'Beheer Applicaties',
           routeType: 'applicaties',
-          extend: [['_extend[]', 'standaarden']],
+          extend: ['standaarden'],
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -74,10 +74,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'diensten',
           title: 'Beheer Dienst',
           routeType: 'diensten',
-          extend: [
-            ['_extend[]', 'voorziening'],
-            ['_extend[]', 'leverancier'],
-          ],
+          extend: ['voorziening', 'leverancier'],
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
             voorziening: {
@@ -137,10 +134,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'voorzieningen-versie',
           title: 'Beheer Voorzieningen Versie',
           routeType: 'voorzieningen-versie',
-          extend: [
-            ['_extend[]', 'voorziening'],
-            ['_extend[]', 'kwetsbaarheden'],
-          ],
+          extend: ['voorziening', 'kwetsbaarheden'],
           defaultHeaders: ['name', 'versienummer', 'releaseDatum', 'status'],
           customHeaders: {
             kwetsbaarheden: {
@@ -186,7 +180,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'organisaties',
           title: 'Beheer Organisaties',
           routeType: 'organisaties',
-          extend: [['_extend[]', 'contactgegevens']],
+          extend: ['contactgegevens'],
           defaultHeaders: [
             'organizationName',
             'website',
@@ -386,10 +380,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'gebruiken',
           title: 'Beheer Gebruiken',
           routeType: 'gebruiken',
-          extend: [
-            ['_extend[]', 'voorzieningId'],
-            ['_extend[]', 'organisatieId'],
-          ],
+          extend: ['voorzieningId', 'organisatieId'],
           defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
           customHeaders: {
             versieId: {
@@ -489,7 +480,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'overeenkomsten',
           title: 'Beheer Overeenkomsten',
           routeType: 'overeenkomsten',
-          extend: [['_extend[]', 'all']],
+          extend: ['all'],
           defaultHeaders: [
             'name',
             'startDatum',

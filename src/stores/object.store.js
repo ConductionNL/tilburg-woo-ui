@@ -3,12 +3,13 @@ import { observable, computed, makeObservable, action, toJS } from 'mobx';
 
 // Imports => Utilities
 import { AcBuildURLSearchParams } from '@utils';
-import axios from 'axios';
+import axios, { CanceledError } from 'axios';
 import { getCookie } from '@src/utilities';
 import { BASE_URL } from '@views/ac-beheer/constants';
 
 let app = {};
 
+// Remove global variable and use dependency injection
 const LIMIT = 20;
 
 export const DEFAULT_SEARCH_QUERY = {
@@ -50,7 +51,156 @@ nextcloudApi.interceptors.response.use(
 /**
  * Store for managing objects in OpenCatalogi.
  * Handles fetching, creating, updating, deleting, and other API operations
- * for objects in the system.
+ * for objects in the system with robust error handling and request cancellation.
+ *
+ * ## Core Functionality Overview
+ *
+ * ### State Management
+ * - **Observable State**: Objects, collections, loading states, errors, active objects, related data, search terms, pagination, success states, selected objects, schema properties, and column filters
+ * - **Computed Getters**: Access to filtered and processed state data
+ * - **Actions**: Methods that modify observable state and trigger API calls
+ * - **Request Cancellation**: AbortController infrastructure to prevent race conditions
+ *
+ * ### API Operations (All with Request Cancellation)
+ *
+ * #### Collection Operations
+ * - `fetchCollection(register, schema, params, append)` - Fetches paginated collections of objects with cancellation support
+ * - `loadMore(type)` - Loads next page of results
+ * - `loadPrevious(type)` - Loads previous page of results
+ *
+ * #### Individual Object Operations
+ * - `fetchObject(register, schema, id, params)` - Fetches single object with related data and cancellation support
+ * - `createObject(register, schema, data)` - Creates new object and refreshes collection
+ * - `saveObject(objectItem)` - Creates or updates object and refreshes collection for data consistency
+ * - `updateObject(register, schema, id, data)` - Updates existing object and refreshes collection
+ * - `deleteObject(objectItem)` - Deletes object with operation-specific error tracking
+ *
+ * #### Object Lifecycle Operations
+ * - `publishObject(objectItem)` - Publishes object with operation-specific state tracking
+ * - `depublishObject(objectItem)` - Depublishes object with operation-specific state tracking
+ * - `lockObject(objectItem, process, duration)` - Locks object for editing with operation-specific state tracking
+ * - `unlockObject(objectItem)` - Unlocks object with operation-specific state tracking
+ *
+ * #### Mass Operations (Parallel Processing)
+ * - `massDeleteObjects(objects, onProgress)` - Deletes multiple objects in parallel
+ * - `massPublishObjects(objects, onProgress)` - Publishes multiple objects in parallel
+ * - `massDepublishObjects(objects, onProgress)` - Depublishes multiple objects in parallel
+ * - `massLockObjects(objects, process, duration, onProgress)` - Locks multiple objects in parallel
+ * - `massUnlockObjects(objects, onProgress)` - Unlocks multiple objects in parallel
+ *
+ * ### Related Data Management
+ * - `fetchRelatedData(register, schema, id, dataType, params)` - Fetches logs, uses, used, files with cancellation support
+ * - `setActiveObject(register, schema, object)` - Sets active object and fetches related data
+ * - `clearActiveObject(register, schema)` - Clears active object and related data
+ *
+ * ### Search and Filtering
+ * - `setSearchTerm(type, term)` - Sets search term with debouncing
+ * - `clearSearchTerm(type)` - Clears search term
+ * - `initializeSchemaProperties(type, schema)` - Initializes schema properties for filtering
+ * - `initializeColumnFilters(type)` - Sets up column filters based on schema
+ * - `updateColumnFilter(type, id, enabled)` - Updates column filter state
+ *
+ * ### Selection Management
+ * - `setSelectedObjects(objects)` - Sets selected objects for bulk operations
+ * - `toggleSelectAllObjects(type)` - Toggles selection of all objects of a type
+ * - `isAllSelectedForType(type)` - Checks if all objects of a type are selected
+ *
+ * ### Request Cancellation
+ * - `cancelRequest(type)` - Cancels ongoing request for specific operation type
+ * - `_createAbortController(type)` - Creates new AbortController for request type
+ *
+ * ### State Setters and Getters
+ *
+ * #### State Setters
+ * - `setCollection(type, results, append)` - Sets collection data
+ * - `setLoading(type, isLoading)` - Sets loading state for operation-specific tracking
+ * - `setError(type, error)` - Sets error state for operation-specific tracking
+ * - `setSuccess(type, success)` - Sets success state for operation-specific tracking
+ * - `setPagination(type, pagination)` - Sets pagination info
+ * - `setObjectError(objectId, error)` - Sets error for specific object
+ * - `clearObjectError(objectId)` - Clears error for specific object
+ * - `clearAllObjectErrors()` - Clears all object errors
+ *
+ * #### State Getters
+ * - `getCollection(type)` - Gets collection data
+ * - `getObject(type, id)` - Gets specific object
+ * - `getActiveObject(type)` - Gets active object
+ * - `getRelatedData(type, dataType)` - Gets related data (logs, uses, used, files)
+ * - `getPagination(type)` - Gets pagination info
+ * - `getSearchTerm(type)` - Gets current search term
+ * - `getError(type)` - Gets error state for operation-specific tracking
+ * - `getObjectError(objectId)` - Gets error for specific object
+ * - `getState(type)` - Gets success/error state for operation-specific tracking
+ * - `getEnabledSchemaProperties(type)` - Gets enabled schema properties
+ * - `getColumnFilters(type)` - Gets column filters
+ * - `getSchemaPropertiesForType(type)` - Gets all schema properties
+ *
+ * #### Utility Getters
+ * - `isLoading(type)` - Checks if specific operation type is loading
+ * - `hasMorePages(type)` - Checks if more pages available
+ * - `hasPreviousPages(type)` - Checks if previous pages available
+ * - `getAuditTrails(type)` - Gets audit trails
+ *
+ * ### Helper Methods
+ * - `_constructApiUrl(register, schema, id, action, params)` - Constructs API URLs
+ * - `_constructQueryParams(params)` - Constructs query parameters
+ * - `extractId(value)` - Extracts ID from various formats
+ * - `getTypeFromObject(objectItem)` - Gets object type from item
+ * - `getTypeFromRegisterAndSchema(register, schema)` - Gets object type from register and schema
+ *
+ * ## Operation-Specific State Tracking
+ *
+ * All operations now use operation-specific identifiers for loading, error, and success states:
+ * - `fetchCollection` → `register_schema`
+ * - `fetchObject` → `register_schema_objectId`
+ * - `fetchRelatedData` → `register_schema_objectId_dataType`
+ * - `createObject` → `register_schema_create`
+ * - `saveObject` → `register_schema_save`
+ * - `updateObject` → `register_schema_objectId`
+ * - `deleteObject` → `delete_objectId`
+ * - `publishObject` → `publish_objectId`
+ * - `depublishObject` → `depublish_objectId`
+ * - `lockObject` → `lock_objectId`
+ * - `unlockObject` → `unlock_objectId`
+ *
+ * ## Function Relationships and Workflows
+ *
+ * ### Typical CRUD Workflow (with Request Cancellation)
+ * 1. `fetchCollection()` → Request cancellation → `setCollection()` → `getCollection()`
+ * 2. `fetchObject()` → Request cancellation → `setActiveObject()` → `getActiveObject()`
+ * 3. `createObject()` → `fetchCollection()` (refresh) → `setActiveObject()`
+ * 4. `saveObject()` → `fetchCollection()` (refresh) → Updates store state → Returns response
+ * 5. `deleteObject()` → Operation-specific state tracking → Clears selections
+ *
+ * ### Search and Filtering Workflow
+ * 1. `setSearchTerm()` → Debounced → `fetchCollection()` with search params and cancellation
+ * 2. `initializeSchemaProperties()` → `initializeColumnFilters()` → `updateColumnFilter()`
+ *
+ * ### Bulk Operations Workflow
+ * 1. `setSelectedObjects()` → `massDeleteObjects()` → Operation-specific error tracking → Update selections
+ * 2. Progress callbacks provide real-time feedback during parallel operations
+ *
+ * ### Related Data Workflow (with Request Cancellation)
+ * 1. `setActiveObject()` → `fetchRelatedData()` with cancellation for logs, uses, used, files
+ * 2. `getRelatedData()` → Access fetched related data
+ *
+ * ### Pagination Workflow
+ * 1. `fetchCollection()` → `setPagination()` → `getPagination()`
+ * 2. `loadMore()` / `loadPrevious()` → `fetchCollection()` with append flag
+ *
+ * ## Error Handling (Enhanced)
+ * - **Operation-Specific Errors**: Each operation has its own error/success state preventing conflicts
+ * - **Individual Object Errors**: Stored in `objectErrors` for granular feedback
+ * - **Request Cancellation**: AbortController prevents race conditions between concurrent requests
+ * - **Mass Operations**: Provide detailed success/failure results with progress tracking
+ * - **Collection Consistency**: Collections refreshed after modifications to ensure data accuracy
+ *
+ * ## State Synchronization (Improved)
+ * - **Collections**: Automatically refreshed after CRUD operations for data consistency
+ * - **Active Objects**: Updated when related operations complete
+ * - **Selected Objects**: Managed across bulk operations with automatic cleanup
+ * - **Related Data**: Refreshed when active object changes with proper cancellation
+ * - **Request Management**: Automatic cleanup of abort controllers after operations
  *
  * Usage Examples:
  *
@@ -113,6 +263,9 @@ export class ObjectStore {
   constructor(store) {
     makeObservable(this);
     app.store = store;
+
+    // Request cancellation infrastructure
+    this.abortControllers = new Map();
   }
 
   // Observable state
@@ -143,6 +296,13 @@ export class ObjectStore {
    * */
   @observable
   errors = {};
+
+  /**
+   * Success states for different operations
+   * @type {{[type: string]: boolean}}
+   * */
+  @observable
+  success = {};
 
   /**
    * Currently selected/active objects by type
@@ -180,13 +340,6 @@ export class ObjectStore {
   pagination = {};
 
   /**
-   * Success states for different operations
-   * @type {{[type: string]: boolean}}
-   * */
-  @observable
-  success = {};
-
-  /**
    * Array of selected object IDs for bulk operations
    * @type {string[]}
    * */
@@ -213,6 +366,34 @@ export class ObjectStore {
    * */
   @observable
   columnFilters = {}; // Column filter states for table views
+
+  // Request cancellation methods
+  /**
+   * Cancels any ongoing request for a specific type
+   * @param {string} type - The type identifier for the request to cancel
+   */
+  @action
+  cancelRequest = (type) => {
+    const controller = this.abortControllers.get(type);
+    if (controller) {
+      controller.abort();
+      this.abortControllers.delete(type);
+    }
+  };
+
+  /**
+   * Creates a new AbortController for a request type
+   * @param {string} type - The type identifier for the request
+   * @returns {AbortController} The abort controller
+   */
+  _createAbortController = (type) => {
+    // Cancel any existing request for this type
+    this.cancelRequest(type);
+
+    const controller = new AbortController();
+    this.abortControllers.set(type, controller);
+    return controller;
+  };
 
   // Computed getters
 
@@ -303,6 +484,16 @@ export class ObjectStore {
   };
 
   /**
+   * Sets the success state for a specific type
+   * @param {string} type - The type identifier for the success state
+   * @param {boolean} success - Whether the operation was successful
+   */
+  @action
+  setSuccess = (type, success) => {
+    this.success[type] = success;
+  };
+
+  /**
    * Sets the active object and fetches its related data
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
@@ -365,23 +556,6 @@ export class ObjectStore {
   @action
   setPagination = (type, pagination) => {
     this.pagination[type] = pagination;
-  };
-
-  /**
-   * Sets success and error states for a specific type
-   * @param {string} type - The type identifier
-   * @param {Object} state - Object containing success and error properties
-   * @param {boolean} [state.success] - Success state
-   * @param {string|null} [state.error] - Error message
-   */
-  @action
-  setState = (type, { success, error }) => {
-    if (success !== undefined) {
-      this.success[type] = success;
-    }
-    if (error !== undefined) {
-      this.errors[type] = error;
-    }
   };
 
   /**
@@ -548,6 +722,13 @@ export class ObjectStore {
       ...params,
     };
 
+    if (
+      Array.isArray(queryParams._extend) &&
+      !queryParams._extend.includes('@self.schema')
+    ) {
+      queryParams._extend.push('@self.schema');
+    }
+
     // Remove internal parameters
     delete queryParams._source;
     delete queryParams._schema;
@@ -579,7 +760,7 @@ export class ObjectStore {
    * @param {Object} objectItem - The object item
    * @returns {string} The object type
    */
-  getObjectTypeFromItem = (objectItem) => {
+  getTypeFromObject = (objectItem) => {
     const register = objectItem['@self']?.register || objectItem.register;
     const schema = objectItem['@self']?.schema || objectItem.schema;
 
@@ -589,7 +770,20 @@ export class ObjectStore {
       return `${registerId}_${schemaId}`;
     }
 
-    return 'unknown';
+    return null;
+  };
+
+  /**
+   * Gets the object type from a register and schema
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @returns {string} The object type
+   */
+  getTypeFromRegisterAndSchema = (register, schema) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    if (!registerId || !schemaId) return null;
+    return `${registerId}_${schemaId}`;
   };
 
   /**
@@ -601,8 +795,13 @@ export class ObjectStore {
    */
   @action
   fetchCollection = async (register, schema, params = {}, append = false) => {
-    this.setLoading(`${register}_${schema}`, true);
-    this.setState(`${register}_${schema}`, { success: null, error: null });
+    const type = `${register}_${schema}`;
+    this.setLoading(type, true);
+    this.setError(type, null);
+    this.setSuccess(type, null);
+
+    // Create abort controller for request cancellation
+    const controller = this._createAbortController(type);
 
     try {
       const queryParams = {
@@ -612,7 +811,10 @@ export class ObjectStore {
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema),
-        { params: this._constructQueryParams(queryParams) }
+        {
+          params: this._constructQueryParams(queryParams),
+          signal: controller.signal,
+        }
       );
       if (!response.ok)
         throw new Error(`Failed to fetch collection for ${register}/${schema}`);
@@ -640,15 +842,23 @@ export class ObjectStore {
       data.results.forEach((item) => {
         this.objects[collectionKey][item.id] = { ...item };
       });
+
+      this.setSuccess(type, true);
     } catch (error) {
+      // Don't throw error if request was cancelled
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        console.log(`Request cancelled for ${type}`);
+        return;
+      }
+
       console.error(`Error fetching collection for ${register}/${schema}:`, error);
-      this.setState(`${register}_${schema}`, {
-        success: false,
-        error: error.message,
-      });
+      this.setError(type, error.message);
+      this.setSuccess(type, false);
       throw error;
     } finally {
-      this.setLoading(`${register}_${schema}`, false);
+      this.setLoading(type, false);
+      // Clean up abort controller
+      this.abortControllers.delete(type);
     }
   };
 
@@ -662,8 +872,13 @@ export class ObjectStore {
   @action
   fetchObject = async (register, schema, id, params = {}) => {
     const type = `${register}_${schema}`;
-    this.setLoading(`${type}_${id}`, true);
-    this.setState(type, { success: null, error: null });
+    const requestType = `${type}_${id}`;
+    this.setLoading(requestType, true);
+    this.setError(type, null);
+    this.setSuccess(type, null);
+
+    // Create abort controller for request cancellation
+    const controller = this._createAbortController(requestType);
 
     try {
       const queryParams = {
@@ -673,7 +888,10 @@ export class ObjectStore {
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id),
-        { params: this._constructQueryParams(queryParams) }
+        {
+          params: this._constructQueryParams(queryParams),
+          signal: controller.signal,
+        }
       );
       if (!response.ok) throw new Error(`Failed to fetch ${type} object`);
 
@@ -684,12 +902,23 @@ export class ObjectStore {
       if (this.activeObjects[type]?.id === id) {
         await this.setActiveObject(register, schema, data);
       }
+
+      this.setSuccess(type, true);
     } catch (error) {
+      // Don't throw error if request was cancelled
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        console.log(`Request cancelled for ${requestType}`);
+        return;
+      }
+
       console.error(`Error fetching ${type} object:`, error);
-      this.setState(type, { success: false, error: error.message });
+      this.setError(type, error.message);
+      this.setSuccess(type, false);
       throw error;
     } finally {
-      this.setLoading(`${type}_${id}`, false);
+      this.setLoading(requestType, false);
+      // Clean up abort controller
+      this.abortControllers.delete(requestType);
     }
   };
 
@@ -704,8 +933,13 @@ export class ObjectStore {
   @action
   fetchRelatedData = async (register, schema, id, dataType, params = {}) => {
     const type = `${register}_${schema}`;
-    this.setLoading(`${type}_${id}_${dataType}`, true);
-    this.setState(type, { success: null, error: null });
+    const requestType = `${type}_${id}_${dataType}`;
+    this.setLoading(requestType, true);
+    this.setError(type, null);
+    this.setSuccess(type, null);
+
+    // Create abort controller for request cancellation
+    const controller = this._createAbortController(requestType);
 
     try {
       const queryParams = {
@@ -717,7 +951,10 @@ export class ObjectStore {
 
       const response = await nextcloudApi.get(
         this._constructApiUrl(register, schema, id, dataType),
-        { params: this._constructQueryParams(queryParams) }
+        {
+          params: this._constructQueryParams(queryParams),
+          signal: controller.signal,
+        }
       );
       if (!response.ok) throw new Error(`Failed to fetch ${dataType} for ${type}`);
 
@@ -748,12 +985,23 @@ export class ObjectStore {
       } else {
         this.relatedData[type][dataType] = data;
       }
+
+      this.setSuccess(type, true);
     } catch (error) {
+      // Don't throw error if request was cancelled
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        console.log(`Request cancelled for ${requestType}`);
+        return;
+      }
+
       console.error(`Error fetching ${dataType} for ${type}:`, error);
-      this.setState(type, { success: false, error: error.message });
+      this.setError(type, error.message);
+      this.setSuccess(type, false);
       throw error;
     } finally {
-      this.setLoading(`${type}_${id}_${dataType}`, false);
+      this.setLoading(requestType, false);
+      // Clean up abort controller
+      this.abortControllers.delete(requestType);
     }
   };
 
@@ -769,7 +1017,7 @@ export class ObjectStore {
     const type = `${register}_${schema}`;
     this.setLoading(`${type}_create`, true);
     this.setError(`${type}_create`, null);
-    this.setState(type, { success: null, error: null });
+    this.setSuccess(type, null);
 
     try {
       const response = await nextcloudApi.post(
@@ -784,13 +1032,13 @@ export class ObjectStore {
 
       await this.fetchCollection(register, schema);
       await this.setActiveObject(register, schema, newObject);
-      this.setState(type, { success: true, error: null });
+      this.setSuccess(type, true);
 
       return newObject;
     } catch (error) {
       console.error(`Error creating ${type} object:`, error);
       this.setError(`${type}_create`, error.message);
-      this.setState(type, { success: false, error: error.message });
+      this.setSuccess(type, false);
       throw error;
     } finally {
       this.setLoading(`${type}_create`, false);
@@ -813,8 +1061,13 @@ export class ObjectStore {
       throw new Error('Object item, register and schema are required');
     }
 
+    const type = `${registerId}_${schemaId}`;
     const isNewObject = !objectItem['@self']?.id;
     const objectId = objectItem['@self']?.id;
+
+    this.setLoading(`${type}_save`, true);
+    this.setError(`${type}_save`, null);
+    this.setSuccess(type, null);
 
     let endpoint = `/openregister/api/objects/${registerId}/${schemaId}`;
     if (!isNewObject && objectId) {
@@ -840,31 +1093,26 @@ export class ObjectStore {
       const data = response.data;
 
       // Update store state after successful save
-      const type = `${registerId}_${schemaId}`;
       if (!this.objects[type]) this.objects[type] = {};
       this.objects[type][data.id] = data;
-
-      // Update collection if it exists
-      if (this.collections[type]) {
-        const existingIndex = this.collections[type].results.findIndex(
-          (item) => item.id === data.id
-        );
-        if (existingIndex >= 0) {
-          this.collections[type].results[existingIndex] = data;
-        } else {
-          this.collections[type].results.unshift(data);
-        }
-      }
 
       // Update active object if it matches
       if (this.activeObjects[type]?.id === data.id) {
         this.activeObjects[type] = data;
       }
 
+      // Refresh the entire collection to ensure data consistency
+      await this.fetchCollection(registerId, schemaId);
+
+      this.setSuccess(type, true);
       return { response, data };
     } catch (error) {
       console.error('Error saving object:', error);
+      this.setError(`${type}_save`, error.message);
+      this.setSuccess(type, false);
       throw error;
+    } finally {
+      this.setLoading(`${type}_save`, false);
     }
   };
 
@@ -878,10 +1126,18 @@ export class ObjectStore {
    */
   @action
   updateObject = async (register, schema, id, data) => {
-    const type = `${register}_${schema}`;
-    this.setLoading(`${type}_${id}`, true);
-    this.setError(`${type}_${id}`, null);
-    this.setState(type, { success: null, error: null });
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId) {
+      throw new Error('Could not extract register or schema ID');
+    }
+
+    const type = `${registerId}_${schemaId}`;
+    const requestType = `${type}_${id}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     try {
       const response = await nextcloudApi.put(
@@ -900,16 +1156,16 @@ export class ObjectStore {
         this.activeObjects[type] = updatedObject;
       }
 
-      this.setState(type, { success: true, error: null });
+      this.setSuccess(requestType, true);
 
       return updatedObject;
     } catch (error) {
       console.error(`Error updating ${type} object:`, error);
-      this.setError(`${type}_${id}`, error.message);
-      this.setState(type, { success: false, error: error.message });
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
-      this.setLoading(`${type}_${id}`, false);
+      this.setLoading(requestType, false);
     }
   };
 
@@ -935,8 +1191,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    this.setLoading(`delete_${objectId}`, true);
-    this.setError(`delete_${objectId}`, null);
+    const requestType = `delete_${objectId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     try {
       const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}`;
@@ -959,13 +1217,15 @@ export class ObjectStore {
         this.setSelectedObjects(remainingSelected);
       }
 
+      this.setSuccess(requestType, true);
       return true;
     } catch (error) {
       console.error('Error deleting object:', error);
-      this.setError(`delete_${objectId}`, error.message);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
-      this.setLoading(`delete_${objectId}`, false);
+      this.setLoading(requestType, false);
     }
   };
 
@@ -991,8 +1251,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    this.setLoading(`publish_${objectId}`, true);
-    this.setError(`publish_${objectId}`, null);
+    const requestType = `publish_${objectId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     try {
       const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`;
@@ -1008,7 +1270,7 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the published object
-      const objectType = this.getObjectTypeFromItem(objectItem);
+      const objectType = this.getTypeFromObject(objectItem);
       const activeObject = this.activeObjects[objectType];
       if (
         activeObject &&
@@ -1027,13 +1289,15 @@ export class ObjectStore {
         this.setSelectedObjects(remainingSelected);
       }
 
+      this.setSuccess(requestType, true);
       return updatedObject;
     } catch (error) {
       console.error('Error publishing object:', error);
-      this.setError(`publish_${objectId}`, error.message);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
-      this.setLoading(`publish_${objectId}`, false);
+      this.setLoading(requestType, false);
     }
   };
 
@@ -1059,8 +1323,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    this.setLoading(`depublish_${objectId}`, true);
-    this.setError(`depublish_${objectId}`, null);
+    const requestType = `depublish_${objectId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     try {
       const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`;
@@ -1076,7 +1342,7 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the depublished object
-      const objectType = this.getObjectTypeFromItem(objectItem);
+      const objectType = this.getTypeFromObject(objectItem);
       const activeObject = this.activeObjects[objectType];
       if (
         activeObject &&
@@ -1095,13 +1361,15 @@ export class ObjectStore {
         this.setSelectedObjects(remainingSelected);
       }
 
+      this.setSuccess(requestType, true);
       return updatedObject;
     } catch (error) {
       console.error('Error depublishing object:', error);
-      this.setError(`depublish_${objectId}`, error.message);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
-      this.setLoading(`depublish_${objectId}`, false);
+      this.setLoading(requestType, false);
     }
   };
 
@@ -1129,8 +1397,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    this.setLoading(`lock_${objectId}`, true);
-    this.setError(`lock_${objectId}`, null);
+    const requestType = `lock_${objectId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     try {
       const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/lock`;
@@ -1150,7 +1420,7 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the locked object
-      const objectType = this.getObjectTypeFromItem(objectItem);
+      const objectType = this.getTypeFromObject(objectItem);
       const activeObject = this.activeObjects[objectType];
       if (
         activeObject &&
@@ -1159,13 +1429,15 @@ export class ObjectStore {
         this.activeObjects[objectType] = updatedObject;
       }
 
+      this.setSuccess(requestType, true);
       return updatedObject;
     } catch (error) {
       console.error('Error locking object:', error);
-      this.setError(`lock_${objectId}`, error.message);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
-      this.setLoading(`lock_${objectId}`, false);
+      this.setLoading(requestType, false);
     }
   };
 
@@ -1191,8 +1463,10 @@ export class ObjectStore {
       throw new Error('Could not extract register or schema ID');
     }
 
-    this.setLoading(`unlock_${objectId}`, true);
-    this.setError(`unlock_${objectId}`, null);
+    const requestType = `unlock_${objectId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     try {
       const endpoint = `/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`;
@@ -1208,7 +1482,7 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the unlocked object
-      const objectType = this.getObjectTypeFromItem(objectItem);
+      const objectType = this.getTypeFromObject(objectItem);
       const activeObject = this.activeObjects[objectType];
       if (
         activeObject &&
@@ -1217,13 +1491,15 @@ export class ObjectStore {
         this.activeObjects[objectType] = updatedObject;
       }
 
+      this.setSuccess(requestType, true);
       return updatedObject;
     } catch (error) {
       console.error('Error unlocking object:', error);
-      this.setError(`unlock_${objectId}`, error.message);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
-      this.setLoading(`unlock_${objectId}`, false);
+      this.setLoading(requestType, false);
     }
   };
 

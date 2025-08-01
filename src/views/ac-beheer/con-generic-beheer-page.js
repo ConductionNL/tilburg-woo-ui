@@ -32,12 +32,9 @@ import { AcButton } from '@molecules';
  * Generic Beheer Page Component
  * This component can handle all beheer page types through configuration
  */
-const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
+const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} }) => {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState([]);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
 
@@ -53,6 +50,37 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
       return null;
     }
   }, [type, configOverrides]);
+
+  // Generate object type identifier for the object store
+  const objectType = useMemo(() => {
+    if (!config) return null;
+    return object.getTypeFromRegisterAndSchema(
+      config.registerSlug,
+      config.schemaSlug
+    );
+  }, [config, object]);
+
+  // Get reactive data from object store
+  const data = useMemo(() => {
+    if (!objectType) return [];
+    return object.getCollection(objectType).results || [];
+  }, [objectType, object]);
+
+  const loading = useMemo(() => {
+    if (!objectType) return false;
+    return object.isLoading(objectType);
+  }, [objectType, object]);
+
+  const error = useMemo(() => {
+    if (!objectType) return null;
+    const storeError = object.getError(objectType);
+    return storeError ? { message: storeError } : null;
+  }, [objectType, object]);
+
+  const objectStorePagination = useMemo(() => {
+    if (!objectType) return { total: 0, page: 1, pages: 0, limit: 20 };
+    return object.getPagination(objectType);
+  }, [objectType, object]);
 
   // If no configuration exists for this type, show wrong page
   if (!config) {
@@ -71,18 +99,15 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
 
   // Use the custom hook for pagination limit management
   const [limit, setLimit] = usePaginationLimit(config.paginationKey);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    pages: 0,
-    limit,
-    offset: 0,
-  });
 
-  // Update pagination when limit changes
-  useEffect(() => {
-    setPagination((prev) => ({ ...prev, limit }));
-  }, [limit]);
+  // Merge object store pagination with local limit preference
+  const pagination = useMemo(
+    () => ({
+      ...objectStorePagination,
+      limit,
+    }),
+    [objectStorePagination, limit]
+  );
 
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
@@ -92,70 +117,57 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
 
   const fetchData = useCallback(
     async (searchParams = {}) => {
-      try {
-        setLoading(true);
+      if (!objectType || !config) {
+        return;
+      }
 
-        const extend = [...config.extend];
+      try {
+        // Build the extend parameters exactly as before
+        const extend = { ...config.extend };
         if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
 
-        // create the data request key
-        const dataRequestKey = `key_data_${config.routeType}`;
+        // Convert extend array and searchParams to object format for object store
+        const storeParams = {
+          _page: pagination.page,
+          _limit: pagination.limit,
+          '_extend[]': extend,
+          ...searchParams,
+        };
+
+        // Use object store for collection data - this handles loading/error states automatically
+        await object.fetchCollection(
+          config.registerSlug,
+          config.schemaSlug,
+          storeParams
+        );
+
+        // Fetch schema separately (object store doesn't handle schemas yet)
         const schemaRequestKey = `key_schema_${config.schemaSlug}`;
+        const schemaResponse = await nextcloud.request(schemaEndpoint, {
+          redirectPath: `/beheer/${config.routeType}`,
+          requestKey: schemaRequestKey,
+        });
 
-        const [response, schemaResponse] = await Promise.all([
-          nextcloud.request(endpoint, {
-            params: [
-              ...extend,
-              ['_page', pagination.page],
-              ['_limit', pagination.limit],
-              ...Object.entries(searchParams),
-            ],
-            redirectPath: `/beheer/${config.routeType}`,
-            requestKey: dataRequestKey,
-          }),
-          nextcloud.request(schemaEndpoint, {
-            redirectPath: `/beheer/${config.routeType}`,
-            requestKey: schemaRequestKey,
-          }),
-        ]);
-
-        const jsonResponse = response.data;
         const schemaJsonResponse = schemaResponse.data;
-
-        setPagination((prev) => ({
-          ...prev,
-          total: jsonResponse.total,
-          pages: jsonResponse.pages,
-          offset: jsonResponse.offset,
-        }));
-
-        const data = jsonResponse.results;
         const dataProperties = schemaJsonResponse.properties;
-
-        const errorResponse = jsonResponse.error;
-
-        errorResponse && setError({ message: errorResponse });
-        setData(data);
         setDataProperties(sortPropertiesByOrder(dataProperties));
       } catch (err) {
-        // Don't set error if request was cancelled
+        // Don't set error if request was cancelled - object store handles collection errors
         if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
           return;
         }
-        console.error('Error fetching data:', err);
-        setError(err);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching schema:', err);
       }
     },
     [
+      objectType,
+      config,
       pagination.page,
       pagination.limit,
-      endpoint,
       schemaEndpoint,
-      config.extend,
-      config.routeType,
       beoordelingFilter,
+      object,
+      nextcloud,
     ]
   );
 
@@ -171,27 +183,43 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
     // Cancel all active requests when switching types
     nextcloud.cancelAllRequests();
 
-    setPagination((prev) => ({ ...prev, page: 1 }));
+    // Reset all state when type changes
     setSelectedRows([]);
     setSingleSelectedRow(null);
     setOpenModal(null);
     setBeoordelingFilter(null);
     setTableHeaders([]);
-    setData([]);
     setDataProperties([]);
-    setError(null);
     setShowSearch(false);
   }, [type]);
 
+  // Fetch data when component is ready and pagination changes
   useEffect(() => {
-    fetchData();
-  }, [pagination.page, pagination.limit]);
+    if (objectType) {
+      // Only fetch when objectType is available
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [objectType, pagination.page, pagination.limit]);
+
+  // Handle object store cancellation when objectType changes (separate effect)
+  const prevObjectTypeRef = useRef();
+  useEffect(() => {
+    const prevObjectType = prevObjectTypeRef.current;
+    prevObjectTypeRef.current = objectType;
+
+    // Cancel previous objectType requests when switching to a new objectType
+    if (prevObjectType && prevObjectType !== objectType) {
+      object.cancelRequest(prevObjectType);
+    }
+  }, [objectType, object]);
 
   // Refetch data when beoordelingFilter changes
   useEffect(() => {
     if (type === 'organisaties') {
       fetchData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beoordelingFilter]);
 
   const [selectedRows, setSelectedRows] = useState([]);
@@ -428,11 +456,37 @@ const ConGenericBeheerPage = ({ type, configOverrides = {} }) => {
             <Pagination
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
-              onPageChange={(page) => {
-                setPagination((prev) => ({
-                  ...prev,
-                  page,
-                }));
+              onPageChange={async (page) => {
+                const params = {
+                  _page: page,
+                  _limit: pagination.limit,
+                };
+
+                // Add beoordelingFilter if present
+                if (beoordelingFilter) {
+                  params.beoordeling = beoordelingFilter;
+                }
+
+                // Add extend parameters
+                const extend = [...config.extend];
+                if (beoordelingFilter)
+                  extend.push(['beoordeling', beoordelingFilter]);
+
+                extend.forEach(([key, value]) => {
+                  if (params[key]) {
+                    params[key] = Array.isArray(params[key])
+                      ? [...params[key], value]
+                      : [params[key], value];
+                  } else {
+                    params[key] = value;
+                  }
+                });
+
+                await object.fetchCollection(
+                  config.registerSlug,
+                  config.schemaSlug,
+                  params
+                );
               }}
               nextLabel=''
               previousLabel=''
