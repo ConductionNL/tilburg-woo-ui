@@ -7,7 +7,6 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * Generic modal to delete 1 or multiple objects
@@ -22,9 +21,9 @@ const ConGenericBeheerDeleteModal = ({
   showModal = false,
   onClose,
   onSuccess,
+  store: { object },
 }) => {
   const modalRef = useRef(null);
-  const nextcloud = useNextcloudRequests();
 
   const handleOpenModal = () => modalRef?.current?.showModal();
 
@@ -50,36 +49,9 @@ const ConGenericBeheerDeleteModal = ({
 
   const handleDelete = async () => {
     try {
-      const deletePromises = objects.map((object) => {
-        const metadata = object['@self'];
+      const results = await object.massDeleteObjects(objects);
 
-        if (!metadata) {
-          console.error('Object missing @self metadata:', object);
-          return Promise.reject(
-            new Error(`Object ${object.id} missing @self metadata`)
-          );
-        }
-
-        const registerSlug = metadata.register?.slug || metadata.register?.id || metadata.register;
-        const schemaSlug = metadata.schema?.slug || metadata.schema?.id || metadata.schema;
-
-        if (!registerSlug || !schemaSlug) {
-          console.error('Object missing register or schema info:', object);
-          return Promise.reject(
-            new Error(`Object ${object.id} missing register or schema info`)
-          );
-        }
-
-        const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
-
-        return nextcloud.request(`${endpoint}/${object.id}`, {
-          method: 'DELETE',
-        });
-      });
-
-      const responses = await Promise.all(deletePromises);
-
-      if (responses.some((response) => response.ok)) {
+      if (results.successful.length > 0) {
         onSuccess?.();
         modalRef?.current?.close();
       }
