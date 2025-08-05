@@ -14,7 +14,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcEditDienstModal from '../modals/ac-dienst-form-modal';
-import AcDeleteDienstModal from '../modals/ac-delete-dienst-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
@@ -450,8 +450,8 @@ const AcBeheerDienstDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteDienstModal
-                  diensten={[data]}
+                <ConGenericBeheerDeleteModal
+                  objects={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);

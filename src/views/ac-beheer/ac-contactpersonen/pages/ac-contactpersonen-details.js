@@ -15,7 +15,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 import AcContactpersonenFormModal from '../modals/ac-contactpersonen-form-modal';
-import AcDeleteContactpersonenModal from '../modals/ac-delete-contactpersonen-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
@@ -44,14 +44,12 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
       const endpoint = `openregister/api/objects/${registerSlug}/${schemaSlug}`;
 
       const [response, schemaResponse] = await Promise.all([
-        nextcloud.request(
-          `${endpoint}/${id}`,
-          { redirectPath: `/beheer/contactpersonen/${id}` }
-        ),
-        nextcloud.request(
-          `openregister/api/schemas/${schemaSlug}`,
-          { redirectPath: `/beheer/contactpersonen/${id}` }
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          redirectPath: `/beheer/contactpersonen/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          redirectPath: `/beheer/contactpersonen/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {
@@ -147,7 +145,6 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
                       >
                         Bijwerken
                       </ConActionMenu.Button>
-                     
 
                       {!data['@self'].published && (
                         <ConActionMenu.Button
@@ -330,8 +327,8 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
               }}
             />
 
-            <AcDeleteContactpersonenModal
-              contactpersonen={[data]}
+            <ConGenericBeheerDeleteModal
+              objects={[data]}
               showModal={openModal === 'delete'}
               onClose={() => {
                 setOpenModal(null);

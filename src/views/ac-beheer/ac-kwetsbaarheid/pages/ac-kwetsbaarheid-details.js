@@ -16,7 +16,7 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 
 import AcKwetsbaarheidFormModal from '../modals/ac-kwetsbaarheid-form-modal';
-import AcDeleteKwetsbaarheidModal from '../modals/ac-delete-kwetsbaarheid-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -174,8 +174,8 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteKwetsbaarheidModal
-                  kwetsbaarheden={[data]}
+                <ConGenericBeheerDeleteModal
+                  objects={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);

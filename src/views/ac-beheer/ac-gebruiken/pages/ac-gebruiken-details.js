@@ -16,7 +16,7 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 
 import AcGebruikenFormModal from '../modals/ac-gebruiken-form-modal';
-import AcDeleteGebruikenModal from '../modals/ac-delete-gebruiken-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -213,8 +213,8 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteGebruikenModal
-                  gebruiken={[data]}
+                <ConGenericBeheerDeleteModal
+                  objects={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);

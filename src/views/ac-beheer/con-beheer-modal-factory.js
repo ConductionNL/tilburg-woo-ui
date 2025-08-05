@@ -5,6 +5,9 @@ const GenericDeleteModal = loadable(() =>
   import('./ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal')
 );
 
+// Load the generic form modal once and reuse it
+const GenericFormModal = loadable(() => import('./con-generic-form-modal'));
+
 /**
  * Base modal configuration that all beheer types inherit from
  */
@@ -24,17 +27,13 @@ const BeheerModalFactory = {
   modalComponents: {
     applicaties: {
       ...baseModalConfig,
-      add: loadable(() =>
-        import('./ac-applicaties/modals/ac-applicaties-form-modal')
-      ),
-      edit: loadable(() =>
-        import('./ac-applicaties/modals/ac-applicaties-form-modal')
-      ),
+      add: GenericFormModal,
+      edit: GenericFormModal,
     },
     diensten: {
       ...baseModalConfig,
-      add: loadable(() => import('./ac-dienst/modals/ac-dienst-form-modal')),
-      edit: loadable(() => import('./ac-dienst/modals/ac-dienst-form-modal')),
+      add: GenericFormModal,
+      edit: GenericFormModal,
     },
     'voorzieningen-versie': {
       ...baseModalConfig,
@@ -47,12 +46,8 @@ const BeheerModalFactory = {
     },
     organisaties: {
       ...baseModalConfig,
-      add: loadable(() =>
-        import('./ac-organisatie/modals/ac-organisatie-form-modal')
-      ),
-      edit: loadable(() =>
-        import('./ac-organisatie/modals/ac-organisatie-form-modal')
-      ),
+      add: GenericFormModal,
+      edit: GenericFormModal,
       activate: loadable(() =>
         import('./ac-organisatie/modals/ac-accept-organisation')
       ),
@@ -74,36 +69,24 @@ const BeheerModalFactory = {
     },
     kwetsbaarheden: {
       ...baseModalConfig,
-      add: loadable(() =>
-        import('./ac-kwetsbaarheid/modals/ac-kwetsbaarheid-form-modal')
-      ),
-      edit: loadable(() =>
-        import('./ac-kwetsbaarheid/modals/ac-kwetsbaarheid-form-modal')
-      ),
+      add: GenericFormModal,
+      edit: GenericFormModal,
     },
     gebruiken: {
       ...baseModalConfig,
-      add: loadable(() => import('./ac-gebruiken/modals/ac-gebruiken-form-modal')),
-      edit: loadable(() => import('./ac-gebruiken/modals/ac-gebruiken-form-modal')),
+      add: GenericFormModal,
+      edit: GenericFormModal,
       koppelen: loadable(() => import('./ac-gebruiken/modals/ac-gebruik-koppelen')),
     },
     overeenkomsten: {
       ...baseModalConfig,
-      add: loadable(() =>
-        import('./ac-overeenkomsten/modals/ac-overeenkomst-form-modal')
-      ),
-      edit: loadable(() =>
-        import('./ac-overeenkomsten/modals/ac-overeenkomst-form-modal')
-      ),
+      add: GenericFormModal,
+      edit: GenericFormModal,
     },
     contactpersonen: {
       ...baseModalConfig,
-      add: loadable(() =>
-        import('./ac-contactpersonen/modals/ac-contactpersonen-form-modal')
-      ),
-      edit: loadable(() =>
-        import('./ac-contactpersonen/modals/ac-contactpersonen-form-modal')
-      ),
+      add: GenericFormModal,
+      edit: GenericFormModal,
       publish: loadable(() =>
         import('./ac-contactpersonen/modals/ac-publish-depublish-contactpersoon')
       ),
@@ -172,35 +155,44 @@ const BeheerModalFactory = {
       };
     }
 
-    // Type-specific props
+    // Generic form modal props - works for add/edit across all types
+    if (modalType === 'add' || modalType === 'edit') {
+      // Define which types use the generic form modal
+      const genericFormTypes = [
+        'applicaties',
+        'diensten',
+        'organisaties',
+        'kwetsbaarheden',
+        'gebruiken',
+        'overeenkomsten',
+        'contactpersonen',
+      ];
+
+      if (genericFormTypes.includes(type)) {
+        // Build preSelected values from params
+        const preSelected = {};
+
+        // Handle type-specific pre-selected values
+        if (type === 'diensten' && params.voorzieningId) {
+          preSelected.voorziening = params.voorzieningId;
+        }
+        if (type === 'gebruiken') {
+          if (params.voorzieningId) preSelected.voorzieningId = params.voorzieningId;
+          if (params.organisatieId) preSelected.organisatieId = params.organisatieId;
+        }
+
+        return {
+          ...baseProps,
+          type,
+          data: singleSelectedRow,
+          isEdit: modalType === 'edit',
+          preSelected,
+        };
+      }
+    }
+
+    // Type-specific props for non-generic modals
     switch (type) {
-      case 'applicaties':
-        switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              applicatie: singleSelectedRow,
-              isEdit: modalType === 'edit',
-            };
-          default:
-            return baseProps;
-        }
-
-      case 'diensten':
-        switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              dienst: singleSelectedRow,
-              preSelectedVoorziening: params.voorzieningId,
-              isEdit: modalType === 'edit',
-            };
-          default:
-            return baseProps;
-        }
-
       case 'voorzieningen-versie':
         switch (modalType) {
           case 'add':
@@ -216,13 +208,6 @@ const BeheerModalFactory = {
 
       case 'organisaties':
         switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              organisatie: singleSelectedRow,
-              isEdit: modalType === 'edit',
-            };
           case 'activate':
           case 'deactivate':
             return {
@@ -248,29 +233,8 @@ const BeheerModalFactory = {
             return baseProps;
         }
 
-      case 'kwetsbaarheden':
-        switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              kwetsbaarheid: singleSelectedRow,
-              isEdit: modalType === 'edit',
-            };
-          default:
-            return baseProps;
-        }
-
       case 'gebruiken':
         switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              gebruik: singleSelectedRow,
-              preSelectedVoorzieningId: params.voorzieningId,
-              isEdit: modalType === 'edit',
-            };
           case 'koppelen':
             return {
               ...baseProps,
@@ -280,28 +244,8 @@ const BeheerModalFactory = {
             return baseProps;
         }
 
-      case 'overeenkomsten':
-        switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              overeenkomst: singleSelectedRow,
-              isEdit: modalType === 'edit',
-            };
-          default:
-            return baseProps;
-        }
-
       case 'contactpersonen':
         switch (modalType) {
-          case 'add':
-          case 'edit':
-            return {
-              ...baseProps,
-              contactpersoon: singleSelectedRow,
-              isEdit: modalType === 'edit',
-            };
           case 'publish':
           case 'depublish':
             return {

@@ -35,7 +35,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import AcOrganisatieFormModal from '../modals/ac-organisatie-form-modal';
-import AcDeleteOrganisatieModal from '../modals/ac-delete-organisatie-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import AcAcceptOrganizationModal from '../modals/ac-accept-organisation';
 import ConObjectUploadFiles from '../../con-object-upload-files/con-object-upload-files';
@@ -899,8 +899,8 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteOrganisatieModal
-                  organisaties={[data]}
+                <ConGenericBeheerDeleteModal
+                  objects={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);

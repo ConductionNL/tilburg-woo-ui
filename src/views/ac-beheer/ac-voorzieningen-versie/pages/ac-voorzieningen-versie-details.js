@@ -16,7 +16,7 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 
 import AcEditVoorzieningVersieModal from '../modals/ac-voorziening-versie-form-modal';
-import AcDeleteVoorzieningVersieModal from '../modals/ac-delete-voorziening-versie-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import { sortPropertiesByOrder } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -196,8 +196,8 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteVoorzieningVersieModal
-                  voorzieningen={[data]}
+                <ConGenericBeheerDeleteModal
+                  objects={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);

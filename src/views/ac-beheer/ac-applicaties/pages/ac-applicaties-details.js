@@ -26,7 +26,7 @@ import {
 } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcApplicatiesFormModal from '../modals/ac-applicaties-form-modal';
-import AcDeleteApplicatiesModal from '../modals/ac-delete-applicaties-modal';
+import ConGenericBeheerDeleteModal from '../../ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '../../con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import _ from 'lodash';
@@ -109,14 +109,13 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
       setLoading(true);
 
       const [response, schemaResponse] = await Promise.all([
-        nextcloud.request(
-          `${endpoint}/${id}`,
-          { params: extend, redirectPath: `/beheer/applicaties/${id}` }
-        ),
-        nextcloud.request(
-          `openregister/api/schemas/${schemaSlug}`,
-          { redirectPath: `/beheer/applicaties/${id}` }
-        ),
+        nextcloud.request(`${endpoint}/${id}`, {
+          params: extend,
+          redirectPath: `/beheer/applicaties/${id}`,
+        }),
+        nextcloud.request(`openregister/api/schemas/${schemaSlug}`, {
+          redirectPath: `/beheer/applicaties/${id}`,
+        }),
       ]);
 
       if (!response.ok || !schemaResponse.ok) {
@@ -792,8 +791,8 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   }}
                 />
 
-                <AcDeleteApplicatiesModal
-                  applicaties={[data]}
+                <ConGenericBeheerDeleteModal
+                  objects={[data]}
                   showModal={openModal === 'delete'}
                   onClose={() => {
                     setOpenModal(null);
