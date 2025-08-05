@@ -6,6 +6,7 @@ import { AcBuildURLSearchParams } from '@utils';
 import axios, { CanceledError } from 'axios';
 import { getCookie } from '@src/utilities';
 import { BASE_URL } from '@views/ac-beheer/constants';
+import { sortPropertiesByOrder } from '@src/utilities';
 
 let app = {};
 
@@ -45,7 +46,16 @@ nextcloudApi.interceptors.response.use(
     ...response,
     ok: response.status >= 200 && response.status < 300,
   }),
-  (error) => Promise.reject(error)
+  (error) => {
+    // Handle 401 Unauthorized errors by redirecting to login
+    if (error.response?.status === 401) {
+      const currentPath = window.location.pathname + window.location.search;
+      window.location.href = `/login?redirect_url=${encodeURIComponent(
+        currentPath
+      )}`;
+    }
+    return Promise.reject(error);
+  }
 );
 
 /**
@@ -56,7 +66,7 @@ nextcloudApi.interceptors.response.use(
  * ## Core Functionality Overview
  *
  * ### State Management
- * - **Observable State**: Objects, collections, loading states, errors, active objects, related data, search terms, pagination, success states, selected objects, schema properties, and column filters
+ * - **Observable State**: Objects, collections, loading states, errors, active objects, related data, search terms, pagination, success states, selected objects, schema properties, column filters, schemas, schema loading states, and schema errors
  * - **Computed Getters**: Access to filtered and processed state data
  * - **Actions**: Methods that modify observable state and trigger API calls
  * - **Request Cancellation**: AbortController infrastructure to prevent race conditions
@@ -67,6 +77,14 @@ nextcloudApi.interceptors.response.use(
  * - `fetchCollection(register, schema, params, append)` - Fetches paginated collections of objects with cancellation support
  * - `loadMore(type)` - Loads next page of results
  * - `loadPrevious(type)` - Loads previous page of results
+ *
+ * #### Schema Operations
+ * - `fetchSchema(register, schema, params)` - Fetches schema definition with cancellation support
+ * - `getSchema(type)` - Gets schema for specific type
+ * - `getSchemaProperties(type)` - Gets sorted schema properties for specific type
+ * - `isSchemaLoading(type)` - Checks if schema is loading for specific type
+ * - `getSchemaError(type)` - Gets schema error for specific type
+ * - `clearSchema(type)` - Clears schema data for specific type
  *
  * #### Individual Object Operations
  * - `fetchObject(register, schema, id, params)` - Fetches single object with related data and cancellation support
@@ -120,6 +138,9 @@ nextcloudApi.interceptors.response.use(
  * - `setObjectError(objectId, error)` - Sets error for specific object
  * - `clearObjectError(objectId)` - Clears error for specific object
  * - `clearAllObjectErrors()` - Clears all object errors
+ * - `setSchemaLoading(type, isLoading)` - Sets schema loading state
+ * - `setSchemaError(type, error)` - Sets schema error state
+ * - `clearSchema(type)` - Clears schema data
  *
  * #### State Getters
  * - `getCollection(type)` - Gets collection data
@@ -134,6 +155,10 @@ nextcloudApi.interceptors.response.use(
  * - `getEnabledSchemaProperties(type)` - Gets enabled schema properties
  * - `getColumnFilters(type)` - Gets column filters
  * - `getSchemaPropertiesForType(type)` - Gets all schema properties
+ * - `getSchema(type)` - Gets schema for specific type
+ * - `getSchemaProperties(type)` - Gets sorted schema properties
+ * - `isSchemaLoading(type)` - Checks if schema is loading
+ * - `getSchemaError(type)` - Gets schema error
  *
  * #### Utility Getters
  * - `isLoading(type)` - Checks if specific operation type is loading
@@ -154,6 +179,7 @@ nextcloudApi.interceptors.response.use(
  * - `fetchCollection` → `register_schema`
  * - `fetchObject` → `register_schema_objectId`
  * - `fetchRelatedData` → `register_schema_objectId_dataType`
+ * - `fetchSchema` → `schema_register_schema`
  * - `createObject` → `register_schema_create`
  * - `saveObject` → `register_schema_save`
  * - `updateObject` → `register_schema_objectId`
@@ -171,6 +197,11 @@ nextcloudApi.interceptors.response.use(
  * 3. `createObject()` → `fetchCollection()` (refresh) → `setActiveObject()`
  * 4. `saveObject()` → `fetchCollection()` (refresh) → Updates store state → Returns response
  * 5. `deleteObject()` → Operation-specific state tracking → Clears selections
+ *
+ * ### Schema Workflow (with Request Cancellation)
+ * 1. `fetchSchema()` → Request cancellation → `setSchemaLoading()` → `getSchemaProperties()`
+ * 2. Schema properties automatically initialized for column filtering
+ * 3. `getSchemaProperties()` → Returns sorted properties using `sortPropertiesByOrder`
  *
  * ### Search and Filtering Workflow
  * 1. `setSearchTerm()` → Debounced → `fetchCollection()` with search params and cancellation
@@ -191,12 +222,14 @@ nextcloudApi.interceptors.response.use(
  * ## Error Handling (Enhanced)
  * - **Operation-Specific Errors**: Each operation has its own error/success state preventing conflicts
  * - **Individual Object Errors**: Stored in `objectErrors` for granular feedback
+ * - **Schema Errors**: Stored in `schemaErrors` for schema-specific error tracking
  * - **Request Cancellation**: AbortController prevents race conditions between concurrent requests
  * - **Mass Operations**: Provide detailed success/failure results with progress tracking
  * - **Collection Consistency**: Collections refreshed after modifications to ensure data accuracy
  *
  * ## State Synchronization (Improved)
  * - **Collections**: Automatically refreshed after CRUD operations for data consistency
+ * - **Schemas**: Cached per object type with automatic property initialization
  * - **Active Objects**: Updated when related operations complete
  * - **Selected Objects**: Managed across bulk operations with automatic cleanup
  * - **Related Data**: Refreshed when active object changes with proper cancellation
@@ -212,6 +245,15 @@ nextcloudApi.interceptors.response.use(
  *
  * // Get the collection data
  * const collection = store.object.getCollection('register-slug_schema-slug');
+ *
+ * // Fetch schema for a specific type
+ * await store.object.fetchSchema('register-slug', 'schema-slug');
+ *
+ * // Get schema properties (sorted by order)
+ * const properties = store.object.getSchemaProperties('register-slug_schema-slug');
+ *
+ * // Check if schema is loading
+ * const isLoading = store.object.isSchemaLoading('register-slug_schema-slug');
  *
  * // Create a new object
  * const newObject = await store.object.createObject('register-slug', 'schema-slug', {
@@ -366,6 +408,27 @@ export class ObjectStore {
    * */
   @observable
   columnFilters = {}; // Column filter states for table views
+
+  /**
+   * Schema definitions for different object types
+   * @type {{[type: string]: Object}}
+   * */
+  @observable
+  schemas = {}; // Schema definitions for different object types
+
+  /**
+   * Loading states for schema fetching operations
+   * @type {{[type: string]: boolean}}
+   * */
+  @observable
+  schemaLoading = {}; // Loading states for schema fetching
+
+  /**
+   * Error states for schema fetching operations
+   * @type {{[type: string]: string}}
+   * */
+  @observable
+  schemaErrors = {}; // Error states for schema fetching
 
   // Request cancellation methods
   /**
@@ -787,6 +850,17 @@ export class ObjectStore {
   };
 
   /**
+   * Gets schema type from schema identifier
+   * @param {string|Object} schema - Schema identifier or object
+   * @returns {string|null} Schema type identifier
+   */
+  getSchemaType = (schema) => {
+    const schemaId = this.extractId(schema);
+    if (!schemaId) return null;
+    return `schema_${schemaId}`;
+  };
+
+  /**
    * Fetches a collection of objects from the API
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
@@ -1002,6 +1076,137 @@ export class ObjectStore {
       this.setLoading(requestType, false);
       // Clean up abort controller
       this.abortControllers.delete(requestType);
+    }
+  };
+
+  /**
+   * Fetches schema definition for a specific register and schema
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   */
+  @action
+  fetchSchema = async (schema, params = {}) => {
+    const schemaId = this.extractId(schema);
+
+    if (!schemaId) {
+      throw new Error('Could not extract schema ID');
+    }
+
+    const schemaType = this.getSchemaType(schema);
+
+    this.setSchemaLoading(schemaType, true);
+    this.setSchemaError(schemaType, null);
+
+    // Create abort controller for request cancellation
+    const controller = this._createAbortController(schemaType);
+
+    try {
+      const endpoint = `/openregister/api/schemas/${schemaId}`;
+
+      const response = await nextcloudApi.get(endpoint, {
+        params: this._constructQueryParams(params),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch schema for ${type}`);
+      }
+
+      const schemaData = response.data;
+      this.schemas[schemaType] = schemaData;
+
+      // Initialize schema properties for this type
+      this.initializeSchemaProperties(schemaType, schemaData);
+
+      this.setSchemaError(schemaType, null);
+    } catch (error) {
+      // Don't throw error if request was cancelled
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        console.log(`Schema request cancelled for ${schemaType}`);
+        return;
+      }
+
+      console.error(`Error fetching schema for ${schemaId}:`, error);
+      this.setSchemaError(schemaType, error.message);
+      throw error;
+    } finally {
+      this.setSchemaLoading(schemaType, false);
+      // Clean up abort controller
+      this.abortControllers.delete(schemaType);
+    }
+  };
+
+  /**
+   * Sets the schema loading state for a specific type
+   * @param {string} type - The type identifier for the schema loading state
+   * @param {boolean} isLoading - Whether the schema is currently loading
+   */
+  @action
+  setSchemaLoading = (type, isLoading) => {
+    this.schemaLoading[type] = isLoading;
+  };
+
+  /**
+   * Sets the schema error state for a specific type
+   * @param {string} type - The type identifier for the schema error state
+   * @param {string|null} error - The error message or null to clear errors
+   */
+  @action
+  setSchemaError = (type, error) => {
+    this.schemaErrors[type] = error;
+    if (error) {
+      console.error('Schema error set for type:', type, error);
+    }
+  };
+
+  /**
+   * Gets the schema for a specific type
+   * @param {string} type - The type identifier
+   * @returns {Object|null} The schema or null if not found
+   */
+  getSchema = (type) => this.schemas[type] || null;
+
+  /**
+   * Gets the schema properties for a specific type
+   * @param {string} type - The type identifier
+   * @returns {Object} The schema properties sorted by order
+   */
+  getSchemaProperties = (type) => {
+    const schema = this.schemas[type];
+    if (!schema?.properties) return {};
+
+    return sortPropertiesByOrder(schema.properties);
+  };
+
+  /**
+   * Checks if schema is currently loading for a specific type
+   * @param {string} type - The type identifier
+   * @returns {boolean} True if the schema is loading, false otherwise
+   */
+  isSchemaLoading = (type) => this.schemaLoading[type] || false;
+
+  /**
+   * Gets the schema error for a specific type
+   * @param {string} type - The type identifier
+   * @returns {string|null} Schema error message or null if no error
+   */
+  getSchemaError = (type) => this.schemaErrors[type] || null;
+
+  /**
+   * Clears schema data for a specific type
+   * @param {string} type - The type identifier
+   */
+  @action
+  clearSchema = (type) => {
+    if (this.schemas[type]) {
+      delete this.schemas[type];
+    }
+    if (this.schemaLoading[type]) {
+      delete this.schemaLoading[type];
+    }
+    if (this.schemaErrors[type]) {
+      delete this.schemaErrors[type];
     }
   };
 

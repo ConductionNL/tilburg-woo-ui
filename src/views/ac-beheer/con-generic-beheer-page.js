@@ -17,7 +17,6 @@ import ConTable from './con-table';
 import ConActionMenu from './con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { Pagination } from '@amsterdam/design-system-react';
-import { sortPropertiesByOrder } from '@src/utilities';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
 } from '../../components/con-pagination-limit-selector/con-pagination-limit-selector';
@@ -34,7 +33,6 @@ import { AcButton } from '@molecules';
  */
 const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} }) => {
   const navigate = useNavigate();
-  const [dataProperties, setDataProperties] = useState([]);
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
 
@@ -60,6 +58,12 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
     );
   }, [config, object]);
 
+  // Generate schema type identifier for schema operations
+  const schemaType = useMemo(() => {
+    if (!config) return null;
+    return object.getSchemaType(config.schemaSlug);
+  }, [config, object]);
+
   // Get reactive data from object store
   const data = useMemo(() => {
     if (!objectType) return [];
@@ -81,6 +85,23 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
     if (!objectType) return { total: 0, page: 1, pages: 0, limit: 20 };
     return object.getPagination(objectType);
   }, [objectType, object]);
+
+  // Get schema properties from object store
+  const dataProperties = useMemo(() => {
+    if (!schemaType) return [];
+    return object.getSchemaProperties(schemaType);
+  }, [schemaType, object]);
+
+  const schemaLoading = useMemo(() => {
+    if (!schemaType) return false;
+    return object.isSchemaLoading(schemaType);
+  }, [schemaType, object]);
+
+  const schemaError = useMemo(() => {
+    if (!schemaType) return null;
+    const storeError = object.getSchemaError(schemaType);
+    return storeError ? { message: storeError } : null;
+  }, [schemaType, object]);
 
   // If no configuration exists for this type, show wrong page
   if (!config) {
@@ -112,9 +133,6 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
 
-  const endpoint = `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`;
-  const schemaEndpoint = `openregister/api/schemas/${config.schemaSlug}`;
-
   const fetchData = useCallback(
     async (searchParams = {}) => {
       if (!objectType || !config) {
@@ -141,22 +159,14 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
           storeParams
         );
 
-        // Fetch schema separately (object store doesn't handle schemas yet)
-        const schemaRequestKey = `key_schema_${config.schemaSlug}`;
-        const schemaResponse = await nextcloud.request(schemaEndpoint, {
-          redirectPath: `/beheer/${config.routeType}`,
-          requestKey: schemaRequestKey,
-        });
-
-        const schemaJsonResponse = schemaResponse.data;
-        const dataProperties = schemaJsonResponse.properties;
-        setDataProperties(sortPropertiesByOrder(dataProperties));
+        // Fetch schema using object store
+        await object.fetchSchema(config.schemaSlug);
       } catch (err) {
         // Don't set error if request was cancelled - object store handles collection errors
         if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
           return;
         }
-        console.error('Error fetching schema:', err);
+        console.error('Error fetching data:', err);
       }
     },
     [
@@ -164,10 +174,8 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
       config,
       pagination.page,
       pagination.limit,
-      schemaEndpoint,
       beoordelingFilter,
       object,
-      nextcloud,
     ]
   );
 
@@ -189,7 +197,6 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
     setOpenModal(null);
     setBeoordelingFilter(null);
     setTableHeaders([]);
-    setDataProperties([]);
     setShowSearch(false);
   }, [type]);
 
@@ -315,6 +322,10 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
 
   if (error) {
     return <AcBeheerError title={config.title} error={error.message} />;
+  }
+
+  if (schemaError) {
+    return <AcBeheerError title={config.title} error={schemaError.message} />;
   }
 
   // Build table headers with status icon if configured
@@ -448,7 +459,7 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
             showSortButtons
             onHeaderSearch={fetchData}
             dataProperties={dataProperties}
-            loading={loading}
+            loading={loading || schemaLoading}
             showSearch={showSearch}
           />
 
