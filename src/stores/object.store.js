@@ -1114,7 +1114,7 @@ export class ObjectStore {
       }
 
       const schemaData = response.data;
-      this.schemas[schemaType] = schemaData;
+      this.setSchema(schemaType, schemaData);
 
       // Initialize schema properties for this type
       this.initializeSchemaProperties(schemaType, schemaData);
@@ -1158,6 +1158,16 @@ export class ObjectStore {
     if (error) {
       console.error('Schema error set for type:', type, error);
     }
+  };
+
+  /**
+   * Sets schema data for a specific type
+   * @param {string} type - The type identifier for the schema
+   * @param {Object} schemaData - The schema data to set
+   */
+  @action
+  setSchema = (type, schemaData) => {
+    this.schemas[type] = schemaData;
   };
 
   /**

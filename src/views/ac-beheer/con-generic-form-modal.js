@@ -6,9 +6,12 @@ import { VISUALS } from '@constants';
 import { AcGrid, AcFlex } from '@atoms';
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-import { collapseExtendedObjects } from '@src/utilities';
+import { AcUUID, collapseExtendedObjects } from '@src/utilities';
 import FormModalConfigFactory from './con-form-modal-config-factory';
 import _ from 'lodash';
+
+const DEFAULT_CONFIG_OVERRIDES = {};
+const DEFAULT_PRE_SELECTED = {};
 
 /**
  * Generic Form Modal Component
@@ -39,9 +42,11 @@ const ConGenericFormModal = ({
   onClose,
   onSuccess,
   isEdit = false,
-  preSelected = {},
-  configOverrides = {},
+  preSelected = DEFAULT_PRE_SELECTED,
+  configOverrides = DEFAULT_CONFIG_OVERRIDES,
 }) => {
+  if (!showModal) return null;
+
   const modalRef = useRef(null);
   const formRef = useRef(null);
 
@@ -62,6 +67,9 @@ const ConGenericFormModal = ({
     }
   }, [type, configOverrides]);
 
+  useEffect(() => console.log('type changed'), [type]);
+  useEffect(() => console.log('configOverrides changed'), [configOverrides]);
+
   // Form state
   const [formData, setFormData] = useState({});
   const [isValid, setIsValid] = useState(false);
@@ -77,7 +85,7 @@ const ConGenericFormModal = ({
   const schemaType = useMemo(() => {
     if (!config?.beheerConfig?.schemaSlug) return null;
     return object.getSchemaType(config.beheerConfig.schemaSlug);
-  }, [config?.beheerConfig?.schemaSlug, object]);
+  }, [String(config?.beheerConfig?.schemaSlug)]);
 
   // Get schema from object store (with proper MobX reactivity)
   const schema = useMemo(() => {
@@ -297,7 +305,14 @@ const ConGenericFormModal = ({
     }
   }, [config, data, isEdit, preSelected, schema]);
 
+  useEffect(() => console.log('config changed'), [config]);
+  useEffect(() => console.log('data changed'), [data]);
+  useEffect(() => console.log('isEdit changed'), [isEdit]);
+  useEffect(() => console.log('preSelected changed'), [preSelected]);
+  useEffect(() => console.log('schema changed'), [schema]);
+
   // Handle additional effects when form data changes
+  const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
   useEffect(() => {
     // Only run additional effects when modal is open
     if (!showModal || !config?.additionalEffects?.length || !formData) {
@@ -307,10 +322,14 @@ const ConGenericFormModal = ({
     config.additionalEffects.forEach((effect, index) => {
       const dependencies = effect.dependencies || [];
 
-      // Check if any of the dependencies have changed
-      // For now, we'll run all effects when formData changes
-      // In a more sophisticated implementation, we could track which dependencies actually changed
-      if (dependencies.some((dep) => formData[dep] !== undefined)) {
+      // Check if any dependency actually changed
+      const hasChangedDependency = dependencies.some((dep) => {
+        const currentValue = formData[dep];
+        const previousValue = previousFormDataRef.current[dep];
+        return !_.isEqual(currentValue, previousValue);
+      });
+
+      if (hasChangedDependency) {
         effect.effect(formData, {
           objectStore: object,
           setOptions: setFieldOptions,
@@ -318,7 +337,10 @@ const ConGenericFormModal = ({
         });
       }
     });
-  }, [showModal, config?.additionalEffects]);
+
+    // Update previous form data reference
+    previousFormDataRef.current = { ...formData };
+  }, [showModal, config?.additionalEffects, formData]);
 
   // Generate options providers for ConDynamicSchemaForm
   const optionsProviders = useMemo(() => {
@@ -490,7 +512,7 @@ const ConGenericFormModal = ({
       modal.addEventListener('close', handleModalClose);
       return () => modal.removeEventListener('close', handleModalClose);
     }
-  }, []);
+  }, [handleModalClose]);
 
   // Don't render if no configuration
   if (!config) {
@@ -502,11 +524,6 @@ const ConGenericFormModal = ({
   const title = isEdit
     ? `${type.charAt(0).toUpperCase() + type.slice(1)} bewerken`
     : `${type.charAt(0).toUpperCase() + type.slice(1)} toevoegen`;
-
-  // Generate form data for ConDynamicSchemaForm (no mapping needed)
-  const dynamicFormData = useMemo(() => {
-    return formData;
-  }, [formData]);
 
   return (
     <AcModal
@@ -563,7 +580,7 @@ const ConGenericFormModal = ({
           <ConDynamicSchemaForm
             ref={formRef}
             schema={schema}
-            formData={dynamicFormData}
+            formData={formData}
             onFieldChange={handleFieldChange}
             fieldConfigs={fieldConfigs}
             customFieldComponents={config.customComponents || {}}
