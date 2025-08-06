@@ -371,9 +371,14 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
                 <VISUALS.FILTER />
               </SecondaryActionButton>
 
-              <PrimaryActionButton onClick={() => setOpenModal('add')}>
-                <VISUALS.PLUS className='ac-button__icon' /> Toevoegen
-              </PrimaryActionButton>
+              <AcButton
+                style='button'
+                buttonType='primary'
+                onClick={() => setOpenModal('add')}
+                icon={<VISUALS.PLUS />}
+              >
+                Toevoegen
+              </AcButton>
 
               <ConActionMenu>
                 <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>

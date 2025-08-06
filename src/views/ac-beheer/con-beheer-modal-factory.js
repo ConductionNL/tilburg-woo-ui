@@ -134,7 +134,6 @@ const BeheerModalFactory = {
       onSuccess: () => {
         tableRef.current?.resetSelectedRows();
         fetchData();
-        setOpenModal(null);
       },
     };
 

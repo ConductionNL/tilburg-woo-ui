@@ -584,11 +584,30 @@ export class ObjectStore {
             this.fetchRelatedData(register, schema, object.id, dataType, {
               _limit: defaultLimit,
               _page: 1,
+            }).catch((error) => {
+              // Log the error but don't throw it to avoid affecting the main operation
+              console.warn(
+                `Failed to fetch ${dataType} for object ${object.id}:`,
+                error
+              );
+              return null; // Return null to indicate failure without throwing
             })
           );
         }
       }
-      await Promise.all(fetchPromises);
+
+      // Use Promise.allSettled instead of Promise.all to handle individual failures gracefully
+      const results = await Promise.allSettled(fetchPromises);
+
+      // Log any failures for debugging but don't throw
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          console.warn(
+            `Related data fetch failed for ${dataTypes[index]}:`,
+            result.reason
+          );
+        }
+      });
     } else {
       console.info('No object ID provided, skipping related data fetch');
     }

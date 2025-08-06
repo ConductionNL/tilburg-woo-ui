@@ -45,8 +45,6 @@ const ConGenericFormModal = ({
   preSelected = DEFAULT_PRE_SELECTED,
   configOverrides = DEFAULT_CONFIG_OVERRIDES,
 }) => {
-  if (!showModal) return null;
-
   const modalRef = useRef(null);
   const formRef = useRef(null);
 
@@ -66,9 +64,6 @@ const ConGenericFormModal = ({
       return null;
     }
   }, [type, configOverrides]);
-
-  useEffect(() => console.log('type changed'), [type]);
-  useEffect(() => console.log('configOverrides changed'), [configOverrides]);
 
   // Form state
   const [formData, setFormData] = useState({});
@@ -305,12 +300,6 @@ const ConGenericFormModal = ({
     }
   }, [config, data, isEdit, preSelected, schema]);
 
-  useEffect(() => console.log('config changed'), [config]);
-  useEffect(() => console.log('data changed'), [data]);
-  useEffect(() => console.log('isEdit changed'), [isEdit]);
-  useEffect(() => console.log('preSelected changed'), [preSelected]);
-  useEffect(() => console.log('schema changed'), [schema]);
-
   // Handle additional effects when form data changes
   const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
   useEffect(() => {
@@ -440,7 +429,7 @@ const ConGenericFormModal = ({
       // Handle specific logic for applicaties (creating initial version)
       if (!isEdit && type === 'applicaties') {
         try {
-          const applicatieData = response.data;
+          const applicatieData = response;
           const currentDate = new Date().toISOString();
 
           // Create version 0.0.1 for the new application using object store
@@ -480,12 +469,10 @@ const ConGenericFormModal = ({
   }, [config, isValid, formData, isEdit, data, type, object, onSuccess]);
 
   // Handle modal open
-  const handleModalOpen = useCallback(() => {
-    modalRef?.current?.showModal();
-  }, []);
+  const handleModalOpen = () => modalRef?.current?.showModal();
 
   // Handle modal close
-  const handleModalClose = useCallback(() => {
+  const handleModalClose = () => {
     if (!config) return;
 
     setFormData(_.cloneDeep(config.initialData));
@@ -496,7 +483,7 @@ const ConGenericFormModal = ({
     setOptionsLoading({});
     formRef.current?.reset();
     onClose?.();
-  }, [config, onClose]);
+  };
 
   // Open modal when showModal prop changes
   useEffect(() => {
@@ -512,11 +499,16 @@ const ConGenericFormModal = ({
       modal.addEventListener('close', handleModalClose);
       return () => modal.removeEventListener('close', handleModalClose);
     }
-  }, [handleModalClose]);
+  }, [modalRef.current]);
 
   // Don't render if no configuration
   if (!config) {
     console.error(`No configuration found for form type: ${type}`);
+    return null;
+  }
+
+  // Don't render if modal should not be shown
+  if (!showModal) {
     return null;
   }
 
