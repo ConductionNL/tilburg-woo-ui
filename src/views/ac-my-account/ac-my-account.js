@@ -9,7 +9,7 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcButton from '@molecules/ac-button/ac-button';
 import AcMyAccountModal from './ac-my-account-modal';
@@ -46,7 +46,7 @@ const AcMyAccount = ({ store }) => {
       // Use UserStore's fetchUserProfile method instead of direct API calls
       await user.fetchUserProfile();
       const userData = user.user;
-      
+
       if (userData) {
         setUserData(userData);
 
@@ -66,7 +66,9 @@ const AcMyAccount = ({ store }) => {
       }
     } catch (err) {
       console.error('Error fetching user data:', err);
-      setError(new Error('Er is een fout opgetreden bij het laden van uw gegevens.'));
+      setError(
+        new Error('Er is een fout opgetreden bij het laden van uw gegevens.')
+      );
     }
   };
 
@@ -93,12 +95,12 @@ const AcMyAccount = ({ store }) => {
 
     try {
       setSwitchingOrg(true);
-      
+
       // Use UserStore's updateUser method
       const response = await user.updateUser({
         activeOrganisation: selectedOption.value,
       });
-      
+
       const updatedUser = response.data;
       setUserData(updatedUser);
 
@@ -118,7 +120,9 @@ const AcMyAccount = ({ store }) => {
       });
     } catch (err) {
       console.error('Error switching organization:', err);
-      setError(new Error('Er is een fout opgetreden bij het wisselen van organisatie.'));
+      setError(
+        new Error('Er is een fout opgetreden bij het wisselen van organisatie.')
+      );
     } finally {
       setSwitchingOrg(false);
     }

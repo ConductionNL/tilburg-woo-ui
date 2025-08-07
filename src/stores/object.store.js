@@ -5,7 +5,7 @@ import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
 import axios, { CanceledError } from 'axios';
 import { getCookie } from '@src/utilities';
-import { BASE_URL } from '@views/ac-beheer/constants';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { sortPropertiesByOrder } from '@src/utilities';
 
 let app = {};

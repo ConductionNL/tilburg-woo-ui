@@ -6,7 +6,7 @@ import { AcCheckbox } from '@molecules';
 import { withStore } from '@stores';
 import { AcLoader } from '@components';
 import { AcBuildURLSearchParams } from '@utils';
-import { BASE_URL } from '@views/ac-beheer/constants';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@atoms';

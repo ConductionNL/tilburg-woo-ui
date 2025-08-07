@@ -17,7 +17,7 @@ import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { commongroundApiUrl } from '@config';
 
 import _ from 'lodash';
-import ConActionMenu from '../ac-beheer/con-action-menu';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 
 const getValueField = (key, value) => {

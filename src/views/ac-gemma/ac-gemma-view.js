@@ -16,7 +16,7 @@ import { VISUALS } from '@constants';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import svgPanZoom from 'svg-pan-zoom';
-import { BASE_URL } from '../ac-beheer/constants';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 const AcGemmaView = ({ store: { gemma } }) => {
   const {
