@@ -5,7 +5,7 @@ import { VISUALS } from '@constants';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader, ConMarkdown } from '@components';
-import { AcBeheerError } from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import { sortPropertiesByOrder } from '@src/utilities';
 import { AcCheckbox, AcFormField } from '@molecules';
 import { ConFileDropZone } from '@views/ac-beheer/shared/components/import-modal/con-file-dropzone';
@@ -25,16 +25,17 @@ import {
   TableRow,
 } from '@utrecht/component-library-react';
 import AcColumn from '@atoms/ac-column/ac-column';
-import AcApplicatiesFormModal from '@views/ac-beheer/domains/ac-applicaties/modals/ac-applicaties-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import _ from 'lodash';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
-import AcGebruikenFormModal from '@views/ac-beheer/domains/ac-gebruiken/modals/ac-gebruiken-form-modal';
-import AcDienstFormModal from '@views/ac-beheer/domains/ac-dienst/modals/ac-dienst-form-modal';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
-import AcVoorzieningVersieFormModal from '@views/ac-beheer/domains/ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
+// disabled until a generic detail page can be made
+// import AcApplicatiesFormModal from '@views/ac-beheer/domains/ac-applicaties/modals/ac-applicaties-form-modal';
+// import AcVoorzieningVersieFormModal from '@views/ac-beheer/domains/ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
+// import AcDienstFormModal from '@views/ac-beheer/domains/ac-dienst/modals/ac-dienst-form-modal';
+// import AcGebruikenFormModal from '@views/ac-beheer/domains/ac-gebruiken/modals/ac-gebruiken-form-modal';
 import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { TOOLTIP_ID } from '@src/index.web';
@@ -779,7 +780,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcApplicatiesFormModal
+                {/* <AcApplicatiesFormModal
                   applicatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -789,7 +790,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchData();
                   }}
-                />
+                /> */}
 
                 <ConGenericBeheerDeleteModal
                   objects={[data]}
@@ -802,7 +803,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   }}
                 />
 
-                <AcGebruikenFormModal
+                {/* <AcGebruikenFormModal
                   preSelectedVoorzieningId={data.id}
                   showModal={openModal === 'addGebruik'}
                   onClose={() => {
@@ -812,9 +813,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     const gebruik = e.data;
                     navigate(`/beheer/gebruiken/${gebruik.id}`);
                   }}
-                />
+                /> */}
 
-                <AcDienstFormModal
+                {/* <AcDienstFormModal
                   showModal={openModal === 'addDienst'}
                   onClose={() => {
                     setOpenModal(null);
@@ -824,9 +825,9 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                     navigate(`/beheer/diensten/${data.id}`);
                   }}
                   preSelectedVoorziening={data.id}
-                />
+                /> */}
 
-                <AcVoorzieningVersieFormModal
+                {/* <AcVoorzieningVersieFormModal
                   voorziening={{ id: data?.id, naam: data?.naam }}
                   showModal={openModal === 'addVersion'}
                   isEdit={false}
@@ -836,7 +837,7 @@ const AcBeheerApplicatiesDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchVersions();
                   }}
-                />
+                /> */}
               </AcFlex>
             )}
           </AcColumn>

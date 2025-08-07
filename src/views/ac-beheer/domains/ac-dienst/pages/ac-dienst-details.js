@@ -9,11 +9,12 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
-import AcEditDienstModal from '@views/ac-beheer/domains/ac-dienst/modals/ac-dienst-form-modal';
+// disabled until a generic detail page can be made
+// import AcEditDienstModal from '@views/ac-beheer/domains/ac-dienst/modals/ac-dienst-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
@@ -438,7 +439,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcEditDienstModal
+                {/* <AcEditDienstModal
                   dienst={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -448,7 +449,7 @@ const AcBeheerDienstDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchData();
                   }}
-                />
+                /> */}
 
                 <ConGenericBeheerDeleteModal
                   objects={[data]}

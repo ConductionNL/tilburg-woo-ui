@@ -10,11 +10,12 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
-import AcContactpersonenFormModal from '@views/ac-beheer/domains/ac-contactpersonen/modals/ac-contactpersonen-form-modal';
+// disabled until this can be turned into a generic detail page
+// import AcContactpersonenFormModal from '@views/ac-beheer/domains/ac-contactpersonen/modals/ac-contactpersonen-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import _ from 'lodash';
@@ -315,7 +316,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
             )}
 
             {/* modals */}
-            <AcContactpersonenFormModal
+            {/* <AcContactpersonenFormModal
               contactpersoon={data}
               showModal={openModal === 'edit' || openModal === 'add'}
               isEdit={openModal === 'edit'}
@@ -325,7 +326,7 @@ const AcBeheerContactpersoonDetails = ({ id }) => {
               onSuccess={() => {
                 fetchData();
               }}
-            />
+            /> */}
 
             <ConGenericBeheerDeleteModal
               objects={[data]}

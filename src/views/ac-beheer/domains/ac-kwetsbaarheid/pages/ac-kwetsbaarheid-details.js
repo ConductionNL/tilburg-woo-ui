@@ -9,13 +9,14 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 
-import AcKwetsbaarheidFormModal from '@views/ac-beheer/domains/ac-kwetsbaarheid/modals/ac-kwetsbaarheid-form-modal';
+// disabled until a generic detail page can be made
+// import AcKwetsbaarheidFormModal from '@views/ac-beheer/domains/ac-kwetsbaarheid/modals/ac-kwetsbaarheid-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
@@ -162,7 +163,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcKwetsbaarheidFormModal
+                {/* <AcKwetsbaarheidFormModal
                   kwetsbaarheid={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -172,7 +173,7 @@ const AcBeheerKwetsbaarheidDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchData();
                   }}
-                />
+                /> */}
 
                 <ConGenericBeheerDeleteModal
                   objects={[data]}

@@ -9,13 +9,14 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcBeheerError } from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 
-import AcGebruikenFormModal from '@views/ac-beheer/domains/ac-gebruiken/modals/ac-gebruiken-form-modal';
+// disabled until a generic detail page can be made
+// import AcGebruikenFormModal from '@views/ac-beheer/domains/ac-gebruiken/modals/ac-gebruiken-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
@@ -201,7 +202,7 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcGebruikenFormModal
+                {/* <AcGebruikenFormModal
                   gebruik={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -211,7 +212,7 @@ const AcBeheerGebruikenDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchData();
                   }}
-                />
+                /> */}
 
                 <ConGenericBeheerDeleteModal
                   objects={[data]}

@@ -13,7 +13,7 @@ import {
 } from '@atoms';
 import { useNavigate } from 'react-router';
 import { AcSideNav, AcLoader, ConMarkdown } from '@components';
-import { AcBeheerError } from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import { AcFormField, AcLink } from '@molecules';
 import { ConHorizontalOverflowWrapper } from '@components';
 import {
@@ -34,7 +34,6 @@ import _ from 'lodash';
 import AcColumn from '@atoms/ac-column/ac-column';
 import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
-import AcOrganisatieFormModal from '@views/ac-beheer/domains/ac-organisatie/modals/ac-organisatie-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import AcAcceptOrganizationModal from '@views/ac-beheer/domains/ac-organisatie/modals/ac-accept-organisation';
@@ -43,7 +42,9 @@ import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import AcPublishDepublishOrganizationModal from '@views/ac-beheer/domains/ac-organisatie/modals/ac-publish-depublish-organisation';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import AcAddRemoveDeelnameModal from '@views/ac-beheer/domains/ac-organisatie/modals/ac-add-remove-deelname';
-import AcContactPersonForm from '@views/ac-beheer/domains/ac-organisatie/modals/ac-contact-person-form';
+// disabled until a generic detail page can be made
+// import AcOrganisatieFormModal from '@views/ac-beheer/domains/ac-organisatie/modals/ac-organisatie-form-modal';
+// import AcContactPersonForm from '@views/ac-beheer/domains/ac-organisatie/modals/ac-contact-person-form';
 import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 import { TOOLTIP_ID } from '@src/index.web';
 
@@ -876,7 +877,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcOrganisatieFormModal
+                {/* <AcOrganisatieFormModal
                   organisatie={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -886,7 +887,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchData();
                   }}
-                />
+                /> */}
 
                 <AcAcceptOrganizationModal
                   organization={data}
@@ -938,7 +939,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   }}
                 />
 
-                <AcContactPersonForm
+                {/* <AcContactPersonForm
                   organizationId={data.id}
                   showModal={openModal === 'addContact'}
                   onClose={() => {
@@ -948,7 +949,7 @@ const AcBeheerOrganisatieDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchUsedBy(registerSlug, schemaSlug, id);
                   }}
-                />
+                /> */}
               </AcFlex>
             )}
           </AcColumn>

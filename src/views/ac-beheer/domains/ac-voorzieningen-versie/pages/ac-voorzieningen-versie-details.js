@@ -15,7 +15,8 @@ import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 
-import AcEditVoorzieningVersieModal from '@views/ac-beheer/domains/ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
+// disabled until a generic detail page can be made
+// import AcEditVoorzieningVersieModal from '@views/ac-beheer/domains/ac-voorzieningen-versie/modals/ac-voorziening-versie-form-modal';
 import ConGenericBeheerDeleteModal from '@views/ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { sortPropertiesByOrder } from '@src/utilities';
@@ -184,7 +185,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                 </AcColumn>
 
                 {/* modals */}
-                <AcEditVoorzieningVersieModal
+                {/* <AcEditVoorzieningVersieModal
                   voorziening={data}
                   showModal={openModal === 'edit' || openModal === 'add'}
                   isEdit={openModal === 'edit'}
@@ -194,7 +195,7 @@ const AcBeheerVoorzieningenVersieDetails = ({ id }) => {
                   onSuccess={() => {
                     fetchData();
                   }}
-                />
+                /> */}
 
                 <ConGenericBeheerDeleteModal
                   objects={[data]}
