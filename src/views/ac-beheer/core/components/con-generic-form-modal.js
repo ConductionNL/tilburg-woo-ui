@@ -77,27 +77,14 @@ const ConGenericFormModal = ({
   const [optionsLoading, setOptionsLoading] = useState({});
 
   // Get schema type identifier
-  const schemaType = useMemo(() => {
-    if (!config?.beheerConfig?.schemaSlug) return null;
-    return object.getSchemaType(config.beheerConfig.schemaSlug);
-  }, [String(config?.beheerConfig?.schemaSlug)]);
+  const schemaType = config?.beheerConfig?.schemaSlug
+    ? object.getSchemaType(config.beheerConfig.schemaSlug)
+    : null;
 
-  // Get schema from object store (with proper MobX reactivity)
-  const schema = useMemo(() => {
-    if (!schemaType) {
-      return null;
-    }
+  // Get schema from object store (read directly to enable MobX tracking)
+  const schema = schemaType ? object.getSchema(schemaType) : null;
 
-    // Access schemas directly to ensure MobX reactivity
-    const schemaResult = object.schemas[schemaType] || null;
-    return schemaResult;
-  }, [schemaType, object.schemas[schemaType]]);
-
-  const schemaLoading = useMemo(() => {
-    if (!schemaType) return false;
-    const loading = object.schemaLoading[schemaType] || false;
-    return loading;
-  }, [schemaType, object.schemaLoading]);
+  const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
 
   // Helper function to set options for a specific field
   const setFieldOptions = useCallback((fieldName, fieldOptions) => {
@@ -153,7 +140,7 @@ const ConGenericFormModal = ({
             optionConfig.params || {}
           );
 
-          const objectType = object.getTypeFromRegisterAndSchema(
+          const objectType = object.getTypeFromParams(
             optionConfig.register,
             optionConfig.schema
           );

@@ -176,7 +176,7 @@ const FormModalConfigFactory = {
                     voorzieningParams
                   );
 
-                  const voorzieningType = objectStore.getTypeFromRegisterAndSchema(
+                  const voorzieningType = objectStore.getTypeFromParams(
                     'voorzieningen',
                     'voorziening'
                   );
@@ -210,7 +210,7 @@ const FormModalConfigFactory = {
                     standaardenParams
                   );
 
-                  const standaardenType = objectStore.getTypeFromRegisterAndSchema(
+                  const standaardenType = objectStore.getTypeFromParams(
                     'voorzieningen',
                     'standaard'
                   );
@@ -500,7 +500,7 @@ const FormModalConfigFactory = {
                     aanbodParams
                   );
 
-                  const aanbodType = objectStore.getTypeFromRegisterAndSchema(
+                  const aanbodType = objectStore.getTypeFromParams(
                     'voorzieningen',
                     'voorzieningaanbod'
                   );
@@ -524,7 +524,7 @@ const FormModalConfigFactory = {
                     versieParams
                   );
 
-                  const versieType = objectStore.getTypeFromRegisterAndSchema(
+                  const versieType = objectStore.getTypeFromParams(
                     'voorzieningen',
                     'voorzieningversie'
                   );

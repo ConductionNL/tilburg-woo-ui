@@ -300,7 +300,7 @@ additionalEffects: [
           voorziening: formData.voorzieningId
         });
 
-        const versieType = objectStore.getTypeFromRegisterAndSchema('voorzieningen', 'voorzieningversie');
+        const versieType = objectStore.getTypeFromParams('voorzieningen', 'voorzieningversie');
         const versieCollection = objectStore.getCollection(versieType);
         const results = versieCollection.results || [];
 
@@ -550,7 +550,7 @@ case 'vehicle-registration':
               brand: formData.brand
             });
 
-            const modelType = objectStore.getTypeFromRegisterAndSchema('vehicles', 'model');
+            const modelType = objectStore.getTypeFromParams('vehicles', 'model');
             const modelCollection = objectStore.getCollection(modelType);
             const results = modelCollection.results || [];
 
@@ -577,7 +577,7 @@ case 'vehicle-registration':
               model: formData.model
             });
 
-            const variantType = objectStore.getTypeFromRegisterAndSchema('vehicles', 'variant');
+            const variantType = objectStore.getTypeFromParams('vehicles', 'variant');
             const variantCollection = objectStore.getCollection(variantType);
             const results = variantCollection.results || [];
 

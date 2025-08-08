@@ -52,10 +52,7 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
   // Generate object type identifier for the object store
   const objectType = useMemo(() => {
     if (!config) return null;
-    return object.getTypeFromRegisterAndSchema(
-      config.registerSlug,
-      config.schemaSlug
-    );
+    return object.getTypeFromParams(config.registerSlug, config.schemaSlug);
   }, [config, object]);
 
   // Generate schema type identifier for schema operations
@@ -64,44 +61,33 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
     return object.getSchemaType(config.schemaSlug);
   }, [config, object]);
 
-  // Get reactive data from object store
-  const data = useMemo(() => {
-    if (!objectType) return [];
-    return object.getCollection(objectType).results || [];
-  }, [objectType, object]);
+  // Get reactive data from object store (read directly to enable MobX tracking)
+  const data = objectType ? object.getCollection(objectType).results || [] : [];
 
-  const loading = useMemo(() => {
-    if (!objectType) return false;
-    return object.isLoading(objectType);
-  }, [objectType, object]);
+  const loading = objectType ? object.isLoading(objectType) : false;
 
-  const error = useMemo(() => {
-    if (!objectType) return null;
-    const storeError = object.getError(objectType);
-    return storeError ? { message: storeError } : null;
-  }, [objectType, object]);
+  const error = objectType
+    ? (() => {
+        const storeError = object.getError(objectType);
+        return storeError ? { message: storeError } : null;
+      })()
+    : null;
 
-  const objectStorePagination = useMemo(() => {
-    if (!objectType) return { total: 0, page: 1, pages: 0, limit: 20 };
-    return object.getPagination(objectType);
-  }, [objectType, object]);
+  const objectStorePagination = objectType
+    ? object.getPagination(objectType)
+    : { total: 0, page: 1, pages: 0, limit: 20 };
 
   // Get schema properties from object store
-  const dataProperties = useMemo(() => {
-    if (!schemaType) return [];
-    return object.getSchemaProperties(schemaType);
-  }, [schemaType, object]);
+  const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : [];
 
-  const schemaLoading = useMemo(() => {
-    if (!schemaType) return false;
-    return object.isSchemaLoading(schemaType);
-  }, [schemaType, object]);
+  const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
 
-  const schemaError = useMemo(() => {
-    if (!schemaType) return null;
-    const storeError = object.getSchemaError(schemaType);
-    return storeError ? { message: storeError } : null;
-  }, [schemaType, object]);
+  const schemaError = schemaType
+    ? (() => {
+        const storeError = object.getSchemaError(schemaType);
+        return storeError ? { message: storeError } : null;
+      })()
+    : null;
 
   // If no configuration exists for this type, show wrong page
   if (!config) {

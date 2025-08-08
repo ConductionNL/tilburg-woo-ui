@@ -16,6 +16,7 @@ import {
   AcBeheerApplicatiesDetails,
 } from '@views/ac-beheer';
 import ConBeheerPageWrapper from './con-beheer-page-wrapper';
+import ConGenericBeheerDetailsPage from './con-generic-beheer-details-page';
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
@@ -57,27 +58,11 @@ const AcBeheer = ({ store }) => {
     return <ConBeheerPageWrapper type={type} />;
   }
 
-  switch (type) {
-    case 'applicaties':
-      return <AcBeheerApplicatiesDetails id={id} />;
-    case 'diensten':
-      return <AcBeheerDienstDetails id={id} />;
-    case 'gebruiken':
-      return <AcBeheerGebruikenDetails id={id} />;
-    case 'voorzieningen-versie':
-      return <AcBeheerVoorzieningenVersieDetails id={id} />;
-    case 'overeenkomsten':
-      return <AcBeheerOvereenkomstenDetails id={id} />;
-    case 'organisaties':
-      return <AcBeheerOrganisatieDetails id={id} />;
-    case 'kwetsbaarheden':
-      return <AcBeheerKwetsbaarheidDetails id={id} />;
-    case 'contactpersonen':
-      return <AcBeheerContactpersoonDetails id={id} />;
-    default:
-      // For unknown types, let the generic page handle the wrong page display
-      return <ConBeheerPageWrapper type={type} />;
+  if (type) {
+    return <ConGenericBeheerDetailsPage type={type} id={id} />;
   }
+
+  return <span>I have no clue how you got here</span>;
 };
 
 export default withStore(observer(AcBeheer));

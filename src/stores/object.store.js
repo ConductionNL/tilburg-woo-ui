@@ -1,12 +1,10 @@
 // Imports => MOBX
-import { observable, computed, makeObservable, action, toJS } from 'mobx';
+import { observable, makeObservable, action, runInAction } from 'mobx';
 
 // Imports => Utilities
-import { AcBuildURLSearchParams } from '@utils';
 import axios, { CanceledError } from 'axios';
-import { getCookie } from '@src/utilities';
+import { getCookie, sortPropertiesByOrder } from '@src/utilities';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
-import { sortPropertiesByOrder } from '@src/utilities';
 
 let app = {};
 
@@ -167,11 +165,11 @@ nextcloudApi.interceptors.response.use(
  * - `getAuditTrails(type)` - Gets audit trails
  *
  * ### Helper Methods
- * - `_constructApiUrl(register, schema, id, action, params)` - Constructs API URLs
+ * - `_constructApiUrl(register, schema, id, action)` - Constructs API URLs
  * - `_constructQueryParams(params)` - Constructs query parameters
  * - `extractId(value)` - Extracts ID from various formats
  * - `getTypeFromObject(objectItem)` - Gets object type from item
- * - `getTypeFromRegisterAndSchema(register, schema)` - Gets object type from register and schema
+ * - `getTypeFromParams(register, schema, id, suffix)` - Gets object type from register, schema, id, suffic
  *
  * ## Operation-Specific State Tracking
  *
@@ -769,7 +767,7 @@ export class ObjectStore {
    * @param {Object} [params={}] - Query parameters
    * @returns {string} Constructed API URL
    */
-  _constructApiUrl = (register, schema, id = null, action = null, params = {}) => {
+  _constructApiUrl = (register, schema, id = null, action = null) => {
     const baseUrl = '/openregister/api/objects';
 
     const registerId = this.extractId(register);
@@ -856,16 +854,26 @@ export class ObjectStore {
   };
 
   /**
-   * Gets the object type from a register and schema
+   * Builds an operation key from register and schema with optional id and suffix.
+   * - Backwards compatible: without id/suffix → 'register_schema'
+   * - With id → 'register_schema_id'
+   * - With id and suffix → 'register_schema_id_suffix'
+   * - With suffix only → 'register_schema_suffix'
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
-   * @returns {string} The object type
+   * @param {string|null} [id=null] - Optional object id
+   * @param {string|null} [suffix=null] - Optional suffix, e.g. 'logs', 'uses', 'used', 'files'
+   * @returns {string|null} The built key or null if ids missing
    */
-  getTypeFromRegisterAndSchema = (register, schema) => {
+  getTypeFromParams = (register, schema, id = null, suffix = null) => {
     const registerId = this.extractId(register);
     const schemaId = this.extractId(schema);
     if (!registerId || !schemaId) return null;
-    return `${registerId}_${schemaId}`;
+    const base = `${registerId}_${schemaId}`;
+    if (id && suffix) return `${base}_${id}_${suffix}`;
+    if (id) return `${base}_${id}`;
+    if (suffix) return `${base}_${suffix}`;
+    return base;
   };
 
   /**
@@ -929,11 +937,14 @@ export class ObjectStore {
       this.setPagination(collectionKey, paginationInfo);
       this.setCollection(collectionKey, data.results, append);
 
-      if (!this.objects[collectionKey]) {
-        this.objects[collectionKey] = {};
-      }
-      data.results.forEach((item) => {
-        this.objects[collectionKey][item.id] = { ...item };
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.objects[collectionKey]) {
+          this.objects[collectionKey] = {};
+        }
+        data.results.forEach((item) => {
+          this.objects[collectionKey][item.id] = { ...item };
+        });
       });
 
       this.setSuccess(type, true);
@@ -989,8 +1000,11 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to fetch ${type} object`);
 
       const data = response.data;
-      if (!this.objects[type]) this.objects[type] = {};
-      this.objects[type][id] = data;
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][id] = data;
+      });
 
       if (this.activeObjects[type]?.id === id) {
         await this.setActiveObject(register, schema, data);
@@ -1028,8 +1042,8 @@ export class ObjectStore {
     const type = `${register}_${schema}`;
     const requestType = `${type}_${id}_${dataType}`;
     this.setLoading(requestType, true);
-    this.setError(type, null);
-    this.setSuccess(type, null);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
 
     // Create abort controller for request cancellation
     const controller = this._createAbortController(requestType);
@@ -1052,9 +1066,12 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to fetch ${dataType} for ${type}`);
 
       const data = response.data;
-      if (!this.relatedData[type]) {
-        this.relatedData[type] = {};
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.relatedData[type]) {
+          this.relatedData[type] = {};
+        }
+      });
 
       if (data.total !== undefined || data.page !== undefined) {
         const paginationKey = `${type}_${dataType}`;
@@ -1073,13 +1090,16 @@ export class ObjectStore {
         this.setPagination(paginationKey, paginationInfo);
       }
 
-      if (dataType === 'logs') {
-        this.relatedData[type][dataType] = data.results || [];
-      } else {
-        this.relatedData[type][dataType] = data;
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (dataType === 'logs') {
+          this.relatedData[type][dataType] = data.results || [];
+        } else {
+          this.relatedData[type][dataType] = data;
+        }
+      });
 
-      this.setSuccess(type, true);
+      this.setSuccess(requestType, true);
     } catch (error) {
       // Don't throw error if request was cancelled
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
@@ -1088,8 +1108,8 @@ export class ObjectStore {
       }
 
       console.error(`Error fetching ${dataType} for ${type}:`, error);
-      this.setError(type, error.message);
-      this.setSuccess(type, false);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
       throw error;
     } finally {
       this.setLoading(requestType, false);
@@ -1129,7 +1149,7 @@ export class ObjectStore {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch schema for ${type}`);
+        throw new Error(`Failed to fetch schema for ${schemaType}`);
       }
 
       const schemaData = response.data;
@@ -1261,8 +1281,11 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to create ${type} object`);
 
       const newObject = response.data;
-      if (!this.objects[type]) this.objects[type] = {};
-      this.objects[type][newObject.id] = newObject;
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][newObject.id] = newObject;
+      });
 
       await this.fetchCollection(register, schema);
       await this.setActiveObject(register, schema, newObject);
@@ -1327,13 +1350,16 @@ export class ObjectStore {
       const data = response.data;
 
       // Update store state after successful save
-      if (!this.objects[type]) this.objects[type] = {};
-      this.objects[type][data.id] = data;
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][data.id] = data;
 
-      // Update active object if it matches
-      if (this.activeObjects[type]?.id === data.id) {
-        this.activeObjects[type] = data;
-      }
+        // Update active object if it matches
+        if (this.activeObjects[type]?.id === data.id) {
+          this.activeObjects[type] = data;
+        }
+      });
 
       // Refresh the entire collection to ensure data consistency
       await this.fetchCollection(registerId, schemaId);
@@ -1381,14 +1407,20 @@ export class ObjectStore {
       if (!response.ok) throw new Error(`Failed to update ${type} object`);
 
       const updatedObject = response.data;
-      if (!this.objects[type]) this.objects[type] = {};
-      this.objects[type][id] = updatedObject;
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][id] = updatedObject;
+      });
 
       await this.fetchCollection(register, schema);
 
-      if (this.activeObjects[type]?.id === id) {
-        this.activeObjects[type] = updatedObject;
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (this.activeObjects[type]?.id === id) {
+          this.activeObjects[type] = updatedObject;
+        }
+      });
 
       this.setSuccess(requestType, true);
 
@@ -1504,14 +1536,17 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the published object
-      const objectType = this.getTypeFromObject(objectItem);
-      const activeObject = this.activeObjects[objectType];
-      if (
-        activeObject &&
-        (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-      ) {
-        this.activeObjects[objectType] = updatedObject;
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        const objectType = this.getTypeFromObject(objectItem);
+        const activeObject = this.activeObjects[objectType];
+        if (
+          activeObject &&
+          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
+        ) {
+          this.activeObjects[objectType] = updatedObject;
+        }
+      });
 
       const isSelected = this.selectedObjects.some(
         (obj) => (obj.id || obj['@self']?.id) === objectId
@@ -1576,14 +1611,17 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the depublished object
-      const objectType = this.getTypeFromObject(objectItem);
-      const activeObject = this.activeObjects[objectType];
-      if (
-        activeObject &&
-        (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-      ) {
-        this.activeObjects[objectType] = updatedObject;
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        const objectType = this.getTypeFromObject(objectItem);
+        const activeObject = this.activeObjects[objectType];
+        if (
+          activeObject &&
+          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
+        ) {
+          this.activeObjects[objectType] = updatedObject;
+        }
+      });
 
       const isSelected = this.selectedObjects.some(
         (obj) => (obj.id || obj['@self']?.id) === objectId
@@ -1654,14 +1692,17 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the locked object
-      const objectType = this.getTypeFromObject(objectItem);
-      const activeObject = this.activeObjects[objectType];
-      if (
-        activeObject &&
-        (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-      ) {
-        this.activeObjects[objectType] = updatedObject;
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        const objectType = this.getTypeFromObject(objectItem);
+        const activeObject = this.activeObjects[objectType];
+        if (
+          activeObject &&
+          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
+        ) {
+          this.activeObjects[objectType] = updatedObject;
+        }
+      });
 
       this.setSuccess(requestType, true);
       return updatedObject;
@@ -1716,14 +1757,17 @@ export class ObjectStore {
       const updatedObject = response.data;
 
       // Update active object if it matches the unlocked object
-      const objectType = this.getTypeFromObject(objectItem);
-      const activeObject = this.activeObjects[objectType];
-      if (
-        activeObject &&
-        (activeObject.id === objectId || activeObject['@self']?.id === objectId)
-      ) {
-        this.activeObjects[objectType] = updatedObject;
-      }
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        const objectType = this.getTypeFromObject(objectItem);
+        const activeObject = this.activeObjects[objectType];
+        if (
+          activeObject &&
+          (activeObject.id === objectId || activeObject['@self']?.id === objectId)
+        ) {
+          this.activeObjects[objectType] = updatedObject;
+        }
+      });
 
       this.setSuccess(requestType, true);
       return updatedObject;
