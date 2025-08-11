@@ -862,7 +862,7 @@ export class ObjectStore {
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
    * @param {string|null} [id=null] - Optional object id
-   * @param {string|null} [suffix=null] - Optional suffix, e.g. 'logs', 'uses', 'used', 'files'
+   * @param {string|null} [suffix=null] - Optional suffix, `${type}_${suffix}`
    * @returns {string|null} The built key or null if ids missing
    */
   getTypeFromParams = (register, schema, id = null, suffix = null) => {
@@ -881,10 +881,10 @@ export class ObjectStore {
    * @param {string|Object} schema - Schema identifier or object
    * @returns {string|null} Schema type identifier
    */
-  getSchemaType = (schema) => {
+  getSchemaType = (schema, typeSuffix = null) => {
     const schemaId = this.extractId(schema);
     if (!schemaId) return null;
-    return `schema_${schemaId}`;
+    return `schema_${schemaId}${typeSuffix ? `_${typeSuffix}` : ''}`;
   };
 
   /**
@@ -893,10 +893,17 @@ export class ObjectStore {
    * @param {string|Object} schema - Schema identifier or object
    * @param {Object} [params={}] - Query parameters for the request
    * @param {boolean} [append=false] - Whether to append to existing results
+   * @param {string} [typeSuffix=''] - Suffix to add to the type (can be used separate page data from the same collection)
    */
   @action
-  fetchCollection = async (register, schema, params = {}, append = false) => {
-    const type = `${register}_${schema}`;
+  fetchCollection = async (
+    register,
+    schema,
+    params = {},
+    append = false,
+    typeSuffix = null
+  ) => {
+    const type = this.getTypeFromParams(register, schema, null, typeSuffix);
     this.setLoading(type, true);
     this.setError(type, null);
     this.setSuccess(type, null);
@@ -922,7 +929,6 @@ export class ObjectStore {
 
       const data = response.data;
 
-      const collectionKey = `${register}_${schema}`;
       const paginationInfo = {
         total: data.total || 0,
         page: data.page || 1,
@@ -934,16 +940,16 @@ export class ObjectStore {
         prev: data.prev || null,
       };
 
-      this.setPagination(collectionKey, paginationInfo);
-      this.setCollection(collectionKey, data.results, append);
+      this.setPagination(type, paginationInfo);
+      this.setCollection(type, data.results, append);
 
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
-        if (!this.objects[collectionKey]) {
-          this.objects[collectionKey] = {};
+        if (!this.objects[type]) {
+          this.objects[type] = {};
         }
         data.results.forEach((item) => {
-          this.objects[collectionKey][item.id] = { ...item };
+          this.objects[type][item.id] = { ...item };
         });
       });
 
@@ -955,7 +961,7 @@ export class ObjectStore {
         return;
       }
 
-      console.error(`Error fetching collection for ${register}/${schema}:`, error);
+      console.error(`Error fetching collection for ${type}:`, error);
       this.setError(type, error.message);
       this.setSuccess(type, false);
       throw error;
@@ -1123,16 +1129,18 @@ export class ObjectStore {
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
    * @param {Object} [params={}] - Query parameters for the request
+   * @param {string} [typeSuffix=null] - Suffix to add to the type (can be used separate page data from the same collection)
    */
   @action
-  fetchSchema = async (schema, params = {}) => {
+  fetchSchema = async (schema, params = {}, typeSuffix = null) => {
     const schemaId = this.extractId(schema);
+    params = params ?? {};
 
     if (!schemaId) {
       throw new Error('Could not extract schema ID');
     }
 
-    const schemaType = this.getSchemaType(schema);
+    const schemaType = this.getSchemaType(schema, typeSuffix);
 
     this.setSchemaLoading(schemaType, true);
     this.setSchemaError(schemaType, null);

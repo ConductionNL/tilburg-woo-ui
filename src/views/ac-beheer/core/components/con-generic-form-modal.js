@@ -78,7 +78,7 @@ const ConGenericFormModal = ({
 
   // Get schema type identifier
   const schemaType = config?.beheerConfig?.schemaSlug
-    ? object.getSchemaType(config.beheerConfig.schemaSlug)
+    ? object.getSchemaType(config.beheerConfig.schemaSlug, 'form')
     : null;
 
   // Get schema from object store (read directly to enable MobX tracking)
@@ -134,15 +134,19 @@ const ConGenericFormModal = ({
         setFieldOptionsLoading(fieldName, true);
 
         try {
-          const response = await object.fetchCollection(
+          await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            optionConfig.params || {}
+            optionConfig.params || {},
+            false,
+            'form-options'
           );
 
           const objectType = object.getTypeFromParams(
             optionConfig.register,
-            optionConfig.schema
+            optionConfig.schema,
+            null,
+            'form-options'
           );
 
           const collection = object.getCollection(objectType);
@@ -186,7 +190,7 @@ const ConGenericFormModal = ({
 
     // Fetch schema using object store
     if (config.beheerConfig?.schemaSlug) {
-      object.fetchSchema(config.beheerConfig.schemaSlug).catch((error) => {
+      object.fetchSchema(config.beheerConfig.schemaSlug, null, 'form').catch((error) => {
         console.error('Schema fetch failed:', error);
         setSubmitError(`Schema kon niet worden geladen: ${error.message || error}`);
       });
@@ -295,7 +299,7 @@ const ConGenericFormModal = ({
       return;
     }
 
-    config.additionalEffects.forEach((effect, index) => {
+    config.additionalEffects.forEach((effect) => {
       const dependencies = effect.dependencies || [];
 
       // Check if any dependency actually changed
