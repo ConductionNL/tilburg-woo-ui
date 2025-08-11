@@ -2,8 +2,6 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex } from '@atoms';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from '@views/ac-beheer/shared/components/import-modal/con-file-dropzone';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
@@ -29,7 +27,13 @@ const createOption = (label) => ({
  * @param {function} onSuccess - function to call when adding files is successful
  * @returns {React.JSX.Element} - component to add files to a register/schema
  */
-const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) => {
+const ConObjectUploadFiles = ({
+  register,
+  schema,
+  id,
+  onSuccess = () => {},
+  store: { object },
+}) => {
   useEffect(() => {
     // if you open the modal without a register or schema, throw an error
     if (!register || !schema || !id) {
@@ -42,14 +46,14 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
   const [onlineFiles, setOnlineFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [labelOptions, setLabelOptions] = useState([createOption('Geen label')]);
+  const [labelOptions, setLabelOptions] = useState([]);
   const [selectedLabels, setSelectedLabels] = useState([]);
   const [showModal, setShowModal] = useState('');
   const [singleSelectedFile, setSingleSelectedFile] = useState(null);
   const [selectedRows, setSelectedRows] = useState([]);
   const tableRef = useRef();
 
-  const { makeMultipartUploadRequest, makeRequest } = useNextcloudRequests();
+  const objectStore = object;
 
   const [deletingFiles, setDeletingFiles] = useState(new Set());
   const [uploadingFiles, setUploadingFiles] = useState(new Set());
@@ -59,12 +63,13 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
   const fetchOnlineFiles = async () => {
     try {
       setLoading(true);
-
-      const response = await makeRequest(
-        `openregister/api/objects/${register}/${schema}/${id}/files`
-      );
-
-      setOnlineFiles(response.data);
+      await objectStore.fetchObjectFiles(register, schema, id, {
+        _limit: 500,
+        _page: 1,
+      });
+      const type = `${register}_${schema}`;
+      const filesData = objectStore.getRelatedData(type, 'files');
+      setOnlineFiles(filesData);
     } catch (error) {
       console.error(error);
     } finally {
@@ -73,14 +78,20 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
   };
 
   const fetchLabels = async () => {
-    const response = await makeRequest(`openregister/api/tags`);
+    const tags = await objectStore.fetchTags();
+
+    if (!tags?.length) {
+      setLabelOptions([createOption('Geen label')]);
+      return;
+    }
 
     setLabelOptions((prevLabelOptions) =>
-      response.data
+      (tags || [])
+        .map((t) => t?.value ?? t)
         .filter(
-          (label) => !prevLabelOptions.some((option) => option.value === label.value)
+          (value) => !prevLabelOptions.some((option) => option.value === value)
         )
-        .map(createOption)
+        .map((value) => createOption(value))
     );
   };
 
@@ -122,17 +133,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
       // Delete files one by one using the same pattern as the existing delete function
       for (const file of filesToDelete) {
-        const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}`;
-
-        const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
-          method: 'DELETE',
-        });
-
-        if (response.status !== 200) {
-          throw new Error(
-            `Failed to delete file ${file.title}: ${response.statusText}`
-          );
-        }
+        await objectStore.deleteObjectFile(register, schema, id, file.title);
       }
 
       // Reset selection and refresh files
@@ -168,17 +169,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
       // Publish files one by one using the same pattern as the existing publish function
       for (const file of filesToPublish) {
-        const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/publish`;
-
-        const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
-          method: 'POST',
-        });
-
-        if (response.status !== 200) {
-          throw new Error(
-            `Failed to publish file ${file.title}: ${response.statusText}`
-          );
-        }
+        await objectStore.publishObjectFile(register, schema, id, file.title);
       }
 
       // Reset selection and refresh files
@@ -214,17 +205,7 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
 
       // Depublish files one by one using the same pattern as the existing depublish function
       for (const file of filesToDepublish) {
-        const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}/depublish`;
-
-        const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
-          method: 'POST',
-        });
-
-        if (response.status !== 200) {
-          throw new Error(
-            `Failed to depublish file ${file.title}: ${response.statusText}`
-          );
-        }
+        await objectStore.depublishObjectFile(register, schema, id, file.title);
       }
 
       // Reset selection and refresh files
@@ -245,13 +226,13 @@ const ConObjectUploadFiles = ({ register, schema, id, onSuccess = () => {} }) =>
       // Add to uploading files set
       setUploadingFiles((prev) => new Set([...prev, file.id]));
 
-      const response = await makeMultipartUploadRequest(
-        `openregister/api/objects/${register}/${schema}/${id}/filesMultipart`,
+      await objectStore.uploadObjectFile(
+        register,
+        schema,
+        id,
         file,
         file.labels,
-        file.share,
-        null,
-        null
+        file.share
       );
 
       // Show success state briefly before removing

@@ -2188,6 +2188,257 @@ export class ObjectStore {
     return { successful, failed };
   };
 
+  /**
+   * Upload a single file (attachment) to an object via multipart/form-data
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {File|Blob} file - The file to upload
+   * @param {Array<string>} [labels=[]] - Optional labels to associate
+   * @param {boolean} [share=false] - Optional share flag
+   * @returns {Object} API response data
+   */
+  @action
+  uploadObjectFile = async (
+    register,
+    schema,
+    id,
+    file,
+    labels = [],
+    share = false
+  ) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId || !id) {
+      throw new Error('register, schema and id are required to upload a file');
+    }
+
+    const filesType = this.getTypeFromParams(registerId, schemaId, id, 'files');
+    const requestType = `${filesType}_upload`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const form = new FormData();
+      form.append('files', file);
+
+      if (Array.isArray(labels)) {
+        labels.forEach((label) => form.append('tags', label));
+      } else if (labels) {
+        form.append('tags', labels);
+      }
+
+      if (share !== undefined && share !== null) {
+        form.append('share', String(share));
+      }
+
+      const baseUrl = this._constructApiUrl(registerId, schemaId, id);
+      const endpoint = `${baseUrl}/filesMultipart`;
+      const response = await nextcloudApi.post(endpoint, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to upload file: ${response.status} ${response.statusText}`
+        );
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      this.setError(requestType, error.message);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Delete a specific file (attachment) from an object
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {string} fileId - File ID to delete
+   * @returns {boolean} True if deletion was successful
+   */
+  @action
+  deleteObjectFile = async (register, schema, id, fileId) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId || !id || !fileId) {
+      throw new Error(
+        'register, schema, id and fileId are required to delete a file'
+      );
+    }
+
+    const filesType = this.getTypeFromParams(registerId, schemaId, id, 'files');
+    const requestType = `${filesType}_delete_${fileId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const encoded = encodeURIComponent(fileId);
+      const filesBase = this._constructApiUrl(registerId, schemaId, id, 'files');
+      const endpoint = `${filesBase}/${encoded}`;
+      const response = await nextcloudApi.delete(endpoint);
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to delete file: ${response.status} ${response.statusText}`
+        );
+      }
+
+      this.setSuccess(requestType, true);
+      return true;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Publish a specific file (attachment) for an object
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {string} fileId - File ID to publish
+   * @returns {Object} Response data
+   */
+  @action
+  publishObjectFile = async (register, schema, id, fileId) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId || !id || !fileId) {
+      throw new Error(
+        'register, schema, id and fileId are required to publish a file'
+      );
+    }
+
+    const filesType = this.getTypeFromParams(registerId, schemaId, id, 'files');
+    const requestType = `${filesType}_publish_${fileId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const encoded = encodeURIComponent(fileId);
+      const filesBase = this._constructApiUrl(registerId, schemaId, id, 'files');
+      const endpoint = `${filesBase}/${encoded}/publish`;
+      const response = await nextcloudApi.post(endpoint);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to publish file: ${response.status} ${response.statusText}`
+        );
+      }
+      this.setSuccess(requestType, true);
+      return response.data;
+    } catch (error) {
+      console.error('Error publishing file:', error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Depublish a specific file (attachment) for an object
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {string} fileId - File ID to depublish
+   * @returns {Object} Response data
+   */
+  @action
+  depublishObjectFile = async (register, schema, id, fileId) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId || !id || !fileId) {
+      throw new Error(
+        'register, schema, id and fileId are required to depublish a file'
+      );
+    }
+
+    const filesType = this.getTypeFromParams(registerId, schemaId, id, 'files');
+    const requestType = `${filesType}_depublish_${fileId}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const encoded = encodeURIComponent(fileId);
+      const filesBase = this._constructApiUrl(registerId, schemaId, id, 'files');
+      const endpoint = `${filesBase}/${encoded}/depublish`;
+      const response = await nextcloudApi.post(endpoint);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to depublish file: ${response.status} ${response.statusText}`
+        );
+      }
+      this.setSuccess(requestType, true);
+      return response.data;
+    } catch (error) {
+      console.error('Error depublishing file:', error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Fetch tags for attachments
+   * @returns {Array} Array of tag values
+   */
+  @action
+  fetchTags = async () => {
+    const requestType = `tags_fetch`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const response = await nextcloudApi.get('/openregister/api/tags');
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch tags: ${response.status} ${response.statusText}`
+        );
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+      this.setError(requestType, error.message);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Convenience wrapper to fetch files related data
+   * @param {string|Object} register
+   * @param {string|Object} schema
+   * @param {string} id
+   * @param {Object} params
+   */
+  @action
+  fetchObjectFiles = async (
+    register,
+    schema,
+    id,
+    params = { _limit: 500, _page: 1 }
+  ) => {
+    return this.fetchRelatedData(register, schema, id, 'files', params);
+  };
+
   // Getters for accessing state
   /**
    * Checks if a specific type is currently loading

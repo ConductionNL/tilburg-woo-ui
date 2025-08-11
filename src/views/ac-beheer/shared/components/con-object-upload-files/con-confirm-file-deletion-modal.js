@@ -5,8 +5,6 @@ import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { VISUALS } from '@constants';
 
 /**
@@ -27,6 +25,7 @@ const ConConfirmFileDeletionModal = ({
   showModal = false,
   onClose = () => {},
   onSuccess = () => {},
+  store,
 }) => {
   useEffect(() => {
     // if you open the modal without a register or schema, throw an error
@@ -40,22 +39,13 @@ const ConConfirmFileDeletionModal = ({
 
   const [error, setError] = useState(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const objectStore = store?.object;
 
   const handleDeleteFile = async () => {
     try {
-      const endpoint = `openregister/api/objects/${register}/${schema}/${id}/files/${file.title}`;
-
-      const response = await makeRequest(`${BASE_URL}/${endpoint}`, null, {
-        method: 'DELETE',
-      });
-
-      if (response.status === 200) {
-        onSuccess?.();
-        handleCloseModal();
-      } else {
-        throw new Error(`Failed to delete file: ${response.statusText}`);
-      }
+      await objectStore.deleteObjectFile(register, schema, id, file.id);
+      onSuccess?.();
+      handleCloseModal();
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
