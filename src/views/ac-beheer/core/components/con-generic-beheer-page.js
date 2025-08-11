@@ -127,8 +127,7 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
 
       try {
         // Build the extend parameters exactly as before
-        const extend = { ...config.extend };
-        if (beoordelingFilter) extend.push(['beoordeling', beoordelingFilter]);
+        const extend = [...config.extend];
 
         // Convert extend array and searchParams to object format for object store
         const storeParams = {
@@ -137,6 +136,8 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
           '_extend[]': extend,
           ...searchParams,
         };
+
+        if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
 
         // Use object store for collection data - this handles loading/error states automatically
         await object.fetchCollection(
@@ -193,7 +194,7 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objectType, pagination.page, pagination.limit]);
+  }, [objectType, pagination.limit, pagination.page]);
 
   // Handle object store cancellation when objectType changes (separate effect)
   const prevObjectTypeRef = useRef();
@@ -459,36 +460,11 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
               totalPages={pagination?.pages}
               page={parseInt(pagination?.page, 10)}
               onPageChange={async (page) => {
-                const params = {
-                  _page: page,
-                  _limit: pagination.limit,
-                };
-
-                // Add beoordelingFilter if present
-                if (beoordelingFilter) {
-                  params.beoordeling = beoordelingFilter;
-                }
-
-                // Add extend parameters
-                const extend = [...config.extend];
-                if (beoordelingFilter)
-                  extend.push(['beoordeling', beoordelingFilter]);
-
-                extend.forEach(([key, value]) => {
-                  if (params[key]) {
-                    params[key] = Array.isArray(params[key])
-                      ? [...params[key], value]
-                      : [params[key], value];
-                  } else {
-                    params[key] = value;
-                  }
+                // push new page to the store
+                object.setPagination(objectType, {
+                  ...object.getPagination(objectType),
+                  page,
                 });
-
-                await object.fetchCollection(
-                  config.registerSlug,
-                  config.schemaSlug,
-                  params
-                );
               }}
               nextLabel=''
               previousLabel=''

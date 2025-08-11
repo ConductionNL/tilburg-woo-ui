@@ -796,8 +796,8 @@ export class ObjectStore {
    */
   _constructQueryParams = (params = {}) => {
     const queryParams = {
-      _limit: params._limit || 20,
-      _page: params._page || 1,
+      _limit: params._limit || params.limit || 20,
+      _page: params._page || params.page || 1,
       _extend: params._extend || params.extend || '@self.schema',
       ...params,
     };
@@ -814,6 +814,8 @@ export class ObjectStore {
     delete queryParams._schema;
     delete queryParams._register;
     delete queryParams.extend;
+    delete queryParams.page;
+    delete queryParams.limit;
 
     return queryParams;
   };
@@ -911,8 +913,12 @@ export class ObjectStore {
     // Create abort controller for request cancellation
     const controller = this._createAbortController(type);
 
+    const pagination = this.getPagination(type) || {};
+
     try {
       const queryParams = {
+        page: pagination.page,
+        limit: pagination.limit,
         ...params,
         _extend: params._extend || params.extend || '@self.schema',
       };

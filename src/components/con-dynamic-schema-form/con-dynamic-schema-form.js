@@ -556,6 +556,7 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     // Update form validity whenever form data changes
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       getIsValid?.(validateForm());
     }, [formData]);
@@ -675,7 +676,7 @@ const ConDynamicSchemaForm = forwardRef(
             id={`dynamic-form-field-${path}`}
             label={fieldConfig.label}
             type={fieldConfig.type}
-            onBlur={handleFieldChange(path, fieldConfig)}
+            onChange={handleFieldChange(path, fieldConfig)}
             value={value || ''}
             placeholder={fieldConfig.placeholder}
             disabled={isDisabled}
@@ -703,7 +704,7 @@ const ConDynamicSchemaForm = forwardRef(
             id={`dynamic-form-field-${path}`}
             label={fieldConfig.label}
             type={fieldConfig.type}
-            onBlur={handleFieldChange(path, fieldConfig)}
+            onChange={handleFieldChange(path, fieldConfig)}
             value={value || ''}
             placeholder={fieldConfig.placeholder}
             disabled={isDisabled}
@@ -809,5 +810,7 @@ const ConDynamicSchemaForm = forwardRef(
     );
   }
 );
+
+ConDynamicSchemaForm.displayName = 'ConDynamicSchemaForm';
 
 export default ConDynamicSchemaForm;

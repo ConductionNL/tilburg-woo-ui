@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -137,7 +138,7 @@ const ConGenericFormModal = ({
           await object.fetchCollection(
             optionConfig.register,
             optionConfig.schema,
-            optionConfig.params || {},
+            { ...optionConfig.params, page: 1, limit: 9999 },
             false,
             'form-options'
           );
@@ -190,10 +191,14 @@ const ConGenericFormModal = ({
 
     // Fetch schema using object store
     if (config.beheerConfig?.schemaSlug) {
-      object.fetchSchema(config.beheerConfig.schemaSlug, null, 'form').catch((error) => {
-        console.error('Schema fetch failed:', error);
-        setSubmitError(`Schema kon niet worden geladen: ${error.message || error}`);
-      });
+      object
+        .fetchSchema(config.beheerConfig.schemaSlug, null, 'form')
+        .catch((error) => {
+          console.error('Schema fetch failed:', error);
+          setSubmitError(
+            `Schema kon niet worden geladen: ${error.message || error}`
+          );
+        });
     }
 
     // Load options
@@ -289,7 +294,7 @@ const ConGenericFormModal = ({
     if (!_.isEqual(formData, initialFormData)) {
       setFormData(initialFormData);
     }
-  }, [config, data, isEdit, preSelected, schema]);
+  }, [showModal]);
 
   // Handle additional effects when form data changes
   const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
