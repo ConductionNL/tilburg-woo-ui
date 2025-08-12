@@ -7,6 +7,13 @@ const GenericDeleteModal = loadable(() =>
   )
 );
 
+// Load the generic publish/depublish modal once and reuse it
+const GenericPublishDepublishModal = loadable(() =>
+  import(
+    '@views/ac-beheer/core/modals/ac-generic-beheer-publish-depublish-modal/ac-generic-beheer-publish-depublish-modal'
+  )
+);
+
 // Load the generic form modal once and reuse it
 const GenericFormModal = loadable(() =>
   import('@views/ac-beheer/core/components/con-generic-form-modal.js')
@@ -16,7 +23,11 @@ const GenericFormModal = loadable(() =>
  * Base modal configuration that all beheer types inherit from
  */
 const baseModalConfig = {
+  add: GenericFormModal,
+  edit: GenericFormModal,
   delete: GenericDeleteModal,
+  publish: GenericPublishDepublishModal,
+  depublish: GenericPublishDepublishModal,
   import: loadable(() =>
     import('@views/ac-beheer/shared/components/import-modal/ac-beheer-import-modal')
   ),
@@ -33,8 +44,6 @@ const BeheerModalFactory = {
   modalComponents: {
     applicaties: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
       // Extra create modals shown on details page action menu
       addGebruik: GenericFormModal,
       addDienst: GenericFormModal,
@@ -42,18 +51,12 @@ const BeheerModalFactory = {
     },
     diensten: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
     },
     'voorzieningen-versie': {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
     },
     organisaties: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
       addContact: GenericFormModal,
       activate: loadable(() =>
         import(
@@ -63,16 +66,6 @@ const BeheerModalFactory = {
       deactivate: loadable(() =>
         import(
           '@views/ac-beheer/domains/ac-organisatie/modals/ac-accept-organisation'
-        )
-      ),
-      publish: loadable(() =>
-        import(
-          '@views/ac-beheer/domains/ac-organisatie/modals/ac-publish-depublish-organisation'
-        )
-      ),
-      depublish: loadable(() =>
-        import(
-          '@views/ac-beheer/domains/ac-organisatie/modals/ac-publish-depublish-organisation'
         )
       ),
       addDeelname: loadable(() =>
@@ -88,36 +81,18 @@ const BeheerModalFactory = {
     },
     kwetsbaarheden: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
     },
     gebruiken: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
       koppelen: loadable(() =>
         import('@views/ac-beheer/domains/ac-gebruiken/modals/ac-gebruik-koppelen')
       ),
     },
     overeenkomsten: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
     },
     contactpersonen: {
       ...baseModalConfig,
-      add: GenericFormModal,
-      edit: GenericFormModal,
-      publish: loadable(() =>
-        import(
-          '@views/ac-beheer/domains/ac-contactpersonen/modals/ac-publish-depublish-contactpersoon'
-        )
-      ),
-      depublish: loadable(() =>
-        import(
-          '@views/ac-beheer/domains/ac-contactpersonen/modals/ac-publish-depublish-contactpersoon'
-        )
-      ),
     },
   },
 
@@ -167,6 +142,15 @@ const BeheerModalFactory = {
       return {
         ...baseProps,
         objects: singleSelectedRow ? [singleSelectedRow] : selectedRows,
+      };
+    }
+
+    // Generic publish/depublish props - works for all types
+    if (modalType === 'publish' || modalType === 'depublish') {
+      return {
+        ...baseProps,
+        objects: singleSelectedRow ? [singleSelectedRow] : selectedRows,
+        publish: modalType === 'publish',
       };
     }
 
@@ -294,7 +278,7 @@ const BeheerModalFactory = {
               data: null,
               isEdit: false,
               preSelected: { organisatie: params?.singleSelectedRow?.id },
-              onSuccess: (created) => {
+              onSuccess: (_created) => {
                 tableRef.current?.resetSelectedRows();
                 setOpenModal(null);
                 if (typeof fetchData === 'function') fetchData();
@@ -368,12 +352,7 @@ const BeheerModalFactory = {
     // This ensures the modal components are always mounted and ready
     config.modals.forEach((modalType) => {
       const ModalComponent = BeheerModalFactory.getModalComponent(type, modalType);
-      if (!ModalComponent) {
-        console.warn(
-          `No modal component found for type: ${type}, modal: ${modalType}`
-        );
-        return;
-      }
+      if (!ModalComponent) return;
 
       const modalProps = BeheerModalFactory.getModalProps(type, modalType, params);
 
