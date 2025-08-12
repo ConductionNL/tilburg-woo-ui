@@ -134,6 +134,16 @@ const DetailsPageConfigFactory = {
         return {
           ...baseDetailsConfig,
           ...beheerConfig,
+          uniqueActions: [
+            ...beheerConfig.uniqueActions,
+            {
+              key: 'addContact',
+              label: 'Contactpersoon toevoegen',
+              icon: VISUALS.PLUS,
+              action: 'addContact',
+              condition: () => true,
+            },
+          ],
           excludedProperties: [
             'id',
             'naam',

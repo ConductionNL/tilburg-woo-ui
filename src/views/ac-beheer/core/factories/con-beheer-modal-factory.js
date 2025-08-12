@@ -54,6 +54,7 @@ const BeheerModalFactory = {
       ...baseModalConfig,
       add: GenericFormModal,
       edit: GenericFormModal,
+      addContact: GenericFormModal,
       activate: loadable(() =>
         import(
           '@views/ac-beheer/domains/ac-organisatie/modals/ac-accept-organisation'
@@ -286,6 +287,19 @@ const BeheerModalFactory = {
 
       case 'organisaties':
         switch (modalType) {
+          case 'addContact':
+            return {
+              ...baseProps,
+              type: 'contactpersonen',
+              data: null,
+              isEdit: false,
+              preSelected: { organisatie: params?.singleSelectedRow?.id },
+              onSuccess: (created) => {
+                tableRef.current?.resetSelectedRows();
+                setOpenModal(null);
+                if (typeof fetchData === 'function') fetchData();
+              },
+            };
           case 'activate':
           case 'deactivate':
             return {
