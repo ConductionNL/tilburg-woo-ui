@@ -13,22 +13,8 @@ const AcDashboard = loadable(() =>
   import('@views/ac-beheer/core/components/ac-dashboard')
 );
 
-// detail pages
-const AcBeheerVoorzieningenVersieDetails = loadable(() =>
-  import(
-    '@views/ac-beheer/domains/ac-voorzieningen-versie/pages/ac-voorzieningen-versie-details'
-  )
-);
-const AcBeheerOvereenkomstenDetails = loadable(() =>
-  import(
-    '@views/ac-beheer/domains/ac-overeenkomsten/pages/ac-overeenkomsten-details'
-  )
-);
-
 export {
   AcDashboard,
   AcBeheerError,
   AcBeheerLoading,
-  AcBeheerVoorzieningenVersieDetails,
-  AcBeheerOvereenkomstenDetails,
 };
