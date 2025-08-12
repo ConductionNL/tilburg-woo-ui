@@ -1450,6 +1450,65 @@ export class ObjectStore {
   };
 
   /**
+   * Patches an existing object
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string} id - The object ID
+   * @param {Object} data - The updated object data
+   * @returns {Object} The updated object
+   */
+  @action
+  patchObject = async (register, schema, id, data) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId) {
+      throw new Error('Could not extract register or schema ID');
+    }
+
+    const type = `${registerId}_${schemaId}`;
+    const requestType = `${type}_${id}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
+
+    try {
+      const response = await nextcloudApi.patch(
+        this._constructApiUrl(register, schema, id),
+        data
+      );
+      if (!response.ok) throw new Error(`Failed to patch ${type} object`);
+
+      const updatedObject = response.data;
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (!this.objects[type]) this.objects[type] = {};
+        this.objects[type][id] = updatedObject;
+      });
+
+      await this.fetchCollection(register, schema);
+
+      runInAction(() => {
+        // run in action to avoid Strict MobX warnings
+        if (this.activeObjects[type]?.id === id) {
+          this.activeObjects[type] = updatedObject;
+        }
+      });
+
+      this.setSuccess(requestType, true);
+
+      return updatedObject;
+    } catch (error) {
+      console.error(`Error patching ${type} object:`, error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
    * Deletes an object
    * @param {Object} objectItem - The object to delete with id, register, and schema information
    * @returns {boolean} True if deletion was successful

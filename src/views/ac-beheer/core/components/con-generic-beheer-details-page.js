@@ -20,6 +20,7 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
+import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { TOOLTIP_ID } from '@src/index.web';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
@@ -186,7 +187,47 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                   </ConActionMenu>
                 </AcFlex>
 
-                <AcColumn gap='md'>
+                <AcColumn gap='tiger'>
+                  {type === 'organisaties' && (
+                    <>
+                      <ConEditableDescription
+                        registerSlug={config.registerSlug}
+                        schemaSlug={config.schemaSlug}
+                        objectId={data.id}
+                        field='beschrijvingKort'
+                        label='Korte beschrijving'
+                        placeholder='Een korte beschrijving van de organisatie'
+                        tooltip='Een korte beschrijving van de organisatie'
+                        maxLength={255}
+                        isMarkdown={false}
+                        value={data.beschrijvingKort}
+                        serialize={(v) => v}
+                        deserialize={(v) => v || ''}
+                      />
+                      <ConEditableDescription
+                        registerSlug={config.registerSlug}
+                        schemaSlug={config.schemaSlug}
+                        objectId={data.id}
+                        field='beschrijvingLang'
+                        label='Lange beschrijving'
+                        placeholder='Een uitgebreide beschrijving van de organisatie'
+                        tooltip='Een uitgebreide beschrijving van de organisatie'
+                        maxLength={2000}
+                        isMarkdown={true}
+                        value={data.beschrijvingLang}
+                        serialize={(v) => JSON.stringify(v || '')}
+                        deserialize={(v) => {
+                          if (!v) return '';
+                          try {
+                            return JSON.parse(v) || '';
+                          } catch (e) {
+                            return '';
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
