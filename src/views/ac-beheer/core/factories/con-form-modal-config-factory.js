@@ -610,6 +610,18 @@ const FormModalConfigFactory = {
           }),
         };
 
+      case 'voorzieningen-versie':
+        return {
+          ...baseConfig,
+          // Initial data generated from schema; preSelected.voorziening can be provided
+          initialData: {},
+          optionsProviders: {},
+          fieldConfigs: {
+            id: { visible: false },
+          },
+          transformSubmitData: (data) => ({ ...data }),
+        };
+
       case 'kwetsbaarheden':
         return {
           ...baseConfig,

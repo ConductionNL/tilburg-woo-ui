@@ -1,4 +1,5 @@
 import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
+import { VISUALS } from '@constants';
 import _ from 'lodash';
 
 /**
@@ -52,6 +53,39 @@ const DetailsPageConfigFactory = {
               organisatie: { include: ['naam'], includeUnknown: true, inline: true },
             },
           },
+          // Add extra create actions specific to applicaties detail page
+          uniqueActions: [
+            ...beheerConfig.uniqueActions,
+            {
+              key: 'openCatalogus',
+              label: 'Bekijk in catalogus',
+              icon: VISUALS.EYE,
+              action: null,
+              onClick: (row) => window.open(`/publicatie/${row.id}`, '_blank'),
+              condition: (row) => !!row?.id,
+            },
+            {
+              key: 'addGebruik',
+              label: 'Gebruiken aanmaken',
+              icon: VISUALS.CLOUD,
+              action: 'addGebruik',
+              condition: () => true,
+            },
+            {
+              key: 'addDienst',
+              label: 'Dienst toevoegen',
+              icon: VISUALS.HAND_HOLDING,
+              action: 'addDienst',
+              condition: () => true,
+            },
+            {
+              key: 'addVersion',
+              label: 'Versie toevoegen',
+              icon: VISUALS.INFO,
+              action: 'addVersion',
+              condition: () => true,
+            },
+          ],
         };
 
       case 'diensten':

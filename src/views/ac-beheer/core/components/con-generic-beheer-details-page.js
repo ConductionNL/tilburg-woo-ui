@@ -165,7 +165,11 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                                 <action.icon />
                               ) : null
                             }
-                            onClick={() => setOpenModal(action.action)}
+                            onClick={() =>
+                              typeof action.onClick === 'function'
+                                ? action.onClick(data)
+                                : setOpenModal(action.action)
+                            }
                           >
                             {action.label}
                           </ConActionMenu.Button>
@@ -369,6 +373,7 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
         setOpenModal,
         setSingleSelectedRow: () => {},
         tableRef: { current: { resetSelectedRows: () => {} } },
+        navigate,
         fetchData: () => {
           // After delete, navigate back to list; otherwise refetch the object
           if (openModal === 'delete') {

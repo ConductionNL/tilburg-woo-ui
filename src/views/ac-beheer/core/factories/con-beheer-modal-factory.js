@@ -35,6 +35,10 @@ const BeheerModalFactory = {
       ...baseModalConfig,
       add: GenericFormModal,
       edit: GenericFormModal,
+      // Extra create modals shown on details page action menu
+      addGebruik: GenericFormModal,
+      addDienst: GenericFormModal,
+      addVersion: GenericFormModal,
     },
     diensten: {
       ...baseModalConfig,
@@ -210,6 +214,60 @@ const BeheerModalFactory = {
       }
     }
 
+    // Cross-type create modals from details pages (e.g., applicaties → gebruik/dienst/versie)
+    if (type === 'applicaties') {
+      switch (modalType) {
+        case 'addGebruik': {
+          return {
+            ...baseProps,
+            type: 'gebruiken',
+            data: null,
+            isEdit: false,
+            preSelected: { voorzieningId: singleSelectedRow?.id },
+            onSuccess: (created) => {
+              tableRef.current?.resetSelectedRows();
+              setOpenModal(null);
+              if (created?.id && typeof params.navigate === 'function') {
+                params.navigate(`/beheer/gebruiken/${created.id}`);
+              } else if (typeof fetchData === 'function') {
+                fetchData();
+              }
+            },
+          };
+        }
+        case 'addDienst': {
+          return {
+            ...baseProps,
+            type: 'diensten',
+            data: null,
+            isEdit: false,
+            // For historical compatibility this equals previous `preSelectedVoorziening`
+            preSelected: { voorziening: singleSelectedRow?.id },
+            onSuccess: (created) => {
+              tableRef.current?.resetSelectedRows();
+              setOpenModal(null);
+              if (created?.id && typeof params.navigate === 'function') {
+                params.navigate(`/beheer/diensten/${created.id}`);
+              } else if (typeof fetchData === 'function') {
+                fetchData();
+              }
+            },
+          };
+        }
+        case 'addVersion': {
+          return {
+            ...baseProps,
+            type: 'voorzieningen-versie',
+            data: null,
+            isEdit: false,
+            preSelected: { voorziening: singleSelectedRow?.id },
+          };
+        }
+        default:
+          break;
+      }
+    }
+
     // Type-specific props for non-generic modals
     switch (type) {
       case 'voorzieningen-versie':
@@ -218,7 +276,8 @@ const BeheerModalFactory = {
           case 'edit':
             return {
               ...baseProps,
-              voorziening: singleSelectedRow,
+              type: 'voorzieningen-versie',
+              data: singleSelectedRow,
               isEdit: modalType === 'edit',
             };
           default:
