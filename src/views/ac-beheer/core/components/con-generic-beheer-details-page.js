@@ -115,16 +115,14 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
   const schemaSlug = config?.schemaSlug;
 
   // Respect schema configuration for files and tags
-  const showFilesTab = !!schema?.configuration?.allowedFiles;
+  const showFilesTab = !!schema?.configuration?.allowFiles;
   const allowedTags = Array.isArray(schema?.configuration?.allowedTags)
     ? schema.configuration.allowedTags
     : [];
 
   // If Files tab is hidden, default to first dynamic tab (index 1)
   useEffect(() => {
-    if (!showFilesTab) {
-      setTabIndex((prev) => (prev === 0 ? 1 : prev));
-    }
+    setTabIndex((prev) => (!showFilesTab ? 1 : 0));
   }, [showFilesTab]);
 
   // Uses/Used unique schemas for tabs
