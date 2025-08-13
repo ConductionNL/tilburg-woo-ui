@@ -57,7 +57,7 @@ graph TD
 | `SITE_DESCRIPTION` | string | `Local development instance...` | Meta description | `Official software catalog` |
 | `SITE` | string | `localhost` | Site identifier | `production` |
 | `MODE` | string | `development` | Application mode | `production` |
-| `THEME_VARIANT` | string | `development` | Theme variation | `tilburg`, `vng`, `custom` |
+| `THEME_VARIANT` | string | `development` | Main CSS theme class | `dimpact`, `vng`, `tilburg`, `rotterdam`, `migrato`, `opencatalogi` |
 | `ENVIRONMENT_NAME` | string | `development` | Environment name | `staging`, `production` |
 
 ### API Configuration
@@ -125,7 +125,47 @@ graph TD
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
 | `MENU_POSITION` | number | `2` | Menu position identifier for navigation | `1` |
-| `FOOTER_STYLE` | string | `vng` | Footer style variant | `dimpact` |
+| `FOOTER_STYLE` | string | `vng` | Footer content and structure | `dimpact` |
+
+### Theming System
+
+The application supports multi-tenant theming through two complementary environment variables:
+
+#### CSS Theme Classes (`THEME_VARIANT`)
+Controls the main visual styling by applying CSS theme classes to the `<body>` element:
+
+| Theme Value | CSS Class | Organization | Description |
+|-------------|-----------|--------------|-------------|
+| `dimpact` | `.dimpact-theme` | Dimpact | Dimpact organization styling |
+| `vng` | `.vng-theme` | VNG | Vereniging Nederlandse Gemeenten styling |
+| `tilburg` | `.tilburg-theme` | Tilburg | Municipality of Tilburg styling |
+| `rotterdam` | `.rotterdam-theme` | Rotterdam | Municipality of Rotterdam styling |
+| `migrato` | `.migrato-theme` | Migrato | Migrato organization styling |
+| `opencatalogi` | `.opencatalogi-theme` | OpenCatalogi | OpenCatalogi platform styling |
+| `horst-aan-de-maas` | `.horst-aan-de-maas-theme` | Horst aan de Maas | Municipality styling |
+| `venray` | `.venray-theme` | Venray | Municipality styling |
+| `development` | `.vng-theme` | Default | Development fallback (uses VNG theme) |
+
+#### Footer Styles (`FOOTER_STYLE`)
+Controls footer content, structure, and navigation items:
+
+| Footer Value | Description | Footer Items |
+|--------------|-------------|--------------|
+| `dimpact` | Dimpact footer structure | What We Do, Who We Are, Information |
+| `vng` | VNG footer structure | Sitemap, Informatie, Bedrijven |
+
+#### Complete Theming Example
+```yaml
+# Full Dimpact theming
+environment:
+  - THEME_VARIANT=dimpact      # CSS: .dimpact-theme applied to <body>
+  - FOOTER_STYLE=dimpact       # Footer: Dimpact-specific navigation items
+```
+
+#### Environment-Based vs Hostname-Based
+- **Environment-based** (recommended): Uses `THEME_VARIANT` and `FOOTER_STYLE` environment variables
+- **Hostname-based** (fallback): Legacy system that maps hostnames to themes
+- **Hybrid support**: Application checks environment variables first, falls back to hostname detection
 
 ## Configuration Files
 
@@ -186,10 +226,13 @@ services:
       - ENABLE_AUTHENTICATION=false
       - ENABLE_ROLLBAR=false
       
+      # Theming Configuration
+      - THEME_VARIANT=dimpact          # CSS: .dimpact-theme class
+      - FOOTER_STYLE=dimpact           # Footer: Dimpact structure
+      
       # Visual Configuration
       - HERO_IMAGE_URL=/custom-dev-hero.jpg
       - MENU_POSITION=2
-      - FOOTER_STYLE=vng
       
       # Connect to local backend
       - API_URL=http://host.docker.internal:3000/apps
@@ -207,6 +250,7 @@ services:
       - SITE_TITLE=Staging Environment 🧪
       - SITE_DESCRIPTION=Pre-production testing environment
       - ENVIRONMENT_NAME=staging
+      - THEME_VARIANT=dimpact          # Consistent theming across environments
       
       # Staging APIs
       - API_URL=https://staging-api.example.com/apps
@@ -235,7 +279,8 @@ services:
       - SITE_TITLE=Software Catalogus
       - SITE_DESCRIPTION=Official government software catalog
       - ENVIRONMENT_NAME=production
-      - THEME_VARIANT=government
+      - THEME_VARIANT=dimpact          # Production Dimpact theming
+      - FOOTER_STYLE=dimpact
       
       # Production APIs
       - API_URL=https://api.softwarecatalogus.nl/apps
@@ -350,6 +395,50 @@ export const getTitle = () => {
 };
 ```
 
+#### Theme System Implementation
+```javascript
+// src/App.web.js - Environment-based theme selection
+const getTheme = () => {
+  // Try to import container constants (generated at runtime)
+  let containerConfig;
+  try {
+    containerConfig = require('@constants/container.constants');
+  } catch (error) {
+    console.warn('Container constants not available, falling back to hostname-based theme logic');
+    containerConfig = null;
+  }
+
+  // Use container config if available
+  if (containerConfig && containerConfig.getThemeVariant) {
+    const themeVariant = containerConfig.getThemeVariant();
+    // Map theme variants to CSS theme classes
+    switch (themeVariant) {
+      case 'dimpact':
+        return 'dimpact-theme';     // Environment: THEME_VARIANT=dimpact
+      case 'vng':
+        return 'vng-theme';
+      case 'tilburg':
+        return 'tilburg-theme';
+      // ... other theme mappings
+      case 'development':
+      default:
+        return 'vng-theme';         // Development fallback
+    }
+  }
+
+  // Fallback to hostname-based logic for production builds
+  const hostname = window.location.hostname;
+  switch (hostname) {
+    // ... existing hostname logic
+  }
+};
+
+// Apply theme class to body element
+const setTheme = () => {
+  document.getElementById('body').classList.add(getTheme());
+};
+```
+
 ### Migration Steps
 
 1. **Identify Configuration Points**:
@@ -433,6 +522,50 @@ export default {
     // ... other config
   }
 };
+```
+
+### Theme Switching Examples
+
+Change themes by updating environment variables and restarting containers:
+
+#### Switch from VNG to Dimpact Theme
+```bash
+# Update docker-compose.dev.yml
+- THEME_VARIANT=vng        # Change from this
+- FOOTER_STYLE=vng
+
+# To this
+- THEME_VARIANT=dimpact    # Dimpact CSS theme class
+- FOOTER_STYLE=dimpact     # Dimpact footer structure
+
+# Restart containers to apply changes
+docker-compose -f docker-compose.dev.yml down
+docker-compose -f docker-compose.dev.yml up -d
+```
+
+#### Switch to Rotterdam Municipality Theme
+```bash
+# Rotterdam theming
+- THEME_VARIANT=rotterdam   # .rotterdam-theme CSS class
+- FOOTER_STYLE=vng         # Use VNG footer structure with Rotterdam styling
+```
+
+#### Multi-Organization Support
+```yaml
+# Organization A environment
+services:
+  app-org-a:
+    environment:
+      - THEME_VARIANT=dimpact
+      - FOOTER_STYLE=dimpact
+      - SITE_TITLE=Organization A Portal
+
+# Organization B environment  
+  app-org-b:
+    environment:
+      - THEME_VARIANT=tilburg
+      - FOOTER_STYLE=vng
+      - SITE_TITLE=Municipality Portal
 ```
 
 ## Debugging

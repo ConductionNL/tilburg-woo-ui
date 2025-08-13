@@ -8,7 +8,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   SITE_DESCRIPTION: 'Development instance of the software catalogus',
   SITE: 'localhost',
   MODE: 'development',
-  THEME_VARIANT: 'development',
+  THEME_VARIANT: 'vng',
   ENVIRONMENT_NAME: 'development',
   BASE_URL: '/api/apps',
   GRANT_TYPE: 'authorization_code',
