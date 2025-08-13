@@ -61,6 +61,9 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
     return object.getSchemaType(config.schemaSlug);
   }, [config]);
 
+  // Full schema (to read configuration)
+  const schema = schemaType ? object.getSchema(schemaType) : null;
+
   // Reactive data (read directly to enable MobX tracking)
   const data =
     objectType && id
@@ -110,6 +113,19 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
   // Tabs: Files always, plus dynamic Uses/Used
   const registerSlug = config?.registerSlug;
   const schemaSlug = config?.schemaSlug;
+
+  // Respect schema configuration for files and tags
+  const showFilesTab = !!schema?.configuration?.allowedFiles;
+  const allowedTags = Array.isArray(schema?.configuration?.allowedTags)
+    ? schema.configuration.allowedTags
+    : [];
+
+  // If Files tab is hidden, default to first dynamic tab (index 1)
+  useEffect(() => {
+    if (!showFilesTab) {
+      setTabIndex((prev) => (prev === 0 ? 1 : prev));
+    }
+  }, [showFilesTab]);
 
   // Uses/Used unique schemas for tabs
   const uniqueSchemasFrom = useCallback((rel) => {
@@ -262,7 +278,9 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                         onSelect={(index) => setTabIndex(index)}
                       >
                         <AcTabList>
-                          <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                          {showFilesTab && (
+                            <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                          )}
                           {usesSchemas.map((schema, idx) => (
                             <AcTab
                               key={`uses-${schema.id}`}
@@ -281,13 +299,16 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                           ))}
                         </AcTabList>
 
-                        <AcTabPanel selected={tabIndex === 0}>
-                          <ConObjectUploadFiles
-                            register={registerSlug}
-                            schema={schemaSlug}
-                            id={data.id}
-                          />
-                        </AcTabPanel>
+                        {showFilesTab && (
+                          <AcTabPanel selected={tabIndex === 0}>
+                            <ConObjectUploadFiles
+                              register={registerSlug}
+                              schema={schemaSlug}
+                              id={data.id}
+                              allowedTags={allowedTags}
+                            />
+                          </AcTabPanel>
+                        )}
 
                         {usesSchemas.map((schema, idx) => {
                           const metadata = usesData?.results?.find(

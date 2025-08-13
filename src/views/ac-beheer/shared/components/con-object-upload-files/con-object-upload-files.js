@@ -7,7 +7,7 @@ import { ConFileDropZone } from '@views/ac-beheer/shared/components/import-modal
 import ConTable from '@views/ac-beheer/shared/components/con-table';
 import { AcButton } from '@src/molecules';
 import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
-import CreatableSelect from 'react-select/creatable';
+import ReactSelect from 'react-select';
 import { Heading } from '@amsterdam/design-system-react';
 import ConConfirmFileDeletionModal from '@views/ac-beheer/shared/components/con-object-upload-files/con-confirm-file-deletion-modal';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
@@ -31,6 +31,7 @@ const ConObjectUploadFiles = ({
   register,
   schema,
   id,
+  allowedTags = [],
   onSuccess = () => {},
   store: { object },
 }) => {
@@ -46,8 +47,8 @@ const ConObjectUploadFiles = ({
   const [onlineFiles, setOnlineFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
-  const [labelOptions, setLabelOptions] = useState([]);
-  const [selectedLabels, setSelectedLabels] = useState([]);
+  const [labelOptions, setLabelOptions] = useState([createOption('Geen label')]);
+  const [selectedLabels, setSelectedLabels] = useState([createOption('Geen label')]);
   const [showModal, setShowModal] = useState('');
   const [singleSelectedFile, setSingleSelectedFile] = useState(null);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -77,27 +78,24 @@ const ConObjectUploadFiles = ({
     }
   };
 
-  const fetchLabels = async () => {
-    const tags = await objectStore.fetchTags();
-
-    if (!tags?.length) {
-      setLabelOptions([createOption('Geen label')]);
-      return;
-    }
-
-    setLabelOptions((prevLabelOptions) =>
-      (tags || [])
-        .map((t) => t?.value ?? t)
-        .filter(
-          (value) => !prevLabelOptions.some((option) => option.value === value)
-        )
-        .map((value) => createOption(value))
-    );
-  };
+  // Initialize label options from allowedTags (schema configuration)
+  useEffect(() => {
+    const base = [createOption('Geen label')];
+    const allowed = Array.isArray(allowedTags) ? allowedTags : [];
+    const opts = [
+      ...base,
+      ...allowed
+        .map((value) => value?.value ?? value)
+        .filter((v) => v && v !== 'Geen label')
+        .map((value) => createOption(value)),
+    ];
+    setLabelOptions(opts);
+    // Keep 'Geen label' as default selection
+    setSelectedLabels([base[0]]);
+  }, [allowedTags]);
 
   useEffect(() => {
     fetchOnlineFiles();
-    fetchLabels();
   }, [register, schema, id]);
 
   const updateFileStatus = (file, status) => {
@@ -307,12 +305,6 @@ const ConObjectUploadFiles = ({
     }
   };
 
-  const handleCreate = (inputValue) => {
-    const newOption = createOption(inputValue);
-    setLabelOptions((prev) => [...prev, newOption]);
-    setSelectedLabels((prev) => [...prev, newOption]);
-  };
-
   // Helper functions to calculate counts for action buttons
   const getPublishableFilesCount = () => {
     return selectedRows.filter((file) => !file.isNew && !file.published).length;
@@ -478,14 +470,11 @@ const ConObjectUploadFiles = ({
     <>
       <AcFlex column spacing='sm'>
         <Heading level={4}>Bestanden toevoegen</Heading>
-        <CreatableSelect
+        <ReactSelect
           placeholder='Labels toevoegen of aanmaken'
           isMulti
           isClearable
           onChange={(newValue) => setSelectedLabels(newValue)}
-          onCreateOption={
-            selectedLabels?.[0]?.value === 'Geen label' ? undefined : handleCreate
-          }
           options={labelOptions.map((option) => ({
             ...option,
             isDisabled:
@@ -494,11 +483,6 @@ const ConObjectUploadFiles = ({
               selectedLabels[0].value !== 'Geen label',
           }))}
           value={selectedLabels}
-          isValidNewOption={(inputValue) =>
-            selectedLabels?.[0]?.value !== 'Geen label' &&
-            inputValue !== '' &&
-            inputValue.toLowerCase() !== 'geen label'
-          }
         />
 
         <ConFileDropZone
