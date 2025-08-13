@@ -75,6 +75,7 @@ nextcloudApi.interceptors.response.use(
  * - `fetchCollection(register, schema, params, append)` - Fetches paginated collections of objects with cancellation support
  * - `loadMore(type)` - Loads next page of results
  * - `loadPrevious(type)` - Loads previous page of results
+ * - `exportObjects(register, schema, type)` - Exports a collection as CSV or Excel
  *
  * #### Schema Operations
  * - `fetchSchema(register, schema, params)` - Fetches schema definition with cancellation support
@@ -123,6 +124,7 @@ nextcloudApi.interceptors.response.use(
  *
  * ### Request Cancellation
  * - `cancelRequest(type)` - Cancels ongoing request for specific operation type
+ * - `cancelAllRequests()` - Cancels all ongoing requests
  * - `_createAbortController(type)` - Creates new AbortController for request type
  *
  * ### State Setters and Getters
@@ -440,6 +442,69 @@ export class ObjectStore {
       controller.abort();
       this.abortControllers.delete(type);
     }
+  };
+
+  /**
+   * Imports one or multiple files into a register/schema
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {File|Blob|Array<File|Blob>} files - File or array of files to import
+   * @returns {Object} API response data
+   */
+  @action
+  importObjects = async (register, schema, files) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+
+    if (!registerId || !schemaId) {
+      throw new Error('Could not extract register or schema ID for import');
+    }
+
+    const requestType = this.getTypeFromParams(registerId, schemaId, null, 'import');
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const normalizeFile = (f) => (f instanceof Blob ? f : f?.file || f);
+      const form = new FormData();
+
+      if (Array.isArray(files)) {
+        files.forEach((f) => form.append('file', normalizeFile(f)));
+      } else {
+        form.append('file', normalizeFile(files));
+      }
+
+      const endpoint = `${this._constructApiUrl(registerId, schemaId)}/import`;
+      const response = await nextcloudApi.post(endpoint, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to import for ${registerId}/${schemaId}`);
+      }
+
+      this.setSuccess(requestType, true);
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        return;
+      }
+      console.error('Error importing objects:', error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Cancels all ongoing requests across the store
+   */
+  @action
+  cancelAllRequests = () => {
+    this.abortControllers.forEach((controller) => controller.abort());
+    this.abortControllers.clear();
   };
 
   /**
@@ -876,6 +941,82 @@ export class ObjectStore {
     if (id) return `${base}_${id}`;
     if (suffix) return `${base}_${suffix}`;
     return base;
+  };
+
+  /**
+   * Exports a collection of objects as CSV or Excel and triggers a browser download
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {('csv'|'excel')} [type='csv'] - Export type
+   */
+  @action
+  exportObjects = async (register, schema, type = 'csv') => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    if (!registerId || !schemaId) {
+      throw new Error('Could not extract register or schema ID for export');
+    }
+
+    const requestType = this.getTypeFromParams(
+      registerId,
+      schemaId,
+      null,
+      `export_${type}`
+    );
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    // Create abort controller for request cancellation
+    const controller = this._createAbortController(requestType);
+
+    try {
+      const endpoint = `${this._constructApiUrl(registerId, schemaId)}/export`;
+      const response = await nextcloudApi.get(endpoint, {
+        params: { type },
+        responseType: 'blob',
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to export ${registerId}/${schemaId}`);
+      }
+
+      const disposition = response.headers['content-disposition'];
+      const inferred = disposition?.match(/filename="?([^";]+)"?/i)?.[1];
+      const date = new Date();
+      const currentDate = date.toISOString().split('T')[0];
+      const utcTime = date
+        .toISOString()
+        .split('T')[1]
+        .replace(/[:\-.]/g, '')
+        .slice(0, 6);
+      const ext = type === 'excel' ? 'xlsx' : 'csv';
+      const filename =
+        inferred || `${registerId}_${schemaId}_${currentDate}_${utcTime}.${ext}`;
+
+      const blob = new Blob([response.data]);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+
+      this.setSuccess(requestType, true);
+    } catch (error) {
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        return;
+      }
+      console.error('Error exporting objects:', error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+      this.abortControllers.delete(requestType);
+    }
   };
 
   /**
@@ -1710,6 +1851,52 @@ export class ObjectStore {
       return updatedObject;
     } catch (error) {
       console.error('Error depublishing object:', error);
+      this.setError(requestType, error.message);
+      this.setSuccess(requestType, false);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Create a koppeling (link) between two 'voorzieninggebruik' objects
+   * @param {string} vanId - ID of the source gebruik
+   * @param {string} naarId - ID of the target gebruik
+   * @returns {boolean} True if the koppeling was created successfully
+   *
+   * @note this is HEAVILY WIP. I am not even sure if koppeling is the right endpoint, or if I need to do something with data
+   */
+  @action
+  linkGebruik = async (vanId, naarId) => {
+    const requestType = this.getTypeFromParams(
+      'voorzieningen',
+      'voorzieninggebruik',
+      null,
+      'link'
+    );
+
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+    this.setSuccess(requestType, null);
+
+    try {
+      const endpoint = `/openregister/api/objects/voorzieningen/koppeling`;
+      const response = await nextcloudApi.post(endpoint, {
+        van: vanId,
+        naar: naarId,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to link gebruiken: ${response.status} ${response.statusText}`
+        );
+      }
+
+      this.setSuccess(requestType, true);
+      return true;
+    } catch (error) {
+      console.error('Error creating koppeling between gebruiken:', error);
       this.setError(requestType, error.message);
       this.setSuccess(requestType, false);
       throw error;

@@ -1,16 +1,15 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal, ConDynamicSchemaForm } from '@components';
+import { AcModal } from '@components';
 import { VISUALS } from '@constants';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import ReactSelect from 'react-select';
-import AcGrid from '@src/atoms/ac-grid/ac-grid';
-import _ from 'lodash';
 import { AcFlex } from '@src/atoms';
 import { Alert } from '@utrecht/component-library-react';
 
 const AcGebruikKoppelenModal = ({
+  store: { object },
   gebruik,
   showModal = false,
   onClose,
@@ -23,7 +22,10 @@ const AcGebruikKoppelenModal = ({
   const [selectedNaar, setSelectedNaar] = useState(null);
   const [error, setError] = useState(null);
 
-  const { makeRequest } = useNextcloudRequests();
+  const typeKey = object.getTypeFromParams(
+    'voorzieningen',
+    'voorzieninggebruik'
+  );
 
   const handleOpenModal = () => modalRef?.current?.showModal();
   const handleCloseModal = () => modalRef?.current?.close();
@@ -37,15 +39,13 @@ const AcGebruikKoppelenModal = ({
   const fetchGebruiken = async () => {
     setLoading(true);
     try {
-      const response = await makeRequest(
-        `openregister/api/objects/voorzieningen/voorzieninggebruik`
-      );
-
-      if (response.ok) {
-        setGebruiken(response.data.results);
-      }
+      await object.fetchCollection('voorzieningen', 'voorzieninggebruik', {
+        _limit: 500,
+        _page: 1,
+      });
+      const col = object.getCollection(typeKey);
+      setGebruiken(col.results || []);
     } catch (err) {
-      console.error(err);
       setError(err);
     }
     setLoading(false);
@@ -70,24 +70,10 @@ const AcGebruikKoppelenModal = ({
     setError(null);
 
     try {
-      const response = await makeRequest(
-        `openregister/api/objects/voorzieningen/koppeling`,
-        null,
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            van: selectedVan.id,
-            naar: selectedNaar.id,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        onSuccess?.(response);
-        handleCloseModal();
-      }
+      await object.linkGebruik(selectedVan.id, selectedNaar.id);
+      onSuccess?.();
+      handleCloseModal();
     } catch (err) {
-      console.error(err);
       setError(err);
     }
   };

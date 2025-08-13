@@ -4,8 +4,6 @@ import { observer } from 'mobx-react-lite';
 import { AcLoader, AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from '@views/ac-beheer/shared/components/import-modal/con-file-dropzone';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
@@ -26,6 +24,7 @@ const AcBeheerImportModal = ({
   showModal = false,
   onClose = () => {},
   onSuccess = () => {},
+  store: { object },
 }) => {
   useEffect(() => {
     // if you open the modal without a register or schema, throw an error
@@ -50,21 +49,12 @@ const AcBeheerImportModal = ({
 
   const modalRef = useRef(null);
 
-  const { makeUploadRequest } = useNextcloudRequests();
-
   const handleOpenModal = () => modalRef?.current?.showModal();
-
-  const endpoint = `openregister/api/objects/${register}/${schema}/import`;
 
   const [error, setError] = useState(null);
   const importFile = async (file) => {
     try {
-      const response = await makeUploadRequest(
-        `${BASE_URL}/${endpoint}`,
-        file,
-        null,
-        null
-      );
+      await object?.importObjects(register, schema, file);
 
       // if upload is successful, set the status to success and move the file to the successful files
       updateFileStatus(file, 'success');

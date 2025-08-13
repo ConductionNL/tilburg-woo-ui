@@ -1,3 +1,4 @@
+// eslint-disable-line import/no-unresolved
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -5,7 +6,6 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import ReactSelect from 'react-select';
 
 /**
@@ -24,9 +24,16 @@ const AcAddRemoveDeelnameModal = ({
   onClose,
   onSuccess,
   deelnameToRemove = null,
+  store: { object },
 }) => {
   const modalRef = useRef(null);
-  const nextcloud = useNextcloudRequests();
+
+  const typeKey = object.getTypeFromParams(
+    'voorzieningen',
+    'organisatie',
+    null,
+    'deelname-opties'
+  );
 
   const [error, setError] = useState(null);
   const [deelnameOptions, setDeelnameOptions] = useState([]);
@@ -46,40 +53,47 @@ const AcAddRemoveDeelnameModal = ({
     if (remove && deelnameToRemove) return;
 
     try {
-      const response = await nextcloud.request(
-        `openregister/api/objects/voorzieningen/organisatie?type[]=samenwerking&type[]=community&_limit=300`
+      await object.fetchCollection(
+        'voorzieningen',
+        'organisatie',
+        {
+          'type[]': ['samenwerking', 'community'],
+          _limit: 300,
+        },
+        false,
+        'deelname-opties'
       );
 
-      if (response.ok) {
-        const orgs = response.data.results;
-        const existingDeelnameIds = Array.isArray(organization?.deelnames)
-          ? organization?.deelnames?.map((d) => (typeof d === 'object' ? d.id : d))
-          : [];
+      const collection = object.getCollection(typeKey);
+      const orgs = collection?.results || [];
+      const existingDeelnameIds = Array.isArray(organization?.deelnames)
+        ? organization?.deelnames?.map((d) => (typeof d === 'object' ? d.id : d))
+        : [];
 
-        if (remove) {
-          // For remove, only show existing deelnames
-          setDeelnameOptions(
-            orgs
-              .filter((org) => existingDeelnameIds.includes(org.id))
-              .map((org) => ({
-                value: org.id,
-                label: org.naam || org.id,
-              }))
-          );
-        } else {
-          // For add, filter out existing deelnames
-          setDeelnameOptions(
-            orgs
-              .filter((org) => !existingDeelnameIds.includes(org.id))
-              .filter((org) => org.id !== organization.id)
-              .map((org) => ({
-                value: org.id,
-                label: org.naam || org.id,
-              }))
-          );
-        }
+      if (remove) {
+        // For remove, only show existing deelnames
+        setDeelnameOptions(
+          orgs
+            .filter((org) => existingDeelnameIds.includes(org.id))
+            .map((org) => ({
+              value: org.id,
+              label: org.naam || org.id,
+            }))
+        );
+      } else {
+        // For add, filter out existing deelnames
+        setDeelnameOptions(
+          orgs
+            .filter((org) => !existingDeelnameIds.includes(org.id))
+            .filter((org) => org.id !== organization.id)
+            .map((org) => ({
+              value: org.id,
+              label: org.naam || org.id,
+            }))
+        );
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
       setError('Er is een fout opgetreden bij het ophalen van de organisaties');
     }
@@ -100,24 +114,14 @@ const AcAddRemoveDeelnameModal = ({
         ? existingDeelnameIds.filter((id) => id !== selectedDeelname.value)
         : [...existingDeelnameIds, selectedDeelname.value];
 
-      const response = await nextcloud.request(
-        `openregister/api/objects/voorzieningen/organisatie/${organization.id}`,
-        {
-          method: 'PUT',
-          data: JSON.stringify({
-            ...organization,
-            deelnames: updatedDeelnames.map(String),
-          }),
-        }
-      );
+      await object.patchObject('voorzieningen', 'organisatie', organization.id, {
+        deelnames: updatedDeelnames.map(String),
+      });
 
-      if (response.ok) {
-        onSuccess?.();
-        modalRef?.current?.close();
-      } else {
-        setError(`Er is een fout opgetreden: ${response.data.error}`);
-      }
+      onSuccess?.();
+      modalRef?.current?.close();
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
       setError(
         `Er is een fout opgetreden bij het ${
@@ -183,8 +187,8 @@ const AcAddRemoveDeelnameModal = ({
         {error && <div style={errorStyle}>{error}</div>}
         {remove && deelnameToRemove ? (
           <Paragraph>
-            Weet u zeker dat u de deelname "
-            {deelnameToRemove.naam || deelnameToRemove.id}" wilt verlaten?
+            Weet u zeker dat u de deelname &quot;
+            {deelnameToRemove.naam || deelnameToRemove.id}&quot; wilt verlaten?
           </Paragraph>
         ) : (
           <>

@@ -6,7 +6,9 @@ let containerConfig;
 try {
   containerConfig = require('@constants/container.constants');
 } catch (error) {
-  console.warn('Container constants not available, falling back to standard behavior');
+  console.warn(
+    'Container constants not available, falling back to standard behavior'
+  );
   containerConfig = null;
 }
 
@@ -54,7 +56,7 @@ export class UserStore {
   @computed
   get hasPermission() {
     return (permission) => {
-      return this.userGroups.some(group => 
+      return this.userGroups.some((group) =>
         group.permissions?.includes(permission)
       );
     };
@@ -62,8 +64,8 @@ export class UserStore {
 
   @computed
   get isAdmin() {
-    return this.userGroups.some(group => 
-      group.name === 'admin' || group.role === 'admin'
+    return this.userGroups.some(
+      (group) => group.name === 'admin' || group.role === 'admin'
     );
   }
 
@@ -112,27 +114,27 @@ export class UserStore {
       'sessionid',
       'csrftoken',
       'oc_sessionPassphrase', // Nextcloud session cookie
-      'nc_sameSiteCookielax',  // Nextcloud SameSite cookie
+      'nc_sameSiteCookielax', // Nextcloud SameSite cookie
       'nc_sameSiteCookiestrict', // Nextcloud SameSite cookie
       'oc6fgt938z8c', // Nextcloud session ID
     ];
 
     const availableCookies = {};
-    indicators.forEach(cookieName => {
+    indicators.forEach((cookieName) => {
       const value = document.cookie
         .split('; ')
-        .find(row => row.startsWith(cookieName + '='));
+        .find((row) => row.startsWith(cookieName + '='));
       if (value) {
         availableCookies[cookieName] = value.split('=')[1];
       }
     });
 
     const hasAnyIndicators = Object.keys(availableCookies).length > 0;
-    
+
     console.log('Authentication cookies check:', {
       hasIndicators: hasAnyIndicators,
       availableCookies: Object.keys(availableCookies),
-      allCookies: document.cookie
+      allCookies: document.cookie,
     });
 
     return hasAnyIndicators;
@@ -146,7 +148,9 @@ export class UserStore {
 
     try {
       if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
-        throw new Error('OpenConnector API URL not configured. Please check your environment setup.');
+        throw new Error(
+          'OpenConnector API URL not configured. Please check your environment setup.'
+        );
       }
 
       const loginUrl = `${containerConfig.getOpenconnectorApiUrl()}/user/login`;
@@ -165,33 +169,38 @@ export class UserStore {
 
       if (response.ok) {
         const data = await response.json();
-        
+
         console.log('Login successful! Response data:', data);
         console.log('All cookies after login:', document.cookie);
-        
+
         // Clear any existing logout cookie that would cause immediate logout
         document.cookie = 'logout=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-        
+
         // Check for authentication tokens in the response
         if (data.access_token) {
           console.log('Found access token in login response:', data.access_token);
           // Store access token as a cookie for future requests
           document.cookie = `openconnector_access_token=${data.access_token}; path=/; SameSite=Lax`;
         }
-        
+
         // Check what session cookies were set
         const sessionCookies = {};
-        ['oc6fgt938z8c', 'oc_sessionPassphrase', 'nc_sameSiteCookielax', 'nc_sameSiteCookiestrict'].forEach(cookieName => {
+        [
+          'oc6fgt938z8c',
+          'oc_sessionPassphrase',
+          'nc_sameSiteCookielax',
+          'nc_sameSiteCookiestrict',
+        ].forEach((cookieName) => {
           const value = document.cookie
             .split('; ')
-            .find(row => row.startsWith(cookieName + '='));
+            .find((row) => row.startsWith(cookieName + '='));
           if (value) {
             sessionCookies[cookieName] = value.split('=')[1];
           }
         });
-        
+
         console.log('Session cookies found after login:', sessionCookies);
-        
+
         // Store user data from login response
         if (data.user) {
           console.log('Setting user from login response:', data.user);
@@ -199,23 +208,30 @@ export class UserStore {
           this.setAuthMethod('session');
           console.log('After setUser - isAuthenticated:', this.isAuthenticated);
         }
-        
+
         // Also fetch full user profile (/me endpoint)
         console.log('Fetching user profile...');
         await this.fetchUserProfile();
-        console.log('After fetchUserProfile - isAuthenticated:', this.isAuthenticated, 'user:', this.user);
-        
+        console.log(
+          'After fetchUserProfile - isAuthenticated:',
+          this.isAuthenticated,
+          'user:',
+          this.user
+        );
+
         this.setLoading(false);
         return { success: true, user: this.user };
       } else {
         const errorData = await response.json();
-        const errorMessage = errorData.error || 'Inloggen mislukt. Controleer uw gegevens.';
+        const errorMessage =
+          errorData.error || 'Inloggen mislukt. Controleer uw gegevens.';
         this.setError(errorMessage);
         this.setLoading(false);
         return { success: false, error: errorMessage };
       }
     } catch (error) {
-      const errorMessage = error.message || 'Inloggen mislukt. Controleer uw gegevens.';
+      const errorMessage =
+        error.message || 'Inloggen mislukt. Controleer uw gegevens.';
       this.setError(errorMessage);
       this.setLoading(false);
       return { success: false, error: errorMessage };
@@ -257,7 +273,7 @@ export class UserStore {
       return true;
     } catch (error) {
       console.error('Auth check failed:', error);
-      
+
       // Fallback to OAuth if available
       if (app.store.auth?.is_authorized) {
         console.log('Falling back to OAuth authentication');
@@ -265,7 +281,7 @@ export class UserStore {
         this.setLoading(false);
         return true;
       }
-      
+
       this.clearUser();
       this.setLoading(false);
       return false;
@@ -282,7 +298,7 @@ export class UserStore {
       }
 
       console.log('Fetching user profile...');
-      
+
       // Use the authenticated request helper instead of direct fetch
       const userData = await this.makeAuthenticatedRequest('/user/me', {
         method: 'GET',
@@ -305,7 +321,7 @@ export class UserStore {
       }
 
       console.log('Updating user profile:', userData);
-      
+
       // Use the authenticated request helper to update user data
       const updatedUserData = await this.makeAuthenticatedRequest('/user/me', {
         method: 'PUT',
@@ -316,10 +332,10 @@ export class UserStore {
       });
 
       console.log('User profile updated successfully:', updatedUserData);
-      
+
       // Update the local user state with the new data
       this.setUser(updatedUserData);
-      
+
       // Return the response in the expected format for compatibility
       return { data: updatedUserData };
     } catch (error) {
@@ -376,10 +392,10 @@ export class UserStore {
       // Clear user data
       this.clearUser();
       this.setLoading(false);
-      
+
       // Clear any nextcloud cookies
       this.clearNextcloudCookies();
-      
+
       return { success: true };
     } catch (error) {
       console.error('Logout failed:', error);
@@ -394,15 +410,17 @@ export class UserStore {
   clearNextcloudCookies = () => {
     const cookiesToClear = [
       'nextcloud_access_token',
-      'nextcloud_refresh_token', 
+      'nextcloud_refresh_token',
       'nextcloud_user_id',
       'nextcloud_client_id',
       'nextcloud_secret_key',
-      'logout'  // Clear the logout cookie that causes immediate logout
+      'logout', // Clear the logout cookie that causes immediate logout
     ];
 
-    cookiesToClear.forEach(cookieName => {
-      document.cookie = `${encodeURIComponent(cookieName)}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+    cookiesToClear.forEach((cookieName) => {
+      document.cookie = `${encodeURIComponent(
+        cookieName
+      )}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
     });
   };
 
@@ -418,20 +436,23 @@ export class UserStore {
     };
 
     // Check what cookies are actually available
-    console.log('Making authenticated request - available cookies:', document.cookie);
-    
+    console.log(
+      'Making authenticated request - available cookies:',
+      document.cookie
+    );
+
     // Priority order for authentication:
     // 1. OpenConnector access token (from login response)
     // 2. Nextcloud access token (from OAuth flow)
     // 3. Session cookies (automatic via credentials: 'include')
-    
+
     const openconnectorToken = document.cookie
       .split('; ')
-      .find(row => row.startsWith('openconnector_access_token='));
-    
+      .find((row) => row.startsWith('openconnector_access_token='));
+
     const nextcloudToken = document.cookie
       .split('; ')
-      .find(row => row.startsWith('nextcloud_access_token='));
+      .find((row) => row.startsWith('nextcloud_access_token='));
 
     if (openconnectorToken) {
       const token = openconnectorToken.split('=')[1];
@@ -450,13 +471,13 @@ export class UserStore {
 
     const baseUrl = containerConfig?.getOpenconnectorApiUrl() || '';
     const fullUrl = `${baseUrl}${endpoint}`;
-    
+
     console.log('Making authenticated request:', {
       url: fullUrl,
       method: options.method || 'GET',
       headers: defaultOptions.headers,
       authMethod: this.authMethod,
-      credentials: defaultOptions.credentials
+      credentials: defaultOptions.credentials,
     });
 
     const response = await fetch(fullUrl, {
@@ -468,7 +489,7 @@ export class UserStore {
       status: response.status,
       statusText: response.statusText,
       url: fullUrl,
-      headers: Object.fromEntries(response.headers.entries())
+      headers: Object.fromEntries(response.headers.entries()),
     });
 
     if (!response.ok) {
@@ -477,7 +498,9 @@ export class UserStore {
         console.log('Received 401 Unauthorized, clearing user authentication');
         this.clearUser();
       }
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`
+      );
     }
 
     return response.json();
@@ -494,4 +517,4 @@ export class UserStore {
   };
 }
 
-export default UserStore; 
+export default UserStore;

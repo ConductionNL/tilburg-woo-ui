@@ -15,7 +15,6 @@ import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { Pagination } from '@amsterdam/design-system-react';
 import ConPaginationLimitSelector, {
   usePaginationLimit,
@@ -35,8 +34,6 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
   const navigate = useNavigate();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
-
-  const nextcloud = useNextcloudRequests();
 
   // Get configuration for this type
   const config = useMemo(() => {
@@ -168,15 +165,15 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
 
   const downloadData = useCallback(
     async (type = 'csv') => {
-      await nextcloud.exportObjects(config.registerSlug, config.schemaSlug, type);
+      await object.exportObjects(config.registerSlug, config.schemaSlug, type);
     },
-    [config.registerSlug, config.schemaSlug]
+    [object, config.registerSlug, config.schemaSlug]
   );
 
   // Cancel all requests and reset state when type changes
   useEffect(() => {
     // Cancel all active requests when switching types
-    nextcloud.cancelAllRequests();
+    object.cancelAllRequests();
 
     // Reset all state when type changes
     setSelectedRows([]);

@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
@@ -13,7 +13,6 @@ import {
 import { VISUALS } from '@constants';
 import AcButton from '@molecules/ac-button/ac-button';
 import { useDebouncedInput } from '@src/hooks/index';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcLogin = ({ store }) => {
   const [nextcloudLogin, setNextcloudLogin] = useState(false);
@@ -27,7 +26,6 @@ const AcLogin = ({ store }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = store;
-  const { login } = useNextcloudRequests();
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect_url');
@@ -65,10 +63,6 @@ const AcLogin = ({ store }) => {
     }
   };
 
-  const validateEmail = useCallback((email) => {
-    return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
-  }, []);
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -94,33 +88,15 @@ const AcLogin = ({ store }) => {
     setIsLoading(true);
     setErrors({});
 
-    const result = await login(
-      {
-        username: formData.username,
-        password: formData.password,
-      },
-      {
-        onSuccess: (data) => {
-          console.log('Login successful:', data);
-          // Handle successful login - you can access user data via data.user
-          // Navigate to dashboard or handle session
-          const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
-          navigate(targetUrl);
-        },
-        onError: (error, errorMessage) => {
-          setErrors({ general: errorMessage });
-        },
-        autoRedirect: false, // Don't auto redirect, handle it manually
-      }
-    );
+    const result = await user.sessionLogin(formData.username, formData.password);
 
     if (result.success) {
-      // Handle successful login manually
-      // You can navigate to a specific page or handle session here
-      console.log('Login successful:', result.data);
+      const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
+      navigate(targetUrl);
     } else {
-      // Error is already handled by onError callback
-      console.log('Login failed:', result.error);
+      setErrors({
+        general: result.error || 'Inloggen mislukt. Controleer uw gegevens.',
+      });
     }
 
     setIsLoading(false);

@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { observer } from 'mobx-react-lite';
+import { withStore } from '@stores';
 import AcModal from '@components/ac-modal/ac-modal';
 import AcFormField from '@molecules/ac-form-field/ac-form-field';
 import AcButton from '@molecules/ac-button/ac-button';
@@ -9,7 +11,6 @@ import {
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 const AcMyAccountModal = ({
   showModal = false,
@@ -18,9 +19,9 @@ const AcMyAccountModal = ({
   formData: initialFormData,
   touched: initialTouched,
   validateEmail: parentValidateEmail,
+  store: { user },
 }) => {
   const modalRef = useRef(null);
-  const { updateUser } = useNextcloudRequests();
 
   const [formData, setFormData] = useState({
     displayName: '',
@@ -105,7 +106,7 @@ const AcMyAccountModal = ({
         middleName: formData.middleName?.trim() || null,
         lastName: formData.lastName?.trim() || null,
       };
-      await updateUser(updateData);
+      await user.updateUser(updateData);
       setAlert({
         type: 'info',
         message: 'Uw gegevens zijn succesvol bijgewerkt.',
@@ -244,4 +245,4 @@ const AcMyAccountModal = ({
   );
 };
 
-export default AcMyAccountModal;
+export default withStore(observer(AcMyAccountModal));

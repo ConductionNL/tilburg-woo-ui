@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -5,7 +6,6 @@ import { AcModal } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 
 /**
  * Modal to activate or deactivate an organization by changing its beoordeling
@@ -21,46 +21,35 @@ const AcAcceptOrganizationModal = ({
   showModal = false,
   onClose,
   onSuccess,
+  store: { object },
 }) => {
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
-
-  const nextcloud = useNextcloudRequests();
 
   const handleModalOpen = () => modalRef?.current?.showModal();
 
   const [error, setError] = useState(null);
   const handleActivateDeactivate = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const endpoint = 'openregister/api/objects/voorzieningen/organisatie';
-
-      const response = await nextcloud.request(`${endpoint}/${organization.id}`, {
-        method: 'PUT',
-        data: JSON.stringify({
-          ...organization,
-          beoordeling: activate ? 'Actief' : 'Deactief',
-        }),
+      await object?.patchObject('voorzieningen', 'organisatie', organization.id, {
+        beoordeling: activate ? 'Actief' : 'Deactief',
       });
-
-      if (response.ok) {
-        onSuccess?.();
-        modalRef?.current?.close();
-        setLoading(false);
-      } else {
-        const status = response.status;
-        const errorMessage = response.data.error;
-        setError(`${status}: ${errorMessage}`);
-        setLoading(false);
-      }
+      onSuccess?.();
+      modalRef?.current?.close();
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
+      const statusError = err?.response?.data?.error;
       setError(
-        err.message ||
+        statusError ||
+          err?.message ||
           `Er is een fout opgetreden bij het ${
             activate ? 'activeren' : 'deactiveren'
           }`
       );
+    } finally {
       setLoading(false);
     }
   };
