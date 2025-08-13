@@ -1,0 +1,215 @@
+// eslint-disable-line import/no-unresolved
+import React, { useEffect, useRef, useState } from 'react';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
+import { AcModal } from '@components';
+import { VISUALS } from '@constants';
+import { AcFlex } from '@atoms';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import ReactSelect from 'react-select';
+
+/**
+ * Modal to add or remove a deelname (participation) to/from an organization
+ * @param {object} organization - The organization to modify deelname for
+ * @param {boolean} remove - Whether to remove (true) or add (false) a deelname
+ * @param {boolean} showModal - boolean to check if the modal is shown
+ * @param {function} onClose - function to call when the modal is closed
+ * @param {object} [deelnameToRemove] - Optional pre-selected deelname to remove
+ * @returns {React.JSX.Element} - modal to add/remove deelname
+ */
+const AcAddRemoveDeelnameModal = ({
+  organization,
+  remove = false,
+  showModal = false,
+  onClose,
+  onSuccess,
+  deelnameToRemove = null,
+  store: { object },
+}) => {
+  const modalRef = useRef(null);
+
+  const typeKey = object.getTypeFromParams(
+    'voorzieningen',
+    'organisatie',
+    null,
+    'deelname-opties'
+  );
+
+  const [error, setError] = useState(null);
+  const [deelnameOptions, setDeelnameOptions] = useState([]);
+  const [selectedDeelname, setSelectedDeelname] = useState(
+    deelnameToRemove
+      ? {
+          value: deelnameToRemove.id,
+          label: deelnameToRemove.naam || deelnameToRemove.id,
+        }
+      : null
+  );
+
+  const handleOpenModal = () => modalRef?.current?.showModal();
+
+  const fetchOrganisations = async () => {
+    // Skip fetching if we have a predefined deelname to remove
+    if (remove && deelnameToRemove) return;
+
+    try {
+      await object.fetchCollection(
+        'voorzieningen',
+        'organisatie',
+        {
+          'type[]': ['samenwerking', 'community'],
+          _limit: 300,
+        },
+        false,
+        'deelname-opties'
+      );
+
+      const collection = object.getCollection(typeKey);
+      const orgs = collection?.results || [];
+      const existingDeelnameIds = Array.isArray(organization?.deelnames)
+        ? organization?.deelnames?.map((d) => (typeof d === 'object' ? d.id : d))
+        : [];
+
+      if (remove) {
+        // For remove, only show existing deelnames
+        setDeelnameOptions(
+          orgs
+            .filter((org) => existingDeelnameIds.includes(org.id))
+            .map((org) => ({
+              value: org.id,
+              label: org.naam || org.id,
+            }))
+        );
+      } else {
+        // For add, filter out existing deelnames
+        setDeelnameOptions(
+          orgs
+            .filter((org) => !existingDeelnameIds.includes(org.id))
+            .filter((org) => org.id !== organization.id)
+            .map((org) => ({
+              value: org.id,
+              label: org.naam || org.id,
+            }))
+        );
+      }
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      setError('Er is een fout opgetreden bij het ophalen van de organisaties');
+    }
+  };
+
+  const handleAddOrRemoveDeelname = async () => {
+    if (!selectedDeelname) {
+      setError('Selecteer eerst een organisatie');
+      return;
+    }
+
+    try {
+      const existingDeelnameIds = Array.isArray(organization.deelnames)
+        ? organization.deelnames.map((d) => (typeof d === 'object' ? d.id : d))
+        : [];
+
+      const updatedDeelnames = remove
+        ? existingDeelnameIds.filter((id) => id !== selectedDeelname.value)
+        : [...existingDeelnameIds, selectedDeelname.value];
+
+      await object.patchObject('voorzieningen', 'organisatie', organization.id, {
+        deelnames: updatedDeelnames.map(String),
+      });
+
+      onSuccess?.();
+      modalRef?.current?.close();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      setError(
+        `Er is een fout opgetreden bij het ${
+          remove ? 'verlaten' : 'toevoegen'
+        } van de deelname`
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (showModal) {
+      handleOpenModal();
+      fetchOrganisations();
+    }
+  }, [showModal]);
+
+  const handleCloseModal = () => {
+    onClose?.();
+  };
+
+  useEffect(() => {
+    modalRef?.current?.addEventListener('close', handleCloseModal);
+  }, [modalRef.current]);
+
+  const errorStyle = {
+    backgroundColor:
+      'color-mix(in srgb, var(--utrecht-form-field-error-message-color, #e53e3e) 5%, #ffffff)',
+    border: '1px solid var(--utrecht-form-field-error-message-color, #e53e3e)',
+    borderRadius: '4px',
+    color: 'var(--utrecht-form-field-error-message-color, #e53e3e)',
+    fontSize: 'var(--utrecht-form-field-error-message-font-size, 1rem)',
+    fontWeight: 'var(--utrecht-form-field-error-message-font-weight, 400)',
+    padding: '1rem',
+    margin: '0 0 1rem 0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontFamily: 'var(--utrecht-form-field-error-message-font-family)',
+  };
+
+  const renderModal = (
+    <AcModal
+      ref={modalRef}
+      id='add-remove-deelname-modal'
+      title={`Deelname ${remove ? 'verlaten' : 'toevoegen'}`}
+      buttons={[
+        {
+          label: 'annuleren',
+          icon: <VISUALS.CLOSE />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'secondary',
+        },
+        {
+          label: remove ? 'verlaten' : 'toevoegen',
+          icon: remove ? <VISUALS.TRASHCAN /> : <VISUALS.PLUS />,
+          onClick: handleAddOrRemoveDeelname,
+        },
+      ]}
+      buttonPosition='end'
+      disableDefaultButton
+    >
+      <AcFlex column spacing='sm'>
+        {error && <div style={errorStyle}>{error}</div>}
+        {remove && deelnameToRemove ? (
+          <Paragraph>
+            Weet u zeker dat u de deelname &quot;
+            {deelnameToRemove.naam || deelnameToRemove.id}&quot; wilt verlaten?
+          </Paragraph>
+        ) : (
+          <>
+            <Paragraph>
+              {remove
+                ? 'Selecteer een deelname om te verlaten:'
+                : 'Selecteer een organisatie van de type samenwerking of community om aan toe te voegen:'}
+            </Paragraph>
+            <ReactSelect
+              options={deelnameOptions}
+              onChange={(selected) => setSelectedDeelname(selected)}
+              value={selectedDeelname}
+              placeholder='Selecteer een organisatie...'
+            />
+          </>
+        )}
+      </AcFlex>
+    </AcModal>
+  );
+
+  return renderModal;
+};
+
+export default withStore(observer(AcAddRemoveDeelnameModal));

@@ -140,20 +140,10 @@
   .markdown-preview {
     flex: 1 1 auto;
   }
-
-  button {
-    margin-left: auto;
-  }
 }
 
 .ac-description-edit-btn {
-  opacity: 1; // Always visible
-  pointer-events: auto; // Always clickable
-}
-
-.ac-description-row:hover .ac-description-edit-btn {
-  opacity: 1;
-  pointer-events: auto;
+  border: none !important;
 }
 
 .ac-description-row {

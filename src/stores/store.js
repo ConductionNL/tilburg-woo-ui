@@ -18,6 +18,7 @@ import MenuStore from '@stores/menu.store';
 import AuthenticationStore from '@stores/authentication.store';
 import MijnOmgevingStore from '@stores/mijnOmgeving.store';
 import GemmaStore from '@stores/gemma.store';
+import ObjectStore from '@stores/object.store';
 
 class Store {
   constructor(config) {
@@ -38,6 +39,7 @@ class Store {
     this.authentication = new AuthenticationStore(this);
     this.mijnOmgeving = new MijnOmgevingStore(this);
     this.gemma = new GemmaStore(this);
+    this.object = new ObjectStore(this);
 
     window.addEventListener(
       'swFreshContentReady',

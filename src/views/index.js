@@ -14,7 +14,9 @@ const AcGemma = loadable(() => import('@views/ac-gemma/ac-gemma'));
 const AcNextcloudAuthorization = loadable(() =>
   import('@views/ac-nextcloud-authorization/ac-nextcloud-authorization')
 );
-const AcBeheer = loadable(() => import('@views/ac-beheer/ac-beheer'));
+const AcBeheer = loadable(() =>
+  import('@views/ac-beheer/core/components/ac-beheer')
+);
 const AcFallbackErrorPage = loadable(() =>
   import('@views/ac-fallback-error-page/ac-fallback-error-page')
 );

@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+// eslint-disable-next-line import/no-unresolved
+import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router';
-import { BASE_URL } from '../ac-beheer/constants';
+import { getAuthConfig } from '@src/constants/container.constants';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -54,7 +55,7 @@ const AcAuthentication = () => {
   const nextcloud_user_id = getCookie('nextcloud_user_id');
   const navigate = useNavigate();
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const redirect_url = searchParams.get('redirect_url');
 
   useEffect(() => {
@@ -95,7 +96,7 @@ const AcAuthentication = () => {
       sameSite: 'strict',
     });
 
-    const url = new URL(BASE_URL + '/oauth2/authorize');
+    const url = new URL(window.location.origin + '/api/apps/oauth2/authorize');
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', clientId);
     url.searchParams.set('scope', 'api');

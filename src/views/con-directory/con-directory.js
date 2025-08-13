@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcLoader } from '@components';
 import { AcContainer, AcSection } from '@atoms';
-import ConTable from '@views/ac-beheer/con-table';
+import ConTable from '@views/ac-beheer/shared/components/con-table';
 import { commongroundApiUrl } from '@config';
 
 const ConDirectory = ({ store: { publications, themes } }) => {
