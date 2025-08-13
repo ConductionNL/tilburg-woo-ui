@@ -16,7 +16,9 @@ const GenericPublishDepublishModal = loadable(() =>
 
 // Load the generic form modal once and reuse it
 const GenericFormModal = loadable(() =>
-  import('@views/ac-beheer/core/components/con-generic-form-modal.js')
+  import(
+    '@views/ac-beheer/core/modals/con-generic-form-modal/con-generic-form-modal'
+  )
 );
 
 /**

@@ -46,7 +46,7 @@ If needed, targeted enhancements can be added in the config factory with minimal
 - Modal Factory (existing): `@views/ac-beheer/core/factories/con-beheer-modal-factory.js`
 
   - The details page reuses this to render domain-specific modals (publish/depublish, koppelen, etc.)
-  - Edit uses the generic form modal (`con-generic-form-modal.js`), delete uses the generic delete modal
+  - Edit uses the generic form modal (`core/modals/con-generic-form-modal/con-generic-form-modal.js`), delete uses the generic delete modal
 
 - Object Store: `@stores/object.store.js`
   - Provides `fetchObject`, `fetchSchema`, `setActiveObject`, `getRelatedData`, `getSchemaProperties`, and operation states

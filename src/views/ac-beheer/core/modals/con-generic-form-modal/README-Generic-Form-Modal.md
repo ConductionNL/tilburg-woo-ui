@@ -1,4 +1,45 @@
-# Generic Form Modal System Documentation
+# Generic Form Modal System Documentation <!-- omit in toc -->
+
+## table of contents <!-- omit in toc -->
+- [📋 **Overview**](#-overview)
+- [🏗️ **Architecture**](#️-architecture)
+- [🚀 **Key Features**](#-key-features)
+  - [✅ **What It Can Do**](#-what-it-can-do)
+  - [🔧 **Integration Benefits**](#-integration-benefits)
+- [📖 **How to Use**](#-how-to-use)
+  - [1. **Basic Usage**](#1-basic-usage)
+  - [2. **Adding a New Form Type**](#2-adding-a-new-form-type)
+- [🎛️ **Configuration Options**](#️-configuration-options)
+  - [**Core Configuration Structure**](#core-configuration-structure)
+  - [**initialData**](#initialdata)
+  - [**fieldMappings (Deprecated)**](#fieldmappings-deprecated)
+- [🎯 **Dropdown Options Configuration**](#-dropdown-options-configuration)
+  - [**1. Static Options (Function-based)**](#1-static-options-function-based)
+  - [**2. API-based Options (Collection type)**](#2-api-based-options-collection-type)
+  - [**3. Dynamic/Dependent Options**](#3-dynamicdependent-options)
+- [🎨 **Field Configuration**](#-field-configuration)
+  - [**Basic Field Controls**](#basic-field-controls)
+  - [**Advanced Field Configuration**](#advanced-field-configuration)
+- [🧩 **Custom Components**](#-custom-components)
+- [🔄 **Data Transformation**](#-data-transformation)
+- [📚 **Common Use Cases**](#-common-use-cases)
+  - [**1. Simple CRUD Form**](#1-simple-crud-form)
+  - [**2. Form with Pre-selected Values**](#2-form-with-pre-selected-values)
+  - [**3. Master-Detail Relationship**](#3-master-detail-relationship)
+  - [**4. Multi-step Dependencies**](#4-multi-step-dependencies)
+- [🎭 **Advanced Use Cases**](#-advanced-use-cases)
+  - [**1. Conditional Field Groups**](#1-conditional-field-groups)
+  - [**2. Complex Data Filtering**](#2-complex-data-filtering)
+  - [**3. Custom Validation**](#3-custom-validation)
+  - [**4. Complex Data Transformation**](#4-complex-data-transformation)
+- [🐛 **Troubleshooting**](#-troubleshooting)
+  - [**Common Issues**](#common-issues)
+  - [**Debugging Tips**](#debugging-tips)
+- [📝 **Best Practices**](#-best-practices)
+  - [**Configuration Organization**](#configuration-organization)
+  - [**Performance Optimization**](#performance-optimization)
+- [🎓 **Summary**](#-summary)
+
 
 ## 📋 **Overview**
 
@@ -45,7 +86,7 @@ FormModalConfigFactory  →  ConGenericFormModal  →  ConDynamicSchemaForm
 ### 1. **Basic Usage**
 
 ```javascript
-import ConGenericFormModal from './con-generic-form-modal';
+import ConGenericFormModal from '@views/ac-beheer/core/modals/con-generic-form-modal/con-generic-form-modal';
 
 // In your component
 <ConGenericFormModal
@@ -54,7 +95,7 @@ import ConGenericFormModal from './con-generic-form-modal';
   isEdit={true} // Edit mode vs create mode
   showModal={showModal} // Controls modal visibility
   onClose={() => setShowModal(false)}
-  onSuccess={() => refetchData()}
+  onSuccess={(response) => refetchData()}
   preSelected={{ voorziening: 'some-id' }} // Pre-fill specific fields
 />;
 ```
