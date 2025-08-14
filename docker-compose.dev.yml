@@ -80,6 +80,9 @@ services:
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
       - FOOTER_STYLE=vng
+      # Footer Text Configuration
+      - FOOTER_LOGO_TITLE=VNG Softwarectalogus
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
@@ -157,6 +160,9 @@ services:
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
       - FOOTER_STYLE=vng
+      # Footer Text Configuration
+      - FOOTER_LOGO_TITLE=Open Tilburg
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]
       interval: 30s

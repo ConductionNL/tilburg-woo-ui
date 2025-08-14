@@ -4,8 +4,8 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Environment Config Test ✅',
-  SITE_DESCRIPTION: 'Development instance of the software catalogus',
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
   SITE: 'localhost',
   MODE: 'development',
   THEME_VARIANT: 'vng',
@@ -34,6 +34,8 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
   FOOTER_STYLE: 'vng',
+  FOOTER_LOGO_TITLE: 'Open Tilburg',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
 });
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
@@ -78,4 +80,7 @@ export const getVisualConfig = () => ({
   menuPosition: CONTAINER_CONFIG.MENU_POSITION,
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
+// Footer text helper functions
+export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
+export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getDefaultConfig = () => CONTAINER_CONFIG;

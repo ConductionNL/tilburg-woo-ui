@@ -3,6 +3,7 @@ import { LABELS, VISUALS } from '@constants';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
+import { getFooterLogoTitle, getFooterLogoSubtitle } from '@constants/container.constants';
 // Removed unused footer constants - backend handles all content
 import { Link } from 'react-router-dom';
 
@@ -41,15 +42,19 @@ const AcFooter = ({ store: { menu } }) => {
             <>
               {footerItems && footerItems.length > 0 ? (
                 footerItems.map((footerItem, index) => (
-                  <nav
-                    className='ac-footer__links'
-                    key={`footer-menu-${index + 1}`}
-                    aria-label={`Footer menu ${index + 1}`}
-                  >
-                    {footerItem.items && footerItem.items.length > 0 ? (
-                      <ul>
-                        {footerItem.items.map((item, index) => (
-                                                     <li key={`footer-item-${index}`}>
+                                     <nav
+                     className='ac-footer__links'
+                     key={`footer-menu-${index + 1}`}
+                     aria-label={`Footer menu ${index + 1}`}
+                   >
+                     {/* Menu Title */}
+                     {footerItem.title && (
+                       <h3 className='ac-footer__menu-title'>{footerItem.title}</h3>
+                     )}
+                     {footerItem.items && footerItem.items.length > 0 ? (
+                       <ul>
+                         {footerItem.items.map((item, index) => (
+                           <li key={`footer-item-${index}`}>
                              {item.link ? (
                                item.link.includes('http') || item.link.includes('https') ? (
                                  <a
@@ -81,10 +86,10 @@ const AcFooter = ({ store: { menu } }) => {
                                </div>
                              )}
                            </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </nav>
+                         ))}
+                       </ul>
+                     ) : null}
+                   </nav>
                 ))
               ) : null}
             </>
@@ -93,7 +98,10 @@ const AcFooter = ({ store: { menu } }) => {
             <ConLogo variant='footer' />
 
             {AcCheckIfSpecificHostname() ? (
-              <></>
+              <span className='ac-footer__logo-text'>
+                <span className='ac-footer__logo-title'>{getFooterLogoTitle()}</span>
+                <span className='ac-footer__logo-subtitle'>{getFooterLogoSubtitle()}</span>
+              </span>
             ) : (
               <span>
                 <span>Open Tilburg</span>
@@ -110,14 +118,15 @@ const AcFooter = ({ store: { menu } }) => {
           <section className='ac-footer__sub-footer'>
             <AcContainer>
               {subFooterItems.map((subFooterItem, index) => (
-                <nav
-                  key={`sub-footer-${index}`}
-                  className='ac-footer__sub-footer-links'
-                  aria-label={`Sub footer menu ${index + 1}`}
-                >
-                  {subFooterItem.items && subFooterItem.items.length > 0 && (
-                    <ul>
-                      {subFooterItem.items.map((item, itemIndex) => (
+                                                  <nav
+                   key={`sub-footer-${index}`}
+                   className='ac-footer__sub-footer-links'
+                   aria-label={`Sub footer menu ${index + 1}`}
+                 >
+                   {/* Position 6: Display items horizontally without title */}
+                   {subFooterItem.items && subFooterItem.items.length > 0 && (
+                     <ul className='ac-footer__sub-footer-horizontal'>
+                       {subFooterItem.items.map((item, itemIndex) => (
                         <li key={`sub-footer-item-${itemIndex}`}>
                           {item.link ? (
                             item.link.includes('http') || item.link.includes('https') ? (
@@ -150,10 +159,10 @@ const AcFooter = ({ store: { menu } }) => {
                             </div>
                           )}
                         </li>
-                      ))}
-                    </ul>
-                  )}
-                </nav>
+                       ))}
+                     </ul>
+                   )}
+                 </nav>
               ))}
             </AcContainer>
           </section>
