@@ -170,7 +170,7 @@ const AcLogin = ({ store }) => {
           </div>
 
           <AcButton
-            style='vng'
+            style='button'
             buttonType='secondary'
             onClick={() => navigate('/register')}
             className='ac-login-form-button'

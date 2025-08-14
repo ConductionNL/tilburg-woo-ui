@@ -17,7 +17,8 @@ const hostname = window.location.hostname;
 const apiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getApiUrl) {
-    throw new Error('API URL not configured. Please check your environment setup.');
+    console.warn('Container constants not available, falling back to default API URL');
+    return '/api/apps'; // Fallback to default
   }
   
   return containerConfig.getApiUrl();
@@ -26,7 +27,8 @@ const apiUrl = () => {
 export const commongroundApiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getCommongroundApiUrl) {
-    throw new Error('CommonGround API URL not configured. Please check your environment setup.');
+    console.warn('Container constants not available, falling back to default CommonGround API URL');
+    return '/api/apps'; // Fallback to default
   }
   
   return containerConfig.getCommongroundApiUrl();

@@ -4,11 +4,11 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Environment Config Test ✅',
-  SITE_DESCRIPTION: 'Development instance of the software catalogus',
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
   SITE: 'localhost',
   MODE: 'development',
-  THEME_VARIANT: 'tilburg',
+  THEME_VARIANT: 'vng',
   ENVIRONMENT_NAME: 'development',
   BASE_URL: '/api/apps',
   GRANT_TYPE: 'authorization_code',
@@ -33,7 +33,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
-  MENU_POSITION: 2,
+  MENU_POSITION: 1,
   FOOTER_STYLE: 'vng',
 });
 // Helper functions to replace hostname-based logic
@@ -80,3 +80,4 @@ export const getVisualConfig = () => ({
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
 export const getDefaultConfig = () => CONTAINER_CONFIG;
+TAINER_CONFIG;
