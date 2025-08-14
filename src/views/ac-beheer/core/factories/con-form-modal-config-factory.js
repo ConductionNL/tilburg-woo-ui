@@ -1,5 +1,5 @@
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field.js';
-import { collapseExtendedObjects, smartSplit } from '@src/utilities';
+import { smartSplit } from '@src/utilities';
 import licenses from '@assets/licenses/licenses.json';
 import BeheerPageConfigFactory from './con-beheer-page-config-factory';
 
