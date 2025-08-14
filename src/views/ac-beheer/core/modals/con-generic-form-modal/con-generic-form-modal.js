@@ -5,6 +5,7 @@ import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcGrid, AcFlex } from '@atoms';
+// eslint-disable-next-line import/no-unresolved
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 import { collapseExtendedObjects } from '@src/utilities';
@@ -45,7 +46,14 @@ const ConGenericFormModal = ({
   isEdit = false,
   preSelected = DEFAULT_PRE_SELECTED,
   configOverrides = DEFAULT_CONFIG_OVERRIDES,
+  onMounted,
 }) => {
+  // Signal to parent that this modal component has mounted
+  useEffect(() => {
+    onMounted?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const modalRef = useRef(null);
   const formRef = useRef(null);
 

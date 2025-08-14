@@ -358,6 +358,11 @@ const BeheerModalFactory = {
 
       const modalProps = BeheerModalFactory.getModalProps(type, modalType, params);
 
+      // Pass a generic onModalMounted callback if provided (modalType gets passed back)
+      if (typeof params.onModalMounted === 'function') {
+        modalProps.onMounted = () => params.onModalMounted(modalType);
+      }
+
       modals.push(<ModalComponent key={`${type}-${modalType}`} {...modalProps} />);
     });
 

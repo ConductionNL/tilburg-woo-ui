@@ -193,6 +193,15 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectType, pagination.limit, pagination.page]);
 
+  // Open create modal when query param is present, but only after the 'add' modal has actually mounted
+  const openAddModal = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wantsCreate = params.get('showCreateModal') === 'true';
+    if (!wantsCreate) return;
+    const timer = setTimeout(() => setOpenModal('add'), 150);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle object store cancellation when objectType changes (separate effect)
   const prevObjectTypeRef = useRef();
   useEffect(() => {
@@ -491,6 +500,12 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
             tableRef,
             fetchData,
             config,
+            onModalMounted: (modalType) => {
+              if (modalType === 'add') {
+                console.log('add modal mounted');
+                openAddModal();
+              }
+            },
             voorzieningId: new URLSearchParams(window.location.search).get(
               'voorzieningId'
             ),
