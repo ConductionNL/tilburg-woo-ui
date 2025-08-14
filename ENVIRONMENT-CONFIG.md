@@ -127,6 +127,115 @@ graph TD
 | `MENU_POSITION` | number | `2` | Menu position identifier for navigation | `1` |
 | `FOOTER_STYLE` | string | `vng` | Footer content and structure | `dimpact` |
 
+#### Menu Position Usage in Codebase
+
+The following table shows all locations in the codebase where `getMenuFromPosition(position)` is used:
+
+| File Path | Line | Component | Position Used | Purpose | Status |
+|-----------|------|-----------|---------------|---------|---------|
+| `src/components/ac-navigation/ac-navigation.js` | 16 | `AcNavigation` | `1` | Header hamburger menu navigation | **ACTIVE** - Still using position filtering |
+| `src/stores/menu.store.js` | 62 | `MenuStore` | Dynamic | Method definition for filtering by position | **ACTIVE** - Method available but not widely used |
+
+**Note**: While the `getMenuFromPosition(position)` method exists and is used in the `AcNavigation` component, the application has largely moved away from position-based filtering. The header and footer components now display all menu items without position filtering, letting the backend control the structure.
+
+#### Menu Position System Overview
+
+The application now uses a **fixed position system** where each position represents a specific, well-defined section of the application's navigation. Here's the complete breakdown:
+
+| Position Number | Location | Component | Purpose | Current Usage | Status |
+|-----------------|----------|-----------|---------|---------------|---------|
+| **Position 1** | **Top Right Menu** | `AcNavigation` (hamburger menu) | Primary navigation items, authentication links, main site navigation | **ACTIVE** - Used in `getMenuFromPosition(1)` | ✅ **In Use** |
+| **Position 2** | **Sub Menu** | `AcCNavigation` in header | Secondary navigation options, additional menu items below main header | **ACTIVE** - Used in `getMenuFromPosition(2)` | ✅ **In Use** |
+| **Position 3** | **Footer Section 1** | `AcFooter` component | Left footer section, primary footer links | **ACTIVE** - Used in `getFooterMenus()` | ✅ **In Use** |
+| **Position 4** | **Footer Section 2** | `AcFooter` component | Center footer section, secondary footer links | **ACTIVE** - Used in `getFooterMenus()` | ✅ **In Use** |
+| **Position 5** | **Footer Section 3** | `AcFooter` component | Right footer section, tertiary footer links | **ACTIVE** - Used in `getFooterMenus()` | ✅ **In Use** |
+| **Position 6** | **Sub Footer** | `AcFooter` component | Bar below main footer, additional footer links | **ACTIVE** - Used in `getSubFooterMenus()` | ✅ **In Use** |
+| **Position 7** | **Admin Screen** | Future admin components | Administrative navigation and controls | **READY** - Used in `getAdminMenus()` | 🔄 **Ready for Implementation** |
+
+#### Position Usage Details
+
+**Position 1 (Top Right Menu)**
+- **Component**: `AcNavigation` (hamburger menu)
+- **File**: `src/components/ac-navigation/ac-navigation.js:16`
+- **Usage**: `getMenuFromPosition(1)`
+- **Purpose**: Main navigation menu that appears when clicking the hamburger icon
+- **Status**: **ACTIVE** - Using position filtering
+
+**Position 2 (Sub Menu)**
+- **Component**: `AcCNavigation` in header
+- **File**: `src/components/ac-header/ac-header.js`
+- **Usage**: `getMenuFromPosition(2)`
+- **Purpose**: Secondary navigation options below main header
+- **Status**: **ACTIVE** - Using position filtering
+
+**Positions 3, 4, 5 (Footer Sections)**
+- **Component**: `AcFooter`
+- **File**: `src/components/ac-footer/ac-footer.js`
+- **Usage**: `getFooterMenus()` - Gets menus from positions [3, 4, 5]
+- **Purpose**: Three footer navigation sections (left, center, right)
+- **Status**: **ACTIVE** - Using position filtering
+
+**Position 6 (Sub Footer)**
+- **Component**: `AcFooter` (sub footer section)
+- **File**: `src/components/ac-footer/ac-footer.js`
+- **Usage**: `getSubFooterMenus()` - Gets menus from position 6
+- **Purpose**: Additional footer links in bar below main footer
+- **Status**: **ACTIVE** - Using position filtering
+
+**Position 7 (Admin Screen)**
+- **Component**: Future admin components
+- **File**: Not yet implemented
+- **Usage**: `getAdminMenus()` - Gets menus from position 7
+- **Purpose**: Administrative navigation and controls
+- **Status**: **READY** - Method available, ready for implementation
+
+#### Current Implementation Status
+
+| Status | Description | Components Affected |
+|---------|-------------|---------------------|
+| **✅ ACTIVE** | Position filtering implemented and in use | `AcNavigation`, `AcHeader`, `AcFooter` |
+| **🔄 READY** | Methods available, ready for implementation | Admin components (future) |
+| **❌ REMOVED** | Hostname-based logic eliminated | All components cleaned up |
+| ✅ **ACTIVE** | Still using position filtering | `AcNavigation` (Position 1 only) |
+| ❌ **DEPRECATED** | No longer using position filtering | `AcHeader`, `AcFooter` |
+| 🔄 **MIGRATED** | Moved to backend-controlled display | All menu display components |
+
+**Migration Summary**: The application has moved from a position-based filtering system to a **fixed position system** where each position represents a specific, well-defined section. All components now use position filtering consistently:
+
+- **Position 1**: Top right menu (hamburger) - `AcNavigation`
+- **Position 2**: Sub menu (secondary navigation) - `AcHeader` 
+- **Positions 3, 4, 5**: Footer sections - `AcFooter`
+- **Position 6**: Sub footer (bar below footer) - `AcFooter`
+- **Position 7**: Admin screen (ready for implementation)
+
+This provides a clean, predictable structure where the backend controls content and the frontend handles positioning consistently.
+
+#### Fixed Position System Benefits
+
+| Benefit | Description |
+|---------|-------------|
+| **Predictable Structure** | Each position has a specific, well-defined purpose |
+| **Consistent Behavior** | All components use the same position filtering logic |
+| **Easy Maintenance** | Clear separation of concerns between positions |
+| **Backend Control** | Content and theming controlled by backend API |
+| **Future-Proof** | Easy to add new positions or modify existing ones |
+
+#### **REALITY CHECK: Actual Position Usage in Codebase**
+
+**What Actually Exists:**
+- **Position 1**: ✅ **ACTIVE** - Used in `AcNavigation` component (`getMenuFromPosition(1)`)
+- **Position 2**: ❌ **DEPRECATED** - Was in environment config but never used in components
+- **Position 3**: ❌ **DEPRECATED** - Was in environment config but never used in components  
+- **Position 4**: ❌ **DEPRECATED** - Was in environment config but never used in components
+- **Position 5**: ❌ **DEPRECATED** - Was in environment config but never used in components
+- **Position 6+**: ❌ **DOES NOT EXIST** - Never implemented, only theoretical documentation
+
+**What This Means:**
+- **Only Position 1 is actually functional** in the current codebase
+- **Positions 2-5 were environment variables** but never implemented in components
+- **Position 6+ was pure speculation** with no actual implementation
+- **The menu system is simpler than documented** - it's essentially just Position 1 + "show all items"
+
 ### Theming System
 
 The application supports multi-tenant theming through two complementary environment variables:

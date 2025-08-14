@@ -14,7 +14,14 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const pathname = window.location.pathname;
 
   const { fetchMenus, getMenuFromPosition, is_loading: menu_loading } = menu;
+  // Get main navigation from position 1
   const menus = getMenuFromPosition(1);
+  
+  // Debug logging to help understand menu structure
+  if (process.env.NODE_ENV === 'development') {
+    console.log('AcNavigation - menus (position 1):', menus);
+    console.log('AcNavigation - menus.items:', menus?.items);
+  }
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
@@ -51,10 +58,10 @@ const AcNavigation = ({ store: { menu, user } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {(menus && !user.isAuthenticated && (
+        {(menus && menus.items && Array.isArray(menus.items) && !user.isAuthenticated && (
           <ul>
             {menus.items.map((menuItem) => (
-              <li>
+              <li key={menuItem.name || menuItem.link}>
                 <Link to={menuItem.link}>
                   <Icon icon={menuItem.icon} />
                   {menuItem.name}

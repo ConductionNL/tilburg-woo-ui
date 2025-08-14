@@ -27,8 +27,15 @@ const AcHeader = ({ store: { menu } }) => {
 
   const { all_menu_items } = menu;
 
-  // Display all menu items from the backend instead of filtering by position
-  const menuItems = all_menu_items;
+  // Get sub menu items from position 2
+  const menuItems = menu.getMenuFromPosition(2) || null;
+  
+  // Debug logging to help understand menu structure
+  if (process.env.NODE_ENV === 'development') {
+    console.log('AcHeader - all_menu_items:', all_menu_items);
+    console.log('AcHeader - menuItems (position 2):', menuItems);
+    console.log('AcHeader - menuItems.items:', menuItems?.items);
+  }
 
   return (
     <header className='ac-header'>
@@ -54,7 +61,7 @@ const AcHeader = ({ store: { menu } }) => {
         </div>
         <AcNavigation />
       </div>
-      {menuItems && menuItems.items.length > 0 && (
+      {menuItems && menuItems.items && Array.isArray(menuItems.items) && menuItems.items.length > 0 && (
         <div className='ac-header__navigation-secondary'>
           <AcCNavigation items={menuItems.items} />
         </div>

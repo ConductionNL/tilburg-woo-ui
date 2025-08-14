@@ -3,17 +3,7 @@ import { LABELS, VISUALS } from '@constants';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
-import {
-  FOOTER_PRIMARY_ABOUT,
-  FOOTER_PRIMARY_QUICK,
-  FOOTER_SECONDARY,
-  VNG_FOOTER_ITEMS_SITEMAP,
-  VNG_FOOTER_ITEMS_INFORMATIE,
-  VNG_FOOTER_ITEMS_BEDRIJVEN,
-  DIMPACT_FOOTER_ITEMS_WHAT_WE_DO,
-  DIMPACT_FOOTER_ITEMS_WHO_WE_ARE,
-  DIMPACT_FOOTER_ITEMS_INFORMATION,
-} from '@constants/routes.constants';
+// Removed unused footer constants - backend handles all content
 import { Link } from 'react-router-dom';
 
 const AcFooter = ({ store: { menu } }) => {
@@ -26,100 +16,19 @@ const AcFooter = ({ store: { menu } }) => {
     return <Icon className='ac-footer__link-icon' />;
   };
 
-  const renderLink = (item) => {
-    const linkContent = item.isExternal ? (
-      <a href={item.href} target='_blank' rel='noopener noreferrer'>
-        {item.label}
-        <span className='sr-only'>Opent in een nieuw tabblad</span>
-        <VISUALS.EXTERNAL_LINK />
-      </a>
-    ) : (
-      <Link to={item.path}>{item.label}</Link>
-    );
+  // Removed renderLink function - backend handles all footer content
 
-    return <li key={item.id}>{linkContent}</li>;
-  };
+  // Backend will handle all footer logic and theming
 
-  // Try to import container constants (generated at runtime)
-  let containerConfig;
-  try {
-    containerConfig = require('@constants/container.constants');
-  } catch (error) {
-    console.warn(
-      'Container constants not available, falling back to hostname-based logic'
-    );
-    containerConfig = null;
+  // Get footer menus from positions 3, 4, 5
+  const footerItems = menu.getFooterMenus();
+  
+  // Debug logging to help understand footer structure
+  if (process.env.NODE_ENV === 'development') {
+    console.log('AcFooter - all_menu_items:', all_menu_items);
+    console.log('AcFooter - footerItems (positions 3,4,5):', footerItems);
+    console.log('AcFooter - subFooterItems (position 6):', menu.getSubFooterMenus());
   }
-
-  const getFooterItems = () => {
-    // Use container config if available
-    if (containerConfig && containerConfig.getFooterStyle) {
-      const footerStyle = containerConfig.getFooterStyle();
-      switch (footerStyle) {
-        case 'dimpact':
-          return [
-            DIMPACT_FOOTER_ITEMS_WHAT_WE_DO,
-            DIMPACT_FOOTER_ITEMS_WHO_WE_ARE,
-            DIMPACT_FOOTER_ITEMS_INFORMATION,
-          ];
-        case 'vng':
-        default:
-          return [
-            VNG_FOOTER_ITEMS_SITEMAP,
-            VNG_FOOTER_ITEMS_INFORMATIE,
-            VNG_FOOTER_ITEMS_BEDRIJVEN,
-          ];
-      }
-    }
-
-    // Fallback to hostname-based logic for production builds
-    const hostname = window.location.hostname;
-    switch (hostname) {
-      case 'vng.opencatalogi.nl':
-      case 'acceptatie.softwarecatalogus.nl':
-        return [
-          VNG_FOOTER_ITEMS_SITEMAP,
-          VNG_FOOTER_ITEMS_INFORMATIE,
-          VNG_FOOTER_ITEMS_BEDRIJVEN,
-        ];
-      case 'open-tilburg.accept.commonground.nu':
-        return [
-          VNG_FOOTER_ITEMS_SITEMAP,
-          VNG_FOOTER_ITEMS_INFORMATIE,
-          VNG_FOOTER_ITEMS_BEDRIJVEN,
-        ];
-      case 'open-dimpact.accept.commonground.nu':
-      case 'dimpact.opencatalogi.nl':
-        return [
-          DIMPACT_FOOTER_ITEMS_WHAT_WE_DO,
-          DIMPACT_FOOTER_ITEMS_WHO_WE_ARE,
-          DIMPACT_FOOTER_ITEMS_INFORMATION,
-        ];
-      case 'open-rotterdam.accept.commonground.nu':
-        return [
-          VNG_FOOTER_ITEMS_SITEMAP,
-          VNG_FOOTER_ITEMS_INFORMATIE,
-          VNG_FOOTER_ITEMS_BEDRIJVEN,
-        ];
-      case 'localhost':
-        return [
-          VNG_FOOTER_ITEMS_SITEMAP,
-          VNG_FOOTER_ITEMS_INFORMATIE,
-          VNG_FOOTER_ITEMS_BEDRIJVEN,
-        ];
-      default:
-        return [
-          VNG_FOOTER_ITEMS_SITEMAP,
-          VNG_FOOTER_ITEMS_INFORMATIE,
-          VNG_FOOTER_ITEMS_BEDRIJVEN,
-        ];
-    }
-  };
-
-  // Display all menu items in the footer instead of filtering by position
-  const footerItems = all_menu_items;
-
-  const hostname = window.location.hostname;
 
   return (
     <footer className='ac-footer'>
@@ -130,88 +39,56 @@ const AcFooter = ({ store: { menu } }) => {
         >
           {AcCheckIfSpecificHostname() ? (
             <>
-              {footerItems.map((footerItem, index) => (
-                <nav
-                  className='ac-footer__links'
-                  key={`footer-menu-${index + 1}`}
-                  aria-label={`Footer menu ${index + 1}`}
-                >
-                  {footerItem.items.map((item, index) =>
-                    item.link ? (
-                      item.link.includes('http' || 'https') ? (
-                        <>
-                          <a
-                            href={item.link}
-                            target='_blank'
-                            className='ac-footer__link'
-                            rel='noreferrer'
-                          >
-                            {hostname === 'open-dimpact.accept.commonground.nu' ||
-                            hostname === 'dimpact.opencatalogi.nl' ? (
-                              <>
-                                {item.icon ? (
-                                  <item.icon className='ac-footer__link-icon' />
-                                ) : (
-                                  <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                                )}
-                                {item.name}
-                                <span className='sr-only'>
-                                  Opent in een nieuw tabblad
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                {item.name}
-                                <span className='sr-only'>
-                                  Opent in een nieuw tabblad
-                                </span>
-                                <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                              </>
-                            )}
-                          </a>
-                        </>
-                      ) : (
-                        <Link className='ac-footer__link' to={item.link}>
-                          {hostname === 'open-dimpact.accept.commonground.nu' ||
-                            (hostname === 'dimpact.opencatalogi.nl' && (
-                              <Icon icon={item.icon} />
-                            ))}
-                          {item.name}
-                          {hostname !== 'open-dimpact.accept.commonground.nu' &&
-                            hostname !== 'dimpact.opencatalogi.nl' && (
-                              <Icon icon={item.icon} />
-                            )}
-                        </Link>
-                      )
-                    ) : (
-                      <div className='ac-footer__link'>
-                        {hostname === 'open-dimpact.accept.commonground.nu' ||
-                          (hostname === 'dimpact.opencatalogi.nl' && (
-                            <Icon icon={item.icon} />
-                          ))}
-                        {item.name}
-                        {hostname !== 'open-dimpact.accept.commonground.nu' &&
-                          hostname !== 'dimpact.opencatalogi.nl' && (
-                            <Icon icon={item.icon} />
-                          )}
-                      </div>
-                    )
-                  )}
-                </nav>
-              ))}
+              {footerItems && footerItems.length > 0 ? (
+                footerItems.map((footerItem, index) => (
+                  <nav
+                    className='ac-footer__links'
+                    key={`footer-menu-${index + 1}`}
+                    aria-label={`Footer menu ${index + 1}`}
+                  >
+                    {footerItem.items && footerItem.items.length > 0 ? (
+                      <ul>
+                        {footerItem.items.map((item, index) => (
+                                                     <li key={`footer-item-${index}`}>
+                             {item.link ? (
+                               item.link.includes('http') || item.link.includes('https') ? (
+                                 <a
+                                   href={item.link}
+                                   target='_blank'
+                                   className='ac-footer__link'
+                                   rel='noreferrer'
+                                 >
+                                   {item.icon ? (
+                                     <item.icon className='ac-footer__link-icon' />
+                                   ) : (
+                                     <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                                   )}
+                                   {item.name}
+                                   <span className='sr-only'>
+                                     Opent in een nieuw tabblad
+                                   </span>
+                                 </a>
+                               ) : (
+                                 <Link className='ac-footer__link' to={item.link}>
+                                   {item.icon && <Icon icon={item.icon} />}
+                                   {item.name}
+                                 </Link>
+                               )
+                             ) : (
+                               <div className='ac-footer__link'>
+                                 {item.icon && <Icon icon={item.icon} />}
+                                 {item.name}
+                               </div>
+                             )}
+                           </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </nav>
+                ))
+              ) : null}
             </>
-          ) : (
-            <>
-              <nav className='ac-footer__links' aria-label='Footer menu 1'>
-                <h3>{LABELS.THIS_WEBSITE}</h3>
-                <ul>{FOOTER_PRIMARY_ABOUT.map(renderLink)}</ul>
-              </nav>
-              <nav className='ac-footer__links' aria-label='Footer menu 2'>
-                <h3>{LABELS.QUICK_LINKS}</h3>
-                <ul>{FOOTER_PRIMARY_QUICK.map(renderLink)}</ul>
-              </nav>
-            </>
-          )}
+          ) : null}
           <div className='ac-footer__logo'>
             <ConLogo variant='footer' />
 
@@ -226,17 +103,62 @@ const AcFooter = ({ store: { menu } }) => {
           </div>
         </AcContainer>
       </section>
-      {AcCheckIfSpecificHostname() ? (
-        <></>
-      ) : (
-        <section>
-          <AcContainer>
-            <nav className='ac-footer__links' aria-label='Footer menu 3'>
-              <ul>{FOOTER_SECONDARY.map(renderLink)}</ul>
-            </nav>
-          </AcContainer>
-        </section>
-      )}
+      {/* Sub Footer - Position 6 */}
+      {(() => {
+        const subFooterItems = menu.getSubFooterMenus();
+        return subFooterItems && subFooterItems.length > 0 ? (
+          <section className='ac-footer__sub-footer'>
+            <AcContainer>
+              {subFooterItems.map((subFooterItem, index) => (
+                <nav
+                  key={`sub-footer-${index}`}
+                  className='ac-footer__sub-footer-links'
+                  aria-label={`Sub footer menu ${index + 1}`}
+                >
+                  {subFooterItem.items && subFooterItem.items.length > 0 && (
+                    <ul>
+                      {subFooterItem.items.map((item, itemIndex) => (
+                        <li key={`sub-footer-item-${itemIndex}`}>
+                          {item.link ? (
+                            item.link.includes('http') || item.link.includes('https') ? (
+                              <a
+                                href={item.link}
+                                target='_blank'
+                                className='ac-footer__sub-footer-link'
+                                rel='noreferrer'
+                              >
+                                {item.icon ? (
+                                  <item.icon className='ac-footer__link-icon' />
+                                ) : (
+                                  <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                                )}
+                                {item.name}
+                                <span className='sr-only'>
+                                  Opent in een nieuw tabblad
+                                </span>
+                              </a>
+                            ) : (
+                              <Link className='ac-footer__sub-footer-link' to={item.link}>
+                                {item.icon && <Icon icon={item.icon} />}
+                                {item.name}
+                              </Link>
+                            )
+                          ) : (
+                            <div className='ac-footer__sub-footer-link'>
+                              {item.icon && <Icon icon={item.icon} />}
+                              {item.name}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </nav>
+              ))}
+            </AcContainer>
+          </section>
+        ) : null;
+      })()}
     </footer>
   );
 };
