@@ -45,7 +45,44 @@ const App = ({ store }) => {
 
   const hostname = window.location.hostname;
 
+  // Try to import container constants (generated at runtime)
+  let containerConfig;
+  try {
+    containerConfig = require('@constants/container.constants');
+  } catch (error) {
+    console.warn('Container constants not available, falling back to hostname-based theme logic');
+    containerConfig = null;
+  }
+
   const getTheme = () => {
+    // Use container config if available
+    if (containerConfig && containerConfig.getThemeVariant) {
+      const themeVariant = containerConfig.getThemeVariant();
+      // Map theme variants to CSS theme classes
+      switch (themeVariant) {
+        case 'vng':
+          return 'vng-theme';
+        case 'dimpact':
+          return 'dimpact-theme';
+        case 'tilburg':
+          return 'tilburg-theme';
+        case 'rotterdam':
+          return 'rotterdam-theme';
+        case 'migrato':
+          return 'migrato-theme';
+        case 'opencatalogi':
+          return 'opencatalogi-theme';
+        case 'horst-aan-de-maas':
+          return 'horst-aan-de-maas-theme';
+        case 'venray':
+          return 'venray-theme';
+        case 'development':
+        default:
+          return 'vng-theme'; // Default for development
+      }
+    }
+
+    // Fallback to hostname-based logic for production builds without container constants
     switch (hostname) {
       case 'vng.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':

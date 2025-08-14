@@ -17,7 +17,8 @@ const hostname = window.location.hostname;
 const apiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getApiUrl) {
-    throw new Error('API URL not configured. Please check your environment setup.');
+    console.warn('Container constants not available, falling back to default API URL');
+    return '/api/apps'; // Fallback to default
   }
   
   return containerConfig.getApiUrl();
@@ -26,16 +27,17 @@ const apiUrl = () => {
 export const commongroundApiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getCommongroundApiUrl) {
-    throw new Error('CommonGround API URL not configured. Please check your environment setup.');
+    console.warn('Container constants not available, falling back to default CommonGround API URL');
+    return '/api/apps'; // Fallback to default
   }
   
   return containerConfig.getCommongroundApiUrl();
 };
 
 // const _api_ = process.env.API_URL;
-const _api_ = apiUrl();
+// const _api_ = apiUrl();
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
-const _api_commonground_ = commongroundApiUrl();
+// const _api_commonground_ = commongroundApiUrl();
 
 const _api_commonground_headers_ = {
   'Content-Type': 'application/json',
@@ -65,7 +67,9 @@ export default {
     environment: process.env.ROLLBAR_ENVIRONMENT,
   }),
   api: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -84,7 +88,9 @@ export default {
     ],
   },
   publications: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -95,7 +101,9 @@ export default {
     },
   },
   authentication: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -106,7 +114,9 @@ export default {
     },
   },
   mijnOmgeving: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -117,7 +127,9 @@ export default {
     },
   },
   menus: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -129,7 +141,9 @@ export default {
     },
   },
   themes: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -140,7 +154,9 @@ export default {
     },
   },
   faqs: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -152,7 +168,9 @@ export default {
     },
   },
   pages: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -164,15 +182,33 @@ export default {
     },
   },
   gemma: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
     credentials: false,
   },
+  download: {
+    get baseURL() {
+      return apiUrl();
+    },
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    credentials: true,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  },
   upload: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',

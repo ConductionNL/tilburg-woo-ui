@@ -38,7 +38,7 @@ services:
       - SITE_DESCRIPTION=Development instance of the software catalogus
       - SITE=localhost
       - MODE=development
-      - THEME_VARIANT=development
+      - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
       # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
       - BASE_URL=/api/apps
@@ -79,7 +79,7 @@ services:
       # Visual Configuration
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
-      - MENU_POSITION=2
+      - MENU_POSITION=1
       - FOOTER_STYLE=vng
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
@@ -115,7 +115,7 @@ services:
       - SITE_DESCRIPTION=Hot reload development instance
       - SITE=localhost
       - MODE=development
-      - THEME_VARIANT=development
+      - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
       # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
       - BASE_URL=/api/apps
@@ -157,7 +157,7 @@ services:
       # Visual Configuration
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
-      - MENU_POSITION=2
+      - MENU_POSITION=1
       - FOOTER_STYLE=vng
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]

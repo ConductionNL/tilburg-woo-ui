@@ -172,11 +172,11 @@ const AcLogin = ({ store }) => {
           <AcButton
             style='button'
             buttonType='secondary'
-            onClick={handleNextcloudLogin}
+            onClick={() => navigate('/register')}
             className='ac-login-form-button'
             disabled={isLoading || user.loading.status}
           >
-            Nextcloud
+            Aanmelden
           </AcButton>
 
           {(user.error || errors.general) && (
