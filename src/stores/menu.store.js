@@ -49,44 +49,9 @@ export class MenuStore {
 
   @action
   setMenus = (items) => {
-    // Filter out user-specific menu items that should be handled by the header
-    const filteredItems = items.map(menu => ({
-      ...menu,
-      items: menu.items ? menu.items.filter(item => {
-        // Filter out user-specific items that contain names or logout functionality
-        const itemText = (item.name || item.label || item.title || '').toLowerCase();
-        const itemHref = (item.href || item.url || item.link || '').toLowerCase();
-        
-        // Exclude items that look like user names or logout links
-        const isUserName = /^[a-zA-Z\s]+ \d+$/.test(item.name || item.label || ''); // Pattern like "Name 3"
-        const isLogout = itemText.includes('uitloggen') || 
-                        itemText.includes('logout') || 
-                        itemHref.includes('logout') ||
-                        itemHref.includes('uitloggen');
-        const isUserProfile = itemText.includes('profiel') || 
-                             itemText.includes('profile') ||
-                             itemText.includes('account');
-        const isDashboard = itemText.includes('dashboard') ||
-                           itemHref.includes('dashboard');
-        
-        // Additional user-specific patterns to filter out
-        const isAuthRelated = itemText.includes('inloggen') || 
-                             itemText.includes('login') ||
-                             itemText.includes('signin') ||
-                             itemText.includes('sign-in');
-        
-        // Filter out beheer/admin related menu items (these should be in sidenav)
-        const isBeheerItem = itemHref.includes('/beheer') ||
-                            itemHref.includes('/admin') ||
-                            itemText.includes('beheer') ||
-                            itemText.includes('admin');
-        
-        // Keep the item only if it's NOT user-specific or admin-related
-        return !isUserName && !isLogout && !isUserProfile && !isDashboard && !isAuthRelated && !isBeheerItem;
-      }) : []
-    }));
-    
-    this.items = filteredItems;
+    // Display all menu items from the backend without filtering
+    // Let the backend control what gets shown where
+    this.items = items;
   };
 
   @action

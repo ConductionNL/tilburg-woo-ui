@@ -116,20 +116,8 @@ const AcFooter = ({ store: { menu } }) => {
     }
   };
 
-  const getFooterMenuPosition = () => {
-    // Use container config if available
-    if (containerConfig && containerConfig.getMenuPosition) {
-      return containerConfig.getMenuPosition();
-    }
-
-    // Fallback to hostname-based logic for production builds
-    const hostname = window.location.hostname;
-    return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
-  };
-
-  const footerItems = all_menu_items.filter(
-    (item) => item.position > getFooterMenuPosition()
-  );
+  // Display all menu items in the footer instead of filtering by position
+  const footerItems = all_menu_items;
 
   const hostname = window.location.hostname;
 

@@ -49,7 +49,6 @@ const getEnvConfig = () => {
     // Visual Configuration
     HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || '/home-hero-background.png',
     // Menu Configuration
-    MENU_POSITION: parseInt(process.env.MENU_POSITION) || 2,
     FOOTER_STYLE: process.env.FOOTER_STYLE || 'vng', // vng, dimpact, etc.
   };
 };

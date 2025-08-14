@@ -4,8 +4,8 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Environment Config Test ✅',
-  SITE_DESCRIPTION: 'Development instance of the software catalogus',
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
   SITE: 'localhost',
   MODE: 'development',
   THEME_VARIANT: 'vng',
@@ -33,7 +33,6 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
-  MENU_POSITION: 1,
   FOOTER_STYLE: 'vng',
 });
 // Helper functions to replace hostname-based logic

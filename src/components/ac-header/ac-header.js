@@ -27,18 +27,8 @@ const AcHeader = ({ store: { menu } }) => {
 
   const { all_menu_items } = menu;
 
-  const getMenuPosition = () => {
-    // Use container config if available
-    if (containerConfig && containerConfig.getMenuPosition) {
-      return containerConfig.getMenuPosition();
-    }
-
-    // Fallback to hostname-based logic for production builds
-    const hostname = window.location.hostname;
-    return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
-  };
-
-  const menuItems = all_menu_items.find((item) => item.position === getMenuPosition());
+  // Display all menu items from the backend instead of filtering by position
+  const menuItems = all_menu_items;
 
   return (
     <header className='ac-header'>
