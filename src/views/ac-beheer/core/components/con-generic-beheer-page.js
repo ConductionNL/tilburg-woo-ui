@@ -25,12 +25,17 @@ import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-
 import _ from 'lodash';
 import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 
 /**
  * Generic Beheer Page Component
  * This component can handle all beheer page types through configuration
  */
-const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} }) => {
+const ConGenericBeheerPage = ({
+  store: { object, user },
+  type,
+  configOverrides = {},
+}) => {
   const navigate = useNavigate();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -115,6 +120,22 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
 
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
+
+  const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
+  const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+
+  // Related create actions via shared hook
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate: (targetType, preSelected) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      setOpenModal('dynamicCreate');
+    },
+  });
 
   const fetchData = useCallback(
     async (searchParams = {}) => {
@@ -298,6 +319,9 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
             },
           })) || [];
 
+      // Map related schemas user can create → dynamic create actions
+      const dynamicCreateActions = makeActionsForContext(row.id);
+
       const deleteAction = {
         key: 'delete',
         label: 'Verwijderen',
@@ -308,9 +332,14 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
         },
       };
 
-      return [...baseActions, ...uniqueActions, deleteAction];
+      return [
+        ...baseActions,
+        ...uniqueActions,
+        ...dynamicCreateActions,
+        deleteAction,
+      ];
     },
-    [config.routeType, config.uniqueActions, navigate]
+    [config.routeType, config.uniqueActions, navigate, makeActionsForContext]
   );
 
   if (error) {
@@ -499,7 +528,13 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
             setSingleSelectedRow,
             tableRef,
             fetchData,
-            config,
+            config: {
+              ...config,
+              // Ensure dynamicCreate is available everywhere
+              modals: [...(config.modals || []), 'dynamicCreate'],
+            },
+            dynamicCreateTargetType,
+            dynamicCreatePreSelected,
             onModalMounted: (modalType) => {
               if (modalType === 'add') {
                 console.log('add modal mounted');

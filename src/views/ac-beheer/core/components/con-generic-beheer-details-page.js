@@ -25,6 +25,8 @@ import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con
 import { TOOLTIP_ID } from '@src/index.web';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
+import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 
 /**
  * Generic Beheer Details Page
@@ -33,13 +35,20 @@ import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal
  * - Renders Files tab and dynamic Uses/Used tabs
  * - Supports unique action menu items and edit/delete via external modals
  */
-const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) => {
+const ConGenericBeheerDetailsPage = ({
+  store: { object, user },
+  type,
+  id: propId,
+}) => {
   const navigate = useNavigate();
   const params = useParams();
   const id = propId || params?.id;
 
   const [openModal, setOpenModal] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
+  const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
+  const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+  const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Resolve config
   const config = useMemo(() => {
@@ -139,8 +148,32 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
   const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
 
   const showDescriptionFields = type === 'organisaties' || type === 'applicaties';
-  const shortTooltip = (type) => `Een korte beschrijving van de ${type.slice(0, -1)}`;
-  const longTooltip = (type) => `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
+  const shortTooltip = (type) =>
+    `Een korte beschrijving van de ${type.slice(0, -1)}`;
+  const longTooltip = (type) =>
+    `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
+
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate: (targetType, preSelected) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      setOpenModal('dynamicCreate');
+    },
+  });
+
+  useEffect(() => {
+    if (!config?.schemaSlug || !data?.id) return;
+    const items = makeActionsForContext(data.id).map(({ key, label, onClick }) => ({
+      key,
+      label,
+      onClick,
+    }));
+    setActionMenuItems(items);
+  }, [config?.schemaSlug, data?.id, makeActionsForContext]);
 
   if (!config) {
     return <AcBeheerError error={'Onbekend detailtype'} />;
@@ -194,6 +227,16 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                           </ConActionMenu.Button>
                         ) : null
                       )}
+                      {actionMenuItems?.length > 0 && <ConActionMenu.Divider />}
+                      {actionMenuItems?.map((item) => (
+                        <ConActionMenu.Button
+                          key={item.label}
+                          onClick={item.onClick}
+                          icon={<VISUALS.PLUS />}
+                        >
+                          {item.label}
+                        </ConActionMenu.Button>
+                      ))}
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -452,12 +495,16 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
         config: {
           registerSlug,
           schemaSlug,
-          // Include all available modals for this type except add/import on details page
+          // Include all available modals for this type plus dynamicCreate, exclude add/import
           modals: (BeheerModalFactory.modalComponents[type]
             ? Object.keys(BeheerModalFactory.modalComponents[type])
             : []
-          ).filter((m) => m !== 'add' && m !== 'import'),
+          )
+            .filter((m) => m !== 'add' && m !== 'import')
+            .concat('dynamicCreate'),
         },
+        dynamicCreateTargetType,
+        dynamicCreatePreSelected,
       })}
     </AcSection>
   );
