@@ -59,6 +59,19 @@ const MENUS_ENDPOINT = `${OPENCATALOGI}${API}${MENUS}s`;
 const THEMES_ENDPOINT = `${OPENCATALOGI}${API}${THEMES}`;
 
 export const ENDPOINTS = AcLockObject({
+  OAUTH: {
+    LOGIN: `${OPENCATALOGI}${API}/oauth/login`,
+    REGISTER: `${OPENCATALOGI}${API}/oauth/register`,
+    LOGOUT: `${OPENCATALOGI}${API}/oauth/logout`,
+    FORGOT_PASSWORD: `${OPENCATALOGI}${API}/oauth/forgot-password`,
+    RESET_PASSWORD: `${OPENCATALOGI}${API}/oauth/reset-password`,
+    REFRESH: `${OPENCATALOGI}${API}/oauth/refresh`,
+  },
+  OPENCONNECTOR: {
+    USER_LOGIN: `${OPENCATALOGI}${API}/openconnector/user/login`,
+    USER_LOGOUT: `${OPENCATALOGI}${API}/openconnector/user/logout`,
+    USER_PROFILE: `${OPENCATALOGI}${API}/openconnector/user/me`,
+  },
   PUBLICATIONS: {
     SEARCH: `${OPENCATALOGI}${API}${PUBLICATIONS}`, // GET
     SINGLE: (_id) =>

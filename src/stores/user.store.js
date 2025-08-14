@@ -153,22 +153,15 @@ export class UserStore {
         );
       }
 
-      const loginUrl = `${containerConfig.getOpenconnectorApiUrl()}/user/login`;
+      // Use the proper API client instead of hardcoded fetch
+      if (!app.store.api || !app.store.api.auth) {
+        throw new Error('Auth API not available');
+      }
 
-      const response = await fetch(loginUrl, {
-        method: 'POST',
-        credentials: 'include', // Include cookies for session-based auth
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+      const data = await app.store.api.auth.sessionLogin({
+        username,
+        password,
       });
-
-      if (response.ok) {
-        const data = await response.json();
 
         console.log('Login successful! Response data:', data);
         console.log('All cookies after login:', document.cookie);
@@ -221,21 +214,13 @@ export class UserStore {
 
         this.setLoading(false);
         return { success: true, user: this.user };
-      } else {
-        const errorData = await response.json();
+      } catch (error) {
         const errorMessage =
-          errorData.error || 'Inloggen mislukt. Controleer uw gegevens.';
+          error.message || 'Inloggen mislukt. Controleer uw gegevens.';
         this.setError(errorMessage);
         this.setLoading(false);
         return { success: false, error: errorMessage };
       }
-    } catch (error) {
-      const errorMessage =
-        error.message || 'Inloggen mislukt. Controleer uw gegevens.';
-      this.setError(errorMessage);
-      this.setLoading(false);
-      return { success: false, error: errorMessage };
-    }
   };
 
   // Check authentication status and fetch user profile
@@ -261,16 +246,17 @@ export class UserStore {
 
       console.log('Checking authentication status...');
 
-      // Use the authenticated request helper instead of direct fetch
-      const userData = await this.makeAuthenticatedRequest('/user/me', {
-        method: 'GET',
-      });
-
-      console.log('Authentication check successful:', userData);
-      this.setUser(userData);
-      this.setAuthMethod('session');
-      this.setLoading(false);
-      return true;
+      // Use the proper API client instead of the authenticated request helper
+      if (app.store.api && app.store.api.auth) {
+        const userData = await app.store.api.auth.getUserProfile();
+        console.log('Authentication check successful:', userData);
+        this.setUser(userData);
+        this.setAuthMethod('session');
+        this.setLoading(false);
+        return true;
+      } else {
+        throw new Error('Auth API not available');
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
 
@@ -292,20 +278,16 @@ export class UserStore {
   @action
   fetchUserProfile = async () => {
     try {
-      if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
-        console.warn('OpenConnector API URL not configured');
-        return;
-      }
-
       console.log('Fetching user profile...');
 
-      // Use the authenticated request helper instead of direct fetch
-      const userData = await this.makeAuthenticatedRequest('/user/me', {
-        method: 'GET',
-      });
-
-      console.log('User profile fetched successfully:', userData);
-      this.setUser(userData);
+      // Use the proper API client instead of the authenticated request helper
+      if (app.store.api && app.store.api.auth) {
+        const userData = await app.store.api.auth.getUserProfile();
+        console.log('User profile fetched successfully:', userData);
+        this.setUser(userData);
+      } else {
+        console.warn('Auth API not available');
+      }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
     }
@@ -315,29 +297,21 @@ export class UserStore {
   @action
   updateUser = async (userData) => {
     try {
-      if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
-        console.warn('OpenConnector API URL not configured');
-        throw new Error('API URL not configured');
-      }
-
       console.log('Updating user profile:', userData);
 
-      // Use the authenticated request helper to update user data
-      const updatedUserData = await this.makeAuthenticatedRequest('/user/me', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      // Use the proper API client instead of the authenticated request helper
+      if (app.store.api && app.store.api.auth) {
+        const updatedUserData = await app.store.api.auth.updateUserProfile(userData);
+        console.log('User profile updated successfully:', updatedUserData);
 
-      console.log('User profile updated successfully:', updatedUserData);
+        // Update the local user state with the new data
+        this.setUser(updatedUserData);
 
-      // Update the local user state with the new data
-      this.setUser(updatedUserData);
-
-      // Return the response in the expected format for compatibility
-      return { data: updatedUserData };
+        // Return the response in the expected format for compatibility
+        return { data: updatedUserData };
+      } else {
+        throw new Error('Auth API not available');
+      }
     } catch (error) {
       console.error('Failed to update user profile:', error);
       throw error;
@@ -372,12 +346,9 @@ export class UserStore {
       // If using session auth, try to call logout endpoint
       if (this.authMethod === 'session') {
         try {
-          if (containerConfig && containerConfig.getOpenconnectorApiUrl) {
-            const logoutUrl = `${containerConfig.getOpenconnectorApiUrl()}/user/logout`;
-            await fetch(logoutUrl, {
-              method: 'POST',
-              credentials: 'include',
-            });
+          // Use the proper API client instead of hardcoded fetch
+          if (app.store.api && app.store.api.auth) {
+            await app.store.api.auth.sessionLogout();
           }
         } catch (error) {
           console.error('Logout endpoint failed:', error);
@@ -422,88 +393,6 @@ export class UserStore {
         cookieName
       )}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
     });
-  };
-
-  // Make authenticated API requests
-  @action
-  makeAuthenticatedRequest = async (endpoint, options = {}) => {
-    const defaultOptions = {
-      credentials: 'include', // Always include cookies for session auth
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    };
-
-    // Check what cookies are actually available
-    console.log(
-      'Making authenticated request - available cookies:',
-      document.cookie
-    );
-
-    // Priority order for authentication:
-    // 1. OpenConnector access token (from login response)
-    // 2. Nextcloud access token (from OAuth flow)
-    // 3. Session cookies (automatic via credentials: 'include')
-
-    const openconnectorToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('openconnector_access_token='));
-
-    const nextcloudToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('nextcloud_access_token='));
-
-    if (openconnectorToken) {
-      const token = openconnectorToken.split('=')[1];
-      defaultOptions.headers.Authorization = `Bearer ${token}`;
-      console.log('Using OpenConnector access token for authentication');
-    } else if (this.authMethod === 'oauth' && app.store.auth?.current_access_token) {
-      defaultOptions.headers.Authorization = `Bearer ${app.store.auth.current_access_token}`;
-      console.log('Using OAuth authentication with token');
-    } else if (nextcloudToken) {
-      const token = nextcloudToken.split('=')[1];
-      defaultOptions.headers.Authorization = `Bearer ${token}`;
-      console.log('Using Nextcloud access token for authentication');
-    } else {
-      console.log('Using session-based authentication with cookies only');
-    }
-
-    const baseUrl = containerConfig?.getOpenconnectorApiUrl() || '';
-    const fullUrl = `${baseUrl}${endpoint}`;
-
-    console.log('Making authenticated request:', {
-      url: fullUrl,
-      method: options.method || 'GET',
-      headers: defaultOptions.headers,
-      authMethod: this.authMethod,
-      credentials: defaultOptions.credentials,
-    });
-
-    const response = await fetch(fullUrl, {
-      ...defaultOptions,
-      ...options,
-    });
-
-    console.log('API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: fullUrl,
-      headers: Object.fromEntries(response.headers.entries()),
-    });
-
-    if (!response.ok) {
-      // If unauthorized, clear authentication
-      if (response.status === 401) {
-        console.log('Received 401 Unauthorized, clearing user authentication');
-        this.clearUser();
-      }
-      throw new Error(
-        `API request failed: ${response.status} ${response.statusText}`
-      );
-    }
-
-    return response.json();
   };
 
   // Get organization dashboard URL
