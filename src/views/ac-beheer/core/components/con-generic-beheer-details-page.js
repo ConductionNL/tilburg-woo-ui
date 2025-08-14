@@ -138,6 +138,10 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
   const usesSchemas = useMemo(() => uniqueSchemasFrom(usesData), [usesData]);
   const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
 
+  const showDescriptionFields = type === 'organisaties' || type === 'applicaties';
+  const shortTooltip = (type) => `Een korte beschrijving van de ${type.slice(0, -1)}`;
+  const longTooltip = (type) => `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
+
   if (!config) {
     return <AcBeheerError error={'Onbekend detailtype'} />;
   }
@@ -202,7 +206,7 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                 </AcFlex>
 
                 <AcColumn gap='tiger'>
-                  {type === 'organisaties' && (
+                  {showDescriptionFields && (
                     <>
                       <ConEditableDescription
                         registerSlug={config.registerSlug}
@@ -210,8 +214,8 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                         objectId={data.id}
                         field='beschrijvingKort'
                         label='Korte beschrijving'
-                        placeholder='Een korte beschrijving van de organisatie'
-                        tooltip='Een korte beschrijving van de organisatie'
+                        placeholder={shortTooltip(type)}
+                        tooltip={shortTooltip(type)}
                         maxLength={255}
                         isMarkdown={false}
                         value={data.beschrijvingKort}
@@ -224,8 +228,8 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                         objectId={data.id}
                         field='beschrijvingLang'
                         label='Lange beschrijving'
-                        placeholder='Een uitgebreide beschrijving van de organisatie'
-                        tooltip='Een uitgebreide beschrijving van de organisatie'
+                        placeholder={longTooltip(type)}
+                        tooltip={longTooltip(type)}
                         maxLength={2000}
                         isMarkdown={true}
                         value={data.beschrijvingLang}
