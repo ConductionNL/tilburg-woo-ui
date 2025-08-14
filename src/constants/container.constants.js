@@ -4,8 +4,8 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Hot Reload Development 🔥',
-  SITE_DESCRIPTION: 'Hot reload development instance',
+  SITE_TITLE: 'Environment Config Test ✅',
+  SITE_DESCRIPTION: 'Development instance of the software catalogus',
   SITE: 'localhost',
   MODE: 'development',
   THEME_VARIANT: 'vng',
@@ -80,4 +80,3 @@ export const getVisualConfig = () => ({
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
 export const getDefaultConfig = () => CONTAINER_CONFIG;
-TAINER_CONFIG;
