@@ -196,7 +196,7 @@ const ConGenericBeheerDetailsPage = ({
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{config.getTitle(data)}</Heading>
+                  <Heading>{data['@self']?.name || data.id}</Heading>
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                       Acties
@@ -209,6 +209,7 @@ const ConGenericBeheerDetailsPage = ({
                         Bijwerken
                       </ConActionMenu.Button>
                       {config.uniqueActions?.map((action) =>
+                        // if condition is true show the action
                         action.condition?.(data) ? (
                           <ConActionMenu.Button
                             key={action.key}

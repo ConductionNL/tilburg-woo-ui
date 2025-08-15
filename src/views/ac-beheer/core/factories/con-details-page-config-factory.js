@@ -28,8 +28,6 @@ const DetailsPageConfigFactory = {
       excludedProperties: ['id'],
       // Additional actions in the action menu (besides edit/delete)
       uniqueActions: [],
-      // Compute page title from loaded object
-      getTitle: (data) => data?.id,
       // Formatting options passed to formatBySchema
       formatBySchemaOptions: {},
     };
@@ -47,7 +45,6 @@ const DetailsPageConfigFactory = {
             'beschrijvingKort',
             'beschrijvingLang',
           ],
-          getTitle: (data) => data?.naam || data?.id,
           formatBySchemaOptions: {
             profile: {
               organisatie: { include: ['naam'], includeUnknown: true, inline: true },
@@ -101,7 +98,6 @@ const DetailsPageConfigFactory = {
             'leverancier',
             'ondersteundeStandaarden',
           ],
-          getTitle: (data) => data?.voorziening?.naam || data?.id,
           formatBySchemaOptions: {
             include: ['naam'],
             includeUnknown: true,
@@ -114,7 +110,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'ibpScore', 'bbnScore', 'interneAantekening'],
-          getTitle: (data) => data?.id,
           formatBySchemaOptions: {
             profile: {
               voorzieningId: {
@@ -147,7 +142,6 @@ const DetailsPageConfigFactory = {
             'deelnames',
             'logo',
           ],
-          getTitle: (data) => data?.naam || data?.id,
           formatBySchemaOptions: {
             exclude: ['@self'],
             includeUnknown: true,
@@ -162,7 +156,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'titel'],
-          getTitle: (data) => data?.titel || data?.id,
           formatBySchemaOptions: {},
         };
 
@@ -171,7 +164,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'contractNummer'],
-          getTitle: (data) => data?.contractNummer || data?.id,
           formatBySchemaOptions: {
             include: ['naam'],
             inline: true,
@@ -195,8 +187,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'voornaam', 'achternaam'],
-          getTitle: (data) =>
-            `${data?.voornaam || ''} ${data?.achternaam || ''}`.trim() || data?.id,
           formatBySchemaOptions: {
             profile: {
               organisatie: { include: ['naam'], includeUnknown: true, inline: true },
