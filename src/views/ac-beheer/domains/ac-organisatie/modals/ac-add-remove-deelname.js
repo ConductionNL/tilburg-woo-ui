@@ -66,26 +66,32 @@ const AcAddRemoveDeelnameModal = ({
 
       const collection = object.getCollection(typeKey);
       const orgs = collection?.results || [];
-      const existingDeelnameIds = Array.isArray(organization?.deelnames)
-        ? organization?.deelnames?.map((d) => (typeof d === 'object' ? d.id : d))
+      const organizationDeelnames = Array.isArray(
+        organization && organization.deelnames
+      )
+        ? organization.deelnames
         : [];
+      const existingDeelnameIds = organizationDeelnames
+        .map((d) => (typeof d === 'object' ? d.id : d))
+        .map(String);
 
       if (remove) {
-        // For remove, only show existing deelnames
-        setDeelnameOptions(
-          orgs
-            .filter((org) => existingDeelnameIds.includes(org.id))
-            .map((org) => ({
-              value: org.id,
-              label: org.naam || org.id,
-            }))
-        );
+        // For remove, include existing deelnames that no longer exist as organisations first
+        const orgIdsSet = new Set(orgs.map((o) => String(o.id)));
+        const missingIds = existingDeelnameIds.filter((id) => !orgIdsSet.has(id));
+        const missingOptions = missingIds.map((id) => ({ value: id, label: id }));
+
+        const existingOptions = orgs
+          .filter((org) => existingDeelnameIds.includes(String(org.id)))
+          .map((org) => ({ value: org.id, label: org.naam || org.id }));
+
+        setDeelnameOptions([...missingOptions, ...existingOptions]);
       } else {
         // For add, filter out existing deelnames
         setDeelnameOptions(
           orgs
-            .filter((org) => !existingDeelnameIds.includes(org.id))
-            .filter((org) => org.id !== organization.id)
+            .filter((org) => !existingDeelnameIds.includes(String(org.id)))
+            .filter((org) => String(org.id) !== String(organization.id))
             .map((org) => ({
               value: org.id,
               label: org.naam || org.id,
@@ -109,10 +115,12 @@ const AcAddRemoveDeelnameModal = ({
       const existingDeelnameIds = Array.isArray(organization.deelnames)
         ? organization.deelnames.map((d) => (typeof d === 'object' ? d.id : d))
         : [];
+      const normalizedExistingIds = existingDeelnameIds.map(String);
+      const selectedId = String(selectedDeelname.value);
 
       const updatedDeelnames = remove
-        ? existingDeelnameIds.filter((id) => id !== selectedDeelname.value)
-        : [...existingDeelnameIds, selectedDeelname.value];
+        ? normalizedExistingIds.filter((id) => id !== selectedId)
+        : Array.from(new Set([...normalizedExistingIds, selectedId]));
 
       await object.patchObject('voorzieningen', 'organisatie', organization.id, {
         deelnames: updatedDeelnames.map(String),
