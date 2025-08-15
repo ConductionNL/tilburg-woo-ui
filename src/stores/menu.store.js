@@ -29,7 +29,11 @@ export class MenuStore {
 
   @computed
   get all_menu_items() {
-    return this.items ? toJS(this.items) : [];
+    const result = this.items ? toJS(this.items) : [];
+    if (process.env.NODE_ENV === 'development') {
+      console.log('MenuStore - all_menu_items computed:', result);
+    }
+    return result;
   }
 
   @computed
@@ -51,6 +55,9 @@ export class MenuStore {
   setMenus = (items) => {
     // Display all menu items from the backend without filtering
     // Let the backend control what gets shown where
+    if (process.env.NODE_ENV === 'development') {
+      console.log('MenuStore - setMenus called with:', items);
+    }
     this.items = items;
   };
 
@@ -61,7 +68,38 @@ export class MenuStore {
 
   @action
   getMenuFromPosition = (position) => {
-    return this.all_menu_items.find((item) => item.position === position);
+    const items = this.all_menu_items;
+    if (!Array.isArray(items) || items.length === 0) {
+      return null;
+    }
+    return items.find((item) => item && item.position === position) || null;
+  };
+
+  @action
+  getMenusFromPositions = (positions) => {
+    const items = this.all_menu_items;
+    if (!Array.isArray(items) || items.length === 0) {
+      return [];
+    }
+    return items.filter((item) => item && positions.includes(item.position));
+  };
+
+  @action
+  getFooterMenus = () => {
+    // Get footer menus (positions 3, 4, 5)
+    return this.getMenusFromPositions([3, 4, 5]);
+  };
+
+  @action
+  getSubFooterMenus = () => {
+    // Get sub footer menus (position 6)
+    return this.getMenusFromPositions([6]);
+  };
+
+  @action
+  getAdminMenus = () => {
+    // Get admin menus (position 7)
+    return this.getMenusFromPositions([7]);
   };
 
   @action
@@ -91,6 +129,9 @@ export class MenuStore {
     app.store.api.menu
       .list()
       .then((response) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('MenuStore - fetchMenus response:', response);
+        }
         if (response.data) {
           this.setMenus(response.data);
         } else {

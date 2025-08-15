@@ -50,6 +50,9 @@ const getEnvConfig = () => {
     HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || '/home-hero-background.png',
     // Menu Configuration
     FOOTER_STYLE: process.env.FOOTER_STYLE || 'vng', // vng, dimpact, etc.
+    // Footer Text Configuration
+    FOOTER_LOGO_TITLE: process.env.FOOTER_LOGO_TITLE || 'Open Tilburg',
+    FOOTER_LOGO_SUBTITLE: process.env.FOOTER_LOGO_SUBTITLE || 'Één plek voor alle publicaties van Gemeente Tilburg',
   };
 };
 // Generate the constants file content
@@ -118,6 +121,9 @@ export const getVisualConfig = () => ({
   menuPosition: CONTAINER_CONFIG.MENU_POSITION,
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
+// Footer text helper functions
+export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
+export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };

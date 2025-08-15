@@ -19,7 +19,7 @@ services:
       - "81:81"
     environment:
       - NODE_ENV=production
-      - BASE_URL=/api/apps
+      - BASE_URL=/api
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
       - CLIENT_SECRET=
@@ -40,9 +40,9 @@ services:
       - MODE=development
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
-      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
-      - BASE_URL=/api/apps
-      - BASE_URL_COMMONGROUND=/api/apps
+      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
+      - BASE_URL=/api
+      - BASE_URL_COMMONGROUND=/api
       
       # Nextcloud/Target Configuration
       - NEXTCLOUD_HOST=nextcloud.local
@@ -80,6 +80,9 @@ services:
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
       - FOOTER_STYLE=vng
+      # Footer Text Configuration
+      - FOOTER_LOGO_TITLE=VNG Softwarectalogus
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
@@ -116,9 +119,9 @@ services:
       - MODE=development
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
-      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
-      - BASE_URL=/api/apps
-      - BASE_URL_COMMONGROUND=/api/apps
+      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
+      - BASE_URL=/api
+      - BASE_URL_COMMONGROUND=/api
       
       # Nextcloud/Target Configuration  
       - NEXTCLOUD_HOST=nextcloud.local
@@ -157,6 +160,9 @@ services:
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
       - FOOTER_STYLE=vng
+      # Footer Text Configuration
+      - FOOTER_LOGO_TITLE=Open Tilburg
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]
       interval: 30s

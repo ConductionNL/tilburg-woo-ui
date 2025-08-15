@@ -79,6 +79,32 @@
     }
   }
 
+  // Sub footer horizontal styling
+  &__sub-footer {
+    &-horizontal {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: var(--tilburg-space-column-horse);
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        margin: 0;
+        padding: 0;
+
+        &:not(:last-child)::after {
+          content: '|';
+          margin-left: var(--tilburg-space-column-horse);
+          color: var(--tilburg-footer-color);
+          opacity: 0.6;
+        }
+      }
+    }
+  }
+
   &__logo {
     display: flex;
     gap: var(--tilburg-space-column-cat);
