@@ -270,13 +270,27 @@ const ConGenericBeheerPage = ({
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
+  // Stable keys to avoid re-running effects on new array/object references
+  const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
+  const defaultHeaderIdsKey = useMemo(
+    () => (config.defaultHeaders || []).join(','),
+    [config.defaultHeaders]
+  );
+
   useEffect(() => {
-    if (headers.length > 0) {
-      setTableHeaders(
-        headers.filter((header) => config.defaultHeaders.includes(header.id))
-      );
-    }
-  }, [headers, config.defaultHeaders]);
+    if (headers.length === 0) return;
+
+    const next = headers.filter((header) =>
+      config.defaultHeaders.includes(header.id)
+    );
+
+    const nextKey = next.map((h) => h.id).join(',');
+    const currentKey = tableHeaders.map((h) => h.id).join(',');
+
+    if (nextKey === currentKey) return;
+
+    setTableHeaders(next);
+  }, [headerIdsKey, defaultHeaderIdsKey]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -537,7 +551,6 @@ const ConGenericBeheerPage = ({
             dynamicCreatePreSelected,
             onModalMounted: (modalType) => {
               if (modalType === 'add') {
-                console.log('add modal mounted');
                 openAddModal();
               }
             },
