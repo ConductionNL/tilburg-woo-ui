@@ -845,4 +845,42 @@ const validateConfig = (config) => {
 };
 ```
 
+## Application Routes
+
+| Route Name         | Path / Pattern                | Type      | Purpose / Description                        | Component (if any)         |
+|--------------------|------------------------------|-----------|----------------------------------------------|----------------------------|
+| Home               | /                            | concrete  | Main landing page                           | AcHome                     |
+| About              | /over-ons                    | concrete  | About the application                       | -                          |
+| Accessibility      | /toegankelijkheid            | concrete  | Accessibility information                   | -                          |
+| Contact            | /contact                     | concrete  | Contact page                                | -                          |
+| FAQ                | /veelgestelde-vragen         | concrete  | Frequently Asked Questions                  | -                          |
+| Organization       | /organisatie-en-werkwijze    | concrete  | Organization and working method             | -                          |
+| Publication        | /publicatie/:id              | dynamic   | Publication detail page                     | AcPublication              |
+| Search             | /zoeken/:query?              | dynamic   | Search results (with optional query)        | AcSearch                   |
+| Search (static)    | /zoeken                      | concrete  | Search landing page                         | AcSearch                   |
+| Login              | /login                       | concrete  | User login/authentication                   | AcLogin                    |
+| Mijn Omgeving      | /mijn-omgeving               | concrete  | User's personal environment                 | AcMijnOmgeving             |
+| GEMMA              | /gemma                       | concrete  | GEMMA integration page                      | AcGemma                    |
+| Themes             | /onderwerpen                 | concrete  | List of themes/subjects                     | AcThemes                   |
+| WOO Request        | /woo-verzoek                 | external  | WOO request (external link)                 | -                          |
+| Nextcloud Auth     | /authorization               | concrete  | Nextcloud authorization                     | AcNextcloudAuthorization   |
+| Beheer             | /beheer                      | concrete  | Admin dashboard                             | AcBeheer                   |
+| Beheer Type        | /beheer/:type                | dynamic   | Admin type list                             | AcBeheer                   |
+| Beheer Type Detail | /beheer/:type/:id            | dynamic   | Admin type detail                           | AcBeheer                   |
+| Register           | /register                    | concrete  | User registration                           | AcRegister                 |
+| Aanmelden          | /aanmelden                   | concrete  | User registration (alias)                   | AcRegister                 |
+| Views              | /views/:id                   | dynamic   | Dynamic views                               | AcViews                    |
+| My Account         | /account                     | concrete  | User account management                     | AcMyAccount                |
+| Directory          | /directory                   | concrete  | Directory listing                           | ConDirectory               |
+| Reach Out          | /bereikbaarheidsgegeverns    | external  | Contact/Reach out (external link)           | -                          |
+| Cookies            | https://www.tilburg.nl/cookies/         | external  | Cookie policy (external)                    | -                          |
+| Privacy            | https://www.tilburg.nl/privacystatement/| external  | Privacy policy (external)                   | -                          |
+| Proclaimer         | https://www.tilburg.nl/proclaimer/      | external  | Proclaimer/disclaimer (external)            | -                          |
+| Website            | https://www.tilburg.nl/                 | external  | Main website (external)                     | -                          |
+| Fallback           | *                            | wildcard  | Any other route redirects to Home           | AcHome                     |
+
+- Dynamic routes use parameters (e.g., :id, :type, :query) for detail or filtered views.
+- External routes open outside the SPA (new tab or redirect).
+- Some routes (like About, Contact) may be handled as static content or CMS-driven pages.
+
 This environment configuration system provides a robust, flexible foundation for managing application configuration across all deployment scenarios while maintaining backward compatibility and operational simplicity. 

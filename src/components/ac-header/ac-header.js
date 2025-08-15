@@ -63,7 +63,9 @@ const AcHeader = ({ store: { menu } }) => {
       </div>
       {menuItems && menuItems.items && Array.isArray(menuItems.items) && menuItems.items.length > 0 && (
         <div className='ac-header__navigation-secondary'>
-          <AcCNavigation items={menuItems.items} />
+          <AcContainer>
+            <AcCNavigation items={menuItems.items} />
+          </AcContainer>
         </div>
       )}
       <div className='ac-header__navigation-breadcrumb'>

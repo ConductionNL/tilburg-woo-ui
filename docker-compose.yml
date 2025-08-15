@@ -18,8 +18,8 @@ services:
     environment:
       - NODE_ENV=production
       # API Configuration (nginx handles index.php)
-      - BASE_URL=/api/apps
-      - BASE_URL_COMMONGROUND=/api/apps
+      - BASE_URL=/api
+      - BASE_URL_COMMONGROUND=/api
       # Nginx Proxy Configuration
       - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80

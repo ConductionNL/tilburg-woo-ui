@@ -84,6 +84,12 @@
       var(--tilburg-color-gray-50)
     );
 
+    // Ensure sub menu content aligns perfectly with breadcrumbs
+    .container {
+      padding-inline-start: 0;
+      padding-inline-end: 0;
+    }
+
     @include respond-max($screen-md) {
       .container {
         flex-direction: column;

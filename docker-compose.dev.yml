@@ -19,7 +19,7 @@ services:
       - "81:81"
     environment:
       - NODE_ENV=production
-      - BASE_URL=/api/apps
+      - BASE_URL=/api
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
       - CLIENT_SECRET=
@@ -40,9 +40,9 @@ services:
       - MODE=development
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
-      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
-      - BASE_URL=/api/apps
-      - BASE_URL_COMMONGROUND=/api/apps
+      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
+      - BASE_URL=/api
+      - BASE_URL_COMMONGROUND=/api
       
       # Nextcloud/Target Configuration
       - NEXTCLOUD_HOST=nextcloud.local
@@ -119,9 +119,9 @@ services:
       - MODE=development
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
-      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
-      - BASE_URL=/api/apps
-      - BASE_URL_COMMONGROUND=/api/apps
+      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
+      - BASE_URL=/api
+      - BASE_URL_COMMONGROUND=/api
       
       # Nextcloud/Target Configuration  
       - NEXTCLOUD_HOST=nextcloud.local
