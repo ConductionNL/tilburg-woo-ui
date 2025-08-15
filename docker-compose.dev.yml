@@ -19,7 +19,7 @@ services:
       - "81:81"
     environment:
       - NODE_ENV=production
-      - BASE_URL=/api
+      - BASE_URL=/api/apps
       - GRANT_TYPE=authorization_code
       - CLIENT_ID=
       - CLIENT_SECRET=
@@ -28,7 +28,6 @@ services:
       - DIRECTORY_BASE=https://directory.test.commonground.nl
       - NEXTCLOUD_HOST=nextcloud.local
       - NEXTCLOUD_PORT=80
-      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
@@ -41,14 +40,11 @@ services:
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
       # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
-      - BASE_URL=/api
-      - BASE_URL_COMMONGROUND=/api
       
       # Nextcloud/Target Configuration
       - NEXTCLOUD_HOST=nextcloud.local
       
       # Nginx-specific environment variables (for tilburg-woo-ui-dev container)
-      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
@@ -120,14 +116,13 @@ services:
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
       # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
-      - BASE_URL=/api
-      - BASE_URL_COMMONGROUND=/api
+      - BASE_URL=/api/apps
+      - BASE_URL_COMMONGROUND=/api/apps
       
       # Nextcloud/Target Configuration  
       - NEXTCLOUD_HOST=nextcloud.local
       - NEXTCLOUD_PORT=80
       # Nginx Proxy Configuration
-      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local

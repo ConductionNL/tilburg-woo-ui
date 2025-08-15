@@ -67,39 +67,104 @@ export class MenuStore {
   };
 
   @action
-  getMenuFromPosition = (position) => {
+  getMenuFromPosition = (position, userIsAuthenticated = false) => {
     const items = this.all_menu_items;
     if (!Array.isArray(items) || items.length === 0) {
       return null;
     }
-    return items.find((item) => item && item.position === position) || null;
+    
+    // Get all menus from this position
+    const menusAtPosition = items.filter((item) => item && item.position === position);
+    
+    // Filter menus based on authentication state
+    const filteredMenus = menusAtPosition.filter(menu => this.shouldShowMenu(menu, userIsAuthenticated));
+    
+    // Return the first matching menu, but also filter its items
+    const activeMenu = filteredMenus[0];
+    if (activeMenu && activeMenu.items) {
+      return {
+        ...activeMenu,
+        items: this.filterMenuItems(activeMenu.items, userIsAuthenticated)
+      };
+    }
+    
+    return activeMenu || null;
   };
 
   @action
-  getMenusFromPositions = (positions) => {
+  shouldShowMenu = (menu, userIsAuthenticated) => {
+    // Handle undefined/null values - default to showing the menu
+    // Rename showAfterLogin to hideBeforeLogin for clarity
+    const hideBeforeLogin = menu.showAfterLogin === true;
+    const hideAfterLogin = menu.hideAfterInlog === true;
+    
+    if (userIsAuthenticated) {
+      // User is logged in - don't show if hideAfterLogin is true
+      return !hideAfterLogin;
+    } else {
+      // User is not logged in - don't show if hideBeforeLogin is true
+      return !hideBeforeLogin;
+    }
+  };
+
+  @action
+  shouldShowMenuItem = (menuItem, userIsAuthenticated) => {
+    // Handle undefined/null values - default to showing the item
+    // Rename showAfterLogin to hideBeforeLogin for clarity
+    const hideBeforeLogin = menuItem.showAfterLogin === true;
+    const hideAfterLogin = menuItem.hideAfterInlog === true;
+    
+    if (userIsAuthenticated) {
+      // User is logged in - don't show if hideAfterLogin is true
+      return !hideAfterLogin;
+    } else {
+      // User is not logged in - don't show if hideBeforeLogin is true
+      return !hideBeforeLogin;
+    }
+  };
+
+  @action
+  filterMenuItems = (items, userIsAuthenticated) => {
+    if (!Array.isArray(items)) return items;
+    
+    return items.filter(item => this.shouldShowMenuItem(item, userIsAuthenticated));
+  };
+
+  @action
+  getMenusFromPositions = (positions, userIsAuthenticated = false) => {
     const items = this.all_menu_items;
     if (!Array.isArray(items) || items.length === 0) {
       return [];
     }
-    return items.filter((item) => item && positions.includes(item.position));
+    
+    // Filter by position first
+    const menusAtPositions = items.filter((item) => item && positions.includes(item.position));
+    
+    // Then filter by authentication state and filter menu items
+    return menusAtPositions
+      .filter(menu => this.shouldShowMenu(menu, userIsAuthenticated))
+      .map(menu => ({
+        ...menu,
+        items: this.filterMenuItems(menu.items, userIsAuthenticated)
+      }));
   };
 
   @action
-  getFooterMenus = () => {
+  getFooterMenus = (userIsAuthenticated = false) => {
     // Get footer menus (positions 3, 4, 5)
-    return this.getMenusFromPositions([3, 4, 5]);
+    return this.getMenusFromPositions([3, 4, 5], userIsAuthenticated);
   };
 
   @action
-  getSubFooterMenus = () => {
+  getSubFooterMenus = (userIsAuthenticated = false) => {
     // Get sub footer menus (position 6)
-    return this.getMenusFromPositions([6]);
+    return this.getMenusFromPositions([6], userIsAuthenticated);
   };
 
   @action
-  getAdminMenus = () => {
+  getAdminMenus = (userIsAuthenticated = false) => {
     // Get admin menus (position 7)
-    return this.getMenusFromPositions([7]);
+    return this.getMenusFromPositions([7], userIsAuthenticated);
   };
 
   @action
