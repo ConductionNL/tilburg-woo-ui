@@ -14,13 +14,15 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const pathname = window.location.pathname;
 
   const { fetchMenus, getMenuFromPosition, is_loading: menu_loading } = menu;
-  // Get main navigation from position 1
-  const menus = getMenuFromPosition(1);
+  
+  // Get main navigation from position 1 with authentication filtering
+  const activeMenu = getMenuFromPosition(1, user.isAuthenticated);
   
   // Debug logging to help understand menu structure
   if (process.env.NODE_ENV === 'development') {
-    console.log('AcNavigation - menus (position 1):', menus);
-    console.log('AcNavigation - menus.items:', menus?.items);
+    console.log('AcNavigation - user.isAuthenticated:', user.isAuthenticated);
+    console.log('AcNavigation - activeMenu:', activeMenu);
+    console.log('AcNavigation - activeMenu.items:', activeMenu?.items);
   }
 
   // Icon component for finding icons based on a variable
@@ -58,18 +60,25 @@ const AcNavigation = ({ store: { menu, user } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {(menus && menus.items && Array.isArray(menus.items) && !user.isAuthenticated && (
+        {activeMenu && activeMenu.items && Array.isArray(activeMenu.items) && (
           <ul>
-            {menus.items.map((menuItem) => (
+            {activeMenu.items.map((menuItem) => (
               <li key={menuItem.name || menuItem.link}>
-                <Link to={menuItem.link}>
-                  <Icon icon={menuItem.icon} />
-                  {menuItem.name}
-                </Link>
+                {menuItem.link === '/logout' ? (
+                  <button onClick={handleLogout} className="logout-button">
+                    <Icon icon={menuItem.icon} />
+                    {menuItem.name}
+                  </button>
+                ) : (
+                  <Link to={menuItem.link}>
+                    <Icon icon={menuItem.icon} />
+                    {menuItem.name}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
-        )) ||
+        ) ||
           (AcCheckIfSpecificHostname() && (
             <>
               {!pathname.includes('beheer') && !user.isAuthenticated ? (

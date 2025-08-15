@@ -7,7 +7,7 @@ import { getFooterLogoTitle, getFooterLogoSubtitle } from '@constants/container.
 // Removed unused footer constants - backend handles all content
 import { Link } from 'react-router-dom';
 
-const AcFooter = ({ store: { menu } }) => {
+const AcFooter = ({ store: { menu, user } }) => {
   const { all_menu_items } = menu;
 
   // Icon component for finding icons based on a variable
@@ -21,14 +21,15 @@ const AcFooter = ({ store: { menu } }) => {
 
   // Backend will handle all footer logic and theming
 
-  // Get footer menus from positions 3, 4, 5
-  const footerItems = menu.getFooterMenus();
+  // Get footer menus from positions 3, 4, 5 with authentication filtering
+  const footerItems = menu.getFooterMenus(user.isAuthenticated);
   
   // Debug logging to help understand footer structure
   if (process.env.NODE_ENV === 'development') {
+    console.log('AcFooter - user.isAuthenticated:', user.isAuthenticated);
     console.log('AcFooter - all_menu_items:', all_menu_items);
     console.log('AcFooter - footerItems (positions 3,4,5):', footerItems);
-    console.log('AcFooter - subFooterItems (position 6):', menu.getSubFooterMenus());
+    console.log('AcFooter - subFooterItems (position 6):', menu.getSubFooterMenus(user.isAuthenticated));
   }
 
   return (
@@ -113,7 +114,7 @@ const AcFooter = ({ store: { menu } }) => {
       </section>
       {/* Sub Footer - Position 6 */}
       {(() => {
-        const subFooterItems = menu.getSubFooterMenus();
+        const subFooterItems = menu.getSubFooterMenus(user.isAuthenticated);
         return subFooterItems && subFooterItems.length > 0 ? (
           <section className='ac-footer__sub-footer'>
             <AcContainer>

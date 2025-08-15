@@ -28,52 +28,9 @@ http {
         add_header X-Frame-Options DENY always;
         add_header X-XSS-Protection "1; mode=block" always;
 
-        # API Proxy to Nextcloud (all API requests through /api/)
-        location /api/openconnector/ {
-            proxy_pass ${NGINX_OPENCONNECTOR_UPSTREAM}/index.php/apps/openconnector/api/;
-            proxy_set_header Host ${NGINX_TARGET_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_cookie_path / /;
-            proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
-            
-            # Enable CORS
-            add_header Access-Control-Allow-Origin $http_origin always;
-            add_header Access-Control-Allow-Credentials true always;
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
-            
-            # Handle preflight requests
-            if ($request_method = 'OPTIONS') {
-                return 204;
-            }
-        }
-
         # API Proxy for Nextcloud apps (adds index.php automatically)
         location /api/apps/ {
             proxy_pass ${NGINX_NEXTCLOUD_UPSTREAM}/index.php/apps/;
-            proxy_set_header Host ${NGINX_TARGET_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_cookie_path / /;
-            proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
-            
-            # Enable CORS
-            add_header Access-Control-Allow-Origin $http_origin always;
-            add_header Access-Control-Allow-Credentials true always;
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
-            
-            # Handle preflight requests
-            if ($request_method = 'OPTIONS') {
-                return 204;
-            }
-        }
-
-        location /api/ {
-            proxy_pass ${NGINX_NEXTCLOUD_UPSTREAM}/;
             proxy_set_header Host ${NGINX_TARGET_HOST};
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

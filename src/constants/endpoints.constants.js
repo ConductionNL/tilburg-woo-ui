@@ -1,36 +1,18 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
-const API = '/api';
-const FAQS = '/faqs';
-const PUBLIC = '/public';
-const PAGES = '/pages';
-const PUBLICATIONS = '/publications';
-const SEARCH = '/search';
-const ATTACHMENTS = '/attachments';
-const CATALOG = '/catalogi';
-const THEMES = '/themes';
-const AUTHENTICATION = '/authentication';
-const MIJN_OMGEVING = '/mijn-omgeving';
-const GEMMA = '/gemma';
-const MENUS = '/menu';
-const OBJECTS = '/objects';
-
-const OPENCONNECTOR = '/openconnector';
-const OPENCATALOGI_PREFIX = '/apps/opencatalogi';
-const NO_PREFIX = '';
-const ENDPOINT = '/endpoint';
-const VIEWS = '/views';
-const ELEMENTS = '/elements';
-const VOORZIENING_GEBRUIK = '/voorzieninggebruiken';
 const HOSTNAME = window.location.hostname;
 
 // Try to import container constants (generated at runtime)
 let containerConfig;
+let getApiUrl;
 try {
-  containerConfig = require('@constants/container.constants');
+  const containerConstants = require('@constants/container.constants');
+  containerConfig = containerConstants;
+  getApiUrl = containerConstants.getApiUrl;
 } catch (error) {
   console.warn('Container constants not available, falling back to hostname-based logic');
   containerConfig = null;
+  getApiUrl = () => '/api';
 }
 
 const getGemmaEndpoint = () => {
@@ -55,47 +37,47 @@ const getGemmaEndpoint = () => {
 
 export const ENDPOINTS = AcLockObject({
   OAUTH: {
-    LOGIN: `${NO_PREFIX}${API}/oauth/login`,
-    REGISTER: `${NO_PREFIX}${API}/oauth/register`,
-    FORGOT_PASSWORD: `${NO_PREFIX}${API}/oauth/forgot-password`,
-    RESET_PASSWORD: `${NO_PREFIX}${API}/oauth/reset-password`,
-    REFRESH: `${NO_PREFIX}${API}/oauth/refresh`,
-    LOGOUT: `${OPENCATALOGI_PREFIX}${API}/oauth/logout`,
+    LOGIN: `/oauth/login`,
+    REGISTER: `/oauth/register`,
+    FORGOT_PASSWORD: `/oauth/forgot-password`,
+    RESET_PASSWORD: `/oauth/reset-password`,
+    REFRESH: `/oauth/refresh`,
+    LOGOUT: `/oauth/logout`,
   },
   OPENCONNECTOR: {
-    USER_LOGIN: `${NO_PREFIX}/openconnector/user/login`,
-    USER_LOGOUT: `${NO_PREFIX}/openconnector/user/logout`,
-    USER_PROFILE: `${NO_PREFIX}/openconnector/user/me`,
+    USER_LOGIN: `/openconnector/api/user/login`,
+    USER_LOGOUT: `/openconnector/api/user/logout`,
+    USER_PROFILE: `/openconnector/api/user/me`,
   },
   PUBLICATIONS: {
-    SEARCH: `${OPENCATALOGI_PREFIX}${API}${PUBLICATIONS}`, // GET
+    SEARCH: `/publications`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI_PREFIX}${API}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
+      `/publications/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
     RELATIONS: (_uri) =>
-      `${OPENCATALOGI_PREFIX}${API}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
+      `/publications?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) =>
-      `${OPENCATALOGI_PREFIX}${API}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+      `/publications/${_id}/attachments`, // GET
   },
   MIJN_OMGEVING: {
-    SEARCH: `${OPENCATALOGI_PREFIX}${API}${MIJN_OMGEVING}`, // GET
+    SEARCH: `/mijn-omgeving`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI_PREFIX}${API}${SEARCH}${MIJN_OMGEVING}/${_id}?extend=all`, // GET
+      `/mijn-omgeving/${_id}?extend=all`, // GET
   },
   AUTHENTICATION: {
-    SEARCH: `${OPENCATALOGI_PREFIX}${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SEARCH: `/publications`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI_PREFIX}${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+      `/publications/${_id}?extend=all`, // GET
   },
   FAQS: {
-    INDEX: `${OPENCATALOGI_PREFIX}${API}${PUBLIC}${FAQS}`, // GET
-    SHOW: (_id) => `${OPENCATALOGI_PREFIX}${API}${PUBLIC}${FAQS}${_id}`, // GET
+    INDEX: `/faqs`, // GET
+    SHOW: (_id) => `/faqs/${_id}`, // GET
   },
   PAGES: {
-    INDEX: `${OPENCATALOGI_PREFIX}${API}${PAGES}`, // GET
-    SHOW: (_slug) => `${OPENCATALOGI_PREFIX}${API}${PAGES}/${_slug}`, // GET
+    INDEX: `/opencatalogi/api/pages`, // GET
+    SHOW: (_slug) => `/opencatalogi/api/pages/${_slug}`, // GET
   },
   THEMES: {
-    INDEX: `${OPENCATALOGI_PREFIX}${API}${THEMES}`, // GET
+    INDEX: `/opencatalogi/api/themes`, // GET
   },
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
@@ -114,8 +96,8 @@ export const ENDPOINTS = AcLockObject({
       `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken?extend[]=voorzieningId`,
   }, // GET
   MENU: {
-    INDEX: `${OPENCATALOGI_PREFIX}${API}${MENUS}s`, // GET
-    SINGLE: (_id) => `${OPENCATALOGI_PREFIX}${API}${MENUS}s/${_id}`, // GET
+    INDEX: `/opencatalogi/api/menus`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
 });
 

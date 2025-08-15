@@ -21,14 +21,14 @@ try {
   containerConfig = null;
 }
 
-const AcHeader = ({ store: { menu } }) => {
+const AcHeader = ({ store: { menu, user } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
   const { all_menu_items } = menu;
 
-  // Get sub menu items from position 2
-  const menuItems = menu.getMenuFromPosition(2) || null;
+  // Get sub menu items from position 2 with authentication filtering
+  const menuItems = menu.getMenuFromPosition(2, user.isAuthenticated) || null;
   
   // Debug logging to help understand menu structure
   if (process.env.NODE_ENV === 'development') {
