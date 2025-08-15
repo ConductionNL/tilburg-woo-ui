@@ -66,17 +66,31 @@ export const useRelatedCreateActions = ({
 
     prepareRelatedActions();
     // Only re-run when schema reference changes
-  }, [schemaRef]);
+  }, [schemaRef, user?.currentUser, object]);
 
   const buildPreSelected = useCallback(
     (targetType, ctxId) => {
       const preSelected = {};
-      if (targetType === 'diensten' && currentType === 'applicaties') {
-        preSelected.voorziening = ctxId;
+      if (targetType === 'applicaties') {
+        if (currentType === 'organisaties') preSelected.organisatie = ctxId;
       }
+
+      if (targetType === 'diensten') {
+        if (currentType === 'applicaties') preSelected.voorziening = ctxId;
+      }
+
       if (targetType === 'gebruiken') {
         if (currentType === 'applicaties') preSelected.voorzieningId = ctxId;
         if (currentType === 'organisaties') preSelected.organisatieId = ctxId;
+      }
+
+      if (targetType === 'voorziening-versie') {
+        if (currentType === 'applicaties') preSelected.voorziening = ctxId;
+        if (currentType === 'diensten') preSelected.voorzieningaanbod = ctxId;
+      }
+
+      if (targetType === 'contactpersonen') {
+        if (currentType === 'organisaties') preSelected.organisatie = ctxId;
       }
       return preSelected;
     },

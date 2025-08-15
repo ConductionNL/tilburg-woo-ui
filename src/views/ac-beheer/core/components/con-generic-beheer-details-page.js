@@ -153,16 +153,18 @@ const ConGenericBeheerDetailsPage = ({
   const longTooltip = (type) =>
     `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
 
+  const openDynamicCreate = React.useCallback((targetType, preSelected) => {
+    setDynamicCreateTargetType(targetType);
+    setDynamicCreatePreSelected(preSelected);
+    setOpenModal('dynamicCreate');
+  }, []);
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
     schemaRef: config?.schemaSlug,
     currentType: type,
-    openDynamicCreate: (targetType, preSelected) => {
-      setDynamicCreateTargetType(targetType);
-      setDynamicCreatePreSelected(preSelected);
-      setOpenModal('dynamicCreate');
-    },
+    openDynamicCreate,
   });
 
   useEffect(() => {
@@ -305,14 +307,12 @@ const ConGenericBeheerDetailsPage = ({
                             >
                               {_.startCase(key)}:
                             </strong>
-                            <Paragraph>
-                              {formatBySchema(
-                                schema,
-                                data,
-                                key,
-                                config.formatBySchemaOptions || {}
-                              )}
-                            </Paragraph>
+                            {formatBySchema(
+                              schema,
+                              data,
+                              key,
+                              config.formatBySchemaOptions || {}
+                            )}
                           </div>
                         ))}
                     </div>

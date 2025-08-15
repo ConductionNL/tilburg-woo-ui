@@ -6,7 +6,9 @@ import {
   useRef,
   useEffect,
   useCallback,
+// eslint-disable-next-line import/no-unresolved
 } from 'react';
+// eslint-disable-next-line import/no-unresolved
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { AcButton, AcCheckbox } from '@src/molecules';
@@ -99,7 +101,7 @@ function useOnClickOutside(refs, handler) {
  * // and clicking any button also closes the menu automatically if doNotClose is not set.
  *
  * @author: Thijn Douwma (SudoThijn on github)
- * @version: 1.1.2
+ * @version: 1.1.3
  * @since: 10/04/2025
  */
 const ConActionMenu = ({ children, className }) => {
@@ -158,6 +160,7 @@ ConActionMenu.Trigger = ({ children, ...props }) => {
     </div>
   );
 };
+ConActionMenu.Trigger.displayName = 'ConActionMenu.Trigger';
 
 /**
  * A sub-component of ConActionMenu that renders the list of menu items.
@@ -231,6 +234,7 @@ ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
 
   return createPortal(menuContent, document.body);
 };
+ConActionMenu.Menu.displayName = 'ConActionMenu.Menu';
 
 /**
  * A sub-component of ConActionMenu that creates a nested submenu.
@@ -301,6 +305,7 @@ ConActionMenu.SubMenu = ({
     </div>
   );
 };
+ConActionMenu.SubMenu.displayName = 'ConActionMenu.SubMenu';
 
 /**
  * A sub-component of ConActionMenu that creates a dropdown menu.
@@ -369,6 +374,7 @@ ConActionMenu.Dropdown = ({ label, icon, children, disabled, ...props }) => {
     </div>
   );
 };
+ConActionMenu.Dropdown.displayName = 'ConActionMenu.Dropdown';
 
 /**
  * A sub-component of ConActionMenu that represents a generic container for menu items.
@@ -401,6 +407,7 @@ ConActionMenu.Item = ({ children, className, ...props }) => {
     </div>
   );
 };
+ConActionMenu.Item.displayName = 'ConActionMenu.Item';
 
 /**
  * A sub-component of ConActionMenu that renders a horizontal divider using the Utrecht Separator component.
@@ -418,6 +425,7 @@ ConActionMenu.Item = ({ children, className, ...props }) => {
 ConActionMenu.Divider = () => {
   return <Separator className='con-action-divider' />;
 };
+ConActionMenu.Divider.displayName = 'ConActionMenu.Divider';
 
 /**
  * A sub-component of ConActionMenu that represents a clickable button menu item.
@@ -474,6 +482,7 @@ ConActionMenu.Button = ({
     </button>
   );
 };
+ConActionMenu.Button.displayName = 'ConActionMenu.Button';
 
 /**
  * A sub-component of ConActionMenu that renders a checkbox menu item.
@@ -553,5 +562,6 @@ ConActionMenu.Checkbox = ({
     </div>
   );
 };
+ConActionMenu.Checkbox.displayName = 'ConActionMenu.Checkbox';
 
 export default ConActionMenu;

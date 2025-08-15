@@ -266,7 +266,7 @@ const ConGenericFormModal = ({
 
   // Initialize form data when modal opens or data changes
   useEffect(() => {
-    if (!config) return;
+    if (!config || !showModal) return;
 
     const schemaInitialData = generateInitialDataFromSchema(schema);
 
@@ -302,7 +302,7 @@ const ConGenericFormModal = ({
     if (!_.isEqual(formData, initialFormData)) {
       setFormData(initialFormData);
     }
-  }, [showModal]);
+  }, [showModal, preSelected, config?.initialData, schema]);
 
   // Handle additional effects when form data changes
   const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison

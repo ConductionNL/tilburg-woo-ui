@@ -37,13 +37,15 @@ const AcButton = ({
 
   return (
     <button className={_CLASSES} {...restProps}>
-      <AcFlex spacing='xs' alignItems='center'>
-        {icon &&
-          (loading ? (
-            <VISUALS.SPINNER className='ac-button__icon--loading' />
-          ) : (
-            icon
-          ))}
+      <AcFlex spacing='xs' alignItems='center' style={{ width: 'max-content' }}>
+        <div className='ac-button__icon-container'>
+          {icon &&
+            (loading ? (
+              <VISUALS.SPINNER className='ac-button__icon--loading' />
+            ) : (
+              icon
+            ))}
+        </div>
 
         {children}
 
