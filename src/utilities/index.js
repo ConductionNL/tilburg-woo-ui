@@ -37,7 +37,7 @@ export { AcFormatPercentage } from './ac-format-percentage';
 export { AcFormatPhonenumber } from './ac-format-phonenumber';
 export { AcFormatRawDataAsList } from './ac-format-raw-data-as-list';
 export { AcFormatRequestParameters } from './ac-format-request-parameters';
-export { AcFormatRole } from './ac-format-role';
+export { AcFormatRole, AcFormatGroup } from './ac-format-role';
 export { AcFormatSecondsToHms } from './ac-format-seconds-to-hm';
 export {
   AcGetAccessToken,
@@ -110,3 +110,9 @@ export { collapseExtendedObjects } from './con-collapse-extended-objects';
 export { smartSplit } from './con-smart-split';
 export { sortPropertiesByOrder } from './con-sort-properties-by-order';
 export { isJsonString } from './con-is-json-string';
+export { 
+  TemplateProcessor, 
+  createUserTemplateProcessor, 
+  processUserTemplate 
+} from './con-template-processor';
+export { withTemplateProcessing, createTemplateComponents } from './con-with-template-processing';

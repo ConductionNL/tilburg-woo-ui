@@ -847,40 +847,298 @@ const validateConfig = (config) => {
 
 ## Application Routes
 
-| Route Name         | Path / Pattern                | Type      | Purpose / Description                        | Component (if any)         |
-|--------------------|------------------------------|-----------|----------------------------------------------|----------------------------|
-| Home               | /                            | concrete  | Main landing page                           | AcHome                     |
-| About              | /over-ons                    | concrete  | About the application                       | -                          |
-| Accessibility      | /toegankelijkheid            | concrete  | Accessibility information                   | -                          |
-| Contact            | /contact                     | concrete  | Contact page                                | -                          |
-| FAQ                | /veelgestelde-vragen         | concrete  | Frequently Asked Questions                  | -                          |
-| Organization       | /organisatie-en-werkwijze    | concrete  | Organization and working method             | -                          |
-| Publication        | /publicatie/:id              | dynamic   | Publication detail page                     | AcPublication              |
-| Search             | /zoeken/:query?              | dynamic   | Search results (with optional query)        | AcSearch                   |
-| Search (static)    | /zoeken                      | concrete  | Search landing page                         | AcSearch                   |
-| Login              | /login                       | concrete  | User login/authentication                   | AcLogin                    |
-| Mijn Omgeving      | /mijn-omgeving               | concrete  | User's personal environment                 | AcMijnOmgeving             |
-| GEMMA              | /gemma                       | concrete  | GEMMA integration page                      | AcGemma                    |
-| Themes             | /onderwerpen                 | concrete  | List of themes/subjects                     | AcThemes                   |
-| WOO Request        | /woo-verzoek                 | external  | WOO request (external link)                 | -                          |
-| Nextcloud Auth     | /authorization               | concrete  | Nextcloud authorization                     | AcNextcloudAuthorization   |
-| Beheer             | /beheer                      | concrete  | Admin dashboard                             | AcBeheer                   |
-| Beheer Type        | /beheer/:type                | dynamic   | Admin type list                             | AcBeheer                   |
-| Beheer Type Detail | /beheer/:type/:id            | dynamic   | Admin type detail                           | AcBeheer                   |
-| Register           | /register                    | concrete  | User registration                           | AcRegister                 |
-| Aanmelden          | /aanmelden                   | concrete  | User registration (alias)                   | AcRegister                 |
-| Views              | /views/:id                   | dynamic   | Dynamic views                               | AcViews                    |
-| My Account         | /account                     | concrete  | User account management                     | AcMyAccount                |
-| Directory          | /directory                   | concrete  | Directory listing                           | ConDirectory               |
-| Reach Out          | /bereikbaarheidsgegeverns    | external  | Contact/Reach out (external link)           | -                          |
-| Cookies            | https://www.tilburg.nl/cookies/         | external  | Cookie policy (external)                    | -                          |
-| Privacy            | https://www.tilburg.nl/privacystatement/| external  | Privacy policy (external)                   | -                          |
-| Proclaimer         | https://www.tilburg.nl/proclaimer/      | external  | Proclaimer/disclaimer (external)            | -                          |
-| Website            | https://www.tilburg.nl/                 | external  | Main website (external)                     | -                          |
-| Fallback           | *                            | wildcard  | Any other route redirects to Home           | AcHome                     |
+| Route Name         | Path / Pattern                | Type      | Auth Required | Purpose / Description                        | Component (if any)         | Status |
+|--------------------|------------------------------|-----------|---------------|----------------------------------------------|----------------------------|---------|
+| Home               | /                            | concrete  | ❌            | Main landing page                           | AcHome                     | ✅ Active |
+| Publication        | /publicatie/:id              | dynamic   | ❌            | Publication detail page                     | AcPublication              | ✅ Active |
+| Search             | /zoeken/:query?              | dynamic   | ❌            | Search results (with optional query)        | AcSearch                   | ✅ Active |
+| Search (static)    | /zoeken                      | concrete  | ❌            | Search landing page                         | AcSearch                   | ✅ Active |
+| Login              | /login                       | concrete  | ❌            | User login/authentication                   | AcLogin                    | ✅ Active |
+| Mijn Omgeving      | /mijn-omgeving               | concrete  | ❌            | User's personal environment                 | AcMijnOmgeving             | ✅ Active |
+| GEMMA              | /gemma                       | concrete  | ❌            | GEMMA integration page                      | AcGemma                    | ✅ Active |
+| Themes             | /onderwerpen                 | concrete  | ❌            | List of themes/subjects                     | AcThemes                   | ✅ Active |
+| Nextcloud Auth     | /authorization               | concrete  | ❌            | Nextcloud authorization                     | AcNextcloudAuthorization   | ✅ Active |
+| **Beheer**         | **/beheer**                  | **concrete** | **🔒 YES**    | **Admin dashboard**                         | **AcBeheer**               | **✅ Active** |
+| **Beheer Type**    | **/beheer/:type**            | **dynamic** | **🔒 YES**     | **Admin type list**                         | **AcBeheer**               | **✅ Active** |
+| **Beheer Type Detail** | **/beheer/:type/:id**    | **dynamic** | **🔒 YES**     | **Admin type detail**                       | **AcBeheer**               | **✅ Active** |
+| Register           | /register                    | concrete  | ❌            | User registration                           | AcRegister                 | ✅ Active |
+| Aanmelden          | /aanmelden                   | concrete  | ❌            | User registration (alias)                   | AcRegister                 | ✅ Active |
+| Views              | /views/:id                   | dynamic   | ❌            | Dynamic views                               | AcViews                    | ✅ Active |
+| **My Account**     | **/account**                 | **concrete** | **🔒 YES**    | **User account management**                 | **AcMyAccount**            | **✅ Active** |
+| Directory          | /directory                   | concrete  | ❌            | Directory listing                           | ConDirectory               | ✅ Active |
+| Fallback           | *                            | wildcard  | ❌            | Any other route redirects to Home           | AcHome                     | ✅ Active |
+
+### Authentication-Required Routes
+
+The following routes require user authentication and should redirect to login if accessed by unauthenticated users:
+
+- **🔒 /beheer** - Admin dashboard
+- **🔒 /beheer/:type** - Admin type management  
+- **🔒 /beheer/:type/:id** - Admin detail pages
+- **🔒 /account** - User account management
+
+### CMS-Driven Routes (Removed from Frontend)
+
+The following routes have been **removed from the frontend application** and are now handled dynamically by the OpenCatalogi CMS system as page objects:
+
+| Route Name (Removed) | Former Path | Reason | Status |
+|---------------------|-------------|---------|---------|
+| ~~About~~           | ~/over-ons~ | CMS-driven content | 🗑️ **REMOVED** |
+| ~~Accessibility~~   | ~/toegankelijkheid~ | CMS-driven content | 🗑️ **REMOVED** |
+| ~~Contact~~         | ~/contact~ | CMS-driven content | 🗑️ **REMOVED** |
+| ~~FAQ~~             | ~/veelgestelde-vragen~ | CMS-driven content | 🗑️ **REMOVED** |
+| ~~Organization~~    | ~/organisatie-en-werkwijze~ | CMS-driven content | 🗑️ **REMOVED** |
+| ~~WOO Request~~     | ~/woo-verzoek~ | CMS-driven external link | 🗑️ **REMOVED** |
+| ~~Reach Out~~       | ~/bereikbaarheidsgegeverns~ | CMS-driven external link | 🗑️ **REMOVED** |
+| ~~Cookies~~         | ~External Link~ | CMS-driven external link | 🗑️ **REMOVED** |
+| ~~Privacy~~         | ~External Link~ | CMS-driven external link | 🗑️ **REMOVED** |
+| ~~Proclaimer~~      | ~External Link~ | CMS-driven external link | 🗑️ **REMOVED** |
+| ~~Website~~         | ~External Link~ | CMS-driven external link | 🗑️ **REMOVED** |
+
+**Migration Strategy**: These routes are now managed as **Page objects** in OpenCatalogi, allowing content managers to:
+- ✅ Update content without code deployments
+- ✅ Manage translations dynamically  
+- ✅ Control visibility and navigation
+- ✅ Handle external links through the CMS
+- ✅ Maintain SEO and meta information
 
 - Dynamic routes use parameters (e.g., :id, :type, :query) for detail or filtered views.
 - External routes open outside the SPA (new tab or redirect).
 - Some routes (like About, Contact) may be handled as static content or CMS-driven pages.
+
+## Permission and Authorization System
+
+The application implements a **group-based permission system** where users are assigned to groups (not roles) that determine their access levels and available functionality.
+
+### Permission Architecture
+
+```mermaid
+graph TD
+    A[User Login] --> B[User Object with Groups Array]
+    B --> C{Group Check}
+    C --> D[Admin Group?]
+    C --> E[Other Groups?]
+    D --> F[Full Access]
+    E --> G[Limited Access]
+    F --> H[Can Access Admin Routes]
+    G --> I[Public Routes Only]
+    
+    J[Content/Menu Item] --> K{Visibility Rules}
+    K --> L[showAfterLogin/hideBeforeLogin]
+    K --> M[hideAfterLogin/hideAfterInlog]
+    L --> N[Show Only When Authenticated]
+    M --> O[Hide When Authenticated]
+```
+
+### Group-Based Access Control
+
+#### User Groups from Login Response
+```json
+{
+  "user": {
+    "groups": ["admin", "openregister"],
+    "organisations": { /* ... */ }
+  }
+}
+```
+
+#### Available Groups
+| Group | Description | Access Level | Usage |
+|-------|-------------|--------------|-------|
+| `admin` | Administrator | Full system access | Can access all admin routes, manage all content |
+| `openregister` | Open Register User | Registry access | Can manage registry content |
+| `editor` | Content Editor | Edit permissions | Can edit content, limited admin access |
+| `viewer` | Read-Only User | View permissions | Can view content, no edit access |
+| `moderator` | Content Moderator | Review permissions | Can moderate content, approve/reject |
+
+### Permission Check Methods
+
+#### UserStore Methods
+```javascript
+// Primary authentication checks
+user.isAuthenticated         // boolean - is user logged in?
+
+// Group-based permissions
+user.isAdmin                // boolean - has 'admin' group?
+user.hasGroup('admin')      // function - check specific group
+user.hasRole('admin')       // alias for hasGroup (backward compatibility)
+user.hasAnyGroup(['admin', 'editor'])  // has any of these groups?
+user.hasAllGroups(['admin', 'editor']) // has all of these groups?
+
+// Route access control
+user.canAccessRoute('/beheer')  // can access specific route?
+
+// Permission system (basic implementation)
+user.hasPermission('manage_users')  // currently returns isAdmin
+```
+
+#### Legacy Permission Utilities
+```javascript
+// src/utilities/ac-get-permissions.js
+import { AcCreateUser } from '@utils';
+
+const userHelper = AcCreateUser(store);
+userHelper.is('admin')           // check if user has group
+userHelper.hasGroup('admin')     // same as is()
+userHelper.hasRole('admin')      // backward compatibility
+userHelper.can('permission')     // check permission (needs expansion)
+userHelper.cannot('permission')  // inverse of can()
+```
+
+### Content Visibility Control
+
+#### Authentication-Based Visibility
+Content items (menus, forms, sections) can be controlled with visibility properties:
+
+| Property | Type | Effect | Usage |
+|----------|------|--------|-------|
+| `hideBeforeLogin` | boolean | Hide before login, show after | Content only for authenticated users |
+| `hideAfterLogin` | boolean | Show before login, hide after | Public-only content |
+
+#### Visibility Examples
+```json
+{
+  "menuItem": {
+    "name": "Admin Dashboard",
+    "link": "/beheer",
+    "hideBeforeLogin": true   // Only show when logged in
+  },
+  "publicContent": {
+    "name": "Login",
+    "link": "/login", 
+    "hideAfterLogin": true    // Only show when NOT logged in
+  }
+}
+```
+
+### Route Protection
+
+#### Authentication-Required Routes
+These routes automatically redirect to login if accessed by unauthenticated users:
+
+```javascript
+// src/constants/routes.constants.js
+export const AUTHENTICATION_REQUIRED_ROUTES = [
+  PATHS.BEHEER,              // /beheer
+  PATHS.BEHEER_TYPE,         // /beheer/:type  
+  PATHS.BEHEER_TYPE_DETAILS, // /beheer/:type/:id
+  PATHS.MY_ACCOUNT,          // /account
+];
+```
+
+#### Protected Route Component
+```javascript
+// Usage in App.web.js
+<Route path="/beheer" element={
+  <AcProtectedRoute requireAuth={true} fallbackPath="/login">
+    <AcBeheer />
+  </AcProtectedRoute>
+} />
+```
+
+### Permission Implementation Locations
+
+#### 1. Route Guards (`src/components/ac-protected-route/`)
+- **Purpose**: Protect routes from unauthorized access
+- **Implementation**: Checks `user.checkAuthStatus()` before rendering
+- **Fallback**: Redirects to `/login?redirect_url=...`
+
+#### 2. Menu Filtering (`src/stores/menu.store.js`)
+- **Purpose**: Show/hide menu items based on authentication
+- **Implementation**: `shouldShowMenu()` and `shouldShowMenuItem()`
+- **Properties**: Uses `hideBeforeLogin`, `hideAfterLogin` properties
+
+#### 3. Content Filtering (`src/utilities/con-authentication-filters.js`)
+- **Purpose**: Filter page content, forms, sections based on auth
+- **Methods**: 
+  - `shouldShowContent()` - check single item
+  - `filterContentItems()` - filter arrays
+  - `shouldShowFormField()` - form field visibility
+  - `filterPageSections()` - page section filtering
+
+#### 4. Component-Level Checks
+```javascript
+// In React components
+const { user } = store;
+
+// Show admin features only to admins
+{user.isAdmin && (
+  <AdminPanel />
+)}
+
+// Show content based on authentication
+{user.isAuthenticated ? (
+  <UserDashboard />
+) : (
+  <LoginPrompt />
+)}
+
+// Group-based features
+{user.hasGroup('editor') && (
+  <EditButton />
+)}
+```
+
+### Permission System Limitations
+
+#### Current Implementation
+- ✅ **Group-based access control** - Users have groups like 'admin', 'editor'
+- ✅ **Route protection** - Authentication-required routes redirect to login
+- ✅ **Content visibility** - Menu items and content can be shown/hidden
+- ✅ **Basic admin detection** - `user.isAdmin` checks for 'admin' group
+
+#### Missing/Limited Features
+- ❌ **Granular permissions** - No fine-grained permission system
+- ❌ **Organization-based permissions** - Groups are global, not per-organization
+- ❌ **Dynamic permissions** - Permissions are hardcoded, not configurable
+- ❌ **Permission inheritance** - No hierarchy or inheritance system
+- ❌ **Resource-based permissions** - Can't check "can edit this specific item"
+
+#### Future Enhancements Needed
+```javascript
+// Desired permission system expansion
+user.can('edit', 'publications')        // Action + Resource
+user.canInOrganization('manage', orgId)  // Organization-scoped permissions
+user.hasPermission('users.create')      // Hierarchical permissions
+user.isOwnerOf(resourceId)              // Resource ownership
+```
+
+### Environment Configuration for Permissions
+
+#### Enable Authentication Features
+```yaml
+environment:
+  - ENABLE_AUTHENTICATION=true    # Show login/logout features
+  - ENABLE_ADMIN_FEATURES=true    # Enable admin dashboard
+  - ENABLE_USER_MANAGEMENT=false  # Enable user management (future)
+```
+
+#### Group Management (Future)
+```yaml
+environment:
+  # Future group configuration
+  - DEFAULT_USER_GROUP=viewer
+  - ADMIN_GROUPS=admin,super_admin
+  - EDITOR_GROUPS=editor,content_manager
+```
+
+### Security Considerations
+
+#### Frontend Security
+- 🔒 **Route protection** prevents unauthorized page access
+- 🔒 **Content filtering** hides sensitive information
+- 🔒 **UI state management** shows appropriate interface elements
+
+#### Backend Security
+- ⚠️ **Frontend permissions are not security** - Always validate on backend
+- ⚠️ **API endpoints must implement their own authorization**
+- ⚠️ **Group membership should be verified server-side**
+
+#### Best Practices
+1. **Always validate permissions on the backend**
+2. **Use frontend permissions only for UI/UX optimization**
+3. **Implement proper session management**
+4. **Regularly audit group assignments**
+5. **Log permission-related actions for security monitoring**
 
 This environment configuration system provides a robust, flexible foundation for managing application configuration across all deployment scenarios while maintaining backward compatibility and operational simplicity. 

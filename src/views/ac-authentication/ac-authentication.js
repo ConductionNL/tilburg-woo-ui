@@ -1,11 +1,10 @@
 // eslint-disable-next-line import/no-unresolved
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { acSafeParseRedirectUri } from '@src/utilities';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router';
-import { getAuthConfig } from '@src/constants/container.constants';
 
 /**
  * Sets a cookie with the specified name, value and options
@@ -71,17 +70,33 @@ const AcAuthentication = () => {
     }
   }, [redirect_url]);
 
-  // TODO: do not make this hardcoded
-  const [clientId, setClientId] = useState(
-    BASE_URL.includes('test')
-      ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
-      : 'VSCKXDSJmhXxa3DSWrCkNtFw3tUDQkPYj2CgBETTR8pioOp1qmcvhDr2nC1OF1zL'
-  );
-  const [secretKey, setSecretKey] = useState(
-    BASE_URL.includes('test')
-      ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
-      : 'emNfF5yBpAXPDGqghgm11bKDfNSgzdsd7uEdBq9GxHYg9E5USxVqZguKQ3QBYLoL'
-  );
+  // Get OAuth config from container constants
+  let containerConfig;
+  try {
+    containerConfig = require('@constants/container.constants');
+  } catch (error) {
+    console.warn('Container constants not available for OAuth config');
+    containerConfig = null;
+  }
+
+  const getOAuthConfig = () => {
+    if (containerConfig && containerConfig.getOAuthConfig) {
+      return containerConfig.getOAuthConfig();
+    }
+    
+    // Fallback to environment-based detection
+    const isTest = window.location.hostname.includes('test') || window.location.hostname === 'localhost';
+    return {
+      clientId: isTest 
+        ? '8xz68cLwZo6Ep1kuyW01bVrc2SOBLwcRKdiEKWTubyxE8lL9VK1Iz4Ol3NOldyne'
+        : 'VSCKXDSJmhXxa3DSWrCkNtFw3tUDQkPYj2CgBETTR8pioOp1qmcvhDr2nC1OF1zL',
+      secretKey: isTest
+        ? 'sCx6A5SgbkybkpBsaAsMXkFchzlwHp3dMcHjaS8nqTPSQ0IXt7DgEXJHoHJWtbCH'
+        : 'emNfF5yBpAXPDGqghgm11bKDfNSgzdsd7uEdBq9GxHYg9E5USxVqZguKQ3QBYLoL'
+    };
+  };
+
+  const { clientId, secretKey } = getOAuthConfig();
 
   const handleLogin = () => {
     // save client id and secret key as a cookie for 5 minutes

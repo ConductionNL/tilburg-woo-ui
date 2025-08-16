@@ -98,10 +98,11 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   const redirect_url = sessionStorage.getItem('redirect_url');
   sessionStorage.removeItem('redirect_url');
 
-  useEffect(async () => {
-    let response;
-    try {
-      response = await fetch(`${BASE_URL}/oauth2/api/v1/token`, {
+  useEffect(() => {
+    const handleAuthorization = async () => {
+      let response;
+      try {
+        response = await fetch(`${BASE_URL}/oauth2/api/v1/token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -163,6 +164,9 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
     }
 
     setIsLoading(false);
+    };
+
+    handleAuthorization();
   }, []);
 
   return (

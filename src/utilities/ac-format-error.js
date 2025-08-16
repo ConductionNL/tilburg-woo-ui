@@ -37,6 +37,12 @@ export const AcFormatErrorMessage = (error, list = false) => {
 		if (!list) msg = msg.join('<br/>');
 	} else if (error.response && error.response.data && error.response.data.message) {
 		msg = error.response.data.message;
+	} else if (error.response && error.response.data && error.response.data.error) {
+		// Handle {"error": "Invalid username or password"} format
+		msg = error.response.data.error;
+	} else if (error.response && error.response.data && typeof error.response.data === 'string') {
+		// Handle plain string error responses
+		msg = error.response.data;
 	}
 
 	return msg;

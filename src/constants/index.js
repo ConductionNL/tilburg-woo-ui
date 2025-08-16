@@ -19,6 +19,7 @@ export {
   ROUTES,
   SUB_NAVIGATION_ITEMS,
   AUTHENTICATION_ROUTES,
+  AUTHENTICATION_REQUIRED_ROUTES,
 } from './routes.constants';
 export { POSITIONS, SIZES, THEMES, TYPES, VARIANTS } from './themes.constants';
 export { TITLES } from './titles.constants';

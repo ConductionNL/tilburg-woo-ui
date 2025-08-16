@@ -18,12 +18,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
   // Get main navigation from position 1 with authentication filtering
   const activeMenu = getMenuFromPosition(1, user.isAuthenticated);
   
-  // Debug logging to help understand menu structure
-  if (process.env.NODE_ENV === 'development') {
-    console.log('AcNavigation - user.isAuthenticated:', user.isAuthenticated);
-    console.log('AcNavigation - activeMenu:', activeMenu);
-    console.log('AcNavigation - activeMenu.items:', activeMenu?.items);
-  }
+
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {

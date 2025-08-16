@@ -101,7 +101,8 @@ export const KEYS = AcLockObject({
 	USERNAME: 'username',
 	USERS: 'users',
 	USER_NAVIGATION: 'user_navigation',
-	USER_ROLE: 'user_role',
+	USER_GROUP: 'user_group',
+	USER_ROLE: 'user_role', // Kept for backward compatibility
 	VISIBLE: 'visible',
 	CLOSEABLE: 'closeable',
 });

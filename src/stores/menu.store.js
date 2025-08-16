@@ -1,6 +1,7 @@
 // Imports => MOBX
 import { ActionSingle } from '@gemeente-denhaag/components-react';
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
+import { processUserTemplate } from '@src/utilities/con-template-processor';
 
 let app = {};
 
@@ -30,9 +31,7 @@ export class MenuStore {
   @computed
   get all_menu_items() {
     const result = this.items ? toJS(this.items) : [];
-    if (process.env.NODE_ENV === 'development') {
-      console.log('MenuStore - all_menu_items computed:', result);
-    }
+
     return result;
   }
 
@@ -55,9 +54,7 @@ export class MenuStore {
   setMenus = (items) => {
     // Display all menu items from the backend without filtering
     // Let the backend control what gets shown where
-    if (process.env.NODE_ENV === 'development') {
-      console.log('MenuStore - setMenus called with:', items);
-    }
+
     this.items = items;
   };
 
@@ -79,24 +76,30 @@ export class MenuStore {
     // Filter menus based on authentication state
     const filteredMenus = menusAtPosition.filter(menu => this.shouldShowMenu(menu, userIsAuthenticated));
     
-    // Return the first matching menu, but also filter its items
+    // Return the first matching menu, but also filter its items and process templates
     const activeMenu = filteredMenus[0];
     if (activeMenu && activeMenu.items) {
       return {
         ...activeMenu,
-        items: this.filterMenuItems(activeMenu.items, userIsAuthenticated)
+        name: this.processMenuTemplate(activeMenu.name),
+        items: this.filterMenuItems(activeMenu.items, userIsAuthenticated).map(item => ({
+          ...item,
+          name: this.processMenuTemplate(item.name)
+        }))
       };
     }
     
-    return activeMenu || null;
+    return activeMenu ? {
+      ...activeMenu,
+      name: this.processMenuTemplate(activeMenu.name)
+    } : null;
   };
 
   @action
   shouldShowMenu = (menu, userIsAuthenticated) => {
     // Handle undefined/null values - default to showing the menu
-    // Rename showAfterLogin to hideBeforeLogin for clarity
-    const hideBeforeLogin = menu.showAfterLogin === true;
-    const hideAfterLogin = menu.hideAfterInlog === true;
+    const hideBeforeLogin = menu.hideBeforeLogin === true;
+    const hideAfterLogin = menu.hideAfterLogin === true;
     
     if (userIsAuthenticated) {
       // User is logged in - don't show if hideAfterLogin is true
@@ -110,9 +113,8 @@ export class MenuStore {
   @action
   shouldShowMenuItem = (menuItem, userIsAuthenticated) => {
     // Handle undefined/null values - default to showing the item
-    // Rename showAfterLogin to hideBeforeLogin for clarity
-    const hideBeforeLogin = menuItem.showAfterLogin === true;
-    const hideAfterLogin = menuItem.hideAfterInlog === true;
+    const hideBeforeLogin = menuItem.hideBeforeLogin === true;
+    const hideAfterLogin = menuItem.hideAfterLogin === true;
     
     if (userIsAuthenticated) {
       // User is logged in - don't show if hideAfterLogin is true
@@ -130,6 +132,26 @@ export class MenuStore {
     return items.filter(item => this.shouldShowMenuItem(item, userIsAuthenticated));
   };
 
+  /**
+   * Process template variables in menu text
+   * @param {string} text - Text that may contain template variables
+   * @returns {string} Processed text with variables replaced
+   */
+  @action
+  processMenuTemplate = (text) => {
+    if (!text || typeof text !== 'string') {
+      return text;
+    }
+    
+    // Get user from the store
+    const user = app.store?.user;
+    if (!user) {
+      return text;
+    }
+    
+    return processUserTemplate(text, user);
+  };
+
   @action
   getMenusFromPositions = (positions, userIsAuthenticated = false) => {
     const items = this.all_menu_items;
@@ -140,12 +162,16 @@ export class MenuStore {
     // Filter by position first
     const menusAtPositions = items.filter((item) => item && positions.includes(item.position));
     
-    // Then filter by authentication state and filter menu items
+    // Then filter by authentication state, filter menu items, and process templates
     return menusAtPositions
       .filter(menu => this.shouldShowMenu(menu, userIsAuthenticated))
       .map(menu => ({
         ...menu,
-        items: this.filterMenuItems(menu.items, userIsAuthenticated)
+        name: this.processMenuTemplate(menu.name),
+        items: this.filterMenuItems(menu.items, userIsAuthenticated).map(item => ({
+          ...item,
+          name: this.processMenuTemplate(item.name)
+        }))
       }));
   };
 
@@ -194,9 +220,7 @@ export class MenuStore {
     app.store.api.menu
       .list()
       .then((response) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('MenuStore - fetchMenus response:', response);
-        }
+
         if (response.data) {
           this.setMenus(response.data);
         } else {
