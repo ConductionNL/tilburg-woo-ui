@@ -87,7 +87,7 @@ const getValueField = (key, value) => {
   return <span>{strValue}</span>;
 };
 
-const AcPublication = observer(({ store: { publications }, schema }) => {
+const AcPublication = observer(({ store: { publications, user }, schema }) => {
   const { id } = useParams();
   const {
     get_single,
@@ -101,7 +101,6 @@ const AcPublication = observer(({ store: { publications }, schema }) => {
   const navigate = useNavigate();
 
   const isVoorziening = schema?.title === 'Voorziening';
-  const isLoggedIn = !!getCookie('nextcloud_user_id');
 
   // Table
   const [headers, setHeaders] = useState([]);
@@ -256,7 +255,7 @@ const AcPublication = observer(({ store: { publications }, schema }) => {
               ></img>
             }
 
-            {isVoorziening && isLoggedIn && (
+            {isVoorziening && user.isAuthenticated && (
               <ConActionMenu>
                 <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                   Acties

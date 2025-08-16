@@ -1,7 +1,7 @@
 // Imports => React
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
 import { AcSetDocumentTitle, AcCapitalize } from '@utils';
@@ -14,19 +14,56 @@ import '@styles/index.scss';
 // Imports => Config
 
 // Imports => Constants
-import { DEFAULT_ROUTE, ROUTES } from '@constants';
+import { DEFAULT_ROUTE, ROUTES, AUTHENTICATION_REQUIRED_ROUTES } from '@constants';
 
 // Imports => Utilities
 import { AcHome } from '@views';
 import AcContent from '@views/ac-content/ac-content';
 import { AcFallbackErrorPage } from '@views';
 
+// Imports => Components
+import AcProtectedRoute from '@components/ac-protected-route/ac-protected-route';
+import { AcLoader } from '@components';
+
 // Imports => Molecules
 const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
 const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
 
+// Logout component
+const AcLogout = withStore(observer(({ store }) => {
+  const navigate = useNavigate();
+  const { user } = store;
+
+  useEffect(() => {
+    const performLogout = async () => {
+      try {
+        console.log('Logging out user...');
+        await user.logout();
+        console.log('Logout successful, redirecting to home...');
+        navigate('/');
+      } catch (error) {
+        console.error('Logout failed:', error);
+        // Redirect anyway in case of error
+        navigate('/');
+      }
+    };
+
+    performLogout();
+  }, [user, navigate]);
+
+  return (
+    <div className="ac-logout-page">
+      <AcLoader />
+      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <p>Aan het uitloggen...</p>
+      </div>
+    </div>
+  );
+}));
+
 const App = ({ store }) => {
-  const { fetchPages, all_pages } = store.pages;
+  const { fetchPages, all_pages, getFilteredPages } = store.pages;
+  const { user } = store;
   const resetFocus = useAutoFocus();
 
   useEffect(() => {
@@ -219,22 +256,47 @@ const App = ({ store }) => {
       <AcHeader store={store} />
       <main id='main' className='ac-app-main'>
         <Routes>
-          {all_pages.map((page) => (
+          {/* CMS-driven pages */}
+          {getFilteredPages(user.isAuthenticated).map((page) => (
             <Route
               key={`route-${page.id}`}
               path={page.slug}
               element={getView(page)}
             />
           ))}
+          
+          {/* Static routes */}
           {Object.values(ROUTES)
             .filter((route) => route.component)
-            .map((route) => (
-              <Route
-                key={`default-route-${route.id}`}
-                path={route.path}
-                element={<route.component store={store} />}
-              />
-            ))}
+            .map((route) => {
+              // Check if this route requires authentication
+              const requiresAuth = AUTHENTICATION_REQUIRED_ROUTES.includes(route.path);
+              
+              return (
+                <Route
+                  key={`default-route-${route.id}`}
+                  path={route.path}
+                  element={
+                    requiresAuth ? (
+                      <AcProtectedRoute requireAuth={true} fallbackPath="/login">
+                        <route.component store={store} />
+                      </AcProtectedRoute>
+                    ) : (
+                      <route.component store={store} />
+                    )
+                  }
+                />
+              );
+            })}
+            
+          {/* Logout route */}
+          <Route
+            key="logout-route"
+            path="/logout"
+            element={<AcLogout store={store} />}
+          />
+          
+          {/* Fallback route */}
           <Route
             key={`default-route-${DEFAULT_ROUTE.id}`}
             path={'*'}

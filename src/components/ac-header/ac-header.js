@@ -30,12 +30,7 @@ const AcHeader = ({ store: { menu, user } }) => {
   // Get sub menu items from position 2 with authentication filtering
   const menuItems = menu.getMenuFromPosition(2, user.isAuthenticated) || null;
   
-  // Debug logging to help understand menu structure
-  if (process.env.NODE_ENV === 'development') {
-    console.log('AcHeader - all_menu_items:', all_menu_items);
-    console.log('AcHeader - menuItems (position 2):', menuItems);
-    console.log('AcHeader - menuItems.items:', menuItems?.items);
-  }
+
 
   return (
     <header className='ac-header'>

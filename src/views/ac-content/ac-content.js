@@ -9,8 +9,8 @@ import { AcContainer } from '@atoms';
 import { AcLoader, AcSectionsHandler } from '@components';
 import AcAuthentication from '@views/ac-authentication/ac-authentication';
 
-const AcContent = ({ store: { pages } }) => {
-  const { fetchPage, get_single, loading, resetPage } = pages;
+const AcContent = ({ store: { pages, user } }) => {
+  const { fetchPage, get_single, loading, resetPage, shouldShowPage } = pages;
 
   const location = useLocation();
 
@@ -21,6 +21,23 @@ const AcContent = ({ store: { pages } }) => {
 
   if (loading.status) {
     return <AcLoader />;
+  }
+
+  // Check if the page should be visible to the current user
+  if (get_single && !shouldShowPage(get_single, user.isAuthenticated)) {
+    // Page exists but user doesn't have permission to see it
+    // Redirect to login if not authenticated, or show 403 if authenticated but no access
+    if (!user.isAuthenticated) {
+      window.location.href = `/login?redirect_url=${encodeURIComponent(location.pathname)}`;
+      return <AcLoader />;
+    } else {
+      return (
+        <AcContainer compact>
+          <Heading level={1}>Access Denied</Heading>
+          <p>You don't have permission to view this page.</p>
+        </AcContainer>
+      );
+    }
   }
 
   return (

@@ -57,6 +57,9 @@ const ConMarkdown = loadable(() =>
 const ConTableSearch = loadable(() =>
   import('@src/components/con-table-search/con-table-search')
 );
+const ConTemplateText = loadable(() =>
+  import('@src/components/con-template-text/con-template-text')
+);
 
 export {
   AcAbout,
@@ -85,4 +88,5 @@ export {
   ConDynamicSchemaForm,
   ConMarkdown,
   ConTableSearch,
+  ConTemplateText,
 };
