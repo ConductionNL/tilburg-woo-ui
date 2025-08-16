@@ -14,7 +14,7 @@
 export const shouldShowContent = (item, userIsAuthenticated) => {
   if (!item) return false;
   
-  // Handle undefined/null values - default to showing the content
+  // Handle both old and new property names for backward compatibility
   const hideBeforeLogin = item.showAfterLogin === true || item.hideBeforeLogin === true;
   const hideAfterLogin = item.hideAfterInlog === true || item.hideAfterLogin === true;
   
