@@ -7,6 +7,7 @@ import { isJsonString } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import _ from 'lodash';
+import { byNested } from '../utils/sorters';
 
 /**
  * Beheer Page Configuration Factory
@@ -19,6 +20,7 @@ const BeheerPageConfigFactory = {
    * @returns {Object} Configuration object
    */
   createConfig: (type) => {
+    // TODO: use the extend 'all' instead of individual extends
     const baseConfig = {
       registerSlug: 'voorzieningen',
       extend: [],
@@ -26,7 +28,7 @@ const BeheerPageConfigFactory = {
       defaultHeaders: [],
       actionButtons: null,
       customFilterDrawer: null,
-      modals: [],
+      modals: ['add', 'edit', 'delete', 'import'],
       uniqueActions: [],
       statusIcon: null,
     };
@@ -64,7 +66,7 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          modals: ['add', 'edit', 'delete', 'import'],
+          modals: [...baseConfig.modals],
         };
 
       case 'diensten':
@@ -84,12 +86,7 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 return row?.voorziening?.naam || '-';
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const nameA = a?.voorziening?.naam || '';
-                const nameB = b?.voorziening?.naam || '';
-                return ConSorterLogic(nameA, nameB, direction);
-              },
+              sortComparator: byNested((r) => r?.voorziening?.naam),
             },
             leverancier_naam: {
               id: 'leverancier',
@@ -102,12 +99,7 @@ const BeheerPageConfigFactory = {
                   </AcColumn>
                 );
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const idA = a?.leverancier?.id || '';
-                const idB = b?.leverancier?.id || '';
-                return ConSorterLogic(idA, idB, direction);
-              },
+              sortComparator: byNested((r) => r?.leverancier?.id),
             },
             leverancier_email: {
               id: 'email',
@@ -116,15 +108,12 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 return row?.leverancier?.contactgegevens?.email || '-';
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const emailA = a?.leverancier?.contactgegevens?.email || '';
-                const emailB = b?.leverancier?.contactgegevens?.email || '';
-                return ConSorterLogic(emailA, emailB, direction);
-              },
+              sortComparator: byNested(
+                (r) => r?.leverancier?.contactgegevens?.email
+              ),
             },
           },
-          modals: ['add', 'edit', 'delete', 'import'],
+          modals: [...baseConfig.modals],
         };
 
       case 'voorzieningen-versie':
@@ -148,12 +137,7 @@ const BeheerPageConfigFactory = {
                     .join(', ') || '-'
                 );
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aTitle = a?.kwetsbaarheden?.[0]?.titel;
-                const bTitle = b?.kwetsbaarheden?.[0]?.titel;
-                return ConSorterLogic(aTitle, bTitle, direction);
-              },
+              sortComparator: byNested((r) => r?.kwetsbaarheden?.[0]?.titel),
             },
             voorzieningName: {
               id: 'voorzieningName',
@@ -162,15 +146,10 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 return row?.voorziening?.naam || '-';
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aTitle = a?.voorziening?.naam || '';
-                const bTitle = b?.voorziening?.naam || '';
-                return ConSorterLogic(aTitle, bTitle, direction);
-              },
+              sortComparator: byNested((r) => r?.voorziening?.naam),
             },
           },
-          modals: ['add', 'edit', 'delete', 'import'],
+          modals: [...baseConfig.modals],
         };
 
       case 'organisaties':
@@ -196,12 +175,7 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 return row.naam || row.naam || '-';
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aName = a.naam || a.naam || undefined;
-                const bName = b.naam || b.naam || undefined;
-                return ConSorterLogic(aName, bName, direction);
-              },
+              sortComparator: byNested((r) => r?.naam),
             },
             contactgegevens: {
               id: 'contactDetails',
@@ -220,12 +194,7 @@ const BeheerPageConfigFactory = {
                   </AcColumn>
                 );
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aName = a?.contactgegevens?.voornaam;
-                const bName = b?.contactgegevens?.voornaam;
-                return ConSorterLogic(aName, bName, direction);
-              },
+              sortComparator: byNested((r) => r?.contactgegevens?.voornaam),
             },
             website: {
               id: 'website',
@@ -323,10 +292,7 @@ const BeheerPageConfigFactory = {
             },
           ],
           modals: [
-            'add',
-            'edit',
-            'delete',
-            'import',
+            ...baseConfig.modals,
             'activate',
             'deactivate',
             'publish',
@@ -370,7 +336,7 @@ const BeheerPageConfigFactory = {
                   : '-',
             },
           },
-          modals: ['add', 'edit', 'delete', 'import'],
+          modals: [...baseConfig.modals],
         };
 
       case 'gebruiken':
@@ -448,7 +414,7 @@ const BeheerPageConfigFactory = {
                 }
                 if (
                   typeof newB.beheerder === 'string' &&
-                  !isJsonString(newB.beheerder)
+                  isJsonString(newB.beheerder)
                 ) {
                   newB.beheerder = JSON.parse(newB.beheerder);
                 }
@@ -470,7 +436,7 @@ const BeheerPageConfigFactory = {
               action: 'koppelen',
             },
           ],
-          modals: ['add', 'edit', 'delete', 'import', 'koppelen'],
+          modals: [...baseConfig.modals, 'koppelen'],
         };
 
       case 'overeenkomsten':
@@ -495,12 +461,7 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 return row?.voorzieningAanbod?.naam || '-';
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aName = a?.voorzieningAanbod?.naam;
-                const bName = b?.voorzieningAanbod?.naam;
-                return ConSorterLogic(aName, bName, direction);
-              },
+              sortComparator: byNested((r) => r?.voorzieningAanbod?.naam),
             },
             voorzieningGebruik: {
               id: 'voorzieningGebruikId',
@@ -509,12 +470,7 @@ const BeheerPageConfigFactory = {
               customContent: (row) => {
                 return row?.voorzieningGebruik?.id || '-';
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aId = a?.voorzieningGebruik?.id;
-                const bId = b?.voorzieningGebruik?.id;
-                return ConSorterLogic(aId, bId, direction);
-              },
+              sortComparator: byNested((r) => r?.voorzieningGebruik?.id),
             },
             contactpersoonAanbieder: {
               id: 'contactPersonProvider',
@@ -524,12 +480,7 @@ const BeheerPageConfigFactory = {
                 if (!row?.contactpersoonAanbieder) return 'N/A';
                 return row.contactpersoonAanbieder.naam;
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aName = a?.contactpersoonAanbieder?.naam;
-                const bName = b?.contactpersoonAanbieder?.naam;
-                return ConSorterLogic(aName, bName, direction);
-              },
+              sortComparator: byNested((r) => r?.contactpersoonAanbieder?.naam),
             },
             contactpersoonGebruiker: {
               id: 'contactPersonUser',
@@ -539,15 +490,10 @@ const BeheerPageConfigFactory = {
                 if (!row?.contactpersoonGebruiker) return 'N/A';
                 return row.contactpersoonGebruiker.naam;
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aName = a?.contactpersoonGebruiker?.naam;
-                const bName = b?.contactpersoonGebruiker?.naam;
-                return ConSorterLogic(aName, bName, direction);
-              },
+              sortComparator: byNested((r) => r?.contactpersoonGebruiker?.naam),
             },
           },
-          modals: ['add', 'edit', 'delete', 'import'],
+          modals: [...baseConfig.modals],
         };
 
       case 'contactpersonen':
@@ -589,14 +535,7 @@ const BeheerPageConfigFactory = {
                 if (!row?.voorkeuren) return '-';
                 return `Taal: ${row.voorkeuren.taal}, Thema: ${row.voorkeuren.thema}`;
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                return ConSorterLogic(
-                  a?.voorkeuren?.taal,
-                  b?.voorkeuren?.taal,
-                  direction
-                );
-              },
+              sortComparator: byNested((r) => r?.voorkeuren?.taal),
             },
           },
           uniqueActions: [
@@ -615,7 +554,7 @@ const BeheerPageConfigFactory = {
               action: 'depublish',
             },
           ],
-          modals: ['add', 'edit', 'delete', 'import', 'publish', 'depublish'],
+          modals: [...baseConfig.modals, 'publish', 'depublish'],
         };
 
       default:

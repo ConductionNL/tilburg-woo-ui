@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// eslint-disable-next-line import/no-unresolved
+import React from 'react';
 import { AcFlex } from '@src/atoms';
 
 /**
@@ -7,32 +8,29 @@ import { AcFlex } from '@src/atoms';
  */
 export const LogoUploadField = ({
   fieldConfig,
-  value,
+  _value,
   onChange,
   validation,
   propertyName,
+  isDisabled,
 }) => {
-  const [logoFile, setLogoFile] = useState(null);
-
   const handleLogoFileSelect = (e) => {
-    if (!e.target.files.length) {
-      setLogoFile(null);
-      onChange(null);
+    const files = e?.target?.files;
+    if (!files || !files.length) {
+      onChange('');
       return;
     }
 
-    const file = e.target.files[0];
-    file.getDataUrl = async () => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
-      });
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      onChange(reader.result);
     };
-
-    setLogoFile(file);
-    onChange(file);
+    reader.onerror = () => {
+      // TODO: show user-friendly error state if needed
+      onChange('');
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -63,6 +61,7 @@ export const LogoUploadField = ({
         ].join(',')}
         multiple={false}
         onChange={handleLogoFileSelect}
+        disabled={isDisabled}
         style={{
           width: '100%',
           padding: '10px 12px',
