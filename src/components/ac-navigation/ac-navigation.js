@@ -60,87 +60,18 @@ const AcNavigation = ({ store: { menu, user } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {activeMenu && activeMenu.items && Array.isArray(activeMenu.items) && (
+        {activeMenu && activeMenu.items && Array.isArray(activeMenu.items) && activeMenu.items.length > 0 && (
           <ul>
             {activeMenu.items.map((menuItem) => (
               <li key={menuItem.name || menuItem.link}>
-                {menuItem.link === '/logout' ? (
-                  <button onClick={handleLogout} className="logout-button">
-                    <Icon icon={menuItem.icon} />
-                    {menuItem.name}
-                  </button>
-                ) : (
-                  <Link to={menuItem.link}>
-                    <Icon icon={menuItem.icon} />
-                    {menuItem.name}
-                  </Link>
-                )}
+                <Link to={menuItem.link}>
+                  <Icon icon={menuItem.icon} />
+                  {menuItem.name}
+                </Link>
               </li>
             ))}
           </ul>
-        ) ||
-          (AcCheckIfSpecificHostname() && (
-            <>
-              {!pathname.includes('beheer') && !user.isAuthenticated ? (
-                <ul>
-                  <li>
-                    <Link to='/register'>
-                      <VISUALS.PERSON_ADD />
-                      Aanmelden
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to='/login'>
-                      <VISUALS.KEY />
-                      Inloggen
-                    </Link>
-                  </li>
-                </ul>
-              ) : (
-                <ul>
-                  <li>
-                    <Link to='/beheer'>
-                      <VISUALS.CHART_LINE />
-                      Dashboard
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to='/account'>
-                      <VISUALS.USER />
-                      Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to='#' onClick={handleLogout}>
-                      <VISUALS.RIGHT_FROM_BRACKET />
-                      Logout
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </>
-          )) || (
-            <ul>
-              <li>
-                <Link to='/over-ons'>
-                  <VISUALS.INFO />
-                  Over Open Tilburg
-                </Link>
-              </li>
-              <li>
-                <Link to='/onderwerpen'>
-                  <VISUALS.LIST />
-                  Onderwerpen
-                </Link>
-              </li>
-              <li>
-                <Link to='/contact'>
-                  <VISUALS.CONTACT />
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          )}
+        )}
       </nav>
     </div>
   );
