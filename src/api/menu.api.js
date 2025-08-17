@@ -8,7 +8,9 @@ export class MenuAPI {
   }
 
   list() {
-    return this.Client.get(ENDPOINTS.MENU.INDEX).then((response) => response.data);
+    return this.Client.get(ENDPOINTS.MENU.INDEX, {
+      params: { _limit: 100 }
+    }).then((response) => response.data);
   }
 
   single(id) {

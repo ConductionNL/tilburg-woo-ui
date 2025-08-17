@@ -36,6 +36,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   FOOTER_STYLE: 'vng',
   FOOTER_LOGO_TITLE: 'Open Tilburg',
   FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
+  SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
 });
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
@@ -83,4 +84,5 @@ export const getVisualConfig = () => ({
 // Footer text helper functions
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
+export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
 export const getDefaultConfig = () => CONTAINER_CONFIG;

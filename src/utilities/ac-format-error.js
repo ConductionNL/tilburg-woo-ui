@@ -1,5 +1,6 @@
 // Imports => Constants
 import { KEYS } from '@constants';
+import { getSupportEmailAddress } from '@constants/container.constants';
 
 // Imports => Utilities
 import { AcCapitalize } from '@utils';
@@ -10,7 +11,8 @@ export const AcFormatErrorMessage = (error, list = false) => {
 		error && error.response && error.response.status ? error.response.status : false;
 
 	if (!code || code === 500) {
-		return `Er is een onbekende fout opgetreden. Probeer het opnieuw of neem contact op met <em>${KEYS.SUPPORT_EMAIL_ADDRESS}</em>`;
+		const supportEmail = getSupportEmailAddress();
+		return `Er is een onbekende fout opgetreden. Probeer het opnieuw of neem contact op met <a href="mailto:${supportEmail}">${supportEmail}</a>`;
 	}
 
 	if (error.response && error.response.data && error.response.data.errors) {

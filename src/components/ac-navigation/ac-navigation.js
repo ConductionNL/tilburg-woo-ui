@@ -29,8 +29,14 @@ const AcNavigation = ({ store: { menu, user } }) => {
 
   useEffect(() => {
     setIsMenuOpen(false);
-    fetchMenus();
   }, [location]);
+
+  // Fetch menus only once on component mount if not already loaded
+  useEffect(() => {
+    if (!menu.all_menu_items || menu.all_menu_items.length === 0) {
+      fetchMenus();
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {

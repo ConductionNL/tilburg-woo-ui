@@ -36,10 +36,12 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
  * - Supports unique action menu items and edit/delete via external modals
  */
 const ConGenericBeheerDetailsPage = ({
-  store: { object, user },
+  store,
   type,
   id: propId,
 }) => {
+  // Destructure the stores we need
+  const { object, user } = store;
   const navigate = useNavigate();
   const params = useParams();
   const id = propId || params?.id;

@@ -53,6 +53,8 @@ const getEnvConfig = () => {
     // Footer Text Configuration
     FOOTER_LOGO_TITLE: process.env.FOOTER_LOGO_TITLE || 'Open Tilburg',
     FOOTER_LOGO_SUBTITLE: process.env.FOOTER_LOGO_SUBTITLE || 'Één plek voor alle publicaties van Gemeente Tilburg',
+    // Support Configuration
+    SUPPORT_EMAIL_ADDRESS: process.env.SUPPORT_EMAIL_ADDRESS || 'info@conduction.nl',
   };
 };
 // Generate the constants file content
@@ -124,6 +126,7 @@ export const getVisualConfig = () => ({
 // Footer text helper functions
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
+export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
 export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };

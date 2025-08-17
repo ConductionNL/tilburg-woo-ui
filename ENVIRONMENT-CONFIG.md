@@ -314,7 +314,7 @@ The Node.js script that creates the constants file:
 const getEnvConfig = () => {
   return {
     SITE_TITLE: process.env.SITE_TITLE || 'Development Catalogus',
-    API_URL: process.env.API_URL || 'http://nextcloud.local/index.php/apps',
+    API_URL: process.env.API_URL || 'http://nextcloud.local/api/apps',
     // ... all environment variable mappings
   };
 };
@@ -331,7 +331,7 @@ services:
     environment:
       # Basic development setup
       - SITE_TITLE=Local Development 🛠️
-      - API_URL=http://nextcloud.local/index.php/apps
+      - API_URL=http://nextcloud.local/api/apps
       - ENABLE_AUTHENTICATION=false
       - ENABLE_ROLLBAR=false
       

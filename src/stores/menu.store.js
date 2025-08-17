@@ -76,8 +76,15 @@ export class MenuStore {
     // Filter menus based on authentication state
     const filteredMenus = menusAtPosition.filter(menu => this.shouldShowMenu(menu, userIsAuthenticated));
     
-    // Return the first matching menu, but also filter its items and process templates
-    const activeMenu = filteredMenus[0];
+    // For position 7 (dashboard), prefer the menu with title "Dashboard" over generic test menus
+    let activeMenu;
+    if (position === 7) {
+      // Look for the Dashboard menu specifically
+      activeMenu = filteredMenus.find(menu => menu.title === 'Dashboard') || filteredMenus[0];
+    } else {
+      // For other positions, use the first matching menu
+      activeMenu = filteredMenus[0];
+    }
     if (activeMenu && activeMenu.items) {
       return {
         ...activeMenu,
