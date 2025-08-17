@@ -102,7 +102,14 @@ const BeheerModalFactory = {
    * @returns {Component|null} The modal component or null if not found
    */
   getModalComponent: (type, modalType) => {
-    return BeheerModalFactory.modalComponents[type]?.[modalType] || null;
+    // First check if we have a specific configuration for this type
+    const specificComponent = BeheerModalFactory.modalComponents[type]?.[modalType];
+    if (specificComponent) {
+      return specificComponent;
+    }
+    
+    // For unknown types, fall back to base modal config if the modal type exists there
+    return baseModalConfig[modalType] || null;
   },
 
   /**
@@ -175,7 +182,12 @@ const BeheerModalFactory = {
         'contactpersonen',
       ];
 
-      if (genericFormTypes.includes(type)) {
+      // For known types, use the explicit list
+      // For unknown types, assume they can use the generic form modal
+      const useGenericForm = genericFormTypes.includes(type) || 
+        !BeheerModalFactory.modalComponents[type];
+
+      if (useGenericForm) {
         // Build preSelected values from params
         const preSelected = {};
 

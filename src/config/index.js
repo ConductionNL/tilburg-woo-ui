@@ -74,7 +74,7 @@ export default {
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
-    credentials: true,
+    withCredentials: true,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -199,7 +199,7 @@ export default {
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
-    credentials: true,
+    withCredentials: true,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -213,7 +213,7 @@ export default {
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
-    credentials: true,
+    withCredentials: true,
     headers: {
       'Content-Type': 'multipart/form-data',
       Accept: 'application/json',

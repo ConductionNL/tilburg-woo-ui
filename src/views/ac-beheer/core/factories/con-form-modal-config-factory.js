@@ -646,7 +646,45 @@ const FormModalConfigFactory = {
         };
 
       default:
-        throw new Error(`Unknown form modal type: ${type}`);
+        // Generic fallback configuration for dynamic types
+        // This will generate a form based purely on the schema
+        try {
+          // Get the beheer page config for this type to reuse registerSlug and schemaSlug
+          const beheerConfig = BeheerPageConfigFactory.createConfig(type);
+          
+          return {
+            // Beheer page configuration (for API endpoint construction)
+            beheerConfig,
+            
+            // Form configuration
+            title: type.charAt(0).toUpperCase() + type.slice(1),
+            fields: [], // Will be populated dynamically from schema
+            fieldVisibility: {}, // All fields visible by default
+            initialData: {}, // No custom initial data
+            optionsProviders: {}, // No custom options providers
+            fieldConfigs: {}, // No custom field configs
+            customComponents: {}, // No custom components
+            transformSubmitData: (data) => data, // No transformation by default
+            additionalEffects: [], // No additional effects
+            customValidation: null, // No custom validation
+          };
+        } catch (error) {
+          // If beheer config also doesn't exist, create a minimal fallback
+          console.warn(`No beheer config found for type: ${type}, using minimal fallback`);
+          return {
+            // Minimal configuration without beheerConfig
+            title: type.charAt(0).toUpperCase() + type.slice(1),
+            fields: [],
+            fieldVisibility: {},
+            initialData: {},
+            optionsProviders: {},
+            fieldConfigs: {},
+            customComponents: {},
+            transformSubmitData: (data) => data,
+            additionalEffects: [],
+            customValidation: null,
+          };
+        }
     }
   },
 };
