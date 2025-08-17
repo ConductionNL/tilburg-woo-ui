@@ -105,7 +105,9 @@ const ConGenericBeheerPage = ({
     if (baseConfig && dataProperties && Object.keys(dataProperties).length > 0 && !schemaLoading && !schemaError) {
       // Only enhance if we have a generic config (no predefined defaultHeaders)
       if (baseConfig.defaultHeaders && baseConfig.defaultHeaders.length === 0) {
-        const schemaPropertyKeys = Object.keys(dataProperties);
+        const schemaPropertyKeys = Object.entries(dataProperties)
+          .filter(([key, value]) => value.hideOnCollection !== true)
+          .map(([key, value]) => key);
         
         // Use schema title if available, otherwise capitalize the type without "Beheer" prefix
         let dynamicTitle = baseConfig.title;
@@ -290,7 +292,7 @@ const ConGenericBeheerPage = ({
     if (!dataProperties) return [];
 
     return Object.entries(dataProperties)
-      .filter(([key, value]) => value.visible !== false)
+      .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
       .map(([key, value]) => {
         // Check if we have a custom override for this header
         if (config.customHeaders[key]) {
@@ -298,9 +300,12 @@ const ConGenericBeheerPage = ({
         }
 
         // Generate standard header from schema
+        // Use schema property title if available, otherwise capitalize the key
+        const label = value.title && value.title.trim() ? value.title : _.upperFirst(key);
+        
         return {
           id: key,
-          label: _.upperFirst(key),
+          label: label,
           key: key,
         };
       });

@@ -4,6 +4,7 @@ import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { NAVIGATE_TO } from '@constants/routes.constants';
+import { ConPublicationActions } from '@components';
 
 const AcSearchResult = ({
   skeleton,
@@ -13,6 +14,8 @@ const AcSearchResult = ({
   category,
   themes,
   id,
+  user,
+  schemaSlug,
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
@@ -36,12 +39,24 @@ const AcSearchResult = ({
           )}
           <Paragraph small>{category}</Paragraph>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
-          <span class='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {title}
-          </span>
-          <VISUALS.ARROW_RIGHT />
-        </AcLink>
+        <AcFlex alignItems='center' spacing='sm'>
+          {user?.isAuthenticated && (
+            <ConPublicationActions
+              user={user}
+              id={id}
+              schemaSlug={schemaSlug}
+              title={title}
+              published={published}
+              triggerStyle='buttonSlim'
+            />
+          )}
+          <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+            <span className='sr-only'>
+              {LABELS.READ_MORE_ABOUT} {title}
+            </span>
+            <VISUALS.ARROW_RIGHT />
+          </AcLink>
+        </AcFlex>
       </AcFlex>
     </AcCard>
   );

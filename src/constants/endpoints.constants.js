@@ -50,13 +50,13 @@ export const ENDPOINTS = AcLockObject({
     USER_PROFILE: `/openconnector/api/user/me`,
   },
   PUBLICATIONS: {
-    SEARCH: `/publications`, // GET
+    SEARCH: `/opencatalogi/api/publications`, // GET
     SINGLE: (_id) =>
-      `/publications/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
+      `/opencatalogi/api/publications/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
     RELATIONS: (_uri) =>
-      `/publications?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
+      `/opencatalogi/api/publications?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) =>
-      `/publications/${_id}/attachments`, // GET
+      `/opencatalogi/api/publications/${_id}/attachments`, // GET
   },
   MIJN_OMGEVING: {
     SEARCH: `/mijn-omgeving`, // GET

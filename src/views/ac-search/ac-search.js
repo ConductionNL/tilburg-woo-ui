@@ -17,7 +17,7 @@ import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
 import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
 
-const AcSearch = ({ store: { publications } }) => {
+const AcSearch = ({ store: { publications, user } }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -122,6 +122,8 @@ const AcSearch = ({ store: { publications } }) => {
               logo={publication['@self'].logo}
               cardType={publication['@self'].schema.slug}
               type={publication['@self'].schema.type}
+              user={user}
+              published={publication['@self'].published}
               key={index}
             />
           );
@@ -157,6 +159,8 @@ const AcSearch = ({ store: { publications } }) => {
                 publication.naam ??
                 publication.id
               }
+              user={user}
+              schemaSlug={publication['@self']?.schema?.slug}
               key={index}
             />
           );

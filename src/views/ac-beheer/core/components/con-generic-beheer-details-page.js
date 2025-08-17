@@ -210,6 +210,25 @@ const ConGenericBeheerDetailsPage = ({
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+                      
+                      {/* Standard publish/depublish actions for all types */}
+                      {!data?.['@self']?.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH />}
+                          onClick={() => setOpenModal('publish')}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+                      
+                      {data?.['@self']?.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH_OFF />}
+                          onClick={() => setOpenModal('depublish')}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
                       {config.uniqueActions?.map((action) =>
                         // if condition is true show the action
                         action.condition?.(data) ? (
@@ -252,6 +271,17 @@ const ConGenericBeheerDetailsPage = ({
                     </ConActionMenu.Menu>
                   </ConActionMenu>
                 </AcFlex>
+
+                {/* Warning card for unpublished objects */}
+                {!data?.['@self']?.published && (
+                  <Alert type="warning">
+                    <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
+                    <Paragraph>
+                      Dit object is momenteel niet zichtbaar in de zoekfunctie van {config?.title || 'de catalogus'}. 
+                      Gebruik de "Publiceren" actie om het object beschikbaar te maken voor bezoekers.
+                    </Paragraph>
+                  </Alert>
+                )}
 
                 <AcColumn gap='tiger'>
                   {showDescriptionFields && (
@@ -501,7 +531,7 @@ const ConGenericBeheerDetailsPage = ({
           // Include all available modals for this type plus dynamicCreate, exclude add/import
           modals: (BeheerModalFactory.modalComponents[type]
             ? Object.keys(BeheerModalFactory.modalComponents[type])
-            : []
+            : ['edit', 'delete', 'publish', 'depublish'] // Default base modals for unknown types
           )
             .filter((m) => m !== 'add' && m !== 'import')
             .concat('dynamicCreate'),

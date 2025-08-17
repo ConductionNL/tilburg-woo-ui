@@ -432,7 +432,7 @@ const BeheerTable = forwardRef((props, ref) => {
     if (!dataProperties) return [];
 
     const schemaHeaders = Object.entries(dataProperties)
-      .filter(([key, value]) => value.visible !== false)
+      .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
       .flatMap(([key, value]) => {
         // leverancier from diensten is a special case as its referenced twice
         if (headerOverrides && type === 'diensten' && key === 'leverancier') {
@@ -453,9 +453,12 @@ const BeheerTable = forwardRef((props, ref) => {
         }
 
         // Generate standard header from schema
+        // Use schema property title if available, otherwise capitalize the key
+        const label = value.title && value.title.trim() ? value.title : _.upperFirst(key);
+        
         return {
           id: key,
-          label: _.upperFirst(key),
+          label: label,
           key: key,
         };
       })

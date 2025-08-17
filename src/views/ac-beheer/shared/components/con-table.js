@@ -409,7 +409,10 @@ const ConTable = (
                 typeof header.sortComparator === 'function');
 
             return (
-              <TableCell key={header.id}>
+              <TableCell 
+                key={header.id}
+                className={header.label === 'Acties' ? 'con-table-actions-column' : undefined}
+              >
                 <div className={clsx('con-table-header-content')}>
                   <div className={clsx('con-table-header-content-label')}>
                     <span
@@ -531,6 +534,7 @@ const ConTable = (
                   : null
               }
               key={header.id}
+              className={header.label === 'Acties' ? 'con-table-actions-column' : undefined}
             >
               <div
                 id={`table-cell-${headerIndex}`}
