@@ -63,6 +63,9 @@ const ConTemplateText = loadable(() =>
 const ConDynamicSidenav = loadable(() =>
   import('@src/components/con-dynamic-sidenav/con-dynamic-sidenav')
 );
+const ConPublicationActions = loadable(() =>
+  import('@src/components/con-publication-actions/con-publication-actions')
+);
 
 export {
   AcAbout,
@@ -93,4 +96,5 @@ export {
   ConTableSearch,
   ConTemplateText,
   ConDynamicSidenav,
+  ConPublicationActions,
 };

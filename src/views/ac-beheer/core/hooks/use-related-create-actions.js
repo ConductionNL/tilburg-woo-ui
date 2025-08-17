@@ -1,7 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
-import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 import { VISUALS } from '@constants';
 
 /**
@@ -38,9 +37,17 @@ export const useRelatedCreateActions = ({
         await object?.fetchSchemaRelated?.(schemaRef);
         const related = object?.getSchemaRelated?.(schemaRef);
 
-        const relatedResults = Array.isArray(related?.results)
-          ? related.results
-          : [];
+        // Handle both old format (results array) and new format (incoming/outgoing)
+        let relatedResults = [];
+        if (Array.isArray(related?.results)) {
+          // Old format: { results: [...] }
+          relatedResults = related.results;
+        } else if (related?.incoming || related?.outgoing) {
+          // New format: { incoming: [...], outgoing: [...] }
+          const incoming = Array.isArray(related.incoming) ? related.incoming : [];
+          const outgoing = Array.isArray(related.outgoing) ? related.outgoing : [];
+          relatedResults = [...incoming, ...outgoing];
+        }
 
         const userGroups = Array.isArray(user?.userGroups)
           ? user.userGroups
@@ -49,13 +56,32 @@ export const useRelatedCreateActions = ({
           : [];
 
         const creatable = relatedResults.filter((rs) => {
+          // If authorization is null or undefined, allow access (no restrictions)
+          if (!rs?.authorization) return true;
+          
           const createGroups = Array.isArray(rs?.authorization?.create)
             ? rs.authorization.create
             : [];
+          
+          // If no create groups specified, allow access
+          if (createGroups.length === 0) return true;
+          
+          // Check for public access or user group match
           if (createGroups.includes('public')) return true;
           return createGroups.some((grp) => userGroups.includes(grp));
         });
 
+        console.log('🔍 Related schemas debug:', {
+          schemaRef,
+          apiResponse: related,
+          incomingCount: related?.incoming?.length || 0,
+          outgoingCount: related?.outgoing?.length || 0,
+          totalRelatedResults: relatedResults.length,
+          userGroups,
+          creatable: creatable.length,
+          creatableSchemas: creatable.map(rs => ({ slug: rs.slug, title: rs.title, auth: rs.authorization }))
+        });
+        
         setCreatableRelated(creatable);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -71,27 +97,38 @@ export const useRelatedCreateActions = ({
   const buildPreSelected = useCallback(
     (targetType, ctxId) => {
       const preSelected = {};
-      if (targetType === 'applicaties') {
-        if (currentType === 'organisaties') preSelected.organisatie = ctxId;
+      
+      // Use schema slugs directly instead of renamed types
+      if (targetType === 'voorziening') {
+        if (currentType === 'organisatie') preSelected.organisatie = ctxId;
       }
 
-      if (targetType === 'diensten') {
-        if (currentType === 'applicaties') preSelected.voorziening = ctxId;
+      if (targetType === 'voorzieningaanbod') {
+        if (currentType === 'voorziening') preSelected.voorziening = ctxId;
       }
 
-      if (targetType === 'gebruiken') {
-        if (currentType === 'applicaties') preSelected.voorzieningId = ctxId;
-        if (currentType === 'organisaties') preSelected.organisatieId = ctxId;
+      if (targetType === 'voorzieninggebruik') {
+        if (currentType === 'voorziening') preSelected.voorzieningId = ctxId;
+        if (currentType === 'organisatie') preSelected.organisatieId = ctxId;
       }
 
-      if (targetType === 'voorziening-versie') {
-        if (currentType === 'applicaties') preSelected.voorziening = ctxId;
-        if (currentType === 'diensten') preSelected.voorzieningaanbod = ctxId;
+      if (targetType === 'voorzieningversie') {
+        if (currentType === 'voorziening') preSelected.voorziening = ctxId;
+        if (currentType === 'voorzieningaanbod') preSelected.voorzieningaanbod = ctxId;
       }
 
-      if (targetType === 'contactpersonen') {
-        if (currentType === 'organisaties') preSelected.organisatie = ctxId;
+      if (targetType === 'contactpersoon') {
+        if (currentType === 'organisatie') preSelected.organisatie = ctxId;
       }
+
+      if (targetType === 'moduleversie') {
+        if (currentType === 'voorzieningmodule') preSelected.module = ctxId;
+      }
+
+      if (targetType === 'voorziening') {
+        if (currentType === 'voorzieningmodule') preSelected.omvat = ctxId;
+      }
+      
       return preSelected;
     },
     [currentType]
@@ -99,12 +136,13 @@ export const useRelatedCreateActions = ({
 
   const makeActionsForContext = useCallback(
     (ctxId) => {
-      return (creatableRelated || [])
+      const actions = (creatableRelated || [])
         .map((rs) => {
           const slug = rs?.slug;
           if (!slug) return null;
-          const targetType = BEHEER_RENAMES[slug];
-          if (!targetType) return null;
+          
+          // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
+          const targetType = slug;
 
           const label = `${rs?.title ?? _.startCase(slug)} toevoegen`;
 
@@ -117,6 +155,15 @@ export const useRelatedCreateActions = ({
           };
         })
         .filter(Boolean);
+        
+      console.log('🎯 makeActionsForContext:', { 
+        ctxId, 
+        creatableRelatedCount: creatableRelated?.length || 0,
+        actionsCount: actions.length,
+        actions: actions.map(a => ({ key: a.key, label: a.label }))
+      });
+      
+      return actions;
     },
     [creatableRelated, openDynamicCreate, buildPreSelected]
   );

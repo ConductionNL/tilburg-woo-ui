@@ -10,4 +10,6 @@ export const BEHEER_RENAMES = {
   organisatie: 'organisaties',
   kwetsbaarheid: 'kwetsbaarheden',
   contactpersoon: 'contactpersonen',
+  voorzieningmodule: 'voorzieningmodule',
+  moduleversie: 'moduleversie',
 };

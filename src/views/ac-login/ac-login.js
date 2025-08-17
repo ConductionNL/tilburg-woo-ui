@@ -131,7 +131,7 @@ const AcLogin = ({ store }) => {
           }}>
             <strong>Inloggen vereist:</strong> Je moet inloggen om deze pagina te bekijken.
             {redirectUrl && (
-              <div style={{ fontSize: '0.9em', marginTop: '4px' }}>
+              <div style={{ fontSize: '0.9em', marginTop: '12px' }}>
                 Na het inloggen word je doorgestuurd naar: <code>{decodeURIComponent(redirectUrl)}</code>
               </div>
             )}

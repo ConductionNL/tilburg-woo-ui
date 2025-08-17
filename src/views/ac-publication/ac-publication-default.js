@@ -18,8 +18,8 @@ import { commongroundApiUrl } from '@config';
 
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import { ConPublicationActions } from '@components';
 import ConLogoPreview from '../ac-register/con-logo-preview';
-import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 
 const getValueField = (key, value) => {
   if (!value) return <div>-</div>;
@@ -111,9 +111,9 @@ const AcPublication = observer(
       const slug = relatedSchema?.slug;
       if (!slug) return null;
 
-      const typeSegment = BEHEER_RENAMES[slug];
-      console.log('typeSegment', typeSegment);
-      if (!typeSegment) return null;
+      // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
+      const typeSegment = slug;
+      console.log('Using schema slug directly:', typeSegment);
 
       const label = `${relatedSchema?.title ?? _.startCase(slug)} toevoegen`;
 
@@ -123,6 +123,7 @@ const AcPublication = observer(
           navigate(
             `/beheer/${typeSegment}?showCreateModal=true&voorzieningId=${id}`
           ),
+        icon: <VISUALS.PLUS />,
       };
     };
 
@@ -143,10 +144,12 @@ const AcPublication = observer(
           // Fetch related schemas via object store
           await object?.fetchSchemaRelated?.(schemaRef);
           const related = object?.getSchemaRelated?.(schemaRef);
+          console.log('Related schemas fetched:', related);
 
           const relatedResults = Array.isArray(related?.results)
             ? related.results
             : [];
+          console.log('Related results:', relatedResults);
 
           const userGroups = Array.isArray(user?.userGroups)
             ? user.userGroups
@@ -168,6 +171,7 @@ const AcPublication = observer(
             .map((rs) => mapRelatedSchemaToAction(rs))
             .filter(Boolean);
 
+          console.log('Related action items prepared:', items);
           setActionMenuItems(items);
         } catch (e) {
           console.error('Failed to prepare action menu:', e);
@@ -317,37 +321,34 @@ const AcPublication = observer(
       <>
         <AcContainer compact margin='xl'>
           <AcFlex column spacing={'lg'}>
-            <AcFlex spacing='lg' className='ac-publication-header'>
-              <Heading>
-                {get_single?.title ??
-                  get_single?.titel ??
-                  get_single?.name ??
-                  get_single?.naam ??
-                  get_single?.id}
-              </Heading>
-              {
-                <img
-                  src={get_single?.image}
-                  className='ac-publication-header-image'
-                ></img>
-              }
+            <div className='ac-publication-header'>
+              <AcFlex column spacing='sm'>
+                <Heading>
+                  {get_single?.title ??
+                    get_single?.titel ??
+                    get_single?.name ??
+                    get_single?.naam ??
+                    get_single?.id}
+                </Heading>
+                {get_single?.image && (
+                  <img
+                    src={get_single?.image}
+                    className='ac-publication-header-image'
+                  />
+                )}
+              </AcFlex>
 
-              {isLoggedIn && actionMenuItems.length > 0 && (
-                <ConActionMenu>
-                  <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
-                    Acties
-                  </ConActionMenu.Trigger>
-
-                  <ConActionMenu.Menu position='right'>
-                    {actionMenuItems.map((item) => (
-                      <ConActionMenu.Button onClick={item.onClick}>
-                        {item.label}
-                      </ConActionMenu.Button>
-                    ))}
-                  </ConActionMenu.Menu>
-                </ConActionMenu>
-              )}
-            </AcFlex>
+              <ConPublicationActions
+                user={user}
+                id={id}
+                schemaSlug={get_single?.['@self']?.schema?.slug}
+                title={get_single?.title ?? get_single?.titel ?? get_single?.name ?? get_single?.naam ?? get_single?.id}
+                published={get_single?.['@self']?.published}
+                showPublishActions={true}
+                triggerStyle='button'
+                additionalActions={actionMenuItems}
+              />
+            </div>
             <AcTable header={headers} rows={rows} />{' '}
             {/* Show only when there are primary attachments */}
             {getFilteredAttachments(true)?.length > 0 && (
