@@ -38,6 +38,11 @@ http {
             proxy_cookie_path / /;
             proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
             
+            # Make requests appear to come from Nextcloud's own domain
+            proxy_set_header Origin https://${NGINX_TARGET_HOST};
+            proxy_set_header Referer https://${NGINX_TARGET_HOST}/;
+            proxy_set_header X-Forwarded-Host ${NGINX_TARGET_HOST};
+            
             # Hide any CORS headers from backend to prevent conflicts
             proxy_hide_header Access-Control-Allow-Origin;
             proxy_hide_header Access-Control-Allow-Credentials;
