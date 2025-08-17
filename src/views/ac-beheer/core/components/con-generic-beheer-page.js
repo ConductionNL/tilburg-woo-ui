@@ -10,7 +10,7 @@ import {
 } from '@utrecht/component-library-react';
 import { VISUALS, LABELS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { ConDynamicSidenav } from '@components';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
@@ -357,11 +357,11 @@ const ConGenericBeheerPage = ({
   );
 
   if (error) {
-    return <AcBeheerError title={config.title} error={error.message} />;
+    return <AcBeheerError title={config.title} error={error.message} store={store} />;
   }
 
   if (schemaError) {
-    return <AcBeheerError title={config.title} error={schemaError.message} />;
+    return <AcBeheerError title={config.title} error={schemaError.message} store={store} />;
   }
 
   // Build table headers with status icon if configured
@@ -384,7 +384,7 @@ const ConGenericBeheerPage = ({
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
           <AcFlex

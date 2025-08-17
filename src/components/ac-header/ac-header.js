@@ -27,8 +27,8 @@ const AcHeader = ({ store: { menu, user } }) => {
 
   const { all_menu_items } = menu;
 
-  // Get sub menu items from position 2 with authentication filtering
-  const menuItems = menu.getMenuFromPosition(2, user.isAuthenticated) || null;
+  // Get sub menu items from position 2 with authentication and group filtering
+  const menuItems = menu.getMenuFromPosition(2, user.isAuthenticated, user.userGroups || []) || null;
   
 
 

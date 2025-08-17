@@ -16,7 +16,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const { fetchMenus, getMenuFromPosition, is_loading: menu_loading } = menu;
   
   // Get main navigation from position 1 with authentication filtering
-  const activeMenu = getMenuFromPosition(1, user.isAuthenticated);
+  const activeMenu = getMenuFromPosition(1, user.isAuthenticated, user.userGroups || []);
   
 
 

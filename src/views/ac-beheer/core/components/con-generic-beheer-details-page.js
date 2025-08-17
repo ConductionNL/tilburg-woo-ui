@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
-import { AcSideNav, AcLoader } from '@components';
+import { ConDynamicSidenav, AcLoader } from '@components';
 import {
   Heading,
   Paragraph,
@@ -178,17 +178,17 @@ const ConGenericBeheerDetailsPage = ({
   }, [config?.schemaSlug, data?.id, makeActionsForContext]);
 
   if (!config) {
-    return <AcBeheerError error={'Onbekend detailtype'} />;
+    return <AcBeheerError error={'Onbekend detailtype'} store={store} />;
   }
 
   if (error) {
-    return <AcBeheerError error={error.message} />;
+    return <AcBeheerError error={error.message} store={store} />;
   }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
         <div className='ac-beheer-details--100-width'>
           <AcColumn gap='sm'>
             {loading && <AcLoader />}

@@ -64,7 +64,7 @@ export class MenuStore {
   };
 
   @action
-  getMenuFromPosition = (position, userIsAuthenticated = false) => {
+  getMenuFromPosition = (position, userIsAuthenticated = false, userGroups = []) => {
     const items = this.all_menu_items;
     if (!Array.isArray(items) || items.length === 0) {
       return null;
@@ -82,7 +82,7 @@ export class MenuStore {
       return {
         ...activeMenu,
         name: this.processMenuTemplate(activeMenu.name),
-        items: this.filterMenuItems(activeMenu.items, userIsAuthenticated).map(item => ({
+        items: this.filterMenuItems(activeMenu.items, userIsAuthenticated, userGroups).map(item => ({
           ...item,
           name: this.processMenuTemplate(item.name)
         }))
@@ -93,6 +93,12 @@ export class MenuStore {
       ...activeMenu,
       name: this.processMenuTemplate(activeMenu.name)
     } : null;
+  };
+
+  // Get admin dashboard menu from position 7 with group-based filtering
+  @action
+  getAdminDashboardMenu = (userIsAuthenticated = false, userGroups = []) => {
+    return this.getMenuFromPosition(7, userIsAuthenticated, userGroups);
   };
 
   @action
@@ -111,25 +117,37 @@ export class MenuStore {
   };
 
   @action
-  shouldShowMenuItem = (menuItem, userIsAuthenticated) => {
+  shouldShowMenuItem = (menuItem, userIsAuthenticated, userGroups = []) => {
     // Handle undefined/null values - default to showing the item
     const hideBeforeLogin = menuItem.hideBeforeLogin === true;
     const hideAfterLogin = menuItem.hideAfterLogin === true;
     
+    // Check authentication-based visibility first
     if (userIsAuthenticated) {
       // User is logged in - don't show if hideAfterLogin is true
-      return !hideAfterLogin;
+      if (hideAfterLogin) return false;
     } else {
       // User is not logged in - don't show if hideBeforeLogin is true
-      return !hideBeforeLogin;
+      if (hideBeforeLogin) return false;
     }
+    
+    // Check group-based visibility
+    if (menuItem.groups && Array.isArray(menuItem.groups) && menuItem.groups.length > 0) {
+      // If menu item has specific groups defined, user must have at least one matching group
+      const hasMatchingGroup = menuItem.groups.some(requiredGroup => 
+        userGroups.includes(requiredGroup)
+      );
+      if (!hasMatchingGroup) return false;
+    }
+    
+    return true;
   };
 
   @action
-  filterMenuItems = (items, userIsAuthenticated) => {
+  filterMenuItems = (items, userIsAuthenticated, userGroups = []) => {
     if (!Array.isArray(items)) return items;
     
-    return items.filter(item => this.shouldShowMenuItem(item, userIsAuthenticated));
+    return items.filter(item => this.shouldShowMenuItem(item, userIsAuthenticated, userGroups));
   };
 
   /**
@@ -153,7 +171,7 @@ export class MenuStore {
   };
 
   @action
-  getMenusFromPositions = (positions, userIsAuthenticated = false) => {
+  getMenusFromPositions = (positions, userIsAuthenticated = false, userGroups = []) => {
     const items = this.all_menu_items;
     if (!Array.isArray(items) || items.length === 0) {
       return [];
@@ -168,7 +186,7 @@ export class MenuStore {
       .map(menu => ({
         ...menu,
         name: this.processMenuTemplate(menu.name),
-        items: this.filterMenuItems(menu.items, userIsAuthenticated).map(item => ({
+        items: this.filterMenuItems(menu.items, userIsAuthenticated, userGroups).map(item => ({
           ...item,
           name: this.processMenuTemplate(item.name)
         }))
@@ -176,21 +194,21 @@ export class MenuStore {
   };
 
   @action
-  getFooterMenus = (userIsAuthenticated = false) => {
+  getFooterMenus = (userIsAuthenticated = false, userGroups = []) => {
     // Get footer menus (positions 3, 4, 5)
-    return this.getMenusFromPositions([3, 4, 5], userIsAuthenticated);
+    return this.getMenusFromPositions([3, 4, 5], userIsAuthenticated, userGroups);
   };
 
   @action
-  getSubFooterMenus = (userIsAuthenticated = false) => {
+  getSubFooterMenus = (userIsAuthenticated = false, userGroups = []) => {
     // Get sub footer menus (position 6)
-    return this.getMenusFromPositions([6], userIsAuthenticated);
+    return this.getMenusFromPositions([6], userIsAuthenticated, userGroups);
   };
 
   @action
-  getAdminMenus = (userIsAuthenticated = false) => {
+  getAdminMenus = (userIsAuthenticated = false, userGroups = []) => {
     // Get admin menus (position 7)
-    return this.getMenusFromPositions([7], userIsAuthenticated);
+    return this.getMenusFromPositions([7], userIsAuthenticated, userGroups);
   };
 
   @action
