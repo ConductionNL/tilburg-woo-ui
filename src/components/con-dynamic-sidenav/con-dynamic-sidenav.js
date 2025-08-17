@@ -68,12 +68,21 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
     const currentPath = location.pathname;
     const itemLink = menuItem.link || '';
     
+    // Exact match for dashboard
     if (itemLink === '/beheer' && currentPath === '/beheer') {
       return true;
     }
     
-    if (itemLink !== '/beheer' && currentPath.startsWith(itemLink)) {
-      return true;
+    // For other paths, ensure exact match or path with trailing content
+    if (itemLink !== '/beheer' && itemLink !== '') {
+      // Exact match
+      if (currentPath === itemLink) {
+        return true;
+      }
+      // Match with trailing slash or path segments
+      if (currentPath.startsWith(itemLink + '/') || currentPath.startsWith(itemLink + '?')) {
+        return true;
+      }
     }
     
     return false;
@@ -108,3 +117,4 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
 };
 
 export default withStore(observer(ConDynamicSidenav));
+

@@ -39,6 +39,7 @@ services:
       - MODE=development
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
+      - SUPPORT_EMAIL_ADDRESS=info@conduction.nl
       # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
       
       # Nextcloud/Target Configuration
@@ -115,6 +116,7 @@ services:
       - MODE=development
       - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
+      - SUPPORT_EMAIL_ADDRESS=info@conduction.nl
       # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
       - BASE_URL=/api/apps
       - BASE_URL_COMMONGROUND=/api/apps

@@ -237,7 +237,7 @@ The system uses environment variables for all endpoints:
 
 ```bash
 # Development (docker-compose.dev.yml)
-OPENCONNECTOR_API_URL=http://nextcloud.local/index.php/apps/openconnector/api
+OPENCONNECTOR_API_URL=http://nextcloud.local/api/openconnector
 
 # Production
 OPENCONNECTOR_API_URL=https://your-api.com/apps/openconnector/api
