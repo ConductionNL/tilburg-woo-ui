@@ -38,8 +38,31 @@ http {
             proxy_cookie_path / /;
             proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
             
-            # CORS headers removed - let the backend (OpenConnector) handle CORS
-            # This prevents duplicate headers which cause CORS failures
+            # Hide any CORS headers from backend to prevent conflicts
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Max-Age;
+            
+            # Override with correct CORS headers based on requesting origin
+            add_header Access-Control-Allow-Origin $http_origin always;
+            add_header Access-Control-Allow-Credentials true always;
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma" always;
+            add_header Access-Control-Max-Age 86400 always;
+            
+            # Handle preflight OPTIONS requests
+            if ($request_method = OPTIONS) {
+                add_header Access-Control-Allow-Origin $http_origin always;
+                add_header Access-Control-Allow-Credentials true always;
+                add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
+                add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma" always;
+                add_header Access-Control-Max-Age 86400 always;
+                add_header Content-Type "text/plain charset=UTF-8" always;
+                add_header Content-Length 0 always;
+                return 204;
+            }
         }
 
         # Static file serving with SPA routing
