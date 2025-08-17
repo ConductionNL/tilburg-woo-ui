@@ -1,6 +1,19 @@
 // Imports => Utilities
 import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
+// Helper function to get basic auth credentials from user store
+const getBasicAuthCredentials = () => {
+  try {
+    // Access the user store through the global app object
+    if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+      return window.app.store.user.basicAuthCredentials;
+    }
+  } catch (error) {
+    // Silently fail if store is not available
+  }
+  return null;
+};
+
 // Get ENV variables
 
 // Try to import container constants (generated at runtime)
@@ -82,7 +95,17 @@ export default {
     transformRequest: [
       (data, headers) => {
         const token = AcGetAccessToken();
-        if (token) headers['authorization'] = `Bearer ${token}`;
+        if (token) {
+          headers['authorization'] = `Bearer ${token}`;
+        } else {
+          // Fallback to basic auth if available
+          // TODO: Implement Bearer token endpoint in OpenConnector to replace basic auth
+          const basicAuth = getBasicAuthCredentials();
+          if (basicAuth && basicAuth.username && basicAuth.password) {
+            const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+            headers['authorization'] = `Basic ${credentials}`;
+          }
+        }
         return JSON.stringify(data);
       },
     ],

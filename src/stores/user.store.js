@@ -27,6 +27,9 @@ export class UserStore {
   user = null;
 
   @observable
+  basicAuthCredentials = null; // Store username/password for basic auth fallback
+
+  @observable
   loading = {
     status: false,
     message: null,
@@ -268,20 +271,33 @@ export class UserStore {
         if (data.access_token) {
           // Store access token as a cookie for future requests
           document.cookie = `openconnector_access_token=${data.access_token}; path=/; SameSite=Lax`;
+          // TODO: Store token in localStorage for Bearer auth: AcSetAccessToken(data.access_token)
         }
 
-        // Backend API change: Login response no longer includes user object
-        // We need to fetch user profile from /me endpoint after successful login
+        // Store basic auth credentials for fallback
+        this.basicAuthCredentials = {
+          username,
+          password
+        };
+
         this.setAuthMethod('session');
         
-        // Fetch full user profile (/me endpoint) - this is now the primary source of user data
+        // If login response includes user data, use it directly
+        if (data.user) {
+          this.setUser(data.user);
+        }
+        
+        // Try to fetch full user profile (/me endpoint) as additional verification
         try {
           await this.fetchUserProfile();
         } catch (profileError) {
-          console.error('Failed to fetch user profile after login:', profileError);
-          // Even if profile fetch fails, login was successful, so don't fail entirely
-          // The user might still be authenticated via session cookies
-          this.setError('Login successful but failed to load user profile. Please refresh the page.');
+          console.warn('Failed to fetch user profile after login, using login response data:', profileError);
+          // If /me fails but login succeeded and returned user data, that's still a successful login
+          if (data.user) {
+            console.log('Using user data from login response instead of /me endpoint');
+          } else {
+            this.setError('Login successful but failed to load user profile. Please refresh the page.');
+          }
         }
 
         this.setLoading(false);
@@ -461,6 +477,9 @@ export class UserStore {
           console.error('Logout endpoint failed:', error);
         }
       }
+
+      // Clear basic auth credentials
+      this.basicAuthCredentials = null;
 
       // Clear OAuth tokens if they exist
       if (app.store.auth) {

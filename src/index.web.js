@@ -19,6 +19,9 @@ const browserHistory = createBrowserHistory();
 const routing = new RouterStore();
 const store = createStore(config);
 
+// Make store available globally for basic auth fallback
+window.app = { store };
+
 const history = syncHistoryWithStore(browserHistory, routing);
 
 const container = document.getElementById('root');
