@@ -33,6 +33,8 @@ const baseModalConfig = {
   import: loadable(() =>
     import('@views/ac-beheer/shared/components/import-modal/ac-beheer-import-modal')
   ),
+  // Generic dynamic create modal that can target another beheer type from current page
+  dynamicCreate: GenericFormModal,
 };
 
 /**
@@ -46,10 +48,6 @@ const BeheerModalFactory = {
   modalComponents: {
     applicaties: {
       ...baseModalConfig,
-      // Extra create modals shown on details page action menu
-      addGebruik: GenericFormModal,
-      addDienst: GenericFormModal,
-      addVersion: GenericFormModal,
     },
     diensten: {
       ...baseModalConfig,
@@ -59,7 +57,6 @@ const BeheerModalFactory = {
     },
     organisaties: {
       ...baseModalConfig,
-      addContact: GenericFormModal,
       activate: loadable(() =>
         import(
           '@views/ac-beheer/domains/ac-organisatie/modals/ac-accept-organisation'
@@ -201,59 +198,32 @@ const BeheerModalFactory = {
       }
     }
 
-    // Cross-type create modals from details pages (e.g., applicaties → gebruik/dienst/versie)
-    if (type === 'applicaties') {
-      switch (modalType) {
-        case 'addGebruik': {
-          return {
-            ...baseProps,
-            type: 'gebruiken',
-            data: null,
-            isEdit: false,
-            preSelected: { voorzieningId: singleSelectedRow?.id },
-            onSuccess: (created) => {
-              tableRef.current?.resetSelectedRows();
-              setOpenModal(null);
-              if (created?.id && typeof params.navigate === 'function') {
-                params.navigate(`/beheer/gebruiken/${created.id}`);
-              } else if (typeof fetchData === 'function') {
-                fetchData();
-              }
-            },
-          };
-        }
-        case 'addDienst': {
-          return {
-            ...baseProps,
-            type: 'diensten',
-            data: null,
-            isEdit: false,
-            // For historical compatibility this equals previous `preSelectedVoorziening`
-            preSelected: { voorziening: singleSelectedRow?.id },
-            onSuccess: (created) => {
-              tableRef.current?.resetSelectedRows();
-              setOpenModal(null);
-              if (created?.id && typeof params.navigate === 'function') {
-                params.navigate(`/beheer/diensten/${created.id}`);
-              } else if (typeof fetchData === 'function') {
-                fetchData();
-              }
-            },
-          };
-        }
-        case 'addVersion': {
-          return {
-            ...baseProps,
-            type: 'voorzieningen-versie',
-            data: null,
-            isEdit: false,
-            preSelected: { voorziening: singleSelectedRow?.id },
-          };
-        }
-        default:
-          break;
+    // Dynamic create modal that can target a different beheer type from the current page
+    if (modalType === 'dynamicCreate') {
+      const targetType = params.dynamicCreateTargetType;
+      const preSelected = params.dynamicCreatePreSelected || {};
+      if (!targetType) {
+        // No valid target type: return a non-visible modal config
+        return {
+          ...baseProps,
+          showModal: false,
+          type: null,
+          data: null,
+          isEdit: false,
+          preSelected: {},
+        };
       }
+      return {
+        ...baseProps,
+        type: targetType,
+        data: null,
+        isEdit: false,
+        preSelected,
+      };
     }
+
+    // Cross-type create modals from details pages (e.g., applicaties → gebruik/dienst/versie)
+    // Removed legacy cross-type create modals (handled by dynamicCreate now)
 
     // Type-specific props for non-generic modals
     switch (type) {
@@ -353,10 +323,22 @@ const BeheerModalFactory = {
     // Always render all modals for this type, just like the original pages do
     // This ensures the modal components are always mounted and ready
     config.modals.forEach((modalType) => {
+      // Guard: only render dynamicCreate when it has a valid target and is being opened
+      if (
+        modalType === 'dynamicCreate' &&
+        (!params.dynamicCreateTargetType || params.openModal !== 'dynamicCreate')
+      ) {
+        return;
+      }
       const ModalComponent = BeheerModalFactory.getModalComponent(type, modalType);
       if (!ModalComponent) return;
 
       const modalProps = BeheerModalFactory.getModalProps(type, modalType, params);
+
+      // Pass a generic onModalMounted callback if provided (modalType gets passed back)
+      if (typeof params.onModalMounted === 'function') {
+        modalProps.onMounted = () => params.onModalMounted(modalType);
+      }
 
       modals.push(<ModalComponent key={`${type}-${modalType}`} {...modalProps} />);
     });

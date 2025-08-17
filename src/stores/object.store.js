@@ -1365,6 +1365,71 @@ export class ObjectStore {
   };
 
   /**
+   * Fetches schemas related to a given schema
+   * Stores the result under the schema key with a configurable suffix (defaults to 'related')
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   * @param {string|null} [typeSuffix='related'] - Optional suffix to store under a separate key
+   */
+  @action
+  fetchSchemaRelated = async (schema, params = {}, typeSuffix = 'related') => {
+    const schemaId = this.extractId(schema);
+    if (!schemaId) {
+      throw new Error('Could not extract schema ID');
+    }
+
+    const schemaType = this.getSchemaType(schema, typeSuffix);
+
+    this.setSchemaLoading(schemaType, true);
+    this.setSchemaError(schemaType, null);
+
+    // Create abort controller for request cancellation
+    const controller = this._createAbortController(schemaType);
+
+    try {
+      const endpoint = `/openregister/api/schemas/${schemaId}/related`;
+
+      const response = await nextcloudApi.get(endpoint, {
+        params: this._constructQueryParams(params || {}),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch related schemas for ${schemaType}`);
+      }
+
+      const relatedData = response.data;
+      this.setSchema(schemaType, relatedData);
+      this.setSchemaError(schemaType, null);
+    } catch (error) {
+      // Don't throw error if request was cancelled
+      if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
+        console.log(`Schema related request cancelled for ${schemaType}`);
+        return;
+      }
+
+      console.error(`Error fetching related schemas for ${schemaId}:`, error);
+      this.setSchemaError(schemaType, error.message);
+      throw error;
+    } finally {
+      this.setSchemaLoading(schemaType, false);
+      // Clean up abort controller
+      this.abortControllers.delete(schemaType);
+    }
+  };
+
+  /**
+   * Gets the related schemas for a given schema (stored using suffix, defaults to 'related')
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {string|null} [typeSuffix='related'] - Optional suffix used when storing
+   * @returns {Object|null} Related schemas response or null
+   */
+  getSchemaRelated = (schema, typeSuffix = 'related') => {
+    const schemaType = this.getSchemaType(schema, typeSuffix);
+    return this.schemas[schemaType] || null;
+  };
+
+  /**
    * Gets the schema for a specific type
    * @param {string} type - The type identifier
    * @returns {Object|null} The schema or null if not found

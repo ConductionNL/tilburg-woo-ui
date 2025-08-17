@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
-import { AcSideNav, AcLoader } from '@components';
+import { ConDynamicSidenav, AcLoader } from '@components';
 import {
   Heading,
   Paragraph,
@@ -25,6 +25,8 @@ import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con
 import { TOOLTIP_ID } from '@src/index.web';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
+import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 
 /**
  * Generic Beheer Details Page
@@ -33,13 +35,20 @@ import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal
  * - Renders Files tab and dynamic Uses/Used tabs
  * - Supports unique action menu items and edit/delete via external modals
  */
-const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) => {
+const ConGenericBeheerDetailsPage = ({
+  store: { object, user },
+  type,
+  id: propId,
+}) => {
   const navigate = useNavigate();
   const params = useParams();
   const id = propId || params?.id;
 
   const [openModal, setOpenModal] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
+  const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
+  const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+  const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Resolve config
   const config = useMemo(() => {
@@ -138,18 +147,48 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
   const usesSchemas = useMemo(() => uniqueSchemasFrom(usesData), [usesData]);
   const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
 
+  const showDescriptionFields = type === 'organisaties' || type === 'applicaties';
+  const shortTooltip = (type) =>
+    `Een korte beschrijving van de ${type.slice(0, -1)}`;
+  const longTooltip = (type) =>
+    `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
+
+  const openDynamicCreate = React.useCallback((targetType, preSelected) => {
+    setDynamicCreateTargetType(targetType);
+    setDynamicCreatePreSelected(preSelected);
+    setOpenModal('dynamicCreate');
+  }, []);
+
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate,
+  });
+
+  useEffect(() => {
+    if (!config?.schemaSlug || !data?.id) return;
+    const items = makeActionsForContext(data.id).map(({ key, label, onClick }) => ({
+      key,
+      label,
+      onClick,
+    }));
+    setActionMenuItems(items);
+  }, [config?.schemaSlug, data?.id, makeActionsForContext]);
+
   if (!config) {
-    return <AcBeheerError error={'Onbekend detailtype'} />;
+    return <AcBeheerError error={'Onbekend detailtype'} store={store} />;
   }
 
   if (error) {
-    return <AcBeheerError error={error.message} />;
+    return <AcBeheerError error={error.message} store={store} />;
   }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
         <div className='ac-beheer-details--100-width'>
           <AcColumn gap='sm'>
             {loading && <AcLoader />}
@@ -157,7 +196,7 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{config.getTitle(data)}</Heading>
+                  <Heading>{data['@self']?.name || data.id}</Heading>
                   <ConActionMenu>
                     <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                       Acties
@@ -170,6 +209,7 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                         Bijwerken
                       </ConActionMenu.Button>
                       {config.uniqueActions?.map((action) =>
+                        // if condition is true show the action
                         action.condition?.(data) ? (
                           <ConActionMenu.Button
                             key={action.key}
@@ -190,6 +230,16 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                           </ConActionMenu.Button>
                         ) : null
                       )}
+                      {actionMenuItems?.length > 0 && <ConActionMenu.Divider />}
+                      {actionMenuItems?.map((item) => (
+                        <ConActionMenu.Button
+                          key={item.label}
+                          onClick={item.onClick}
+                          icon={<VISUALS.PLUS />}
+                        >
+                          {item.label}
+                        </ConActionMenu.Button>
+                      ))}
                       <ConActionMenu.Divider />
                       <ConActionMenu.Button
                         icon={<VISUALS.TRASHCAN />}
@@ -202,7 +252,7 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                 </AcFlex>
 
                 <AcColumn gap='tiger'>
-                  {type === 'organisaties' && (
+                  {showDescriptionFields && (
                     <>
                       <ConEditableDescription
                         registerSlug={config.registerSlug}
@@ -210,8 +260,8 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                         objectId={data.id}
                         field='beschrijvingKort'
                         label='Korte beschrijving'
-                        placeholder='Een korte beschrijving van de organisatie'
-                        tooltip='Een korte beschrijving van de organisatie'
+                        placeholder={shortTooltip(type)}
+                        tooltip={shortTooltip(type)}
                         maxLength={255}
                         isMarkdown={false}
                         value={data.beschrijvingKort}
@@ -224,8 +274,8 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                         objectId={data.id}
                         field='beschrijvingLang'
                         label='Lange beschrijving'
-                        placeholder='Een uitgebreide beschrijving van de organisatie'
-                        tooltip='Een uitgebreide beschrijving van de organisatie'
+                        placeholder={longTooltip(type)}
+                        tooltip={longTooltip(type)}
                         maxLength={2000}
                         isMarkdown={true}
                         value={data.beschrijvingLang}
@@ -258,14 +308,12 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
                             >
                               {_.startCase(key)}:
                             </strong>
-                            <Paragraph>
-                              {formatBySchema(
-                                schema,
-                                data,
-                                key,
-                                config.formatBySchemaOptions || {}
-                              )}
-                            </Paragraph>
+                            {formatBySchema(
+                              schema,
+                              data,
+                              key,
+                              config.formatBySchemaOptions || {}
+                            )}
                           </div>
                         ))}
                     </div>
@@ -448,12 +496,16 @@ const ConGenericBeheerDetailsPage = ({ store: { object }, type, id: propId }) =>
         config: {
           registerSlug,
           schemaSlug,
-          // Include all available modals for this type except add/import on details page
+          // Include all available modals for this type plus dynamicCreate, exclude add/import
           modals: (BeheerModalFactory.modalComponents[type]
             ? Object.keys(BeheerModalFactory.modalComponents[type])
             : []
-          ).filter((m) => m !== 'add' && m !== 'import'),
+          )
+            .filter((m) => m !== 'add' && m !== 'import')
+            .concat('dynamicCreate'),
         },
+        dynamicCreateTargetType,
+        dynamicCreatePreSelected,
       })}
     </AcSection>
   );

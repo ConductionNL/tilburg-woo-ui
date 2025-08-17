@@ -2,19 +2,19 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { Code } from '@utrecht/component-library-react';
-import { AcSideNav } from '@components';
+import { ConDynamicSidenav } from '@components';
 import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
 
-const AcBeheerError = ({ title, error }) => {
+const AcBeheerError = ({ title, error, store }) => {
   const headingLevel = title ? 2 : 1;
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
         <AcColumn gap='tiger'>
           {title && <Heading>{title}</Heading>}
           <AcColumn>

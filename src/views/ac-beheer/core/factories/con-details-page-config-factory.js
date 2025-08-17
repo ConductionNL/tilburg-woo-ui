@@ -28,8 +28,6 @@ const DetailsPageConfigFactory = {
       excludedProperties: ['id'],
       // Additional actions in the action menu (besides edit/delete)
       uniqueActions: [],
-      // Compute page title from loaded object
-      getTitle: (data) => data?.id,
       // Formatting options passed to formatBySchema
       formatBySchemaOptions: {},
     };
@@ -47,13 +45,12 @@ const DetailsPageConfigFactory = {
             'beschrijvingKort',
             'beschrijvingLang',
           ],
-          getTitle: (data) => data?.naam || data?.id,
           formatBySchemaOptions: {
             profile: {
               organisatie: { include: ['naam'], includeUnknown: true, inline: true },
             },
           },
-          // Add extra create actions specific to applicaties detail page
+          // Keep only non-creation unique actions; creation is handled dynamically
           uniqueActions: [
             ...beheerConfig.uniqueActions,
             {
@@ -64,27 +61,28 @@ const DetailsPageConfigFactory = {
               onClick: (row) => window.open(`/publicatie/${row.id}`, '_blank'),
               condition: (row) => !!row?.id,
             },
-            {
-              key: 'addGebruik',
-              label: 'Gebruiken aanmaken',
-              icon: VISUALS.CLOUD,
-              action: 'addGebruik',
-              condition: () => true,
-            },
-            {
-              key: 'addDienst',
-              label: 'Dienst toevoegen',
-              icon: VISUALS.HAND_HOLDING,
-              action: 'addDienst',
-              condition: () => true,
-            },
-            {
-              key: 'addVersion',
-              label: 'Versie toevoegen',
-              icon: VISUALS.INFO,
-              action: 'addVersion',
-              condition: () => true,
-            },
+            // commented incase this is ever still needed
+            // {
+            //   key: 'addGebruik',
+            //   label: 'Gebruiken aanmaken',
+            //   icon: VISUALS.CLOUD,
+            //   action: 'addGebruik',
+            //   condition: () => true,
+            // },
+            // {
+            //   key: 'addDienst',
+            //   label: 'Dienst toevoegen',
+            //   icon: VISUALS.HAND_HOLDING,
+            //   action: 'addDienst',
+            //   condition: () => true,
+            // },
+            // {
+            //   key: 'addVersion',
+            //   label: 'Versie toevoegen',
+            //   icon: VISUALS.INFO,
+            //   action: 'addVersion',
+            //   condition: () => true,
+            // },
           ],
         };
 
@@ -100,7 +98,6 @@ const DetailsPageConfigFactory = {
             'leverancier',
             'ondersteundeStandaarden',
           ],
-          getTitle: (data) => data?.voorziening?.naam || data?.id,
           formatBySchemaOptions: {
             include: ['naam'],
             includeUnknown: true,
@@ -113,7 +110,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'ibpScore', 'bbnScore', 'interneAantekening'],
-          getTitle: (data) => data?.id,
           formatBySchemaOptions: {
             profile: {
               voorzieningId: {
@@ -134,16 +130,8 @@ const DetailsPageConfigFactory = {
         return {
           ...baseDetailsConfig,
           ...beheerConfig,
-          uniqueActions: [
-            ...beheerConfig.uniqueActions,
-            {
-              key: 'addContact',
-              label: 'Contactpersoon toevoegen',
-              icon: VISUALS.PLUS,
-              action: 'addContact',
-              condition: () => true,
-            },
-          ],
+          // Creation is handled dynamically; preserve existing beheer unique actions
+          uniqueActions: [...beheerConfig.uniqueActions],
           excludedProperties: [
             'id',
             'naam',
@@ -154,7 +142,6 @@ const DetailsPageConfigFactory = {
             'deelnames',
             'logo',
           ],
-          getTitle: (data) => data?.naam || data?.id,
           formatBySchemaOptions: {
             exclude: ['@self'],
             includeUnknown: true,
@@ -169,7 +156,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'titel'],
-          getTitle: (data) => data?.titel || data?.id,
           formatBySchemaOptions: {},
         };
 
@@ -178,7 +164,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'contractNummer'],
-          getTitle: (data) => data?.contractNummer || data?.id,
           formatBySchemaOptions: {
             include: ['naam'],
             inline: true,
@@ -202,8 +187,6 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           ...beheerConfig,
           excludedProperties: ['id', 'voornaam', 'achternaam'],
-          getTitle: (data) =>
-            `${data?.voornaam || ''} ${data?.achternaam || ''}`.trim() || data?.id,
           formatBySchemaOptions: {
             profile: {
               organisatie: { include: ['naam'], includeUnknown: true, inline: true },

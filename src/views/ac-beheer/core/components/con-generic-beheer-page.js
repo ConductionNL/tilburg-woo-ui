@@ -10,7 +10,7 @@ import {
 } from '@utrecht/component-library-react';
 import { VISUALS, LABELS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { ConDynamicSidenav } from '@components';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
@@ -25,12 +25,17 @@ import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-
 import _ from 'lodash';
 import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 
 /**
  * Generic Beheer Page Component
  * This component can handle all beheer page types through configuration
  */
-const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} }) => {
+const ConGenericBeheerPage = ({
+  store: { object, user },
+  type,
+  configOverrides = {},
+}) => {
   const navigate = useNavigate();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
@@ -116,6 +121,22 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
   const filterHeadersDrawerRef = useRef(null);
   const tableRef = useRef(null);
 
+  const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
+  const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+
+  // Related create actions via shared hook
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate: (targetType, preSelected) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      setOpenModal('dynamicCreate');
+    },
+  });
+
   const fetchData = useCallback(
     async (searchParams = {}) => {
       if (!objectType || !config) {
@@ -193,6 +214,15 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [objectType, pagination.limit, pagination.page]);
 
+  // Open create modal when query param is present, but only after the 'add' modal has actually mounted
+  const openAddModal = useCallback(() => {
+    const params = new URLSearchParams(window.location.search);
+    const wantsCreate = params.get('showCreateModal') === 'true';
+    if (!wantsCreate) return;
+    const timer = setTimeout(() => setOpenModal('add'), 150);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle object store cancellation when objectType changes (separate effect)
   const prevObjectTypeRef = useRef();
   useEffect(() => {
@@ -240,13 +270,27 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
+  // Stable keys to avoid re-running effects on new array/object references
+  const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
+  const defaultHeaderIdsKey = useMemo(
+    () => (config.defaultHeaders || []).join(','),
+    [config.defaultHeaders]
+  );
+
   useEffect(() => {
-    if (headers.length > 0) {
-      setTableHeaders(
-        headers.filter((header) => config.defaultHeaders.includes(header.id))
-      );
-    }
-  }, [headers, config.defaultHeaders]);
+    if (headers.length === 0) return;
+
+    const next = headers.filter((header) =>
+      config.defaultHeaders.includes(header.id)
+    );
+
+    const nextKey = next.map((h) => h.id).join(',');
+    const currentKey = tableHeaders.map((h) => h.id).join(',');
+
+    if (nextKey === currentKey) return;
+
+    setTableHeaders(next);
+  }, [headerIdsKey, defaultHeaderIdsKey]);
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
@@ -289,6 +333,9 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
             },
           })) || [];
 
+      // Map related schemas user can create → dynamic create actions
+      const dynamicCreateActions = makeActionsForContext(row.id);
+
       const deleteAction = {
         key: 'delete',
         label: 'Verwijderen',
@@ -299,17 +346,22 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
         },
       };
 
-      return [...baseActions, ...uniqueActions, deleteAction];
+      return [
+        ...baseActions,
+        ...uniqueActions,
+        ...dynamicCreateActions,
+        deleteAction,
+      ];
     },
-    [config.routeType, config.uniqueActions, navigate]
+    [config.routeType, config.uniqueActions, navigate, makeActionsForContext]
   );
 
   if (error) {
-    return <AcBeheerError title={config.title} error={error.message} />;
+    return <AcBeheerError title={config.title} error={error.message} store={store} />;
   }
 
   if (schemaError) {
-    return <AcBeheerError title={config.title} error={schemaError.message} />;
+    return <AcBeheerError title={config.title} error={schemaError.message} store={store} />;
   }
 
   // Build table headers with status icon if configured
@@ -332,7 +384,7 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
           <AcFlex
@@ -490,7 +542,18 @@ const ConGenericBeheerPage = ({ store: { object }, type, configOverrides = {} })
             setSingleSelectedRow,
             tableRef,
             fetchData,
-            config,
+            config: {
+              ...config,
+              // Ensure dynamicCreate is available everywhere
+              modals: [...(config.modals || []), 'dynamicCreate'],
+            },
+            dynamicCreateTargetType,
+            dynamicCreatePreSelected,
+            onModalMounted: (modalType) => {
+              if (modalType === 'add') {
+                openAddModal();
+              }
+            },
             voorzieningId: new URLSearchParams(window.location.search).get(
               'voorzieningId'
             ),

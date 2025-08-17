@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+you cant fix an infinite loop in a useEffect by adding more dependencies or changing the useEffect code.
+
+You have to either reduce the dependencies OR fix the dependencies.
+for example it might create a new object reference for the same data, causing infinite refreshes.
