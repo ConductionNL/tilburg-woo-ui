@@ -225,7 +225,17 @@ const DetailsPageConfigFactory = {
         };
 
       default:
-        throw new Error(`Unknown details page type: ${type}`);
+        // Generic fallback configuration for dynamic types
+        // This will use the beheer config and apply generic detail settings
+        return {
+          ...baseDetailsConfig,
+          ...beheerConfig,
+          // Generic settings for unknown types
+          excludedProperties: ['id'], // Only exclude ID by default
+          formatBySchemaOptions: {
+            includeUnknown: true, // Show all fields we don't know about
+          },
+        };
     }
   },
 };
