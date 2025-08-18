@@ -55,7 +55,14 @@ export class UserStore {
   @computed
   get userGroups() {
     // Handle the groups array from the login response (simple string array)
-    return this.user?.groups || [];
+    const groups = this.user?.groups || [];
+    
+    // Ensure authenticated users always have the 'user' group
+    if (this.isAuthenticated && !groups.includes('user')) {
+      return [...groups, 'user'];
+    }
+    
+    return groups;
   }
 
   @computed

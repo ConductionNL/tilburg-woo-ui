@@ -14,6 +14,7 @@ import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import { canReadField } from '@utils/field-authorization';
 
 const GET_CONFIG = (type, metadata, navigate) => {
   let typeGetFailed = false;
@@ -289,6 +290,7 @@ const BeheerTable = forwardRef((props, ref) => {
     pagination = {},
     setPagination = () => {},
     onHeaderSearch,
+    user = null, // User object for authorization checks
   } = props;
 
   if (!type && !metadata) {
@@ -433,6 +435,7 @@ const BeheerTable = forwardRef((props, ref) => {
 
     const schemaHeaders = Object.entries(dataProperties)
       .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
+      .filter(([key, value]) => canReadField(user, value))
       .flatMap(([key, value]) => {
         // leverancier from diensten is a special case as its referenced twice
         if (headerOverrides && type === 'diensten' && key === 'leverancier') {
@@ -466,7 +469,7 @@ const BeheerTable = forwardRef((props, ref) => {
       .filter((header) => !config.removeHeaders?.includes(header.id));
 
     return schemaHeaders;
-  }, [dataProperties, headerOverrides, config.removeHeaders]);
+  }, [dataProperties, headerOverrides, config.removeHeaders, user]);
 
   useEffect(() => {
     getHeaders?.(generatedHeaders);

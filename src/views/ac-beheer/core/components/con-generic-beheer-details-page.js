@@ -17,6 +17,7 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-details-page-config-factory';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import { canReadField } from '@utils/field-authorization';
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { ConDetailsActionsMenu } from '@components';
@@ -289,6 +290,7 @@ const ConGenericBeheerDetailsPage = ({
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
                         .filter(([key]) => !config.excludedProperties.includes(key))
+                        .filter(([key, schema]) => canReadField(user, schema))
                         .map(([key, schema]) => (
                           <div key={key}>
                             <strong
@@ -367,6 +369,7 @@ const ConGenericBeheerDetailsPage = ({
                                   metadata={metadata}
                                   data={rows}
                                   dataProperties={schema.properties}
+                                  user={user}
                                   actionButtons={(config) =>
                                     !!config.navigateView && {
                                       id: 'actions',
@@ -421,6 +424,7 @@ const ConGenericBeheerDetailsPage = ({
                                   metadata={metadata}
                                   data={rows}
                                   dataProperties={schema.properties}
+                                  user={user}
                                   actionButtons={(config) =>
                                     !!config.navigateView && {
                                       id: 'actions',
