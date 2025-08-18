@@ -620,6 +620,8 @@ const ConGenericFormModal = ({
             getIsValid={handleFormValidCheck}
             honorImmutable={isEdit}
             userIsAuthenticated={user.isAuthenticated}
+            user={user}
+            isCreateMode={!isEdit}
           />
         ) : (
           <div>

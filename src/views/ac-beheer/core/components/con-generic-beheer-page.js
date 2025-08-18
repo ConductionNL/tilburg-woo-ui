@@ -26,6 +26,7 @@ import _ from 'lodash';
 import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { canReadField } from '@utils/field-authorization';
 
 /**
  * Generic Beheer Page Component
@@ -297,6 +298,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       .filter(
         ([key, value]) => value.visible !== false && value.hideOnCollection !== true
       )
+      .filter(([key, value]) => canReadField(user, value))
       .map(([key, value]) => {
         // Check if we have a custom override for this header
         if (config.customHeaders[key]) {
@@ -314,23 +316,42 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           key: key,
         };
       });
-  }, [dataProperties, config.customHeaders]);
+  }, [dataProperties, config.customHeaders, user]);
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
   // Stable keys to avoid re-running effects on new array/object references
+  const { defaultHeaderIds, shouldShowAllHeaders } = useMemo(() => {
+    if (!dataProperties) return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+
+    const entries = Object.entries(dataProperties);
+    const anyTable = entries.some(([, value]) => !!value?.table);
+    const defaultTrueKeys = new Set(
+      entries.filter(([, value]) => value?.table?.default === true).map(([k]) => k)
+    );
+
+    const showAll = !anyTable || defaultTrueKeys.size === 0;
+    if (showAll) {
+      return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+    }
+
+    const ids = headers.filter((h) => defaultTrueKeys.has(h.id)).map((h) => h.id);
+
+    return { defaultHeaderIds: ids, shouldShowAllHeaders: false };
+  }, [dataProperties, headers]);
+
   const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
   const defaultHeaderIdsKey = useMemo(
-    () => (config.defaultHeaders || []).join(','),
-    [config.defaultHeaders]
+    () => (shouldShowAllHeaders ? '' : defaultHeaderIds.join(',')),
+    [shouldShowAllHeaders, defaultHeaderIds]
   );
 
   useEffect(() => {
     if (headers.length === 0) return;
 
-    const next = headers.filter((header) =>
-      config.defaultHeaders.includes(header.id)
-    );
+    const next = shouldShowAllHeaders
+      ? headers
+      : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
     const currentKey = tableHeaders.map((h) => h.id).join(',');
@@ -619,7 +640,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           {FilterDrawerFactory.renderFilterDrawer(type, {
             filterHeadersDrawerRef,
             headers,
-            defaultHeaders: config.defaultHeaders,
+            defaultHeaders: shouldShowAllHeaders
+              ? headers.map((h) => h.id)
+              : defaultHeaderIds,
             setTableHeaders,
             loading,
             setBeoordelingFilter,

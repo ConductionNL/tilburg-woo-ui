@@ -118,7 +118,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                 schema.items,
                 item,
                 null,
-                options.profile[dataKey] || options
+                (dataKey && options.profile && options.profile[dataKey]) || options
               )}
             </li>
           ))}
@@ -138,7 +138,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
       };
 
       // use profile options if defined
-      if (currentOptions.profile[dataKey]) {
+      if (dataKey && currentOptions.profile[dataKey]) {
         currentOptions = {
           include: currentOptions.profile[dataKey].include,
           inline: currentOptions.profile[dataKey].inline,
