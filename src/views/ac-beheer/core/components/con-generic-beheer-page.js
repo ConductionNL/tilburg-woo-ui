@@ -178,8 +178,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       setDynamicCreatePreSelected(preSelected);
       // Handle outgoing relationship metadata  
       if (metadata.isOutgoing) {
-        console.log('🔄 Outgoing relationship from list page:', metadata);
-        // TODO: Store metadata for post-creation relationship updates
+        // Store metadata for post-creation relationship updates
+        // (handled by the form modal after successful creation)
       }
       setOpenModal('dynamicCreate');
     },

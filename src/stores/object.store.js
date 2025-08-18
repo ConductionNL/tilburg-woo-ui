@@ -1681,11 +1681,23 @@ export class ObjectStore {
     this.setSuccess(requestType, null);
 
     try {
+      console.log('🌐 PATCH Request:', {
+        url: this._constructApiUrl(register, schema, id),
+        data: JSON.stringify(data),
+        dataKeys: Object.keys(data)
+      });
+      
       const response = await nextcloudApi.patch(
         this._constructApiUrl(register, schema, id),
         data
       );
       if (!response.ok) throw new Error(`Failed to patch ${type} object`);
+      
+      console.log('✅ PATCH Response:', {
+        status: response.status,
+        dataKeys: Object.keys(response.data || {}),
+        responseId: response.data?.id
+      });
 
       const updatedObject = response.data;
       runInAction(() => {

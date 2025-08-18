@@ -71,6 +71,10 @@ const ConDetailsActionsMenu = loadable(() =>
   import('@src/components/con-details-actions-menu/con-details-actions-menu')
 );
 
+const ConRelatedObjectsLinks = loadable(() =>
+  import('@src/components/con-related-objects-links/con-related-objects-links')
+);
+
 export {
   AcAbout,
   AcCNavigation,
@@ -102,4 +106,5 @@ export {
   ConDynamicSidenav,
   ConPublicationActions,
   ConDetailsActionsMenu,
+  ConRelatedObjectsLinks,
 };

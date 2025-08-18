@@ -22,8 +22,15 @@ const DetailsPageConfigFactory = {
       'uniqueActions',
     ]);
 
+    // For details pages, always extend with 'all' to get full related objects
+    // This allows us to display related object names instead of just IDs
+    const detailsExtend = [...(beheerConfig.extend || []), 'all'];
+
     // Details-specific defaults (kept minimal)
     const baseDetailsConfig = {
+      ...beheerConfig,
+      // Override extend parameter to include 'all' for details pages
+      extend: detailsExtend,
       // Fields to exclude from the details grid
       excludedProperties: ['id'],
       // Additional actions in the action menu (besides edit/delete)
@@ -36,7 +43,6 @@ const DetailsPageConfigFactory = {
       case 'applicaties':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           excludedProperties: [
             'id',
             'naam',
@@ -89,7 +95,6 @@ const DetailsPageConfigFactory = {
       case 'diensten':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           excludedProperties: [
             'id',
             'naam',
@@ -108,7 +113,6 @@ const DetailsPageConfigFactory = {
       case 'gebruiken':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           excludedProperties: ['id', 'ibpScore', 'bbnScore', 'interneAantekening'],
           formatBySchemaOptions: {
             profile: {
@@ -129,7 +133,6 @@ const DetailsPageConfigFactory = {
       case 'organisaties':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           // Creation is handled dynamically; preserve existing beheer unique actions
           uniqueActions: [...beheerConfig.uniqueActions],
           excludedProperties: [
@@ -154,7 +157,6 @@ const DetailsPageConfigFactory = {
       case 'kwetsbaarheden':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           excludedProperties: ['id', 'titel'],
           formatBySchemaOptions: {},
         };
@@ -162,7 +164,6 @@ const DetailsPageConfigFactory = {
       case 'overeenkomsten':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           excludedProperties: ['id', 'contractNummer'],
           formatBySchemaOptions: {
             include: ['naam'],
@@ -194,10 +195,23 @@ const DetailsPageConfigFactory = {
           },
         };
 
+      case 'voorzieningen':
+        return {
+          ...baseDetailsConfig,
+          excludedProperties: ['id'],
+          getTitle: (data) => data?.naam || data?.id,
+          formatBySchemaOptions: {
+            includeUnknown: true,
+            profile: {
+              organisatie: { include: ['naam'], includeUnknown: true, inline: true },
+              omvat: { includeUnknown: true, inline: true },
+            },
+          },
+        };
+
       case 'voorzieningen-versie':
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           excludedProperties: [
             'id',
             'naam',
@@ -229,7 +243,6 @@ const DetailsPageConfigFactory = {
         // This will use the beheer config and apply generic detail settings
         return {
           ...baseDetailsConfig,
-          ...beheerConfig,
           // Generic settings for unknown types
           excludedProperties: ['id'], // Only exclude ID by default
           formatBySchemaOptions: {

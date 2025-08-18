@@ -509,6 +509,147 @@ const ConGenericFormModal = ({
         }
       }
 
+      // Handle outgoing relationship updates
+      if (!isEdit && metadata?.isOutgoing && metadata?.currentObjectId && metadata?.relationshipField) {
+        try {
+          console.log('🔗 Updating outgoing relationship:', {
+            currentObjectId: metadata.currentObjectId,
+            relationshipField: metadata.relationshipField,
+            newItemId: response.id,
+            metadata: metadata
+          });
+
+          // Get the current object to update - use the CURRENT object's register/schema, not the target's
+          const currentObjectRegister = metadata.currentObjectRegister || config.beheerConfig.registerSlug;
+          const currentObjectSchema = metadata.currentObjectSchema || 'voorziening'; // fallback for products
+          
+          console.log('🎯 Looking for current object with:', {
+            register: currentObjectRegister,
+            schema: currentObjectSchema,
+            currentObjectId: metadata.currentObjectId
+          });
+
+          // Try different type suffixes to find the object in the store
+          const possibleTypes = [
+            object.getTypeFromParams(currentObjectRegister, currentObjectSchema, metadata.currentObjectId, null), // details page
+            object.getTypeFromParams(currentObjectRegister, currentObjectSchema, null, 'list'), // list page
+            object.getTypeFromParams(currentObjectRegister, currentObjectSchema, null, null), // generic
+            `${currentObjectRegister}_${currentObjectSchema}`, // simple format
+          ];
+          
+          let currentObject = null;
+          let usedType = null;
+          
+          for (const objectType of possibleTypes) {
+            currentObject = object.getObject(objectType, metadata.currentObjectId);
+            if (currentObject) {
+              usedType = objectType;
+              break;
+            }
+          }
+          
+          console.log('🔍 Searched object types:', possibleTypes);
+          console.log('📦 Found current object in type:', usedType);
+          console.log('🎯 Current object:', currentObject);
+          
+          // If object not found in store, try to fetch it fresh
+          if (!currentObject) {
+            console.log('⚠️ Current object not found in store, fetching fresh...');
+            try {
+              await object.fetchObject(currentObjectRegister, currentObjectSchema, metadata.currentObjectId);
+              // Try to find it again after fetching
+              for (const objectType of possibleTypes) {
+                currentObject = object.getObject(objectType, metadata.currentObjectId);
+                if (currentObject) {
+                  usedType = objectType;
+                  console.log('✅ Found current object after fresh fetch:', usedType);
+                  break;
+                }
+              }
+            } catch (fetchError) {
+              console.warn('Failed to fetch current object:', fetchError);
+            }
+          }
+          
+          if (currentObject) {
+            const currentFieldValue = currentObject[metadata.relationshipField];
+            let updatedFieldValue;
+
+            // Helper function to extract ID from value (handle both objects and strings)
+            const extractId = (value) => {
+              if (typeof value === 'string') return value;
+              if (typeof value === 'object' && value?.id) return value.id;
+              if (typeof value === 'object' && value?.['@self']?.id) return value['@self'].id;
+              return value;
+            };
+
+            if (Array.isArray(currentFieldValue)) {
+              // Convert existing extended objects to IDs and add new ID
+              const existingIds = currentFieldValue.map(extractId).filter(Boolean);
+              updatedFieldValue = [...existingIds, response.id];
+            } else if (currentFieldValue === null || currentFieldValue === undefined) {
+              // Initialize as array with new item
+              updatedFieldValue = [response.id];
+            } else {
+              // Field exists but not array - convert to array with extracted ID
+              const existingId = extractId(currentFieldValue);
+              updatedFieldValue = existingId ? [existingId, response.id] : [response.id];
+            }
+
+            // Update the current object using PATCH (partial update)
+            // Create a clean object with ONLY the field we want to update
+            const patchData = {};
+            patchData[metadata.relationshipField] = updatedFieldValue;
+            
+            console.log('🩹 About to PATCH current object:', {
+              register: currentObjectRegister,
+              schema: currentObjectSchema,
+              id: metadata.currentObjectId,
+              field: metadata.relationshipField,
+              currentValue: Array.isArray(currentFieldValue) ? currentFieldValue.map(extractId) : currentFieldValue,
+              newValue: updatedFieldValue,
+              patchDataKeys: Object.keys(patchData),
+              patchDataSize: JSON.stringify(patchData).length,
+              actualPatchData: JSON.stringify(patchData, null, 2)
+            });
+
+            await object.patchObject(
+              currentObjectRegister,
+              currentObjectSchema,
+              metadata.currentObjectId,
+              patchData
+            );
+
+            console.log('✅ Outgoing relationship updated successfully');
+            
+            // Refresh the current object to get the updated relationship
+            console.log('🔄 Refreshing current object with updated relationship...');
+            await object.fetchObject(
+              currentObjectRegister,
+              currentObjectSchema,
+              metadata.currentObjectId,
+              { _extend: ['all'] }
+            );
+            
+            // Also refresh the related data (uses/used) to show the new item in tabs
+            console.log('🔄 Refreshing related data for current object...');
+            await object.setActiveObject(currentObjectRegister, currentObjectSchema, {
+              id: metadata.currentObjectId
+            });
+          } else {
+            console.error('❌ Could not find current object in store after all attempts:', {
+              searchedTypes: possibleTypes,
+              currentObjectId: metadata.currentObjectId,
+              register: currentObjectRegister,
+              schema: currentObjectSchema
+            });
+          }
+        } catch (relationshipError) {
+          console.error('❌ Failed to update outgoing relationship:', relationshipError);
+          // Don't fail the entire operation if relationship update fails
+        }
+      }
+
       setSubmitSuccess(
         isEdit ? 'Gegevens succesvol bijgewerkt' : 'Gegevens succesvol toegevoegd'
       );

@@ -200,13 +200,15 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     if (!schema?.properties || !currentRegister || !object) return;
     if (hasInitializedRef.current) return;
 
-    console.log('🎯 useRefOptions: Initializing for schema:', schema?.title || 'Unknown');
-
     const refFields = findRefFields(schema.properties);
     
     if (refFields.length > 0) {
+      // Development debug for initialization
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🎯 useRefOptions: Initializing for schema:', schema?.title || 'Unknown');
+      }
+      
       refFields.forEach(({ path, refSchemaSlug }) => {
-        console.log(`🔄 useRefOptions: Loading initial options for ${path} (${refSchemaSlug})`);
         fetchOptionsForField(path, refSchemaSlug);
       });
       
@@ -218,7 +220,7 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
   // Reset the guard when schema changes (similar to modal pattern)
   useEffect(() => {
     hasInitializedRef.current = false;
-    console.log('🔄 useRefOptions: Reset initialization guard due to schema change');
+    // Reset initialization guard for schema change
   }, [schema?.title, schema?.version, currentRegister]);
 
   // Cleanup effect to clear any pending search timeouts

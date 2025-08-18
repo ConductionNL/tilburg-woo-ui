@@ -122,6 +122,8 @@ const AcPublication = observer(
       currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
       openDynamicCreate,
       currentObject: get_single, // Pass current object for organization permission checks
+      currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
+      currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
     });
 
     // Generate action menu items

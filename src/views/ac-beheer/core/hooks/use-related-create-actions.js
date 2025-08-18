@@ -17,6 +17,8 @@ import { checkOrganizationPermissions } from '@utils/organization-permissions';
  * @param {string} params.currentType - Current beheer route type (e.g., 'applicaties')
  * @param {(targetType: string, preSelected: Object, metadata?: Object) => void} params.openDynamicCreate - Callback to open dynamic create modal
  * @param {Object} params.currentObject - Current object for organization permission checks (optional)
+ * @param {string} params.currentObjectRegister - Register slug of the current object (optional)
+ * @param {string} params.currentObjectSchema - Schema slug of the current object (optional)
  */
 export const useRelatedCreateActions = ({
   object,
@@ -25,6 +27,8 @@ export const useRelatedCreateActions = ({
   currentType,
   openDynamicCreate,
   currentObject = null, // Add current object for organization permission checks
+  currentObjectRegister = null, // Add current object register information
+  currentObjectSchema = null, // Add current object schema information
 }) => {
   const [creatableRelated, setCreatableRelated] = useState([]);
   const [outgoingSchemas, setOutgoingSchemas] = useState(new Set());
@@ -95,16 +99,13 @@ export const useRelatedCreateActions = ({
           return createGroups.some((grp) => userGroups.includes(grp));
         });
 
-        console.log('🔍 Related schemas debug:', {
-          schemaRef,
-          apiResponse: related,
-          incomingCount: related?.incoming?.length || 0,
-          outgoingCount: related?.outgoing?.length || 0,
-          totalRelatedResults: relatedResults.length,
-          userGroups,
-          creatable: creatable.length,
-          creatableSchemas: creatable.map(rs => ({ slug: rs.slug, title: rs.title, auth: rs.authorization }))
-        });
+        // Development debug info for related schemas
+        if (process.env.NODE_ENV === 'development' && creatable.length > 0) {
+          console.log('🔍 Related schemas:', {
+            schemaRef,
+            creatableCount: creatable.length
+          });
+        }
         
         setCreatableRelated(creatable);
       } catch (e) {
@@ -227,14 +228,10 @@ export const useRelatedCreateActions = ({
           }
         });
 
-        console.log('🎯 Schema-driven preSelected:', {
-          targetType,
-          currentSchemaSlug,
-          ctxId,
-          currentObjectLabel,
-          preSelected,
-          preSelectedLabels
-        });
+        // Development debug for preSelected fields
+        if (process.env.NODE_ENV === 'development' && Object.keys(preSelected).length > 0) {
+          console.log('🎯 Pre-selected fields:', { targetType, fields: Object.keys(preSelected) });
+        }
 
       } catch (error) {
         console.error('Error building schema-driven preSelected:', error);
@@ -270,19 +267,15 @@ export const useRelatedCreateActions = ({
                 isOutgoing,
                 currentObjectId: ctxId,
                 relationshipField: isOutgoing ? getOutgoingRelationshipField(targetType, currentType) : null,
-                preSelectedLabels // Pass the labels for optimization
+                preSelectedLabels, // Pass the labels for optimization
+                currentObjectRegister, // Pass current object register for updating
+                currentObjectSchema, // Pass current object schema for updating
               });
             },
           };
         })
         .filter(Boolean);
-        
-      console.log('🎯 makeActionsForContext:', { 
-        ctxId, 
-        creatableRelatedCount: creatableRelated?.length || 0,
-        actionsCount: actions.length,
-        actions: actions.map(a => ({ key: a.key, label: a.label }))
-      });
+
       
       return actions;
     },

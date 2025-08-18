@@ -161,14 +161,7 @@ const ConGenericBeheerDetailsPage = ({
   const openDynamicCreate = React.useCallback((targetType, preSelected, metadata = {}) => {
     setDynamicCreateTargetType(targetType);
     setDynamicCreatePreSelected(preSelected);
-    // Store metadata for outgoing relationship handling and labels
-    if (metadata.isOutgoing) {
-      // TODO: Handle outgoing relationship updates after successful form submission
-      console.log('🔄 Outgoing relationship detected:', metadata);
-    }
-    if (metadata.preSelectedLabels) {
-      console.log('🏷️ PreSelected labels provided:', metadata.preSelectedLabels);
-    }
+    // Store metadata for outgoing relationship handling and optimization
     // Store all metadata for the modal to use
     setDynamicCreateMetadata(metadata);
     setOpenModal('dynamicCreate');
@@ -181,6 +174,8 @@ const ConGenericBeheerDetailsPage = ({
     currentType: type,
     openDynamicCreate,
     currentObject: data, // Pass current object for organization permission checks
+    currentObjectRegister: config?.registerSlug, // Pass current object register
+    currentObjectSchema: config?.schemaSlug, // Pass current object schema
   });
 
   useEffect(() => {
@@ -303,29 +298,59 @@ const ConGenericBeheerDetailsPage = ({
                       {Object.entries(dataProperties)
                         .filter(([key]) => !config.excludedProperties.includes(key))
                         .filter(([key, schema]) => canReadField(user, schema))
-                        .map(([key, schema]) => (
-                          <div key={key}>
-                            <strong
-                              {...(schema?.description
-                                ? {
-                                    'data-tooltip-id': TOOLTIP_ID,
-                                    'data-tooltip-content': schema.description,
-                                  }
-                                : {})}
-                            >
-                              {_.startCase(key)}:
-                            </strong>
-                            {formatBySchema(
-                              schema,
-                              data,
-                              key,
-                              config.formatBySchemaOptions || {}
-                            )}
-                          </div>
-                        ))}
+                        .map(([key, schema]) => {
+                          // Check if this property should be displayed inline
+                          const isInline = config.formatBySchemaOptions?.profile?.[key]?.inline;
+                          
+                          if (isInline) {
+                            // Inline rendering: label and value on same line
+                            return (
+                              <div key={key} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                                <strong
+                                  {...(schema?.description
+                                    ? {
+                                        'data-tooltip-id': TOOLTIP_ID,
+                                        'data-tooltip-content': schema.description,
+                                      }
+                                    : {})}
+                                >
+                                  {_.startCase(key)}:
+                                </strong>
+                                {formatBySchema(
+                                  schema,
+                                  data,
+                                  key,
+                                  config.formatBySchemaOptions || {}
+                                )}
+                              </div>
+                            );
+                          } else {
+                            // Default block rendering: label above value
+                            return (
+                              <div key={key}>
+                                <strong
+                                  {...(schema?.description
+                                    ? {
+                                        'data-tooltip-id': TOOLTIP_ID,
+                                        'data-tooltip-content': schema.description,
+                                      }
+                                    : {})}
+                                >
+                                  {_.startCase(key)}:
+                                </strong>
+                                {formatBySchema(
+                                  schema,
+                                  data,
+                                  key,
+                                  config.formatBySchemaOptions || {}
+                                )}
+                              </div>
+                            );
+                          }
+                        })}
                     </div>
 
-                    <div>
+                    <div className="ac-beheer-details--tabs-container">
                       <AcTabs
                         selectedIndex={tabIndex}
                         onSelect={(index) => setTabIndex(index)}
