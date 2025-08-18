@@ -16,7 +16,19 @@ const AcSearchResult = ({
   id,
   user,
   schemaSlug,
+  ...rest // This will capture the full object data
 }) => {
+  // Reconstruct the full object for organization permission checks
+  const fullObject = {
+    id,
+    title,
+    summary,
+    published,
+    category,
+    themes,
+    schemaSlug,
+    ...rest
+  };
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
       <Heading level={3}>{title}</Heading>
@@ -47,6 +59,7 @@ const AcSearchResult = ({
               schemaSlug={schemaSlug}
               title={title}
               published={published}
+              object={fullObject}
               triggerStyle='buttonSlim'
             />
           )}
