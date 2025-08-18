@@ -396,10 +396,7 @@ const ConDynamicSchemaForm = forwardRef(
           refSchemaSlug, // Store for options fetching
           isSearchable: true, // Enable search if more than 20 results
         };
-      } else if (
-        propertySchema.type === 'array' && 
-        propertySchema.items?.$ref
-      ) {
+      } else if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
         // Handle array of object references
         const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.items.$ref);
         schemaConfig = {
@@ -440,7 +437,8 @@ const ConDynamicSchemaForm = forwardRef(
           ...baseConfig,
           type: 'date',
           component: 'AcFormField',
-          inputType: propertySchema.format === 'date-time' ? 'datetime-local' : 'date',
+          inputType:
+            propertySchema.format === 'date-time' ? 'datetime-local' : 'date',
         };
       } else if (propertySchema.type === 'string') {
         schemaConfig = {
@@ -476,7 +474,12 @@ const ConDynamicSchemaForm = forwardRef(
      * // Returns: true/false based on formData.type value and authentication state
      */
     const getFieldVisibility = (propertyPath, fieldConfig) => {
-      return shouldShowFormField(fieldConfig, formData, userIsAuthenticated, context);
+      return shouldShowFormField(
+        fieldConfig,
+        formData,
+        userIsAuthenticated,
+        context
+      );
     };
 
     /**
@@ -676,6 +679,7 @@ const ConDynamicSchemaForm = forwardRef(
       if (!getFieldVisibility(path, fieldConfig)) return null;
 
       const value = getNestedValue(path, formData);
+
       const options = getFieldOptions(path, propertySchema);
       const isLoading = getFieldLoading(path);
       const isDisabled = getFieldDisabled(path, propertySchema, fieldConfig);
