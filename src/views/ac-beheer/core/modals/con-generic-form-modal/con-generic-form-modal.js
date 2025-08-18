@@ -277,8 +277,10 @@ const ConGenericFormModal = ({
   }, []);
 
   // Initialize form data when modal opens or data changes
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (!config || !showModal) return;
+    if (!config || !showModal || hasInitializedRef.current) return;
+    if (schemaLoading || !schema?.properties) return; // wait for stable schema
 
     const schemaInitialData = generateInitialDataFromSchema(schema);
 
@@ -310,11 +312,20 @@ const ConGenericFormModal = ({
         })()),
     };
 
-    // Only update if the form data would actually change
-    if (!_.isEqual(formData, initialFormData)) {
-      setFormData(initialFormData);
-    }
-  }, [showModal, preSelected, config?.initialData, schema]);
+    setFormData(initialFormData);
+    hasInitializedRef.current = true;
+  }, [
+    showModal,
+    config?.initialData,
+    preSelected,
+    schemaLoading,
+    schema?.properties,
+  ]);
+
+  // Reset the guard when closing or changing type
+  useEffect(() => {
+    if (!showModal) hasInitializedRef.current = false;
+  }, [showModal]);
 
   // Handle additional effects when form data changes
   const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
@@ -380,9 +391,9 @@ const ConGenericFormModal = ({
 
   // Generate loading states for ConDynamicSchemaForm
   const loadingStates = useMemo(() => {
-    return { 
+    return {
       ...optionsLoading,
-      ...refLoadingStates
+      ...refLoadingStates,
     };
   }, [optionsLoading, refLoadingStates]);
 
