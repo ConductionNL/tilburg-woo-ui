@@ -1,3 +1,40 @@
+// Account page specific styling for register review sections
+.ac-register-review__section {
+  .ac-beheer-select,
+  .ac-form-field__input {
+    width: 100%;
+    min-height: 40px;
+    border-radius: 4px;
+  }
+
+  .utrecht-form-label .utrecht-heading-4 {
+    margin-bottom: var(--tilburg-space-block-mouse);
+    font-weight: 500;
+    color: var(--tilburg-color-gray-700);
+  }
+
+  // Header controls layout (select + button)
+  .ac-register-review__header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    
+    .ac-register-review__org-select {
+      min-width: 200px;
+    }
+    
+    // Ensure button styling is consistent
+    .ac-button {
+      flex-shrink: 0;
+    }
+  }
+
+  // More space between button and separator line
+  .ac-register-review-header__separator {
+    margin-top: var(--tilburg-space-block-cat) !important;
+  }
+}
+
 .ac-mijn-omgeving-section {
   .ac-register-form-section {
     margin-block-start: var(--tilburg-space-block-rat);

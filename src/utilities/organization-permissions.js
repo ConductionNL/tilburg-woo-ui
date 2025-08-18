@@ -85,7 +85,7 @@ export const checkOrganizationPermissions = (user, object) => {
 
 /**
  * Gets tooltip message for disabled actions based on organization permissions
- * @param {string} action - The action being performed ('edit', 'publish', 'depublish')
+ * @param {string} action - The action being performed ('edit', 'publish', 'depublish', 'delete')
  * @param {string} reason - The reason from checkOrganizationPermissions
  * @returns {string} - Tooltip message
  */
@@ -93,7 +93,8 @@ export const getDisabledActionTooltip = (action, reason) => {
   const actionMap = {
     edit: 'bewerken',
     publish: 'publiceren', 
-    depublish: 'depubliceren'
+    depublish: 'depubliceren',
+    delete: 'verwijderen'
   };
 
   const actionText = actionMap[action] || action;

@@ -173,11 +173,17 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     user,
     schemaRef: config?.schemaSlug,
     currentType: type,
-    openDynamicCreate: (targetType, preSelected) => {
+    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
       setDynamicCreateTargetType(targetType);
       setDynamicCreatePreSelected(preSelected);
+      // Handle outgoing relationship metadata  
+      if (metadata.isOutgoing) {
+        // Store metadata for post-creation relationship updates
+        // (handled by the form modal after successful creation)
+      }
       setOpenModal('dynamicCreate');
     },
+    currentObject: null, // List page doesn't have a single current object
   });
 
   const fetchData = useCallback(

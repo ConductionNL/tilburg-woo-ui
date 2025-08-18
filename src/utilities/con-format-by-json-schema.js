@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from '@utrecht/component-library-react/dist/css-module';
+import { ConRelatedObjectsLinks } from '@components';
 
 /**
  * Helper function to determine the actual runtime type of a value
@@ -10,6 +11,26 @@ function getActualType(value) {
   if (value === null) return 'null';
   if (Array.isArray(value)) return 'array';
   return typeof value;
+}
+
+/**
+ * Helper function to check if an array contains extended objects
+ * Extended objects have @self properties with name, schema, and id
+ * @param {Array} array - The array to check
+ * @returns {boolean} - True if array contains extended objects
+ */
+function isExtendedObjectsArray(array) {
+  if (!Array.isArray(array) || array.length === 0) return false;
+  
+  // Check if at least one item has the required @self properties
+  return array.some(item => 
+    item && 
+    typeof item === 'object' && 
+    item['@self'] && 
+    item['@self'].name && 
+    item['@self'].schema && 
+    item['@self'].id
+  );
 }
 
 /**
@@ -109,6 +130,53 @@ function formatBySchema(schema, data, dataKey, options = {}) {
 
     case 'array': {
       if (!Array.isArray(value)) return <em>Invalid array</em>;
+      
+      // Get current options for this array (might be configured via profile)
+      let currentOptions = {
+        inline: options.inline,
+        includeUnknown: options.includeUnknown,
+        profile: options.profile || {},
+      };
+
+      // Use profile options for this specific dataKey if defined
+      if (dataKey && currentOptions.profile[dataKey]) {
+        currentOptions = {
+          inline: currentOptions.profile[dataKey].inline !== undefined 
+            ? currentOptions.profile[dataKey].inline 
+            : currentOptions.inline,
+          includeUnknown: currentOptions.profile[dataKey].includeUnknown !== undefined
+            ? currentOptions.profile[dataKey].includeUnknown 
+            : currentOptions.includeUnknown,
+          profile: currentOptions.profile[dataKey].profile || {},
+        };
+      }
+      
+      // Check if this is an array of extended objects (with @self properties)
+      if (isExtendedObjectsArray(value)) {
+        // For extended objects, always use ConRelatedObjectsLinks (which renders inline by default)
+        return <ConRelatedObjectsLinks objects={value} />;
+      }
+      
+      // For regular arrays, check if inline rendering is requested
+      if (currentOptions.inline && value.length > 0) {
+        return (
+          <span>
+            {value.map((item, i) => (
+              <React.Fragment key={i}>
+                {formatBySchema(
+                  schema.items,
+                  item,
+                  null,
+                  currentOptions
+                )}
+                {i < value.length - 1 ? ', ' : ''}
+              </React.Fragment>
+            ))}
+          </span>
+        );
+      }
+      
+      // Default array rendering (bullet list)
       return (
         <ul>
           {value.length === 0 && <span>-</span>}
@@ -118,7 +186,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                 schema.items,
                 item,
                 null,
-                (dataKey && options.profile && options.profile[dataKey]) || options
+                currentOptions
               )}
             </li>
           ))}

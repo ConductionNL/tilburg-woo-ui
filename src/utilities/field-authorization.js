@@ -118,15 +118,22 @@ export const getFieldAuthorizationState = (user, fieldSchema, isCreate = false) 
  * @param {boolean} isCreate - Whether this is a create operation
  */
 export const debugFieldAuthorization = (user, fieldSchema, fieldName, isCreate = false) => {
-  const userGroups = user?.userGroups || [];
-  const authorization = fieldSchema?.authorization;
-  
-  console.log(`Field Authorization Debug - ${fieldName}:`, {
-    userGroups,
-    authorization,
-    isCreate,
-    canRead: canReadField(user, fieldSchema),
-    canEdit: canEditField(user, fieldSchema, isCreate),
-    authState: getFieldAuthorizationState(user, fieldSchema, isCreate)
-  });
+  // Only log field authorization issues in development when access is denied
+  if (process.env.NODE_ENV === 'development') {
+    const canRead = canReadField(user, fieldSchema);
+    const canEdit = canEditField(user, fieldSchema, isCreate);
+    
+    // Only log when there are actual authorization restrictions
+    if (!canRead || (!canEdit && isCreate)) {
+      const userGroups = user?.userGroups || [];
+      const authorization = fieldSchema?.authorization;
+      
+      console.log(`⚠️ Field Authorization - ${fieldName}:`, {
+        canRead, 
+        canEdit,
+        userGroups,
+        authorization
+      });
+    }
+  }
 };
