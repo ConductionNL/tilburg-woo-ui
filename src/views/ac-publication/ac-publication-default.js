@@ -297,6 +297,7 @@ const AcPublication = observer(
                 schemaSlug={get_single?.['@self']?.schema?.slug}
                 title={get_single?.title ?? get_single?.titel ?? get_single?.name ?? get_single?.naam ?? get_single?.id}
                 published={get_single?.['@self']?.published}
+                object={get_single}
                 showPublishActions={true}
                 triggerStyle='button'
                 relatedActions={actionMenuItems}
