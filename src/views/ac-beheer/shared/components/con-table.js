@@ -37,6 +37,7 @@ import { ConTableSearch } from '@components';
  * - Multiple simultaneous header searches
  * - Enum support with dropdown selects from schema properties
  * - Toggleable search interface
+ * - Static column styling for action columns via `static: true` on a header
  *
  * **Automatic Data Handling:**
  * - Arrays: joined with commas
@@ -159,7 +160,8 @@ import { ConTableSearch } from '@components';
  *      customHeader?: React.ReactElement | string | (() => React.ReactElement | string),
  *      customContent?: React.ReactElement | string | ((row: any) => React.ReactElement | string),
  *      sortComparator?: (a: any, b: any, direction: boolean | null) => number,
- *      doNotTruncate?: boolean
+ *      doNotTruncate?: boolean,
+ *      static?: boolean
  * }[]} props.tableHeaders - The headers to display in the table. (array of objects)
  * @param props.tableHeaders.id - The unique identifier for the header. Required.
  * @param props.tableHeaders.label - The label to display in the table header.
@@ -168,6 +170,7 @@ import { ConTableSearch } from '@components';
  * @param props.tableHeaders.customContent - The custom content to display in the table cell.
  * @param props.tableHeaders.sortComparator - The custom sort function to display in the table cell. for direction true = ascending, false = descending, null = no sort
  * @param props.tableHeaders.doNotTruncate - Whether to not truncate the text in the table cell. (default: false)
+ * @param props.tableHeaders.static - When true, apply static column styling (e.g., actions column). Adds class `con-table-actions-column` and omits default header label styling.
  * @param {Object} props.dataProperties - Schema properties object containing field definitions with enum values.
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {boolean} props.showSearch - Whether to show the search interface above the table. (default: false)
@@ -409,15 +412,15 @@ const ConTable = (
                 typeof header.sortComparator === 'function');
 
             return (
-              <TableCell 
+              <TableCell
                 key={header.id}
-                className={header.label === 'Acties' ? 'con-table-actions-column' : undefined}
+                className={header.static ? 'con-table-actions-column' : undefined}
               >
                 <div className={clsx('con-table-header-content')}>
                   <div className={clsx('con-table-header-content-label')}>
                     <span
                       className={
-                        header.label !== 'Acties'
+                        !header.static
                           ? 'con-table-header-content__label'
                           : undefined
                       }
@@ -534,7 +537,7 @@ const ConTable = (
                   : null
               }
               key={header.id}
-              className={header.label === 'Acties' ? 'con-table-actions-column' : undefined}
+              className={header.static ? 'con-table-actions-column' : undefined}
             >
               <div
                 id={`table-cell-${headerIndex}`}

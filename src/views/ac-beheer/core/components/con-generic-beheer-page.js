@@ -546,6 +546,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                 id: 'actions',
                 label: 'Acties',
                 key: '',
+                static: true,
                 customContent: (row) => (
                   <ConActionMenu>
                     <ConActionMenu.Trigger
