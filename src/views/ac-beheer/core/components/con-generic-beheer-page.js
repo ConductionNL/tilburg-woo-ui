@@ -26,6 +26,7 @@ import _ from 'lodash';
 import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { canReadField } from '@utils/field-authorization';
 
 /**
  * Generic Beheer Page Component
@@ -293,6 +294,7 @@ const ConGenericBeheerPage = ({
 
     return Object.entries(dataProperties)
       .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
+      .filter(([key, value]) => canReadField(user, value))
       .map(([key, value]) => {
         // Check if we have a custom override for this header
         if (config.customHeaders[key]) {
@@ -309,7 +311,7 @@ const ConGenericBeheerPage = ({
           key: key,
         };
       });
-  }, [dataProperties, config.customHeaders]);
+  }, [dataProperties, config.customHeaders, user]);
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
