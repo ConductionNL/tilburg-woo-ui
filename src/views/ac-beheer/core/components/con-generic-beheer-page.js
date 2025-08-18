@@ -32,11 +32,7 @@ import { canReadField } from '@utils/field-authorization';
  * Generic Beheer Page Component
  * This component can handle all beheer page types through configuration
  */
-const ConGenericBeheerPage = ({
-  store,
-  type,
-  configOverrides = {},
-}) => {
+const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Destructure the stores we need
   const { object, user } = store;
   const navigate = useNavigate();
@@ -88,7 +84,7 @@ const ConGenericBeheerPage = ({
 
   // Get schema properties from object store
   const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : [];
-  
+
   // Get full schema object to access title and other metadata
   const schemaData = schemaType ? object.getSchema(schemaType) : null;
 
@@ -103,13 +99,19 @@ const ConGenericBeheerPage = ({
 
   // Enhance config with dynamic headers and title from schema
   useEffect(() => {
-    if (baseConfig && dataProperties && Object.keys(dataProperties).length > 0 && !schemaLoading && !schemaError) {
+    if (
+      baseConfig &&
+      dataProperties &&
+      Object.keys(dataProperties).length > 0 &&
+      !schemaLoading &&
+      !schemaError
+    ) {
       // Only enhance if we have a generic config (no predefined defaultHeaders)
       if (baseConfig.defaultHeaders && baseConfig.defaultHeaders.length === 0) {
         const schemaPropertyKeys = Object.entries(dataProperties)
           .filter(([key, value]) => value.hideOnCollection !== true)
           .map(([key, value]) => key);
-        
+
         // Use schema title if available, otherwise capitalize the type without "Beheer" prefix
         let dynamicTitle = baseConfig.title;
         if (schemaData && schemaData.title) {
@@ -118,7 +120,7 @@ const ConGenericBeheerPage = ({
           // Remove "Beheer " prefix and just use the capitalized type
           dynamicTitle = type.charAt(0).toUpperCase() + type.slice(1);
         }
-        
+
         const enhancedConfigWithHeaders = {
           ...baseConfig,
           defaultHeaders: schemaPropertyKeys,
@@ -293,7 +295,9 @@ const ConGenericBeheerPage = ({
     if (!dataProperties) return [];
 
     return Object.entries(dataProperties)
-      .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
+      .filter(
+        ([key, value]) => value.visible !== false && value.hideOnCollection !== true
+      )
       .filter(([key, value]) => canReadField(user, value))
       .map(([key, value]) => {
         // Check if we have a custom override for this header
@@ -303,8 +307,9 @@ const ConGenericBeheerPage = ({
 
         // Generate standard header from schema
         // Use schema property title if available, otherwise capitalize the key
-        const label = value.title && value.title.trim() ? value.title : _.upperFirst(key);
-        
+        const label =
+          value.title && value.title.trim() ? value.title : _.upperFirst(key);
+
         return {
           id: key,
           label: label,
@@ -316,18 +321,37 @@ const ConGenericBeheerPage = ({
   const [tableHeaders, setTableHeaders] = useState([]);
 
   // Stable keys to avoid re-running effects on new array/object references
+  const { defaultHeaderIds, shouldShowAllHeaders } = useMemo(() => {
+    if (!dataProperties) return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+
+    const entries = Object.entries(dataProperties);
+    const anyTable = entries.some(([, value]) => !!value?.table);
+    const defaultTrueKeys = new Set(
+      entries.filter(([, value]) => value?.table?.default === true).map(([k]) => k)
+    );
+
+    const showAll = !anyTable || defaultTrueKeys.size === 0;
+    if (showAll) {
+      return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+    }
+
+    const ids = headers.filter((h) => defaultTrueKeys.has(h.id)).map((h) => h.id);
+
+    return { defaultHeaderIds: ids, shouldShowAllHeaders: false };
+  }, [dataProperties, headers]);
+
   const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
   const defaultHeaderIdsKey = useMemo(
-    () => (config.defaultHeaders || []).join(','),
-    [config.defaultHeaders]
+    () => (shouldShowAllHeaders ? '' : defaultHeaderIds.join(',')),
+    [shouldShowAllHeaders, defaultHeaderIds]
   );
 
   useEffect(() => {
     if (headers.length === 0) return;
 
-    const next = headers.filter((header) =>
-      config.defaultHeaders.includes(header.id)
-    );
+    const next = shouldShowAllHeaders
+      ? headers
+      : headers.filter((header) => defaultHeaderIds.includes(header.id));
 
     const nextKey = next.map((h) => h.id).join(',');
     const currentKey = tableHeaders.map((h) => h.id).join(',');
@@ -402,11 +426,19 @@ const ConGenericBeheerPage = ({
   );
 
   if (error) {
-    return <AcBeheerError title={config.title} error={error.message} store={store} />;
+    return (
+      <AcBeheerError title={config.title} error={error.message} store={store} />
+    );
   }
 
   if (schemaError) {
-    return <AcBeheerError title={config.title} error={schemaError.message} store={store} />;
+    return (
+      <AcBeheerError
+        title={config.title}
+        error={schemaError.message}
+        store={store}
+      />
+    );
   }
 
   // Build table headers with status icon if configured
@@ -514,6 +546,7 @@ const ConGenericBeheerPage = ({
                 id: 'actions',
                 label: 'Acties',
                 key: '',
+                static: true,
                 customContent: (row) => (
                   <ConActionMenu>
                     <ConActionMenu.Trigger
@@ -607,7 +640,9 @@ const ConGenericBeheerPage = ({
           {FilterDrawerFactory.renderFilterDrawer(type, {
             filterHeadersDrawerRef,
             headers,
-            defaultHeaders: config.defaultHeaders,
+            defaultHeaders: shouldShowAllHeaders
+              ? headers.map((h) => h.id)
+              : defaultHeaderIds,
             setTableHeaders,
             loading,
             setBeoordelingFilter,
