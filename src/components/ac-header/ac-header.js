@@ -21,24 +21,16 @@ try {
   containerConfig = null;
 }
 
-const AcHeader = ({ store: { menu } }) => {
+const AcHeader = ({ store: { menu, user } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
   const { all_menu_items } = menu;
 
-  const getMenuPosition = () => {
-    // Use container config if available
-    if (containerConfig && containerConfig.getMenuPosition) {
-      return containerConfig.getMenuPosition();
-    }
+  // Get sub menu items from position 2 with authentication and group filtering
+  const menuItems = menu.getMenuFromPosition(2, user.isAuthenticated, user.userGroups || []) || null;
+  
 
-    // Fallback to hostname-based logic for production builds
-    const hostname = window.location.hostname;
-    return hostname === 'horstadmaas.accept.opencatalogi.nl' ? 1 : 2;
-  };
-
-  const menuItems = all_menu_items.find((item) => item.position === getMenuPosition());
 
   return (
     <header className='ac-header'>
@@ -64,9 +56,11 @@ const AcHeader = ({ store: { menu } }) => {
         </div>
         <AcNavigation />
       </div>
-      {menuItems && menuItems.items.length > 0 && (
+      {menuItems && menuItems.items && Array.isArray(menuItems.items) && menuItems.items.length > 0 && (
         <div className='ac-header__navigation-secondary'>
-          <AcCNavigation items={menuItems.items} />
+          <AcContainer>
+            <AcCNavigation items={menuItems.items} />
+          </AcContainer>
         </div>
       )}
       <div className='ac-header__navigation-breadcrumb'>

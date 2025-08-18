@@ -558,7 +558,19 @@ const BeheerPageConfigFactory = {
         };
 
       default:
-        throw new Error(`Unknown beheer page type: ${type}`);
+        // Generic configuration for dynamic types
+        // Assumes: schemaSlug = type, paginationKey = type, routeType = type
+        // Title = capitalized type (schema title will override this if available)
+        return {
+          ...baseConfig,
+          schemaSlug: type,
+          paginationKey: type,
+          title: type.charAt(0).toUpperCase() + type.slice(1), // Remove "Beheer" prefix
+          routeType: type,
+          extend: [],
+          defaultHeaders: [],
+          customHeaders: {},
+        };
     }
   },
 };

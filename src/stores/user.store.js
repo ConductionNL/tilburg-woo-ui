@@ -1,6 +1,9 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 
+// Imports => Utilities  
+import { AcFormatErrorMessage } from '@utils/ac-format-error';
+
 // Try to import container constants (generated at runtime)
 let containerConfig;
 try {
@@ -24,6 +27,9 @@ export class UserStore {
   user = null;
 
   @observable
+  basicAuthCredentials = null; // Store username/password for basic auth fallback
+
+  @observable
   loading = {
     status: false,
     message: null,
@@ -45,28 +51,124 @@ export class UserStore {
 
   @computed
   get userGroups() {
+    // Handle the groups array from the login response (simple string array)
     return this.user?.groups || [];
   }
 
   @computed
   get userOrganizations() {
-    return this.user?.organizations || this.user?.organisations || [];
+    // Handle the organisations object structure from login response
+    if (this.user?.organisations) {
+      // Return the results array if it exists, otherwise return empty array
+      return this.user.organisations.results || [];
+    }
+    // Fallback for legacy organizations field
+    return this.user?.organizations || [];
+  }
+
+  @computed
+  get activeOrganization() {
+    // Get the active organization from the login response
+    return this.user?.organisations?.active || null;
+  }
+
+  @computed
+  get totalOrganizations() {
+    // Get total count of organizations
+    return this.user?.organisations?.total || 0;
   }
 
   @computed
   get hasPermission() {
     return (permission) => {
-      return this.userGroups.some((group) =>
-        group.permissions?.includes(permission)
-      );
+      // Since groups is now a simple string array, check if user has admin role
+      // This would need to be expanded based on actual permission system
+      return this.isAdmin;
     };
   }
 
   @computed
   get isAdmin() {
-    return this.userGroups.some(
-      (group) => group.name === 'admin' || group.role === 'admin'
-    );
+    // Check if user has 'admin' in their groups array (simple string check)
+    return this.userGroups.includes('admin');
+  }
+
+  @computed
+  get userDisplayName() {
+    return this.user?.displayName || this.user?.name || '';
+  }
+
+  @computed
+  get userEmail() {
+    return this.user?.email || '';
+  }
+
+  @computed
+  get userPhone() {
+    return this.user?.phone || '';
+  }
+
+  @computed
+  get userFullName() {
+    const { firstName, middleName, lastName } = this.user || {};
+    return [firstName, middleName, lastName].filter(Boolean).join(' ') || this.userDisplayName;
+  }
+
+  @computed
+  get isEnabled() {
+    return this.user?.enabled !== false; // Default to true if not specified
+  }
+
+  // Authentication utilities
+
+  // Group and role checking methods
+  @computed
+  get hasGroup() {
+    return (groupName) => {
+      return this.userGroups.includes(groupName);
+    };
+  }
+
+  @computed
+  get hasRole() {
+    // Alias for hasGroup since groups function as roles in this system
+    return this.hasGroup;
+  }
+
+  @computed
+  get hasAnyGroup() {
+    return (groupNames) => {
+      if (!Array.isArray(groupNames)) return false;
+      return groupNames.some(group => this.userGroups.includes(group));
+    };
+  }
+
+  @computed
+  get hasAllGroups() {
+    return (groupNames) => {
+      if (!Array.isArray(groupNames)) return false;
+      return groupNames.every(group => this.userGroups.includes(group));
+    };
+  }
+
+  // Organization checking methods
+  @computed
+  get hasOrganization() {
+    return (orgId) => {
+      return this.userOrganizations.some(org => 
+        org.id === orgId || org.uuid === orgId || org.slug === orgId
+      );
+    };
+  }
+
+  @computed
+  get isOwnerOfOrganization() {
+    return (orgId) => {
+      return this.userOrganizations.some(org => 
+        (org.id === orgId || org.uuid === orgId || org.slug === orgId) && 
+        org.owner === this.user?.uid
+      );
+    };
   }
 
   @action
@@ -153,89 +255,86 @@ export class UserStore {
         );
       }
 
-      const loginUrl = `${containerConfig.getOpenconnectorApiUrl()}/user/login`;
+      // Use the proper API client instead of hardcoded fetch
+      if (!app.store.api || !app.store.api.auth) {
+        throw new Error('Auth API not available');
+      }
 
-      const response = await fetch(loginUrl, {
-        method: 'POST',
-        credentials: 'include', // Include cookies for session-based auth
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+      const data = await app.store.api.auth.sessionLogin({
+        username,
+        password,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        console.log('Login successful! Response data:', data);
-        console.log('All cookies after login:', document.cookie);
-
         // Clear any existing logout cookie that would cause immediate logout
         document.cookie = 'logout=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 
         // Check for authentication tokens in the response
         if (data.access_token) {
-          console.log('Found access token in login response:', data.access_token);
           // Store access token as a cookie for future requests
           document.cookie = `openconnector_access_token=${data.access_token}; path=/; SameSite=Lax`;
+          // TODO: Store token in localStorage for Bearer auth: AcSetAccessToken(data.access_token)
         }
 
-        // Check what session cookies were set
-        const sessionCookies = {};
-        [
-          'oc6fgt938z8c',
-          'oc_sessionPassphrase',
-          'nc_sameSiteCookielax',
-          'nc_sameSiteCookiestrict',
-        ].forEach((cookieName) => {
-          const value = document.cookie
-            .split('; ')
-            .find((row) => row.startsWith(cookieName + '='));
-          if (value) {
-            sessionCookies[cookieName] = value.split('=')[1];
-          }
-        });
+        // Store basic auth credentials for fallback
+        this.basicAuthCredentials = {
+          username,
+          password
+        };
 
-        console.log('Session cookies found after login:', sessionCookies);
-
-        // Store user data from login response
+        this.setAuthMethod('session');
+        
+        // If login response includes user data, use it directly
         if (data.user) {
-          console.log('Setting user from login response:', data.user);
           this.setUser(data.user);
-          this.setAuthMethod('session');
-          console.log('After setUser - isAuthenticated:', this.isAuthenticated);
         }
-
-        // Also fetch full user profile (/me endpoint)
-        console.log('Fetching user profile...');
-        await this.fetchUserProfile();
-        console.log(
-          'After fetchUserProfile - isAuthenticated:',
-          this.isAuthenticated,
-          'user:',
-          this.user
-        );
+        
+        // Try to fetch full user profile (/me endpoint) as additional verification
+        try {
+          await this.fetchUserProfile();
+        } catch (profileError) {
+          console.warn('Failed to fetch user profile after login, using login response data:', profileError);
+          // If /me fails but login succeeded and returned user data, that's still a successful login
+          if (data.user) {
+            console.log('Using user data from login response instead of /me endpoint');
+          } else {
+            this.setError('Login successful but failed to load user profile. Please refresh the page.');
+          }
+        }
 
         this.setLoading(false);
         return { success: true, user: this.user };
-      } else {
-        const errorData = await response.json();
-        const errorMessage =
-          errorData.error || 'Inloggen mislukt. Controleer uw gegevens.';
+      } catch (error) {
+        console.error('Login failed:', error);
+        
+        // Use the error formatting utility to extract the proper error message
+        let errorMessage = 'Inloggen mislukt. Controleer uw gegevens.';
+        
+        // Try to extract a more specific error message
+        if (error.response && error.response.data) {
+          if (error.response.data.error) {
+            // Handle {"error": "Invalid username or password"} format
+            errorMessage = error.response.data.error;
+          } else if (error.response.data.message) {
+            // Handle {"message": "..."} format
+            errorMessage = error.response.data.message;
+          } else if (typeof error.response.data === 'string') {
+            // Handle plain string responses
+            errorMessage = error.response.data;
+          } else {
+            // Try using the formatting utility as a fallback
+            const formattedError = AcFormatErrorMessage(error);
+            if (formattedError && formattedError !== false) {
+              errorMessage = formattedError;
+            }
+          }
+        } else if (error.message) {
+          // Fallback to error.message
+          errorMessage = error.message;
+        }
+        
         this.setError(errorMessage);
         this.setLoading(false);
         return { success: false, error: errorMessage };
       }
-    } catch (error) {
-      const errorMessage =
-        error.message || 'Inloggen mislukt. Controleer uw gegevens.';
-      this.setError(errorMessage);
-      this.setLoading(false);
-      return { success: false, error: errorMessage };
-    }
   };
 
   // Check authentication status and fetch user profile
@@ -244,6 +343,12 @@ export class UserStore {
     this.setLoading(true);
 
     try {
+      // If we already have a user and are marked as authenticated, return true immediately
+      if (this.isAuthenticated && this.user) {
+        this.setLoading(false);
+        return true;
+      }
+
       if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
         console.warn('OpenConnector API URL not configured');
         this.setLoading(false);
@@ -261,16 +366,17 @@ export class UserStore {
 
       console.log('Checking authentication status...');
 
-      // Use the authenticated request helper instead of direct fetch
-      const userData = await this.makeAuthenticatedRequest('/user/me', {
-        method: 'GET',
-      });
-
-      console.log('Authentication check successful:', userData);
-      this.setUser(userData);
-      this.setAuthMethod('session');
-      this.setLoading(false);
-      return true;
+      // Use the proper API client instead of the authenticated request helper
+      if (app.store.api && app.store.api.auth) {
+        const userData = await app.store.api.auth.getUserProfile();
+        console.log('Authentication check successful:', userData);
+        this.setUser(userData);
+        this.setAuthMethod('session');
+        this.setLoading(false);
+        return true;
+      } else {
+        throw new Error('Auth API not available');
+      }
     } catch (error) {
       console.error('Auth check failed:', error);
 
@@ -292,20 +398,16 @@ export class UserStore {
   @action
   fetchUserProfile = async () => {
     try {
-      if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
-        console.warn('OpenConnector API URL not configured');
-        return;
-      }
-
       console.log('Fetching user profile...');
 
-      // Use the authenticated request helper instead of direct fetch
-      const userData = await this.makeAuthenticatedRequest('/user/me', {
-        method: 'GET',
-      });
-
-      console.log('User profile fetched successfully:', userData);
-      this.setUser(userData);
+      // Use the proper API client instead of the authenticated request helper
+      if (app.store.api && app.store.api.auth) {
+        const userData = await app.store.api.auth.getUserProfile();
+        console.log('User profile fetched successfully:', userData);
+        this.setUser(userData);
+      } else {
+        console.warn('Auth API not available');
+      }
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
     }
@@ -315,29 +417,21 @@ export class UserStore {
   @action
   updateUser = async (userData) => {
     try {
-      if (!containerConfig || !containerConfig.getOpenconnectorApiUrl) {
-        console.warn('OpenConnector API URL not configured');
-        throw new Error('API URL not configured');
-      }
-
       console.log('Updating user profile:', userData);
 
-      // Use the authenticated request helper to update user data
-      const updatedUserData = await this.makeAuthenticatedRequest('/user/me', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
+      // Use the proper API client instead of the authenticated request helper
+      if (app.store.api && app.store.api.auth) {
+        const updatedUserData = await app.store.api.auth.updateUserProfile(userData);
+        console.log('User profile updated successfully:', updatedUserData);
 
-      console.log('User profile updated successfully:', updatedUserData);
+        // Update the local user state with the new data
+        this.setUser(updatedUserData);
 
-      // Update the local user state with the new data
-      this.setUser(updatedUserData);
-
-      // Return the response in the expected format for compatibility
-      return { data: updatedUserData };
+        // Return the response in the expected format for compatibility
+        return { data: updatedUserData };
+      } else {
+        throw new Error('Auth API not available');
+      }
     } catch (error) {
       console.error('Failed to update user profile:', error);
       throw error;
@@ -366,27 +460,31 @@ export class UserStore {
   // Universal logout
   @action
   logout = async () => {
-    this.setLoading(true);
+    this.setLoading(true, 'Uitloggen...');
 
     try {
+      console.log('Logging out user:', this.user?.uid || 'unknown');
+
       // If using session auth, try to call logout endpoint
       if (this.authMethod === 'session') {
         try {
-          if (containerConfig && containerConfig.getOpenconnectorApiUrl) {
-            const logoutUrl = `${containerConfig.getOpenconnectorApiUrl()}/user/logout`;
-            await fetch(logoutUrl, {
-              method: 'POST',
-              credentials: 'include',
-            });
+          // Use the proper API client instead of hardcoded fetch
+          if (app.store.api && app.store.api.auth) {
+            await app.store.api.auth.sessionLogout();
+            console.log('Session logout successful');
           }
         } catch (error) {
           console.error('Logout endpoint failed:', error);
         }
       }
 
+      // Clear basic auth credentials
+      this.basicAuthCredentials = null;
+
       // Clear OAuth tokens if they exist
       if (app.store.auth) {
         await app.store.auth.logout();
+        console.log('OAuth logout completed');
       }
 
       // Clear user data
@@ -396,6 +494,7 @@ export class UserStore {
       // Clear any nextcloud cookies
       this.clearNextcloudCookies();
 
+      console.log('Logout completed successfully');
       return { success: true };
     } catch (error) {
       console.error('Logout failed:', error);
@@ -404,6 +503,53 @@ export class UserStore {
       return { success: false, error: error.message };
     }
   };
+
+  // Convenience login method that determines which auth method to use
+  @action
+  login = async (credentials) => {
+    // Default to session login for now, could be expanded to auto-detect
+    return await this.sessionLogin(credentials.username, credentials.password);
+  };
+
+  // Check if user can access a specific route
+  @computed
+  get canAccessRoute() {
+    return (routePath) => {
+      // Import AUTHENTICATION_REQUIRED_ROUTES to check if route requires auth
+      try {
+        const { AUTHENTICATION_REQUIRED_ROUTES } = require('@constants/routes.constants');
+        const requiresAuth = AUTHENTICATION_REQUIRED_ROUTES.some(route => {
+          // Handle parameterized routes by converting :param to regex
+          const routePattern = route.replace(/:[^/]+/g, '[^/]+');
+          const regex = new RegExp(`^${routePattern}$`);
+          return regex.test(routePath);
+        });
+        
+        // If route doesn't require auth, allow access
+        if (!requiresAuth) return true;
+        
+        // If route requires auth, check if user is authenticated
+        return this.isAuthenticated;
+      } catch (error) {
+        console.warn('Could not load route constants for access check:', error);
+        // Default to allowing access if we can't check
+        return true;
+      }
+    };
+  }
+
+  // Get user initials for avatars
+  @computed
+  get userInitials() {
+    const fullName = this.userFullName;
+    if (!fullName) return this.userDisplayName.substring(0, 2).toUpperCase();
+    
+    const nameParts = fullName.split(' ').filter(Boolean);
+    if (nameParts.length >= 2) {
+      return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+    }
+    return nameParts[0] ? nameParts[0].substring(0, 2).toUpperCase() : 'U';
+  }
 
   // Clear Nextcloud authentication cookies
   @action
@@ -424,95 +570,11 @@ export class UserStore {
     });
   };
 
-  // Make authenticated API requests
-  @action
-  makeAuthenticatedRequest = async (endpoint, options = {}) => {
-    const defaultOptions = {
-      credentials: 'include', // Always include cookies for session auth
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    };
-
-    // Check what cookies are actually available
-    console.log(
-      'Making authenticated request - available cookies:',
-      document.cookie
-    );
-
-    // Priority order for authentication:
-    // 1. OpenConnector access token (from login response)
-    // 2. Nextcloud access token (from OAuth flow)
-    // 3. Session cookies (automatic via credentials: 'include')
-
-    const openconnectorToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('openconnector_access_token='));
-
-    const nextcloudToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('nextcloud_access_token='));
-
-    if (openconnectorToken) {
-      const token = openconnectorToken.split('=')[1];
-      defaultOptions.headers.Authorization = `Bearer ${token}`;
-      console.log('Using OpenConnector access token for authentication');
-    } else if (this.authMethod === 'oauth' && app.store.auth?.current_access_token) {
-      defaultOptions.headers.Authorization = `Bearer ${app.store.auth.current_access_token}`;
-      console.log('Using OAuth authentication with token');
-    } else if (nextcloudToken) {
-      const token = nextcloudToken.split('=')[1];
-      defaultOptions.headers.Authorization = `Bearer ${token}`;
-      console.log('Using Nextcloud access token for authentication');
-    } else {
-      console.log('Using session-based authentication with cookies only');
-    }
-
-    const baseUrl = containerConfig?.getOpenconnectorApiUrl() || '';
-    const fullUrl = `${baseUrl}${endpoint}`;
-
-    console.log('Making authenticated request:', {
-      url: fullUrl,
-      method: options.method || 'GET',
-      headers: defaultOptions.headers,
-      authMethod: this.authMethod,
-      credentials: defaultOptions.credentials,
-    });
-
-    const response = await fetch(fullUrl, {
-      ...defaultOptions,
-      ...options,
-    });
-
-    console.log('API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      url: fullUrl,
-      headers: Object.fromEntries(response.headers.entries()),
-    });
-
-    if (!response.ok) {
-      // If unauthorized, clear authentication
-      if (response.status === 401) {
-        console.log('Received 401 Unauthorized, clearing user authentication');
-        this.clearUser();
-      }
-      throw new Error(
-        `API request failed: ${response.status} ${response.statusText}`
-      );
-    }
-
-    return response.json();
-  };
-
   // Get organization dashboard URL
   @action
   getOrganizationDashboardUrl = () => {
-    const primaryOrg = this.userOrganizations[0];
-    if (primaryOrg) {
-      return `/beheer/${primaryOrg.id || primaryOrg.slug || 'dashboard'}`;
-    }
+    // Always redirect to /beheer regardless of organizations
+    // The admin dashboard will handle organization-specific content internally
     return '/beheer';
   };
 }

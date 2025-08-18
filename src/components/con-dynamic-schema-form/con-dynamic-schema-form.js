@@ -3,6 +3,7 @@ import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
+import { shouldShowFormField } from '@src/utilities/con-authentication-filters';
 import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
@@ -201,6 +202,7 @@ import { VISUALS } from '@src/constants';
  * @param {object} props.context - Additional context object passed to visibility functions.
  * @param {(isValid: boolean) => void} props.getIsValid - Callback function that receives the form validation state.
  * @param {boolean} props.honorImmutable - When true, fields with `immutable: true` in their schema will be disabled.
+ * @param {boolean} props.userIsAuthenticated - Whether the current user is authenticated (for authentication-based field visibility).
  * @param {React.Ref} ref - Ref object that exposes a `reset()` method to reset all ReactSelect components.
  *
  * @returns {React.ReactElement|null} The rendered dynamic form component or null if no schema properties exist.
@@ -234,6 +236,7 @@ const ConDynamicSchemaForm = forwardRef(
       context = {},
       getIsValid = () => {},
       honorImmutable = false,
+      userIsAuthenticated = false,
     },
     ref
   ) => {
@@ -414,18 +417,15 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Determines if a field should be visible based on its configuration and current form data.
+     * Determines if a field should be visible based on its configuration, current form data, and authentication state.
      * Used by renderField() and validateForm() to conditionally show/hide fields.
      *
      * @example
      * getFieldVisibility("status", { visible: (formData) => formData.type === 'active' })
-     * // Returns: true/false based on formData.type value
+     * // Returns: true/false based on formData.type value and authentication state
      */
     const getFieldVisibility = (propertyPath, fieldConfig) => {
-      if (typeof fieldConfig.visible === 'function') {
-        return fieldConfig.visible(formData, context);
-      }
-      return fieldConfig.visible !== false;
+      return shouldShowFormField(fieldConfig, formData, userIsAuthenticated, context);
     };
 
     /**

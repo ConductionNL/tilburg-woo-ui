@@ -28,7 +28,6 @@ services:
       - DIRECTORY_BASE=https://directory.test.commonground.nl
       - NEXTCLOUD_HOST=nextcloud.local
       - NEXTCLOUD_PORT=80
-      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
@@ -38,17 +37,15 @@ services:
       - SITE_DESCRIPTION=Development instance of the software catalogus
       - SITE=localhost
       - MODE=development
-      - THEME_VARIANT=development
+      - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
-      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
-      - BASE_URL=/api/apps
-      - BASE_URL_COMMONGROUND=/api/apps
+      - SUPPORT_EMAIL_ADDRESS=info@conduction.nl
+      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
       
       # Nextcloud/Target Configuration
       - NEXTCLOUD_HOST=nextcloud.local
       
       # Nginx-specific environment variables (for tilburg-woo-ui-dev container)
-      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
@@ -79,8 +76,10 @@ services:
       # Visual Configuration
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
-      - MENU_POSITION=2
       - FOOTER_STYLE=vng
+      # Footer Text Configuration
+      - FOOTER_LOGO_TITLE=VNG Softwarectalogus
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
@@ -115,9 +114,10 @@ services:
       - SITE_DESCRIPTION=Hot reload development instance
       - SITE=localhost
       - MODE=development
-      - THEME_VARIANT=development
+      - THEME_VARIANT=vng
       - ENVIRONMENT_NAME=development
-      # API Configuration (Updated to use cleaner /api/apps instead of /api/index.php/apps)
+      - SUPPORT_EMAIL_ADDRESS=info@conduction.nl
+      # API Configuration (Updated to use cleaner /api instead of /api/index.php/apps)
       - BASE_URL=/api/apps
       - BASE_URL_COMMONGROUND=/api/apps
       
@@ -125,7 +125,6 @@ services:
       - NEXTCLOUD_HOST=nextcloud.local
       - NEXTCLOUD_PORT=80
       # Nginx Proxy Configuration
-      - NGINX_OPENCONNECTOR_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_UPSTREAM=http://host.docker.internal:80
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
@@ -157,8 +156,10 @@ services:
       # Visual Configuration
       - HERO_IMAGE_URL=/home-hero-background.png
       # Menu Configuration
-      - MENU_POSITION=2
       - FOOTER_STYLE=vng
+      # Footer Text Configuration
+      - FOOTER_LOGO_TITLE=Open Tilburg
+      - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]
       interval: 30s

@@ -51,7 +51,7 @@ const AcBeheer = ({ store }) => {
   const { type, id } = useParams();
 
   if (window.location.pathname === '/beheer') {
-    return <AcDashboard />;
+    return <AcDashboard store={store} />;
   }
 
   if (!id) {

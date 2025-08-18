@@ -31,6 +31,34 @@ export class PagesStore {
     return this.items ? toJS(this.items) : [];
   }
 
+  // Get pages filtered by authentication state
+  @computed
+  get getFilteredPages() {
+    return (userIsAuthenticated = false) => {
+      const pages = this.all_pages;
+      if (!Array.isArray(pages)) return [];
+      
+      return pages.filter(page => this.shouldShowPage(page, userIsAuthenticated));
+    };
+  }
+
+  // Check if a page should be visible based on authentication
+  @action
+  shouldShowPage = (page, userIsAuthenticated) => {
+    if (!page) return false;
+    
+    const hideBeforeLogin = page.hideBeforeLogin === true;
+    const hideAfterLogin = page.hideAfterLogin === true;
+    
+    if (userIsAuthenticated) {
+      // User is logged in - don't show if hideAfterLogin is true
+      return !hideAfterLogin;
+    } else {
+      // User is not logged in - don't show if hideBeforeLogin is true
+      return !hideBeforeLogin;
+    }
+  };
+
   @computed
   get get_single() {
     return this.single ? toJS(this.single) : null;

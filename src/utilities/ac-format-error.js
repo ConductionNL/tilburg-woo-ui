@@ -1,5 +1,6 @@
 // Imports => Constants
 import { KEYS } from '@constants';
+import { getSupportEmailAddress } from '@constants/container.constants';
 
 // Imports => Utilities
 import { AcCapitalize } from '@utils';
@@ -10,7 +11,8 @@ export const AcFormatErrorMessage = (error, list = false) => {
 		error && error.response && error.response.status ? error.response.status : false;
 
 	if (!code || code === 500) {
-		return `Er is een onbekende fout opgetreden. Probeer het opnieuw of neem contact op met <em>${KEYS.SUPPORT_EMAIL_ADDRESS}</em>`;
+		const supportEmail = getSupportEmailAddress();
+		return `Er is een onbekende fout opgetreden. Probeer het opnieuw of neem contact op met <a href="mailto:${supportEmail}">${supportEmail}</a>`;
 	}
 
 	if (error.response && error.response.data && error.response.data.errors) {
@@ -37,6 +39,12 @@ export const AcFormatErrorMessage = (error, list = false) => {
 		if (!list) msg = msg.join('<br/>');
 	} else if (error.response && error.response.data && error.response.data.message) {
 		msg = error.response.data.message;
+	} else if (error.response && error.response.data && error.response.data.error) {
+		// Handle {"error": "Invalid username or password"} format
+		msg = error.response.data.error;
+	} else if (error.response && error.response.data && typeof error.response.data === 'string') {
+		// Handle plain string error responses
+		msg = error.response.data;
 	}
 
 	return msg;

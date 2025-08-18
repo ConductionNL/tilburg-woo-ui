@@ -57,6 +57,15 @@ const ConMarkdown = loadable(() =>
 const ConTableSearch = loadable(() =>
   import('@src/components/con-table-search/con-table-search')
 );
+const ConTemplateText = loadable(() =>
+  import('@src/components/con-template-text/con-template-text')
+);
+const ConDynamicSidenav = loadable(() =>
+  import('@src/components/con-dynamic-sidenav/con-dynamic-sidenav')
+);
+const ConPublicationActions = loadable(() =>
+  import('@src/components/con-publication-actions/con-publication-actions')
+);
 
 export {
   AcAbout,
@@ -85,4 +94,7 @@ export {
   ConDynamicSchemaForm,
   ConMarkdown,
   ConTableSearch,
+  ConTemplateText,
+  ConDynamicSidenav,
+  ConPublicationActions,
 };

@@ -1,35 +1,18 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
-const API = '/api';
-const FAQS = '/faqs';
-const PUBLIC = '/public';
-const PAGES = '/pages';
-const PUBLICATIONS = '/publications';
-const SEARCH = '/search';
-const ATTACHMENTS = '/attachments';
-const CATALOG = '/catalogi';
-const THEMES = '/themes';
-const AUTHENTICATION = '/authentication';
-const MIJN_OMGEVING = '/mijn-omgeving';
-const GEMMA = '/gemma';
-const MENUS = '/menu';
-const OBJECTS = '/objects';
-
-const OPENCONNECTOR = '/openconnector';
-const OPENCATALOGI = '/opencatalogi';
-const ENDPOINT = '/endpoint';
-const VIEWS = '/views';
-const ELEMENTS = '/elements';
-const VOORZIENING_GEBRUIK = '/voorzieninggebruiken';
 const HOSTNAME = window.location.hostname;
 
 // Try to import container constants (generated at runtime)
 let containerConfig;
+let getApiUrl;
 try {
-  containerConfig = require('@constants/container.constants');
+  const containerConstants = require('@constants/container.constants');
+  containerConfig = containerConstants;
+  getApiUrl = containerConstants.getApiUrl;
 } catch (error) {
   console.warn('Container constants not available, falling back to hostname-based logic');
   containerConfig = null;
+  getApiUrl = () => '/api';
 }
 
 const getGemmaEndpoint = () => {
@@ -52,42 +35,49 @@ const getGemmaEndpoint = () => {
   }
 };
 
-const PAGES_ENDPOINT = `${OPENCATALOGI}${API}${PAGES}`;
-
-const MENUS_ENDPOINT = `${OPENCATALOGI}${API}${MENUS}s`;
-
-const THEMES_ENDPOINT = `${OPENCATALOGI}${API}${THEMES}`;
-
 export const ENDPOINTS = AcLockObject({
+  OAUTH: {
+    LOGIN: `/oauth/login`,
+    REGISTER: `/oauth/register`,
+    FORGOT_PASSWORD: `/oauth/forgot-password`,
+    RESET_PASSWORD: `/oauth/reset-password`,
+    REFRESH: `/oauth/refresh`,
+    LOGOUT: `/oauth/logout`,
+  },
+  OPENCONNECTOR: {
+    USER_LOGIN: `/openconnector/api/user/login`,
+    USER_LOGOUT: `/openconnector/api/user/logout`,
+    USER_PROFILE: `/openconnector/api/user/me`,
+  },
   PUBLICATIONS: {
-    SEARCH: `${OPENCATALOGI}${API}${PUBLICATIONS}`, // GET
+    SEARCH: `/opencatalogi/api/publications`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI}${API}${PUBLICATIONS}/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
+      `/opencatalogi/api/publications/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
     RELATIONS: (_uri) =>
-      `${OPENCATALOGI}${API}${PUBLICATIONS}?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
+      `/opencatalogi/api/publications?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
     ATTACHMENTS: (_id) =>
-      `${OPENCATALOGI}${API}${PUBLICATIONS}/${_id}${ATTACHMENTS}`, // GET
+      `/opencatalogi/api/publications/${_id}/attachments`, // GET
   },
   MIJN_OMGEVING: {
-    SEARCH: `${OPENCATALOGI}${API}${MIJN_OMGEVING}`, // GET
+    SEARCH: `/mijn-omgeving`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI}${API}${SEARCH}${MIJN_OMGEVING}/${_id}?extend=all`, // GET
+      `/mijn-omgeving/${_id}?extend=all`, // GET
   },
   AUTHENTICATION: {
-    SEARCH: `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}`, // GET
+    SEARCH: `/publications`, // GET
     SINGLE: (_id) =>
-      `${OPENCATALOGI}${API}${SEARCH}${PUBLICATIONS}/${_id}?extend=all`, // GET
+      `/publications/${_id}?extend=all`, // GET
   },
   FAQS: {
-    INDEX: `${OPENCATALOGI}${API}${PUBLIC}${FAQS}`, // GET
-    SHOW: (_id) => `${OPENCATALOGI}${API}${PUBLIC}${FAQS}${_id}`, // GET
+    INDEX: `/faqs`, // GET
+    SHOW: (_id) => `/faqs/${_id}`, // GET
   },
   PAGES: {
-    INDEX: `${PAGES_ENDPOINT}`, // GET
-    SHOW: (_slug) => `${PAGES_ENDPOINT}${_slug}`, // GET
+    INDEX: `/opencatalogi/api/pages`, // GET
+    SHOW: (_slug) => `/opencatalogi/api/pages/${_slug}`, // GET
   },
   THEMES: {
-    INDEX: `${THEMES_ENDPOINT}`, // GET
+    INDEX: `/opencatalogi/api/themes`, // GET
   },
   GEMMA: {
     // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
@@ -106,8 +96,8 @@ export const ENDPOINTS = AcLockObject({
       `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken?extend[]=voorzieningId`,
   }, // GET
   MENU: {
-    INDEX: `${MENUS_ENDPOINT}`, // GET
-    SINGLE: (_id) => `${MENUS_ENDPOINT}/${_id}`, // GET
+    INDEX: `/opencatalogi/api/menus`, // GET
+    SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
 });
 

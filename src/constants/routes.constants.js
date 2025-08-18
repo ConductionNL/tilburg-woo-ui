@@ -28,24 +28,14 @@ import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-ho
 
 export const PATHS = AcLockObject({
   HOME: '/',
-  ABOUT: '/over-ons',
-  ACCESSIBILITY: '/toegankelijkheid',
-  CONTACT: '/contact',
-  COOKIES: 'https://www.tilburg.nl/cookies/',
-  FAQ: '/veelgestelde-vragen',
-  ORGANIZATION: '/organisatie-en-werkwijze',
-  PRIVACY: 'https://www.tilburg.nl/privacystatement/',
-  PROCLAIMER: 'https://www.tilburg.nl/proclaimer/',
+  // CMS-driven routes removed: ABOUT, ACCESSIBILITY, CONTACT, FAQ, ORGANIZATION, COOKIES, PRIVACY, PROCLAIMER, WEBSITE, WOO, REACH_OUT
   PUBLICATION: '/publicatie/:id',
-  REACH_OUT: '/bereikbaarheidsgegeverns',
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   AUTHENTICATION_STATIC: '/login',
   MIJN_OMGEVING_STATIC: '/mijn-omgeving',
   GEMMA_STATIC: '/gemma',
   THEMES: '/onderwerpen',
-  WEBSITE: 'https://www.tilburg.nl/',
-  WOO: '/woo-verzoek',
   NEXTCLOUD_LOGIN: '/login',
   NEXTCLOUD_AUTHORIZATION: '/authorization',
   BEHEER: '/beheer',
@@ -117,41 +107,7 @@ const getTitle = () => {
 };
 
 export const ROUTES = {
-  ABOUT: {
-    id: AcUUID(),
-    name: 'About',
-    label: TITLES.ABOUT,
-    path: PATHS.ABOUT,
-    title: `${TITLES.BASE} | ${TITLES.ABOUT}`,
-  },
-  ACCESSIBILITY: {
-    id: AcUUID(),
-    name: 'Accessibility',
-    label: TITLES.ACCESSIBILITY,
-    path: PATHS.ACCESSIBILITY,
-    title: `${TITLES.BASE} | ${TITLES.ACCESSIBILITY}`,
-  },
-  CONTACT: {
-    id: AcUUID(),
-    name: 'Contact',
-    label: TITLES.CONTACT,
-    path: PATHS.CONTACT,
-    title: `${TITLES.BASE} | ${TITLES.CONTACT}`,
-  },
-  COOKIES: {
-    id: AcUUID(),
-    name: 'Cookies',
-    label: TITLES.COOKIES,
-    href: PATHS.COOKIES,
-    isExternal: true,
-  },
-  FAQ: {
-    id: AcUUID(),
-    name: 'FAQ',
-    label: TITLES.FAQ,
-    href: PATHS.FAQ,
-    title: `${TITLES.BASE} | ${TITLES.FAQ}`,
-  },
+  // CMS-driven routes removed: ABOUT, ACCESSIBILITY, CONTACT, COOKIES, FAQ
   HOME: {
     id: AcUUID(),
     name: 'Home',
@@ -162,27 +118,7 @@ export const ROUTES = {
     }`,
     component: AcHome,
   },
-  ORGANIZATION: {
-    id: AcUUID(),
-    name: 'Organization',
-    label: LABELS.ORGANIZATION,
-    href: PATHS.ORGANIZATION,
-    title: `${TITLES.BASE} | ${TITLES.ORGANIZATION}`,
-  },
-  PRIVACY: {
-    id: AcUUID(),
-    name: 'Privacy',
-    label: TITLES.PRIVACY,
-    href: PATHS.PRIVACY,
-    isExternal: true,
-  },
-  PROCLAIMER: {
-    id: AcUUID(),
-    name: 'Proclaimer',
-    label: TITLES.PROCLAIMER,
-    href: PATHS.PROCLAIMER,
-    isExternal: true,
-  },
+  // CMS-driven routes removed: ORGANIZATION, PRIVACY, PROCLAIMER
   PUBLICATION: {
     id: AcUUID(),
     name: 'Publication',
@@ -239,44 +175,7 @@ export const ROUTES = {
     }`,
     component: AcThemes,
   },
-  ABOUT: {
-    id: AcUUID(),
-    name: 'Over Open Tilburg',
-    label: TITLES.ABOUT,
-    path: PATHS.ABOUT,
-    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Over`,
-  },
-  WEBSITE: {
-    id: AcUUID(),
-    name: 'Website',
-    label: TITLES.WEBSITE,
-    href: PATHS.WEBSITE,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.WEBSITE}`,
-  },
-  WOO: {
-    id: AcUUID(),
-    name: 'WOO',
-    label: TITLES.WOO,
-    href: PATHS.WOO,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.WOO}`,
-  },
-  REACH_OUT: {
-    id: AcUUID(),
-    name: 'ReachOut',
-    label: TITLES.REACH_OUT,
-    href: PATHS.REACH_OUT,
-    isExternal: true,
-    title: `${TITLES.BASE} | ${TITLES.REACH_OUT}`,
-  },
-  ACCESSIBILITY: {
-    id: AcUUID(),
-    name: 'Toegankelijkheid',
-    label: TITLES.ACCESSIBILITY,
-    path: PATHS.ACCESSIBILITY,
-    title: `${TITLES.BASE} | ${TITLES.ACCESSIBILITY}`,
-  },
+  // CMS-driven routes removed: ABOUT (duplicate), WEBSITE, WOO, REACH_OUT, ACCESSIBILITY (duplicate)
   NEXTCLOUD_LOGIN: {
     id: AcUUID(),
     name: 'Nextcloud Login',
@@ -487,34 +386,14 @@ export const DIMPACT_ROUTES_INFORMATION = {
   },
 };
 
-const ROUTES_EXTERNAL = {
-  TILBURG: {
-    label: 'Tilburg',
-    href: 'https://www.tilburg.nl/',
-  },
-  PRIVACY: {
-    label: 'Privacy',
-    href: 'https://www.tilburg.nl/privacystatement/',
-  },
-  PROCLAIMER: {
-    label: 'Proclaimer',
-    href: 'https://www.tilburg.nl/proclaimer/',
-  },
-  COOKIES: {
-    label: 'Cookies',
-    href: 'https://www.tilburg.nl/cookies/',
-  },
-};
+// CMS-driven external routes removed - now managed by OpenCatalogi
 
 export const NAVIGATION_ITEMS = [ROUTES.HOME];
 
 export const FOOTER_PRIMARY_ABOUT = [
-  ROUTES.ABOUT,
+  // CMS-driven routes removed from footer - now managed by OpenCatalogi
   ROUTES.SEARCH,
   ROUTES.THEMES,
-  ROUTES.ORGANIZATION,
-  ROUTES.FAQ,
-  ROUTES.CONTACT,
 ];
 
 export const VNG_FOOTER_ITEMS_SITEMAP = [
@@ -555,25 +434,25 @@ export const DIMPACT_FOOTER_ITEMS_INFORMATION = [
   DIMPACT_ROUTES_INFORMATION.KVK,
 ];
 
-export const EXTERNAL_LINKS = [
-  ROUTES_EXTERNAL.TILBURG,
-  ROUTES_EXTERNAL.PRIVACY,
-  ROUTES_EXTERNAL.PROCLAIMER,
-  ROUTES_EXTERNAL.COOKIES,
-];
+// CMS-driven external links removed - now managed by OpenCatalogi
+export const EXTERNAL_LINKS = [];
 
-export const FOOTER_PRIMARY_QUICK = [ROUTES.WEBSITE, ROUTES.WOO, ROUTES.REACH_OUT];
+// CMS-driven footer links removed - now managed by OpenCatalogi
+export const FOOTER_PRIMARY_QUICK = [];
 
-export const FOOTER_SECONDARY = [
-  ROUTES.ACCESSIBILITY,
-  ROUTES.PROCLAIMER,
-  ROUTES.COOKIES,
-  ROUTES.PRIVACY,
-];
+export const FOOTER_SECONDARY = [];
 
 export const SUB_NAVIGATION_ITEMS = [];
 
 export const AUTHENTICATION_ROUTES = [];
+
+// Routes that require user authentication
+export const AUTHENTICATION_REQUIRED_ROUTES = [
+  PATHS.BEHEER,
+  PATHS.BEHEER_TYPE,
+  PATHS.BEHEER_TYPE_DETAILS,
+  PATHS.MY_ACCOUNT,
+];
 
 export const DEFAULT_ROUTE = ROUTES.HOME;
 export const REDIRECT_ROUTE = ROUTES.HOME;

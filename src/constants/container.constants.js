@@ -8,7 +8,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   SITE_DESCRIPTION: 'Development instance of the software catalogus',
   SITE: 'localhost',
   MODE: 'development',
-  THEME_VARIANT: 'development',
+  THEME_VARIANT: 'vng',
   ENVIRONMENT_NAME: 'development',
   BASE_URL: '/api/apps',
   GRANT_TYPE: 'authorization_code',
@@ -33,8 +33,10 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_COOKIES_URL: 'https://www.tilburg.nl/cookies/',
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
-  MENU_POSITION: 2,
   FOOTER_STYLE: 'vng',
+  FOOTER_LOGO_TITLE: 'VNG Softwarectalogus',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle software voor en door Gemeenten',
+  SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
 });
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
@@ -79,4 +81,8 @@ export const getVisualConfig = () => ({
   menuPosition: CONTAINER_CONFIG.MENU_POSITION,
   footerStyle: CONTAINER_CONFIG.FOOTER_STYLE,
 });
+// Footer text helper functions
+export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
+export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
+export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
 export const getDefaultConfig = () => CONTAINER_CONFIG;

@@ -29,6 +29,7 @@ const AcLogin = ({ store }) => {
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect_url');
+  const wasRedirected = !!redirectUrl;
 
   // Check if already authenticated on component mount
   useEffect(() => {
@@ -119,6 +120,24 @@ const AcLogin = ({ store }) => {
   return (
     <div className='ac-login-container'>
       <div>
+        {wasRedirected && (
+          <div className='ac-login-redirect-notice' style={{ 
+            backgroundColor: '#e3f2fd', 
+            border: '1px solid #2196f3', 
+            borderRadius: '4px', 
+            padding: '12px', 
+            marginBottom: '16px',
+            color: '#1976d2'
+          }}>
+            <strong>Inloggen vereist:</strong> Je moet inloggen om deze pagina te bekijken.
+            {redirectUrl && (
+              <div style={{ fontSize: '0.9em', marginTop: '12px' }}>
+                Na het inloggen word je doorgestuurd naar: <code>{decodeURIComponent(redirectUrl)}</code>
+              </div>
+            )}
+          </div>
+        )}
+        
         <div className='ac-login-heading'>
           <Heading level={1}>Inloggen</Heading>
         </div>
@@ -172,11 +191,11 @@ const AcLogin = ({ store }) => {
           <AcButton
             style='button'
             buttonType='secondary'
-            onClick={handleNextcloudLogin}
+            onClick={() => navigate('/register')}
             className='ac-login-form-button'
             disabled={isLoading || user.loading.status}
           >
-            Nextcloud
+            Aanmelden
           </AcButton>
 
           {(user.error || errors.general) && (

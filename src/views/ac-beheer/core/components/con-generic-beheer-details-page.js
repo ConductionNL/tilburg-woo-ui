@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
 import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
-import { AcSideNav, AcLoader } from '@components';
+import { ConDynamicSidenav, AcLoader } from '@components';
 import {
   Heading,
   Paragraph,
@@ -36,10 +36,12 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
  * - Supports unique action menu items and edit/delete via external modals
  */
 const ConGenericBeheerDetailsPage = ({
-  store: { object, user },
+  store,
   type,
   id: propId,
 }) => {
+  // Destructure the stores we need
+  const { object, user } = store;
   const navigate = useNavigate();
   const params = useParams();
   const id = propId || params?.id;
@@ -178,17 +180,17 @@ const ConGenericBeheerDetailsPage = ({
   }, [config?.schemaSlug, data?.id, makeActionsForContext]);
 
   if (!config) {
-    return <AcBeheerError error={'Onbekend detailtype'} />;
+    return <AcBeheerError error={'Onbekend detailtype'} store={store} />;
   }
 
   if (error) {
-    return <AcBeheerError error={error.message} />;
+    return <AcBeheerError error={error.message} store={store} />;
   }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
         <div className='ac-beheer-details--100-width'>
           <AcColumn gap='sm'>
             {loading && <AcLoader />}
@@ -208,6 +210,25 @@ const ConGenericBeheerDetailsPage = ({
                       >
                         Bijwerken
                       </ConActionMenu.Button>
+                      
+                      {/* Standard publish/depublish actions for all types */}
+                      {!data?.['@self']?.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH />}
+                          onClick={() => setOpenModal('publish')}
+                        >
+                          Publiceren
+                        </ConActionMenu.Button>
+                      )}
+                      
+                      {data?.['@self']?.published && (
+                        <ConActionMenu.Button
+                          icon={<VISUALS.PUBLISH_OFF />}
+                          onClick={() => setOpenModal('depublish')}
+                        >
+                          Depubliceren
+                        </ConActionMenu.Button>
+                      )}
                       {config.uniqueActions?.map((action) =>
                         // if condition is true show the action
                         action.condition?.(data) ? (
@@ -250,6 +271,17 @@ const ConGenericBeheerDetailsPage = ({
                     </ConActionMenu.Menu>
                   </ConActionMenu>
                 </AcFlex>
+
+                {/* Warning card for unpublished objects */}
+                {!data?.['@self']?.published && (
+                  <Alert type="warning">
+                    <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
+                    <Paragraph>
+                      Dit object is momenteel niet zichtbaar in de zoekfunctie van {config?.title || 'de catalogus'}. 
+                      Gebruik de "Publiceren" actie om het object beschikbaar te maken voor bezoekers.
+                    </Paragraph>
+                  </Alert>
+                )}
 
                 <AcColumn gap='tiger'>
                   {showDescriptionFields && (
@@ -499,7 +531,7 @@ const ConGenericBeheerDetailsPage = ({
           // Include all available modals for this type plus dynamicCreate, exclude add/import
           modals: (BeheerModalFactory.modalComponents[type]
             ? Object.keys(BeheerModalFactory.modalComponents[type])
-            : []
+            : ['edit', 'delete', 'publish', 'depublish'] // Default base modals for unknown types
           )
             .filter((m) => m !== 'add' && m !== 'import')
             .concat('dynamicCreate'),

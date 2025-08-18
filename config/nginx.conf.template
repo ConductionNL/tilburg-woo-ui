@@ -28,28 +28,6 @@ http {
         add_header X-Frame-Options DENY always;
         add_header X-XSS-Protection "1; mode=block" always;
 
-        # API Proxy to Nextcloud (all API requests through /api/)
-        location /api/openconnector/ {
-            proxy_pass ${NGINX_OPENCONNECTOR_UPSTREAM}/index.php/apps/openconnector/api/;
-            proxy_set_header Host ${NGINX_TARGET_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_cookie_path / /;
-            proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
-            
-            # Enable CORS
-            add_header Access-Control-Allow-Origin $http_origin always;
-            add_header Access-Control-Allow-Credentials true always;
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
-            
-            # Handle preflight requests
-            if ($request_method = 'OPTIONS') {
-                return 204;
-            }
-        }
-
         # API Proxy for Nextcloud apps (adds index.php automatically)
         location /api/apps/ {
             proxy_pass ${NGINX_NEXTCLOUD_UPSTREAM}/index.php/apps/;
@@ -60,35 +38,34 @@ http {
             proxy_cookie_path / /;
             proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
             
-            # Enable CORS
+            # Make requests appear to come from Nextcloud's own domain
+            proxy_set_header Origin https://${NGINX_TARGET_HOST};
+            proxy_set_header Referer https://${NGINX_TARGET_HOST}/;
+            proxy_set_header X-Forwarded-Host ${NGINX_TARGET_HOST};
+            
+            # Hide any CORS headers from backend to prevent conflicts
+            proxy_hide_header Access-Control-Allow-Origin;
+            proxy_hide_header Access-Control-Allow-Credentials;
+            proxy_hide_header Access-Control-Allow-Methods;
+            proxy_hide_header Access-Control-Allow-Headers;
+            proxy_hide_header Access-Control-Max-Age;
+            
+            # Override with correct CORS headers based on requesting origin
             add_header Access-Control-Allow-Origin $http_origin always;
             add_header Access-Control-Allow-Credentials true always;
             add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
+            add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma" always;
+            add_header Access-Control-Max-Age 86400 always;
             
-            # Handle preflight requests
-            if ($request_method = 'OPTIONS') {
-                return 204;
-            }
-        }
-
-        location /api/ {
-            proxy_pass ${NGINX_NEXTCLOUD_UPSTREAM}/;
-            proxy_set_header Host ${NGINX_TARGET_HOST};
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            proxy_cookie_path / /;
-            proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
-            
-            # Enable CORS
-            add_header Access-Control-Allow-Origin $http_origin always;
-            add_header Access-Control-Allow-Credentials true always;
-            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
-            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
-            
-            # Handle preflight requests
-            if ($request_method = 'OPTIONS') {
+            # Handle preflight OPTIONS requests
+            if ($request_method = OPTIONS) {
+                add_header Access-Control-Allow-Origin $http_origin always;
+                add_header Access-Control-Allow-Credentials true always;
+                add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, PATCH, OPTIONS" always;
+                add_header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, Pragma" always;
+                add_header Access-Control-Max-Age 86400 always;
+                add_header Content-Type "text/plain charset=UTF-8" always;
+                add_header Content-Length 0 always;
                 return 204;
             }
         }

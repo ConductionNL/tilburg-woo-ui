@@ -14,7 +14,11 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const pathname = window.location.pathname;
 
   const { fetchMenus, getMenuFromPosition, is_loading: menu_loading } = menu;
-  const menus = getMenuFromPosition(1);
+  
+  // Get main navigation from position 1 with authentication filtering
+  const activeMenu = getMenuFromPosition(1, user.isAuthenticated, user.userGroups || []);
+  
+
 
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
@@ -25,8 +29,14 @@ const AcNavigation = ({ store: { menu, user } }) => {
 
   useEffect(() => {
     setIsMenuOpen(false);
-    fetchMenus();
   }, [location]);
+
+  // Fetch menus only once on component mount if not already loaded
+  useEffect(() => {
+    if (!menu.all_menu_items || menu.all_menu_items.length === 0) {
+      fetchMenus();
+    }
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -51,10 +61,10 @@ const AcNavigation = ({ store: { menu, user } }) => {
         {isMenuOpen ? LABELS.CLOSE_SINGULAR : LABELS.MENU}
       </button>
       <nav aria-label='Hoofd'>
-        {(menus && !user.isAuthenticated && (
+        {activeMenu && activeMenu.items && Array.isArray(activeMenu.items) && activeMenu.items.length > 0 && (
           <ul>
-            {menus.items.map((menuItem) => (
-              <li>
+            {activeMenu.items.map((menuItem) => (
+              <li key={menuItem.name || menuItem.link}>
                 <Link to={menuItem.link}>
                   <Icon icon={menuItem.icon} />
                   {menuItem.name}
@@ -62,69 +72,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
               </li>
             ))}
           </ul>
-        )) ||
-          (AcCheckIfSpecificHostname() && (
-            <>
-              {!pathname.includes('beheer') && !user.isAuthenticated ? (
-                <ul>
-                  <li>
-                    <Link to='/register'>
-                      <VISUALS.PERSON_ADD />
-                      Aanmelden
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to='/login'>
-                      <VISUALS.KEY />
-                      Inloggen
-                    </Link>
-                  </li>
-                </ul>
-              ) : (
-                <ul>
-                  <li>
-                    <Link to='/beheer'>
-                      <VISUALS.CHART_LINE />
-                      Dashboard
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to='/account'>
-                      <VISUALS.USER />
-                      Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to='#' onClick={handleLogout}>
-                      <VISUALS.RIGHT_FROM_BRACKET />
-                      Logout
-                    </Link>
-                  </li>
-                </ul>
-              )}
-            </>
-          )) || (
-            <ul>
-              <li>
-                <Link to='/over-ons'>
-                  <VISUALS.INFO />
-                  Over Open Tilburg
-                </Link>
-              </li>
-              <li>
-                <Link to='/onderwerpen'>
-                  <VISUALS.LIST />
-                  Onderwerpen
-                </Link>
-              </li>
-              <li>
-                <Link to='/contact'>
-                  <VISUALS.CONTACT />
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          )}
+        )}
       </nav>
     </div>
   );

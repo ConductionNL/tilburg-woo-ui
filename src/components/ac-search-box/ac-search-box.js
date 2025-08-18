@@ -58,7 +58,11 @@ export const AcSearchBox = ({
   return (
     <>
       <form className={_CLASSES} onSubmit={submitCallback}>
-        {renderHeading}
+        {renderHeading && (
+          <div className='ac-search-box__title-wrapper'>
+            {renderHeading}
+          </div>
+        )}
 
         <AcFlex column spacing='sm'>
           <FormLabel>{label}</FormLabel>

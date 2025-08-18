@@ -37,7 +37,7 @@ const DEFAULT_PRE_SELECTED = {};
  * @param {Object} props.configOverrides - Configuration overrides
  */
 const ConGenericFormModal = ({
-  store: { object },
+  store: { object, user },
   type,
   data = null,
   showModal = false,
@@ -585,6 +585,7 @@ const ConGenericFormModal = ({
             disabledStates={{}}
             getIsValid={handleFormValidCheck}
             honorImmutable={isEdit}
+            userIsAuthenticated={user.isAuthenticated}
           />
         ) : (
           <div>

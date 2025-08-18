@@ -10,7 +10,7 @@ import {
 } from '@utrecht/component-library-react';
 import { VISUALS, LABELS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
-import { AcSideNav } from '@components';
+import { ConDynamicSidenav } from '@components';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcColumn from '@atoms/ac-column/ac-column';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
@@ -32,24 +32,30 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
  * This component can handle all beheer page types through configuration
  */
 const ConGenericBeheerPage = ({
-  store: { object, user },
+  store,
   type,
   configOverrides = {},
 }) => {
+  // Destructure the stores we need
+  const { object, user } = store;
   const navigate = useNavigate();
   const [beoordelingFilter, setBeoordelingFilter] = useState(null);
   const [showSearch, setShowSearch] = useState(false);
+  const [enhancedConfig, setEnhancedConfig] = useState(null);
 
-  // Get configuration for this type
-  const config = useMemo(() => {
+  // Get base configuration for this type
+  const baseConfig = useMemo(() => {
     try {
-      const baseConfig = BeheerPageConfigFactory.createConfig(type);
-      return { ...baseConfig, ...configOverrides };
+      const config = BeheerPageConfigFactory.createConfig(type);
+      return { ...config, ...configOverrides };
     } catch (err) {
       // If configuration doesn't exist for this type, return null
       return null;
     }
   }, [type, configOverrides]);
+
+  // Use enhanced config if available, otherwise fall back to base config
+  const config = enhancedConfig || baseConfig;
 
   // Generate object type identifier for the object store
   const objectType = useMemo(() => {
@@ -81,6 +87,9 @@ const ConGenericBeheerPage = ({
 
   // Get schema properties from object store
   const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : [];
+  
+  // Get full schema object to access title and other metadata
+  const schemaData = schemaType ? object.getSchema(schemaType) : null;
 
   const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
 
@@ -90,6 +99,37 @@ const ConGenericBeheerPage = ({
         return storeError ? { message: storeError } : null;
       })()
     : null;
+
+  // Enhance config with dynamic headers and title from schema
+  useEffect(() => {
+    if (baseConfig && dataProperties && Object.keys(dataProperties).length > 0 && !schemaLoading && !schemaError) {
+      // Only enhance if we have a generic config (no predefined defaultHeaders)
+      if (baseConfig.defaultHeaders && baseConfig.defaultHeaders.length === 0) {
+        const schemaPropertyKeys = Object.entries(dataProperties)
+          .filter(([key, value]) => value.hideOnCollection !== true)
+          .map(([key, value]) => key);
+        
+        // Use schema title if available, otherwise capitalize the type without "Beheer" prefix
+        let dynamicTitle = baseConfig.title;
+        if (schemaData && schemaData.title) {
+          dynamicTitle = schemaData.title;
+        } else {
+          // Remove "Beheer " prefix and just use the capitalized type
+          dynamicTitle = type.charAt(0).toUpperCase() + type.slice(1);
+        }
+        
+        const enhancedConfigWithHeaders = {
+          ...baseConfig,
+          defaultHeaders: schemaPropertyKeys,
+          title: dynamicTitle,
+        };
+        setEnhancedConfig(enhancedConfigWithHeaders);
+      } else {
+        // If config already has headers, use it as-is
+        setEnhancedConfig(baseConfig);
+      }
+    }
+  }, [baseConfig, dataProperties, schemaData, schemaLoading, schemaError, type]);
 
   // If no configuration exists for this type, show wrong page
   if (!config) {
@@ -252,7 +292,7 @@ const ConGenericBeheerPage = ({
     if (!dataProperties) return [];
 
     return Object.entries(dataProperties)
-      .filter(([key, value]) => value.visible !== false)
+      .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
       .map(([key, value]) => {
         // Check if we have a custom override for this header
         if (config.customHeaders[key]) {
@@ -260,9 +300,12 @@ const ConGenericBeheerPage = ({
         }
 
         // Generate standard header from schema
+        // Use schema property title if available, otherwise capitalize the key
+        const label = value.title && value.title.trim() ? value.title : _.upperFirst(key);
+        
         return {
           id: key,
-          label: _.upperFirst(key),
+          label: label,
           key: key,
         };
       });
@@ -357,11 +400,11 @@ const ConGenericBeheerPage = ({
   );
 
   if (error) {
-    return <AcBeheerError title={config.title} error={error.message} />;
+    return <AcBeheerError title={config.title} error={error.message} store={store} />;
   }
 
   if (schemaError) {
-    return <AcBeheerError title={config.title} error={schemaError.message} />;
+    return <AcBeheerError title={config.title} error={schemaError.message} store={store} />;
   }
 
   // Build table headers with status icon if configured
@@ -384,7 +427,7 @@ const ConGenericBeheerPage = ({
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
-        <AcSideNav />
+        <ConDynamicSidenav store={store} />
 
         <AcColumn gap='sm' horizontalOverflowWrapper>
           <AcFlex

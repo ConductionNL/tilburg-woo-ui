@@ -6,6 +6,7 @@ import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import { ConPublicationActions } from '@components';
 
 const ConCardOrganisationApplication = ({
   skeleton,
@@ -15,6 +16,8 @@ const ConCardOrganisationApplication = ({
   id,
   logo,
   cardType,
+  user,
+  published,
 }) => {
   const icon = useMemo(() => {
     switch (cardType) {
@@ -51,12 +54,24 @@ const ConCardOrganisationApplication = ({
         <AcFlex alignItems='center' spacing='sm'>
           <Paragraph small>{type}</Paragraph>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
-          <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {title}
-          </span>
-          <VISUALS.ARROW_RIGHT />
-        </AcLink>
+        <AcFlex alignItems='center' spacing='sm'>
+          {user?.isAuthenticated && (
+            <ConPublicationActions
+              user={user}
+              id={id}
+              schemaSlug={cardType}
+              title={title}
+              published={published}
+              triggerStyle='buttonSlim'
+            />
+          )}
+          <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+            <span className='sr-only'>
+              {LABELS.READ_MORE_ABOUT} {title}
+            </span>
+            <VISUALS.ARROW_RIGHT />
+          </AcLink>
+        </AcFlex>
       </AcFlex>
     </AcCard>
   );

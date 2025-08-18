@@ -3,7 +3,7 @@ import { observable, makeObservable, action, runInAction } from 'mobx';
 
 // Imports => Utilities
 import axios, { CanceledError } from 'axios';
-import { getCookie, sortPropertiesByOrder } from '@src/utilities';
+import { getCookie, sortPropertiesByOrder, AcFormatErrorMessage } from '@src/utilities';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 let app = {};
@@ -1109,7 +1109,8 @@ export class ObjectStore {
       }
 
       console.error(`Error fetching collection for ${type}:`, error);
-      this.setError(type, error.message);
+      const formattedError = AcFormatErrorMessage(error) || error.message;
+      this.setError(type, formattedError);
       this.setSuccess(type, false);
       throw error;
     } finally {
@@ -1322,7 +1323,8 @@ export class ObjectStore {
       }
 
       console.error(`Error fetching schema for ${schemaId}:`, error);
-      this.setSchemaError(schemaType, error.message);
+      const formattedError = AcFormatErrorMessage(error) || error.message;
+      this.setSchemaError(schemaType, formattedError);
       throw error;
     } finally {
       this.setSchemaLoading(schemaType, false);

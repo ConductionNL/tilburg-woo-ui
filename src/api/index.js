@@ -90,35 +90,7 @@ export class API {
     });
     addInterceptors(Client);
 
-    const PublicationsClient = axios.create({
-      ...config.publications,
-    });
-    addInterceptors(PublicationsClient);
-
-    const ThemesClient = axios.create({
-      ...config.themes,
-    });
-    addInterceptors(ThemesClient);
-
-    const MenuClient = axios.create({
-      ...config.menus,
-    });
-    addInterceptors(MenuClient);
-
-    const AuthenticationClient = axios.create({
-      ...config.authentication,
-    });
-    addInterceptors(AuthenticationClient);
-
-    const MijnOmgevingClient = axios.create({
-      ...config.mijnOmgeving,
-    });
-    addInterceptors(MijnOmgevingClient);
-
-    const GemmaClient = axios.create({
-      ...config.gemma,
-    });
-    addInterceptors(GemmaClient);
+    // All APIs now use the single Client
 
     const DownloadClient = axios.create({
       ...config.download,
@@ -135,17 +107,17 @@ export class API {
     window.addEventListener('cancelRequests', cancelRequests, false);
 
     this.auth = new AuthAPI({ Store, Client });
-    this.publications = new PublicationsAPI({ Store, Client: PublicationsClient });
+    this.publications = new PublicationsAPI({ Store, Client });
     this.faqs = new FaqsAPI({ Store, Client });
     this.pages = new PagesAPI({ Store, Client });
-    this.themes = new ThemesAPI({ Store, Client: ThemesClient });
-    this.menu = new MenuAPI({ Store, Client: MenuClient });
+    this.themes = new ThemesAPI({ Store, Client });
+    this.menu = new MenuAPI({ Store, Client });
     this.authentication = new AuthenticationAPI({
       Store,
-      Client: AuthenticationClient,
+      Client,
     });
-    this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client: MijnOmgevingClient });
-    this.gemma = new GemmaAPI({ Store, Client: GemmaClient });
+    this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client });
+    this.gemma = new GemmaAPI({ Store, Client });
   }
 }
 

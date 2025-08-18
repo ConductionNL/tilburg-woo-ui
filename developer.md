@@ -341,7 +341,7 @@ docker-compose -f docker-compose.dev.yml up -d
 ```yaml
 environment:
   - SITE_TITLE=Local Development 🛠️
-  - API_URL=http://nextcloud.local/index.php/apps
+  - API_URL=http://nextcloud.local/api/apps
   - ENABLE_AUTHENTICATION=false
   - ENABLE_ROLLBAR=false
   # Visual Configuration

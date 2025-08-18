@@ -1,6 +1,19 @@
 // Imports => Utilities
 import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
 
+// Helper function to get basic auth credentials from user store
+const getBasicAuthCredentials = () => {
+  try {
+    // Access the user store through the global app object
+    if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+      return window.app.store.user.basicAuthCredentials;
+    }
+  } catch (error) {
+    // Silently fail if store is not available
+  }
+  return null;
+};
+
 // Get ENV variables
 
 // Try to import container constants (generated at runtime)
@@ -17,7 +30,8 @@ const hostname = window.location.hostname;
 const apiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getApiUrl) {
-    throw new Error('API URL not configured. Please check your environment setup.');
+    console.warn('Container constants not available, falling back to default API URL');
+    return '/api/apps'; // Fallback to default
   }
   
   return containerConfig.getApiUrl();
@@ -26,16 +40,17 @@ const apiUrl = () => {
 export const commongroundApiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getCommongroundApiUrl) {
-    throw new Error('CommonGround API URL not configured. Please check your environment setup.');
+    console.warn('Container constants not available, falling back to default CommonGround API URL');
+    return '/api/apps'; // Fallback to default
   }
   
   return containerConfig.getCommongroundApiUrl();
 };
 
 // const _api_ = process.env.API_URL;
-const _api_ = apiUrl();
+// const _api_ = apiUrl();
 // const _api_commonground_ = process.env.API_URL_COMMONGROUND;
-const _api_commonground_ = commongroundApiUrl();
+// const _api_commonground_ = commongroundApiUrl();
 
 const _api_commonground_headers_ = {
   'Content-Type': 'application/json',
@@ -65,12 +80,14 @@ export default {
     environment: process.env.ROLLBAR_ENVIRONMENT,
   }),
   api: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
-    credentials: true,
+    withCredentials: true,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -78,13 +95,25 @@ export default {
     transformRequest: [
       (data, headers) => {
         const token = AcGetAccessToken();
-        if (token) headers['authorization'] = `Bearer ${token}`;
+        if (token) {
+          headers['authorization'] = `Bearer ${token}`;
+        } else {
+          // Fallback to basic auth if available
+          // TODO: Implement Bearer token endpoint in OpenConnector to replace basic auth
+          const basicAuth = getBasicAuthCredentials();
+          if (basicAuth && basicAuth.username && basicAuth.password) {
+            const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+            headers['authorization'] = `Basic ${credentials}`;
+          }
+        }
         return JSON.stringify(data);
       },
     ],
   },
   publications: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -95,7 +124,9 @@ export default {
     },
   },
   authentication: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -106,7 +137,9 @@ export default {
     },
   },
   mijnOmgeving: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -117,7 +150,9 @@ export default {
     },
   },
   menus: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -129,7 +164,9 @@ export default {
     },
   },
   themes: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -140,7 +177,9 @@ export default {
     },
   },
   faqs: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -152,7 +191,9 @@ export default {
     },
   },
   pages: {
-    baseURL: `${_api_}`,
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
@@ -164,20 +205,38 @@ export default {
     },
   },
   gemma: {
-    baseURL: `${_api_commonground_}`,
+    get baseURL() {
+      return commongroundApiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
     credentials: false,
   },
-  upload: {
-    baseURL: `${_api_}`,
+  download: {
+    get baseURL() {
+      return apiUrl();
+    },
     timeout: 1000 * 60,
     maxContentLength: 10000,
     responseType: 'json',
     responseEncoding: 'utf8',
-    credentials: true,
+    withCredentials: true,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  },
+  upload: {
+    get baseURL() {
+      return apiUrl();
+    },
+    timeout: 1000 * 60,
+    maxContentLength: 10000,
+    responseType: 'json',
+    responseEncoding: 'utf8',
+    withCredentials: true,
     headers: {
       'Content-Type': 'multipart/form-data',
       Accept: 'application/json',
