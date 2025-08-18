@@ -4,6 +4,7 @@ import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
 import { shouldShowFormField } from '@src/utilities/con-authentication-filters';
+import { getFieldAuthorizationState, debugFieldAuthorization } from '@utils/field-authorization';
 import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
@@ -22,6 +23,7 @@ import { VISUALS } from '@src/constants';
  * - Built-in validation with custom validation support
  * - Property ordering support via the `sortPropertiesByOrder` utility
  * - Dynamic visibility support based on form data and external context
+ * - **Field-level authorization**: Automatic field visibility and editability based on user groups and schema authorization rules
  *
  * **Automatic Field Type Detection:**
  * - **Arrays**: Automatically rendered as multi-select dropdowns
@@ -118,6 +120,38 @@ import { VISUALS } from '@src/constants';
  * }}
  * ```
  *
+ * **Field-Level Authorization:**
+ * Fields can be automatically hidden or disabled based on user permissions:
+ * ```jsx
+ * // Schema with authorization rules
+ * const schema = {
+ *   properties: {
+ *     sensitiveField: {
+ *       type: "string",
+ *       authorization: {
+ *         read: ["admin", "editor"],    // Only admins and editors can see this field
+ *         create: ["admin"],            // Only admins can create values
+ *         update: ["admin", "editor"]   // Admins and editors can edit
+ *       }
+ *     }
+ *   }
+ * };
+ *
+ * <ConDynamicSchemaForm
+ *   schema={schema}
+ *   user={userStore}              // Pass user object with groups
+ *   isCreateMode={true}           // Affects create vs update permissions
+ *   // ... other props
+ * />
+ * ```
+ *
+ * **Authorization Rules:**
+ * - If `authorization` is not defined or empty: field is visible and editable
+ * - If `read` groups are defined: field is only visible to users with those groups
+ * - If `create`/`update` groups are defined: field is only editable by users with those groups
+ * - If no read groups are defined: field is hidden
+ * - If no create/update groups are defined: field is disabled (read-only)
+ *
  * @example
  * ```jsx
  * const formRef = useRef();
@@ -205,6 +239,8 @@ import { VISUALS } from '@src/constants';
  * @param {(isValid: boolean) => void} props.getIsValid - Callback function that receives the form validation state.
  * @param {boolean} props.honorImmutable - When true, fields with `immutable: true` in their schema will be disabled.
  * @param {boolean} props.userIsAuthenticated - Whether the current user is authenticated (for authentication-based field visibility).
+ * @param {object} props.user - Full user object with groups for field-level authorization checks.
+ * @param {boolean} props.isCreateMode - Whether this form is in create mode (affects authorization checks).
  * @param {React.Ref} ref - Ref object that exposes a `reset()` method to reset all ReactSelect components.
  *
  * @returns {React.ReactElement|null} The rendered dynamic form component or null if no schema properties exist.
@@ -239,6 +275,8 @@ const ConDynamicSchemaForm = forwardRef(
       getIsValid = () => {},
       honorImmutable = false,
       userIsAuthenticated = false,
+      user = null,
+      isCreateMode = false,
     },
     ref
   ) => {
@@ -466,20 +504,35 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Determines if a field should be visible based on its configuration, current form data, and authentication state.
+     * Determines if a field should be visible based on its configuration, current form data, authentication state,
+     * and field-level authorization.
      * Used by renderField() and validateForm() to conditionally show/hide fields.
      *
      * @example
-     * getFieldVisibility("status", { visible: (formData) => formData.type === 'active' })
-     * // Returns: true/false based on formData.type value and authentication state
+     * getFieldVisibility("status", { visible: (formData) => formData.type === 'active' }, propertySchema)
+     * // Returns: true/false based on formData.type value, authentication state, and field authorization
      */
-    const getFieldVisibility = (propertyPath, fieldConfig) => {
-      return shouldShowFormField(
-        fieldConfig,
-        formData,
-        userIsAuthenticated,
-        context
-      );
+    const getFieldVisibility = (propertyPath, fieldConfig, propertySchema) => {
+      // First check traditional visibility rules
+      const isVisibleByConfig = shouldShowFormField(fieldConfig, formData, userIsAuthenticated, context);
+      if (!isVisibleByConfig) {
+        return false;
+      }
+
+      // Then check field-level authorization if user object is available
+      if (user && propertySchema) {
+        const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
+        
+        // Enable debug logging for development
+        if (process.env.NODE_ENV === 'development') {
+          debugFieldAuthorization(user, propertySchema, propertyPath, isCreateMode);
+        }
+        
+        return authState.visible;
+      }
+
+      // Fallback to traditional visibility if no user object or schema
+      return isVisibleByConfig;
     };
 
     /**
@@ -520,11 +573,11 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Gets the disabled state for a specific field from the disabledStates prop.
+     * Gets the disabled state for a specific field from the disabledStates prop and field-level authorization.
      *
      * @example
-     * getFieldDisabled("status", { disabled: true })
-     * // Returns: true if fieldConfig.disabled is true, or from disabledStates
+     * getFieldDisabled("status", propertySchema, { disabled: true })
+     * // Returns: true if fieldConfig.disabled is true, or from disabledStates, or from authorization
      */
     const getFieldDisabled = (propertyPath, propertySchema, fieldConfig) => {
       // Priority 1: Check fieldConfig.disabled first (highest priority)
@@ -537,7 +590,15 @@ const ConDynamicSchemaForm = forwardRef(
         return true;
       }
 
-      // Priority 3: Check custom disabled states
+      // Priority 3: Check field-level authorization if user object is available
+      if (user && propertySchema) {
+        const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
+        if (!authState.editable) {
+          return true;
+        }
+      }
+
+      // Priority 4: Check custom disabled states
       if (typeof disabledStates[propertyPath] === 'function') {
         return disabledStates[propertyPath](formData);
       }
@@ -676,7 +737,7 @@ const ConDynamicSchemaForm = forwardRef(
       const fieldConfig = getFieldConfig(path, propertySchema, required);
 
       // Check visibility - support both boolean and function
-      if (!getFieldVisibility(path, fieldConfig)) return null;
+      if (!getFieldVisibility(path, fieldConfig, propertySchema)) return null;
 
       const value = getNestedValue(path, formData);
 

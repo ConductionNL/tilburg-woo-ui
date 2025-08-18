@@ -40,8 +40,18 @@ export const checkOrganizationPermissions = (user, object) => {
   }
 
   // Check if organization IDs match
-  const userOrgId = userActiveOrg.id || userActiveOrg.uuid;
-  const objectOrgId = objectOrg.id || objectOrg.uuid;
+  // Prefer UUID over numeric database ID for external API comparisons
+  const userOrgId = userActiveOrg.uuid || userActiveOrg.id;
+  
+  // Handle both object and string organization IDs
+  let objectOrgId;
+  if (typeof objectOrg === 'string') {
+    // If objectOrg is a string UUID, use it directly
+    objectOrgId = objectOrg;
+  } else if (typeof objectOrg === 'object' && objectOrg !== null) {
+    // If objectOrg is an object, extract id or uuid
+    objectOrgId = objectOrg.id || objectOrg.uuid;
+  }
 
   if (userOrgId && objectOrgId && userOrgId === objectOrgId) {
     return {
@@ -52,13 +62,18 @@ export const checkOrganizationPermissions = (user, object) => {
 
   // Check if organization names match (fallback)
   const userOrgName = userActiveOrg.name || userActiveOrg.naam;
-  const objectOrgName = objectOrg.name || objectOrg.naam;
-
-  if (userOrgName && objectOrgName && userOrgName === objectOrgName) {
-    return {
-      canEdit: true,
-      reason: null
-    };
+  
+  // Only check name matching if objectOrg is an object
+  let objectOrgName;
+  if (typeof objectOrg === 'object' && objectOrg !== null) {
+    objectOrgName = objectOrg.name || objectOrg.naam;
+    
+    if (userOrgName && objectOrgName && userOrgName === objectOrgName) {
+      return {
+        canEdit: true,
+        reason: null
+      };
+    }
   }
 
   // Organizations don't match

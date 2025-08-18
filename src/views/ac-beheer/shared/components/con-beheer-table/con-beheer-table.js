@@ -14,6 +14,7 @@ import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
 import { sortPropertiesByOrder } from '@src/utilities';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import { canReadField } from '@utils/field-authorization';
 
 const GET_CONFIG = (type, metadata, navigate) => {
   let typeGetFailed = false;
@@ -289,6 +290,7 @@ const BeheerTable = forwardRef((props, ref) => {
     pagination = {},
     setPagination = () => {},
     onHeaderSearch,
+    user = null, // User object for authorization checks
   } = props;
 
   if (!type && !metadata) {

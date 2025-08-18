@@ -26,6 +26,7 @@ import _ from 'lodash';
 import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { canReadField } from '@utils/field-authorization';
 
 /**
  * Generic Beheer Page Component
@@ -315,7 +316,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           key: key,
         };
       });
-  }, [dataProperties, config.customHeaders]);
+  }, [dataProperties, config.customHeaders, user]);
 
   const [tableHeaders, setTableHeaders] = useState([]);
 
