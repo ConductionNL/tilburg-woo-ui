@@ -314,10 +314,6 @@ const BeheerTable = forwardRef((props, ref) => {
     return config;
   }, [type, navigate, metadata]);
 
-  useEffect(() => {
-    getDefaultHeaders?.(config.defaultHeaders);
-  }, [config.defaultHeaders, getDefaultHeaders]);
-
   const fetchObjectData = async (searchParams = {}) => {
     // ✅ Transform search parameters to handle extended properties
     const transformedSearchParams = {};
@@ -432,59 +428,95 @@ const BeheerTable = forwardRef((props, ref) => {
     if (!dataProperties) return [];
 
     const schemaHeaders = Object.entries(dataProperties)
-      .filter(([key, value]) => value.visible !== false && value.hideOnCollection !== true)
+      .filter(
+        ([key, value]) => value.visible !== false && value.hideOnCollection !== true
+      )
+      .filter(([key, value]) => canReadField(user, value))
       .flatMap(([key, value]) => {
         // leverancier from diensten is a special case as its referenced twice
         if (headerOverrides && type === 'diensten' && key === 'leverancier') {
           return [
-            headerOverrides?.['leverancier_naam'],
-            headerOverrides?.['leverancier_email'],
+            { ...(headerOverrides?.['leverancier_naam'] || {}), sourceKey: key },
+            { ...(headerOverrides?.['leverancier_email'] || {}), sourceKey: key },
           ];
         }
 
         // Check if we have a custom override for this header
         if (headerOverrides?.[key]) {
-          return headerOverrides[key];
+          return { ...headerOverrides[key], sourceKey: key };
         }
 
         // Try config.headerOverrides if headerOverrides doesn't exist
         if (config.headerOverrides?.[key]) {
-          return config.headerOverrides[key];
+          return { ...config.headerOverrides[key], sourceKey: key };
         }
 
         // Generate standard header from schema
         // Use schema property title if available, otherwise capitalize the key
-        const label = value.title && value.title.trim() ? value.title : _.upperFirst(key);
-        
+        const label =
+          value.title && value.title.trim() ? value.title : _.upperFirst(key);
+
         return {
           id: key,
           label: label,
           key: key,
+          sourceKey: key,
         };
       })
       // Filter out headers that are in the removeHeaders config
       .filter((header) => !config.removeHeaders?.includes(header.id));
 
     return schemaHeaders;
-  }, [dataProperties, headerOverrides, config.removeHeaders]);
+  }, [
+    dataProperties,
+    headerOverrides,
+    config.removeHeaders,
+    user,
+    type,
+    config.defaultHeaders,
+  ]);
+
+  const { defaultHeaderIds, shouldShowAllHeaders } = useMemo(() => {
+    if (!dataProperties) return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+
+    const entries = Object.entries(dataProperties);
+    const anyTable = entries.some(([, value]) => !!value?.table);
+    const defaultTrueKeys = new Set(
+      entries.filter(([, value]) => value?.table?.default === true).map(([k]) => k)
+    );
+
+    const showAll = !anyTable || defaultTrueKeys.size === 0;
+
+    if (showAll) {
+      return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+    }
+
+    const ids = generatedHeaders
+      .filter((h) => defaultTrueKeys.has(h.sourceKey || h.id))
+      .map((h) => h.id);
+
+    return { defaultHeaderIds: ids, shouldShowAllHeaders: false };
+  }, [dataProperties, generatedHeaders]);
 
   useEffect(() => {
     getHeaders?.(generatedHeaders);
+    getDefaultHeaders?.(shouldShowAllHeaders ? [] : defaultHeaderIds);
 
     // default headers if `headers` is not being used
     if (generatedHeaders.length > 0) {
       setTableHeaders(
         generatedHeaders.filter(
-          // Show all headers if:
-          // 1. No defaultHeaders exist in config
-          // 2. defaultHeaders is an empty array
-          (header) =>
-            !config.defaultHeaders?.length ||
-            config.defaultHeaders.includes(header.id)
+          (header) => shouldShowAllHeaders || defaultHeaderIds.includes(header.id)
         )
       );
     }
-  }, [generatedHeaders]);
+  }, [
+    generatedHeaders,
+    getHeaders,
+    getDefaultHeaders,
+    defaultHeaderIds,
+    shouldShowAllHeaders,
+  ]);
 
   // if no overrideActionButtons are provided, use the default action buttons
   const overrideActionsIsValid =
