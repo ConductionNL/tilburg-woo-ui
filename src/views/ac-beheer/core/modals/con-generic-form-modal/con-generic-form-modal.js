@@ -48,6 +48,7 @@ const ConGenericFormModal = ({
   preSelected = DEFAULT_PRE_SELECTED,
   configOverrides = DEFAULT_CONFIG_OVERRIDES,
   onMounted,
+  metadata = {},
 }) => {
   // Signal to parent that this modal component has mounted
   useEffect(() => {
@@ -97,13 +98,34 @@ const ConGenericFormModal = ({
   // Get schema from object store (read directly to enable MobX tracking)
   const schema = schemaType ? object.getSchema(schemaType) : null;
 
+  // Generate disabled states for pre-selected fields
+  const preSelectedDisabledStates = useMemo(() => {
+    const disabledStates = {};
+    
+    // Automatically disable any pre-selected fields to prevent user modification
+    Object.keys(preSelected || {}).forEach((fieldName) => {
+      disabledStates[fieldName] = true;
+    });
+    
+    return disabledStates;
+  }, [preSelected]);
+
   // Use the ref options hook for $ref-based fields (after schema is defined)
   const {
     optionsProviders: refOptionsProviders,
     loadingStates: refLoadingStates,
     disabledStates: refDisabledStates,
     handleSearch,
-  } = useRefOptions({ object, user }, currentRegister, schema, config?.fieldConfigs);
+  } = useRefOptions({ object, user }, currentRegister, schema, config?.fieldConfigs, {
+    preSelected,
+    preSelectedLabels: metadata?.preSelectedLabels || {}
+  });
+
+  // Merge pre-selected disabled states with ref disabled states
+  const combinedDisabledStates = useMemo(() => ({
+    ...refDisabledStates,
+    ...preSelectedDisabledStates,
+  }), [refDisabledStates, preSelectedDisabledStates]);
 
   const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
 
@@ -616,12 +638,13 @@ const ConGenericFormModal = ({
             customFieldComponents={config.customComponents || {}}
             optionsProviders={optionsProviders}
             loadingStates={loadingStates}
-            disabledStates={refDisabledStates}
+            disabledStates={combinedDisabledStates}
             getIsValid={handleFormValidCheck}
             honorImmutable={isEdit}
             userIsAuthenticated={user.isAuthenticated}
             user={user}
             isCreateMode={!isEdit}
+            onSearchHandlers={{ handleSearch }}
           />
         ) : (
           <div>

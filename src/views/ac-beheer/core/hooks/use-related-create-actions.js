@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { VISUALS } from '@constants';
+import { checkOrganizationPermissions } from '@utils/organization-permissions';
 
 /**
  * Hook to build dynamic related-create actions based on schema relations and user groups
@@ -14,7 +15,8 @@ import { VISUALS } from '@constants';
  * @param {Object} params.user - User store
  * @param {string|Object} params.schemaRef - Schema slug/id whose relations are used
  * @param {string} params.currentType - Current beheer route type (e.g., 'applicaties')
- * @param {(targetType: string, preSelected: Object) => void} params.openDynamicCreate - Callback to open dynamic create modal
+ * @param {(targetType: string, preSelected: Object, metadata?: Object) => void} params.openDynamicCreate - Callback to open dynamic create modal
+ * @param {Object} params.currentObject - Current object for organization permission checks (optional)
  */
 export const useRelatedCreateActions = ({
   object,
@@ -22,8 +24,10 @@ export const useRelatedCreateActions = ({
   schemaRef,
   currentType,
   openDynamicCreate,
+  currentObject = null, // Add current object for organization permission checks
 }) => {
   const [creatableRelated, setCreatableRelated] = useState([]);
+  const [outgoingSchemas, setOutgoingSchemas] = useState(new Set());
 
   useEffect(() => {
     if (!schemaRef) return;
@@ -39,6 +43,8 @@ export const useRelatedCreateActions = ({
 
         // Handle both old format (results array) and new format (incoming/outgoing)
         let relatedResults = [];
+        const outgoingSlugs = new Set();
+        
         if (Array.isArray(related?.results)) {
           // Old format: { results: [...] }
           relatedResults = related.results;
@@ -46,8 +52,16 @@ export const useRelatedCreateActions = ({
           // New format: { incoming: [...], outgoing: [...] }
           const incoming = Array.isArray(related.incoming) ? related.incoming : [];
           const outgoing = Array.isArray(related.outgoing) ? related.outgoing : [];
+          
+          // Track outgoing schema slugs
+          outgoing.forEach(schema => {
+            if (schema?.slug) outgoingSlugs.add(schema.slug);
+          });
+          
           relatedResults = [...incoming, ...outgoing];
         }
+        
+        setOutgoingSchemas(outgoingSlugs);
 
         const userGroups = Array.isArray(user?.userGroups)
           ? user.userGroups
@@ -55,7 +69,17 @@ export const useRelatedCreateActions = ({
               .filter(Boolean)
           : [];
 
+        // Check organization permissions for current object (needed for outgoing relationships)
+        const { canEdit: canEditCurrentObject } = currentObject 
+          ? checkOrganizationPermissions(user, currentObject)
+          : { canEdit: true }; // Default to true if no current object provided
+
         const creatable = relatedResults.filter((rs) => {
+          // For outgoing relationships, check if user can edit current object
+          if (outgoingSlugs.has(rs?.slug) && !canEditCurrentObject) {
+            return false; // Can't create outgoing relationships if can't edit current object
+          }
+
           // If authorization is null or undefined, allow access (no restrictions)
           if (!rs?.authorization) return true;
           
@@ -91,47 +115,135 @@ export const useRelatedCreateActions = ({
     };
 
     prepareRelatedActions();
-    // Only re-run when schema reference changes
-  }, [schemaRef, user?.currentUser, object]);
+    // Only re-run when schema reference changes or current object changes (for permissions)
+  }, [schemaRef, user?.currentUser, object, currentObject]);
 
+  // Schema-driven helper to determine which field in the current object should be updated for outgoing relationships
+  const getOutgoingRelationshipField = useCallback((targetType, sourceType) => {
+    try {
+      // Get the source schema to find properties that reference the target schema
+      const sourceSchemaType = object.getSchemaType(sourceType);
+      const sourceSchema = sourceSchemaType ? object.getSchema(sourceSchemaType) : null;
+      
+      if (!sourceSchema?.properties) {
+        return null;
+      }
+
+      // Look for properties in source schema that reference the target schema
+      for (const [fieldName, fieldSchema] of Object.entries(sourceSchema.properties)) {
+        if (fieldSchema.$ref) {
+          // Extract schema slug from $ref
+          const refMatch = fieldSchema.$ref.match(/\/schemas\/([^\/]+)$/);
+          const referencedSchemaSlug = refMatch?.[1];
+          
+          if (referencedSchemaSlug === targetType) {
+            console.log(`✅ Found outgoing relationship field: ${fieldName} -> ${targetType}`);
+            return fieldName;
+          }
+        }
+        
+        // Handle array items that reference the target schema
+        if (fieldSchema.type === 'array' && fieldSchema.items?.$ref) {
+          const refMatch = fieldSchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
+          const referencedSchemaSlug = refMatch?.[1];
+          
+          if (referencedSchemaSlug === targetType) {
+            console.log(`✅ Found outgoing array relationship field: ${fieldName} -> ${targetType}`);
+            return fieldName;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error finding outgoing relationship field:', error);
+    }
+    
+    return null;
+  }, [object]);
+
+  // Schema-driven approach to build preSelected values with labels
   const buildPreSelected = useCallback(
-    (targetType, ctxId) => {
+    async (targetType, ctxId) => {
       const preSelected = {};
+      const preSelectedLabels = {};
       
-      // Use schema slugs directly instead of renamed types
-      if (targetType === 'voorziening') {
-        if (currentType === 'organisatie') preSelected.organisatie = ctxId;
-      }
+      try {
+        // Get the target schema to analyze its properties
+        const targetSchemaType = object.getSchemaType(targetType);
+        let targetSchema = targetSchemaType ? object.getSchema(targetSchemaType) : null;
+        
+        // If schema is not loaded, try to fetch it
+        if (!targetSchema) {
+          console.log(`🔄 Fetching schema for ${targetType}...`);
+          await object.fetchSchema(targetType);
+          const updatedTargetSchemaType = object.getSchemaType(targetType);
+          targetSchema = updatedTargetSchemaType ? object.getSchema(updatedTargetSchemaType) : null;
+        }
+        
+        if (!targetSchema?.properties) {
+          console.log('❌ No schema properties found for target type:', targetType);
+          return { preSelected, preSelectedLabels };
+        }
 
-      if (targetType === 'voorzieningaanbod') {
-        if (currentType === 'voorziening') preSelected.voorziening = ctxId;
-      }
+        // Get current schema slug for reference matching
+        const currentSchemaSlug = typeof schemaRef === 'string' ? schemaRef : schemaRef?.slug;
+        if (!currentSchemaSlug) {
+          console.log('❌ No current schema slug found');
+          return { preSelected, preSelectedLabels };
+        }
 
-      if (targetType === 'voorzieninggebruik') {
-        if (currentType === 'voorziening') preSelected.voorzieningId = ctxId;
-        if (currentType === 'organisatie') preSelected.organisatieId = ctxId;
-      }
+        // Get current object data to extract label/name
+        const currentObjectData = currentObject;
+        const currentObjectLabel = currentObjectData?.naam || 
+                                  currentObjectData?.name || 
+                                  currentObjectData?.title || 
+                                  currentObjectData?.titel || 
+                                  currentObjectData?.['@self']?.name ||
+                                  ctxId;
 
-      if (targetType === 'voorzieningversie') {
-        if (currentType === 'voorziening') preSelected.voorziening = ctxId;
-        if (currentType === 'voorzieningaanbod') preSelected.voorzieningaanbod = ctxId;
-      }
+        // Look for properties in target schema that reference our current schema
+        Object.entries(targetSchema.properties).forEach(([fieldName, fieldSchema]) => {
+          if (fieldSchema.$ref) {
+            // Extract schema slug from $ref (e.g., "#/components/schemas/voorziening" -> "voorziening")
+            const refMatch = fieldSchema.$ref.match(/\/schemas\/([^\/]+)$/);
+            const referencedSchemaSlug = refMatch?.[1];
+            
+            if (referencedSchemaSlug === currentSchemaSlug) {
+              console.log(`✅ Found reference: ${fieldName} -> ${currentSchemaSlug}`);
+              preSelected[fieldName] = ctxId;
+              preSelectedLabels[fieldName] = currentObjectLabel;
+            }
+          }
+          
+          // Handle array items that reference our schema
+          if (fieldSchema.type === 'array' && fieldSchema.items?.$ref) {
+            const refMatch = fieldSchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
+            const referencedSchemaSlug = refMatch?.[1];
+            
+            if (referencedSchemaSlug === currentSchemaSlug) {
+              console.log(`✅ Found array reference: ${fieldName} -> ${currentSchemaSlug}`);
+              preSelected[fieldName] = [ctxId]; // Array field gets array value
+              preSelectedLabels[fieldName] = [currentObjectLabel]; // Array labels
+            }
+          }
+        });
 
-      if (targetType === 'contactpersoon') {
-        if (currentType === 'organisatie') preSelected.organisatie = ctxId;
-      }
+        console.log('🎯 Schema-driven preSelected:', {
+          targetType,
+          currentSchemaSlug,
+          ctxId,
+          currentObjectLabel,
+          preSelected,
+          preSelectedLabels
+        });
 
-      if (targetType === 'moduleversie') {
-        if (currentType === 'voorzieningmodule') preSelected.module = ctxId;
-      }
-
-      if (targetType === 'voorziening') {
-        if (currentType === 'voorzieningmodule') preSelected.omvat = ctxId;
+      } catch (error) {
+        console.error('Error building schema-driven preSelected:', error);
+        // Fallback to empty preSelected on error
       }
       
-      return preSelected;
+      return { preSelected, preSelectedLabels };
     },
-    [currentType]
+    [schemaRef, object, currentObject]
   );
 
   const makeActionsForContext = useCallback(
@@ -146,12 +258,21 @@ export const useRelatedCreateActions = ({
 
           const label = `${rs?.title ?? _.startCase(slug)} toevoegen`;
 
+          const isOutgoing = outgoingSchemas.has(slug);
+
           return {
             key: `create-${slug}`,
             label,
             icon: <VISUALS.PLUS />,
-            onClick: () =>
-              openDynamicCreate(targetType, buildPreSelected(targetType, ctxId)),
+            onClick: async () => {
+              const { preSelected, preSelectedLabels } = await buildPreSelected(targetType, ctxId);
+              openDynamicCreate(targetType, preSelected, {
+                isOutgoing,
+                currentObjectId: ctxId,
+                relationshipField: isOutgoing ? getOutgoingRelationshipField(targetType, currentType) : null,
+                preSelectedLabels // Pass the labels for optimization
+              });
+            },
           };
         })
         .filter(Boolean);

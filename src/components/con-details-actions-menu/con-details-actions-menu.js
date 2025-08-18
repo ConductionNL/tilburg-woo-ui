@@ -140,25 +140,34 @@ const ConDetailsActionsMenu = ({
         )}
 
         {/* Unique actions (type-specific) */}
-        {uniqueActions.map((action) => (
-          <ConActionMenu.Button
-            key={action.key || action.label}
-            icon={
-              React.isValidElement(action.icon) ? (
-                action.icon
-              ) : action.icon ? (
-                <action.icon />
-              ) : null
-            }
-            onClick={() => {
-              if (typeof action.onClick === 'function') {
-                action.onClick();
+        {uniqueActions.map((action) => {
+          // Apply permission check for destructive actions (delete)
+          const isDestructiveAction = action.key === 'delete' || action.label?.toLowerCase().includes('verwijder');
+          const actionDisabled = isDestructiveAction && !canEdit;
+          
+          return (
+            <ConActionMenu.Button
+              key={action.key || action.label}
+              icon={
+                React.isValidElement(action.icon) ? (
+                  action.icon
+                ) : action.icon ? (
+                  <action.icon />
+                ) : null
               }
-            }}
-          >
-            {action.label}
-          </ConActionMenu.Button>
-        ))}
+              onClick={actionDisabled ? undefined : () => {
+                if (typeof action.onClick === 'function') {
+                  action.onClick();
+                }
+              }}
+              disabled={actionDisabled}
+              data-tooltip-id={actionDisabled ? TOOLTIP_ID : undefined}
+              data-tooltip-content={actionDisabled ? getDisabledActionTooltip('delete', reason) : undefined}
+            >
+              {action.label}
+            </ConActionMenu.Button>
+          );
+        })}
 
         {/* Divider before related actions */}
         {relatedActions.length > 0 && <ConActionMenu.Divider />}

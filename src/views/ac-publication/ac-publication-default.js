@@ -106,8 +106,12 @@ const AcPublication = observer(
     const isLoggedIn = !!getCookie('nextcloud_user_id');
 
     // Use the same related actions hook as beheer pages
-    const openDynamicCreate = useCallback((targetType, preSelected) => {
+    const openDynamicCreate = useCallback((targetType, preSelected, metadata = {}) => {
       // For publication pages, we'll navigate to the beheer page with modal open
+      // TODO: Handle outgoing relationship metadata in beheer page URL params
+      if (metadata.isOutgoing) {
+        console.log('🔄 Outgoing relationship from publication page:', metadata);
+      }
       navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
     }, [navigate, id]);
 
@@ -117,6 +121,7 @@ const AcPublication = observer(
       schemaRef: get_single?.['@self']?.schema?.slug,
       currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
       openDynamicCreate,
+      currentObject: get_single, // Pass current object for organization permission checks
     });
 
     // Generate action menu items
@@ -298,7 +303,20 @@ const AcPublication = observer(
                 title={get_single?.title ?? get_single?.titel ?? get_single?.name ?? get_single?.naam ?? get_single?.id}
                 published={get_single?.['@self']?.published}
                 object={get_single}
+                showViewAction={false}
+                showEditAction={true}
                 showPublishActions={true}
+                uniqueActions={[
+                  {
+                    key: 'delete',
+                    label: 'Verwijderen',
+                    icon: VISUALS.TRASHCAN,
+                    onClick: () => {
+                      console.log('Delete action for publication:', id);
+                      // TODO: Implement delete modal for publications
+                    }
+                  }
+                ]}
                 triggerStyle='button'
                 relatedActions={actionMenuItems}
               />

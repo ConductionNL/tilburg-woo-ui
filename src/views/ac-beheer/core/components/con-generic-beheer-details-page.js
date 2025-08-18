@@ -52,6 +52,7 @@ const ConGenericBeheerDetailsPage = ({
   const [tabIndex, setTabIndex] = useState(0);
   const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+  const [dynamicCreateMetadata, setDynamicCreateMetadata] = useState({});
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Resolve config
@@ -157,9 +158,19 @@ const ConGenericBeheerDetailsPage = ({
   const longTooltip = (type) =>
     `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
 
-  const openDynamicCreate = React.useCallback((targetType, preSelected) => {
+  const openDynamicCreate = React.useCallback((targetType, preSelected, metadata = {}) => {
     setDynamicCreateTargetType(targetType);
     setDynamicCreatePreSelected(preSelected);
+    // Store metadata for outgoing relationship handling and labels
+    if (metadata.isOutgoing) {
+      // TODO: Handle outgoing relationship updates after successful form submission
+      console.log('🔄 Outgoing relationship detected:', metadata);
+    }
+    if (metadata.preSelectedLabels) {
+      console.log('🏷️ PreSelected labels provided:', metadata.preSelectedLabels);
+    }
+    // Store all metadata for the modal to use
+    setDynamicCreateMetadata(metadata);
     setOpenModal('dynamicCreate');
   }, []);
 
@@ -169,6 +180,7 @@ const ConGenericBeheerDetailsPage = ({
     schemaRef: config?.schemaSlug,
     currentType: type,
     openDynamicCreate,
+    currentObject: data, // Pass current object for organization permission checks
   });
 
   useEffect(() => {
@@ -503,6 +515,7 @@ const ConGenericBeheerDetailsPage = ({
         },
         dynamicCreateTargetType,
         dynamicCreatePreSelected,
+        dynamicCreateMetadata,
       })}
     </AcSection>
   );

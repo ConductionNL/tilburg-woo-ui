@@ -241,6 +241,7 @@ import { VISUALS } from '@src/constants';
  * @param {boolean} props.userIsAuthenticated - Whether the current user is authenticated (for authentication-based field visibility).
  * @param {object} props.user - Full user object with groups for field-level authorization checks.
  * @param {boolean} props.isCreateMode - Whether this form is in create mode (affects authorization checks).
+ * @param {object} props.onSearchHandlers - Object containing search handlers for dynamic option loading. Should include handleSearch function.
  * @param {React.Ref} ref - Ref object that exposes a `reset()` method to reset all ReactSelect components.
  *
  * @returns {React.ReactElement|null} The rendered dynamic form component or null if no schema properties exist.
@@ -277,10 +278,14 @@ const ConDynamicSchemaForm = forwardRef(
       userIsAuthenticated = false,
       user = null,
       isCreateMode = false,
+      onSearchHandlers = {},
     },
     ref
   ) => {
     const [resetKey, setResetKey] = React.useState(0);
+
+    // Extract search handler
+    const { handleSearch } = onSearchHandlers;
 
     // Expose reset function through ref
     useImperativeHandle(ref, () => ({
@@ -288,6 +293,25 @@ const ConDynamicSchemaForm = forwardRef(
         setResetKey((prev) => prev + 1);
       },
     }));
+
+    /**
+     * Determines if a field needs search functionality based on its schema
+     * @param {Object} propertySchema - The field's schema definition
+     * @returns {string|null} - The referenced schema slug if searchable, null otherwise
+     */
+    const getFieldRefSchemaSlug = (propertySchema) => {
+      if (propertySchema.$ref) {
+        const refMatch = propertySchema.$ref.match(/\/schemas\/([^\/]+)$/);
+        return refMatch?.[1] || null;
+      }
+      
+      if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
+        const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
+        return refMatch?.[1] || null;
+      }
+      
+      return null;
+    };
 
     if (!schema?.properties) return null;
 
@@ -836,6 +860,10 @@ const ConDynamicSchemaForm = forwardRef(
           ? options?.filter((option) => value?.includes(option.value)) || []
           : options?.find((option) => option.value === value);
 
+        // Automatically enable search for $ref fields (fields that reference other schemas)
+        const isRefField = getFieldRefSchemaSlug(propertySchema) !== null;
+        const shouldBeSearchable = isRefField || fieldConfig.isSearchable;
+
         return (
           <div key={`${path}-${resetKey}`}>
             <label className='utrecht-form-label'>
@@ -885,6 +913,15 @@ const ConDynamicSchemaForm = forwardRef(
               isDisabled={isDisabled}
               isMulti={fieldConfig.isMulti}
               closeMenuOnSelect={fieldConfig.closeMenuOnSelect}
+              isSearchable={shouldBeSearchable}
+              onInputChange={handleSearch && getFieldRefSchemaSlug(propertySchema) ? (inputValue, actionMeta) => {
+                // Only trigger search for user input, not programmatic changes
+                if (actionMeta.action === 'input-change' && inputValue && inputValue.length > 1 && !isLoading) {
+                  const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
+                  console.log(`🔍 User searching ${path} (${refSchemaSlug}):`, inputValue);
+                  handleSearch(path, refSchemaSlug, inputValue);
+                }
+              } : undefined}
               {...(validation.required && {
                 required: true,
               })}

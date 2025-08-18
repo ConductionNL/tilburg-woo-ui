@@ -214,6 +214,7 @@ const BeheerModalFactory = {
     if (modalType === 'dynamicCreate') {
       const targetType = params.dynamicCreateTargetType;
       const preSelected = params.dynamicCreatePreSelected || {};
+      const metadata = params.dynamicCreateMetadata || {};
       if (!targetType) {
         // No valid target type: return a non-visible modal config
         return {
@@ -223,6 +224,7 @@ const BeheerModalFactory = {
           data: null,
           isEdit: false,
           preSelected: {},
+          metadata: {},
         };
       }
       return {
@@ -231,6 +233,7 @@ const BeheerModalFactory = {
         data: null,
         isEdit: false,
         preSelected,
+        metadata,
       };
     }
 
