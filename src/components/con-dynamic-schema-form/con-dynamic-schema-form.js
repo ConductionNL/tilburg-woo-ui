@@ -255,6 +255,17 @@ const ConDynamicSchemaForm = forwardRef(
     const topLevelRequired = Array.isArray(schema.required) ? schema.required : [];
 
     /**
+     * Extracts the schema slug from a $ref value
+     * @param {string} ref - The $ref value like "#/components/schemas/voorzieningmodule"
+     * @returns {string} - The schema slug like "voorzieningmodule"
+     */
+    const extractSchemaSlugFromRef = (ref) => {
+      if (!ref || typeof ref !== 'string') return null;
+      const parts = ref.split('/');
+      return parts[parts.length - 1]; // Get the last part
+    };
+
+    /**
      * Safely retrieves a nested value from an object using dot notation path.
      */
     const getNestedValue = (path, data) => {
@@ -372,6 +383,33 @@ const ConDynamicSchemaForm = forwardRef(
           })),
           placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
         };
+      } else if (propertySchema.$ref) {
+        // Handle object references with $ref
+        const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.$ref);
+        schemaConfig = {
+          ...baseConfig,
+          type: 'select',
+          component: 'ReactSelect',
+          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
+          refSchemaSlug, // Store for options fetching
+          isSearchable: true, // Enable search if more than 20 results
+        };
+      } else if (
+        propertySchema.type === 'array' && 
+        propertySchema.items?.$ref
+      ) {
+        // Handle array of object references
+        const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.items.$ref);
+        schemaConfig = {
+          ...baseConfig,
+          type: 'multiSelect',
+          component: 'ReactSelect',
+          isMulti: true,
+          closeMenuOnSelect: false,
+          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
+          refSchemaSlug, // Store for options fetching
+          isSearchable: true, // Enable search if more than 20 results
+        };
       } else if (
         propertySchema.type === 'string' &&
         optionsProviders[propertyPath]?.length > 0
@@ -429,7 +467,7 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Gets the options array for select/multi-select fields based on schema enum or optionsProviders.
+     * Gets the options array for select/multi-select fields based on schema enum, $ref, or optionsProviders.
      *
      * @example
      * getFieldOptions("bivClassificatie.beschikbaarheid", { enum: ["Laag", "Midden", "Hoog"] })
@@ -444,7 +482,8 @@ const ConDynamicSchemaForm = forwardRef(
         }));
       }
 
-      // Priority 2: OptionsProviders if no enum in schema
+      // Priority 2: $ref-based options from optionsProviders
+      // The parent component should populate optionsProviders with fetched data for $ref fields
       if (optionsProviders[propertyPath]) {
         return optionsProviders[propertyPath];
       }

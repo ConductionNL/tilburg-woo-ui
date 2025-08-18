@@ -67,6 +67,10 @@ const ConPublicationActions = loadable(() =>
   import('@src/components/con-publication-actions/con-publication-actions')
 );
 
+const ConDetailsActionsMenu = loadable(() =>
+  import('@src/components/con-details-actions-menu/con-details-actions-menu')
+);
+
 export {
   AcAbout,
   AcCNavigation,
@@ -97,4 +101,5 @@ export {
   ConTemplateText,
   ConDynamicSidenav,
   ConPublicationActions,
+  ConDetailsActionsMenu,
 };
