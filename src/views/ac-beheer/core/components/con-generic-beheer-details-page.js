@@ -206,6 +206,7 @@ const ConGenericBeheerDetailsPage = ({
                     schemaSlug={config?.schemaSlug}
                     title={data['@self']?.name || data.id}
                     published={data?.['@self']?.published}
+                    object={data}
                     showViewAction={false}
                     showEditAction={true}
                     showPublishActions={true}
