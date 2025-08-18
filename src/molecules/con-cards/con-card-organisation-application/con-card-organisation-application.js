@@ -18,7 +18,19 @@ const ConCardOrganisationApplication = ({
   cardType,
   user,
   published,
+  ...rest // Capture additional object data
 }) => {
+  // Reconstruct the full object for organization permission checks
+  const fullObject = {
+    id,
+    title,
+    summary,
+    type,
+    logo,
+    published,
+    cardType,
+    ...rest
+  };
   const icon = useMemo(() => {
     switch (cardType) {
       case 'voorziening':
@@ -62,6 +74,7 @@ const ConCardOrganisationApplication = ({
               schemaSlug={cardType}
               title={title}
               published={published}
+              object={fullObject}
               triggerStyle='buttonSlim'
             />
           )}

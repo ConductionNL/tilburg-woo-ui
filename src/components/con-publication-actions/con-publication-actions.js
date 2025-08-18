@@ -3,6 +3,8 @@ import React from 'react';
 import { VISUALS } from '@constants';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import { checkOrganizationPermissions, getDisabledActionTooltip } from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Reusable Publication Actions Component
@@ -14,6 +16,7 @@ import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
  * @param {string} props.schemaSlug - Schema slug for beheer navigation
  * @param {string} props.title - Publication title (for accessibility)
  * @param {boolean} props.published - Publication status
+ * @param {Object} props.object - Full object data with @self property for organization checks
  * @param {string} props.triggerStyle - Style for trigger button ('buttonSlim', 'button', etc.)
  * @param {string} props.triggerSize - Size for trigger button
  * @param {boolean} props.showViewAction - Whether to show "Bekijken" action (default: true)
@@ -28,6 +31,7 @@ const ConPublicationActions = ({
   schemaSlug,
   title,
   published,
+  object,
   triggerStyle = 'buttonSlim',
   triggerSize,
   showViewAction = true,
@@ -41,6 +45,9 @@ const ConPublicationActions = ({
   if (!user?.isAuthenticated || !schemaSlug) {
     return null;
   }
+
+  // Check organization permissions for edit and publish actions
+  const { canEdit, reason } = checkOrganizationPermissions(user, object);
 
   console.log('ConPublicationActions additionalActions:', additionalActions);
 
@@ -69,7 +76,10 @@ const ConPublicationActions = ({
         {showEditAction && (
           <ConActionMenu.Button
             icon={<VISUALS.PENCIL />}
-            onClick={() => window.open(beheerUrl, '_blank')}
+            onClick={canEdit ? () => window.open(beheerUrl, '_blank') : undefined}
+            disabled={!canEdit}
+            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+            data-tooltip-content={!canEdit ? getDisabledActionTooltip('edit', reason) : undefined}
           >
             Bewerken
           </ConActionMenu.Button>
@@ -78,14 +88,17 @@ const ConPublicationActions = ({
         {showPublishActions && !published && (
           <ConActionMenu.Button
             icon={<VISUALS.PUBLISH />}
-            onClick={() => {
+            onClick={canEdit ? () => {
               if (onPublish) {
                 onPublish(id);
               } else {
                 // Default publish action - could open a modal or make an API call
                 console.log('Publish action for:', id);
               }
-            }}
+            } : undefined}
+            disabled={!canEdit}
+            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+            data-tooltip-content={!canEdit ? getDisabledActionTooltip('publish', reason) : undefined}
           >
             Publiceren
           </ConActionMenu.Button>
@@ -94,14 +107,17 @@ const ConPublicationActions = ({
         {showPublishActions && published && (
           <ConActionMenu.Button
             icon={<VISUALS.PUBLISH_OFF />}
-            onClick={() => {
+            onClick={canEdit ? () => {
               if (onDepublish) {
                 onDepublish(id);
               } else {
                 // Default depublish action - could open a modal or make an API call
                 console.log('Depublish action for:', id);
               }
-            }}
+            } : undefined}
+            disabled={!canEdit}
+            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+            data-tooltip-content={!canEdit ? getDisabledActionTooltip('depublish', reason) : undefined}
           >
             Depubliceren
           </ConActionMenu.Button>
