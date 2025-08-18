@@ -10,6 +10,7 @@ import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-modu
 
 import { collapseExtendedObjects } from '@src/utilities';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
+import { useRefOptions } from '@src/hooks/use-ref-options';
 import _ from 'lodash';
 
 const DEFAULT_CONFIG_OVERRIDES = {};
@@ -85,6 +86,9 @@ const ConGenericFormModal = ({
   const [options, setOptions] = useState({});
   const [optionsLoading, setOptionsLoading] = useState({});
 
+  // Get current register from beheer config
+  const currentRegister = config?.beheerConfig?.registerSlug;
+
   // Get schema type identifier
   const schemaType = config?.beheerConfig?.schemaSlug
     ? object.getSchemaType(config.beheerConfig.schemaSlug, 'form')
@@ -92,6 +96,14 @@ const ConGenericFormModal = ({
 
   // Get schema from object store (read directly to enable MobX tracking)
   const schema = schemaType ? object.getSchema(schemaType) : null;
+
+  // Use the ref options hook for $ref-based fields (after schema is defined)
+  const {
+    optionsProviders: refOptionsProviders,
+    loadingStates: refLoadingStates,
+    disabledStates: refDisabledStates,
+    handleSearch,
+  } = useRefOptions({ object, user }, currentRegister, schema, config?.fieldConfigs);
 
   const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
 
@@ -339,11 +351,12 @@ const ConGenericFormModal = ({
   const optionsProviders = useMemo(() => {
     const providers = {};
 
+    // Priority 1: Manual options from config
     Object.keys(config?.optionsProviders || {}).forEach((fieldName) => {
       providers[fieldName] = options[fieldName] || [];
     });
 
-    // Add any schema-based enum options
+    // Priority 2: Schema-based enum options
     if (schema?.properties) {
       Object.entries(schema.properties).forEach(([fieldName, fieldSchema]) => {
         if (fieldSchema.enum && !providers[fieldName]) {
@@ -355,13 +368,23 @@ const ConGenericFormModal = ({
       });
     }
 
+    // Priority 3: $ref-based options from the hook
+    Object.keys(refOptionsProviders || {}).forEach((fieldName) => {
+      if (!providers[fieldName]) {
+        providers[fieldName] = refOptionsProviders[fieldName] || [];
+      }
+    });
+
     return providers;
-  }, [config, options, schema]);
+  }, [config, options, schema, refOptionsProviders]);
 
   // Generate loading states for ConDynamicSchemaForm
   const loadingStates = useMemo(() => {
-    return { ...optionsLoading };
-  }, [optionsLoading]);
+    return { 
+      ...optionsLoading,
+      ...refLoadingStates
+    };
+  }, [optionsLoading, refLoadingStates]);
 
   // Generate field configurations for ConDynamicSchemaForm
   const fieldConfigs = useMemo(() => {
@@ -582,7 +605,7 @@ const ConGenericFormModal = ({
             customFieldComponents={config.customComponents || {}}
             optionsProviders={optionsProviders}
             loadingStates={loadingStates}
-            disabledStates={{}}
+            disabledStates={refDisabledStates}
             getIsValid={handleFormValidCheck}
             honorImmutable={isEdit}
             userIsAuthenticated={user.isAuthenticated}

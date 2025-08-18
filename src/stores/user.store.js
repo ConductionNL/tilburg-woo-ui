@@ -21,6 +21,9 @@ export class UserStore {
   constructor(store) {
     makeObservable(this);
     app.store = store;
+    
+    // Initialize from localStorage on startup
+    this.initializeFromStorage();
   }
 
   @observable
@@ -191,6 +194,11 @@ export class UserStore {
   setUser = (userData) => {
     this.user = userData;
     this.isAuthenticated = !!userData;
+    
+    // Save to localStorage whenever user data changes
+    if (userData) {
+      this.saveToStorage();
+    }
   };
 
   @action
@@ -300,6 +308,9 @@ export class UserStore {
           }
         }
 
+        // Save user state to localStorage for persistence across tabs
+        this.saveToStorage();
+        
         this.setLoading(false);
         return { success: true, user: this.user };
       } catch (error) {
@@ -489,6 +500,10 @@ export class UserStore {
 
       // Clear user data
       this.clearUser();
+      
+      // Clear localStorage
+      this.clearStorage();
+      
       this.setLoading(false);
 
       // Clear any nextcloud cookies
@@ -499,6 +514,7 @@ export class UserStore {
     } catch (error) {
       console.error('Logout failed:', error);
       this.clearUser(); // Clear anyway
+      this.clearStorage(); // Clear localStorage anyway
       this.setLoading(false);
       return { success: false, error: error.message };
     }
@@ -576,6 +592,57 @@ export class UserStore {
     // Always redirect to /beheer regardless of organizations
     // The admin dashboard will handle organization-specific content internally
     return '/beheer';
+  };
+
+  // LocalStorage persistence methods
+  @action
+  saveToStorage = () => {
+    try {
+      const userState = {
+        user: toJS(this.user),
+        isAuthenticated: this.isAuthenticated,
+        authMethod: this.authMethod,
+        basicAuthCredentials: this.basicAuthCredentials,
+      };
+      localStorage.setItem('woo-user-state', JSON.stringify(userState));
+      console.log('User state saved to localStorage');
+    } catch (error) {
+      console.warn('Failed to save user state to localStorage:', error);
+    }
+  };
+
+  @action
+  initializeFromStorage = () => {
+    try {
+      const savedState = localStorage.getItem('woo-user-state');
+      if (savedState) {
+        const userState = JSON.parse(savedState);
+        
+        // Restore user state
+        this.user = userState.user;
+        this.isAuthenticated = userState.isAuthenticated || false;
+        this.authMethod = userState.authMethod;
+        this.basicAuthCredentials = userState.basicAuthCredentials;
+        
+        console.log('User state restored from localStorage:', {
+          authenticated: this.isAuthenticated,
+          method: this.authMethod,
+          user: this.user?.uid || 'no-uid'
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to restore user state from localStorage:', error);
+    }
+  };
+
+  @action
+  clearStorage = () => {
+    try {
+      localStorage.removeItem('woo-user-state');
+      console.log('User state cleared from localStorage');
+    } catch (error) {
+      console.warn('Failed to clear user state from localStorage:', error);
+    }
   };
 }
 

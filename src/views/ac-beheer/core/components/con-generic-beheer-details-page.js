@@ -19,6 +19,7 @@ import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-detail
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import { ConDetailsActionsMenu } from '@components';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
@@ -199,77 +200,36 @@ const ConGenericBeheerDetailsPage = ({
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
                   <Heading>{data['@self']?.name || data.id}</Heading>
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
-                      Acties
-                    </ConActionMenu.Trigger>
-                    <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button
-                        icon={<VISUALS.PENCIL />}
-                        onClick={() => setOpenModal('edit')}
-                      >
-                        Bijwerken
-                      </ConActionMenu.Button>
-                      
-                      {/* Standard publish/depublish actions for all types */}
-                      {!data?.['@self']?.published && (
-                        <ConActionMenu.Button
-                          icon={<VISUALS.PUBLISH />}
-                          onClick={() => setOpenModal('publish')}
-                        >
-                          Publiceren
-                        </ConActionMenu.Button>
-                      )}
-                      
-                      {data?.['@self']?.published && (
-                        <ConActionMenu.Button
-                          icon={<VISUALS.PUBLISH_OFF />}
-                          onClick={() => setOpenModal('depublish')}
-                        >
-                          Depubliceren
-                        </ConActionMenu.Button>
-                      )}
-                      {config.uniqueActions?.map((action) =>
-                        // if condition is true show the action
-                        action.condition?.(data) ? (
-                          <ConActionMenu.Button
-                            key={action.key}
-                            icon={
-                              React.isValidElement(action.icon) ? (
-                                action.icon
-                              ) : action.icon ? (
-                                <action.icon />
-                              ) : null
-                            }
-                            onClick={() =>
-                              typeof action.onClick === 'function'
-                                ? action.onClick(data)
-                                : setOpenModal(action.action)
-                            }
-                          >
-                            {action.label}
-                          </ConActionMenu.Button>
-                        ) : null
-                      )}
-                      {actionMenuItems?.length > 0 && <ConActionMenu.Divider />}
-                      {actionMenuItems?.map((item) => (
-                        <ConActionMenu.Button
-                          key={item.label}
-                          onClick={item.onClick}
-                          icon={<VISUALS.PLUS />}
-                        >
-                          {item.label}
-                        </ConActionMenu.Button>
-                      ))}
-                      <ConActionMenu.Divider />
-                      <ConActionMenu.Button
-                        icon={<VISUALS.TRASHCAN />}
-                        onClick={() => setOpenModal('delete')}
-                      >
-                        Verwijderen
-                      </ConActionMenu.Button>
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
+                  <ConDetailsActionsMenu
+                    user={user}
+                    id={id}
+                    schemaSlug={config?.schemaSlug}
+                    title={data['@self']?.name || data.id}
+                    published={data?.['@self']?.published}
+                    showViewAction={false}
+                    showEditAction={true}
+                    showPublishActions={true}
+                    uniqueActions={[
+                      // Add unique actions from config
+                      ...(config.uniqueActions?.filter(action => action.condition?.(data)).map(action => ({
+                        key: action.key,
+                        label: action.label,
+                        icon: action.icon,
+                        onClick: () => typeof action.onClick === 'function' ? action.onClick(data) : setOpenModal(action.action)
+                      })) || []),
+                      // Add delete action
+                      {
+                        key: 'delete',
+                        label: 'Verwijderen',
+                        icon: VISUALS.TRASHCAN,
+                        onClick: () => setOpenModal('delete')
+                      }
+                    ]}
+                    relatedActions={actionMenuItems}
+                    onEdit={() => setOpenModal('edit')}
+                    onPublish={() => setOpenModal('publish')}
+                    onDepublish={() => setOpenModal('depublish')}
+                  />
                 </AcFlex>
 
                 {/* Warning card for unpublished objects */}

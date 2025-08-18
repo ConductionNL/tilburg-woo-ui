@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
@@ -18,7 +18,8 @@ import { commongroundApiUrl } from '@config';
 
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
-import { ConPublicationActions } from '@components';
+import { ConDetailsActionsMenu } from '@components';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 
 const getValueField = (key, value) => {
@@ -104,84 +105,36 @@ const AcPublication = observer(
 
     const isLoggedIn = !!getCookie('nextcloud_user_id');
 
-    // Dynamic ActionMenu (related schemas + user permissions)
+    // Use the same related actions hook as beheer pages
+    const openDynamicCreate = useCallback((targetType, preSelected) => {
+      // For publication pages, we'll navigate to the beheer page with modal open
+      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
+    }, [navigate, id]);
+
+    const { makeActionsForContext } = useRelatedCreateActions({
+      object,
+      user,
+      schemaRef: get_single?.['@self']?.schema?.slug,
+      currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
+      openDynamicCreate,
+    });
+
+    // Generate action menu items
     const [actionMenuItems, setActionMenuItems] = useState([]);
 
-    const mapRelatedSchemaToAction = (relatedSchema) => {
-      const slug = relatedSchema?.slug;
-      if (!slug) return null;
-
-      // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
-      const typeSegment = slug;
-      console.log('Using schema slug directly:', typeSegment);
-
-      const label = `${relatedSchema?.title ?? _.startCase(slug)} toevoegen`;
-
-      return {
-        label,
-        onClick: () =>
-          navigate(
-            `/beheer/${typeSegment}?showCreateModal=true&voorzieningId=${id}`
-          ),
-        icon: <VISUALS.PLUS />,
-      };
-    };
-
     useEffect(() => {
-      // Only proceed when logged in and object data present
-      if (!isLoggedIn || !get_single?.['@self']?.schema) return;
-
-      const schemaRef = get_single['@self'].schema;
-
-      const ensureUserAndRelated = async () => {
-        try {
-          // Ensure user data with groups is available
-          if (!user?.isAuthenticated) {
-            await user?.checkAuthStatus?.();
-            await user?.fetchUserProfile?.();
-          }
-
-          // Fetch related schemas via object store
-          await object?.fetchSchemaRelated?.(schemaRef);
-          const related = object?.getSchemaRelated?.(schemaRef);
-          console.log('Related schemas fetched:', related);
-
-          const relatedResults = Array.isArray(related?.results)
-            ? related.results
-            : [];
-          console.log('Related results:', relatedResults);
-
-          const userGroups = Array.isArray(user?.userGroups)
-            ? user.userGroups
-                .map((g) => (typeof g === 'string' ? g : g?.name))
-                .filter(Boolean)
-            : [];
-
-          // Filter related schemas where user has create permission
-          const creatable = relatedResults.filter((rs) => {
-            const createGroups = Array.isArray(rs?.authorization?.create)
-              ? rs.authorization.create
-              : [];
-            if (createGroups.includes('public')) return true;
-            return createGroups.some((grp) => userGroups.includes(grp));
-          });
-
-          // Map to concrete actions we support in this view
-          const items = creatable
-            .map((rs) => mapRelatedSchemaToAction(rs))
-            .filter(Boolean);
-
-          console.log('Related action items prepared:', items);
-          setActionMenuItems(items);
-        } catch (e) {
-          console.error('Failed to prepare action menu:', e);
-          setActionMenuItems([]);
-        }
-      };
-
-      ensureUserAndRelated();
-      // Intentionally only re-run when schema reference or login state changes
-    }, [isLoggedIn, get_single?.['@self']?.schema]);
+      if (!get_single?.['@self']?.schema?.slug || !id) return;
+      
+      const items = makeActionsForContext(id).map(({ key, label, onClick }) => ({
+        key,
+        label,
+        onClick,
+        icon: <VISUALS.PLUS />,
+      }));
+      
+      console.log('Publication related action items:', items);
+      setActionMenuItems(items);
+    }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
     // Table
     const [headers, setHeaders] = useState([]);
@@ -338,7 +291,7 @@ const AcPublication = observer(
                 )}
               </AcFlex>
 
-              <ConPublicationActions
+              <ConDetailsActionsMenu
                 user={user}
                 id={id}
                 schemaSlug={get_single?.['@self']?.schema?.slug}
@@ -346,7 +299,7 @@ const AcPublication = observer(
                 published={get_single?.['@self']?.published}
                 showPublishActions={true}
                 triggerStyle='button'
-                additionalActions={actionMenuItems}
+                relatedActions={actionMenuItems}
               />
             </div>
             <AcTable header={headers} rows={rows} />{' '}
