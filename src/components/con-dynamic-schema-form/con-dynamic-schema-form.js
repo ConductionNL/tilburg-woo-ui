@@ -28,6 +28,8 @@ import { VISUALS } from '@src/constants';
  * - **Enums**: Automatically rendered as single-select dropdowns
  * - **Objects**: Recursively rendered as individual fields for each nested property
  * - **Strings**: Rendered as text input fields
+ * - **Date fields**: Strings with `format: "date"` rendered as HTML5 date input
+ * - **DateTime fields**: Strings with `format: "date-time"` rendered as HTML5 datetime-local input
  * - **Other types**: Default to text input fields
  *
  * **Nested Object Support:**
@@ -429,6 +431,17 @@ const ConDynamicSchemaForm = forwardRef(
           type: 'text',
           component: 'AcTextarea',
         };
+      } else if (
+        propertySchema.type === 'string' &&
+        (propertySchema.format === 'date' || propertySchema.format === 'date-time')
+      ) {
+        // Handle date and datetime fields
+        schemaConfig = {
+          ...baseConfig,
+          type: 'date',
+          component: 'AcFormField',
+          inputType: propertySchema.format === 'date-time' ? 'datetime-local' : 'date',
+        };
       } else if (propertySchema.type === 'string') {
         schemaConfig = {
           ...baseConfig,
@@ -715,6 +728,7 @@ const ConDynamicSchemaForm = forwardRef(
             id={`dynamic-form-field-${path}`}
             label={fieldConfig.label}
             type={fieldConfig.type}
+            inputType={fieldConfig.inputType || 'text'} // Support for HTML5 input types like date, datetime-local
             onChange={handleFieldChange(path, fieldConfig)}
             value={value || ''}
             placeholder={fieldConfig.placeholder}
