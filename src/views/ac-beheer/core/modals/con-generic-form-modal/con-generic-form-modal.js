@@ -713,10 +713,11 @@ const ConGenericFormModal = ({
     return null;
   }
 
-  // Generate title
+  // Generate title - prefer schema title over type slug
+  const schemaTitle = schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
   const title = isEdit
-    ? `${type.charAt(0).toUpperCase() + type.slice(1)} bewerken`
-    : `${type.charAt(0).toUpperCase() + type.slice(1)} toevoegen`;
+    ? `${schemaTitle} bewerken`
+    : `${schemaTitle} toevoegen`;
 
   return (
     <AcModal
