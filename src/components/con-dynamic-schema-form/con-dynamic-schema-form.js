@@ -66,10 +66,32 @@ import ColorField from './inputs/color-field';
  *     options: [{ value: "option1", label: "Option 1" }],
  *     isMulti: false,
  *     closeMenuOnSelect: true,
- *     placeholder: "Custom placeholder"
+ *     placeholder: "Custom placeholder",
+ *     size: "half|full" // Controls field width: half (50%) or full (100%)
  *   }
  * }}
  * ```
+ *
+ * **Flexible Field Layout System:**
+ * The form uses a flexible layout with floating divs that automatically adjust field sizes based on content:
+ * 
+ * **Automatic Sizing Rules:**
+ * - **Full Width (100%)**: Markdown/HTML fields, JSON objects, large text (maxLength > 100), multi-select arrays
+ * - **Half Width + Double Height**: Text areas, description fields, fields with maxLength > 50
+ * - **Half Width + Normal Height**: Default for most fields (text inputs, selects, numbers, etc.)
+ * 
+ * **Manual Size Override:**
+ * ```jsx
+ * fieldConfigs={{
+ *   description: { size: "full" },        // Force full width
+ *   shortText: { size: "half" }           // Force half width
+ * }}
+ * ```
+ *
+ * **Responsive Behavior:**
+ * - Desktop: Fields respect their size classes (50%/100% width)
+ * - Tablet (≤1024px): Half-width fields become full width
+ * - Mobile (≤768px): All fields become full width for better usability
  *
  * **Custom Field Components:**
  * For special cases like file uploads, you can provide custom React components:
@@ -553,7 +575,7 @@ const ConDynamicSchemaForm = forwardRef(
           schemaConfig = {
             ...baseConfig,
             type: 'text',
-            component: 'MarkdownHtml',
+            component: 'LightweightMarkdown',
             isMarkdown: format === 'markdown',
           };
         } else if (['email', 'idn-email'].includes(format)) {
@@ -796,7 +818,7 @@ const ConDynamicSchemaForm = forwardRef(
         typeof value === 'string' ||
         fieldConfig.component === 'AcFormField' ||
         fieldConfig.component === 'AcTextarea' ||
-        fieldConfig.component === 'MarkdownHtml'
+        fieldConfig.component === 'LightweightMarkdown'
       ) {
         errors = errors.concat(validateString(value, fieldConfig.schema || {}));
       }
@@ -1051,9 +1073,9 @@ const ConDynamicSchemaForm = forwardRef(
         );
       }
 
-      if (fieldConfig.component === 'MarkdownHtml') {
+      if (fieldConfig.component === 'LightweightMarkdown') {
         return (
-          <MarkdownHtmlField
+          <ConLightweightMarkdownEditor
             key={path}
             path={path}
             label={fieldConfig.label}
@@ -1063,7 +1085,6 @@ const ConDynamicSchemaForm = forwardRef(
             placeholder={fieldConfig.placeholder}
             required={validation.required}
             disabled={isDisabled}
-            isMarkdown={fieldConfig.isMarkdown}
           />
         );
       }
@@ -1237,23 +1258,87 @@ const ConDynamicSchemaForm = forwardRef(
     );
 
     /**
+     * Determines the size class for a field based on its type, format, and other characteristics
+     * @param {string} path - The property path
+     * @param {object} propertySchema - The property schema
+     * @param {object} fieldConfig - The field configuration
+     * @returns {string} CSS class name for field sizing
+     */
+    const getFieldSizeClass = (path, propertySchema, fieldConfig) => {
+      // Check for explicit size configuration first
+      if (fieldConfig.size === 'full') return 'field-size-full';
+      if (fieldConfig.size === 'half') return 'field-size-half';
+      
+      // Business rules for automatic sizing based on type/format
+      const format = propertySchema.format;
+      const component = fieldConfig.component;
+
+      // Only markdown fields get special treatment: full width + double height
+      if (component === 'LightweightMarkdown' || format === 'markdown') {
+        return 'field-size-full field-height-double';
+      }
+
+      // Everything else: half width, normal height
+      return 'field-size-half';
+    };
+
+    /**
+     * Wraps a field with appropriate sizing container
+     * @param {React.ReactElement} fieldElement - The rendered field element
+     * @param {string} path - The property path
+     * @param {object} propertySchema - The property schema
+     * @param {object} fieldConfig - The field configuration
+     * @returns {React.ReactElement} Wrapped field element
+     */
+    const wrapFieldWithSize = (fieldElement, path, propertySchema, fieldConfig) => {
+      if (!fieldElement) return null;
+      
+      const sizeClass = getFieldSizeClass(path, propertySchema, fieldConfig);
+      
+      return (
+        <div key={path} className={`con-form-field-wrapper ${sizeClass}`}>
+          {fieldElement}
+        </div>
+      );
+    };
+
+    /**
+     * Enhanced render field function that includes size wrapping
+     */
+    const renderFieldWithSize = (property) => {
+      const { path, schema: propertySchema, required } = property;
+      const fieldConfig = getFieldConfig(path, propertySchema, required);
+      
+      // Check visibility first
+      if (!getFieldVisibility(path, fieldConfig, propertySchema)) {
+        return null;
+      }
+      
+      // Render the actual field
+      const fieldElement = renderField(property);
+      
+      // Wrap with size container
+      return wrapFieldWithSize(fieldElement, path, propertySchema, fieldConfig);
+    };
+
+    /**
      * Main render section that processes and renders all form fields.
      *
      * Process:
      * 1. Sort top-level properties using custom sortPropertiesByOrder logic
      * 2. Flatten nested object properties into individual fields with dot notation paths
-     * 3. Render each field using renderField() function
+     * 3. Render each field using renderField() function with size wrapping
      * 4. Include tooltip component for field descriptions
      *
      * The flattened properties maintain the original order from the sorted top-level properties,
      * with nested properties appearing in their original order within their parent object.
      */
     return (
-      <>
-        {flattenedProperties.map((property) => renderField(property))}
+      <div className="con-form-fields-container">
+        {flattenedProperties.map((property) => renderFieldWithSize(property))}
         {/* Tooltip needs to be rendered again because the dialog is rendered in a portal at #top-layer */}
         <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />
-      </>
+      </div>
     );
   }
 );

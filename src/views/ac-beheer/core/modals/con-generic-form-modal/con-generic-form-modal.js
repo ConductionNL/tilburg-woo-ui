@@ -767,7 +767,7 @@ const ConGenericFormModal = ({
       )}
 
       {/* Form content */}
-      <AcGrid columns={2}>
+      <div className="con-dynamic-form-container">
         {schemaLoading ? (
           <div>Schema wordt geladen...</div>
         ) : schema ? (
@@ -793,7 +793,7 @@ const ConGenericFormModal = ({
             Schema kon niet worden geladen. Controleer of het schema bestaat.
           </div>
         )}
-      </AcGrid>
+      </div>
     </AcModal>
   );
 };
