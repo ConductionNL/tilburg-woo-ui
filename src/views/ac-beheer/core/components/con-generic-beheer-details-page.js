@@ -2,7 +2,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
-import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
+import {
+  AcFlex,
+  AcSection,
+  AcTab,
+  AcTabList,
+  AcTabPanel,
+  AcTabs,
+  ConLogo,
+} from '@atoms';
 import { ConDynamicSidenav, AcLoader } from '@components';
 import {
   Heading,
@@ -29,6 +37,7 @@ import { TOOLTIP_ID } from '@src/index.web';
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
 import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import ConLogoPreview from '@views/ac-register/con-logo-preview';
 
 /**
  * Generic Beheer Details Page
@@ -37,11 +46,7 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
  * - Renders Files tab and dynamic Uses/Used tabs
  * - Supports unique action menu items and edit/delete via external modals
  */
-const ConGenericBeheerDetailsPage = ({
-  store,
-  type,
-  id: propId,
-}) => {
+const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   // Destructure the stores we need
   const { object, user } = store;
   const navigate = useNavigate();
@@ -134,6 +139,15 @@ const ConGenericBeheerDetailsPage = ({
     ? schema.configuration.allowedTags
     : [];
 
+  const configuredMetaFields = useMemo(() => {
+    const cfg = schema?.configuration;
+    return [
+      cfg?.objectDescriptionField,
+      cfg?.objectImageField,
+      cfg?.objectNameField,
+    ].filter(Boolean);
+  }, [schema]);
+
   // If Files tab is hidden, default to first dynamic tab (index 1)
   useEffect(() => {
     setTabIndex((prev) => (!showFilesTab ? 1 : 0));
@@ -158,14 +172,17 @@ const ConGenericBeheerDetailsPage = ({
   const longTooltip = (type) =>
     `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
 
-  const openDynamicCreate = React.useCallback((targetType, preSelected, metadata = {}) => {
-    setDynamicCreateTargetType(targetType);
-    setDynamicCreatePreSelected(preSelected);
-    // Store metadata for outgoing relationship handling and optimization
-    // Store all metadata for the modal to use
-    setDynamicCreateMetadata(metadata);
-    setOpenModal('dynamicCreate');
-  }, []);
+  const openDynamicCreate = React.useCallback(
+    (targetType, preSelected, metadata = {}) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      // Store metadata for outgoing relationship handling and optimization
+      // Store all metadata for the modal to use
+      setDynamicCreateMetadata(metadata);
+      setOpenModal('dynamicCreate');
+    },
+    []
+  );
 
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
@@ -207,7 +224,14 @@ const ConGenericBeheerDetailsPage = ({
             {!loading && data && (
               <AcFlex column spacing='xl'>
                 <AcFlex spacing='sm' justifyContent='between'>
-                  <Heading>{data['@self']?.name || data.id}</Heading>
+                  <AcFlex>
+                    <ConLogoPreview
+                      className='ac-publication-logo-container'
+                      logoUrl={data?.['@self']?.image}
+                    />
+
+                    <Heading>{data['@self']?.name || data.id}</Heading>
+                  </AcFlex>
                   <ConDetailsActionsMenu
                     user={user}
                     id={id}
@@ -220,19 +244,24 @@ const ConGenericBeheerDetailsPage = ({
                     showPublishActions={true}
                     uniqueActions={[
                       // Add unique actions from config
-                      ...(config.uniqueActions?.filter(action => action.condition?.(data)).map(action => ({
-                        key: action.key,
-                        label: action.label,
-                        icon: action.icon,
-                        onClick: () => typeof action.onClick === 'function' ? action.onClick(data) : setOpenModal(action.action)
-                      })) || []),
+                      ...(config.uniqueActions
+                        ?.filter((action) => action.condition?.(data))
+                        .map((action) => ({
+                          key: action.key,
+                          label: action.label,
+                          icon: action.icon,
+                          onClick: () =>
+                            typeof action.onClick === 'function'
+                              ? action.onClick(data)
+                              : setOpenModal(action.action),
+                        })) || []),
                       // Add delete action
                       {
                         key: 'delete',
                         label: 'Verwijderen',
                         icon: VISUALS.TRASHCAN,
-                        onClick: () => setOpenModal('delete')
-                      }
+                        onClick: () => setOpenModal('delete'),
+                      },
                     ]}
                     relatedActions={actionMenuItems}
                     onEdit={() => setOpenModal('edit')}
@@ -243,14 +272,21 @@ const ConGenericBeheerDetailsPage = ({
 
                 {/* Warning card for unpublished objects */}
                 {!data?.['@self']?.published && (
-                  <Alert type="warning">
+                  <Alert type='warning'>
                     <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
                     <Paragraph>
-                      Dit object is momenteel niet zichtbaar in de zoekfunctie van {config?.title || 'de catalogus'}. 
-                      Gebruik de "Publiceren" actie om het object beschikbaar te maken voor bezoekers.
+                      Dit object is momenteel niet zichtbaar in de zoekfunctie van{' '}
+                      {config?.title || 'de catalogus'}. Gebruik de "Publiceren"
+                      actie om het object beschikbaar te maken voor bezoekers.
                     </Paragraph>
                   </Alert>
                 )}
+
+                <AcColumn>
+                  {!showDescriptionFields && (
+                    <div>{data?.['@self']?.description}</div>
+                  )}
+                </AcColumn>
 
                 <AcColumn gap='tiger'>
                   {showDescriptionFields && (
@@ -297,15 +333,24 @@ const ConGenericBeheerDetailsPage = ({
                     <div className='ac-beheer-details--grid'>
                       {Object.entries(dataProperties)
                         .filter(([key]) => !config.excludedProperties.includes(key))
+                        .filter(([key]) => !configuredMetaFields.includes(key))
                         .filter(([key, schema]) => canReadField(user, schema))
                         .map(([key, schema]) => {
                           // Check if this property should be displayed inline
-                          const isInline = config.formatBySchemaOptions?.profile?.[key]?.inline;
-                          
+                          const isInline =
+                            config.formatBySchemaOptions?.profile?.[key]?.inline;
+
                           if (isInline) {
                             // Inline rendering: label and value on same line
                             return (
-                              <div key={key} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                              <div
+                                key={key}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'baseline',
+                                  gap: '8px',
+                                }}
+                              >
                                 <strong
                                   {...(schema?.description
                                     ? {
@@ -337,7 +382,7 @@ const ConGenericBeheerDetailsPage = ({
                                     : {})}
                                 >
                                   {_.startCase(key)}:
-                                </strong>
+                                </strong>{' '}
                                 {formatBySchema(
                                   schema,
                                   data,
@@ -350,7 +395,7 @@ const ConGenericBeheerDetailsPage = ({
                         })}
                     </div>
 
-                    <div className="ac-beheer-details--tabs-container">
+                    <div className='ac-beheer-details--tabs-container'>
                       <AcTabs
                         selectedIndex={tabIndex}
                         onSelect={(index) => setTabIndex(index)}
@@ -533,8 +578,8 @@ const ConGenericBeheerDetailsPage = ({
           // Include all available modals for this type plus dynamicCreate, exclude add/import
           modals: (BeheerModalFactory.modalComponents[type]
             ? Object.keys(BeheerModalFactory.modalComponents[type])
-            : ['edit', 'delete', 'publish', 'depublish'] // Default base modals for unknown types
-          )
+            : ['edit', 'delete', 'publish', 'depublish']
+          ) // Default base modals for unknown types
             .filter((m) => m !== 'add' && m !== 'import')
             .concat('dynamicCreate'),
         },
