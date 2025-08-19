@@ -1,3 +1,12 @@
 {
-    "prettier.configPath": ".prettierrc.json"
+  "prettier.configPath": ".prettierrc.json",
+
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": ".*",
+        "cmd": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$root='${workspaceFolder}'; $f='${file}'; if ($f.ToLower().StartsWith($root.ToLower())) { $rel=$f.Substring($root.Length).TrimStart('\\\\') } else { $rel=$f }; git -C $root check-ignore -q -- $rel; if ($LASTEXITCODE -eq 1) { $relUnix=$rel -replace '\\\\','/'; if ($relUnix.StartsWith('src/') -or $relUnix.StartsWith('public/')) { docker compose exec -T tilburg-woo-ui-hot sh -lc \\\"if [ -e '/app/$relUnix' ]; then touch -c '/app/$relUnix'; else echo 'Saved outside mounted dirs: $relUnix'; fi\\\" } else { Write-Output ('Skipped (not src/public): ' + $relUnix) } } else { Write-Output 'Skipped ignored file: ${fileBasename}' }\""
+      }
+    ]
+  }
 }
