@@ -52,8 +52,13 @@ $ yarn build:web
 - Workspace is trusted (not in Restricted Mode)
 - “Run On Save” extension is installed
 
-### Installing the extension in Cursor (via Marketplace Service URL)
+### Installing the extension
 
+#### VS Code
+- Install: [Run On Save — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave).
+
+
+#### Cursor (via Marketplace Service URL)
 - In Cursor, open Settings and search for `marketplace`, or navigate: Features → Extensions → Gallery → Service URL.
 - Set the Service URL to: `https://marketplace.visualstudio.com/_apis/public/gallery`.
 - Restart Cursor to apply the change.
@@ -80,3 +85,27 @@ $ yarn build:web
 - It checks the path with `git check-ignore`; ignored files are skipped.
 - For files in `src/` or `public/`, it executes a command inside the hot‑reload container that “touches” the corresponding path under `/app/...`.
 - The “touch” prompts Webpack/Watchpack to recompile the changed modules; the browser updates via HMR without restarting the container.
+
+### Container targeted by on-save
+
+- The on-save command targets the hot-reload container by default: `tilburg-woo-ui-hot`.
+- If your setup uses a different service name, update the service in `.vscode/settings.json` where the command invokes Docker.
+
+Example: change the service name
+
+```json
+{
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": ".*",
+        "autoShowOutputPanel": "always",
+        "message": "🚀 Trigger HMR in <your-service-name>",
+        "cmd": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$enc=[Text.Encoding]::UTF8; try{[Console]::OutputEncoding=$enc}catch{}; $OutputEncoding=$enc; $root='${workspaceFolder}'; $f='${file}'; if ($f.ToLower().StartsWith($root.ToLower())) { $rel=$f.Substring($root.Length).TrimStart('\\\\') } else { $rel=$f }; git -C $root check-ignore -q -- $rel; if ($LASTEXITCODE -eq 1) { $relUnix=$rel -replace '\\\\','/'; if ($relUnix.StartsWith('src/') -or $relUnix.StartsWith('public/')) { docker compose exec -T <your-service-name> sh -lc \\\"if [ -e '/app/$relUnix' ]; then echo 'Updated: $relUnix'; else echo 'Saved outside mounted dirs: $relUnix'; fi\\\" } } }\""
+      }
+    ]
+  }
+}
+```
+
+- Replace `<your-service-name>` with the container service from your `docker-compose.yml`.
