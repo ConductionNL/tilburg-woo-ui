@@ -52,17 +52,20 @@ $ yarn build:web
 - Workspace is trusted (not in Restricted Mode)
 - “Run On Save” extension is installed
 
-### Installing the extension in Cursor
+### Installing the extension in Cursor (via Marketplace Service URL)
 
-- Install the extension in VS Code first: [Run On Save — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave).
-- Then, in Cursor, update your extensions from VS Code.
+- In Cursor, open Settings and search for `marketplace`, or navigate: Features → Extensions → Gallery → Service URL.
+- Set the Service URL to: `https://marketplace.visualstudio.com/_apis/public/gallery`.
+- Restart Cursor to apply the change.
+- Open the Extensions view in Cursor, search for “Run On Save” by emeraldwalk, and install it: [Run On Save — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave).
 
-**Important — destructive action**
+> Note: Using an alternative marketplace endpoint is not officially supported and behavior may change. See the discussion in [Cursor issue #2461](https://github.com/cursor/cursor/issues/2461).
 
-- Updating extensions in Cursor from VS Code will overwrite Cursor’s extension list with VS Code’s.
-- Extensions installed only in Cursor (and not in VS Code) will be removed.
-- Use this action with caution. 
-  - See discussion: [Cursor issue comment](https://github.com/cursor/cursor/issues/2461#issuecomment-2540387698).
+**Warning — destructive sync action (avoid unless necessary)**
+
+- If you use “Sync extensions from VS Code,” Cursor will overwrite its extension list with VS Code’s list.
+- Any extensions installed only in Cursor (and not present in VS Code) will be removed.
+- Use with caution; see: [Cursor issue #2461](https://github.com/cursor/cursor/issues/2461).
 
 ### What it does
 
