@@ -80,12 +80,12 @@ const FormModalConfigFactory = {
           optionsProviders: {
             voorzieningstype: () =>
               [
-                { id: 'Toepassing', label: 'Toepassing' },
-                { id: 'Platform', label: 'Platform' },
-                { id: 'GeneriekComponent', label: 'GeneriekComponent' },
-                { id: 'Service', label: 'Service' },
-                { id: 'Anders', label: 'Anders' },
-              ].map((type) => ({ value: type.id, label: type.label })),
+                { value: 'Toepassing', label: 'Toepassing' },
+                { value: 'Platform', label: 'Platform' },
+                { value: 'GeneriekComponent', label: 'GeneriekComponent' },
+                { value: 'Service', label: 'Service' },
+                { value: 'Anders', label: 'Anders' },
+              ],
             licentie: () =>
               licenses.map((license) => ({
                 label: license.name,
