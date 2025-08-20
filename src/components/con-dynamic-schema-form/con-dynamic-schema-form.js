@@ -14,6 +14,8 @@ import { TOOLTIP_ID } from '@src/index.web';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import MarkdownHtmlField from './inputs/markdown-html-field';
+import MDEditor from '@uiw/react-md-editor';
+import ConLightweightMarkdownEditor from './inputs/con-lightweight-markdown-editor';
 import JsonObjectField from './inputs/json-object-field';
 import BooleanField from './inputs/boolean-field';
 import NumberField from './inputs/number-field';
@@ -575,7 +577,7 @@ const ConDynamicSchemaForm = forwardRef(
           schemaConfig = {
             ...baseConfig,
             type: 'text',
-            component: 'LightweightMarkdown',
+            component: 'WysiwygMarkdown',
             isMarkdown: format === 'markdown',
           };
         } else if (['email', 'idn-email'].includes(format)) {
@@ -818,7 +820,7 @@ const ConDynamicSchemaForm = forwardRef(
         typeof value === 'string' ||
         fieldConfig.component === 'AcFormField' ||
         fieldConfig.component === 'AcTextarea' ||
-        fieldConfig.component === 'LightweightMarkdown'
+        fieldConfig.component === 'WysiwygMarkdown'
       ) {
         errors = errors.concat(validateString(value, fieldConfig.schema || {}));
       }
@@ -1073,19 +1075,40 @@ const ConDynamicSchemaForm = forwardRef(
         );
       }
 
-      if (fieldConfig.component === 'LightweightMarkdown') {
+      if (fieldConfig.component === 'WysiwygMarkdown') {
         return (
-          <ConLightweightMarkdownEditor
-            key={path}
-            path={path}
-            label={fieldConfig.label}
-            description={fieldConfig.description}
-            value={value}
-            onChange={handleFieldChange(path, fieldConfig)}
-            placeholder={fieldConfig.placeholder}
-            required={validation.required}
-            disabled={isDisabled}
-          />
+          <div key={path} className="con-wysiwyg-markdown-field">
+            <label className="utrecht-form-label">
+              <h4 className="utrecht-heading-4">
+                {fieldConfig.label}
+                {validation.required && (
+                  <>
+                    <span className="required-indicator" aria-hidden="true">*</span>
+                    <span className="sr-only">(verplicht)</span>
+                  </>
+                )}
+                {fieldConfig.description && (
+                  <span
+                    data-tooltip-id={TOOLTIP_ID}
+                    data-tooltip-content={fieldConfig.description}
+                    className="info-indicator"
+                    role="img"
+                    aria-label={fieldConfig.description}
+                  >
+                    <VISUALS.INFO />
+                  </span>
+                )}
+              </h4>
+            </label>
+            <MDEditor
+              value={value || ''}
+              onChange={(val) => handleFieldChange(path, fieldConfig)(val || '')}
+              data-color-mode="light"
+              visibleDragBar={false}
+              preview="edit"
+              hideToolbar={isDisabled}
+            />
+          </div>
         );
       }
 
@@ -1274,7 +1297,7 @@ const ConDynamicSchemaForm = forwardRef(
       const component = fieldConfig.component;
 
       // Only markdown fields get special treatment: full width + double height
-      if (component === 'LightweightMarkdown' || format === 'markdown') {
+      if (component === 'WysiwygMarkdown' || format === 'markdown') {
         return 'field-size-full field-height-double';
       }
 

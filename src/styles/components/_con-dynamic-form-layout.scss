@@ -11,7 +11,7 @@
 .con-form-fields-container {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--tilburg-space-block-mouse);
+  gap: var(--tilburg-space-block-snail); // Reduced from mouse (16px) to snail (12px) for tighter spacing
   align-items: flex-start;
   width: 100%;
   justify-content: flex-start;
@@ -44,7 +44,7 @@
 // Size variants - flexbox with gap handles spacing automatically
 .con-form-field-wrapper.field-size-half {
   // Simple 50% width - gap is handled automatically by flexbox
-  flex-basis: calc(50% - 8px); // Account for half of the 16px gap
+  flex-basis: calc(50% - calc(var(--tilburg-space-block-snail) / 2)); // Account for half of the gap
   
   // On mobile, make all fields full width
   @media (max-width: 768px) {
@@ -167,7 +167,7 @@
   }
   
   .con-form-fields-container {
-    gap: var(--tilburg-space-block-snail);
+    gap: var(--tilburg-space-block-beetle); // 8px for tablet
   }
 }
 
@@ -177,7 +177,7 @@
   }
   
   .con-form-fields-container {
-    gap: var(--tilburg-space-block-ant);
+    gap: var(--tilburg-space-block-ant); // 4px for mobile - tightest spacing
   }
 }
 

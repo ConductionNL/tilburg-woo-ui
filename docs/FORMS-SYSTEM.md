@@ -356,6 +356,175 @@ Forms use consistent styling classes:
 }
 ```
 
+### Dynamic Form Layout System
+
+The application features a flexible form layout system that automatically arranges form fields in responsive grids:
+
+#### Layout Classes
+
+**Container Classes**:
+```scss
+.con-dynamic-form-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+}
+
+.con-form-fields-container {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+}
+```
+
+**Field Wrapper Classes**:
+```scss
+.con-form-field-wrapper {
+  flex-basis: calc(50% - 0.5rem) !important;
+  min-width: 0 !important;
+}
+```
+
+**Field Size Classes**:
+```scss
+.field-size-half {
+  // Takes 50% width on desktop, 100% on mobile
+  flex-basis: calc(50% - 0.5rem) !important;
+}
+
+.field-size-full {
+  // Takes 100% width on all screen sizes
+  flex-basis: 100% !important;
+}
+
+.field-height-double {
+  // Double height for textarea/markdown fields
+  min-height: 200px !important;
+}
+```
+
+#### Automatic Field Sizing
+
+The form system automatically determines field sizes based on field type and format:
+
+```javascript
+const getFieldSizeClass = (path, propertySchema, fieldConfig) => {
+  // User-defined size overrides
+  if (fieldConfig.size === 'full') return 'field-size-full';
+  if (fieldConfig.size === 'half') return 'field-size-half';
+  
+  // Automatic sizing based on field type
+  const format = propertySchema.format;
+  const component = fieldConfig.component;
+  
+  // Markdown fields get full width + double height
+  if (component === 'WysiwygMarkdown' || format === 'markdown') {
+    return 'field-size-full field-height-double';
+  }
+  
+  // Default: half width, normal height
+  return 'field-size-half';
+};
+```
+
+#### Field Configuration Options
+
+Field configurations can include a `size` property to override automatic sizing:
+
+```javascript
+/**
+ * @typedef {Object} FieldConfig
+ * @property {string} label - Field display label
+ * @property {string} component - Component type to render
+ * @property {Object} schema - JSON schema for validation
+ * @property {'half'|'full'} [size] - Override automatic field sizing
+ * @property {string} [placeholder] - Placeholder text
+ * @property {boolean} [disabled] - Whether field is disabled
+ */
+
+const fieldConfigs = {
+  'description': {
+    label: 'Beschrijving',
+    component: 'WysiwygMarkdown',
+    size: 'full', // Force full width
+    schema: { type: 'string', format: 'markdown' }
+  },
+  'email': {
+    label: 'E-mailadres', 
+    component: 'AcFormField',
+    size: 'half', // Force half width
+    schema: { type: 'string', format: 'email' }
+  }
+};
+```
+
+#### Responsive Breakpoints
+
+The layout system includes responsive breakpoints for optimal mobile experience:
+
+```scss
+// Tablet breakpoint
+@media (max-width: 768px) {
+  .field-size-half {
+    flex-basis: 100% !important;
+  }
+}
+
+// Mobile breakpoint  
+@media (max-width: 480px) {
+  .con-form-fields-container {
+    gap: 0.75rem !important;
+  }
+  
+  .field-height-double {
+    min-height: 150px !important;
+  }
+}
+```
+
+#### Multi-Select Field Optimization
+
+Special handling for ReactSelect components to ensure consistent height:
+
+```scss
+.ac-beheer-select {
+  .react-select__control {
+    min-height: 40px !important;
+  }
+  
+  .react-select__control--is-multi {
+    max-height: 120px !important;
+    overflow-y: auto !important;
+  }
+  
+  .react-select__multi-value {
+    margin: 2px !important;
+  }
+}
+```
+
+#### WYSIWYG Markdown Editor
+
+The form system supports user-friendly WYSIWYG markdown editing:
+
+```javascript
+// Field configuration for markdown
+if (format === 'markdown' || format === 'html') {
+  schemaConfig = {
+    ...baseConfig,
+    type: 'text',
+    component: 'WysiwygMarkdown', // Uses @uiw/react-md-editor
+    isMarkdown: format === 'markdown',
+  };
+}
+```
+
+The markdown editor includes:
+- Live preview capabilities
+- Toolbar with common formatting options
+- Full-width, double-height sizing
+- Light theme integration
+
 ### Component Integration
 
 Forms integrate with the established design system:
@@ -363,6 +532,7 @@ Forms integrate with the established design system:
 - Utrecht component library for form elements
 - Atomic design pattern for component structure
 - Responsive design for mobile compatibility
+- Flexible form layout system for optimal field arrangement
 
 ## Development Guidelines
 
