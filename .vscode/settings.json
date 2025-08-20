@@ -1,3 +1,17 @@
 {
-    "prettier.configPath": ".prettierrc.json"
+  "prettier.configPath": ".prettierrc.json",
+
+  "emeraldwalk.runonsave": {
+    "autoClearConsole": true,
+    "message": "🔄 On Save: checking file and triggering HMR…",
+    "showElapsed": true,
+    "commands": [
+      {
+        "match": ".*",
+        "autoShowOutputPanel": "always",
+        "message": "🚀 Trigger HMR in tilburg-woo-ui-hot",
+        "cmd": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"$enc=[Text.Encoding]::UTF8; try{[Console]::OutputEncoding=$enc}catch{}; $OutputEncoding=$enc; $root='${workspaceFolder}'; $f='${file}'; if ($f.ToLower().StartsWith($root.ToLower())) { $rel=$f.Substring($root.Length).TrimStart('\\\\') } else { $rel=$f }; git -C $root check-ignore -q -- $rel; if ($LASTEXITCODE -eq 1) { $relUnix=$rel -replace '\\\\','/'; if ($relUnix.StartsWith('src/') -or $relUnix.StartsWith('public/')) { Write-Output ('⏳ Updating: ' + $relUnix); docker compose exec -T tilburg-woo-ui-hot sh -lc \\\"if [ -e '/app/$relUnix' ]; then echo '✅ Updated: $relUnix'; else echo 'ℹ Saved outside mounted dirs: $relUnix'; fi\\\" 2>$null; Write-Output '✅ On Save: complete.' } else { Write-Output ('⏭️ Skipped (not src/public): ' + $relUnix) } } else { Write-Output ('🚫 Skipped (gitignored): ' + $rel) }\""
+      }
+    ]
+  }
 }
