@@ -55,10 +55,11 @@ $ yarn build:web
 ### Installing the extension
 
 #### VS Code
+
 - Install: [Run On Save — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave).
 
-
 #### Cursor (via Marketplace Service URL)
+
 - In Cursor, open Settings and search for `marketplace`, or navigate: Features → Extensions → Gallery → Service URL.
 - Set the Service URL to: `https://marketplace.visualstudio.com/_apis/public/gallery`.
 - Restart Cursor to apply the change.
@@ -109,3 +110,16 @@ Example: change the service name
 ```
 
 - Replace `<your-service-name>` with the container service from your `docker-compose.yml`.
+
+#### If you change the container
+
+- Ensure the container has reliable file-watching enabled (as in `docker-compose.dev.yml`):
+  - `CHOKIDAR_USEPOLLING=true`
+  - `WATCHPACK_POLLING=true`
+  - Place these under `services.<your-service-name>.environment`.
+- Recreate the container(s) so env vars take effect:
+
+```powershell
+docker compose down
+docker compose up -d <your-service-name>
+```
