@@ -8,7 +8,7 @@ const MDEditor = React.lazy(() => import('@uiw/react-md-editor'));
 
 /**
  * Modern WYSIWYG Markdown Editor Field
- * 
+ *
  * Features:
  * - True WYSIWYG editing experience
  * - Live preview side-by-side
@@ -51,23 +51,23 @@ const ConWysiwygMarkdownField = ({
   }, []);
 
   return (
-    <div className="con-wysiwyg-markdown-field">
+    <div className='con-wysiwyg-markdown-field'>
       {/* Field Header */}
-      <label className="utrecht-form-label">
+      <label className='utrecht-form-label'>
         <h4
           className={clsx('utrecht-heading-4', {
             'ac-form-field-header-info': description,
           })}
         >
-          <div className="con-wysiwyg-markdown-field__header">
+          <div className='con-wysiwyg-markdown-field__header'>
             <div>
               {label}
               {required && (
                 <>
-                  <span className="required-indicator" aria-hidden="true">
+                  <span className='required-indicator' aria-hidden='true'>
                     *
                   </span>
-                  <span className="sr-only">(verplicht)</span>
+                  <span className='sr-only'>(verplicht)</span>
                 </>
               )}
             </div>
@@ -76,8 +76,8 @@ const ConWysiwygMarkdownField = ({
             <span
               data-tooltip-id={TOOLTIP_ID}
               data-tooltip-content={description}
-              className="info-indicator"
-              role="img"
+              className='info-indicator'
+              role='img'
               aria-label={description}
             >
               <VISUALS.INFO />
@@ -87,16 +87,22 @@ const ConWysiwygMarkdownField = ({
       </label>
 
       {/* Editor Container */}
-      <div className="con-wysiwyg-markdown-field__editor">
+      <div className='con-wysiwyg-markdown-field__editor'>
         {isLoaded ? (
-          <React.Suspense fallback={<div className="con-wysiwyg-markdown-field__loading">Markdown editor wordt geladen...</div>}>
+          <React.Suspense
+            fallback={
+              <div className='con-wysiwyg-markdown-field__loading'>
+                Markdown editor wordt geladen...
+              </div>
+            }
+          >
             <MDEditor
               value={editorValue}
               onChange={handleEditorChange}
-              preview="edit"
+              preview='edit'
               hideToolbar={disabled}
               visibleDragBar={false}
-              data-color-mode="light"
+              data-color-mode='light'
               height={300}
               textareaProps={{
                 placeholder: placeholder || 'Schrijf hier je markdown tekst...',
@@ -119,7 +125,7 @@ const ConWysiwygMarkdownField = ({
           // Fallback textarea while loading
           <textarea
             id={path}
-            className="utrecht-textarea con-wysiwyg-markdown-field__fallback"
+            className='utrecht-textarea con-wysiwyg-markdown-field__fallback'
             value={editorValue}
             onChange={(e) => handleEditorChange(e.target.value)}
             placeholder={placeholder || 'Schrijf hier je markdown tekst...'}
