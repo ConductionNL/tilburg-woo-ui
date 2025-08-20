@@ -1,0 +1,52 @@
+.con-dynamic-schema-form-field--span-2 {
+  grid-row: span 2;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+.con-dynamic-schema-form-preview {
+  /* Ensure preview matches textarea baseline height and scrolls */
+  min-height: 139.6px; /* manually calculated max height of 2 rows of inputs */
+  height: auto;
+  max-height: 139.6px;
+  overflow-y: auto;
+
+  .con-dynamic-schema-form-preview__content.markdown-preview {
+    /* Ensure inner preview scrolls and respects container size */
+    min-height: inherit;
+    height: auto;
+    max-height: inherit;
+    overflow-y: auto;
+  }
+}
+
+.con-dynamic-schema-form-flex {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.con-dynamic-schema-form-textarea,
+.con-dynamic-schema-form-preview {
+  flex: 1 1 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.con-dynamic-schema-form-textarea {
+  /* Cap the textarea like the preview and ensure minimum visual height */
+  min-height: 139.6px; /* manually calculated max height of 2 rows of inputs */
+  height: auto;
+  max-height: 139.6px;
+
+  .utrecht-textarea {
+    min-height: inherit;
+    height: auto;
+    max-height: inherit;
+    overflow-y: auto;
+    /* Preserve user ability to resize but respect max height */
+    resize: vertical;
+  }
+}
