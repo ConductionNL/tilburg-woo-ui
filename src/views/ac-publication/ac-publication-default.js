@@ -307,7 +307,7 @@ const AcPublication = observer(
       <>
         <AcContainer compact margin='xl'>
           <AcFlex column spacing={'lg'}>
-            <div className='ac-publication-header'>
+            <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
               <div className='con-beheer-details--header-container'>
                 {get_single?.['@self']?.image && (
                   <ConLogoPreview
@@ -345,7 +345,7 @@ const AcPublication = observer(
                 triggerStyle='button'
                 relatedActions={actionMenuItems}
               />
-            </div>
+            </AcFlex>
 
             <div>
               {get_single?.['@self']?.summary || get_single?.['@self']?.description}
