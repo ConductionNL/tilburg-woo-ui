@@ -166,7 +166,6 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   const usesSchemas = useMemo(() => uniqueSchemasFrom(usesData), [usesData]);
   const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
 
-  const showDescriptionFields = type === 'organisaties' || type === 'applicaties';
   const shortTooltip = (type) =>
     `Een korte beschrijving van de ${type.slice(0, -1)}`;
   const longTooltip = (type) =>
@@ -223,15 +222,19 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
             {!loading && !data && <Heading>Er is een fout opgetreden</Heading>}
             {!loading && data && (
               <AcFlex column spacing='xl'>
-                <AcFlex spacing='sm' justifyContent='between'>
-                  <AcFlex>
-                    <ConLogoPreview
-                      className='ac-publication-logo-container'
-                      logoUrl={data?.['@self']?.image}
-                    />
+                <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
+                  <div className='con-beheer-details--header-container'>
+                    {data?.['@self']?.image && (
+                      <ConLogoPreview
+                        className='con-beheer-details--logo-container'
+                        logoUrl={data?.['@self']?.image}
+                      />
+                    )}
 
-                    <Heading>{data['@self']?.name || data.id}</Heading>
-                  </AcFlex>
+                    <Heading className='con-beheer-details--title'>
+                      {data['@self']?.name || data.id}
+                    </Heading>
+                  </div>
                   <ConDetailsActionsMenu
                     user={user}
                     id={id}
@@ -282,52 +285,45 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                   </Alert>
                 )}
 
-                <AcColumn>
-                  {!showDescriptionFields && (
-                    <div>{data?.['@self']?.description}</div>
-                  )}
-                </AcColumn>
-
                 <AcColumn gap='tiger'>
-                  {showDescriptionFields && (
-                    <>
-                      <ConEditableDescription
-                        registerSlug={config.registerSlug}
-                        schemaSlug={config.schemaSlug}
-                        objectId={data.id}
-                        field='beschrijvingKort'
-                        label='Korte beschrijving'
-                        placeholder={shortTooltip(type)}
-                        tooltip={shortTooltip(type)}
-                        maxLength={255}
-                        isMarkdown={false}
-                        value={data.beschrijvingKort}
-                        serialize={(v) => v}
-                        deserialize={(v) => v || ''}
-                      />
-                      <ConEditableDescription
-                        registerSlug={config.registerSlug}
-                        schemaSlug={config.schemaSlug}
-                        objectId={data.id}
-                        field='beschrijvingLang'
-                        label='Lange beschrijving'
-                        placeholder={longTooltip(type)}
-                        tooltip={longTooltip(type)}
-                        maxLength={2000}
-                        isMarkdown={true}
-                        value={data.beschrijvingLang}
-                        serialize={(v) => JSON.stringify(v || '')}
-                        deserialize={(v) => {
-                          if (!v) return '';
-                          try {
-                            return JSON.parse(v) || '';
-                          } catch (e) {
-                            return '';
-                          }
-                        }}
-                      />
-                    </>
-                  )}
+                  <>
+                    <ConEditableDescription
+                      registerSlug={config.registerSlug}
+                      schemaSlug={config.schemaSlug}
+                      objectId={data.id}
+                      field='beschrijvingKort'
+                      label='Korte beschrijving'
+                      placeholder={shortTooltip(type)}
+                      tooltip={shortTooltip(type)}
+                      maxLength={255}
+                      isMarkdown={false}
+                      value={data.beschrijvingKort}
+                      serialize={(v) => v}
+                      deserialize={(v) => v || ''}
+                    />
+
+                    <ConEditableDescription
+                      registerSlug={config.registerSlug}
+                      schemaSlug={config.schemaSlug}
+                      objectId={data.id}
+                      field='beschrijvingLang'
+                      label='Lange beschrijving'
+                      placeholder={longTooltip(type)}
+                      tooltip={longTooltip(type)}
+                      maxLength={2000}
+                      isMarkdown={true}
+                      value={data.beschrijvingLang}
+                      serialize={(v) => JSON.stringify(v || '')}
+                      deserialize={(v) => {
+                        if (!v) return '';
+                        try {
+                          return JSON.parse(v) || '';
+                        } catch (e) {
+                          return v;
+                        }
+                      }}
+                    />
+                  </>
 
                   <AcFlex column spacing='sm'>
                     <div className='ac-beheer-details--grid'>
@@ -395,155 +391,160 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                         })}
                     </div>
 
-                    <div className='ac-beheer-details--tabs-container'>
-                      <AcTabs
-                        selectedIndex={tabIndex}
-                        onSelect={(index) => setTabIndex(index)}
-                      >
-                        <AcTabList>
+                    {(usesSchemas.length > 0 ||
+                      usedSchemas.length > 0 ||
+                      showFilesTab) && (
+                      <div className='ac-beheer-details--tabs-container'>
+                        <AcTabs
+                          selectedIndex={tabIndex}
+                          onSelect={(index) => setTabIndex(index)}
+                        >
+                          <AcTabList>
+                            {showFilesTab && (
+                              <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                            )}
+                            {usesSchemas.map((schema, idx) => (
+                              <AcTab
+                                key={`uses-${schema.id}`}
+                                selected={tabIndex === idx + 1}
+                              >
+                                {schema.title || schema.id}
+                              </AcTab>
+                            ))}
+                            {usedSchemas.map((schema, idx) => (
+                              <AcTab
+                                key={`used-${schema.id}`}
+                                selected={tabIndex === idx + 1 + usesSchemas.length}
+                              >
+                                {schema.title || schema.id}
+                              </AcTab>
+                            ))}
+                          </AcTabList>
                           {showFilesTab && (
-                            <AcTab selected={tabIndex === 0}>Bestanden</AcTab>
+                            <AcTabPanel selected={tabIndex === 0}>
+                              <ConObjectUploadFiles
+                                register={registerSlug}
+                                schema={schemaSlug}
+                                id={data.id}
+                                allowedTags={allowedTags}
+                              />
+                            </AcTabPanel>
                           )}
-                          {usesSchemas.map((schema, idx) => (
-                            <AcTab
-                              key={`uses-${schema.id}`}
-                              selected={tabIndex === idx + 1}
-                            >
-                              {schema.title || schema.id}
-                            </AcTab>
-                          ))}
-                          {usedSchemas.map((schema, idx) => (
-                            <AcTab
-                              key={`used-${schema.id}`}
-                              selected={tabIndex === idx + 1 + usesSchemas.length}
-                            >
-                              {schema.title || schema.id}
-                            </AcTab>
-                          ))}
-                        </AcTabList>
-
-                        {showFilesTab && (
-                          <AcTabPanel selected={tabIndex === 0}>
-                            <ConObjectUploadFiles
-                              register={registerSlug}
-                              schema={schemaSlug}
-                              id={data.id}
-                              allowedTags={allowedTags}
-                            />
-                          </AcTabPanel>
-                        )}
-
-                        {usesSchemas.map((schema, idx) => {
-                          const metadata = usesData?.results?.find(
-                            (r) => r['@self']?.schema?.id === schema.id
-                          )?.['@self'];
-                          const rows = (usesData?.results || []).filter(
-                            (r) => r['@self']?.schema?.id === schema.id
-                          );
-                          return (
-                            <AcTabPanel
-                              key={`uses-${schema.id}`}
-                              selected={tabIndex === idx + 1}
-                            >
-                              {metadata ? (
-                                <BeheerTable
-                                  type={schema.slug}
-                                  metadata={metadata}
-                                  data={rows}
-                                  dataProperties={schema.properties}
-                                  user={user}
-                                  actionButtons={(config) =>
-                                    !!config.navigateView && {
-                                      id: 'actions',
-                                      label: 'Acties',
-                                      key: '',
-                                      customContent: (row) => (
-                                        <AcFlex column spacing='xs'>
-                                          <button
-                                            className='utrecht-button slim'
-                                            variant='secondary'
-                                            onClick={() =>
-                                              config.navigateView(row.id)
-                                            }
-                                          >
-                                            <VISUALS.EYE className='ac-button__icon' />{' '}
-                                            Bekijken
-                                          </button>
-                                        </AcFlex>
-                                      ),
-                                    }
+                          {usesSchemas.length > 0 &&
+                            usesSchemas.map((schema, idx) => {
+                              const metadata = usesData?.results?.find(
+                                (r) => r['@self']?.schema?.id === schema.id
+                              )?.['@self'];
+                              const rows = (usesData?.results || []).filter(
+                                (r) => r['@self']?.schema?.id === schema.id
+                              );
+                              return (
+                                <AcTabPanel
+                                  key={`uses-${schema.id}`}
+                                  selected={tabIndex === idx + 1}
+                                >
+                                  {metadata ? (
+                                    <BeheerTable
+                                      type={schema.slug}
+                                      metadata={metadata}
+                                      data={rows}
+                                      dataProperties={schema.properties}
+                                      user={user}
+                                      actionButtons={(config) =>
+                                        !!config.navigateView && {
+                                          id: 'actions',
+                                          label: 'Acties',
+                                          key: '',
+                                          customContent: (row) => (
+                                            <AcFlex column spacing='xs'>
+                                              <button
+                                                className='utrecht-button slim'
+                                                variant='secondary'
+                                                onClick={() =>
+                                                  config.navigateView(row.id)
+                                                }
+                                              >
+                                                <VISUALS.EYE className='ac-button__icon' />{' '}
+                                                Bekijken
+                                              </button>
+                                            </AcFlex>
+                                          ),
+                                        }
+                                      }
+                                      tableProps={{
+                                        renderSelectRowButtons: false,
+                                        truncateLines: 1,
+                                      }}
+                                    />
+                                  ) : (
+                                    <Alert type='error'>
+                                      Er is een fout opgetreden bij het laden van
+                                      deze gegevens.
+                                    </Alert>
+                                  )}
+                                </AcTabPanel>
+                              );
+                            })}
+                          {usedSchemas.length > 0 &&
+                            usedSchemas.map((schema, idx) => {
+                              const metadata = usedData?.results?.find(
+                                (r) => r['@self']?.schema?.id === schema.id
+                              )?.['@self'];
+                              const rows = (usedData?.results || []).filter(
+                                (r) => r['@self']?.schema?.id === schema.id
+                              );
+                              return (
+                                <AcTabPanel
+                                  key={`used-${schema.id}`}
+                                  selected={
+                                    tabIndex === idx + 1 + usesSchemas.length
                                   }
-                                  tableProps={{
-                                    renderSelectRowButtons: false,
-                                    truncateLines: 1,
-                                  }}
-                                />
-                              ) : (
-                                <Alert type='error'>
-                                  Er is een fout opgetreden bij het laden van deze
-                                  gegevens.
-                                </Alert>
-                              )}
-                            </AcTabPanel>
-                          );
-                        })}
-
-                        {usedSchemas.map((schema, idx) => {
-                          const metadata = usedData?.results?.find(
-                            (r) => r['@self']?.schema?.id === schema.id
-                          )?.['@self'];
-                          const rows = (usedData?.results || []).filter(
-                            (r) => r['@self']?.schema?.id === schema.id
-                          );
-                          return (
-                            <AcTabPanel
-                              key={`used-${schema.id}`}
-                              selected={tabIndex === idx + 1 + usesSchemas.length}
-                            >
-                              {metadata ? (
-                                <BeheerTable
-                                  type={schema.slug}
-                                  metadata={metadata}
-                                  data={rows}
-                                  dataProperties={schema.properties}
-                                  user={user}
-                                  actionButtons={(config) =>
-                                    !!config.navigateView && {
-                                      id: 'actions',
-                                      label: 'Acties',
-                                      key: '',
-                                      customContent: (row) => (
-                                        <AcFlex column spacing='xs'>
-                                          <button
-                                            className='utrecht-button slim'
-                                            variant='secondary'
-                                            onClick={() =>
-                                              config.navigateView(row.id)
-                                            }
-                                          >
-                                            <VISUALS.EYE className='ac-button__icon' />{' '}
-                                            Bekijken
-                                          </button>
-                                        </AcFlex>
-                                      ),
-                                    }
-                                  }
-                                  tableProps={{
-                                    renderSelectRowButtons: false,
-                                    truncateLines: 1,
-                                  }}
-                                />
-                              ) : (
-                                <Alert type='error'>
-                                  Er is een fout opgetreden bij het laden van deze
-                                  gegevens.
-                                </Alert>
-                              )}
-                            </AcTabPanel>
-                          );
-                        })}
-                      </AcTabs>
-                    </div>
+                                >
+                                  {metadata ? (
+                                    <BeheerTable
+                                      type={schema.slug}
+                                      metadata={metadata}
+                                      data={rows}
+                                      dataProperties={schema.properties}
+                                      user={user}
+                                      actionButtons={(config) =>
+                                        !!config.navigateView && {
+                                          id: 'actions',
+                                          label: 'Acties',
+                                          key: '',
+                                          customContent: (row) => (
+                                            <AcFlex column spacing='xs'>
+                                              <button
+                                                className='utrecht-button slim'
+                                                variant='secondary'
+                                                onClick={() =>
+                                                  config.navigateView(row.id)
+                                                }
+                                              >
+                                                <VISUALS.EYE className='ac-button__icon' />{' '}
+                                                Bekijken
+                                              </button>
+                                            </AcFlex>
+                                          ),
+                                        }
+                                      }
+                                      tableProps={{
+                                        renderSelectRowButtons: false,
+                                        truncateLines: 1,
+                                      }}
+                                    />
+                                  ) : (
+                                    <Alert type='error'>
+                                      Er is een fout opgetreden bij het laden van
+                                      deze gegevens.
+                                    </Alert>
+                                  )}
+                                </AcTabPanel>
+                              );
+                            })}
+                        </AcTabs>
+                      </div>
+                    )}
                   </AcFlex>
                 </AcColumn>
               </AcFlex>

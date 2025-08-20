@@ -5,7 +5,7 @@
 ## Getting started
 
 0. [Prerequisites](#prerequisites)
-1. [Installation](#installation)  
+1. [Installation](#installation)
 2. [Scripts](#scripts)
 3. [Architecture](#architecture)
 4. [Deployments](#deployments)
@@ -44,13 +44,15 @@ $ yarn build:web
 The Tilburg WOO UI is a React-based single-page application with the following key features:
 
 ### Technology Stack
+
 - **Frontend**: React/Preact with MobX state management
-- **Styling**: SCSS with NLDS design system  
+- **Styling**: SCSS with NLDS design system
 - **Routing**: React Router with centralized route configuration
 - **Build System**: Webpack with code splitting
 - **Architecture**: Atomic design pattern (atoms, molecules, components, views)
 
 ### Key Features
+
 - **Multi-tenant theming**: Automatic theming based on hostname
 - **Dynamic forms system**: Multiple form types with dedicated API endpoints
 - **Authentication system**: Protected routes with user session management
@@ -58,21 +60,23 @@ The Tilburg WOO UI is a React-based single-page application with the following k
 - **Responsive design**: Mobile-first approach with NLDS components
 
 ### Form System
+
 The application includes a comprehensive forms system under the '/forms' namespace:
 
 - **'/forms/register'**: Organization registration
-- **'/forms/gebruik'**: Usage registration  
+- **'/forms/gebruik'**: Usage registration
 - **'/forms/product'**: Product catalog registration
 - **'/forms/koppeling'**: System integration registration
 
 Each form type posts to its dedicated API endpoint for specialized processing.
 
 ### Component Architecture
+
 ```
 src/
 ├── atoms/          # Basic UI building blocks
 ├── molecules/      # Simple component combinations
-├── components/     # Complex reusable components  
+├── components/     # Complex reusable components
 ├── views/          # Page-level components
 ├── stores/         # MobX state management
 ├── hooks/          # Custom React hooks
@@ -96,15 +100,17 @@ Technical documentation is available in the '/docs' directory:
 - **[AUTHENTICATION-STATUS.md](AUTHENTICATION-STATUS.md)**: Authentication status tracking
 
 ### Component-Specific Documentation
+
 Individual components include README files with usage examples:
 
-- **Beheer System**: 'src/views/ac-beheer/README-*.md'
-- **Form Modals**: 'src/views/ac-beheer/core/modals/*/README-*.md'
-- **Related Actions**: 'src/views/ac-beheer/core/hooks/README-*.md'
+- **Beheer System**: 'src/views/ac-beheer/README-\*.md'
+- **Form Modals**: 'src/views/ac-beheer/core/modals/_/README-_.md'
+- **Related Actions**: 'src/views/ac-beheer/core/hooks/README-\*.md'
 
 ### Development Guidelines
+
 - Use established SCSS structure and NLDS design tokens
-- Follow atomic design patterns for component organization  
+- Follow atomic design patterns for component organization
 - Use MobX patterns for state management
 - Apply 'con-' prefix for new Conduction components
 - Apply 'ac-' prefix for existing Acato components
