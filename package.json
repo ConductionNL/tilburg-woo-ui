@@ -67,6 +67,7 @@
     "@loadable/component": "^5.15.3",
     "@lottiefiles/react-lottie-player": "^3.5.3",
     "@nl-design-system-unstable/rotterdam-design-tokens": "^1.0.0-alpha.100",
+    "@uiw/react-md-editor": "^4.0.8",
     "@utrecht/component-library-react": "9.0.3",
     "@utrecht/components": "^3.0.1-alpha.42",
     "axios": "^1.6.7",

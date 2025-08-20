@@ -1,0 +1,189 @@
+// Con Dynamic Form Layout Styles
+// Implements flexible form field layout with floating divs
+
+// Form container
+.con-dynamic-form-container {
+  width: 100%;
+  padding: 0;
+}
+
+// Fields container with floating layout
+.con-form-fields-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tilburg-space-block-snail); // Reduced from mouse (16px) to snail (12px) for tighter spacing
+  align-items: flex-start;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+// Base field wrapper
+.con-form-field-wrapper {
+  // Base height for form fields
+  --field-base-height: 120px;
+  
+  // Flex properties for proper wrapping
+  flex-shrink: 0;
+  flex-grow: 0;
+  
+  // Default sizing - let size classes override this
+  min-height: var(--field-base-height);
+  
+  // Ensure proper spacing and alignment
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  
+  // Field content should fill the wrapper
+  > * {
+    flex: 1;
+    min-height: 0; // Allow shrinking
+  }
+}
+
+// Size variants - flexbox with gap handles spacing automatically
+.con-form-field-wrapper.field-size-half {
+  // Simple 50% width - gap is handled automatically by flexbox
+  flex-basis: calc(50% - calc(var(--tilburg-space-block-snail) / 2)); // Account for half of the gap
+  
+  // On mobile, make all fields full width
+  @media (max-width: 768px) {
+    flex-basis: 100%;
+  }
+}
+
+.con-form-field-wrapper.field-size-full {
+  flex-basis: 100%;
+}
+
+// Height variants
+.con-form-field-wrapper.field-height-double {
+  min-height: calc(var(--field-base-height) * 2);
+  
+  // Ensure textarea and other tall components use the full height
+  .ac-form-field,
+  textarea,
+  .con-markdown-editor {
+    min-height: calc(var(--field-base-height) * 1.5);
+  }
+}
+
+// Special handling for specific field types
+.con-form-field-wrapper {
+  // Ensure select dropdowns have consistent height
+  .ac-beheer-select {
+    min-height: 40px;
+    
+    // Control multi-select height expansion
+    .css-13cymwt-control {
+      min-height: 40px;
+      
+      // Multi-value container should wrap properly without excessive height
+      .css-1dyz3mf {
+        min-height: 32px;
+        max-height: 80px; // Limit height for multi-select with many tags
+        overflow-y: auto;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      
+      // Multi-value tags should be compact
+      .css-1p3m7a8-multiValue {
+        margin: 2px;
+        max-width: calc(100% - 8px);
+      }
+    }
+  }
+  
+  // React-select control consistency
+  .react-select__control {
+    min-height: 40px;
+  }
+  
+  // Text areas should expand to fill their container
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    flex: 1;
+  }
+  
+  // Form fields should fill the wrapper properly
+  .ac-form-field {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    
+    label {
+      margin-bottom: var(--tilburg-space-block-snail);
+    }
+    
+    input,
+    textarea,
+    select {
+      flex: 1;
+    }
+  }
+  
+  // Boolean fields (checkboxes) should not stretch
+  .boolean-field-wrapper,
+  .con-boolean-field {
+    min-height: auto;
+    height: auto;
+    flex: none;
+    
+    .ac-form-field {
+      flex: none;
+      height: auto;
+    }
+  }
+  
+  // JSON object fields need more space
+  .json-object-field {
+    min-height: calc(var(--field-base-height) * 1.5);
+    
+    textarea {
+      min-height: calc(var(--field-base-height) * 1.2);
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    }
+  }
+  
+  // Markdown fields need full width and height
+  &.field-size-full .markdown-html-field {
+    min-height: calc(var(--field-base-height) * 2);
+  }
+  
+  // Array comma list fields
+  .array-comma-list-field {
+    textarea {
+      min-height: calc(var(--field-base-height) * 0.8);
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 1024px) {
+  .con-form-field-wrapper.field-size-half {
+    width: 100%;
+  }
+  
+  .con-form-fields-container {
+    gap: var(--tilburg-space-block-beetle); // 8px for tablet
+  }
+}
+
+@media (max-width: 480px) {
+  .con-form-field-wrapper {
+    --field-base-height: 100px;
+  }
+  
+  .con-form-fields-container {
+    gap: var(--tilburg-space-block-ant); // 4px for mobile - tightest spacing
+  }
+}
+
+// Dark mode support (if needed)
+@media (prefers-color-scheme: dark) {
+  .con-form-field-wrapper {
+    // Add any dark mode specific styling if needed
+  }
+}
