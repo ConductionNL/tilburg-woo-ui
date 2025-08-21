@@ -66,6 +66,14 @@ const AcFormsProduct = () => {
     allAppsDienst: null,
   });
 
+  // Persist UI state for ReferentiecomponentenForm across steps
+  const [refCompFormState, setRefCompFormState] = useState({
+    rows: [0],
+    nextRowId: 1,
+    selectedApplication: {},
+    selectedRefCompsByRow: {}, // rowId -> array of values
+  });
+
   const setProductData = useCallback((key, value) => {
     if (key.includes('applicaties')) {
       const parts = key.split('.');
@@ -135,6 +143,59 @@ const AcFormsProduct = () => {
     },
   ];
 
+  // Referentiecomponenten options (empty by default; will be filled via API)
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
+    []
+  );
+  const [referentieComponentenLoading, setReferentieComponentenLoading] =
+    useState(false);
+  const [referentieComponentenError, setReferentieComponentenError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const endpoint = `${BASE_URL}/openconnector/api/referentiecomponenten`;
+
+    const mapToOption = (item, index) => {
+      const label =
+        item?.naam ||
+        item?.name ||
+        item?.title ||
+        item?.label ||
+        `Component ${index + 1}`;
+      const value = item?.value || item?.id || item?.slug || label;
+      return { value: String(value), label: String(label) };
+    };
+
+    const fetchOptions = async () => {
+      setReferentieComponentenLoading(true);
+      setReferentieComponentenError(null);
+      try {
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map(mapToOption).filter((o) => o.label && o.value);
+        if (isMounted && options.length) setReferentieComponentenOptions(options);
+      } catch (e) {
+        if (isMounted)
+          setReferentieComponentenError(e?.message || 'Ophalen mislukt');
+      } finally {
+        if (isMounted) setReferentieComponentenLoading(false);
+      }
+    };
+
+    fetchOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const handleRegister = async () => {
     setLoading(true);
     try {
@@ -164,7 +225,6 @@ const AcFormsProduct = () => {
           setRegisterCallBack('success');
         }
       } else {
-        console.error('Registration failed', response);
         setRegisterCallBack('error');
         setError({
           message: 'Er is een fout opgetreden bij het registreren.',
@@ -172,7 +232,6 @@ const AcFormsProduct = () => {
         });
       }
     } catch (err) {
-      console.error('Registration error:', err);
       setRegisterCallBack('error');
       setError({
         message: 'Er is een fout opgetreden bij het registreren.',
@@ -239,9 +298,13 @@ const AcFormsProduct = () => {
         );
       case 4:
         return (
-          <TestForm
+          <ReferentieComponentenForm
             {...{
-              currentStep,
+              product,
+              setProduct,
+              referentieComponentenOptions,
+              refCompFormState,
+              setRefCompFormState,
             }}
           />
         );
@@ -282,6 +345,7 @@ const AcFormsProduct = () => {
             {...{
               product,
               dienstOptions,
+              referentieComponentenOptions,
             }}
           />
         );
@@ -317,7 +381,13 @@ const AcFormsProduct = () => {
       case 2:
         return isMultiApplicatie ? 'Applicaties' : 'Applicatie';
       case 3:
-        return 'Licentie & Hosting';
+        return 'Licentie';
+      case 4:
+        return 'Referentiecomponenten';
+      case 5:
+        return 'Standaarden';
+      case 6:
+        return 'Koppelingen';
       case 7:
         return 'Diensten';
     }
@@ -413,7 +483,7 @@ const AcFormsProduct = () => {
                               {
                                 id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
                                 status: getStatus(currentStep, 3),
-                                title: 'Licentie & hosting',
+                                title: 'Licentie',
                               },
                               {
                                 id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
@@ -525,7 +595,7 @@ const AcFormsProduct = () => {
   );
 };
 
-// Step 1 Productopbouw
+// Step 0  Productopbouw
 const ProductOpbouwForm = memo(({ isMultiApplicatie, setIsMultiApplicatie }) => {
   return (
     <div
@@ -560,7 +630,7 @@ const ProductOpbouwForm = memo(({ isMultiApplicatie, setIsMultiApplicatie }) => 
   );
 });
 
-// Step 2 Productinformatie
+// Step 1 Productinformatie
 const ProductOpbouwInformationForm = memo(
   ({ product, setProductData, loading, touched }) => {
     // Debounce example
@@ -570,6 +640,13 @@ const ProductOpbouwInformationForm = memo(
     );
 
     const remainingDescriptionChars = 225 - (product.beschrijving?.length || 0);
+
+    const jurisdictionOptions = [
+      { value: 'NL', label: 'NL' },
+      { value: 'EU', label: 'EU' },
+      { value: 'US', label: 'US' },
+      { value: 'elders', label: 'Elders' },
+    ];
 
     return (
       <div
@@ -642,12 +719,57 @@ const ProductOpbouwInformationForm = memo(
 
           <div style={{ gridColumn: 'span 2' }}>
             <LogoUploadField
-              fieldConfig={{ label: 'Logo (upload)' }}
+              fieldConfig={{
+                label: 'Logo (upload)',
+                filename: product.logoFilename,
+              }}
               _value={product.logo}
               onChange={(dataUrl) => setProductData('logo', dataUrl)}
+              onChangeFileName={(name) => setProductData('logoFilename', name)}
+              onClear={() => {
+                setProductData('logo', '');
+                setProductData('logoFilename', '');
+              }}
               validation={{ required: false }}
               propertyName='logo'
               isDisabled={loading}
+            />
+          </div>
+
+          <div>
+            <label className='utrecht-form-label'>Hosting</label>
+            <ReactSelect
+              className={clsx(
+                'ac-beheer-select',
+                loading && 'ac-beheer-select--disabled'
+              )}
+              value={
+                jurisdictionOptions.find((o) => o.value === product.hosting) || null
+              }
+              onChange={(opt) => setProductData('hosting', opt?.value || '')}
+              options={jurisdictionOptions}
+              isDisabled={loading}
+              placeholder='Selecteer hosting'
+              isClearable
+            />
+          </div>
+
+          <div>
+            <label className='utrecht-form-label'>Jurisdictie</label>
+            <ReactSelect
+              className={clsx(
+                'ac-beheer-select',
+                loading && 'ac-beheer-select--disabled'
+              )}
+              value={
+                jurisdictionOptions.find((o) => o.value === product.jurisdictie) ||
+                null
+              }
+              onChange={(opt) => setProductData('jurisdictie', opt?.value || '')}
+              options={jurisdictionOptions}
+              isDisabled={loading}
+              placeholder='Selecteer jurisdictie'
+              isClearable
             />
           </div>
         </div>
@@ -720,7 +842,7 @@ const ApplicatieFormFields = memo(
   }
 );
 
-// Step 3 Applicatie(s)
+// Step 2 Applicatie(s)
 const ApplicatieStep = memo(
   ({ product, setProduct, isMultiApplicatie, loading }) => {
     // Keep focus while typing by only committing name changes on blur
@@ -877,7 +999,7 @@ const ApplicatieStep = memo(
   }
 );
 
-// Step 4: Licentie & Hosting
+// Step 3: Licentie
 const LicenseAndHostingStep = memo(
   ({ product, setProduct, isMultiApplicatie, loading }) => {
     const [sameForAll, setSameForAll] = useState(true);
@@ -892,13 +1014,6 @@ const LicenseAndHostingStep = memo(
       value: l['SPDX ID'],
       label: l.name,
     }));
-
-    const hostingOptions = [
-      { value: 'On-premises', label: 'On-premises' },
-      { value: 'SaaS', label: 'SaaS' },
-      { value: 'PaaS', label: 'PaaS' },
-      { value: 'Hybride', label: 'Hybride' },
-    ];
 
     const applicatieIndices = Object.keys(product.applicaties || {})
       .map((k) => parseInt(k, 10))
@@ -930,17 +1045,13 @@ const LicenseAndHostingStep = memo(
     const renderSelectors = ({
       valueLicentieType,
       valueLicentie,
-      valueHosting,
       onChangeLicentieType,
       onChangeLicentie,
-      onChangeHosting,
     }) => {
       const selectedType =
         licentieTypeOptions.find((o) => o.value === valueLicentieType) || null;
       const selectedLicentie =
         licentieOptions.find((o) => o.value === valueLicentie) || null;
-      const selectedHosting =
-        hostingOptions.find((o) => o.value === valueHosting) || null;
 
       return (
         <div className='ac-register-form-grid'>
@@ -973,20 +1084,6 @@ const LicenseAndHostingStep = memo(
               isClearable
             />
           </div>
-          <div>
-            <label className='utrecht-form-label'>Hosting</label>
-            <ReactSelect
-              className={clsx(
-                'ac-beheer-select',
-                loading && 'ac-beheer-select--disabled'
-              )}
-              value={selectedHosting}
-              onChange={(opt) => onChangeHosting(opt?.value || null)}
-              options={hostingOptions}
-              isDisabled={loading}
-              placeholder='Selecteer hosting'
-            />
-          </div>
         </div>
       );
     };
@@ -998,11 +1095,10 @@ const LicenseAndHostingStep = memo(
         aria-labelledby='license-hosting-section-title'
       >
         <h2 id='license-hosting-section-title' className='sr-only'>
-          Licentie & Hosting
+          Licentie
         </h2>
         <Paragraph>
-          Geef hieronder aan welke licenties, hostingopties en jurisdicties van
-          toepassing zijn op de applicatie(s). U kunt meerdere opties selecteren.
+          Geef hieronder aan welke licenties van toepassing zijn op de applicatie(s).
         </Paragraph>
 
         {isMultiApplicatie && (
@@ -1010,9 +1106,7 @@ const LicenseAndHostingStep = memo(
             className='ac-register-form-checkbox-wrapper'
             style={{ marginBottom: '1rem' }}
           >
-            <p>
-              Geldt dezelfde licentie-en hostinginformatie voor alle applicaties?
-            </p>
+            <p>Geldt dezelfde licentie-informatie voor alle applicaties?</p>
             <AcCheckbox
               label='Ja, voor alle applicaties hetzelfde'
               value='same'
@@ -1033,8 +1127,6 @@ const LicenseAndHostingStep = memo(
             {renderSelectors({
               valueLicentieType: product.applicaties?.[0]?.licentieType || '',
               valueLicentie: product.applicaties?.[0]?.licentie || '',
-              valueHosting: product.applicaties?.[0]?.hosting || '',
-
               onChangeLicentieType: (v) => {
                 if (sameForAll && isMultiApplicatie) {
                   applyToAll({
@@ -1049,10 +1141,6 @@ const LicenseAndHostingStep = memo(
               onChangeLicentie: (v) => {
                 if (sameForAll && isMultiApplicatie) applyToAll({ licentie: v });
                 else updateApplicatieField(0, 'licentie', v);
-              },
-              onChangeHosting: (v) => {
-                if (sameForAll && isMultiApplicatie) applyToAll({ hosting: v });
-                else updateApplicatieField(0, 'hosting', v);
               },
             })}
           </div>
@@ -1070,9 +1158,6 @@ const LicenseAndHostingStep = memo(
                   <TableCell>
                     <b>Licentie</b>
                   </TableCell>
-                  <TableCell>
-                    <b>Hosting</b>
-                  </TableCell>
                 </TableRow>
               </thead>
               <TableBody>
@@ -1083,8 +1168,6 @@ const LicenseAndHostingStep = memo(
                     null;
                   const selectedLicentie =
                     licentieOptions.find((o) => o.value === app.licentie) || null;
-                  const selectedHosting =
-                    hostingOptions.find((o) => o.value === app.hosting) || null;
                   return (
                     <TableRow key={index}>
                       <TableCell>
@@ -1141,25 +1224,6 @@ const LicenseAndHostingStep = memo(
                           isClearable
                         />
                       </TableCell>
-                      <TableCell>
-                        <ReactSelect
-                          className={clsx(
-                            'ac-beheer-select',
-                            loading && 'ac-beheer-select--disabled'
-                          )}
-                          value={selectedHosting}
-                          onChange={(opt) =>
-                            updateApplicatieField(
-                              index,
-                              'hosting',
-                              opt?.value || null
-                            )
-                          }
-                          options={hostingOptions}
-                          isDisabled={loading}
-                          placeholder='Selecteer hosting'
-                        />
-                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -1171,6 +1235,190 @@ const LicenseAndHostingStep = memo(
     );
   }
 );
+
+// Step 4 Referentiecomponenten
+const ReferentieComponentenForm = memo(
+  ({
+    product,
+    setProduct,
+    referentieComponentenOptions,
+    refCompFormState,
+    setRefCompFormState,
+  }) => {
+    const { rows, selectedApplication } = refCompFormState;
+
+    const normalizeValues = (arr) => {
+      if (!Array.isArray(arr)) return [];
+      const values = arr
+        .map((item) => {
+          if (!item) return null;
+          if (typeof item === 'object' && 'value' in item) return String(item.value);
+          return String(item);
+        })
+        .filter((v) => typeof v === 'string' && v.length > 0);
+      return Array.from(new Set(values));
+    };
+
+    const replaceRefs = (appId, refs) => {
+      const refsArray = normalizeValues(refs);
+      setProduct((prev) => {
+        const applicaties = { ...prev.applicaties };
+        const existing = applicaties[appId] || {};
+        applicaties[appId] = { ...existing, referentieComponenten: refsArray };
+        return { ...prev, applicaties };
+      });
+    };
+
+    const appOptions = Object.entries(product.applicaties).map(([id, app]) => ({
+      value: id,
+      label: app.naam,
+    }));
+
+    return (
+      <div>
+        <h2 id='refcomp-section-title' className='sr-only'>
+          Referentiecomponenten
+        </h2>
+
+        <TableContainer className='con-form-wizard-table-container'>
+          <Table>
+            <thead>
+              <TableRow>
+                <TableCell>
+                  <b>Applicatie</b>
+                </TableCell>
+                <TableCell>
+                  <b>Referentiecomponenten</b>
+                </TableCell>
+                <TableCell>
+                  <b>Acties</b>
+                </TableCell>
+              </TableRow>
+            </thead>
+            <TableBody>
+              {rows.map((rowId) => {
+                const appId = selectedApplication[rowId];
+                const saved = normalizeValues(
+                  appId != null
+                    ? product.applicaties?.[appId]?.referentieComponenten
+                    : []
+                );
+                const selectedMulti = saved
+                  .map((v) =>
+                    referentieComponentenOptions.find(
+                      (o) => String(o.value) === String(v)
+                    )
+                  )
+                  .filter(Boolean);
+
+                return (
+                  <TableRow key={rowId}>
+                    <TableCell>
+                      <ReactSelect
+                        options={appOptions}
+                        value={
+                          selectedApplication[rowId] != null
+                            ? appOptions.find(
+                                (o) => o.value === selectedApplication[rowId]
+                              )
+                            : null
+                        }
+                        onChange={(selectedOption) => {
+                          setRefCompFormState((prev) => ({
+                            ...prev,
+                            selectedApplication: {
+                              ...prev.selectedApplication,
+                              [rowId]: selectedOption?.value,
+                            },
+                          }));
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <ReactSelect
+                        isMulti
+                        options={referentieComponentenOptions}
+                        value={selectedMulti}
+                        isDisabled={selectedApplication[rowId] == null}
+                        onChange={(selectedOptions) => {
+                          if (selectedApplication[rowId] == null) return;
+                          setRefCompFormState((prev) => ({
+                            ...prev,
+                            selectedRefCompsByRow: {
+                              ...prev.selectedRefCompsByRow,
+                              [rowId]: Array.isArray(selectedOptions)
+                                ? selectedOptions.map((o) => String(o.value))
+                                : [],
+                            },
+                          }));
+                          replaceRefs(
+                            selectedApplication[rowId],
+                            Array.isArray(selectedOptions)
+                              ? selectedOptions.map((o) => String(o.value))
+                              : []
+                          );
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <AcButton
+                          style='buttonSlim'
+                          buttonType='secondary'
+                          icon={<VISUALS.MINUS />}
+                          disabled={rows.length === 1}
+                          onClick={() => {
+                            setRefCompFormState((prev) => ({
+                              ...prev,
+                              rows: prev.rows.filter((id) => id !== rowId),
+                              selectedApplication: Object.fromEntries(
+                                Object.entries(prev.selectedApplication).filter(
+                                  ([k]) => Number(k) !== rowId
+                                )
+                              ),
+                              selectedRefCompsByRow: Object.fromEntries(
+                                Object.entries(prev.selectedRefCompsByRow).filter(
+                                  ([k]) => Number(k) !== rowId
+                                )
+                              ),
+                            }));
+                          }}
+                          title='Rij verwijderen'
+                        ></AcButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+
+              <div style={{ marginTop: '1rem' }}>
+                <AcButton
+                  style='button'
+                  icon={<VISUALS.PLUS />}
+                  onClick={() =>
+                    setRefCompFormState((prev) => ({
+                      ...prev,
+                      rows: [...prev.rows, prev.nextRowId],
+                      nextRowId: prev.nextRowId + 1,
+                    }))
+                  }
+                >
+                  Rij toevoegen
+                </AcButton>
+              </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    );
+  }
+);
+
+ReferentieComponentenForm.displayName = 'ReferentieComponentenForm';
+
+// Step 5 Koppelingen
+
+// Step 6 Standaarden
 
 // Step 7 Diensten
 const DienstenForm = memo(
@@ -1401,14 +1649,17 @@ const DienstenForm = memo(
 );
 
 // Step 8 Controleren
-const ControlerenForm = memo(({ product, dienstOptions }) => {
-  return (
-    <div>
-      <div className='con-form-wizard-review-heading-container'>
-        <h3 className='con-form-wizard-review-heading-header'>Product informatie</h3>
-        <div className='ac-register-review__section'>
-          <div className='ac-register-review__header'>
-            <h4 className='utrecht-heading-4'>{product.productName}</h4>
+const ControlerenForm = memo(
+  ({ product, dienstOptions, referentieComponentenOptions }) => {
+    return (
+      <div>
+        <div className='con-form-wizard-review-heading-container'>
+          <h3 className='con-form-wizard-review-heading-header'>
+            Product informatie
+          </h3>
+          <div className='ac-register-review__section'>
+            <div className='ac-register-review__header'>
+              <h4 className='utrecht-heading-4'>{product.productName}</h4>
             {product.logo && (
               <ConLogoPreview
                 logoUrl={product.logo}
@@ -1475,17 +1726,25 @@ const ControlerenForm = memo(({ product, dienstOptions }) => {
                 {Array.isArray(applicatie.referentieComponenten) &&
                   applicatie.referentieComponenten.length > 0 && (
                     <div className='ac-register-review__field'>
-                      <strong>Referentiecomponenten:</strong>
-                      <div>
-                        <UnorderedList>
-                          {applicatie.referentieComponenten.map((rc) => (
-                            <UnorderedListItem key={rc.id || rc.naam}>
-                              {rc.naam}
-                            </UnorderedListItem>
-                          ))}
-                        </UnorderedList>
+                        <strong>Referentiecomponenten:</strong>
+                        <div>
+                          <UnorderedList>
+                            {applicatie.referentieComponenten.map((rc, i) => {
+                              // accept old shape {id, naam} or new string values
+                              const value = typeof rc === 'string' ? rc : rc?.naam;
+                              const opt = referentieComponentenOptions?.find(
+                                (o) => String(o.value) === String(value)
+                              );
+                              const label = opt ? opt.label : value;
+                              return (
+                                <UnorderedListItem key={value || i}>
+                                  {label}
+                                </UnorderedListItem>
+                              );
+                            })}
+                          </UnorderedList>
+                        </div>
                       </div>
-                    </div>
                   )}
 
                 {Array.isArray(applicatie.standaarden) &&
@@ -1570,10 +1829,11 @@ const ControlerenForm = memo(({ product, dienstOptions }) => {
             </div>
           </div>
         ))}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const TestForm = memo(({ currentStep }) => {
   // TODOThis testForm needs to be removed after all the steps have their own form
