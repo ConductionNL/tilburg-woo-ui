@@ -28,6 +28,66 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import licenses from '@assets/licenses/licenses.json';
 
+/**
+ * Product Aanmelden Wizard (AcFormsProduct)
+ *
+ * High-level overview
+ * - This file implements a multi-step wizard for registering a "product" and its related
+ *   data: basic product info, one or more applications, license/hosting, reference components,
+ *   standards, integrations (koppelingen), services (diensten) and a final review.
+ * - The wizard is rendered by the top-level component `AcFormsProduct`. The component maintains
+ *   all shared state and renders the correct step via `renderStep(currentStep)`.
+ * - Each step is a memoized sub-component that is only responsible for its own slice of the UI
+ *   and writes changes back into the shared `product` object using `setProduct` or `setProductData`.
+ *
+ * Data model (simplified)
+ * - product: {
+ *     productName, beschrijving, productpagina, logo(+filename), hosting, jurisdictie,
+ *     applicaties: {
+ *       [index]: {
+ *         naam, beschrijvingKort, licentieType, licentie,
+ *         referentieComponenten: string[] | { id, naam }[],
+ *         standaarden: { naam: string, supported?: boolean, bewijs?: string }[],
+ *         koppelingen: {
+ *           applicatie1: string, applicatie2: string,
+ *           richtingDataUitwisseling?: string, sooortKoppeling?: string
+ *         }[],
+ *         diensten: string[]
+ *       }
+ *     }
+ *   }
+ *
+ * Fetching
+ * - This file performs three read-only fetches to populate select options. Each follows the
+ *   same pattern and accepts either an array or a `{ results: [] }` response shape:
+ *   - Standards:      `${BASE_URL}/openregister/api/standaarden`
+ *   - Ref. components:`${BASE_URL}/openregister/api/referentiecomponenten`
+ *   - Modules:        `${BASE_URL}/openregister/api/modules`
+ *   All are mapped to `{ value, label }` pairs and degrade to an empty list on error.
+ *
+ * Accessibility & UX
+ * - The wizard announces the current step via an aria-live region.
+ * - Per-step forms use Utrecht and project components; large tables use `Table`, `TableRow` ...
+ * - File uploads use a shared `LogoUploadField` for both the product logo and standards evidence.
+ *
+ * Implementation notes
+ * - The wizard avoids re-mounting app form fields unnecessarily by lifting state and memoizing
+ *   sub-forms. Some steps maintain additional UI state (e.g. row management for tables) to
+ *   preserve intra-step selection as the user navigates forward/back.
+ */
+
+/**
+ * TODOs (endpoints and persistence)
+ * - [ ] Confirm and finalize openregister fetch endpoints used in this wizard:
+ *       - Standards: `${BASE_URL}/openregister/api/standaarden`
+ *       - Referentiecomponenten: `${BASE_URL}/openregister/api/referentiecomponenten`
+ *       - Modules (for Applicatie B in Koppelingen): `${BASE_URL}/openregister/api/modules`
+ *       If the final API differs, update the mapping in the corresponding useEffect blocks.
+ * - [ ] Implement and wire the POST endpoint to save the full product registration payload
+ *       in `handleRegister` (currently posts a minimal payload). Confirm schema and endpoint
+ *       path, then serialize `product` accordingly.
+ */
+
 const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
