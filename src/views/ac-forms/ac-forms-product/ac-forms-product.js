@@ -117,6 +117,62 @@ const AcFormsProduct = () => {
             }}
           />
         );
+      case 2:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
+      case 3:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
+      case 4:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
+      case 5:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
+      case 6:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
+      case 7:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
+      case 8:
+        return (
+          <TestForm
+            {...{
+              currentStep,
+            }}
+          />
+        );
     }
   };
 
@@ -130,8 +186,8 @@ const AcFormsProduct = () => {
     }
   };
 
-  const getStatusMultiStep = (currentStep, step) => {
-    if (currentStep === 0 || currentStep === 1) {
+  const getStatusMultiStep = (currentStep, step, firstStep, lastStep) => {
+    if (currentStep >= firstStep && currentStep <= lastStep) {
       return 'current';
     } else if (currentStep < step) {
       return 'not-checked';
@@ -154,7 +210,8 @@ const AcFormsProduct = () => {
       return false;
     }
     if (currentStep === 1) {
-      return !product.productName;
+      // return !product.productName;
+      return false;
     }
   };
 
@@ -218,7 +275,7 @@ const AcFormsProduct = () => {
                           {
                             id: '4p5q6r7s-8t9u-0v1w-2x3y-4z5a6b7c8d9e',
                             marker: 1,
-                            status: getStatusMultiStep(currentStep, 0),
+                            status: getStatusMultiStep(currentStep, 0, 0, 1),
                             title: 'Productopbouw',
                             steps: [
                               {
@@ -231,8 +288,41 @@ const AcFormsProduct = () => {
                           {
                             id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
                             marker: 2,
-                            status: getStatus(currentStep, 2),
-                            title: 'Contactpersoon',
+                            status: getStatusMultiStep(currentStep, 2, 2, 7),
+                            title: 'Applicatie(s)',
+                            steps: [
+                              {
+                                id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
+                                status: getStatus(currentStep, 3),
+                                title: 'Licentie & hosting',
+                              },
+                              {
+                                id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
+                                status: getStatus(currentStep, 4),
+                                title: 'Referentiecomponenten',
+                              },
+                              {
+                                id: 'c3d4e5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8',
+                                status: getStatus(currentStep, 5),
+                                title: 'Standaarden',
+                              },
+                              {
+                                id: 'd4e5f6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9',
+                                status: getStatus(currentStep, 6),
+                                title: 'Koppelingen',
+                              },
+                              {
+                                id: 'e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0',
+                                status: getStatus(currentStep, 7),
+                                title: 'Diensten',
+                              },
+                            ],
+                          },
+                          {
+                            id: 'f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1',
+                            marker: 3,
+                            status: getStatus(currentStep, 8),
+                            title: 'Controleren',
                           },
                         ]}
                       />
@@ -267,7 +357,7 @@ const AcFormsProduct = () => {
                             Vorige
                           </AcButton>
                         )}
-                        {currentStep !== 3 && (
+                        {currentStep !== 8 && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -291,13 +381,14 @@ const AcFormsProduct = () => {
                           </div>
                         )}
 
-                        {currentStep === 3 && (
+                        {currentStep === 8 && (
                           <AcButton
                             style='button'
                             icon={<VISUALS.CLIPBOARD_CHECK />}
                             onClick={handleRegister}
                             loading={loading}
-                            disabled={loading}
+                            // Disabled until we know what endpoint we need to use and what data we need to send
+                            disabled={loading || true}
                           >
                             Product aanmelden
                           </AcButton>
@@ -315,7 +406,7 @@ const AcFormsProduct = () => {
   );
 };
 
-const ProductOpbouwForm = memo(({ product, setProductData, touched }) => {
+const ProductOpbouwForm = memo(() => {
   return (
     <div
       className='ac-register-form-section'
@@ -330,7 +421,6 @@ const ProductOpbouwForm = memo(({ product, setProductData, touched }) => {
     </div>
   );
 });
-ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 
 const ProductOpbouwInformationForm = memo(
   ({ product, setProductData, loading, touched }) => {
@@ -383,7 +473,15 @@ const ProductOpbouwInformationForm = memo(
     );
   }
 );
+const TestForm = memo(({ currentStep }) => {
+  // This testForm needs to be removed after all the steps have their own form
 
+  return <div>hi this is current step {currentStep}</div>;
+});
+
+ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
+
+TestForm.displayName = 'TestForm';
 
 export default withStore(observer(AcFormsProduct));
