@@ -9,60 +9,31 @@ import {
   getFieldAuthorizationState,
   debugFieldAuthorization,
 } from '@utils/field-authorization';
+// Import reusable field utilities
+import {
+  getFieldConfig as utilGetFieldConfig,
+  getFieldVisibility as utilGetFieldVisibility,
+  getFieldOptions as utilGetFieldOptions,
+  getFieldDisabled as utilGetFieldDisabled,
+  getFieldValidation as utilGetFieldValidation,
+  handleFieldChange as utilHandleFieldChange,
+  getFieldSizeClass as utilGetFieldSizeClass,
+  getNestedValue,
+  setNestedValue,
+  extractSchemaSlugFromRef,
+  getFieldRefSchemaSlug
+} from './utils/field-utilities';
+// Import reusable field renderer
+import { renderField as utilRenderField } from './utils/field-renderers';
 import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 
-// HACK: Wrapper component for ReactSelect that listens to global options updates (TODO: Fix the actual re-render loop issue)
-const ReactSelectWithGlobalHack = (props) => {
-  const { fieldPath, options: propOptions, ...selectProps } = props;
-  const [globalOptions, setGlobalOptions] = useState(propOptions || []);
+// ReactSelectWithGlobalHack is now imported in field-renderers.js
 
-  useEffect(() => {
-    // Check if there are already options in global state
-    const existingOptions = window.FORCE_DROPDOWN_UPDATE.get(fieldPath);
-    if (existingOptions && existingOptions.length > 0) {
-      console.log(`🌍 HACK: Loading existing global options for ${fieldPath}:`, existingOptions);
-      setGlobalOptions(existingOptions);
-    }
-
-    // Listen for global option updates
-    const handleGlobalUpdate = (event) => {
-      if (event.detail.fieldPath === fieldPath) {
-        console.log(`🌍 HACK: Received global update for ${fieldPath}:`, event.detail.options);
-        setGlobalOptions(event.detail.options);
-      }
-    };
-
-    window.addEventListener('dropdownOptionsUpdate', handleGlobalUpdate);
-
-    return () => {
-      window.removeEventListener('dropdownOptionsUpdate', handleGlobalUpdate);
-    };
-  }, [fieldPath]);
-
-  // Use global options if available, otherwise fall back to prop options
-  const effectiveOptions = globalOptions.length > 0 ? globalOptions : (propOptions || []);
-
-  return (
-    <ReactSelect
-      {...selectProps}
-      options={effectiveOptions}
-    />
-  );
-};
-
-import MarkdownHtmlField from './inputs/markdown-html-field';
-import MDEditor from '@uiw/react-md-editor';
-import ConLightweightMarkdownEditor from './inputs/con-lightweight-markdown-editor';
-import JsonObjectField from './inputs/json-object-field';
-import BooleanField from './inputs/boolean-field';
-import NumberField from './inputs/number-field';
+// Field components are now imported in field-renderers.js
 import { validateArray, validateNumber, validateString } from './utils/validation';
-import ArrayCommaListField from './inputs/array-comma-list-field';
-import { getDefaultValue } from './utils/defaults';
-import ColorField from './inputs/color-field';
 
 /**
  * A dynamic form component that automatically generates form fields based on a JSON schema.
@@ -429,61 +400,16 @@ const ConDynamicSchemaForm = forwardRef(
       },
     }));
 
-    /**
-     * Determines if a field needs search functionality based on its schema
-     * @param {Object} propertySchema - The field's schema definition
-     * @returns {string|null} - The referenced schema slug if searchable, null otherwise
-     */
-    const getFieldRefSchemaSlug = (propertySchema) => {
-      if (propertySchema.$ref) {
-        const refMatch = propertySchema.$ref.match(/\/schemas\/([^\/]+)$/);
-        return refMatch?.[1] || null;
-      }
-
-      if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
-        const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
-        return refMatch?.[1] || null;
-      }
-
-      return null;
-    };
+    // getFieldRefSchemaSlug is now imported from utilities
 
     if (!schema?.properties) return null;
 
     // Get the top-level required array, default to []
     const topLevelRequired = Array.isArray(schema.required) ? schema.required : [];
 
-    /**
-     * Extracts the schema slug from a $ref value
-     * @param {string} ref - The $ref value like "#/components/schemas/voorzieningmodule"
-     * @returns {string} - The schema slug like "voorzieningmodule"
-     */
-    const extractSchemaSlugFromRef = (ref) => {
-      if (!ref || typeof ref !== 'string') return null;
-      const parts = ref.split('/');
-      return parts[parts.length - 1]; // Get the last part
-    };
+    // extractSchemaSlugFromRef is now imported from utilities
 
-    /**
-     * Safely retrieves a nested value from an object using dot notation path.
-     */
-    const getNestedValue = (path, data) => {
-      return path.split('.').reduce((obj, key) => obj?.[key], data);
-    };
-
-    /**
-     * Sets a nested value in an object using dot notation path, creating intermediate objects as needed.
-     */
-    const setNestedValue = (path, data, value) => {
-      const keys = path.split('.');
-      const lastKey = keys.pop();
-      const target = keys.reduce((obj, key) => {
-        if (!obj[key]) obj[key] = {};
-        return obj[key];
-      }, data);
-      target[lastKey] = value;
-      return data;
-    };
+    // getNestedValue and setNestedValue are now imported from utilities
 
     /**
      * Recursively flattens nested object properties into a flat list with dot notation paths.
@@ -535,293 +461,24 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Generates field configuration for a property based on its schema and custom overrides.
-     * Used by renderField() to determine field type, component, validation, and display options.
-     *
-     * @param {string} propertyPath - Dot notation path of the property (e.g., "bivClassificatie.beschikbaarheid")
-     * @param {object} propertySchema - The property's schema definition
-     * @param {boolean} isRequired - Whether the field is required
-     * @returns {object} Field configuration with type, component, label, placeholder, etc.
-     *
-     * @example
-     * getFieldConfig("bivClassificatie.beschikbaarheid", { type: "string", enum: ["Laag", "Midden", "Hoog"] }, true)
-     * // Returns: { type: "select", component: "ReactSelect", label: "Beschikbaarheid", required: true, ... }
+     * Generate field configuration using the reusable utility
      */
     const getFieldConfig = (propertyPath, propertySchema, isRequired) => {
-      const baseConfig = {
-        label:
-          propertySchema.title ||
-          propertyPath.split('.').pop().charAt(0).toUpperCase() +
-            propertyPath.split('.').pop().slice(1),
-        required: isRequired,
-        visible: propertySchema.visible !== false,
-        description: propertySchema.description,
-        placeholder: propertySchema.example || undefined,
-      };
-
-      // Handle different field types based on schema
-      let schemaConfig = baseConfig;
-
-      if (propertySchema.type === 'array') {
-        const arrayItemsRefSchemaSlug = propertySchema.items?.$ref
-          ? extractSchemaSlugFromRef(propertySchema.items.$ref)
-          : undefined;
-
-        schemaConfig = {
-          ...baseConfig,
-          type: 'multiSelect',
-          component: 'ReactSelect',
-          isMulti: true,
-          closeMenuOnSelect: false,
-          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
-          ...(arrayItemsRefSchemaSlug && {
-            refSchemaSlug: arrayItemsRefSchemaSlug,
-            isSearchable: true,
-          }),
-        };
-      } else if (propertySchema.enum) {
-        schemaConfig = {
-          ...baseConfig,
-          type: 'select',
-          component: 'ReactSelect',
-          options: propertySchema.enum.map((option) => ({
-            value: option,
-            label: option,
-          })),
-          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
-        };
-      } else if (propertySchema.$ref) {
-        // Handle object references with $ref
-        const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.$ref);
-        schemaConfig = {
-          ...baseConfig,
-          type: 'select',
-          component: 'ReactSelect',
-          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
-          refSchemaSlug, // Store for options fetching
-          isSearchable: true, // Enable search if more than 20 results
-        };
-      } else if (
-        propertySchema.type === 'string' &&
-        optionsProviders[propertyPath]?.length > 0
-      ) {
-        schemaConfig = {
-          ...baseConfig,
-          type: 'select',
-          component: 'ReactSelect',
-          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
-        };
-      } else if (propertySchema.type === 'boolean') {
-        schemaConfig = {
-          ...baseConfig,
-          type: 'boolean',
-          component: 'Boolean',
-        };
-      } else if (
-        propertySchema.type === 'number' ||
-        propertySchema.type === 'integer'
-      ) {
-        schemaConfig = {
-          ...baseConfig,
-          type: 'number',
-          component: 'Number',
-          integer: propertySchema.type === 'integer',
-        };
-      } else if (propertySchema.type === 'object' && !propertySchema.properties) {
-        // Object without properties: JSON textarea
-        schemaConfig = {
-          ...baseConfig,
-          type: 'json',
-          component: 'JsonObject',
-        };
-      } else if (propertySchema.type === 'string') {
-        // Supported string formats only
-        const format = propertySchema.format;
-
-        // Color formats -> custom ColorField
-        const colorFormats = [
-          'color',
-          'color-hex',
-          'color-hex-alpha',
-          'color-rgb',
-          'color-rgba',
-          'color-hsl',
-          'color-hsla',
-        ];
-
-        if (format === 'text') {
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'AcTextarea',
-          };
-        } else if (
-          format === 'date' ||
-          format === 'date-time' ||
-          format === 'time'
-        ) {
-          schemaConfig = {
-            ...baseConfig,
-            type: 'date',
-            component: 'AcFormField',
-            inputType:
-              format === 'date-time'
-                ? 'datetime-local'
-                : format === 'time'
-                ? 'time'
-                : 'date',
-          };
-        } else if (format === 'markdown' || format === 'html') {
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'WysiwygMarkdown',
-            isMarkdown: format === 'markdown',
-          };
-        } else if (['email', 'idn-email'].includes(format)) {
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'AcFormField',
-            inputType: 'email',
-          };
-        } else if (
-          ['url', 'uri', 'uri-reference', 'iri', 'iri-reference'].includes(format)
-        ) {
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'AcFormField',
-            inputType: 'url',
-          };
-        } else if (colorFormats.includes(format)) {
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'Color',
-            colorFormat: format,
-          };
-        } else if (
-          [
-            'duration',
-            'hostname',
-            'idn-hostname',
-            'ipv4',
-            'ipv6',
-            'uuid',
-            'uri-template',
-            'json-pointer',
-            'relative-json-pointer',
-            'regex',
-          ].includes(format)
-        ) {
-          // No special widget: keep as simple text input
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'AcFormField',
-          };
-        } else {
-          // Unknown or no format -> plain text
-          schemaConfig = {
-            ...baseConfig,
-            type: 'text',
-            component: 'AcFormField',
-          };
-        }
-      } else {
-        schemaConfig = {
-          ...baseConfig,
-          type: 'text',
-          component: 'AcFormField',
-        };
-      }
-
-      // Merge custom field config with schema config
-      if (fieldConfigs[propertyPath]) {
-        return {
-          ...schemaConfig,
-          ...fieldConfigs[propertyPath],
-        };
-      }
-
-      return schemaConfig;
+      return utilGetFieldConfig(propertyPath, propertySchema, isRequired, fieldConfigs, optionsProviders);
     };
 
     /**
-     * Determines if a field should be visible based on its configuration, current form data, authentication state,
-     * and field-level authorization.
-     * Used by renderField() and validateForm() to conditionally show/hide fields.
-     *
-     * @example
-     * getFieldVisibility("status", { visible: (formData) => formData.type === 'active' }, propertySchema)
-     * // Returns: true/false based on formData.type value, authentication state, and field authorization
+     * Determine field visibility using the reusable utility
      */
     const getFieldVisibility = (propertyPath, fieldConfig, propertySchema) => {
-      // First check traditional visibility rules
-      const isVisibleByConfig = shouldShowFormField(
-        fieldConfig,
-        formData,
-        userIsAuthenticated,
-        context
-      );
-      if (!isVisibleByConfig) {
-        return false;
-      }
-
-      // Then check field-level authorization if user object is available
-      if (user && propertySchema) {
-        const authState = getFieldAuthorizationState(
-          user,
-          propertySchema,
-          isCreateMode
-        );
-
-        // Enable debug logging for development
-        if (process.env.NODE_ENV === 'development') {
-          debugFieldAuthorization(user, propertySchema, propertyPath, isCreateMode);
-        }
-
-        return authState.visible;
-      }
-
-      // Fallback to traditional visibility if no user object or schema
-      return isVisibleByConfig;
+      return utilGetFieldVisibility(propertyPath, fieldConfig, propertySchema, formData, userIsAuthenticated, context, user, isCreateMode);
     };
 
     /**
-     * Gets the options array for select/multi-select fields based on schema enum, $ref, or optionsProviders.
-     *
-     * @example
-     * getFieldOptions("bivClassificatie.beschikbaarheid", { enum: ["Laag", "Midden", "Hoog"] })
-     * // Returns: [{ value: "Laag", label: "Laag" }, { value: "Midden", label: "Midden" }, ...]
+     * Get field options using the reusable utility
      */
     const getFieldOptions = (propertyPath, propertySchema) => {
-      // Priority 1: Schema enum takes highest priority
-      if (propertySchema.enum) {
-        return propertySchema.enum.map((option) => ({
-          value: option,
-          label: option,
-        }));
-      }
-
-      // Arrays of primitives may have items.enum
-      if (propertySchema.type === 'array' && propertySchema.items?.enum) {
-        return propertySchema.items.enum.map((option) => ({
-          value: option,
-          label: option,
-        }));
-      }
-
-      // Priority 2: $ref-based options from optionsProviders
-      // The parent component should populate optionsProviders with fetched data for $ref fields
-      if (optionsProviders[propertyPath]) {
-        const provided = optionsProviders[propertyPath];
-        return typeof provided === 'function' ? provided(formData) : provided;
-      }
-
-      // Priority 3: No options
-      return [];
+      return utilGetFieldOptions(propertyPath, propertySchema, optionsProviders, formData);
     };
 
     /**
@@ -836,98 +493,17 @@ const ConDynamicSchemaForm = forwardRef(
     };
 
     /**
-     * Gets the disabled state for a specific field from the disabledStates prop and field-level authorization.
-     *
-     * @example
-     * getFieldDisabled("status", propertySchema, { disabled: true })
-     * // Returns: true if fieldConfig.disabled is true, or from disabledStates, or from authorization
+     * Get field disabled state using the reusable utility
      */
     const getFieldDisabled = (propertyPath, propertySchema, fieldConfig) => {
-      // Priority 1: Check fieldConfig.disabled first (highest priority)
-      if (fieldConfig?.disabled !== undefined) {
-        return fieldConfig.disabled;
-      }
-
-      // Priority 2: Check if field should be disabled due to immutable property
-      if (honorImmutable && propertySchema?.immutable === true) {
-        return true;
-      }
-
-      // Priority 3: Check field-level authorization if user object is available
-      if (user && propertySchema) {
-        const authState = getFieldAuthorizationState(
-          user,
-          propertySchema,
-          isCreateMode
-        );
-        if (!authState.editable) {
-          return true;
-        }
-      }
-
-      // Priority 4: Check custom disabled states
-      if (typeof disabledStates[propertyPath] === 'function') {
-        return disabledStates[propertyPath](formData);
-      }
-      return disabledStates[propertyPath] || false;
+      return utilGetFieldDisabled(propertyPath, propertySchema, fieldConfig, disabledStates, honorImmutable, user, isCreateMode, formData);
     };
 
     /**
-     * Validates a field based on its configuration and current value.
-     *
-     * @example
-     * getFieldValidation("name", { required: true })
-     * // Returns: { hasError: true, required: true } if name is empty
+     * Get field validation using the reusable utility
      */
     const getFieldValidation = (propertyPath, fieldConfig, valueOverride) => {
-      if (validationStates[propertyPath]) {
-        return validationStates[propertyPath];
-      }
-
-      // Support required as boolean or function(formData)
-      let isRequired = fieldConfig.required;
-      if (typeof isRequired === 'function') {
-        try {
-          isRequired = isRequired(formData);
-        } catch (_) {
-          isRequired = false;
-        }
-      }
-      const value =
-        valueOverride !== undefined
-          ? valueOverride
-          : getNestedValue(propertyPath, formData);
-
-      let errors = [];
-      if (isRequired) {
-        const normalizedValue = typeof value === 'string' ? value.trim() : value;
-        const isEmpty =
-          normalizedValue === undefined ||
-          normalizedValue === null ||
-          (typeof normalizedValue === 'string' && normalizedValue === '') ||
-          (Array.isArray(normalizedValue) && normalizedValue.length === 0);
-        if (isEmpty) errors.push('Dit veld is verplicht');
-      }
-
-      // Type-specific validations
-      if (fieldConfig.component === 'Number') {
-        errors = errors.concat(validateNumber(value, fieldConfig.schema || {}));
-      } else if (fieldConfig.component === 'ReactSelect' && fieldConfig.isMulti) {
-        errors = errors.concat(validateArray(value, fieldConfig.schema || {}));
-      } else if (
-        typeof value === 'string' ||
-        fieldConfig.component === 'AcFormField' ||
-        fieldConfig.component === 'AcTextarea' ||
-        fieldConfig.component === 'WysiwygMarkdown'
-      ) {
-        errors = errors.concat(validateString(value, fieldConfig.schema || {}));
-      }
-
-      return {
-        hasError: errors.length > 0,
-        required: isRequired,
-        errorMessage: errors[0],
-      };
+      return utilGetFieldValidation(propertyPath, fieldConfig, formData, validationStates, valueOverride);
     };
 
     /**
@@ -974,418 +550,39 @@ const ConDynamicSchemaForm = forwardRef(
     }, [formData]);
 
     /**
-     * Handles field value changes and updates the form data accordingly.
-     *
-     * @example
-     * handleFieldChange("bivClassificatie.beschikbaarheid", { isMulti: false })("Midden")
-     * // Calls onFieldChange("bivClassificatie", { beschikbaarheid: "Midden", ... })
+     * Handle field changes using the reusable utility
      */
-    const handleFieldChange = (propertyPath, fieldConfig) => (value) => {
-      let processedValue = value;
-
-      // Handle multi-select values
-      if (fieldConfig.isMulti && Array.isArray(value)) {
-        processedValue = value.map((item) => item.value);
-      } else if (fieldConfig.component === 'ReactSelect' && !fieldConfig.isMulti) {
-        processedValue = value?.value;
-      }
-
-      // For nested properties, we need to handle the update differently
-      if (propertyPath.includes('.')) {
-        // Extract the top-level property name and the nested path
-        const [topLevelProperty, ...nestedPath] = propertyPath.split('.');
-
-        // Get the current value of the top-level property
-        const currentTopLevelValue = formData[topLevelProperty] || {};
-
-        // Create a new object with the updated nested value
-        const updatedTopLevelValue = { ...currentTopLevelValue };
-        let current = updatedTopLevelValue;
-
-        // Navigate to the parent of the target property
-        for (let i = 0; i < nestedPath.length - 1; i++) {
-          if (!current[nestedPath[i]]) {
-            current[nestedPath[i]] = {};
-          }
-          current = current[nestedPath[i]];
-        }
-
-        // Set the final value
-        current[nestedPath[nestedPath.length - 1]] = processedValue;
-
-        // Call onFieldChange with the top-level property name and the updated object
-        onFieldChange(topLevelProperty, updatedTopLevelValue);
-      } else {
-        // For non-nested properties, use the original behavior
-        onFieldChange(propertyPath, processedValue);
-      }
+    const handleFieldChange = (propertyPath, fieldConfig) => {
+      return utilHandleFieldChange(propertyPath, fieldConfig, onFieldChange, formData);
     };
 
     /**
-     * Renders a single form field based on its configuration and current state.returns {React.ReactElement|null} The rendered field component or null if field is not visible
-     *
-     * @example
-     * renderField({ path: "bivClassificatie.beschikbaarheid", schema: {...}, required: true })
-     * // Returns: ReactSelect component with proper configuration and validation
+     * Render a field using the reusable field renderer utility
      */
     const renderField = (property) => {
       const { path, schema: propertySchema, required } = property;
-      const fieldConfig = {
-        ...getFieldConfig(path, propertySchema, required),
-        schema: propertySchema,
-      };
-
-      // Check visibility - support both boolean and function
-      if (!getFieldVisibility(path, fieldConfig, propertySchema)) return null;
-
-      let value = getNestedValue(path, formData);
-      // Apply default if undefined
-      if (value === undefined) {
-        value = getDefaultValue(propertySchema);
-      }
-
-      const options = getFieldOptions(path, propertySchema);
-      const isLoading = getFieldLoading(path);
-      const isDisabled = getFieldDisabled(path, propertySchema, fieldConfig);
-      const validation = getFieldValidation(path, fieldConfig, value);
-
-      // Check if there's a custom component for this field
-      const CustomComponent = customFieldComponents[path];
-      if (CustomComponent) {
-        return (
-          <CustomComponent
-            // stop password managers (certain fields are called 'username' or 'email', causing unwanted interference from password managers)
-            data-1p-ignore='true' // 1Password
-            data-op-ignore='true' // 1Password
-            data-lpignore='true' // LastPass
-            data-protonpass-ignore='true' // ProtonPass
-            // KeepassXC does not support it - https://github.com/keepassxreboot/keepassxc-browser/issues/1921
-            data-form-type='other' // Dashlane (stops only prefilling)
-            data-bwignore='true' // Bitwarden
-            autocomplete='off' // rest
-            // =============
-            key={path}
-            fieldConfig={fieldConfig}
-            value={value}
-            onChange={handleFieldChange(path, fieldConfig)}
-            validation={validation}
-            isLoading={isLoading}
-            isDisabled={isDisabled}
-            options={options}
-            propertyName={path}
-            context={context}
-          />
-        );
-      }
-
-      if (fieldConfig.component === 'Boolean') {
-        return (
-          <BooleanField
-            key={path}
-            label={fieldConfig.label}
-            value={!!value}
-            onChange={handleFieldChange(path, fieldConfig)}
-            disabled={isDisabled}
-          />
-        );
-      }
-
-      if (fieldConfig.component === 'Number') {
-        return (
-          <NumberField
-            key={path}
-            path={path}
-            label={fieldConfig.label}
-            value={value}
-            onChange={handleFieldChange(path, fieldConfig)}
-            placeholder={fieldConfig.placeholder}
-            disabled={isDisabled}
-            required={validation.required}
-            schema={propertySchema}
-            integer={fieldConfig.integer}
-            validation={validation}
-          />
-        );
-      }
-
-      if (fieldConfig.component === 'Color') {
-        return (
-          <div key={`${path}-${resetKey}`}>
-            <label className='utrecht-form-label'>
-              <Heading
-                level={4}
-                className={clsx({
-                  'ac-form-field-header-info': fieldConfig.description,
-                })}
-              >
-                <div>
-                  {fieldConfig.label}
-                  {validation.required && (
-                    <>
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </>
-                  )}
-                </div>
-                {fieldConfig.description && (
-                  <>
-                    <span
-                      data-tooltip-id={TOOLTIP_ID}
-                      data-tooltip-content={fieldConfig.description}
-                      className='info-indicator'
-                      role='img'
-                      aria-label={fieldConfig.description}
-                    >
-                      <VISUALS.INFO />
-                    </span>
-                  </>
-                )}
-              </Heading>
-            </label>
-            <ColorField
-              key={path}
-              path={path}
-              label={fieldConfig.label}
-              value={value}
-              onChange={handleFieldChange(path, fieldConfig)}
-              placeholder={fieldConfig.placeholder}
-              disabled={isDisabled}
-              required={validation.required}
-              colorFormat={fieldConfig.colorFormat}
-            />
-          </div>
-        );
-      }
-
-      if (fieldConfig.component === 'JsonObject') {
-        return (
-          <JsonObjectField
-            key={path}
-            path={path}
-            label={fieldConfig.label}
-            value={value}
-            onChange={handleFieldChange(path, fieldConfig)}
-            placeholder={fieldConfig.placeholder}
-            disabled={isDisabled}
-          />
-        );
-      }
-
-      if (fieldConfig.component === 'WysiwygMarkdown') {
-        return (
-          <div key={`${path}-${resetKey}`} className='con-wysiwyg-markdown-field'>
-            <label className='utrecht-form-label'>
-              <Heading
-                level={4}
-                className={clsx({
-                  'ac-form-field-header-info': fieldConfig.description,
-                })}
-              >
-                <div>
-                  {fieldConfig.label}
-                  {validation.required && (
-                    <>
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </>
-                  )}
-                </div>
-                {fieldConfig.description && (
-                  <span
-                    data-tooltip-id={TOOLTIP_ID}
-                    data-tooltip-content={fieldConfig.description}
-                    className='info-indicator'
-                    role='img'
-                    aria-label={fieldConfig.description}
-                  >
-                    <VISUALS.INFO />
-                  </span>
-                )}
-              </Heading>
-            </label>
-            <MDEditor
-              value={value || ''}
-              onChange={(val) => handleFieldChange(path, fieldConfig)(val || '')}
-              data-color-mode='light'
-              visibleDragBar={false}
-              preview='edit'
-              hideToolbar={isDisabled}
-            />
-          </div>
-        );
-      }
-
-      if (fieldConfig.component === 'AcFormField') {
-        return (
-          <AcFormField
-            // stop password managers (certain fields are called 'username' or 'email', causing unwanted interference from password managers)
-            data-1p-ignore='true' // 1Password
-            data-op-ignore='true' // 1Password
-            data-lpignore='true' // LastPass
-            data-protonpass-ignore='true' // ProtonPass
-            // KeepassXC does not support it - https://github.com/keepassxreboot/keepassxc-browser/issues/1921
-            data-form-type='other' // Dashlane (stops only prefilling)
-            data-bwignore='true' // Bitwarden
-            autocomplete='off' // rest
-            // =============
-            tooltip={fieldConfig.description}
-            key={path}
-            id={`dynamic-form-field-${path}`}
-            label={fieldConfig.label}
-            type={fieldConfig.type}
-            inputType={fieldConfig.inputType || 'text'} // Support for HTML5 input types like date, datetime-local
-            onChange={handleFieldChange(path, fieldConfig)}
-            value={value ?? ''}
-            placeholder={fieldConfig.placeholder}
-            disabled={isDisabled}
-            minLength={propertySchema?.minLength ?? undefined}
-            maxLength={propertySchema?.maxLength ?? undefined}
-            pattern={propertySchema?.pattern || undefined}
-            {...validation}
-          />
-        );
-      }
-
-      if (fieldConfig.component === 'AcTextarea') {
-        return (
-          <AcFormField
-            // stop password managers (certain fields are called 'username' or 'email', causing unwanted interference from password managers)
-            data-1p-ignore='true' // 1Password
-            data-op-ignore='true' // 1Password
-            data-lpignore='true' // LastPass
-            data-protonpass-ignore='true' // ProtonPass
-            // KeepassXC does not support it - https://github.com/keepassxreboot/keepassxc-browser/issues/1921
-            data-form-type='other' // Dashlane (stops only prefilling)
-            data-bwignore='true' // Bitwarden
-            autocomplete='off' // rest
-            // =============
-            tooltip={fieldConfig.description}
-            key={path}
-            inputClassName='textarea'
-            id={`dynamic-form-field-${path}`}
-            label={fieldConfig.label}
-            type={fieldConfig.type}
-            onChange={handleFieldChange(path, fieldConfig)}
-            value={value || ''}
-            placeholder={fieldConfig.placeholder}
-            disabled={isDisabled}
-            {...validation}
-          />
-        );
-      }
-
-      // Array comma list fallback when array has no enum/optionsProviders
-      if (propertySchema.type === 'array') {
-        const options = getFieldOptions(path, propertySchema);
-        if (!propertySchema.items?.$ref && options.length === 0) {
-          const itemsType = propertySchema.items?.type;
-          return (
-            <ArrayCommaListField
-              key={path}
-              path={path}
-              label={fieldConfig.label}
-              value={value}
-              onChange={handleFieldChange(path, fieldConfig)}
-              placeholder={fieldConfig.placeholder}
-              disabled={isDisabled}
-              itemsType={itemsType}
-            />
-          );
-        }
-      }
-
-      if (fieldConfig.component === 'ReactSelect') {
-        const selectValue = fieldConfig.isMulti
-          ? options?.filter((option) => value?.includes(option.value)) || []
-          : options?.find((option) => option.value === value);
-
-        // Automatically enable search for $ref fields (fields that reference other schemas)
-        const isRefField = getFieldRefSchemaSlug(propertySchema) !== null;
-        const shouldBeSearchable = isRefField || fieldConfig.isSearchable;
-
-        return (
-          <div key={`${path}-${resetKey}`}>
-            <label className='utrecht-form-label'>
-              <Heading
-                level={4}
-                className={clsx({
-                  'ac-form-field-header-info': fieldConfig.description,
-                })}
-              >
-                <div>
-                  {fieldConfig.label}
-                  {validation.required && (
-                    <>
-                      <span className='required-indicator' aria-hidden='true'>
-                        *
-                      </span>
-                      <span className='sr-only'>(verplicht)</span>
-                    </>
-                  )}
-                </div>
-                {fieldConfig.description && (
-                  <>
-                    <span
-                      data-tooltip-id={TOOLTIP_ID}
-                      data-tooltip-content={fieldConfig.description}
-                      className='info-indicator'
-                      role='img'
-                      aria-label={fieldConfig.description}
-                    >
-                      <VISUALS.INFO />
-                    </span>
-                  </>
-                )}
-              </Heading>
-            </label>
-            <ReactSelectWithGlobalHack
-              key={`${path}-${resetKey}-${forceRenderKey}`}
-              fieldPath={path}
-              placeholder={fieldConfig.placeholder}
-              value={selectValue}
-              className={clsx(
-                'ac-beheer-select',
-                isDisabled && 'ac-beheer-select--disabled'
-              )}
-              onChange={handleFieldChange(path, fieldConfig)}
-              options={options}
-              isLoading={isLoading}
-              isDisabled={isDisabled}
-              isMulti={fieldConfig.isMulti}
-              closeMenuOnSelect={fieldConfig.closeMenuOnSelect}
-              isSearchable={shouldBeSearchable}
-              onInputChange={
-                handleSearch && getFieldRefSchemaSlug(propertySchema)
-                  ? (inputValue, actionMeta) => {
-                      // Only trigger search for user input, not programmatic changes
-                      if (
-                        actionMeta.action === 'input-change' &&
-                        inputValue &&
-                        inputValue.length > 1 &&
-                        !isLoading
-                      ) {
-                        const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
-                        handleSearch(path, refSchemaSlug, inputValue);
-                      }
-                    }
-                  : undefined
-              }
-              {...(validation.required && {
-                required: true,
-              })}
-              {...(!validation.required && {
-                isClearable: true,
-              })}
-            />
-          </div>
-        );
-      }
-
-      return null;
+      
+      return utilRenderField({
+        path,
+        propertySchema,
+        required,
+        formData,
+        fieldConfigs,
+        customFieldComponents,
+        optionsProviders,
+        loadingStates,
+        disabledStates,
+        validationStates,
+        onFieldChange,
+        userIsAuthenticated,
+        context,
+        user,
+        isCreateMode,
+        honorImmutable,
+        onSearchHandlers,
+        resetKey,
+        forceRenderKey
+      });
     };
 
     // Sort top-level properties using the custom sorting logic, then flatten
@@ -1397,28 +594,10 @@ const ConDynamicSchemaForm = forwardRef(
     );
 
     /**
-     * Determines the size class for a field based on its type, format, and other characteristics
-     * @param {string} path - The property path
-     * @param {object} propertySchema - The property schema
-     * @param {object} fieldConfig - The field configuration
-     * @returns {string} CSS class name for field sizing
+     * Get field size class using the reusable utility
      */
     const getFieldSizeClass = (path, propertySchema, fieldConfig) => {
-      // Check for explicit size configuration first
-      if (fieldConfig.size === 'full') return 'field-size-full';
-      if (fieldConfig.size === 'half') return 'field-size-half';
-
-      // Business rules for automatic sizing based on type/format
-      const format = propertySchema.format;
-      const component = fieldConfig.component;
-
-      // Only markdown fields get special treatment: full width + double height
-      if (component === 'WysiwygMarkdown' || format === 'markdown') {
-        return 'field-size-full field-height-double';
-      }
-
-      // Everything else: half width, normal height
-      return 'field-size-half';
+      return utilGetFieldSizeClass(path, propertySchema, fieldConfig);
     };
 
     /**
