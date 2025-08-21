@@ -117,7 +117,8 @@ const AcFormField = ({
         value: value,
         minLength: minLength,
         maxLength: maxLength,
-        type: inputType,
+        // Do not pass a type prop to Textarea
+        ...(inputType !== 'textarea' ? { type: inputType } : {}),
         ...restProps,
       })}
     </FormField>

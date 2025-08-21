@@ -1,6 +1,6 @@
+import { useState, useCallback, memo, useEffect } from 'react';
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
-import { useState, useCallback, memo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
@@ -11,12 +11,19 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+} from '@utrecht/component-library-react';
+import {
   Heading1,
   UnorderedList,
   UnorderedListItem,
   Alert,
   Paragraph,
   Separator,
+  Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcFormsProduct = () => {
@@ -139,9 +146,12 @@ const AcFormsProduct = () => {
         );
       case 2:
         return (
-          <TestForm
+          <ApplicatieStep
             {...{
-              currentStep,
+              product,
+              setProduct,
+              isMultiApplicatie,
+              loading,
             }}
           />
         );
@@ -222,15 +232,18 @@ const AcFormsProduct = () => {
         return 'Productopbouw';
       case 1:
         return 'Productinformatie';
+      case 2:
+        return isMultiApplicatie ? 'Applicaties' : 'Applicatie';
     }
   };
 
   const getDisabledStatus = (currentStep) => {
+    // TODO: uncomment at the end
     if (currentStep === 0) {
       return false;
     }
     if (currentStep === 1) {
-      // return !product.productName;
+      //   return !product.productName;
       return false;
     }
   };
@@ -725,14 +738,238 @@ const ControlerenForm = memo(({ product }) => {
 });
 
 const TestForm = memo(({ currentStep }) => {
-  // This testForm needs to be removed after all the steps have their own form
+  // TODOThis testForm needs to be removed after all the steps have their own form
 
   return <div>hi this is current step {currentStep}</div>;
 });
 
+// Applicatie form fields are extracted to module scope to avoid remounts
+// used in ApplicatieStep
+const ApplicatieFormFields = memo(
+  ({ index, applicatie, updateApplicatie, loading }) => {
+    const nameInputId = `applicatie-naam-${index}`;
+
+    const [localName, setLocalName] = useState(applicatie.naam || '');
+    useEffect(() => {
+      setLocalName(applicatie.naam || '');
+    }, [applicatie.naam, index]);
+
+    const [localDesc, setLocalDesc] = useState(applicatie.beschrijvingKort || '');
+    useEffect(() => {
+      setLocalDesc(applicatie.beschrijvingKort || '');
+    }, [applicatie.beschrijvingKort, index]);
+
+    const debouncedSetName = useDebouncedInput(
+      (v) => updateApplicatie(index, 'naam', v),
+      300
+    );
+    const debouncedSetDesc = useDebouncedInput(
+      (v) => updateApplicatie(index, 'beschrijvingKort', v),
+      300
+    );
+
+    return (
+      <div className='ac-register-form-grid'>
+        <div style={{ gridColumn: 'span 2' }}>
+          <AcFormField
+            label='Naam van de applicatie'
+            value={localName}
+            onChange={(v) => {
+              setLocalName(v);
+              debouncedSetName(v);
+            }}
+            disabled={loading}
+            id={nameInputId}
+            className='ac-register-form-field__no-width-limit'
+          />
+        </div>
+
+        <div style={{ gridColumn: 'span 2' }}>
+          <AcFormField
+            label='Korte beschrijving van de applicatie'
+            inputType='textarea'
+            value={localDesc}
+            onChange={(v) => {
+              setLocalDesc(v);
+              debouncedSetDesc(v);
+            }}
+            maxLength={255}
+            disabled={loading}
+            id={`applicatie-beschrijving-${index}`}
+            className='ac-register-form-field__no-width-limit'
+          />
+          <small className='ac-register-form-field-help'>
+            {255 - (localDesc?.length || 0)} karakters over
+          </small>
+        </div>
+      </div>
+    );
+  }
+);
+ApplicatieFormFields.displayName = 'ApplicatieFormFields';
+
+const ApplicatieStep = memo(
+  ({ product, setProduct, isMultiApplicatie, loading }) => {
+    // Keep focus while typing by only committing name changes on blur
+
+    const updateApplicatie = (index, key, value) => {
+      setProduct((prev) => {
+        const applicaties = { ...prev.applicaties };
+        const existing = applicaties[index];
+        applicaties[index] = { ...existing, [key]: value };
+        return { ...prev, applicaties: applicaties };
+      });
+    };
+
+    const addApplicatie = () => {
+      setProduct((prev) => {
+        const indices = Object.keys(prev.applicaties).map((k) => parseInt(k, 10));
+        const nextIndex = indices.length ? Math.max(...indices) + 1 : 0;
+
+        const createEmptyClone = (template) => {
+          if (Array.isArray(template)) return [];
+          if (template && typeof template === 'object') {
+            return Object.keys(template).reduce((acc, key) => {
+              acc[key] = createEmptyClone(template[key]);
+              return acc;
+            }, {});
+          }
+          return '';
+        };
+
+        const templateIndex = indices.length ? Math.max(...indices) : null;
+        const template =
+          templateIndex !== null ? prev.applicaties[templateIndex] : {};
+        const emptyApplicatie = createEmptyClone(template);
+
+        return {
+          ...prev,
+          applicaties: {
+            ...prev.applicaties,
+            [nextIndex]: emptyApplicatie,
+          },
+        };
+      });
+    };
+
+    if (!isMultiApplicatie) {
+      const app0 = product.applicaties?.[0];
+      return (
+        <div
+          className='ac-register-form-section'
+          role='group'
+          aria-labelledby='applicatie-section-title'
+        >
+          <h2 id='applicatie-section-title' className='sr-only'>
+            Applicatie
+          </h2>
+          <ApplicatieFormFields
+            index={0}
+            applicatie={app0}
+            updateApplicatie={updateApplicatie}
+            loading={loading}
+          />
+        </div>
+      );
+    }
+
+    const applicatieIndices = Object.keys(product.applicaties || {})
+      .map((k) => parseInt(k, 10))
+      .sort((a, b) => a - b);
+
+    return (
+      <div
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='applicaties-section-title'
+      >
+        <h2 id='applicaties-section-title' className='sr-only'>
+          Applicaties
+        </h2>
+        <Table>
+          <thead>
+            <TableRow>
+              <TableCell>
+                <b>Naam</b>
+              </TableCell>
+              <TableCell>
+                <b>Beschrijving</b>
+              </TableCell>
+              <TableCell>
+                <b>Acties</b>
+              </TableCell>
+            </TableRow>
+          </thead>
+          <TableBody>
+            {applicatieIndices.map((index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Textbox
+                    id={`table-applicatie-naam-${index}`}
+                    value={product.applicaties[index]?.naam || ''}
+                    onChange={(e) =>
+                      updateApplicatie(index, 'naam', e.target.value)
+                    }
+                    placeholder='Naam van de applicatie'
+                    disabled={loading}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Textbox
+                    id={`table-applicatie-beschrijving-${index}`}
+                    value={product.applicaties[index]?.beschrijvingKort || ''}
+                    onChange={(e) =>
+                      updateApplicatie(index, 'beschrijvingKort', e.target.value)
+                    }
+                    maxLength={255}
+                    placeholder='Beschrijving van de applicatie'
+                    disabled={loading}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <AcButton
+                      style='buttonSlim'
+                      buttonType='secondary'
+                      icon={<VISUALS.MINUS />}
+                      disabled={applicatieIndices.length === 1}
+                      onClick={() => {
+                        setProduct((prev) => {
+                          const next = {
+                            ...prev,
+                            applicaties: { ...prev.applicaties },
+                          };
+                          delete next.applicaties[index];
+                          return next;
+                        });
+                      }}
+                      title='Applicatie verwijderen'
+                    ></AcButton>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <div style={{ marginTop: '1rem' }}>
+          <AcButton style='button' icon={<VISUALS.PLUS />} onClick={addApplicatie}>
+            Applicatie toevoegen
+          </AcButton>
+        </div>
+      </div>
+    );
+  }
+);
+
 ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
 ControlerenForm.displayName = 'ControlerenForm';
+ApplicatieStep.displayName = 'ApplicatieStep';
 
 TestForm.displayName = 'TestForm';
 
