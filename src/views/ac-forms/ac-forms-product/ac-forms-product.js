@@ -6,6 +6,7 @@ import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox } from '@src/molecules';
+import ReactSelect from 'react-select';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
@@ -15,8 +16,6 @@ import {
   TableBody,
   TableCell,
   TableRow,
-} from '@utrecht/component-library-react';
-import {
   Heading1,
   UnorderedList,
   UnorderedListItem,
@@ -25,6 +24,7 @@ import {
   Separator,
   Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
+import licenses from '@assets/licenses/licenses.json';
 
 const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
@@ -157,9 +157,12 @@ const AcFormsProduct = () => {
         );
       case 3:
         return (
-          <TestForm
+          <LicenseAndHostingStep
             {...{
-              currentStep,
+              product,
+              setProduct,
+              isMultiApplicatie,
+              loading,
             }}
           />
         );
@@ -234,6 +237,8 @@ const AcFormsProduct = () => {
         return 'Productinformatie';
       case 2:
         return isMultiApplicatie ? 'Applicaties' : 'Applicatie';
+      case 3:
+        return 'Licentie & Hosting';
     }
   };
 
@@ -743,6 +748,301 @@ const TestForm = memo(({ currentStep }) => {
   return <div>hi this is current step {currentStep}</div>;
 });
 
+// Step 3: Licentie & Hosting
+const LicenseAndHostingStep = memo(
+  ({ product, setProduct, isMultiApplicatie, loading }) => {
+    const [sameForAll, setSameForAll] = useState(true);
+
+    // Options
+    const licentieTypeOptions = [
+      { value: 'Closed Source', label: 'Closed Source' },
+      { value: 'Open Source', label: 'Open Source' },
+    ];
+
+    const licentieOptions = licenses.map((l) => ({
+      value: l['SPDX ID'],
+      label: l.name,
+    }));
+
+    const hostingOptions = [
+      { value: 'On-premises', label: 'On-premises' },
+      { value: 'SaaS', label: 'SaaS' },
+      { value: 'PaaS', label: 'PaaS' },
+      { value: 'Hybride', label: 'Hybride' },
+    ];
+
+    const applicatieIndices = Object.keys(product.applicaties || {})
+      .map((k) => parseInt(k, 10))
+      .sort((a, b) => a - b);
+
+    const applicatieOptions = applicatieIndices.map((i) => ({
+      value: i,
+      label: product.applicaties?.[i]?.naam || `Applicatie ${i + 1}`,
+    }));
+
+    const updateApplicatieField = (index, key, value) => {
+      setProduct((prev) => {
+        const next = { ...prev, applicaties: { ...prev.applicaties } };
+        next.applicaties[index] = { ...next.applicaties[index], [key]: value };
+        return next;
+      });
+    };
+
+    const applyToAll = (fields) => {
+      setProduct((prev) => {
+        const next = { ...prev, applicaties: { ...prev.applicaties } };
+        Object.keys(next.applicaties).forEach((k) => {
+          next.applicaties[k] = { ...next.applicaties[k], ...fields };
+        });
+        return next;
+      });
+    };
+
+    const renderSelectors = ({
+      valueLicentieType,
+      valueLicentie,
+      valueHosting,
+      onChangeLicentieType,
+      onChangeLicentie,
+      onChangeHosting,
+    }) => {
+      const selectedType =
+        licentieTypeOptions.find((o) => o.value === valueLicentieType) || null;
+      const selectedLicentie =
+        licentieOptions.find((o) => o.value === valueLicentie) || null;
+      const selectedHosting =
+        hostingOptions.find((o) => o.value === valueHosting) || null;
+
+      return (
+        <div className='ac-register-form-grid'>
+          <div>
+            <label className='utrecht-form-label'>Type Licentie</label>
+            <ReactSelect
+              className={clsx(
+                'ac-beheer-select',
+                loading && 'ac-beheer-select--disabled'
+              )}
+              value={selectedType}
+              onChange={(opt) => onChangeLicentieType(opt?.value || null)}
+              options={licentieTypeOptions}
+              isDisabled={loading}
+              placeholder='Selecteer type licentie'
+            />
+          </div>
+          <div>
+            <label className='utrecht-form-label'>Licentie</label>
+            <ReactSelect
+              className={clsx(
+                'ac-beheer-select',
+                loading && 'ac-beheer-select--disabled'
+              )}
+              value={selectedLicentie}
+              onChange={(opt) => onChangeLicentie(opt?.value || null)}
+              options={licentieOptions}
+              isDisabled={loading || selectedType?.value !== 'Open Source'}
+              placeholder='Selecteer licentie'
+              isClearable
+            />
+          </div>
+          <div>
+            <label className='utrecht-form-label'>Hosting</label>
+            <ReactSelect
+              className={clsx(
+                'ac-beheer-select',
+                loading && 'ac-beheer-select--disabled'
+              )}
+              value={selectedHosting}
+              onChange={(opt) => onChangeHosting(opt?.value || null)}
+              options={hostingOptions}
+              isDisabled={loading}
+              placeholder='Selecteer hosting'
+            />
+          </div>
+        </div>
+      );
+    };
+
+    return (
+      <div
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='license-hosting-section-title'
+      >
+        <h2 id='license-hosting-section-title' className='sr-only'>
+          Licentie & Hosting
+        </h2>
+        <Paragraph>
+          Geef hieronder aan welke licenties, hostingopties en jurisdicties van
+          toepassing zijn op de applicatie(s). U kunt meerdere opties selecteren.
+        </Paragraph>
+
+        {isMultiApplicatie && (
+          <div
+            className='ac-register-form-checkbox-wrapper'
+            style={{ marginBottom: '1rem' }}
+          >
+            <p>
+              Geldt dezelfde licentie-en hostinginformatie voor alle applicaties?
+            </p>
+            <AcCheckbox
+              label='Ja, voor alle applicaties hetzelfde'
+              value='same'
+              checked={sameForAll}
+              onChange={() => setSameForAll(true)}
+            />
+            <AcCheckbox
+              label='Nee, per applicatie verschillend'
+              value='per-app'
+              checked={!sameForAll}
+              onChange={() => setSameForAll(false)}
+            />
+          </div>
+        )}
+
+        {!isMultiApplicatie || sameForAll ? (
+          <div>
+            {renderSelectors({
+              valueLicentieType: product.applicaties?.[0]?.licentieType || '',
+              valueLicentie: product.applicaties?.[0]?.licentie || '',
+              valueHosting: product.applicaties?.[0]?.hosting || '',
+
+              onChangeLicentieType: (v) => {
+                if (sameForAll && isMultiApplicatie) {
+                  applyToAll({
+                    licentieType: v,
+                    ...(v !== 'Open Source' ? { licentie: '' } : {}),
+                  });
+                } else {
+                  updateApplicatieField(0, 'licentieType', v);
+                  if (v !== 'Open Source') updateApplicatieField(0, 'licentie', '');
+                }
+              },
+              onChangeLicentie: (v) => {
+                if (sameForAll && isMultiApplicatie) applyToAll({ licentie: v });
+                else updateApplicatieField(0, 'licentie', v);
+              },
+              onChangeHosting: (v) => {
+                if (sameForAll && isMultiApplicatie) applyToAll({ hosting: v });
+                else updateApplicatieField(0, 'hosting', v);
+              },
+            })}
+          </div>
+        ) : (
+          <div>
+            <Table>
+              <thead>
+                <TableRow>
+                  <TableCell>
+                    <b>Applicatie</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Type licentie</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Licentie</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Hosting</b>
+                  </TableCell>
+                </TableRow>
+              </thead>
+              <TableBody>
+                {applicatieIndices.map((index) => {
+                  const app = product.applicaties[index] || {};
+                  const selectedType =
+                    licentieTypeOptions.find((o) => o.value === app.licentieType) ||
+                    null;
+                  const selectedLicentie =
+                    licentieOptions.find((o) => o.value === app.licentie) || null;
+                  const selectedHosting =
+                    hostingOptions.find((o) => o.value === app.hosting) || null;
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <ReactSelect
+                          className={clsx(
+                            'ac-beheer-select',
+                            'ac-beheer-select--disabled'
+                          )}
+                          value={
+                            applicatieOptions.find((o) => o.value === index) || null
+                          }
+                          options={applicatieOptions}
+                          isDisabled
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <ReactSelect
+                          className={clsx(
+                            'ac-beheer-select',
+                            loading && 'ac-beheer-select--disabled'
+                          )}
+                          value={selectedType}
+                          onChange={(opt) =>
+                            updateApplicatieField(
+                              index,
+                              'licentieType',
+                              opt?.value || null
+                            )
+                          }
+                          options={licentieTypeOptions}
+                          isDisabled={loading}
+                          placeholder='Selecteer type licentie'
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <ReactSelect
+                          className={clsx(
+                            'ac-beheer-select',
+                            loading && 'ac-beheer-select--disabled'
+                          )}
+                          value={selectedLicentie}
+                          onChange={(opt) =>
+                            updateApplicatieField(
+                              index,
+                              'licentie',
+                              opt?.value || null
+                            )
+                          }
+                          options={licentieOptions}
+                          isDisabled={
+                            loading || selectedType?.value !== 'Open Source'
+                          }
+                          placeholder='Selecteer licentie'
+                          isClearable
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <ReactSelect
+                          className={clsx(
+                            'ac-beheer-select',
+                            loading && 'ac-beheer-select--disabled'
+                          )}
+                          value={selectedHosting}
+                          onChange={(opt) =>
+                            updateApplicatieField(
+                              index,
+                              'hosting',
+                              opt?.value || null
+                            )
+                          }
+                          options={hostingOptions}
+                          isDisabled={loading}
+                          placeholder='Selecteer hosting'
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+
 // Applicatie form fields are extracted to module scope to avoid remounts
 // used in ApplicatieStep
 const ApplicatieFormFields = memo(
@@ -907,9 +1207,7 @@ const ApplicatieStep = memo(
                   <Textbox
                     id={`table-applicatie-naam-${index}`}
                     value={product.applicaties[index]?.naam || ''}
-                    onChange={(e) =>
-                      updateApplicatie(index, 'naam', e.target.value)
-                    }
+                    onChange={(e) => updateApplicatie(index, 'naam', e.target.value)}
                     placeholder='Naam van de applicatie'
                     disabled={loading}
                   />
@@ -970,6 +1268,7 @@ ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
 ControlerenForm.displayName = 'ControlerenForm';
 ApplicatieStep.displayName = 'ApplicatieStep';
+LicenseAndHostingStep.displayName = 'LicenseAndHostingStep';
 
 TestForm.displayName = 'TestForm';
 
