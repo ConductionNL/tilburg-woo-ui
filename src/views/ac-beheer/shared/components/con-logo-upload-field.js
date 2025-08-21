@@ -16,6 +16,8 @@ export const LogoUploadField = ({
   validation,
   propertyName,
   isDisabled,
+  accept,
+  showPreview = true,
 }) => {
   const inputRef = useRef(null);
   const handleLogoFileSelect = (e) => {
@@ -40,6 +42,19 @@ export const LogoUploadField = ({
     reader.readAsDataURL(file);
   };
 
+  const defaultAccept = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/webp',
+    'image/svg+xml',
+  ];
+  const acceptAttr = Array.isArray(accept)
+    ? accept.join(',')
+    : typeof accept === 'string' && accept.length > 0
+    ? accept
+    : defaultAccept.join(',');
+
   return (
     <AcFlex column>
       <label className='utrecht-form-label'>
@@ -60,13 +75,7 @@ export const LogoUploadField = ({
         ref={inputRef}
         id={`fileInput-${propertyName}`}
         type='file'
-        accept={[
-          'image/png',
-          'image/jpeg',
-          'image/jpg',
-          'image/webp',
-          'image/svg+xml',
-        ].join(',')}
+        accept={acceptAttr}
         multiple={false}
         onChange={handleLogoFileSelect}
         disabled={isDisabled}
@@ -97,7 +106,7 @@ export const LogoUploadField = ({
           userSelect: 'none',
         }}
       >
-        Toegestane bestandstypen: png, jpeg, jpg, webp, svg
+        Toegestane bestandstypen: {acceptAttr}
       </small>
 
       {(_value || fieldConfig?.filename) && (
@@ -133,7 +142,7 @@ export const LogoUploadField = ({
         </div>
       )}
 
-      {_value ? (
+      {showPreview && _value ? (
         <div
           style={{
             marginTop: '0.75rem',

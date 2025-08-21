@@ -127,6 +127,56 @@ const AcFormsProduct = () => {
     }
   }, []);
 
+  // Standards options via API
+  const [standaardOptionsState, setStandaardOptionsState] = useState([]);
+  const standaardOptionsRef = { current: standaardOptionsState };
+  useEffect(() => {
+    let isMounted = true;
+    const endpoint = `${BASE_URL}/openconnector/api/standaarden`;
+    const mapToOption = (item, index) => {
+      const label =
+        item?.naam ||
+        item?.name ||
+        item?.title ||
+        item?.label ||
+        `Standaard ${index + 1}`;
+      const value = item?.value || item?.id || item?.slug || label;
+      return { value: String(value), label: String(label) };
+    };
+    const fetchOptions = async () => {
+      try {
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map(mapToOption).filter((o) => o.label && o.value);
+        if (isMounted) setStandaardOptionsState(options);
+      } catch (e) {
+        if (isMounted) setStandaardOptionsState([]);
+      }
+    };
+    fetchOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Persist UI state for StandaardenForm across steps
+  const [standaardenFormState, setStandaardenFormState] = useState({
+    rows: [0],
+    nextRowId: 1,
+    selectedApplication: {},
+    selectedStandardByRow: {},
+    supportedByRow: {},
+    bewijsByRow: {},
+  });
+
   const dienstOptions = [
     {
       value: 'Functioneel beheer',
@@ -147,9 +197,7 @@ const AcFormsProduct = () => {
   const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
     []
   );
-  const [referentieComponentenLoading, setReferentieComponentenLoading] =
-    useState(false);
-  const [referentieComponentenError, setReferentieComponentenError] = useState(null);
+  // Remove unused loading/error flags to keep lint clean; we optimistically load and fallback to empty
 
   useEffect(() => {
     let isMounted = true;
@@ -167,8 +215,6 @@ const AcFormsProduct = () => {
     };
 
     const fetchOptions = async () => {
-      setReferentieComponentenLoading(true);
-      setReferentieComponentenError(null);
       try {
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
@@ -181,12 +227,9 @@ const AcFormsProduct = () => {
           ? data.results
           : [];
         const options = list.map(mapToOption).filter((o) => o.label && o.value);
-        if (isMounted && options.length) setReferentieComponentenOptions(options);
+        if (isMounted) setReferentieComponentenOptions(options);
       } catch (e) {
-        if (isMounted)
-          setReferentieComponentenError(e?.message || 'Ophalen mislukt');
-      } finally {
-        if (isMounted) setReferentieComponentenLoading(false);
+        if (isMounted) setReferentieComponentenOptions([]);
       }
     };
 
@@ -310,9 +353,13 @@ const AcFormsProduct = () => {
         );
       case 5:
         return (
-          <TestForm
+          <StandaardenForm
             {...{
-              currentStep,
+              product,
+              setProduct,
+              standaardOptions: standaardOptionsRef.current,
+              standaardenFormState,
+              setStandaardenFormState,
             }}
           />
         );
@@ -1419,6 +1466,283 @@ ReferentieComponentenForm.displayName = 'ReferentieComponentenForm';
 // Step 5 Koppelingen
 
 // Step 6 Standaarden
+const StandaardenForm = memo(
+  ({
+    product,
+    setProduct,
+    standaardOptions,
+    standaardenFormState,
+    setStandaardenFormState,
+  }) => {
+    const { rows, selectedApplication, selectedStandardByRow, supportedByRow } =
+      standaardenFormState;
+
+    const appOptions = Object.entries(product.applicaties).map(([id, app]) => ({
+      value: id,
+      label: app.naam,
+    }));
+
+    const setSupported = (rowId, supported) => {
+      setStandaardenFormState((prev) => ({
+        ...prev,
+        supportedByRow: { ...prev.supportedByRow, [rowId]: !!supported },
+      }));
+
+      const appId = selectedApplication[rowId];
+      const stdVal = selectedStandardByRow[rowId];
+      if (appId == null || !stdVal) return;
+
+      setProduct((prev) => {
+        const applicaties = { ...prev.applicaties };
+        const existing = applicaties[appId] || {};
+        const current = Array.isArray(existing.standaarden)
+          ? existing.standaarden
+          : [];
+        const other = current.filter((s) =>
+          typeof s === 'object' ? s.naam !== stdVal : s !== stdVal
+        );
+        const nextItem = {
+          naam: String(stdVal),
+          bewijs: existing.bewijs || '',
+          supported: !!supported,
+        };
+        applicaties[appId] = { ...existing, standaarden: [...other, nextItem] };
+        return { ...prev, applicaties };
+      });
+    };
+
+    const setBewijs = (rowId, file) => {
+      const appId = selectedApplication[rowId];
+      const stdVal = selectedStandardByRow[rowId];
+      if (appId == null || !stdVal) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        setProduct((prev) => {
+          const applicaties = { ...prev.applicaties };
+          const existing = applicaties[appId] || {};
+          const current = Array.isArray(existing.standaarden)
+            ? existing.standaarden
+            : [];
+          const updated = current.map((s) => {
+            if (typeof s === 'object' ? s.naam === stdVal : s === stdVal) {
+              return {
+                naam: String(stdVal),
+                bewijs: dataUrl,
+                supported: !!supportedByRow[rowId],
+              };
+            }
+            return s;
+          });
+          applicaties[appId] = { ...existing, standaarden: updated };
+          return { ...prev, applicaties };
+        });
+      };
+      reader.readAsDataURL(file);
+    };
+
+    return (
+      <div>
+        <h2 id='standaarden-section-title' className='sr-only'>
+          Standaarden
+        </h2>
+
+        <TableContainer className='con-form-wizard-table-container'>
+          <Table>
+            <thead>
+              <TableRow>
+                <TableCell>
+                  <b>Applicatie</b>
+                </TableCell>
+                <TableCell>
+                  <b>Standaard</b>
+                </TableCell>
+                <TableCell>
+                  <b>Ondersteund</b>
+                </TableCell>
+                <TableCell>
+                  <b>Bewijs</b>
+                </TableCell>
+                <TableCell>
+                  <b>Acties</b>
+                </TableCell>
+              </TableRow>
+            </thead>
+            <TableBody>
+              {rows.map((rowId) => {
+                const selectedStdVal = selectedStandardByRow[rowId] || '';
+                const selectedStd =
+                  selectedStdVal &&
+                  standaardOptions.find(
+                    (o) => String(o.value) === String(selectedStdVal)
+                  );
+
+                return (
+                  <TableRow key={rowId}>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      <ReactSelect
+                        options={appOptions}
+                        value={
+                          selectedApplication[rowId] != null
+                            ? appOptions.find(
+                                (o) => o.value === selectedApplication[rowId]
+                              )
+                            : null
+                        }
+                        onChange={(opt) =>
+                          setStandaardenFormState((prev) => ({
+                            ...prev,
+                            selectedApplication: {
+                              ...prev.selectedApplication,
+                              [rowId]: opt?.value,
+                            },
+                          }))
+                        }
+                      />
+                    </TableCell>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      <ReactSelect
+                        options={standaardOptions}
+                        value={selectedStd || null}
+                        isDisabled={selectedApplication[rowId] == null}
+                        onChange={(opt) =>
+                          setStandaardenFormState((prev) => ({
+                            ...prev,
+                            selectedStandardByRow: {
+                              ...prev.selectedStandardByRow,
+                              [rowId]: opt?.value || '',
+                            },
+                          }))
+                        }
+                      />
+                    </TableCell>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      <input
+                        type='checkbox'
+                        checked={!!supportedByRow[rowId]}
+                        disabled={
+                          selectedApplication[rowId] == null ||
+                          !selectedStandardByRow[rowId]
+                        }
+                        onChange={(e) => setSupported(rowId, e.target.checked)}
+                      />
+                    </TableCell>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      {(() => {
+                        const appIdVal = selectedApplication[rowId];
+                        const stdVal = selectedStandardByRow[rowId];
+                        const saved =
+                          appIdVal != null && stdVal
+                            ? (Array.isArray(
+                                product.applicaties?.[appIdVal]?.standaarden
+                              )
+                                ? product.applicaties[appIdVal].standaarden
+                                : []
+                              ).find((s) =>
+                                typeof s === 'object'
+                                  ? s.naam === stdVal
+                                  : s === stdVal
+                              )
+                            : null;
+
+                        return (
+                          <LogoUploadField
+                            fieldConfig={{
+                              label: 'Bewijs (upload)',
+                              filename:
+                                standaardenFormState?.bewijsByRow?.[rowId] || '',
+                            }}
+                            _value={
+                              typeof saved === 'object' ? saved?.bewijs || '' : ''
+                            }
+                            onChange={(dataUrl) =>
+                              setBewijs(rowId, { target: { result: dataUrl } })
+                            }
+                            onChangeFileName={(name) =>
+                              setStandaardenFormState((prev) => ({
+                                ...prev,
+                                bewijsByRow: {
+                                  ...prev.bewijsByRow,
+                                  [rowId]: name || '',
+                                },
+                              }))
+                            }
+                            onClear={() =>
+                              setBewijs(rowId, { target: { result: '' } })
+                            }
+                            accept={['.pdf', '.txt', '.doc', '.docx']}
+                            showPreview={false}
+                            validation={{ required: false }}
+                            propertyName={`bewijs-${rowId}`}
+                            isDisabled={
+                              selectedApplication[rowId] == null ||
+                              !selectedStandardByRow[rowId]
+                            }
+                          />
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <AcButton
+                          style='buttonSlim'
+                          buttonType='secondary'
+                          icon={<VISUALS.MINUS />}
+                          disabled={rows.length === 1}
+                          onClick={() =>
+                            setStandaardenFormState((prev) => ({
+                              ...prev,
+                              rows: prev.rows.filter((id) => id !== rowId),
+                              selectedApplication: Object.fromEntries(
+                                Object.entries(prev.selectedApplication).filter(
+                                  ([k]) => Number(k) !== rowId
+                                )
+                              ),
+                              selectedStandardByRow: Object.fromEntries(
+                                Object.entries(prev.selectedStandardByRow).filter(
+                                  ([k]) => Number(k) !== rowId
+                                )
+                              ),
+                              supportedByRow: Object.fromEntries(
+                                Object.entries(prev.supportedByRow).filter(
+                                  ([k]) => Number(k) !== rowId
+                                )
+                              ),
+                            }))
+                          }
+                          title='Rij verwijderen'
+                        ></AcButton>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+
+              <div style={{ marginTop: '1rem' }}>
+                <AcButton
+                  style='button'
+                  icon={<VISUALS.PLUS />}
+                  onClick={() =>
+                    setStandaardenFormState((prev) => ({
+                      ...prev,
+                      rows: [...prev.rows, prev.nextRowId],
+                      nextRowId: prev.nextRowId + 1,
+                    }))
+                  }
+                >
+                  Rij toevoegen
+                </AcButton>
+              </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </div>
+    );
+  }
+);
+
+StandaardenForm.displayName = 'StandaardenForm';
 
 // Step 7 Diensten
 const DienstenForm = memo(
