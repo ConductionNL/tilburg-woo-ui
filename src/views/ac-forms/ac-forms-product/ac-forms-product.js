@@ -1,195 +1,60 @@
-import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { Heading } from '@amsterdam/design-system-react';
-import { AcContainer, AcSection, AcFlex, AcGrid } from '@src/atoms';
+import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
-import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
+import { AcFormField, AcButton } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
-import { AcColumn } from '@src/atoms';
+
 import {
   Heading1,
-  Separator,
   UnorderedList,
   UnorderedListItem,
   Alert,
   Paragraph,
-  Link,
 } from '@utrecht/component-library-react/dist/css-module';
-import { isValidPhoneNumber } from 'libphonenumber-js';
-import ReactSelect from 'react-select';
 import clsx from 'clsx';
-import ConLogoPreview from '@views/ac-register/con-logo-preview';
-import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
-import { ConMarkdown } from '@src/components';
-
-const organizationTypes = [
-  { value: 'Leverancier', label: 'Leverancier' },
-  { value: 'Gemeente', label: 'Gemeente' },
-  { value: 'Samenwerking', label: 'Samenwerking' },
-  { value: 'Community', label: 'Community' },
-];
 
 const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
-  const [showAlert, setShowAlert] = useState(true);
-  const [organization, setOrganization] = useState({
-    name: '',
-    contactInformation: {},
-    website: '',
-    links: '',
-    oin: '',
-    logo: '',
-    cbs: '',
-    phone: '',
-    role: '',
-    summary: '',
-    contactPersons: [
-      {
-        firstName: '',
-        middleName: '',
-        lastName: '',
-        phone: '',
-        email: '',
-        function: '',
-      },
-    ],
-    organizationType: 'Leverancier',
-    kvkNumber: '',
-    email: '',
+  const [product, setProduct] = useState({
+    productName: '',
   });
-  const [logoFile, setLogoFile] = useState(null);
-  const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [touched, setTouched] = useState({
-    name: false,
-    contactPersons: {
-      firstName: false,
-      lastName: false,
-      phone: false,
-      email: false,
-    },
-  });
-  const [confirmationCheckbox, setConfirmationCheckbox] = useState({
-    privacy: false,
-    terms: false,
+    productName: false,
   });
 
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const orgType = params.get('organisatieType');
-
-    if (orgType) {
-      const matchingType = organizationTypes.find(
-        (type) => type.value.toLowerCase() === orgType.toLowerCase()
-      );
-      if (matchingType) {
-        setOrganization((prev) => ({
-          ...prev,
-          organizationType: matchingType.value,
-        }));
-      }
+  const setProductData = useCallback((key, value) => {
+    {
+      setProduct((prev) => ({ ...prev, [key]: value }));
+      setTouched((prev) => ({
+        ...prev,
+        [key]: true,
+      }));
     }
-  }, []);
-
-  const acceptedLogoFileTypes = [
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp',
-    'image/svg+xml',
-  ];
-
-  const handleLogoFileSelect = useCallback(
-    (selectedFile) => {
-      if (!selectedFile || !acceptedLogoFileTypes.includes(selectedFile.type)) {
-        return;
-      }
-
-      setLogoFile(selectedFile);
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const logoDataUrl = event.target.result;
-        setLogoDataUrl(logoDataUrl);
-        setOrganization((prevOrganization) => ({
-          ...prevOrganization,
-          logo: logoDataUrl,
-        }));
-      };
-
-      reader.readAsDataURL(selectedFile);
-    },
-    [acceptedLogoFileTypes]
-  );
-
-  const validateWebsite = useCallback((website) => {
-    if (!website) return false;
-    try {
-      // Allow websites without protocol, but validate the structure
-      const urlPattern = /^(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+(?:\/[^\s]*)?$/;
-      return urlPattern.test(website);
-    } catch {
-      return false;
-    }
-  }, []);
-
-  const validatePhone = useCallback((phone) => {
-    if (!phone) return false;
-    const trimmed = phone.replace(/\s+/g, '');
-    if (trimmed.startsWith('+')) {
-      return isValidPhoneNumber(trimmed);
-    }
-    if (trimmed.startsWith('06')) {
-      return isValidPhoneNumber(trimmed, 'NL');
-    }
-    return false;
   }, []);
 
   const handleRegister = async () => {
     setLoading(true);
     try {
       // Create a copy of the organization data
-      const organizationData = {
-        naam: organization.name,
-        website: organization.website,
-        links: organization.links,
-        oin: organization.oin,
-        cbs: organization.cbs,
-        telefoonnummer: organization.phone,
-        rol: organization.role,
-        beschrijvingKort: organization.summary,
-        logo: logoDataUrl,
-        contactpersonen: [
-          {
-            voornaam: organization.contactPersons[0].firstName,
-            tussenvoegsel: organization.contactPersons[0].middleName,
-            achternaam: organization.contactPersons[0].lastName,
-            telefoonnummer: organization.contactPersons[0].phone,
-            'e-mailadres': organization.contactPersons[0].email,
-            functie: organization.contactPersons[0].function,
-          },
-        ],
-        type: organization.organizationType,
-        kvkNummer: organization.kvkNumber,
-        'e-mailadres': organization.email,
+      const productData = {
+        naam: product.productName,
       };
 
-      // Changed endpoint to /product
       const response = await fetch(
-        `${BASE_URL}/openconnector/api/endpoint/product`,
+        `${BASE_URL}/openconnector/api/endpoint/register`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(organizationData),
+          body: JSON.stringify(productData),
         }
       );
 
@@ -222,128 +87,303 @@ const AcFormsProduct = () => {
     }
   };
 
-  const isFormValid = useMemo(() => {
-    const isStep1Valid =
-      organization.name.trim() &&
-      organization.contactPersons[0].firstName.trim() &&
-      organization.contactPersons[0].lastName.trim() &&
-      organization.contactPersons[0].email &&
-      validateWebsite(organization.website) &&
-      validatePhone(organization.contactPersons[0].phone);
+  const focusForm = () => {
+    const form = document.querySelector('#formStart');
+    if (form) {
+      form.focus();
+    }
+  };
 
-    const isStep2Valid = organization.summary.trim();
+  const renderStep = (step) => {
+    switch (step) {
+      case 0:
+        return (
+          <ProductOpbouwForm
+            {...{
+              product,
+              setProductData,
+              touched,
+            }}
+          />
+        );
+      case 1:
+        return (
+          <ProductOpbouwInformationForm
+            {...{
+              product,
+              setProductData,
+              loading,
+              touched,
+            }}
+          />
+        );
+    }
+  };
 
-    const isStep3Valid =
-      confirmationCheckbox.privacy && confirmationCheckbox.terms;
+  const getStatus = (currentStep, step) => {
+    if (currentStep === step) {
+      return 'current';
+    } else if (currentStep < step) {
+      return 'not-checked';
+    } else if (currentStep > step) {
+      return 'checked';
+    }
+  };
 
+  const getStatusMultiStep = (currentStep, step) => {
+    if (currentStep === 0 || currentStep === 1) {
+      return 'current';
+    } else if (currentStep < step) {
+      return 'not-checked';
+    } else if (currentStep > step) {
+      return 'checked';
+    }
+  };
+
+  const currentStepName = (currentStep) => {
     switch (currentStep) {
       case 0:
-        return isStep1Valid;
+        return 'Productopbouw';
       case 1:
-        return isStep2Valid;
-      case 2:
-        return isStep3Valid;
-      default:
-        return false;
+        return 'Productinformatie';
     }
-  }, [
-    organization,
-    currentStep,
-    confirmationCheckbox,
-    validateWebsite,
-    validatePhone,
-  ]);
+  };
 
-  if (registerCallBack === 'success') {
-    return (
-      <AcSection spacing>
-        <AcContainer>
-          <AcColumn gap="lg">
-            <Heading1>Product Aanmelding Gelukt!</Heading1>
-            <Alert type="ok">
-              <Paragraph>
-                Uw product aanmelding is succesvol ingediend. U ontvangt
-                binnenkort een bevestiging via e-mail.
-              </Paragraph>
-            </Alert>
-          </AcColumn>
-        </AcContainer>
-      </AcSection>
-    );
-  }
+  const getDisabledStatus = (currentStep) => {
+    if (currentStep === 0) {
+      return false;
+    }
+    if (currentStep === 1) {
+      return !product.productName;
+    }
+  };
+
+  // Add this function to generate the tooltip message
+  const getDisabledTooltip = (product) => {
+    // Example
+    if (currentStep === 1) {
+      const messages = [];
+      if (!product.productName) {
+        messages.push('Productnaam is verplicht');
+      }
+      return messages.join('\n');
+    }
+
+    return '';
+  };
 
   return (
     <AcSection spacing>
       <AcContainer>
-        <AcColumn gap="lg">
-          <div>
-            <Heading1>Product Aanmelden</Heading1>
-            <Paragraph>
-              Vul dit formulier in om een product aan te melden in onze catalogus.
-            </Paragraph>
-          </div>
+        <AcColumn gap='tiger'>
+          {!registerCallBack && (
+            <>
+              <div>
+                <Heading1>Product Aanmelden</Heading1>
+                <Paragraph>
+                  Vul dit formulier in om een product aan te melden in onze
+                  catalogus.
+                </Paragraph>
+              </div>
+              <div>
+                <h3
+                  className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
+                >
+                  {currentStepName(currentStep)}
+                </h3>
 
-          {registerCallBack === 'error' && error.message && (
-            <Alert type="error">
-              <Paragraph>{error.message}</Paragraph>
-              {error.errors && (
-                <UnorderedList>
-                  {Object.entries(error.errors).map(([field, messages]) => (
-                    <UnorderedListItem key={field}>
-                      <strong>{field}:</strong> {Array.isArray(messages) ? messages.join(', ') : messages}
-                    </UnorderedListItem>
-                  ))}
-                </UnorderedList>
-              )}
-            </Alert>
+                {registerCallBack === 'error' && error.message && (
+                  <Alert type='error'>
+                    <Paragraph>{error.message}</Paragraph>
+                    {error.errors && (
+                      <UnorderedList>
+                        {Object.entries(error.errors).map(([field, messages]) => (
+                          <UnorderedListItem key={field}>
+                            <strong>{field}:</strong>{' '}
+                            {Array.isArray(messages)
+                              ? messages.join(', ')
+                              : messages}
+                          </UnorderedListItem>
+                        ))}
+                      </UnorderedList>
+                    )}
+                  </Alert>
+                )}
+
+                <AcColumn gap='sm'>
+                  <div className='ac-register-container'>
+                    <div className='ac-register-process-steps'>
+                      <ProcessSteps
+                        steps={[
+                          {
+                            id: '4p5q6r7s-8t9u-0v1w-2x3y-4z5a6b7c8d9e',
+                            marker: 1,
+                            status: getStatusMultiStep(currentStep, 0),
+                            title: 'Productopbouw',
+                            steps: [
+                              {
+                                id: 'v6w7x8y9-0z1a-2b3c-4d5e-6f7g8h9i0j1k',
+                                status: getStatus(currentStep, 1),
+                                title: 'Product informatie',
+                              },
+                            ],
+                          },
+                          {
+                            id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
+                            marker: 2,
+                            status: getStatus(currentStep, 2),
+                            title: 'Contactpersoon',
+                          },
+                        ]}
+                      />
+                    </div>
+                    <div className='ac-register-form-container'>
+                      <div
+                        className='sr-only'
+                        role='status'
+                        aria-live='polite'
+                        id='form-status'
+                      >
+                        {currentStepName(currentStep)}
+                      </div>
+                      <div tabIndex='-1' id='formStart'></div>
+
+                      {renderStep(currentStep)}
+
+                      <div
+                        className={clsx(
+                          'ac-register-form-buttons',
+                          currentStep !== 0 &&
+                            'ac-register-form-buttons-not-first-step'
+                        )}
+                      >
+                        {currentStep !== 0 && (
+                          <AcButton
+                            style='button'
+                            icon={<VISUALS.ARROW_LEFT />}
+                            onClick={() => setCurrentStep(currentStep - 1)}
+                            disabled={loading}
+                          >
+                            Vorige
+                          </AcButton>
+                        )}
+                        {currentStep !== 3 && (
+                          <div className='ac-register-button-wrapper'>
+                            <AcButton
+                              style='button'
+                              className={clsx(
+                                currentStep === 0 && 'ac-register-form-next-button'
+                              )}
+                              icon={<VISUALS.ARROW_RIGHT />}
+                              disabled={getDisabledStatus(currentStep) || loading}
+                              onClick={() => {
+                                focusForm();
+                                setCurrentStep(currentStep + 1);
+                              }}
+                              title={
+                                getDisabledStatus(currentStep)
+                                  ? getDisabledTooltip(currentStep, product)
+                                  : ''
+                              }
+                            >
+                              Volgende
+                            </AcButton>
+                          </div>
+                        )}
+
+                        {currentStep === 3 && (
+                          <AcButton
+                            style='button'
+                            icon={<VISUALS.CLIPBOARD_CHECK />}
+                            onClick={handleRegister}
+                            loading={loading}
+                            disabled={loading}
+                          >
+                            Product aanmelden
+                          </AcButton>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </AcColumn>
+              </div>
+            </>
           )}
-
-          <ProcessSteps
-            steps={[
-              { status: currentStep >= 0 ? 'current' : 'incomplete', title: 'Productgegevens' },
-              { status: currentStep >= 1 ? 'current' : 'incomplete', title: 'Beschrijving' },
-              { status: currentStep >= 2 ? 'current' : 'incomplete', title: 'Bevestiging' },
-            ]}
-          />
-
-          <div className="ac-register-form-content">
-            {/* Form content would be rendered here based on currentStep */}
-            <p>Product formulier content for step {currentStep + 1} would go here...</p>
-          </div>
-
-          <div className="ac-register-form-actions">
-            {currentStep > 0 && (
-              <AcButton
-                style="secondary"
-                onClick={() => setCurrentStep(currentStep - 1)}
-                disabled={loading}
-              >
-                Vorige
-              </AcButton>
-            )}
-            
-            {currentStep < 2 ? (
-              <AcButton
-                style="primary"
-                onClick={() => setCurrentStep(currentStep + 1)}
-                disabled={!isFormValid || loading}
-              >
-                Volgende
-              </AcButton>
-            ) : (
-              <AcButton
-                style="primary"
-                onClick={handleRegister}
-                disabled={!isFormValid || loading}
-              >
-                {loading ? 'Bezig met verzenden...' : 'Product Aanmelden'}
-              </AcButton>
-            )}
-          </div>
         </AcColumn>
       </AcContainer>
     </AcSection>
   );
 };
 
-export default memo(withStore(observer(AcFormsProduct)));
+const ProductOpbouwForm = memo(({ product, setProductData, touched }) => {
+  return (
+    <div
+      className='ac-register-form-section'
+      role='group'
+      aria-labelledby='organization-section-title'
+    >
+      <h2 id='organization-section-title' className='sr-only'>
+        Productopbouw
+      </h2>
+
+      <div className='ac-register-form-grid'></div>
+    </div>
+  );
+});
+ProductOpbouwForm.displayName = 'ProductOpbouwForm';
+
+const ProductOpbouwInformationForm = memo(
+  ({ product, setProductData, loading, touched }) => {
+    // Debounce example
+    const debouncedSetName = useDebouncedInput(
+      (value) => setProductData('productName', value),
+      500
+    );
+
+    return (
+      <div
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='organization-section-title'
+      >
+        <h2 id='organization-section-title' className='sr-only'>
+          Productinformatie
+        </h2>
+
+        <div className='ac-register-form-grid'>
+          <div style={{ gridColumn: 'span 2' }}>
+            <AcFormField
+              label='Productnaam'
+              required={true}
+              placeholder='Voorbeeld: Gemeente Amsterdam'
+              value={product.productName}
+              onChange={(e) => debouncedSetName(e)}
+              hasError={touched.productName && !product.productName}
+              disabled={loading}
+              id='product-name'
+              aria-describedby={
+                touched.productName && !product.productName
+                  ? 'name-error'
+                  : undefined
+              }
+              className='ac-register-form-field__no-width-limit'
+            />
+            {touched.productName && !product.productName && (
+              <span
+                className='ac-register-form-field-error'
+                id='name-error'
+                role='alert'
+              >
+                Dit veld is verplicht
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
+
+export default withStore(observer(AcFormsProduct));
