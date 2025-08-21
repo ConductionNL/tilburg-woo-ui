@@ -1043,8 +1043,6 @@ const LicenseAndHostingStep = memo(
   }
 );
 
-LicenseAndHostingStep.displayName = 'LicenseAndHostingStep';
-
 // Applicatie form fields are extracted to module scope to avoid remounts
 // used in ApplicatieStep
 const ApplicatieFormFields = memo(
@@ -1270,6 +1268,7 @@ ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
 ControlerenForm.displayName = 'ControlerenForm';
 ApplicatieStep.displayName = 'ApplicatieStep';
+LicenseAndHostingStep.displayName = 'LicenseAndHostingStep';
 
 TestForm.displayName = 'TestForm';
 
