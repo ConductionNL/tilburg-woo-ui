@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
-import { useState, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
@@ -17,27 +17,117 @@ import {
   Alert,
   Paragraph,
   Separator,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
+import ReactSelect from 'react-select';
 
 const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(7);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
   const [product, setProduct] = useState({
-    productName: '',
-    beschrijving: '',
-    productpagina: '',
-    logo: '',
+    productName: 'VNG Product',
+    beschrijving: 'Dit is de beschrijving van het VNG product',
+    productpagina: 'https://www.vng.nl',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Vereniging_van_Nederlandse_Gemeenten_logo.svg',
     applicaties: {
       0: {
-        naam: '',
-        beschrijvingKort: '',
-        licentieType: '',
-        licentie: '',
+        id: '550e8400-e29b-41d4-a716-446655440000',
+        naam: 'OpenWoo',
+        beschrijvingKort:
+          'Open source WOO-portaal voor transparante overheidscommunicatie',
+        licentieType: 'Open Source',
+        licentie: 'EUPL 1.2',
+        referentieComponenten: [
+          {
+            naam: 'Document Management Component',
+            id: 'dmc-001',
+          },
+          {
+            naam: 'Zoek Component',
+            id: 'zc-002',
+          },
+          {
+            naam: 'Publicatie Component',
+            id: 'pc-003',
+          },
+          {
+            naam: 'Metadata Component',
+            id: 'mc-004',
+          },
+        ],
+        standaarden: [
+          {
+            naam: 'TMLO 2.0',
+            id: 'tmlo-20',
+            bewijs: 'https://www.nationaalarchief.nl/archiveren/kennisbank/tmlo',
+          },
+        ],
+        koppelingen: [
+          {
+            applicatie1: 'OpenWoo',
+            applicatie2: 'OpenZaak',
+            richtingDataUitwisseling: 'Bidirectioneel',
+            sooortKoppeling: 'REST API',
+          },
+          {
+            applicatie1: 'OpenWoo',
+            applicatie2: 'DocumentManagementSystem',
+            richtingDataUitwisseling: 'Bidirectioneel',
+            sooortKoppeling: 'REST API',
+          },
+        ],
+        diensten: [],
+      },
+      1: {
+        id: 'c0f1e0a0-e29b-41d4-a716-446655440001',
+
+        naam: 'OpenZaak',
+        beschrijvingKort:
+          'Open source zaaksysteem voor gemeenten met ondersteuning voor ZGW API standaarden',
+        licentieType: 'Open Source',
+        licentie: 'EUPL 1.2',
         referentieComponenten: [],
         standaarden: [],
+        koppelingen: [
+          {
+            applicatie1: 'OpenZaak',
+            applicatie2: 'Klantportaal',
+            richtingDataUitwisseling: 'Bidirectioneel',
+            sooortKoppeling: 'REST API',
+          },
+        ],
+        diensten: [],
+      },
+      2: {
+        id: 'c0f1e0a0-e29b-41d4-a716-446655440002',
+
+        naam: 'Burgerzaken Suite',
+        beschrijvingKort:
+          'Complete oplossing voor burgerzaken met modules voor geboorteaangifte, huwelijken en overlijdensaangifte',
+        licentieType: 'Closed Source',
+        licentie: 'Proprietary Enterprise License',
+        referentieComponenten: [
+          {
+            naam: 'BRP Koppeling Module',
+            id: 'brp-001',
+          },
+        ],
+        standaarden: [
+          {
+            naam: 'StUF-BG 3.10',
+            id: 'stuf-310',
+            bewijs: 'https://www.gemmaonline.nl/index.php/StUF-BG_3.10_compliance',
+          },
+        ],
         koppelingen: [],
         diensten: [],
       },
@@ -46,9 +136,53 @@ const AcFormsProduct = () => {
   const [touched, setTouched] = useState({
     productName: false,
   });
+  const [allSameType, setAllSameType] = useState(false);
 
   const setProductData = useCallback((key, value) => {
-    {
+    if (key.includes('applicaties')) {
+      const parts = key.split('.');
+      const id = parts[1];
+      const field = parts[2];
+
+      setProduct((prev) => {
+        // Handle diensten array specially
+        if (field === 'diensten') {
+          return {
+            ...prev,
+            applicaties: {
+              ...prev.applicaties,
+              [id]: {
+                ...prev.applicaties[id],
+                diensten: [...(prev.applicaties[id]?.diensten || []), value],
+              },
+            },
+          };
+        }
+
+        // Handle other fields normally
+        return {
+          ...prev,
+          applicaties: {
+            ...prev.applicaties,
+            [id]: {
+              ...prev.applicaties[id],
+              [field]: value,
+            },
+          },
+        };
+      });
+
+      setTouched((prev) => ({
+        ...prev,
+        applicaties: {
+          ...prev.applicaties,
+          [id]: {
+            ...prev.applicaties?.[id],
+            [field]: true,
+          },
+        },
+      }));
+    } else {
       setProduct((prev) => ({ ...prev, [key]: value }));
       setTouched((prev) => ({
         ...prev,
@@ -56,6 +190,8 @@ const AcFormsProduct = () => {
       }));
     }
   }, []);
+
+  const [rowCount, setRowCount] = useState(1);
 
   const handleRegister = async () => {
     setLoading(true);
@@ -179,9 +315,15 @@ const AcFormsProduct = () => {
         );
       case 7:
         return (
-          <TestForm
+          <DienstenForm
             {...{
               currentStep,
+              setAllSameType,
+              allSameType,
+              product,
+              setProductData,
+              rowCount,
+              setRowCount,
             }}
           />
         );
@@ -222,6 +364,8 @@ const AcFormsProduct = () => {
         return 'Productopbouw';
       case 1:
         return 'Productinformatie';
+      case 7:
+        return 'Diensten';
     }
   };
 
@@ -555,6 +699,259 @@ const ProductOpbouwInformationForm = memo(
   }
 );
 
+const DienstenForm = memo(
+  ({
+    setAllSameType,
+    allSameType,
+    product,
+    setProductData,
+    rowCount,
+    setRowCount,
+  }) => {
+    // This testForm needs to be removed after all the steps have their own form
+
+    const [selectedApplication, setSelectedApplication] = useState({});
+    const [selectedDienstByRow, setSelectedDienstByRow] = useState({});
+    const [allAppsDienst, setAllAppsDienst] = useState(null);
+    const [rows, setRows] = useState([0]);
+    const nextRowId = useRef(1);
+
+    const dienstOptions = [
+      { value: '1', label: 'Optie 1' },
+      { value: '2', label: 'Optie 2' },
+      { value: '3', label: 'Optie 3' },
+      { value: '4', label: 'Optie 4' },
+    ];
+
+    const appOptions = Object.entries(product.applicaties).map(([id, app]) => ({
+      value: id,
+      label: app.naam,
+    }));
+
+    return (
+      <div>
+        <h2 id='diensten-section-title' className='sr-only'>
+          Diensten
+        </h2>
+        <button onClick={() => console.log({ product })}>click me</button>
+        <div className='con-form-wizard-service-selection'>
+          <Paragraph>
+            Geef per applicatie aan welke diensten u aanbiedt. Kies uit functioneel
+            beheer, technisch beheer, training of implementatie-ondersteuning. U kunt
+            meerdere diensten selecteren.
+          </Paragraph>
+          <div className='con-form-wizard-service-selection-radio-button-container'>
+            <Paragraph>
+              Geldt hetzelfde dienstenaanbod voor alle applicaties, of verschilt dit
+              per applicatie?
+            </Paragraph>
+            <AcCheckbox
+              label='Ja, hetzelfde voor alle applicaties'
+              value='allSameType'
+              checked={!allSameType}
+              onChange={() => setAllSameType(false)}
+            />
+            <AcCheckbox
+              label='Nee, verschillend per applicatie'
+              value='differentPerApplicatie'
+              checked={allSameType}
+              onChange={() => setAllSameType(true)}
+            />
+          </div>
+        </div>
+
+        <TableContainer className='con-form-wizard-table-container'>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHeaderCell>Applicatie</TableHeaderCell>
+                <TableHeaderCell>Dienst Type</TableHeaderCell>
+                <TableHeaderCell></TableHeaderCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {allSameType && (
+                <TableRow>
+                  <TableCell>Alle applicaties</TableCell>
+                  <TableCell>
+                    <ReactSelect
+                      options={dienstOptions}
+                      isClearable
+                      value={
+                        allAppsDienst
+                          ? dienstOptions.find((o) => o.value === allAppsDienst)
+                          : null
+                      }
+                      onChange={(option) => {
+                        if (!option && allAppsDienst) {
+                          // Clear: remove previously selected dienst from all apps
+                          Object.keys(product.applicaties).forEach((appId) => {
+                            setProductData(`applicaties.${appId}.diensten`, {
+                              action: 'remove',
+                              value: allAppsDienst,
+                            });
+                          });
+                          setAllAppsDienst(null);
+                          return;
+                        }
+
+                        if (option) {
+                          // Add selected dienst to all apps (unique)
+                          Object.keys(product.applicaties).forEach((appId) => {
+                            setProductData(`applicaties.${appId}.diensten`, {
+                              action: 'add',
+                              value: option.value,
+                            });
+                          });
+                          setAllAppsDienst(option.value);
+                        }
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {/* Dynamic rows */}
+              {rows.map((rowId, index) => (
+                <TableRow key={rowId}>
+                  <TableCell>
+                    <ReactSelect
+                      options={appOptions}
+                      value={
+                        selectedApplication[rowId] != null
+                          ? appOptions.find(
+                              (o) => o.value === selectedApplication[rowId]
+                            )
+                          : null
+                      }
+                      onChange={(selectedOption) => {
+                        const prevAppId = selectedApplication[rowId];
+                        const prevDienst = selectedDienstByRow[rowId];
+
+                        // If there was a dienst saved for the previous app selection, remove it
+                        if (prevAppId != null && prevDienst != null) {
+                          setProductData(`applicaties.${prevAppId}.diensten`, {
+                            action: 'remove',
+                            value: prevDienst,
+                          });
+                        }
+
+                        // Store the selected application id for this row
+                        setSelectedApplication((prev) => ({
+                          ...prev,
+                          [rowId]: selectedOption?.value,
+                        }));
+
+                        // Reset any existing dienst selection for this row on app change
+                        setSelectedDienstByRow((prev) => {
+                          const next = { ...prev };
+                          delete next[rowId];
+                          return next;
+                        });
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ReactSelect
+                      options={dienstOptions}
+                      isClearable
+                      value={
+                        selectedDienstByRow[rowId] != null
+                          ? dienstOptions.find(
+                              (o) => o.value === selectedDienstByRow[rowId]
+                            )
+                          : null
+                      }
+                      isDisabled={allSameType || selectedApplication[rowId] == null}
+                      isOptionDisabled={(opt) => {
+                        const appId = selectedApplication[rowId];
+                        if (appId == null) return true;
+                        const saved = product.applicaties?.[appId]?.diensten || [];
+                        return saved.includes(opt.value);
+                      }}
+                      onChange={(selectedOption) => {
+                        const appId = selectedApplication[rowId];
+                        if (appId == null) return;
+
+                        // Clear
+                        if (!selectedOption) {
+                          const prevDienst = selectedDienstByRow[rowId];
+                          if (prevDienst != null) {
+                            setProductData(`applicaties.${appId}.diensten`, {
+                              action: 'remove',
+                              value: prevDienst,
+                            });
+                          }
+                          setSelectedDienstByRow((prev) => {
+                            const next = { ...prev };
+                            delete next[rowId];
+                            return next;
+                          });
+                          return;
+                        }
+
+                        // Add (unique enforced in setProductData)
+                        setProductData(`applicaties.${appId}.diensten`, {
+                          action: 'add',
+                          value: selectedOption.value,
+                        });
+                        setSelectedDienstByRow((prev) => ({
+                          ...prev,
+                          [rowId]: selectedOption.value,
+                        }));
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {index > 0 && (
+                      <AcButton
+                        style='button'
+                        icon={<VISUALS.MINUS />}
+                        onClick={() => {
+                          const appId = selectedApplication[rowId];
+                          const dienstVal = selectedDienstByRow[rowId];
+
+                          // Remove saved dienst for this row, if present
+                          if (appId != null && dienstVal != null) {
+                            setProductData(`applicaties.${appId}.diensten`, {
+                              action: 'remove',
+                              value: dienstVal,
+                            });
+                          }
+
+                          // Remove local row state
+                          setRows((prev) => prev.filter((id) => id !== rowId));
+                          setSelectedApplication((prev) => {
+                            const next = { ...prev };
+                            delete next[rowId];
+                            return next;
+                          });
+                          setSelectedDienstByRow((prev) => {
+                            const next = { ...prev };
+                            delete next[rowId];
+                            return next;
+                          });
+                        }}
+                      />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <AcButton
+            style='button'
+            onClick={() => setRows((prev) => [...prev, nextRowId.current++])}
+            icon={<VISUALS.PLUS />}
+          >
+            Voeg rij toe
+          </AcButton>
+        </TableContainer>
+      </div>
+    );
+  }
+);
+
 const ControlerenForm = memo(({ product }) => {
   return (
     <div>
@@ -732,6 +1129,7 @@ const TestForm = memo(({ currentStep }) => {
 
 ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
+DienstenForm.displayName = 'DienstenForm';
 ControlerenForm.displayName = 'ControlerenForm';
 
 TestForm.displayName = 'TestForm';
