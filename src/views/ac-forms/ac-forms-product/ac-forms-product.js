@@ -58,12 +58,22 @@ import licenses from '@assets/licenses/licenses.json';
  *   }
  *
  * Fetching
- * - This file performs three read-only fetches to populate select options. Each follows the
- *   same pattern and accepts either an array or a `{ results: [] }` response shape:
- *   - Standards:      `${BASE_URL}/openregister/api/standaarden`
- *   - Ref. components:`${BASE_URL}/openregister/api/referentiecomponenten`
- *   - Modules:        `${BASE_URL}/openregister/api/modules`
+ * - This file performs multiple read-only fetches for form setup and options:
+ *   
+    *   **Schema Definitions** (fetched on component mount):
+   *   - Product:        `${BASE_URL}/openregister/api/schemas/product`
+   *   - Module:         `${BASE_URL}/openregister/api/schemas/module`  
+   *   - Dienst:         `${BASE_URL}/openregister/api/schemas/dienst`
+   *   - Koppeling:      `${BASE_URL}/openregister/api/schemas/koppeling`
+   *   - Compliancy:     `${BASE_URL}/openregister/api/schemas/compliancy`
+ *   Used to provide field types, validation, descriptions, and enhanced form generation.
+ *   
+ *   **Select Options** (for dropdown fields):
+ *   - Standards:      `${BASE_URL}/openregister/api/objects/vng-gemma/element`
+ *   - Ref. components:`${BASE_URL}/openregister/api/objects/vng-gemma/element`
+ *   - Modules:        `${BASE_URL}/openregister/api/objects/voorzieningen/module`
  *   All are mapped to `{ value, label }` pairs and degrade to an empty list on error.
+ *   Each API call is limited to 50 items initially to prevent loading thousands of records.
  *
  * Accessibility & UX
  * - The wizard announces the current step via an aria-live region.
@@ -78,14 +88,20 @@ import licenses from '@assets/licenses/licenses.json';
 
 /**
  * TODOs (endpoints and persistence)
- * - [ ] Confirm and finalize openregister fetch endpoints used in this wizard:
- *       - Standards: `${BASE_URL}/openregister/api/standaarden`
- *       - Referentiecomponenten: `${BASE_URL}/openregister/api/referentiecomponenten`
- *       - Modules (for Applicatie B in Koppelingen): `${BASE_URL}/openregister/api/modules`
- *       If the final API differs, update the mapping in the corresponding useEffect blocks.
+ * - [x] Confirm and finalize openregister fetch endpoints used in this wizard:
+ *       - Standards: `${BASE_URL}/openregister/api/objects/vng-gemma/element` (✓ Fixed)
+ *       - Referentiecomponenten: `${BASE_URL}/openregister/api/objects/vng-gemma/element` (✓ Fixed)
+ *       - Modules (for Applicatie B in Koppelingen): `${BASE_URL}/openregister/api/objects/voorzieningen/module` (✓ Fixed)
+ *       All endpoints now include pagination with _limit=50 to prevent loading thousands of records.
+ * - [x] Implement schema fetching for enhanced form generation (✓ Added):
+ *       - Fetches schemas for: product, module, dienst, koppeling, compliancy
+ *       - Provides `getFieldFromSchema()` and `getEnhancedFieldConfig()` utilities
+ *       - Enables schema-based field validation, types, and descriptions
  * - [ ] Implement and wire the POST endpoint to save the full product registration payload
  *       in `handleRegister` (currently posts a minimal payload). Confirm schema and endpoint
  *       path, then serialize `product` accordingly.
+ * - [ ] Integrate schema-based form generation in form steps using `getEnhancedFieldConfig()`
+ *       to automatically populate field labels, types, validation, and descriptions from schemas.
  */
 
 const AcFormsProduct = () => {
@@ -277,12 +293,119 @@ const AcFormsProduct = () => {
     }
   }, []);
 
+  // Schema definitions for form generation
+  const [schemas, setSchemas] = useState({
+    product: null,
+    module: null,
+    dienst: null,
+    koppeling: null,
+    compliancy: null
+  });
+  const [schemasLoading, setSchemasLoading] = useState(true);
+
+  // Fetch schema definitions on component mount
+  useEffect(() => {
+    const fetchSchemas = async () => {
+      setSchemasLoading(true);
+      const schemaTypes = ['product', 'module', 'dienst', 'koppeling', 'compliancy'];
+      const fetchedSchemas = {};
+
+      try {
+        const schemaPromises = schemaTypes.map(async (schemaType) => {
+          try {
+            const response = await fetch(`${BASE_URL}/openregister/api/schemas/${schemaType}`, {
+              headers: { Accept: 'application/json' },
+            });
+            if (!response.ok) {
+              console.warn(`Schema fetch failed for ${schemaType}:`, response.status);
+              return { schemaType, schema: null };
+            }
+            const schema = await response.json();
+            console.log(`✅ Fetched schema for ${schemaType}:`, schema);
+            return { schemaType, schema };
+          } catch (error) {
+            console.error(`Failed to fetch schema for ${schemaType}:`, error);
+            return { schemaType, schema: null };
+          }
+        });
+
+        const results = await Promise.all(schemaPromises);
+        results.forEach(({ schemaType, schema }) => {
+          fetchedSchemas[schemaType] = schema;
+        });
+
+        setSchemas(fetchedSchemas);
+      } catch (error) {
+        console.error('Failed to fetch schemas:', error);
+      } finally {
+        setSchemasLoading(false);
+      }
+    };
+
+    fetchSchemas();
+  }, []);
+
+  /**
+   * Utility function to get field information from schemas
+   * @param {string} schemaType - The schema type (product, module, dienst, koppeling, compliancy)
+   * @param {string} fieldName - The field name to look up
+   * @returns {object|null} Field schema information or null if not found
+   */
+  const getFieldFromSchema = (schemaType, fieldName) => {
+    const schema = schemas[schemaType];
+    if (!schema?.properties) return null;
+    
+    // Support nested field paths with dot notation (e.g., "bivClassificatie.beschikbaarheid")
+    const fieldPath = fieldName.split('.');
+    let currentSchema = schema.properties;
+    
+    for (const pathSegment of fieldPath) {
+      if (!currentSchema[pathSegment]) return null;
+      
+      if (currentSchema[pathSegment].type === 'object' && currentSchema[pathSegment].properties) {
+        currentSchema = currentSchema[pathSegment].properties;
+      } else {
+        return currentSchema[pathSegment];
+      }
+    }
+    
+    return null;
+  };
+
+  /**
+   * Get enhanced field configuration using schema information
+   * @param {string} schemaType - The schema type to look up
+   * @param {string} fieldName - The field name
+   * @param {object} baseConfig - Base field configuration
+   * @returns {object} Enhanced field configuration with schema information
+   */
+  const getEnhancedFieldConfig = (schemaType, fieldName, baseConfig = {}) => {
+    const fieldSchema = getFieldFromSchema(schemaType, fieldName);
+    if (!fieldSchema) return baseConfig;
+    
+    return {
+      ...baseConfig,
+      label: fieldSchema.title || baseConfig.label || fieldName,
+      description: fieldSchema.description || baseConfig.description,
+      required: fieldSchema.required || baseConfig.required,
+      placeholder: fieldSchema.example || baseConfig.placeholder,
+      type: fieldSchema.type || baseConfig.type,
+      enum: fieldSchema.enum || baseConfig.enum,
+      format: fieldSchema.format || baseConfig.format,
+      minLength: fieldSchema.minLength || baseConfig.minLength,
+      maxLength: fieldSchema.maxLength || baseConfig.maxLength,
+      minimum: fieldSchema.minimum || baseConfig.minimum,
+      maximum: fieldSchema.maximum || baseConfig.maximum,
+      pattern: fieldSchema.pattern || baseConfig.pattern,
+    };
+  };
+
   // Standards options via API
   const [standaardOptionsState, setStandaardOptionsState] = useState([]);
   const standaardOptionsRef = { current: standaardOptionsState };
   useEffect(() => {
     let isMounted = true;
-    const endpoint = `${BASE_URL}/openregister/api/standaarden`;
+    const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
     const mapToOption = (item, index) => {
       const label =
         item?.naam ||
@@ -295,6 +418,13 @@ const AcFormsProduct = () => {
     };
     const fetchOptions = async () => {
       try {
+        // Add pagination parameters to limit initial load
+        const params = new URLSearchParams({
+          _limit: '50',
+          _page: '1'
+        });
+        const endpoint = `${baseEndpoint}?${params}`;
+        
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
         });
@@ -308,6 +438,7 @@ const AcFormsProduct = () => {
         const options = list.map(mapToOption).filter((o) => o.label && o.value);
         if (isMounted) setStandaardOptionsState(options);
       } catch (e) {
+        console.error('Failed to fetch standards:', e);
         if (isMounted) setStandaardOptionsState([]);
       }
     };
@@ -351,7 +482,7 @@ const AcFormsProduct = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const endpoint = `${BASE_URL}/openregister/api/referentiecomponenten`;
+    const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
 
     const mapToOption = (item, index) => {
       const label =
@@ -366,6 +497,13 @@ const AcFormsProduct = () => {
 
     const fetchOptions = async () => {
       try {
+        // Add pagination parameters to limit initial load
+        const params = new URLSearchParams({
+          _limit: '50',
+          _page: '1'
+        });
+        const endpoint = `${baseEndpoint}?${params}`;
+        
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
         });
@@ -379,6 +517,7 @@ const AcFormsProduct = () => {
         const options = list.map(mapToOption).filter((o) => o.label && o.value);
         if (isMounted) setReferentieComponentenOptions(options);
       } catch (e) {
+        console.error('Failed to fetch referentie componenten:', e);
         if (isMounted) setReferentieComponentenOptions([]);
       }
     };
@@ -394,7 +533,7 @@ const AcFormsProduct = () => {
   const [modulesOptions, setModulesOptions] = useState([]);
   useEffect(() => {
     let isMounted = true;
-    const endpoint = `${BASE_URL}/openregister/api/modules`;
+    const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
     const mapToOption = (item, index) => {
       const label =
         item?.naam ||
@@ -407,6 +546,13 @@ const AcFormsProduct = () => {
     };
     const fetchOptions = async () => {
       try {
+        // Add pagination parameters to limit initial load
+        const params = new URLSearchParams({
+          _limit: '50',
+          _page: '1'
+        });
+        const endpoint = `${baseEndpoint}?${params}`;
+        
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
         });
@@ -420,6 +566,7 @@ const AcFormsProduct = () => {
         const options = list.map(mapToOption).filter((o) => o.label && o.value);
         if (isMounted) setModulesOptions(options);
       } catch (e) {
+        console.error('Failed to fetch modules:', e);
         if (isMounted) setModulesOptions([]);
       }
     };
@@ -671,6 +818,46 @@ const AcFormsProduct = () => {
                   Vul dit formulier in om een product aan te melden in onze
                   catalogus.
                 </Paragraph>
+
+                {/* Show loading state while schemas are being fetched */}
+                {schemasLoading && (
+                  <div className='ac-forms-product-loading' style={{ 
+                    padding: '1rem', 
+                    backgroundColor: '#f0f4ff', 
+                    border: '1px solid #d1e7ff',
+                    borderRadius: '4px',
+                    margin: '1rem 0'
+                  }}>
+                    <p style={{ margin: 0, color: '#0066cc' }}>📋 Formulier definities aan het laden...</p>
+                  </div>
+                )}
+
+                {/* Debug: Show loaded schemas in development */}
+                {process.env.NODE_ENV === 'development' && !schemasLoading && (
+                  <details style={{ marginBottom: '1rem', fontSize: '0.8rem', color: '#666' }}>
+                    <summary>🔍 Debug: Loaded Schemas & Utilities</summary>
+                    <div style={{ padding: '0.5rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                      <p><strong>Schemas Status:</strong></p>
+                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1rem' }}>
+                        {Object.entries(schemas).map(([key, schema]) => (
+                          <li key={key} style={{ color: schema ? '#28a745' : '#dc3545' }}>
+                            {key}: {schema ? '✅ Loaded' : '❌ Failed'}
+                            {schema && schema.properties && (
+                              <span style={{ fontSize: '0.7rem', color: '#666' }}>
+                                {' '}({Object.keys(schema.properties).length} properties)
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                      <p><strong>Available Utilities:</strong></p>
+                      <code style={{ fontSize: '0.7rem', display: 'block', margin: '0.5rem 0' }}>
+                        getFieldFromSchema(schemaType, fieldName)<br/>
+                        getEnhancedFieldConfig(schemaType, fieldName, baseConfig)
+                      </code>
+                    </div>
+                  </details>
+                )}
               </div>
               <div>
                 <h3
@@ -719,7 +906,7 @@ const AcFormsProduct = () => {
                             id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
                             marker: 2,
                             status: getStatusMultiStep(currentStep, 2, 2, 7),
-                            title: 'Applicatie(s)',
+                            title: currentStepName(2),
                             steps: [
                               {
                                 id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
