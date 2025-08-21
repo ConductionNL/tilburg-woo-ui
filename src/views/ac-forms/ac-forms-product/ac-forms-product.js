@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
-import { AcFormField, AcButton } from '@src/molecules';
+import { AcFormField, AcButton, AcCheckbox } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 
@@ -16,14 +16,20 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import clsx from 'clsx';
 import { useDebouncedInput } from '@src/hooks/index';
+import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
 
 const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
+  const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
   const [product, setProduct] = useState({
     productName: '',
+    beschrijving: '',
+    productpagina: '',
+    logo: '',
+    applicaties: {}, // array of applicaties with a unique key for easier data management
   });
   const [touched, setTouched] = useState({
     productName: false,
@@ -103,6 +109,8 @@ const AcFormsProduct = () => {
               product,
               setProductData,
               touched,
+              isMultiApplicatie,
+              setIsMultiApplicatie,
             }}
           />
         );
@@ -406,21 +414,47 @@ const AcFormsProduct = () => {
   );
 };
 
-const ProductOpbouwForm = memo(() => {
-  return (
-    <div
-      className='ac-register-form-section'
-      role='group'
-      aria-labelledby='organization-section-title'
-    >
-      <h2 id='organization-section-title' className='sr-only'>
-        Productopbouw
-      </h2>
+const ProductOpbouwForm = memo(
+  ({
+    product,
+    setProductData,
+    touched,
+    isMultiApplicatie,
+    setIsMultiApplicatie,
+  }) => {
+    return (
+      <div
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='organization-section-title'
+      >
+        <h2 id='organization-section-title' className='sr-only'>
+          Productopbouw
+        </h2>
 
-      <div className='ac-register-form-grid'></div>
-    </div>
-  );
-});
+        <Paragraph>
+          Een product kan één applicatie zijn, of een verzameling applicaties en
+          modules die samen een suite vormen. Geef hieronder aan welke situatie van
+          toepassing is.
+        </Paragraph>
+        <div className='ac-register-form-checkbox-wrapper'>
+          <AcCheckbox
+            label='Een enkele'
+            value='single'
+            checked={!isMultiApplicatie}
+            onChange={() => setIsMultiApplicatie(false)}
+          />
+          <AcCheckbox
+            label='Een verzameling applicaties of modules (suite)'
+            value='multi'
+            checked={isMultiApplicatie}
+            onChange={() => setIsMultiApplicatie(true)}
+          />
+        </div>
+      </div>
+    );
+  }
+);
 
 const ProductOpbouwInformationForm = memo(
   ({ product, setProductData, loading, touched }) => {
@@ -429,6 +463,8 @@ const ProductOpbouwInformationForm = memo(
       (value) => setProductData('productName', value),
       500
     );
+
+    const remainingDescriptionChars = 225 - (product.beschrijving?.length || 0);
 
     return (
       <div
@@ -467,6 +503,47 @@ const ProductOpbouwInformationForm = memo(
                 Dit veld is verplicht
               </span>
             )}
+          </div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <AcFormField
+              label='Beschrijving'
+              tooltip='Beschrijf kort het product (max. 225 tekens).'
+              inputType='textarea'
+              value={product.beschrijving}
+              onChange={(v) => setProductData('beschrijving', v)}
+              disabled={loading}
+              id='product-description'
+              maxLength={225}
+              className='ac-register-form-field__no-width-limit'
+            />
+            <small className='ac-register-form-field-help'>
+              {remainingDescriptionChars} karakters over
+            </small>
+          </div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <AcFormField
+              label='Productpagina'
+              inputType='url'
+              placeholder='https://voorbeeld.nl/product'
+              value={product.productpagina}
+              onChange={(v) => setProductData('productpagina', v)}
+              disabled={loading}
+              id='product-page'
+              className='ac-register-form-field__no-width-limit'
+            />
+          </div>
+
+          <div style={{ gridColumn: 'span 2' }}>
+            <LogoUploadField
+              fieldConfig={{ label: 'Logo (upload)' }}
+              _value={product.logo}
+              onChange={(dataUrl) => setProductData('logo', dataUrl)}
+              validation={{ required: false }}
+              propertyName='logo'
+              isDisabled={loading}
+            />
           </div>
         </div>
       </div>
