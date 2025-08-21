@@ -190,6 +190,14 @@
   display: block;
 }
 
+.ac-register-form-field-help {
+  color: var(--tilburg-color-gray-700);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: block;
+  user-select: none;
+}
+
 // Ensure focus indicators are visible
 .ac-form-field__input:focus,
 .ac-beheer-select .select__control--is-focused {
