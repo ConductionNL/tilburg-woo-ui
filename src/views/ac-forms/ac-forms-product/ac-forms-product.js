@@ -10,12 +10,7 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-} from '@utrecht/component-library-react';
+
 import {
   Heading1,
   UnorderedList,
@@ -27,8 +22,6 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHeader,
-  TableHeaderCell,
   TableRow,
   Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
@@ -38,103 +31,21 @@ const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(7);
+  const [currentStep, setCurrentStep] = useState(0);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
   const [product, setProduct] = useState({
-    productName: 'VNG Product',
-    beschrijving: 'Dit is de beschrijving van het VNG product',
-    productpagina: 'https://www.vng.nl',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Vereniging_van_Nederlandse_Gemeenten_logo.svg',
+    productName: '',
+    beschrijving: '',
+    productpagina: '',
+    logo: '',
     applicaties: {
       0: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        naam: 'OpenWoo',
-        beschrijvingKort:
-          'Open source WOO-portaal voor transparante overheidscommunicatie',
-        licentieType: 'Open Source',
-        licentie: 'EUPL 1.2',
-        referentieComponenten: [
-          {
-            naam: 'Document Management Component',
-            id: 'dmc-001',
-          },
-          {
-            naam: 'Zoek Component',
-            id: 'zc-002',
-          },
-          {
-            naam: 'Publicatie Component',
-            id: 'pc-003',
-          },
-          {
-            naam: 'Metadata Component',
-            id: 'mc-004',
-          },
-        ],
-        standaarden: [
-          {
-            naam: 'TMLO 2.0',
-            id: 'tmlo-20',
-            bewijs: 'https://www.nationaalarchief.nl/archiveren/kennisbank/tmlo',
-          },
-        ],
-        koppelingen: [
-          {
-            applicatie1: 'OpenWoo',
-            applicatie2: 'OpenZaak',
-            richtingDataUitwisseling: 'Bidirectioneel',
-            sooortKoppeling: 'REST API',
-          },
-          {
-            applicatie1: 'OpenWoo',
-            applicatie2: 'DocumentManagementSystem',
-            richtingDataUitwisseling: 'Bidirectioneel',
-            sooortKoppeling: 'REST API',
-          },
-        ],
-        diensten: [],
-      },
-      1: {
-        id: 'c0f1e0a0-e29b-41d4-a716-446655440001',
-
-        naam: 'OpenZaak',
-        beschrijvingKort:
-          'Open source zaaksysteem voor gemeenten met ondersteuning voor ZGW API standaarden',
-        licentieType: 'Open Source',
-        licentie: 'EUPL 1.2',
+        naam: '',
+        beschrijvingKort: '',
+        licentieType: '',
+        licentie: '',
         referentieComponenten: [],
         standaarden: [],
-        koppelingen: [
-          {
-            applicatie1: 'OpenZaak',
-            applicatie2: 'Klantportaal',
-            richtingDataUitwisseling: 'Bidirectioneel',
-            sooortKoppeling: 'REST API',
-          },
-        ],
-        diensten: [],
-      },
-      2: {
-        id: 'c0f1e0a0-e29b-41d4-a716-446655440002',
-
-        naam: 'Burgerzaken Suite',
-        beschrijvingKort:
-          'Complete oplossing voor burgerzaken met modules voor geboorteaangifte, huwelijken en overlijdensaangifte',
-        licentieType: 'Closed Source',
-        licentie: 'Proprietary Enterprise License',
-        referentieComponenten: [
-          {
-            naam: 'BRP Koppeling Module',
-            id: 'brp-001',
-          },
-        ],
-        standaarden: [
-          {
-            naam: 'StUF-BG 3.10',
-            id: 'stuf-310',
-            bewijs: 'https://www.gemmaonline.nl/index.php/StUF-BG_3.10_compliance',
-          },
-        ],
         koppelingen: [],
         diensten: [],
       },
@@ -144,6 +55,15 @@ const AcFormsProduct = () => {
     productName: false,
   });
   const [allSameType, setAllSameType] = useState(false);
+
+  // Persist UI state for DienstenForm across steps
+  const [dienstenFormState, setDienstenFormState] = useState({
+    rows: [0],
+    nextRowId: 1,
+    selectedApplication: {},
+    selectedDienstByRow: {},
+    allAppsDienst: null,
+  });
 
   const setProductData = useCallback((key, value) => {
     if (key.includes('applicaties')) {
@@ -198,7 +118,21 @@ const AcFormsProduct = () => {
     }
   }, []);
 
-  const [rowCount, setRowCount] = useState(1);
+  const dienstOptions = [
+    {
+      value: 'Functioneel beheer',
+      label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
+    },
+    {
+      value: 'Technisch beheer',
+      label: 'Technisch beheer: installatie, updates en systeembeheer.',
+    },
+    { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
+    {
+      value: 'Implementatie-ondersteuning',
+      label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
+    },
+  ];
 
   const handleRegister = async () => {
     setLoading(true);
@@ -330,10 +264,11 @@ const AcFormsProduct = () => {
               currentStep,
               setAllSameType,
               allSameType,
+              dienstOptions,
               product,
-              setProductData,
-              rowCount,
-              setRowCount,
+              setProduct, // keep product updates consistent with ApplicatieStep
+              dienstenFormState, // persist form UI state across steps
+              setDienstenFormState,
             }}
           />
         );
@@ -342,6 +277,7 @@ const AcFormsProduct = () => {
           <ControlerenForm
             {...{
               product,
+              dienstOptions,
             }}
           />
         );
@@ -712,120 +648,305 @@ const ProductOpbouwInformationForm = memo(
   }
 );
 
+// Applicatie form fields are extracted to module scope to avoid remounts
+// used in ApplicatieStep
+const ApplicatieFormFields = memo(
+  ({ index, applicatie, updateApplicatie, loading }) => {
+    const nameInputId = `applicatie-naam-${index}`;
+
+    const [localName, setLocalName] = useState(applicatie.naam || '');
+    useEffect(() => {
+      setLocalName(applicatie.naam || '');
+    }, [applicatie.naam, index]);
+
+    const [localDesc, setLocalDesc] = useState(applicatie.beschrijvingKort || '');
+    useEffect(() => {
+      setLocalDesc(applicatie.beschrijvingKort || '');
+    }, [applicatie.beschrijvingKort, index]);
+
+    const debouncedSetName = useDebouncedInput(
+      (v) => updateApplicatie(index, 'naam', v),
+      300
+    );
+    const debouncedSetDesc = useDebouncedInput(
+      (v) => updateApplicatie(index, 'beschrijvingKort', v),
+      300
+    );
+
+    return (
+      <div className='ac-register-form-grid'>
+        <div style={{ gridColumn: 'span 2' }}>
+          <AcFormField
+            label='Naam van de applicatie'
+            value={localName}
+            onChange={(v) => {
+              setLocalName(v);
+              debouncedSetName(v);
+            }}
+            disabled={loading}
+            id={nameInputId}
+            className='ac-register-form-field__no-width-limit'
+          />
+        </div>
+
+        <div style={{ gridColumn: 'span 2' }}>
+          <AcFormField
+            label='Korte beschrijving van de applicatie'
+            inputType='textarea'
+            value={localDesc}
+            onChange={(v) => {
+              setLocalDesc(v);
+              debouncedSetDesc(v);
+            }}
+            maxLength={255}
+            disabled={loading}
+            id={`applicatie-beschrijving-${index}`}
+            className='ac-register-form-field__no-width-limit'
+          />
+          <small className='ac-register-form-field-help'>
+            {255 - (localDesc?.length || 0)} karakters over
+          </small>
+        </div>
+      </div>
+    );
+  }
+);
+
+const ApplicatieStep = memo(
+  ({ product, setProduct, isMultiApplicatie, loading }) => {
+    // Keep focus while typing by only committing name changes on blur
+
+    const updateApplicatie = (index, key, value) => {
+      setProduct((prev) => {
+        const applicaties = { ...prev.applicaties };
+        const existing = applicaties[index];
+        applicaties[index] = { ...existing, [key]: value };
+        return { ...prev, applicaties: applicaties };
+      });
+    };
+
+    const addApplicatie = () => {
+      setProduct((prev) => {
+        const indices = Object.keys(prev.applicaties).map((k) => parseInt(k, 10));
+        const nextIndex = indices.length ? Math.max(...indices) + 1 : 0;
+
+        const createEmptyClone = (template) => {
+          if (Array.isArray(template)) return [];
+          if (template && typeof template === 'object') {
+            return Object.keys(template).reduce((acc, key) => {
+              acc[key] = createEmptyClone(template[key]);
+              return acc;
+            }, {});
+          }
+          return '';
+        };
+
+        const templateIndex = indices.length ? Math.max(...indices) : null;
+        const template =
+          templateIndex !== null ? prev.applicaties[templateIndex] : {};
+        const emptyApplicatie = createEmptyClone(template);
+
+        return {
+          ...prev,
+          applicaties: {
+            ...prev.applicaties,
+            [nextIndex]: emptyApplicatie,
+          },
+        };
+      });
+    };
+
+    if (!isMultiApplicatie) {
+      const app0 = product.applicaties?.[0];
+      return (
+        <div
+          className='ac-register-form-section'
+          role='group'
+          aria-labelledby='applicatie-section-title'
+        >
+          <h2 id='applicatie-section-title' className='sr-only'>
+            Applicatie
+          </h2>
+          <ApplicatieFormFields
+            index={0}
+            applicatie={app0}
+            updateApplicatie={updateApplicatie}
+            loading={loading}
+          />
+        </div>
+      );
+    }
+
+    const applicatieIndices = Object.keys(product.applicaties || {})
+      .map((k) => parseInt(k, 10))
+      .sort((a, b) => a - b);
+
+    return (
+      <div
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='applicaties-section-title'
+      >
+        <h2 id='applicaties-section-title' className='sr-only'>
+          Applicaties
+        </h2>
+        <Table>
+          <thead>
+            <TableRow>
+              <TableCell>
+                <b>Naam</b>
+              </TableCell>
+              <TableCell>
+                <b>Beschrijving</b>
+              </TableCell>
+              <TableCell>
+                <b>Acties</b>
+              </TableCell>
+            </TableRow>
+          </thead>
+          <TableBody>
+            {applicatieIndices.map((index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Textbox
+                    id={`table-applicatie-naam-${index}`}
+                    value={product.applicaties[index]?.naam || ''}
+                    onChange={(e) => updateApplicatie(index, 'naam', e.target.value)}
+                    placeholder='Naam van de applicatie'
+                    disabled={loading}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Textbox
+                    id={`table-applicatie-beschrijving-${index}`}
+                    value={product.applicaties[index]?.beschrijvingKort || ''}
+                    onChange={(e) =>
+                      updateApplicatie(index, 'beschrijvingKort', e.target.value)
+                    }
+                    maxLength={255}
+                    placeholder='Beschrijving van de applicatie'
+                    disabled={loading}
+                  />
+                </TableCell>
+                <TableCell>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <AcButton
+                      style='buttonSlim'
+                      buttonType='secondary'
+                      icon={<VISUALS.MINUS />}
+                      disabled={applicatieIndices.length === 1}
+                      onClick={() => {
+                        setProduct((prev) => {
+                          const next = {
+                            ...prev,
+                            applicaties: { ...prev.applicaties },
+                          };
+                          delete next.applicaties[index];
+                          return next;
+                        });
+                      }}
+                      title='Applicatie verwijderen'
+                    ></AcButton>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <div style={{ marginTop: '1rem' }}>
+          <AcButton style='button' icon={<VISUALS.PLUS />} onClick={addApplicatie}>
+            Applicatie toevoegen
+          </AcButton>
+        </div>
+      </div>
+    );
+  }
+);
+
 const DienstenForm = memo(
   ({
-    setAllSameType,
-    allSameType,
     product,
-    setProductData,
-    rowCount,
-    setRowCount,
+    dienstOptions,
+    setProduct,
+    dienstenFormState,
+    setDienstenFormState,
   }) => {
-    // This testForm needs to be removed after all the steps have their own form
+    // Keep UI state in parent so it persists across steps
+    const { rows, selectedApplication, selectedDienstByRow } = dienstenFormState;
 
-    const [selectedApplication, setSelectedApplication] = useState({});
-    const [selectedDienstByRow, setSelectedDienstByRow] = useState({});
-    const [allAppsDienst, setAllAppsDienst] = useState(null);
-    const [rows, setRows] = useState([0]);
-    const nextRowId = useRef(1);
+    const normalizeDiensten = (arr) => {
+      if (!Array.isArray(arr)) return [];
+      const strs = arr
+        .map((item) => {
+          if (item == null) return null;
+          if (typeof item === 'object') {
+            if ('value' in item) return String(item.value);
+            return null;
+          }
+          return String(item);
+        })
+        .filter((v) => typeof v === 'string' && v.length > 0);
+      return Array.from(new Set(strs));
+    };
 
-    const dienstOptions = [
-      { value: '1', label: 'Optie 1' },
-      { value: '2', label: 'Optie 2' },
-      { value: '3', label: 'Optie 3' },
-      { value: '4', label: 'Optie 4' },
-    ];
+    const addDienst = (appId, dienstVal) => {
+      const dienst = String(dienstVal);
+      setProduct((prev) => {
+        const applicaties = { ...prev.applicaties };
+        const existing = applicaties[appId] || {};
+        const prevDiensten = normalizeDiensten(existing.diensten);
+        const nextDiensten = prevDiensten.includes(dienst)
+          ? prevDiensten
+          : [...prevDiensten, dienst];
+        applicaties[appId] = { ...existing, diensten: nextDiensten };
+        return { ...prev, applicaties };
+      });
+    };
+
+    const removeDienst = (appId, dienstVal) => {
+      const dienst = String(dienstVal);
+      setProduct((prev) => {
+        const applicaties = { ...prev.applicaties };
+        const existing = applicaties[appId] || {};
+        const prevDiensten = normalizeDiensten(existing.diensten);
+        const nextDiensten = prevDiensten.filter((d) => d !== dienst);
+        applicaties[appId] = { ...existing, diensten: nextDiensten };
+        return { ...prev, applicaties };
+      });
+    };
 
     const appOptions = Object.entries(product.applicaties).map(([id, app]) => ({
       value: id,
       label: app.naam,
     }));
-
     return (
       <div>
         <h2 id='diensten-section-title' className='sr-only'>
           Diensten
         </h2>
-        <button onClick={() => console.log({ product })}>click me</button>
-        <div className='con-form-wizard-service-selection'>
-          <Paragraph>
-            Geef per applicatie aan welke diensten u aanbiedt. Kies uit functioneel
-            beheer, technisch beheer, training of implementatie-ondersteuning. U kunt
-            meerdere diensten selecteren.
-          </Paragraph>
-          <div className='con-form-wizard-service-selection-radio-button-container'>
-            <Paragraph>
-              Geldt hetzelfde dienstenaanbod voor alle applicaties, of verschilt dit
-              per applicatie?
-            </Paragraph>
-            <AcCheckbox
-              label='Ja, hetzelfde voor alle applicaties'
-              value='allSameType'
-              checked={!allSameType}
-              onChange={() => setAllSameType(false)}
-            />
-            <AcCheckbox
-              label='Nee, verschillend per applicatie'
-              value='differentPerApplicatie'
-              checked={allSameType}
-              onChange={() => setAllSameType(true)}
-            />
-          </div>
-        </div>
 
         <TableContainer className='con-form-wizard-table-container'>
           <Table>
-            <TableHeader>
+            <thead>
               <TableRow>
-                <TableHeaderCell>Applicatie</TableHeaderCell>
-                <TableHeaderCell>Dienst Type</TableHeaderCell>
-                <TableHeaderCell></TableHeaderCell>
+                <TableCell>
+                  <b>Applicatie</b>
+                </TableCell>
+                <TableCell>
+                  <b>Dienst Type</b>
+                </TableCell>
+                <TableCell>
+                  <b>Acties</b>
+                </TableCell>
               </TableRow>
-            </TableHeader>
+            </thead>
             <TableBody>
-              {allSameType && (
-                <TableRow>
-                  <TableCell>Alle applicaties</TableCell>
-                  <TableCell>
-                    <ReactSelect
-                      options={dienstOptions}
-                      isClearable
-                      value={
-                        allAppsDienst
-                          ? dienstOptions.find((o) => o.value === allAppsDienst)
-                          : null
-                      }
-                      onChange={(option) => {
-                        if (!option && allAppsDienst) {
-                          // Clear: remove previously selected dienst from all apps
-                          Object.keys(product.applicaties).forEach((appId) => {
-                            setProductData(`applicaties.${appId}.diensten`, {
-                              action: 'remove',
-                              value: allAppsDienst,
-                            });
-                          });
-                          setAllAppsDienst(null);
-                          return;
-                        }
-
-                        if (option) {
-                          // Add selected dienst to all apps (unique)
-                          Object.keys(product.applicaties).forEach((appId) => {
-                            setProductData(`applicaties.${appId}.diensten`, {
-                              action: 'add',
-                              value: option.value,
-                            });
-                          });
-                          setAllAppsDienst(option.value);
-                        }
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {/* Dynamic rows */}
-              {rows.map((rowId, index) => (
+              {rows.map((rowId) => (
                 <TableRow key={rowId}>
                   <TableCell>
                     <ReactSelect
@@ -841,26 +962,22 @@ const DienstenForm = memo(
                         const prevAppId = selectedApplication[rowId];
                         const prevDienst = selectedDienstByRow[rowId];
 
-                        // If there was a dienst saved for the previous app selection, remove it
                         if (prevAppId != null && prevDienst != null) {
-                          setProductData(`applicaties.${prevAppId}.diensten`, {
-                            action: 'remove',
-                            value: prevDienst,
-                          });
+                          removeDienst(prevAppId, prevDienst);
                         }
 
-                        // Store the selected application id for this row
-                        setSelectedApplication((prev) => ({
+                        setDienstenFormState((prev) => ({
                           ...prev,
-                          [rowId]: selectedOption?.value,
+                          selectedApplication: {
+                            ...prev.selectedApplication,
+                            [rowId]: selectedOption?.value,
+                          },
+                          selectedDienstByRow: Object.fromEntries(
+                            Object.entries(prev.selectedDienstByRow).filter(
+                              ([k]) => Number(k) !== rowId
+                            )
+                          ),
                         }));
-
-                        // Reset any existing dienst selection for this row on app change
-                        setSelectedDienstByRow((prev) => {
-                          const next = { ...prev };
-                          delete next[rowId];
-                          return next;
-                        });
                       }}
                     />
                   </TableCell>
@@ -871,101 +988,114 @@ const DienstenForm = memo(
                       value={
                         selectedDienstByRow[rowId] != null
                           ? dienstOptions.find(
-                              (o) => o.value === selectedDienstByRow[rowId]
+                              (o) =>
+                                String(o.value) ===
+                                String(selectedDienstByRow[rowId])
                             )
                           : null
                       }
-                      isDisabled={allSameType || selectedApplication[rowId] == null}
+                      isDisabled={selectedApplication[rowId] == null}
                       isOptionDisabled={(opt) => {
                         const appId = selectedApplication[rowId];
                         if (appId == null) return true;
-                        const saved = product.applicaties?.[appId]?.diensten || [];
-                        return saved.includes(opt.value);
+                        const saved = normalizeDiensten(
+                          product.applicaties?.[appId]?.diensten
+                        );
+                        const optVal = String(opt.value);
+                        return saved.includes(optVal);
                       }}
                       onChange={(selectedOption) => {
                         const appId = selectedApplication[rowId];
                         if (appId == null) return;
 
-                        // Clear
                         if (!selectedOption) {
                           const prevDienst = selectedDienstByRow[rowId];
                           if (prevDienst != null) {
-                            setProductData(`applicaties.${appId}.diensten`, {
-                              action: 'remove',
-                              value: prevDienst,
-                            });
+                            removeDienst(appId, prevDienst);
                           }
-                          setSelectedDienstByRow((prev) => {
-                            const next = { ...prev };
-                            delete next[rowId];
-                            return next;
-                          });
+                          setDienstenFormState((prev) => ({
+                            ...prev,
+                            selectedDienstByRow: Object.fromEntries(
+                              Object.entries(prev.selectedDienstByRow).filter(
+                                ([k]) => Number(k) !== rowId
+                              )
+                            ),
+                          }));
                           return;
                         }
 
-                        // Add (unique enforced in setProductData)
-                        setProductData(`applicaties.${appId}.diensten`, {
-                          action: 'add',
-                          value: selectedOption.value,
-                        });
-                        setSelectedDienstByRow((prev) => ({
+                        addDienst(appId, selectedOption.value);
+                        setDienstenFormState((prev) => ({
                           ...prev,
-                          [rowId]: selectedOption.value,
+                          selectedDienstByRow: {
+                            ...prev.selectedDienstByRow,
+                            [rowId]: String(selectedOption.value),
+                          },
                         }));
                       }}
                     />
                   </TableCell>
                   <TableCell>
-                    {index > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <AcButton
-                        style='button'
+                        style='buttonSlim'
+                        buttonType='secondary'
                         icon={<VISUALS.MINUS />}
+                        disabled={rows.length === 1}
                         onClick={() => {
                           const appId = selectedApplication[rowId];
                           const dienstVal = selectedDienstByRow[rowId];
 
-                          // Remove saved dienst for this row, if present
                           if (appId != null && dienstVal != null) {
-                            setProductData(`applicaties.${appId}.diensten`, {
-                              action: 'remove',
-                              value: dienstVal,
-                            });
+                            removeDienst(appId, dienstVal);
                           }
 
-                          // Remove local row state
-                          setRows((prev) => prev.filter((id) => id !== rowId));
-                          setSelectedApplication((prev) => {
-                            const next = { ...prev };
-                            delete next[rowId];
-                            return next;
-                          });
-                          setSelectedDienstByRow((prev) => {
-                            const next = { ...prev };
-                            delete next[rowId];
-                            return next;
-                          });
+                          setDienstenFormState((prev) => ({
+                            ...prev,
+                            rows: prev.rows.filter((id) => id !== rowId),
+                            selectedApplication: Object.fromEntries(
+                              Object.entries(prev.selectedApplication).filter(
+                                ([k]) => Number(k) !== rowId
+                              )
+                            ),
+                            selectedDienstByRow: Object.fromEntries(
+                              Object.entries(prev.selectedDienstByRow).filter(
+                                ([k]) => Number(k) !== rowId
+                              )
+                            ),
+                          }));
                         }}
-                      />
-                    )}
+                        title='Rij verwijderen'
+                      ></AcButton>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
+
+              <div style={{ marginTop: '1rem' }}>
+                <AcButton
+                  style='button'
+                  icon={<VISUALS.PLUS />}
+                  onClick={() =>
+                    setDienstenFormState((prev) => ({
+                      ...prev,
+                      rows: [...prev.rows, prev.nextRowId],
+                      nextRowId: prev.nextRowId + 1,
+                    }))
+                  }
+                >
+                  Rij toevoegen
+                </AcButton>
+              </div>
             </TableBody>
           </Table>
-          <AcButton
-            style='button'
-            onClick={() => setRows((prev) => [...prev, nextRowId.current++])}
-            icon={<VISUALS.PLUS />}
-          >
-            Voeg rij toe
-          </AcButton>
         </TableContainer>
       </div>
     );
   }
 );
 
-const ControlerenForm = memo(({ product }) => {
+const ControlerenForm = memo(({ product, dienstOptions }) => {
   return (
     <div>
       <div className='con-form-wizard-review-heading-container'>
@@ -1116,11 +1246,16 @@ const ControlerenForm = memo(({ product }) => {
                       <strong>Diensten:</strong>
                       <div>
                         <UnorderedList>
-                          {applicatie.diensten.map((dienst) => (
-                            <UnorderedListItem key={dienst.id || dienst.naam}>
-                              {dienst.naam}
-                            </UnorderedListItem>
-                          ))}
+                          {applicatie.diensten.map((dienst) => {
+                            const dienstOption = dienstOptions.find(
+                              (option) => option.value === dienst
+                            );
+                            return (
+                              <UnorderedListItem key={dienst}>
+                                {dienstOption ? dienstOption.label : dienst}
+                              </UnorderedListItem>
+                            );
+                          })}
                         </UnorderedList>
                       </div>
                     </div>
@@ -1140,229 +1275,7 @@ const TestForm = memo(({ currentStep }) => {
   return <div>hi this is current step {currentStep}</div>;
 });
 
-// Applicatie form fields are extracted to module scope to avoid remounts
-// used in ApplicatieStep
-const ApplicatieFormFields = memo(
-  ({ index, applicatie, updateApplicatie, loading }) => {
-    const nameInputId = `applicatie-naam-${index}`;
-
-    const [localName, setLocalName] = useState(applicatie.naam || '');
-    useEffect(() => {
-      setLocalName(applicatie.naam || '');
-    }, [applicatie.naam, index]);
-
-    const [localDesc, setLocalDesc] = useState(applicatie.beschrijvingKort || '');
-    useEffect(() => {
-      setLocalDesc(applicatie.beschrijvingKort || '');
-    }, [applicatie.beschrijvingKort, index]);
-
-    const debouncedSetName = useDebouncedInput(
-      (v) => updateApplicatie(index, 'naam', v),
-      300
-    );
-    const debouncedSetDesc = useDebouncedInput(
-      (v) => updateApplicatie(index, 'beschrijvingKort', v),
-      300
-    );
-
-    return (
-      <div className='ac-register-form-grid'>
-        <div style={{ gridColumn: 'span 2' }}>
-          <AcFormField
-            label='Naam van de applicatie'
-            value={localName}
-            onChange={(v) => {
-              setLocalName(v);
-              debouncedSetName(v);
-            }}
-            disabled={loading}
-            id={nameInputId}
-            className='ac-register-form-field__no-width-limit'
-          />
-        </div>
-
-        <div style={{ gridColumn: 'span 2' }}>
-          <AcFormField
-            label='Korte beschrijving van de applicatie'
-            inputType='textarea'
-            value={localDesc}
-            onChange={(v) => {
-              setLocalDesc(v);
-              debouncedSetDesc(v);
-            }}
-            maxLength={255}
-            disabled={loading}
-            id={`applicatie-beschrijving-${index}`}
-            className='ac-register-form-field__no-width-limit'
-          />
-          <small className='ac-register-form-field-help'>
-            {255 - (localDesc?.length || 0)} karakters over
-          </small>
-        </div>
-      </div>
-    );
-  }
-);
 ApplicatieFormFields.displayName = 'ApplicatieFormFields';
-
-const ApplicatieStep = memo(
-  ({ product, setProduct, isMultiApplicatie, loading }) => {
-    // Keep focus while typing by only committing name changes on blur
-
-    const updateApplicatie = (index, key, value) => {
-      setProduct((prev) => {
-        const applicaties = { ...prev.applicaties };
-        const existing = applicaties[index];
-        applicaties[index] = { ...existing, [key]: value };
-        return { ...prev, applicaties: applicaties };
-      });
-    };
-
-    const addApplicatie = () => {
-      setProduct((prev) => {
-        const indices = Object.keys(prev.applicaties).map((k) => parseInt(k, 10));
-        const nextIndex = indices.length ? Math.max(...indices) + 1 : 0;
-
-        const createEmptyClone = (template) => {
-          if (Array.isArray(template)) return [];
-          if (template && typeof template === 'object') {
-            return Object.keys(template).reduce((acc, key) => {
-              acc[key] = createEmptyClone(template[key]);
-              return acc;
-            }, {});
-          }
-          return '';
-        };
-
-        const templateIndex = indices.length ? Math.max(...indices) : null;
-        const template =
-          templateIndex !== null ? prev.applicaties[templateIndex] : {};
-        const emptyApplicatie = createEmptyClone(template);
-
-        return {
-          ...prev,
-          applicaties: {
-            ...prev.applicaties,
-            [nextIndex]: emptyApplicatie,
-          },
-        };
-      });
-    };
-
-    if (!isMultiApplicatie) {
-      const app0 = product.applicaties?.[0];
-      return (
-        <div
-          className='ac-register-form-section'
-          role='group'
-          aria-labelledby='applicatie-section-title'
-        >
-          <h2 id='applicatie-section-title' className='sr-only'>
-            Applicatie
-          </h2>
-          <ApplicatieFormFields
-            index={0}
-            applicatie={app0}
-            updateApplicatie={updateApplicatie}
-            loading={loading}
-          />
-        </div>
-      );
-    }
-
-    const applicatieIndices = Object.keys(product.applicaties || {})
-      .map((k) => parseInt(k, 10))
-      .sort((a, b) => a - b);
-
-    return (
-      <div
-        className='ac-register-form-section'
-        role='group'
-        aria-labelledby='applicaties-section-title'
-      >
-        <h2 id='applicaties-section-title' className='sr-only'>
-          Applicaties
-        </h2>
-        <Table>
-          <thead>
-            <TableRow>
-              <TableCell>
-                <b>Naam</b>
-              </TableCell>
-              <TableCell>
-                <b>Beschrijving</b>
-              </TableCell>
-              <TableCell>
-                <b>Acties</b>
-              </TableCell>
-            </TableRow>
-          </thead>
-          <TableBody>
-            {applicatieIndices.map((index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Textbox
-                    id={`table-applicatie-naam-${index}`}
-                    value={product.applicaties[index]?.naam || ''}
-                    onChange={(e) =>
-                      updateApplicatie(index, 'naam', e.target.value)
-                    }
-                    placeholder='Naam van de applicatie'
-                    disabled={loading}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Textbox
-                    id={`table-applicatie-beschrijving-${index}`}
-                    value={product.applicaties[index]?.beschrijvingKort || ''}
-                    onChange={(e) =>
-                      updateApplicatie(index, 'beschrijvingKort', e.target.value)
-                    }
-                    maxLength={255}
-                    placeholder='Beschrijving van de applicatie'
-                    disabled={loading}
-                  />
-                </TableCell>
-                <TableCell>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <AcButton
-                      style='buttonSlim'
-                      buttonType='secondary'
-                      icon={<VISUALS.MINUS />}
-                      disabled={applicatieIndices.length === 1}
-                      onClick={() => {
-                        setProduct((prev) => {
-                          const next = {
-                            ...prev,
-                            applicaties: { ...prev.applicaties },
-                          };
-                          delete next.applicaties[index];
-                          return next;
-                        });
-                      }}
-                      title='Applicatie verwijderen'
-                    ></AcButton>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div style={{ marginTop: '1rem' }}>
-          <AcButton style='button' icon={<VISUALS.PLUS />} onClick={addApplicatie}>
-            Applicatie toevoegen
-          </AcButton>
-        </div>
-      </div>
-    );
-  }
-);
-
 ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
 DienstenForm.displayName = 'DienstenForm';
