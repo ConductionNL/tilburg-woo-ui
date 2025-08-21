@@ -1,3 +1,5 @@
+import clsx from 'clsx';
+import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { useState, useCallback, memo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
@@ -6,30 +8,40 @@ import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
-
+import { useDebouncedInput } from '@src/hooks/index';
+import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import {
   Heading1,
   UnorderedList,
   UnorderedListItem,
   Alert,
   Paragraph,
+  Separator,
 } from '@utrecht/component-library-react/dist/css-module';
-import clsx from 'clsx';
-import { useDebouncedInput } from '@src/hooks/index';
-import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
 
 const AcFormsProduct = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(8);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
   const [product, setProduct] = useState({
     productName: '',
     beschrijving: '',
     productpagina: '',
     logo: '',
-    applicaties: {}, // array of applicaties with a unique key for easier data management
+    applicaties: {
+      0: {
+        naam: '',
+        beschrijvingKort: '',
+        licentieType: '',
+        licentie: '',
+        referentieComponenten: [],
+        standaarden: [],
+        koppelingen: [],
+        diensten: [],
+      },
+    }, // array of applicaties with a unique key for easier data management
   });
   const [touched, setTouched] = useState({
     productName: false,
@@ -175,9 +187,9 @@ const AcFormsProduct = () => {
         );
       case 8:
         return (
-          <TestForm
+          <ControlerenForm
             {...{
-              currentStep,
+              product,
             }}
           />
         );
@@ -414,47 +426,39 @@ const AcFormsProduct = () => {
   );
 };
 
-const ProductOpbouwForm = memo(
-  ({
-    product,
-    setProductData,
-    touched,
-    isMultiApplicatie,
-    setIsMultiApplicatie,
-  }) => {
-    return (
-      <div
-        className='ac-register-form-section'
-        role='group'
-        aria-labelledby='organization-section-title'
-      >
-        <h2 id='organization-section-title' className='sr-only'>
-          Productopbouw
-        </h2>
+const ProductOpbouwForm = memo(({ isMultiApplicatie, setIsMultiApplicatie }) => {
+  return (
+    <div
+      className='ac-register-form-section'
+      role='group'
+      aria-labelledby='organization-section-title'
+    >
+      <h2 id='organization-section-title' className='sr-only'>
+        Productopbouw
+      </h2>
 
-        <Paragraph>
-          Een product kan één applicatie zijn, of een verzameling applicaties en
-          modules die samen een suite vormen. Geef hieronder aan welke situatie van
-          toepassing is.
-        </Paragraph>
-        <div className='ac-register-form-checkbox-wrapper'>
-          <AcCheckbox
-            label='Een enkele'
-            value='single'
-            checked={!isMultiApplicatie}
-            onChange={() => setIsMultiApplicatie(false)}
-          />
-          <AcCheckbox
-            label='Een verzameling applicaties of modules (suite)'
-            value='multi'
-            checked={isMultiApplicatie}
-            onChange={() => setIsMultiApplicatie(true)}
-          />
-        </div>
+      <Paragraph>
+        Een product kan één applicatie zijn, of een verzameling applicaties en
+        modules die samen een suite vormen. Geef hieronder aan welke situatie van
+        toepassing is.
+      </Paragraph>
+      <div className='ac-register-form-checkbox-wrapper'>
+        <AcCheckbox
+          label='Een enkele'
+          value='single'
+          checked={!isMultiApplicatie}
+          onChange={() => setIsMultiApplicatie(false)}
+        />
+        <AcCheckbox
+          label='Een verzameling applicaties of modules (suite)'
+          value='multi'
+          checked={isMultiApplicatie}
+          onChange={() => setIsMultiApplicatie(true)}
+        />
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 const ProductOpbouwInformationForm = memo(
   ({ product, setProductData, loading, touched }) => {
@@ -550,6 +554,176 @@ const ProductOpbouwInformationForm = memo(
     );
   }
 );
+
+const ControlerenForm = memo(({ product }) => {
+  return (
+    <div>
+      <div className='con-form-wizard-review-heading-container'>
+        <h3 className='con-form-wizard-review-heading-header'>Product informatie</h3>
+        <div className='ac-register-review__section'>
+          <div className='ac-register-review__header'>
+            <h4 className='utrecht-heading-4'>{product.productName}</h4>
+            {product.logo && (
+              <ConLogoPreview
+                logoUrl={product.logo}
+                className='ac-register-review__logo'
+              />
+            )}
+          </div>
+          <Separator className='con-form-wizard-review-header__separator' />
+
+          <div className='ac-register-review__field'>
+            <strong>Beschrijving:</strong>
+            <span>{product.beschrijving || '-'}</span>
+          </div>
+
+          <div className='ac-register-review__field'>
+            <strong>Productpagina:</strong> {product.productpagina || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Hosting:</strong> {product.hosting || '-'}
+          </div>
+          <div className='ac-register-review__field'>
+            <strong>Jurisdictie:</strong> {product.jurisdictie || '-'}
+          </div>
+        </div>
+      </div>
+
+      <h3 className='con-form-wizard-review-heading-header'>Applicaties</h3>
+      <div className='ac-register-review'>
+        {Object.values(product.applicaties).map((applicatie, idx) => (
+          <div
+            className='ac-register-form-section'
+            key={applicatie.id || applicatie.naam || idx}
+          >
+            <div className='ac-register-review'>
+              <div className='ac-register-review__section'>
+                <div className='ac-register-review__header'>
+                  <h4 className='utrecht-heading-4'>{applicatie.naam}</h4>
+                </div>
+                <Separator className='ac-register-review-header__separator' />
+
+                <div className='ac-register-review__field'>
+                  <strong>Korte beschrijving:</strong>
+                  <div>
+                    <div>{applicatie.beschrijvingKort || ''}</div>
+                  </div>
+                </div>
+
+                <div className='ac-register-review__field'>
+                  <strong>Licentietype:</strong>
+                  <div>
+                    <div>{applicatie.licentieType || ''}</div>
+                  </div>
+                </div>
+
+                {applicatie.licentieType !== 'Closed Source' && (
+                  <div className='ac-register-review__field'>
+                    <strong>Licentie:</strong>
+                    <div>
+                      <div>{applicatie.licentie || ''}</div>
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(applicatie.referentieComponenten) &&
+                  applicatie.referentieComponenten.length > 0 && (
+                    <div className='ac-register-review__field'>
+                      <strong>Referentiecomponenten:</strong>
+                      <div>
+                        <UnorderedList>
+                          {applicatie.referentieComponenten.map((rc) => (
+                            <UnorderedListItem key={rc.id || rc.naam}>
+                              {rc.naam}
+                            </UnorderedListItem>
+                          ))}
+                        </UnorderedList>
+                      </div>
+                    </div>
+                  )}
+
+                {Array.isArray(applicatie.standaarden) &&
+                  applicatie.standaarden.length > 0 && (
+                    <div className='ac-register-review__field'>
+                      <strong>Standaarden:</strong>
+                      <div>
+                        <UnorderedList>
+                          {applicatie.standaarden.map((std) => (
+                            <UnorderedListItem key={std.id || std.naam}>
+                              {std.naam}
+                              {std.bewijs ? (
+                                <>
+                                  {' '}
+                                  -{' '}
+                                  <a
+                                    href={std.bewijs}
+                                    target='_blank'
+                                    rel='noreferrer noopener'
+                                  >
+                                    bewijs
+                                  </a>
+                                </>
+                              ) : null}
+                            </UnorderedListItem>
+                          ))}
+                        </UnorderedList>
+                      </div>
+                    </div>
+                  )}
+
+                {Array.isArray(applicatie.koppelingen) &&
+                  applicatie.koppelingen.length > 0 && (
+                    <div className='ac-register-review__field'>
+                      <strong>Koppelingen:</strong>
+                      <div>
+                        <UnorderedList>
+                          {applicatie.koppelingen.map((kp, kIdx) => {
+                            const richting = kp.richtingDataUitwisseling;
+                            const soort = kp.sooortKoppeling;
+                            const details =
+                              richting || soort
+                                ? ` (${[richting, soort]
+                                    .filter(Boolean)
+                                    .join(', ')})`
+                                : '';
+                            return (
+                              <UnorderedListItem
+                                key={`${kp.applicatie1}-${kp.applicatie2}-${kIdx}`}
+                              >
+                                {kp.applicatie1} ↔ {kp.applicatie2}
+                                {details}
+                              </UnorderedListItem>
+                            );
+                          })}
+                        </UnorderedList>
+                      </div>
+                    </div>
+                  )}
+
+                {Array.isArray(applicatie.diensten) &&
+                  applicatie.diensten.length > 0 && (
+                    <div className='ac-register-review__field'>
+                      <strong>Diensten:</strong>
+                      <div>
+                        <UnorderedList>
+                          {applicatie.diensten.map((dienst) => (
+                            <UnorderedListItem key={dienst.id || dienst.naam}>
+                              {dienst.naam}
+                            </UnorderedListItem>
+                          ))}
+                        </UnorderedList>
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
 const TestForm = memo(({ currentStep }) => {
   // This testForm needs to be removed after all the steps have their own form
 
@@ -558,6 +732,7 @@ const TestForm = memo(({ currentStep }) => {
 
 ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
+ControlerenForm.displayName = 'ControlerenForm';
 
 TestForm.displayName = 'TestForm';
 
