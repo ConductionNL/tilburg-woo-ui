@@ -817,19 +817,10 @@ const ConDynamicSchemaForm = forwardRef(
       // The parent component should populate optionsProviders with fetched data for $ref fields
       if (optionsProviders[propertyPath]) {
         const provided = optionsProviders[propertyPath];
-        // Debug logging disabled to prevent loops
-        // if (process.env.NODE_ENV === 'development' && propertyPath === 'aanbieder') {
-        //   console.log(`🔍 getFieldOptions: Found options for ${propertyPath}:`, provided);
-        // }
         return typeof provided === 'function' ? provided(formData) : provided;
       }
 
       // Priority 3: No options
-      // Debug logging for aanbieder field specifically
-      if (process.env.NODE_ENV === 'development' && propertyPath === 'aanbieder' && propertySchema.$ref) {
-        console.log(`⚠️ getFieldOptions: No options found for $ref field ${propertyPath}, schema:`, propertySchema);
-        console.log(`⚠️ getFieldOptions: Available optionsProviders keys:`, Object.keys(optionsProviders));
-      }
       return [];
     };
 
@@ -1378,10 +1369,6 @@ const ConDynamicSchemaForm = forwardRef(
                         !isLoading
                       ) {
                         const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
-                        console.log(
-                          `🔍 User searching ${path} (${refSchemaSlug}):`,
-                          inputValue
-                        );
                         handleSearch(path, refSchemaSlug, inputValue);
                       }
                     }
