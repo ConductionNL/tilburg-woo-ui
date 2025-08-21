@@ -256,15 +256,6 @@ const BeheerPageConfigFactory = {
               action: 'deactivate',
             },
             {
-              key: 'publish',
-              label: 'Publiceren',
-              icon: <VISUALS.PUBLISH />,
-              condition: (row) =>
-                !row['@self'].published &&
-                row?.beoordeling?.toLowerCase?.() !== 'concept',
-              action: 'publish',
-            },
-            {
               key: 'depublish',
               label: 'Depubliceren',
               icon: <VISUALS.PUBLISH_OFF />,

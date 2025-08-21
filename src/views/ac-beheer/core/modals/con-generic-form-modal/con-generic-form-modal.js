@@ -419,6 +419,18 @@ const ConGenericFormModal = ({
     };
   }, [optionsLoading, refLoadingStates]);
 
+  // Merge options providers to prevent unnecessary re-renders
+  const combinedOptionsProviders = useMemo(() => ({
+    ...optionsProviders,
+    ...refOptionsProviders,
+  }), [optionsProviders, refOptionsProviders]);
+
+  // Merge loading states to prevent unnecessary re-renders  
+  const combinedLoadingStates = useMemo(() => ({
+    ...loadingStates,
+    ...refLoadingStates,
+  }), [loadingStates, refLoadingStates]);
+
   // Generate field configurations for ConDynamicSchemaForm
   const fieldConfigs = useMemo(() => {
     if (!config?.fieldConfigs) return {};
@@ -713,10 +725,11 @@ const ConGenericFormModal = ({
     return null;
   }
 
-  // Generate title
+  // Generate title - prefer schema title over type slug
+  const schemaTitle = schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
   const title = isEdit
-    ? `${type.charAt(0).toUpperCase() + type.slice(1)} bewerken`
-    : `${type.charAt(0).toUpperCase() + type.slice(1)} toevoegen`;
+    ? `${schemaTitle} bewerken`
+    : `${schemaTitle} toevoegen`;
 
   return (
     <AcModal
@@ -766,7 +779,7 @@ const ConGenericFormModal = ({
       )}
 
       {/* Form content */}
-      <AcGrid columns={2}>
+      <div className="con-dynamic-form-container">
         {schemaLoading ? (
           <div>Schema wordt geladen...</div>
         ) : schema ? (
@@ -777,8 +790,8 @@ const ConGenericFormModal = ({
             onFieldChange={handleFieldChange}
             fieldConfigs={fieldConfigs}
             customFieldComponents={config.customComponents || {}}
-            optionsProviders={optionsProviders}
-            loadingStates={loadingStates}
+            optionsProviders={combinedOptionsProviders}
+            loadingStates={combinedLoadingStates}
             disabledStates={combinedDisabledStates}
             getIsValid={handleFormValidCheck}
             honorImmutable={isEdit}
@@ -792,7 +805,7 @@ const ConGenericFormModal = ({
             Schema kon niet worden geladen. Controleer of het schema bestaat.
           </div>
         )}
-      </AcGrid>
+      </div>
     </AcModal>
   );
 };

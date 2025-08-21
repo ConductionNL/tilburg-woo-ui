@@ -1,14 +1,69 @@
-import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
+// eslint-disable-next-line import/no-unresolved
+import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
 import { shouldShowFormField } from '@src/utilities/con-authentication-filters';
-import { getFieldAuthorizationState, debugFieldAuthorization } from '@utils/field-authorization';
+import {
+  getFieldAuthorizationState,
+  debugFieldAuthorization,
+} from '@utils/field-authorization';
 import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
+
+// HACK: Wrapper component for ReactSelect that listens to global options updates (TODO: Fix the actual re-render loop issue)
+const ReactSelectWithGlobalHack = (props) => {
+  const { fieldPath, options: propOptions, ...selectProps } = props;
+  const [globalOptions, setGlobalOptions] = useState(propOptions || []);
+
+  useEffect(() => {
+    // Check if there are already options in global state
+    const existingOptions = window.FORCE_DROPDOWN_UPDATE.get(fieldPath);
+    if (existingOptions && existingOptions.length > 0) {
+      console.log(`🌍 HACK: Loading existing global options for ${fieldPath}:`, existingOptions);
+      setGlobalOptions(existingOptions);
+    }
+
+    // Listen for global option updates
+    const handleGlobalUpdate = (event) => {
+      if (event.detail.fieldPath === fieldPath) {
+        console.log(`🌍 HACK: Received global update for ${fieldPath}:`, event.detail.options);
+        setGlobalOptions(event.detail.options);
+      }
+    };
+
+    window.addEventListener('dropdownOptionsUpdate', handleGlobalUpdate);
+
+    return () => {
+      window.removeEventListener('dropdownOptionsUpdate', handleGlobalUpdate);
+    };
+  }, [fieldPath]);
+
+  // Use global options if available, otherwise fall back to prop options
+  const effectiveOptions = globalOptions.length > 0 ? globalOptions : (propOptions || []);
+
+  return (
+    <ReactSelect
+      {...selectProps}
+      options={effectiveOptions}
+    />
+  );
+};
+
+import MarkdownHtmlField from './inputs/markdown-html-field';
+import MDEditor from '@uiw/react-md-editor';
+import ConLightweightMarkdownEditor from './inputs/con-lightweight-markdown-editor';
+import JsonObjectField from './inputs/json-object-field';
+import BooleanField from './inputs/boolean-field';
+import NumberField from './inputs/number-field';
+import { validateArray, validateNumber, validateString } from './utils/validation';
+import ArrayCommaListField from './inputs/array-comma-list-field';
+import { getDefaultValue } from './utils/defaults';
+import ColorField from './inputs/color-field';
+
 /**
  * A dynamic form component that automatically generates form fields based on a JSON schema.
  *
@@ -53,10 +108,32 @@ import { VISUALS } from '@src/constants';
  *     options: [{ value: "option1", label: "Option 1" }],
  *     isMulti: false,
  *     closeMenuOnSelect: true,
- *     placeholder: "Custom placeholder"
+ *     placeholder: "Custom placeholder",
+ *     size: "half|full" // Controls field width: half (50%) or full (100%)
  *   }
  * }}
  * ```
+ *
+ * **Flexible Field Layout System:**
+ * The form uses a flexible layout with floating divs that automatically adjust field sizes based on content:
+ *
+ * **Automatic Sizing Rules:**
+ * - **Full Width (100%)**: Markdown/HTML fields, JSON objects, large text (maxLength > 100), multi-select arrays
+ * - **Half Width + Double Height**: Text areas, description fields, fields with maxLength > 50
+ * - **Half Width + Normal Height**: Default for most fields (text inputs, selects, numbers, etc.)
+ *
+ * **Manual Size Override:**
+ * ```jsx
+ * fieldConfigs={{
+ *   description: { size: "full" },        // Force full width
+ *   shortText: { size: "half" }           // Force half width
+ * }}
+ * ```
+ *
+ * **Responsive Behavior:**
+ * - Desktop: Fields respect their size classes (50%/100% width)
+ * - Tablet (≤1024px): Half-width fields become full width
+ * - Mobile (≤768px): All fields become full width for better usability
  *
  * **Custom Field Components:**
  * For special cases like file uploads, you can provide custom React components:
@@ -284,6 +361,64 @@ const ConDynamicSchemaForm = forwardRef(
   ) => {
     const [resetKey, setResetKey] = React.useState(0);
 
+    // HACK: Force re-render when options change (TODO: Fix the actual re-render loop issue)
+    const [forceRenderKey, setForceRenderKey] = useState(0);
+    const prevOptionsRef = useRef({});
+
+    // Debug logging disabled to reduce console noise
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('🔍 ConDynamicSchemaForm: Received props:', {
+    //     schemaTitle: schema?.title,
+    //     optionsProvidersKeys: Object.keys(optionsProviders),
+    //     loadingStatesKeys: Object.keys(loadingStates),
+    //     disabledStatesKeys: Object.keys(disabledStates)
+    //   });
+    // }
+
+    // HACK: Force re-render when options change (TODO: Fix the actual re-render loop issue)
+    useEffect(() => {
+      // Check if any options have changed from empty to having data
+      let hasNewOptions = false;
+      
+      Object.keys(optionsProviders).forEach(key => {
+        const currentOptions = optionsProviders[key];
+        const prevOptions = prevOptionsRef.current[key];
+        
+        // If we now have options but didn't before, force re-render
+        if (Array.isArray(currentOptions) && currentOptions.length > 0 && 
+            (!prevOptions || prevOptions.length === 0)) {
+          hasNewOptions = true;
+          console.log(`🔧 HACK: Force re-render for new options in ${key}:`, currentOptions);
+        }
+      });
+      
+      if (hasNewOptions) {
+        // Force re-render after a short delay to ensure DOM is ready
+        setTimeout(() => {
+          setForceRenderKey(prev => prev + 1);
+        }, 100);
+      }
+      
+      // Update previous options reference
+      prevOptionsRef.current = { ...optionsProviders };
+    }, [optionsProviders]);
+
+    // Debug effect disabled to reduce console noise
+    // const prevOptionsKeysRef = useRef([]);
+    // useEffect(() => {
+    //   if (process.env.NODE_ENV === 'development') {
+    //     const currentKeys = Object.keys(optionsProviders).sort();
+    //     const prevKeys = prevOptionsKeysRef.current;
+    //     
+    //     // Only log if keys actually changed
+    //     if (JSON.stringify(currentKeys) !== JSON.stringify(prevKeys)) {
+    //       console.log('🔍 ConDynamicSchemaForm: optionsProviders keys changed:', currentKeys);
+    //       console.log('🔍 ConDynamicSchemaForm: optionsProviders content:', optionsProviders);
+    //       prevOptionsKeysRef.current = currentKeys;
+    //     }
+    //   }
+    // }, [optionsProviders]);
+
     // Extract search handler
     const { handleSearch } = onSearchHandlers;
 
@@ -304,12 +439,12 @@ const ConDynamicSchemaForm = forwardRef(
         const refMatch = propertySchema.$ref.match(/\/schemas\/([^\/]+)$/);
         return refMatch?.[1] || null;
       }
-      
+
       if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
         const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
         return refMatch?.[1] || null;
       }
-      
+
       return null;
     };
 
@@ -428,6 +563,10 @@ const ConDynamicSchemaForm = forwardRef(
       let schemaConfig = baseConfig;
 
       if (propertySchema.type === 'array') {
+        const arrayItemsRefSchemaSlug = propertySchema.items?.$ref
+          ? extractSchemaSlugFromRef(propertySchema.items.$ref)
+          : undefined;
+
         schemaConfig = {
           ...baseConfig,
           type: 'multiSelect',
@@ -435,6 +574,10 @@ const ConDynamicSchemaForm = forwardRef(
           isMulti: true,
           closeMenuOnSelect: false,
           placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
+          ...(arrayItemsRefSchemaSlug && {
+            refSchemaSlug: arrayItemsRefSchemaSlug,
+            isSearchable: true,
+          }),
         };
       } else if (propertySchema.enum) {
         schemaConfig = {
@@ -458,19 +601,6 @@ const ConDynamicSchemaForm = forwardRef(
           refSchemaSlug, // Store for options fetching
           isSearchable: true, // Enable search if more than 20 results
         };
-      } else if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
-        // Handle array of object references
-        const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.items.$ref);
-        schemaConfig = {
-          ...baseConfig,
-          type: 'multiSelect',
-          component: 'ReactSelect',
-          isMulti: true,
-          closeMenuOnSelect: false,
-          placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
-          refSchemaSlug, // Store for options fetching
-          isSearchable: true, // Enable search if more than 20 results
-        };
       } else if (
         propertySchema.type === 'string' &&
         optionsProviders[propertyPath]?.length > 0
@@ -481,33 +611,124 @@ const ConDynamicSchemaForm = forwardRef(
           component: 'ReactSelect',
           placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
         };
-      } else if (
-        propertySchema.type === 'string' &&
-        propertySchema.format === 'text'
-      ) {
+      } else if (propertySchema.type === 'boolean') {
         schemaConfig = {
           ...baseConfig,
-          type: 'text',
-          component: 'AcTextarea',
+          type: 'boolean',
+          component: 'Boolean',
         };
       } else if (
-        propertySchema.type === 'string' &&
-        (propertySchema.format === 'date' || propertySchema.format === 'date-time')
+        propertySchema.type === 'number' ||
+        propertySchema.type === 'integer'
       ) {
-        // Handle date and datetime fields
         schemaConfig = {
           ...baseConfig,
-          type: 'date',
-          component: 'AcFormField',
-          inputType:
-            propertySchema.format === 'date-time' ? 'datetime-local' : 'date',
+          type: 'number',
+          component: 'Number',
+          integer: propertySchema.type === 'integer',
+        };
+      } else if (propertySchema.type === 'object' && !propertySchema.properties) {
+        // Object without properties: JSON textarea
+        schemaConfig = {
+          ...baseConfig,
+          type: 'json',
+          component: 'JsonObject',
         };
       } else if (propertySchema.type === 'string') {
-        schemaConfig = {
-          ...baseConfig,
-          type: 'text',
-          component: 'AcFormField',
-        };
+        // Supported string formats only
+        const format = propertySchema.format;
+
+        // Color formats -> custom ColorField
+        const colorFormats = [
+          'color',
+          'color-hex',
+          'color-hex-alpha',
+          'color-rgb',
+          'color-rgba',
+          'color-hsl',
+          'color-hsla',
+        ];
+
+        if (format === 'text') {
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'AcTextarea',
+          };
+        } else if (
+          format === 'date' ||
+          format === 'date-time' ||
+          format === 'time'
+        ) {
+          schemaConfig = {
+            ...baseConfig,
+            type: 'date',
+            component: 'AcFormField',
+            inputType:
+              format === 'date-time'
+                ? 'datetime-local'
+                : format === 'time'
+                ? 'time'
+                : 'date',
+          };
+        } else if (format === 'markdown' || format === 'html') {
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'WysiwygMarkdown',
+            isMarkdown: format === 'markdown',
+          };
+        } else if (['email', 'idn-email'].includes(format)) {
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'AcFormField',
+            inputType: 'email',
+          };
+        } else if (
+          ['url', 'uri', 'uri-reference', 'iri', 'iri-reference'].includes(format)
+        ) {
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'AcFormField',
+            inputType: 'url',
+          };
+        } else if (colorFormats.includes(format)) {
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'Color',
+            colorFormat: format,
+          };
+        } else if (
+          [
+            'duration',
+            'hostname',
+            'idn-hostname',
+            'ipv4',
+            'ipv6',
+            'uuid',
+            'uri-template',
+            'json-pointer',
+            'relative-json-pointer',
+            'regex',
+          ].includes(format)
+        ) {
+          // No special widget: keep as simple text input
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'AcFormField',
+          };
+        } else {
+          // Unknown or no format -> plain text
+          schemaConfig = {
+            ...baseConfig,
+            type: 'text',
+            component: 'AcFormField',
+          };
+        }
       } else {
         schemaConfig = {
           ...baseConfig,
@@ -538,20 +759,29 @@ const ConDynamicSchemaForm = forwardRef(
      */
     const getFieldVisibility = (propertyPath, fieldConfig, propertySchema) => {
       // First check traditional visibility rules
-      const isVisibleByConfig = shouldShowFormField(fieldConfig, formData, userIsAuthenticated, context);
+      const isVisibleByConfig = shouldShowFormField(
+        fieldConfig,
+        formData,
+        userIsAuthenticated,
+        context
+      );
       if (!isVisibleByConfig) {
         return false;
       }
 
       // Then check field-level authorization if user object is available
       if (user && propertySchema) {
-        const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
-        
+        const authState = getFieldAuthorizationState(
+          user,
+          propertySchema,
+          isCreateMode
+        );
+
         // Enable debug logging for development
         if (process.env.NODE_ENV === 'development') {
           debugFieldAuthorization(user, propertySchema, propertyPath, isCreateMode);
         }
-        
+
         return authState.visible;
       }
 
@@ -575,13 +805,31 @@ const ConDynamicSchemaForm = forwardRef(
         }));
       }
 
+      // Arrays of primitives may have items.enum
+      if (propertySchema.type === 'array' && propertySchema.items?.enum) {
+        return propertySchema.items.enum.map((option) => ({
+          value: option,
+          label: option,
+        }));
+      }
+
       // Priority 2: $ref-based options from optionsProviders
       // The parent component should populate optionsProviders with fetched data for $ref fields
       if (optionsProviders[propertyPath]) {
-        return optionsProviders[propertyPath];
+        const provided = optionsProviders[propertyPath];
+        // Debug logging disabled to prevent loops
+        // if (process.env.NODE_ENV === 'development' && propertyPath === 'aanbieder') {
+        //   console.log(`🔍 getFieldOptions: Found options for ${propertyPath}:`, provided);
+        // }
+        return typeof provided === 'function' ? provided(formData) : provided;
       }
 
       // Priority 3: No options
+      // Debug logging for aanbieder field specifically
+      if (process.env.NODE_ENV === 'development' && propertyPath === 'aanbieder' && propertySchema.$ref) {
+        console.log(`⚠️ getFieldOptions: No options found for $ref field ${propertyPath}, schema:`, propertySchema);
+        console.log(`⚠️ getFieldOptions: Available optionsProviders keys:`, Object.keys(optionsProviders));
+      }
       return [];
     };
 
@@ -616,7 +864,11 @@ const ConDynamicSchemaForm = forwardRef(
 
       // Priority 3: Check field-level authorization if user object is available
       if (user && propertySchema) {
-        const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
+        const authState = getFieldAuthorizationState(
+          user,
+          propertySchema,
+          isCreateMode
+        );
         if (!authState.editable) {
           return true;
         }
@@ -636,29 +888,54 @@ const ConDynamicSchemaForm = forwardRef(
      * getFieldValidation("name", { required: true })
      * // Returns: { hasError: true, required: true } if name is empty
      */
-    const getFieldValidation = (propertyPath, fieldConfig) => {
+    const getFieldValidation = (propertyPath, fieldConfig, valueOverride) => {
       if (validationStates[propertyPath]) {
         return validationStates[propertyPath];
       }
 
-      const isRequired = fieldConfig.required;
-      const value = getNestedValue(propertyPath, formData);
-
-      // Better validation logic that handles different value types
-      let hasError = false;
-      if (isRequired) {
-        if (fieldConfig.isMulti) {
-          // For multi-select, check if array exists and has items
-          hasError = !Array.isArray(value) || value.length === 0;
-        } else {
-          // For single select and text fields, check if value exists and is not empty
-          hasError = value === undefined || value === null || value === '';
+      // Support required as boolean or function(formData)
+      let isRequired = fieldConfig.required;
+      if (typeof isRequired === 'function') {
+        try {
+          isRequired = isRequired(formData);
+        } catch (_) {
+          isRequired = false;
         }
+      }
+      const value =
+        valueOverride !== undefined
+          ? valueOverride
+          : getNestedValue(propertyPath, formData);
+
+      let errors = [];
+      if (isRequired) {
+        const normalizedValue = typeof value === 'string' ? value.trim() : value;
+        const isEmpty =
+          normalizedValue === undefined ||
+          normalizedValue === null ||
+          (typeof normalizedValue === 'string' && normalizedValue === '') ||
+          (Array.isArray(normalizedValue) && normalizedValue.length === 0);
+        if (isEmpty) errors.push('Dit veld is verplicht');
+      }
+
+      // Type-specific validations
+      if (fieldConfig.component === 'Number') {
+        errors = errors.concat(validateNumber(value, fieldConfig.schema || {}));
+      } else if (fieldConfig.component === 'ReactSelect' && fieldConfig.isMulti) {
+        errors = errors.concat(validateArray(value, fieldConfig.schema || {}));
+      } else if (
+        typeof value === 'string' ||
+        fieldConfig.component === 'AcFormField' ||
+        fieldConfig.component === 'AcTextarea' ||
+        fieldConfig.component === 'WysiwygMarkdown'
+      ) {
+        errors = errors.concat(validateString(value, fieldConfig.schema || {}));
       }
 
       return {
-        hasError,
+        hasError: errors.length > 0,
         required: isRequired,
+        errorMessage: errors[0],
       };
     };
 
@@ -684,8 +961,12 @@ const ConDynamicSchemaForm = forwardRef(
           property.required
         );
 
-        // Skip validation for invisible fields
-        if (!getFieldVisibility(property.path, fieldConfig)) continue;
+        // Skip validation for invisible fields (including auth-based visibility)
+        if (!getFieldVisibility(property.path, fieldConfig, property.schema))
+          continue;
+
+        // Skip validation for disabled fields
+        if (getFieldDisabled(property.path, property.schema, fieldConfig)) continue;
 
         const validation = getFieldValidation(property.path, fieldConfig);
         if (validation.hasError) {
@@ -758,17 +1039,24 @@ const ConDynamicSchemaForm = forwardRef(
      */
     const renderField = (property) => {
       const { path, schema: propertySchema, required } = property;
-      const fieldConfig = getFieldConfig(path, propertySchema, required);
+      const fieldConfig = {
+        ...getFieldConfig(path, propertySchema, required),
+        schema: propertySchema,
+      };
 
       // Check visibility - support both boolean and function
       if (!getFieldVisibility(path, fieldConfig, propertySchema)) return null;
 
-      const value = getNestedValue(path, formData);
+      let value = getNestedValue(path, formData);
+      // Apply default if undefined
+      if (value === undefined) {
+        value = getDefaultValue(propertySchema);
+      }
 
       const options = getFieldOptions(path, propertySchema);
       const isLoading = getFieldLoading(path);
       const isDisabled = getFieldDisabled(path, propertySchema, fieldConfig);
-      const validation = getFieldValidation(path, fieldConfig);
+      const validation = getFieldValidation(path, fieldConfig, value);
 
       // Check if there's a custom component for this field
       const CustomComponent = customFieldComponents[path];
@@ -799,6 +1087,147 @@ const ConDynamicSchemaForm = forwardRef(
         );
       }
 
+      if (fieldConfig.component === 'Boolean') {
+        return (
+          <BooleanField
+            key={path}
+            label={fieldConfig.label}
+            value={!!value}
+            onChange={handleFieldChange(path, fieldConfig)}
+            disabled={isDisabled}
+          />
+        );
+      }
+
+      if (fieldConfig.component === 'Number') {
+        return (
+          <NumberField
+            key={path}
+            path={path}
+            label={fieldConfig.label}
+            value={value}
+            onChange={handleFieldChange(path, fieldConfig)}
+            placeholder={fieldConfig.placeholder}
+            disabled={isDisabled}
+            required={validation.required}
+            schema={propertySchema}
+            integer={fieldConfig.integer}
+            validation={validation}
+          />
+        );
+      }
+
+      if (fieldConfig.component === 'Color') {
+        return (
+          <div key={`${path}-${resetKey}`}>
+            <label className='utrecht-form-label'>
+              <Heading
+                level={4}
+                className={clsx({
+                  'ac-form-field-header-info': fieldConfig.description,
+                })}
+              >
+                <div>
+                  {fieldConfig.label}
+                  {validation.required && (
+                    <>
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </>
+                  )}
+                </div>
+                {fieldConfig.description && (
+                  <>
+                    <span
+                      data-tooltip-id={TOOLTIP_ID}
+                      data-tooltip-content={fieldConfig.description}
+                      className='info-indicator'
+                      role='img'
+                      aria-label={fieldConfig.description}
+                    >
+                      <VISUALS.INFO />
+                    </span>
+                  </>
+                )}
+              </Heading>
+            </label>
+            <ColorField
+              key={path}
+              path={path}
+              label={fieldConfig.label}
+              value={value}
+              onChange={handleFieldChange(path, fieldConfig)}
+              placeholder={fieldConfig.placeholder}
+              disabled={isDisabled}
+              required={validation.required}
+              colorFormat={fieldConfig.colorFormat}
+            />
+          </div>
+        );
+      }
+
+      if (fieldConfig.component === 'JsonObject') {
+        return (
+          <JsonObjectField
+            key={path}
+            path={path}
+            label={fieldConfig.label}
+            value={value}
+            onChange={handleFieldChange(path, fieldConfig)}
+            placeholder={fieldConfig.placeholder}
+            disabled={isDisabled}
+          />
+        );
+      }
+
+      if (fieldConfig.component === 'WysiwygMarkdown') {
+        return (
+          <div key={`${path}-${resetKey}`} className='con-wysiwyg-markdown-field'>
+            <label className='utrecht-form-label'>
+              <Heading
+                level={4}
+                className={clsx({
+                  'ac-form-field-header-info': fieldConfig.description,
+                })}
+              >
+                <div>
+                  {fieldConfig.label}
+                  {validation.required && (
+                    <>
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </>
+                  )}
+                </div>
+                {fieldConfig.description && (
+                  <span
+                    data-tooltip-id={TOOLTIP_ID}
+                    data-tooltip-content={fieldConfig.description}
+                    className='info-indicator'
+                    role='img'
+                    aria-label={fieldConfig.description}
+                  >
+                    <VISUALS.INFO />
+                  </span>
+                )}
+              </Heading>
+            </label>
+            <MDEditor
+              value={value || ''}
+              onChange={(val) => handleFieldChange(path, fieldConfig)(val || '')}
+              data-color-mode='light'
+              visibleDragBar={false}
+              preview='edit'
+              hideToolbar={isDisabled}
+            />
+          </div>
+        );
+      }
+
       if (fieldConfig.component === 'AcFormField') {
         return (
           <AcFormField
@@ -819,9 +1248,12 @@ const ConDynamicSchemaForm = forwardRef(
             type={fieldConfig.type}
             inputType={fieldConfig.inputType || 'text'} // Support for HTML5 input types like date, datetime-local
             onChange={handleFieldChange(path, fieldConfig)}
-            value={value || ''}
+            value={value ?? ''}
             placeholder={fieldConfig.placeholder}
             disabled={isDisabled}
+            minLength={propertySchema?.minLength ?? undefined}
+            maxLength={propertySchema?.maxLength ?? undefined}
+            pattern={propertySchema?.pattern || undefined}
             {...validation}
           />
         );
@@ -853,6 +1285,26 @@ const ConDynamicSchemaForm = forwardRef(
             {...validation}
           />
         );
+      }
+
+      // Array comma list fallback when array has no enum/optionsProviders
+      if (propertySchema.type === 'array') {
+        const options = getFieldOptions(path, propertySchema);
+        if (!propertySchema.items?.$ref && options.length === 0) {
+          const itemsType = propertySchema.items?.type;
+          return (
+            <ArrayCommaListField
+              key={path}
+              path={path}
+              label={fieldConfig.label}
+              value={value}
+              onChange={handleFieldChange(path, fieldConfig)}
+              placeholder={fieldConfig.placeholder}
+              disabled={isDisabled}
+              itemsType={itemsType}
+            />
+          );
+        }
       }
 
       if (fieldConfig.component === 'ReactSelect') {
@@ -899,8 +1351,9 @@ const ConDynamicSchemaForm = forwardRef(
                 )}
               </Heading>
             </label>
-            <ReactSelect
-              key={`${path}-${resetKey}`}
+            <ReactSelectWithGlobalHack
+              key={`${path}-${resetKey}-${forceRenderKey}`}
+              fieldPath={path}
               placeholder={fieldConfig.placeholder}
               value={selectValue}
               className={clsx(
@@ -914,14 +1367,26 @@ const ConDynamicSchemaForm = forwardRef(
               isMulti={fieldConfig.isMulti}
               closeMenuOnSelect={fieldConfig.closeMenuOnSelect}
               isSearchable={shouldBeSearchable}
-              onInputChange={handleSearch && getFieldRefSchemaSlug(propertySchema) ? (inputValue, actionMeta) => {
-                // Only trigger search for user input, not programmatic changes
-                if (actionMeta.action === 'input-change' && inputValue && inputValue.length > 1 && !isLoading) {
-                  const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
-                  console.log(`🔍 User searching ${path} (${refSchemaSlug}):`, inputValue);
-                  handleSearch(path, refSchemaSlug, inputValue);
-                }
-              } : undefined}
+              onInputChange={
+                handleSearch && getFieldRefSchemaSlug(propertySchema)
+                  ? (inputValue, actionMeta) => {
+                      // Only trigger search for user input, not programmatic changes
+                      if (
+                        actionMeta.action === 'input-change' &&
+                        inputValue &&
+                        inputValue.length > 1 &&
+                        !isLoading
+                      ) {
+                        const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
+                        console.log(
+                          `🔍 User searching ${path} (${refSchemaSlug}):`,
+                          inputValue
+                        );
+                        handleSearch(path, refSchemaSlug, inputValue);
+                      }
+                    }
+                  : undefined
+              }
               {...(validation.required && {
                 required: true,
               })}
@@ -945,23 +1410,90 @@ const ConDynamicSchemaForm = forwardRef(
     );
 
     /**
+     * Determines the size class for a field based on its type, format, and other characteristics
+     * @param {string} path - The property path
+     * @param {object} propertySchema - The property schema
+     * @param {object} fieldConfig - The field configuration
+     * @returns {string} CSS class name for field sizing
+     */
+    const getFieldSizeClass = (path, propertySchema, fieldConfig) => {
+      // Check for explicit size configuration first
+      if (fieldConfig.size === 'full') return 'field-size-full';
+      if (fieldConfig.size === 'half') return 'field-size-half';
+
+      // Business rules for automatic sizing based on type/format
+      const format = propertySchema.format;
+      const component = fieldConfig.component;
+
+      // Only markdown fields get special treatment: full width + double height
+      if (component === 'WysiwygMarkdown' || format === 'markdown') {
+        return 'field-size-full field-height-double';
+      }
+
+      // Everything else: half width, normal height
+      return 'field-size-half';
+    };
+
+    /**
+     * Wraps a field with appropriate sizing container
+     * @param {React.ReactElement} fieldElement - The rendered field element
+     * @param {string} path - The property path
+     * @param {object} propertySchema - The property schema
+     * @param {object} fieldConfig - The field configuration
+     * @returns {React.ReactElement} Wrapped field element
+     */
+    const wrapFieldWithSize = (fieldElement, path, propertySchema, fieldConfig) => {
+      if (!fieldElement) return null;
+
+      const sizeClass = getFieldSizeClass(path, propertySchema, fieldConfig);
+
+      return (
+        <div key={path} className={`con-form-field-wrapper ${sizeClass}`}>
+          {fieldElement}
+        </div>
+      );
+    };
+
+    /**
+     * Enhanced render field function that includes size wrapping
+     */
+    const renderFieldWithSize = (property) => {
+      const { path, schema: propertySchema, required } = property;
+      const fieldConfig = getFieldConfig(path, propertySchema, required);
+
+      // Check visibility first
+      if (!getFieldVisibility(path, fieldConfig, propertySchema)) {
+        return null;
+      }
+
+      // Render the actual field
+      const fieldElement = renderField(property);
+
+      // Wrap with size container
+      return wrapFieldWithSize(fieldElement, path, propertySchema, fieldConfig);
+    };
+
+    /**
      * Main render section that processes and renders all form fields.
      *
      * Process:
      * 1. Sort top-level properties using custom sortPropertiesByOrder logic
      * 2. Flatten nested object properties into individual fields with dot notation paths
-     * 3. Render each field using renderField() function
+     * 3. Render each field using renderField() function with size wrapping
      * 4. Include tooltip component for field descriptions
      *
      * The flattened properties maintain the original order from the sorted top-level properties,
      * with nested properties appearing in their original order within their parent object.
      */
     return (
-      <>
-        {flattenedProperties.map((property) => renderField(property))}
+      <div 
+        className='con-form-fields-container'
+        key={`form-${resetKey}-${forceRenderKey}`} // HACK: Include forceRenderKey to force re-render when options change
+      >
+        {flattenedProperties.map((property) => renderFieldWithSize(property))}
         {/* Tooltip needs to be rendered again because the dialog is rendered in a portal at #top-layer */}
         <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />
-      </>
+      </div>
     );
   }
 );

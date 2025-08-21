@@ -73,6 +73,9 @@
           ["@utils", "./src/utilities"]
         ],
         "extensions": [".js", ".jsx"]
+      },
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
     }
   }

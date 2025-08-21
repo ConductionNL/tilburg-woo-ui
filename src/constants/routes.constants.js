@@ -22,6 +22,9 @@ import {
   AcMyAccount,
   AcLogin,
   ConDirectory,
+  AcFormsGebruik,
+  AcFormsProduct,
+  AcFormsKoppeling,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -43,6 +46,10 @@ export const PATHS = AcLockObject({
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
   REGISTER: '/register',
   AANMELDEN: '/aanmelden',
+  FORMS_REGISTER: '/forms/register',
+  FORMS_GEBRUIK: '/forms/gebruik',
+  FORMS_PRODUCT: '/forms/product',
+  FORMS_KOPPELING: '/forms/koppeling',
   VIEWS: '/views/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
@@ -236,6 +243,46 @@ export const ROUTES = {
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Aanmelden`,
     component: AcRegister,
+  },
+  FORMS_REGISTER: {
+    id: AcUUID(),
+    name: 'Formulier Aanmelden',
+    label: 'Formulier Aanmelden',
+    path: PATHS.FORMS_REGISTER,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Aanmelden`,
+    component: AcRegister,
+  },
+  FORMS_GEBRUIK: {
+    id: AcUUID(),
+    name: 'Formulier Gebruik',
+    label: 'Formulier Gebruik',
+    path: PATHS.FORMS_GEBRUIK,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Gebruik`,
+    component: AcFormsGebruik,
+  },
+  FORMS_PRODUCT: {
+    id: AcUUID(),
+    name: 'Formulier Product',
+    label: 'Formulier Product',
+    path: PATHS.FORMS_PRODUCT,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Product`,
+    component: AcFormsProduct,
+  },
+  FORMS_KOPPELING: {
+    id: AcUUID(),
+    name: 'Formulier Koppeling',
+    label: 'Formulier Koppeling',
+    path: PATHS.FORMS_KOPPELING,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Koppeling`,
+    component: AcFormsKoppeling,
   },
   VIEWS: {
     id: AcUUID(),

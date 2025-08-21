@@ -1,12 +1,22 @@
-// eslint-disable-next-line import/no-unresolved
 import React, { useEffect, useMemo, useState } from 'react';
+import clsx from 'clsx';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { VISUALS } from '@constants';
 import { AcButton, AcFormField } from '@molecules';
-import { ConMarkdown } from '@components';
-import { Heading, Button } from '@utrecht/component-library-react/dist/css-module';
+import { TOOLTIP_ID } from '@src/index.web';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex } from '@src/atoms';
+
+// Markdown Editor
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import { remarkMark } from 'remark-mark-highlight';
+import rehypeSlug from 'rehype-slug';
 
 /**
  * ConEditableDescription
@@ -49,7 +59,7 @@ const ConEditableDescription = ({
 
   const handleSave = async () => {
     if (!objectId || !field) return;
-    const payload = { [field]: serialize(tempValue || '') };
+    const payload = { [field]: tempValue };
     try {
       await objectStore.patchObject(registerSlug, schemaSlug, objectId, payload);
       setIsEditing(false);
@@ -65,22 +75,64 @@ const ConEditableDescription = ({
       {isEditing ? (
         <div className='ac-organisatie-detail-form-wrapper'>
           <div className='ac-organisatie-detail-form'>
-            <div className='ac-organisatie-detail-form-label-row'>
-              <Heading level={3} className='ac-form-field__label-with-icon'>
-                {label}
-                {tooltip ? (
-                  <span className='ac-form-field__tooltip' title={tooltip}>
-                    <VISUALS.INFO />
-                  </span>
-                ) : null}
-              </Heading>
-            </div>
-            <div className={isMarkdown ? 'ac-organisatie-detail-form-flex' : ''}>
-              <div
-                className={isMarkdown ? 'ac-organisatie-detail-form-textarea' : ''}
-              >
+            {isMarkdown ? (
+              <div className='con-wysiwyg-markdown-field'>
+                <label className='utrecht-form-label'>
+                  <Heading
+                    level={4}
+                    className={clsx({
+                      'ac-form-field-header-info': tooltip,
+                    })}
+                  >
+                    <div>{label}</div>
+                    {tooltip && (
+                      <span
+                        data-tooltip-id={TOOLTIP_ID}
+                        data-tooltip-content={tooltip}
+                        className='info-indicator'
+                        role='img'
+                        aria-label={tooltip}
+                      >
+                        <VISUALS.INFO />
+                      </span>
+                    )}
+                  </Heading>
+                </label>
+                <MDEditor
+                  value={tempValue || ''}
+                  onChange={(val) => {
+                    setTempValue(val);
+                    setCharCount((val || '').length);
+                  }}
+                  data-color-mode='light'
+                  visibleDragBar={false}
+                  preview='live'
+                  hideToolbar={saving}
+                  textareaProps={{
+                    maxLength: maxLength,
+                  }}
+                  previewOptions={{
+                    remarkPlugins: [
+                      [remarkGfm, { singleTilde: false }],
+                      remarkDefinitionList,
+                      remarkEmoji,
+                      remarkSupersub,
+                      remarkMark,
+                    ],
+                    rehypePlugins: [
+                      rehypeSlug,
+                      [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                    ],
+                  }}
+                />
+                <span className='character-count'>
+                  {maxLength - charCount} karakters over
+                </span>
+              </div>
+            ) : (
+              <div>
                 <AcFormField
-                  label='Invoerveld'
+                  label={label}
                   fullWidth={true}
                   inputType='textarea'
                   value={tempValue}
@@ -101,15 +153,7 @@ const ConEditableDescription = ({
                   {maxLength - charCount} karakters over
                 </span>
               </div>
-              {isMarkdown && (
-                <div className='ac-organisatie-detail-form-preview'>
-                  <Heading level={4}>Preview</Heading>
-                  <div className='ac-organisatie-detail-preview markdown-preview'>
-                    <ConMarkdown>{tempValue}</ConMarkdown>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
 
             <AcFlex spacing='sm' justifyContent='end'>
               <AcButton
@@ -149,7 +193,24 @@ const ConEditableDescription = ({
                   </span>
                 );
               }
-              return isMarkdown ? <ConMarkdown>{v}</ConMarkdown> : <p>{v}</p>;
+              return isMarkdown ? (
+                <MDEditor.Markdown
+                  source={v}
+                  remarkPlugins={[
+                    [remarkGfm, { singleTilde: false }],
+                    remarkDefinitionList,
+                    remarkEmoji,
+                    remarkSupersub,
+                    remarkMark,
+                  ]}
+                  rehypePlugins={[
+                    rehypeSlug,
+                    [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                  ]}
+                />
+              ) : (
+                <p>{v}</p>
+              );
             })()}
           </div>
           <AcButton
@@ -164,7 +225,7 @@ const ConEditableDescription = ({
               setCharCount((v || '').length);
             }}
           >
-          Bewerken
+            Bewerken
           </AcButton>
         </>
       )}
