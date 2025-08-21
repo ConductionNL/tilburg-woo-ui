@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
@@ -7,7 +7,7 @@ import { AcTable, AcLink } from '@molecules';
 import { withStore } from '@stores';
 import { ENDPOINTS, LABELS, VISUALS } from '@constants';
 import { Pagination } from '@amsterdam/design-system-react';
-import { getCookie } from '@src/utilities';
+import { getCookie, sortPropertiesByOrder } from '@src/utilities';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import {
   Heading,
@@ -15,12 +15,25 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { commongroundApiUrl } from '@config';
+import formatBySchema from '@src/utilities/con-format-by-json-schema';
 
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { ConDetailsActionsMenu } from '@components';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '../ac-register/con-logo-preview';
+import { canReadField } from '@utils/field-authorization';
+import { TOOLTIP_ID } from '@src/index.web';
+
+// Markdown Editor
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import { remarkMark } from 'remark-mark-highlight';
+import rehypeSlug from 'rehype-slug';
 
 const getValueField = (key, value) => {
   if (!value) return <div>-</div>;
@@ -106,14 +119,17 @@ const AcPublication = observer(
     const isLoggedIn = !!getCookie('nextcloud_user_id');
 
     // Use the same related actions hook as beheer pages
-    const openDynamicCreate = useCallback((targetType, preSelected, metadata = {}) => {
-      // For publication pages, we'll navigate to the beheer page with modal open
-      // TODO: Handle outgoing relationship metadata in beheer page URL params
-      if (metadata.isOutgoing) {
-        console.log('🔄 Outgoing relationship from publication page:', metadata);
-      }
-      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
-    }, [navigate, id]);
+    const openDynamicCreate = useCallback(
+      (targetType, preSelected, metadata = {}) => {
+        // For publication pages, we'll navigate to the beheer page with modal open
+        // TODO: Handle outgoing relationship metadata in beheer page URL params
+        if (metadata.isOutgoing) {
+          console.log('🔄 Outgoing relationship from publication page:', metadata);
+        }
+        navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
+      },
+      [navigate, id]
+    );
 
     const { makeActionsForContext } = useRelatedCreateActions({
       object,
@@ -131,14 +147,14 @@ const AcPublication = observer(
 
     useEffect(() => {
       if (!get_single?.['@self']?.schema?.slug || !id) return;
-      
+
       const items = makeActionsForContext(id).map(({ key, label, onClick }) => ({
         key,
         label,
         onClick,
         icon: <VISUALS.PLUS />,
       }));
-      
+
       console.log('Publication related action items:', items);
       setActionMenuItems(items);
     }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
@@ -267,6 +283,16 @@ const AcPublication = observer(
       setUsedLoading(false);
     };
 
+    const configuredMetaFields = useMemo(() => {
+      const cfg = schema?.configuration;
+      return [
+        cfg?.objectDescriptionField,
+        cfg?.objectImageField,
+        cfg?.objectNameField,
+        cfg?.objectSummaryField,
+      ].filter(Boolean);
+    }, [schema]);
+
     useEffect(() => {
       fetchUses();
       fetchUsed();
@@ -281,28 +307,25 @@ const AcPublication = observer(
       <>
         <AcContainer compact margin='xl'>
           <AcFlex column spacing={'lg'}>
-            <div className='ac-publication-header'>
-              <AcFlex column spacing='sm'>
-                <Heading>
-                  {get_single?.title ??
-                    get_single?.titel ??
-                    get_single?.name ??
-                    get_single?.naam ??
-                    get_single?.id}
-                </Heading>
-                {get_single?.image && (
-                  <img
-                    src={get_single?.image}
-                    className='ac-publication-header-image'
+            <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
+              <div className='con-beheer-details--header-container'>
+                {get_single?.['@self']?.image && (
+                  <ConLogoPreview
+                    className='con-beheer-details--logo-container'
+                    logoUrl={get_single?.['@self']?.image}
                   />
                 )}
-              </AcFlex>
+
+                <Heading className='con-beheer-details--title'>
+                  {get_single?.['@self']?.name || get_single?.id}
+                </Heading>
+              </div>
 
               <ConDetailsActionsMenu
                 user={user}
                 id={id}
                 schemaSlug={get_single?.['@self']?.schema?.slug}
-                title={get_single?.title ?? get_single?.titel ?? get_single?.name ?? get_single?.naam ?? get_single?.id}
+                title={get_single?.['@self']?.name || get_single?.id}
                 published={get_single?.['@self']?.published}
                 object={get_single}
                 showViewAction={false}
@@ -316,14 +339,102 @@ const AcPublication = observer(
                     onClick: () => {
                       console.log('Delete action for publication:', id);
                       // TODO: Implement delete modal for publications
-                    }
-                  }
+                    },
+                  },
                 ]}
                 triggerStyle='button'
                 relatedActions={actionMenuItems}
               />
+            </AcFlex>
+
+            <div>
+              {get_single?.['@self']?.summary || get_single?.['@self']?.description}
             </div>
-            <AcTable header={headers} rows={rows} />{' '}
+
+            <MDEditor.Markdown
+              source={get_single?.beschrijvingLang}
+              remarkPlugins={[
+                [remarkGfm, { singleTilde: false }],
+                remarkDefinitionList,
+                remarkEmoji,
+                remarkSupersub,
+                remarkMark,
+              ]}
+              rehypePlugins={[
+                rehypeSlug,
+                [remarkRehype, { handlers: { ...defListHastHandlers } }],
+              ]}
+            />
+            <div className='ac-beheer-details--grid'>
+              {Object.entries(
+                sortPropertiesByOrder(get_single?.['@self']?.schema?.properties)
+              )
+                .filter(
+                  ([key]) =>
+                    !schema?.configuration?.excludedProperties?.includes(key)
+                )
+                .filter(([key]) => !configuredMetaFields.includes(key))
+                .filter(([key, schema]) => canReadField(user, schema))
+                .map(([key, schema]) => {
+                  // Check if this property should be displayed inline
+                  const isInline =
+                    schema?.configuration?.formatBySchemaOptions?.profile?.[key]
+                      ?.inline;
+
+                  if (isInline) {
+                    // Inline rendering: label and value on same line
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          gap: '8px',
+                        }}
+                      >
+                        <strong
+                          {...(schema?.description
+                            ? {
+                                'data-tooltip-id': TOOLTIP_ID,
+                                'data-tooltip-content': schema.description,
+                              }
+                            : {})}
+                        >
+                          {_.startCase(key)}:
+                        </strong>
+                        {formatBySchema(
+                          schema,
+                          get_single,
+                          key,
+                          schema?.configuration?.formatBySchemaOptions || {}
+                        )}
+                      </div>
+                    );
+                  } else {
+                    // Default block rendering: label above value
+                    return (
+                      <div key={key}>
+                        <strong
+                          {...(schema?.description
+                            ? {
+                                'data-tooltip-id': TOOLTIP_ID,
+                                'data-tooltip-content': schema.description,
+                              }
+                            : {})}
+                        >
+                          {_.startCase(key)}:
+                        </strong>{' '}
+                        {formatBySchema(
+                          schema,
+                          get_single,
+                          key,
+                          schema?.configuration?.formatBySchemaOptions || {}
+                        )}
+                      </div>
+                    );
+                  }
+                })}
+            </div>
             {/* Show only when there are primary attachments */}
             {getFilteredAttachments(true)?.length > 0 && (
               <div>

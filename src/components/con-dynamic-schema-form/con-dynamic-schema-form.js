@@ -76,12 +76,12 @@ import ColorField from './inputs/color-field';
  *
  * **Flexible Field Layout System:**
  * The form uses a flexible layout with floating divs that automatically adjust field sizes based on content:
- * 
+ *
  * **Automatic Sizing Rules:**
  * - **Full Width (100%)**: Markdown/HTML fields, JSON objects, large text (maxLength > 100), multi-select arrays
  * - **Half Width + Double Height**: Text areas, description fields, fields with maxLength > 50
  * - **Half Width + Normal Height**: Default for most fields (text inputs, selects, numbers, etc.)
- * 
+ *
  * **Manual Size Override:**
  * ```jsx
  * fieldConfigs={{
@@ -341,12 +341,12 @@ const ConDynamicSchemaForm = forwardRef(
         const refMatch = propertySchema.$ref.match(/\/schemas\/([^\/]+)$/);
         return refMatch?.[1] || null;
       }
-      
+
       if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
         const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
         return refMatch?.[1] || null;
       }
-      
+
       return null;
     };
 
@@ -1077,35 +1077,44 @@ const ConDynamicSchemaForm = forwardRef(
 
       if (fieldConfig.component === 'WysiwygMarkdown') {
         return (
-          <div key={path} className="con-wysiwyg-markdown-field">
-            <label className="utrecht-form-label">
-              <h4 className="utrecht-heading-4">
-                {fieldConfig.label}
-                {validation.required && (
-                  <>
-                    <span className="required-indicator" aria-hidden="true">*</span>
-                    <span className="sr-only">(verplicht)</span>
-                  </>
-                )}
+          <div key={`${path}-${resetKey}`} className='con-wysiwyg-markdown-field'>
+            <label className='utrecht-form-label'>
+              <Heading
+                level={4}
+                className={clsx({
+                  'ac-form-field-header-info': fieldConfig.description,
+                })}
+              >
+                <div>
+                  {fieldConfig.label}
+                  {validation.required && (
+                    <>
+                      <span className='required-indicator' aria-hidden='true'>
+                        *
+                      </span>
+                      <span className='sr-only'>(verplicht)</span>
+                    </>
+                  )}
+                </div>
                 {fieldConfig.description && (
                   <span
                     data-tooltip-id={TOOLTIP_ID}
                     data-tooltip-content={fieldConfig.description}
-                    className="info-indicator"
-                    role="img"
+                    className='info-indicator'
+                    role='img'
                     aria-label={fieldConfig.description}
                   >
                     <VISUALS.INFO />
                   </span>
                 )}
-              </h4>
+              </Heading>
             </label>
             <MDEditor
               value={value || ''}
               onChange={(val) => handleFieldChange(path, fieldConfig)(val || '')}
-              data-color-mode="light"
+              data-color-mode='light'
               visibleDragBar={false}
-              preview="edit"
+              preview='edit'
               hideToolbar={isDisabled}
             />
           </div>
@@ -1250,14 +1259,26 @@ const ConDynamicSchemaForm = forwardRef(
               isMulti={fieldConfig.isMulti}
               closeMenuOnSelect={fieldConfig.closeMenuOnSelect}
               isSearchable={shouldBeSearchable}
-              onInputChange={handleSearch && getFieldRefSchemaSlug(propertySchema) ? (inputValue, actionMeta) => {
-                // Only trigger search for user input, not programmatic changes
-                if (actionMeta.action === 'input-change' && inputValue && inputValue.length > 1 && !isLoading) {
-                  const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
-                  console.log(`🔍 User searching ${path} (${refSchemaSlug}):`, inputValue);
-                  handleSearch(path, refSchemaSlug, inputValue);
-                }
-              } : undefined}
+              onInputChange={
+                handleSearch && getFieldRefSchemaSlug(propertySchema)
+                  ? (inputValue, actionMeta) => {
+                      // Only trigger search for user input, not programmatic changes
+                      if (
+                        actionMeta.action === 'input-change' &&
+                        inputValue &&
+                        inputValue.length > 1 &&
+                        !isLoading
+                      ) {
+                        const refSchemaSlug = getFieldRefSchemaSlug(propertySchema);
+                        console.log(
+                          `🔍 User searching ${path} (${refSchemaSlug}):`,
+                          inputValue
+                        );
+                        handleSearch(path, refSchemaSlug, inputValue);
+                      }
+                    }
+                  : undefined
+              }
               {...(validation.required && {
                 required: true,
               })}
@@ -1291,7 +1312,7 @@ const ConDynamicSchemaForm = forwardRef(
       // Check for explicit size configuration first
       if (fieldConfig.size === 'full') return 'field-size-full';
       if (fieldConfig.size === 'half') return 'field-size-half';
-      
+
       // Business rules for automatic sizing based on type/format
       const format = propertySchema.format;
       const component = fieldConfig.component;
@@ -1315,9 +1336,9 @@ const ConDynamicSchemaForm = forwardRef(
      */
     const wrapFieldWithSize = (fieldElement, path, propertySchema, fieldConfig) => {
       if (!fieldElement) return null;
-      
+
       const sizeClass = getFieldSizeClass(path, propertySchema, fieldConfig);
-      
+
       return (
         <div key={path} className={`con-form-field-wrapper ${sizeClass}`}>
           {fieldElement}
@@ -1331,15 +1352,15 @@ const ConDynamicSchemaForm = forwardRef(
     const renderFieldWithSize = (property) => {
       const { path, schema: propertySchema, required } = property;
       const fieldConfig = getFieldConfig(path, propertySchema, required);
-      
+
       // Check visibility first
       if (!getFieldVisibility(path, fieldConfig, propertySchema)) {
         return null;
       }
-      
+
       // Render the actual field
       const fieldElement = renderField(property);
-      
+
       // Wrap with size container
       return wrapFieldWithSize(fieldElement, path, propertySchema, fieldConfig);
     };
@@ -1357,7 +1378,7 @@ const ConDynamicSchemaForm = forwardRef(
      * with nested properties appearing in their original order within their parent object.
      */
     return (
-      <div className="con-form-fields-container">
+      <div className='con-form-fields-container'>
         {flattenedProperties.map((property) => renderFieldWithSize(property))}
         {/* Tooltip needs to be rendered again because the dialog is rendered in a portal at #top-layer */}
         <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />

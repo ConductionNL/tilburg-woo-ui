@@ -2,12 +2,12 @@ import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
-import { AcContainer, AcSection, AcFlex, AcGrid } from '@src/atoms';
+import { AcContainer, AcSection, AcFlex, AcGrid , AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
-import { AcColumn } from '@src/atoms';
+
 import {
   Heading1,
   Separator,
@@ -529,7 +529,7 @@ const AcRegister = () => {
                       >
                         {currentStepName(currentStep)}
                       </div>
-                      <div tabindex='-1' id='formStart'></div>
+                      <div tabIndex='-1' id='formStart'></div>
 
                       {renderStep(currentStep)}
 
@@ -1419,5 +1419,10 @@ const ReviewForm = memo(
     );
   }
 );
+
+OrganizationRequiredForm.displayName = 'OrganizationRequiredForm';
+OrganizationOptionalForm.displayName = 'OrganizationOptionalForm';
+ContactInformationForm.displayName = 'ContactInformationForm';
+ReviewForm.displayName = 'ReviewForm';
 
 export default withStore(observer(AcRegister));

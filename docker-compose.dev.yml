@@ -160,6 +160,8 @@ services:
       # Footer Text Configuration
       - FOOTER_LOGO_TITLE=Open Tilburg
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/status.php"]
       interval: 30s

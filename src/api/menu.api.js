@@ -9,7 +9,7 @@ export class MenuAPI {
 
   list() {
     return this.Client.get(ENDPOINTS.MENU.INDEX, {
-      params: { _limit: 100 }
+      params: { _limit: 100 },
     }).then((response) => response.data);
   }
 
