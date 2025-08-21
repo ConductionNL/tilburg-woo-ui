@@ -10,3 +10,34 @@
   margin-block-start: var(--tilburg-space-block-cat);
   margin-block-end: var(--tilburg-space-block-cat);
 }
+
+.con-form-wizard-service-selection :not(:last-child) {
+  margin-block-end: 10px;
+}
+
+.con-form-wizard-service-selection-radio-button-container :not(:last-child) {
+  margin-block-end: 5px;
+}
+
+.con-form-wizard-table-container {
+  margin-block-start: var(--tilburg-space-block-cat);
+}
+
+.con-form-wizard-radio {
+  &-button-label {
+    user-select: none;
+    cursor: pointer;
+    font-size: var(--utrecht-radio-button-label-font-size);
+    line-height: var(--utrecht-radio-button-label-line-height);
+    font-weight: var(--utrecht-radio-button-label-font-weight);
+    font-family: var(--utrecht-radio-button-label-font-family);
+  }
+  &-button-container {
+    display: flex;
+    gap: 4px;
+  }
+  &-button {
+    min-block-size: var(--utrecht-radio-button-min-block-size) !important;
+    min-inline-size: var(--utrecht-radio-button-min-inline-size) !important;
+  }
+}
