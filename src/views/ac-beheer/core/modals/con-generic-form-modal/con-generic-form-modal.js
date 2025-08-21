@@ -419,6 +419,18 @@ const ConGenericFormModal = ({
     };
   }, [optionsLoading, refLoadingStates]);
 
+  // Merge options providers to prevent unnecessary re-renders
+  const combinedOptionsProviders = useMemo(() => ({
+    ...optionsProviders,
+    ...refOptionsProviders,
+  }), [optionsProviders, refOptionsProviders]);
+
+  // Merge loading states to prevent unnecessary re-renders  
+  const combinedLoadingStates = useMemo(() => ({
+    ...loadingStates,
+    ...refLoadingStates,
+  }), [loadingStates, refLoadingStates]);
+
   // Generate field configurations for ConDynamicSchemaForm
   const fieldConfigs = useMemo(() => {
     if (!config?.fieldConfigs) return {};
@@ -778,8 +790,8 @@ const ConGenericFormModal = ({
             onFieldChange={handleFieldChange}
             fieldConfigs={fieldConfigs}
             customFieldComponents={config.customComponents || {}}
-            optionsProviders={optionsProviders}
-            loadingStates={loadingStates}
+            optionsProviders={combinedOptionsProviders}
+            loadingStates={combinedLoadingStates}
             disabledStates={combinedDisabledStates}
             getIsValid={handleFormValidCheck}
             honorImmutable={isEdit}

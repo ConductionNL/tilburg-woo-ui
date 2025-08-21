@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import React, { useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
@@ -13,6 +13,46 @@ import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
+
+// HACK: Wrapper component for ReactSelect that listens to global options updates (TODO: Fix the actual re-render loop issue)
+const ReactSelectWithGlobalHack = (props) => {
+  const { fieldPath, options: propOptions, ...selectProps } = props;
+  const [globalOptions, setGlobalOptions] = useState(propOptions || []);
+
+  useEffect(() => {
+    // Check if there are already options in global state
+    const existingOptions = window.FORCE_DROPDOWN_UPDATE.get(fieldPath);
+    if (existingOptions && existingOptions.length > 0) {
+      console.log(`🌍 HACK: Loading existing global options for ${fieldPath}:`, existingOptions);
+      setGlobalOptions(existingOptions);
+    }
+
+    // Listen for global option updates
+    const handleGlobalUpdate = (event) => {
+      if (event.detail.fieldPath === fieldPath) {
+        console.log(`🌍 HACK: Received global update for ${fieldPath}:`, event.detail.options);
+        setGlobalOptions(event.detail.options);
+      }
+    };
+
+    window.addEventListener('dropdownOptionsUpdate', handleGlobalUpdate);
+
+    return () => {
+      window.removeEventListener('dropdownOptionsUpdate', handleGlobalUpdate);
+    };
+  }, [fieldPath]);
+
+  // Use global options if available, otherwise fall back to prop options
+  const effectiveOptions = globalOptions.length > 0 ? globalOptions : (propOptions || []);
+
+  return (
+    <ReactSelect
+      {...selectProps}
+      options={effectiveOptions}
+    />
+  );
+};
+
 import MarkdownHtmlField from './inputs/markdown-html-field';
 import MDEditor from '@uiw/react-md-editor';
 import ConLightweightMarkdownEditor from './inputs/con-lightweight-markdown-editor';
@@ -320,6 +360,64 @@ const ConDynamicSchemaForm = forwardRef(
     ref
   ) => {
     const [resetKey, setResetKey] = React.useState(0);
+
+    // HACK: Force re-render when options change (TODO: Fix the actual re-render loop issue)
+    const [forceRenderKey, setForceRenderKey] = useState(0);
+    const prevOptionsRef = useRef({});
+
+    // Debug logging disabled to reduce console noise
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('🔍 ConDynamicSchemaForm: Received props:', {
+    //     schemaTitle: schema?.title,
+    //     optionsProvidersKeys: Object.keys(optionsProviders),
+    //     loadingStatesKeys: Object.keys(loadingStates),
+    //     disabledStatesKeys: Object.keys(disabledStates)
+    //   });
+    // }
+
+    // HACK: Force re-render when options change (TODO: Fix the actual re-render loop issue)
+    useEffect(() => {
+      // Check if any options have changed from empty to having data
+      let hasNewOptions = false;
+      
+      Object.keys(optionsProviders).forEach(key => {
+        const currentOptions = optionsProviders[key];
+        const prevOptions = prevOptionsRef.current[key];
+        
+        // If we now have options but didn't before, force re-render
+        if (Array.isArray(currentOptions) && currentOptions.length > 0 && 
+            (!prevOptions || prevOptions.length === 0)) {
+          hasNewOptions = true;
+          console.log(`🔧 HACK: Force re-render for new options in ${key}:`, currentOptions);
+        }
+      });
+      
+      if (hasNewOptions) {
+        // Force re-render after a short delay to ensure DOM is ready
+        setTimeout(() => {
+          setForceRenderKey(prev => prev + 1);
+        }, 100);
+      }
+      
+      // Update previous options reference
+      prevOptionsRef.current = { ...optionsProviders };
+    }, [optionsProviders]);
+
+    // Debug effect disabled to reduce console noise
+    // const prevOptionsKeysRef = useRef([]);
+    // useEffect(() => {
+    //   if (process.env.NODE_ENV === 'development') {
+    //     const currentKeys = Object.keys(optionsProviders).sort();
+    //     const prevKeys = prevOptionsKeysRef.current;
+    //     
+    //     // Only log if keys actually changed
+    //     if (JSON.stringify(currentKeys) !== JSON.stringify(prevKeys)) {
+    //       console.log('🔍 ConDynamicSchemaForm: optionsProviders keys changed:', currentKeys);
+    //       console.log('🔍 ConDynamicSchemaForm: optionsProviders content:', optionsProviders);
+    //       prevOptionsKeysRef.current = currentKeys;
+    //     }
+    //   }
+    // }, [optionsProviders]);
 
     // Extract search handler
     const { handleSearch } = onSearchHandlers;
@@ -719,10 +817,19 @@ const ConDynamicSchemaForm = forwardRef(
       // The parent component should populate optionsProviders with fetched data for $ref fields
       if (optionsProviders[propertyPath]) {
         const provided = optionsProviders[propertyPath];
+        // Debug logging disabled to prevent loops
+        // if (process.env.NODE_ENV === 'development' && propertyPath === 'aanbieder') {
+        //   console.log(`🔍 getFieldOptions: Found options for ${propertyPath}:`, provided);
+        // }
         return typeof provided === 'function' ? provided(formData) : provided;
       }
 
       // Priority 3: No options
+      // Debug logging for aanbieder field specifically
+      if (process.env.NODE_ENV === 'development' && propertyPath === 'aanbieder' && propertySchema.$ref) {
+        console.log(`⚠️ getFieldOptions: No options found for $ref field ${propertyPath}, schema:`, propertySchema);
+        console.log(`⚠️ getFieldOptions: Available optionsProviders keys:`, Object.keys(optionsProviders));
+      }
       return [];
     };
 
@@ -1244,8 +1351,9 @@ const ConDynamicSchemaForm = forwardRef(
                 )}
               </Heading>
             </label>
-            <ReactSelect
-              key={`${path}-${resetKey}`}
+            <ReactSelectWithGlobalHack
+              key={`${path}-${resetKey}-${forceRenderKey}`}
+              fieldPath={path}
               placeholder={fieldConfig.placeholder}
               value={selectValue}
               className={clsx(
@@ -1378,7 +1486,10 @@ const ConDynamicSchemaForm = forwardRef(
      * with nested properties appearing in their original order within their parent object.
      */
     return (
-      <div className='con-form-fields-container'>
+      <div 
+        className='con-form-fields-container'
+        key={`form-${resetKey}-${forceRenderKey}`} // HACK: Include forceRenderKey to force re-render when options change
+      >
         {flattenedProperties.map((property) => renderFieldWithSize(property))}
         {/* Tooltip needs to be rendered again because the dialog is rendered in a portal at #top-layer */}
         <Tooltip id={TOOLTIP_ID} className='ac-gemma-tooltip' />
