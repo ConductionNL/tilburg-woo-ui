@@ -1,0 +1,97 @@
+// Dashboard Component Styling
+.ac-dashboard-content {
+  flex: 1;
+  max-width: 100%;
+
+  // Font consistency for welcome section - Override all text
+  .ac-register-review__section {
+    font-family: 'Avenir', sans-serif !important;
+    color: rgb(51, 51, 51) !important;
+
+    * {
+      font-family: 'Avenir', sans-serif !important;
+      color: rgb(51, 51, 51) !important;
+    }
+
+    .utrecht-heading-4 {
+      font-family: 'Avenir', sans-serif !important;
+      font-weight: 600 !important;
+      font-size: 1.3rem !important;
+      color: rgb(51, 51, 51) !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .utrecht-paragraph {
+      font-family: 'Avenir', sans-serif !important;
+      font-weight: 400 !important;
+      font-size: 1rem !important;
+      color: rgb(51, 51, 51) !important;
+      line-height: 1.5 !important;
+      margin: 0 0 1rem 0 !important;
+      padding: 0 !important;
+    }
+
+    .ac-register-review__field {
+      font-family: 'Avenir', sans-serif !important;
+      color: rgb(51, 51, 51) !important;
+      margin: 0.5rem 0 !important;
+      padding: 0 !important;
+
+      strong {
+        font-family: 'Avenir', sans-serif !important;
+        font-weight: 600 !important;
+        color: rgb(51, 51, 51) !important;
+      }
+
+      span {
+        font-family: 'Avenir', sans-serif !important;
+        font-weight: 400 !important;
+        color: rgb(51, 51, 51) !important;
+      }
+    }
+
+    a {
+      font-family: 'Avenir', sans-serif !important;
+      font-weight: 400 !important;
+      color: #0066cc !important; // Link color
+      text-decoration: underline !important;
+    }
+
+    p, span, div, strong, em, b, i {
+      font-family: 'Avenir', sans-serif !important;
+      color: rgb(51, 51, 51) !important;
+    }
+  }
+}
+
+// Wizard Tiles Section
+.ac-dashboard-wizards {
+  margin-bottom: var(--tilburg-space-block-xl); // Consistent spacing with welcome section
+
+  .utrecht-heading-3 {
+    margin-bottom: var(--tilburg-space-block-xl); // Same spacing as between tiles and welcome section
+    color: var(--tilburg-color-gray-700);
+    font-family: 'Avenir', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 1.5rem !important;
+  }
+}
+
+.ac-dashboard-wizard-grid {
+  margin-top: 40px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// Wizard tiles now use AcTile component
