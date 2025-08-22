@@ -3,7 +3,11 @@ import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid } from '@atoms';
 import { AcButton, AcTile } from '@molecules';
 import { ConDynamicSidenav } from '@components';
-import { getDashboardWizards, getWizardUrl, SOFTWARE_CATALOG_CONCEPTS } from '@constants/wizards.constants';
+import {
+  getDashboardWizards,
+  getWizardUrl,
+  SOFTWARE_CATALOG_CONCEPTS,
+} from '@constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
 import {
   Heading,
@@ -36,7 +40,7 @@ const AcDashboard = ({ store }) => {
                     text={wizard.name}
                     to={getWizardUrl(wizard)}
                     color={wizard.color}
-                    size="medium"
+                    size='medium'
                     className='ac-dashboard-wizard-tile'
                   />
                 ))}
@@ -52,40 +56,65 @@ const AcDashboard = ({ store }) => {
             <Separator className='ac-register-review-header__separator' />
 
             <Paragraph>
-              Centrale plek voor het beheren en ontdekken van software, diensten en toepassingen binnen de overheid.
+              Centrale plek voor het beheren en ontdekken van software, diensten en
+              toepassingen binnen de overheid.
             </Paragraph>
 
             <Paragraph>
-              Producten en diensten toevoegen aan de catalogus, gebruik van software registreren binnen uw organisatie, zoeken naar bestaande oplossingen en uw organisatiegegevens beheren.
+              Producten en diensten toevoegen aan de catalogus, gebruik van software
+              registreren binnen uw organisatie, zoeken naar bestaande oplossingen en
+              uw organisatiegegevens beheren.
             </Paragraph>
 
-            <div className='ac-register-review__field' style={{ marginTop: 'var(--tilburg-space-block-lg)' }}>
+            <div
+              className='ac-register-review__field'
+              style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
+            >
               <strong>Product:</strong>
-              <span>Een softwareproduct is een complete oplossing die door een organisatie wordt aangeboden. Dit kan bijvoorbeeld een website, applicatie of systeem zijn.</span>
+              <span>
+                Een softwareproduct is een complete oplossing die door een
+                organisatie wordt aangeboden. Dit kan bijvoorbeeld een website,
+                applicatie of systeem zijn.
+              </span>
             </div>
 
             <div className='ac-register-review__field'>
               <strong>Dienst:</strong>
-              <span>Een dienst is een specifieke functionaliteit of service die wordt aangeboden, vaak als onderdeel van een groter product.</span>
+              <span>
+                Een dienst is een specifieke functionaliteit of service die wordt
+                aangeboden, vaak als onderdeel van een groter product.
+              </span>
             </div>
 
             <div className='ac-register-review__field'>
               <strong>Applicatie:</strong>
-              <span>Een applicatie is een specifieke software-implementatie die onderdeel kan zijn van een product en concrete functionaliteiten biedt.</span>
+              <span>
+                Een applicatie is een specifieke software-implementatie die onderdeel
+                kan zijn van een product en concrete functionaliteiten biedt.
+              </span>
             </div>
 
             <div className='ac-register-review__field'>
               <strong>Gebruik:</strong>
-              <span>Gebruik registreert hoe organisaties producten, diensten of applicaties inzetten binnen hun processen en werkwijzen.</span>
+              <span>
+                Gebruik registreert hoe organisaties producten, diensten of
+                applicaties inzetten binnen hun processen en werkwijzen.
+              </span>
             </div>
 
             <Paragraph>
               U kunt uw organisatiegegevens en accountinformatie beheren via{' '}
-              <a href="/account" onClick={(e) => { e.preventDefault(); navigate('/account'); }}>
+              <a
+                href='/account'
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/account');
+                }}
+              >
                 Mijn Account
-              </a>.
-              Voor vragen over de catalogus kunt u contact opnemen via de contactgegevens 
-              in de footer van deze website.
+              </a>
+              . Voor vragen over de catalogus kunt u contact opnemen via de
+              contactgegevens in de footer van deze website.
             </Paragraph>
           </div>
         </AcFlex>
