@@ -1,10 +1,10 @@
 /**
  * Schema-Enhanced Field Component
- * 
+ *
  * A standalone field component that automatically configures itself based on JSON schema properties
  * while maintaining full layout control. This component reuses the field rendering logic from
  * ConDynamicSchemaForm but allows for manual placement and custom styling.
- * 
+ *
  * **Key Features:**
  * - Automatic field configuration from JSON schema
  * - Manual component placement with custom layout control
@@ -13,7 +13,7 @@
  * - Maintains custom styling and sizing
  * - Search functionality for $ref fields
  * - Validation and authorization support
- * 
+ *
  * **Usage Examples:**
  * ```jsx
  * // Simple text field
@@ -24,7 +24,7 @@
  *   onChange={(value) => setProduct({...product, naam: value})}
  *   className="my-custom-class"
  * />
- * 
+ *
  * // Select field with search
  * <ConSchemaEnhancedField
  *   schemaType="product"
@@ -35,7 +35,7 @@
  *   isLoading={aanbiedersLoading}
  *   onSearch={handleAanbiedersSearch}
  * />
- * 
+ *
  * // Override schema defaults
  * <ConSchemaEnhancedField
  *   schemaType="product"
@@ -48,7 +48,7 @@
  *     component: "AcTextarea"
  *   }}
  * />
- * 
+ *
  * // Override field width
  * <ConSchemaEnhancedField
  *   schemaType="product"
@@ -136,20 +136,29 @@ const ConSchemaEnhancedField = ({
     propertySchema = schemaProperty;
     // Try to derive field name from context - for now just use a generic name
     // The parent component should pass a fieldName or we derive it from prop names used in formData
-    fieldName = Object.keys(formData).find(key => 
-      formData[key] === value
-    ) || schemaProperty.title?.toLowerCase() || 'field';
+    fieldName =
+      Object.keys(formData).find((key) => formData[key] === value) ||
+      schemaProperty.title?.toLowerCase() ||
+      'field';
   } else if (typeof schemaProperty === 'string') {
     // Property name provided - need to look up in schema
     if (!schemaType) {
       console.warn('schemaType is required when schemaProperty is a string');
-      return <div className={`schema-field-error ${className}`} style={style}>Schema type ontbreekt</div>;
+      return (
+        <div className={`schema-field-error ${className}`} style={style}>
+          Schema type ontbreekt
+        </div>
+      );
     }
 
     const schema = schemas[schemaType];
     if (!schema) {
       console.warn(`Schema not found for type: ${schemaType}`);
-      return <div className={`schema-field-loading ${className}`} style={style}>Schema laden...</div>;
+      return (
+        <div className={`schema-field-loading ${className}`} style={style}>
+          Schema laden...
+        </div>
+      );
     }
 
     // Get field schema - support nested properties with dot notation
@@ -164,7 +173,10 @@ const ConSchemaEnhancedField = ({
       for (const pathSegment of fieldPath) {
         if (!currentSchema[pathSegment]) return null;
 
-        if (currentSchema[pathSegment].type === 'object' && currentSchema[pathSegment].properties) {
+        if (
+          currentSchema[pathSegment].type === 'object' &&
+          currentSchema[pathSegment].properties
+        ) {
           currentSchema = currentSchema[pathSegment].properties;
         } else {
           return currentSchema[pathSegment];
@@ -180,7 +192,11 @@ const ConSchemaEnhancedField = ({
 
   if (!propertySchema) {
     console.warn(`Property schema not available:`, { schemaType, schemaProperty });
-    return <div className={`schema-field-error ${className}`} style={style}>Schema eigenschap niet gevonden</div>;
+    return (
+      <div className={`schema-field-error ${className}`} style={style}>
+        Schema eigenschap niet gevonden
+      </div>
+    );
   }
 
   // Apply default if undefined
@@ -192,17 +208,17 @@ const ConSchemaEnhancedField = ({
   // Create updated formData with current value for field renderer
   const updatedFormData = {
     ...formData,
-    [fieldName]: fieldValue
+    [fieldName]: fieldValue,
   };
 
   // Create a mock schema for useRefOptions if we have a valid property schema
   const mockSchemaForRefOptions = useMemo(() => {
     if (!propertySchema) return null;
-    
+
     return {
       properties: {
-        [fieldName]: propertySchema
-      }
+        [fieldName]: propertySchema,
+      },
     };
   }, [fieldName, propertySchema]);
 
@@ -216,26 +232,36 @@ const ConSchemaEnhancedField = ({
   );
 
   // Debug store structure
-  if (process.env.NODE_ENV === 'development' && (fieldName === 'contactpersoon' || fieldName === 'aanbieder')) {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    (fieldName === 'contactpersoon' || fieldName === 'aanbieder')
+  ) {
     console.log(`🏪 Store debug for [${fieldName}]:`, {
       hasStore: !!store,
-      hasObject: !!(store?.object),
+      hasObject: !!store?.object,
       storeKeys: store ? Object.keys(store) : [],
-      objectKeys: store?.object ? Object.keys(store.object) : []
+      objectKeys: store?.object ? Object.keys(store.object) : [],
     });
   }
 
   // Extract options and loading state from useRefOptions if it's a $ref field
-  const hasRefProperty = propertySchema?.$ref || (propertySchema?.items && propertySchema.items.$ref);
-  const effectiveOptionsProvider = hasRefProperty 
-    ? (refOptionsResult?.optionsProviders?.[fieldName] || [])
+  const hasRefProperty =
+    propertySchema?.$ref || (propertySchema?.items && propertySchema.items.$ref);
+  const effectiveOptionsProvider = hasRefProperty
+    ? refOptionsResult?.optionsProviders?.[fieldName] || []
     : optionsProvider;
-  const effectiveIsLoading = hasRefProperty 
-    ? (refOptionsResult?.loadingStates?.[fieldName] || false)
+  const effectiveIsLoading = hasRefProperty
+    ? refOptionsResult?.loadingStates?.[fieldName] || false
     : isLoading;
 
   // Debug logging
-  if (process.env.NODE_ENV === 'development' && (hasRefProperty || fieldName === 'contactpersoon' || fieldName === 'aanbieder' || fieldName === 'modules')) {
+  if (
+    process.env.NODE_ENV === 'development' &&
+    (hasRefProperty ||
+      fieldName === 'contactpersoon' ||
+      fieldName === 'aanbieder' ||
+      fieldName === 'modules')
+  ) {
     console.log(`🔍 ConSchemaEnhancedField [${fieldName}]:`, {
       hasRefProperty,
       refProperty: propertySchema?.$ref,
@@ -246,7 +272,7 @@ const ConSchemaEnhancedField = ({
       propertySchemaKeys: propertySchema ? Object.keys(propertySchema) : [],
       schemaType,
       propertyType: propertySchema?.type,
-      options: effectiveOptionsProvider.slice(0, 2) // Show first 2 options for debugging
+      options: effectiveOptionsProvider.slice(0, 2), // Show first 2 options for debugging
     });
   }
 
@@ -255,14 +281,17 @@ const ConSchemaEnhancedField = ({
     if (!hasRefProperty || !refOptionsResult?.fetchOptions) {
       return onSearch ? { handleSearch: onSearch } : {};
     }
-    
+
     return {
       handleSearch: async (fieldPath, query) => {
-        console.log(`🔍 ConSchemaEnhancedField: Search triggered for ${fieldPath}:`, query);
+        console.log(
+          `🔍 ConSchemaEnhancedField: Search triggered for ${fieldPath}:`,
+          query
+        );
         if (refOptionsResult.fetchOptions) {
           await refOptionsResult.fetchOptions(fieldPath, query);
         }
-      }
+      },
     };
   }, [hasRefProperty, refOptionsResult?.fetchOptions, onSearch]);
 
@@ -273,7 +302,7 @@ const ConSchemaEnhancedField = ({
     ...(width && { size: width }),
     // Override label and description visibility
     ...(showLabel === false && { hideLabel: true }),
-    ...(showDescription === false && { hideDescription: true })
+    ...(showDescription === false && { hideDescription: true }),
   };
 
   // Use the reusable field renderer utility with custom onChange wrapper
@@ -292,7 +321,7 @@ const ConSchemaEnhancedField = ({
       // Handle main field change
       if (field === fieldName) {
         onChange(value);
-      } 
+      }
       // Handle related field changes (like filename for file uploads)
       else if (onFieldChange) {
         onFieldChange(field, value);
@@ -305,7 +334,7 @@ const ConSchemaEnhancedField = ({
     honorImmutable,
     onSearchHandlers: effectiveOnSearchHandlers,
     resetKey,
-    forceRenderKey: 0
+    forceRenderKey: 0,
   });
 
   // Apply size wrapper like ConDynamicSchemaForm does
@@ -313,7 +342,7 @@ const ConSchemaEnhancedField = ({
 
   // Apply custom className and style if needed, combined with size wrapper
   const combinedClassName = [sizeClass, className].filter(Boolean).join(' ');
-  
+
   return (
     <div className={`con-form-field-wrapper ${combinedClassName}`} style={style}>
       {fieldRenderer}
@@ -323,7 +352,8 @@ const ConSchemaEnhancedField = ({
 
 ConSchemaEnhancedField.propTypes = {
   schemaType: PropTypes.string, // Optional when schemaProperty is an object
-  schemaProperty: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
+  schemaProperty: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
+    .isRequired,
   value: PropTypes.any,
   onChange: PropTypes.func.isRequired,
   onFieldChange: PropTypes.func, // For handling related field changes (like filename)

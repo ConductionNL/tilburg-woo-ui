@@ -58,7 +58,13 @@
       text-decoration: underline !important;
     }
 
-    p, span, div, strong, em, b, i {
+    p,
+    span,
+    div,
+    strong,
+    em,
+    b,
+    i {
       font-family: 'Avenir', sans-serif !important;
       color: rgb(51, 51, 51) !important;
     }
@@ -67,10 +73,14 @@
 
 // Wizard Tiles Section
 .ac-dashboard-wizards {
-  margin-bottom: var(--tilburg-space-block-xl); // Consistent spacing with welcome section
+  margin-bottom: var(
+    --tilburg-space-block-xl
+  ); // Consistent spacing with welcome section
 
   .utrecht-heading-3 {
-    margin-bottom: var(--tilburg-space-block-xl); // Same spacing as between tiles and welcome section
+    margin-bottom: var(
+      --tilburg-space-block-xl
+    ); // Same spacing as between tiles and welcome section
     color: var(--tilburg-color-gray-700);
     font-family: 'Avenir', sans-serif !important;
     font-weight: 600 !important;
@@ -80,18 +90,22 @@
 
 .ac-dashboard-wizard-grid {
   margin-top: 40px;
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }
+}
+
+.ac-dashboard-wizard-tile {
+  padding: 1rem !important;
 }
 
 // Wizard tiles now use AcTile component

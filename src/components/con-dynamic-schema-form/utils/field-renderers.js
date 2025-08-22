@@ -31,7 +31,7 @@ import {
   getFieldOptions,
   getFieldDisabled,
   getFieldValidation,
-  handleFieldChange
+  handleFieldChange,
 } from './field-utilities';
 
 /**
@@ -45,14 +45,20 @@ const ReactSelectWithGlobalHack = (props) => {
     // Check if there are already options in global state
     const existingOptions = window.FORCE_DROPDOWN_UPDATE?.get(fieldPath);
     if (existingOptions && existingOptions.length > 0) {
-      console.log(`🌍 HACK: Loading existing global options for ${fieldPath}:`, existingOptions);
+      console.log(
+        `🌍 HACK: Loading existing global options for ${fieldPath}:`,
+        existingOptions
+      );
       setGlobalOptions(existingOptions);
     }
 
     // Listen for global option updates
     const handleGlobalUpdate = (event) => {
       if (event.detail.fieldPath === fieldPath) {
-        console.log(`🌍 HACK: Received global update for ${fieldPath}:`, event.detail.options);
+        console.log(
+          `🌍 HACK: Received global update for ${fieldPath}:`,
+          event.detail.options
+        );
         setGlobalOptions(event.detail.options);
       }
     };
@@ -69,14 +75,10 @@ const ReactSelectWithGlobalHack = (props) => {
   }, [fieldPath]);
 
   // Use global options if available, otherwise fall back to prop options
-  const effectiveOptions = globalOptions.length > 0 ? globalOptions : (propOptions || []);
+  const effectiveOptions =
+    globalOptions.length > 0 ? globalOptions : propOptions || [];
 
-  return (
-    <ReactSelect
-      {...selectProps}
-      options={effectiveOptions}
-    />
-  );
+  return <ReactSelect {...selectProps} options={effectiveOptions} />;
 };
 
 /**
@@ -122,11 +124,17 @@ export const renderField = ({
   honorImmutable = false,
   onSearchHandlers = {},
   resetKey = 0,
-  forceRenderKey = 0
+  forceRenderKey = 0,
 }) => {
   // Generate field configuration
   const fieldConfig = {
-    ...getFieldConfig(path, propertySchema, required, fieldConfigs, optionsProviders),
+    ...getFieldConfig(
+      path,
+      propertySchema,
+      required,
+      fieldConfigs,
+      optionsProviders
+    ),
     schema: propertySchema,
   };
 
@@ -163,7 +171,13 @@ export const renderField = ({
     isCreateMode,
     formData
   );
-  const validation = getFieldValidation(path, fieldConfig, formData, validationStates, value);
+  const validation = getFieldValidation(
+    path,
+    fieldConfig,
+    formData,
+    validationStates,
+    value
+  );
 
   // Create field change handler
   const handleChange = handleFieldChange(path, fieldConfig, onFieldChange, formData);
@@ -199,20 +213,19 @@ export const renderField = ({
   }
 
   // Handle file upload fields (triggered by type="file" or format="base64" etc.)
-  if (propertySchema.type === 'file' || 
-      fieldConfig.type === 'file' ||
-      fieldConfig.component === 'File' ||
-      fieldConfig.inputType === 'file' ||
-      propertySchema.format === 'base64' || 
-      (propertySchema.type === 'string' && (
-        propertySchema.format === 'binary' ||
-        propertySchema.format === 'byte'
-      ))) {
-    
+  if (
+    propertySchema.type === 'file' ||
+    fieldConfig.type === 'file' ||
+    fieldConfig.component === 'File' ||
+    fieldConfig.inputType === 'file' ||
+    propertySchema.format === 'base64' ||
+    (propertySchema.type === 'string' &&
+      (propertySchema.format === 'binary' || propertySchema.format === 'byte'))
+  ) {
     // Extract filename field from path (assume fieldname + "Filename")
     const filenamePath = path + 'Filename';
     const filenameValue = getNestedValue(filenamePath, formData);
-    
+
     return (
       <LogoUploadField
         key={path}
@@ -220,7 +233,7 @@ export const renderField = ({
           label: fieldConfig.label,
           description: fieldConfig.description,
           filename: filenameValue,
-          required: validation.required
+          required: validation.required,
         }}
         _value={value}
         onChange={(dataUrl) => {
@@ -291,7 +304,9 @@ export const renderField = ({
               {fieldConfig.label}
               {validation.required && (
                 <>
-                  <span className='required-indicator' aria-hidden='true'>*</span>
+                  <span className='required-indicator' aria-hidden='true'>
+                    *
+                  </span>
                   <span className='sr-only'>(verplicht)</span>
                 </>
               )}
@@ -354,7 +369,9 @@ export const renderField = ({
               {fieldConfig.label}
               {validation.required && (
                 <>
-                  <span className='required-indicator' aria-hidden='true'>*</span>
+                  <span className='required-indicator' aria-hidden='true'>
+                    *
+                  </span>
                   <span className='sr-only'>(verplicht)</span>
                 </>
               )}
@@ -441,7 +458,12 @@ export const renderField = ({
 
   // Array comma list fallback when array has no enum/optionsProviders
   if (propertySchema.type === 'array') {
-    const fieldOptions = getFieldOptions(path, propertySchema, optionsProviders, formData);
+    const fieldOptions = getFieldOptions(
+      path,
+      propertySchema,
+      optionsProviders,
+      formData
+    );
     if (!propertySchema.items?.$ref && fieldOptions.length === 0) {
       const itemsType = propertySchema.items?.type;
       return (
@@ -475,14 +497,17 @@ export const renderField = ({
             <Heading
               level={4}
               className={clsx({
-                'ac-form-field-header-info': fieldConfig.description && !fieldConfig.hideDescription,
+                'ac-form-field-header-info':
+                  fieldConfig.description && !fieldConfig.hideDescription,
               })}
             >
               <div>
                 {fieldConfig.label}
                 {validation.required && (
                   <>
-                    <span className='required-indicator' aria-hidden='true'>*</span>
+                    <span className='required-indicator' aria-hidden='true'>
+                      *
+                    </span>
                     <span className='sr-only'>(verplicht)</span>
                   </>
                 )}

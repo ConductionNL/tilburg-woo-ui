@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 
@@ -55,6 +55,33 @@ export const LogoUploadField = ({
     ? accept
     : defaultAccept.join(',');
 
+  /**
+   * Convert the accept attribute to a readable format
+   *
+   * @example
+   * ```
+   * 'image/png,image/jpeg,image/jpg,image/webp,image/svg+xml'
+   * => ['png', 'jpeg', 'jpg', 'webp', 'svg']
+   * ```
+   *
+   * if no standard accept type is given (e.g. '.png') just return the item
+   *
+   * @example
+   * ```
+   * '.pdf,.txt,.doc,.docx'
+   * => ['.pdf', '.txt', '.doc', '.docx']
+   * ```
+   *
+   * @returns {string[]}
+   */
+  const readableAccept = useMemo(() => {
+    return acceptAttr.split(',').map((item) => {
+      const type = item.split('/')[1];
+      if (!type) return item;
+      return type.includes('+') ? type.split('+')[0] : type;
+    });
+  }, [acceptAttr]);
+
   return (
     <AcFlex column>
       <label className='utrecht-form-label'>
@@ -106,7 +133,7 @@ export const LogoUploadField = ({
           userSelect: 'none',
         }}
       >
-        Toegestane bestandstypen: {acceptAttr}
+        Toegestane bestandstypen: {readableAccept.join(', ')}
       </small>
 
       {(_value || fieldConfig?.filename) && (
