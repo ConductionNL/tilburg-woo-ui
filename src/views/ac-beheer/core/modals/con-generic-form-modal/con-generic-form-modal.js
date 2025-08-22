@@ -82,6 +82,8 @@ const ConGenericFormModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(null);
+  const [showSuccessCountdown, setShowSuccessCountdown] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(3);
 
   // Options state
   const [options, setOptions] = useState({});
@@ -419,6 +421,18 @@ const ConGenericFormModal = ({
     };
   }, [optionsLoading, refLoadingStates]);
 
+  // Merge options providers to prevent unnecessary re-renders
+  const combinedOptionsProviders = useMemo(() => ({
+    ...optionsProviders,
+    ...refOptionsProviders,
+  }), [optionsProviders, refOptionsProviders]);
+
+  // Merge loading states to prevent unnecessary re-renders  
+  const combinedLoadingStates = useMemo(() => ({
+    ...loadingStates,
+    ...refLoadingStates,
+  }), [loadingStates, refLoadingStates]);
+
   // Generate field configurations for ConDynamicSchemaForm
   const fieldConfigs = useMemo(() => {
     if (!config?.fieldConfigs) return {};
@@ -654,13 +668,12 @@ const ConGenericFormModal = ({
         isEdit ? 'Gegevens succesvol bijgewerkt' : 'Gegevens succesvol toegevoegd'
       );
 
+      // Show success countdown instead of just timeout
+      setShowSuccessCountdown(true);
+      setCountdownSeconds(3);
+
       // Call success callback
       onSuccess?.(response);
-
-      // Close modal after a short delay to show success message
-      setTimeout(() => {
-        modalRef?.current?.close();
-      }, 2000);
     } catch (err) {
       console.error('Error submitting form:', err);
       setSubmitError(err.message || 'Er is een fout opgetreden bij het opslaan');
@@ -668,6 +681,53 @@ const ConGenericFormModal = ({
       setIsSubmitting(false);
     }
   }, [config, isValid, formData, isEdit, data, type, object, onSuccess]);
+
+  // Countdown effect for success state
+  useEffect(() => {
+    if (showSuccessCountdown && countdownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setCountdownSeconds(prev => prev - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (showSuccessCountdown && countdownSeconds === 0) {
+      modalRef?.current?.close();
+    }
+  }, [showSuccessCountdown, countdownSeconds]);
+
+  // Generate modal buttons based on current state
+  const getModalButtons = () => {
+    // If success countdown is active, show countdown button
+    if (showSuccessCountdown) {
+      const plural = countdownSeconds === 1 ? '' : 'n';
+      return [
+        {
+          label: `Formulier sluit over ${countdownSeconds} seconde${plural}`,
+          icon: <VISUALS.CHECK />,
+          onClick: () => modalRef?.current?.close(),
+          buttonType: 'primary',
+          disabled: false,
+        },
+      ];
+    }
+
+    // Default form buttons
+    return [
+      {
+        label: 'Annuleren',
+        icon: <VISUALS.CLOSE />,
+        onClick: () => modalRef?.current?.close(),
+        buttonType: 'secondary',
+        disabled: isSubmitting,
+      },
+      {
+        label: 'Opslaan',
+        icon: <VISUALS.SAVE />,
+        onClick: handleSubmit,
+        disabled: !isValid || isSubmitting,
+        loading: isSubmitting,
+      },
+    ];
+  };
 
   // Handle modal open
   const handleModalOpen = () => modalRef?.current?.showModal();
@@ -680,6 +740,8 @@ const ConGenericFormModal = ({
     setIsValid(false);
     setSubmitError(null);
     setSubmitSuccess(null);
+    setShowSuccessCountdown(false);
+    setCountdownSeconds(3);
     setOptions({});
     setOptionsLoading({});
     formRef.current?.reset();
@@ -725,22 +787,7 @@ const ConGenericFormModal = ({
       id={`${type}-form-modal`}
       title={title}
       layoutClassName='wide-content'
-      buttons={[
-        {
-          label: 'Annuleren',
-          icon: <VISUALS.CLOSE />,
-          onClick: () => modalRef?.current?.close(),
-          buttonType: 'secondary',
-          disabled: isSubmitting,
-        },
-        {
-          label: 'Opslaan',
-          icon: <VISUALS.SAVE />,
-          onClick: handleSubmit,
-          disabled: !isValid || isSubmitting,
-          loading: isSubmitting,
-        },
-      ]}
+      buttons={getModalButtons()}
       buttonPosition='end'
       disableDefaultButton
     >
@@ -766,34 +813,36 @@ const ConGenericFormModal = ({
         </AcFlex>
       )}
 
-      {/* Form content */}
-      <div className="con-dynamic-form-container">
-        {schemaLoading ? (
-          <div>Schema wordt geladen...</div>
-        ) : schema ? (
-          <ConDynamicSchemaForm
-            ref={formRef}
-            schema={schema}
-            formData={formData}
-            onFieldChange={handleFieldChange}
-            fieldConfigs={fieldConfigs}
-            customFieldComponents={config.customComponents || {}}
-            optionsProviders={optionsProviders}
-            loadingStates={loadingStates}
-            disabledStates={combinedDisabledStates}
-            getIsValid={handleFormValidCheck}
-            honorImmutable={isEdit}
-            userIsAuthenticated={user.isAuthenticated}
-            user={user}
-            isCreateMode={!isEdit}
-            onSearchHandlers={{ handleSearch }}
-          />
-        ) : (
-          <div>
-            Schema kon niet worden geladen. Controleer of het schema bestaat.
-          </div>
-        )}
-      </div>
+      {/* Form content - hide during success countdown */}
+      {!showSuccessCountdown && (
+        <div className="con-dynamic-form-container">
+          {schemaLoading ? (
+            <div>Schema wordt geladen...</div>
+          ) : schema ? (
+            <ConDynamicSchemaForm
+              ref={formRef}
+              schema={schema}
+              formData={formData}
+              onFieldChange={handleFieldChange}
+              fieldConfigs={fieldConfigs}
+              customFieldComponents={config.customComponents || {}}
+              optionsProviders={combinedOptionsProviders}
+              loadingStates={combinedLoadingStates}
+              disabledStates={combinedDisabledStates}
+              getIsValid={handleFormValidCheck}
+              honorImmutable={isEdit}
+              userIsAuthenticated={user.isAuthenticated}
+              user={user}
+              isCreateMode={!isEdit}
+              onSearchHandlers={{ handleSearch }}
+            />
+          ) : (
+            <div>
+              Schema kon niet worden geladen. Controleer of het schema bestaat.
+            </div>
+          )}
+        </div>
+      )}
     </AcModal>
   );
 };

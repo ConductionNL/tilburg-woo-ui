@@ -1,0 +1,59 @@
+// Clean CSS for ac-forms-product without conflicting classes
+// Now that we removed all ac-register-* classes, we can use simple, clean CSS
+
+// Main container
+.ac-forms-product-container {
+  width: 100%;
+  padding: 0;
+}
+
+// Step sections (replacement for ac-register-form-section)
+.ac-forms-product-step-section {
+  margin-bottom: var(--tilburg-space-block-xl);
+  
+  // Clean container without Grid conflicts
+  .con-dynamic-form-container {
+    width: 100%;
+  }
+  
+  // Our Flexbox layout works perfectly now
+  .con-form-fields-container {
+    // No !important needed - no conflicts!
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--tilburg-space-block-snail);
+    align-items: flex-start;
+    width: 100%;
+    
+    .con-form-field-wrapper {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      
+      &.field-size-full {
+        flex-basis: 100%;
+        width: 100%;
+      }
+      
+      &.field-size-half {
+        flex-basis: calc(50% - calc(var(--tilburg-space-block-snail) / 2));
+        
+        @media (max-width: 768px) {
+          flex-basis: 100%;
+        }
+      }
+    }
+  }
+}
+
+// Basic grid layout for other form sections (replacement for ac-register-form-grid) 
+.ac-forms-product-basic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--tilburg-space-block-rat);
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}

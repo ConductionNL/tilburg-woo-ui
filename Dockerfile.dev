@@ -17,7 +17,7 @@ COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn set version 4.1.1
 
 # Install dependencies
-RUN yarn install --immutable
+RUN yarn install
 
 # Copy source code
 COPY . .

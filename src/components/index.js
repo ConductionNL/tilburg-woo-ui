@@ -51,6 +51,13 @@ const ConSpinLoader = loadable(() =>
 const ConDynamicSchemaForm = loadable(() =>
   import('@src/components/con-dynamic-schema-form/con-dynamic-schema-form')
 );
+const ConSchemaEnhancedField = loadable(() =>
+  import('@src/components/con-schema-enhanced-field/con-schema-enhanced-field')
+);
+const ConApiSelectField = loadable(() =>
+  import('@src/components/con-api-select-field/con-api-select-field')
+);
+
 const ConMarkdown = loadable(() =>
   import('@src/components/con-markdown/con-markdown')
 );
@@ -100,6 +107,8 @@ export {
   ConHorizontalOverflowWrapper,
   ConSpinLoader,
   ConDynamicSchemaForm,
+  ConSchemaEnhancedField,
+  ConApiSelectField,
   ConMarkdown,
   ConTableSearch,
   ConTemplateText,

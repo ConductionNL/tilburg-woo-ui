@@ -23,6 +23,7 @@ const AcTable = loadable(() => import('@molecules/ac-table/ac-table'));
 const ConFacetsFilters = loadable(() =>
   import('@molecules/con-facets-filters/con-facets-filters')
 );
+const AcTile = loadable(() => import('@molecules/ac-tile/ac-tile'));
 
 export {
   AcBreadcrumbs,
@@ -38,4 +39,5 @@ export {
   AcFormField,
   AcTable,
   ConFacetsFilters,
+  AcTile,
 };
