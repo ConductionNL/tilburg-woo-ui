@@ -1447,7 +1447,8 @@ const LicenseAndHostingStep = memo(
                         <ReactSelect
                           className={clsx(
                             'ac-beheer-select',
-                            loading && 'ac-beheer-select--disabled'
+                            (loading || selectedType?.value !== 'Open Source') &&
+                              'ac-beheer-select--disabled'
                           )}
                           value={selectedLicentie}
                           onChange={(opt) =>
