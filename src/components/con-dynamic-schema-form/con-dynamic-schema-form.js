@@ -1,5 +1,11 @@
 // eslint-disable-next-line import/no-unresolved
-import React, { useEffect, useImperativeHandle, forwardRef, useRef, useState } from 'react';
+import React, {
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+  useRef,
+  useState,
+} from 'react';
 import clsx from 'clsx';
 import { AcFormField } from '@src/molecules';
 import ReactSelect from 'react-select';
@@ -21,7 +27,7 @@ import {
   getNestedValue,
   setNestedValue,
   extractSchemaSlugFromRef,
-  getFieldRefSchemaSlug
+  getFieldRefSchemaSlug,
 } from './utils/field-utilities';
 // Import reusable field renderer
 import { renderField as utilRenderField } from './utils/field-renderers';
@@ -350,26 +356,32 @@ const ConDynamicSchemaForm = forwardRef(
     useEffect(() => {
       // Check if any options have changed from empty to having data
       let hasNewOptions = false;
-      
-      Object.keys(optionsProviders).forEach(key => {
+
+      Object.keys(optionsProviders).forEach((key) => {
         const currentOptions = optionsProviders[key];
         const prevOptions = prevOptionsRef.current[key];
-        
+
         // If we now have options but didn't before, force re-render
-        if (Array.isArray(currentOptions) && currentOptions.length > 0 && 
-            (!prevOptions || prevOptions.length === 0)) {
+        if (
+          Array.isArray(currentOptions) &&
+          currentOptions.length > 0 &&
+          (!prevOptions || prevOptions.length === 0)
+        ) {
           hasNewOptions = true;
-          console.log(`🔧 HACK: Force re-render for new options in ${key}:`, currentOptions);
+          console.log(
+            `🔧 HACK: Force re-render for new options in ${key}:`,
+            currentOptions
+          );
         }
       });
-      
+
       if (hasNewOptions) {
         // Force re-render after a short delay to ensure DOM is ready
         setTimeout(() => {
-          setForceRenderKey(prev => prev + 1);
+          setForceRenderKey((prev) => prev + 1);
         }, 100);
       }
-      
+
       // Update previous options reference
       prevOptionsRef.current = { ...optionsProviders };
     }, [optionsProviders]);
@@ -380,7 +392,7 @@ const ConDynamicSchemaForm = forwardRef(
     //   if (process.env.NODE_ENV === 'development') {
     //     const currentKeys = Object.keys(optionsProviders).sort();
     //     const prevKeys = prevOptionsKeysRef.current;
-    //     
+    //
     //     // Only log if keys actually changed
     //     if (JSON.stringify(currentKeys) !== JSON.stringify(prevKeys)) {
     //       console.log('🔍 ConDynamicSchemaForm: optionsProviders keys changed:', currentKeys);
@@ -464,21 +476,41 @@ const ConDynamicSchemaForm = forwardRef(
      * Generate field configuration using the reusable utility
      */
     const getFieldConfig = (propertyPath, propertySchema, isRequired) => {
-      return utilGetFieldConfig(propertyPath, propertySchema, isRequired, fieldConfigs, optionsProviders);
+      return utilGetFieldConfig(
+        propertyPath,
+        propertySchema,
+        isRequired,
+        fieldConfigs,
+        optionsProviders
+      );
     };
 
     /**
      * Determine field visibility using the reusable utility
      */
     const getFieldVisibility = (propertyPath, fieldConfig, propertySchema) => {
-      return utilGetFieldVisibility(propertyPath, fieldConfig, propertySchema, formData, userIsAuthenticated, context, user, isCreateMode);
+      return utilGetFieldVisibility(
+        propertyPath,
+        fieldConfig,
+        propertySchema,
+        formData,
+        userIsAuthenticated,
+        context,
+        user,
+        isCreateMode
+      );
     };
 
     /**
      * Get field options using the reusable utility
      */
     const getFieldOptions = (propertyPath, propertySchema) => {
-      return utilGetFieldOptions(propertyPath, propertySchema, optionsProviders, formData);
+      return utilGetFieldOptions(
+        propertyPath,
+        propertySchema,
+        optionsProviders,
+        formData
+      );
     };
 
     /**
@@ -496,14 +528,29 @@ const ConDynamicSchemaForm = forwardRef(
      * Get field disabled state using the reusable utility
      */
     const getFieldDisabled = (propertyPath, propertySchema, fieldConfig) => {
-      return utilGetFieldDisabled(propertyPath, propertySchema, fieldConfig, disabledStates, honorImmutable, user, isCreateMode, formData);
+      return utilGetFieldDisabled(
+        propertyPath,
+        propertySchema,
+        fieldConfig,
+        disabledStates,
+        honorImmutable,
+        user,
+        isCreateMode,
+        formData
+      );
     };
 
     /**
      * Get field validation using the reusable utility
      */
     const getFieldValidation = (propertyPath, fieldConfig, valueOverride) => {
-      return utilGetFieldValidation(propertyPath, fieldConfig, formData, validationStates, valueOverride);
+      return utilGetFieldValidation(
+        propertyPath,
+        fieldConfig,
+        formData,
+        validationStates,
+        valueOverride
+      );
     };
 
     /**
@@ -553,7 +600,12 @@ const ConDynamicSchemaForm = forwardRef(
      * Handle field changes using the reusable utility
      */
     const handleFieldChange = (propertyPath, fieldConfig) => {
-      return utilHandleFieldChange(propertyPath, fieldConfig, onFieldChange, formData);
+      return utilHandleFieldChange(
+        propertyPath,
+        fieldConfig,
+        onFieldChange,
+        formData
+      );
     };
 
     /**
@@ -561,7 +613,7 @@ const ConDynamicSchemaForm = forwardRef(
      */
     const renderField = (property) => {
       const { path, schema: propertySchema, required } = property;
-      
+
       return utilRenderField({
         path,
         propertySchema,
@@ -581,7 +633,7 @@ const ConDynamicSchemaForm = forwardRef(
         honorImmutable,
         onSearchHandlers,
         resetKey,
-        forceRenderKey
+        forceRenderKey,
       });
     };
 
@@ -652,7 +704,7 @@ const ConDynamicSchemaForm = forwardRef(
      * with nested properties appearing in their original order within their parent object.
      */
     return (
-      <div 
+      <div
         className='con-form-fields-container'
         key={`form-${resetKey}-${forceRenderKey}`} // HACK: Include forceRenderKey to force re-render when options change
       >

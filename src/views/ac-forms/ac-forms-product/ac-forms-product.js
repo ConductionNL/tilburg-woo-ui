@@ -555,6 +555,7 @@ const AcFormsProduct = ({ userStore, store }) => {
 
     const mapToOption = (item, index) => {
       const label =
+        item?.xml?.name?._value ||
         item?.naam ||
         item?.name ||
         item?.title ||
@@ -568,9 +569,10 @@ const AcFormsProduct = ({ userStore, store }) => {
       try {
         // Add pagination parameters to limit initial load
         const params = new URLSearchParams({
-          _limit: '50',
+          _limit: '500',
           _page: '1',
         });
+        params.set('gemmaType', 'Referentiecomponent');
         const endpoint = `${baseEndpoint}?${params}`;
 
         const res = await fetch(endpoint, {
@@ -2346,9 +2348,9 @@ const ReferentieComponentenForm = memo(
                   );
                   const selectedMulti = saved
                     .map((v) =>
-                      referentieComponentenOptions.find(
-                        (o) => String(o.value) === String(v)
-                      )
+                      referentieComponentenOptions.find((o) => {
+                        return String(o.value) === String(v);
+                      })
                     )
                     .filter(Boolean);
 
@@ -2779,15 +2781,19 @@ const KoppelingenForm = memo(
     }));
 
     const directionOptions = [
-      { value: 'A -> B', label: 'Van A naar B' },
-      { value: 'B -> A', label: 'Van B naar A' },
-      { value: 'A <-> B', label: 'Bidirectioneel' },
+      { value: 'AnaarB', label: 'A → B' },
+      { value: 'BnaarA', label: 'B → A' },
+      { value: 'bi-directioneel', label: '↔ Bi-directioneel' },
     ];
 
     const typeOptions = [
-      { value: 'Maatwerk', label: 'Maatwerk' },
-      { value: 'Standaard', label: 'Standaard' },
-      { value: 'API', label: 'API' },
+      { value: 'n.v.t', label: 'N.v.t' },
+      { value: 'bestandsoverdracht', label: 'Bestandsoverdracht' },
+      { value: 'digikoppeling', label: 'Digikoppeling' },
+      { value: 'message que', label: 'Message queue' },
+      { value: 'upload naar portaal', label: 'Upload naar portaal' },
+      { value: 'webservices', label: 'Webservices' },
+      { value: 'api', label: 'API' },
     ];
 
     // Fetch modules per selected Applicatie A; empty fallback when none
@@ -3361,19 +3367,20 @@ const ControlerenForm = memo(
                           <UnorderedList>
                             {applicatie.koppelingen.map((kp, kIdx) => {
                               const richting = kp.richtingDataUitwisseling;
-                              const soort = kp.sooortKoppeling;
-                              const details =
-                                richting || soort
-                                  ? ` (${[richting, soort]
-                                      .filter(Boolean)
-                                      .join(', ')})`
-                                  : '';
+                              const soortVal = kp.sooortKoppeling;
+                              const soortLabel = soortVal || '';
+                              const arrow =
+                                richting === 'AnaarB'
+                                  ? '→'
+                                  : richting === 'BnaarA'
+                                  ? '←'
+                                  : '↔';
                               return (
                                 <UnorderedListItem
                                   key={`${kp.applicatie1}-${kp.applicatie2}-${kIdx}`}
                                 >
-                                  {kp.applicatie1} ↔ {kp.applicatie2}
-                                  {details}
+                                  {kp.applicatie1} {arrow} {kp.applicatie2}
+                                  {soortLabel ? ` (${soortLabel})` : ''}
                                 </UnorderedListItem>
                               );
                             })}
