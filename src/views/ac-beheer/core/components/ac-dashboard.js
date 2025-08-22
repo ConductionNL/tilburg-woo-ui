@@ -37,6 +37,7 @@ const AcDashboard = ({ store }) => {
                     to={getWizardUrl(wizard)}
                     color={wizard.color}
                     size="medium"
+                    className='ac-dashboard-wizard-tile'
                   />
                 ))}
               </AcGrid>
