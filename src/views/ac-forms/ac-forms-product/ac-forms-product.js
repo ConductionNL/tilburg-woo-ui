@@ -3658,9 +3658,6 @@ const AanbiederInformatieForm = memo(
                   onChange={(value) => setProductData('aanbiederLogo', value)}
                   isDisabled={loading}
                   width='half'
-                  customProps={{
-                    placeholder: 'https://www.organisatie.nl/logo.png',
-                  }}
                   schemas={schemas}
                 />
               </>
