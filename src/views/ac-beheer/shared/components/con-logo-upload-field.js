@@ -55,9 +55,29 @@ export const LogoUploadField = ({
     ? accept
     : defaultAccept.join(',');
 
+  /**
+   * Convert the accept attribute to a readable format
+   *
+   * @example
+   * ```
+   * 'image/png,image/jpeg,image/jpg,image/webp,image/svg+xml'
+   * => ['png', 'jpeg', 'jpg', 'webp', 'svg']
+   * ```
+   *
+   * if no standard accept type is given (e.g. '.png') just return the item
+   *
+   * @example
+   * ```
+   * '.pdf,.txt,.doc,.docx'
+   * => ['.pdf', '.txt', '.doc', '.docx']
+   * ```
+   *
+   * @returns {string[]}
+   */
   const readableAccept = useMemo(() => {
     return acceptAttr.split(',').map((item) => {
       const type = item.split('/')[1];
+      if (!type) return item;
       return type.includes('+') ? type.split('+')[0] : type;
     });
   }, [acceptAttr]);
