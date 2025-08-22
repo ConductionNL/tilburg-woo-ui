@@ -50,6 +50,7 @@ const AcFormsKoppeling = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveResult, setSaveResult] = useState(null); // 'success' | 'error' | null
   const [saveErrors, setSaveErrors] = useState([]); // array of error messages
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
 
   const directionOptions = [
     { value: 'AnaarB', label: 'A → B' },
@@ -304,6 +305,24 @@ const AcFormsKoppeling = () => {
       setSaveLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (saveResult === 'success') {
+      setRedirectCountdown(3);
+      const intervalId = setInterval(() => {
+        setRedirectCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalId);
+            window.location.assign('/beheer/koppeling');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(intervalId);
+    }
+    return undefined;
+  }, [saveResult]);
 
   const renderStep = (step) => {
     switch (step) {
@@ -603,9 +622,25 @@ const AcFormsKoppeling = () => {
             </h2>
 
             {saveResult === 'success' && (
-              <Alert type='ok'>
-                <Paragraph>Koppelingen succesvol opgeslagen.</Paragraph>
-              </Alert>
+              <div className='ac-register-form-alert'>
+                {/* Note: Styling for the 'ok' alert has not yet been implemented. */}
+                <Alert type='info'>
+                  <Paragraph>
+                    Koppelingen succesvol opgeslagen. U wordt doorgestuurd naar het
+                    beheer-overzicht in {redirectCountdown} seconden…
+                  </Paragraph>
+                  <Paragraph>
+                    Of ga direct naar{' '}
+                    <a
+                      className='ac-register-form-alert-link'
+                      href='/beheer/koppeling'
+                    >
+                      /beheer/koppeling
+                    </a>
+                    .
+                  </Paragraph>
+                </Alert>
+              </div>
             )}
 
             {saveResult === 'error' && (

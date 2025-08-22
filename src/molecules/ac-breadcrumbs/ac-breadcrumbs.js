@@ -22,8 +22,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
   const pathnames = location.pathname.split('/');
 
   // pretify the pathname
-  const prettifyPathname = (name) =>
-    name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  const prettifyPathname = (name, adition) =>
+    name &&
+    name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()) +
+      (adition ? ` ${adition}` : '');
 
   const getBreadcrumbs = useMemo(() => {
     if (location.pathname.startsWith('/zoeken')) {
@@ -78,6 +80,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
 
     if (location.pathname.startsWith('/views')) {
       return BREADCRUMBS.VIEWS(single_view?.name);
+    }
+
+    if (location.pathname.startsWith('/forms')) {
+      return BREADCRUMBS.BEHEER(prettifyPathname(pathnames[2], 'formulier'));
     }
 
     if (get_single_page?.name) {
