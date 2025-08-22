@@ -55,6 +55,11 @@
 .con-form-field-wrapper.field-size-full {
   flex-basis: 100%;
 }
+.con-form-field-wrapper.field-size-full .utrecht-textbox,
+.con-form-field-wrapper.field-size-full .utrecht-textarea,
+.con-form-field-wrapper.field-size-full .ac-beheer-select > div {
+  max-inline-size: 100% !important;
+}
 
 // Height variants
 .con-form-field-wrapper.field-height-double {
