@@ -2456,8 +2456,6 @@ const ReferentieComponentenForm = memo(
   }
 );
 
-ReferentieComponentenForm.displayName = 'ReferentieComponentenForm';
-
 // Step 5 Koppelingen
 
 // Step 6 Standaarden
@@ -2763,8 +2761,6 @@ const StandaardenForm = memo(
   }
 );
 
-StandaardenForm.displayName = 'StandaardenForm';
-
 // Step 6.5 Koppelingen
 const KoppelingenForm = memo(
   ({
@@ -3000,8 +2996,6 @@ const KoppelingenForm = memo(
     );
   }
 );
-
-KoppelingenForm.displayName = 'KoppelingenForm';
 
 // Step 7 Diensten
 const DienstenForm = memo(
@@ -3242,7 +3236,7 @@ const ControlerenForm = memo(
           </h3>
           <div className='ac-register-review__section'>
             <div className='ac-register-review__header'>
-              <h4 className='utrecht-heading-4'>{product.productName}</h4>
+              <h4 className='utrecht-heading-4'>{product.naam}</h4>
               {product.logo && (
                 <ConLogoPreview
                   logoUrl={product.logo}
@@ -3253,18 +3247,18 @@ const ControlerenForm = memo(
             <Separator className='con-form-wizard-review-header__separator' />
 
             <div className='ac-register-review__field'>
-              <strong>Beschrijving:</strong>
-              <span>{product.beschrijving || '-'}</span>
+              <strong>Sammenvatting:</strong>
+              <span>{product.beschrijvingKort || '-'}</span>
             </div>
 
             <div className='ac-register-review__field'>
-              <strong>Productpagina:</strong> {product.productpagina || '-'}
+              <strong>Website:</strong> {product.website || '-'}
             </div>
             <div className='ac-register-review__field'>
-              <strong>Hosting:</strong> {product.hosting || '-'}
+              <strong>Hosting:</strong> {product.hostingLocatie || '-'}
             </div>
             <div className='ac-register-review__field'>
-              <strong>Jurisdictie:</strong> {product.jurisdictie || '-'}
+              <strong>Jurisdictie:</strong> {product.hostingJurisdictie || '-'}
             </div>
           </div>
         </div>
@@ -3417,15 +3411,6 @@ const ControlerenForm = memo(
     );
   }
 );
-
-const TestForm = memo(({ currentStep }) => {
-  // TODOThis testForm needs to be removed after all the steps have their own form
-
-  return <div>hi this is current step {currentStep}</div>;
-});
-
-ProductOpbouwForm.displayName = 'ProductOpbouwForm';
-ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
 
 /**
  * Aanbieder Informatie Form Component
@@ -3693,7 +3678,10 @@ ApplicatieStep.displayName = 'ApplicatieStep';
 LicenseAndHostingStep.displayName = 'LicenseAndHostingStep';
 DienstenForm.displayName = 'DienstenForm';
 ControlerenForm.displayName = 'ControlerenForm';
-
-TestForm.displayName = 'TestForm';
+ReferentieComponentenForm.displayName = 'ReferentieComponentenForm';
+ProductOpbouwForm.displayName = 'ProductOpbouwForm';
+ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
+KoppelingenForm.displayName = 'KoppelingenForm';
+StandaardenForm.displayName = 'StandaardenForm';
 
 export default withStore(observer(AcFormsProduct));
