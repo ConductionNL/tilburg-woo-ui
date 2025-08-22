@@ -74,7 +74,8 @@ const AcFormsGebruik = () => {
 
     const fetchRefComps = async () => {
       try {
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
+        const params = new URLSearchParams({ _limit: '500', _page: '1' });
+        params.set('gemmaType', 'Referentiecomponent');
         const endpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
@@ -88,6 +89,7 @@ const AcFormsGebruik = () => {
           : [];
         const options = list.map((item, index) => {
           const label =
+            item?.xml?.name?._value ||
             item?.naam ||
             item?.name ||
             item?.title ||
@@ -457,7 +459,7 @@ const AcFormsGebruik = () => {
   return (
     <AcSection spacing>
       <AcContainer>
-        <AcColumn gap='lg'>
+        <AcColumn gap='tiger'>
           <div>
             <Heading1>Gebruik Aanmelden</Heading1>
             <Paragraph>
