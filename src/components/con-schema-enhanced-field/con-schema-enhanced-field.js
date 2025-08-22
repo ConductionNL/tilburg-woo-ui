@@ -48,22 +48,36 @@
  *     component: "AcTextarea"
  *   }}
  * />
+ * 
+ * // Override field width
+ * <ConSchemaEnhancedField
+ *   schemaType="product"
+ *   schemaProperty="naam"
+ *   value={product.naam}
+ *   onChange={(value) => setProduct({...product, naam: value})}
+ *   width="full" // Force full width instead of default half width
+ * />
  * ```
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
 
 // Import utilities
 import { getDefaultValue } from '../con-dynamic-schema-form/utils/defaults';
-// Import field renderer
+// Import field renderer and utilities
 import { renderField as utilRenderField } from '../con-dynamic-schema-form/utils/field-renderers';
+import { getFieldSizeClass as utilGetFieldSizeClass } from '../con-dynamic-schema-form/utils/field-utilities';
+// Import useRefOptions hook for automatic $ref field handling
+import { useRefOptions } from '../../hooks/use-ref-options';
 
 /**
  * Schema-Enhanced Field Component
  * @param {Object} props - Component props
- * @param {string} props.schemaType - Schema type to look up (product, module, dienst, etc.)
- * @param {string} props.schemaProperty - Property name in the schema  
+ * @param {string} props.schemaType - Schema type to look up (product, module, dienst, etc.) - OPTIONAL if schemaProperty is provided
+ * @param {string|Object} props.schemaProperty - Property name in the schema OR the property schema object directly
  * @param {*} props.value - Current field value
  * @param {function} props.onChange - Change handler function
  * @param {Object} props.schemas - Object containing loaded schema definitions
@@ -71,20 +85,25 @@ import { renderField as utilRenderField } from '../con-dynamic-schema-form/utils
  * @param {Object} props.customProps - Custom props to override schema defaults
  * @param {string} props.className - Custom CSS classes for styling
  * @param {Object} props.style - Custom inline styles
- * @param {Array} props.optionsProvider - Options array for select fields
- * @param {boolean} props.isLoading - Loading state for the field
+ * @param {Array} props.optionsProvider - Options array for select fields (fallback if not $ref)
+ * @param {boolean} props.isLoading - Loading state for the field (fallback if not $ref)
  * @param {boolean} props.isDisabled - Disabled state override
- * @param {function} props.onSearch - Search handler for $ref fields
+ * @param {function} props.onSearch - Search handler for $ref fields (fallback)
  * @param {Object} props.user - User object for authorization
  * @param {boolean} props.isCreateMode - Whether in create mode for authorization
  * @param {boolean} props.honorImmutable - Whether to respect immutable flag
  * @param {Object} props.context - Additional context for visibility functions
+ * @param {string} props.width - Override field width: 'half' or 'full' - overrides automatic width detection
+ * @param {boolean} props.showLabel - Whether to show the field label (default: true)
+ * @param {boolean} props.showDescription - Whether to show the field description/info (default: true)
+ * @param {Object} props.store - MobX store (injected by withStore)
  */
 const ConSchemaEnhancedField = ({
   schemaType,
   schemaProperty,
   value,
   onChange,
+  onFieldChange = null,
   schemas = {},
   formData = {},
   customProps = {},
@@ -98,43 +117,70 @@ const ConSchemaEnhancedField = ({
   isCreateMode = false,
   honorImmutable = false,
   context = {},
+  width = null, // Override field width ('half' or 'full')
+  showLabel = true, // NEW: Whether to show field label
+  showDescription = true, // NEW: Whether to show field description/info
+  store = null, // MobX store injected by withStore
   ...otherProps
 }) => {
   const [resetKey, setResetKey] = useState(0);
 
-  // Get schema for the specified type
-  const schema = schemas[schemaType];
-  if (!schema) {
-    console.warn(`Schema not found for type: ${schemaType}`);
-    return <div className={`schema-field-loading ${className}`} style={style}>Schema laden...</div>;
-  }
+  // Handle two usage patterns:
+  // 1. schemaProperty is a string - look up in schema
+  // 2. schemaProperty is an object - use it directly
+  let propertySchema = null;
+  let fieldName = '';
 
-  // Get field schema - support nested properties with dot notation
-  const getFieldFromSchema = (schemaType, fieldName) => {
-    const schema = schemas[schemaType];
-    if (!schema?.properties) return null;
-
-    // Support nested field paths with dot notation (e.g., "bivClassificatie.beschikbaarheid")
-    const fieldPath = fieldName.split('.');
-    let currentSchema = schema.properties;
-
-    for (const pathSegment of fieldPath) {
-      if (!currentSchema[pathSegment]) return null;
-
-      if (currentSchema[pathSegment].type === 'object' && currentSchema[pathSegment].properties) {
-        currentSchema = currentSchema[pathSegment].properties;
-      } else {
-        return currentSchema[pathSegment];
-      }
+  if (typeof schemaProperty === 'object' && schemaProperty !== null) {
+    // Direct schema property object provided
+    propertySchema = schemaProperty;
+    // Try to derive field name from context - for now just use a generic name
+    // The parent component should pass a fieldName or we derive it from prop names used in formData
+    fieldName = Object.keys(formData).find(key => 
+      formData[key] === value
+    ) || schemaProperty.title?.toLowerCase() || 'field';
+  } else if (typeof schemaProperty === 'string') {
+    // Property name provided - need to look up in schema
+    if (!schemaType) {
+      console.warn('schemaType is required when schemaProperty is a string');
+      return <div className={`schema-field-error ${className}`} style={style}>Schema type ontbreekt</div>;
     }
 
-    return null;
-  };
+    const schema = schemas[schemaType];
+    if (!schema) {
+      console.warn(`Schema not found for type: ${schemaType}`);
+      return <div className={`schema-field-loading ${className}`} style={style}>Schema laden...</div>;
+    }
 
-  const propertySchema = getFieldFromSchema(schemaType, schemaProperty);
+    // Get field schema - support nested properties with dot notation
+    const getFieldFromSchema = (schemaType, fieldName) => {
+      const schema = schemas[schemaType];
+      if (!schema?.properties) return null;
+
+      // Support nested field paths with dot notation (e.g., "bivClassificatie.beschikbaarheid")
+      const fieldPath = fieldName.split('.');
+      let currentSchema = schema.properties;
+
+      for (const pathSegment of fieldPath) {
+        if (!currentSchema[pathSegment]) return null;
+
+        if (currentSchema[pathSegment].type === 'object' && currentSchema[pathSegment].properties) {
+          currentSchema = currentSchema[pathSegment].properties;
+        } else {
+          return currentSchema[pathSegment];
+        }
+      }
+
+      return null;
+    };
+
+    propertySchema = getFieldFromSchema(schemaType, schemaProperty);
+    fieldName = schemaProperty;
+  }
+
   if (!propertySchema) {
-    console.warn(`Property not found in schema: ${schemaType}.${schemaProperty}`);
-    return <div className={`schema-field-error ${className}`} style={style}>Property niet gevonden</div>;
+    console.warn(`Property schema not available:`, { schemaType, schemaProperty });
+    return <div className={`schema-field-error ${className}`} style={style}>Schema eigenschap niet gevonden</div>;
   }
 
   // Apply default if undefined
@@ -146,49 +192,141 @@ const ConSchemaEnhancedField = ({
   // Create updated formData with current value for field renderer
   const updatedFormData = {
     ...formData,
-    [schemaProperty]: fieldValue
+    [fieldName]: fieldValue
+  };
+
+  // Create a mock schema for useRefOptions if we have a valid property schema
+  const mockSchemaForRefOptions = useMemo(() => {
+    if (!propertySchema) return null;
+    
+    return {
+      properties: {
+        [fieldName]: propertySchema
+      }
+    };
+  }, [fieldName, propertySchema]);
+
+  // Use useRefOptions for automatic $ref field handling if we have store and valid schema
+  const refOptionsResult = useRefOptions(
+    store && store.object ? store : null, // Only pass store if it has object property
+    'openregister', // Current register - hardcoded for now
+    mockSchemaForRefOptions,
+    { [fieldName]: customProps }, // Field configs
+    {} // Optimizations
+  );
+
+  // Debug store structure
+  if (process.env.NODE_ENV === 'development' && (fieldName === 'contactpersoon' || fieldName === 'aanbieder')) {
+    console.log(`🏪 Store debug for [${fieldName}]:`, {
+      hasStore: !!store,
+      hasObject: !!(store?.object),
+      storeKeys: store ? Object.keys(store) : [],
+      objectKeys: store?.object ? Object.keys(store.object) : []
+    });
+  }
+
+  // Extract options and loading state from useRefOptions if it's a $ref field
+  const hasRefProperty = propertySchema?.$ref || (propertySchema?.items && propertySchema.items.$ref);
+  const effectiveOptionsProvider = hasRefProperty 
+    ? (refOptionsResult?.optionsProviders?.[fieldName] || [])
+    : optionsProvider;
+  const effectiveIsLoading = hasRefProperty 
+    ? (refOptionsResult?.loadingStates?.[fieldName] || false)
+    : isLoading;
+
+  // Debug logging
+  if (process.env.NODE_ENV === 'development' && (hasRefProperty || fieldName === 'contactpersoon' || fieldName === 'aanbieder' || fieldName === 'modules')) {
+    console.log(`🔍 ConSchemaEnhancedField [${fieldName}]:`, {
+      hasRefProperty,
+      refProperty: propertySchema?.$ref,
+      itemsRefProperty: propertySchema?.items?.$ref,
+      optionsCount: effectiveOptionsProvider.length,
+      isLoading: effectiveIsLoading,
+      store: !!store,
+      propertySchemaKeys: propertySchema ? Object.keys(propertySchema) : [],
+      schemaType,
+      propertyType: propertySchema?.type,
+      options: effectiveOptionsProvider.slice(0, 2) // Show first 2 options for debugging
+    });
+  }
+
+  // Create search handler for $ref fields
+  const effectiveOnSearchHandlers = useMemo(() => {
+    if (!hasRefProperty || !refOptionsResult?.fetchOptions) {
+      return onSearch ? { handleSearch: onSearch } : {};
+    }
+    
+    return {
+      handleSearch: async (fieldPath, query) => {
+        console.log(`🔍 ConSchemaEnhancedField: Search triggered for ${fieldPath}:`, query);
+        if (refOptionsResult.fetchOptions) {
+          await refOptionsResult.fetchOptions(fieldPath, query);
+        }
+      }
+    };
+  }, [hasRefProperty, refOptionsResult?.fetchOptions, onSearch]);
+
+  // Merge width override with customProps for field configuration
+  const fieldConfig = {
+    ...customProps,
+    // Override size/width if provided
+    ...(width && { size: width }),
+    // Override label and description visibility
+    ...(showLabel === false && { hideLabel: true }),
+    ...(showDescription === false && { hideDescription: true })
   };
 
   // Use the reusable field renderer utility with custom onChange wrapper
   const fieldRenderer = utilRenderField({
-    path: schemaProperty,
+    path: fieldName,
     propertySchema,
     required: propertySchema.required || false,
     formData: updatedFormData,
-    fieldConfigs: { [schemaProperty]: customProps },
+    fieldConfigs: { [fieldName]: fieldConfig },
     customFieldComponents: {},
-    optionsProviders: { [schemaProperty]: optionsProvider },
-    loadingStates: { [schemaProperty]: isLoading },
-    disabledStates: { [schemaProperty]: isDisabled },
+    optionsProviders: { [fieldName]: effectiveOptionsProvider },
+    loadingStates: { [fieldName]: effectiveIsLoading },
+    disabledStates: { [fieldName]: isDisabled },
     validationStates: {},
-    onFieldChange: (field, value) => onChange(value), // Simple onChange wrapper
+    onFieldChange: (field, value) => {
+      // Handle main field change
+      if (field === fieldName) {
+        onChange(value);
+      } 
+      // Handle related field changes (like filename for file uploads)
+      else if (onFieldChange) {
+        onFieldChange(field, value);
+      }
+    },
     userIsAuthenticated: true,
     context,
     user,
     isCreateMode,
     honorImmutable,
-    onSearchHandlers: onSearch ? { handleSearch: onSearch } : {},
+    onSearchHandlers: effectiveOnSearchHandlers,
     resetKey,
     forceRenderKey: 0
   });
 
-  // Apply custom className and style if needed
-  if ((className || style) && fieldRenderer) {
-    return (
-      <div className={className} style={style}>
-        {fieldRenderer}
-      </div>
-    );
-  }
+  // Apply size wrapper like ConDynamicSchemaForm does
+  const sizeClass = utilGetFieldSizeClass(fieldName, propertySchema, fieldConfig);
 
-  return fieldRenderer;
+  // Apply custom className and style if needed, combined with size wrapper
+  const combinedClassName = [sizeClass, className].filter(Boolean).join(' ');
+  
+  return (
+    <div className={`con-form-field-wrapper ${combinedClassName}`} style={style}>
+      {fieldRenderer}
+    </div>
+  );
 };
 
 ConSchemaEnhancedField.propTypes = {
-  schemaType: PropTypes.string.isRequired,
-  schemaProperty: PropTypes.string.isRequired,
+  schemaType: PropTypes.string, // Optional when schemaProperty is an object
+  schemaProperty: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
   value: PropTypes.any,
   onChange: PropTypes.func.isRequired,
+  onFieldChange: PropTypes.func, // For handling related field changes (like filename)
   schemas: PropTypes.object,
   formData: PropTypes.object,
   customProps: PropTypes.object,
@@ -202,6 +340,10 @@ ConSchemaEnhancedField.propTypes = {
   isCreateMode: PropTypes.bool,
   honorImmutable: PropTypes.bool,
   context: PropTypes.object,
+  width: PropTypes.oneOf(['half', 'full']), // Override field width
+  showLabel: PropTypes.bool, // Whether to show field label (default: true)
+  showDescription: PropTypes.bool, // Whether to show field description (default: true)
+  store: PropTypes.object, // MobX store (injected by withStore)
 };
 
-export default ConSchemaEnhancedField;
+export default withStore(observer(ConSchemaEnhancedField));

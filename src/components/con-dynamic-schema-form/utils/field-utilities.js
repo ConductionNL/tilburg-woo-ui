@@ -200,6 +200,15 @@ export const getFieldConfig = (propertyPath, propertySchema, isRequired, fieldCo
         component: 'WysiwygMarkdown',
         isMarkdown: format === 'markdown',
       };
+    } else if (format === 'base64' || format === 'binary' || format === 'byte') {
+      // File upload fields with base64 encoding
+      schemaConfig = {
+        ...baseConfig,
+        type: 'file',
+        component: 'File',
+        inputType: 'file',
+        format: format,
+      };
     } else if (['email', 'idn-email'].includes(format)) {
       schemaConfig = {
         ...baseConfig,
@@ -260,14 +269,23 @@ export const getFieldConfig = (propertyPath, propertySchema, isRequired, fieldCo
   }
 
   // Merge custom field config with schema config
+  let finalConfig = schemaConfig;
   if (fieldConfigs[propertyPath]) {
-    return {
+    finalConfig = {
       ...schemaConfig,
       ...fieldConfigs[propertyPath],
     };
   }
 
-  return schemaConfig;
+  // Handle custom format overrides that might trigger file uploads
+  if (finalConfig?.format === 'base64' || finalConfig?.inputType === 'file') {
+    finalConfig.type = 'file';
+    finalConfig.component = 'File';
+    finalConfig.inputType = 'file';
+    finalConfig.format = finalConfig.format || 'base64';
+  }
+
+  return finalConfig;
 };
 
 /**
@@ -465,7 +483,7 @@ export const handleFieldChange = (propertyPath, fieldConfig, onFieldChange, form
  * Determines the size class for a field based on its type and format
  */
 export const getFieldSizeClass = (propertyPath, propertySchema, fieldConfig) => {
-  // Check for explicit size configuration first
+  // Check for explicit size configuration first - these ALWAYS take priority
   if (fieldConfig.size === 'full') return 'field-size-full';
   if (fieldConfig.size === 'half') return 'field-size-half';
 
@@ -473,9 +491,15 @@ export const getFieldSizeClass = (propertyPath, propertySchema, fieldConfig) => 
   const format = propertySchema.format;
   const component = fieldConfig.component;
 
-  // Only markdown fields get special treatment: full width + double height
+  // Markdown fields get special treatment: full width + double height (unless overridden above)
   if (component === 'WysiwygMarkdown' || format === 'markdown') {
     return 'field-size-full field-height-double';
+  }
+
+  // File upload fields: half width by default (unless overridden by explicit size above)
+  if (component === 'File' || fieldConfig.type === 'file' || propertySchema.type === 'file' || 
+      format === 'base64' || format === 'binary' || format === 'byte') {
+    return 'field-size-half';
   }
 
   // Everything else: half width, normal height

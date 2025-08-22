@@ -20,6 +20,7 @@ import BooleanField from '../inputs/boolean-field';
 import NumberField from '../inputs/number-field';
 import ArrayCommaListField from '../inputs/array-comma-list-field';
 import ColorField from '../inputs/color-field';
+import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 
 import { getDefaultValue } from './defaults';
 import {
@@ -193,6 +194,54 @@ export const renderField = ({
         options={options}
         propertyName={path}
         context={context}
+      />
+    );
+  }
+
+  // Handle file upload fields (triggered by type="file" or format="base64" etc.)
+  if (propertySchema.type === 'file' || 
+      fieldConfig.type === 'file' ||
+      fieldConfig.component === 'File' ||
+      fieldConfig.inputType === 'file' ||
+      propertySchema.format === 'base64' || 
+      (propertySchema.type === 'string' && (
+        propertySchema.format === 'binary' ||
+        propertySchema.format === 'byte'
+      ))) {
+    
+    // Extract filename field from path (assume fieldname + "Filename")
+    const filenamePath = path + 'Filename';
+    const filenameValue = getNestedValue(filenamePath, formData);
+    
+    return (
+      <LogoUploadField
+        key={path}
+        fieldConfig={{
+          label: fieldConfig.label,
+          description: fieldConfig.description,
+          filename: filenameValue,
+          required: validation.required
+        }}
+        _value={value}
+        onChange={(dataUrl) => {
+          handleChange(dataUrl);
+        }}
+        onChangeFileName={(filename) => {
+          // Update filename field if it exists in formData structure
+          if (onFieldChange) {
+            onFieldChange(filenamePath, filename);
+          }
+        }}
+        onClear={() => {
+          handleChange('');
+          if (onFieldChange) {
+            onFieldChange(filenamePath, '');
+          }
+        }}
+        validation={validation}
+        propertyName={path}
+        isDisabled={isDisabled}
+        placeholder={fieldConfig.placeholder}
       />
     );
   }
@@ -421,37 +470,39 @@ export const renderField = ({
 
     return (
       <div key={`${path}-${resetKey}`}>
-        <label className='utrecht-form-label'>
-          <Heading
-            level={4}
-            className={clsx({
-              'ac-form-field-header-info': fieldConfig.description,
-            })}
-          >
-            <div>
-              {fieldConfig.label}
-              {validation.required && (
+        {!fieldConfig.hideLabel && (
+          <label className='utrecht-form-label'>
+            <Heading
+              level={4}
+              className={clsx({
+                'ac-form-field-header-info': fieldConfig.description && !fieldConfig.hideDescription,
+              })}
+            >
+              <div>
+                {fieldConfig.label}
+                {validation.required && (
+                  <>
+                    <span className='required-indicator' aria-hidden='true'>*</span>
+                    <span className='sr-only'>(verplicht)</span>
+                  </>
+                )}
+              </div>
+              {!fieldConfig.hideDescription && fieldConfig.description && (
                 <>
-                  <span className='required-indicator' aria-hidden='true'>*</span>
-                  <span className='sr-only'>(verplicht)</span>
+                  <span
+                    data-tooltip-id={TOOLTIP_ID}
+                    data-tooltip-content={fieldConfig.description}
+                    className='info-indicator'
+                    role='img'
+                    aria-label={fieldConfig.description}
+                  >
+                    <VISUALS.INFO />
+                  </span>
                 </>
               )}
-            </div>
-            {fieldConfig.description && (
-              <>
-                <span
-                  data-tooltip-id={TOOLTIP_ID}
-                  data-tooltip-content={fieldConfig.description}
-                  className='info-indicator'
-                  role='img'
-                  aria-label={fieldConfig.description}
-                >
-                  <VISUALS.INFO />
-                </span>
-              </>
-            )}
-          </Heading>
-        </label>
+            </Heading>
+          </label>
+        )}
         <ReactSelectWithGlobalHack
           key={`${path}-${resetKey}-${forceRenderKey}`}
           fieldPath={path}

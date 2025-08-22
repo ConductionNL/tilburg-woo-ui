@@ -43,12 +43,31 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
   const fetchingFieldsRef = useRef(new Set());
 
   /**
+   * Maps schema slugs to their correct register
+   * Some schemas live in different registers than the default currentRegister
+   */
+  const SCHEMA_REGISTER_MAPPING = {
+    'contactpersoon': 'voorzieningen',
+    'organisatie': 'voorzieningen',
+    'module': 'voorzieningen',
+    // Add more mappings as needed
+    // By default, schemas without mapping use the currentRegister
+  };
+
+  /**
    * Extracts the schema slug from a $ref value
    */
   const extractSchemaSlugFromRef = (ref) => {
     if (!ref || typeof ref !== 'string') return null;
     const parts = ref.split('/');
     return parts[parts.length - 1];
+  };
+
+  /**
+   * Gets the correct register for a schema slug
+   */
+  const getRegisterForSchema = (schemaSlug) => {
+    return SCHEMA_REGISTER_MAPPING[schemaSlug] || currentRegister;
   };
 
   /**
@@ -97,9 +116,12 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       return;
     }
 
+    // Get the correct register for this schema
+    const targetRegister = getRegisterForSchema(refSchemaSlug);
+
     // Create a unique key for this fetch operation
     const fetchKey = `${fieldPath}-${refSchemaSlug}-${searchQuery || 'initial'}`;
-    const cacheKey = `${currentRegister}-${refSchemaSlug}-${searchQuery || 'initial'}`;
+    const cacheKey = `${targetRegister}-${refSchemaSlug}-${searchQuery || 'initial'}`;
     
     // Check cache first - if we have cached results, use them immediately
     if (API_CACHE.has(cacheKey)) {
@@ -171,10 +193,12 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
         _page: 1, // Always start from page 1 for form field options
       };
       
-      await object.fetchCollection(currentRegister, refSchemaSlug, fetchParams, false, optionsTypeSuffix);
+      await object.fetchCollection(targetRegister, refSchemaSlug, fetchParams, false, optionsTypeSuffix);
       
       // Get the data from the store after fetching using the suffixed type
-      const collectionType = `${currentRegister}_${refSchemaSlug}_${optionsTypeSuffix}`;
+      const collectionType = `${targetRegister}_${refSchemaSlug}_${optionsTypeSuffix}`;
+
+      console.log(`🔍 useRefOptions: Fetching from ${targetRegister}/${refSchemaSlug} for field ${fieldPath}`);
       const collection = object.getCollection(collectionType);
 
       if (collection && collection.results && collection.results.length > 0) {
