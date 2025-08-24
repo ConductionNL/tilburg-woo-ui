@@ -2,21 +2,7 @@ import React, { useState, memo, useCallback } from 'react';
 import ReactSelect from 'react-select';
 import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
 
-// Add CSS for spinner animation (in case needed for future enhancements)
-const spinnerStyles = `
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-`;
-
-// Inject CSS if not already present
-if (!document.getElementById('referentie-spinner-styles')) {
-  const style = document.createElement('style');
-  style.id = 'referentie-spinner-styles';
-  style.textContent = spinnerStyles;
-  document.head.appendChild(style);
-}
+// Removed spinner CSS since we're no longer using search functionality
 import {
   Paragraph,
   Table,
@@ -50,7 +36,6 @@ const ConFormReferentiecomponentenStage = memo(
     loading,
     getNewModulesWithApplicatieData,
     existingModulesLookup,
-    searchReferentieComponenten,
     referentieComponentenLoading,
   }) => {
     const [sameForAll, setSameForAll] = useState(true);
@@ -132,42 +117,7 @@ const ConFormReferentiecomponentenStage = memo(
       });
     };
 
-    // If no new applications exist, show a message instead of the form
-    if (applicatieIndices.length === 0) {
-      return (
-        <div>
-          <h2 id='refcomp-section-title' className='sr-only'>
-            Referentiecomponenten
-          </h2>
-
-          <Paragraph>
-            <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong><br/>
-            Referentiecomponenten uit de GEMMA architectuur tonen aan welke standaard gemeentelijke functies uw software ondersteunt. 
-            Door deze te koppelen aan uw applicaties, kunnen organisaties direct zien of uw software aansluit op hun IT-architectuur. 
-            Dit vergemakkelijkt integratie met bestaande systemen en zorgt voor herkenbare functionaliteit. 
-            Organisaties gebruiken deze informatie voor architectuur-assessments en interoperabiliteitsbeoordelingen.
-          </Paragraph>
-
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '2rem',
-              background: '#f8f9fa',
-              borderRadius: '8px',
-            }}
-          >
-            <Paragraph>
-              <strong>Geen nieuwe applicaties gevonden</strong>
-            </Paragraph>
-            <Paragraph>
-              Alle applicaties in dit product zijn bestaande applicaties die al
-              hun eigen referentiecomponenten hebben. Er hoeven geen
-              referentiecomponenten gekoppeld te worden.
-            </Paragraph>
-          </div>
-        </div>
-      );
-    }
+    // Don't early return - let the component continue to show ConExistingModulesInfoBox
 
     return (
       <div>
@@ -220,25 +170,15 @@ const ConFormReferentiecomponentenStage = memo(
                     }
                   }}
                   options={referentieComponentenOptions}
-                  placeholder={referentieComponentenOptions.length === 0 && !referentieComponentenLoading ? "Begin met typen om te zoeken..." : "Selecteer referentie componenten"}
+                  placeholder={referentieComponentenLoading ? "Laden..." : "Selecteer referentie componenten"}
                   isMulti={true}
                   isSearchable={true}
                   isLoading={referentieComponentenLoading}
                   isDisabled={loading}
-                  onInputChange={(inputValue, actionMeta) => {
-                    if (actionMeta.action === 'input-change') {
-                      console.log('🔍 ReactSelect referentie search input:', inputValue);
-                      if (searchReferentieComponenten) {
-                        searchReferentieComponenten(inputValue);
-                      }
-                    }
-                  }}
-                  filterOption={() => true} // Disable client-side filtering, use server search
                   styles={{
                     control: (provided) => ({
                       ...provided,
-                      minHeight: '48px', // Match the height of original field
-                      height: '48px',
+                      minHeight: '120px', // Much larger to accommodate multiple selections
                       border: '1px solid #ccc',
                       borderRadius: '4px',
                     }),
@@ -248,8 +188,17 @@ const ConFormReferentiecomponentenStage = memo(
                     }),
                     valueContainer: (provided) => ({
                       ...provided,
-                      height: '46px',
-                      padding: '0 12px',
+                      minHeight: '116px', // Allow container to expand
+                      padding: '8px 12px', // More padding for larger area
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      alignItems: 'flex-start',
+                    }),
+                    multiValue: (provided) => ({
+                      ...provided,
+                      margin: '2px',
+                      backgroundColor: '#e3f2fd',
+                      border: '1px solid #bbdefb',
                     }),
                     input: (provided) => ({
                       ...provided,
@@ -297,20 +246,11 @@ const ConFormReferentiecomponentenStage = memo(
                             updateReferentieComponentenWithStandards(index, refsArray);
                           }}
                           options={referentieComponentenOptions}
-                          placeholder={referentieComponentenOptions.length === 0 && !referentieComponentenLoading ? "Begin met typen om te zoeken..." : "Selecteer referentie componenten"}
+                          placeholder={referentieComponentenLoading ? "Laden..." : "Selecteer referentie componenten"}
                           isMulti={true}
                           isSearchable={true}
                           isLoading={referentieComponentenLoading}
                           isDisabled={loading}
-                          onInputChange={(inputValue, actionMeta) => {
-                            if (actionMeta.action === 'input-change') {
-                              console.log('🔍 ReactSelect referentie search input (table):', inputValue);
-                              if (searchReferentieComponenten) {
-                                searchReferentieComponenten(inputValue);
-                              }
-                            }
-                          }}
-                          filterOption={() => true} // Disable client-side filtering, use server search
                           styles={{
                             control: (provided) => ({
                               ...provided,
@@ -345,15 +285,7 @@ const ConFormReferentiecomponentenStage = memo(
               </TableBody>
             </Table>
           </div>
-        ) : (
-          // No new applications that need referentiecomponenten configuration
-          <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #e9ecef' }}>
-            <Paragraph style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
-              Alle applicaties zijn bestaande applicaties uit de catalogus. 
-              Hun referentiecomponenten zijn al vastgelegd en hoeven niet opnieuw geconfigureerd te worden.
-            </Paragraph>
-          </div>
-        )}
+        ) : null}
 
         <ConExistingModulesInfoBox 
           key="referentie-stage-existing-modules-info"

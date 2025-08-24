@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { AcFlex, AcSection, AcGrid } from '@atoms';
+import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
 import { AcButton, AcTile } from '@molecules';
 import { ConDynamicSidenav } from '@components';
 import {
@@ -24,10 +24,11 @@ const AcDashboard = ({ store }) => {
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
-      <AcFlex spacing='xl'>
-        <ConDynamicSidenav store={store} />
+      <AcContainer>
+        <AcFlex spacing='xl'>
+          <ConDynamicSidenav store={store} />
 
-        <AcFlex column spacing='lg' className='ac-dashboard-content'>
+          <AcFlex column spacing='lg' className='ac-dashboard-content'>
           {/* Wizard Tiles */}
           {availableWizards.length > 0 && (
             <div className='ac-dashboard-wizards'>
@@ -119,6 +120,7 @@ const AcDashboard = ({ store }) => {
           </div>
         </AcFlex>
       </AcFlex>
+      </AcContainer>
     </AcSection>
   );
 };

@@ -206,6 +206,14 @@ const ConFormStandaardenStage = ({
 
   // Toggle compliance for a specific module-standard combination
   const toggleCompliance = (key, isCompliant) => {
+    // Get current entry BEFORE updating state to avoid React timing issues
+    const currentEntry = tableState[key];
+    if (!currentEntry) {
+      console.warn('No entry found for key:', key);
+      return;
+    }
+
+    // Update tableState
     setTableState(prev => ({
       ...prev,
       [key]: {
@@ -216,23 +224,26 @@ const ConFormStandaardenStage = ({
       }
     }));
 
-    // Update product data
-    const entry = tableState[key];
-    if (!entry) return;
-
+    // Update product data using currentEntry (not the updated tableState)
     setProduct(prev => {
       const modules = [...(prev.modules || [])];
-      const moduleIndex = entry.moduleId; // This should now be the direct module index
+      const moduleIndex = currentEntry.moduleId;
       const app = modules[moduleIndex];
+      
+      if (typeof app !== 'object') {
+        console.warn('Cannot update compliancy on existing module:', moduleIndex, app);
+        return prev;
+      }
+
       let compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
 
       if (isCompliant) {
         // Add or update compliancy object
-        const existingIndex = compliancy.findIndex(c => c.standaardversie === entry.standardId);
+        const existingIndex = compliancy.findIndex(c => c.standaardversie === currentEntry.standardId);
         const compliancyObject = {
-          standaardversie: entry.standardId,
+          standaardversie: currentEntry.standardId,
           // ✅ REMOVED: module property - backend handles this with inversedBy logic
-          bewijs: entry.bewijs || null,
+          bewijs: currentEntry.bewijs || null,
         };
 
         if (existingIndex >= 0) {
@@ -240,19 +251,22 @@ const ConFormStandaardenStage = ({
         } else {
           compliancy.push(compliancyObject);
         }
+        
+        console.log('✅ Added compliancy:', compliancyObject, 'to module:', currentEntry.moduleId);
       } else {
         // Remove compliancy object
-        compliancy = compliancy.filter(c => c.standaardversie !== entry.standardId);
+        const beforeLength = compliancy.length;
+        compliancy = compliancy.filter(c => c.standaardversie !== currentEntry.standardId);
+        
+        console.log('❌ Removed compliancy for standard:', currentEntry.standardId, 'from module:', currentEntry.moduleId, `(${beforeLength} -> ${compliancy.length})`);
       }
 
-      if (typeof app === 'object') {
-        modules[moduleIndex] = {
-          ...app,
-          compliancy,
-        };
-        return { ...prev, modules };
-      }
-      return prev;
+      modules[moduleIndex] = {
+        ...app,
+        compliancy,
+      };
+      
+      return { ...prev, modules };
     });
   };
 

@@ -291,6 +291,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     nextRowId: 1,
     selectedApplication: {},
     selectedDienstByRow: {},
+    dienstBeschrijvingByRow: {}, // Track custom descriptions for each dienst
     allAppsDienst: null,
   });
 
@@ -318,11 +319,11 @@ const AcFormsProduct = ({ userStore, store }) => {
 
   const setProductData = useCallback((key, value) => {
     // No more applicaties handling - all new module data is stored directly in modules array
-    setProduct((prev) => ({ ...prev, [key]: value }));
-    setTouched((prev) => ({
-      ...prev,
-      [key]: true,
-    }));
+      setProduct((prev) => ({ ...prev, [key]: value }));
+      setTouched((prev) => ({
+        ...prev,
+        [key]: true,
+      }));
   }, []);
 
   // Schema definitions for form generation
@@ -670,31 +671,31 @@ const AcFormsProduct = ({ userStore, store }) => {
   // Referentiecomponenten options with search functionality
   const [referentieComponentenOptions, setReferentieComponentenOptions] = useState([]);
   const [referentieComponentenLoading, setReferentieComponentenLoading] = useState(false);
-  
-  // Get query parameters from schema property configuration
+    
+    // Get query parameters from schema property configuration
   const getReferentieComponentenQueryParams = useCallback(() => {
-    const moduleSchema = schemas?.module;
-    const refCompProperty = moduleSchema?.properties?.referentieComponenten;
-    const queryParamsString = refCompProperty?.items?.objectConfiguration?.queryParams;
-    
-    const baseParams = {
+      const moduleSchema = schemas?.module;
+      const refCompProperty = moduleSchema?.properties?.referentieComponenten;
+      const queryParamsString = refCompProperty?.items?.objectConfiguration?.queryParams;
+      
+      const baseParams = {
       _limit: '500', // Load 500 referentiecomponenten upfront
-      _page: '1',
-    };
-    
-    if (queryParamsString) {
-      // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
-      const urlParams = new URLSearchParams(queryParamsString);
-      urlParams.forEach((value, key) => {
-        baseParams[key] = value;
-      });
-    } else {
-      // Fallback to hardcoded if schema doesn't have queryParams
-      baseParams.gemmaType = 'Referentiecomponent';
-      baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
-    }
-    
-    return baseParams;
+        _page: '1',
+      };
+      
+      if (queryParamsString) {
+        // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
+        const urlParams = new URLSearchParams(queryParamsString);
+        urlParams.forEach((value, key) => {
+          baseParams[key] = value;
+        });
+      } else {
+        // Fallback to hardcoded if schema doesn't have queryParams
+        baseParams.gemmaType = 'Referentiecomponent';
+        baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+      }
+      
+      return baseParams;
   }, [schemas]);
 
   // Function to load all referentiecomponenten upfront
@@ -707,32 +708,32 @@ const AcFormsProduct = ({ userStore, store }) => {
     
     try {
       const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
-      const queryParams = getReferentieComponentenQueryParams();
-      const params = new URLSearchParams(queryParams);
-      const endpoint = `${baseEndpoint}?${params}`;
+        const queryParams = getReferentieComponentenQueryParams();
+        const params = new URLSearchParams(queryParams);
+        const endpoint = `${baseEndpoint}?${params}`;
 
       console.log('🔍 Full endpoint:', endpoint);
 
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
 
-      const mapToOption = (item, index) => {
-        const label =
+    const mapToOption = (item, index) => {
+      const label =
           item?.xml?.name?._value ||
-          item?.naam ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
+        item?.naam ||
+        item?.name ||
+        item?.title ||
+        item?.label ||
           `Component ${index + 1}`;
-        const value = item?.value || item?.id || item?.slug || label;
+      const value = item?.value || item?.id || item?.slug || label;
         return { 
           value: String(value), 
           label: String(label),
@@ -772,10 +773,10 @@ const AcFormsProduct = ({ userStore, store }) => {
     
     try {
       const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
-      const params = new URLSearchParams({
+        const params = new URLSearchParams({
         _limit: searchTerm ? '50' : '20', // More results when searching
-        _page: '1',
-      });
+          _page: '1',
+        });
       
       // Add search parameter if provided
       if (searchTerm && searchTerm.trim()) {
@@ -783,20 +784,20 @@ const AcFormsProduct = ({ userStore, store }) => {
         console.log('🔍 API call with _search:', searchTerm.trim());
       }
       
-      const endpoint = `${baseEndpoint}?${params}`;
+        const endpoint = `${baseEndpoint}?${params}`;
       console.log('🔍 Full endpoint:', endpoint);
+
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
       
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-      
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
         
       const mapToOption = (item, index) => {
         const label =
@@ -813,16 +814,16 @@ const AcFormsProduct = ({ userStore, store }) => {
         };
       };
       
-      const options = list.map(mapToOption).filter((o) => o.label && o.value);
+        const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setModulesOptions(options);
       console.log(`📊 Found ${options.length} modules for search: "${searchTerm}"`);
       
-    } catch (e) {
-      console.error('Failed to fetch modules:', e);
+      } catch (e) {
+        console.error('Failed to fetch modules:', e);
       setModulesOptions([]);
     } finally {
       setModulesLoading(false);
-    }
+      }
   }, []);
 
   // ✅ Debounced search function for modules
@@ -868,13 +869,16 @@ const AcFormsProduct = ({ userStore, store }) => {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Create a copy of the organization data
+      // Submit the complete product object to the voorzieningen register
       const productData = {
-        naam: product.productName,
+        ...product,
+        naam: product.naam || product.productName, // Ensure naam is properly set
       };
 
+      console.log('🚀 Submitting product to voorzieningen register:', productData);
+
       const response = await fetch(
-        `${BASE_URL}/openconnector/api/endpoint/register`,
+        `${BASE_URL}/openregister/api/objects/voorzieningen/product`,
         {
           method: 'POST',
           headers: {
@@ -1088,6 +1092,7 @@ const AcFormsProduct = ({ userStore, store }) => {
             product={product}
             dienstOptions={dienstOptions}
             referentieComponentenOptions={referentieComponentenOptions}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
             existingModulesLookup={existingModulesLookup}
             getAllModulesForStages={getAllModulesForStages}
           />
@@ -1149,11 +1154,14 @@ const AcFormsProduct = ({ userStore, store }) => {
   };
 
   const getDisabledStatus = (currentStep) => {
+    // Convert physical step to logical step for consistent validation
+    const logicalStep = getLogicalStepFromIndex(currentStep);
+    
     // TODO: uncomment at the end
-    if (currentStep === 0) {
+    if (logicalStep === 0) {
       return false;
     }
-    if (currentStep === 1) {
+    if (logicalStep === 1) {
       // Productinformatie step validation
       const requiredFields = ['naam', 'website'];
       const missingFields = requiredFields.filter(field => !product[field] || !product[field].trim());
@@ -1171,7 +1179,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       
       return missingFields.length > 0;
     }
-    if (currentStep === 2) {
+    if (logicalStep === 3) {
       // Applicaties step validation - check modules array
       const totalModules = product.modules?.length || 0;
       
@@ -1189,7 +1197,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       return hasIncompleteNewModules;
     }
     
-    if (currentStep === 4) {
+    if (logicalStep === 4) {
       // Licentie step validation - check new modules
       const newModules = getNewModules();
       const hasIncompleteLicenses = newModules.some(module => {
@@ -1212,13 +1220,67 @@ const AcFormsProduct = ({ userStore, store }) => {
       return hasIncompleteLicenses;
     }
     
+    // TODO: Koppelingen validation temporarily removed - too strict
+    // if (logicalStep === 8) {
+    //   // Koppelingen step validation - check if all koppeling rows are complete
+    //   const { rows, selectedAppAByRow, selectedAppBByRow, directionByRow, typeByRow } = koppelingenFormState;
+    //   
+    //   // Allow empty koppelingen (user might not want to add any connections)
+    //   if (rows.length === 0) {
+    //     return false;
+    //   }
+    //   
+    //   // Check if any row has incomplete data
+    //   const hasIncompleteKoppelingen = rows.some(rowId => {
+    //     const appA = selectedAppAByRow[rowId];
+    //     const appB = selectedAppBByRow[rowId];
+    //     const direction = directionByRow[rowId];
+    //     const type = typeByRow[rowId];
+    //     
+    //     // If any field in a row is filled, all fields must be filled
+    //     const hasAnyData = appA || appB || direction || type;
+    //     const hasAllData = appA && appB && direction && type;
+    //     
+    //     return hasAnyData && !hasAllData;
+    //   });
+    //   
+    //   return hasIncompleteKoppelingen;
+    // }
+    
+    if (logicalStep === 9) {
+      // Diensten step validation - check if all dienst rows are complete
+      const { rows, selectedApplication, selectedDienstByRow } = dienstenFormState;
+      
+      // Allow empty diensten (user might not want to add any services)
+      if (rows.length === 0) {
+        return false;
+      }
+      
+      // Check if any row has incomplete data
+      const hasIncompleteDiensten = rows.some(rowId => {
+        const appId = selectedApplication[rowId];
+        const dienstVal = selectedDienstByRow[rowId];
+        
+        // If any field in a row is filled, all fields must be filled
+        const hasAnyData = appId != null || dienstVal != null;
+        const hasAllData = appId != null && dienstVal != null;
+        
+        return hasAnyData && !hasAllData;
+      });
+      
+      return hasIncompleteDiensten;
+    }
+    
     return false;
   };
 
   // Add this function to generate the tooltip message
   const getDisabledTooltip = (currentStep, product) => {
+    // Convert physical step to logical step for consistent validation
+    const logicalStep = getLogicalStepFromIndex(currentStep);
+    
     // Example
-    if (currentStep === 1) {
+    if (logicalStep === 1) {
       const messages = [];
       
       // Check required fields
@@ -1242,7 +1304,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       return messages.join('\n');
     }
     
-    if (currentStep === 2) {
+    if (logicalStep === 3) {
       const messages = [];
       const totalModules = product.modules?.length || 0;
       
@@ -1280,7 +1342,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       return messages.join('\n');
     }
     
-    if (currentStep === 4) {
+    if (logicalStep === 4) {
       // Licentie step validation messages
       const messages = [];
       const newModules = getNewModules();
@@ -1305,6 +1367,53 @@ const AcFormsProduct = ({ userStore, store }) => {
         messages.push('Alle nieuwe applicaties hebben volledige licentie-informatie nodig:');
         messages.push(...incompleteLicenses);
       }
+      
+      return messages.join('\n');
+    }
+    
+    // TODO: Koppelingen tooltip validation temporarily removed - too strict
+    // if (logicalStep === 8) {
+    //   const { rows, selectedAppAByRow, selectedAppBByRow, directionByRow, typeByRow } = koppelingenFormState;
+    //   const messages = [];
+    //   
+    //   // Check each row for missing fields
+    //   rows.forEach((rowId, index) => {
+    //     const appA = selectedAppAByRow[rowId];
+    //     const appB = selectedAppBByRow[rowId];
+    //     const direction = directionByRow[rowId];
+    //     const type = typeByRow[rowId];
+    //     
+    //     const missingFields = [];
+    //     if (!appA) missingFields.push('Applicatie A');
+    //     if (!appB) missingFields.push('Applicatie B');
+    //     if (!direction) missingFields.push('Richting data-uitwisseling');
+    //     if (!type) missingFields.push('Soort koppeling');
+    //     
+    //     if (missingFields.length > 0) {
+    //       messages.push(`Rij ${index + 1}: ${missingFields.join(', ')} ontbreekt`);
+    //     }
+    //   });
+    //   
+    //   return messages.join('\n');
+    // }
+    
+    if (logicalStep === 9) {
+      const { rows, selectedApplication, selectedDienstByRow } = dienstenFormState;
+      const messages = [];
+      
+      // Check each row for missing fields
+      rows.forEach((rowId, index) => {
+        const appId = selectedApplication[rowId];
+        const dienstVal = selectedDienstByRow[rowId];
+        
+        const missingFields = [];
+        if (appId == null) missingFields.push('Applicatie');
+        if (dienstVal == null) missingFields.push('Dienst Type');
+        
+        if (missingFields.length > 0) {
+          messages.push(`Rij ${index + 1}: ${missingFields.join(', ')} ontbreekt`);
+        }
+      });
       
       return messages.join('\n');
     }
@@ -1389,6 +1498,8 @@ const AcFormsProduct = ({ userStore, store }) => {
                     )}
                   </Alert>
                 )}
+
+
 
                 <AcColumn gap='sm'>
                   <div className='ac-register-container ac-forms-product'>
@@ -1602,16 +1713,66 @@ const AcFormsProduct = ({ userStore, store }) => {
                         )}
                       </div>
 
-                      {/* Info box for steps that exclude existing applications - positioned after navigation for calmer experience */}
-                      {currentStep === 4 && renderExistingAppsInfoBox('license')}
-                      {currentStep === 5 && renderExistingAppsInfoBox('moduleVersies')}
-                      {currentStep === 6 && renderExistingAppsInfoBox('referentiecomponenten')}
+                      {/* Info boxes now handled within individual stage components via ConExistingModulesInfoBox */}
+                      {/* Exception: Standaarden stage still uses the old renderExistingAppsInfoBox */}
                       {currentStep === 7 && renderExistingAppsInfoBox('standaarden')}
                     </div>
                   </div>
                 </AcColumn>
               </div>
             </>
+          )}
+
+          {/* Success Feedback Page */}
+          {registerCallBack === 'success' && (
+            <div>
+              <Heading1>🎉 Product succesvol aangemeld!</Heading1>
+              
+              <Alert type='success'>
+                <Paragraph>
+                  <strong>Uw product is succesvol geregistreerd!</strong>
+                </Paragraph>
+                <Paragraph>
+                  Het product "{product.naam || 'Onbekend product'}" en alle bijbehorende modules, standaarden, koppelingen en diensten zijn opgeslagen in de software catalogus.
+                </Paragraph>
+              </Alert>
+
+              <div style={{ marginTop: '2rem' }}>
+                <Paragraph>
+                  <strong>Wat gebeurt er nu?</strong>
+                </Paragraph>
+                <UnorderedList>
+                  <UnorderedListItem>Het product wordt zichtbaar in de software catalogus</UnorderedListItem>
+                  <UnorderedListItem>Organisaties kunnen het product bekijken en beoordelen</UnorderedListItem>
+                  <UnorderedListItem>U kunt het product beheren via het beheer dashboard</UnorderedListItem>
+                  <UnorderedListItem>Eventuele wijzigingen kunnen later worden aangebracht</UnorderedListItem>
+                </UnorderedList>
+              </div>
+
+              <div style={{ marginTop: '2rem' }}>
+                <AcButton
+                  style='button'
+                  icon={<VISUALS.HOME />}
+                  onClick={() => window.location.href = '/beheer'}
+                >
+                  Terug naar beheer dashboard
+                </AcButton>
+                
+                <AcButton
+                  style='button'
+                  variant='secondary'
+                  onClick={() => {
+                    setRegisterCallBack(null);
+                    setCurrentStep(0);
+                    // Reset form for new product
+                    window.location.reload();
+                  }}
+                  sx={{ marginLeft: '1rem' }}
+                >
+                  Nieuw product aanmelden
+                </AcButton>
+              </div>
+            </div>
           )}
         </AcColumn>
       </AcContainer>

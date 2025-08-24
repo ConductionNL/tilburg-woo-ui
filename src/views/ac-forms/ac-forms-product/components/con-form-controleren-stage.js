@@ -15,9 +15,10 @@ import {
  * @param {Object} product - The product object containing form data
  * @param {Array} dienstOptions - Available service options for display
  * @param {Array} referentieComponentenOptions - Available reference component options for display
+ * @param {Array} referentieComponentenWithStandards - Available reference components with their standards
  */
 const ConFormControlerenStage = memo(
-  ({ product, dienstOptions, referentieComponentenOptions, existingModulesLookup }) => {
+  ({ product, dienstOptions, referentieComponentenOptions, referentieComponentenWithStandards, existingModulesLookup }) => {
     // Debug logging to understand why the form might be empty
     console.log('🔍 ControlerenForm Debug:', {
       product: product,
@@ -25,8 +26,37 @@ const ConFormControlerenStage = memo(
       modules: product?.modules,
       modulesCount: (product?.modules || []).length,
       dienstOptionsCount: dienstOptions?.length || 0,
-      referentieComponentenOptionsCount: referentieComponentenOptions?.length || 0
+      referentieComponentenOptionsCount: referentieComponentenOptions?.length || 0,
+      referentieComponentenWithStandardsCount: referentieComponentenWithStandards?.length || 0
     });
+
+    // Helper function to get standard name from ID
+    const getStandardNameFromId = (standardId) => {
+      if (!referentieComponentenWithStandards || !Array.isArray(referentieComponentenWithStandards)) {
+        return standardId; // Fallback to ID if no standards data available
+      }
+
+      // Search through all reference components and their standards
+      for (const refComp of referentieComponentenWithStandards) {
+        // Check verplichte standards
+        if (Array.isArray(refComp.verplichteStandaarden)) {
+          const found = refComp.verplichteStandaarden.find(standard => 
+            standard.id === standardId || `id-${standard.id}` === standardId
+          );
+          if (found) return found.naam || found.title || standardId;
+        }
+
+        // Check aanbevolen standards
+        if (Array.isArray(refComp.aanbevolenStandaarden)) {
+          const found = refComp.aanbevolenStandaarden.find(standard => 
+            standard.id === standardId || `id-${standard.id}` === standardId
+          );
+          if (found) return found.naam || found.title || standardId;
+        }
+      }
+      
+      return standardId; // Fallback to ID if name not found
+    };
 
     return (
       <div>
@@ -156,7 +186,7 @@ const ConFormControlerenStage = memo(
                           <UnorderedList>
                             {module.compliancy.map((comp, i) => (
                               <UnorderedListItem key={comp.standaardversie || i}>
-                                {comp.standaardversie}
+                                {getStandardNameFromId(comp.standaardversie)}
                                 {comp.bewijs ? (
                                   <>
                                     {' '}
@@ -217,16 +247,17 @@ const ConFormControlerenStage = memo(
                           <UnorderedList>
                             {module.diensten.map((dienst, i) => {
                               // Handle both object and string formats
-                              const dienstId = typeof dienst === 'object' ? dienst.id : dienst;
+                              const dienstType = typeof dienst === 'object' ? dienst.type : dienst;
                               const dienstNaam = typeof dienst === 'object' ? dienst.naam : null;
+                              const dienstId = typeof dienst === 'object' ? dienst.id : null;
                               
                               const dienstOption = dienstOptions.find(
-                                (option) => option.value === dienstId
+                                (option) => option.value === dienstType
                               );
-                              const displayName = dienstNaam || dienstOption?.label || dienstId;
+                              const displayName = dienstNaam || dienstOption?.label || dienstType;
                               
                               return (
-                                <UnorderedListItem key={dienstId || i}>
+                                <UnorderedListItem key={dienstId || `${dienstType}-${i}`}>
                                   {displayName}
                                 </UnorderedListItem>
                               );
@@ -265,10 +296,75 @@ const ConFormControlerenStage = memo(
                     </div>
                   </div>
 
+                  <div className='ac-register-review__field'>
+                    <strong>Licentietype:</strong>
+                    <div>
+                      <div>{moduleData.licentietype || 'Niet opgegeven'}</div>
+                    </div>
+                  </div>
+
+                  {moduleData.licentietype !== 'Closed Source' && moduleData.licentie && (
+                    <div className='ac-register-review__field'>
+                      <strong>Licentie:</strong>
+                      <div>
+                        <div>{moduleData.licentie}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {Array.isArray(moduleData.referentieComponenten) &&
+                    moduleData.referentieComponenten.length > 0 && (
+                      <div className='ac-register-review__field'>
+                        <strong>Referentiecomponenten:</strong>
+                        <div>
+                          <UnorderedList>
+                            {moduleData.referentieComponenten.map((rc, i) => {
+                              const value = typeof rc === 'string' ? rc : rc?.naam || rc?.id;
+                              const opt = referentieComponentenOptions?.find(
+                                (o) => String(o.value) === String(value)
+                              );
+                              const label = opt ? opt.label : value;
+                              return (
+                                <UnorderedListItem key={value || i}>
+                                  {label}
+                                </UnorderedListItem>
+                              );
+                            })}
+                          </UnorderedList>
+                        </div>
+                      </div>
+                    )}
+
+                  {Array.isArray(moduleData.diensten) &&
+                    moduleData.diensten.length > 0 && (
+                      <div className='ac-register-review__field'>
+                        <strong>Diensten:</strong>
+                        <div>
+                          <UnorderedList>
+                            {moduleData.diensten.map((dienst, i) => {
+                              const dienstType = typeof dienst === 'object' ? dienst.type : dienst;
+                              const dienstNaam = typeof dienst === 'object' ? dienst.naam : null;
+                              const dienstId = typeof dienst === 'object' ? dienst.id : null;
+                              
+                              const dienstOption = dienstOptions.find(
+                                (option) => option.value === dienstType
+                              );
+                              const displayName = dienstNaam || dienstOption?.label || dienstType;
+                              
+                              return (
+                                <UnorderedListItem key={dienstId || `${dienstType}-${i}`}>
+                                  {displayName}
+                                </UnorderedListItem>
+                              );
+                            })}
+                          </UnorderedList>
+                        </div>
+                      </div>
+                    )}
+
                   <div className='ac-register-review__field' style={{ color: '#666', fontStyle: 'italic' }}>
                     <Paragraph style={{ margin: 0, fontSize: '0.875rem' }}>
-                      📋 Deze module bestaat al in de catalogus. Alle configuraties (licenties, 
-                      standaarden, koppelingen) zijn al vastgelegd en worden automatisch overgenomen.
+                      📋 Bestaande module uit de catalogus - bovenstaande informatie is al geregistreerd
                     </Paragraph>
                   </div>
                 </div>

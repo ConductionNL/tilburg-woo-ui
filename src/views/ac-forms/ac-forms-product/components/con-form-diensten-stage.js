@@ -8,6 +8,7 @@ import {
   TableCell,
   TableContainer,
   TableRow,
+  Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -32,7 +33,7 @@ const ConFormDienstenStage = memo(
     getAllModulesForStages,
   }) => {
     // Keep UI state in parent so it persists across steps
-    const { rows, selectedApplication, selectedDienstByRow } = dienstenFormState;
+    const { rows, selectedApplication, selectedDienstByRow, dienstBeschrijvingByRow } = dienstenFormState;
 
     const normalizeDiensten = (arr) => {
       if (!Array.isArray(arr)) return [];
@@ -49,7 +50,7 @@ const ConFormDienstenStage = memo(
       return Array.from(new Set(strs));
     };
 
-    const addDienst = (moduleIndex, dienstVal, dienstOptions) => {
+    const addDienst = (moduleIndex, dienstVal, dienstOptions, customDescription = '') => {
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
         const targetModule = modules[moduleIndex];
@@ -61,17 +62,18 @@ const ConFormDienstenStage = memo(
           return prev;
         }
 
-        // Create dienst object instead of string
+        // Create dienst object with proper structure - let backend generate ID
         const dienstOption = dienstOptions.find(opt => opt.value === dienstVal);
         const dienstObject = {
-          id: dienstVal,
-          naam: dienstOption?.label || dienstVal,
+          type: dienstVal, // The service type (e.g., "Functioneel beheer")
+          naam: customDescription || dienstOption?.label || dienstVal,
+          aanbieder: prev.aanbieder, // Add active organization as aanbieder
         };
         
-        // Check if dienst already exists (by id)
+        // Check if dienst already exists (by type)
         const prevDiensten = Array.isArray(targetModule.diensten) ? targetModule.diensten : [];
         const exists = prevDiensten.some(d => 
-          typeof d === 'object' ? d.id === dienstVal : d === dienstVal
+          typeof d === 'object' ? d.type === dienstVal : d === dienstVal
         );
         
         if (exists) {
@@ -80,7 +82,11 @@ const ConFormDienstenStage = memo(
         
         const nextDiensten = [...prevDiensten, dienstObject];
         
-        console.log('🔧 Adding dienst object:', { dienstObject, nextDiensten });
+        console.log('🔧 Adding dienst object (backend will generate ID):', { 
+          dienstObject, 
+          aanbieder: prev.aanbieder,
+          nextDiensten 
+        });
         
         modules[moduleIndex] = { ...targetModule, diensten: nextDiensten };
         return { ...prev, modules };
@@ -99,16 +105,46 @@ const ConFormDienstenStage = memo(
           return prev;
         }
         
-        // Filter out the dienst by id/value
+        // Filter out the dienst by type/value
         const prevDiensten = Array.isArray(targetModule.diensten) ? targetModule.diensten : [];
         const nextDiensten = prevDiensten.filter((d) => 
-          typeof d === 'object' ? d.id !== dienstVal : d !== dienstVal
+          typeof d === 'object' ? d.type !== dienstVal : d !== dienstVal
         );
         
         console.log('🔧 Removing dienst:', { dienstVal, prevDiensten, nextDiensten });
         
         modules[moduleIndex] = { ...targetModule, diensten: nextDiensten };
         return { ...prev, modules };
+      });
+    };
+
+    // Function to update dienst description
+    const updateDienstDescription = (moduleIndex, dienstVal, newDescription) => {
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        const targetModule = modules[moduleIndex];
+        
+        // Only modify if it's an object (new module)
+        if (typeof targetModule !== 'object') {
+          return prev;
+        }
+        
+        const diensten = Array.isArray(targetModule.diensten) ? [...targetModule.diensten] : [];
+        const dienstIndex = diensten.findIndex(d => 
+          typeof d === 'object' ? d.type === dienstVal : d === dienstVal
+        );
+        
+        if (dienstIndex !== -1 && typeof diensten[dienstIndex] === 'object') {
+          diensten[dienstIndex] = {
+            ...diensten[dienstIndex],
+            naam: newDescription || diensten[dienstIndex].naam
+          };
+          
+          modules[moduleIndex] = { ...targetModule, diensten };
+          return { ...prev, modules };
+        }
+        
+        return prev;
       });
     };
 
@@ -143,6 +179,9 @@ const ConFormDienstenStage = memo(
                 </TableCell>
                 <TableCell>
                   <b>Dienst Type</b>
+                </TableCell>
+                <TableCell>
+                  <b>Beschrijving</b>
                 </TableCell>
                 <TableCell>
                   <b>Acties</b>
@@ -181,6 +220,11 @@ const ConFormDienstenStage = memo(
                               ([k]) => Number(k) !== rowId
                             )
                           ),
+                          dienstBeschrijvingByRow: Object.fromEntries(
+                            Object.entries(prev.dienstBeschrijvingByRow).filter(
+                              ([k]) => Number(k) !== rowId
+                            )
+                          ),
                         }));
                       }}
                     />
@@ -208,7 +252,7 @@ const ConFormDienstenStage = memo(
                         if (typeof targetModule === 'object' && Array.isArray(targetModule.diensten)) {
                           const optVal = String(opt.value);
                           return targetModule.diensten.some(d => 
-                            typeof d === 'object' ? d.id === optVal : d === optVal
+                            typeof d === 'object' ? d.type === optVal : d === optVal
                           );
                         }
                         return false;
@@ -229,11 +273,17 @@ const ConFormDienstenStage = memo(
                                 ([k]) => Number(k) !== rowId
                               )
                             ),
+                            dienstBeschrijvingByRow: Object.fromEntries(
+                              Object.entries(prev.dienstBeschrijvingByRow).filter(
+                                ([k]) => Number(k) !== rowId
+                              )
+                            ),
                           }));
                           return;
                         }
 
-                        addDienst(appId, selectedOption.value, dienstOptions);
+                        const customDesc = dienstBeschrijvingByRow[rowId] || '';
+                        addDienst(appId, selectedOption.value, dienstOptions, customDesc);
                         setDienstenFormState((prev) => ({
                           ...prev,
                           selectedDienstByRow: {
@@ -242,6 +292,30 @@ const ConFormDienstenStage = memo(
                           },
                         }));
                       }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Textbox
+                      value={dienstBeschrijvingByRow[rowId] || ''}
+                      onChange={(e) => {
+                        const newDescription = e.target.value;
+                        setDienstenFormState((prev) => ({
+                          ...prev,
+                          dienstBeschrijvingByRow: {
+                            ...prev.dienstBeschrijvingByRow,
+                            [rowId]: newDescription,
+                          },
+                        }));
+                        
+                        // Also update the product immediately if both app and dienst are selected
+                        const appId = selectedApplication[rowId];
+                        const dienstVal = selectedDienstByRow[rowId];
+                        if (appId != null && dienstVal != null) {
+                          updateDienstDescription(appId, dienstVal, newDescription);
+                        }
+                      }}
+                      placeholder="Beschrijving van de dienst"
+                      disabled={selectedApplication[rowId] == null || selectedDienstByRow[rowId] == null}
                     />
                   </TableCell>
                   <TableCell>
@@ -269,6 +343,11 @@ const ConFormDienstenStage = memo(
                             ),
                             selectedDienstByRow: Object.fromEntries(
                               Object.entries(prev.selectedDienstByRow).filter(
+                                ([k]) => Number(k) !== rowId
+                              )
+                            ),
+                            dienstBeschrijvingByRow: Object.fromEntries(
+                              Object.entries(prev.dienstBeschrijvingByRow).filter(
                                 ([k]) => Number(k) !== rowId
                               )
                             ),
