@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
+  Paragraph,
   Table,
   TableBody,
   TableCell,
@@ -124,6 +125,14 @@ const ConFormDienstenStage = memo(
         <h2 id='diensten-section-title' className='sr-only'>
           Diensten
         </h2>
+
+        <Paragraph style={{ marginBottom: '2rem' }}>
+          <strong>Digitale dienstverlening en functionaliteit</strong><br/>
+          Hier beschrijft u welke diensten uw software ondersteunt. Deze informatie helpt organisaties om te begrijpen welke 
+          concrete functionaliteit uw software biedt aan burgers en bedrijven. Door duidelijk te maken welke diensten worden 
+          ondersteund, kunnen organisaties beoordelen of uw software aansluit bij hun dienstverleningsportfolio. 
+          Dit is vooral belangrijk voor gemeenten die hun digitale dienstverlening willen uitbreiden of moderniseren.
+        </Paragraph>
 
         <TableContainer className='con-form-wizard-table-container'>
           <Table>

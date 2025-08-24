@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
+  Paragraph,
   Table,
   TableBody,
   TableCell,
@@ -114,6 +115,15 @@ const ConFormKoppelingenStage = memo(
         <h2 id='koppelingen-section-title' className='sr-only'>
           Koppelingen
         </h2>
+
+        <Paragraph style={{ marginBottom: '2rem' }}>
+          <strong>Integraties en gegevensuitwisseling</strong><br/>
+          Hier specificeert u hoe uw applicaties met andere systemen communiceren. Deze informatie is essentieel voor organisaties 
+          om te begrijpen hoe uw software integreert in hun bestaande IT-landschap. Door koppelingen duidelijk te beschrijven 
+          (inclusief richting en type gegevensuitwisseling), kunnen organisaties de impact op hun architectuur beoordelen. 
+          Dit helpt bij het maken van integratieplannen en het inschatten van implementatie-inspanningen.
+        </Paragraph>
+
         <TableContainer className='con-form-wizard-table-container'>
           <Table>
             <thead>

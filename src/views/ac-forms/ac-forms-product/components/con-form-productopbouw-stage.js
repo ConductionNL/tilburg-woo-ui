@@ -23,9 +23,11 @@ const ConFormProductopbouwStage = memo(({ isMultiApplicatie, setIsMultiApplicati
       </h2>
 
       <Paragraph>
-        Een product kan één applicatie zijn, of een verzameling applicaties en
-        modules die samen een suite vormen. Geef hieronder aan welke situatie van
-        toepassing is.
+        <strong>Definieer de structuur van uw product</strong><br/>
+        Een product kan bestaan uit één enkele applicatie of een verzameling van meerdere applicaties en modules die samen een suite vormen. 
+        Deze informatie helpt organisaties om het juiste product te vinden en te begrijpen hoe complex uw oplossing is. 
+        In de catalogus worden producten overzichtelijk weergegeven met hun onderliggende componenten, 
+        waardoor potentiële gebruikers direct zien wat uw product omvat.
       </Paragraph>
 
       <div className='ac-register-form-checkbox-wrapper'>

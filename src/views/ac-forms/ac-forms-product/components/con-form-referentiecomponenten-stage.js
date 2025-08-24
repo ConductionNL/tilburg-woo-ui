@@ -1,6 +1,22 @@
-import React, { useState, memo } from 'react';
-import { AcCheckbox } from '@src/molecules';
-import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import React, { useState, memo, useCallback } from 'react';
+import ReactSelect from 'react-select';
+import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
+
+// Add CSS for spinner animation (in case needed for future enhancements)
+const spinnerStyles = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+// Inject CSS if not already present
+if (!document.getElementById('referentie-spinner-styles')) {
+  const style = document.createElement('style');
+  style.id = 'referentie-spinner-styles';
+  style.textContent = spinnerStyles;
+  document.head.appendChild(style);
+}
 import {
   Paragraph,
   Table,
@@ -33,6 +49,9 @@ const ConFormReferentiecomponentenStage = memo(
     schemas,
     loading,
     getNewModulesWithApplicatieData,
+    existingModulesLookup,
+    searchReferentieComponenten,
+    referentieComponentenLoading,
   }) => {
     const [sameForAll, setSameForAll] = useState(true);
 
@@ -47,6 +66,8 @@ const ConFormReferentiecomponentenStage = memo(
 
     // Check if there are multiple NEW applications that need referentiecomponenten configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
+
+
 
     const updateModuleField = (moduleIndex, key, value) => {
       setProduct((prev) => {
@@ -120,7 +141,11 @@ const ConFormReferentiecomponentenStage = memo(
           </h2>
 
           <Paragraph>
-            Koppel referentiecomponenten aan uw nieuwe applicaties.
+            <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong><br/>
+            Referentiecomponenten uit de GEMMA architectuur tonen aan welke standaard gemeentelijke functies uw software ondersteunt. 
+            Door deze te koppelen aan uw applicaties, kunnen organisaties direct zien of uw software aansluit op hun IT-architectuur. 
+            Dit vergemakkelijkt integratie met bestaande systemen en zorgt voor herkenbare functionaliteit. 
+            Organisaties gebruiken deze informatie voor architectuur-assessments en interoperabiliteitsbeoordelingen.
           </Paragraph>
 
           <div
@@ -151,34 +176,38 @@ const ConFormReferentiecomponentenStage = memo(
         </h2>
 
         <Paragraph>
-          Koppel referentiecomponenten aan uw nieuwe applicaties.
+          <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong><br/>
+          Referentiecomponenten uit de GEMMA architectuur tonen aan welke standaard gemeentelijke functies uw software ondersteunt. 
+          Door deze te koppelen aan uw applicaties, kunnen organisaties direct zien of uw software aansluit op hun IT-architectuur. 
+          Dit vergemakkelijkt integratie met bestaande systemen en zorgt voor herkenbare functionaliteit. 
+          Organisaties gebruiken deze informatie voor architectuur-assessments en interoperabiliteitsbeoordelingen.
         </Paragraph>
 
-        {/* Same for all checkbox - only show if multiple new applications */}
-        {isMultiNewApplicatie && (
-          <div style={{ marginBottom: '1rem' }}>
-            <AcCheckbox
-              checked={sameForAll}
-              label='Dezelfde referentiecomponenten voor alle applicaties'
-              onChange={() => setSameForAll(!sameForAll)}
-            />
-          </div>
-        )}
+
+
+        <ConModulesChoiceSwitch
+          isMultiNewApplicatie={isMultiNewApplicatie}
+          sameForAll={sameForAll}
+          onSameForAllChange={setSameForAll}
+          configType="referentiecomponenten"
+          questionText="Dezelfde referentiecomponenten voor alle nieuwe applicaties?"
+          sameForAllLabel="Ja, dezelfde voor alle"
+          perAppLabel="Nee, per applicatie kiezen"
+        />
 
         {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
           <div>
             {/* Single application or "same for all" mode */}
             <div className='ac-register-form-grid'>
-              <div>
-                <ConSchemaEnhancedField
-                  schemaType='module'
-                  schemaProperty='referentieComponenten'
+              <div style={{ width: '100%', maxWidth: '400px' }}>
+                <ReactSelect
                   value={(() => {
                     const currentModule = newModules[0] || {};
-                    return currentModule.referentieComponenten || [];
+                    const selectedValues = currentModule.referentieComponenten || [];
+                    return referentieComponentenOptions.filter(opt => selectedValues.includes(opt.value));
                   })()}
-                  onChange={(value) => {
-                    const refsArray = normalizeValues(value);
+                  onChange={(selectedOptions) => {
+                    const refsArray = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
                     if (sameForAll && isMultiNewApplicatie) {
                       applyToAll({ referentieComponenten: refsArray });
                       // Update standards data for all applications
@@ -190,9 +219,47 @@ const ConFormReferentiecomponentenStage = memo(
                       updateReferentieComponentenWithStandards(applicatieIndices[0], refsArray);
                     }
                   }}
+                  options={referentieComponentenOptions}
+                  placeholder={referentieComponentenOptions.length === 0 && !referentieComponentenLoading ? "Begin met typen om te zoeken..." : "Selecteer referentie componenten"}
+                  isMulti={true}
+                  isSearchable={true}
+                  isLoading={referentieComponentenLoading}
                   isDisabled={loading}
-                  width='full'
-                  schemas={schemas}
+                  onInputChange={(inputValue, actionMeta) => {
+                    if (actionMeta.action === 'input-change') {
+                      console.log('🔍 ReactSelect referentie search input:', inputValue);
+                      if (searchReferentieComponenten) {
+                        searchReferentieComponenten(inputValue);
+                      }
+                    }
+                  }}
+                  filterOption={() => true} // Disable client-side filtering, use server search
+                  styles={{
+                    control: (provided) => ({
+                      ...provided,
+                      minHeight: '48px', // Match the height of original field
+                      height: '48px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                    }),
+                    placeholder: (provided) => ({
+                      ...provided,
+                      color: '#666',
+                    }),
+                    valueContainer: (provided) => ({
+                      ...provided,
+                      height: '46px',
+                      padding: '0 12px',
+                    }),
+                    input: (provided) => ({
+                      ...provided,
+                      margin: 0,
+                      padding: 0,
+                    }),
+                    indicatorSeparator: () => ({
+                      display: 'none',
+                    }),
+                  }}
                 />
               </div>
             </div>
@@ -222,19 +289,54 @@ const ConFormReferentiecomponentenStage = memo(
                         <strong>{app.naam || `Applicatie ${index + 1}`}</strong>
                       </TableCell>
                       <TableCell>
-                        <ConSchemaEnhancedField
-                          schemaType='module'
-                          schemaProperty='referentieComponenten'
-                          value={currentRefs}
-                          onChange={(value) => {
-                            const refsArray = normalizeValues(value);
+                        <ReactSelect
+                          value={referentieComponentenOptions.filter(opt => currentRefs.includes(opt.value))}
+                          onChange={(selectedOptions) => {
+                            const refsArray = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
                             updateModuleField(index, 'referentieComponenten', refsArray);
                             updateReferentieComponentenWithStandards(index, refsArray);
                           }}
+                          options={referentieComponentenOptions}
+                          placeholder={referentieComponentenOptions.length === 0 && !referentieComponentenLoading ? "Begin met typen om te zoeken..." : "Selecteer referentie componenten"}
+                          isMulti={true}
+                          isSearchable={true}
+                          isLoading={referentieComponentenLoading}
                           isDisabled={loading}
-                          width='full'
-                          schemas={schemas}
-                          showLabel={false}
+                          onInputChange={(inputValue, actionMeta) => {
+                            if (actionMeta.action === 'input-change') {
+                              console.log('🔍 ReactSelect referentie search input (table):', inputValue);
+                              if (searchReferentieComponenten) {
+                                searchReferentieComponenten(inputValue);
+                              }
+                            }
+                          }}
+                          filterOption={() => true} // Disable client-side filtering, use server search
+                          styles={{
+                            control: (provided) => ({
+                              ...provided,
+                              minHeight: '48px', // Match the height of original field
+                              height: '48px',
+                              border: '1px solid #ccc',
+                              borderRadius: '4px',
+                            }),
+                            placeholder: (provided) => ({
+                              ...provided,
+                              color: '#666',
+                            }),
+                            valueContainer: (provided) => ({
+                              ...provided,
+                              height: '46px',
+                              padding: '0 12px',
+                            }),
+                            input: (provided) => ({
+                              ...provided,
+                              margin: 0,
+                              padding: 0,
+                            }),
+                            indicatorSeparator: () => ({
+                              display: 'none',
+                            }),
+                          }}
                         />
                       </TableCell>
                     </TableRow>
@@ -252,6 +354,12 @@ const ConFormReferentiecomponentenStage = memo(
             </Paragraph>
           </div>
         )}
+
+        <ConExistingModulesInfoBox 
+          key="referentie-stage-existing-modules-info"
+          existingModulesLookup={existingModulesLookup}
+          configType="referentiecomponenten"
+        />
       </div>
     );
   }

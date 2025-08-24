@@ -667,138 +667,189 @@ const AcFormsProduct = ({ userStore, store }) => {
     },
   ];
 
-  // Referentiecomponenten options (empty by default; will be filled via API)
-  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
-    []
-  );
-  // Remove unused loading/error flags to keep lint clean; we optimistically load and fallback to empty
+  // Referentiecomponenten options with search functionality
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState([]);
+  const [referentieComponentenLoading, setReferentieComponentenLoading] = useState(false);
+  
+  // Get query parameters from schema property configuration
+  const getReferentieComponentenQueryParams = useCallback(() => {
+    const moduleSchema = schemas?.module;
+    const refCompProperty = moduleSchema?.properties?.referentieComponenten;
+    const queryParamsString = refCompProperty?.items?.objectConfiguration?.queryParams;
+    
+    const baseParams = {
+      _limit: '500', // Load 500 referentiecomponenten upfront
+      _page: '1',
+    };
+    
+    if (queryParamsString) {
+      // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
+      const urlParams = new URLSearchParams(queryParamsString);
+      urlParams.forEach((value, key) => {
+        baseParams[key] = value;
+      });
+    } else {
+      // Fallback to hardcoded if schema doesn't have queryParams
+      baseParams.gemmaType = 'Referentiecomponent';
+      baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+    }
+    
+    return baseParams;
+  }, [schemas]);
 
+  // Function to load all referentiecomponenten upfront
+  // ✅ Simplified function to load 500 referentiecomponenten
+  const loadReferentieComponenten = useCallback(async () => {
+    if (!schemas?.module) return; // Wait for schemas to load
+    
+    console.log('📦 Loading all referentiecomponenten (500 limit)...');
+    setReferentieComponentenLoading(true);
+    
+    try {
+      const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
+      const queryParams = getReferentieComponentenQueryParams();
+      const params = new URLSearchParams(queryParams);
+      const endpoint = `${baseEndpoint}?${params}`;
+
+      console.log('🔍 Full endpoint:', endpoint);
+
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
+
+      const mapToOption = (item, index) => {
+        const label =
+          item?.xml?.name?._value ||
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Component ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return { 
+          value: String(value), 
+          label: String(label),
+          data: item // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+        };
+      };
+
+      const options = list.map(mapToOption).filter((o) => o.label && o.value);
+      setReferentieComponentenOptions(options);
+      console.log(`📊 Loaded ${options.length} referentiecomponenten successfully`);
+      
+    } catch (e) {
+      console.error('Failed to load referentie componenten:', e);
+      setReferentieComponentenOptions([]);
+    } finally {
+      setReferentieComponentenLoading(false);
+    }
+  }, [schemas, getReferentieComponentenQueryParams]);
+
+  // ✅ Load referentiecomponenten when schemas are available
   useEffect(() => {
-    let isMounted = true;
-    
-    // Get query parameters from schema property configuration
-    const getReferentieComponentenQueryParams = () => {
-      // Extract query parameters from module schema referentieComponenten property
-      const moduleSchema = schemas?.module;
-      const refCompProperty = moduleSchema?.properties?.referentieComponenten;
-      const queryParamsString = refCompProperty?.items?.objectConfiguration?.queryParams;
-      
-      const baseParams = {
-        _limit: '500',
-        _page: '1',
-      };
-      
-      if (queryParamsString) {
-        // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
-        const urlParams = new URLSearchParams(queryParamsString);
-        urlParams.forEach((value, key) => {
-          baseParams[key] = value;
-        });
-      } else {
-        // Fallback to hardcoded if schema doesn't have queryParams
-        baseParams.gemmaType = 'Referentiecomponent';
-        baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
-      }
-      
-      return baseParams;
-    };
-    
-    const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
+    if (schemas?.module && referentieComponentenOptions.length === 0 && !referentieComponentenLoading) {
+      console.log('🚀 Auto-loading referentiecomponenten on form render...');
+      loadReferentieComponenten();
+    }
+  }, [schemas?.module, referentieComponentenOptions.length, referentieComponentenLoading, loadReferentieComponenten]);
 
-    const mapToOption = (item, index) => {
-      const label =
-        item?.xml?.name?._value ||
-        item?.naam ||
-        item?.name ||
-        item?.title ||
-        item?.label ||
-        `Component ${index + 1}`;
-      const value = item?.value || item?.id || item?.slug || label;
-      return { 
-        value: String(value), 
-        label: String(label),
-        data: item // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
-      };
-    };
-
-    const fetchOptions = async () => {
-      try {
-        // Use schema-driven query parameters
-        const queryParams = getReferentieComponentenQueryParams();
-        const params = new URLSearchParams(queryParams);
-        const endpoint = `${baseEndpoint}?${params}`;
-
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map(mapToOption).filter((o) => o.label && o.value);
-        if (isMounted) setReferentieComponentenOptions(options);
-      } catch (e) {
-        console.error('Failed to fetch referentie componenten:', e);
-        if (isMounted) setReferentieComponentenOptions([]);
-      }
-    };
-
-    fetchOptions();
-    return () => {
-      isMounted = false;
-    };
-  }, [schemas]); // Add schemas dependency to re-fetch when schemas are loaded
-
-  // Modules options (global fetch like standaarden/referentiecomponenten)
-  // Modules list for KoppelingenForm
+  // Modules options with search functionality
   const [modulesOptions, setModulesOptions] = useState([]);
-  useEffect(() => {
-    let isMounted = true;
-    const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
-    const mapToOption = (item, index) => {
-      const label =
-        item?.naam ||
-        item?.name ||
-        item?.title ||
-        item?.label ||
-        `Module ${index + 1}`;
-      const value = item?.value || item?.id || item?.slug || label;
-      return { value: String(value), label: String(label) };
-    };
-    const fetchOptions = async () => {
-      try {
-        // Add pagination parameters to limit initial load
-        const params = new URLSearchParams({
-          _limit: '50',
-          _page: '1',
-        });
-        const endpoint = `${baseEndpoint}?${params}`;
-
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map(mapToOption).filter((o) => o.label && o.value);
-        if (isMounted) setModulesOptions(options);
-      } catch (e) {
-        console.error('Failed to fetch modules:', e);
-        if (isMounted) setModulesOptions([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
+  
+  // Function to search modules with debouncing
+  // ✅ Core search function for modules
+  const performModulesSearch = useCallback(async (searchTerm = '') => {
+    console.log('🔍 Performing modules search with term:', searchTerm);
+    setModulesLoading(true);
+    
+    try {
+      const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
+      const params = new URLSearchParams({
+        _limit: searchTerm ? '50' : '20', // More results when searching
+        _page: '1',
+      });
+      
+      // Add search parameter if provided
+      if (searchTerm && searchTerm.trim()) {
+        params.set('_search', searchTerm.trim());
+        console.log('🔍 API call with _search:', searchTerm.trim());
       }
-    };
-    fetchOptions();
-    return () => {
-      isMounted = false;
-    };
+      
+      const endpoint = `${baseEndpoint}?${params}`;
+      console.log('🔍 Full endpoint:', endpoint);
+      
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
+      
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
+        
+      const mapToOption = (item, index) => {
+        const label =
+          item?.naam ||
+          item?.name ||
+          item?.title ||
+          item?.label ||
+          `Module ${index + 1}`;
+        const value = item?.value || item?.id || item?.slug || label;
+        return { 
+          value: String(value), 
+          label: String(label),
+          data: item  // Store the full API data for later access
+        };
+      };
+      
+      const options = list.map(mapToOption).filter((o) => o.label && o.value);
+      setModulesOptions(options);
+      console.log(`📊 Found ${options.length} modules for search: "${searchTerm}"`);
+      
+    } catch (e) {
+      console.error('Failed to fetch modules:', e);
+      setModulesOptions([]);
+    } finally {
+      setModulesLoading(false);
+    }
   }, []);
+
+  // ✅ Debounced search function for modules
+  const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
+
+  // ✅ Public search function that handles immediate vs debounced calls
+  const searchModules = useCallback((searchTerm = '') => {
+    console.log('🔍 SearchModules called with term:', searchTerm, {
+      type: typeof searchTerm,
+      length: searchTerm?.length,
+      trimmed: searchTerm?.trim?.(),
+      stack: new Error().stack?.split('\n')?.slice(1, 3)
+    });
+    
+    // For empty/initial searches, call immediately
+    if (!searchTerm || !searchTerm.trim()) {
+      performModulesSearch(searchTerm);
+      return;
+    }
+    
+    // For search terms, show loading immediately and use debounced search
+    setModulesLoading(true);
+    debouncedModulesSearch(searchTerm);
+  }, [performModulesSearch, debouncedModulesSearch]);
+
+  // Don't pre-load modules - let users start typing to search
+  // This makes it clearer that the field is search-based
 
   // Auto-set aanbieder to user's active organization
   useEffect(() => {
@@ -951,6 +1002,9 @@ const AcFormsProduct = ({ userStore, store }) => {
             store={store}
             existingModulesLookup={existingModulesLookup}
             setExistingModulesLookup={setExistingModulesLookup}
+            searchModules={searchModules}
+            modulesLoading={modulesLoading}
+            modulesOptions={modulesOptions}
           />
         );
       case 4:
@@ -962,6 +1016,8 @@ const AcFormsProduct = ({ userStore, store }) => {
             loading={loading}
             schemas={schemas}
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
+            existingModulesLookup={existingModulesLookup}
+            getAllModulesForStages={getAllModulesForStages}
           />
         );
       case 5:
@@ -973,6 +1029,8 @@ const AcFormsProduct = ({ userStore, store }) => {
             loading={loading}
             schemas={schemas}
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
+            existingModulesLookup={existingModulesLookup}
+            getAllModulesForStages={getAllModulesForStages}
           />
         );
       case 6:
@@ -986,6 +1044,8 @@ const AcFormsProduct = ({ userStore, store }) => {
             schemas={schemas}
             loading={schemasLoading}
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
+            existingModulesLookup={existingModulesLookup}
+            referentieComponentenLoading={referentieComponentenLoading}
           />
         );
       case 7:
@@ -1007,6 +1067,8 @@ const AcFormsProduct = ({ userStore, store }) => {
             koppelingenFormState={koppelingenFormState}
             setKoppelingenFormState={setKoppelingenFormState}
             getAllModulesForStages={getAllModulesForStages}
+            searchModules={searchModules}
+            modulesLoading={modulesLoading}
           />
         );
       case 9:
@@ -1133,8 +1195,18 @@ const AcFormsProduct = ({ userStore, store }) => {
       const hasIncompleteLicenses = newModules.some(module => {
         // Check both possible field names (schema uses 'licentietype', code uses 'licentieType')
         const licenseType = module.licentietype || module.licentieType;
+        
+        // License type is required for all modules
+        if (!licenseType || !licenseType.trim()) {
+          return true;
+        }
+        
         // If licentietype is "Open Source", then licentie is required
-        return licenseType === 'Open Source' && (!module.licentie || !module.licentie.trim());
+        if (licenseType === 'Open Source' && (!module.licentie || !module.licentie.trim())) {
+          return true;
+        }
+        
+        return false;
       });
       
       return hasIncompleteLicenses;
@@ -1217,15 +1289,20 @@ const AcFormsProduct = ({ userStore, store }) => {
       newModules.forEach((module, index) => {
         // Check both possible field names (schema uses 'licentietype', code uses 'licentieType')
         const licenseType = module.licentietype || module.licentieType;
-        if (licenseType === 'Open Source' && (!module.licentie || !module.licentie.trim())) {
-          // Use the actual module name if available
-          const moduleName = module.naam && module.naam.trim() ? module.naam.trim() : `Nieuwe applicatie ${index + 1}`;
-          incompleteLicenses.push(`${moduleName}: licentie is verplicht bij Open Source`);
+        const moduleName = module.naam && module.naam.trim() ? module.naam.trim() : `Nieuwe applicatie ${index + 1}`;
+        
+        // Check if license type is missing
+        if (!licenseType || !licenseType.trim()) {
+          incompleteLicenses.push(`${moduleName}: licentie type is verplicht`);
+        }
+        // Check if Open Source but no specific license
+        else if (licenseType === 'Open Source' && (!module.licentie || !module.licentie.trim())) {
+          incompleteLicenses.push(`${moduleName}: specifieke licentie is verplicht bij Open Source`);
         }
       });
       
       if (incompleteLicenses.length > 0) {
-        messages.push('Voor Open Source applicaties is een licentie verplicht:');
+        messages.push('Alle nieuwe applicaties hebben volledige licentie-informatie nodig:');
         messages.push(...incompleteLicenses);
       }
       

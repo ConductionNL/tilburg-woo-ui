@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * Product Informatie Stage Component
@@ -29,6 +30,14 @@ const ConFormProductInformatieStage = memo(({
       <h2 id='product-informatie-section-title' className='sr-only'>
         Product informatie
       </h2>
+
+      <Paragraph style={{ marginBottom: '2rem' }}>
+        <strong>Basisinformatie voor vindbaarheid in de catalogus</strong><br/>
+        Deze informatie wordt gebruikt om uw product vindbaar te maken voor organisaties die op zoek zijn naar softwareoplossingen. 
+        Een goede naam, heldere beschrijving en professionele website helpen bij de beoordeling en selectie van uw product. 
+        Logo en contactgegevens zorgen voor herkenbaarheid en vertrouwen. De hostinginformatie is belangrijk voor organisaties 
+        die specifieke eisen hebben aan gegevensopslag en juridische vereisten.
+      </Paragraph>
 
       {/* Use the same container class as ConDynamicSchemaForm for consistency */}
       <div className='con-dynamic-form-container'>

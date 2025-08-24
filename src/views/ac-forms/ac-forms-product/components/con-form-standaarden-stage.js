@@ -302,7 +302,11 @@ const ConFormStandaardenStage = ({
         </h2>
 
         <Paragraph>
-          Configureer compliance met standaarden voor uw nieuwe applicaties.
+          <strong>Compliance met standaarden voor vertrouwen en kwaliteit</strong><br/>
+          Door aan te geven welke standaarden uw software ondersteunt, toont u de kwaliteit en betrouwbaarheid van uw oplossing. 
+          Standaarden zoals API-specificaties, beveiligingsstandaarden en gegevensuitwisselingsprotocollen zijn belangrijk voor 
+          organisaties om risico's in te schatten. Deze informatie helpt bij due diligence processen en architectuurbeslissingen. 
+          Compliance met erkende standaarden verhoogt het vertrouwen in uw software.
         </Paragraph>
 
         <div
@@ -335,7 +339,11 @@ const ConFormStandaardenStage = ({
         </h2>
 
         <Paragraph>
-          Configureer compliance met standaarden voor uw nieuwe applicaties.
+          <strong>Compliance met standaarden voor vertrouwen en kwaliteit</strong><br/>
+          Door aan te geven welke standaarden uw software ondersteunt, toont u de kwaliteit en betrouwbaarheid van uw oplossing. 
+          Standaarden zoals API-specificaties, beveiligingsstandaarden en gegevensuitwisselingsprotocollen zijn belangrijk voor 
+          organisaties om risico's in te schatten. Deze informatie helpt bij due diligence processen en architectuurbeslissingen. 
+          Compliance met erkende standaarden verhoogt het vertrouwen in uw software.
         </Paragraph>
 
         <div

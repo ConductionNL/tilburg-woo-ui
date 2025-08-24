@@ -82,6 +82,14 @@ const ConRelatedObjectsLinks = loadable(() =>
   import('@src/components/con-related-objects-links/con-related-objects-links')
 );
 
+const ConExistingModulesInfoBox = loadable(() =>
+  import('@src/components/con-existing-modules-info-box/con-existing-modules-info-box')
+);
+
+const ConModulesChoiceSwitch = loadable(() =>
+  import('@src/components/con-modules-choice-switch/con-modules-choice-switch')
+);
+
 export {
   AcAbout,
   AcCNavigation,
@@ -116,4 +124,6 @@ export {
   ConPublicationActions,
   ConDetailsActionsMenu,
   ConRelatedObjectsLinks,
+  ConExistingModulesInfoBox,
+  ConModulesChoiceSwitch,
 };

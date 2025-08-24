@@ -2,6 +2,7 @@ import React, { useState, memo } from 'react';
 import clsx from 'clsx';
 import { AcCheckbox } from '@src/molecules';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
 import {
   Paragraph,
   Table,
@@ -25,15 +26,34 @@ import ReactSelect from 'react-select';
  * @param {Object} schemas - Available schemas for field configuration
  */
 const ConFormModuleVersieStage = memo(
-  ({ product, setProduct, isMultiApplicatie, loading, schemas, getNewModulesWithApplicatieData }) => {
+  ({ product, setProduct, isMultiApplicatie, loading, schemas, getNewModulesWithApplicatieData, existingModulesLookup, getAllModulesForStages }) => {
     const [sameForAll, setSameForAll] = useState(true);
 
-    // Get moduleVersie schema for status options
+    // Get moduleVersie schema for status options and defaults
     const moduleVersieSchema = schemas?.moduleversie;
     const statusOptions = moduleVersieSchema?.properties?.status?.enum?.map(status => ({
       value: status,
       label: status
     })) || [];
+
+    // Extract default values from schema
+    const getSchemaDefaults = () => {
+      const defaults = {};
+      if (moduleVersieSchema?.properties) {
+        Object.entries(moduleVersieSchema.properties).forEach(([key, property]) => {
+          if (property.default !== undefined) {
+            defaults[key] = property.default;
+          }
+          // Also check for examples as fallback defaults
+          if (property.example !== undefined && defaults[key] === undefined) {
+            defaults[key] = property.example;
+          }
+        });
+      }
+      return defaults;
+    };
+
+    const schemaDefaults = getSchemaDefaults();
 
     // ✅ SIMPLIFIED: Use helper method to get new modules that need versie configuration
     const newModules = getNewModulesWithApplicatieData ? getNewModulesWithApplicatieData() : [];
@@ -46,6 +66,18 @@ const ConFormModuleVersieStage = memo(
 
     // Check if there are multiple NEW applications that need versie configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
+    
+    // Debug logging to understand the state
+    console.log('🔧 Versie stage debug:', {
+      applicatieIndicesLength: applicatieIndices.length,
+      isMultiNewApplicatie,
+      sameForAll,
+      newModulesCount: newModules.length,
+      existingModulesCount: existingModulesLookup ? Object.keys(existingModulesLookup).length : 0,
+      showChoiceOptions: applicatieIndices.length > 0 && isMultiNewApplicatie,
+      showSingleForm: applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll),
+      showTable: applicatieIndices.length > 0 && isMultiNewApplicatie && !sameForAll
+    });
 
     const updateModuleVersie = (moduleIndex, field, value) => {
       setProduct((prev) => {
@@ -60,7 +92,9 @@ const ConFormModuleVersieStage = memo(
           
           // For now, we'll manage one version per module (index 0)
           if (!module.moduleVersies[0]) {
-            module.moduleVersies[0] = {};
+            // Initialize with schema defaults
+            module.moduleVersies[0] = { ...schemaDefaults };
+            console.log('🔧 Initializing moduleVersie with schema defaults:', schemaDefaults);
           }
           
           module.moduleVersies[0][field] = value;
@@ -81,14 +115,25 @@ const ConFormModuleVersieStage = memo(
       });
     };
 
-    const renderVersieFields = ({ appIndex, moduleVersie }) => {
+    const renderVersieFields = ({ appIndex, moduleVersie, isSameForAll = false }) => {
+      const handleFieldChange = (field, value) => {
+        if (isSameForAll) {
+          // Apply to all modules
+          applyToAll({ [field]: value });
+          console.log('🔧 Applying to all modules:', field, value);
+        } else {
+          // Update only specific module
+          updateModuleVersie(appIndex, field, value);
+        }
+      };
+
       return (
         <div className='con-form-field-layout'>
           <ConSchemaEnhancedField
             schemaType='moduleversie'
             schemaProperty='versie'
-            value={moduleVersie?.versie || ''}
-            onChange={(value) => updateModuleVersie(appIndex, 'versie', value)}
+            value={moduleVersie?.versie || schemaDefaults.versie || ''}
+            onChange={(value) => handleFieldChange('versie', value)}
             isDisabled={loading}
             width='half'
             schemas={schemas}
@@ -97,8 +142,8 @@ const ConFormModuleVersieStage = memo(
           <ConSchemaEnhancedField
             schemaType='moduleversie'
             schemaProperty='status'
-            value={moduleVersie?.status || ''}
-            onChange={(value) => updateModuleVersie(appIndex, 'status', value)}
+            value={moduleVersie?.status || schemaDefaults.status || ''}
+            onChange={(value) => handleFieldChange('status', value)}
             isDisabled={loading}
             width='half'
             schemas={schemas}
@@ -107,8 +152,8 @@ const ConFormModuleVersieStage = memo(
           <ConSchemaEnhancedField
             schemaType='moduleversie'
             schemaProperty='beschrijvingKort'
-            value={moduleVersie?.beschrijvingKort || ''}
-            onChange={(value) => updateModuleVersie(appIndex, 'beschrijvingKort', value)}
+            value={moduleVersie?.beschrijvingKort || schemaDefaults.beschrijvingKort || ''}
+            onChange={(value) => handleFieldChange('beschrijvingKort', value)}
             isDisabled={loading}
             width='full'
             schemas={schemas}
@@ -128,56 +173,31 @@ const ConFormModuleVersieStage = memo(
           Versies
         </h2>
         <Paragraph>
-          Geef versie informatie op voor uw nieuwe applicaties/modules.
+          <strong>Versie-informatie voor beheer en planning</strong><br/>
+          Versie-informatie helpt organisaties om te begrijpen welke functies beschikbaar zijn en hoe actueel uw software is. 
+          De status (zoals 'in gebruik', 'ontwikkeling', of 'uitgefaseerd') geeft inzicht in de levenscyclus en ondersteuningsmogelijkheden. 
+          Een korte beschrijving per versie helpt bij het kiezen van de juiste versie voor hun situatie. 
+          Deze informatie wordt gebruikt voor impactanalyses bij updates en voor planningsdoeleinden.
         </Paragraph>
 
-        {applicatieIndices.length === 0 && allApplicatieIndices.length > 0 && (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '2rem',
-              background: '#f8f9fa',
-              borderRadius: '8px',
-            }}
-          >
-            <Paragraph>
-              <strong>Geen nieuwe applicaties gevonden</strong>
-            </Paragraph>
-            <Paragraph>
-              Alle applicaties in dit product zijn bestaande applicaties die al hun
-              eigen versie-informatie hebben vastgelegd in de catalogus. Er hoeven geen
-              versies geconfigureerd te worden.
-            </Paragraph>
-          </div>
-        )}
 
-        {applicatieIndices.length > 0 && isMultiNewApplicatie && (
-          <div
-            className='ac-register-form-checkbox-wrapper'
-            style={{ marginBottom: '1rem' }}
-          >
-            <p>Geldt dezelfde versie-informatie voor alle nieuwe applicaties?</p>
-            <AcCheckbox
-              label='Ja, voor alle applicaties hetzelfde'
-              value='same'
-              checked={sameForAll}
-              onChange={() => setSameForAll(true)}
-            />
-            <AcCheckbox
-              label='Nee, per applicatie verschillend'
-              value='per-app'
-              checked={!sameForAll}
-              onChange={() => setSameForAll(false)}
-            />
-          </div>
-        )}
+
+
+
+        <ConModulesChoiceSwitch
+          isMultiNewApplicatie={isMultiNewApplicatie}
+          sameForAll={sameForAll}
+          onSameForAllChange={setSameForAll}
+          configType="versie"
+        />
 
         {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
           <div>
             <h3>Versie informatie</h3>
             {renderVersieFields({
               appIndex: applicatieIndices[0],
-              moduleVersie: newModules[0]?.moduleVersies?.[0] || {}
+              moduleVersie: newModules[0]?.moduleVersies?.[0] || {},
+              isSameForAll: sameForAll && isMultiNewApplicatie
             })}
           </div>
         ) : applicatieIndices.length > 0 ? (
@@ -211,9 +231,9 @@ const ConFormModuleVersieStage = memo(
                       </TableCell>
                       <TableCell>
                         <Textbox
-                          value={moduleVersie.versie || ''}
+                          value={moduleVersie.versie || schemaDefaults.versie || ''}
                           onChange={(e) => updateModuleVersie(index, 'versie', e.target.value)}
-                          placeholder='1.0.0'
+                          placeholder={schemaDefaults.versie || moduleVersieSchema?.properties?.versie?.example || '1.0.0'}
                           disabled={loading}
                         />
                       </TableCell>
@@ -223,18 +243,18 @@ const ConFormModuleVersieStage = memo(
                             'ac-beheer-select',
                             loading && 'ac-beheer-select--disabled'
                           )}
-                          value={statusOptions.find(opt => opt.value === moduleVersie.status) || null}
+                          value={statusOptions.find(opt => opt.value === (moduleVersie.status || schemaDefaults.status)) || null}
                           onChange={(opt) => updateModuleVersie(index, 'status', opt?.value || null)}
                           options={statusOptions}
                           isDisabled={loading}
-                          placeholder='Status'
+                          placeholder={schemaDefaults.status || 'Selecteer status'}
                         />
                       </TableCell>
                       <TableCell>
                         <Textbox
-                          value={moduleVersie.beschrijvingKort || ''}
+                          value={moduleVersie.beschrijvingKort || schemaDefaults.beschrijvingKort || ''}
                           onChange={(e) => updateModuleVersie(index, 'beschrijvingKort', e.target.value)}
-                          placeholder='Beschrijving'
+                          placeholder={schemaDefaults.beschrijvingKort || moduleVersieSchema?.properties?.beschrijvingKort?.example || 'Beschrijving'}
                           disabled={loading}
                           maxLength={255}
                         />
@@ -246,6 +266,12 @@ const ConFormModuleVersieStage = memo(
             </Table>
           </div>
         ) : null}
+
+        <ConExistingModulesInfoBox 
+          key="versie-stage-existing-modules-info"
+          existingModulesLookup={existingModulesLookup}
+          configType="versies"
+        />
       </div>
     );
   }

@@ -211,25 +211,48 @@ const ConSchemaEnhancedField = ({
     [fieldName]: fieldValue,
   };
 
-  // Create a mock schema for useRefOptions if we have a valid property schema
+  // ✅ CONDITIONAL REF OPTIONS: Only use internal $ref system when NO custom search is provided
+  const useCustomSearch = !!onSearch;
+  
+  // Create a mock schema for useRefOptions if we have a valid property schema AND no custom search
   const mockSchemaForRefOptions = useMemo(() => {
-    if (!propertySchema) return null;
+    if (!propertySchema || useCustomSearch) return null;
 
     return {
       properties: {
         [fieldName]: propertySchema,
       },
     };
-  }, [fieldName, propertySchema]);
+  }, [fieldName, propertySchema, useCustomSearch]);
 
-  // Use useRefOptions for automatic $ref field handling if we have store and valid schema
-  const refOptionsResult = useRefOptions(
-    store && store.object ? store : null, // Only pass store if it has object property
-    'openregister', // Current register - hardcoded for now
-    mockSchemaForRefOptions,
-    { [fieldName]: customProps }, // Field configs
-    {} // Optimizations
-  );
+  // Use useRefOptions for automatic $ref field handling ONLY when no custom search is provided
+  const shouldUseRefOptions = store && store.object && !useCustomSearch && mockSchemaForRefOptions;
+  const refOptionsResult = shouldUseRefOptions 
+    ? useRefOptions(
+        store,
+        'openregister', // Current register - hardcoded for now
+        mockSchemaForRefOptions,
+        { [fieldName]: customProps }, // Field configs
+        {} // Optimizations
+      )
+    : {
+        optionsProviders: {},
+        loadingStates: {},
+        fetchOptions: null,
+      };
+
+  // Debug RefOptions status
+  if (process.env.NODE_ENV === 'development' && fieldName === 'modules') {
+    console.log(`🔧 ConSchemaEnhancedField [${fieldName}] RefOptions:`, {
+      useCustomSearch,
+      hasCustomOnSearch: !!onSearch,
+      shouldUseRefOptions,
+      refOptionsActive: shouldUseRefOptions,
+      mockSchemaExists: !!mockSchemaForRefOptions,
+      storeProvided: !!store,
+      hasStoreObject: !!(store && store.object),
+    });
+  }
 
   // Debug store structure
   if (
@@ -247,10 +270,11 @@ const ConSchemaEnhancedField = ({
   // Extract options and loading state from useRefOptions if it's a $ref field
   const hasRefProperty =
     propertySchema?.$ref || (propertySchema?.items && propertySchema.items.$ref);
-  const effectiveOptionsProvider = hasRefProperty
+  
+  const effectiveOptionsProvider = (hasRefProperty && !useCustomSearch)
     ? refOptionsResult?.optionsProviders?.[fieldName] || []
     : optionsProvider;
-  const effectiveIsLoading = hasRefProperty
+  const effectiveIsLoading = (hasRefProperty && !useCustomSearch)
     ? refOptionsResult?.loadingStates?.[fieldName] || false
     : isLoading;
 
@@ -264,6 +288,7 @@ const ConSchemaEnhancedField = ({
   ) {
     console.log(`🔍 ConSchemaEnhancedField [${fieldName}]:`, {
       hasRefProperty,
+      useCustomSearch,
       refProperty: propertySchema?.$ref,
       itemsRefProperty: propertySchema?.items?.$ref,
       optionsCount: effectiveOptionsProvider.length,
@@ -273,19 +298,29 @@ const ConSchemaEnhancedField = ({
       schemaType,
       propertyType: propertySchema?.type,
       options: effectiveOptionsProvider.slice(0, 2), // Show first 2 options for debugging
+      customOnSearch: !!onSearch,
+      internalRefDisabled: useCustomSearch,
     });
   }
 
   // Create search handler for $ref fields
   const effectiveOnSearchHandlers = useMemo(() => {
-    if (!hasRefProperty || !refOptionsResult?.fetchOptions) {
-      return onSearch ? { handleSearch: onSearch } : {};
+    // ✅ PRIORITY FIX: Always prefer custom onSearch over internal $ref search
+    if (onSearch) {
+      console.log(`🔍 ConSchemaEnhancedField: Using CUSTOM search handler for ${fieldName} (disabling internal $ref)`);
+      return { handleSearch: onSearch };
     }
 
+    // Fallback to internal $ref search if no custom handler
+    if (!hasRefProperty || !refOptionsResult?.fetchOptions) {
+      return {};
+    }
+
+    console.log(`🔍 ConSchemaEnhancedField: Using INTERNAL $ref search for ${fieldName}`);
     return {
       handleSearch: async (fieldPath, query) => {
         console.log(
-          `🔍 ConSchemaEnhancedField: Search triggered for ${fieldPath}:`,
+          `🔍 ConSchemaEnhancedField: Internal search triggered for ${fieldPath}:`,
           query
         );
         if (refOptionsResult.fetchOptions) {
@@ -293,7 +328,7 @@ const ConSchemaEnhancedField = ({
         }
       },
     };
-  }, [hasRefProperty, refOptionsResult?.fetchOptions, onSearch]);
+  }, [onSearch, hasRefProperty, refOptionsResult?.fetchOptions, fieldName]);
 
   // Merge width override with customProps for field configuration
   const fieldConfig = {

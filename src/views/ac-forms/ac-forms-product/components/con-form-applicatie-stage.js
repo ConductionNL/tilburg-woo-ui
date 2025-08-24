@@ -1,7 +1,23 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useCallback, useEffect } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
-import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import ReactSelect from 'react-select';
+
+// Add CSS for spinner animation
+const spinnerStyles = `
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+// Inject CSS if not already present
+if (!document.getElementById('spinner-styles')) {
+  const style = document.createElement('style');
+  style.id = 'spinner-styles';
+  style.textContent = spinnerStyles;
+  document.head.appendChild(style);
+}
 import {
   Table,
   TableBody,
@@ -84,6 +100,9 @@ const ConFormApplicatieStage = memo(
     store,
     existingModulesLookup,
     setExistingModulesLookup,
+    searchModules,
+    modulesLoading,
+    modulesOptions,
   }) => {
     // Keep focus while typing by only committing name changes on blur
 
@@ -92,6 +111,16 @@ const ConFormApplicatieStage = memo(
       useState(null);
     // State to store available module options for lookup
     const [availableModuleOptions, setAvailableModuleOptions] = useState([]);
+
+
+
+    // Debug logging for search setup
+    console.log('🔧 ConFormApplicatieStage - Search setup:', {
+      hasSearchModules: !!searchModules,
+      modulesOptionsCount: modulesOptions ? modulesOptions.length : 0,
+      modulesLoading,
+      firstFewOptions: modulesOptions ? modulesOptions.slice(0, 3) : []
+    });
 
     const updateModule = (moduleIndex, key, value) => {
       setProduct((prev) => {
@@ -106,9 +135,32 @@ const ConFormApplicatieStage = memo(
       });
     };
 
+    // Helper function to get schema defaults for moduleVersie
+    const getModuleVersieDefaults = () => {
+      const defaults = {};
+      const moduleVersieSchema = schemas?.moduleversie;
+      if (moduleVersieSchema?.properties) {
+        Object.entries(moduleVersieSchema.properties).forEach(([key, property]) => {
+          if (property.default !== undefined) {
+            defaults[key] = property.default;
+          }
+          // Also check for examples as fallback defaults
+          if (property.example !== undefined && defaults[key] === undefined) {
+            defaults[key] = property.example;
+          }
+        });
+      }
+      return defaults;
+    };
+
     const addModule = () => {
       setProduct((prev) => {
-        // ✅ NEW: Create new module object directly with empty data
+        // Get schema defaults for moduleVersie
+        const moduleVersieDefaults = getModuleVersieDefaults();
+        
+        console.log('🔧 Creating new module with moduleVersie defaults:', moduleVersieDefaults);
+        
+        // ✅ NEW: Create new module object directly with empty data + initialized moduleVersies
         const newModuleObject = {
           naam: '',
           beschrijvingKort: '',
@@ -120,6 +172,9 @@ const ConFormApplicatieStage = memo(
           standaarden: [],
           referentieComponenten: [],
           diensten: [],
+          koppelingen: [],    
+          compliancy: [],    
+          moduleVersies: [{ ...moduleVersieDefaults }], // Initialize with schema defaults
           // Backend will generate ID and other properties when saving
         };
 
@@ -156,32 +211,24 @@ const ConFormApplicatieStage = memo(
 
       if (typeof selectedExistingApplication === 'string') {
         // If it's just a string ID, we need to find the full object from available options
-        // Get the options from the store directly
-        const collectionType = 'voorzieningen_module_options';
-        const moduleCollection = store?.object?.getCollection?.(collectionType);
-
-        console.log('🔍 Looking for module collection:', {
-          collectionType,
-          hasCollection: !!moduleCollection,
-          resultsCount: moduleCollection?.results?.length,
-          firstResult: moduleCollection?.results?.[0],
+        // Look in modulesOptions instead of store collections
+        console.log('🔍 Looking for module in modulesOptions:', {
+          selectedId: selectedExistingApplication,
+          modulesOptionsCount: modulesOptions?.length,
+          firstOption: modulesOptions?.[0],
         });
 
-        if (moduleCollection?.results) {
-          const foundModule = moduleCollection.results.find(
-            (item) => item['@self']?.id === selectedExistingApplication
+        if (modulesOptions?.length) {
+          const foundOption = modulesOptions.find(
+            (option) => option.value === selectedExistingApplication
           );
-          console.log('🔍 Found module:', {
-            foundModule,
+          console.log('🔍 Found module option:', {
+            foundOption,
             searchingFor: selectedExistingApplication,
           });
 
-          if (foundModule) {
-            selectedItem = {
-              value: selectedExistingApplication,
-              label: foundModule['@self']?.name || 'Unnamed Module',
-              data: foundModule,
-            };
+          if (foundOption) {
+            selectedItem = foundOption; // modulesOptions already has the right format
           } else {
             console.warn(
               'Could not find module data for ID:',
@@ -190,7 +237,7 @@ const ConFormApplicatieStage = memo(
             return;
           }
         } else {
-          console.warn('Module collection not available');
+          console.warn('Module options not available');
           return;
         }
       } else if (Array.isArray(selectedExistingApplication)) {
@@ -256,7 +303,12 @@ const ConFormApplicatieStage = memo(
         const productName = product.naam || '';
         const productDescription = product.beschrijvingKort || '';
         
-        // Initialize the first module with product data
+        // Get schema defaults for moduleVersie
+        const moduleVersieDefaults = getModuleVersieDefaults();
+        
+        console.log('🔧 Initializing single applicatie module with moduleVersie defaults:', moduleVersieDefaults);
+        
+        // Initialize the first module with product data + moduleVersies with schema defaults
         const newModule = {
           naam: productName,
           beschrijvingKort: productDescription,
@@ -268,6 +320,9 @@ const ConFormApplicatieStage = memo(
           standaarden: [],
           referentieComponenten: [],
           diensten: [],
+          koppelingen: [],    
+          compliancy: [],    
+          moduleVersies: [{ ...moduleVersieDefaults }], // Initialize with schema defaults
         };
         
         setProduct(prev => ({
@@ -467,10 +522,11 @@ const ConFormApplicatieStage = memo(
           {/* Explanation text */}
           <div style={{ marginBottom: '1.5rem' }}>
             <Paragraph>
-              <strong>Applicaties toevoegen aan uw product</strong>
-            </Paragraph>
-            <Paragraph>
-              U heeft twee opties om applicaties toe te voegen aan uw product:
+              <strong>Voeg applicaties toe aan uw product</strong><br/>
+              Hier definieert u welke applicaties en modules onderdeel zijn van uw product. U kunt kiezen tussen bestaande applicaties 
+              uit de catalogus of nieuwe applicaties aanmaken. Bestaande applicaties hebben al hun configuratie vastgelegd, 
+              terwijl voor nieuwe applicaties in de volgende stappen licenties, versies, standaarden en koppelingen moeten worden opgegeven. 
+              Deze informatie helpt organisaties om te begrijpen uit welke componenten uw product bestaat.
             </Paragraph>
           </div>
 
@@ -567,27 +623,51 @@ const ConFormApplicatieStage = memo(
                     style={{
                       display: 'flex',
                       gap: '0.5rem',
-                      alignItems: 'flex-start', // Changed from flex-end to flex-start
+                      alignItems: 'center', // Center align for proper button alignment
                     }}
                   >
-                    <div style={{ flex: '1' }}>
-                      <ConSchemaEnhancedField
-                        schemaType='product'
-                        schemaProperty='modules'
-                        value={selectedExistingApplication}
-                        onChange={setSelectedExistingApplication}
-                        schemas={schemas}
-                        formData={{}}
-                        store={store}
-                        width='full'
-                        showLabel={false}
-                        showDescription={false}
-                        customProps={{
-                          // placeholder will come from schema example
-                          // Force single-select instead of multi-select
-                          isMulti: false,
-                          // Override the array behavior
-                          type: 'select',
+                    <div style={{ width: '250px', flexShrink: 0 }}>
+                      <ReactSelect
+                        value={modulesOptions.find(opt => opt.value === selectedExistingApplication) || null}
+                        onChange={(selectedOption) => setSelectedExistingApplication(selectedOption?.value || null)}
+                        options={modulesOptions}
+                        placeholder={modulesOptions.length === 0 && !modulesLoading ? "Begin met typen om te zoeken..." : "Selecteer modules"}
+                        isSearchable={true}
+                        isLoading={modulesLoading}
+                        onInputChange={(inputValue, actionMeta) => {
+                          if (actionMeta.action === 'input-change') {
+                            console.log('🔍 ReactSelect search input:', inputValue);
+                            if (searchModules) {
+                              searchModules(inputValue);
+                            }
+                          }
+                        }}
+                        filterOption={() => true} // Disable client-side filtering, use server search
+                        styles={{
+                          control: (provided) => ({
+                            ...provided,
+                            minHeight: '48px', // Match button height
+                            height: '48px',
+                            border: '1px solid #ccc',
+                            borderRadius: '4px',
+                          }),
+                          placeholder: (provided) => ({
+                            ...provided,
+                            color: '#666',
+                          }),
+                          valueContainer: (provided) => ({
+                            ...provided,
+                            height: '46px',
+                            padding: '0 12px',
+                          }),
+                          input: (provided) => ({
+                            ...provided,
+                            margin: 0,
+                            padding: 0,
+                          }),
+                          indicatorSeparator: () => ({
+                            display: 'none',
+                          }),
                         }}
                       />
                     </div>
@@ -599,7 +679,19 @@ const ConFormApplicatieStage = memo(
                         disabled={!selectedExistingApplication || loading}
                         onClick={addExistingApplication}
                       >
-                        Toevoegen
+                        {modulesLoading ? (
+                          <>
+                            <i 
+                              className="ac-icon--refresh" 
+                              style={{
+                                marginRight: '0.5rem',
+                                display: 'inline-block',
+                                animation: 'spin 1s linear infinite'
+                              }}
+                            ></i>
+                            Zoeken...
+                          </>
+                        ) : 'Toevoegen'}
                       </AcButton>
                     </div>
                   </div>
