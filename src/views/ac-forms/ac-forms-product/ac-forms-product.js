@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useEffect, useMemo } from 'react';
+import { useState, useCallback, memo, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
@@ -13,6 +13,7 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import StandaardenFormNew from './components/standaarden-form-new';
 
 import {
   Heading1,
@@ -65,6 +66,7 @@ import licenses from '@assets/licenses/licenses.json';
  *   **Schema Definitions** (fetched on component mount):
  *   - Product:        `${BASE_URL}/openregister/api/schemas/product`
  *   - Module:         `${BASE_URL}/openregister/api/schemas/module`
+ *   - ModuleVersie:   `${BASE_URL}/openregister/api/schemas/moduleversie`
  *   - Dienst:         `${BASE_URL}/openregister/api/schemas/dienst`
  *   - Koppeling:      `${BASE_URL}/openregister/api/schemas/koppeling`
  *   - Compliancy:     `${BASE_URL}/openregister/api/schemas/compliancy`
@@ -121,6 +123,99 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(true); // shows wether the product has multiple applicaties, used to dictate how to render the form
+  
+  // Ref for ProcessSteps container to add click handlers
+  const processStepsRef = useRef(null);
+
+  /**
+   * Handle step navigation from clickable process steps
+   * Maps visual step indices to actual step numbers accounting for conditional steps
+   * @param {number} visualStepIndex - The index from the visual step representation
+   */
+  const handleStepNavigation = (visualStepIndex) => {
+    // Map visual step indices to actual step numbers
+    // Visual steps structure:
+    // 0: Productopbouw (step 0)
+    // 1: Product informatie (step 1) 
+    // 2: Aanbieder informatie (step 2) - conditional
+    // 3: Applicaties (step 2 or 3 depending on aanbieder)
+    // 4: Licentie (step 3 or 4)
+    // 5: Versies (step 4 or 5)
+    // 6: Referentiecomponenten (step 5 or 6)
+    // 7: Standaarden (step 6 or 7)
+    // 8: Koppelingen (step 7 or 8)
+    // 9: Diensten (step 8 or 9)
+    // 10: Controleren (step 9 or 10)
+
+    const showsAanbiederStep = shouldShowAanbiederStep();
+    let targetStep = visualStepIndex;
+
+    // Adjust for the aanbieder step offset
+    if (!showsAanbiederStep && visualStepIndex >= 2) {
+      targetStep = visualStepIndex + 1; // Skip the aanbieder step
+    }
+
+    // Navigate to the target step
+    setCurrentStep(targetStep);
+  };
+
+  /**
+   * Check if a step should be accessible for navigation
+   * Only allow navigation to completed steps or the current step
+   * @param {number} visualStepIndex - The visual step index
+   * @returns {boolean} Whether the step should be accessible
+   */
+  const isStepAccessible = (visualStepIndex) => {
+    const showsAanbiederStep = shouldShowAanbiederStep();
+    let actualStepIndex = visualStepIndex;
+    
+    if (!showsAanbiederStep && visualStepIndex >= 2) {
+      actualStepIndex = visualStepIndex + 1;
+    }
+    
+    // Only allow navigation to completed steps (steps before current) or current step
+    return actualStepIndex <= currentStep;
+  };
+
+  // Add click handlers to ProcessSteps after each render
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+
+    const addClickHandlers = () => {
+      // Find all step elements in the DOM
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '[class*="process-step"], [role="button"], [role="tab"], .step, [data-step]'
+      );
+
+      stepElements.forEach((stepEl, index) => {
+        // Remove any existing click handlers first
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        // Only make completed steps clickable (index < currentStep)
+        if (index < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+          
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStepNavigation(index);
+          };
+        }
+      });
+    };
+
+    // Add handlers immediately
+    addClickHandlers();
+
+    // Also add handlers after a slight delay to handle async rendering
+    const timeoutId = setTimeout(addClickHandlers, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [currentStep, handleStepNavigation]); // Re-run when currentStep changes
   /**
    * Product State Object
    *
@@ -141,15 +236,14 @@ const AcFormsProduct = ({ userStore, store }) => {
    */
   const [product, setProduct] = useState({
     // Schema-compliant product properties
-    naam: 'VNG Product',
-    beschrijvingKort: 'Dit is de korte beschrijving van het VNG product',
-    beschrijvingLang:
-      'Dit is een uitgebreide beschrijving van het VNG product in **Markdown** formaat.',
-    website: 'https://www.vng.nl',
-    logo: 'data:image/png;base64,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',
+    naam: '',
+    beschrijvingKort: '',
+    beschrijvingLang: '',
+    website: '',
+    logo: '',
     logoFilename: '',
-    hostingLocatie: 'NL',
-    hostingJurisdictie: 'EU',
+    hostingLocatie: '',
+    hostingJurisdictie: '',
     contactpersoon: null, // Contact person object reference
     cloudDienstverleningsmodel: '', // Cloud service model enum
     modules: [], // Array of module objects/UUIDs
@@ -170,95 +264,7 @@ const AcFormsProduct = ({ userStore, store }) => {
 
     // Legacy properties for existing wizard steps (will be migrated)
     // These are maintained for compatibility with existing ApplicatieStep and other components
-    applicaties: {
-      0: {
-        naam: 'OpenWoo',
-        beschrijvingKort:
-          'Open source WOO-portaal voor transparante overheidscommunicatie',
-        licentieType: 'Open Source',
-        licentie: 'EUPL 1.2',
-        referentieComponenten: [
-          {
-            naam: 'Document Management Component',
-            id: 'dmc-001',
-          },
-          {
-            naam: 'Zoek Component',
-            id: 'zc-002',
-          },
-          {
-            naam: 'Publicatie Component',
-            id: 'pc-003',
-          },
-          {
-            naam: 'Metadata Component',
-            id: 'mc-004',
-          },
-        ],
-        standaarden: [
-          {
-            naam: 'TMLO 2.0',
-            id: 'tmlo-20',
-            bewijs: 'https://www.nationaalarchief.nl/archiveren/kennisbank/tmlo',
-          },
-        ],
-        koppelingen: [
-          {
-            applicatie1: 'OpenWoo',
-            applicatie2: 'OpenZaak',
-            richtingDataUitwisseling: 'Bidirectioneel',
-            sooortKoppeling: 'REST API',
-          },
-          {
-            applicatie1: 'OpenWoo',
-            applicatie2: 'DocumentManagementSystem',
-            richtingDataUitwisseling: 'Bidirectioneel',
-            sooortKoppeling: 'REST API',
-          },
-        ],
-        diensten: ['Technisch beheer', 'Implementatie-ondersteuning'],
-      },
-      1: {
-        naam: 'OpenZaak',
-        beschrijvingKort:
-          'Open source zaaksysteem voor gemeenten met ondersteuning voor ZGW API standaarden',
-        licentieType: 'Open Source',
-        licentie: 'EUPL 1.2',
-        referentieComponenten: [],
-        standaarden: [],
-        koppelingen: [
-          {
-            applicatie1: 'OpenZaak',
-            applicatie2: 'Klantportaal',
-            richtingDataUitwisseling: 'Bidirectioneel',
-            sooortKoppeling: 'REST API',
-          },
-        ],
-        diensten: [],
-      },
-      2: {
-        naam: 'Burgerzaken Suite',
-        beschrijvingKort:
-          'Complete oplossing voor burgerzaken met modules voor geboorteaangifte, huwelijken en overlijdensaangifte',
-        licentieType: 'Closed Source',
-        licentie: 'Proprietary Enterprise License',
-        referentieComponenten: [
-          {
-            naam: 'BRP Koppeling Module',
-            id: 'brp-001',
-          },
-        ],
-        standaarden: [
-          {
-            naam: 'StUF-BG 3.10',
-            id: 'stuf-310',
-            bewijs: 'https://www.gemmaonline.nl/index.php/StUF-BG_3.10_compliance',
-          },
-        ],
-        koppelingen: [],
-        diensten: [],
-      },
-    }, // array of applicaties with a unique key for easier data management
+    applicaties: {}, // Empty applications list - will be populated by user
   });
   const [touched, setTouched] = useState({
     productName: false,
@@ -281,6 +287,10 @@ const AcFormsProduct = ({ userStore, store }) => {
     selectedApplication: {},
     selectedRefCompsByRow: {}, // rowId -> array of values
   });
+
+  // Separate array to track chosen referentieComponenten with their standards
+  // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], applicatieId }]
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] = useState([]);
 
   // Persist UI state for KoppelingenForm across steps
   const [koppelingenFormState, setKoppelingenFormState] = useState({
@@ -356,17 +366,109 @@ const AcFormsProduct = ({ userStore, store }) => {
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
 
+  /**
+   * Generate a default/empty product object based on the product schema using ObjectStore
+   * @param {Object} productSchema - The product schema object
+   * @returns {Object} Default product object with schema-based properties
+   */
+  const createDefaultProductFromSchema = useCallback((productSchema) => {
+    // Use the centralized ObjectStore method for schema-based object creation
+    const defaultProduct = store.object.createDefaultObjectFromSchema(productSchema, {
+      // Legacy wizard structure for compatibility - ensures applicaties property exists
+      applicaties: {},
+    });
+    
+    return defaultProduct;
+  }, [store.object]);
+
+  /**
+   * Get existing applications for information display
+   * Used to show which applications are excluded from configuration
+   */
+  const getExistingApplications = useCallback(() => {
+    const allApplicatieIndices = Object.keys(product.applicaties || {})
+      .map((k) => parseInt(k, 10))
+      .sort((a, b) => a - b);
+
+    return allApplicatieIndices
+      .filter((index) => {
+        const app = product.applicaties[index];
+        return app?.isExisting; // Only existing applications
+      })
+      .map((index) => product.applicaties[index]?.naam || `Applicatie ${index + 1}`);
+  }, [product.applicaties]);
+
+  /**
+   * Render info box for steps that exclude existing applications
+   * Shows consistent messaging about why certain applications aren't shown
+   */
+  const renderExistingAppsInfoBox = useCallback((stepType) => {
+    const existingApps = getExistingApplications();
+    
+    if (existingApps.length === 0) return null;
+
+    const stepTexts = {
+      license: {
+        title: 'Bestaande applicaties uitgesloten',
+        description: 'Voor bestaande applicaties kunnen geen licenties worden toegevoegd of aangepast, omdat deze al hun eigen licentie-informatie hebben vastgelegd in de catalogus.',
+      },
+      referentiecomponenten: {
+        title: 'Bestaande applicaties uitgesloten', 
+        description: 'Voor bestaande applicaties kunnen geen referentiecomponenten worden toegevoegd of aangepast, omdat deze al hun eigen referentiecomponenten hebben vastgelegd in de catalogus.',
+      },
+      standaarden: {
+        title: 'Bestaande applicaties uitgesloten',
+        description: 'Voor bestaande applicaties kunnen geen standaarden worden toegevoegd of aangepast, omdat deze al hun eigen standaarden hebben vastgelegd in de catalogus.',
+      },
+      moduleVersies: {
+        title: 'Bestaande applicaties uitgesloten',
+        description: 'Voor bestaande applicaties kunnen geen versies worden toegevoegd of aangepast, omdat deze al hun eigen versie-informatie hebben vastgelegd in de catalogus.',
+      },
+    };
+
+    const text = stepTexts[stepType];
+    if (!text) return null;
+
+    return (
+      <Alert
+        severity='info'
+        style={{
+          marginTop: '1.5rem',
+          backgroundColor: '#e3f2fd',
+          border: '1px solid #bbdefb',
+          borderRadius: '8px',
+        }}
+      >
+        <div>
+          <strong>{text.title}</strong>
+        </div>
+        <div style={{ marginTop: '0.5rem' }}>
+          {text.description}
+        </div>
+        <div style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>
+          De volgende bestaande applicatie{existingApps.length > 1 ? 's' : ''} worden daarom niet in dit overzicht getoond:
+        </div>
+        <ul style={{ marginTop: '0.25rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
+          {existingApps.map((naam, index) => (
+            <li key={index}>{naam}</li>
+          ))}
+        </ul>
+      </Alert>
+    );
+  }, [getExistingApplications]);
+
   // Fetch schema definitions on component mount
   useEffect(() => {
     const fetchSchemas = async () => {
       setSchemasLoading(true);
-      const schemaTypes = [
+            const schemaTypes = [
         'product',
         'module',
         'dienst',
-        'koppeling',
+        'koppeling', 
         'compliancy',
         'organisatie',
+        'moduleversie',
       ];
       const fetchedSchemas = {};
 
@@ -401,6 +503,19 @@ const AcFormsProduct = ({ userStore, store }) => {
         });
 
         setSchemas(fetchedSchemas);
+
+        // Update product object with schema-based defaults if product schema was loaded
+        if (fetchedSchemas.product) {
+          setProduct(prevProduct => {
+            // Only update if current product is the default/empty state
+            // Don't override if user has already started filling the form
+            const isEmpty = !prevProduct.naam && !prevProduct.website && !prevProduct.beschrijvingKort;
+            if (isEmpty) {
+              return createDefaultProductFromSchema(fetchedSchemas.product);
+            }
+            return prevProduct;
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch schemas:', error);
       } finally {
@@ -409,7 +524,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     };
 
     fetchSchemas();
-  }, []);
+  }, [createDefaultProductFromSchema]);
 
   /**
    * Utility function to get field information from schemas
@@ -517,15 +632,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     };
   }, []);
 
-  // Persist UI state for StandaardenForm across steps
-  const [standaardenFormState, setStandaardenFormState] = useState({
-    rows: [0],
-    nextRowId: 1,
-    selectedApplication: {},
-    selectedStandardByRow: {},
-    supportedByRow: {},
-    bewijsByRow: {},
-  });
+  // Note: StandaardenForm now uses its own internal state management
 
   const dienstOptions = [
     {
@@ -551,6 +658,34 @@ const AcFormsProduct = ({ userStore, store }) => {
 
   useEffect(() => {
     let isMounted = true;
+    
+    // Get query parameters from schema property configuration
+    const getReferentieComponentenQueryParams = () => {
+      // Extract query parameters from module schema referentieComponenten property
+      const moduleSchema = schemas?.module;
+      const refCompProperty = moduleSchema?.properties?.referentieComponenten;
+      const queryParamsString = refCompProperty?.items?.objectConfiguration?.queryParams;
+      
+      const baseParams = {
+        _limit: '500',
+        _page: '1',
+      };
+      
+      if (queryParamsString) {
+        // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
+        const urlParams = new URLSearchParams(queryParamsString);
+        urlParams.forEach((value, key) => {
+          baseParams[key] = value;
+        });
+      } else {
+        // Fallback to hardcoded if schema doesn't have queryParams
+        baseParams.gemmaType = 'Referentiecomponent';
+        baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+      }
+      
+      return baseParams;
+    };
+    
     const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
 
     const mapToOption = (item, index) => {
@@ -562,17 +697,18 @@ const AcFormsProduct = ({ userStore, store }) => {
         item?.label ||
         `Component ${index + 1}`;
       const value = item?.value || item?.id || item?.slug || label;
-      return { value: String(value), label: String(label) };
+      return { 
+        value: String(value), 
+        label: String(label),
+        data: item // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+      };
     };
 
     const fetchOptions = async () => {
       try {
-        // Add pagination parameters to limit initial load
-        const params = new URLSearchParams({
-          _limit: '500',
-          _page: '1',
-        });
-        params.set('gemmaType', 'Referentiecomponent');
+        // Use schema-driven query parameters
+        const queryParams = getReferentieComponentenQueryParams();
+        const params = new URLSearchParams(queryParams);
         const endpoint = `${baseEndpoint}?${params}`;
 
         const res = await fetch(endpoint, {
@@ -597,7 +733,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [schemas]); // Add schemas dependency to re-fetch when schemas are loaded
 
   // Modules options (global fetch like standaarden/referentiecomponenten)
   // Modules list for KoppelingenForm
@@ -730,8 +866,11 @@ const AcFormsProduct = ({ userStore, store }) => {
 
   // Helper function to get logical step from actual step index
   const getLogicalStepFromIndex = (stepIndex) => {
-    if (!shouldShowAanbiederStep() && stepIndex > 1) {
-      return stepIndex + 1;
+    // When aanbieder step is NOT shown, we need to map physical steps to logical steps
+    // Physical: 0,1,2,3,4,5,6,7,8,9  → Logical: 0,1,3,4,5,6,7,8,9,10
+    // When aanbieder step IS shown, physical and logical steps are the same
+    if (!shouldShowAanbiederStep() && stepIndex >= 2) {
+      return stepIndex + 1; // Skip logical step 2 (aanbieder)
     }
     return stepIndex;
   };
@@ -739,6 +878,14 @@ const AcFormsProduct = ({ userStore, store }) => {
   const renderStep = (step) => {
     // Get the logical step number (accounting for optional aanbieder step)
     const logicalStep = getLogicalStepFromIndex(step);
+    
+    // Debug logging to understand step mapping
+    console.log('🔍 renderStep Debug:', {
+      physicalStep: step,
+      logicalStep: logicalStep,
+      shouldShowAanbiederStep: shouldShowAanbiederStep(),
+      formType: formType
+    });
 
     switch (logicalStep) {
       case 0:
@@ -806,34 +953,46 @@ const AcFormsProduct = ({ userStore, store }) => {
               setProduct,
               isMultiApplicatie,
               loading,
+              schemas,
             }}
           />
         );
       case 5:
+        return (
+          <ModuleVersieStep
+            {...{
+              product,
+              setProduct,
+              isMultiApplicatie,
+              loading,
+              schemas,
+            }}
+          />
+        );
+      case 6:
         return (
           <ReferentieComponentenForm
             {...{
               product,
               setProduct,
               referentieComponentenOptions,
-              refCompFormState,
-              setRefCompFormState,
-            }}
-          />
-        );
-      case 6:
-        return (
-          <StandaardenForm
-            {...{
-              product,
-              setProduct,
-              standaardOptions: standaardOptionsRef.current,
-              standaardenFormState,
-              setStandaardenFormState,
+              referentieComponentenWithStandards,
+              setReferentieComponentenWithStandards,
+              schemas,
+              loading: schemasLoading,
             }}
           />
         );
       case 7:
+        return (
+          <StandaardenFormNew
+            product={product}
+            setProduct={setProduct}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            schemas={schemas}
+          />
+        );
+      case 8:
         return (
           <KoppelingenForm
             {...{
@@ -845,7 +1004,7 @@ const AcFormsProduct = ({ userStore, store }) => {
             }}
           />
         );
-      case 8:
+      case 9:
         return (
           <DienstenForm
             {...{
@@ -860,7 +1019,7 @@ const AcFormsProduct = ({ userStore, store }) => {
             }}
           />
         );
-      case 9:
+      case 10:
         return (
           <ControlerenForm
             {...{
@@ -912,14 +1071,16 @@ const AcFormsProduct = ({ userStore, store }) => {
       case 4:
         return 'Licentie';
       case 5:
-        return 'Referentiecomponenten';
+        return 'Versies';
       case 6:
-        return 'Standaarden';
+        return 'Referentiecomponenten';
       case 7:
-        return 'Koppelingen';
+        return 'Standaarden';
       case 8:
-        return 'Diensten';
+        return 'Koppelingen';
       case 9:
+        return 'Diensten';
+      case 10:
         return 'Controleren';
     }
   };
@@ -930,19 +1091,153 @@ const AcFormsProduct = ({ userStore, store }) => {
       return false;
     }
     if (currentStep === 1) {
-      //   return !product.productName;
-      return false;
+      // Productinformatie step validation
+      const requiredFields = ['naam', 'website'];
+      const missingFields = requiredFields.filter(field => !product[field] || !product[field].trim());
+      
+      // Check website format (allow URLs without http/https)
+      if (product.website && product.website.trim()) {
+        const website = product.website.trim();
+        // More permissive domain validation - allow domains with or without protocol
+        // Matches: example.com, www.example.com, https://example.com, sub.domain.co.uk, etc.
+        const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
+        if (!domainRegex.test(website)) {
+          return true; // Invalid website format
+        }
+      }
+      
+      return missingFields.length > 0;
     }
+    if (currentStep === 2) {
+      // Applicaties step validation
+      const applicaties = product.applicaties || {};
+      const applicatieEntries = Object.entries(applicaties);
+      
+      // Must have at least one application (new or existing)
+      if (applicatieEntries.length === 0) {
+        return true;
+      }
+      
+      // All new applications must have naam and beschrijving
+      const newApplications = applicatieEntries.filter(([id, app]) => !app.isExisting);
+      const hasIncompleteNewApps = newApplications.some(([id, app]) => {
+        return !app.naam || !app.naam.trim() || !app.beschrijvingKort || !app.beschrijvingKort.trim();
+      });
+      
+      return hasIncompleteNewApps;
+    }
+    
+    if (currentStep === 4) {
+      // Licentie step validation
+      const applicaties = product.applicaties || {};
+      const applicatieEntries = Object.entries(applicaties);
+      
+      // Check new applications for license requirements
+      const newApplications = applicatieEntries.filter(([id, app]) => !app.isExisting);
+      const hasIncompleteLicenses = newApplications.some(([id, app]) => {
+        // Check both possible field names (schema uses 'licentietype', code uses 'licentieType')
+        const licenseType = app.licentietype || app.licentieType;
+        // If licentietype is "Open Source", then licentie is required
+        return licenseType === 'Open Source' && (!app.licentie || !app.licentie.trim());
+      });
+      
+      return hasIncompleteLicenses;
+    }
+    
+    return false;
   };
 
   // Add this function to generate the tooltip message
-  const getDisabledTooltip = (product) => {
+  const getDisabledTooltip = (currentStep, product) => {
     // Example
     if (currentStep === 1) {
       const messages = [];
-      if (!product.productName) {
+      
+      // Check required fields
+      if (!product.naam || !product.naam.trim()) {
         messages.push('Productnaam is verplicht');
       }
+      if (!product.website || !product.website.trim()) {
+        messages.push('Website is verplicht');
+      }
+      
+      // Check website format
+      if (product.website && product.website.trim()) {
+        const website = product.website.trim();
+        // More permissive domain validation - allow domains with or without protocol
+        const domainRegex = /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
+        if (!domainRegex.test(website)) {
+          messages.push('Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)');
+        }
+      }
+      
+      return messages.join('\n');
+    }
+    
+    if (currentStep === 2) {
+      const messages = [];
+      const applicaties = product.applicaties || {};
+      const applicatieEntries = Object.entries(applicaties);
+      
+      // Check if no applications exist
+      if (applicatieEntries.length === 0) {
+        messages.push('Een product moet bestaan uit minimaal één applicatie (nieuwe of bestaande)');
+        return messages.join('\n');
+      }
+      
+      // Check for incomplete new applications
+      const newApplications = applicatieEntries.filter(([id, app]) => !app.isExisting);
+      const incompleteApps = [];
+      
+      newApplications.forEach(([id, app], index) => {
+        const missingFields = [];
+        if (!app.naam || !app.naam.trim()) {
+          missingFields.push('naam');
+        }
+        if (!app.beschrijvingKort || !app.beschrijvingKort.trim()) {
+          missingFields.push('beschrijving');
+        }
+        
+        if (missingFields.length > 0) {
+          // Use the actual application name if available, otherwise fall back to "Nieuwe applicatie X"
+          const appName = app.naam && app.naam.trim() ? app.naam.trim() : `Nieuwe applicatie ${index + 1}`;
+          incompleteApps.push(`${appName}: ${missingFields.join(', ')} ontbreekt`);
+        }
+      });
+      
+      if (incompleteApps.length > 0) {
+        messages.push('Alle nieuwe applicaties moeten een naam en beschrijving hebben:');
+        messages.push(...incompleteApps);
+      }
+      
+      return messages.join('\n');
+    }
+    
+    if (currentStep === 4) {
+      // Licentie step validation messages
+      const messages = [];
+      const applicaties = product.applicaties || {};
+      const applicatieEntries = Object.entries(applicaties);
+      
+      // Check for incomplete licenses in new applications
+      const newApplications = applicatieEntries.filter(([id, app]) => !app.isExisting);
+      const incompleteLicenses = [];
+      
+      newApplications.forEach(([id, app], index) => {
+        // Check both possible field names (schema uses 'licentietype', code uses 'licentieType')
+        const licenseType = app.licentietype || app.licentieType;
+        if (licenseType === 'Open Source' && (!app.licentie || !app.licentie.trim())) {
+          // Use the actual application name if available
+          const appName = app.naam && app.naam.trim() ? app.naam.trim() : `Nieuwe applicatie ${index + 1}`;
+          incompleteLicenses.push(`${appName}: licentie is verplicht bij Open Source`);
+        }
+      });
+      
+      if (incompleteLicenses.length > 0) {
+        messages.push('Voor Open Source applicaties is een licentie verplicht:');
+        messages.push(...incompleteLicenses);
+      }
+      
       return messages.join('\n');
     }
 
@@ -1001,59 +1296,6 @@ const AcFormsProduct = ({ userStore, store }) => {
                   </div>
                 )}
 
-                {/* Debug: Show loaded schemas in development */}
-                {process.env.NODE_ENV === 'development' && !schemasLoading && (
-                  <details
-                    style={{
-                      marginBottom: '1rem',
-                      fontSize: '0.8rem',
-                      color: '#666',
-                    }}
-                  >
-                    <summary>🔍 Debug: Loaded Schemas & Utilities</summary>
-                    <div
-                      style={{
-                        padding: '0.5rem',
-                        backgroundColor: '#f8f9fa',
-                        borderRadius: '4px',
-                      }}
-                    >
-                      <p>
-                        <strong>Schemas Status:</strong>
-                      </p>
-                      <ul style={{ margin: '0.5rem 0', paddingLeft: '1rem' }}>
-                        {Object.entries(schemas).map(([key, schema]) => (
-                          <li
-                            key={key}
-                            style={{ color: schema ? '#28a745' : '#dc3545' }}
-                          >
-                            {key}: {schema ? '✅ Loaded' : '❌ Failed'}
-                            {schema && schema.properties && (
-                              <span style={{ fontSize: '0.7rem', color: '#666' }}>
-                                {' '}
-                                ({Object.keys(schema.properties).length} properties)
-                              </span>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                      <p>
-                        <strong>Available Utilities:</strong>
-                      </p>
-                      <code
-                        style={{
-                          fontSize: '0.7rem',
-                          display: 'block',
-                          margin: '0.5rem 0',
-                        }}
-                      >
-                        getFieldFromSchema(schemaType, fieldName)
-                        <br />
-                        getEnhancedFieldConfig(schemaType, fieldName, baseConfig)
-                      </code>
-                    </div>
-                  </details>
-                )}
               </div>
               <div>
                 <h3
@@ -1082,26 +1324,29 @@ const AcFormsProduct = ({ userStore, store }) => {
 
                 <AcColumn gap='sm'>
                   <div className='ac-register-container ac-forms-product'>
-                    <div className='ac-register-process-steps'>
+                    <div 
+                      ref={processStepsRef}
+                      className='ac-register-process-steps'
+                    >
                       <ProcessSteps
                         steps={(() => {
                           const baseSteps = [
-                            {
-                              id: '4p5q6r7s-8t9u-0v1w-2x3y-4z5a6b7c8d9e',
-                              marker: 1,
+                          {
+                            id: '4p5q6r7s-8t9u-0v1w-2x3y-4z5a6b7c8d9e',
+                            marker: 1,
                               status: getStatusMultiStep(
                                 currentStep,
                                 0,
                                 0,
                                 shouldShowAanbiederStep() ? 2 : 1
                               ),
-                              title: 'Productopbouw',
-                              steps: [
-                                {
-                                  id: 'v6w7x8y9-0z1a-2b3c-4d5e-6f7g8h9i0j1k',
-                                  status: getStatus(currentStep, 1),
-                                  title: 'Product informatie',
-                                },
+                            title: 'Productopbouw',
+                            steps: [
+                              {
+                                id: 'v6w7x8y9-0z1a-2b3c-4d5e-6f7g8h9i0j1k',
+                                status: getStatus(currentStep, 1),
+                                title: 'Product informatie',
+                              },
                                 // Conditionally add aanbieder step
                                 ...(shouldShowAanbiederStep()
                                   ? [
@@ -1112,72 +1357,80 @@ const AcFormsProduct = ({ userStore, store }) => {
                                       },
                                     ]
                                   : []),
-                              ],
-                            },
-                            {
-                              id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
-                              marker: 2,
+                            ],
+                          },
+                          {
+                            id: '7f8e9a2b-1c3d-4f5g-6h7i-8j9k0l1m2n3o',
+                            marker: 2,
                               status: getStatusMultiStep(
                                 currentStep,
                                 shouldShowAanbiederStep() ? 3 : 2,
                                 shouldShowAanbiederStep() ? 3 : 2,
-                                shouldShowAanbiederStep() ? 8 : 7
+                                shouldShowAanbiederStep() ? 9 : 8
                               ),
                               title: currentStepName(
                                 shouldShowAanbiederStep() ? 3 : 2
                               ),
-                              steps: [
-                                {
-                                  id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
+                            steps: [
+                              {
+                                id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
                                   status: getStatus(
                                     currentStep,
                                     shouldShowAanbiederStep() ? 4 : 3
                                   ),
-                                  title: 'Licentie',
-                                },
-                                {
-                                  id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
+                                title: 'Licentie',
+                              },
+                              {
+                                id: 'a2b3c4d5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
                                   status: getStatus(
                                     currentStep,
                                     shouldShowAanbiederStep() ? 5 : 4
                                   ),
-                                  title: 'Referentiecomponenten',
-                                },
-                                {
-                                  id: 'c3d4e5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8',
+                                title: 'Versies',
+                              },
+                              {
+                                id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
                                   status: getStatus(
                                     currentStep,
                                     shouldShowAanbiederStep() ? 6 : 5
                                   ),
-                                  title: 'Standaarden',
-                                },
-                                {
-                                  id: 'd4e5f6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9',
+                                title: 'Referentiecomponenten',
+                              },
+                              {
+                                id: 'c3d4e5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8',
                                   status: getStatus(
                                     currentStep,
                                     shouldShowAanbiederStep() ? 7 : 6
                                   ),
-                                  title: 'Koppelingen',
-                                },
-                                {
-                                  id: 'e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0',
+                                title: 'Standaarden',
+                              },
+                              {
+                                id: 'd4e5f6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9',
                                   status: getStatus(
                                     currentStep,
                                     shouldShowAanbiederStep() ? 8 : 7
                                   ),
-                                  title: 'Diensten',
-                                },
-                              ],
-                            },
-                            {
-                              id: 'f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1',
-                              marker: 3,
+                                title: 'Koppelingen',
+                              },
+                              {
+                                id: 'e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0',
+                                  status: getStatus(
+                                    currentStep,
+                                    shouldShowAanbiederStep() ? 9 : 8
+                                  ),
+                                title: 'Diensten',
+                              },
+                            ],
+                          },
+                          {
+                            id: 'f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1',
+                            marker: 3,
                               status: getStatus(
                                 currentStep,
-                                shouldShowAanbiederStep() ? 9 : 8
+                                shouldShowAanbiederStep() ? 10 : 9
                               ),
-                              title: 'Controleren',
-                            },
+                            title: 'Controleren',
+                          },
                           ];
                           return baseSteps;
                         })()}
@@ -1214,7 +1467,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                             Vorige
                           </AcButton>
                         )}
-                        {currentStep !== (shouldShowAanbiederStep() ? 9 : 8) && (
+                        {currentStep !== (shouldShowAanbiederStep() ? 10 : 9) && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -1238,7 +1491,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                           </div>
                         )}
 
-                        {currentStep === (shouldShowAanbiederStep() ? 9 : 8) && (
+                        {currentStep === (shouldShowAanbiederStep() ? 10 : 9) && (
                           <AcButton
                             style='button'
                             icon={<VISUALS.CLIPBOARD_CHECK />}
@@ -1251,6 +1504,12 @@ const AcFormsProduct = ({ userStore, store }) => {
                           </AcButton>
                         )}
                       </div>
+
+                      {/* Info box for steps that exclude existing applications - positioned after navigation for calmer experience */}
+                      {currentStep === 4 && renderExistingAppsInfoBox('license')}
+                      {currentStep === 5 && renderExistingAppsInfoBox('moduleVersies')}
+                      {currentStep === 6 && renderExistingAppsInfoBox('referentiecomponenten')}
+                      {currentStep === 7 && renderExistingAppsInfoBox('standaarden')}
                     </div>
                   </div>
                 </AcColumn>
@@ -1348,7 +1607,7 @@ const ProductOpbouwInformationForm = memo(
               onChange={(value) => setProductData('naam', value)}
               isDisabled={loading}
               width='full' // Override to full width
-              customProps={{ placeholder: 'Voorbeeld: VNG Product Suite' }}
+              // placeholder will come from schema example
               schemas={schemas}
             />
 
@@ -1360,7 +1619,7 @@ const ProductOpbouwInformationForm = memo(
               onChange={(value) => setProductData('website', value)}
               isDisabled={loading}
               width='full' // Override to full width
-              customProps={{ placeholder: 'https://voorbeeld.nl/product' }}
+              // placeholder will come from schema example
               schemas={schemas}
             />
 
@@ -1430,7 +1689,7 @@ const ProductOpbouwInformationForm = memo(
               schemas={schemas}
             />
 
-            {/* Cloud Service Model - Enum select, full width (after contact) */}
+            {/* Cloud Service Model - Enum select, half width (next to contact) */}
             <ConSchemaEnhancedField
               schemaType='product'
               schemaProperty='cloudDienstverleningsmodel'
@@ -1439,7 +1698,7 @@ const ProductOpbouwInformationForm = memo(
                 setProductData('cloudDienstverleningsmodel', value)
               }
               isDisabled={loading}
-              width='full' // Override width to ensure full width display
+              width='half' // Half width to position next to Contact field
               schemas={schemas}
             />
 
@@ -1472,63 +1731,45 @@ const ProductOpbouwInformationForm = memo(
 );
 
 // Applicatie form fields are extracted to module scope to avoid remounts
-// used in ApplicatieStep
+// used in ApplicatieStep - now using schema-driven fields
 const ApplicatieFormFields = memo(
-  ({ index, applicatie, updateApplicatie, loading }) => {
-    const nameInputId = `applicatie-naam-${index}`;
+  ({ index, applicatie, updateApplicatie, loading, schemas }) => {
+    // Add defensive check for applicatie object
+    if (!applicatie) {
+      console.warn(`ApplicatieFormFields: applicatie is undefined for index ${index}`);
+      return <div>Loading applicatie...</div>;
+    }
 
-    const [localName, setLocalName] = useState(applicatie.naam || '');
-    useEffect(() => {
-      setLocalName(applicatie.naam || '');
-    }, [applicatie.naam, index]);
-
-    const [localDesc, setLocalDesc] = useState(applicatie.beschrijvingKort || '');
-    useEffect(() => {
-      setLocalDesc(applicatie.beschrijvingKort || '');
-    }, [applicatie.beschrijvingKort, index]);
-
-    const debouncedSetName = useDebouncedInput(
-      (v) => updateApplicatie(index, 'naam', v),
-      300
-    );
-    const debouncedSetDesc = useDebouncedInput(
-      (v) => updateApplicatie(index, 'beschrijvingKort', v),
-      300
-    );
+    // Get module schema for field configuration
+    const moduleSchema = schemas?.module;
+    if (!moduleSchema) {
+      return <div>Schema laden...</div>;
+    }
 
     return (
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2' }}>
-          <AcFormField
-            label='Naam van de applicatie'
-            value={localName}
-            onChange={(v) => {
-              setLocalName(v);
-              debouncedSetName(v);
-            }}
-            disabled={loading}
-            id={nameInputId}
-            className='ac-register-form-field__no-width-limit'
+          <ConSchemaEnhancedField
+            schemaType='module'
+            schemaProperty='naam'
+            value={applicatie.naam || ''}
+            onChange={(value) => updateApplicatie(index, 'naam', value)}
+            isDisabled={loading}
+            width='full'
+            schemas={schemas}
           />
         </div>
 
         <div style={{ gridColumn: 'span 2' }}>
-          <AcFormField
-            label='Korte beschrijving van de applicatie'
-            inputType='textarea'
-            value={localDesc}
-            onChange={(v) => {
-              setLocalDesc(v);
-              debouncedSetDesc(v);
-            }}
-            maxLength={255}
-            disabled={loading}
-            id={`applicatie-beschrijving-${index}`}
-            className='ac-register-form-field__no-width-limit'
+          <ConSchemaEnhancedField
+            schemaType='module'
+            schemaProperty='beschrijvingKort'
+            value={applicatie.beschrijvingKort || ''}
+            onChange={(value) => updateApplicatie(index, 'beschrijvingKort', value)}
+            isDisabled={loading}
+            width='full'
+            schemas={schemas}
           />
-          <small className='ac-register-form-field-help'>
-            {255 - (localDesc?.length || 0)} karakters over
-          </small>
         </div>
       </div>
     );
@@ -1723,6 +1964,28 @@ const ApplicatieStep = memo(
 
     if (!isMultiApplicatie) {
       const app0 = product.applicaties?.[0];
+      
+      // Ensure there's always an applicatie object for single applicatie mode
+      if (!app0) {
+        // Initialize applicatie with product name and description if available
+        const productName = product.naam || '';
+        const productDescription = product.beschrijvingKort || '';
+        
+        // Initialize the applicatie with product data
+        setProduct(prev => ({
+          ...prev,
+          applicaties: {
+            ...prev.applicaties,
+            0: {
+              naam: productName,
+              beschrijvingKort: productDescription,
+            }
+          }
+        }));
+        
+        return <div>Initialiseren...</div>;
+      }
+      
       return (
         <div
           className='ac-register-form-section'
@@ -1737,6 +2000,7 @@ const ApplicatieStep = memo(
             applicatie={app0}
             updateApplicatie={updateApplicatie}
             loading={loading}
+            schemas={schemas}
           />
         </div>
       );
@@ -1759,10 +2023,10 @@ const ApplicatieStep = memo(
           <thead>
             <TableRow>
               <TableCell>
-                <b>Naam</b>
+                <b>{schemas?.module?.properties?.naam?.title || 'Naam'}</b>
               </TableCell>
               <TableCell>
-                <b>Beschrijving</b>
+                <b>{schemas?.module?.properties?.beschrijvingKort?.title || 'Beschrijving'}</b>
               </TableCell>
               <TableCell>
                 <b>Acties</b>
@@ -1775,8 +2039,8 @@ const ApplicatieStep = memo(
               const isExisting = applicatie?.isExisting;
 
               return (
-                <TableRow key={index}>
-                  <TableCell>
+              <TableRow key={index}>
+                <TableCell>
                     {isExisting ? (
                       // Read-only display for existing modules
                       <div
@@ -1795,18 +2059,18 @@ const ApplicatieStep = memo(
                         </small>
                       </div>
                     ) : (
-                      <Textbox
-                        id={`table-applicatie-naam-${index}`}
+                  <Textbox
+                    id={`table-applicatie-naam-${index}`}
                         value={applicatie?.naam || ''}
                         onChange={(e) =>
                           updateApplicatie(index, 'naam', e.target.value)
                         }
-                        placeholder='Naam van de applicatie'
-                        disabled={loading}
-                      />
+                    placeholder={schemas?.module?.properties?.naam?.example || 'Naam van de applicatie'} // placeholder will come from schema example
+                    disabled={loading}
+                  />
                     )}
-                  </TableCell>
-                  <TableCell>
+                </TableCell>
+                <TableCell>
                     {isExisting ? (
                       // Read-only display for existing modules
                       <div
@@ -1823,45 +2087,45 @@ const ApplicatieStep = memo(
                           'Geen beschrijving beschikbaar'}
                       </div>
                     ) : (
-                      <Textbox
-                        id={`table-applicatie-beschrijving-${index}`}
+                  <Textbox
+                    id={`table-applicatie-beschrijving-${index}`}
                         value={applicatie?.beschrijvingKort || ''}
-                        onChange={(e) =>
-                          updateApplicatie(index, 'beschrijvingKort', e.target.value)
-                        }
-                        maxLength={255}
-                        placeholder='Beschrijving van de applicatie'
-                        disabled={loading}
-                      />
+                    onChange={(e) =>
+                      updateApplicatie(index, 'beschrijvingKort', e.target.value)
+                    }
+                    maxLength={255}
+                    placeholder={schemas?.module?.properties?.beschrijvingKort?.example || 'Beschrijving van de applicatie'} // placeholder will come from schema example
+                    disabled={loading}
+                  />
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <AcButton
-                        style='buttonSlim'
-                        buttonType='secondary'
+                </TableCell>
+                <TableCell>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <AcButton
+                      style='button'
+                      buttonType='secondary'
                         icon={<VISUALS.TRASHCAN />}
-                        disabled={applicatieIndices.length === 1}
-                        onClick={() => {
-                          setProduct((prev) => {
-                            const next = {
-                              ...prev,
-                              applicaties: { ...prev.applicaties },
-                            };
-                            delete next.applicaties[index];
-                            return next;
-                          });
-                        }}
-                        title='Applicatie verwijderen'
-                      ></AcButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                      disabled={applicatieIndices.length === 1}
+                      onClick={() => {
+                        setProduct((prev) => {
+                          const next = {
+                            ...prev,
+                            applicaties: { ...prev.applicaties },
+                          };
+                          delete next.applicaties[index];
+                          return next;
+                        });
+                      }}
+                      title='Applicatie verwijderen'
+                    ></AcButton>
+                  </div>
+                </TableCell>
+              </TableRow>
               );
             })}
           </TableBody>
@@ -1925,7 +2189,7 @@ const ApplicatieStep = memo(
                     className='ac-forms-full-width-button'
                   >
                     Nieuwe applicatie toevoegen
-                  </AcButton>
+          </AcButton>
                 </div>
               </div>
             </div>
@@ -1970,7 +2234,7 @@ const ApplicatieStep = memo(
                     style={{
                       display: 'flex',
                       gap: '0.5rem',
-                      alignItems: 'flex-start',
+                      alignItems: 'flex-end',
                     }}
                   >
                     <div style={{ flex: '1' }}>
@@ -1986,7 +2250,7 @@ const ApplicatieStep = memo(
                         showLabel={false}
                         showDescription={false}
                         customProps={{
-                          placeholder: 'Selecteer een bestaande applicatie...',
+                          // placeholder will come from schema example
                           // Force single-select instead of multi-select
                           isMulti: false,
                           // Override the array behavior
@@ -2018,7 +2282,7 @@ const ApplicatieStep = memo(
 
 // Step 3: Licentie
 const LicenseAndHostingStep = memo(
-  ({ product, setProduct, isMultiApplicatie, loading }) => {
+  ({ product, setProduct, isMultiApplicatie, loading, schemas }) => {
     const [sameForAll, setSameForAll] = useState(true);
 
     // Options
@@ -2032,14 +2296,26 @@ const LicenseAndHostingStep = memo(
       label: l.name,
     }));
 
-    const applicatieIndices = Object.keys(product.applicaties || {})
+    // Get all application indices
+    const allApplicatieIndices = Object.keys(product.applicaties || {})
       .map((k) => parseInt(k, 10))
       .sort((a, b) => a - b);
+
+    // Filter out existing applications for license configuration - only new applications need license setup
+    const applicatieIndices = allApplicatieIndices.filter((index) => {
+      const app = product.applicaties[index];
+      return !app?.isExisting; // Only include new applications (not existing ones)
+    });
 
     const applicatieOptions = applicatieIndices.map((i) => ({
       value: i,
       label: product.applicaties?.[i]?.naam || `Applicatie ${i + 1}`,
     }));
+
+    // Check if there are multiple NEW applications that need license configuration
+    const isMultiNewApplicatie = applicatieIndices.length > 1;
+
+
 
     const updateApplicatieField = (index, key, value) => {
       setProduct((prev) => {
@@ -2052,58 +2328,18 @@ const LicenseAndHostingStep = memo(
     const applyToAll = (fields) => {
       setProduct((prev) => {
         const next = { ...prev, applicaties: { ...prev.applicaties } };
-        Object.keys(next.applicaties).forEach((k) => {
+        // Only apply to NEW applications (not existing ones)
+        applicatieIndices.forEach((index) => {
+          const k = String(index);
+          if (next.applicaties[k] && !next.applicaties[k].isExisting) {
           next.applicaties[k] = { ...next.applicaties[k], ...fields };
+          }
         });
         return next;
       });
     };
 
-    const renderSelectors = ({
-      valueLicentieType,
-      valueLicentie,
-      onChangeLicentieType,
-      onChangeLicentie,
-    }) => {
-      const selectedType =
-        licentieTypeOptions.find((o) => o.value === valueLicentieType) || null;
-      const selectedLicentie =
-        licentieOptions.find((o) => o.value === valueLicentie) || null;
-
-      return (
-        <div className='ac-register-form-grid'>
-          <div>
-            <label className='utrecht-form-label'>Type Licentie</label>
-            <ReactSelect
-              className={clsx(
-                'ac-beheer-select',
-                loading && 'ac-beheer-select--disabled'
-              )}
-              value={selectedType}
-              onChange={(opt) => onChangeLicentieType(opt?.value || null)}
-              options={licentieTypeOptions}
-              isDisabled={loading}
-              placeholder='Selecteer type licentie'
-            />
-          </div>
-          <div>
-            <label className='utrecht-form-label'>Licentie</label>
-            <ReactSelect
-              className={clsx(
-                'ac-beheer-select',
-                loading && 'ac-beheer-select--disabled'
-              )}
-              value={selectedLicentie}
-              onChange={(opt) => onChangeLicentie(opt?.value || null)}
-              options={licentieOptions}
-              isDisabled={loading || selectedType?.value !== 'Open Source'}
-              placeholder='Selecteer licentie'
-              isClearable
-            />
-          </div>
-        </div>
-      );
-    };
+    // renderSelectors function removed - now using direct implementation for better reactivity
 
     return (
       <div
@@ -2115,15 +2351,35 @@ const LicenseAndHostingStep = memo(
           Licentie
         </h2>
         <Paragraph>
-          Geef hieronder aan welke licenties van toepassing zijn op de applicatie(s).
+          Geef hieronder aan welke licenties van toepassing zijn op de nieuwe applicatie(s).
         </Paragraph>
 
-        {isMultiApplicatie && (
+        {applicatieIndices.length === 0 && allApplicatieIndices.length > 0 && (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '2rem',
+              background: '#f8f9fa',
+              borderRadius: '8px',
+            }}
+          >
+            <Paragraph>
+              <strong>Geen nieuwe applicaties gevonden</strong>
+            </Paragraph>
+            <Paragraph>
+              Alle applicaties in dit product zijn bestaande applicaties die al hun
+              eigen licentie-informatie hebben vastgelegd in de catalogus. Er hoeven geen
+              licenties geconfigureerd te worden.
+            </Paragraph>
+          </div>
+        )}
+
+        {applicatieIndices.length > 0 && isMultiNewApplicatie && (
           <div
             className='ac-register-form-checkbox-wrapper'
             style={{ marginBottom: '1rem' }}
           >
-            <p>Geldt dezelfde licentie-informatie voor alle applicaties?</p>
+            <p>Geldt dezelfde licentie-informatie voor alle nieuwe applicaties?</p>
             <AcCheckbox
               label='Ja, voor alle applicaties hetzelfde'
               value='same'
@@ -2139,35 +2395,91 @@ const LicenseAndHostingStep = memo(
           </div>
         )}
 
-        {!isMultiApplicatie || sameForAll ? (
+        {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
           <div>
-            {renderSelectors({
-              valueLicentieType: product.applicaties?.[0]?.licentieType || '',
-              valueLicentie: product.applicaties?.[0]?.licentie || '',
-              onChangeLicentieType: (v) => {
-                if (sameForAll && isMultiApplicatie) {
-                  applyToAll({
-                    licentieType: v,
-                    ...(v !== 'Open Source' ? { licentie: '' } : {}),
-                  });
-                } else {
-                  updateApplicatieField(0, 'licentieType', v);
-                  if (v !== 'Open Source') updateApplicatieField(0, 'licentie', '');
-                }
-              },
-              onChangeLicentie: (v) => {
-                if (sameForAll && isMultiApplicatie) applyToAll({ licentie: v });
-                else updateApplicatieField(0, 'licentie', v);
-              },
-            })}
+            {/* Direct implementation instead of renderSelectors for better reactivity */}
+            <div className='ac-register-form-grid'>
+              <div>
+                <ConSchemaEnhancedField
+                  schemaType='module'
+                  schemaProperty='licentietype'
+                  value={(() => {
+                    const currentApp = product.applicaties?.[applicatieIndices[0]] || {};
+                    return currentApp.licentietype || currentApp.licentieType || '';
+                  })()}
+                  onChange={(value) => {
+                    // Store as both schema field name and camelCase for compatibility
+                    if (sameForAll && isMultiNewApplicatie) {
+                      applyToAll({
+                        licentietype: value,  // Schema field name
+                        licentieType: value,  // Legacy camelCase
+                        ...(value !== 'Open Source' ? { licentie: '' } : {}),
+                      });
+                    } else {
+                      updateApplicatieField(applicatieIndices[0], 'licentietype', value);
+                      updateApplicatieField(applicatieIndices[0], 'licentieType', value);
+                      if (value !== 'Open Source') updateApplicatieField(applicatieIndices[0], 'licentie', '');
+                    }
+                  }}
+                  isDisabled={loading}
+                  width='half'
+                  schemas={schemas}
+                />
+              </div>
+              <div>
+                <ConSchemaEnhancedField
+                  schemaType='module'
+                  schemaProperty='licentie'
+                  value={(() => {
+                    const currentApp = product.applicaties?.[applicatieIndices[0]] || {};
+                    return currentApp.licentie || '';
+                  })()}
+                  onChange={(value) => {
+                    // Handle license change directly
+                    if (sameForAll && isMultiNewApplicatie) {
+                      applyToAll({ licentie: value });
+                    } else {
+                      updateApplicatieField(applicatieIndices[0], 'licentie', value);
+                    }
+                  }}
+                  isDisabled={(() => {
+                    // Get current license type dynamically
+                    const currentApp = product.applicaties?.[applicatieIndices[0]] || {};
+                    const currentLicenseType = currentApp.licentietype || currentApp.licentieType || '';
+                    return loading || currentLicenseType !== 'Open Source';
+                  })()}
+                  width='half'
+                  schemas={schemas}
+                  customProps={(() => {
+                    // Get current values dynamically for customProps
+                    const currentApp = product.applicaties?.[applicatieIndices[0]] || {};
+                    const currentLicenseType = currentApp.licentietype || currentApp.licentieType || '';
+                    const currentLicense = currentApp.licentie || '';
+                    const isOpenSource = currentLicenseType === 'Open Source';
+                    
+                    return {
+                      // Add required styling when Open Source is selected
+                      className: clsx(
+                        isOpenSource && !currentLicense && 'ac-beheer-select--error'
+                      ),
+                      placeholder: isOpenSource ? 'Selecteer licentie (verplicht)' : 'Selecteer licentie',
+                      // Make field required when Open Source is selected
+                      required: isOpenSource,
+                      // Add visual required indicator
+                      label: isOpenSource ? 'licentie *' : 'licentie'
+                    };
+                  })()}
+                />
+              </div>
+            </div>
           </div>
-        ) : (
+        ) : applicatieIndices.length > 0 ? (
           <div>
             <Table>
               <thead>
                 <TableRow>
                   <TableCell>
-                    <b>Applicatie</b>
+                    <b>Nieuwe applicatie</b>
                   </TableCell>
                   <TableCell>
                     <b>Type licentie</b>
@@ -2181,10 +2493,12 @@ const LicenseAndHostingStep = memo(
                 {applicatieIndices.map((index) => {
                   const app = product.applicaties[index] || {};
                   const selectedType =
-                    licentieTypeOptions.find((o) => o.value === app.licentieType) ||
+                    licentieTypeOptions.find((o) => o.value === (app.licentietype || app.licentieType)) ||
                     null;
                   const selectedLicentie =
                     licentieOptions.find((o) => o.value === app.licentie) || null;
+                  const isOpenSourceSelected = selectedType?.value === 'Open Source';
+                  const isLicenseRequired = isOpenSourceSelected && !selectedLicentie;
                   return (
                     <TableRow key={index}>
                       <TableCell>
@@ -2207,13 +2521,16 @@ const LicenseAndHostingStep = memo(
                             loading && 'ac-beheer-select--disabled'
                           )}
                           value={selectedType}
-                          onChange={(opt) =>
-                            updateApplicatieField(
-                              index,
-                              'licentieType',
-                              opt?.value || null
-                            )
-                          }
+                          onChange={(opt) => {
+                            const value = opt?.value || null;
+                            // Store as both schema field name and camelCase for compatibility
+                            updateApplicatieField(index, 'licentietype', value);
+                            updateApplicatieField(index, 'licentieType', value);
+                            // Clear license if not Open Source
+                            if (value !== 'Open Source') {
+                              updateApplicatieField(index, 'licentie', '');
+                            }
+                          }}
                           options={licentieTypeOptions}
                           isDisabled={loading}
                           placeholder='Selecteer type licentie'
@@ -2224,7 +2541,9 @@ const LicenseAndHostingStep = memo(
                           className={clsx(
                             'ac-beheer-select',
                             (loading || selectedType?.value !== 'Open Source') &&
-                              'ac-beheer-select--disabled'
+                              'ac-beheer-select--disabled',
+                            // Add red border when Open Source is selected but no license is chosen
+                            isLicenseRequired && 'ac-beheer-select--error'
                           )}
                           value={selectedLicentie}
                           onChange={(opt) =>
@@ -2238,7 +2557,7 @@ const LicenseAndHostingStep = memo(
                           isDisabled={
                             loading || selectedType?.value !== 'Open Source'
                           }
-                          placeholder='Selecteer licentie'
+                          placeholder={isOpenSourceSelected ? 'Selecteer licentie (verplicht)' : 'Selecteer licentie'}
                           isClearable
                         />
                       </TableCell>
@@ -2248,63 +2567,132 @@ const LicenseAndHostingStep = memo(
               </TableBody>
             </Table>
           </div>
+        ) : (
+          // No new applications that need license configuration
+          <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #e9ecef' }}>
+            <Paragraph style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
+              Alle applicaties zijn bestaande applicaties uit de catalogus. 
+              Hun licentie-informatie is al vastgelegd en hoeft niet opnieuw geconfigureerd te worden.
+            </Paragraph>
+          </div>
         )}
       </div>
     );
   }
 );
 
-// Step 4 Referentiecomponenten
-const ReferentieComponentenForm = memo(
-  ({
-    product,
-    setProduct,
-    referentieComponentenOptions,
-    refCompFormState,
-    setRefCompFormState,
-  }) => {
-    const { rows, selectedApplication } = refCompFormState;
+// Step 5: ModuleVersies
+const ModuleVersieStep = memo(
+  ({ product, setProduct, isMultiApplicatie, loading, schemas }) => {
+    const [sameForAll, setSameForAll] = useState(true);
 
-    const normalizeValues = (arr) => {
-      if (!Array.isArray(arr)) return [];
-      const values = arr
-        .map((item) => {
-          if (!item) return null;
-          if (typeof item === 'object' && 'value' in item) return String(item.value);
-          return String(item);
-        })
-        .filter((v) => typeof v === 'string' && v.length > 0);
-      return Array.from(new Set(values));
-    };
+    // Get moduleVersie schema for status options
+    const moduleVersieSchema = schemas?.moduleversie;
+    const statusOptions = moduleVersieSchema?.properties?.status?.enum?.map(status => ({
+      value: status,
+      label: status
+    })) || [];
 
-    const replaceRefs = (appId, refs) => {
-      const refsArray = normalizeValues(refs);
+    // Get all application indices
+    const allApplicatieIndices = Object.keys(product.applicaties || {})
+      .map((k) => parseInt(k, 10))
+      .sort((a, b) => a - b);
+
+    // Filter out existing applications for versie configuration - only new applications need versie setup
+    const applicatieIndices = allApplicatieIndices.filter((index) => {
+      const app = product.applicaties[index];
+      return !app?.isExisting; // Only include new applications (not existing ones)
+    });
+
+    const applicatieOptions = applicatieIndices.map((i) => ({
+      value: i,
+      label: product.applicaties?.[i]?.naam || `Applicatie ${i + 1}`,
+    }));
+
+    // Check if there are multiple NEW applications that need versie configuration
+    const isMultiNewApplicatie = applicatieIndices.length > 1;
+
+    const updateModuleVersie = (appIndex, field, value) => {
       setProduct((prev) => {
-        const applicaties = { ...prev.applicaties };
-        const existing = applicaties[appId] || {};
-        applicaties[appId] = { ...existing, referentieComponenten: refsArray };
-        return { ...prev, applicaties };
+        const next = { ...prev, applicaties: { ...prev.applicaties } };
+        const app = next.applicaties[appIndex] || {};
+        
+        // Initialize moduleVersies array if it doesn't exist
+        if (!app.moduleVersies) {
+          app.moduleVersies = [];
+        }
+        
+        // For now, we'll manage one version per module (index 0)
+        if (!app.moduleVersies[0]) {
+          app.moduleVersies[0] = {};
+        }
+        
+        app.moduleVersies[0][field] = value;
+        next.applicaties[appIndex] = app;
+        
+        return next;
       });
     };
 
-    // Filter out existing applications - they already have their referentiecomponenten defined
-    const appOptions = Object.entries(product.applicaties)
-      .filter(([id, app]) => !app.isExisting) // Only include new applications
-      .map(([id, app]) => ({
-        value: id,
-        label: app.naam,
-      }));
+    const applyToAll = (fields) => {
+      applicatieIndices.forEach((index) => {
+        Object.entries(fields).forEach(([field, value]) => {
+          updateModuleVersie(index, field, value);
+        });
+      });
+    };
 
-    // If no new applications exist, show a message instead of the form
-    const hasNewApplications = appOptions.length > 0;
+    const renderVersieFields = ({ appIndex, moduleVersie }) => {
+      return (
+        <div className='con-form-field-layout'>
+          <ConSchemaEnhancedField
+            schemaType='moduleversie'
+            schemaProperty='versie'
+            value={moduleVersie?.versie || ''}
+            onChange={(value) => updateModuleVersie(appIndex, 'versie', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+            // placeholder will come from schema example
+          />
+          <ConSchemaEnhancedField
+            schemaType='moduleversie'
+            schemaProperty='status'
+            value={moduleVersie?.status || ''}
+            onChange={(value) => updateModuleVersie(appIndex, 'status', value)}
+            isDisabled={loading}
+            width='half'
+            schemas={schemas}
+            // placeholder will come from schema example
+          />
+          <ConSchemaEnhancedField
+            schemaType='moduleversie'
+            schemaProperty='beschrijvingKort'
+            value={moduleVersie?.beschrijvingKort || ''}
+            onChange={(value) => updateModuleVersie(appIndex, 'beschrijvingKort', value)}
+            isDisabled={loading}
+            width='full'
+            schemas={schemas}
+            // placeholder will come from schema example
+          />
+        </div>
+      );
+    };
 
     return (
-      <div>
-        <h2 id='refcomp-section-title' className='sr-only'>
-          Referentiecomponenten
+      <div
+        className='ac-register-form-section'
+        role='group'
+        aria-labelledby='versie-section-title'
+      >
+        <h2 id='versie-section-title' className='sr-only'>
+          Versies
         </h2>
+        <Paragraph>
+          Geef versie informatie op voor uw nieuwe applicaties/modules.
+        </Paragraph>
 
-        {!hasNewApplications ? (
+        {applicatieIndices.length === 0 && allApplicatieIndices.length > 0 && (
           <div
             style={{
               textAlign: 'center',
@@ -2318,140 +2706,342 @@ const ReferentieComponentenForm = memo(
             </Paragraph>
             <Paragraph>
               Alle applicaties in dit product zijn bestaande applicaties die al hun
-              eigen referentiecomponenten hebben. Er hoeven geen
-              referentiecomponenten toegevoegd te worden.
+              eigen versie-informatie hebben vastgelegd in de catalogus. Er hoeven geen
+              versies geconfigureerd te worden.
             </Paragraph>
           </div>
-        ) : (
-          <TableContainer className='con-form-wizard-table-container'>
+        )}
+
+        {applicatieIndices.length > 0 && isMultiNewApplicatie && (
+          <div
+            className='ac-register-form-checkbox-wrapper'
+            style={{ marginBottom: '1rem' }}
+          >
+            <p>Geldt dezelfde versie-informatie voor alle nieuwe applicaties?</p>
+            <AcCheckbox
+              label='Ja, voor alle applicaties hetzelfde'
+              value='same'
+              checked={sameForAll}
+              onChange={() => setSameForAll(true)}
+            />
+            <AcCheckbox
+              label='Nee, per applicatie verschillend'
+              value='per-app'
+              checked={!sameForAll}
+              onChange={() => setSameForAll(false)}
+            />
+          </div>
+        )}
+
+        {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
+          <div>
+            <h3>Versie informatie</h3>
+            {renderVersieFields({
+              appIndex: applicatieIndices[0],
+              moduleVersie: product.applicaties?.[applicatieIndices[0]]?.moduleVersies?.[0] || {}
+            })}
+          </div>
+        ) : applicatieIndices.length > 0 ? (
+          <div>
             <Table>
               <thead>
                 <TableRow>
                   <TableCell>
-                    <b>Applicatie</b>
+                    <b>Nieuwe applicatie</b>
                   </TableCell>
                   <TableCell>
-                    <b>Referentiecomponenten</b>
+                    <b>Versie</b>
                   </TableCell>
                   <TableCell>
-                    <b>Acties</b>
+                    <b>Status</b>
+                  </TableCell>
+                  <TableCell>
+                    <b>Beschrijving</b>
                   </TableCell>
                 </TableRow>
               </thead>
               <TableBody>
-                {rows.map((rowId) => {
-                  const appId = selectedApplication[rowId];
-                  const saved = normalizeValues(
-                    appId != null
-                      ? product.applicaties?.[appId]?.referentieComponenten
-                      : []
-                  );
-                  const selectedMulti = saved
-                    .map((v) =>
-                      referentieComponentenOptions.find((o) => {
-                        return String(o.value) === String(v);
-                      })
-                    )
-                    .filter(Boolean);
-
+                {applicatieIndices.map((index) => {
+                  const app = product.applicaties[index] || {};
+                  const moduleVersie = app.moduleVersies?.[0] || {};
+                  
                   return (
-                    <TableRow key={rowId}>
+                    <TableRow key={index}>
                       <TableCell>
-                        <ReactSelect
-                          options={appOptions}
-                          value={
-                            selectedApplication[rowId] != null
-                              ? appOptions.find(
-                                  (o) => o.value === selectedApplication[rowId]
-                                )
-                              : null
-                          }
-                          onChange={(selectedOption) => {
-                            setRefCompFormState((prev) => ({
-                              ...prev,
-                              selectedApplication: {
-                                ...prev.selectedApplication,
-                                [rowId]: selectedOption?.value,
-                              },
-                            }));
-                          }}
+                        <span>{app.naam || `Applicatie ${index + 1}`}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Textbox
+                          value={moduleVersie.versie || ''}
+                          onChange={(e) => updateModuleVersie(index, 'versie', e.target.value)}
+                          placeholder='1.0.0'
+                          disabled={loading}
                         />
                       </TableCell>
                       <TableCell>
                         <ReactSelect
-                          isMulti
-                          options={referentieComponentenOptions}
-                          value={selectedMulti}
-                          isDisabled={selectedApplication[rowId] == null}
-                          onChange={(selectedOptions) => {
-                            if (selectedApplication[rowId] == null) return;
-                            setRefCompFormState((prev) => ({
-                              ...prev,
-                              selectedRefCompsByRow: {
-                                ...prev.selectedRefCompsByRow,
-                                [rowId]: Array.isArray(selectedOptions)
-                                  ? selectedOptions.map((o) => String(o.value))
-                                  : [],
-                              },
-                            }));
-                            replaceRefs(
-                              selectedApplication[rowId],
-                              Array.isArray(selectedOptions)
-                                ? selectedOptions.map((o) => String(o.value))
-                                : []
-                            );
-                          }}
+                          className={clsx(
+                            'ac-beheer-select',
+                            loading && 'ac-beheer-select--disabled'
+                          )}
+                          value={statusOptions.find(opt => opt.value === moduleVersie.status) || null}
+                          onChange={(opt) => updateModuleVersie(index, 'status', opt?.value || null)}
+                          options={statusOptions}
+                          isDisabled={loading}
+                          placeholder='Status'
                         />
                       </TableCell>
                       <TableCell>
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <AcButton
-                            style='buttonSlim'
-                            buttonType='secondary'
-                            icon={<VISUALS.MINUS />}
-                            disabled={rows.length === 1}
-                            onClick={() => {
-                              setRefCompFormState((prev) => ({
-                                ...prev,
-                                rows: prev.rows.filter((id) => id !== rowId),
-                                selectedApplication: Object.fromEntries(
-                                  Object.entries(prev.selectedApplication).filter(
-                                    ([k]) => Number(k) !== rowId
-                                  )
-                                ),
-                                selectedRefCompsByRow: Object.fromEntries(
-                                  Object.entries(prev.selectedRefCompsByRow).filter(
-                                    ([k]) => Number(k) !== rowId
-                                  )
-                                ),
-                              }));
-                            }}
-                            title='Rij verwijderen'
-                          ></AcButton>
-                        </div>
+                        <Textbox
+                          value={moduleVersie.beschrijvingKort || ''}
+                          onChange={(e) => updateModuleVersie(index, 'beschrijvingKort', e.target.value)}
+                          placeholder='Beschrijving'
+                          disabled={loading}
+                          maxLength={255}
+                        />
                       </TableCell>
                     </TableRow>
                   );
                 })}
-
-                <div style={{ marginTop: '1rem' }}>
-                  <AcButton
-                    style='button'
-                    icon={<VISUALS.PLUS />}
-                    onClick={() =>
-                      setRefCompFormState((prev) => ({
-                        ...prev,
-                        rows: [...prev.rows, prev.nextRowId],
-                        nextRowId: prev.nextRowId + 1,
-                      }))
-                    }
-                  >
-                    Rij toevoegen
-                  </AcButton>
-                </div>
               </TableBody>
             </Table>
-          </TableContainer>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+);
+
+// Step 6 Referentiecomponenten
+const ReferentieComponentenForm = memo(
+  ({
+    product,
+    setProduct,
+    referentieComponentenOptions,
+    referentieComponentenWithStandards,
+    setReferentieComponentenWithStandards,
+    schemas,
+    loading,
+  }) => {
+    const [sameForAll, setSameForAll] = useState(true);
+
+    // Get all application indices
+    const allApplicatieIndices = Object.keys(product.applicaties || {})
+      .map((k) => parseInt(k, 10))
+      .sort((a, b) => a - b);
+
+    // Filter out existing applications for referentiecomponenten configuration - only new applications need this
+    const applicatieIndices = allApplicatieIndices.filter((index) => {
+      const app = product.applicaties[index];
+      return !app?.isExisting; // Only include new applications (not existing ones)
+    });
+
+    const applicatieOptions = applicatieIndices.map((i) => ({
+      value: i,
+      label: product.applicaties?.[i]?.naam || `Applicatie ${i + 1}`,
+    }));
+
+    // Check if there are multiple NEW applications that need referentiecomponenten configuration
+    const isMultiNewApplicatie = applicatieIndices.length > 1;
+
+    const updateApplicatieField = (index, key, value) => {
+      setProduct((prev) => {
+        const next = { ...prev, applicaties: { ...prev.applicaties } };
+        next.applicaties[index] = { ...next.applicaties[index], [key]: value };
+        return next;
+      });
+    };
+
+    const applyToAll = (fields) => {
+      setProduct((prev) => {
+        const next = { ...prev, applicaties: { ...prev.applicaties } };
+        applicatieIndices.forEach((index) => {
+          next.applicaties[index] = { ...next.applicaties[index], ...fields };
+        });
+        return next;
+      });
+    };
+
+    const normalizeValues = (values) => {
+      if (!values) return [];
+      if (Array.isArray(values)) {
+        return values.map((v) => (typeof v === 'object' ? v.value || v.id : v));
+      }
+      return Array.from(new Set(values));
+    };
+
+    const updateReferentieComponentenWithStandards = (appId, refs) => {
+      const refsArray = normalizeValues(refs);
+      
+      // Update the separate array with full referentieComponent data including standards
+      setReferentieComponentenWithStandards((prev) => {
+        // Remove existing entries for this application
+        const filtered = prev.filter(item => item.applicatieId !== appId);
+        
+        // Add new entries with full data from referentieComponentenOptions
+        const newEntries = refsArray.map(refId => {
+          const refOption = referentieComponentenOptions.find(opt => String(opt.value) === String(refId));
+          const refData = refOption?.data || {};
+          
+          return {
+            id: refId,
+            naam: refOption?.label || refId,
+            moduleId: appId, // Use moduleId for consistency with standards component
+            applicatieId: appId,
+            // Extract standards from the API data (these come from _extend query parameter)
+            aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
+            verplichteStandaarden: refData.verplichteStandaarden || [],
+            // Store the full API data for future use
+            fullData: refData,
+          };
+        });
+        
+        const result = [...filtered, ...newEntries];
+        console.log('🔍 Updated referentieComponentenWithStandards:', result);
+        return result;
+      });
+    };
+
+    // If no new applications exist, show a message instead of the form
+    if (applicatieIndices.length === 0) {
+      return (
+        <div>
+          <h2 id='refcomp-section-title' className='sr-only'>
+            Referentiecomponenten
+          </h2>
+
+          <Paragraph>
+            Koppel referentiecomponenten aan uw nieuwe applicaties.
+          </Paragraph>
+
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '2rem',
+              background: '#f8f9fa',
+              borderRadius: '8px',
+            }}
+          >
+            <Paragraph>
+              <strong>Geen nieuwe applicaties gevonden</strong>
+            </Paragraph>
+            <Paragraph>
+              Alle applicaties in dit product zijn bestaande applicaties die al
+              hun eigen referentiecomponenten hebben. Er hoeven geen
+              referentiecomponenten gekoppeld te worden.
+            </Paragraph>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <h2 id='refcomp-section-title' className='sr-only'>
+          Referentiecomponenten
+        </h2>
+
+        <Paragraph>
+          Koppel referentiecomponenten aan uw nieuwe applicaties.
+        </Paragraph>
+
+        {/* Same for all checkbox - only show if multiple new applications */}
+        {isMultiNewApplicatie && (
+          <div style={{ marginBottom: '1rem' }}>
+            <AcCheckbox
+              checked={sameForAll}
+              label='Dezelfde referentiecomponenten voor alle applicaties'
+              onChange={() => setSameForAll(!sameForAll)}
+            />
+          </div>
+        )}
+
+        {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
+          <div>
+            {/* Single application or "same for all" mode */}
+            <div className='ac-register-form-grid'>
+              <div>
+                <ConSchemaEnhancedField
+                  schemaType='module'
+                  schemaProperty='referentieComponenten'
+                  value={(() => {
+                    const currentApp = product.applicaties?.[applicatieIndices[0]] || {};
+                    return currentApp.referentieComponenten || [];
+                  })()}
+                  onChange={(value) => {
+                    const refsArray = normalizeValues(value);
+                    if (sameForAll && isMultiNewApplicatie) {
+                      applyToAll({ referentieComponenten: refsArray });
+                      // Update standards data for all applications
+                      applicatieIndices.forEach(appId => {
+                        updateReferentieComponentenWithStandards(appId, refsArray);
+                      });
+                    } else {
+                      updateApplicatieField(applicatieIndices[0], 'referentieComponenten', refsArray);
+                      updateReferentieComponentenWithStandards(applicatieIndices[0], refsArray);
+                    }
+                  }}
+                  isDisabled={loading}
+                  width='full'
+                  schemas={schemas}
+                />
+              </div>
+            </div>
+          </div>
+        ) : applicatieIndices.length > 0 ? (
+          <div>
+            {/* Multiple applications, different referentiecomponenten per application */}
+            <Table>
+              <thead>
+                <TableRow>
+                  <TableCell>
+                    <strong>Applicatie</strong>
+                  </TableCell>
+                  <TableCell>
+                    <strong>Referentiecomponenten</strong>
+                  </TableCell>
+                </TableRow>
+              </thead>
+              <TableBody>
+                {applicatieIndices.map((index) => {
+                  const app = product.applicaties[index] || {};
+                  const currentRefs = app.referentieComponenten || [];
+
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <strong>{app.naam || `Applicatie ${index + 1}`}</strong>
+                      </TableCell>
+                      <TableCell>
+                        <ConSchemaEnhancedField
+                          schemaType='module'
+                          schemaProperty='referentieComponenten'
+                          value={currentRefs}
+                          onChange={(value) => {
+                            const refsArray = normalizeValues(value);
+                            updateApplicatieField(index, 'referentieComponenten', refsArray);
+                            updateReferentieComponentenWithStandards(index, refsArray);
+                          }}
+                          isDisabled={loading}
+                          width='full'
+                          schemas={schemas}
+                          showLabel={false}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          // No new applications that need referentiecomponenten configuration
+          <div style={{ padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px', border: '1px solid #e9ecef' }}>
+            <Paragraph style={{ margin: 0, fontStyle: 'italic', color: '#6c757d' }}>
+              Alle applicaties zijn bestaande applicaties uit de catalogus. 
+              Hun referentiecomponenten zijn al vastgelegd en hoeven niet opnieuw geconfigureerd te worden.
+            </Paragraph>
+          </div>
         )}
       </div>
     );
@@ -2460,308 +3050,7 @@ const ReferentieComponentenForm = memo(
 
 // Step 5 Koppelingen
 
-// Step 6 Standaarden
-const StandaardenForm = memo(
-  ({
-    product,
-    setProduct,
-    standaardOptions,
-    standaardenFormState,
-    setStandaardenFormState,
-  }) => {
-    const { rows, selectedApplication, selectedStandardByRow, supportedByRow } =
-      standaardenFormState;
-
-    // Filter out existing applications - they already have their standaarden defined
-    const appOptions = Object.entries(product.applicaties)
-      .filter(([id, app]) => !app.isExisting) // Only include new applications
-      .map(([id, app]) => ({
-        value: id,
-        label: app.naam,
-      }));
-
-    // If no new applications exist, show a message instead of the form
-    const hasNewApplications = appOptions.length > 0;
-
-    const setSupported = (rowId, supported) => {
-      setStandaardenFormState((prev) => ({
-        ...prev,
-        supportedByRow: { ...prev.supportedByRow, [rowId]: !!supported },
-      }));
-
-      const appId = selectedApplication[rowId];
-      const stdVal = selectedStandardByRow[rowId];
-      if (appId == null || !stdVal) return;
-
-      setProduct((prev) => {
-        const applicaties = { ...prev.applicaties };
-        const existing = applicaties[appId] || {};
-        const current = Array.isArray(existing.standaarden)
-          ? existing.standaarden
-          : [];
-        const other = current.filter((s) =>
-          typeof s === 'object' ? s.naam !== stdVal : s !== stdVal
-        );
-        const nextItem = {
-          naam: String(stdVal),
-          bewijs: existing.bewijs || '',
-          supported: !!supported,
-        };
-        applicaties[appId] = { ...existing, standaarden: [...other, nextItem] };
-        return { ...prev, applicaties };
-      });
-    };
-
-    const setBewijs = (rowId, file) => {
-      const appId = selectedApplication[rowId];
-      const stdVal = selectedStandardByRow[rowId];
-      if (appId == null || !stdVal) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result;
-        setProduct((prev) => {
-          const applicaties = { ...prev.applicaties };
-          const existing = applicaties[appId] || {};
-          const current = Array.isArray(existing.standaarden)
-            ? existing.standaarden
-            : [];
-          const updated = current.map((s) => {
-            if (typeof s === 'object' ? s.naam === stdVal : s === stdVal) {
-              return {
-                naam: String(stdVal),
-                bewijs: dataUrl,
-                supported: !!supportedByRow[rowId],
-              };
-            }
-            return s;
-          });
-          applicaties[appId] = { ...existing, standaarden: updated };
-          return { ...prev, applicaties };
-        });
-      };
-      reader.readAsDataURL(file);
-    };
-
-    return (
-      <div>
-        <h2 id='standaarden-section-title' className='sr-only'>
-          Standaarden
-        </h2>
-
-        {!hasNewApplications ? (
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '2rem',
-              background: '#f8f9fa',
-              borderRadius: '8px',
-            }}
-          >
-            <Paragraph>
-              <strong>Geen nieuwe applicaties gevonden</strong>
-            </Paragraph>
-            <Paragraph>
-              Alle applicaties in dit product zijn bestaande applicaties die al hun
-              eigen standaarden hebben. Er hoeven geen standaarden toegevoegd te
-              worden.
-            </Paragraph>
-          </div>
-        ) : (
-          <TableContainer className='con-form-wizard-table-container'>
-            <Table>
-              <thead>
-                <TableRow>
-                  <TableCell>
-                    <b>Applicatie</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Standaard</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Ondersteund</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Bewijs</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Acties</b>
-                  </TableCell>
-                </TableRow>
-              </thead>
-              <TableBody>
-                {rows.map((rowId) => {
-                  const selectedStdVal = selectedStandardByRow[rowId] || '';
-                  const selectedStd =
-                    selectedStdVal &&
-                    standaardOptions.find(
-                      (o) => String(o.value) === String(selectedStdVal)
-                    );
-
-                  return (
-                    <TableRow key={rowId}>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <ReactSelect
-                          options={appOptions}
-                          value={
-                            selectedApplication[rowId] != null
-                              ? appOptions.find(
-                                  (o) => o.value === selectedApplication[rowId]
-                                )
-                              : null
-                          }
-                          onChange={(opt) =>
-                            setStandaardenFormState((prev) => ({
-                              ...prev,
-                              selectedApplication: {
-                                ...prev.selectedApplication,
-                                [rowId]: opt?.value,
-                              },
-                            }))
-                          }
-                        />
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <ReactSelect
-                          options={standaardOptions}
-                          value={selectedStd || null}
-                          isDisabled={selectedApplication[rowId] == null}
-                          onChange={(opt) =>
-                            setStandaardenFormState((prev) => ({
-                              ...prev,
-                              selectedStandardByRow: {
-                                ...prev.selectedStandardByRow,
-                                [rowId]: opt?.value || '',
-                              },
-                            }))
-                          }
-                        />
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <input
-                          type='checkbox'
-                          checked={!!supportedByRow[rowId]}
-                          disabled={
-                            selectedApplication[rowId] == null ||
-                            !selectedStandardByRow[rowId]
-                          }
-                          onChange={(e) => setSupported(rowId, e.target.checked)}
-                        />
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        {(() => {
-                          const appIdVal = selectedApplication[rowId];
-                          const stdVal = selectedStandardByRow[rowId];
-                          const saved =
-                            appIdVal != null && stdVal
-                              ? (Array.isArray(
-                                  product.applicaties?.[appIdVal]?.standaarden
-                                )
-                                  ? product.applicaties[appIdVal].standaarden
-                                  : []
-                                ).find((s) =>
-                                  typeof s === 'object'
-                                    ? s.naam === stdVal
-                                    : s === stdVal
-                                )
-                              : null;
-
-                          return (
-                            <LogoUploadField
-                              fieldConfig={{
-                                label: 'Bewijs (upload)',
-                                filename:
-                                  standaardenFormState?.bewijsByRow?.[rowId] || '',
-                              }}
-                              _value={
-                                typeof saved === 'object' ? saved?.bewijs || '' : ''
-                              }
-                              onChange={(dataUrl) =>
-                                setBewijs(rowId, { target: { result: dataUrl } })
-                              }
-                              onChangeFileName={(name) =>
-                                setStandaardenFormState((prev) => ({
-                                  ...prev,
-                                  bewijsByRow: {
-                                    ...prev.bewijsByRow,
-                                    [rowId]: name || '',
-                                  },
-                                }))
-                              }
-                              onClear={() =>
-                                setBewijs(rowId, { target: { result: '' } })
-                              }
-                              accept={['.pdf', '.txt', '.doc', '.docx']}
-                              showPreview={false}
-                              validation={{ required: false }}
-                              propertyName={`bewijs-${rowId}`}
-                              isDisabled={
-                                selectedApplication[rowId] == null ||
-                                !selectedStandardByRow[rowId]
-                              }
-                            />
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <AcButton
-                            style='buttonSlim'
-                            buttonType='secondary'
-                            icon={<VISUALS.MINUS />}
-                            disabled={rows.length === 1}
-                            onClick={() =>
-                              setStandaardenFormState((prev) => ({
-                                ...prev,
-                                rows: prev.rows.filter((id) => id !== rowId),
-                                selectedApplication: Object.fromEntries(
-                                  Object.entries(prev.selectedApplication).filter(
-                                    ([k]) => Number(k) !== rowId
-                                  )
-                                ),
-                                selectedStandardByRow: Object.fromEntries(
-                                  Object.entries(prev.selectedStandardByRow).filter(
-                                    ([k]) => Number(k) !== rowId
-                                  )
-                                ),
-                                supportedByRow: Object.fromEntries(
-                                  Object.entries(prev.supportedByRow).filter(
-                                    ([k]) => Number(k) !== rowId
-                                  )
-                                ),
-                              }))
-                            }
-                            title='Rij verwijderen'
-                          ></AcButton>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-
-                <div style={{ marginTop: '1rem' }}>
-                  <AcButton
-                    style='button'
-                    icon={<VISUALS.PLUS />}
-                    onClick={() =>
-                      setStandaardenFormState((prev) => ({
-                        ...prev,
-                        rows: [...prev.rows, prev.nextRowId],
-                        nextRowId: prev.nextRowId + 1,
-                      }))
-                    }
-                  >
-                    Rij toevoegen
-                  </AcButton>
-                </div>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </div>
-    );
-  }
-);
+// Step 6 Standaarden - Now using StandaardenFormNew component
 
 // Step 6.5 Koppelingen
 const KoppelingenForm = memo(
@@ -2943,9 +3232,9 @@ const KoppelingenForm = memo(
                   <TableCell>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <AcButton
-                        style='buttonSlim'
+                        style='button'
                         buttonType='secondary'
-                        icon={<VISUALS.MINUS />}
+                        icon={<VISUALS.TRASHCAN />}
                         disabled={rows.length === 1}
                         onClick={() =>
                           setKoppelingenFormState((prev) => ({
@@ -3174,9 +3463,9 @@ const DienstenForm = memo(
                   <TableCell>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <AcButton
-                        style='buttonSlim'
+                        style='button'
                         buttonType='secondary'
-                        icon={<VISUALS.MINUS />}
+                        icon={<VISUALS.TRASHCAN />}
                         disabled={rows.length === 1}
                         onClick={() => {
                           const appId = selectedApplication[rowId];
@@ -3234,6 +3523,16 @@ const DienstenForm = memo(
 // Step 8 Controleren
 const ControlerenForm = memo(
   ({ product, dienstOptions, referentieComponentenOptions }) => {
+    // Debug logging to understand why the form might be empty
+    console.log('🔍 ControlerenForm Debug:', {
+      product: product,
+      productKeys: Object.keys(product || {}),
+      applicaties: product?.applicaties,
+      applicatiesKeys: Object.keys(product?.applicaties || {}),
+      dienstOptionsCount: dienstOptions?.length || 0,
+      referentieComponentenOptionsCount: referentieComponentenOptions?.length || 0
+    });
+
     return (
       <div>
         <div className='con-form-wizard-review-heading-container'>
@@ -3538,7 +3837,7 @@ const AanbiederInformatieForm = memo(
                 isDisabled={loading}
                 width='full'
                 customProps={{
-                  placeholder: 'Selecteer een organisatie...',
+                  // placeholder will come from schema example
                   isClearable: true,
                 }}
                 schemas={schemas}
@@ -3556,7 +3855,7 @@ const AanbiederInformatieForm = memo(
                   onChange={(value) => setProductData('aanbiederNaam', value)}
                   isDisabled={loading}
                   width='full'
-                  customProps={{ placeholder: 'Bijvoorbeeld: VNG Realisatie' }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -3579,7 +3878,7 @@ const AanbiederInformatieForm = memo(
                   onChange={(value) => setProductData('aanbiederWebsite', value)}
                   isDisabled={loading}
                   width='half'
-                  customProps={{ placeholder: 'https://www.organisatie.nl' }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -3594,7 +3893,7 @@ const AanbiederInformatieForm = memo(
                   isDisabled={loading}
                   width='full'
                   customProps={{
-                    placeholder: 'Korte beschrijving van de organisatie',
+                    // placeholder will come from schema example
                     maxLength: 255,
                   }}
                   schemas={schemas}
@@ -3611,7 +3910,7 @@ const AanbiederInformatieForm = memo(
                   isDisabled={loading}
                   width='full'
                   customProps={{
-                    placeholder: 'Uitgebreide beschrijving van de organisatie',
+                    // placeholder will come from schema example
                     component: 'AcTextarea',
                     rows: 4,
                     maxLength: 2000,
@@ -3627,7 +3926,7 @@ const AanbiederInformatieForm = memo(
                   onChange={(value) => setProductData('aanbiederEmail', value)}
                   isDisabled={loading}
                   width='half'
-                  customProps={{ placeholder: 'contact@organisatie.nl' }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -3641,7 +3940,7 @@ const AanbiederInformatieForm = memo(
                   }
                   isDisabled={loading}
                   width='half'
-                  customProps={{ placeholder: '06 12345678' }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -3653,7 +3952,7 @@ const AanbiederInformatieForm = memo(
                   onChange={(value) => setProductData('aanbiederKvkNummer', value)}
                   isDisabled={loading}
                   width='half'
-                  customProps={{ placeholder: '12345678' }}
+                  // placeholder will come from schema example
                   schemas={schemas}
                 />
 
@@ -3680,12 +3979,13 @@ AanbiederInformatieForm.displayName = 'AanbiederInformatieForm';
 ApplicatieFormFields.displayName = 'ApplicatieFormFields';
 ApplicatieStep.displayName = 'ApplicatieStep';
 LicenseAndHostingStep.displayName = 'LicenseAndHostingStep';
+ModuleVersieStep.displayName = 'ModuleVersieStep';
 DienstenForm.displayName = 'DienstenForm';
 ControlerenForm.displayName = 'ControlerenForm';
 ReferentieComponentenForm.displayName = 'ReferentieComponentenForm';
 ProductOpbouwForm.displayName = 'ProductOpbouwForm';
 ProductOpbouwInformationForm.displayName = 'ProductOpbouwInformationForm';
 KoppelingenForm.displayName = 'KoppelingenForm';
-StandaardenForm.displayName = 'StandaardenForm';
+// StandaardenForm is now StandaardenFormNew (separate component)
 
 export default withStore(observer(AcFormsProduct));

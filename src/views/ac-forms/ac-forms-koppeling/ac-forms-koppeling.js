@@ -1,6 +1,7 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
+import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn } from '@src/atoms';
 import { AcButton } from '@src/molecules';
@@ -22,9 +23,47 @@ import {
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcFormsKoppeling = () => {
+const AcFormsKoppeling = ({ store }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Ref for ProcessSteps to add click handlers
+  const processStepsRef = useRef(null);
+
+  // Add click handlers to steps
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+
+    const addClickHandlers = () => {
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '[class*="process-step"], [role="button"], [role="tab"], .step'
+      );
+
+      stepElements.forEach((stepEl, index) => {
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        if (index < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            setCurrentStep(index);
+          };
+        }
+      });
+    };
+
+    const timeoutId = setTimeout(addClickHandlers, 100);
+    return () => clearTimeout(timeoutId);
+  }, [currentStep]);
+
+  // Schema management
+  const [schemas, setSchemas] = useState({});
+  const [schemasLoading, setSchemasLoading] = useState(true);
+
+  // Koppeling object based on schema
+  const [koppeling, setKoppeling] = useState({});
 
   // Options for modules (applications)
   const [modulesOptions, setModulesOptions] = useState([]);
@@ -81,6 +120,38 @@ const AcFormsKoppeling = () => {
     if (dir === 'bi-directioneel') return '↔';
     return '↔';
   };
+
+  // Fetch schemas on component mount
+  useEffect(() => {
+    const fetchSchemas = async () => {
+      setSchemasLoading(true);
+      try {
+        // Fetch 'koppeling' schema for this form
+        const response = await fetch('/api/apps/openregister/api/schemas/koppeling');
+        if (response.ok) {
+          const koppelingSchema = await response.json();
+          const fetchedSchemas = { koppeling: koppelingSchema };
+          setSchemas(fetchedSchemas);
+
+          // Initialize default koppeling object based on schema
+          const defaultKoppeling = createDefaultFormObject(store, koppelingSchema, 'koppeling', {
+            // Add any specific defaults for koppeling form
+            status: 'concept',
+            richting: '',
+            type: '',
+            beschrijving: ''
+          });
+          setKoppeling(defaultKoppeling);
+        }
+      } catch (error) {
+        console.error('Failed to fetch schemas for koppeling form:', error);
+      } finally {
+        setSchemasLoading(false);
+      }
+    };
+
+    fetchSchemas();
+  }, [store]);
 
   // Fetch modules (applications) options on mount
   useEffect(() => {
@@ -588,7 +659,7 @@ const AcFormsKoppeling = () => {
                         style={{ verticalAlign: 'middle', textAlign: 'center' }}
                       >
                         <AcButton
-                          style='buttonSlim'
+                          style='button'
                           buttonType='secondary'
                           onClick={() => removeRow(rowId)}
                           disabled={rows.length === 1}
@@ -773,7 +844,10 @@ const AcFormsKoppeling = () => {
           </h3>
 
           <div className='ac-register-container ac-forms-product'>
-            <div className='ac-register-process-steps'>
+            <div 
+              ref={processStepsRef}
+              className='ac-register-process-steps'
+            >
               <ProcessSteps
                 steps={(() => {
                   const steps = [

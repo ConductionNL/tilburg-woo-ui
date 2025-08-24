@@ -50,6 +50,7 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     'contactpersoon': 'voorzieningen',
     'organisatie': 'voorzieningen',
     'module': 'voorzieningen',
+    'element': 'vng-gemma', // Referentiecomponenten live in vng-gemma register
     // Add more mappings as needed
     // By default, schemas without mapping use the currentRegister
   };
@@ -67,7 +68,9 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
    * Gets the correct register for a schema slug
    */
   const getRegisterForSchema = (schemaSlug) => {
-    return SCHEMA_REGISTER_MAPPING[schemaSlug] || currentRegister;
+    const mappedRegister = SCHEMA_REGISTER_MAPPING[schemaSlug] || currentRegister;
+    console.log(`🗺️ Register mapping for ${schemaSlug}: ${mappedRegister} (current: ${currentRegister})`);
+    return mappedRegister;
   };
 
   /**
@@ -109,6 +112,52 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
   }, []);
 
   /**
+   * Extracts query parameters from schema field configuration
+   */
+  const getQueryParamsFromSchema = useCallback((fieldPath) => {
+    if (!schema || !schema.properties) return {};
+    
+    // Navigate to the field in the schema
+    const pathParts = fieldPath.split('.');
+    let currentProperty = schema.properties;
+    
+    for (const part of pathParts) {
+      if (currentProperty[part]) {
+        currentProperty = currentProperty[part];
+      } else {
+        return {};
+      }
+    }
+    
+    // Check for query parameters in different locations
+    let queryParamsString = '';
+    
+    // For array fields, check items.objectConfiguration.queryParams
+    if (currentProperty.items?.objectConfiguration?.queryParams) {
+      queryParamsString = currentProperty.items.objectConfiguration.queryParams;
+    }
+    // For direct object references, check objectConfiguration.queryParams
+    else if (currentProperty.objectConfiguration?.queryParams) {
+      queryParamsString = currentProperty.objectConfiguration.queryParams;
+    }
+    
+    if (queryParamsString) {
+      console.log(`🔧 Found queryParams for ${fieldPath}: ${queryParamsString}`);
+      
+      // Parse the queryParams string into an object
+      const params = {};
+      const urlParams = new URLSearchParams(queryParamsString);
+      urlParams.forEach((value, key) => {
+        params[key] = value;
+      });
+      
+      return params;
+    }
+    
+    return {};
+  }, [schema]);
+
+  /**
    * Fetches options for a specific $ref field
    */
   const fetchOptionsForField = useCallback(async (fieldPath, refSchemaSlug, searchQuery = '') => {
@@ -119,9 +168,12 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     // Get the correct register for this schema
     const targetRegister = getRegisterForSchema(refSchemaSlug);
 
-    // Create a unique key for this fetch operation
+    // Get query parameters from schema configuration
+    const schemaQueryParams = getQueryParamsFromSchema(fieldPath);
+
+    // Create a unique key for this fetch operation (include schema params in cache key)
     const fetchKey = `${fieldPath}-${refSchemaSlug}-${searchQuery || 'initial'}`;
-    const cacheKey = `${targetRegister}-${refSchemaSlug}-${searchQuery || 'initial'}`;
+    const cacheKey = `${targetRegister}-${refSchemaSlug}-${searchQuery || 'initial'}-${JSON.stringify(schemaQueryParams)}`;
     
     // Check cache first - if we have cached results, use them immediately
     if (API_CACHE.has(cacheKey)) {
@@ -191,7 +243,10 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
         _search: searchQuery || undefined,
         _limit: 50,
         _page: 1, // Always start from page 1 for form field options
+        ...schemaQueryParams, // Add schema-defined query parameters
       };
+      
+      console.log(`📋 API params for ${fieldPath}:`, fetchParams);
       
       await object.fetchCollection(targetRegister, refSchemaSlug, fetchParams, false, optionsTypeSuffix);
       
@@ -270,7 +325,7 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       // Remove from fetching set when done
       fetchingFieldsRef.current.delete(fetchKey);
     }
-  }, [currentRegister, object, preSelected, preSelectedLabels]);
+  }, [currentRegister, object, preSelected, preSelectedLabels, getRegisterForSchema, getQueryParamsFromSchema]);
 
   /**
    * Handles search input for a specific field with improved debouncing and loop prevention

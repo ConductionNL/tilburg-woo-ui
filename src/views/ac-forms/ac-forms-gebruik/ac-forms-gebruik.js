@@ -1,6 +1,7 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
+import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn } from '@src/atoms';
 import { AcButton } from '@src/molecules';
@@ -27,9 +28,47 @@ const mapToOption = (item, index) => {
   return { value: String(value), label: String(label), data: item };
 };
 
-const AcFormsGebruik = () => {
+const AcFormsGebruik = ({ store }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Ref for ProcessSteps to add click handlers
+  const processStepsRef = useRef(null);
+
+  // Add click handlers to steps
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+
+    const addClickHandlers = () => {
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '[class*="process-step"], [role="button"], [role="tab"], .step'
+      );
+
+      stepElements.forEach((stepEl, index) => {
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        if (index < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            setCurrentStep(index);
+          };
+        }
+      });
+    };
+
+    const timeoutId = setTimeout(addClickHandlers, 100);
+    return () => clearTimeout(timeoutId);
+  }, [currentStep]);
+
+  // Schema management
+  const [schemas, setSchemas] = useState({});
+  const [schemasLoading, setSchemasLoading] = useState(true);
+
+  // Gebruik object based on schema
+  const [gebruik, setGebruik] = useState({});
 
   // Applicatie selectie
   const [appOptions, setAppOptions] = useState([]);
@@ -46,6 +85,35 @@ const AcFormsGebruik = () => {
   // Referentiecomponenten
   const [refCompOptions, setRefCompOptions] = useState([]);
   const [selectedRefComps, setSelectedRefComps] = useState([]);
+
+  // Fetch schemas on component mount
+  useEffect(() => {
+    const fetchSchemas = async () => {
+      setSchemasLoading(true);
+      try {
+        // Fetch 'gebruik' schema for this form
+        const response = await fetch('/api/apps/openregister/api/schemas/gebruik');
+        if (response.ok) {
+          const gebruikSchema = await response.json();
+          const fetchedSchemas = { gebruik: gebruikSchema };
+          setSchemas(fetchedSchemas);
+
+          // Initialize default gebruik object based on schema
+          const defaultGebruik = createDefaultFormObject(store, gebruikSchema, 'gebruik', {
+            // Add any specific defaults for gebruik form
+            status: 'concept'
+          });
+          setGebruik(defaultGebruik);
+        }
+      } catch (error) {
+        console.error('Failed to fetch schemas for gebruik form:', error);
+      } finally {
+        setSchemasLoading(false);
+      }
+    };
+
+    fetchSchemas();
+  }, [store]);
 
   // Fetch applicaties and referentiecomponenten options on mount
   useEffect(() => {
@@ -473,7 +541,10 @@ const AcFormsGebruik = () => {
           </h3>
 
           <div className='ac-register-container ac-forms-product'>
-            <div className='ac-register-process-steps'>
+            <div 
+              ref={processStepsRef}
+              className='ac-register-process-steps'
+            >
               <ProcessSteps
                 steps={(() => {
                   const steps = [

@@ -70,3 +70,32 @@
   width: 100% !important;
   display: block !important;
 }
+
+// Simple CSS for clickable steps - minimal styling to avoid layout disruption
+.ac-register-process-steps .ac-step-clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ac-register-process-steps .ac-step-clickable:hover {
+  opacity: 0.8;
+}
+
+// Error styling for required license fields
+.ac-beheer-select--error .react-select__control {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.ac-beheer-select--error .react-select__control:hover {
+  border-color: #dc3545 !important;
+}
+
+// Font consistency for Alert components
+.MuiAlert-root {
+  font-family: 'Avenir', sans-serif !important;
+  
+  * {
+    font-family: 'Avenir', sans-serif !important;
+  }
+}
