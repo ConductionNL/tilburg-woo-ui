@@ -43,18 +43,34 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
   const fetchingFieldsRef = useRef(new Set());
 
   /**
+   * Maps schema slugs to their correct register
+   * Some schemas live in different registers than the default currentRegister
+   */
+  const SCHEMA_REGISTER_MAPPING = {
+    'contactpersoon': 'voorzieningen',
+    'organisatie': 'voorzieningen',
+    'module': 'voorzieningen',
+    'element': 'vng-gemma', // Referentiecomponenten live in vng-gemma register
+    // Add more mappings as needed
+    // By default, schemas without mapping use the currentRegister
+  };
+
+  /**
    * Extracts the schema slug from a $ref value
    */
   const extractSchemaSlugFromRef = (ref) => {
     if (!ref || typeof ref !== 'string') return null;
     const parts = ref.split('/');
-    const slug = parts[parts.length - 1];
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 extractSchemaSlugFromRef: ${ref} -> ${slug}`);
-    }
-    
-    return slug;
+    return parts[parts.length - 1];
+  };
+
+  /**
+   * Gets the correct register for a schema slug
+   */
+  const getRegisterForSchema = (schemaSlug) => {
+    const mappedRegister = SCHEMA_REGISTER_MAPPING[schemaSlug] || currentRegister;
+    console.log(`🗺️ Register mapping for ${schemaSlug}: ${mappedRegister} (current: ${currentRegister})`);
+    return mappedRegister;
   };
 
   /**
@@ -63,19 +79,12 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
   const findRefFields = useCallback((properties, parentPath = '') => {
     const refFields = [];
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 findRefFields: Scanning properties for ${parentPath || 'root'}:`, Object.keys(properties));
-    }
-    
     Object.entries(properties).forEach(([key, propertySchema]) => {
       const fieldPath = parentPath ? `${parentPath}.${key}` : key;
       
       // Direct $ref
       if (propertySchema.$ref) {
         const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.$ref);
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`🔍 findRefFields: Found $ref field ${fieldPath} -> ${refSchemaSlug}`);
-        }
         refFields.push({
           path: fieldPath,
           refSchemaSlug,
@@ -86,9 +95,6 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       // Array of $ref
       if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
         const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.items.$ref);
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`🔍 findRefFields: Found array $ref field ${fieldPath} -> ${refSchemaSlug}`);
-        }
         refFields.push({
           path: fieldPath,
           refSchemaSlug,
@@ -102,40 +108,86 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       }
     });
     
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 findRefFields: Total ref fields found for ${parentPath || 'root'}:`, refFields.length);
-    }
-    
     return refFields;
   }, []);
+
+  /**
+   * Extracts query parameters from schema field configuration
+   */
+  const getQueryParamsFromSchema = useCallback((fieldPath) => {
+    if (!schema || !schema.properties) return {};
+    
+    // Navigate to the field in the schema
+    const pathParts = fieldPath.split('.');
+    let currentProperty = schema.properties;
+    
+    for (const part of pathParts) {
+      if (currentProperty[part]) {
+        currentProperty = currentProperty[part];
+      } else {
+        return {};
+      }
+    }
+    
+    // Check for query parameters in different locations
+    let queryParamsString = '';
+    
+    // For array fields, check items.objectConfiguration.queryParams
+    if (currentProperty.items?.objectConfiguration?.queryParams) {
+      queryParamsString = currentProperty.items.objectConfiguration.queryParams;
+    }
+    // For direct object references, check objectConfiguration.queryParams
+    else if (currentProperty.objectConfiguration?.queryParams) {
+      queryParamsString = currentProperty.objectConfiguration.queryParams;
+    }
+    
+    if (queryParamsString) {
+      console.log(`🔧 Found queryParams for ${fieldPath}: ${queryParamsString}`);
+      
+      // Parse the queryParams string into an object
+      const params = {};
+      const urlParams = new URLSearchParams(queryParamsString);
+      urlParams.forEach((value, key) => {
+        params[key] = value;
+      });
+      
+      return params;
+    }
+    
+    return {};
+  }, [schema]);
 
   /**
    * Fetches options for a specific $ref field
    */
   const fetchOptionsForField = useCallback(async (fieldPath, refSchemaSlug, searchQuery = '') => {
     if (!currentRegister || !refSchemaSlug || !object) {
-      console.log(`❌ fetchOptionsForField: Missing required params for ${fieldPath}:`, { currentRegister, refSchemaSlug, object: !!object });
       return;
     }
 
-    // Create a unique key for this fetch operation
+    // Get the correct register for this schema
+    const targetRegister = getRegisterForSchema(refSchemaSlug);
+
+    // Get query parameters from schema configuration
+    const schemaQueryParams = getQueryParamsFromSchema(fieldPath);
+
+    // Create a unique key for this fetch operation (include schema params in cache key)
     const fetchKey = `${fieldPath}-${refSchemaSlug}-${searchQuery || 'initial'}`;
-    const cacheKey = `${currentRegister}-${refSchemaSlug}-${searchQuery || 'initial'}`;
+    const cacheKey = `${targetRegister}-${refSchemaSlug}-${searchQuery || 'initial'}-${JSON.stringify(schemaQueryParams)}`;
     
     // Check cache first - if we have cached results, use them immediately
     if (API_CACHE.has(cacheKey)) {
       const cachedOptions = API_CACHE.get(cacheKey);
-      // console.log(`🚀 fetchOptionsForField: Using cached options for ${fieldPath}:`, cachedOptions.length);
       
       setOptionsProviders(prev => ({
         ...prev,
         [fieldPath]: cachedOptions
       }));
 
-      // Disable field if only one option is available
+      // Don't auto-disable fields - users should always be able to clear/change selections
       setDisabledStates(prev => ({
         ...prev,
-        [fieldPath]: cachedOptions.length === 1
+        [fieldPath]: false
       }));
       
       return;
@@ -143,7 +195,6 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     
     // Prevent duplicate fetches for the same field/query combination
     if (fetchingFieldsRef.current.has(fetchKey)) {
-      console.log(`🔄 fetchOptionsForField: Already fetching ${fieldPath}, skipping duplicate call`);
       return;
     }
 
@@ -155,8 +206,6 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     const fieldPreselectedLabel = preSelectedLabels[fieldPath];
     
     if (fieldPreselectedValue && fieldPreselectedLabel && !searchQuery) {
-      console.log(`🚀 Optimizing ${fieldPath}: Using preselected option instead of fetching`);
-      
       // Handle both single values and arrays
       const isArray = Array.isArray(fieldPreselectedValue);
       const values = isArray ? fieldPreselectedValue : [fieldPreselectedValue];
@@ -185,7 +234,6 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     }
 
     try {
-      console.log(`🔍 fetchOptionsForField: Starting fetch for ${fieldPath} (${refSchemaSlug})`);
       setLoadingStates(prev => ({ ...prev, [fieldPath]: true }));
 
       // Use the object store's fetchCollection method to get the objects
@@ -195,22 +243,20 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
         _search: searchQuery || undefined,
         _limit: 50,
         _page: 1, // Always start from page 1 for form field options
+        ...schemaQueryParams, // Add schema-defined query parameters
       };
       
-      console.log(`🔍 fetchOptionsForField: Fetching with params:`, fetchParams);
-      await object.fetchCollection(currentRegister, refSchemaSlug, fetchParams, false, optionsTypeSuffix);
+      console.log(`📋 API params for ${fieldPath}:`, fetchParams);
+      
+      await object.fetchCollection(targetRegister, refSchemaSlug, fetchParams, false, optionsTypeSuffix);
       
       // Get the data from the store after fetching using the suffixed type
-      const collectionType = `${currentRegister}_${refSchemaSlug}_${optionsTypeSuffix}`;
+      const collectionType = `${targetRegister}_${refSchemaSlug}_${optionsTypeSuffix}`;
+
+      console.log(`🔍 useRefOptions: Fetching from ${targetRegister}/${refSchemaSlug} for field ${fieldPath}`);
       const collection = object.getCollection(collectionType);
 
-      console.log(`🔍 fetchOptionsForField: Collection result for ${fieldPath}:`, collection);
-      console.log(`🔍 fetchOptionsForField: Collection results array for ${fieldPath}:`, collection?.results);
-      console.log(`🔍 fetchOptionsForField: Collection results length:`, collection?.results?.length);
-
       if (collection && collection.results && collection.results.length > 0) {
-        console.log(`🔍 fetchOptionsForField: Raw results for ${fieldPath}:`, collection.results);
-        console.log(`🔍 fetchOptionsForField: First item structure:`, collection.results[0]);
         
         const options = collection.results.map((item, index) => {
           // Always use @self.id for the value
@@ -219,17 +265,8 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
           // Always use @self.name for the label
           const label = item['@self']?.name || 'Unnamed';
           
-          console.log(`🔍 Mapping item ${index} for ${fieldPath}:`, {
-            hasAtSelf: !!item['@self'],
-            atSelfKeys: item['@self'] ? Object.keys(item['@self']) : 'N/A',
-            extractedValue: value,
-            extractedLabel: label,
-            fullItem: item
-          });
-          
           // Skip items without @self.id
           if (!value) {
-            console.warn(`⚠️ Skipping item ${index} for ${fieldPath}: no @self.id found`);
             return null;
           }
           
@@ -239,8 +276,6 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
             data: item // Store full object for reference
           };
         }).filter(Boolean); // Remove null entries
-
-        console.log(`🔍 fetchOptionsForField: Generated options for ${fieldPath}:`, options);
 
         // Cache the results for future use
         API_CACHE.set(cacheKey, options);
@@ -252,26 +287,19 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
 
         // HACK: Store in global state for direct dropdown access (TODO: Fix the actual re-render loop issue)
         window.FORCE_DROPDOWN_UPDATE.set(fieldPath, options);
-        console.log(`🌍 HACK: Stored ${options.length} options globally for ${fieldPath}`);
 
         // HACK: Trigger a custom event to notify dropdowns
         window.dispatchEvent(new CustomEvent('dropdownOptionsUpdate', { 
           detail: { fieldPath, options } 
         }));
 
-        // Disable field if only one option is available
+        // Don't auto-disable fields based on search results
+        // Users should be able to clear/change their selection even with 1 result
         setDisabledStates(prev => ({
           ...prev,
-          [fieldPath]: options.length === 1
+          [fieldPath]: false
         }));
-
-        // Enable search if there are more results available  
-        const hasMoreResults = collection.total > collection.results.length;
-        if (hasMoreResults) {
-          // Field should be searchable - this is handled in the field config
-        }
       } else {
-        console.warn(`⚠️ fetchOptionsForField: No collection or results for ${fieldPath}`);
         // Cache empty results to prevent repeated calls
         API_CACHE.set(cacheKey, []);
         
@@ -297,7 +325,7 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       // Remove from fetching set when done
       fetchingFieldsRef.current.delete(fetchKey);
     }
-  }, [currentRegister, object, preSelected, preSelectedLabels]);
+  }, [currentRegister, object, preSelected, preSelectedLabels, getRegisterForSchema, getQueryParamsFromSchema]);
 
   /**
    * Handles search input for a specific field with improved debouncing and loop prevention
@@ -314,20 +342,21 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       return;
     }
 
-    console.log(`📝 Scheduling search for ${fieldPath}:`, searchQuery);
     setSearchQueries(prev => ({ ...prev, [fieldPath]: searchQuery }));
     
     // Clear any existing timeout for this field
     if (window[`searchTimeout_${fieldPath}`]) {
       clearTimeout(window[`searchTimeout_${fieldPath}`]);
+      delete window[`searchTimeout_${fieldPath}`];
     }
     
     // Debounce the search with field-specific timeouts
-    window[`searchTimeout_${fieldPath}`] = setTimeout(() => {
-      console.log(`🎯 Executing search for ${fieldPath}:`, searchQuery);
+    const timeoutId = setTimeout(() => {
       fetchOptionsForField(fieldPath, refSchemaSlug, searchQuery);
       delete window[`searchTimeout_${fieldPath}`];
     }, 300);
+    
+    window[`searchTimeout_${fieldPath}`] = timeoutId;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingStates, searchQueries]);
 
@@ -342,27 +371,21 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
     const refFields = findRefFields(schema.properties);
     
     if (refFields.length > 0) {
-      // Development debug for initialization
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🎯 useRefOptions: Initializing for schema:', schema?.title || 'Unknown');
-        console.log('🎯 useRefOptions: Found ref fields:', refFields.map(f => `${f.path} -> ${f.refSchemaSlug}`));
-      }
-      
       // Check cache immediately for instant loading
       refFields.forEach(({ path, refSchemaSlug }) => {
         const cacheKey = `${currentRegister}-${refSchemaSlug}-initial`;
         if (API_CACHE.has(cacheKey)) {
           const cachedOptions = API_CACHE.get(cacheKey);
-          // console.log(`🚀 useRefOptions: Loading cached options for ${path}:`, cachedOptions.length);
           
           setOptionsProviders(prev => ({
             ...prev,
             [path]: cachedOptions
           }));
 
+          // Don't auto-disable based on option count
           setDisabledStates(prev => ({
             ...prev,
-            [path]: cachedOptions.length === 1
+            [path]: false
           }));
         }
       });
@@ -370,7 +393,6 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
       // Add a small delay to ensure schema is stable, then fetch missing data
       const timeoutId = setTimeout(() => {
         refFields.forEach(({ path, refSchemaSlug }) => {
-          console.log(`🎯 useRefOptions: Fetching options for ${path} (${refSchemaSlug})`);
           fetchOptionsForField(path, refSchemaSlug);
         });
         
@@ -388,24 +410,23 @@ export const useRefOptions = (store, currentRegister, schema, fieldConfigs = {},
   useEffect(() => {
     hasInitializedRef.current = false;
     fetchingFieldsRef.current.clear(); // Clear fetching state
-    // Reset initialization guard for schema change
-    console.log('🔄 useRefOptions: Schema changed, resetting initialization guard');
   }, [schema?.slug, currentRegister]);
 
-  // Cleanup effect to clear any pending search timeouts
+  // Cleanup effect to clear any pending search timeouts (only on unmount)
   useEffect(() => {
     return () => {
-      // Clear all search timeouts on unmount
-      Object.keys(searchQueries).forEach(fieldPath => {
-        if (window[`searchTimeout_${fieldPath}`]) {
-          clearTimeout(window[`searchTimeout_${fieldPath}`]);
-          delete window[`searchTimeout_${fieldPath}`];
+      // Clear all search timeouts on unmount by checking the global window object
+      // We can't use searchQueries here because it would cause this effect to run on every query change
+      for (const key in window) {
+        if (key.startsWith('searchTimeout_')) {
+          clearTimeout(window[key]);
+          delete window[key];
         }
-      });
+      }
       // Clear fetching state on unmount
       fetchingFieldsRef.current.clear();
     };
-  }, [searchQueries]);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   // Debug effect disabled to prevent infinite loops
   // const prevRefOptionsKeysRef = useRef([]);

@@ -2905,6 +2905,92 @@ export class ObjectStore {
       delete this.columnFilters[type];
     }
   };
+
+  /**
+   * Creates a default object based on a schema definition
+   * @param {Object} schema - The schema object containing properties definition
+   * @param {Object} overrides - Optional object with property overrides
+   * @returns {Object} Default object with schema-driven structure and values
+   * 
+   * @example
+   * const schema = {
+   *   properties: {
+   *     naam: { type: 'string', default: 'Default Name' },
+   *     beschrijving: { type: 'string' },
+   *     aantal: { type: 'integer', default: 0 },
+   *     actief: { type: 'boolean', default: true },
+   *     tags: { type: 'array' },
+   *     metadata: { type: 'object' }
+   *   }
+   * };
+   * const defaultObj = store.object.createDefaultObjectFromSchema(schema, { naam: 'Custom Name' });
+   * // Result: { naam: 'Custom Name', beschrijving: '', aantal: 0, actief: true, tags: [], metadata: {} }
+   */
+  createDefaultObjectFromSchema = (schema, overrides = {}) => {
+    if (!schema?.properties) {
+      console.warn('createDefaultObjectFromSchema: Invalid schema provided, returning empty object');
+      return { ...overrides };
+    }
+
+    const defaultObject = {};
+
+    Object.entries(schema.properties).forEach(([key, property]) => {
+      // Check for explicit default value in schema
+      if (property.default !== undefined) {
+        defaultObject[key] = property.default;
+      } 
+      // Set empty values based on property type
+      else if (property.type === 'string') {
+        defaultObject[key] = '';
+      } 
+      else if (property.type === 'array') {
+        defaultObject[key] = [];
+      } 
+      else if (property.type === 'object') {
+        defaultObject[key] = property.$ref ? null : {}; // null for $ref objects, {} for plain objects
+      } 
+      else if (property.type === 'boolean') {
+        defaultObject[key] = false;
+      } 
+      else if (property.type === 'number' || property.type === 'integer') {
+        defaultObject[key] = 0;
+      } 
+      else {
+        // Fallback for unknown types
+        defaultObject[key] = null;
+      }
+    });
+
+    // Apply overrides
+    return { ...defaultObject, ...overrides };
+  };
+
+  /**
+   * Creates multiple default objects from multiple schemas
+   * @param {Object} schemas - Object containing multiple schema definitions keyed by type
+   * @param {Object} overridesByType - Optional overrides per schema type
+   * @returns {Object} Object containing default objects keyed by schema type
+   * 
+   * @example
+   * const schemas = {
+   *   product: { properties: { naam: { type: 'string' }, website: { type: 'string' } } },
+   *   organisatie: { properties: { naam: { type: 'string' }, email: { type: 'string' } } }
+   * };
+   * const defaults = store.object.createDefaultObjectsFromSchemas(schemas, {
+   *   product: { naam: 'My Product' }
+   * });
+   * // Result: { product: { naam: 'My Product', website: '' }, organisatie: { naam: '', email: '' } }
+   */
+  createDefaultObjectsFromSchemas = (schemas, overridesByType = {}) => {
+    const results = {};
+
+    Object.entries(schemas).forEach(([schemaType, schema]) => {
+      const overrides = overridesByType[schemaType] || {};
+      results[schemaType] = this.createDefaultObjectFromSchema(schema, overrides);
+    });
+
+    return results;
+  };
 }
 
 export default ObjectStore;

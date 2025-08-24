@@ -374,7 +374,10 @@ const AcPublication = observer(
                     !schema?.configuration?.excludedProperties?.includes(key)
                 )
                 .filter(([key]) => !configuredMetaFields.includes(key))
-                .filter(([key, schema]) => canReadField(user, schema))
+
+                .filter(([key, fieldSchema]) =>
+                  user?.isAuthenticated ? canReadField(user, fieldSchema) : true
+                )
                 .map(([key, schema]) => {
                   // Check if this property should be displayed inline
                   const isInline =

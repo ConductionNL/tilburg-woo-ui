@@ -4,8 +4,8 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Environment Config Test ✅',
-  SITE_DESCRIPTION: 'Development instance of the software catalogus',
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
   SITE: 'localhost',
   MODE: 'development',
   THEME_VARIANT: 'vng',
@@ -34,8 +34,8 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
   FOOTER_STYLE: 'vng',
-  FOOTER_LOGO_TITLE: 'VNG Softwarectalogus',
-  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle software voor en door Gemeenten',
+  FOOTER_LOGO_TITLE: 'Open Tilburg',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
   SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
 });
 // Helper functions to replace hostname-based logic
