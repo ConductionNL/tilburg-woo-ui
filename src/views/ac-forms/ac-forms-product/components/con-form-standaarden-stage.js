@@ -21,14 +21,14 @@ import ReactSelect from 'react-select';
  * 3. Compliant (checkbox)
  * 4. Bewijs (file upload when compliant)
  */
-const StandaardenFormNew = ({
+const ConFormStandaardenStage = ({
   product,
   setProduct,
   referentieComponentenWithStandards,
   schemas,
   getNewModulesWithApplicatieData,
 }) => {
-  // ✅ SIMPLIFIED: Use helper method to get new modules that need standards configuration
+  // ✅ SIMPLIFIED: Use helper method to get new modules with applicatie data
   const newModules = useMemo(() => {
     return getNewModulesWithApplicatieData ? getNewModulesWithApplicatieData() : [];
   }, [getNewModulesWithApplicatieData]);
@@ -575,4 +575,4 @@ const StandaardenFormNew = ({
   );
 };
 
-export default StandaardenFormNew;
+export default ConFormStandaardenStage;
