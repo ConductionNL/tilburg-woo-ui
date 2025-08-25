@@ -44,7 +44,7 @@
 
     // Algemene regels
     "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
-    "no-console": "warn",
+    "no-console": ["error", { "allow": ["warn", "error", "info", "debug"] }],
     "no-debugger": "error"
   },
    "settings": {

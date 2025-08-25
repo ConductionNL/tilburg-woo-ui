@@ -28,6 +28,8 @@ const AcFormField = ({
   minLength,
   maxLength,
   required,
+  touched,
+  touchedKey,
   customInput,
   tooltip,
   ...restProps
@@ -62,66 +64,79 @@ const AcFormField = ({
   };
 
   return (
-    <FormField type={type}>
-      <FormLabel
-        htmlFor={id}
-        className={clsx({ 'ac-form-field-label-with-custom-part': customLabelPart })}
-      >
-        <Heading
-          level={headingLevel}
+    <>
+      <FormField type={type}>
+        <FormLabel
+          htmlFor={id}
           className={clsx({
-            'ac-form-field-header-info': tooltip,
-            'ac-form-field-header-info-with-custom-part': customLabelPart,
+            'ac-form-field-label-with-custom-part': customLabelPart,
           })}
         >
-          <div>
-            {label}
-            {required && (
+          <Heading
+            level={headingLevel}
+            className={clsx({
+              'ac-form-field-header-info': tooltip,
+              'ac-form-field-header-info-with-custom-part': customLabelPart,
+            })}
+          >
+            <div>
+              {label}
+              {required && (
+                <>
+                  <span className='required-indicator' aria-hidden='true'>
+                    *
+                  </span>
+                  <span className='sr-only'>(verplicht)</span>
+                </>
+              )}
+            </div>
+            {tooltip && (
               <>
-                <span className='required-indicator' aria-hidden='true'>
-                  *
+                <span
+                  data-tooltip-id={TOOLTIP_ID}
+                  data-tooltip-content={tooltip}
+                  className='info-indicator'
+                  role='img'
+                  aria-label={tooltip}
+                >
+                  <VISUALS.INFO />
                 </span>
-                <span className='sr-only'>(verplicht)</span>
               </>
             )}
-          </div>
-          {tooltip && (
-            <>
-              <span
-                data-tooltip-id={TOOLTIP_ID}
-                data-tooltip-content={tooltip}
-                className='info-indicator'
-                role='img'
-                aria-label={tooltip}
-              >
-                <VISUALS.INFO />
-              </span>
-            </>
-          )}
-        </Heading>
-        {customLabelPart && customLabelPart}
-      </FormLabel>
-      {getInput(inputType, {
-        id: id,
-        className: clsx(
-          { 'error-input': hasError },
-          fullWidth && 'ac-form-field--full-width'
-        ),
-        defaultValue: defaultValue,
-        placeholder: placeholder,
-        customInput: customInput,
-        onBlur: onBlurHandler,
-        disabled: disabled,
-        onKeyDown: onKeyDown,
-        onChange: onChangeHandler,
-        value: value,
-        minLength: minLength,
-        maxLength: maxLength,
-        // Do not pass a type prop to Textarea
-        ...(inputType !== 'textarea' ? { type: inputType } : {}),
-        ...restProps,
-      })}
-    </FormField>
+          </Heading>
+          {customLabelPart && customLabelPart}
+        </FormLabel>
+        {getInput(inputType, {
+          id: id,
+          className: clsx(
+            { 'error-input': touched ? touched[touchedKey] && hasError : hasError },
+            fullWidth && 'ac-form-field--full-width'
+          ),
+          defaultValue: defaultValue,
+          placeholder: placeholder,
+          customInput: customInput,
+          onBlur: onBlurHandler,
+          disabled: disabled,
+          onKeyDown: onKeyDown,
+          onChange: onChangeHandler,
+          value: value,
+          minLength: minLength,
+          maxLength: maxLength,
+          // Do not pass a type prop to Textarea
+          ...(inputType !== 'textarea' ? { type: inputType } : {}),
+          ...restProps,
+        })}
+      </FormField>
+      {touched ? (
+        <span className='ac-register-form-field-error'>
+          {touched[touchedKey] && restProps.errorMessage}
+        </span>
+      ) : (
+        <span className='ac-register-form-field-error'>
+          {restProps.errorMessage}
+        </span>
+      )}
+    </>
   );
 };
 
