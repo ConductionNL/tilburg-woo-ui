@@ -200,7 +200,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         const storeParams = {
           _page: pagination.page,
           _limit: pagination.limit,
-          '_extend[]': extend,
+          _extend: extend,
           ...searchParams,
         };
 
