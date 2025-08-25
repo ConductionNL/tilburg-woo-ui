@@ -475,20 +475,9 @@ const AcFormsProduct = ({ userStore, store }) => {
       try {
         const schemaPromises = schemaTypes.map(async (schemaType) => {
           try {
-            const response = await fetch(
-              `${BASE_URL}/openregister/api/schemas/${schemaType}`,
-              {
-                headers: { Accept: 'application/json' },
-              }
-            );
-            if (!response.ok) {
-              console.warn(
-                `Schema fetch failed for ${schemaType}:`,
-                response.status
-              );
-              return { schemaType, schema: null };
-            }
-            const schema = await response.json();
+            // Use object store's fetchSchema method which includes authentication
+            await store.object.fetchSchema(schemaType);
+            const schema = store.object.getSchema(`schema_${schemaType}`);
             console.log(`✅ Fetched schema for ${schemaType}:`, schema);
             return { schemaType, schema };
           } catch (error) {
@@ -664,23 +653,13 @@ const AcFormsProduct = ({ userStore, store }) => {
     };
     const fetchOptions = async () => {
       try {
-        // Add pagination parameters to limit initial load
-        const params = new URLSearchParams({
-          _limit: '50',
-          _page: '1',
+        // Use object store's fetchCollection method which includes authentication
+        await store.object.fetchCollection('vng-gemma', 'element', {
+          _limit: 50,
+          _page: 1,
         });
-        const endpoint = `${baseEndpoint}?${params}`;
-
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
+        const data = store.object.getCollection('vng-gemma_element');
+        const list = Array.isArray(data?.results) ? data.results : [];
         const options = list.map(mapToOption).filter((o) => o.label && o.value);
         if (isMounted) setStandaardOptionsState(options);
       } catch (e) {
@@ -844,7 +823,7 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       // Add search parameter if provided
       if (searchTerm && searchTerm.trim()) {
-        params.set('_search', searchTerm.trim());
+        queryParams._search = searchTerm.trim();
         console.log('🔍 API call with _search:', searchTerm.trim());
       }
 
@@ -945,33 +924,11 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       console.log('🚀 Submitting product to voorzieningen register:', productData);
 
-      const response = await fetch(
-        `${BASE_URL}/openregister/api/objects/voorzieningen/product`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(productData),
-        }
-      );
+      // Use object store's createObject method which includes authentication
+      const data = await store.object.createObject('voorzieningen', 'product', productData);
 
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.status === 'error') {
-          setRegisterCallBack('error');
-          setError({ message: data.message, errors: data.errors });
-        } else {
-          setRegisterCallBack('success');
-        }
-      } else {
-        setRegisterCallBack('error');
-        setError({
-          message: 'Er is een fout opgetreden bij het registreren.',
-          errors: null,
-        });
-      }
+      // createObject returns the created object directly on success
+      setRegisterCallBack('success');
     } catch (err) {
       setRegisterCallBack('error');
       setError({

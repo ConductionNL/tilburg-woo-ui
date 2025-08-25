@@ -195,6 +195,9 @@ const ConEditableDescription = ({
               }
               return isMarkdown ? (
                 <MDEditor.Markdown
+                  wrapperElement={{
+                    'data-color-mode': 'light',
+                  }}
                   source={v}
                   remarkPlugins={[
                     [remarkGfm, { singleTilde: false }],
