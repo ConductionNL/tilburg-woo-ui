@@ -26,12 +26,25 @@ const nextcloudApi = axios.create({
   },
 });
 
-// Add Authorization header interceptor for OAuth tokens
+// Add Authorization header interceptor for OAuth tokens AND basic auth fallback
 nextcloudApi.interceptors.request.use(
   (config) => {
     const accessToken = getCookie('nextcloud_access_token');
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
+    } else {
+      // Fallback to basic auth if available (same logic as main config)
+      try {
+        if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+          const basicAuth = window.app.store.user.basicAuthCredentials;
+          if (basicAuth && basicAuth.username && basicAuth.password) {
+            const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+            config.headers.Authorization = `Basic ${credentials}`;
+          }
+        }
+      } catch (error) {
+        // Silently fail if store is not available
+      }
     }
     return config;
   },
