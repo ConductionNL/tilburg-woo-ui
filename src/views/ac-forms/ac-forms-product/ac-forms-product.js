@@ -136,7 +136,7 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(true); // shows wether the product has multiple applicaties, used to dictate how to render the form
 
   // Ref for ProcessSteps container to add click handlers
