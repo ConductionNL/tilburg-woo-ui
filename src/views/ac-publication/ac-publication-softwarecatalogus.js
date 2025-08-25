@@ -59,10 +59,10 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
 
   const mapTabRow = (row) => {
     return [
-      <span>{row.title}</span>,
-      <span>{row.summary || 'Geen samenvatting beschikbaar'}</span>,
-      <span>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
-      <AcLink to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
+      <span key={row.id}>{row.title}</span>,
+      <span key={row.id}>{row.summary || 'Geen samenvatting beschikbaar'}</span>,
+      <span key={row.id}>{row.catalog.title || 'Geen catalogus beschikbaar'}</span>,
+      <AcLink key={row.id} to={`/publicatie/${row.id}`} onClick={() => TabOnClick(row.id)}>
         <VISUALS.ARROW_RIGHT />
         <Link>Bekijk</Link>
       </AcLink>,
@@ -163,6 +163,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
             </AcFlex>
             <AcTable rows={AcGetAdditionalInfoRow(get_single, getSearchPageURL)} />
           </div>
+
           <div className='ac-publication-three-column'>
             {/* <div>
               <Heading2 className='ac-publication-three-column-item-heading'>Applicatie</Heading2>
@@ -209,6 +210,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
               </div>
             </div> */}
           </div>
+
           {uniquePublicationTypes && uniquePublicationTypes.length > 0 && (
             <AcTabs
               selectedIndex={tabIndex}
@@ -217,7 +219,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
               <AcTabList>
                 {uniquePublicationTypes &&
                   uniquePublicationTypes.map((publicationType, idx) => (
-                    <AcTab selected={tabIndex === idx}>
+                    <AcTab key={idx} selected={tabIndex === idx}>
                       <span>{publicationType.title}</span>
                       <BadgeCounter className='ac-publication-badge-counter'>
                         {
@@ -233,7 +235,7 @@ const AcPublicationSoftwarecatalogus = ({ store: { publications } }) => {
               </AcTabList>
               {uniquePublicationTypes &&
                 uniquePublicationTypes.map((publicationType, idx) => (
-                  <AcTabPanel selected={tabIndex === idx}>
+                  <AcTabPanel key={idx} selected={tabIndex === idx}>
                     <AcTable
                       header={['Naam', 'Samenvatting', 'Catalogus']}
                       rows={get_relations
