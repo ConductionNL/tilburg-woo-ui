@@ -380,7 +380,6 @@ const AcPublication = observer(
                     !schema?.configuration?.excludedProperties?.includes(key)
                 )
                 .filter(([key]) => !configuredMetaFields.includes(key))
-
                 .filter(([key, fieldSchema]) =>
                   user?.isAuthenticated ? canReadField(user, fieldSchema) : true
                 )
