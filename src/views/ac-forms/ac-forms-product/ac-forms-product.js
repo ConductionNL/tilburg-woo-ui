@@ -251,17 +251,39 @@ const AcFormsProduct = ({ userStore, store }) => {
    */
   const [product, setProduct] = useState({
     // Schema-compliant product properties
-    naam: '',
+    naam: 'test',
     beschrijvingKort: '',
     beschrijvingLang: '',
-    website: '',
+    website: 'test.nl',
     logo: '',
     logoFilename: '',
     hostingLocatie: '',
     hostingJurisdictie: '',
     contactpersoon: null, // Contact person object reference
     cloudDienstverleningsmodel: '', // Cloud service model enum
-    modules: [], // Array of module IDs for existing modules + new module objects
+    modules: [
+      {
+        naam: 'at',
+        beschrijvingKort: 'a',
+        beschrijvingLang: '',
+        licentieType: 'Closed Source',
+        licentie: '',
+        hostingLocatie: '',
+        hostingJurisdictie: '',
+        standaarden: [],
+        referentieComponenten: ['id-5060f0fc-6198-4936-99d3-1c5a35aae8de'],
+        diensten: [],
+        koppelingen: [],
+        compliancy: [],
+        moduleVersies: [
+          {
+            versie: '1.0.0',
+            status: 'in gebruik',
+          },
+        ],
+        licentietype: 'Closed Source',
+      },
+    ], // Array of module IDs for existing modules + new module objects
 
     // Aanbieder/Organization reference (for all types)
     aanbieder: null, // Organization object reference - auto-set to user's active organization
@@ -339,6 +361,8 @@ const AcFormsProduct = ({ userStore, store }) => {
     organisatie: null,
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
+  // Loading state for standards step (used to disable next button)
+  const [standaardenLoading, setStandaardenLoading] = useState(false);
 
   /**
    * Generate a default/empty product object based on the product schema using ObjectStore
@@ -716,7 +740,15 @@ const AcFormsProduct = ({ userStore, store }) => {
     } else {
       // Fallback to hardcoded if schema doesn't have queryParams
       baseParams.gemmaType = 'Referentiecomponent';
-      baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+      // baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+    }
+
+    // // Ensure we do not send schema-provided _extend for referentiecomponenten requests
+    if (baseParams._extend) {
+      delete baseParams._extend;
+    }
+    if (baseParams['_extend[]']) {
+      delete baseParams['_extend[]'];
     }
 
     return baseParams;
@@ -806,7 +838,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     try {
       const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
       const params = new URLSearchParams({
-        _limit: searchTerm ? '50' : '20', // More results when searching
+        _limit: '50',
         _page: '1',
       });
 
@@ -883,8 +915,10 @@ const AcFormsProduct = ({ userStore, store }) => {
     [performModulesSearch, debouncedModulesSearch]
   );
 
-  // Don't pre-load modules - let users start typing to search
-  // This makes it clearer that the field is search-based
+  // Pre-load modules once so Applicatie B has initial options
+  useEffect(() => {
+    performModulesSearch('');
+  }, [performModulesSearch]);
 
   // Auto-set aanbieder to user's active organization
   useEffect(() => {
@@ -1096,6 +1130,7 @@ const AcFormsProduct = ({ userStore, store }) => {
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             schemas={schemas}
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
+            setStandaardenLoading={setStandaardenLoading}
           />
         );
       case 8:
@@ -1753,7 +1788,12 @@ const AcFormsProduct = ({ userStore, store }) => {
                                 currentStep === 0 && 'ac-register-form-next-button'
                               )}
                               icon={<VISUALS.ARROW_RIGHT />}
-                              disabled={getDisabledStatus(currentStep) || loading}
+                              disabled={
+                                getDisabledStatus(currentStep) ||
+                                loading ||
+                                (getLogicalStepFromIndex(currentStep) === 7 &&
+                                  standaardenLoading)
+                              }
                               onClick={() => {
                                 focusForm();
                                 setCurrentStep(currentStep + 1);
@@ -1802,9 +1842,9 @@ const AcFormsProduct = ({ userStore, store }) => {
                   <strong>Uw product is succesvol geregistreerd!</strong>
                 </Paragraph>
                 <Paragraph>
-                  Het product &quot;{product.naam || 'Onbekend product'}&quot; en
-                  alle bijbehorende modules, standaarden, koppelingen en diensten
-                  zijn opgeslagen in de software catalogus.
+                  Het product {product.naam || 'Onbekend product'} en alle
+                  bijbehorende modules, standaarden, koppelingen en diensten zijn
+                  opgeslagen in de software catalogus.
                 </Paragraph>
               </Alert>
 
@@ -1828,10 +1868,10 @@ const AcFormsProduct = ({ userStore, store }) => {
                 </UnorderedList>
               </div>
 
-              <div style={{ marginTop: '2rem' }}>
+              <div style={{ marginTop: '2rem', display: 'flex', gap: '10px' }}>
                 <AcButton
                   style='button'
-                  icon={<VISUALS.HOME />}
+                  icon={<VISUALS.HOUSE />}
                   onClick={() => (window.location.href = '/beheer')}
                 >
                   Terug naar beheer dashboard
@@ -1840,6 +1880,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                 <AcButton
                   style='button'
                   variant='secondary'
+                  icon={<VISUALS.CUBE />}
                   onClick={() => {
                     setRegisterCallBack(null);
                     setCurrentStep(0);
