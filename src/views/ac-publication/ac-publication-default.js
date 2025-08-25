@@ -303,6 +303,16 @@ const AcPublication = observer(
       return <AcLoader />;
     }
 
+    /*
+     * Remove the beschrijvingLang field from the showable data
+     * as the markdown editor already shows the description
+     */
+    const filteredData = useMemo(() => {
+      const x = { ...get_single };
+      delete x.beschrijvingLang;
+      return x;
+    }, [get_single]);
+
     return (
       <>
         <AcContainer compact margin='xl'>
@@ -347,24 +357,30 @@ const AcPublication = observer(
               />
             </AcFlex>
 
-            <div>
-              {get_single?.['@self']?.summary || get_single?.['@self']?.description}
-            </div>
+            {!!get_single?.['@self']?.summary && (
+              <div>{get_single?.['@self']?.summary}</div>
+            )}
 
-            <MDEditor.Markdown
-              source={get_single?.beschrijvingLang}
-              remarkPlugins={[
-                [remarkGfm, { singleTilde: false }],
-                remarkDefinitionList,
-                remarkEmoji,
-                remarkSupersub,
-                remarkMark,
-              ]}
-              rehypePlugins={[
-                rehypeSlug,
-                [remarkRehype, { handlers: { ...defListHastHandlers } }],
-              ]}
-            />
+            {!!get_single?.beschrijvingLang && (
+              <MDEditor.Markdown
+                wrapperElement={{
+                  'data-color-mode': 'light',
+                }}
+                source={get_single?.beschrijvingLang}
+                remarkPlugins={[
+                  [remarkGfm, { singleTilde: false }],
+                  remarkDefinitionList,
+                  remarkEmoji,
+                  remarkSupersub,
+                  remarkMark,
+                ]}
+                rehypePlugins={[
+                  rehypeSlug,
+                  [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                ]}
+              />
+            )}
+
             <div className='ac-beheer-details--grid'>
               {Object.entries(
                 sortPropertiesByOrder(get_single?.['@self']?.schema?.properties)
@@ -407,7 +423,7 @@ const AcPublication = observer(
                         </strong>
                         {formatBySchema(
                           schema,
-                          get_single,
+                          filteredData,
                           key,
                           schema?.configuration?.formatBySchemaOptions || {}
                         )}
@@ -429,7 +445,7 @@ const AcPublication = observer(
                         </strong>{' '}
                         {formatBySchema(
                           schema,
-                          get_single,
+                          filteredData,
                           key,
                           schema?.configuration?.formatBySchemaOptions || {}
                         )}
@@ -438,6 +454,7 @@ const AcPublication = observer(
                   }
                 })}
             </div>
+
             {/* Show only when there are primary attachments */}
             {getFilteredAttachments(true)?.length > 0 && (
               <div>
@@ -454,6 +471,7 @@ const AcPublication = observer(
                 />
               </div>
             )}
+
             {/* Show only if there are secondary attachments */}
             {getFilteredAttachments()?.length > 0 && (
               <div>
@@ -479,6 +497,7 @@ const AcPublication = observer(
                 </AcFlex>
               </div>
             )}
+
             <div>
               {uses && uses.length > 0 && (
                 <>
@@ -550,6 +569,7 @@ const AcPublication = observer(
                 </>
               )}
             </div>
+
             <div>
               {used && used.length > 0 && (
                 <>
