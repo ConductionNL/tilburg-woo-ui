@@ -23,7 +23,7 @@ const BeheerPageConfigFactory = {
     // TODO: use the extend 'all' instead of individual extends
     const baseConfig = {
       registerSlug: 'voorzieningen',
-      extend: [],
+      extend: ['all'],
       customHeaders: {},
       defaultHeaders: [],
       actionButtons: null,
@@ -41,7 +41,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'applicaties',
           title: 'Beheer Applicaties',
           routeType: 'applicaties',
-          extend: ['standaarden'],
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -76,7 +75,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'diensten',
           title: 'Beheer Dienst',
           routeType: 'diensten',
-          extend: ['voorziening', 'leverancier'],
           defaultHeaders: ['name', 'voorzieningName', 'email'],
           customHeaders: {
             voorziening: {
@@ -123,7 +121,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'voorzieningen-versie',
           title: 'Beheer Voorzieningen Versie',
           routeType: 'voorzieningen-versie',
-          extend: ['voorziening', 'kwetsbaarheden'],
           defaultHeaders: ['name', 'versienummer', 'releaseDatum', 'status'],
           customHeaders: {
             kwetsbaarheden: {
@@ -159,7 +156,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'organisaties',
           title: 'Beheer Organisaties',
           routeType: 'organisaties',
-          extend: ['contactgegevens'],
           defaultHeaders: [
             'organizationName',
             'website',
@@ -301,7 +297,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'kwetsbaarheden',
           title: 'Beheer Kwetsbaarheden',
           routeType: 'kwetsbaarheden',
-          extend: [],
           defaultHeaders: ['titel', 'ernst', 'detectedOn', 'status'],
           customHeaders: {
             ontdektOp: {
@@ -337,7 +332,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'gebruiken',
           title: 'Beheer Gebruiken',
           routeType: 'gebruiken',
-          extend: ['voorzieningId', 'organisatieId'],
           defaultHeaders: ['voorzieningId', 'diensten', 'status', 'contact'],
           customHeaders: {
             versieId: {
@@ -437,7 +431,6 @@ const BeheerPageConfigFactory = {
           paginationKey: 'overeenkomsten',
           title: 'Beheer Overeenkomsten',
           routeType: 'overeenkomsten',
-          extend: ['all'],
           defaultHeaders: [
             'name',
             'startDatum',
@@ -487,14 +480,14 @@ const BeheerPageConfigFactory = {
           modals: [...baseConfig.modals],
         };
 
+      case 'contactpersoon':
       case 'contactpersonen':
         return {
           ...baseConfig,
           schemaSlug: 'contactpersoon',
-          paginationKey: 'contactpersonen',
-          title: 'Beheer Contactpersonen',
-          routeType: 'contactpersonen',
-          extend: [],
+          paginationKey: 'contactpersoon',
+          title: 'Contactpersoon',
+          routeType: 'contactpersoon',
           defaultHeaders: ['name', 'status', 'lastActivity', 'email', 'organisatie'],
           customHeaders: {
             voornaam: {
@@ -558,7 +551,7 @@ const BeheerPageConfigFactory = {
           paginationKey: type,
           title: type.charAt(0).toUpperCase() + type.slice(1), // Remove "Beheer" prefix
           routeType: type,
-          extend: [],
+          extend: [...baseConfig.extend],
           defaultHeaders: [],
           customHeaders: {},
         };
