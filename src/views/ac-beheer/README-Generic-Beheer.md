@@ -68,7 +68,7 @@ The system cancels outdated requests to prevent race conditions:
 ```javascript
 // When switching object types
 useEffect(() => {
-  nextcloud.cancelAllRequests(); // Cancel all active requests
+  object.cancelAllRequests(); // Cancel all active requests
   // Reset state...
 }, [type]);
 
@@ -237,24 +237,16 @@ statusIcon: {
 The system uses AbortController to cancel requests:
 
 ```javascript
-// In useNextcloudRequests hook
-const controller = new AbortController();
-activeRequests.set(key, controller);
+// In ObjectStore
+// Create controller per request type and pass signal to axios
+const controller = this._createAbortController(requestType);
+await nextcloudApi.get(url, { signal: controller.signal });
 
-// Request includes signal
-const config = {
-  signal: controller.signal,
-  // ... other config
-};
+// Cancel specific request by type key
+object.cancelRequest(requestType);
 
-// Cancel specific request
-const cancelRequest = (requestKey) => {
-  const controller = activeRequests.get(requestKey);
-  if (controller) {
-    controller.abort();
-    activeRequests.delete(requestKey);
-  }
-};
+// Cancel all active requests
+object.cancelAllRequests();
 ```
 
 ### Request Keys
@@ -262,11 +254,11 @@ const cancelRequest = (requestKey) => {
 Each request gets a unique key for cancellation:
 
 ```javascript
-// Data request key
-const dataRequestKey = `key_data_${config.routeType}`;
+// Collection request key (type)
+const typeKey = object.getTypeFromParams(config.registerSlug, config.schemaSlug);
 
-// Schema request key
-const schemaRequestKey = `key_schema_${config.schemaSlug}`;
+// Schema request key (schema type)
+const schemaType = object.getSchemaType(config.schemaSlug);
 ```
 
 ### Error Handling
@@ -429,12 +421,8 @@ const AcBeheerApplicaties = () => {
 
 5. **Race Conditions**
 
-   - Ensure `nextcloud.cancelAllRequests()` is called when switching types
+   - Ensure `object.cancelAllRequests()` is called when switching types
    - Check request keys are unique
-
-6. **Pagination Issues**
-   - Verify pagination key is unique for each object type
-   - Check `usePaginationLimit` is used correctly
 
 ### Request Cancellation Issues
 
@@ -443,7 +431,7 @@ const AcBeheerApplicaties = () => {
    ```javascript
    // Check this is called when switching types
    useEffect(() => {
-     nextcloud.cancelAllRequests();
+     object.cancelAllRequests();
      // Reset state...
    }, [type]);
    ```
@@ -482,7 +470,7 @@ src/views/ac-beheer/
 
 ## Key Dependencies
 
-- `useNextcloudRequests` - Request management with cancellation
+- `ObjectStore` - Request management with cancellation
 - `usePaginationLimit` - Pagination with session storage
 - `@loadable/component` - Dynamic modal loading
 - `mobx-react-lite` - State management

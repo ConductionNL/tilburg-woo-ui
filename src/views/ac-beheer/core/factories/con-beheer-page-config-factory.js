@@ -31,6 +31,7 @@ const BeheerPageConfigFactory = {
       modals: ['add', 'edit', 'delete', 'import'],
       uniqueActions: [],
       statusIcon: null,
+      routeType: null,
     };
 
     switch (type) {
