@@ -303,16 +303,6 @@ const AcPublication = observer(
       return <AcLoader />;
     }
 
-    /*
-     * Remove the beschrijvingLang field from the showable data
-     * as the markdown editor already shows the description
-     */
-    const filteredData = useMemo(() => {
-      const x = { ...get_single };
-      delete x.beschrijvingLang;
-      return x;
-    }, [get_single]);
-
     return (
       <>
         <AcContainer compact margin='xl'>
@@ -423,7 +413,7 @@ const AcPublication = observer(
                         </strong>
                         {formatBySchema(
                           schema,
-                          filteredData,
+                          get_single,
                           key,
                           schema?.configuration?.formatBySchemaOptions || {}
                         )}
@@ -445,7 +435,7 @@ const AcPublication = observer(
                         </strong>{' '}
                         {formatBySchema(
                           schema,
-                          filteredData,
+                          get_single,
                           key,
                           schema?.configuration?.formatBySchemaOptions || {}
                         )}
