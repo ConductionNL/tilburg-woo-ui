@@ -20,10 +20,10 @@ const BeheerPageConfigFactory = {
    * @returns {Object} Configuration object
    */
   createConfig: (type) => {
-    // TODO: use the extend 'all' instead of individual extends
+    // Removed extend: ['all'] for performance reasons - use specific extends when needed
     const baseConfig = {
       registerSlug: 'voorzieningen',
-      extend: ['all'],
+      extend: [],
       customHeaders: {},
       defaultHeaders: [],
       actionButtons: null,
