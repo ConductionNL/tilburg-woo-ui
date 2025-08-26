@@ -91,14 +91,22 @@
 .ac-dashboard-wizard-grid {
   margin-top: 40px;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
+  // For screens smaller than 1440px, use 4 columns
+  @media (max-width: 1439px) {
+    grid-template-columns: repeat(4, 1fr);
   }
 
+  // For tablets, use 3 columns
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  // For small tablets, use 2 columns
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  // For mobile phones, use 1 column
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }

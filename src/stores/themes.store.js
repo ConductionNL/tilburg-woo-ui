@@ -41,9 +41,7 @@ const MOCK_THEMES = [
 
 let app = {};
 
-const DEFAULT_QUERY = {
-  extend: 'all',
-};
+const DEFAULT_QUERY = {};
 
 export class ThemesStore {
   constructor(store) {
