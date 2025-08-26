@@ -299,6 +299,8 @@ const AcFormsProduct = ({ userStore, store }) => {
     selectedAppBByRow: {},
     directionByRow: {},
     typeByRow: {},
+    koppelingIdByRow: {}, // rowId -> local koppeling id
+    moduleIndexByRow: {}, // rowId -> last persisted module (Applicatie A index)
   });
 
   const setProductData = useCallback((key, value) => {
@@ -829,7 +831,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     try {
       const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
       const params = new URLSearchParams({
-        _limit: '50',
+        _limit: '20',
         _page: '1',
       });
 
@@ -855,10 +857,11 @@ const AcFormsProduct = ({ userStore, store }) => {
       const mapToOption = (item, index) => {
         const label =
           item?.naam ||
+          item?.['@self']?.name ||
           item?.name ||
           item?.title ||
           item?.label ||
-          `Module ${index + 1}`;
+          (item?.id ? String(item.id) : `Module ${index + 1}`);
         const value = item?.value || item?.id || item?.slug || label;
         return {
           value: String(value),
@@ -905,6 +908,22 @@ const AcFormsProduct = ({ userStore, store }) => {
   // State for aanbieder selection
   const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
 
+  // Remove any local-only IDs (like _localId) before submitting
+  const stripLocalIds = (value) => {
+    if (Array.isArray(value)) {
+      return value.map(stripLocalIds);
+    }
+    if (value && typeof value === 'object') {
+      const out = {};
+      Object.keys(value).forEach((k) => {
+        if (k === '_localId') return;
+        out[k] = stripLocalIds(value[k]);
+      });
+      return out;
+    }
+    return value;
+  };
+
   const handleRegister = async () => {
     setLoading(true);
     try {
@@ -913,11 +932,10 @@ const AcFormsProduct = ({ userStore, store }) => {
         ...product,
         naam: product.naam || product.productName, // Ensure naam is properly set
       };
-
-      // console.debug('Submitting product to voorzieningen register:', productData);
+      const sanitized = stripLocalIds(productData);
 
       // Use object store's createObject method which includes authentication
-      await store.object.createObject('voorzieningen', 'product', productData);
+      await store.object.createObject('voorzieningen', 'product', sanitized);
 
       // createObject returns the created object directly on success
       setRegisterCallBack('success');
