@@ -46,7 +46,11 @@ const ConFormKoppelingenStage = memo(
     const allModules = getAllModulesForStages ? getAllModulesForStages() : [];
     const appOptions = allModules.map((module, index) => ({
       value: module.isExisting ? module.id : module.moduleIndex,
-      label: module.naam || `Module ${index + 1}`,
+      label:
+        module.naam ||
+        module?.['@self']?.name ||
+        module?.fullData?.['@self']?.name ||
+        (module.id ? String(module.id) : `Module ${index + 1}`),
       isExisting: !!module.isExisting,
     }));
 

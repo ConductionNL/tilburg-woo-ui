@@ -857,10 +857,11 @@ const AcFormsProduct = ({ userStore, store }) => {
       const mapToOption = (item, index) => {
         const label =
           item?.naam ||
+          item?.['@self']?.name ||
           item?.name ||
           item?.title ||
           item?.label ||
-          `Module ${index + 1}`;
+          (item?.id ? String(item.id) : `Module ${index + 1}`);
         const value = item?.value || item?.id || item?.slug || label;
         return {
           value: String(value),
