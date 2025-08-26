@@ -33,7 +33,7 @@ const AcDashboard = ({ store }) => {
             {availableWizards.length > 0 && (
               <div className='ac-dashboard-wizards'>
                 <Heading level={3}>Wizards</Heading>
-                <AcGrid columns={4} gap='xl' className='ac-dashboard-wizard-grid'>
+                <AcGrid columns={5} gap='xl' className='ac-dashboard-wizard-grid'>
                   {availableWizards.map((wizard) => (
                     <AcTile
                       key={wizard.id}

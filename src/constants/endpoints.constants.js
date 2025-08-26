@@ -61,12 +61,12 @@ export const ENDPOINTS = AcLockObject({
   MIJN_OMGEVING: {
     SEARCH: `/mijn-omgeving`, // GET
     SINGLE: (_id) =>
-      `/mijn-omgeving/${_id}?extend=all`, // GET
+      `/mijn-omgeving/${_id}`, // GET
   },
   AUTHENTICATION: {
     SEARCH: `/publications`, // GET
     SINGLE: (_id) =>
-      `/publications/${_id}?extend=all`, // GET
+      `/publications/${_id}`, // GET
   },
   FAQS: {
     INDEX: `/faqs`, // GET
