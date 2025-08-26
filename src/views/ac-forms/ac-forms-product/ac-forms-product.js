@@ -232,39 +232,17 @@ const AcFormsProduct = ({ userStore, store }) => {
    */
   const [product, setProduct] = useState({
     // Schema-compliant product properties
-    naam: 'test',
+    naam: '',
     beschrijvingKort: '',
     beschrijvingLang: '',
-    website: 'test.nl',
+    website: '',
     logo: '',
     logoFilename: '',
     hostingLocatie: '',
     hostingJurisdictie: '',
     contactpersoon: null, // Contact person object reference
     cloudDienstverleningsmodel: '', // Cloud service model enum
-    modules: [
-      {
-        naam: 'at',
-        beschrijvingKort: 'a',
-        beschrijvingLang: '',
-        licentieType: 'Closed Source',
-        licentie: '',
-        hostingLocatie: '',
-        hostingJurisdictie: '',
-        standaarden: [],
-        referentieComponenten: ['id-5060f0fc-6198-4936-99d3-1c5a35aae8de'],
-        diensten: [],
-        koppelingen: [],
-        compliancy: [],
-        moduleVersies: [
-          {
-            versie: '1.0.0',
-            status: 'in gebruik',
-          },
-        ],
-        licentietype: 'Closed Source',
-      },
-    ], // Array of module IDs for existing modules + new module objects
+    modules: [], // Array of module IDs for existing modules + new module objects
 
     // Aanbieder/Organization reference (for all types)
     aanbieder: null, // Organization object reference - auto-set to user's active organization
