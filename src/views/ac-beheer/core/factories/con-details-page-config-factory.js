@@ -22,14 +22,14 @@ const DetailsPageConfigFactory = {
       'uniqueActions',
     ]);
 
-    // For details pages, always extend with 'all' to get full related objects
-    // This allows us to display related object names instead of just IDs
-    const detailsExtend = [...(beheerConfig.extend || []), 'all'];
+    // For details pages, use only the base extend configuration for better performance
+    // Use specific extends when needed rather than 'all'
+    const detailsExtend = beheerConfig.extend || [];
 
     // Details-specific defaults (kept minimal)
     const baseDetailsConfig = {
       ...beheerConfig,
-      // Override extend parameter to include 'all' for details pages
+      // Use specific extends instead of 'all' for better performance
       extend: detailsExtend,
       // Fields to exclude from the details grid
       excludedProperties: ['id'],

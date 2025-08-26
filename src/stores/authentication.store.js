@@ -9,13 +9,10 @@ let app = {};
 const LIMIT = 7;
 
 export const DEFAULT_SEARCH_QUERY = {
-  extend: 'all',
   _limit: LIMIT,
 };
 
-const DEFAULT_QUERY = {
-  extend: 'all',
-};
+const DEFAULT_QUERY = {};
 
 export class AuthenticationStore {
   constructor(store) {
