@@ -1,7 +1,7 @@
 // Generic validation helpers for ConDynamicSchemaForm
 import { validateByFormat } from './format-validators';
 
-export const validateString = (value, schema) => {
+export const validateString = (value, schema, customErrorMessage) => {
   const errors = [];
   if (schema?.minLength != null && typeof value === 'string') {
     if ((value || '').length < schema.minLength)
@@ -9,18 +9,19 @@ export const validateString = (value, schema) => {
   }
   if (schema?.maxLength != null && typeof value === 'string') {
     if ((value || '').length > schema.maxLength)
-      errors.push(`Maximaal ${schema.maxLength} tekens`);
+      errors.push(customErrorMessage || `Maximaal ${schema.maxLength} tekens`);
   }
   if (schema?.pattern && typeof value === 'string') {
     try {
       const re = new RegExp(schema.pattern);
-      if (value && !re.test(value)) errors.push('Ongeldig patroon');
+      if (value && !re.test(value))
+        errors.push(customErrorMessage || 'Ongeldig patroon');
     } catch (_) {
       // ignore invalid pattern
     }
   }
   if (schema?.format && !validateByFormat(schema.format, value)) {
-    errors.push('Ongeldige waarde voor format');
+    errors.push(customErrorMessage || 'Ongeldige waarde voor format');
   }
   return errors;
 };
@@ -70,4 +71,3 @@ export const validateArray = (value, schema) => {
   }
   return errors;
 };
-

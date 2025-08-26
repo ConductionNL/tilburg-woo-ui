@@ -13,8 +13,6 @@ import { VISUALS } from '@src/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 
 // Import field components
-import MarkdownHtmlField from '../inputs/markdown-html-field';
-import ConLightweightMarkdownEditor from '../inputs/con-lightweight-markdown-editor';
 import JsonObjectField from '../inputs/json-object-field';
 import BooleanField from '../inputs/boolean-field';
 import NumberField from '../inputs/number-field';
@@ -45,7 +43,7 @@ const ReactSelectWithGlobalHack = (props) => {
     // Check if there are already options in global state
     const existingOptions = window.FORCE_DROPDOWN_UPDATE?.get(fieldPath);
     if (existingOptions && existingOptions.length > 0) {
-      console.log(
+      console.info(
         `🌍 HACK: Loading existing global options for ${fieldPath}:`,
         existingOptions
       );
@@ -55,7 +53,7 @@ const ReactSelectWithGlobalHack = (props) => {
     // Listen for global option updates
     const handleGlobalUpdate = (event) => {
       if (event.detail.fieldPath === fieldPath) {
-        console.log(
+        console.info(
           `🌍 HACK: Received global update for ${fieldPath}:`,
           event.detail.options
         );
@@ -103,6 +101,7 @@ const ReactSelectWithGlobalHack = (props) => {
  * @param {object} params.onSearchHandlers - Search handlers
  * @param {number} params.resetKey - Reset key for forcing re-renders
  * @param {number} params.forceRenderKey - Force render key for options updates
+ * @param {object} params.touched - Touched states by field path
  * @returns {React.ReactElement|null} Rendered field or null if not visible
  */
 export const renderField = ({
@@ -125,6 +124,7 @@ export const renderField = ({
   onSearchHandlers = {},
   resetKey = 0,
   forceRenderKey = 0,
+  touched = {},
 }) => {
   // Generate field configuration
   const fieldConfig = {
@@ -394,7 +394,7 @@ export const renderField = ({
           onChange={(val) => handleChange(val || '')}
           data-color-mode='light'
           visibleDragBar={false}
-          preview='edit'
+          preview='live'
           hideToolbar={isDisabled}
         />
       </div>
@@ -422,6 +422,8 @@ export const renderField = ({
         value={value ?? ''}
         placeholder={fieldConfig.placeholder}
         disabled={isDisabled}
+        touched={touched}
+        touchedKey={path}
         minLength={propertySchema?.minLength ?? undefined}
         maxLength={propertySchema?.maxLength ?? undefined}
         pattern={propertySchema?.pattern || undefined}
@@ -451,6 +453,8 @@ export const renderField = ({
         value={value || ''}
         placeholder={fieldConfig.placeholder}
         disabled={isDisabled}
+        touched={touched}
+        touchedKey={path}
         {...validation}
       />
     );

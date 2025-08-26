@@ -177,9 +177,7 @@ const PAPER_PLANE = loadable(() =>
   import('-!svg-react-loader!@assets/images/paper-plane.svg')
 );
 
-const XMARK = loadable(() =>
-  import('-!svg-react-loader!@assets/images/xmark.svg')
-);
+const XMARK = loadable(() => import('-!svg-react-loader!@assets/images/xmark.svg'));
 
 const PUBLISH = loadable(() =>
   import('-!svg-react-loader!@assets/images/publish.svg')
@@ -189,13 +187,9 @@ const PUBLISH_OFF = loadable(() =>
   import('-!svg-react-loader!@assets/images/publish-off.svg')
 );
 
-const LINK = loadable(() =>
-  import('-!svg-react-loader!@assets/images/link.svg')
-);
+const LINK = loadable(() => import('-!svg-react-loader!@assets/images/link.svg'));
 
-const MINUS = loadable(() =>
-  import('-!svg-react-loader!@assets/images/minus.svg')
-);
+const MINUS = loadable(() => import('-!svg-react-loader!@assets/images/minus.svg'));
 
 const ENVELOPE = loadable(() =>
   import('-!svg-react-loader!@assets/images/envelope.svg')

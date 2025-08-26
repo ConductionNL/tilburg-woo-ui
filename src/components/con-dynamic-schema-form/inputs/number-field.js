@@ -42,6 +42,7 @@ const NumberField = ({
       disabled={disabled}
       required={required}
       hasError={validation?.hasError}
+      
       {...inputProps}
     />
   );
