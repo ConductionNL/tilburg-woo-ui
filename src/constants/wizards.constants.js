@@ -45,7 +45,7 @@ export const DASHBOARD_WIZARDS = {
     name: 'Dienst toevoegen', 
     description: 'Registreer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
-    path: PATHS.FORMS_KOPPELING, // or separate dienst form if it exists
+    path: PATHS.FORMS_DIENST, // or separate dienst form if it exists
     requiresAuth: true,
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],

@@ -25,6 +25,7 @@ import {
   AcFormsGebruik,
   AcFormsProduct,
   AcFormsKoppeling,
+  ConFormsDienst,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -50,6 +51,7 @@ export const PATHS = AcLockObject({
   FORMS_GEBRUIK: '/forms/gebruik',
   FORMS_PRODUCT: '/forms/product',
   FORMS_KOPPELING: '/forms/koppeling',
+  FORMS_DIENST: '/forms/dienst',
   VIEWS: '/views/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
@@ -68,7 +70,9 @@ let containerConfig;
 try {
   containerConfig = require('@constants/container.constants');
 } catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
+  console.warn(
+    'Container constants not available, falling back to hostname-based logic'
+  );
   containerConfig = null;
 }
 
@@ -283,6 +287,16 @@ export const ROUTES = {
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Formulier Koppeling`,
     component: AcFormsKoppeling,
+  },
+  FORMS_DIENST: {
+    id: AcUUID(),
+    name: 'Formulier Dienst',
+    label: 'Formulier Dienst',
+    path: PATHS.FORMS_DIENST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulier Dienst`,
+    component: ConFormsDienst,
   },
   VIEWS: {
     id: AcUUID(),
