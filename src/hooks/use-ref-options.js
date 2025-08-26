@@ -55,6 +55,7 @@ export const useRefOptions = (
   const SCHEMA_REGISTER_MAPPING = {
     contactpersoon: 'voorzieningen',
     organisatie: 'voorzieningen',
+    product: 'voorzieningen',
     module: 'voorzieningen',
     element: 'vng-gemma', // Referentiecomponenten live in vng-gemma register
     // Add more mappings as needed
