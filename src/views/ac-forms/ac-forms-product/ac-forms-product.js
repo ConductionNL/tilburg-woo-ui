@@ -902,23 +902,17 @@ const AcFormsProduct = ({ userStore, store }) => {
   // ✅ Debounced search function for modules
   const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
 
-  // ✅ Public search function that handles immediate vs debounced calls
+  // ✅ Public search function that always debounces by 500ms (only on real typing)
   const searchModules = useCallback(
     (searchTerm = '') => {
-      // For empty/initial searches, call immediately
-      if (!searchTerm || !searchTerm.trim()) {
-        performModulesSearch(searchTerm);
-        return;
-      }
-
-      // For search terms, show loading immediately and use debounced search
+      // Only trigger debounced fetch; component will ensure it's only called on typing
       setModulesLoading(true);
-      debouncedModulesSearch(searchTerm);
+      debouncedModulesSearch(searchTerm || '');
     },
     [performModulesSearch, debouncedModulesSearch]
   );
 
-  // Pre-load modules disabled per request; options will be loaded on demand
+  // Pre-load modules once so Applicatie B has initial options
   useEffect(() => {
     performModulesSearch('');
   }, [performModulesSearch]);

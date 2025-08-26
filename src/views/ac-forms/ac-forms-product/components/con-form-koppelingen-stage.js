@@ -194,10 +194,11 @@ const ConFormKoppelingenStage = memo(
                             )
                           : null
                       }
-                      onMenuOpen={() => searchModules('')}
-                      onInputChange={(input) => {
-                        searchModules(input);
-                        return input;
+                      onInputChange={(inputValue, meta) => {
+                        if (meta && meta.action === 'input-change') {
+                          searchModules(inputValue || '');
+                        }
+                        return inputValue;
                       }}
                       isLoading={modulesLoading}
                       onChange={(opt) => {
