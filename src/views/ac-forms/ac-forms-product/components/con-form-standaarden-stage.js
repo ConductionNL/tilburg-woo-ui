@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AcButton, AcCheckbox } from '@src/molecules';
+import { AcCheckbox } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
-import { VISUALS } from '@src/constants';
 import {
   Paragraph,
   Table,
@@ -10,8 +9,6 @@ import {
   TableContainer,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
-import ReactSelect from 'react-select';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 /**
  * Standaarden Form - Simple Table View
@@ -23,12 +20,14 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
  * 4. Bewijs (file upload when compliant)
  */
 const ConFormStandaardenStage = ({
-  product,
+  _product,
   setProduct,
   referentieComponentenWithStandards,
-  schemas,
+  _schemas,
   getNewModulesWithApplicatieData,
   setStandaardenLoading: setParentStandaardenLoading,
+  standaardenOptions,
+  standaardenOptionsLoading,
 }) => {
   // ✅ SIMPLIFIED: Use helper method to get new modules with applicatie data
   const newModules = useMemo(() => {
@@ -37,10 +36,6 @@ const ConFormStandaardenStage = ({
 
   // State to track compliance and bewijs for each module-standard combination
   const [tableState, setTableState] = useState({});
-
-  // Cache of fetched standard details by id
-  const [standaardenById, setStandaardenById] = useState({});
-  const [standaardenLoading, setStandaardenLoading] = useState(false);
 
   // Normalize a standard reference to its id string
   const getStandardId = (standard) => {
@@ -51,104 +46,25 @@ const ConFormStandaardenStage = ({
     );
   };
 
-  // Collect unique standard ids from selected referentiecomponenten
-  const collectStandardIds = () => {
-    const ids = new Set();
-    referentieComponentenWithStandards.forEach((refComp) => {
-      const aanbevolen = Array.isArray(refComp.aanbevolenStandaarden)
-        ? refComp.aanbevolenStandaarden
-        : [];
-      const verplichte = Array.isArray(refComp.verplichteStandaarden)
-        ? refComp.verplichteStandaarden
-        : [];
-
-      [...aanbevolen, ...verplichte].forEach((st) => {
-        const id = getStandardId(st);
-        if (id) ids.add(String(id));
-      });
-    });
-    return Array.from(ids);
-  };
-
-  // Fetch standards by ids when entering this step or when selection changes
-  useEffect(() => {
-    const ids = collectStandardIds();
-    if (ids.length === 0) {
-      setStandaardenById({});
-      setParentStandaardenLoading?.(false);
-      return;
-    }
-
-    let abort = false;
-    const fetchStandards = async () => {
-      setStandaardenLoading(true);
-      setParentStandaardenLoading?.(true);
-      try {
-        const params = new URLSearchParams({
-          _limit: String(ids.length),
-          _page: '1',
-        });
-        // Append as array filter: identifier[]=...
-        ids.forEach((id) => params.append('identifier[]', id));
-        const endpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        let list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        // Fallback: some backends might expect id[] instead of identifier[]
-        if (!abort && list.length === 0) {
-          const altParams = new URLSearchParams({
-            _limit: String(ids.length),
-            _page: '1',
-          });
-          ids.forEach((id) => altParams.append('id[]', id));
-          const altEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element?${altParams}`;
-          const altRes = await fetch(altEndpoint, {
-            headers: { Accept: 'application/json' },
-          });
-          if (altRes.ok) {
-            const altData = await altRes.json();
-            list = Array.isArray(altData)
-              ? altData
-              : Array.isArray(altData?.results)
-              ? altData.results
-              : [];
-          }
-        }
-        const map = {};
-        list.forEach((item) => {
-          const id =
-            item?.id ||
-            item?.identifier ||
-            item?.value ||
-            item?.slug ||
-            item?.['@self']?.id;
-          if (!id) return;
-          map[String(id)] = item;
-        });
-        if (!abort) setStandaardenById(map);
-      } catch (_e) {
-        if (!abort) setStandaardenById({});
-      } finally {
-        if (!abort) {
-          setStandaardenLoading(false);
-          setParentStandaardenLoading?.(false);
-        }
+  // Build lookup map from provided standaarden options
+  const standaardenMap = useMemo(() => {
+    const map = {};
+    (standaardenOptions || []).forEach((opt) => {
+      const d = opt?.data || {};
+      const id = d?.id || d?.identifier || d?.value || d?.slug || opt?.value;
+      if (id != null) {
+        map[String(id)] = d;
       }
-    };
+    });
+    return map;
+  }, [standaardenOptions]);
 
-    fetchStandards();
-    return () => {
-      abort = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(referentieComponentenWithStandards)]);
+  // Reflect loading to parent if provided
+  useEffect(() => {
+    if (typeof setParentStandaardenLoading === 'function') {
+      setParentStandaardenLoading(!!standaardenOptionsLoading);
+    }
+  }, [standaardenOptionsLoading, setParentStandaardenLoading]);
 
   // Get all standards from referentieComponentenWithStandards with component tracking
   const getAllStandards = () => {
@@ -166,10 +82,7 @@ const ConFormStandaardenStage = ({
           const standardId = getStandardId(standard);
           if (standardId) {
             // Extract name from various possible locations
-            const fetched = standaardenById[String(standardId)] || {};
-
-            console.log(fetched.name);
-
+            const fetched = standaardenMap[String(standardId)] || {};
             const standardName =
               fetched.name ||
               fetched.xml?.name?._value ||
@@ -228,7 +141,7 @@ const ConFormStandaardenStage = ({
           const standardId = getStandardId(standard);
           if (standardId) {
             // Extract name from various possible locations
-            const fetched = standaardenById[String(standardId)] || {};
+            const fetched = standaardenMap[String(standardId)] || {};
             const standardName =
               fetched.name ||
               fetched.xml?.name?._value ||
@@ -284,38 +197,14 @@ const ConFormStandaardenStage = ({
 
   const allStandards = getAllStandards();
 
-  // Debug logging to understand data flow
-  console.log('🔍 StandaardenFormNew Debug:', {
-    newModules: newModules.map((module) => ({
-      moduleIndex: module.moduleIndex,
-      naam: module.naam,
-    })),
-    referentieComponentenWithStandards: referentieComponentenWithStandards.map(
-      (ref) => ({
-        id: ref.id,
-        moduleId: ref.moduleId,
-        aanbevolenCount: ref.aanbevolenStandaarden?.length || 0,
-        verplichteCount: ref.verplichteStandaarden?.length || 0,
-      })
-    ),
-    allStandards: allStandards.length,
-    tableState: Object.keys(tableState).length,
-  });
-
   // Initialize table state based on existing compliancy data and module-standard relationships
   useEffect(() => {
-    console.log('🔧 TableState useEffect triggered:', {
-      newModulesCount: newModules.length,
-      referentieComponentenCount: referentieComponentenWithStandards.length,
-    });
-
     const initialState = {};
 
     // Build state based on allStandards which now includes component information
     newModules.forEach((module) => {
       // ✅ SIMPLIFIED: Use moduleIndex as moduleId for consistency
       const moduleId = module.moduleIndex;
-      console.log('🔍 Processing module:', { moduleId, moduleNaam: module.naam });
 
       allStandards.forEach((standard) => {
         // Only include standards that are relevant to this module
@@ -361,13 +250,8 @@ const ConFormStandaardenStage = ({
       });
     });
 
-    console.log('🎯 Setting tableState with:', {
-      initialStateKeys: Object.keys(initialState).length,
-      sampleKeys: Object.keys(initialState).slice(0, 3),
-    });
-
     setTableState(initialState);
-  }, [newModules, referentieComponentenWithStandards, standaardenById]);
+  }, [newModules, referentieComponentenWithStandards, standaardenMap]);
 
   // Toggle compliance for a specific module-standard combination
   const toggleCompliance = (key, isCompliant) => {
@@ -422,26 +306,10 @@ const ConFormStandaardenStage = ({
         } else {
           compliancy.push(compliancyObject);
         }
-
-        console.log(
-          '✅ Added compliancy:',
-          compliancyObject,
-          'to module:',
-          currentEntry.moduleId
-        );
       } else {
         // Remove compliancy object
-        const beforeLength = compliancy.length;
         compliancy = compliancy.filter(
           (c) => c.standaardversie !== currentEntry.standardId
-        );
-
-        console.log(
-          '❌ Removed compliancy for standard:',
-          currentEntry.standardId,
-          'from module:',
-          currentEntry.moduleId,
-          `(${beforeLength} -> ${compliancy.length})`
         );
       }
 
@@ -504,9 +372,9 @@ const ConFormStandaardenStage = ({
           kwaliteit en betrouwbaarheid van uw oplossing. Standaarden zoals
           API-specificaties, beveiligingsstandaarden en
           gegevensuitwisselingsprotocollen zijn belangrijk voor organisaties om
-          risico's in te schatten. Deze informatie helpt bij due diligence processen
-          en architectuurbeslissingen. Compliance met erkende standaarden verhoogt
-          het vertrouwen in uw software.
+          risico&apos;s in te schatten. Deze informatie helpt bij due diligence
+          processen en architectuurbeslissingen. Compliance met erkende standaarden
+          verhoogt het vertrouwen in uw software.
         </Paragraph>
 
         <div
@@ -531,7 +399,7 @@ const ConFormStandaardenStage = ({
   }
 
   // If no standards available, show message
-  if (standaardenLoading) {
+  if (standaardenOptionsLoading) {
     return (
       <div>
         <h2 id='standaarden-section-title' className='sr-only'>
@@ -556,9 +424,9 @@ const ConFormStandaardenStage = ({
           kwaliteit en betrouwbaarheid van uw oplossing. Standaarden zoals
           API-specificaties, beveiligingsstandaarden en
           gegevensuitwisselingsprotocollen zijn belangrijk voor organisaties om
-          risico's in te schatten. Deze informatie helpt bij due diligence processen
-          en architectuurbeslissingen. Compliance met erkende standaarden verhoogt
-          het vertrouwen in uw software.
+          risico&apos;s in te schatten. Deze informatie helpt bij due diligence
+          processen en architectuurbeslissingen. Compliance met erkende standaarden
+          verhoogt het vertrouwen in uw software.
         </Paragraph>
 
         <div
@@ -595,7 +463,7 @@ const ConFormStandaardenStage = ({
   });
 
   // Generate table rows with correct rowspan logic
-  Object.entries(moduleGroups).forEach(([moduleId, entries]) => {
+  Object.entries(moduleGroups).forEach(([_moduleId, entries]) => {
     // Sort entries within each module for consistent display
     entries.sort((a, b) => {
       // Sort by type first (verplicht before aanbevolen), then by name
@@ -607,8 +475,6 @@ const ConFormStandaardenStage = ({
 
     entries.forEach((entry, index) => {
       const isFirstRowOfModule = index === 0;
-
-      console.log({ entry });
 
       tableRows.push(
         <TableRow key={entry.key}>

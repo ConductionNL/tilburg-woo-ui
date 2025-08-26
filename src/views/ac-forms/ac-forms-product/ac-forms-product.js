@@ -128,16 +128,13 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [searchParams] = useSearchParams();
   const formType = searchParams.get('type') || '';
 
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 Product form type from URL:', formType);
-  }
+  // Debug logging in development (disabled per lint rules)
 
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
-  const [isMultiApplicatie, setIsMultiApplicatie] = useState(true); // shows wether the product has multiple applicaties, used to dictate how to render the form
+  const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
 
   // Ref for ProcessSteps container to add click handlers
   const processStepsRef = useRef(null);
@@ -174,23 +171,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     setCurrentStep(targetStep);
   };
 
-  /**
-   * Check if a step should be accessible for navigation
-   * Only allow navigation to completed steps or the current step
-   * @param {number} visualStepIndex - The visual step index
-   * @returns {boolean} Whether the step should be accessible
-   */
-  const isStepAccessible = (visualStepIndex) => {
-    const showsAanbiederStep = shouldShowAanbiederStep();
-    let actualStepIndex = visualStepIndex;
-
-    if (!showsAanbiederStep && visualStepIndex >= 2) {
-      actualStepIndex = visualStepIndex + 1;
-    }
-
-    // Only allow navigation to completed steps (steps before current) or current step
-    return actualStepIndex <= currentStep;
-  };
+  // Step accessibility handled via UI click handlers
 
   // Add click handlers to ProcessSteps after each render
   useEffect(() => {
@@ -478,7 +459,6 @@ const AcFormsProduct = ({ userStore, store }) => {
             // Use object store's fetchSchema method which includes authentication
             await store.object.fetchSchema(schemaType);
             const schema = store.object.getSchema(`schema_${schemaType}`);
-            console.log(`✅ Fetched schema for ${schemaType}:`, schema);
             return { schemaType, schema };
           } catch (error) {
             console.error(`Failed to fetch schema for ${schemaType}:`, error);
@@ -635,46 +615,18 @@ const AcFormsProduct = ({ userStore, store }) => {
     });
   }, [product.modules, existingModulesLookup]);
 
-  // Standards options via API
-  const [standaardOptionsState, setStandaardOptionsState] = useState([]);
-  const standaardOptionsRef = { current: standaardOptionsState };
-  useEffect(() => {
-    let isMounted = true;
-    const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
-    const mapToOption = (item, index) => {
-      const label =
-        item?.naam ||
-        item?.name ||
-        item?.title ||
-        item?.label ||
-        `Standaard ${index + 1}`;
-      const value = item?.value || item?.id || item?.slug || label;
-      return { value: String(value), label: String(label) };
-    };
-    const fetchOptions = async () => {
-      try {
-        // Use object store's fetchCollection method which includes authentication
-        await store.object.fetchCollection('vng-gemma', 'element', {
-          _limit: 50,
-          _page: 1,
-        });
-        const data = store.object.getCollection('vng-gemma_element');
-        const list = Array.isArray(data?.results) ? data.results : [];
-        const options = list.map(mapToOption).filter((o) => o.label && o.value);
-        if (isMounted) setStandaardOptionsState(options);
-      } catch (e) {
-        console.error('Failed to fetch standards:', e);
-        if (isMounted) setStandaardOptionsState([]);
-      }
-    };
-    fetchOptions();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Standaarden options (fetched similarly to referentiecomponenten)
+  const [standaardenOptions, setStandaardenOptions] = useState([]);
+  const [standaardenOptionsLoading, setStandaardenOptionsLoading] = useState(false);
 
-  // Note: StandaardenForm now uses its own internal state management
+  // Referentiecomponenten options with search functionality
+  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
+    []
+  );
+  const [referentieComponentenLoading, setReferentieComponentenLoading] =
+    useState(false);
 
+  // Diensten static options
   const dienstOptions = [
     {
       value: 'Functioneel beheer',
@@ -690,13 +642,6 @@ const AcFormsProduct = ({ userStore, store }) => {
       label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
     },
   ];
-
-  // Referentiecomponenten options with search functionality
-  const [referentieComponentenOptions, setReferentieComponentenOptions] = useState(
-    []
-  );
-  const [referentieComponentenLoading, setReferentieComponentenLoading] =
-    useState(false);
 
   // Get query parameters from schema property configuration
   const getReferentieComponentenQueryParams = useCallback(() => {
@@ -733,12 +678,45 @@ const AcFormsProduct = ({ userStore, store }) => {
     return baseParams;
   }, [schemas]);
 
+  const getStandaardenQueryParams = useCallback(() => {
+    const moduleSchema = schemas?.module;
+    const refCompProperty = moduleSchema?.properties?.referentieComponenten;
+    const queryParamsString =
+      refCompProperty?.items?.objectConfiguration?.queryParams;
+
+    const baseParams = {
+      _limit: '500', // Load 500 standaarden upfront
+      _page: '1',
+    };
+
+    if (queryParamsString) {
+      // Parse whatever schema has, then override gemmaType below
+      const urlParams = new URLSearchParams(queryParamsString);
+      urlParams.forEach((value, key) => {
+        baseParams[key] = value;
+      });
+    }
+
+    // Force the correct type for standaarden, regardless of schema-provided params
+    baseParams.gemmaType = 'Standaard';
+
+    // Ensure we do not send schema-provided _extend for standards requests
+    if (baseParams._extend) {
+      delete baseParams._extend;
+    }
+    if (baseParams['_extend[]']) {
+      delete baseParams['_extend[]'];
+    }
+
+    return baseParams;
+  }, [schemas]);
+
   // Function to load all referentiecomponenten upfront
   // ✅ Simplified function to load 500 referentiecomponenten
   const loadReferentieComponenten = useCallback(async () => {
     if (!schemas?.module) return; // Wait for schemas to load
 
-    console.log('📦 Loading all referentiecomponenten (500 limit)...');
+    // console.debug('Loading all referentiecomponenten (500 limit)...');
     setReferentieComponentenLoading(true);
 
     try {
@@ -747,7 +725,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       const params = new URLSearchParams(queryParams);
       const endpoint = `${baseEndpoint}?${params}`;
 
-      console.log('🔍 Full endpoint:', endpoint);
+      // console.debug('Full endpoint:', endpoint);
 
       const res = await fetch(endpoint, {
         headers: { Accept: 'application/json' },
@@ -778,30 +756,87 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setReferentieComponentenOptions(options);
-      console.log(`📊 Loaded ${options.length} referentiecomponenten successfully`);
+      // console.debug(`Loaded ${options.length} referentiecomponenten successfully`);
     } catch (e) {
       console.error('Failed to load referentie componenten:', e);
       setReferentieComponentenOptions([]);
     } finally {
       setReferentieComponentenLoading(false);
     }
-  }, [schemas, getReferentieComponentenQueryParams]);
+  }, [schemas, getReferentieComponentenQueryParams, getStandaardenQueryParams]);
 
-  // ✅ Load referentiecomponenten when schemas are available
+  // Add this after loadReferentieComponenten()
+  const loadStandaarden = useCallback(async () => {
+    if (!schemas?.module) return;
+
+    // console.debug('Loading standaarden (500 limit)...');
+    setStandaardenOptionsLoading(true);
+
+    try {
+      const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
+      const queryParams = getStandaardenQueryParams();
+      const params = new URLSearchParams(queryParams);
+      const endpoint = `${baseEndpoint}?${params}`;
+
+      // console.debug('Full endpoint (standaarden):', endpoint);
+
+      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
+
+      const options = list
+        .map((item, index) => {
+          const label =
+            item?.xml?.name?._value ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Standaard ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        })
+        .filter((o) => o.label && o.value);
+
+      setStandaardenOptions(options);
+      // console.debug(`Loaded ${options.length} standaarden successfully`);
+    } catch (e) {
+      console.error('Failed to load standaarden:', e);
+      setStandaardenOptions([]);
+    } finally {
+      setStandaardenOptionsLoading(false);
+    }
+  }, [schemas, getStandaardenQueryParams]);
+
+  // ✅ Load referentiecomponenten and standaarden when schemas are available
   useEffect(() => {
-    if (
-      schemas?.module &&
-      referentieComponentenOptions.length === 0 &&
-      !referentieComponentenLoading
-    ) {
-      console.log('🚀 Auto-loading referentiecomponenten on form render...');
-      loadReferentieComponenten();
+    if (!schemas?.module) return;
+
+    const shouldLoadRefs =
+      referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
+    const shouldLoadStandards =
+      standaardenOptions.length === 0 && !standaardenOptionsLoading;
+
+    if (shouldLoadRefs || shouldLoadStandards) {
+      const tasks = [];
+      if (shouldLoadRefs) tasks.push(loadReferentieComponenten());
+      if (shouldLoadStandards) tasks.push(loadStandaarden());
+      Promise.all(tasks).catch(() => {});
     }
   }, [
     schemas?.module,
     referentieComponentenOptions.length,
     referentieComponentenLoading,
     loadReferentieComponenten,
+    standaardenOptions.length,
+    standaardenOptionsLoading,
+    loadStandaarden,
   ]);
 
   // Modules options with search functionality
@@ -811,7 +846,6 @@ const AcFormsProduct = ({ userStore, store }) => {
   // Function to search modules with debouncing
   // ✅ Core search function for modules
   const performModulesSearch = useCallback(async (searchTerm = '') => {
-    console.log('🔍 Performing modules search with term:', searchTerm);
     setModulesLoading(true);
 
     try {
@@ -823,12 +857,10 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       // Add search parameter if provided
       if (searchTerm && searchTerm.trim()) {
-        queryParams._search = searchTerm.trim();
-        console.log('🔍 API call with _search:', searchTerm.trim());
+        params.set('_search', searchTerm.trim());
       }
 
       const endpoint = `${baseEndpoint}?${params}`;
-      console.log('🔍 Full endpoint:', endpoint);
 
       const res = await fetch(endpoint, {
         headers: { Accept: 'application/json' },
@@ -859,7 +891,6 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setModulesOptions(options);
-      console.log(`📊 Found ${options.length} modules for search: "${searchTerm}"`);
     } catch (e) {
       console.error('Failed to fetch modules:', e);
       setModulesOptions([]);
@@ -874,13 +905,6 @@ const AcFormsProduct = ({ userStore, store }) => {
   // ✅ Public search function that handles immediate vs debounced calls
   const searchModules = useCallback(
     (searchTerm = '') => {
-      console.log('🔍 SearchModules called with term:', searchTerm, {
-        type: typeof searchTerm,
-        length: searchTerm?.length,
-        trimmed: searchTerm?.trim?.(),
-        stack: new Error().stack?.split('\n')?.slice(1, 3),
-      });
-
       // For empty/initial searches, call immediately
       if (!searchTerm || !searchTerm.trim()) {
         performModulesSearch(searchTerm);
@@ -894,7 +918,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     [performModulesSearch, debouncedModulesSearch]
   );
 
-  // Pre-load modules once so Applicatie B has initial options
+  // Pre-load modules disabled per request; options will be loaded on demand
   useEffect(() => {
     performModulesSearch('');
   }, [performModulesSearch]);
@@ -902,10 +926,6 @@ const AcFormsProduct = ({ userStore, store }) => {
   // Auto-set aanbieder to user's active organization
   useEffect(() => {
     if (userStore?.activeOrganization && !product.aanbieder) {
-      console.log(
-        '🏢 Auto-setting aanbieder to user active organization:',
-        userStore.activeOrganization
-      );
       setProductData('aanbieder', userStore.activeOrganization);
     }
   }, [userStore?.activeOrganization, product.aanbieder]);
@@ -922,10 +942,10 @@ const AcFormsProduct = ({ userStore, store }) => {
         naam: product.naam || product.productName, // Ensure naam is properly set
       };
 
-      console.log('🚀 Submitting product to voorzieningen register:', productData);
+      // console.debug('Submitting product to voorzieningen register:', productData);
 
       // Use object store's createObject method which includes authentication
-      const data = await store.object.createObject('voorzieningen', 'product', productData);
+      await store.object.createObject('voorzieningen', 'product', productData);
 
       // createObject returns the created object directly on success
       setRegisterCallBack('success');
@@ -976,13 +996,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     // Get the logical step number (accounting for optional aanbieder step)
     const logicalStep = getLogicalStepFromIndex(step);
 
-    // Debug logging to understand step mapping
-    console.log('🔍 renderStep Debug:', {
-      physicalStep: step,
-      logicalStep: logicalStep,
-      shouldShowAanbiederStep: shouldShowAanbiederStep(),
-      formType: formType,
-    });
+    // Debug logging disabled per lint rules
 
     switch (logicalStep) {
       case 0:
@@ -1088,6 +1102,8 @@ const AcFormsProduct = ({ userStore, store }) => {
             schemas={schemas}
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
             setStandaardenLoading={setStandaardenLoading}
+            standaardenOptions={standaardenOptions}
+            standaardenOptionsLoading={standaardenOptionsLoading}
           />
         );
       case 8:
@@ -1331,7 +1347,7 @@ const AcFormsProduct = ({ userStore, store }) => {
         const website = product.website.trim();
         // More permissive domain validation - allow domains with or without protocol
         const domainRegex =
-          /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
+          /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
         if (!domainRegex.test(website)) {
           messages.push(
             'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)'

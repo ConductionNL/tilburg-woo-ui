@@ -394,7 +394,7 @@ export const renderField = ({
           onChange={(val) => handleChange(val || '')}
           data-color-mode='light'
           visibleDragBar={false}
-          preview='edit'
+          preview='live'
           hideToolbar={isDisabled}
         />
       </div>

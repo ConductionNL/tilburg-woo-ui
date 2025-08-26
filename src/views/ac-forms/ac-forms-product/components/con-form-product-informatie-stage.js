@@ -88,6 +88,7 @@ const ConFormProductInformatieStage = memo(
               onChange={(value) => setProductData('beschrijvingKort', value)}
               isDisabled={loading}
               width='full'
+              
               schemas={schemas}
             />
 
