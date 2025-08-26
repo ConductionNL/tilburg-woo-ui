@@ -3,11 +3,9 @@
  * These utilities can be used by standalone schema-enhanced fields
  */
 
-import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
 import { shouldShowFormField } from '@src/utilities/con-authentication-filters';
 import { getFieldAuthorizationState } from '@utils/field-authorization';
 import { validateArray, validateNumber, validateString } from './validation';
-import { getDefaultValue } from './defaults';
 
 /**
  * Extracts the schema slug from a $ref value
@@ -48,12 +46,12 @@ export const setNestedValue = (path, data, value) => {
  */
 export const getFieldRefSchemaSlug = (propertySchema) => {
   if (propertySchema.$ref) {
-    const refMatch = propertySchema.$ref.match(/\/schemas\/([^\/]+)$/);
+    const refMatch = propertySchema.$ref.match(/\/schemas\/([^/]+)$/);
     return refMatch?.[1] || null;
   }
 
   if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
-    const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
+    const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^/]+)$/);
     return refMatch?.[1] || null;
   }
 
@@ -69,7 +67,13 @@ export const getFieldRefSchemaSlug = (propertySchema) => {
  * @param {object} optionsProviders - Options providers for select fields
  * @returns {object} Field configuration with type, component, label, placeholder, etc.
  */
-export const getFieldConfig = (propertyPath, propertySchema, isRequired, fieldConfigs = {}, optionsProviders = {}) => {
+export const getFieldConfig = (
+  propertyPath,
+  propertySchema,
+  isRequired,
+  fieldConfigs = {},
+  optionsProviders = {}
+) => {
   const baseConfig = {
     label:
       propertySchema.title ||
@@ -139,10 +143,7 @@ export const getFieldConfig = (propertyPath, propertySchema, isRequired, fieldCo
       type: 'boolean',
       component: 'Boolean',
     };
-  } else if (
-    propertySchema.type === 'number' ||
-    propertySchema.type === 'integer'
-  ) {
+  } else if (propertySchema.type === 'number' || propertySchema.type === 'integer') {
     schemaConfig = {
       ...baseConfig,
       type: 'number',
@@ -177,11 +178,7 @@ export const getFieldConfig = (propertyPath, propertySchema, isRequired, fieldCo
         type: 'text',
         component: 'AcTextarea',
       };
-    } else if (
-      format === 'date' ||
-      format === 'date-time' ||
-      format === 'time'
-    ) {
+    } else if (format === 'date' || format === 'date-time' || format === 'time') {
       schemaConfig = {
         ...baseConfig,
         type: 'date',
@@ -291,7 +288,16 @@ export const getFieldConfig = (propertyPath, propertySchema, isRequired, fieldCo
 /**
  * Determines if a field should be visible based on its configuration
  */
-export const getFieldVisibility = (propertyPath, fieldConfig, propertySchema, formData, userIsAuthenticated, context, user, isCreateMode) => {
+export const getFieldVisibility = (
+  propertyPath,
+  fieldConfig,
+  propertySchema,
+  formData,
+  userIsAuthenticated,
+  context,
+  user,
+  isCreateMode
+) => {
   // First check traditional visibility rules
   const isVisibleByConfig = shouldShowFormField(
     fieldConfig,
@@ -305,11 +311,7 @@ export const getFieldVisibility = (propertyPath, fieldConfig, propertySchema, fo
 
   // Then check field-level authorization if user object is available
   if (user && propertySchema) {
-    const authState = getFieldAuthorizationState(
-      user,
-      propertySchema,
-      isCreateMode
-    );
+    const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
 
     return authState.visible;
   }
@@ -321,7 +323,12 @@ export const getFieldVisibility = (propertyPath, fieldConfig, propertySchema, fo
 /**
  * Gets the options array for select/multi-select fields
  */
-export const getFieldOptions = (propertyPath, propertySchema, optionsProviders = {}, formData = {}) => {
+export const getFieldOptions = (
+  propertyPath,
+  propertySchema,
+  optionsProviders = {},
+  formData = {}
+) => {
   // Priority 1: Schema enum takes highest priority
   if (propertySchema.enum) {
     return propertySchema.enum.map((option) => ({
@@ -351,7 +358,16 @@ export const getFieldOptions = (propertyPath, propertySchema, optionsProviders =
 /**
  * Gets the disabled state for a specific field
  */
-export const getFieldDisabled = (propertyPath, propertySchema, fieldConfig, disabledStates = {}, honorImmutable = false, user = null, isCreateMode = false, formData = {}) => {
+export const getFieldDisabled = (
+  propertyPath,
+  propertySchema,
+  fieldConfig,
+  disabledStates = {},
+  honorImmutable = false,
+  user = null,
+  isCreateMode = false,
+  formData = {}
+) => {
   // Priority 1: Check fieldConfig.disabled first (highest priority)
   if (fieldConfig?.disabled !== undefined) {
     return fieldConfig.disabled;
@@ -364,11 +380,7 @@ export const getFieldDisabled = (propertyPath, propertySchema, fieldConfig, disa
 
   // Priority 3: Check field-level authorization if user object is available
   if (user && propertySchema) {
-    const authState = getFieldAuthorizationState(
-      user,
-      propertySchema,
-      isCreateMode
-    );
+    const authState = getFieldAuthorizationState(user, propertySchema, isCreateMode);
     if (!authState.editable) {
       return true;
     }
@@ -384,7 +396,13 @@ export const getFieldDisabled = (propertyPath, propertySchema, fieldConfig, disa
 /**
  * Validates a field based on its configuration and current value.
  */
-export const getFieldValidation = (propertyPath, fieldConfig, formData = {}, validationStates = {}, valueOverride) => {
+export const getFieldValidation = (
+  propertyPath,
+  fieldConfig,
+  formData = {},
+  validationStates = {},
+  valueOverride
+) => {
   if (validationStates[propertyPath]) {
     return validationStates[propertyPath];
   }
@@ -425,8 +443,37 @@ export const getFieldValidation = (propertyPath, fieldConfig, formData = {}, val
     fieldConfig.component === 'AcTextarea' ||
     fieldConfig.component === 'WysiwygMarkdown'
   ) {
-    errors = errors.concat(validateString(value, fieldConfig.schema || {}));
+    // If a custom validator is provided, use its outcome instead of validateString
+    const customValidator = fieldConfig.validation?.custom;
+    if (typeof customValidator === 'function') {
+      try {
+        const result = customValidator(value, formData, fieldConfig);
+        if (Array.isArray(result)) {
+          errors = errors.concat(result);
+        } else if (result === false) {
+          errors.push(
+            fieldConfig.validation?.customErrorMessage || 'Ongeldige waarde'
+          );
+        } else if (typeof result === 'string') {
+          errors.push(result);
+        }
+        // If result is true/undefined/null, treat as no errors
+      } catch (_) {
+        errors.push(
+          fieldConfig.validation?.customErrorMessage || 'Ongeldige waarde'
+        );
+      }
+    } else {
+      errors = errors.concat(
+        validateString(
+          value,
+          fieldConfig.schema || {},
+          fieldConfig.validation?.customErrorMessage
+        )
+      );
+    }
   }
+
 
   return {
     hasError: errors.length > 0,
@@ -438,46 +485,48 @@ export const getFieldValidation = (propertyPath, fieldConfig, formData = {}, val
 /**
  * Handles field value changes for nested properties
  */
-export const handleFieldChange = (propertyPath, fieldConfig, onFieldChange, formData = {}) => (value) => {
-  let processedValue = value;
+export const handleFieldChange =
+  (propertyPath, fieldConfig, onFieldChange, formData = {}) =>
+  (value) => {
+    let processedValue = value;
 
-  // Handle multi-select values
-  if (fieldConfig.isMulti && Array.isArray(value)) {
-    processedValue = value.map((item) => item.value);
-  } else if (fieldConfig.component === 'ReactSelect' && !fieldConfig.isMulti) {
-    processedValue = value?.value;
-  }
-
-  // For nested properties, we need to handle the update differently
-  if (propertyPath.includes('.')) {
-    // Extract the top-level property name and the nested path
-    const [topLevelProperty, ...nestedPath] = propertyPath.split('.');
-
-    // Get the current value of the top-level property
-    const currentTopLevelValue = formData[topLevelProperty] || {};
-
-    // Create a new object with the updated nested value
-    const updatedTopLevelValue = { ...currentTopLevelValue };
-    let current = updatedTopLevelValue;
-
-    // Navigate to the parent of the target property
-    for (let i = 0; i < nestedPath.length - 1; i++) {
-      if (!current[nestedPath[i]]) {
-        current[nestedPath[i]] = {};
-      }
-      current = current[nestedPath[i]];
+    // Handle multi-select values
+    if (fieldConfig.isMulti && Array.isArray(value)) {
+      processedValue = value.map((item) => item.value);
+    } else if (fieldConfig.component === 'ReactSelect' && !fieldConfig.isMulti) {
+      processedValue = value?.value;
     }
 
-    // Set the final value
-    current[nestedPath[nestedPath.length - 1]] = processedValue;
+    // For nested properties, we need to handle the update differently
+    if (propertyPath.includes('.')) {
+      // Extract the top-level property name and the nested path
+      const [topLevelProperty, ...nestedPath] = propertyPath.split('.');
 
-    // Call onFieldChange with the top-level property name and the updated object
-    onFieldChange(topLevelProperty, updatedTopLevelValue);
-  } else {
-    // For non-nested properties, use the original behavior
-    onFieldChange(propertyPath, processedValue);
-  }
-};
+      // Get the current value of the top-level property
+      const currentTopLevelValue = formData[topLevelProperty] || {};
+
+      // Create a new object with the updated nested value
+      const updatedTopLevelValue = { ...currentTopLevelValue };
+      let current = updatedTopLevelValue;
+
+      // Navigate to the parent of the target property
+      for (let i = 0; i < nestedPath.length - 1; i++) {
+        if (!current[nestedPath[i]]) {
+          current[nestedPath[i]] = {};
+        }
+        current = current[nestedPath[i]];
+      }
+
+      // Set the final value
+      current[nestedPath[nestedPath.length - 1]] = processedValue;
+
+      // Call onFieldChange with the top-level property name and the updated object
+      onFieldChange(topLevelProperty, updatedTopLevelValue);
+    } else {
+      // For non-nested properties, use the original behavior
+      onFieldChange(propertyPath, processedValue);
+    }
+  };
 
 /**
  * Determines the size class for a field based on its type and format
@@ -497,8 +546,14 @@ export const getFieldSizeClass = (propertyPath, propertySchema, fieldConfig) => 
   }
 
   // File upload fields: half width by default (unless overridden by explicit size above)
-  if (component === 'File' || fieldConfig.type === 'file' || propertySchema.type === 'file' || 
-      format === 'base64' || format === 'binary' || format === 'byte') {
+  if (
+    component === 'File' ||
+    fieldConfig.type === 'file' ||
+    propertySchema.type === 'file' ||
+    format === 'base64' ||
+    format === 'binary' ||
+    format === 'byte'
+  ) {
     return 'field-size-half';
   }
 

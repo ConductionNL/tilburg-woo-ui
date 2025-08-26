@@ -95,6 +95,7 @@ import { useRefOptions } from '../../hooks/use-ref-options';
  * @param {Object} props.context - Additional context for visibility functions
  * @param {string} props.width - Override field width: 'half' or 'full' - overrides automatic width detection
  * @param {boolean} props.showLabel - Whether to show the field label (default: true)
+ * @param {Object} props.touched - Touched states by field path
  * @param {boolean} props.showDescription - Whether to show the field description/info (default: true)
  * @param {Object} props.store - MobX store (injected by withStore)
  */
@@ -117,11 +118,11 @@ const ConSchemaEnhancedField = ({
   isCreateMode = false,
   honorImmutable = false,
   context = {},
+  touched = null,
   width = null, // Override field width ('half' or 'full')
   showLabel = true, // NEW: Whether to show field label
   showDescription = true, // NEW: Whether to show field description/info
   store = null, // MobX store injected by withStore
-  ...otherProps
 }) => {
   const [resetKey, setResetKey] = useState(0);
 
@@ -213,7 +214,7 @@ const ConSchemaEnhancedField = ({
 
   // ✅ CONDITIONAL REF OPTIONS: Only use internal $ref system when NO custom search is provided
   const useCustomSearch = !!onSearch;
-  
+
   // Create a mock schema for useRefOptions if we have a valid property schema AND no custom search
   const mockSchemaForRefOptions = useMemo(() => {
     if (!propertySchema || useCustomSearch) return null;
@@ -226,8 +227,9 @@ const ConSchemaEnhancedField = ({
   }, [fieldName, propertySchema, useCustomSearch]);
 
   // Use useRefOptions for automatic $ref field handling ONLY when no custom search is provided
-  const shouldUseRefOptions = store && store.object && !useCustomSearch && mockSchemaForRefOptions;
-  const refOptionsResult = shouldUseRefOptions 
+  const shouldUseRefOptions =
+    store && store.object && !useCustomSearch && mockSchemaForRefOptions;
+  const refOptionsResult = shouldUseRefOptions
     ? useRefOptions(
         store,
         'openregister', // Current register - hardcoded for now
@@ -243,7 +245,7 @@ const ConSchemaEnhancedField = ({
 
   // Debug RefOptions status
   if (process.env.NODE_ENV === 'development' && fieldName === 'modules') {
-    console.log(`🔧 ConSchemaEnhancedField [${fieldName}] RefOptions:`, {
+    console.info(`🔧 ConSchemaEnhancedField [${fieldName}] RefOptions:`, {
       useCustomSearch,
       hasCustomOnSearch: !!onSearch,
       shouldUseRefOptions,
@@ -259,7 +261,7 @@ const ConSchemaEnhancedField = ({
     process.env.NODE_ENV === 'development' &&
     (fieldName === 'contactpersoon' || fieldName === 'aanbieder')
   ) {
-    console.log(`🏪 Store debug for [${fieldName}]:`, {
+    console.info(`🏪 Store debug for [${fieldName}]:`, {
       hasStore: !!store,
       hasObject: !!store?.object,
       storeKeys: store ? Object.keys(store) : [],
@@ -270,13 +272,15 @@ const ConSchemaEnhancedField = ({
   // Extract options and loading state from useRefOptions if it's a $ref field
   const hasRefProperty =
     propertySchema?.$ref || (propertySchema?.items && propertySchema.items.$ref);
-  
-  const effectiveOptionsProvider = (hasRefProperty && !useCustomSearch)
-    ? refOptionsResult?.optionsProviders?.[fieldName] || []
-    : optionsProvider;
-  const effectiveIsLoading = (hasRefProperty && !useCustomSearch)
-    ? refOptionsResult?.loadingStates?.[fieldName] || false
-    : isLoading;
+
+  const effectiveOptionsProvider =
+    hasRefProperty && !useCustomSearch
+      ? refOptionsResult?.optionsProviders?.[fieldName] || []
+      : optionsProvider;
+  const effectiveIsLoading =
+    hasRefProperty && !useCustomSearch
+      ? refOptionsResult?.loadingStates?.[fieldName] || false
+      : isLoading;
 
   // Debug logging
   if (
@@ -286,7 +290,7 @@ const ConSchemaEnhancedField = ({
       fieldName === 'aanbieder' ||
       fieldName === 'modules')
   ) {
-    console.log(`🔍 ConSchemaEnhancedField [${fieldName}]:`, {
+    console.info(`🔍 ConSchemaEnhancedField [${fieldName}]:`, {
       hasRefProperty,
       useCustomSearch,
       refProperty: propertySchema?.$ref,
@@ -307,7 +311,9 @@ const ConSchemaEnhancedField = ({
   const effectiveOnSearchHandlers = useMemo(() => {
     // ✅ PRIORITY FIX: Always prefer custom onSearch over internal $ref search
     if (onSearch) {
-      console.log(`🔍 ConSchemaEnhancedField: Using CUSTOM search handler for ${fieldName} (disabling internal $ref)`);
+      console.info(
+        `🔍 ConSchemaEnhancedField: Using CUSTOM search handler for ${fieldName} (disabling internal $ref)`
+      );
       return { handleSearch: onSearch };
     }
 
@@ -316,10 +322,12 @@ const ConSchemaEnhancedField = ({
       return {};
     }
 
-    console.log(`🔍 ConSchemaEnhancedField: Using INTERNAL $ref search for ${fieldName}`);
+    console.info(
+      `🔍 ConSchemaEnhancedField: Using INTERNAL $ref search for ${fieldName}`
+    );
     return {
       handleSearch: async (fieldPath, query) => {
-        console.log(
+        console.info(
           `🔍 ConSchemaEnhancedField: Internal search triggered for ${fieldPath}:`,
           query
         );
@@ -331,6 +339,7 @@ const ConSchemaEnhancedField = ({
   }, [onSearch, hasRefProperty, refOptionsResult?.fetchOptions, fieldName]);
 
   // Merge width override with customProps for field configuration
+
   const fieldConfig = {
     ...customProps,
     // Override size/width if provided
@@ -345,6 +354,7 @@ const ConSchemaEnhancedField = ({
     path: fieldName,
     propertySchema,
     required: propertySchema.required || false,
+    touched: touched,
     formData: updatedFormData,
     fieldConfigs: { [fieldName]: fieldConfig },
     customFieldComponents: {},

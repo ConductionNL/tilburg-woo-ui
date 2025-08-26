@@ -134,18 +134,13 @@ const AcFormsKoppeling = ({ store }) => {
           setSchemas(fetchedSchemas);
 
           // Initialize default koppeling object based on schema
-          const defaultKoppeling = createDefaultFormObject(
-            store,
-            koppelingSchema,
-            'koppeling',
-            {
-              // Add any specific defaults for koppeling form
-              status: 'concept',
-              richting: '',
-              type: '',
-              beschrijving: '',
-            }
-          );
+          const defaultKoppeling = createDefaultFormObject(store, koppelingSchema, 'koppeling', {
+            // Add any specific defaults for koppeling form
+            status: 'concept',
+            richting: '',
+            type: '',
+            beschrijving: ''
+          });
           setKoppeling(defaultKoppeling);
         }
       } catch (error) {
@@ -513,7 +508,6 @@ const AcFormsKoppeling = ({ store }) => {
                               Applicatie A
                             </label>
                             <ReactSelect
-                              isClearable
                               className={clsx(
                                 'ac-beheer-select',
                                 loading && 'ac-beheer-select--disabled'
@@ -573,7 +567,6 @@ const AcFormsKoppeling = ({ store }) => {
                                 'ac-beheer-select',
                                 loading && 'ac-beheer-select--disabled'
                               )}
-                              isClearable
                               options={modulesOptions}
                               value={
                                 selectedAppBByRow[rowId] != null
@@ -851,7 +844,10 @@ const AcFormsKoppeling = ({ store }) => {
           </h3>
 
           <div className='ac-register-container ac-forms-product'>
-            <div ref={processStepsRef} className='ac-register-process-steps'>
+            <div 
+              ref={processStepsRef}
+              className='ac-register-process-steps'
+            >
               <ProcessSteps
                 steps={(() => {
                   const steps = [

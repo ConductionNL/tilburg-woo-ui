@@ -63,6 +63,18 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
     color: 'blue'
+  },
+  KOPPELING: {
+    id: 'koppeling',
+    name: 'Koppeling toevoegen',
+    description: 'Registreer een koppeling tussen een product en een dienst',
+    icon: VISUALS.LINK,
+    path: PATHS.FORMS_KOPPELING,
+    requiresAuth: true,
+    requiresOrganization: true,
+    groupTypes: ['gemeente', 'samenwerking', 'community'],
+    params: {},
+    color: 'blue'
   }
 };
 

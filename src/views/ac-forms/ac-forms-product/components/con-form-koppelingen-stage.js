@@ -13,9 +13,9 @@ import ReactSelect from 'react-select';
 
 /**
  * Koppelingen Stage Component
- * 
+ *
  * This stage manages connections/integrations between applications in the product.
- * 
+ *
  * @param {Object} product - The product object containing form data
  * @param {Function} setProduct - Function to update the entire product object
  * @param {Array} modulesOptions - Available modules for connections
@@ -24,12 +24,13 @@ import ReactSelect from 'react-select';
  */
 const ConFormKoppelingenStage = memo(
   ({
-    product,
     setProduct,
     modulesOptions,
+    modulesLoading,
     koppelingenFormState,
     setKoppelingenFormState,
     getAllModulesForStages,
+    searchModules,
   }) => {
     const { rows, selectedAppAByRow, selectedAppBByRow, directionByRow, typeByRow } =
       koppelingenFormState;
@@ -41,6 +42,10 @@ const ConFormKoppelingenStage = memo(
       label: module.naam || `Module ${index + 1}`,
       isExisting: !!module.isExisting,
     }));
+
+    React.useEffect(() => {
+      getAllModulesForStages();
+    }, []);
 
     const directionOptions = [
       { value: 'AnaarB', label: 'A → B' },
@@ -72,15 +77,21 @@ const ConFormKoppelingenStage = memo(
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
         const sourceModule = modules[appAId];
-        
+
         // Only modify if it's an object (new module), not string (existing module)
         if (typeof sourceModule !== 'object') {
-          console.warn('Cannot modify existing module koppelingen:', appAId, sourceModule);
+          console.warn(
+            'Cannot modify existing module koppelingen:',
+            appAId,
+            sourceModule
+          );
           // TODO: Voor externe modules moeten koppelingen via aparte API calls worden aangemaakt
           return prev;
         }
-        
-        const list = Array.isArray(sourceModule.koppelingen) ? sourceModule.koppelingen : [];
+
+        const list = Array.isArray(sourceModule.koppelingen)
+          ? sourceModule.koppelingen
+          : [];
         const withoutSame = list.filter(
           (k) =>
             !(
@@ -94,17 +105,17 @@ const ConFormKoppelingenStage = memo(
           richtingDataUitwisseling: richting,
           sooortKoppeling: soort,
         };
-        
-        console.log('🔗 Adding koppeling:', { 
-          appAId, 
-          appBId, 
-          newItem, 
-          existingKoppelingen: sourceModule.koppelingen?.length || 0 
+
+        console.log('🔗 Adding koppeling:', {
+          appAId,
+          appBId,
+          newItem,
+          existingKoppelingen: sourceModule.koppelingen?.length || 0,
         });
-        
+
         modules[appAId] = {
           ...sourceModule,
-          koppelingen: [...withoutSame, newItem]
+          koppelingen: [...withoutSame, newItem],
         };
         return { ...prev, modules };
       });
@@ -117,11 +128,15 @@ const ConFormKoppelingenStage = memo(
         </h2>
 
         <Paragraph style={{ marginBottom: '2rem' }}>
-          <strong>Integraties en gegevensuitwisseling</strong><br/>
-          Hier specificeert u hoe uw applicaties met andere systemen communiceren. Deze informatie is essentieel voor organisaties 
-          om te begrijpen hoe uw software integreert in hun bestaande IT-landschap. Door koppelingen duidelijk te beschrijven 
-          (inclusief richting en type gegevensuitwisseling), kunnen organisaties de impact op hun architectuur beoordelen. 
-          Dit helpt bij het maken van integratieplannen en het inschatten van implementatie-inspanningen.
+          <strong>Integraties en gegevensuitwisseling</strong>
+          <br />
+          Hier specificeert u hoe uw applicaties met andere systemen communiceren.
+          Deze informatie is essentieel voor organisaties om te begrijpen hoe uw
+          software integreert in hun bestaande IT-landschap. Door koppelingen
+          duidelijk te beschrijven (inclusief richting en type gegevensuitwisseling),
+          kunnen organisaties de impact op hun architectuur beoordelen. Dit helpt bij
+          het maken van integratieplannen en het inschatten van
+          implementatie-inspanningen.
         </Paragraph>
 
         <TableContainer className='con-form-wizard-table-container'>
@@ -179,6 +194,13 @@ const ConFormKoppelingenStage = memo(
                             )
                           : null
                       }
+                      onInputChange={(inputValue, meta) => {
+                        if (meta && meta.action === 'input-change') {
+                          searchModules(inputValue || '');
+                        }
+                        return inputValue;
+                      }}
+                      isLoading={modulesLoading}
                       onChange={(opt) => {
                         setKoppelingValue(rowId, (prev) => ({
                           selectedAppBByRow: {
