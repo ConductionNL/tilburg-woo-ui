@@ -208,25 +208,36 @@ const ConFormControlerenStage = memo(
                           <strong>Ondersteunde standaarden:</strong>
                           <div>
                             <UnorderedList>
-                              {module.compliancy.map((comp, i) => (
-                                <UnorderedListItem key={comp.standaardversie || i}>
-                                  {getStandardNameFromId(comp.standaardversie)}
-                                  {comp.bewijs ? (
-                                    <>
-                                      {' '}
-                                      -{' '}
-                                      <AcLink href={comp.bewijs} target='_blank'>
-                                        bewijs
-                                      </AcLink>
-                                    </>
-                                  ) : (
-                                    <small style={{ color: '#666' }}>
-                                      {' '}
-                                      (geen bewijs)
-                                    </small>
-                                  )}
-                                </UnorderedListItem>
-                              ))}
+                              {module.compliancy.map((comp, i) => {
+                                const displayName =
+                                  comp.standaardnaam ||
+                                  getStandardNameFromId(comp.standaardversie);
+                                return (
+                                  <UnorderedListItem key={comp.standaardversie || i}>
+                                    <span
+                                      style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.25rem',
+                                      }}
+                                    >
+                                      <span>{displayName}</span>
+                                      {comp.bewijs ? (
+                                        <>
+                                          <span>-</span>
+                                          <AcLink href={comp.bewijs} target='_blank'>
+                                            bewijs
+                                          </AcLink>
+                                        </>
+                                      ) : (
+                                        <span style={{ color: '#666' }}>
+                                          (geen bewijs)
+                                        </span>
+                                      )}
+                                    </span>
+                                  </UnorderedListItem>
+                                );
+                              })}
                             </UnorderedList>
                           </div>
                         </div>

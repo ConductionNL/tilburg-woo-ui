@@ -297,6 +297,7 @@ const ConFormStandaardenStage = ({
         );
         const compliancyObject = {
           standaardversie: currentEntry.standardId,
+          standaardnaam: currentEntry.standardName,
           // ✅ REMOVED: module property - backend handles this with inversedBy logic
           bewijs: currentEntry.bewijs || null,
         };
@@ -343,7 +344,9 @@ const ConFormStandaardenStage = ({
       const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
 
       const updatedCompliancy = compliancy.map((c) =>
-        c.standaardversie === entry.standardId ? { ...c, bewijs } : c
+        c.standaardversie === entry.standardId
+          ? { ...c, standaardnaam: entry.standardName, bewijs }
+          : c
       );
 
       if (typeof app === 'object') {
