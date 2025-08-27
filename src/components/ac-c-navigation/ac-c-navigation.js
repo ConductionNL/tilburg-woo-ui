@@ -19,7 +19,12 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
   };
 
   return (
-    <div className={clsx('ac-c-navigation__container', layoutClassName && layoutClassName)}>
+    <div
+      className={clsx(
+        'ac-c-navigation__container',
+        layoutClassName && layoutClassName
+      )}
+    >
       <div className='ac-c-navigation__menu-toggle-container'>
         {mobileLogo}
 
@@ -32,6 +37,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
         <ul className='ac-c-navigation__ul'>
           {items.map(({ name, icon, link, slug, items }, idx) => (
             <Link
+              key={idx}
               to={!items.length && link}
               className='ac-c-navigation__link-container'
             >
@@ -40,8 +46,6 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                   'ac-c-navigation__li',
                   isCurrent(slug) && 'ac-c-navigation__current'
                 )}
-                c
-                key={idx}
               >
                 <div
                   className={clsx(
