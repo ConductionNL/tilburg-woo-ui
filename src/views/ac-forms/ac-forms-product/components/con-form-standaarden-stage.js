@@ -365,16 +365,12 @@ const ConFormStandaardenStage = ({
           Standaarden
         </h2>
 
-        <Paragraph>
+        <Paragraph style={{ marginBottom: '2rem' }}>
           <strong>Compliance met standaarden voor vertrouwen en kwaliteit</strong>
           <br />
-          Door aan te geven welke standaarden uw software ondersteunt, toont u de
-          kwaliteit en betrouwbaarheid van uw oplossing. Standaarden zoals
-          API-specificaties, beveiligingsstandaarden en
-          gegevensuitwisselingsprotocollen zijn belangrijk voor organisaties om
-          risico&apos;s in te schatten. Deze informatie helpt bij due diligence
-          processen en architectuurbeslissingen. Compliance met erkende standaarden
-          verhoogt het vertrouwen in uw software.
+          Geef aan welke standaarden uw product ondersteunt, zoals API-specificaties
+          of beveiligingsstandaarden. Dit laat zien dat uw software betrouwbaar is en
+          goed aansluit op andere systemen.
         </Paragraph>
 
         <div
@@ -441,9 +437,9 @@ const ConFormStandaardenStage = ({
             <strong>Geen standaarden beschikbaar</strong>
           </Paragraph>
           <Paragraph>
-            Er zijn geen standaarden gevonden op basis van de geselecteerde
-            referentiecomponenten. Ga terug naar de Referentiecomponenten stap om
-            componenten te selecteren.
+            Aan de geselecteerde referentiecomponenten zijn momenteel geen
+            standaarden gekoppeld. U kunt teruggaan om andere referentiecomponenten
+            te selecteren of doorgaan zonder standaarden.
           </Paragraph>
         </div>
       </div>

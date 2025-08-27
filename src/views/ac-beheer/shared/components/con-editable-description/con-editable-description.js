@@ -108,6 +108,11 @@ const ConEditableDescription = ({
                   visibleDragBar={false}
                   preview='live'
                   hideToolbar={saving}
+                  // Stops the toolbar from being focused when tabbing through the form
+                  commandsFilter={(cmd) => ({
+                    ...cmd,
+                    buttonProps: { ...(cmd.buttonProps || {}), tabIndex: -1 },
+                  })}
                   textareaProps={{
                     maxLength: maxLength,
                   }}

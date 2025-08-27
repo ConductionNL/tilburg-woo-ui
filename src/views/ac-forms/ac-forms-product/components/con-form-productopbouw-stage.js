@@ -1,6 +1,8 @@
 import React, { memo } from 'react';
-import { AcCheckbox } from '@src/molecules';
-import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { AcTile } from '@src/molecules';
+import { AcGrid } from '@atoms';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 
 /**
  * Productopbouw Stage Component
@@ -28,37 +30,56 @@ const ConFormProductopbouwStage = memo(
           <br />
           Een product kan bestaan uit:
           <br />
-          <br />
           <strong>Een enkele applicatie:</strong> één softwaretoepassing met eigen
           functionaliteit.
           <br />
-          <br />
           <strong>Een suite (meerdere applicaties/modules):</strong> een verzameling
           applicaties en modules die samen één oplossing vormen.
+          <br />
+          <i>
+            Deze keuze helpt organisaties om te begrijpen hoe uw oplossing is
+            opgebouwd en maakt de catalogus overzichtelijker.
+          </i>
+          {isMultiApplicatie && (
+            <div className='ac-register-form-alert' style={{ marginTop: '1rem' }}>
+              <Alert type='info'>
+                <Paragraph>
+                  U heeft gekozen voor een suite. In de volgende stappen kunt u
+                  meerdere applicaties toevoegen aan dit product.
+                </Paragraph>
+              </Alert>
+            </div>
+          )}
         </Paragraph>
 
         <div className='ac-register-form-checkbox-wrapper'>
-          <AcCheckbox
-            label='Een enkele applicatie'
-            value='single'
-            checked={!isMultiApplicatie}
-            onChange={() => setIsMultiApplicatie(false)}
-          />
-          <AcCheckbox
-            label='Een verzameling applicaties of modules (suite)'
-            value='multi'
-            checked={isMultiApplicatie}
-            onChange={() => setIsMultiApplicatie(true)}
-          />
+          <AcGrid columns={2} gap='xl'>
+            <AcTile
+              key={'enkel'}
+              icon={VISUALS.CUBE}
+              text={'Een enkele applicatie'}
+              to={''}
+              color={'blue'}
+              size='medium'
+              className={`ac-dashboard-wizard-tile ${
+                !isMultiApplicatie ? 'ac-tile--selected' : 'ac-tile--not-selected'
+              }`}
+              onClick={() => setIsMultiApplicatie(false)}
+            />
 
-          {isMultiApplicatie && (
-            <Alert type='info' style={{ marginTop: '1rem' }}>
-              <Paragraph>
-                U heeft gekozen voor een suite. In de volgende stappen kunt u
-                meerdere applicaties toevoegen aan dit product
-              </Paragraph>
-            </Alert>
-          )}
+            <AcTile
+              key={'multi'}
+              icon={VISUALS.CUBES}
+              text={'Een verzameling van applicaties of modules (suite)'}
+              to={''}
+              color={'blue'}
+              size='medium'
+              className={`ac-dashboard-wizard-tile ${
+                isMultiApplicatie ? 'ac-tile--selected' : 'ac-tile--not-selected'
+              }`}
+              onClick={() => setIsMultiApplicatie(true)}
+            />
+          </AcGrid>
         </div>
       </div>
     );

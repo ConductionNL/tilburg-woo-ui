@@ -103,7 +103,7 @@ const ConFormKoppelingenStage = memo(
           moduleA: appOptions.find((o) => o.value === appAId)?.label,
           moduleB: appOptions.find((o) => o.value === appBId)?.label,
           richtingDataUitwisseling: richting,
-          sooortKoppeling: soort,
+          soortKoppeling: soort,
         };
 
         console.log('🔗 Adding koppeling:', {
@@ -130,13 +130,11 @@ const ConFormKoppelingenStage = memo(
         <Paragraph style={{ marginBottom: '2rem' }}>
           <strong>Integraties en gegevensuitwisseling</strong>
           <br />
-          Hier specificeert u hoe uw applicaties met andere systemen communiceren.
-          Deze informatie is essentieel voor organisaties om te begrijpen hoe uw
-          software integreert in hun bestaande IT-landschap. Door koppelingen
-          duidelijk te beschrijven (inclusief richting en type gegevensuitwisseling),
-          kunnen organisaties de impact op hun architectuur beoordelen. Dit helpt bij
-          het maken van integratieplannen en het inschatten van
-          implementatie-inspanningen.
+          Geef hier aan hoe uw applicatie gegevens uitwisselt met andere systemen.
+          Dit helpt organisaties om te zien hoe uw software integreert in hun
+          applicatielandschap. Vul voor elke koppeling in: de betrokken applicaties,
+          de richting van de uitwisseling en het type koppeling (bijv. API, bestand,
+          bericht).
         </Paragraph>
 
         <TableContainer className='con-form-wizard-table-container'>
@@ -301,7 +299,7 @@ const ConFormKoppelingenStage = memo(
                     }))
                   }
                 >
-                  Rij toevoegen
+                  Nieuwe koppeling toevoegen
                 </AcButton>
               </div>
             </TableBody>

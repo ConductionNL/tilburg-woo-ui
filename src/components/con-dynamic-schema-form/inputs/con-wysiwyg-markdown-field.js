@@ -104,6 +104,11 @@ const ConWysiwygMarkdownField = ({
               visibleDragBar={false}
               data-color-mode='light'
               height={300}
+              // Stops the toolbar from being focused when tabbing through the form
+              commandsFilter={(cmd) => ({
+                ...cmd,
+                buttonProps: { ...(cmd.buttonProps || {}), tabIndex: -1 },
+              })}
               textareaProps={{
                 placeholder: placeholder || 'Schrijf hier je markdown tekst...',
                 disabled: disabled,
