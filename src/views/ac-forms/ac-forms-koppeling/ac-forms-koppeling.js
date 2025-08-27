@@ -675,9 +675,7 @@ const AcFormsKoppeling = ({ store }) => {
                           onClick={() => removeRow(rowId)}
                           disabled={rows.length === 1}
                           icon={<VISUALS.CLOSE />}
-                        >
-                          
-                        </AcButton>
+                        ></AcButton>
                       </TableCell>
                     </TableRow>
                   ))}
