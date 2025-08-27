@@ -10,6 +10,7 @@ const ConFormProductenStage = memo(
   ({
     selectedProductIds,
     setSelectedProductIds,
+    setSelectedProductOptions,
     productOptions,
     productsLoading,
     searchProducts,
@@ -38,12 +39,28 @@ const ConFormProductenStage = memo(
           options={productOptions}
           value={value}
           isLoading={productsLoading}
-          onChange={(opts) =>
-            setSelectedProductIds((opts || []).map((o) => o.value))
-          }
+          onChange={(opts) => {
+            const arr = opts || [];
+            setSelectedProductIds(arr.map((o) => o.value));
+            setSelectedProductOptions(arr);
+          }}
           onInputChange={(inputValue, meta) => {
             if (meta && meta.action === 'input-change') {
-              searchProducts(inputValue || '');
+              // Debounce search by 500ms after user stops typing
+              if (!window.__dienstProductsSearchTimers) {
+                window.__dienstProductsSearchTimers = new Map();
+              }
+              const key = 'productenSearch';
+              const timers = window.__dienstProductsSearchTimers;
+              if (timers.has(key)) {
+                clearTimeout(timers.get(key));
+                timers.delete(key);
+              }
+              const timeoutId = setTimeout(() => {
+                searchProducts(inputValue || '');
+                timers.delete(key);
+              }, 500);
+              timers.set(key, timeoutId);
             }
             return inputValue;
           }}

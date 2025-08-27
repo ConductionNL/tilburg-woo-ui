@@ -9,19 +9,29 @@ const ConFormApplicatiesStage = memo(
   ({
     productToModulesLookup,
     selectedProductIds,
+    selectedProductOptions,
+    productOptions,
+    productLabels,
     selectedModuleIds,
     setSelectedModuleIds,
   }) => {
-    const availableModules = useMemo(() => {
-      const moduleMap = new Map();
+    const groupedModules = useMemo(() => {
+      // Build groups per selected product id with product label
+      const map = [];
       (selectedProductIds || []).forEach((prodId) => {
+        // Prefer label from productLabels (fetched detail), then selected options, then search options
+        const productLabel =
+          (productLabels && productLabels[prodId]) ||
+          (selectedProductOptions || []).find((p) => p.value === prodId)?.label ||
+          (productOptions || []).find((p) => p.value === prodId)?.label ||
+          null;
         const items = productToModulesLookup[prodId] || [];
-        items.forEach((mod) => {
-          if (!moduleMap.has(mod.value)) moduleMap.set(mod.value, mod);
-        });
+        if (items.length > 0) {
+          map.push({ productId: prodId, productLabel, modules: items });
+        }
       });
-      return Array.from(moduleMap.values());
-    }, [productToModulesLookup, selectedProductIds]);
+      return map;
+    }, [productToModulesLookup, selectedProductIds, selectedProductOptions]);
 
     const toggle = (id) => {
       setSelectedModuleIds((prev) => {
@@ -44,30 +54,42 @@ const ConFormApplicatiesStage = memo(
           applicaties uit de gekozen producten worden getoond.
         </Paragraph>
 
-        {availableModules.length === 0 ? (
+        {groupedModules.length === 0 ? (
           <Paragraph>
             Geen applicaties beschikbaar voor de geselecteerde producten.
           </Paragraph>
         ) : (
           <div className='con-form-checkbox-list'>
-            {availableModules.map((opt) => (
-              <label
-                key={opt.value}
-                className='ac-checkbox-label'
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  alignItems: 'center',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                <input
-                  type='checkbox'
-                  checked={selectedModuleIds.includes(opt.value)}
-                  onChange={() => toggle(opt.value)}
-                />
-                <span>{opt.label}</span>
-              </label>
+            {groupedModules.map((group) => (
+              <div key={group.productId} style={{ marginBottom: '1rem' }}>
+                <div
+                  style={{
+                    fontWeight: 'bold',
+                    marginBottom: '0.25rem',
+                  }}
+                >
+                  {group.productLabel || 'Product'}
+                </div>
+                {(group.modules || []).map((opt) => (
+                  <label
+                    key={opt.value}
+                    className='ac-checkbox-label'
+                    style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      alignItems: 'center',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    <input
+                      type='checkbox'
+                      checked={selectedModuleIds.includes(opt.value)}
+                      onChange={() => toggle(opt.value)}
+                    />
+                    <span>{opt.label}</span>
+                  </label>
+                ))}
+              </div>
             ))}
           </div>
         )}

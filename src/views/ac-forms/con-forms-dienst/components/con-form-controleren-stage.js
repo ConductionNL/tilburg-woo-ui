@@ -1,8 +1,8 @@
 import React, { memo } from 'react';
 import {
-  Paragraph,
   UnorderedList,
   UnorderedListItem,
+  Separator,
 } from '@utrecht/component-library-react/dist/css-module';
 
 const ConFormControlerenStage = memo(
@@ -32,46 +32,67 @@ const ConFormControlerenStage = memo(
       .filter(Boolean);
 
     return (
-      <div
-        className='ac-register-form-section'
-        role='group'
-        aria-labelledby='dienst-controleren-section-title'
-      >
-        <h2 id='dienst-controleren-section-title' className='sr-only'>
-          Controleren
-        </h2>
+      <div>
+        <div className='con-form-wizard-review-heading-container'>
+          <h3 className='con-form-wizard-review-heading-header'>
+            Dienst informatie
+          </h3>
+          <div className='ac-register-review__section'>
+            <div className='ac-register-review__header'>
+              <h4 className='utrecht-heading-4'>{dienst.naam || '-'}</h4>
+            </div>
+            <Separator className='con-form-wizard-review-header__separator' />
 
-        <Paragraph>
-          <strong>Controleer uw invoer voordat u opslaat</strong>
-        </Paragraph>
+            <div className='ac-register-review__field'>
+              <strong>Website:</strong> <span>{dienst.website || '-'}</span>
+            </div>
 
-        <UnorderedList>
-          <UnorderedListItem>
-            <strong>Naam:</strong> {dienst.naam || '-'}
-          </UnorderedListItem>
-          <UnorderedListItem>
-            <strong>Website:</strong> {dienst.website || '-'}
-          </UnorderedListItem>
-          <UnorderedListItem>
-            <strong>Type:</strong> {dienst.type || '-'}
-          </UnorderedListItem>
-          <UnorderedListItem>
-            <strong>Aanbieder:</strong>{' '}
-            {dienst.aanbieder?.naam ||
-              dienst.aanbieder?.name ||
-              dienst.aanbieder?.title ||
-              '-'}
-          </UnorderedListItem>
-          <UnorderedListItem>
-            <strong>Producten:</strong> {productLabels.join(', ') || '-'}
-          </UnorderedListItem>
-          <UnorderedListItem>
-            <strong>Applicaties:</strong> {moduleLabels.join(', ') || '-'}
-          </UnorderedListItem>
-          <UnorderedListItem>
-            <strong>Koppelingen:</strong> {koppelingLabels.join(', ') || '-'}
-          </UnorderedListItem>
-        </UnorderedList>
+            <div className='ac-register-review__field'>
+              <strong>Type:</strong> <span>{dienst.type || '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 className='con-form-wizard-review-heading-header'>Producten</h3>
+        <div className='ac-register-review'>
+          <div className='ac-register-review__section'>
+            <div className='ac-register-review__field'>
+              <UnorderedList>
+                {(productLabels.length ? productLabels : ['-']).map((label, i) => (
+                  <UnorderedListItem key={`prod-${i}`}>{label}</UnorderedListItem>
+                ))}
+              </UnorderedList>
+            </div>
+          </div>
+        </div>
+
+        <h3 className='con-form-wizard-review-heading-header'>Applicaties</h3>
+        <div className='ac-register-review'>
+          <div className='ac-register-review__section'>
+            <div className='ac-register-review__field'>
+              <UnorderedList>
+                {(moduleLabels.length ? moduleLabels : ['-']).map((label, i) => (
+                  <UnorderedListItem key={`mod-${i}`}>{label}</UnorderedListItem>
+                ))}
+              </UnorderedList>
+            </div>
+          </div>
+        </div>
+
+        <h3 className='con-form-wizard-review-heading-header'>Koppelingen</h3>
+        <div className='ac-register-review'>
+          <div className='ac-register-review__section'>
+            <div className='ac-register-review__field'>
+              <UnorderedList>
+                {(koppelingLabels.length ? koppelingLabels : ['-']).map(
+                  (label, i) => (
+                    <UnorderedListItem key={`kp-${i}`}>{label}</UnorderedListItem>
+                  )
+                )}
+              </UnorderedList>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
