@@ -273,14 +273,20 @@ const ConSchemaEnhancedField = ({
   const hasRefProperty =
     propertySchema?.$ref || (propertySchema?.items && propertySchema.items.$ref);
 
-  const effectiveOptionsProvider =
-    hasRefProperty && !useCustomSearch
-      ? refOptionsResult?.optionsProviders?.[fieldName] || []
-      : optionsProvider;
-  const effectiveIsLoading =
-    hasRefProperty && !useCustomSearch
-      ? refOptionsResult?.loadingStates?.[fieldName] || false
-      : isLoading;
+  // edited so that optionsProvider has priority, cuz why else would that prop even exist...
+  const hasExternalOptionsProvider =
+    Array.isArray(optionsProvider) && optionsProvider.length > 0;
+
+  const effectiveOptionsProvider = hasExternalOptionsProvider
+    ? optionsProvider
+    : hasRefProperty && !useCustomSearch
+    ? refOptionsResult?.optionsProviders?.[fieldName] || []
+    : optionsProvider;
+  const effectiveIsLoading = hasExternalOptionsProvider
+    ? isLoading
+    : hasRefProperty && !useCustomSearch
+    ? refOptionsResult?.loadingStates?.[fieldName] || false
+    : isLoading;
 
   // Debug logging
   if (

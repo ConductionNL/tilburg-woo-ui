@@ -7,24 +7,27 @@ import { AcSection, AcContainer, AcColumn } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
-import ReactSelect from 'react-select';
 import {
   Heading1,
   Paragraph,
-  UnorderedList,
-  UnorderedListItem,
-  Separator,
-  Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
+import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
+import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
+import ConGebruikStepVersie from './components/con-gebruik-step-versie';
+import ConGebruikStepKoppelingen from './components/con-gebruik-step-koppelingen';
+import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
+import ConGebruikStepReview from './components/con-gebruik-step-review';
+import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 
 const mapToOption = (item, index) => {
   const label =
+    item?.['@self']?.name ||
     item?.naam ||
     item?.name ||
     item?.title ||
     item?.label ||
     `Applicatie ${index + 1}`;
-  const value = item?.value || item?.id || item?.slug || label;
+  const value = item?.id || item?.slug || label;
   return { value: String(value), label: String(label), data: item };
 };
 
@@ -69,60 +72,81 @@ const AcFormsGebruik = ({ store }) => {
 
   // Gebruik object based on schema
   const [gebruik, setGebruik] = useState({});
+  // Single source of truth updater
+  const setGebruikData = (key, value) =>
+    setGebruik((prev) => ({ ...prev, [key]: value }));
 
-  // Applicatie selectie
-  const [appOptions, setAppOptions] = useState([]);
-  const [selectedApp, setSelectedApp] = useState(null);
+  // Options state (UI-only)
+  const [productOptions, setProductOptions] = useState([]);
+  const [modulesOptions, setModulesOptions] = useState([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [koppelingOptions, setKoppelingOptions] = useState([]);
+  const [dienstOptions] = useState([
+    {
+      value: 'Functioneel beheer',
+      label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
+    },
+    {
+      value: 'Technisch beheer',
+      label: 'Technisch beheer: installatie, updates en systeembeheer.',
+    },
+    { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
+    {
+      value: 'Implementatie-ondersteuning',
+      label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
+    },
+  ]);
 
-  // Prefilled info (disabled)
-  const [appName, setAppName] = useState('');
-  const [appSummary, setAppSummary] = useState('');
+  // Deelnemers (organisaties) options
+  const [organisatieOptions, setOrganisatieOptions] = useState([]);
 
   // Versies
   const [versionOptions, setVersionOptions] = useState([]);
-  const [selectedVersion, setSelectedVersion] = useState(null);
 
   // Referentiecomponenten
   const [refCompOptions, setRefCompOptions] = useState([]);
-  const [selectedRefComps, setSelectedRefComps] = useState([]);
 
   // Fetch schemas on component mount
   useEffect(() => {
-    const fetchSchemas = async () => {
-      setSchemasLoading(true);
+    const fetchSchemaAndInit = async () => {
       try {
-        // Fetch 'gebruik' schema for this form
         const response = await fetch('/api/apps/openregister/api/schemas/gebruik');
         if (response.ok) {
           const gebruikSchema = await response.json();
-          const fetchedSchemas = { gebruik: gebruikSchema };
-          setSchemas(fetchedSchemas);
-
-          // Initialize default gebruik object based on schema
-          const defaultGebruik = createDefaultFormObject(store, gebruikSchema, 'gebruik', {
-            // Add any specific defaults for gebruik form
-            status: 'concept'
-          });
+          const defaultGebruik = createDefaultFormObject(
+            store,
+            gebruikSchema,
+            'gebruik',
+            { status: 'Verwerving' }
+          );
           setGebruik(defaultGebruik);
+          setSchemas({ gebruik: gebruikSchema });
+          setSchemasLoading(false);
         }
       } catch (error) {
         console.error('Failed to fetch schemas for gebruik form:', error);
-      } finally {
+        setSchemas({});
         setSchemasLoading(false);
       }
     };
-
-    fetchSchemas();
+    fetchSchemaAndInit();
   }, [store]);
 
-  // Fetch applicaties and referentiecomponenten options on mount
+  // Prefill afnemer from active organization (if present)
+  useEffect(() => {
+    const org = store?.userStore?.activeOrganization;
+    if (org) setGebruikData('afnemer', org);
+  }, [store?.userStore?.activeOrganization]);
+
+  // Fetch product and referentiecomponenten options on mount
   useEffect(() => {
     let isMounted = true;
 
-    const fetchApps = async () => {
+    const fetchProducts = async () => {
       try {
         const params = new URLSearchParams({ _limit: '50', _page: '1' });
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
+        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
         });
@@ -134,9 +158,9 @@ const AcFormsGebruik = ({ store }) => {
           ? data.results
           : [];
         const options = list.map(mapToOption);
-        if (isMounted) setAppOptions(options);
+        if (isMounted) setProductOptions(options);
       } catch (e) {
-        if (isMounted) setAppOptions([]);
+        if (isMounted) setProductOptions([]);
       }
     };
 
@@ -172,39 +196,89 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
-    fetchApps();
+    fetchProducts();
     fetchRefComps();
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // When an app is selected, prefill info and fetch versions
+  // When product changes, fetch modules
   useEffect(() => {
-    const prefillFromSelected = () => {
-      const data = selectedApp?.data || null;
-      const name =
-        selectedApp?.label || data?.naam || data?.name || data?.title || '';
-      const summary =
-        data?.beschrijvingKort ||
-        data?.beschrijving ||
-        data?.description ||
-        data?.summary ||
-        '';
-      setAppName(name);
-      setAppSummary(summary);
+    const fetchModulesForProduct = async () => {
+      try {
+        setModulesLoading(true);
+        setModulesOptions([]);
+        setGebruikData('module', null);
+        const p = gebruik?.product;
+        if (!p) return;
+        const params = new URLSearchParams({ _limit: '50', _page: '1' });
+        const searchLabel = p?.naam || p?.name || p?.title;
+        if (searchLabel) params.set('_search', searchLabel);
+        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map(mapToOption);
+        setModulesOptions(options);
+        if (options.length === 1)
+          setGebruikData('module', options[0].data || options[0]);
+      } catch (e) {
+        setModulesOptions([]);
+      } finally {
+        setModulesLoading(false);
+      }
     };
+    fetchModulesForProduct();
+  }, [gebruik?.product]);
 
+  // Server-side search for modules
+  const searchModules = async (query) => {
+    try {
+      setModulesLoading(true);
+      const q = String(query || '').trim();
+      if (!q) {
+        setModulesOptions([]);
+        return;
+      }
+      const params = new URLSearchParams({ _limit: '50', _page: '1' });
+      params.set('_search', q);
+      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
+      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
+      const options = list.map(mapToOption);
+      setModulesOptions(options);
+    } catch (e) {
+      setModulesOptions([]);
+    } finally {
+      setModulesLoading(false);
+    }
+  };
+
+  // When module changes, fetch versions (and later koppelingen/diensten)
+  useEffect(() => {
     const fetchVersions = async () => {
-      setLoading(true);
+      setVersionsLoading(true);
       try {
         setVersionOptions([]);
-        setSelectedVersion(null);
-        if (!selectedApp?.value) return;
+        if (!gebruik?.module) return;
 
         // Fetch module versions via the dedicated endpoint with pagination
         // Filter by relation @self.relations.module; fallback to client-side filtering
-        const moduleId = String(selectedApp.value);
+        const moduleId = gebruik?.module;
         const limit = 20;
         let page = 1;
         let allItems = [];
@@ -243,14 +317,10 @@ const AcFormsGebruik = ({ store }) => {
               break;
             }
             const data = await res.json();
-            const list = Array.isArray(data)
-              ? data
-              : Array.isArray(data?.results)
-              ? data.results
-              : [];
+            const list = data?.results;
 
             allItems = allItems.concat(list);
-            hasMore = list.length === limit;
+            hasMore = !!data?.next;
             page += 1;
           }
 
@@ -296,6 +366,7 @@ const AcFormsGebruik = ({ store }) => {
 
         const options = allItems.map((v) => {
           const label =
+            v?.['@self']?.name ||
             v?.nummer ||
             v?.version ||
             v?.naam ||
@@ -313,13 +384,97 @@ const AcFormsGebruik = ({ store }) => {
       } catch {
         setVersionOptions([]);
       } finally {
-        setLoading(false);
+        setVersionsLoading(false);
       }
     };
-
-    prefillFromSelected();
     fetchVersions();
-  }, [selectedApp]);
+  }, [gebruik?.module]);
+
+  // When module changes, fetch koppelingen options using _search on module label
+  useEffect(() => {
+    const fetchKoppelingen = async () => {
+      try {
+        const modId = gebruik?.module;
+        const mod = modulesOptions.find((m) => m.value === modId)?.data;
+        if (!mod) {
+          setKoppelingOptions([]);
+          return;
+        }
+        const searchLabel = mod?.naam || mod?.name || mod?.title;
+        const params = new URLSearchParams({ _limit: '50', _page: '1' });
+        if (searchLabel) params.set('_search', searchLabel);
+        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map((item, index) => {
+          const appA =
+            item?.applicatie1 ||
+            item?.applicatieA ||
+            item?.moduleA ||
+            item?.bronApplicatie ||
+            item?.source ||
+            `A${index + 1}`;
+          const appB =
+            item?.applicatie2 ||
+            item?.applicatieB ||
+            item?.moduleB ||
+            item?.doelApplicatie ||
+            item?.target ||
+            `B${index + 1}`;
+
+          const label = `${appA} ↔ ${appB}`;
+          const value = item?.value || item?.id || label;
+          return { value: String(value), label: String(label) };
+        });
+        setKoppelingOptions(options);
+      } catch (e) {
+        setKoppelingOptions([]);
+      }
+    };
+    fetchKoppelingen();
+  }, [gebruik?.module]);
+
+  // When afnemer is samenwerking, fetch organisaties for deelnemers step
+  useEffect(() => {
+    const fetchOrganisaties = async () => {
+      try {
+        if (!isAfnemerSamenwerking()) {
+          setOrganisatieOptions([]);
+          return;
+        }
+        const params = new URLSearchParams({ _limit: '100', _page: '1' });
+        const endpoint = `${BASE_URL}/openregister/api/objects/organisatie?${params}`;
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.naam || item?.name || item?.title || `Organisatie ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label) };
+        });
+        setOrganisatieOptions(options);
+      } catch (e) {
+        setOrganisatieOptions([]);
+      }
+    };
+    fetchOrganisaties();
+  }, [gebruik?.afnemer]);
 
   const getStatus = (active, step) => {
     if (active === step) return 'current';
@@ -327,16 +482,43 @@ const AcFormsGebruik = ({ store }) => {
     return 'checked';
   };
 
-  const getStatusMulti = (active, first, last) => {
-    if (active >= first && active <= last) return 'current';
-    if (active < first) return 'not-checked';
-    return 'checked';
+  const isAfnemerSamenwerking = () => {
+    const type = gebruik?.afnemer?.organisatieType || gebruik?.afnemer?.type || '';
+    return String(type).toLowerCase() === 'samenwerking';
   };
 
+  const stepsList = (() => {
+    const base = [
+      'Informatie',
+      'Product en applicatie',
+      'Versie',
+      'Koppelingen',
+      'Diensten',
+    ];
+    if (isAfnemerSamenwerking()) base.push('Deelnemers');
+    base.push('Controleren');
+    return base;
+  })();
+
   const canGoNext = () => {
-    if (currentStep === 0) return !!selectedApp;
-    if (currentStep === 1) return !!selectedVersion;
-    if (currentStep === 2) return true; // referentiecomponenten optional
+    if (currentStep === 0) {
+      return !!gebruik?.contactpersoon;
+    }
+    if (currentStep === 1) {
+      return !!gebruik?.module;
+    }
+    if (currentStep === 2) {
+      return !!gebruik?.moduleVersie && !versionsLoading;
+    }
+    if (currentStep === 3) {
+      return true; // koppelingen optional
+    }
+    if (currentStep === 4) {
+      return true; // diensten optional
+    }
+    if (currentStep === 5 && isAfnemerSamenwerking()) {
+      return true; // deelnemers optional
+    }
     return false;
   };
 
@@ -344,185 +526,85 @@ const AcFormsGebruik = ({ store }) => {
     switch (step) {
       case 0:
         return (
-          <div
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='app-select-title'
-          >
-            <h2 id='app-select-title' className='sr-only'>
-              Applicatie selecteren
-            </h2>
-            <Paragraph>Kies een applicatie uit de catalogus.</Paragraph>
-            <div style={{ maxWidth: '640px' }}>
-              <ReactSelect
-                className={clsx(
-                  'ac-beheer-select',
-                  loading && 'ac-beheer-select--disabled'
-                )}
-                options={appOptions}
-                value={selectedApp}
-                onChange={(opt) => setSelectedApp(opt)}
-                isDisabled={loading}
-                placeholder='Selecteer een applicatie...'
-                isClearable
-              />
-            </div>
-          </div>
+          <ConGebruikStepInformatie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            loading={loading}
+            refCompOptions={refCompOptions}
+            schemas={schemas}
+            schemasLoading={schemasLoading}
+          />
         );
       case 1:
         return (
-          <div
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='app-info-title'
-          >
-            <h2 id='app-info-title' className='sr-only'>
-              Applicatie informatie
-            </h2>
-            <div className='ac-register-form-grid'>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label className='utrecht-form-label'>Naam van de applicatie</label>
-                <Textbox value={appName} disabled id='app-name' />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label className='utrecht-form-label'>
-                  Korte beschrijving van de applicatie
-                </label>
-                <Textbox value={appSummary} disabled id='app-summary' />
-              </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label className='utrecht-form-label'>Versie</label>
-                <ReactSelect
-                  className={clsx(
-                    'ac-beheer-select',
-                    loading && 'ac-beheer-select--disabled'
-                  )}
-                  options={versionOptions}
-                  value={
-                    versionOptions.find((o) => o.value === selectedVersion) || null
-                  }
-                  onChange={(opt) => setSelectedVersion(opt?.value || null)}
-                  isDisabled={loading || !versionOptions.length}
-                  placeholder={
-                    versionOptions.length
-                      ? 'Selecteer een versie'
-                      : 'Geen versies beschikbaar'
-                  }
-                  isClearable
-                />
-              </div>
-            </div>
-          </div>
+          <ConGebruikStepProductApplicatie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            productOptions={productOptions}
+            moduleOptions={modulesOptions}
+            modulesLoading={modulesLoading}
+            searchModules={searchModules}
+            loading={loading}
+            schemas={schemas}
+          />
         );
       case 2:
         return (
-          <div
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='refcomp-title'
-          >
-            <h2 id='refcomp-title' className='sr-only'>
-              Referentiecomponenten
-            </h2>
-            <Paragraph>
-              Selecteer de referentiecomponenten die door deze applicatie worden
-              gebruikt.
-            </Paragraph>
-            <div style={{ maxWidth: '640px' }}>
-              <ReactSelect
-                isMulti
-                className='ac-beheer-select'
-                options={refCompOptions}
-                value={selectedRefComps
-                  .map((v) =>
-                    refCompOptions.find((o) => String(o.value) === String(v))
-                  )
-                  .filter(Boolean)}
-                onChange={(opts) =>
-                  setSelectedRefComps(
-                    Array.isArray(opts) ? opts.map((o) => String(o.value)) : []
-                  )
-                }
-                placeholder='Selecteer referentiecomponenten...'
-              />
-            </div>
-          </div>
+          <ConGebruikStepVersie
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            versionOptions={versionOptions}
+            versionsLoading={versionsLoading}
+            schemas={schemas}
+          />
         );
       case 3:
         return (
-          <div
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='review-title'
-          >
-            <h2 id='review-title' className='sr-only'>
-              Controleren
-            </h2>
-            <div className='ac-register-review'>
-              <div className='ac-register-review__section'>
-                <div className='ac-register-review__header'>
-                  <h3 className='utrecht-heading-4'>Geselecteerde applicatie</h3>
-                </div>
-                <Separator className='con-form-wizard-review-header__separator' />
-                <div className='ac-register-review__field'>
-                  <strong>Naam:</strong>
-                  <div>{appName || '-'}</div>
-                </div>
-                <div className='ac-register-review__field'>
-                  <strong>Korte beschrijving:</strong>
-                  <div>{appSummary || '-'}</div>
-                </div>
-                <div className='ac-register-review__field'>
-                  <strong>Versie:</strong>
-                  <div>
-                    {versionOptions.find((o) => o.value === selectedVersion)
-                      ?.label || '-'}
-                  </div>
-                </div>
-                <div className='ac-register-review__field'>
-                  <strong>Referentiecomponenten:</strong>
-                  <div>
-                    {selectedRefComps.length ? (
-                      <UnorderedList>
-                        {selectedRefComps.map((v) => {
-                          const opt = refCompOptions.find(
-                            (o) => String(o.value) === String(v)
-                          );
-                          return (
-                            <UnorderedListItem key={v}>
-                              {opt ? opt.label : v}
-                            </UnorderedListItem>
-                          );
-                        })}
-                      </UnorderedList>
-                    ) : (
-                      '-'
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ConGebruikStepKoppelingen
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            koppelingOptions={koppelingOptions}
+            schemas={schemas}
+          />
         );
+      case 4:
+        return (
+          <ConGebruikStepDiensten
+            gebruik={gebruik}
+            setGebruikData={setGebruikData}
+            dienstOptions={dienstOptions}
+            schemas={schemas}
+          />
+        );
+      case 5:
+        if (isAfnemerSamenwerking()) {
+          return (
+            <ConGebruikStepDeelnemers
+              gebruik={gebruik}
+              setGebruikData={setGebruikData}
+              organisatieOptions={organisatieOptions}
+              schemas={schemas}
+            />
+          );
+        }
+      // fall through to review if not samenwerking
       default:
-        return null;
+        return (
+          <ConGebruikStepReview
+            gebruik={gebruik}
+            versionOptions={versionOptions}
+            refCompOptions={refCompOptions}
+            koppelingOptions={koppelingOptions}
+            dienstOptions={dienstOptions}
+            organisatieOptions={organisatieOptions}
+            productOptions={productOptions}
+            moduleOptions={modulesOptions}
+          />
+        );
     }
   };
 
-  const currentStepName = (step) => {
-    switch (step) {
-      case 0:
-        return 'Applicatie selecteren';
-      case 1:
-        return 'Applicatie informatie';
-      case 2:
-        return 'Referentiecomponenten';
-      case 3:
-        return 'Controleren';
-      default:
-        return '';
-    }
-  };
+  const currentStepName = (step) => stepsList[step] || '';
 
   return (
     <AcSection spacing>
@@ -536,97 +618,73 @@ const AcFormsGebruik = ({ store }) => {
             </Paragraph>
           </div>
 
-          <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-            {currentStepName(currentStep)}
-          </h3>
+          <div>
+            <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
+              {currentStepName(currentStep)}
+            </h3>
 
-          <div className='ac-register-container ac-forms-product'>
-            <div 
-              ref={processStepsRef}
-              className='ac-register-process-steps'
-            >
-              <ProcessSteps
-                steps={(() => {
-                  const steps = [
-                    {
-                      id: 'grp-app-select',
-                      marker: 1,
-                      status: getStatusMulti(currentStep, 0, 2),
-                      title: 'Applicatie selecteren',
-                      steps: [
-                        {
-                          id: 'sub-app-info',
-                          status: getStatus(currentStep, 1),
-                          title: 'Applicatie informatie',
-                        },
-                        {
-                          id: 'sub-refcomp',
-                          status: getStatus(currentStep, 2),
-                          title: 'Referentiecomponenten',
-                        },
-                      ],
-                    },
-                    {
-                      id: 'grp-review',
-                      marker: 2,
-                      status: getStatus(currentStep, 3),
-                      title: 'Controleren',
-                    },
-                  ];
-                  return steps;
-                })()}
-              />
-            </div>
-
-            <div className='ac-register-form-container'>
-              <div
-                className='sr-only'
-                role='status'
-                aria-live='polite'
-                id='form-status'
-              >
-                {currentStepName(currentStep)}
+            <div className='ac-register-container ac-forms-product'>
+              <div ref={processStepsRef} className='ac-register-process-steps'>
+                <ProcessSteps
+                  steps={stepsList.map((title, index) => ({
+                    id: `step-${index}`,
+                    marker: index + 1,
+                    status: getStatus(currentStep, index),
+                    title,
+                  }))}
+                />
               </div>
 
-              {renderStep(currentStep)}
+              <div className='ac-register-form-container'>
+                <div
+                  className='sr-only'
+                  role='status'
+                  aria-live='polite'
+                  id='form-status'
+                >
+                  {currentStepName(currentStep)}
+                </div>
 
-              <div
-                className={clsx(
-                  'ac-register-form-buttons',
-                  currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
-                )}
-              >
-                {currentStep !== 0 && (
-                  <AcButton
-                    style='button'
-                    buttonType='secondary'
-                    onClick={() => setCurrentStep(currentStep - 1)}
-                    disabled={loading}
-                  >
-                    Vorige
-                  </AcButton>
-                )}
+                {renderStep(currentStep)}
 
-                {currentStep !== 3 && (
-                  <div className='ac-register-button-wrapper'>
+                <div
+                  className={clsx(
+                    'ac-register-form-buttons',
+                    currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
+                  )}
+                >
+                  {currentStep !== 0 && (
                     <AcButton
                       style='button'
-                      className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
-                      )}
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                      disabled={!canGoNext() || loading}
+                      buttonType='secondary'
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      disabled={loading}
                     >
-                      Volgende
+                      Vorige
                     </AcButton>
-                  </div>
-                )}
+                  )}
 
-                {currentStep === 3 && (
-                  <AcButton style='button' buttonType='primary' disabled>
-                    Bevestigen (niet actief)
-                  </AcButton>
-                )}
+                  {currentStep !== stepsList.length - 1 && (
+                    <div className='ac-register-button-wrapper'>
+                      <AcButton
+                        style='button'
+                        className={clsx(
+                          currentStep === 0 && 'ac-register-form-next-button'
+                        )}
+                        onClick={() => setCurrentStep(currentStep + 1)}
+                        disabled={!canGoNext() || loading}
+                      >
+                        Volgende
+                      </AcButton>
+                    </div>
+                  )}
+
+                  {currentStep === stepsList.length - 1 && (
+                    <AcButton style='button' buttonType='primary' disabled>
+                      Bevestigen (niet actief)
+                    </AcButton>
+                  )}
+                </div>
               </div>
             </div>
           </div>

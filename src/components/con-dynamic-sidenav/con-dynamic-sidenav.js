@@ -38,6 +38,7 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
       'Overeenkomsten': VISUALS.HAND_SHAKE,
       'Organisaties': VISUALS.BUILDING,
       'Kwetsbaarheden': VISUALS.TRIANGLE_EXCLAMATION,
+      'Koppelingen': VISUALS.LINK,
       'Contactpersonen': VISUALS.USERS,
     };
 
@@ -57,6 +58,7 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
     if (linkPath.includes('/kwetsbaarheden')) return VISUALS.TRIANGLE_EXCLAMATION;
     if (linkPath.includes('/contactpersonen')) return VISUALS.USERS;
     if (linkPath.includes('/voorzieningen')) return VISUALS.CUBE;
+    if (linkPath.includes('/koppelingen')) return VISUALS.LINK;
     if (linkPath === '/beheer') return VISUALS.CHART_LINE;
 
     // Default icon

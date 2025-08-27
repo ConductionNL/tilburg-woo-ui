@@ -32,14 +32,25 @@ const ConFormKoppelingenStage = memo(
     getAllModulesForStages,
     searchModules,
   }) => {
-    const { rows, selectedAppAByRow, selectedAppBByRow, directionByRow, typeByRow } =
-      koppelingenFormState;
+    const {
+      rows,
+      selectedAppAByRow,
+      selectedAppBByRow,
+      directionByRow,
+      typeByRow,
+      koppelingIdByRow = {},
+      moduleIndexByRow = {},
+    } = koppelingenFormState;
 
     // ✅ SIMPLIFIED: Use helper method to get all modules (new + existing) for koppelingen
     const allModules = getAllModulesForStages ? getAllModulesForStages() : [];
     const appOptions = allModules.map((module, index) => ({
       value: module.isExisting ? module.id : module.moduleIndex,
-      label: module.naam || `Module ${index + 1}`,
+      label:
+        module.naam ||
+        module?.['@self']?.name ||
+        module?.fullData?.['@self']?.name ||
+        (module.id ? String(module.id) : `Module ${index + 1}`),
       isExisting: !!module.isExisting,
     }));
 
@@ -67,15 +78,45 @@ const ConFormKoppelingenStage = memo(
       setKoppelingenFormState((prev) => ({ ...prev, ...updater(prev) }));
     };
 
-    const persistRowIntoProduct = (rowId) => {
-      const appAId = selectedAppAByRow[rowId];
-      const appBId = selectedAppBByRow[rowId];
-      const richting = directionByRow[rowId];
-      const soort = typeByRow[rowId];
+    const generateLocalId = () =>
+      `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+    // Accept overrides so we can persist immediately with the newly selected value(s)
+    const persistRowIntoProduct = (rowId, overrides = {}) => {
+      const appAId = overrides.appAId ?? selectedAppAByRow[rowId];
+      const appBId = overrides.appBId ?? selectedAppBByRow[rowId];
+      const richting = overrides.richting ?? directionByRow[rowId];
+      const soort = overrides.soort ?? typeByRow[rowId];
       if (appAId == null || appBId == null) return;
+
+      let localId = koppelingIdByRow[rowId];
+      if (!localId) {
+        localId = generateLocalId();
+        setKoppelingenFormState((prev) => ({
+          ...prev,
+          koppelingIdByRow: { ...(prev.koppelingIdByRow || {}), [rowId]: localId },
+        }));
+      }
+
+      const prevModuleIndex = moduleIndexByRow[rowId];
 
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
+
+        // If koppeling moved from another module, remove it there first
+        if (prevModuleIndex != null && prevModuleIndex !== appAId) {
+          const prevModule = modules[prevModuleIndex];
+          if (typeof prevModule === 'object') {
+            const prevList = Array.isArray(prevModule.koppelingen)
+              ? prevModule.koppelingen
+              : [];
+            modules[prevModuleIndex] = {
+              ...prevModule,
+              koppelingen: prevList.filter((k) => k._localId !== localId),
+            };
+          }
+        }
+
         const sourceModule = modules[appAId];
 
         // Only modify if it's an object (new module), not string (existing module)
@@ -85,40 +126,97 @@ const ConFormKoppelingenStage = memo(
             appAId,
             sourceModule
           );
-          // TODO: Voor externe modules moeten koppelingen via aparte API calls worden aangemaakt
           return prev;
         }
 
         const list = Array.isArray(sourceModule.koppelingen)
-          ? sourceModule.koppelingen
+          ? [...sourceModule.koppelingen]
           : [];
-        const withoutSame = list.filter(
-          (k) =>
-            !(
-              k.moduleA === appOptions.find((o) => o.value === appAId)?.label &&
-              k.moduleB === appOptions.find((o) => o.value === appBId)?.label
-            )
-        );
-        const newItem = {
-          moduleA: appOptions.find((o) => o.value === appAId)?.label,
-          moduleB: appOptions.find((o) => o.value === appBId)?.label,
+        const idx = list.findIndex((k) => k?._localId === localId);
+
+        const moduleALabel = appOptions.find((o) => o.value === appAId)?.label;
+        const moduleBLabel = (modulesOptions || []).find(
+          (o) => o.value === appBId
+        )?.label;
+
+        const fields = {
+          moduleA: moduleALabel,
+          moduleB: moduleBLabel,
           richtingDataUitwisseling: richting,
-          sooortKoppeling: soort,
+          soortKoppeling: soort,
         };
 
-        console.log('🔗 Adding koppeling:', {
-          appAId,
-          appBId,
-          newItem,
-          existingKoppelingen: sourceModule.koppelingen?.length || 0,
-        });
+        if (idx >= 0) {
+          list[idx] = { ...list[idx], ...fields };
+        } else {
+          list.push({ _localId: localId, ...fields });
+        }
 
-        modules[appAId] = {
-          ...sourceModule,
-          koppelingen: [...withoutSame, newItem],
-        };
+        modules[appAId] = { ...sourceModule, koppelingen: list };
         return { ...prev, modules };
       });
+
+      // Track last persisted module index for this row
+      setKoppelingenFormState((prev) => ({
+        ...prev,
+        moduleIndexByRow: { ...(prev.moduleIndexByRow || {}), [rowId]: appAId },
+      }));
+    };
+
+    const removeRow = (rowId) => {
+      const localId = koppelingIdByRow[rowId];
+      const curModuleIdx = selectedAppAByRow[rowId];
+      const prevModuleIdx = moduleIndexByRow[rowId];
+
+      if (localId != null) {
+        setProduct((prev) => {
+          const modules = [...(prev.modules || [])];
+
+          const removeFrom = (idx) => {
+            if (idx == null) return;
+            const mod = modules[idx];
+            if (typeof mod === 'object') {
+              const list = Array.isArray(mod.koppelingen) ? mod.koppelingen : [];
+              modules[idx] = {
+                ...mod,
+                koppelingen: list.filter((k) => k?._localId !== localId),
+              };
+            }
+          };
+
+          removeFrom(prevModuleIdx);
+          if (curModuleIdx !== prevModuleIdx) removeFrom(curModuleIdx);
+
+          return { ...prev, modules };
+        });
+      }
+
+      setKoppelingenFormState((prev) => ({
+        ...prev,
+        rows: prev.rows.filter((id) => id !== rowId),
+        selectedAppAByRow: Object.fromEntries(
+          Object.entries(prev.selectedAppAByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        selectedAppBByRow: Object.fromEntries(
+          Object.entries(prev.selectedAppBByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        directionByRow: Object.fromEntries(
+          Object.entries(prev.directionByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        typeByRow: Object.fromEntries(
+          Object.entries(prev.typeByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        koppelingIdByRow: Object.fromEntries(
+          Object.entries(prev.koppelingIdByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+        moduleIndexByRow: Object.fromEntries(
+          Object.entries(prev.moduleIndexByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+      }));
     };
 
     return (
@@ -130,13 +228,11 @@ const ConFormKoppelingenStage = memo(
         <Paragraph style={{ marginBottom: '2rem' }}>
           <strong>Integraties en gegevensuitwisseling</strong>
           <br />
-          Hier specificeert u hoe uw applicaties met andere systemen communiceren.
-          Deze informatie is essentieel voor organisaties om te begrijpen hoe uw
-          software integreert in hun bestaande IT-landschap. Door koppelingen
-          duidelijk te beschrijven (inclusief richting en type gegevensuitwisseling),
-          kunnen organisaties de impact op hun architectuur beoordelen. Dit helpt bij
-          het maken van integratieplannen en het inschatten van
-          implementatie-inspanningen.
+          Geef hier aan hoe uw applicatie gegevens uitwisselt met andere systemen.
+          Dit helpt organisaties om te zien hoe uw software integreert in hun
+          applicatielandschap. Vul voor elke koppeling in: de betrokken applicaties,
+          de richting van de uitwisseling en het type koppeling (bijv. API, bestand,
+          bericht).
         </Paragraph>
 
         <TableContainer className='con-form-wizard-table-container'>
@@ -174,13 +270,15 @@ const ConFormKoppelingenStage = memo(
                           : null
                       }
                       onChange={(opt) => {
+                        // Persist immediately with the fresh value
+                        persistRowIntoProduct(rowId, { appAId: opt?.value });
+                        // Keep UI state in sync
                         setKoppelingValue(rowId, (prev) => ({
                           selectedAppAByRow: {
                             ...prev.selectedAppAByRow,
                             [rowId]: opt?.value,
                           },
                         }));
-                        persistRowIntoProduct(rowId);
                       }}
                     />
                   </TableCell>
@@ -202,13 +300,15 @@ const ConFormKoppelingenStage = memo(
                       }}
                       isLoading={modulesLoading}
                       onChange={(opt) => {
+                        // Persist immediately with the fresh value
+                        persistRowIntoProduct(rowId, { appBId: opt?.value });
+                        // Keep UI state in sync
                         setKoppelingValue(rowId, (prev) => ({
                           selectedAppBByRow: {
                             ...prev.selectedAppBByRow,
                             [rowId]: opt?.value,
                           },
                         }));
-                        persistRowIntoProduct(rowId);
                       }}
                     />
                   </TableCell>
@@ -223,13 +323,15 @@ const ConFormKoppelingenStage = memo(
                           : null
                       }
                       onChange={(opt) => {
+                        // Persist immediately with the fresh value
+                        persistRowIntoProduct(rowId, { richting: opt?.value });
+                        // Keep UI state in sync
                         setKoppelingValue(rowId, (prev) => ({
                           directionByRow: {
                             ...prev.directionByRow,
                             [rowId]: opt?.value,
                           },
                         }));
-                        persistRowIntoProduct(rowId);
                       }}
                     />
                   </TableCell>
@@ -242,10 +344,12 @@ const ConFormKoppelingenStage = memo(
                           : null
                       }
                       onChange={(opt) => {
+                        // Persist immediately with the fresh value
+                        persistRowIntoProduct(rowId, { soort: opt?.value });
+                        // Keep UI state in sync
                         setKoppelingValue(rowId, (prev) => ({
                           typeByRow: { ...prev.typeByRow, [rowId]: opt?.value },
                         }));
-                        persistRowIntoProduct(rowId);
                       }}
                     />
                   </TableCell>
@@ -256,32 +360,9 @@ const ConFormKoppelingenStage = memo(
                         buttonType='secondary'
                         icon={<VISUALS.TRASHCAN />}
                         disabled={rows.length === 1}
-                        onClick={() =>
-                          setKoppelingenFormState((prev) => ({
-                            ...prev,
-                            rows: prev.rows.filter((id) => id !== rowId),
-                            selectedAppAByRow: Object.fromEntries(
-                              Object.entries(prev.selectedAppAByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            selectedAppBByRow: Object.fromEntries(
-                              Object.entries(prev.selectedAppBByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            directionByRow: Object.fromEntries(
-                              Object.entries(prev.directionByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            typeByRow: Object.fromEntries(
-                              Object.entries(prev.typeByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                          }))
-                        }
+                        onClick={() => {
+                          removeRow(rowId);
+                        }}
                         title='Rij verwijderen'
                       ></AcButton>
                     </div>
@@ -301,7 +382,7 @@ const ConFormKoppelingenStage = memo(
                     }))
                   }
                 >
-                  Rij toevoegen
+                  Nieuwe koppeling toevoegen
                 </AcButton>
               </div>
             </TableBody>

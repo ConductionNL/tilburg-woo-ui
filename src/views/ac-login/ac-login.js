@@ -121,23 +121,22 @@ const AcLogin = ({ store }) => {
     <div className='ac-login-container'>
       <div>
         {wasRedirected && (
-          <div className='ac-login-redirect-notice' style={{ 
-            backgroundColor: '#e3f2fd', 
-            border: '1px solid #2196f3', 
-            borderRadius: '4px', 
-            padding: '12px', 
-            marginBottom: '16px',
-            color: '#1976d2'
-          }}>
-            <strong>Inloggen vereist:</strong> Je moet inloggen om deze pagina te bekijken.
-            {redirectUrl && (
-              <div style={{ fontSize: '0.9em', marginTop: '12px' }}>
-                Na het inloggen word je doorgestuurd naar: <code>{decodeURIComponent(redirectUrl)}</code>
-              </div>
-            )}
+          <div
+            className='ac-login-redirect-notice'
+            style={{
+              backgroundColor: '#e3f2fd',
+              border: '1px solid #2196f3',
+              borderRadius: '4px',
+              padding: '12px',
+              marginBottom: '16px',
+              color: '#1976d2',
+            }}
+          >
+            <strong>Inloggen vereist:</strong> Je moet inloggen om deze pagina te
+            bekijken.
           </div>
         )}
-        
+
         <div className='ac-login-heading'>
           <Heading level={1}>Inloggen</Heading>
         </div>
