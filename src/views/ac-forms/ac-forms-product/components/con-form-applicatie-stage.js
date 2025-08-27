@@ -34,7 +34,9 @@ const ApplicatieFormFields = memo(
   ({ index, applicatie, updateApplicatie, loading, schemas }) => {
     // Add defensive check for applicatie object
     if (!applicatie) {
-      console.warn(`ApplicatieFormFields: applicatie is undefined for index ${index}`);
+      console.warn(
+        `ApplicatieFormFields: applicatie is undefined for index ${index}`
+      );
       return <div>Loading applicatie...</div>;
     }
 
@@ -78,10 +80,10 @@ ApplicatieFormFields.displayName = 'ApplicatieFormFields';
 
 /**
  * Applicatie Stage Component
- * 
- * This stage manages applications within a product. It supports both single and multiple 
+ *
+ * This stage manages applications within a product. It supports both single and multiple
  * application modes, and allows users to add new applications or link existing ones.
- * 
+ *
  * @param {Object} product - The product object containing form data
  * @param {Function} setProduct - Function to update the entire product object
  * @param {boolean} isMultiApplicatie - Whether product has multiple applications
@@ -113,14 +115,12 @@ const ConFormApplicatieStage = memo(
     // State to store available module options for lookup
     const [availableModuleOptions, setAvailableModuleOptions] = useState([]);
 
-
-
     // Debug logging for search setup
     console.log('🔧 ConFormApplicatieStage - Search setup:', {
       hasSearchModules: !!searchModules,
       modulesOptionsCount: modulesOptions ? modulesOptions.length : 0,
       modulesLoading,
-      firstFewOptions: modulesOptions ? modulesOptions.slice(0, 3) : []
+      firstFewOptions: modulesOptions ? modulesOptions.slice(0, 3) : [],
     });
 
     const updateModule = (moduleIndex, key, value) => {
@@ -158,9 +158,12 @@ const ConFormApplicatieStage = memo(
       setProduct((prev) => {
         // Get schema defaults for moduleVersie
         const moduleVersieDefaults = getModuleVersieDefaults();
-        
-        console.log('🔧 Creating new module with moduleVersie defaults:', moduleVersieDefaults);
-        
+
+        console.log(
+          '🔧 Creating new module with moduleVersie defaults:',
+          moduleVersieDefaults
+        );
+
         // ✅ NEW: Create new module object directly with empty data + initialized moduleVersies
         const newModuleObject = {
           naam: '',
@@ -173,8 +176,8 @@ const ConFormApplicatieStage = memo(
           standaarden: [],
           referentieComponenten: [],
           diensten: [],
-          koppelingen: [],    
-          compliancy: [],    
+          koppelingen: [],
+          compliancy: [],
           moduleVersies: [{ ...moduleVersieDefaults }], // Initialize with schema defaults
           // Backend will generate ID and other properties when saving
         };
@@ -255,16 +258,18 @@ const ConFormApplicatieStage = memo(
       setProduct((prev) => {
         const moduleId = selectedItem.value;
         const applicationData = selectedItem.data || {};
-        
+
         // Extract basic info from selected application
-        const naam = selectedItem.label ||
+        const naam =
+          selectedItem.label ||
           applicationData.naam ||
           applicationData.name ||
           applicationData.title ||
           applicationData['@self']?.name ||
           'Unnamed Application';
 
-        const beschrijvingKort = applicationData.beschrijvingKort ||
+        const beschrijvingKort =
+          applicationData.beschrijvingKort ||
           applicationData.beschrijving ||
           applicationData.description ||
           applicationData.beschrijvingLang ||
@@ -274,7 +279,7 @@ const ConFormApplicatieStage = memo(
 
         // ✅ NEW STRUCTURE: Only store ID in modules array, data in separate lookup
         // Update separate lookup state
-        setExistingModulesLookup(prevLookup => ({
+        setExistingModulesLookup((prevLookup) => ({
           ...prevLookup,
           [moduleId]: {
             id: moduleId,
@@ -283,7 +288,7 @@ const ConFormApplicatieStage = memo(
             fullData: applicationData,
           },
         }));
-        
+
         return {
           ...prev,
           // Add module ID string to modules array (for backend submission)
@@ -297,18 +302,21 @@ const ConFormApplicatieStage = memo(
 
     if (!isMultiApplicatie) {
       const firstModule = product.modules?.[0];
-      
+
       // Ensure there's always a module object for single applicatie mode
       if (!firstModule || typeof firstModule === 'string') {
         // Initialize module with product name and description if available
         const productName = product.naam || '';
         const productDescription = product.beschrijvingKort || '';
-        
+
         // Get schema defaults for moduleVersie
         const moduleVersieDefaults = getModuleVersieDefaults();
-        
-        console.log('🔧 Initializing single applicatie module with moduleVersie defaults:', moduleVersieDefaults);
-        
+
+        console.log(
+          '🔧 Initializing single applicatie module with moduleVersie defaults:',
+          moduleVersieDefaults
+        );
+
         // Initialize the first module with product data + moduleVersies with schema defaults
         const newModule = {
           naam: productName,
@@ -321,19 +329,22 @@ const ConFormApplicatieStage = memo(
           standaarden: [],
           referentieComponenten: [],
           diensten: [],
-          koppelingen: [],    
-          compliancy: [],    
+          koppelingen: [],
+          compliancy: [],
           moduleVersies: [{ ...moduleVersieDefaults }], // Initialize with schema defaults
         };
-        
-        setProduct(prev => ({
+
+        setProduct((prev) => ({
           ...prev,
-          modules: [newModule, ...(prev.modules || []).filter(m => typeof m === 'string')],
+          modules: [
+            newModule,
+            ...(prev.modules || []).filter((m) => typeof m === 'string'),
+          ],
         }));
-        
+
         return <div>Initialiseren...</div>;
       }
-      
+
       return (
         <div
           className='ac-register-form-section'
@@ -343,13 +354,36 @@ const ConFormApplicatieStage = memo(
           <h2 id='applicatie-section-title' className='sr-only'>
             Applicatie
           </h2>
-          <ApplicatieFormFields
-            index={0}
-            applicatie={firstModule}
-            updateApplicatie={(index, key, value) => updateModule(index, key, value)}
-            loading={loading}
-            schemas={schemas}
-          />
+          <div className='ac-register-review'>
+            <Paragraph>
+              <strong>Enkele applicatie geselecteerd</strong>
+              <br />
+              De naam en samenvatting van de applicatie zijn automatisch overgenomen
+              van het product.
+            </Paragraph>
+            <div
+              className='ac-register-review__section'
+              style={{ marginTop: '0.5rem' }}
+            >
+              <div className='ac-register-review__field'>
+                <Paragraph style={{ margin: 0 }}>
+                  <strong>Naam</strong>
+                  <br />
+                  {firstModule.naam || '-'}
+                </Paragraph>
+              </div>
+              <div
+                className='ac-register-review__field'
+                style={{ marginTop: '0.75rem' }}
+              >
+                <Paragraph style={{ margin: 0 }}>
+                  <strong>Samenvatting</strong>
+                  <br />
+                  {firstModule.beschrijvingKort || '-'}
+                </Paragraph>
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
@@ -357,7 +391,7 @@ const ConFormApplicatieStage = memo(
     // ✅ NEW: Get all modules directly from modules array for display
     const getAllModulesForDisplay = () => {
       const items = [];
-      
+
       (product.modules || []).forEach((module, index) => {
         if (typeof module === 'string') {
           // Existing module (string ID)
@@ -379,7 +413,7 @@ const ConFormApplicatieStage = memo(
           });
         }
       });
-      
+
       return items;
     };
 
@@ -395,7 +429,7 @@ const ConFormApplicatieStage = memo(
         <h2 id='applicaties-section-title' className='sr-only'>
           Applicaties
         </h2>
-        
+
         {hasAnyModules && (
           <Table>
             <thead>
@@ -404,7 +438,10 @@ const ConFormApplicatieStage = memo(
                   <b>{schemas?.module?.properties?.naam?.title || 'Naam'}</b>
                 </TableCell>
                 <TableCell>
-                  <b>{schemas?.module?.properties?.beschrijvingKort?.title || 'Beschrijving'}</b>
+                  <b>
+                    {schemas?.module?.properties?.beschrijvingKort?.title ||
+                      'Beschrijving'}
+                  </b>
                 </TableCell>
                 <TableCell>
                   <b>Acties</b>
@@ -443,7 +480,10 @@ const ConFormApplicatieStage = memo(
                           onChange={(e) =>
                             updateModule(item.moduleIndex, 'naam', e.target.value)
                           }
-                          placeholder={schemas?.module?.properties?.naam?.example || 'Naam van de applicatie'}
+                          placeholder={
+                            schemas?.module?.properties?.naam?.example ||
+                            'Naam van de applicatie'
+                          }
                           disabled={loading}
                         />
                       )}
@@ -468,10 +508,17 @@ const ConFormApplicatieStage = memo(
                           id={`table-module-beschrijving-${item.moduleIndex}`}
                           value={data?.beschrijvingKort || ''}
                           onChange={(e) =>
-                            updateModule(item.moduleIndex, 'beschrijvingKort', e.target.value)
+                            updateModule(
+                              item.moduleIndex,
+                              'beschrijvingKort',
+                              e.target.value
+                            )
                           }
                           maxLength={255}
-                          placeholder={schemas?.module?.properties?.beschrijvingKort?.example || 'Beschrijving van de applicatie'}
+                          placeholder={
+                            schemas?.module?.properties?.beschrijvingKort?.example ||
+                            'Beschrijving van de applicatie'
+                          }
                           disabled={loading}
                         />
                       )}
@@ -493,10 +540,12 @@ const ConFormApplicatieStage = memo(
                               // Remove existing module from modules array and lookup
                               setProduct((prev) => ({
                                 ...prev,
-                                modules: (prev.modules || []).filter((_, index) => index !== item.moduleIndex),
+                                modules: (prev.modules || []).filter(
+                                  (_, index) => index !== item.moduleIndex
+                                ),
                               }));
-                              
-                              setExistingModulesLookup(prevLookup => {
+
+                              setExistingModulesLookup((prevLookup) => {
                                 const newLookup = { ...prevLookup };
                                 delete newLookup[item.moduleId];
                                 return newLookup;
@@ -505,7 +554,9 @@ const ConFormApplicatieStage = memo(
                               // Remove new module directly from modules array
                               setProduct((prev) => ({
                                 ...prev,
-                                modules: (prev.modules || []).filter((_, index) => index !== item.moduleIndex),
+                                modules: (prev.modules || []).filter(
+                                  (_, index) => index !== item.moduleIndex
+                                ),
                               }));
                             }
                           }}
@@ -523,11 +574,15 @@ const ConFormApplicatieStage = memo(
           {/* Explanation text */}
           <div style={{ marginBottom: '1.5rem' }}>
             <Paragraph>
-              <strong>Voeg applicaties toe aan uw product</strong><br/>
-              Hier definieert u welke applicaties en modules onderdeel zijn van uw product. U kunt kiezen tussen bestaande applicaties 
-              uit de catalogus of nieuwe applicaties aanmaken. Bestaande applicaties hebben al hun configuratie vastgelegd, 
-              terwijl voor nieuwe applicaties in de volgende stappen licenties, versies, standaarden en koppelingen moeten worden opgegeven. 
-              Deze informatie helpt organisaties om te begrijpen uit welke componenten uw product bestaat.
+              <strong>Voeg applicaties toe aan uw product</strong>
+              <br />
+              Hier definieert u welke applicaties en modules onderdeel zijn van uw
+              product. U kunt kiezen tussen bestaande applicaties uit de catalogus of
+              nieuwe applicaties aanmaken. Bestaande applicaties hebben al hun
+              configuratie vastgelegd, terwijl voor nieuwe applicaties in de volgende
+              stappen licenties, versies, standaarden en koppelingen moeten worden
+              opgegeven. Deze informatie helpt organisaties om te begrijpen uit welke
+              componenten uw product bestaat.
             </Paragraph>
           </div>
 
@@ -579,7 +634,7 @@ const ConFormApplicatieStage = memo(
                     className='ac-forms-full-width-button'
                   >
                     Nieuwe applicatie toevoegen
-          </AcButton>
+                  </AcButton>
                 </div>
               </div>
             </div>
@@ -629,10 +684,22 @@ const ConFormApplicatieStage = memo(
                   >
                     <div style={{ width: '250px', flexShrink: 0 }}>
                       <ReactSelect
-                        value={modulesOptions.find(opt => opt.value === selectedExistingApplication) || null}
-                        onChange={(selectedOption) => setSelectedExistingApplication(selectedOption?.value || null)}
+                        value={
+                          modulesOptions.find(
+                            (opt) => opt.value === selectedExistingApplication
+                          ) || null
+                        }
+                        onChange={(selectedOption) =>
+                          setSelectedExistingApplication(
+                            selectedOption?.value || null
+                          )
+                        }
                         options={modulesOptions}
-                        placeholder={modulesOptions.length === 0 && !modulesLoading ? "Begin met typen om te zoeken..." : "Selecteer modules"}
+                        placeholder={
+                          modulesOptions.length === 0 && !modulesLoading
+                            ? 'Begin met typen om te zoeken...'
+                            : 'Selecteer modules'
+                        }
                         isSearchable={true}
                         isLoading={modulesLoading}
                         onInputChange={(inputValue, actionMeta) => {
@@ -682,17 +749,19 @@ const ConFormApplicatieStage = memo(
                       >
                         {modulesLoading ? (
                           <>
-                            <i 
-                              className="ac-icon--refresh" 
+                            <i
+                              className='ac-icon--refresh'
                               style={{
                                 marginRight: '0.5rem',
                                 display: 'inline-block',
-                                animation: 'spin 1s linear infinite'
+                                animation: 'spin 1s linear infinite',
                               }}
                             ></i>
                             Zoeken...
                           </>
-                        ) : 'Toevoegen'}
+                        ) : (
+                          'Toevoegen'
+                        )}
                       </AcButton>
                     </div>
                   </div>

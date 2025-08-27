@@ -1,6 +1,9 @@
 {
   "prettier.configPath": ".prettierrc.json",
-
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+},
   "emeraldwalk.runonsave": {
     "autoClearConsole": true,
     "message": "🔄 On Save: checking file and triggering HMR…",

@@ -9,6 +9,7 @@
   transition: all 0.2s ease;
   text-align: center;
   color: var(--tilburg-color-white);
+  position: relative;
 
   &:focus {
     outline: 3px solid var(--tilburg-color-focus);
@@ -21,6 +22,7 @@
 
   // Color variants
   &--primary {
+    --ac-tile-bg: var(--tilburg-color-primary-600);
     background: var(--tilburg-color-primary-600);
 
     &:hover:not(.ac-tile--disabled) {
@@ -35,6 +37,7 @@
   }
 
   &--secondary {
+    --ac-tile-bg: var(--tilburg-color-gray-600);
     background: var(--tilburg-color-gray-600);
 
     &:hover:not(.ac-tile--disabled) {
@@ -49,6 +52,7 @@
   }
 
   &--success {
+    --ac-tile-bg: var(--tilburg-color-green-600);
     background: var(--tilburg-color-green-600);
 
     &:hover:not(.ac-tile--disabled) {
@@ -63,6 +67,7 @@
   }
 
   &--warning {
+    --ac-tile-bg: var(--tilburg-color-yellow-600);
     background: var(--tilburg-color-yellow-600);
 
     &:hover:not(.ac-tile--disabled) {
@@ -77,6 +82,7 @@
   }
 
   &--danger {
+    --ac-tile-bg: var(--tilburg-color-red-600);
     background: var(--tilburg-color-red-600);
 
     &:hover:not(.ac-tile--disabled) {
@@ -92,6 +98,7 @@
 
   // Modern colorful variants (like in the image)
   &--orange {
+    --ac-tile-bg: #ff7f27;
     background: #ff7f27;
 
     &:hover:not(.ac-tile--disabled) {
@@ -106,6 +113,7 @@
   }
 
   &--green {
+    --ac-tile-bg: #2ecc71;
     background: #2ecc71;
 
     &:hover:not(.ac-tile--disabled) {
@@ -120,6 +128,7 @@
   }
 
   &--purple {
+    --ac-tile-bg: #9b59b6;
     background: #9b59b6;
 
     &:hover:not(.ac-tile--disabled) {
@@ -134,6 +143,7 @@
   }
 
   &--yellow {
+    --ac-tile-bg: #f1c40f;
     background: #f1c40f;
     color: var(--tilburg-color-gray-800) !important;
 
@@ -157,6 +167,7 @@
   }
 
   &--teal {
+    --ac-tile-bg: #1abc9c;
     background: #1abc9c;
 
     &:hover:not(.ac-tile--disabled) {
@@ -171,6 +182,7 @@
   }
 
   &--blue {
+    --ac-tile-bg: #3498db;
     background: #3498db;
 
     &:hover:not(.ac-tile--disabled) {
@@ -255,12 +267,14 @@
   &--disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    
+
     &:hover {
       transform: none;
       box-shadow: none;
     }
   }
+
+  // Selected/Not-selected styles are defined in _ac-tile-select.scss
 
   // Icon styling
   .ac-tile__icon {

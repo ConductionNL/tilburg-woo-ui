@@ -68,7 +68,7 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
  *         standaarden: { naam: string, supported?: boolean, bewijs?: string }[],
  *         koppelingen: {
  *           applicatie1: string, applicatie2: string,
- *           richtingDataUitwisseling?: string, sooortKoppeling?: string
+ *           richtingDataUitwisseling?: string, soortKoppeling?: string
  *         }[],
  *         diensten: string[]
  *       }
@@ -240,7 +240,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     logoFilename: '',
     hostingLocatie: '',
     hostingJurisdictie: '',
-    contactpersoon: null, // Contact person object reference
+    contactpersoon: '', // Contact person object reference
     cloudDienstverleningsmodel: '', // Cloud service model enum
     modules: [], // Array of module IDs for existing modules + new module objects
 
@@ -911,12 +911,14 @@ const AcFormsProduct = ({ userStore, store }) => {
   // Remove any local-only IDs (like _localId) before submitting
   const stripLocalIds = (value) => {
     if (Array.isArray(value)) {
-      return value.map(stripLocalIds);
+      return value.map(stripLocalIds).filter((v) => v != null);
     }
     if (value && typeof value === 'object') {
       const out = {};
       Object.keys(value).forEach((k) => {
         if (k === '_localId') return;
+        // Remove UI-only fields from compliancy objects
+        if (k === 'standaardnaam') return;
         out[k] = stripLocalIds(value[k]);
       });
       return out;
@@ -962,24 +964,141 @@ const AcFormsProduct = ({ userStore, store }) => {
     return formType === 'ontbrekend';
   };
 
+  // Helper to determine if Versies step should be shown (On-premise only)
+  const shouldShowVersiesStep = () => {
+    return (
+      (product?.cloudDienstverleningsmodel || '') === 'On-premises (self-managed)'
+    );
+  };
+
   // Helper function to get the correct step index accounting for optional aanbieder step
   const getAdjustedStepIndex = (logicalStep) => {
-    if (!shouldShowAanbiederStep()) {
-      // If aanbieder step is not shown, shift all steps after step 1 down by 1
-      return logicalStep > 1 ? logicalStep - 1 : logicalStep;
+    let index = logicalStep;
+    // If aanbieder step is not shown, shift all steps after step 1 down by 1
+    if (!shouldShowAanbiederStep() && logicalStep > 1) {
+      index -= 1;
     }
-    return logicalStep;
+    // If versies step is not shown, shift all steps after logical step 5 down by 1
+    if (!shouldShowVersiesStep() && logicalStep > 5) {
+      index -= 1;
+    }
+    return index;
   };
 
   // Helper function to get logical step from actual step index
   const getLogicalStepFromIndex = (stepIndex) => {
-    // When aanbieder step is NOT shown, we need to map physical steps to logical steps
-    // Physical: 0,1,2,3,4,5,6,7,8,9  → Logical: 0,1,3,4,5,6,7,8,9,10
-    // When aanbieder step IS shown, physical and logical steps are the same
+    // Base logical mapping, accounting for optional aanbieder step (logical 2)
+    let logical = stepIndex;
     if (!shouldShowAanbiederStep() && stepIndex >= 2) {
-      return stepIndex + 1; // Skip logical step 2 (aanbieder)
+      logical = stepIndex + 1;
     }
-    return stepIndex;
+    // Additionally account for optional versies step (logical 5)
+    if (!shouldShowVersiesStep()) {
+      const versiesPhysicalIndex = getAdjustedStepIndex(5);
+      if (stepIndex >= versiesPhysicalIndex) {
+        logical += 1; // Skip logical step 5
+      }
+    }
+    return logical;
+  };
+
+  // Defaults for moduleVersie based on schema, used when auto-creating a module in single-app mode
+  const getModuleVersieDefaults = useCallback(() => {
+    const defaults = {};
+    const moduleVersieSchema = schemas?.moduleversie;
+    if (moduleVersieSchema?.properties) {
+      Object.entries(moduleVersieSchema.properties).forEach(([key, property]) => {
+        if (property.default !== undefined) {
+          defaults[key] = property.default;
+        }
+        if (property.example !== undefined && defaults[key] === undefined) {
+          defaults[key] = property.example;
+        }
+      });
+    }
+    return defaults;
+  }, [schemas]);
+
+  // Ensure a single-app module exists and is prefilled from product fields
+  const ensureSingleModuleInitialized = useCallback(() => {
+    if (isMultiApplicatie) return;
+    const firstModule = product.modules?.[0];
+    if (!firstModule || typeof firstModule === 'string') {
+      const moduleVersieDefaults = getModuleVersieDefaults();
+      const newModule = {
+        naam: product.naam || '',
+        beschrijvingKort: product.beschrijvingKort || '',
+        beschrijvingLang: '',
+        licentieType: '',
+        licentietype: '',
+        licentie: '',
+        hostingLocatie: '',
+        hostingJurisdictie: '',
+        standaarden: [],
+        referentieComponenten: [],
+        diensten: [],
+        koppelingen: [],
+        compliancy: [],
+        moduleVersies: [{ ...moduleVersieDefaults }],
+      };
+      setProduct((prev) => ({
+        ...prev,
+        modules: [
+          newModule,
+          ...(prev.modules || []).filter((m) => typeof m === 'string'),
+        ],
+      }));
+    }
+  }, [
+    isMultiApplicatie,
+    product.modules,
+    product.naam,
+    product.beschrijvingKort,
+    getModuleVersieDefaults,
+    setProduct,
+  ]);
+
+  // Always ensure a module exists in single-app mode as soon as the mode is selected
+  useEffect(() => {
+    if (!isMultiApplicatie) {
+      ensureSingleModuleInitialized();
+    }
+  }, [isMultiApplicatie, ensureSingleModuleInitialized]);
+
+  // Navigation helpers to skip Applicatie step in single-app mode
+  const getNextStepIndex = (stepIndex) => {
+    const logical = getLogicalStepFromIndex(stepIndex);
+    if (!isMultiApplicatie) {
+      // From Productinformatie → either Aanbieder (if shown) or directly to Licentie
+      if (logical === 1) {
+        if (shouldShowAanbiederStep()) {
+          return stepIndex + 1; // go to Aanbieder
+        }
+        return getAdjustedStepIndex(4); // skip Applicatie → Licentie
+      }
+      // From Aanbieder → skip Applicatie → go to Licentie
+      if (logical === 2) {
+        return getAdjustedStepIndex(4);
+      }
+    }
+    // From Licentie → skip Versies when not On-premise
+    if (!shouldShowVersiesStep() && logical === 4) {
+      return getAdjustedStepIndex(6);
+    }
+    return stepIndex + 1;
+  };
+
+  const getPrevStepIndex = (stepIndex) => {
+    const logical = getLogicalStepFromIndex(stepIndex);
+    // From Licentie back to Productinformatie in single-app mode
+    if (!isMultiApplicatie && logical === 4) {
+      return getAdjustedStepIndex(1);
+    }
+    // From Referentiecomponenten back to Licentie when Versies is hidden
+    if (!shouldShowVersiesStep() && logical === 6) {
+      return getAdjustedStepIndex(4);
+    }
+    return stepIndex - 1;
   };
 
   const renderStep = (step) => {
@@ -1004,6 +1123,7 @@ const AcFormsProduct = ({ userStore, store }) => {
             loading={loading}
             touched={touched}
             schemas={schemas}
+            isMultiApplicatie={isMultiApplicatie}
           />
         );
       case 2:
@@ -1054,7 +1174,7 @@ const AcFormsProduct = ({ userStore, store }) => {
           />
         );
       case 5:
-        return (
+        return shouldShowVersiesStep() ? (
           <ConFormModuleVersieStage
             product={product}
             setProduct={setProduct}
@@ -1065,6 +1185,9 @@ const AcFormsProduct = ({ userStore, store }) => {
             existingModulesLookup={existingModulesLookup}
             getAllModulesForStages={getAllModulesForStages}
           />
+        ) : (
+          // If versions step is hidden, render next step (Referentiecomponenten)
+          renderStep(getAdjustedStepIndex(6))
         );
       case 6:
         return (
@@ -1173,7 +1296,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       case 4:
         return 'Licentie';
       case 5:
-        return 'Versies';
+        return shouldShowVersiesStep() ? 'Versies' : 'Referentiecomponenten';
       case 6:
         return 'Referentiecomponenten';
       case 7:
@@ -1183,7 +1306,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       case 9:
         return 'Diensten';
       case 10:
-        return 'Controleren';
+        return 'Controleer uw gegevens';
     }
   };
 
@@ -1616,14 +1739,20 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   ),
                                   title: 'Licentie',
                                 },
-                                {
-                                  id: 'a2b3c4d5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
-                                  status: getStatus(
-                                    currentStep,
-                                    shouldShowAanbiederStep() ? 5 : 4
-                                  ),
-                                  title: 'Versies',
-                                },
+                                // Conditionally include Versies only for On-premise cloudDienstverleningsmodel
+                                ...((product?.cloudDienstverleningsmodel || '') ===
+                                'On-premises (self-managed)'
+                                  ? [
+                                      {
+                                        id: 'a2b3c4d5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
+                                        status: getStatus(
+                                          currentStep,
+                                          shouldShowAanbiederStep() ? 5 : 4
+                                        ),
+                                        title: 'Versies',
+                                      },
+                                    ]
+                                  : []),
                                 {
                                   id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
                                   status: getStatus(
@@ -1737,7 +1866,9 @@ const AcFormsProduct = ({ userStore, store }) => {
                             style='button'
                             buttonType='secondary'
                             icon={<VISUALS.ARROW_LEFT />}
-                            onClick={() => setCurrentStep(currentStep - 1)}
+                            onClick={() =>
+                              setCurrentStep(getPrevStepIndex(currentStep))
+                            }
                             disabled={loading}
                           >
                             Vorige
@@ -1759,7 +1890,9 @@ const AcFormsProduct = ({ userStore, store }) => {
                               }
                               onClick={() => {
                                 focusForm();
-                                setCurrentStep(currentStep + 1);
+                                // In single-app mode, ensure a module exists before jumping to Licentie
+                                ensureSingleModuleInitialized();
+                                setCurrentStep(getNextStepIndex(currentStep));
                               }}
                               title={
                                 getDisabledStatus(currentStep)

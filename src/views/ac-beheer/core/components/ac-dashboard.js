@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
@@ -93,7 +94,7 @@ const AcDashboard = ({ store }) => {
               </div>
 
               <Paragraph>
-                U kunt uw organisatiegegevens en accountinformatie beheren via{' '}
+                Voor account- en organisatiedetails gaat u naar{' '}
                 <a
                   href='/account'
                   onClick={(e) => {
@@ -103,8 +104,7 @@ const AcDashboard = ({ store }) => {
                 >
                   Mijn Account
                 </a>
-                . Voor vragen over de catalogus kunt u contact opnemen via de
-                contactgegevens in de footer van deze website.
+                .
               </Paragraph>
             </div>
           </AcFlex>

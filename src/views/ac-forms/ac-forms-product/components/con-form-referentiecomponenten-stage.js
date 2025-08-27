@@ -13,10 +13,10 @@ import {
 
 /**
  * Referentiecomponenten Stage Component
- * 
+ *
  * This stage manages linking reference components to new applications in the product.
  * Existing applications are excluded as they already have their reference components.
- * 
+ *
  * @param {Object} product - The product object containing form data
  * @param {Function} setProduct - Function to update the entire product object
  * @param {Array} referentieComponentenOptions - Available reference component options
@@ -41,7 +41,9 @@ const ConFormReferentiecomponentenStage = memo(
     const [sameForAll, setSameForAll] = useState(true);
 
     // ✅ SIMPLIFIED: Use helper method to get new modules that need referentiecomponenten configuration
-    const newModules = getNewModulesWithApplicatieData ? getNewModulesWithApplicatieData() : [];
+    const newModules = getNewModulesWithApplicatieData
+      ? getNewModulesWithApplicatieData()
+      : [];
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
 
     const applicatieOptions = applicatieIndices.map((i) => ({
@@ -51,8 +53,6 @@ const ConFormReferentiecomponentenStage = memo(
 
     // Check if there are multiple NEW applications that need referentiecomponenten configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
-
-
 
     const updateModuleField = (moduleIndex, key, value) => {
       setProduct((prev) => {
@@ -87,17 +87,19 @@ const ConFormReferentiecomponentenStage = memo(
 
     const updateReferentieComponentenWithStandards = (appId, refs) => {
       const refsArray = normalizeValues(refs);
-      
+
       // Update the separate array with full referentieComponent data including standards
       setReferentieComponentenWithStandards((prev) => {
         // Remove existing entries for this application
-        const filtered = prev.filter(item => item.applicatieId !== appId);
-        
+        const filtered = prev.filter((item) => item.applicatieId !== appId);
+
         // Add new entries with full data from referentieComponentenOptions
-        const newEntries = refsArray.map(refId => {
-          const refOption = referentieComponentenOptions.find(opt => String(opt.value) === String(refId));
+        const newEntries = refsArray.map((refId) => {
+          const refOption = referentieComponentenOptions.find(
+            (opt) => String(opt.value) === String(refId)
+          );
           const refData = refOption?.data || {};
-          
+
           return {
             id: refId,
             naam: refOption?.label || refId,
@@ -110,7 +112,7 @@ const ConFormReferentiecomponentenStage = memo(
             fullData: refData,
           };
         });
-        
+
         const result = [...filtered, ...newEntries];
         console.log('🔍 Updated referentieComponentenWithStandards:', result);
         return result;
@@ -125,24 +127,25 @@ const ConFormReferentiecomponentenStage = memo(
           Referentiecomponenten
         </h2>
 
-        <Paragraph>
-          <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong><br/>
-          Referentiecomponenten uit de GEMMA architectuur tonen aan welke standaard gemeentelijke functies uw software ondersteunt. 
-          Door deze te koppelen aan uw applicaties, kunnen organisaties direct zien of uw software aansluit op hun IT-architectuur. 
-          Dit vergemakkelijkt integratie met bestaande systemen en zorgt voor herkenbare functionaliteit. 
-          Organisaties gebruiken deze informatie voor architectuur-assessments en interoperabiliteitsbeoordelingen.
+        <Paragraph style={{ marginBottom: '2rem' }}>
+          <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong>
+          <br />
+          Koppel uw applicatie aan de GEMMA-referentiecomponenten die de
+          gemeentelijke functies weergeven die uw software ondersteunt. Dit helpt
+          gemeenten te zien hoe uw software past in hun architectuur en
+          vergemakkelijkt integraties. Voor een overzicht van alle
+          referentiecomponenten(https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten)
+          kunt u terecht op GEMMA Online.
         </Paragraph>
-
-
 
         <ConModulesChoiceSwitch
           isMultiNewApplicatie={isMultiNewApplicatie}
           sameForAll={sameForAll}
           onSameForAllChange={setSameForAll}
-          configType="referentiecomponenten"
-          questionText="Dezelfde referentiecomponenten voor alle nieuwe applicaties?"
-          sameForAllLabel="Ja, dezelfde voor alle"
-          perAppLabel="Nee, per applicatie kiezen"
+          configType='referentiecomponenten'
+          questionText='Dezelfde referentiecomponenten voor alle nieuwe applicaties?'
+          sameForAllLabel='Ja, dezelfde voor alle'
+          perAppLabel='Nee, per applicatie kiezen'
         />
 
         {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
@@ -154,23 +157,34 @@ const ConFormReferentiecomponentenStage = memo(
                   value={(() => {
                     const currentModule = newModules[0] || {};
                     const selectedValues = currentModule.referentieComponenten || [];
-                    return referentieComponentenOptions.filter(opt => selectedValues.includes(opt.value));
+                    return referentieComponentenOptions.filter((opt) =>
+                      selectedValues.includes(opt.value)
+                    );
                   })()}
                   onChange={(selectedOptions) => {
-                    const refsArray = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
+                    const refsArray = selectedOptions
+                      ? selectedOptions.map((opt) => opt.value)
+                      : [];
                     if (sameForAll && isMultiNewApplicatie) {
                       applyToAll({ referentieComponenten: refsArray });
                       // Update standards data for all applications
-                      applicatieIndices.forEach(appId => {
+                      applicatieIndices.forEach((appId) => {
                         updateReferentieComponentenWithStandards(appId, refsArray);
                       });
                     } else {
                       updateModuleField(0, 'referentieComponenten', refsArray);
-                      updateReferentieComponentenWithStandards(applicatieIndices[0], refsArray);
+                      updateReferentieComponentenWithStandards(
+                        applicatieIndices[0],
+                        refsArray
+                      );
                     }
                   }}
                   options={referentieComponentenOptions}
-                  placeholder={referentieComponentenLoading ? "Laden..." : "Selecteer referentie componenten"}
+                  placeholder={
+                    referentieComponentenLoading
+                      ? 'Laden...'
+                      : 'Zoek en selecteer een referentiecomponent'
+                  }
                   isMulti={true}
                   isSearchable={true}
                   isLoading={referentieComponentenLoading}
@@ -239,14 +253,29 @@ const ConFormReferentiecomponentenStage = memo(
                       </TableCell>
                       <TableCell>
                         <ReactSelect
-                          value={referentieComponentenOptions.filter(opt => currentRefs.includes(opt.value))}
+                          value={referentieComponentenOptions.filter((opt) =>
+                            currentRefs.includes(opt.value)
+                          )}
                           onChange={(selectedOptions) => {
-                            const refsArray = selectedOptions ? selectedOptions.map(opt => opt.value) : [];
-                            updateModuleField(index, 'referentieComponenten', refsArray);
-                            updateReferentieComponentenWithStandards(index, refsArray);
+                            const refsArray = selectedOptions
+                              ? selectedOptions.map((opt) => opt.value)
+                              : [];
+                            updateModuleField(
+                              index,
+                              'referentieComponenten',
+                              refsArray
+                            );
+                            updateReferentieComponentenWithStandards(
+                              index,
+                              refsArray
+                            );
                           }}
                           options={referentieComponentenOptions}
-                          placeholder={referentieComponentenLoading ? "Laden..." : "Selecteer referentie componenten"}
+                          placeholder={
+                            referentieComponentenLoading
+                              ? 'Laden...'
+                              : 'Selecteer referentie componenten'
+                          }
                           isMulti={true}
                           isSearchable={true}
                           isLoading={referentieComponentenLoading}
@@ -287,10 +316,10 @@ const ConFormReferentiecomponentenStage = memo(
           </div>
         ) : null}
 
-        <ConExistingModulesInfoBox 
-          key="referentie-stage-existing-modules-info"
+        <ConExistingModulesInfoBox
+          key='referentie-stage-existing-modules-info'
           existingModulesLookup={existingModulesLookup}
-          configType="referentiecomponenten"
+          configType='referentiecomponenten'
         />
       </div>
     );
