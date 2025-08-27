@@ -3,7 +3,7 @@ import { PATHS } from './routes.constants';
 
 /**
  * Configuration for dashboard wizard tiles
- * 
+ *
  * Each wizard has:
  * - id: unique identifier
  * - name: display name in Dutch
@@ -26,7 +26,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'eigen' },
-    color: 'blue'
+    color: 'blue',
   },
   ONTBREKEND_PRODUCT: {
     id: 'ontbrekend-product', 
@@ -38,19 +38,19 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: false,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
     params: { type: 'ontbrekend' },
-    color: 'blue'
+    color: 'blue',
   },
   DIENST: {
     id: 'dienst',
     name: 'Dienst registreren', 
     description: 'Registreer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
-    path: PATHS.FORMS_KOPPELING, // or separate dienst form if it exists
+    path: PATHS.FORMS_DIENST, // or separate dienst form if it exists
     requiresAuth: true,
     requiresOrganization: true,
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'dienst' },
-    color: 'blue'
+    color: 'blue',
   },
   GEBRUIK: {
     id: 'gebruik',
@@ -62,7 +62,7 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
-    color: 'blue'
+    color: 'blue',
   },
   KOPPELING: {
     id: 'koppeling',
@@ -74,8 +74,8 @@ export const DASHBOARD_WIZARDS = {
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
-    color: 'blue'
-  }
+    color: 'blue',
+  },
 };
 
 /**
@@ -92,12 +92,12 @@ export const getDashboardWizards = (user = null, userOrganization = null) => {
  */
 export const getWizardUrl = (wizard) => {
   let url = wizard.path;
-  
+
   if (wizard.params && Object.keys(wizard.params).length > 0) {
     const params = new URLSearchParams(wizard.params);
     url += `?${params.toString()}`;
   }
-  
+
   return url;
 };
 
@@ -107,18 +107,22 @@ export const getWizardUrl = (wizard) => {
 export const SOFTWARE_CATALOG_CONCEPTS = {
   PRODUCT: {
     title: 'Product',
-    description: 'Een softwareproduct is een complete oplossing die door een organisatie wordt aangeboden. Dit kan bijvoorbeeld een website, applicatie of systeem zijn.'
+    description:
+      'Een softwareproduct is een complete oplossing die door een organisatie wordt aangeboden. Dit kan bijvoorbeeld een website, applicatie of systeem zijn.',
   },
   DIENST: {
-    title: 'Dienst', 
-    description: 'Een dienst is een specifieke functionaliteit of service die wordt aangeboden, vaak als onderdeel van een groter product.'
+    title: 'Dienst',
+    description:
+      'Een dienst is een specifieke functionaliteit of service die wordt aangeboden, vaak als onderdeel van een groter product.',
   },
   APPLICATIE: {
     title: 'Applicatie',
-    description: 'Een applicatie is een specifieke software-implementatie die onderdeel kan zijn van een product en concrete functionaliteiten biedt.'
+    description:
+      'Een applicatie is een specifieke software-implementatie die onderdeel kan zijn van een product en concrete functionaliteiten biedt.',
   },
   GEBRUIK: {
     title: 'Gebruik',
-    description: 'Gebruik registreert hoe organisaties producten, diensten of applicaties inzetten binnen hun processen en werkwijzen.'
-  }
+    description:
+      'Gebruik registreert hoe organisaties producten, diensten of applicaties inzetten binnen hun processen en werkwijzen.',
+  },
 };

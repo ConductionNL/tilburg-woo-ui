@@ -49,7 +49,7 @@ For developers working with the routing system:
 
 1. **Import New Components**: 
    ```javascript
-   import { AcFormsGebruik, AcFormsProduct, AcFormsKoppeling } from '@views';
+   import { AcFormsGebruik, AcFormsProduct, AcFormsKoppeling, ConFormsDienst } from '@views';
    ```
 
 2. **Route Navigation**:

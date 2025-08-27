@@ -10,7 +10,7 @@ export const BREADCRUMB_ITEMS = {
   MIJN_OMGEVING: { label: 'Mijn omgeving', href: '/mijn-omgeving' },
   GEMMA: { label: 'GEMMA', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
-  BEHEER: { label: 'Beheer' },
+  BEHEER: { label: 'Beheer', href: '/beheer' },
   BEHEER_LIST: (type) => ({
     label: prettifyPathname(type),
     href: `/beheer/${type}`,

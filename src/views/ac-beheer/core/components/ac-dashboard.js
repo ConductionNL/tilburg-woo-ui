@@ -2,13 +2,9 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
-import { AcButton, AcTile } from '@molecules';
+import { AcTile } from '@molecules';
 import { ConDynamicSidenav } from '@components';
-import {
-  getDashboardWizards,
-  getWizardUrl,
-  SOFTWARE_CATALOG_CONCEPTS,
-} from '@constants/wizards.constants';
+import { getDashboardWizards, getWizardUrl } from '@constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
 import {
   Heading,
@@ -90,6 +86,11 @@ const AcDashboard = ({ store }) => {
                   registreer hoe uw organisatie applicaties inzet in processen en
                   werkstromen.
                 </span>
+              </div>
+
+              <div className='ac-register-review__field'>
+                <strong>Koppeling registreren:</strong>
+                <span>leg vast welke koppelingen uw organisatie gebruikt.</span>
               </div>
 
               <Paragraph>
