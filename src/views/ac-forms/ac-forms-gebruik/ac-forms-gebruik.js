@@ -618,71 +618,73 @@ const AcFormsGebruik = ({ store }) => {
             </Paragraph>
           </div>
 
-          <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-            {currentStepName(currentStep)}
-          </h3>
+          <div>
+            <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
+              {currentStepName(currentStep)}
+            </h3>
 
-          <div className='ac-register-container ac-forms-product'>
-            <div ref={processStepsRef} className='ac-register-process-steps'>
-              <ProcessSteps
-                steps={stepsList.map((title, index) => ({
-                  id: `step-${index}`,
-                  marker: index + 1,
-                  status: getStatus(currentStep, index),
-                  title,
-                }))}
-              />
-            </div>
-
-            <div className='ac-register-form-container'>
-              <div
-                className='sr-only'
-                role='status'
-                aria-live='polite'
-                id='form-status'
-              >
-                {currentStepName(currentStep)}
+            <div className='ac-register-container ac-forms-product'>
+              <div ref={processStepsRef} className='ac-register-process-steps'>
+                <ProcessSteps
+                  steps={stepsList.map((title, index) => ({
+                    id: `step-${index}`,
+                    marker: index + 1,
+                    status: getStatus(currentStep, index),
+                    title,
+                  }))}
+                />
               </div>
 
-              {renderStep(currentStep)}
+              <div className='ac-register-form-container'>
+                <div
+                  className='sr-only'
+                  role='status'
+                  aria-live='polite'
+                  id='form-status'
+                >
+                  {currentStepName(currentStep)}
+                </div>
 
-              <div
-                className={clsx(
-                  'ac-register-form-buttons',
-                  currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
-                )}
-              >
-                {currentStep !== 0 && (
-                  <AcButton
-                    style='button'
-                    buttonType='secondary'
-                    onClick={() => setCurrentStep(currentStep - 1)}
-                    disabled={loading}
-                  >
-                    Vorige
-                  </AcButton>
-                )}
+                {renderStep(currentStep)}
 
-                {currentStep !== stepsList.length - 1 && (
-                  <div className='ac-register-button-wrapper'>
+                <div
+                  className={clsx(
+                    'ac-register-form-buttons',
+                    currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
+                  )}
+                >
+                  {currentStep !== 0 && (
                     <AcButton
                       style='button'
-                      className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
-                      )}
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                      disabled={!canGoNext() || loading}
+                      buttonType='secondary'
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      disabled={loading}
                     >
-                      Volgende
+                      Vorige
                     </AcButton>
-                  </div>
-                )}
+                  )}
 
-                {currentStep === stepsList.length - 1 && (
-                  <AcButton style='button' buttonType='primary' disabled>
-                    Bevestigen (niet actief)
-                  </AcButton>
-                )}
+                  {currentStep !== stepsList.length - 1 && (
+                    <div className='ac-register-button-wrapper'>
+                      <AcButton
+                        style='button'
+                        className={clsx(
+                          currentStep === 0 && 'ac-register-form-next-button'
+                        )}
+                        onClick={() => setCurrentStep(currentStep + 1)}
+                        disabled={!canGoNext() || loading}
+                      >
+                        Volgende
+                      </AcButton>
+                    </div>
+                  )}
+
+                  {currentStep === stepsList.length - 1 && (
+                    <AcButton style='button' buttonType='primary' disabled>
+                      Bevestigen (niet actief)
+                    </AcButton>
+                  )}
+                </div>
               </div>
             </div>
           </div>
