@@ -131,13 +131,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
   const facets = all_facets;
 
-  // Debug logging
-  console.group('FACETS DEBUG');
-  console.log('All facets:', facets);
-  console.log('Is facets config loaded:', is_facets_config_loaded);
-  console.log('Is facets loading:', is_facets_loading);
-  console.log('Facets config:', facetsConfig);
-  console.groupEnd();
+
 
   // Only show skeleton loading when:
   // 1. Config is not loaded yet, OR
@@ -161,16 +155,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     );
   }
 
-  // Count available facets for debugging
-  const availableFacetsCount = Object.entries(facets).reduce((count, [key, value]) => {
-    if (key === '@self') {
-      return count + Object.entries(value).filter(([_key, _value]) => _value.buckets && _value.buckets.length > 0).length;
-    } else {
-      return count + (value.buckets && value.buckets.length > 0 ? 1 : 0);
-    }
-  }, 0);
 
-  console.log('Available facets count:', availableFacetsCount);
 
   // Show helpful message when all facets are empty
   const hasAnyFacetData = Object.entries(facets).some(([key, value]) => {
@@ -213,8 +198,6 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             {Object.entries(value).map(([_key, _value]) => {
               const hasData = _value.buckets && _value.buckets.length > 0;
               const shouldShowFacet = !['register', 'directory', 'catalogs', 'organisation', 'name'].includes(_key.toLowerCase());
-              
-              console.log(`@self facet ${_key}:`, { hasData, shouldShowFacet, buckets: _value.buckets });
               
               return shouldShowFacet ? (
                 <AcFlex

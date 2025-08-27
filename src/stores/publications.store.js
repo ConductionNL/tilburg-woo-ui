@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
 import { LABELS, LABELS_DYNAMIC } from '@constants';
+import { commongroundApiUrl } from '@config';
 
 let app = {};
 
@@ -276,6 +277,8 @@ export class PublicationsStore {
   @action
   setSearchQuery = (searchQuery) => {
     this.query._search = searchQuery;
+    // Trigger publications reload with new search query
+    this.fetchPublications();
   };
 
   @action
@@ -449,24 +452,30 @@ export class PublicationsStore {
       console.log('FACETS SEARCH QUERY:', toJS(search_query));
       console.groupEnd();
 
-      const response = await app.store.api.publications.search(search_query);
+      const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': '*/*',
+          'Referer': window.location.origin + '/zoeken',
+        },
+        credentials: 'include', // Include cookies like the browser
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      });
 
-      console.group('PROCESSING FACETS RESPONSE');
-      console.log('Full response:', response);
-      console.log('Response facets:', response.facets);
-      console.log('Facets config:', facetsConfig);
-      console.groupEnd();
+
 
       if (response.facets) {
         // Add titles to facets from available facets
         const facetsWithTitles = {};
         for (const [key, value] of Object.entries(response.facets)) {
-          console.log(`Processing facet: ${key}`, value);
-          
           if (key === '@self') {
             facetsWithTitles[key] = {};
             for (const [subKey, subValue] of Object.entries(value)) {
-              console.log(`  Processing @self subkey: ${subKey}`, subValue);
               facetsWithTitles[key][subKey] = {
                 ...subValue,
                 title: facetsConfig?.object_fields?.[subKey]?.title || subKey,
@@ -479,8 +488,6 @@ export class PublicationsStore {
             };
           }
         }
-        
-        console.log('Final facets with titles:', facetsWithTitles);
         this.setFacets(facetsWithTitles);
       } else {
         console.warn('No facets in response');
@@ -496,20 +503,40 @@ export class PublicationsStore {
   fetchPublications = async () => {
     this.loading.status = true;
 
-    // recreate the search query to include the metadata schema in the extend array
-    // I just do it like this because the current API system is just so awful and not flexible at all.
-    // I spent more hours then i'd like to admit figuring out where the original extend is coming from, and I still dont know.
+    // For the first call, include search term if it exists, plus _facetable
     const search_query = {
-      ...buildPublicationsSearchQuery(this.search_query),
-      _facetable: true // Add facetable to get both results and facet config
+      _facetable: true // Essential for faceting
     };
+    
+    // Add search term if user has entered one
+    if (this.search_query._search) {
+      search_query._search = this.search_query._search;
+    }
 
     console.group('MAKING API CALL - Publications + Facetable');
     console.log('SEARCH QUERY:', toJS(search_query));
+    
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`;
+    console.log('FULL URL:', fullUrl);
+    console.log('WORKING URL WAS: http://localhost:3000/api/apps/opencatalogi/api/publications?_facetable=true');
     console.groupEnd();
 
-    app.store.api.publications
-      .search(search_query)
+    // Use fetch with credentials to include session cookies
+    fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Referer': window.location.origin + '/zoeken',
+      },
+      credentials: 'include', // Include cookies like the browser
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
       .then((response) => {
         // Set search results immediately
         this.setItems(response.results);
