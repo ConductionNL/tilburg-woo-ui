@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import {
-  Paragraph,
   UnorderedList,
   UnorderedListItem,
   Separator,
