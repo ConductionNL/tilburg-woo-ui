@@ -17,7 +17,9 @@ let containerConfig;
 try {
   containerConfig = require('@constants/container.constants');
 } catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
+  console.warn(
+    'Container constants not available, falling back to hostname-based logic'
+  );
   containerConfig = null;
 }
 
@@ -28,9 +30,8 @@ const AcHeader = ({ store: { menu, user } }) => {
   const { all_menu_items } = menu;
 
   // Get sub menu items from position 2 with authentication and group filtering
-  const menuItems = menu.getMenuFromPosition(2, user.isAuthenticated, user.userGroups || []) || null;
-  
-
+  const menuItems =
+    menu.getMenuFromPosition(2, user.isAuthenticated, user.userGroups || []) || null;
 
   return (
     <header className='ac-header'>
@@ -43,26 +44,29 @@ const AcHeader = ({ store: { menu, user } }) => {
             <div>
               <ConLogo variant='header' />
               <span className='sr-only'>Logo</span>
-              <span class='logo-text'>{getTitle()}</span>
+              <span className='logo-text'>{getTitle()}</span>
             </div>
           ) : (
             <>
               <Link to='/' title='Logo Tilburg - Ga naar de beginpagina'>
                 <ConLogo variant='header' />
-                <span class='logo-text'>{getTitle()}</span>
+                <span className='logo-text'>{getTitle()}</span>
               </Link>
             </>
           )}
         </div>
         <AcNavigation />
       </div>
-      {menuItems && menuItems.items && Array.isArray(menuItems.items) && menuItems.items.length > 0 && (
-        <div className='ac-header__navigation-secondary'>
-          <AcContainer>
-            <AcCNavigation items={menuItems.items} />
-          </AcContainer>
-        </div>
-      )}
+      {menuItems &&
+        menuItems.items &&
+        Array.isArray(menuItems.items) &&
+        menuItems.items.length > 0 && (
+          <div className='ac-header__navigation-secondary'>
+            <AcContainer>
+              <AcCNavigation items={menuItems.items} />
+            </AcContainer>
+          </div>
+        )}
       <div className='ac-header__navigation-breadcrumb'>
         <AcContainer>{!isHomePage && <AcBreadcrumbs />}</AcContainer>
       </div>
