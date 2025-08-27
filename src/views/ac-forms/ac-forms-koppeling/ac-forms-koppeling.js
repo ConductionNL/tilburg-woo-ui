@@ -2,7 +2,7 @@ import { useState, useEffect, memo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import clsx from 'clsx';
-import { AcSection, AcContainer, AcColumn } from '@src/atoms';
+import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
@@ -21,6 +21,7 @@ import {
   TableContainer,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
 
 const AcFormsKoppeling = ({ _store }) => {
@@ -434,7 +435,9 @@ const AcFormsKoppeling = ({ _store }) => {
     switch (step) {
       case 0:
         return (
-          <div
+          <AcFlex
+            column
+            spacing='sm'
             className='ac-register-form-section'
             role='group'
             aria-labelledby='koppeling-zoek-title'
@@ -444,7 +447,7 @@ const AcFormsKoppeling = ({ _store }) => {
             </h2>
 
             <Paragraph>
-              Vul de naam van uw applicatie in om te controleren of er al koppelingen
+              Vul de naam van de applicatie in om te controleren of er al koppelingen
               bestaan.
             </Paragraph>
 
@@ -470,24 +473,25 @@ const AcFormsKoppeling = ({ _store }) => {
                   }}
                 />
               </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label className='utrecht-form-label'>Zoek op applicatienaam</label>
-                <Textbox
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e?.target?.value || '')}
-                  placeholder='Bijv. OpenWoo'
-                  id='koppeling-zoek-input'
-                />
-              </div>
             </div>
 
-            <div style={{ marginTop: '1rem' }}>
+            <div>
               <AcButton style='button' onClick={handleSearch} disabled={loading}>
                 Zoeken
               </AcButton>
             </div>
 
-            <div style={{ marginTop: '1.5rem' }}>
+            <AcFlex column style={{ gridColumn: 'span 2' }}>
+              <label className='utrecht-form-label'>Zoek op applicatienaam</label>
+              <Textbox
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e?.target?.value || '')}
+                placeholder='Bijv. OpenWoo'
+                id='koppeling-zoek-input'
+              />
+            </AcFlex>
+
+            <div style={{ marginTop: '1rem' }}>
               <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
                 Zoekresultaten
               </h3>
@@ -504,7 +508,7 @@ const AcFormsKoppeling = ({ _store }) => {
                 <Paragraph>Geen koppelingen gevonden.</Paragraph>
               )}
             </div>
-          </div>
+          </AcFlex>
         );
 
       case 1:
@@ -704,9 +708,8 @@ const AcFormsKoppeling = ({ _store }) => {
                           buttonType='secondary'
                           onClick={() => removeRow(rowId)}
                           disabled={rows.length === 1}
-                        >
-                          Verwijderen
-                        </AcButton>
+                          icon={<VISUALS.CLOSE />}
+                        ></AcButton>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -873,101 +876,103 @@ const AcFormsKoppeling = ({ _store }) => {
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>Koppeling Aanmelden</Heading1>
+            <Heading1>Koppeling registreren</Heading1>
             <Paragraph>
               Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en
               controleer uw invoer.
             </Paragraph>
           </div>
 
-          <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-            {currentStepName(currentStep)}
-          </h3>
+          <div>
+            <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
+              {currentStepName(currentStep)}
+            </h3>
 
-          <div className='ac-register-container ac-forms-product'>
-            <div ref={processStepsRef} className='ac-register-process-steps'>
-              <ProcessSteps
-                steps={(() => {
-                  const steps = [
-                    {
-                      id: 'grp-koppeling',
-                      marker: 1,
-                      status: getStatusMulti(currentStep, 0, 1),
-                      title: 'Koppeling zoeken',
-                      steps: [
-                        {
-                          id: 'sub-toevoegen',
-                          status: getStatus(currentStep, 1),
-                          title: 'Toevoegen',
-                        },
-                      ],
-                    },
-                    {
-                      id: 'grp-review',
-                      marker: 2,
-                      status: getStatus(currentStep, 2),
-                      title: 'Controleren',
-                    },
-                  ];
-                  return steps;
-                })()}
-              />
-            </div>
-
-            <div className='ac-register-form-container'>
-              <div
-                className='sr-only'
-                role='status'
-                aria-live='polite'
-                id='form-status'
-              >
-                {currentStepName(currentStep)}
+            <div className='ac-register-container ac-forms-product'>
+              <div ref={processStepsRef} className='ac-register-process-steps'>
+                <ProcessSteps
+                  steps={(() => {
+                    const steps = [
+                      {
+                        id: 'grp-koppeling',
+                        marker: 1,
+                        status: getStatusMulti(currentStep, 0, 1),
+                        title: 'Koppeling zoeken',
+                        steps: [
+                          {
+                            id: 'sub-toevoegen',
+                            status: getStatus(currentStep, 1),
+                            title: 'Toevoegen',
+                          },
+                        ],
+                      },
+                      {
+                        id: 'grp-review',
+                        marker: 2,
+                        status: getStatus(currentStep, 2),
+                        title: 'Controleren',
+                      },
+                    ];
+                    return steps;
+                  })()}
+                />
               </div>
 
-              {renderStep(currentStep)}
+              <div className='ac-register-form-container'>
+                <div
+                  className='sr-only'
+                  role='status'
+                  aria-live='polite'
+                  id='form-status'
+                >
+                  {currentStepName(currentStep)}
+                </div>
 
-              <div
-                className={clsx(
-                  'ac-register-form-buttons',
-                  currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
-                )}
-              >
-                {currentStep !== 0 && (
-                  <AcButton
-                    style='button'
-                    buttonType='secondary'
-                    onClick={() => setCurrentStep(currentStep - 1)}
-                    disabled={loading || saveLoading}
-                  >
-                    Vorige
-                  </AcButton>
-                )}
+                {renderStep(currentStep)}
 
-                {currentStep !== 2 && (
-                  <div className='ac-register-button-wrapper'>
+                <div
+                  className={clsx(
+                    'ac-register-form-buttons',
+                    currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
+                  )}
+                >
+                  {currentStep !== 0 && (
                     <AcButton
                       style='button'
-                      className={clsx(
-                        currentStep === 0 && 'ac-register-form-next-button'
-                      )}
-                      onClick={() => setCurrentStep(currentStep + 1)}
-                      disabled={!canGoNext() || loading || saveLoading}
+                      buttonType='secondary'
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      disabled={loading || saveLoading}
                     >
-                      Volgende
+                      Vorige
                     </AcButton>
-                  </div>
-                )}
+                  )}
 
-                {currentStep === 2 && (
-                  <AcButton
-                    style='button'
-                    buttonType='primary'
-                    onClick={handleSave}
-                    disabled={saveLoading || !canSave()}
-                  >
-                    {saveLoading ? 'Bezig met opslaan...' : 'Opslaan'}
-                  </AcButton>
-                )}
+                  {currentStep !== 2 && (
+                    <div className='ac-register-button-wrapper'>
+                      <AcButton
+                        style='button'
+                        className={clsx(
+                          currentStep === 0 && 'ac-register-form-next-button'
+                        )}
+                        onClick={() => setCurrentStep(currentStep + 1)}
+                        disabled={!canGoNext() || loading || saveLoading}
+                      >
+                        Volgende
+                      </AcButton>
+                    </div>
+                  )}
+
+                  {currentStep === 2 && (
+                    <AcButton
+                      style='button'
+                      buttonType='primary'
+                      onClick={handleSave}
+                      disabled={saveLoading || !canSave()}
+                    >
+                      {saveLoading ? 'Bezig met opslaan...' : 'Opslaan'}
+                    </AcButton>
+                  )}
+                </div>
               </div>
             </div>
           </div>

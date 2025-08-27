@@ -29,7 +29,7 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
   },
   ONTBREKEND_PRODUCT: {
-    id: 'ontbrekend-product',
+    id: 'ontbrekend-product', 
     name: 'Product melden en registreren',
     description: 'Meld een product dat nog niet in de catalogus staat',
     icon: VISUALS.PLUS,
@@ -42,7 +42,7 @@ export const DASHBOARD_WIZARDS = {
   },
   DIENST: {
     id: 'dienst',
-    name: 'Dienst registreren',
+    name: 'Dienst registreren', 
     description: 'Registreer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_DIENST, // or separate dienst form if it exists

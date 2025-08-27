@@ -48,7 +48,7 @@ const AcDashboard = ({ store }) => {
             {/* Welcome Section */}
             <div className='ac-register-review__section'>
               <div className='ac-register-review__header'>
-                <Heading level={4}>Welkom bij de Softwarecatalogus!</Heading>
+                <Heading level={4}>Welkom in de Softwarecatalogus!</Heading>
               </div>
               <Separator className='ac-register-review-header__separator' />
 
@@ -62,11 +62,14 @@ const AcDashboard = ({ store }) => {
                 className='ac-register-review__field'
                 style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
               >
-                <strong>Product aanbieden</strong>
+                <strong>Product aanbieden:</strong>
                 <span>registreer uw softwareproduct als leverancier.</span>
               </div>
 
-              <div className='ac-register-review__field'>
+              <div
+                className='ac-register-review__field'
+                style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
+              >
                 <strong>Product melden:</strong>
                 <span>geef door als een product nog ontbreekt in de catalogus.</span>
               </div>
@@ -80,8 +83,7 @@ const AcDashboard = ({ store }) => {
                 <strong>Gebruik registreren:</strong>
                 <span>
                   registreer hoe uw organisatie applicaties inzet in processen en
-                  werkstromen. Voor account- en organisatiedetails gaat u naar Mijn
-                  Account. Pete
+                  werkstromen.
                 </span>
               </div>
 
