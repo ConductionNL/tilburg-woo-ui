@@ -163,6 +163,62 @@ const ConFormKoppelingenStage = memo(
       }));
     };
 
+    const removeRow = (rowId) => {
+      const localId = koppelingIdByRow[rowId];
+      const curModuleIdx = selectedAppAByRow[rowId];
+      const prevModuleIdx = moduleIndexByRow[rowId];
+
+      if (localId != null) {
+        setProduct((prev) => {
+          const modules = [...(prev.modules || [])];
+
+          const removeFrom = (idx) => {
+            if (idx == null) return;
+            const mod = modules[idx];
+            if (typeof mod === 'object') {
+              const list = Array.isArray(mod.koppelingen) ? mod.koppelingen : [];
+              modules[idx] = {
+                ...mod,
+                koppelingen: list.filter((k) => k?._localId !== localId),
+              };
+            }
+          };
+
+          removeFrom(prevModuleIdx);
+          if (curModuleIdx !== prevModuleIdx) removeFrom(curModuleIdx);
+
+          return { ...prev, modules };
+        });
+      }
+
+      setKoppelingenFormState((prev) => ({
+        ...prev,
+        rows: prev.rows.filter((id) => id !== rowId),
+        selectedAppAByRow: Object.fromEntries(
+          Object.entries(prev.selectedAppAByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        selectedAppBByRow: Object.fromEntries(
+          Object.entries(prev.selectedAppBByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        directionByRow: Object.fromEntries(
+          Object.entries(prev.directionByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        typeByRow: Object.fromEntries(
+          Object.entries(prev.typeByRow).filter(([k]) => Number(k) !== rowId)
+        ),
+        koppelingIdByRow: Object.fromEntries(
+          Object.entries(prev.koppelingIdByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+        moduleIndexByRow: Object.fromEntries(
+          Object.entries(prev.moduleIndexByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+      }));
+    };
+
     return (
       <div>
         <h2 id='koppelingen-section-title' className='sr-only'>
@@ -307,72 +363,7 @@ const ConFormKoppelingenStage = memo(
                         icon={<VISUALS.TRASHCAN />}
                         disabled={rows.length === 1}
                         onClick={() => {
-                          const localId = koppelingIdByRow[rowId];
-                          const curModuleIdx = selectedAppAByRow[rowId];
-                          const prevModuleIdx = moduleIndexByRow[rowId];
-
-                          if (localId != null) {
-                            setProduct((prev) => {
-                              const modules = [...(prev.modules || [])];
-
-                              const removeFrom = (idx) => {
-                                if (idx == null) return;
-                                const mod = modules[idx];
-                                if (typeof mod === 'object') {
-                                  const list = Array.isArray(mod.koppelingen)
-                                    ? mod.koppelingen
-                                    : [];
-                                  modules[idx] = {
-                                    ...mod,
-                                    koppelingen: list.filter(
-                                      (k) => k?._localId !== localId
-                                    ),
-                                  };
-                                }
-                              };
-
-                              removeFrom(prevModuleIdx);
-                              if (curModuleIdx !== prevModuleIdx)
-                                removeFrom(curModuleIdx);
-
-                              return { ...prev, modules };
-                            });
-                          }
-
-                          setKoppelingenFormState((prev) => ({
-                            ...prev,
-                            rows: prev.rows.filter((id) => id !== rowId),
-                            selectedAppAByRow: Object.fromEntries(
-                              Object.entries(prev.selectedAppAByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            selectedAppBByRow: Object.fromEntries(
-                              Object.entries(prev.selectedAppBByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            directionByRow: Object.fromEntries(
-                              Object.entries(prev.directionByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            typeByRow: Object.fromEntries(
-                              Object.entries(prev.typeByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            koppelingIdByRow: Object.fromEntries(
-                              Object.entries(prev.koppelingIdByRow || {}).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            moduleIndexByRow: Object.fromEntries(
-                              Object.entries(prev.moduleIndexByRow || {}).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                          }));
+                          removeRow(rowId);
                         }}
                         title='Rij verwijderen'
                       ></AcButton>
