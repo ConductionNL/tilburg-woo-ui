@@ -39,7 +39,10 @@ const ConGebruikStepInformatie = ({
         </div>
         <div style={{ gridColumn: 'span 2' }}>
           <label className='utrecht-form-label'>Afnemer (huidige organisatie)</label>
-          <Textbox value={gebruik?.afnemer?.naam || gebruik?.afnemer?.name || ''} />
+          <Textbox
+            value={gebruik?.afnemer?.naam || gebruik?.afnemer?.name || ''}
+            disabled
+          />
         </div>
         <div style={{ gridColumn: 'span 2' }}>
           <ConSchemaEnhancedField
