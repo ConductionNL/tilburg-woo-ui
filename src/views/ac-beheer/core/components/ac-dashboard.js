@@ -1,13 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
-import { AcButton, AcTile } from '@molecules';
+import { AcTile } from '@molecules';
 import { ConDynamicSidenav } from '@components';
-import {
-  getDashboardWizards,
-  getWizardUrl,
-  SOFTWARE_CATALOG_CONCEPTS,
-} from '@constants/wizards.constants';
+import { getDashboardWizards, getWizardUrl } from '@constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
 import {
   Heading,
@@ -57,51 +53,41 @@ const AcDashboard = ({ store }) => {
               <Separator className='ac-register-review-header__separator' />
 
               <Paragraph>
-                Centrale plek voor het beheren en ontdekken van software, diensten en
-                toepassingen binnen de overheid.
-              </Paragraph>
-
-              <Paragraph>
-                Producten en diensten toevoegen aan de catalogus, gebruik van
-                software registreren binnen uw organisatie, zoeken naar bestaande
-                oplossingen en uw organisatiegegevens beheren.
+                Dit is de centrale plek om applicaties en diensten binnen de gemeente
+                te beheren en te ontdekken en deze te koppelen aan uw ICT
+                Architectuur op basis van de GEMMA.
               </Paragraph>
 
               <div
                 className='ac-register-review__field'
                 style={{ marginTop: 'var(--tilburg-space-block-lg)' }}
               >
-                <strong>Product:</strong>
+                <strong>Product aanbieden</strong>
+                <span>registreer uw softwareproduct als leverancier.</span>
+              </div>
+
+              <div className='ac-register-review__field'>
+                <strong>Product melden:</strong>
+                <span>geef door als een product nog ontbreekt in de catalogus.</span>
+              </div>
+
+              <div className='ac-register-review__field'>
+                <strong>Dienst registreren:</strong>
+                <span>leg vast welke diensten u bij een product afneemt.</span>
+              </div>
+
+              <div className='ac-register-review__field'>
+                <strong>Gebruik registreren:</strong>
                 <span>
-                  Een softwareproduct is een complete oplossing die door een
-                  organisatie wordt aangeboden. Dit kan bijvoorbeeld een website,
-                  applicatie of systeem zijn.
+                  registreer hoe uw organisatie applicaties inzet in processen en
+                  werkstromen. Voor account- en organisatiedetails gaat u naar Mijn
+                  Account. Pete
                 </span>
               </div>
 
               <div className='ac-register-review__field'>
-                <strong>Dienst:</strong>
-                <span>
-                  Een dienst is een specifieke functionaliteit of service die wordt
-                  aangeboden, vaak als onderdeel van een groter product.
-                </span>
-              </div>
-
-              <div className='ac-register-review__field'>
-                <strong>Applicatie:</strong>
-                <span>
-                  Een applicatie is een specifieke software-implementatie die
-                  onderdeel kan zijn van een product en concrete functionaliteiten
-                  biedt.
-                </span>
-              </div>
-
-              <div className='ac-register-review__field'>
-                <strong>Gebruik:</strong>
-                <span>
-                  Gebruik registreert hoe organisaties producten, diensten of
-                  applicaties inzetten binnen hun processen en werkwijzen.
-                </span>
+                <strong>Koppeling registreren:</strong>
+                <span>leg vast welke koppelingen uw organisatie gebruikt.</span>
               </div>
 
               <Paragraph>

@@ -1,7 +1,6 @@
 import { useState, useEffect, memo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn } from '@src/atoms';
 import { AcButton } from '@src/molecules';
@@ -22,8 +21,9 @@ import {
   TableContainer,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
+import { useDebounce } from '@src/hooks/use-debounce.hook';
 
-const AcFormsKoppeling = ({ store }) => {
+const AcFormsKoppeling = ({ _store }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -58,15 +58,13 @@ const AcFormsKoppeling = ({ store }) => {
     return () => clearTimeout(timeoutId);
   }, [currentStep]);
 
-  // Schema management
-  const [schemas, setSchemas] = useState({});
-  const [schemasLoading, setSchemasLoading] = useState(true);
-
-  // Koppeling object based on schema
-  const [koppeling, setKoppeling] = useState({});
+  // (Removed) Schema management state
 
   // Options for modules (applications)
   const [modulesOptions, setModulesOptions] = useState([]);
+  // Options/loading specifically for the own-app searchable select
+  const [ownAppOptions, setOwnAppOptions] = useState([]);
+  const [ownAppLoading, setOwnAppLoading] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,6 +72,9 @@ const AcFormsKoppeling = ({ store }) => {
 
   // "Your" application (optional anchor for adding/searching)
   const [ownApp, setOwnApp] = useState(null);
+  // Capture input typed into the select's search field (debounced)
+  const [ownAppInput, setOwnAppInput] = useState('');
+  const debouncedOwnAppInput = useDebounce(ownAppInput, 500);
 
   // Toevoegen state (rows-based like product KoppelingenForm), but using modules for A and B
   const [rows, setRows] = useState([0]);
@@ -121,42 +122,7 @@ const AcFormsKoppeling = ({ store }) => {
     return '↔';
   };
 
-  // Fetch schemas on component mount
-  useEffect(() => {
-    const fetchSchemas = async () => {
-      setSchemasLoading(true);
-      try {
-        // Fetch 'koppeling' schema for this form
-        const response = await fetch('/api/apps/openregister/api/schemas/koppeling');
-        if (response.ok) {
-          const koppelingSchema = await response.json();
-          const fetchedSchemas = { koppeling: koppelingSchema };
-          setSchemas(fetchedSchemas);
-
-          // Initialize default koppeling object based on schema
-          const defaultKoppeling = createDefaultFormObject(
-            store,
-            koppelingSchema,
-            'koppeling',
-            {
-              // Add any specific defaults for koppeling form
-              status: 'concept',
-              richting: '',
-              type: '',
-              beschrijving: '',
-            }
-          );
-          setKoppeling(defaultKoppeling);
-        }
-      } catch (error) {
-        console.error('Failed to fetch schemas for koppeling form:', error);
-      } finally {
-        setSchemasLoading(false);
-      }
-    };
-
-    fetchSchemas();
-  }, [store]);
+  // (Removed) Fetch schemas effect
 
   // Fetch modules (applications) options on mount
   useEffect(() => {
@@ -185,9 +151,15 @@ const AcFormsKoppeling = ({ store }) => {
           const value = item?.value || item?.id || item?.slug || label;
           return { value: String(value), label: String(label), data: item };
         });
-        if (isMounted) setModulesOptions(options);
+        if (isMounted) {
+          setModulesOptions(options);
+          setOwnAppOptions(options);
+        }
       } catch (e) {
-        if (isMounted) setModulesOptions([]);
+        if (isMounted) {
+          setModulesOptions([]);
+          setOwnAppOptions([]);
+        }
       }
     };
 
@@ -197,8 +169,65 @@ const AcFormsKoppeling = ({ store }) => {
     };
   }, []);
 
+  // Debounced server-side search on modules for the own-app select only
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const q = (debouncedOwnAppInput || '').trim();
+      if (!q) {
+        // Reset to base options when input is cleared
+        setOwnAppOptions(modulesOptions);
+        return;
+      }
+      setOwnAppLoading(true);
+      try {
+        const params = new URLSearchParams({ _limit: '50', _page: '1' });
+        params.set('_search', q);
+        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
+        const res = await fetch(endpoint, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Module ${index + 1}`;
+          const value = item?.value || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        });
+        if (!cancelled) setOwnAppOptions(options);
+      } catch {
+        if (!cancelled) setOwnAppOptions([]);
+      } finally {
+        if (!cancelled) setOwnAppLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedOwnAppInput, modulesOptions]);
+
   // Search koppelingen by app name (client + server tolerant)
-  const handleSearch = async () => {
+  const handleSearch = async (qOverride) => {
+    const raw = (qOverride ?? searchQuery) || '';
+    const trimmed = raw.trim();
+
+    // When empty, clear results and skip network calls
+    if (!trimmed) {
+      setSearchResults([]);
+      return;
+    }
+
     setLoading(true);
     try {
       const results = [];
@@ -209,7 +238,7 @@ const AcFormsKoppeling = ({ store }) => {
         _page: '1',
         _extend: '@self.schema',
       });
-      if (searchQuery) params.set('_search', searchQuery);
+      params.set('_search', trimmed);
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
 
       let list = [];
@@ -229,9 +258,8 @@ const AcFormsKoppeling = ({ store }) => {
         // ignore and keep list empty
       }
 
-      // Fallback: if no server results, keep list empty; we'll still show nothing
       // Client-side filter further by app name if needed
-      const q = (searchQuery || '').toLowerCase();
+      const q = trimmed.toLowerCase();
       const filtered = list.filter((k) => {
         const a =
           k?.applicatie1 ||
@@ -276,6 +304,8 @@ const AcFormsKoppeling = ({ store }) => {
     if (currentStep === 1) return rows.length > 0; // at least one row exists
     return true;
   };
+
+  // (Removed) Previously triggered koppeling search from the own-app select input
 
   const addRow = () => {
     setRows((prev) => [...prev, nextRowId]);
@@ -428,12 +458,16 @@ const AcFormsKoppeling = ({ store }) => {
                     'ac-beheer-select',
                     loading && 'ac-beheer-select--disabled'
                   )}
-                  options={modulesOptions}
+                  options={ownAppOptions}
                   value={ownApp}
                   onChange={setOwnApp}
                   isDisabled={loading}
                   placeholder='Selecteer uw applicatie...'
                   isClearable
+                  isLoading={ownAppLoading}
+                  onInputChange={(input, { action }) => {
+                    if (action === 'input-change') setOwnAppInput(input || '');
+                  }}
                 />
               </div>
               <div style={{ gridColumn: 'span 2' }}>

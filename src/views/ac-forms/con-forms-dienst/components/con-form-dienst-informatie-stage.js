@@ -1,7 +1,8 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect } from 'react';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+// import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 /**
  * Dienst Informatie Stage
@@ -11,9 +12,6 @@ import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
  */
 const ConFormDienstInformatieStage = memo(
   ({ dienst, setDienstData, loading, touched, schemas, userStore }) => {
-    const [aanbiederOptions, setAanbiederOptions] = useState([]);
-    const [aanbiederLoading, setAanbiederLoading] = useState(false);
-
     // Prefill aanbieder with active organization (ID) if empty
     useEffect(() => {
       const org = userStore?.activeOrganization;
@@ -27,91 +25,7 @@ const ConFormDienstInformatieStage = memo(
       }
     }, [userStore?.activeOrganization, dienst.aanbieder]);
 
-    // Explicitly call /me, then search organisations by name
-    useEffect(() => {
-      let cancelled = false;
-      const resolveOrganisationByName = async () => {
-        setAanbiederLoading(true);
-        try {
-          const meUrl = `${BASE_URL}/openconnector/api/user/me`;
-          if (process.env.NODE_ENV === 'development') {
-            // eslint-disable-next-line no-console
-            console.log('Dienst info - fetching /me:', meUrl);
-          }
-          let me = null;
-          try {
-            const res = await fetch(meUrl, {
-              headers: { Accept: 'application/json' },
-            });
-            if (res.ok) {
-              me = await res.json();
-            }
-          } catch {
-            // ignore
-          }
-
-          const active = me?.organisations?.active || null;
-          const activeName = active?.name || active?.naam || '';
-          if (!activeName) {
-            if (!cancelled) setAanbiederOptions([]);
-            return;
-          }
-
-          const params = new URLSearchParams({
-            _limit: '1',
-            _page: '1',
-            _search: activeName,
-          });
-          const orgUrl = `${BASE_URL}/openregister/api/objects/organisaties/organisatie?${params}`;
-          if (process.env.NODE_ENV === 'development') {
-            // eslint-disable-next-line no-console
-            console.log('Dienst info - fetching organisation by name:', orgUrl);
-          }
-          const res = await fetch(orgUrl, {
-            headers: { Accept: 'application/json' },
-          });
-          let found = null;
-          if (res.ok) {
-            const data = await res.json();
-            const list = Array.isArray(data)
-              ? data
-              : Array.isArray(data?.results)
-              ? data.results
-              : [];
-            found =
-              list.find((o) => (o?.name || o?.naam) === activeName) ||
-              list[0] ||
-              null;
-          }
-
-          const id = String(
-            found?.uuid ||
-              found?.id ||
-              found?.slug ||
-              active?.uuid ||
-              active?.id ||
-              active?.slug ||
-              ''
-          );
-          const label = String(
-            found?.naam || found?.name || found?.title || activeName
-          );
-          const option = id ? [{ value: id, label, data: found || active }] : [];
-          if (!cancelled) {
-            setAanbiederOptions(option);
-            if (id && !dienst.aanbieder) setDienstData('aanbieder', id);
-          }
-        } catch {
-          if (!cancelled) setAanbiederOptions([]);
-        } finally {
-          if (!cancelled) setAanbiederLoading(false);
-        }
-      };
-      resolveOrganisationByName();
-      return () => {
-        cancelled = true;
-      };
-    }, []);
+    // Aanbieder field is hidden; value is prefilled from active organization above
 
     return (
       <div
@@ -143,25 +57,7 @@ const ConFormDienstInformatieStage = memo(
               schemas={schemas}
             />
 
-            {/* Aanbieder before Website so required fields are on top */}
-            <ConSchemaEnhancedField
-              schemaType='dienst'
-              schemaProperty='aanbieder'
-              value={
-                dienst.aanbieder ||
-                userStore?.activeOrganization?.uuid ||
-                userStore?.activeOrganization?.id ||
-                userStore?.activeOrganization?.slug ||
-                ''
-              }
-              onChange={(value) => setDienstData('aanbieder', value)}
-              isDisabled
-              width='half'
-              schemas={schemas}
-              optionsProvider={aanbiederOptions}
-              isLoading={aanbiederLoading}
-              onSearch={() => {}}
-            />
+            {/* Aanbieder field removed from UI */}
 
             <ConSchemaEnhancedField
               schemaType='dienst'
@@ -172,7 +68,18 @@ const ConFormDienstInformatieStage = memo(
               width='half'
               touched={touched}
               schemas={schemas}
-              customProps={{ inputType: 'text' }}
+              customProps={{
+                inputType: 'text',
+                validation: {
+                  custom: (value) => {
+                    if (!value || String(value).trim() === '') return true;
+                    const website = String(value).trim();
+                    return validateWebsite(website);
+                  },
+                  customErrorMessage:
+                    'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
+                },
+              }}
             />
 
             <ConSchemaEnhancedField
@@ -216,25 +123,7 @@ const ConFormDienstInformatieStage = memo(
               schemas={schemas}
             />
 
-            {/* Aanbieder - required select, prefilled with user's active organization */}
-            <ConSchemaEnhancedField
-              schemaType='dienst'
-              schemaProperty='aanbieder'
-              value={
-                dienst.aanbieder ||
-                userStore?.activeOrganization?.uuid ||
-                userStore?.activeOrganization?.id ||
-                userStore?.activeOrganization?.slug ||
-                ''
-              }
-              onChange={(value) => setDienstData('aanbieder', value)}
-              isDisabled
-              width='half'
-              schemas={schemas}
-              optionsProvider={aanbiederOptions}
-              isLoading={aanbiederLoading}
-              onSearch={() => {}}
-            />
+            {/* Aanbieder field removed from UI */}
 
             <ConSchemaEnhancedField
               schemaType='dienst'

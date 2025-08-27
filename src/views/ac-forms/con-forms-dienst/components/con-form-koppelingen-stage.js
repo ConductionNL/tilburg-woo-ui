@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
-import ReactSelect from 'react-select';
 
 /**
  * Koppelingen Selectie Stage voor Dienst
@@ -14,17 +13,31 @@ const ConFormKoppelingenStage = memo(
     selectedKoppelingIds,
     setSelectedKoppelingIds,
   }) => {
+    // Build a moduleId -> label map for display of endpoints
+
+    // Already pre-filtered by server search; apply safety filter
+    const extractRelationId = (rel) => {
+      if (!rel) return '';
+      if (typeof rel === 'string') return rel;
+      if (typeof rel === 'object') {
+        return String(rel.id || rel.value || rel?.['@self']?.id || '') || '';
+      }
+      return '';
+    };
+
     const filtered = useMemo(() => {
       if (!selectedModuleIds?.length) return [];
+      const selectedSet = new Set((selectedModuleIds || []).map((v) => String(v)));
       return (koppelingOptions || []).filter((opt) => {
         const k = opt.data || {};
-        const a = String(
-          k.moduleA || k.applicatie1 || k.applicatieA || k.appA || ''
-        );
-        const b = String(
-          k.moduleB || k.applicatie2 || k.applicatieB || k.appB || ''
-        );
-        return selectedModuleIds.includes(a) || selectedModuleIds.includes(b);
+        const rels = k?.['@self']?.relations || {};
+        const aRel =
+          rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
+        const bRel =
+          rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+        const aId = String(extractRelationId(aRel));
+        const bId = String(extractRelationId(bRel));
+        return selectedSet.has(aId) || selectedSet.has(bId);
       });
     }, [koppelingOptions, selectedModuleIds]);
 
@@ -55,38 +68,32 @@ const ConFormKoppelingenStage = memo(
           </Paragraph>
         ) : (
           <div className='con-form-checkbox-list'>
-            {filtered.map((opt) => (
-              <label
-                key={opt.value}
-                className='ac-checkbox-label'
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  alignItems: 'center',
-                  marginBottom: '0.5rem',
-                }}
-              >
-                <input
-                  type='checkbox'
-                  checked={selectedKoppelingIds.includes(opt.value)}
-                  onChange={() => toggle(opt.value)}
-                />
-                <span>
-                  {(opt.data?.naam || opt.label) + ' – '}
-                  {(opt.data?.moduleA ||
-                    opt.data?.applicatie1 ||
-                    opt.data?.applicatieA ||
-                    opt.data?.appA ||
-                    '-') +
-                    ' ↔ ' +
-                    (opt.data?.moduleB ||
-                      opt.data?.applicatie2 ||
-                      opt.data?.applicatieB ||
-                      opt.data?.appB ||
-                      '-')}
-                </span>
-              </label>
-            ))}
+            {filtered.map((opt) => {
+              const k = opt.data || {};
+
+              const title = String(
+                k?.naam || k?.['@self']?.name || opt.label || opt.value
+              );
+              return (
+                <label
+                  key={opt.value}
+                  className='ac-checkbox-label'
+                  style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    alignItems: 'center',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  <input
+                    type='checkbox'
+                    checked={selectedKoppelingIds.includes(opt.value)}
+                    onChange={() => toggle(opt.value)}
+                  />
+                  <span>{title}</span>
+                </label>
+              );
+            })}
           </div>
         )}
       </div>
