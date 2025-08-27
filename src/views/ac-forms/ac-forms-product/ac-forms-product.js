@@ -986,6 +986,7 @@ const AcFormsProduct = ({ userStore, store }) => {
             loading={loading}
             touched={touched}
             schemas={schemas}
+            isMultiApplicatie={isMultiApplicatie}
           />
         );
       case 2:
