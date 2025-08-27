@@ -9,7 +9,7 @@ const ConGebruikStepVersie = ({
   gebruik,
   setGebruikData,
   versionOptions,
-  loading,
+  versionsLoading,
   schemas,
 }) => {
   return (
@@ -27,7 +27,8 @@ const ConGebruikStepVersie = ({
           schemaProperty='moduleVersie'
           value={gebruik?.moduleVersie || null}
           onChange={(value) => setGebruikData('moduleVersie', value)}
-          isDisabled={loading}
+          isDisabled={versionsLoading}
+          isLoading={versionsLoading}
           schemas={schemas}
           optionsProvider={versionOptions}
           width='full'

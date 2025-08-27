@@ -41,7 +41,6 @@ const ConGebruikStepInformatie = ({
           <label className='utrecht-form-label'>Afnemer (huidige organisatie)</label>
           <Textbox
             value={gebruik?.afnemer?.naam || gebruik?.afnemer?.name || ''}
-            disabled
           />
         </div>
         <div style={{ gridColumn: 'span 2' }}>

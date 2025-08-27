@@ -17,6 +17,8 @@ const ConGebruikStepReview = ({
   koppelingOptions,
   dienstOptions,
   organisatieOptions,
+  productOptions,
+  moduleOptions,
 }) => {
   return (
     <div
@@ -34,10 +36,6 @@ const ConGebruikStepReview = ({
           </div>
           <Separator className='con-form-wizard-review-header__separator' />
 
-          <div className='ac-register-review__field'>
-            <strong>Naam:</strong>
-            <div>{gebruik?.naam || '-'}</div>
-          </div>
           <div className='ac-register-review__field'>
             <strong>Contactpersoon:</strong>
             <div>{gebruik?.contactpersoon || '-'}</div>
@@ -97,19 +95,14 @@ const ConGebruikStepReview = ({
           <div className='ac-register-review__field'>
             <strong>Product:</strong>
             <div>
-              {(() => {
-                const p = gebruik?.product;
-                return p?.naam || p?.name || p?.title || '-';
-              })()}
+              {productOptions.find((o) => o.value === gebruik?.product)?.label ||
+                '-'}
             </div>
           </div>
           <div className='ac-register-review__field'>
             <strong>Applicatie:</strong>
             <div>
-              {(() => {
-                const m = gebruik?.module;
-                return m?.naam || m?.name || m?.title || '-';
-              })()}
+              {moduleOptions.find((o) => o.value === gebruik?.module)?.label || '-'}
             </div>
           </div>
           <div className='ac-register-review__field'>

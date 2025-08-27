@@ -113,8 +113,6 @@ const ConFormApplicatieStage = memo(
     // State to store available module options for lookup
     const [availableModuleOptions, setAvailableModuleOptions] = useState([]);
 
-
-
     // Debug logging for search setup
     console.log('🔧 ConFormApplicatieStage - Search setup:', {
       hasSearchModules: !!searchModules,

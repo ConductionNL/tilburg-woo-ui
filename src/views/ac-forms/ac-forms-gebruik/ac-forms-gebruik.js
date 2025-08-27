@@ -21,12 +21,13 @@ import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 
 const mapToOption = (item, index) => {
   const label =
+    item?.['@self']?.name ||
     item?.naam ||
     item?.name ||
     item?.title ||
     item?.label ||
     `Applicatie ${index + 1}`;
-  const value = item?.value || item?.id || item?.slug || label;
+  const value = item?.id || item?.slug || label;
   return { value: String(value), label: String(label), data: item };
 };
 
@@ -79,8 +80,9 @@ const AcFormsGebruik = ({ store }) => {
   const [productOptions, setProductOptions] = useState([]);
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
+  const [versionsLoading, setVersionsLoading] = useState(false);
   const [koppelingOptions, setKoppelingOptions] = useState([]);
-  const [dienstOptions, setDienstOptions] = useState([
+  const [dienstOptions] = useState([
     {
       value: 'Functioneel beheer',
       label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
@@ -205,6 +207,7 @@ const AcFormsGebruik = ({ store }) => {
   useEffect(() => {
     const fetchModulesForProduct = async () => {
       try {
+        setModulesLoading(true);
         setModulesOptions([]);
         setGebruikData('module', null);
         const p = gebruik?.product;
@@ -229,6 +232,8 @@ const AcFormsGebruik = ({ store }) => {
           setGebruikData('module', options[0].data || options[0]);
       } catch (e) {
         setModulesOptions([]);
+      } finally {
+        setModulesLoading(false);
       }
     };
     fetchModulesForProduct();
@@ -266,15 +271,14 @@ const AcFormsGebruik = ({ store }) => {
   // When module changes, fetch versions (and later koppelingen/diensten)
   useEffect(() => {
     const fetchVersions = async () => {
-      setLoading(true);
+      setVersionsLoading(true);
       try {
         setVersionOptions([]);
-        const mod = gebruik?.module;
-        if (!mod) return;
+        if (!gebruik?.module) return;
 
         // Fetch module versions via the dedicated endpoint with pagination
         // Filter by relation @self.relations.module; fallback to client-side filtering
-        const moduleId = String(mod?.id || mod?.value);
+        const moduleId = gebruik?.module;
         const limit = 20;
         let page = 1;
         let allItems = [];
@@ -313,14 +317,10 @@ const AcFormsGebruik = ({ store }) => {
               break;
             }
             const data = await res.json();
-            const list = Array.isArray(data)
-              ? data
-              : Array.isArray(data?.results)
-              ? data.results
-              : [];
+            const list = data?.results;
 
             allItems = allItems.concat(list);
-            hasMore = list.length === limit;
+            hasMore = !!data?.next;
             page += 1;
           }
 
@@ -366,6 +366,7 @@ const AcFormsGebruik = ({ store }) => {
 
         const options = allItems.map((v) => {
           const label =
+            v?.['@self']?.name ||
             v?.nummer ||
             v?.version ||
             v?.naam ||
@@ -383,7 +384,7 @@ const AcFormsGebruik = ({ store }) => {
       } catch {
         setVersionOptions([]);
       } finally {
-        setLoading(false);
+        setVersionsLoading(false);
       }
     };
     fetchVersions();
@@ -393,7 +394,8 @@ const AcFormsGebruik = ({ store }) => {
   useEffect(() => {
     const fetchKoppelingen = async () => {
       try {
-        const mod = gebruik?.module;
+        const modId = gebruik?.module;
+        const mod = modulesOptions.find((m) => m.value === modId)?.data;
         if (!mod) {
           setKoppelingOptions([]);
           return;
@@ -503,10 +505,10 @@ const AcFormsGebruik = ({ store }) => {
       return !!gebruik?.contactpersoon;
     }
     if (currentStep === 1) {
-      return !!(gebruik?.module?.id || gebruik?.module?.value);
+      return !!gebruik?.module;
     }
     if (currentStep === 2) {
-      return !!gebruik?.moduleVersie;
+      return !!gebruik?.moduleVersie && !versionsLoading;
     }
     if (currentStep === 3) {
       return true; // koppelingen optional
@@ -552,7 +554,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             versionOptions={versionOptions}
-            loading={loading}
+            versionsLoading={versionsLoading}
             schemas={schemas}
           />
         );
@@ -595,6 +597,8 @@ const AcFormsGebruik = ({ store }) => {
             koppelingOptions={koppelingOptions}
             dienstOptions={dienstOptions}
             organisatieOptions={organisatieOptions}
+            productOptions={productOptions}
+            moduleOptions={modulesOptions}
           />
         );
     }
