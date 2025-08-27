@@ -1,0 +1,53 @@
+// Selected/Not-selected styles for AcTile
+.ac-tile {
+  position: relative;
+
+  &--selected {
+    /* High-contrast white inner ring + colored outer ring based on tile color */
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px var(--ac-tile-bg, #2e7d32),
+      0 8px 18px rgba(0, 0, 0, 0.35);
+    transform: translateY(-2px);
+  }
+
+  /* Keep selection ring when hovering/focused so selection stays obvious */
+  &--selected:hover,
+  &--selected:focus,
+  &--selected:focus-visible,
+  &--selected:hover:not(.ac-tile--disabled),
+  &--selected.ac-tile--primary:hover,
+  &--selected.ac-tile--secondary:hover,
+  &--selected.ac-tile--success:hover,
+  &--selected.ac-tile--warning:hover,
+  &--selected.ac-tile--danger:hover,
+  &--selected.ac-tile--orange:hover,
+  &--selected.ac-tile--green:hover,
+  &--selected.ac-tile--purple:hover,
+  &--selected.ac-tile--yellow:hover,
+  &--selected.ac-tile--teal:hover,
+  &--selected.ac-tile--blue:hover {
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 5px var(--ac-tile-bg, #2e7d32),
+      0 10px 22px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-2px);
+  }
+
+  &--selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ac-tile-bg, #000);
+    color: #fff;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+
+  &--not-selected {
+    opacity: 0.85;
+    filter: saturate(0.9);
+  }
+}

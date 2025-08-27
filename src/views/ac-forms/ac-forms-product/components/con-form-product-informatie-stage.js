@@ -16,7 +16,7 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  * @param {Object} schemas - Available schemas for field configuration
  */
 const ConFormProductInformatieStage = memo(
-  ({ product, setProductData, loading, touched, schemas }) => {
+  ({ product, setProductData, loading, touched, schemas, isMultiApplicatie }) => {
     return (
       <div
         className='ac-register-form-section'
@@ -30,12 +30,11 @@ const ConFormProductInformatieStage = memo(
         <Paragraph style={{ marginBottom: '2rem' }}>
           <strong>Basisinformatie voor vindbaarheid in de catalogus</strong>
           <br />
-          Deze informatie wordt gebruikt om uw product vindbaar te maken voor
-          organisaties die op zoek zijn naar softwareoplossingen. Een goede naam,
-          heldere beschrijving en professionele website helpen bij de beoordeling en
-          selectie van uw product. Logo en contactgegevens zorgen voor herkenbaarheid
-          en vertrouwen. De hostinginformatie is belangrijk voor organisaties die
-          specifieke eisen hebben aan gegevensopslag en juridische vereisten.
+          Deze gegevens maken uw applicatie vindbaar in de catalogus. Een duidelijke
+          naam, samenvatting en website helpen gemeenten om uw oplossing snel te
+          begrijpen en te beoordelen. Logo en contactgegevens zorgen voor herkenning
+          en vertrouwen. Hosting- en juridische informatie geven inzicht in waar en
+          hoe de applicatie beschikbaar is.
         </Paragraph>
 
         {/* Use the same container class as ConDynamicSchemaForm for consistency */}
@@ -51,6 +50,10 @@ const ConFormProductInformatieStage = memo(
               width='half'
               touched={touched}
               schemas={schemas}
+              customProps={{
+                placeholder:
+                  'Bijv. VNG Product ' + (isMultiApplicatie ? 'Suite' : ''),
+              }}
             />
 
             <ConSchemaEnhancedField
@@ -88,7 +91,6 @@ const ConFormProductInformatieStage = memo(
               onChange={(value) => setProductData('beschrijvingKort', value)}
               isDisabled={loading}
               width='full'
-              
               schemas={schemas}
             />
 
