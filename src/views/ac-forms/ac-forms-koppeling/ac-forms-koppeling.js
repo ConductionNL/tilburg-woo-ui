@@ -2,28 +2,19 @@ import { useState, useEffect, memo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import clsx from 'clsx';
-import { AcSection, AcContainer, AcColumn, AcFlex } from '@src/atoms';
+import { AcSection, AcContainer, AcColumn } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
-import ReactSelect from 'react-select';
 import {
   Heading1,
   Paragraph,
-  UnorderedList,
-  UnorderedListItem,
-  Separator,
-  Textbox,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
 import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
+import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
+import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
+import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
 
 const AcFormsKoppeling = ({ _store }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -145,14 +136,24 @@ const AcFormsKoppeling = ({ _store }) => {
           ? data.results
           : [];
         const options = list.map((item, index) => {
+          const id =
+            item?.id ||
+            item?.['@self']?.id ||
+            item?.uuid ||
+            item?.value ||
+            item?.slug ||
+            index;
           const label =
             item?.naam ||
             item?.name ||
             item?.title ||
             item?.label ||
-            `Module ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
+            item?.uuid ||
+            item?.id ||
+            item?.value ||
+            item?.slug ||
+            `Applicatie ${index + 1}`;
+          return { value: String(id), label: String(label), data: item };
         });
         if (isMounted) {
           setModulesOptions(options);
@@ -198,14 +199,24 @@ const AcFormsKoppeling = ({ _store }) => {
           ? data.results
           : [];
         const options = list.map((item, index) => {
+          const id =
+            item?.id ||
+            item?.['@self']?.id ||
+            item?.uuid ||
+            item?.value ||
+            item?.slug ||
+            index;
           const label =
             item?.naam ||
             item?.name ||
             item?.title ||
             item?.label ||
-            `Module ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
+            item?.uuid ||
+            item?.id ||
+            item?.value ||
+            item?.slug ||
+            `Applicatie ${index + 1}`;
+          return { value: String(id), label: String(label), data: item };
         });
         if (!cancelled) setOwnAppOptions(options);
       } catch {
@@ -445,411 +456,69 @@ const AcFormsKoppeling = ({ _store }) => {
         );
       case 1:
         return (
-          <AcFlex
-            column
-            spacing='sm'
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='koppeling-zoek-title'
-          >
-            <h2 id='koppeling-zoek-title' className='sr-only'>
-              Koppeling zoeken
-            </h2>
-
-            <Paragraph>
-              Vul de naam van de applicatie in om te controleren of er al koppelingen
-              bestaan.
-            </Paragraph>
-
-            <div className='ac-register-form-grid'>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label className='utrecht-form-label'>
-                  Uw applicatie (optioneel)
-                </label>
-                <ReactSelect
-                  className={clsx(
-                    'ac-beheer-select',
-                    loading && 'ac-beheer-select--disabled'
-                  )}
-                  options={ownAppOptions}
-                  value={ownApp}
-                  onChange={setOwnApp}
-                  isDisabled={loading}
-                  placeholder='Selecteer uw applicatie...'
-                  isClearable
-                  isLoading={ownAppLoading}
-                  onInputChange={(input, { action }) => {
-                    if (action === 'input-change') setOwnAppInput(input || '');
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <AcButton style='button' onClick={handleSearch} disabled={loading}>
-                Zoeken
-              </AcButton>
-            </div>
-
-            <AcFlex column style={{ gridColumn: 'span 2' }}>
-              <label className='utrecht-form-label'>Zoek op applicatienaam</label>
-              <Textbox
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e?.target?.value || '')}
-                placeholder='Bijv. OpenWoo'
-                id='koppeling-zoek-input'
-              />
-            </AcFlex>
-
-            <div style={{ marginTop: '1rem' }}>
-              <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
-                Zoekresultaten
-              </h3>
-              {searchResults.length ? (
-                <UnorderedList>
-                  {searchResults.map((k, i) => (
-                    <UnorderedListItem key={k?.id || i}>
-                      {k?.applicatie1 || k?.applicatieA || k?.appA || 'Onbekend'} ↔{' '}
-                      {k?.applicatie2 || k?.applicatieB || k?.appB || 'Onbekend'}
-                    </UnorderedListItem>
-                  ))}
-                </UnorderedList>
-              ) : (
-                <Paragraph>Geen koppelingen gevonden.</Paragraph>
-              )}
-            </div>
-          </AcFlex>
+          <ConKoppelingStageZoeken
+            loading={loading}
+            ownAppOptions={ownAppOptions}
+            ownApp={ownApp}
+            setOwnApp={setOwnApp}
+            ownAppLoading={ownAppLoading}
+            setOwnAppInput={setOwnAppInput}
+            handleSearch={handleSearch}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            searchResults={searchResults}
+          />
         );
 
       case 2:
         return (
-          <div
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='koppeling-toevoegen-title'
-          >
-            <h2 id='koppeling-toevoegen-title' className='sr-only'>
-              Toevoegen
-            </h2>
-
-            <TableContainer className='con-form-wizard-table-container'>
-              <Table>
-                <TableBody>
-                  {rows.map((rowId) => (
-                    <TableRow key={`row-${rowId}`}>
-                      <TableCell>
-                        <div style={{ display: 'grid', gap: '0.5rem' }}>
-                          <div>
-                            <label className='utrecht-form-label'>Naam</label>
-                            <Textbox
-                              value={nameByRow[rowId] || ''}
-                              onChange={(e) =>
-                                setNameByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: e?.target?.value || '',
-                                }))
-                              }
-                              placeholder='Naam van de koppeling'
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div style={{ display: 'grid', gap: '0.5rem' }}>
-                          <div>
-                            <label className='utrecht-form-label'>
-                              Applicatie A
-                            </label>
-                            <ReactSelect
-                              isClearable
-                              className={clsx(
-                                'ac-beheer-select',
-                                loading && 'ac-beheer-select--disabled'
-                              )}
-                              options={modulesOptions}
-                              value={
-                                selectedAppAByRow[rowId] != null
-                                  ? modulesOptions.find(
-                                      (o) => o.value === selectedAppAByRow[rowId]
-                                    ) || null
-                                  : ownApp || null
-                              }
-                              onChange={(opt) =>
-                                setSelectedAppAByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: opt?.value,
-                                }))
-                              }
-                              placeholder='Selecteer applicatie A'
-                            />
-                          </div>
-                          <div>
-                            <label className='utrecht-form-label'>Soort</label>
-                            <ReactSelect
-                              className={clsx(
-                                'ac-beheer-select',
-                                loading && 'ac-beheer-select--disabled'
-                              )}
-                              options={typeOptions}
-                              value={
-                                typeByRow[rowId]
-                                  ? typeOptions.find(
-                                      (o) => o.value === typeByRow[rowId]
-                                    )
-                                  : null
-                              }
-                              onChange={(opt) =>
-                                setTypeByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: opt?.value,
-                                }))
-                              }
-                              placeholder='Soort'
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div style={{ display: 'grid', gap: '0.5rem' }}>
-                          <div>
-                            <label className='utrecht-form-label'>
-                              Applicatie B
-                            </label>
-                            <ReactSelect
-                              className={clsx(
-                                'ac-beheer-select',
-                                loading && 'ac-beheer-select--disabled'
-                              )}
-                              isClearable
-                              options={modulesOptions}
-                              value={
-                                selectedAppBByRow[rowId] != null
-                                  ? modulesOptions.find(
-                                      (o) => o.value === selectedAppBByRow[rowId]
-                                    ) || null
-                                  : null
-                              }
-                              onChange={(opt) =>
-                                setSelectedAppBByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: opt?.value,
-                                }))
-                              }
-                              placeholder='Selecteer applicatie B'
-                            />
-                          </div>
-                          <div>
-                            <label className='utrecht-form-label'>
-                              Beschrijving
-                            </label>
-                            <Textbox
-                              value={beschrijvingByRow[rowId] || ''}
-                              onChange={(e) =>
-                                setBeschrijvingByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: e?.target?.value || '',
-                                }))
-                              }
-                              placeholder='Korte beschrijving'
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell>
-                        <div style={{ display: 'grid', gap: '0.5rem' }}>
-                          <div>
-                            <label className='utrecht-form-label'>Richting</label>
-                            <ReactSelect
-                              className={clsx(
-                                'ac-beheer-select',
-                                loading && 'ac-beheer-select--disabled'
-                              )}
-                              options={directionOptions}
-                              value={
-                                directionByRow[rowId]
-                                  ? directionOptions.find(
-                                      (o) => o.value === directionByRow[rowId]
-                                    )
-                                  : null
-                              }
-                              onChange={(opt) =>
-                                setDirectionByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: opt?.value,
-                                }))
-                              }
-                              placeholder='Richting'
-                            />
-                          </div>
-                          <div>
-                            <label className='utrecht-form-label'>Status</label>
-                            <ReactSelect
-                              className={clsx(
-                                'ac-beheer-select',
-                                loading && 'ac-beheer-select--disabled'
-                              )}
-                              options={statusOptions}
-                              value={
-                                statusByRow[rowId]
-                                  ? statusOptions.find(
-                                      (o) => o.value === statusByRow[rowId]
-                                    )
-                                  : null
-                              }
-                              onChange={(opt) =>
-                                setStatusByRow((prev) => ({
-                                  ...prev,
-                                  [rowId]: opt?.value,
-                                }))
-                              }
-                              placeholder='Status'
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell
-                        style={{ verticalAlign: 'middle', textAlign: 'center' }}
-                      >
-                        <AcButton
-                          style='button'
-                          buttonType='secondary'
-                          onClick={() => removeRow(rowId)}
-                          disabled={rows.length === 1}
-                          icon={<VISUALS.CLOSE />}
-                        ></AcButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <div style={{ marginTop: '1rem' }}>
-              <AcButton style='button' onClick={addRow}>
-                Rij toevoegen
-              </AcButton>
-            </div>
-          </div>
+          <ConKoppelingStageToevoegen
+            rows={rows}
+            addRow={addRow}
+            removeRow={removeRow}
+            modulesOptions={modulesOptions}
+            loading={loading}
+            selectedAppAByRow={selectedAppAByRow}
+            setSelectedAppAByRow={setSelectedAppAByRow}
+            ownApp={ownApp}
+            typeOptions={typeOptions}
+            typeByRow={typeByRow}
+            setTypeByRow={setTypeByRow}
+            selectedAppBByRow={selectedAppBByRow}
+            setSelectedAppBByRow={setSelectedAppBByRow}
+            beschrijvingByRow={beschrijvingByRow}
+            setBeschrijvingByRow={setBeschrijvingByRow}
+            directionOptions={directionOptions}
+            directionByRow={directionByRow}
+            setDirectionByRow={setDirectionByRow}
+            statusOptions={statusOptions}
+            statusByRow={statusByRow}
+            setStatusByRow={setStatusByRow}
+            nameByRow={nameByRow}
+            setNameByRow={setNameByRow}
+          />
         );
 
       case 3:
         return (
-          <div
-            className='ac-register-form-section'
-            role='group'
-            aria-labelledby='koppeling-review-title'
-          >
-            <h2 id='koppeling-review-title' className='sr-only'>
-              Controleren
-            </h2>
-
-            {saveResult === 'success' && (
-              <div className='ac-register-form-alert'>
-                {/* Note: Styling for the 'ok' alert has not yet been implemented. */}
-                <Alert type='info'>
-                  <Paragraph>
-                    Koppelingen succesvol opgeslagen. U wordt doorgestuurd naar het
-                    beheer-overzicht in {redirectCountdown} seconden…
-                  </Paragraph>
-                  <Paragraph>
-                    Of ga direct naar{' '}
-                    <a
-                      className='ac-register-form-alert-link'
-                      href='/beheer/koppeling'
-                    >
-                      /beheer/koppeling
-                    </a>
-                    .
-                  </Paragraph>
-                </Alert>
-              </div>
-            )}
-
-            {saveResult === 'error' && (
-              <Alert type='error'>
-                <Paragraph>Opslaan mislukt:</Paragraph>
-                {saveErrors.length > 0 && (
-                  <UnorderedList>
-                    {saveErrors.map((msg, idx) => (
-                      <UnorderedListItem key={idx}>{msg}</UnorderedListItem>
-                    ))}
-                  </UnorderedList>
-                )}
-              </Alert>
-            )}
-
-            <div className='ac-register-review'>
-              <div className='ac-register-review__section'>
-                <div className='ac-register-review__header'>
-                  <h3 className='utrecht-heading-4'>Overzicht koppelingen</h3>
-                </div>
-                <Separator className='con-form-wizard-review-header__separator' />
-
-                {!rows.length ? (
-                  <Paragraph>Geen toegevoegde koppelingen.</Paragraph>
-                ) : (
-                  <UnorderedList>
-                    {rows.map((rowId) => {
-                      const naam = (nameByRow[rowId] || '').trim();
-                      const appA =
-                        modulesOptions.find(
-                          (o) => o.value === selectedAppAByRow[rowId]
-                        )?.label ||
-                        ownApp?.label ||
-                        '-';
-                      const appB =
-                        modulesOptions.find(
-                          (o) => o.value === selectedAppBByRow[rowId]
-                        )?.label || '-';
-                      const richting = directionByRow[rowId] || '';
-                      const soortVal = typeByRow[rowId] || '';
-                      const soortLabel =
-                        (soortVal &&
-                          (typeOptions.find((o) => o.value === soortVal)?.label ||
-                            soortVal)) ||
-                        '-';
-                      const beschrijving = beschrijvingByRow[rowId] || '-';
-                      const statusVal = statusByRow[rowId] || '';
-                      const statusLabel =
-                        (statusVal &&
-                          (statusOptions.find((o) => o.value === statusVal)?.label ||
-                            statusVal)) ||
-                        '-';
-                      const dirArrow = getArrowForDirection(richting);
-                      return (
-                        <UnorderedListItem key={rowId}>
-                          {naam ? (
-                            <div style={{ marginBottom: '0.25rem' }}>
-                              <strong>{naam}</strong>
-                            </div>
-                          ) : null}
-                          {appA} {dirArrow} {appB}
-                          <div>
-                            <small>
-                              <strong>Beschrijving:</strong> {beschrijving}
-                            </small>
-                          </div>
-                          <div>
-                            <small>
-                              <strong>Soort:</strong> {soortLabel}
-                            </small>
-                          </div>
-                          <div>
-                            <small>
-                              <strong>Status:</strong> {statusLabel}
-                            </small>
-                          </div>
-                        </UnorderedListItem>
-                      );
-                    })}
-                  </UnorderedList>
-                )}
-              </div>
-            </div>
-          </div>
+          <ConKoppelingStageControleren
+            rows={rows}
+            modulesOptions={modulesOptions}
+            selectedAppAByRow={selectedAppAByRow}
+            selectedAppBByRow={selectedAppBByRow}
+            ownApp={ownApp}
+            directionByRow={directionByRow}
+            typeByRow={typeByRow}
+            typeOptions={typeOptions}
+            beschrijvingByRow={beschrijvingByRow}
+            statusByRow={statusByRow}
+            statusOptions={statusOptions}
+            nameByRow={nameByRow}
+            getArrowForDirection={getArrowForDirection}
+            saveResult={saveResult}
+            saveErrors={saveErrors}
+            redirectCountdown={redirectCountdown}
+          />
         );
 
       default:
@@ -990,16 +659,20 @@ const AcFormsKoppeling = ({ _store }) => {
                           borderRadius: '2px',
                         }}
                       >
-                        {JSON.stringify({
-                          koppelingsType,
-                          ownApp,
-                          rows,
-                          selectedAppAByRow,
-                          selectedAppBByRow,
-                          directionByRow,
-                          typeByRow,
-                          payloads: serializeRowsToPayload()
-                        }, null, 2)}
+                        {JSON.stringify(
+                          {
+                            koppelingsType,
+                            ownApp,
+                            rows,
+                            selectedAppAByRow,
+                            selectedAppBByRow,
+                            directionByRow,
+                            typeByRow,
+                            payloads: serializeRowsToPayload(),
+                          },
+                          null,
+                          2
+                        )}
                       </pre>
                     </details>
                   </div>
