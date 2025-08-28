@@ -30,7 +30,7 @@ const AcSectionsHandler = ({ store: { user }, contents = [] }) => {
   }
 
   return (
-    <div class={_CLASSES}>
+    <div className={_CLASSES}>
       {filteredContents.map((content, index) => {
         const BlockComponent = BLOCK_TYPES[content.type];
         if (!BlockComponent) {

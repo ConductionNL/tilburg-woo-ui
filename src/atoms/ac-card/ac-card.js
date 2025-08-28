@@ -25,7 +25,7 @@ const AcCard = ({
   return (
     <div className={_CLASSES}>
       {image && <img src={image} alt='' />}
-      <div class='ac-card__content'>{children}</div>
+      <div className='ac-card__content'>{children}</div>
     </div>
   );
 };

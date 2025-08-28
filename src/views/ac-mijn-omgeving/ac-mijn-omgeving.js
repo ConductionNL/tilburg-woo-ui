@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { AcSearchResult, AcButton, AcFormField } from '@molecules';
 import { AcFlex, AcSection } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { AcModal } from '@components';
+import { AcModal , AcSideNav } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -15,7 +15,6 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
-import { AcSideNav } from '@components';
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
