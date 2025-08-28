@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {  useNavigate } from 'react-router-dom';
 
 import { AcSearchResult, AcButton, AcFormField } from '@molecules';
 import { AcFlex, AcSection } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { AcModal , AcSideNav } from '@components';
+import { AcModal, AcSideNav } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -14,7 +14,6 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject } from '@utils';
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
@@ -36,57 +35,26 @@ function getCookie(name) {
 const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const navigate = useNavigate();
 
-  if (!getCookie('nextcloud_user_id')) {
-    useEffect(() => {
-      navigate('/login?redirect_url=/mijn-omgeving');
-    }, []);
-  }
-
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const [tabIndex, setTabIndex] = useState(0);
-  const [catalogId, setCatalogId] = useState(null);
-  const [publicationTypeId, setPublicationTypeId] = useState(null);
-  const [selectedPublicationType, setSelectedPublicationType] = useState(null);
+  const nextcloud_user_id = getCookie('nextcloud_user_id');
+  useEffect(() => {
+    if (!nextcloud_user_id) return;
+    navigate('/login?redirect_url=/mijn-omgeving');
+  }, [nextcloud_user_id]);
 
   const {
-    search_query,
+    // search_query,
     pagination,
     setPage,
-    updateQuery,
+    // updateQuery,
     setSearchQuery,
-    fetchAggregations,
-    fetchPublications,
+    // fetchAggregations,
+    // fetchPublications,
     is_loading,
-    getSearchPageURL,
+    // getSearchPageURL,
     all_publications,
-    resetSearchQuery,
-    resetAggregations,
+    // resetSearchQuery,
+    // resetAggregations,
   } = mijnOmgeving;
-
-  const getSelectedPublicationType = (catalog_id, publication_type_id) => {
-    console.log(catalog_id, publication_type_id);
-    const catalog = all_publications.find((catalog) => catalog.id === catalog_id);
-    console.log(catalog);
-    const publicationType = catalog.publicationTypes.find(
-      (publicationType) => publicationType.id === publication_type_id
-    );
-    setSelectedPublicationType(publicationType);
-  };
-
-  const publicationRow = () => {
-    const test = JSON.parse(JSON.stringify(selectedPublicationType));
-    console.log(test.title);
-
-    return [
-      <span>{test.title}</span>,
-      <span>{test.summary || 'Geen samenvatting beschikbaar'}</span>,
-    ];
-  };
-
-  const setQuery = () => {
-    updateQuery(AcSearchParamsToObject(searchParams));
-  };
 
   // useEffect(() => {
   //   setQuery();
@@ -118,33 +86,6 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   //   setQuery();
   //   fetchPublications();
   // }, [location.mijnOmgeving]);
-
-  const onPaginationChange = (page) => {
-    setPage(page);
-  };
-
-  const renderPagination = useMemo(() => {
-    // Pagination component does not update with updated props. It will keep the 'page' prop internally.
-    // To force an update, we need to rerender the component.
-    if (is_loading) {
-      return null;
-    }
-
-    return (
-      <Pagination
-        totalPages={pagination?.pages}
-        page={parseInt(pagination?.page, 10)}
-        onPageChange={onPaginationChange}
-        nextLabel=''
-        previousLabel=''
-        maxVisiblePages={7}
-      />
-    );
-  }, [is_loading, pagination?.page]);
-
-  const onSearchSubmit = (query) => {
-    setSearchQuery(query);
-  };
 
   const users = [
     {

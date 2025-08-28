@@ -1,23 +1,19 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AcContainer, AcFlex , AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader , ConDetailsActionsMenu } from '@components';
+import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { AcTable, AcLink } from '@molecules';
 import { withStore } from '@stores';
-import { ENDPOINTS, LABELS, VISUALS } from '@constants';
+import { LABELS, VISUALS } from '@constants';
 import { Pagination } from '@amsterdam/design-system-react';
-import { getCookie, sortPropertiesByOrder } from '@src/utilities';
+import { sortPropertiesByOrder } from '@src/utilities';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
-import {
-  Heading,
-  BadgeCounter,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 
 import _ from 'lodash';
-import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { canReadField } from '@utils/field-authorization';
@@ -114,15 +110,13 @@ const AcPublication = observer(
 
     const navigate = useNavigate();
 
-    const isLoggedIn = !!getCookie('nextcloud_user_id');
-
     // Use the same related actions hook as beheer pages
     const openDynamicCreate = useCallback(
       (targetType, preSelected, metadata = {}) => {
         // For publication pages, we'll navigate to the beheer page with modal open
         // TODO: Handle outgoing relationship metadata in beheer page URL params
         if (metadata.isOutgoing) {
-          console.log('🔄 Outgoing relationship from publication page:', metadata);
+          // handle outgoing relationship metadata
         }
         navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
       },
@@ -153,12 +147,14 @@ const AcPublication = observer(
         icon: <VISUALS.PLUS />,
       }));
 
-      console.log('Publication related action items:', items);
       setActionMenuItems(items);
     }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
     // Table
+    // TODO: this just needs a code fix, headers and rows is not being used
+    // eslint-disable-next-line no-unused-vars
     const [headers, setHeaders] = useState([]);
+    // eslint-disable-next-line no-unused-vars
     const [rows, setRows] = useState([]);
 
     const getFilteredData = (data) => {
@@ -218,7 +214,7 @@ const AcPublication = observer(
 
     const getFilterdRows = (data) => {
       return Object.entries(data).map(([key, value]) => [
-        <strong>{_.upperFirst(key)}</strong>,
+        <strong key={key}>{_.upperFirst(key)}</strong>,
         <>{getValueField(key, value)}</>,
       ]);
     };
@@ -233,7 +229,10 @@ const AcPublication = observer(
     const [tabIndexUsed, setTabIndexUsed] = useState(0);
     const [uses, setUses] = useState([]);
     const [used, setUsed] = useState([]);
+    // TODO: this just needs a code fix, usesLoading and usedLoading is not being used
+    // eslint-disable-next-line no-unused-vars
     const [usesLoading, setUsesLoading] = useState(false);
+    // eslint-disable-next-line no-unused-vars
     const [usedLoading, setUsedLoading] = useState(false);
 
     const fetchUses = async () => {
@@ -335,7 +334,6 @@ const AcPublication = observer(
                     label: 'Verwijderen',
                     icon: VISUALS.TRASHCAN,
                     onClick: () => {
-                      console.log('Delete action for publication:', id);
                       // TODO: Implement delete modal for publications
                     },
                   },
@@ -378,7 +376,8 @@ const AcPublication = observer(
                     !schema?.configuration?.excludedProperties?.includes(key)
                 )
                 .filter(([key]) => !configuredMetaFields.includes(key))
-                .filter(([key, fieldSchema]) =>
+                // eslint-disable-next-line no-unused-vars
+                .filter(([_, fieldSchema]) =>
                   user?.isAuthenticated ? canReadField(user, fieldSchema) : true
                 )
                 .map(([key, schema]) => {
@@ -500,7 +499,7 @@ const AcPublication = observer(
                             // show unique headers
                             _.uniqBy(uses, (use) => use['@self'].schema.id).map(
                               (use, idx) => (
-                                <AcTab selected={tabIndexUses === idx}>
+                                <AcTab key={use['@self'].schema.id} selected={tabIndexUses === idx}>
                                   <span>{use['@self'].schema.title}</span>
                                 </AcTab>
                               )
@@ -535,8 +534,9 @@ const AcPublication = observer(
                             // Description: use 'beschrijving' or fallback to empty string
                             getValueField('beschrijving', item.beschrijving ?? ''),
                             <button
+                              key={item.id}
                               className='utrecht-button slim'
-                              variant='secondary'
+                              // variant='secondary'
                               onClick={() => {
                                 window.location.href = `/publicatie/${item.id}`;
                               }}
@@ -547,7 +547,7 @@ const AcPublication = observer(
 
                           // 4. Render the table
                           return (
-                            <AcTabPanel selected={tabIndexUses === idx}>
+                            <AcTabPanel key={idx} selected={tabIndexUses === idx}>
                               <AcTable header={tabHeaders} rows={tabRows} />
                             </AcTabPanel>
                           );
@@ -572,7 +572,7 @@ const AcPublication = observer(
                             // show unique headers
                             _.uniqBy(used, (use) => use['@self'].schema.id).map(
                               (use, idx) => (
-                                <AcTab selected={tabIndexUsed === idx}>
+                                <AcTab key={use['@self'].schema.id} selected={tabIndexUsed === idx}>
                                   <span>{use['@self'].schema.title}</span>
                                 </AcTab>
                               )
@@ -607,8 +607,9 @@ const AcPublication = observer(
                             // Description: use 'beschrijving' or fallback to empty string
                             getValueField('beschrijving', item.beschrijving ?? ''),
                             <button
+                              key={item.id}
                               className='utrecht-button slim'
-                              variant='secondary'
+                              // variant='secondary'
                               onClick={() => {
                                 window.location.href = `/publicatie/${item.id}`;
                               }}
@@ -619,7 +620,7 @@ const AcPublication = observer(
 
                           // 4. Render the table
                           return (
-                            <AcTabPanel selected={tabIndexUsed === idx}>
+                            <AcTabPanel key={idx} selected={tabIndexUsed === idx}>
                               <AcTable header={tabHeaders} rows={tabRows} />
                             </AcTabPanel>
                           );
