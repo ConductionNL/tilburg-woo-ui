@@ -13,8 +13,8 @@ const AcGemma = observer(({ store: { gemma } }) => {
   useEffect(() => {
     if (
       hostname !== 'localhost' &&
-      hostname !== 'vng.opencatalogi.nl' &&
-      hostname !== 'vng.test.opencatalogi.nl' &&
+      hostname !== 'softwarecatalogus.test.opencatalogi.nl' &&
+      hostname !== 'softwarecatalogus.accept.opencatalogi.nl' &&
       hostname !== 'acceptatie.softwarecatalogus.nl'
     ) {
       navigate('/');
