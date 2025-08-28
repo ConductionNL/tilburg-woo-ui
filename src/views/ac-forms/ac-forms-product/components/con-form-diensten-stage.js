@@ -40,21 +40,6 @@ const ConFormDienstenStage = memo(
       dienstBeschrijvingByRow,
     } = dienstenFormState;
 
-    const normalizeDiensten = (arr) => {
-      if (!Array.isArray(arr)) return [];
-      const strs = arr
-        .map((item) => {
-          if (item == null) return null;
-          if (typeof item === 'object') {
-            if ('value' in item) return String(item.value);
-            return null;
-          }
-          return String(item);
-        })
-        .filter((v) => typeof v === 'string' && v.length > 0);
-      return Array.from(new Set(strs));
-    };
-
     const addDienst = (
       moduleIndex,
       dienstVal,
@@ -98,12 +83,6 @@ const ConFormDienstenStage = memo(
 
         const nextDiensten = [...prevDiensten, dienstObject];
 
-        console.log('🔧 Adding dienst object (backend will generate ID):', {
-          dienstObject,
-          aanbieder: prev.aanbieder,
-          nextDiensten,
-        });
-
         modules[moduleIndex] = { ...targetModule, diensten: nextDiensten };
         return { ...prev, modules };
       });
@@ -132,12 +111,6 @@ const ConFormDienstenStage = memo(
         const nextDiensten = prevDiensten.filter((d) =>
           typeof d === 'object' ? d.type !== dienstVal : d !== dienstVal
         );
-
-        console.log('🔧 Removing dienst:', {
-          dienstVal,
-          prevDiensten,
-          nextDiensten,
-        });
 
         modules[moduleIndex] = { ...targetModule, diensten: nextDiensten };
         return { ...prev, modules };

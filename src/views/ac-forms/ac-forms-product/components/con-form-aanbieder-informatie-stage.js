@@ -29,7 +29,7 @@ const ConFormAanbiederInformatieStage = memo(
     product,
     setProductData,
     loading,
-    touched,
+    // touched,
     schemas,
     userStore,
     aanbiederkeuze,
