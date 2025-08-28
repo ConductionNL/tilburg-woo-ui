@@ -383,7 +383,7 @@ const StandaardenFormNew = ({
   });
 
   // Generate table rows with correct rowspan logic
-  Object.entries(moduleGroups).forEach(([_, entries]) => {
+  Object.values(moduleGroups).forEach((entries) => {
     // Sort entries within each module for consistent display
     entries.sort((a, b) => {
       // Sort by type first (verplicht before aanbevolen), then by name

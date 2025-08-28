@@ -91,11 +91,6 @@ module.exports = {
   rules: {
     // Keep warnings as errors in CI-style scripts
     'no-console': ['error', { allow: ['warn', 'error', 'info', 'debug'] }],
-    'no-unused-vars': [
-      'error',
-      // ignore single _, does not ignore variables that start with _ (e.g. _applicaties)
-      { argsIgnorePattern: '^_$', varsIgnorePattern: '^_$' },
-    ],
     'no-debugger': 'warn',
 
     // React specific
