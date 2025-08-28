@@ -1,19 +1,14 @@
-import { useState, useCallback, memo, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
-import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
-import { AcFormField, AcButton, AcCheckbox } from '@src/molecules';
-import ReactSelect from 'react-select';
+import { AcButton } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
-import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
-import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
-import StandaardenFormNew from './components/standaarden-form-new';
 
 import {
   Heading1,
@@ -21,15 +16,7 @@ import {
   UnorderedListItem,
   Alert,
   Paragraph,
-  Separator,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Textbox,
 } from '@utrecht/component-library-react/dist/css-module';
-import licenses from '@assets/licenses/licenses.json';
 
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
@@ -1258,14 +1245,13 @@ const AcFormsProduct = ({ userStore, store }) => {
   };
 
   const getStatus = (currentStep, step) => {
-    const result = currentStep === step 
-      ? 'current' 
-      : currentStep < step 
-      ? 'not-checked' 
-      : 'checked';
-    
+    const result =
+      currentStep === step
+        ? 'current'
+        : currentStep < step
+        ? 'not-checked'
+        : 'checked';
 
-    
     return result;
   };
 
@@ -1690,7 +1676,6 @@ const AcFormsProduct = ({ userStore, store }) => {
                   <div className='ac-register-container ac-forms-product'>
                     {/* Debug step information - only in development */}
 
-
                     <div ref={processStepsRef} className='ac-register-process-steps'>
                       <ProcessSteps
                         steps={(() => {
@@ -1700,15 +1685,20 @@ const AcFormsProduct = ({ userStore, store }) => {
                               marker: 1,
                               status: getStatusMultiStep(
                                 currentStep,
-                                0,
-                                0,
-                                shouldShowAanbiederStep() ? 2 : 1
+                                getAdjustedStepIndex(0),
+                                getAdjustedStepIndex(0),
+                                getAdjustedStepIndex(
+                                  shouldShowAanbiederStep() ? 2 : 1
+                                )
                               ),
                               title: 'Productopbouw',
                               steps: [
                                 {
                                   id: 'v6w7x8y9-0z1a-2b3c-4d5e-6f7g8h9i0j1k',
-                                  status: getStatus(currentStep, 1),
+                                  status: getStatus(
+                                    currentStep,
+                                    getAdjustedStepIndex(1)
+                                  ),
                                   title: 'Product informatie',
                                 },
                                 // Conditionally add aanbieder step
@@ -1716,7 +1706,10 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   ? [
                                       {
                                         id: 'w7x8y9z0-1a2b-3c4d-5e6f-7g8h9i0j1k2l',
-                                        status: getStatus(currentStep, 2),
+                                        status: getStatus(
+                                          currentStep,
+                                          getAdjustedStepIndex(2)
+                                        ),
                                         title: 'Aanbieder informatie',
                                       },
                                     ]
@@ -1728,9 +1721,9 @@ const AcFormsProduct = ({ userStore, store }) => {
                               marker: 2,
                               status: getStatusMultiStep(
                                 currentStep,
-                                shouldShowAanbiederStep() ? 3 : 2,
-                                shouldShowAanbiederStep() ? 3 : 2,
-                                shouldShowAanbiederStep() ? 9 : 7
+                                getAdjustedStepIndex(3),
+                                getAdjustedStepIndex(3),
+                                getAdjustedStepIndex(9)
                               ),
                               title: currentStepName(
                                 shouldShowAanbiederStep() ? 3 : 2
@@ -1740,7 +1733,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 4 : 3
+                                    getAdjustedStepIndex(4)
                                   ),
                                   title: 'Licentie',
                                 },
@@ -1752,7 +1745,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                         id: 'a2b3c4d5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
                                         status: getStatus(
                                           currentStep,
-                                          shouldShowAanbiederStep() ? 5 : 4
+                                          getAdjustedStepIndex(5)
                                         ),
                                         title: 'Versies',
                                       },
@@ -1762,7 +1755,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 6 : 4
+                                    getAdjustedStepIndex(6)
                                   ),
                                   title: 'Referentiecomponenten',
                                 },
@@ -1770,7 +1763,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'c3d4e5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 7 : 5
+                                    getAdjustedStepIndex(7)
                                   ),
                                   title: 'Standaarden',
                                 },
@@ -1778,7 +1771,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'd4e5f6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 8 : 6
+                                    getAdjustedStepIndex(8)
                                   ),
                                   title: 'Koppelingen',
                                 },
@@ -1786,7 +1779,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 9 : 7
+                                    getAdjustedStepIndex(9)
                                   ),
                                   title: 'Diensten',
                                 },
@@ -1795,10 +1788,10 @@ const AcFormsProduct = ({ userStore, store }) => {
                             {
                               id: 'f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1',
                               marker: 3,
-                                            status: getStatus(
-                currentStep,
-                shouldShowAanbiederStep() ? 10 : 8
-              ),
+                              status: getStatus(
+                                currentStep,
+                                getAdjustedStepIndex(10)
+                              ),
                               title: 'Controleren',
                             },
                           ];
@@ -1879,7 +1872,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                             Vorige
                           </AcButton>
                         )}
-                        {currentStep !== (shouldShowAanbiederStep() ? 10 : 8) && (
+                        {currentStep !== getAdjustedStepIndex(10) && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -1910,7 +1903,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                           </div>
                         )}
 
-                        {currentStep === (shouldShowAanbiederStep() ? 10 : 8) && (
+                        {currentStep === getAdjustedStepIndex(10) && (
                           <AcButton
                             style='button'
                             icon={<VISUALS.CLIPBOARD_CHECK />}
