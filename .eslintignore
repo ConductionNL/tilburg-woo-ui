@@ -5,6 +5,7 @@ node_modules/
 public_html/
 build/
 dist/
+coverage/
 
 # Configuration files
 webpack.config.js
@@ -18,3 +19,13 @@ src/constants/container.constants.js
 
 # External libraries
 src/assets/licenses/ 
+
+# Caches
+.eslintcache
+.cache/
+.tmp/
+
+# Yarn Berry
+.yarn/
+.pnp.cjs
+.pnp.loader.mjs
