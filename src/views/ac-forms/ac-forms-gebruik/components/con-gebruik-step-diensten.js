@@ -23,6 +23,7 @@ const ConGebruikStepDiensten = ({
       <h2 id='diensten-title' className='sr-only'>
         Diensten
       </h2>
+
       <Paragraph>
         Selecteer de diensten die door de gekozen applicatie worden aangeboden.
       </Paragraph>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -38,13 +38,13 @@ const AcSearch = ({ store: { publications, user } }) => {
     updateQuery(AcSearchParamsToObject(searchParams));
   };
 
-  useEffect(() => {
-    if (getSearchPageURL() === location.pathname + location.search) {
-      return;
-    }
-
-    navigate(getSearchPageURL());
-  }, [search_query, ...Object.values(search_query?.published || {})]);
+  // DISABLED: This effect was competing with URL processing and causing the deep linking issue
+  // useEffect(() => {
+  //   if (getSearchPageURL() === location.pathname + location.search) {
+  //     return;
+  //   }
+  //   navigate(getSearchPageURL());
+  // }, [search_query, ...Object.values(search_query?.published || {})]);
 
   // On GET params change.
   useEffect(() => {

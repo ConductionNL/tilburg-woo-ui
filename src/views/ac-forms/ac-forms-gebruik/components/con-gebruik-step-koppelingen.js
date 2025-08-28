@@ -23,6 +23,7 @@ const ConGebruikStepKoppelingen = ({
       <h2 id='koppelingen-title' className='sr-only'>
         Koppelingen
       </h2>
+
       <Paragraph>
         Selecteer de koppelingen waar de gekozen applicatie onderdeel van is.
       </Paragraph>

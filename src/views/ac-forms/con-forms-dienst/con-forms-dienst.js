@@ -1,4 +1,4 @@
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import clsx from 'clsx';
@@ -17,8 +17,8 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 // Stage components
+import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
-import ConFormDienstopbouwStage from './components/con-form-dienstopbouw-stage';
 import ConFormProductenStage from './components/con-form-producten-stage';
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
 import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
@@ -53,6 +53,9 @@ const ConFormsDienst = ({ store, userStore }) => {
   });
 
   const [touched, setTouched] = useState({});
+
+  // Service type selection state
+  const [dienstType, setDienstType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
 
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
@@ -139,24 +142,40 @@ const ConFormsDienst = ({ store, userStore }) => {
   }, [store]);
 
   // Auto-set aanbieder from active org
-  useEffect(() => {
-    if (userStore?.activeOrganization && !dienst.aanbieder) {
-      setDienstData(
-        'aanbieder',
-        userStore.activeOrganization.uuid ||
-          userStore.activeOrganization.id ||
-          userStore.activeOrganization.slug ||
-          ''
-      );
-    }
-  }, [userStore?.activeOrganization, dienst.aanbieder]);
+  // TODO: Initialize aanbieder to active organization ID
+  // useEffect(() => {
+  //   const actualUserStore = userStore || store?.user;
+  //   if (actualUserStore?.activeOrganization && !dienst.aanbieder) {
+  //     const orgId = actualUserStore.activeOrganization.uuid || 
+  //                  actualUserStore.activeOrganization.id || 
+  //                  actualUserStore.activeOrganization.slug;
+  //     setDienstData('aanbieder', orgId || '');
+  //   }
+  // }, [userStore, store?.user, dienst.aanbieder]);
+
+  // Use ref to avoid dependency issues
+  const selectedProductOptionsRef = useRef(selectedProductOptions);
+  selectedProductOptionsRef.current = selectedProductOptions;
 
   // Search/fetch products
-  const performProductsSearch = async (term = '') => {
+  const performProductsSearch = useCallback(async (term = '') => {
     setProductsLoading(true);
     try {
       const params = new URLSearchParams({ _limit: '20', _page: '1' });
       if (term && term.trim()) params.set('_search', term.trim());
+      
+      // TODO: Filter by own organization when dienst type is 'eigen-organisatie'
+      // Use @self[organisation] parameter to filter products by organization
+      // const actualUserStore = userStore || store?.user;
+      // if (dienstType === 'eigen-organisatie' && actualUserStore?.activeOrganization) {
+      //   const orgId = actualUserStore.activeOrganization.uuid || 
+      //                actualUserStore.activeOrganization.id || 
+      //                actualUserStore.activeOrganization.slug;
+      //   if (orgId) {
+      //     params.set('@self[organisation]', String(orgId));
+      //   }
+      // }
+      
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product?${params}`;
       const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -174,11 +193,10 @@ const ConFormsDienst = ({ store, userStore }) => {
         data: item,
       }));
       // Always include currently selected options so selected values remain available
-      const selectedById = new Set(
-        (selectedProductOptions || []).map((o) => o.value)
-      );
+      const currentSelectedOptions = selectedProductOptionsRef.current || [];
+      const selectedById = new Set(currentSelectedOptions.map((o) => o.value));
       const merged = [
-        ...(selectedProductOptions || []),
+        ...currentSelectedOptions,
         ...mapped.filter((o) => !selectedById.has(o.value)),
       ];
       setProductOptions(merged);
@@ -187,11 +205,25 @@ const ConFormsDienst = ({ store, userStore }) => {
     } finally {
       setProductsLoading(false);
     }
-  };
+  }, []);
 
+  // Initial load of products
   useEffect(() => {
     performProductsSearch('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // TODO: Reload products when dienst type changes to apply organization filtering
+  // useEffect(() => {
+  //   if (dienstType) {
+  //     // Clear current selections as available products will change
+  //     setSelectedProductIds([]);
+  //     setSelectedProductOptions([]);
+  //     setSelectedModuleIds([]);
+  //     // Reload products with new filtering
+  //     performProductsSearch('');
+  //   }
+  // }, [dienstType]);
 
   // When products selected, fetch their modules to build lookup
   useEffect(() => {
@@ -201,30 +233,50 @@ const ConFormsDienst = ({ store, userStore }) => {
       const labels = {};
       for (const prodId of selectedProductIds) {
         try {
-          // Fetch product details to find modules inside
-          const params = new URLSearchParams({ extend: 'modules' });
-          const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product/${prodId}?${params}`;
-          const res = await fetch(endpoint, {
+          // First, get product details for the label
+          const productEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product/${prodId}`;
+          const productRes = await fetch(productEndpoint, {
             headers: { Accept: 'application/json' },
           });
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          const item = await res.json();
-          // Capture product label for display
-          const prodLabel = String(
-            item?.naam || item?.name || item?.title || item?.label || prodId
-          );
-          labels[prodId] = prodLabel;
-          const modules = Array.isArray(item?.modules) ? item.modules : [];
+          if (productRes.ok) {
+            const productItem = await productRes.json();
+            const prodLabel = String(
+              productItem?.naam || productItem?.name || productItem?.title || productItem?.label || prodId
+            );
+            labels[prodId] = prodLabel;
+          }
+
+          // Then, fetch modules directly from module endpoint filtered by product
+          const moduleParams = new URLSearchParams({ 
+            _limit: '50', 
+            product: prodId // Filter modules by product ID
+          });
+          const moduleEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${moduleParams}`;
+          const moduleRes = await fetch(moduleEndpoint, {
+            headers: { Accept: 'application/json' },
+          });
+          
+          if (!moduleRes.ok) throw new Error('HTTP ' + moduleRes.status);
+          const moduleData = await moduleRes.json();
+          
+          // Handle both array and paginated response formats
+          const modules = Array.isArray(moduleData) 
+            ? moduleData 
+            : Array.isArray(moduleData?.results) 
+            ? moduleData.results 
+            : [];
+            
           lookup[prodId] = modules
             .map((m, idx) => {
-              const id = String(m?.id || m?.value || m);
+              const id = String(m?.id || m?.value || m?.uuid || m);
               const label = String(
                 m?.naam || m?.name || m?.title || `Applicatie ${idx + 1}`
               );
               return { value: id, label, data: m };
             })
             .filter((o) => o.value && o.label);
-        } catch {
+        } catch (error) {
+          console.error(`Failed to load modules for product ${prodId}:`, error);
           lookup[prodId] = [];
         }
       }
@@ -316,23 +368,14 @@ const ConFormsDienst = ({ store, userStore }) => {
     switch (step) {
       case 0:
         return (
-          <ConFormDienstopbouwStage
-            setDienstData={setDienstData}
-            userStore={userStore}
+          <ConFormSoortDienstStage
+            dienstType={dienstType}
+            setDienstType={setDienstType}
+            loading={schemasLoading}
+            dienst={dienst}
           />
         );
       case 1:
-        return (
-          <ConFormDienstInformatieStage
-            dienst={dienst}
-            setDienstData={setDienstData}
-            loading={schemasLoading}
-            touched={touched}
-            schemas={schemas}
-            userStore={userStore}
-          />
-        );
-      case 2:
         return (
           <ConFormProductenStage
             selectedProductIds={selectedProductIds}
@@ -341,6 +384,19 @@ const ConFormsDienst = ({ store, userStore }) => {
             productOptions={productOptions}
             productsLoading={productsLoading}
             searchProducts={performProductsSearch}
+            dienstType={dienstType}
+          />
+        );
+      case 2:
+        return (
+          <ConFormDienstInformatieStage
+            dienst={dienst}
+            setDienstData={setDienstData}
+            loading={schemasLoading}
+            touched={touched}
+            schemas={schemas}
+            userStore={userStore}
+            dienstType={dienstType}
           />
         );
       case 3:
@@ -353,6 +409,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             productLabels={productLabels}
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
+            dienstType={dienstType}
           />
         );
       case 4:
@@ -363,6 +420,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             koppelingOptions={koppelingOptions}
             selectedKoppelingIds={selectedKoppelingIds}
             setSelectedKoppelingIds={setSelectedKoppelingIds}
+            dienstType={dienstType}
           />
         );
       case 5:
@@ -376,6 +434,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             selectedKoppelingIds={selectedKoppelingIds}
             koppelingOptions={koppelingOptions}
             userStore={userStore}
+            dienstType={dienstType}
           />
         );
       default:
@@ -386,11 +445,11 @@ const ConFormsDienst = ({ store, userStore }) => {
   const currentStepName = (step) => {
     switch (step) {
       case 0:
-        return 'Informatie';
+        return 'Soort dienst';
       case 1:
-        return 'Dienst informatie';
-      case 2:
         return 'Producten';
+      case 2:
+        return 'Dienst informatie';
       case 3:
         return 'Applicaties';
       case 4:
@@ -418,7 +477,15 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Validation mirroring product form style
   const getDisabledStatus = (step) => {
+    if (step === 0) {
+      // Must select service type
+      return !dienstType;
+    }
     if (step === 1) {
+      // Producten: at least one product selected
+      return selectedProductIds.length === 0;
+    }
+    if (step === 2) {
       // Respect schema requiredness
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
@@ -435,10 +502,6 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return false;
     }
-    if (step === 2) {
-      // Producten: at least one product selected
-      return selectedProductIds.length === 0;
-    }
     if (step === 3) {
       // Applicaties: at least one module selected
       return selectedModuleIds.length === 0;
@@ -448,7 +511,13 @@ const ConFormsDienst = ({ store, userStore }) => {
   };
 
   const getDisabledTooltip = (step) => {
+    if (step === 0) {
+      return !dienstType ? 'Selecteer het type dienst' : '';
+    }
     if (step === 1) {
+      return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
+    }
+    if (step === 2) {
       const messages = [];
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
@@ -468,15 +537,23 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return messages.join('\n');
     }
-    if (step === 2) {
-      return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
-    }
     if (step === 3) {
       return selectedModuleIds.length === 0
         ? 'Selecteer minimaal één applicatie'
         : '';
     }
     return '';
+  };
+
+  // Determine page title based on dienst type
+  const getPageTitle = () => {
+    if (dienstType === 'eigen-organisatie') {
+      return 'Dienst Aanmelden voor eigen organisatie';
+    }
+    if (dienstType === 'andere-organisatie') {
+      return 'Dienst Aanmelden voor andere organisatie';
+    }
+    return 'Dienst Aanmelden';
   };
 
   const handleSaveDienst = async () => {
@@ -488,6 +565,8 @@ const ConFormsDienst = ({ store, userStore }) => {
         producten: selectedProductIds,
         modules: selectedModuleIds,
         koppelingen: selectedKoppelingIds,
+        // Include service type for processing
+        dienstType: dienstType,
       };
       await store.object.createObject('voorzieningen', 'dienst', payload);
       setSaveResult('success');
@@ -503,7 +582,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>Dienst Aanmelden</Heading1>
+            <Heading1>{getPageTitle()}</Heading1>
             <Paragraph>
               Voer de gegevens van de dienst in, selecteer relevante producten,
               applicaties en koppelingen en controleer uw invoer.
@@ -577,38 +656,45 @@ const ConFormsDienst = ({ store, userStore }) => {
                   <ProcessSteps
                     steps={[
                       {
-                        id: 'grp-dienst',
+                        id: 'grp-soort-dienst',
                         marker: 1,
                         status:
-                          currentStep >= 0 && currentStep <= 3
+                          currentStep >= 0 && currentStep <= 1
                             ? 'current'
                             : currentStep < 0
                             ? 'not-checked'
                             : 'checked',
-                        title: 'Informatie',
+                        title: 'Soort dienst',
                         steps: [
                           {
-                            id: 'stg-dienst-info',
-                            status: getStatus(currentStep, 1),
-                            title: 'Dienst informatie',
-                          },
-                          {
                             id: 'stg-producten',
-                            status: getStatus(currentStep, 2),
+                            status: getStatus(currentStep, 1),
                             title: 'Producten',
                           },
+                        ],
+                      },
+                      {
+                        id: 'grp-dienst-informatie',
+                        marker: 2,
+                        status:
+                          currentStep >= 2 && currentStep <= 4
+                            ? 'current'
+                            : currentStep < 2
+                            ? 'not-checked'
+                            : 'checked',
+                        title: 'Dienst informatie',
+                        steps: [
                           {
                             id: 'stg-apps',
                             status: getStatus(currentStep, 3),
                             title: 'Applicaties',
                           },
+                          {
+                            id: 'stg-koppelingen',
+                            status: getStatus(currentStep, 4),
+                            title: 'Koppelingen',
+                          },
                         ],
-                      },
-                      {
-                        id: 'grp-koppelingen',
-                        marker: 2,
-                        status: getStatus(currentStep, 4),
-                        title: 'Koppelingen',
                       },
                       {
                         id: 'grp-review',

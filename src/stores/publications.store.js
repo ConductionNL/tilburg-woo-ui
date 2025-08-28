@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
 import { LABELS, LABELS_DYNAMIC } from '@constants';
+import { commongroundApiUrl } from '@config';
 
 let app = {};
 
@@ -18,15 +19,35 @@ const DEFAULT_QUERY = {
 
 
 
+// Function to build facetsQueries from available facets
+export const buildFacetsQueries = (availableFacets) => {
+  const queries = [];
+
+  // Handle @self facets
+  if (availableFacets['@self']) {
+    Object.entries(availableFacets['@self']).forEach(([key, config]) => {
+      if (config.facet_types && config.facet_types.includes('terms')) {
+        queries.push([['@self', key], 'terms']);
+      }
+    });
+  }
+
+  // Handle object_fields facets
+  if (availableFacets.object_fields) {
+    Object.entries(availableFacets.object_fields).forEach(([key, config]) => {
+      if (config.facet_types && config.facet_types.includes('terms')) {
+        queries.push([key, 'terms']);
+      }
+    });
+  }
+
+  return queries;
+};
+
 export const buildPublicationsSearchQuery = (baseQuery) => {
   return {
     ...baseQuery,
-    extend: [
-      '@self.schema',
-      baseQuery.extend,
-      'organisatie',
-      'referentieComponenten',
-    ],
+    extend: '@self.schema',
   };
 };
 
@@ -61,6 +82,18 @@ export class PublicationsStore {
   themesFacets = [];
 
   @observable
+  facets = {};
+
+  @observable
+  availableFacets = null;
+
+  @observable
+  facetsConfig = null;
+
+  @observable
+  facetsConfigLoaded = false;
+
+  @observable
   pagination = {};
 
   @observable
@@ -85,6 +118,9 @@ export class PublicationsStore {
     status: false,
     message: undefined,
   };
+
+  @observable
+  facetsLoading = false;
 
   @observable
   attachmentSearch = '';
@@ -147,6 +183,16 @@ export class PublicationsStore {
   }
 
   @computed
+  get is_facets_loading() {
+    return this.facetsLoading;
+  }
+
+  @computed
+  get is_facets_config_loaded() {
+    return this.facetsConfigLoaded;
+  }
+
+  @computed
   get get_order() {
     return this.query._order;
   }
@@ -169,6 +215,11 @@ export class PublicationsStore {
   @computed
   get all_attachments() {
     return toJS(this.attachments);
+  }
+
+  @computed
+  get all_facets() {
+    return toJS(this.facets);
   }
 
   @action
@@ -226,6 +277,8 @@ export class PublicationsStore {
   @action
   setSearchQuery = (searchQuery) => {
     this.query._search = searchQuery;
+    // Trigger publications reload with new search query
+    this.fetchPublications();
   };
 
   @action
@@ -302,6 +355,47 @@ export class PublicationsStore {
   };
 
   @action
+  setFacets = (facets) => {
+    this.facets = facets;
+  };
+
+  @action
+  setAvailableFacets = (availableFacets) => {
+    this.availableFacets = availableFacets;
+  };
+
+  @action
+  setFacetsLoadingStatus = (status) => {
+    this.facetsLoading = status;
+  };
+
+  @action
+  setFacetsConfig = (config) => {
+    const configChanged = JSON.stringify(this.facetsConfig) !== JSON.stringify(config);
+    this.facetsConfig = config;
+    this.facetsConfigLoaded = true;
+    
+    // If config changed, trigger facets reload
+    if (configChanged && config) {
+      this.triggerFacetsReload();
+    }
+  };
+
+  @action
+  resetFacetsConfig = () => {
+    this.facetsConfig = null;
+    this.facetsConfigLoaded = false;
+    this.facets = {};
+  };
+
+  @action
+  triggerFacetsReload = async () => {
+    if (this.facetsConfig) {
+      await this.fetchFacets();
+    }
+  };
+
+  @action
   toggleMobileFilters = () => {
     this.mobileFiltersOpen = !this.mobileFiltersOpen;
   };
@@ -319,26 +413,144 @@ export class PublicationsStore {
     return `/zoeken?${urlParams}`;
   };
 
+  // Note: fetchAvailableFacets removed - now handled in fetchPublications
+
+  @action
+  fetchFacets = async () => {
+    this.setFacetsLoadingStatus(true);
+    
+    try {
+      // Use facets configuration 
+      const facetsConfig = this.facetsConfig;
+      
+      if (!facetsConfig) {
+        console.error('No facets config found. Make sure fetchPublications was called first.');
+        this.setFacetsLoadingStatus(false);
+        return;
+      }
+
+      // Build dynamic facets queries
+      const dynamicFacetsQueries = buildFacetsQueries(facetsConfig);
+      
+      // Create search query with facets (full query like user specified)
+      const search_query = {
+        ...buildPublicationsSearchQuery(this.search_query),
+        _facetable: true,
+      };
+
+      // Add facets parameters
+      dynamicFacetsQueries.forEach(([key, value]) => {
+        if (Array.isArray(key)) {
+          const brackets = key.map((val) => `[${val}]`).join('');
+          search_query[`_facets${brackets}`] = value;
+        } else {
+          search_query[`_facets[${key}]`] = value;
+        }
+      });
+
+      console.group('MAKING FACETS API CALL');
+      console.log('FACETS SEARCH QUERY:', toJS(search_query));
+      console.groupEnd();
+
+      const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': '*/*',
+          'Referer': window.location.origin + '/zoeken',
+        },
+        credentials: 'include', // Include cookies like the browser
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      });
+
+
+
+      if (response.facets) {
+        // Add titles to facets from available facets
+        const facetsWithTitles = {};
+        for (const [key, value] of Object.entries(response.facets)) {
+          if (key === '@self') {
+            facetsWithTitles[key] = {};
+            for (const [subKey, subValue] of Object.entries(value)) {
+              facetsWithTitles[key][subKey] = {
+                ...subValue,
+                title: facetsConfig?.object_fields?.[subKey]?.title || subKey,
+              };
+            }
+          } else {
+            facetsWithTitles[key] = {
+              ...value,
+              title: facetsConfig?.object_fields?.[key]?.title || key,
+            };
+          }
+        }
+        this.setFacets(facetsWithTitles);
+      } else {
+        console.warn('No facets in response');
+      }
+    } catch (error) {
+      console.error('Error fetching facets:', error);
+    } finally {
+      this.setFacetsLoadingStatus(false);
+    }
+  };
+
   @action
   fetchPublications = async () => {
     this.loading.status = true;
 
-    // recreate the search query to include the metadata schema in the extend array
-    // I just do it like this because the current API system is just so awful and not flexible at all.
-    // I spent more hours then i'd like to admit figuring out where the original extend is coming from, and I still dont know.
-    const search_query = buildPublicationsSearchQuery(this.search_query);
+    // For the first call, include search term if it exists, plus _facetable
+    const search_query = {
+      _facetable: true // Essential for faceting
+    };
+    
+    // Add search term if user has entered one
+    if (this.search_query._search) {
+      search_query._search = this.search_query._search;
+    }
 
-    console.group('MAKING API CALL');
+    console.group('MAKING API CALL - Publications + Facetable');
     console.log('SEARCH QUERY:', toJS(search_query));
+    
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`;
+    console.log('FULL URL:', fullUrl);
+    console.log('WORKING URL WAS: http://localhost:3000/api/apps/opencatalogi/api/publications?_facetable=true');
     console.groupEnd();
 
-
-    app.store.api.publications
-      .search(search_query)
+    // Use fetch with credentials to include session cookies
+    fetch(fullUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': '*/*',
+        'Referer': window.location.origin + '/zoeken',
+      },
+      credentials: 'include', // Include cookies like the browser
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
       .then((response) => {
+        // Set search results immediately
         this.setItems(response.results);
+        
+        // Store facetable configuration for facets call
+        if (response.facetable) {
+          this.setAvailableFacets(response.facetable);
+          this.setFacetsConfig(response.facetable); // This will trigger facets reload if config changed
+        }
+        
+        // Clean up response and set pagination
         delete response.results;
-      this.setPagination(response);
+        delete response.facetable;
+        this.setPagination(response);
       })
       .catch((e) => console.error(e))
       .finally(() => {

@@ -23,6 +23,7 @@ const ConGebruikStepDeelnemers = ({
       <h2 id='deelnemers-title' className='sr-only'>
         Deelnemers
       </h2>
+
       <Paragraph>
         Selecteer de deelnemende organisaties binnen de samenwerking.
       </Paragraph>
