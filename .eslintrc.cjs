@@ -90,7 +90,7 @@ module.exports = {
   ],
   rules: {
     // Keep warnings as errors in CI-style scripts
-    'no-console': 'warn',
+    'no-console': ['error', { allow: ['warn', 'error', 'info', 'debug'] }],
     'no-debugger': 'warn',
 
     // React specific
