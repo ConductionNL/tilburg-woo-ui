@@ -11,6 +11,7 @@ import {
   Heading1,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
+import ConGebruikStepSoort from './components/con-gebruik-step-soort';
 import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
 import ConGebruikStepProductApplicatie from './components/con-gebruik-step-product-applicatie';
 import ConGebruikStepVersie from './components/con-gebruik-step-versie';
@@ -34,6 +35,10 @@ const mapToOption = (item, index) => {
 const AcFormsGebruik = ({ store }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  
+  // Submission state management (following product wizard pattern)
+  const [registerCallBack, setRegisterCallBack] = useState(null);
+  const [error, setError] = useState({ message: null, errors: null });
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
@@ -75,6 +80,9 @@ const AcFormsGebruik = ({ store }) => {
   // Single source of truth updater
   const setGebruikData = (key, value) =>
     setGebruik((prev) => ({ ...prev, [key]: value }));
+
+  // Usage type selection state
+  const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
 
   // Options state (UI-only)
   const [productOptions, setProductOptions] = useState([]);
@@ -487,9 +495,45 @@ const AcFormsGebruik = ({ store }) => {
     return String(type).toLowerCase() === 'samenwerking';
   };
 
+  // Submission handler (following product wizard pattern)
+  const handleRegister = async () => {
+    setLoading(true);
+    try {
+      // Strip any local IDs and prepare data for submission
+      const gebruikData = {
+        ...gebruik,
+        // Ensure required fields are properly set
+        contactpersoon: gebruik?.contactpersoon,
+        afnemer: gebruik?.afnemer,
+        product: gebruik?.product,
+        module: gebruik?.module,
+        moduleVersie: gebruik?.moduleVersie,
+        status: gebruik?.status || 'Verwerving',
+        // Include usage type for processing
+        gebruikType: gebruikType,
+      };
+
+      // Submit to the gebruik endpoint using the object store
+      await store.object.createObject('voorzieningen', 'gebruik', gebruikData);
+
+      // On success, show success page
+      setRegisterCallBack('success');
+    } catch (err) {
+      setRegisterCallBack('error');
+      setError({
+        message: 'Er is een fout opgetreden bij het registreren van het gebruik.',
+        errors: null,
+      });
+      console.error('Gebruik registration failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const stepsList = (() => {
     const base = [
-      'Informatie',
+      'Soort gebruik',
+      'Gebruik informatie', 
       'Product en applicatie',
       'Versie',
       'Koppelingen',
@@ -502,21 +546,24 @@ const AcFormsGebruik = ({ store }) => {
 
   const canGoNext = () => {
     if (currentStep === 0) {
-      return !!gebruik?.contactpersoon;
+      return !!gebruikType; // Must select usage type
     }
     if (currentStep === 1) {
-      return !!gebruik?.module;
+      return !!gebruik?.contactpersoon; // Gebruik informatie step
     }
     if (currentStep === 2) {
-      return !!gebruik?.moduleVersie && !versionsLoading;
+      return !!gebruik?.module; // Product en applicatie step
     }
     if (currentStep === 3) {
-      return true; // koppelingen optional
+      return !!gebruik?.moduleVersie && !versionsLoading; // Versie step
     }
     if (currentStep === 4) {
+      return true; // koppelingen optional
+    }
+    if (currentStep === 5) {
       return true; // diensten optional
     }
-    if (currentStep === 5 && isAfnemerSamenwerking()) {
+    if (currentStep === 6 && isAfnemerSamenwerking()) {
       return true; // deelnemers optional
     }
     return false;
@@ -526,6 +573,15 @@ const AcFormsGebruik = ({ store }) => {
     switch (step) {
       case 0:
         return (
+          <ConGebruikStepSoort
+            gebruikType={gebruikType}
+            setGebruikType={setGebruikType}
+            loading={loading}
+            gebruik={gebruik}
+          />
+        );
+      case 1:
+        return (
           <ConGebruikStepInformatie
             gebruik={gebruik}
             setGebruikData={setGebruikData}
@@ -533,9 +589,10 @@ const AcFormsGebruik = ({ store }) => {
             refCompOptions={refCompOptions}
             schemas={schemas}
             schemasLoading={schemasLoading}
+            gebruikType={gebruikType}
           />
         );
-      case 1:
+      case 2:
         return (
           <ConGebruikStepProductApplicatie
             gebruik={gebruik}
@@ -546,9 +603,10 @@ const AcFormsGebruik = ({ store }) => {
             searchModules={searchModules}
             loading={loading}
             schemas={schemas}
+            gebruikType={gebruikType}
           />
         );
-      case 2:
+      case 3:
         return (
           <ConGebruikStepVersie
             gebruik={gebruik}
@@ -558,7 +616,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 3:
+      case 4:
         return (
           <ConGebruikStepKoppelingen
             gebruik={gebruik}
@@ -567,7 +625,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 4:
+      case 5:
         return (
           <ConGebruikStepDiensten
             gebruik={gebruik}
@@ -576,7 +634,7 @@ const AcFormsGebruik = ({ store }) => {
             schemas={schemas}
           />
         );
-      case 5:
+      case 6:
         if (isAfnemerSamenwerking()) {
           return (
             <ConGebruikStepDeelnemers
@@ -606,17 +664,31 @@ const AcFormsGebruik = ({ store }) => {
 
   const currentStepName = (step) => stepsList[step] || '';
 
+  // Determine page title based on gebruik type
+  const getPageTitle = () => {
+    if (gebruikType === 'eigen-organisatie') {
+      return 'Gebruik Aanmelden voor eigen organisatie';
+    }
+    if (gebruikType === 'andere-organisatie') {
+      return 'Gebruik Aanmelden voor andere organisatie';
+    }
+    return 'Gebruik Aanmelden';
+  };
+
   return (
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
-          <div>
-            <Heading1>Gebruik Aanmelden</Heading1>
-            <Paragraph>
-              Selecteer een applicatie, vul aanvullende informatie aan en controleer
-              uw invoer.
-            </Paragraph>
-          </div>
+          {/* Main form - only show when not in success/error state */}
+          {!registerCallBack && (
+            <>
+              <div>
+                <Heading1>{getPageTitle()}</Heading1>
+                <Paragraph>
+                  Selecteer een applicatie, vul aanvullende informatie aan en controleer
+                  uw invoer.
+                </Paragraph>
+              </div>
 
           <div>
             <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
@@ -644,6 +716,45 @@ const AcFormsGebruik = ({ store }) => {
                 >
                   {currentStepName(currentStep)}
                 </div>
+
+                {process.env.NODE_ENV === 'development' && (
+                  <div
+                    style={{
+                      marginBottom: '2rem',
+                      padding: '1rem',
+                      backgroundColor: '#f8f9fa',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    <details>
+                      <summary
+                        style={{
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
+                        🐛 Debug: Gebruik Object (Click to expand)
+                      </summary>
+                      <pre
+                        style={{
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          maxHeight: '300px',
+                          overflow: 'auto',
+                          backgroundColor: '#ffffff',
+                          padding: '0.5rem',
+                          border: '1px solid #ccc',
+                          borderRadius: '2px',
+                        }}
+                      >
+                        {JSON.stringify(gebruik, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                )}
 
                 {renderStep(currentStep)}
 
@@ -680,14 +791,129 @@ const AcFormsGebruik = ({ store }) => {
                   )}
 
                   {currentStep === stepsList.length - 1 && (
-                    <AcButton style='button' buttonType='primary' disabled>
-                      Bevestigen (niet actief)
+                    <AcButton 
+                      style='button' 
+                      buttonType='primary'
+                      onClick={handleRegister}
+                      loading={loading}
+                      disabled={loading}
+                    >
+                      Gebruik registreren
                     </AcButton>
                   )}
                 </div>
               </div>
             </div>
           </div>
+            </>
+          )}
+
+          {/* Error Display */}
+          {registerCallBack === 'error' && error.message && (
+            <div>
+              <Heading1>❌ Registratie mislukt</Heading1>
+              <div style={{ marginTop: '1rem' }}>
+                <div className="utrecht-alert utrecht-alert--error">
+                  <Paragraph>{error.message}</Paragraph>
+                  {error.errors && (
+                    <ul>
+                      {Object.entries(error.errors).map(([field, messages]) => (
+                        <li key={field}>
+                          <strong>{field}:</strong>{' '}
+                          {Array.isArray(messages) ? messages.join(', ') : messages}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div style={{ marginTop: '2rem' }}>
+                  <AcButton
+                    style='button'
+                    onClick={() => {
+                      setRegisterCallBack(null);
+                      setError({ message: null, errors: null });
+                    }}
+                  >
+                    Probeer opnieuw
+                  </AcButton>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success Page */}
+          {registerCallBack === 'success' && (
+            <div>
+              <Heading1>🎉 Gebruik succesvol geregistreerd!</Heading1>
+
+              <div style={{ marginTop: '1rem' }}>
+                <div className="utrecht-alert utrecht-alert--success">
+                  <Paragraph>
+                    <strong>Uw gebruik is succesvol geregistreerd!</strong>
+                  </Paragraph>
+                  <Paragraph>
+                    Het gebruik van {gebruik?.product?.naam || gebruik?.module?.naam || 'het geselecteerde product'} 
+                    {gebruikType === 'eigen-organisatie' 
+                      ? ` door uw organisatie` 
+                      : ` door ${gebruik?.afnemer?.naam || 'de geselecteerde organisatie'}`
+                    } is opgeslagen in de software catalogus.
+                  </Paragraph>
+                  <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
+                    Type registratie: {gebruikType === 'eigen-organisatie' 
+                      ? 'Gebruik voor eigen organisatie' 
+                      : 'Gebruik voor andere organisatie (klant)'
+                    }
+                  </Paragraph>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '2rem' }}>
+                <Paragraph>
+                  <strong>Wat gebeurt er nu?</strong>
+                </Paragraph>
+                <ul className="utrecht-unordered-list">
+                  {gebruikType === 'eigen-organisatie' ? (
+                    <>
+                      <li>Het gebruik wordt zichtbaar in de software catalogus</li>
+                      <li>Andere organisaties kunnen zien welke producten u gebruikt</li>
+                      <li>Dit helpt bij het delen van ervaringen en best practices</li>
+                      <li>U kunt het gebruik beheren via het beheer dashboard</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>De klantorganisatie wordt geïnformeerd over deze registratie</li>
+                      <li>De klant moet het gebruik goedkeuren voordat het definitief wordt</li>
+                      <li>Na goedkeuring wordt het gebruik zichtbaar in de catalogus</li>
+                      <li>U kunt het gebruik beheren via het beheer dashboard</li>
+                    </>
+                  )}
+                  <li>Eventuele wijzigingen kunnen later worden aangebracht</li>
+                </ul>
+              </div>
+
+              <div style={{ marginTop: '2rem', display: 'flex', gap: '10px' }}>
+                <AcButton
+                  style='button'
+                  onClick={() => (window.location.href = '/beheer')}
+                >
+                  Terug naar beheer dashboard
+                </AcButton>
+
+                <AcButton
+                  style='button'
+                  buttonType='secondary'
+                  onClick={() => {
+                    setRegisterCallBack(null);
+                    setCurrentStep(0);
+                    // Reset form for new registration
+                    window.location.reload();
+                  }}
+                >
+                  Nieuw gebruik registreren
+                </AcButton>
+              </div>
+            </div>
+          )}
         </AcColumn>
       </AcContainer>
     </AcSection>

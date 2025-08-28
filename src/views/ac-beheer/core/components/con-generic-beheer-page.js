@@ -394,6 +394,31 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         },
       ];
 
+      // Add publish/depublish actions as standard options
+      const publishActions = [];
+      if (row['@self']?.published === false) {
+        publishActions.push({
+          key: 'publish',
+          label: 'Publiceren',
+          icon: <VISUALS.PUBLISH />,
+          onClick: () => {
+            setSingleSelectedRow(row);
+            setOpenModal('publish');
+          },
+        });
+      }
+      if (row['@self']?.published === true) {
+        publishActions.push({
+          key: 'depublish',
+          label: 'Depubliceren',
+          icon: <VISUALS.PUBLISH_OFF />,
+          onClick: () => {
+            setSingleSelectedRow(row);
+            setOpenModal('depublish');
+          },
+        });
+      }
+
       // Add unique actions based on configuration
       const uniqueActions =
         config.uniqueActions
@@ -423,6 +448,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
       return [
         ...baseActions,
+        ...publishActions,
         ...uniqueActions,
         ...dynamicCreateActions,
         deleteAction,

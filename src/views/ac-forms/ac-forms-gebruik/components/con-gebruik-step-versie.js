@@ -21,6 +21,7 @@ const ConGebruikStepVersie = ({
       <h2 id='version-title' className='sr-only'>
         Versie
       </h2>
+
       <div style={{ maxWidth: '640px' }}>
         <ConSchemaEnhancedField
           schemaType='gebruik'
@@ -33,6 +34,8 @@ const ConGebruikStepVersie = ({
           optionsProvider={versionOptions}
           width='full'
         />
+
+
       </div>
     </div>
   );

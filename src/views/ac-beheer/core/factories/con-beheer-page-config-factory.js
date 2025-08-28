@@ -28,7 +28,7 @@ const BeheerPageConfigFactory = {
       defaultHeaders: [],
       actionButtons: null,
       customFilterDrawer: null,
-      modals: ['add', 'edit', 'delete', 'import'],
+      modals: ['add', 'edit', 'delete', 'import', 'publish', 'depublish'],
       uniqueActions: [],
       statusIcon: null,
     };

@@ -28,6 +28,7 @@ const ConGebruikStepReview = ({
       <h2 id='review-title' className='sr-only'>
         Controleren
       </h2>
+
       <div className='ac-register-review'>
         <div className='ac-register-review__section'>
           <div className='ac-register-review__header'>

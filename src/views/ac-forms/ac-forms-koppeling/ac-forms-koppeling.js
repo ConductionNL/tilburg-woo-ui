@@ -23,10 +23,12 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
+import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
 
 const AcFormsKoppeling = ({ _store }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [koppelingsType, setKoppelingsType] = useState(null); // 'eigen-organisatie' or 'aanbieden-koppeling'
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
@@ -301,8 +303,9 @@ const AcFormsKoppeling = ({ _store }) => {
   };
 
   const canGoNext = () => {
-    if (currentStep === 0) return true; // search is optional to proceed
-    if (currentStep === 1) return rows.length > 0; // at least one row exists
+    if (currentStep === 0) return koppelingsType !== null; // type must be selected
+    if (currentStep === 1) return true; // search is optional to proceed
+    if (currentStep === 2) return rows.length > 0; // at least one row exists
     return true;
   };
 
@@ -435,6 +438,13 @@ const AcFormsKoppeling = ({ _store }) => {
     switch (step) {
       case 0:
         return (
+          <ConKoppelingStepSoort
+            koppelingsType={koppelingsType}
+            setKoppelingsType={setKoppelingsType}
+          />
+        );
+      case 1:
+        return (
           <AcFlex
             column
             spacing='sm'
@@ -511,7 +521,7 @@ const AcFormsKoppeling = ({ _store }) => {
           </AcFlex>
         );
 
-      case 1:
+      case 2:
         return (
           <div
             className='ac-register-form-section'
@@ -725,7 +735,7 @@ const AcFormsKoppeling = ({ _store }) => {
           </div>
         );
 
-      case 2:
+      case 3:
         return (
           <div
             className='ac-register-form-section'
@@ -850,10 +860,12 @@ const AcFormsKoppeling = ({ _store }) => {
   const currentStepName = (step) => {
     switch (step) {
       case 0:
-        return 'Koppeling zoeken';
+        return 'Soort koppeling';
       case 1:
-        return 'Toevoegen';
+        return 'Koppeling zoeken';
       case 2:
+        return 'Toevoegen';
+      case 3:
         return 'Controleren';
       default:
         return '';
@@ -871,12 +883,23 @@ const AcFormsKoppeling = ({ _store }) => {
     return true;
   };
 
+  // Determine page title based on koppelings type
+  const getPageTitle = () => {
+    if (koppelingsType === 'eigen-organisatie') {
+      return 'Koppeling registreren voor eigen organisatie';
+    }
+    if (koppelingsType === 'aanbieden-koppeling') {
+      return 'Koppeling aanbieden';
+    }
+    return 'Koppeling registreren';
+  };
+
   return (
     <AcSection spacing>
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>Koppeling registreren</Heading1>
+            <Heading1>{getPageTitle()}</Heading1>
             <Paragraph>
               Zoek naar bestaande koppelingen, voeg nieuwe koppelingen toe en
               controleer uw invoer.
@@ -894,22 +917,28 @@ const AcFormsKoppeling = ({ _store }) => {
                   steps={(() => {
                     const steps = [
                       {
-                        id: 'grp-koppeling',
+                        id: 'grp-soort',
                         marker: 1,
-                        status: getStatusMulti(currentStep, 0, 1),
+                        status: getStatus(currentStep, 0),
+                        title: 'Soort koppeling',
+                      },
+                      {
+                        id: 'grp-koppeling',
+                        marker: 2,
+                        status: getStatusMulti(currentStep, 1, 2),
                         title: 'Koppeling zoeken',
                         steps: [
                           {
                             id: 'sub-toevoegen',
-                            status: getStatus(currentStep, 1),
+                            status: getStatus(currentStep, 2),
                             title: 'Toevoegen',
                           },
                         ],
                       },
                       {
                         id: 'grp-review',
-                        marker: 2,
-                        status: getStatus(currentStep, 2),
+                        marker: 3,
+                        status: getStatus(currentStep, 3),
                         title: 'Controleren',
                       },
                     ];
@@ -927,6 +956,54 @@ const AcFormsKoppeling = ({ _store }) => {
                 >
                   {currentStepName(currentStep)}
                 </div>
+
+                {process.env.NODE_ENV === 'development' && (
+                  <div
+                    style={{
+                      marginBottom: '2rem',
+                      padding: '1rem',
+                      backgroundColor: '#f8f9fa',
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      fontSize: '0.8rem',
+                    }}
+                  >
+                    <details>
+                      <summary
+                        style={{
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                          marginBottom: '0.5rem',
+                        }}
+                      >
+                        🐛 Debug: Koppeling Data (Click to expand)
+                      </summary>
+                      <pre
+                        style={{
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          maxHeight: '300px',
+                          overflow: 'auto',
+                          backgroundColor: '#ffffff',
+                          padding: '0.5rem',
+                          border: '1px solid #ccc',
+                          borderRadius: '2px',
+                        }}
+                      >
+                        {JSON.stringify({
+                          koppelingsType,
+                          ownApp,
+                          rows,
+                          selectedAppAByRow,
+                          selectedAppBByRow,
+                          directionByRow,
+                          typeByRow,
+                          payloads: serializeRowsToPayload()
+                        }, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                )}
 
                 {renderStep(currentStep)}
 
@@ -947,7 +1024,7 @@ const AcFormsKoppeling = ({ _store }) => {
                     </AcButton>
                   )}
 
-                  {currentStep !== 2 && (
+                  {currentStep !== 3 && (
                     <div className='ac-register-button-wrapper'>
                       <AcButton
                         style='button'
@@ -962,7 +1039,7 @@ const AcFormsKoppeling = ({ _store }) => {
                     </div>
                   )}
 
-                  {currentStep === 2 && (
+                  {currentStep === 3 && (
                     <AcButton
                       style='button'
                       buttonType='primary'

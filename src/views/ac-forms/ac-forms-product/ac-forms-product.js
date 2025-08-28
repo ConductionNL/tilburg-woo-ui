@@ -1258,13 +1258,15 @@ const AcFormsProduct = ({ userStore, store }) => {
   };
 
   const getStatus = (currentStep, step) => {
-    if (currentStep === step) {
-      return 'current';
-    } else if (currentStep < step) {
-      return 'not-checked';
-    } else if (currentStep > step) {
-      return 'checked';
-    }
+    const result = currentStep === step 
+      ? 'current' 
+      : currentStep < step 
+      ? 'not-checked' 
+      : 'checked';
+    
+
+    
+    return result;
   };
 
   const getStatusMultiStep = (currentStep, step, firstStep, lastStep) => {
@@ -1686,6 +1688,9 @@ const AcFormsProduct = ({ userStore, store }) => {
 
                 <AcColumn gap='sm'>
                   <div className='ac-register-container ac-forms-product'>
+                    {/* Debug step information - only in development */}
+
+
                     <div ref={processStepsRef} className='ac-register-process-steps'>
                       <ProcessSteps
                         steps={(() => {
@@ -1725,7 +1730,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                 currentStep,
                                 shouldShowAanbiederStep() ? 3 : 2,
                                 shouldShowAanbiederStep() ? 3 : 2,
-                                shouldShowAanbiederStep() ? 9 : 8
+                                shouldShowAanbiederStep() ? 9 : 7
                               ),
                               title: currentStepName(
                                 shouldShowAanbiederStep() ? 3 : 2
@@ -1757,7 +1762,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'b2c3d4e5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 6 : 5
+                                    shouldShowAanbiederStep() ? 6 : 4
                                   ),
                                   title: 'Referentiecomponenten',
                                 },
@@ -1765,7 +1770,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'c3d4e5f6-g7h8-i9j0-k1l2-m3n4o5p6q7r8',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 7 : 6
+                                    shouldShowAanbiederStep() ? 7 : 5
                                   ),
                                   title: 'Standaarden',
                                 },
@@ -1773,7 +1778,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'd4e5f6g7-h8i9-j0k1-l2m3-n4o5p6q7r8s9',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 8 : 7
+                                    shouldShowAanbiederStep() ? 8 : 6
                                   ),
                                   title: 'Koppelingen',
                                 },
@@ -1781,7 +1786,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   id: 'e5f6g7h8-i9j0-k1l2-m3n4-o5p6q7r8s9t0',
                                   status: getStatus(
                                     currentStep,
-                                    shouldShowAanbiederStep() ? 9 : 8
+                                    shouldShowAanbiederStep() ? 9 : 7
                                   ),
                                   title: 'Diensten',
                                 },
@@ -1790,10 +1795,10 @@ const AcFormsProduct = ({ userStore, store }) => {
                             {
                               id: 'f6g7h8i9-j0k1-l2m3-n4o5-p6q7r8s9t0u1',
                               marker: 3,
-                              status: getStatus(
-                                currentStep,
-                                shouldShowAanbiederStep() ? 10 : 9
-                              ),
+                                            status: getStatus(
+                currentStep,
+                shouldShowAanbiederStep() ? 10 : 8
+              ),
                               title: 'Controleren',
                             },
                           ];
@@ -1874,7 +1879,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                             Vorige
                           </AcButton>
                         )}
-                        {currentStep !== (shouldShowAanbiederStep() ? 10 : 9) && (
+                        {currentStep !== (shouldShowAanbiederStep() ? 10 : 8) && (
                           <div className='ac-register-button-wrapper'>
                             <AcButton
                               style='button'
@@ -1905,7 +1910,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                           </div>
                         )}
 
-                        {currentStep === (shouldShowAanbiederStep() ? 10 : 9) && (
+                        {currentStep === (shouldShowAanbiederStep() ? 10 : 8) && (
                           <AcButton
                             style='button'
                             icon={<VISUALS.CLIPBOARD_CHECK />}

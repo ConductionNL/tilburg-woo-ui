@@ -79,7 +79,19 @@ export const useRelatedCreateActions = ({
           ? checkOrganizationPermissions(user, currentObject)
           : { canEdit: true }; // Default to true if no current object provided
 
-        const creatable = relatedResults.filter((rs) => {
+        // Deduplicate by slug to prevent duplicate menu items
+        const deduplicatedResults = relatedResults.reduce((acc, rs) => {
+          if (!rs?.slug) return acc;
+          
+          // Check if we already have this slug
+          const existing = acc.find(item => item.slug === rs.slug);
+          if (!existing) {
+            acc.push(rs);
+          }
+          return acc;
+        }, []);
+
+        const creatable = deduplicatedResults.filter((rs) => {
           // For outgoing relationships, check if user can edit current object
           if (outgoingSlugs.has(rs?.slug) && !canEditCurrentObject) {
             return false; // Can't create outgoing relationships if can't edit current object

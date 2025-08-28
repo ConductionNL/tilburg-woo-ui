@@ -1,8 +1,8 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
-// import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
+import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 /**
  * Dienst Informatie Stage
@@ -11,19 +11,60 @@ import { validateWebsite } from '@views/ac-forms/validation/form-validations';
  * - naam, contactpersoon, aanbieder, website, type, beschrijvingKort, beschrijvingLang, logo
  */
 const ConFormDienstInformatieStage = memo(
-  ({ dienst, setDienstData, loading, touched, schemas, userStore }) => {
-    // Prefill aanbieder with active organization (ID) if empty
+  ({ dienst, setDienstData, loading, touched, schemas, userStore, dienstType }) => {
+    // Ensure aanbieder is set from /me so users cannot change it later
+    const hasInitializedRef = useRef(false);
     useEffect(() => {
-      const org = userStore?.activeOrganization;
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log('Dienst form - active organisation:', org);
-      }
-      if (org && !dienst.aanbieder) {
-        const id = org.uuid || org.id || org.slug || '';
-        if (id) setDienstData('aanbieder', id);
-      }
-    }, [userStore?.activeOrganization, dienst.aanbieder]);
+      if (hasInitializedRef.current) return;
+
+      let cancelled = false;
+      const resolveActiveOrganisation = async () => {
+        try {
+          // Prefer active org from store if available
+          const activeFromStore = userStore?.activeOrganization || null;
+          if (activeFromStore) {
+            const id = String(
+              activeFromStore?.uuid ||
+                activeFromStore?.id ||
+                activeFromStore?.slug ||
+                ''
+            );
+            if (!cancelled && id) {
+              setDienstData('aanbieder', id);
+              hasInitializedRef.current = true;
+              return;
+            }
+          }
+
+          // Fallback to /me endpoint once
+          const meUrl = `${BASE_URL}/openconnector/api/user/me`;
+          let me = null;
+          try {
+            const res = await fetch(meUrl, {
+              headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+              me = await res.json();
+            }
+          } catch {
+            // ignore
+          }
+
+          const active = me?.organisations?.active || null;
+          const id = String(active?.uuid || active?.id || active?.slug || '');
+          if (!cancelled && id) {
+            setDienstData('aanbieder', id);
+            hasInitializedRef.current = true;
+          }
+        } catch {
+          // ignore
+        }
+      };
+      resolveActiveOrganisation();
+      return () => {
+        cancelled = true;
+      };
+    }, []);
 
     // Aanbieder field is hidden; value is prefilled from active organization above
 
@@ -36,6 +77,32 @@ const ConFormDienstInformatieStage = memo(
         <h2 id='dienst-informatie-section-title' className='sr-only'>
           Dienst informatie
         </h2>
+
+        <Paragraph style={{ marginBottom: '1.5rem' }}>
+          <strong>Registreer uw dienst</strong>
+          <br />
+          {dienstType === 'eigen-organisatie' ? (
+            <>
+              U gaat een dienst registreren op een product van uw eigen organisatie. 
+              In de volgende stappen vult u de basisgegevens in, selecteert u een van uw producten, 
+              applicaties en kiest u relevante koppelingen.
+            </>
+          ) : dienstType === 'andere-organisatie' ? (
+            <>
+              U gaat een dienst registreren op een product van een andere organisatie.
+              In de volgende stappen vult u de basisgegevens in, selecteert u een extern product,
+              applicaties en kiest u relevante koppelingen.
+            </>
+          ) : (
+            <>
+              In de volgende stappen vult u de basisgegevens in, selecteert u de
+              bijbehorende producten en applicaties en kiest u relevante koppelingen.
+            </>
+          )}
+          <br />
+          Deze informatie helpt organisaties om snel te begrijpen welk aanbod uw dienst
+          omvat en hoe die binnen hun landschap past.
+        </Paragraph>
 
         <Paragraph style={{ marginBottom: '2rem' }}>
           <strong>Basisinformatie van de dienst</strong>
