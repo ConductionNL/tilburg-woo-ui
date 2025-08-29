@@ -372,6 +372,7 @@ const ConKoppelingStageToevoegen = ({
                       loading && 'ac-beheer-select--disabled'
                     )}
                     options={typeOptions}
+                    isClearable
                     value={
                       typeByRow[rowId]
                         ? typeOptions.find((o) => o.value === typeByRow[rowId])
@@ -434,6 +435,7 @@ const ConKoppelingStageToevoegen = ({
                       loading && 'ac-beheer-select--disabled'
                     )}
                     options={statusOptions}
+                    isClearable
                     value={
                       statusByRow[rowId]
                         ? statusOptions.find((o) => o.value === statusByRow[rowId])

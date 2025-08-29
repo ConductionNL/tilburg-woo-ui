@@ -29,6 +29,50 @@ const ConKoppelingStageControleren = ({
   saveErrors,
   // redirectCountdown,
 }) => {
+  if (saveResult === 'error') {
+    return (
+      <div className='ac-register-form-section'>
+        <Heading1>Er is iets misgegaan</Heading1>
+
+        <Alert type='error'>
+          <Paragraph>
+            Het opslaan van de koppelingen is mislukt. Probeer het later nog eens.
+          </Paragraph>
+          {saveErrors?.length > 0 && (
+            <>
+              <Paragraph>
+                <strong>Details:</strong>
+              </Paragraph>
+              <UnorderedList>
+                {saveErrors.map((msg, idx) => (
+                  <UnorderedListItem key={idx}>{msg}</UnorderedListItem>
+                ))}
+              </UnorderedList>
+            </>
+          )}
+        </Alert>
+
+        <div style={{ marginTop: '2rem', display: 'flex', gap: '10px' }}>
+          <AcButton
+            style='button'
+            icon={<VISUALS.HOUSE />}
+            onClick={() => (window.location.href = '/beheer')}
+          >
+            Terug naar beheer dashboard
+          </AcButton>
+
+          <AcButton
+            style='button'
+            buttonType='secondary'
+            icon={<VISUALS.RELOAD />}
+            onClick={() => window.location.reload()}
+          >
+            Opnieuw proberen
+          </AcButton>
+        </div>
+      </div>
+    );
+  }
   if (saveResult === 'success') {
     return (
       <div className='ac-register-form-section'>

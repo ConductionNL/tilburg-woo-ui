@@ -651,6 +651,7 @@ const AcFormsKoppeling = () => {
             searchResults={searchResults}
             resolvedModulesFromResults={resolvedModulesFromResults}
             resultsLoading={resultsLoading}
+            getArrowForDirection={getArrowForDirection}
           />
         );
 
@@ -867,54 +868,56 @@ const AcFormsKoppeling = () => {
 
                 {renderStep(currentStep)}
 
-                <div
-                  className={clsx(
-                    'ac-register-form-buttons',
-                    currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
-                  )}
-                >
-                  {currentStep !== 0 && (
-                    <AcButton
-                      style='button'
-                      buttonType='secondary'
-                      icon={<VISUALS.ARROW_LEFT />}
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                      disabled={loading || saveLoading}
-                    >
-                      Vorige
-                    </AcButton>
-                  )}
-
-                  {currentStep !== 3 && (
-                    <div className='ac-register-button-wrapper'>
+                {saveResult !== 'success' && saveResult !== 'error' && (
+                  <div
+                    className={clsx(
+                      'ac-register-form-buttons',
+                      currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
+                    )}
+                  >
+                    {currentStep !== 0 && (
                       <AcButton
                         style='button'
-                        className={clsx(
-                          currentStep === 0 && 'ac-register-form-next-button'
-                        )}
-                        icon={<VISUALS.ARROW_RIGHT />}
-                        onClick={() => setCurrentStep(currentStep + 1)}
-                        disabled={!canGoNext() || loading || saveLoading}
-                        title={!canGoNext() ? getNextDisabledTooltip() : ''}
+                        buttonType='secondary'
+                        icon={<VISUALS.ARROW_LEFT />}
+                        onClick={() => setCurrentStep(currentStep - 1)}
+                        disabled={loading || saveLoading}
                       >
-                        Volgende
+                        Vorige
                       </AcButton>
-                    </div>
-                  )}
+                    )}
 
-                  {currentStep === 3 && (
-                    <AcButton
-                      style='button'
-                      buttonType='primary'
-                      icon={<VISUALS.CLIPBOARD_CHECK />}
-                      onClick={handleSave}
-                      loading={saveLoading}
-                      disabled={saveLoading || !canSave()}
-                    >
-                      {saveLoading ? 'Bezig met opslaan...' : 'Opslaan'}
-                    </AcButton>
-                  )}
-                </div>
+                    {currentStep !== 3 && (
+                      <div className='ac-register-button-wrapper'>
+                        <AcButton
+                          style='button'
+                          className={clsx(
+                            currentStep === 0 && 'ac-register-form-next-button'
+                          )}
+                          icon={<VISUALS.ARROW_RIGHT />}
+                          onClick={() => setCurrentStep(currentStep + 1)}
+                          disabled={!canGoNext() || loading || saveLoading}
+                          title={!canGoNext() ? getNextDisabledTooltip() : ''}
+                        >
+                          Volgende
+                        </AcButton>
+                      </div>
+                    )}
+
+                    {currentStep === 3 && (
+                      <AcButton
+                        style='button'
+                        buttonType='primary'
+                        icon={<VISUALS.CLIPBOARD_CHECK />}
+                        onClick={handleSave}
+                        loading={saveLoading}
+                        disabled={saveLoading || !canSave()}
+                      >
+                        {saveLoading ? 'Bezig met opslaan...' : 'Opslaan'}
+                      </AcButton>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

@@ -19,6 +19,7 @@ const ConKoppelingStageZoeken = ({
   searchResults,
   resolvedModulesFromResults = [],
   resultsLoading = false,
+  getArrowForDirection,
 }) => {
   const [ownAppMenuOpen, setOwnAppMenuOpen] = useState(false);
   const idToLabel = Object.fromEntries(
@@ -33,6 +34,25 @@ const ConKoppelingStageZoeken = ({
     }
     return '';
   };
+
+  const getDirectionValue = (k) => {
+    return (
+      k?.gegevensuitwisselingRichting ||
+      k?.richting ||
+      k?.direction ||
+      (k?.gegevensuitwisseling && k?.gegevensuitwisseling.richting) ||
+      ''
+    );
+  };
+
+  const arrowFor = (dir) => {
+    if (typeof getArrowForDirection === 'function') return getArrowForDirection(dir);
+    if (dir === 'AnaarB') return '→';
+    if (dir === 'BnaarA') return '←';
+    if (dir === 'bi-directioneel') return '↔';
+    return '↔';
+  };
+
   return (
     <AcFlex
       column
@@ -150,9 +170,49 @@ const ConKoppelingStageZoeken = ({
                     String(bNameFromObject || (bId ? idToLabel[bId] : '') || '') ||
                     (typeof bRel === 'string' ? String(bRel) : '-') ||
                     '-';
+
+                  const dir = getDirectionValue(k);
+                  const dirArrow = arrowFor(dir);
+
+                  const naam = String(
+                    (k?.naam || k?.name || k?.title || k?.label || '').toString()
+                  ).trim();
+                  const soortLabel = String(
+                    k?.type ||
+                      k?.soort ||
+                      (k?.gegevensuitwisseling && k?.gegevensuitwisseling.soort) ||
+                      ''
+                  ).trim();
+                  const statusLabel = String(k?.status || '').trim();
+                  const beschrijving = String(
+                    k?.beschrijvingKort || k?.beschrijving || k?.omschrijving || ''
+                  ).trim();
+
                   return (
                     <UnorderedListItem key={k?.id || i}>
-                      {aLabel} ↔ {bLabel}
+                      {naam && (
+                        <div style={{ marginBottom: '0.25rem' }}>
+                          <strong>{naam}</strong>
+                        </div>
+                      )}
+                      <div>
+                        {dir === 'BnaarA' ? (
+                          <>
+                            {bLabel} {dirArrow} {aLabel}
+                          </>
+                        ) : (
+                          <>
+                            {aLabel} {dirArrow} {bLabel}
+                          </>
+                        )}
+                        {soortLabel ? ` (${soortLabel})` : ''}
+                      </div>
+                      {(statusLabel || beschrijving) && (
+                        <div style={{ color: '#666', fontSize: '0.9rem' }}>
+                          {statusLabel && <div>Status: {statusLabel}</div>}
+                          {beschrijving && <div>Beschrijving: {beschrijving}</div>}
+                        </div>
+                      )}
                     </UnorderedListItem>
                   );
                 })}
