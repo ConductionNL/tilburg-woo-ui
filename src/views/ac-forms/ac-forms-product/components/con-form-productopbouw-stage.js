@@ -41,7 +41,7 @@ const ConFormProductopbouwStage = memo(
             opgebouwd en maakt de catalogus overzichtelijker.
           </i>
           {isMultiApplicatie && (
-            <div className='ac-register-form-alert' style={{ marginTop: '1rem' }}>
+            <div className='ac-wizard-form-alert' style={{ marginTop: '1rem' }}>
               <Alert type='info'>
                 <Paragraph>
                   U heeft gekozen voor een suite. In de volgende stappen kunt u
