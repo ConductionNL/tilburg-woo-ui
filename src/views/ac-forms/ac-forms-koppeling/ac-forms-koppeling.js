@@ -10,6 +10,7 @@ import {
   Heading1,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
 import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
 import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
@@ -63,6 +64,8 @@ const AcFormsKoppeling = () => {
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [resolvedModulesFromResults, setResolvedModulesFromResults] = useState([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
 
   // "Your" application (optional anchor for adding/searching)
   const [ownApp, setOwnApp] = useState(null);
@@ -80,11 +83,12 @@ const AcFormsKoppeling = () => {
   const [beschrijvingByRow, setBeschrijvingByRow] = useState({});
   const [statusByRow, setStatusByRow] = useState({});
   const [nameByRow, setNameByRow] = useState({});
+  const [selectedModuleLabels, setSelectedModuleLabels] = useState({}); // id -> label
 
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveResult, setSaveResult] = useState(null); // 'success' | 'error' | null
   const [saveErrors, setSaveErrors] = useState([]); // array of error messages
-  const [redirectCountdown, setRedirectCountdown] = useState(3);
+  const [redirectCountdown, setRedirectCountdown] = useState(0);
 
   const directionOptions = [
     { value: 'AnaarB', label: 'A → B' },
@@ -123,7 +127,8 @@ const AcFormsKoppeling = () => {
     let isMounted = true;
     const fetchModules = async () => {
       try {
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
+        setOwnAppLoading(true);
+        const params = new URLSearchParams({ _limit: '20', _page: '1' });
         const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
@@ -164,6 +169,8 @@ const AcFormsKoppeling = () => {
           setModulesOptions([]);
           setOwnAppOptions([]);
         }
+      } finally {
+        if (isMounted) setOwnAppLoading(false);
       }
     };
 
@@ -185,7 +192,7 @@ const AcFormsKoppeling = () => {
       }
       setOwnAppLoading(true);
       try {
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
+        const params = new URLSearchParams({ _limit: '20', _page: '1' });
         params.set('_search', q);
         const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
         const res = await fetch(endpoint, {
@@ -231,75 +238,225 @@ const AcFormsKoppeling = () => {
     };
   }, [debouncedOwnAppInput, modulesOptions]);
 
-  // Search koppelingen by app name (client + server tolerant)
-  const handleSearch = async (qOverride) => {
-    const raw = (qOverride ?? searchQuery) || '';
-    const trimmed = raw.trim();
+  /*
+   * Search koppelingen by app name (client + server tolerant)
+   * const handleSearch = async (qOverride) => {
+   *   const raw = (qOverride ?? searchQuery) || '';
+   *   const trimmed = raw.trim();
+   *
+   *   if (!trimmed) {
+   *     setSearchResults([]);
+   *     setResolvedModulesFromResults([]);
+   *     setResultsLoading(false);
+   *     return;
+   *   }
+   *
+   *   setLoading(true);
+   *   setResultsLoading(true);
+   *   try {
+   *     const results = [];
+   *     const params = new URLSearchParams({
+   *       _limit: '20',
+   *       _page: '1',
+   *       _extend: '@self.schema,@self.relations',
+   *     });
+   *     params.set('_search', trimmed);
+   *     const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
+   *
+   *     let list = [];
+   *     try {
+   *       const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+   *       if (res.ok) {
+   *         const data = await res.json();
+   *         list = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
+   *       }
+   *     } catch {}
+   *
+   *     const q = trimmed.toLowerCase();
+   *     const filtered = list.filter((k) => {
+   *       const a = k?.applicatie1 || k?.applicatieA || k?.appA || k?.bronApplicatie || k?.source || '';
+   *       const b = k?.applicatie2 || k?.applicatieB || k?.appB || k?.doelApplicatie || k?.target || '';
+   *       return String(a).toLowerCase().includes(q) || String(b).toLowerCase().includes(q);
+   *     });
+   *
+   *     results.push(...filtered);
+   *     setSearchResults(results);
+   *   } finally {
+   *     setLoading(false);
+   *   }
+   * };
+   */
 
-    // When empty, clear results and skip network calls
-    if (!trimmed) {
-      setSearchResults([]);
-      return;
+  // Helper: extract relation id from various shapes (mirrors example.js)
+  const extractRelationId = (rel) => {
+    if (!rel) return '';
+    if (typeof rel === 'string') return rel;
+    if (typeof rel === 'object') {
+      return String(rel.id || rel.value || rel?.['@self']?.id || '') || '';
     }
+    return '';
+  };
 
-    setLoading(true);
-    try {
-      const results = [];
+  // Resolve and cache application names for module ids present in searchResults
+  useEffect(() => {
+    let cancelled = false;
 
-      // Attempt server search on koppelingen endpoint
-      const params = new URLSearchParams({
-        _limit: '20',
-        _page: '1',
-        _extend: '@self.schema',
-      });
-      params.set('_search', trimmed);
-      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
-
-      let list = [];
+    const run = async () => {
       try {
+        setResultsLoading(true);
+        // Collect all module ids from results (moduleA/moduleB/applicatie1/applicatie2/etc.)
+        const ids = [];
+        for (const k of searchResults || []) {
+          const rels = k?.['@self']?.relations || {};
+          const aRel =
+            rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
+          const bRel =
+            rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+          const aId = String(extractRelationId(aRel));
+          const bId = String(extractRelationId(bRel));
+          if (aId) ids.push(aId);
+          if (bId) ids.push(bId);
+        }
+
+        if (!ids.length) {
+          if (!cancelled) setResolvedModulesFromResults([]);
+          return;
+        }
+
+        const uniqueIds = Array.from(new Set(ids.map((v) => String(v))));
+
+        // Build a local map from existing module options first
+        const localMap = new Map();
+        for (const opt of modulesOptions || []) {
+          const key = String(opt?.value ?? '');
+          if (key) localMap.set(key, String(opt?.label ?? key));
+        }
+
+        const resultMap = new Map();
+        const missingIds = [];
+        for (const id of uniqueIds) {
+          if (localMap.has(id)) {
+            resultMap.set(id, localMap.get(id));
+          } else {
+            missingIds.push(id);
+          }
+        }
+
+        // Fetch missing module names in one batched call if any
+        if (missingIds.length) {
+          try {
+            const params = new URLSearchParams({ _limit: '100', _page: '1' });
+            for (const id of missingIds) params.append('_search[]', id);
+            const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
+            const res = await fetch(endpoint, {
+              headers: { Accept: 'application/json' },
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const list = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.results)
+                ? data.results
+                : [];
+              for (const item of list) {
+                const id = String(
+                  item?.id || item?.['@self']?.id || item?.uuid || item?.value || ''
+                );
+                if (!id) continue;
+                const label = String(
+                  item?.naam ||
+                    item?.name ||
+                    item?.title ||
+                    item?.label ||
+                    item?.uuid ||
+                    id
+                );
+                resultMap.set(id, label);
+              }
+            }
+          } catch {
+            // ignore fetch errors; fallback below
+          }
+        }
+
+        // Finalize array in input order with fallback label = id
+        const resolved = uniqueIds.map((id) => ({
+          value: id,
+          label: String(resultMap.get(id) || id),
+        }));
+
+        if (!cancelled) setResolvedModulesFromResults(resolved);
+      } catch {
+        if (!cancelled) setResolvedModulesFromResults([]);
+      } finally {
+        if (!cancelled) setResultsLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+      setResultsLoading(false);
+    };
+  }, [searchResults, modulesOptions]);
+
+  // Search koppelingen by selected module id (auto when ownApp changes)
+  useEffect(() => {
+    const moduleId = ownApp?.value ? String(ownApp.value) : '';
+    let cancelled = false;
+    const run = async () => {
+      if (!moduleId) {
+        setSearchResults([]);
+        setResolvedModulesFromResults([]);
+        setResultsLoading(false);
+        return;
+      }
+      setLoading(true);
+      setResultsLoading(true);
+      try {
+        const params = new URLSearchParams({ _limit: '20', _page: '1' });
+        // Server-side search by id; backend supports multiple _search[] keys, we use one
+        params.append('_search[]', moduleId);
+        // Ensure relations are included for label rendering
+        params.append('_extend[]', '@self.schema');
+        params.append('_extend[]', '@self.relations');
+        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
         const res = await fetch(endpoint, {
           headers: { Accept: 'application/json' },
         });
-        if (res.ok) {
-          const data = await res.json();
-          list = Array.isArray(data)
-            ? data
-            : Array.isArray(data?.results)
-            ? data.results
-            : [];
+        if (!res.ok) {
+          if (!cancelled) setSearchResults([]);
+          return;
         }
+        const data = await res.json();
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.results)
+          ? data.results
+          : [];
+        // Safety filter: ensure selected module is moduleA or moduleB
+        const filtered = list.filter((k) => {
+          const rels = k?.['@self']?.relations || {};
+          const aRel =
+            rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
+          const bRel =
+            rels.moduleB ?? k.moduleB ?? k.applicatie2 ?? k.applicatieB ?? k.appB;
+          const aId = String(extractRelationId(aRel));
+          const bId = String(extractRelationId(bRel));
+          return aId === moduleId || bId === moduleId;
+        });
+        if (!cancelled) setSearchResults(filtered);
       } catch {
-        // ignore and keep list empty
+        if (!cancelled) setSearchResults([]);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      // Client-side filter further by app name if needed
-      const q = trimmed.toLowerCase();
-      const filtered = list.filter((k) => {
-        const a =
-          k?.applicatie1 ||
-          k?.applicatieA ||
-          k?.appA ||
-          k?.bronApplicatie ||
-          k?.source ||
-          '';
-        const b =
-          k?.applicatie2 ||
-          k?.applicatieB ||
-          k?.appB ||
-          k?.doelApplicatie ||
-          k?.target ||
-          '';
-        return (
-          String(a).toLowerCase().includes(q) || String(b).toLowerCase().includes(q)
-        );
-      });
-
-      results.push(...filtered);
-      setSearchResults(results);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [ownApp?.value]);
 
   const getStatus = (active, step) => {
     if (active === step) return 'current';
@@ -313,10 +470,46 @@ const AcFormsKoppeling = () => {
     return 'checked';
   };
 
+  // Build a detailed tooltip similar to ac-register when Next is disabled
+  const getNextDisabledTooltip = () => {
+    if (currentStep !== 2) return '';
+    const messages = [];
+    const missing = [];
+    let missingA = false;
+    let missingB = false;
+    let missingR = false;
+    for (let i = 0; i < rows.length; i++) {
+      const rowId = rows[i];
+      const appAId = selectedAppAByRow[rowId] || ownApp?.value;
+      const appBId = selectedAppBByRow[rowId];
+      const richting = directionByRow[rowId];
+      if (!appAId) missingA = true;
+      if (!appBId) missingB = true;
+      if (!richting) missingR = true;
+    }
+    if (missingA) missing.push('Applicatie A');
+    if (missingB) missing.push('Applicatie B');
+    if (missingR) missing.push('Richting');
+    if (missing.length > 0) {
+      messages.push(`Verplichte velden nog niet ingevuld: ${missing.join(', ')}`);
+    }
+    return messages.join('\n');
+  };
+
   const canGoNext = () => {
     if (currentStep === 0) return koppelingsType !== null; // type must be selected
     if (currentStep === 1) return true; // search is optional to proceed
-    if (currentStep === 2) return rows.length > 0; // at least one row exists
+    if (currentStep === 2) {
+      if (!rows.length) return false;
+      // Require Applicatie A, Applicatie B and Richting for all rows
+      for (const rowId of rows) {
+        const appAId = selectedAppAByRow[rowId] || ownApp?.value;
+        const appBId = selectedAppBByRow[rowId];
+        const richting = directionByRow[rowId];
+        if (!appAId || !appBId || !richting) return false;
+      }
+      return true;
+    }
     return true;
   };
 
@@ -427,20 +620,10 @@ const AcFormsKoppeling = () => {
     }
   };
 
+  // On success, show success on review screen; no auto-navigation
   useEffect(() => {
     if (saveResult === 'success') {
-      setRedirectCountdown(3);
-      const intervalId = setInterval(() => {
-        setRedirectCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(intervalId);
-            window.location.assign('/beheer/koppeling');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(intervalId);
+      setRedirectCountdown(0);
     }
     return undefined;
   }, [saveResult]);
@@ -463,10 +646,11 @@ const AcFormsKoppeling = () => {
             setOwnApp={setOwnApp}
             ownAppLoading={ownAppLoading}
             setOwnAppInput={setOwnAppInput}
-            handleSearch={handleSearch}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             searchResults={searchResults}
+            resolvedModulesFromResults={resolvedModulesFromResults}
+            resultsLoading={resultsLoading}
           />
         );
 
@@ -477,6 +661,8 @@ const AcFormsKoppeling = () => {
             addRow={addRow}
             removeRow={removeRow}
             modulesOptions={modulesOptions}
+            setModulesOptions={setModulesOptions}
+            setSelectedModuleLabels={setSelectedModuleLabels}
             loading={loading}
             selectedAppAByRow={selectedAppAByRow}
             setSelectedAppAByRow={setSelectedAppAByRow}
@@ -504,6 +690,7 @@ const AcFormsKoppeling = () => {
           <ConKoppelingStageControleren
             rows={rows}
             modulesOptions={modulesOptions}
+            selectedModuleLabels={selectedModuleLabels}
             selectedAppAByRow={selectedAppAByRow}
             selectedAppBByRow={selectedAppBByRow}
             ownApp={ownApp}
@@ -690,6 +877,7 @@ const AcFormsKoppeling = () => {
                     <AcButton
                       style='button'
                       buttonType='secondary'
+                      icon={<VISUALS.ARROW_LEFT />}
                       onClick={() => setCurrentStep(currentStep - 1)}
                       disabled={loading || saveLoading}
                     >
@@ -704,8 +892,10 @@ const AcFormsKoppeling = () => {
                         className={clsx(
                           currentStep === 0 && 'ac-register-form-next-button'
                         )}
+                        icon={<VISUALS.ARROW_RIGHT />}
                         onClick={() => setCurrentStep(currentStep + 1)}
                         disabled={!canGoNext() || loading || saveLoading}
+                        title={!canGoNext() ? getNextDisabledTooltip() : ''}
                       >
                         Volgende
                       </AcButton>
@@ -716,7 +906,9 @@ const AcFormsKoppeling = () => {
                     <AcButton
                       style='button'
                       buttonType='primary'
+                      icon={<VISUALS.CLIPBOARD_CHECK />}
                       onClick={handleSave}
+                      loading={saveLoading}
                       disabled={saveLoading || !canSave()}
                     >
                       {saveLoading ? 'Bezig met opslaan...' : 'Opslaan'}
