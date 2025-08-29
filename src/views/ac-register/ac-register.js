@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
@@ -63,7 +63,6 @@ const AcRegister = () => {
     kvkNumber: '',
     email: '',
   });
-  const [logoFile, setLogoFile] = useState(null);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
@@ -109,7 +108,6 @@ const AcRegister = () => {
   const handleLogoFileSelect = useCallback(
     (e) => {
       if (!e.target.files.length) {
-        setLogoFile(null);
         setLogoDataUrl(null);
         return;
       }
@@ -117,7 +115,6 @@ const AcRegister = () => {
       const file = e.target.files[0];
 
       if (!acceptedLogoFileTypes.includes(file.type)) {
-        setLogoFile(null);
         setLogoDataUrl(null);
         return;
       }
@@ -131,14 +128,12 @@ const AcRegister = () => {
         });
       };
 
-      setLogoFile(file);
-
       (async () => {
         const dataUrl = await file.getDataUrl();
         setLogoDataUrl(dataUrl);
       })();
     },
-    [setLogoFile]
+    []
   );
 
   const setOrganizationData = useCallback((key, value) => {
@@ -251,10 +246,21 @@ const AcRegister = () => {
   };
 
   const focusForm = () => {
-    const form = document.querySelector('#formStart');
-    if (form) {
-      form.focus();
-    }
+    let curAttempt = 0;
+    const maxAttempts = 8
+    const tryFocus = () => {
+      curAttempt += 1;
+      const input = document.querySelector(
+        '.ac-register-form-container input:not([disabled]):not([tabindex="-1"]),' +
+          '.ac-register-form-container textarea:not([disabled]):not([tabindex="-1"])'
+      );
+      if (input && input.getClientRects().length) {
+        input.focus();
+        return;
+      }
+      if (curAttempt < maxAttempts) requestAnimationFrame(tryFocus); // try next frame
+    };
+    requestAnimationFrame(tryFocus);
   };
 
   const resetForm = () => {
@@ -270,7 +276,6 @@ const AcRegister = () => {
         email: false,
       },
     });
-    setLogoFile(null);
     setCurrentStep(0);
   };
 
@@ -733,11 +738,11 @@ const OrganizationRequiredForm = memo(
                   <Paragraph>
                     Alle Nederlandse gemeenten zijn al opgenomen in de
                     Softwarecatalogus. Ook is voor elke gemeente een inlogaccount
-                    beschikbaar om het gemeentelijk applicatieportfolio te beheren.​
+                    beschikbaar om het gemeentelijk applicatieportfolio te beheren.
                     Bent u gemeentemedewerker en heeft u zelf nog geen persoonlijk
                     account? Vraag dan binnen uw gemeente na wie een beheeraccount
                     heeft. Dit is vaak de informatiemanager of de coördinator I&A.
-                    Deze collega kan u eenvoudig toegang verlenen.​
+                    Deze collega kan u eenvoudig toegang verlenen.
                   </Paragraph>
                   <Paragraph>
                     Heeft u vragen of komt u er niet uit? Neem dan gerust contact met
@@ -766,9 +771,9 @@ const OrganizationRequiredForm = memo(
                   </Heading>
                   <Paragraph>
                     Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
-                    Softwarecatalogus. Controleer daarom eerst de lijst "Alle
-                    samenwerkingsverbanden". Staat uw samenwerkingsverband ertussen?
-                    Vraag dan toegang aan bij de beheerder – vaak de
+                    Softwarecatalogus. Controleer daarom eerst de lijst &quot;Alle
+                    samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband ertussen?
+                    Vraag dan toegang aan bij de beheerder - vaak de
                     ICT-verantwoordelijke.{' '}
                   </Paragraph>
                   <Paragraph>
@@ -800,7 +805,7 @@ const OrganizationRequiredForm = memo(
                     Met een community wordt een samenwerkingsverband van gemeenten
                     die gezamenlijk applicaties (door)ontwikkelen en de software
                     beschikbaar stellen voor hergebruik bedoelt. Controleer eerst de
-                    lijst "Alle communities" of de community al bestaat. Staat de
+                    lijst &quot;Alle communities&quot; of de community al bestaat. Staat de
                     community ertussen? Vraag dan toegang aan bij de beheerder.
                   </Paragraph>
                   <Paragraph>
@@ -927,7 +932,6 @@ const OrganizationOptionalForm = memo(
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
-    let localSummary = organization.summary || '';
 
     // Debounced functions for all optional fields
     const debouncedSetSummary = useDebouncedInput(
@@ -988,7 +992,6 @@ const OrganizationOptionalForm = memo(
               tooltip='Een korte beschrijving van de organisatie'
               value={organization.summary}
               onChange={(e) => {
-                localSummary = e;
                 updateCounter(e);
                 debouncedSetSummary(e);
               }}
