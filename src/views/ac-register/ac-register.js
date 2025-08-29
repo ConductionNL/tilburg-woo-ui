@@ -36,7 +36,7 @@ const AcRegister = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
     name: '',
