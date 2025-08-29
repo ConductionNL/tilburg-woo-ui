@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback, useEffect } from 'react';
+import React, { useState, memo } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import ReactSelect from 'react-select';
@@ -99,8 +99,8 @@ const ConFormApplicatieStage = memo(
     isMultiApplicatie,
     loading,
     schemas,
-    schemasLoading,
-    store,
+    // schemasLoading,
+    // store,
     existingModulesLookup,
     setExistingModulesLookup,
     searchModules,
@@ -112,16 +112,6 @@ const ConFormApplicatieStage = memo(
     // State for selecting existing applications to add
     const [selectedExistingApplication, setSelectedExistingApplication] =
       useState(null);
-    // State to store available module options for lookup
-    const [availableModuleOptions, setAvailableModuleOptions] = useState([]);
-
-    // Debug logging for search setup
-    console.log('🔧 ConFormApplicatieStage - Search setup:', {
-      hasSearchModules: !!searchModules,
-      modulesOptionsCount: modulesOptions ? modulesOptions.length : 0,
-      modulesLoading,
-      firstFewOptions: modulesOptions ? modulesOptions.slice(0, 3) : [],
-    });
 
     const updateModule = (moduleIndex, key, value) => {
       setProduct((prev) => {
@@ -159,11 +149,6 @@ const ConFormApplicatieStage = memo(
         // Get schema defaults for moduleVersie
         const moduleVersieDefaults = getModuleVersieDefaults();
 
-        console.log(
-          '🔧 Creating new module with moduleVersie defaults:',
-          moduleVersieDefaults
-        );
-
         // ✅ NEW: Create new module object directly with empty data + initialized moduleVersies
         const newModuleObject = {
           naam: '',
@@ -194,42 +179,16 @@ const ConFormApplicatieStage = memo(
     const addExistingApplication = () => {
       if (!selectedExistingApplication) return;
 
-      // Debug logging to understand the data structure
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔍 Adding existing application:', {
-          selectedApplication: selectedExistingApplication,
-          isArray: Array.isArray(selectedExistingApplication),
-          isString: typeof selectedExistingApplication === 'string',
-          length: selectedExistingApplication?.length,
-          firstItem: Array.isArray(selectedExistingApplication)
-            ? selectedExistingApplication[0]
-            : selectedExistingApplication,
-          storeCollections: store?.object
-            ? Object.keys(store.object.collections || {})
-            : 'no store',
-        });
-      }
-
       // Handle different data types: string ID, object, or array
       let selectedItem;
 
       if (typeof selectedExistingApplication === 'string') {
         // If it's just a string ID, we need to find the full object from available options
         // Look in modulesOptions instead of store collections
-        console.log('🔍 Looking for module in modulesOptions:', {
-          selectedId: selectedExistingApplication,
-          modulesOptionsCount: modulesOptions?.length,
-          firstOption: modulesOptions?.[0],
-        });
-
         if (modulesOptions?.length) {
           const foundOption = modulesOptions.find(
             (option) => option.value === selectedExistingApplication
           );
-          console.log('🔍 Found module option:', {
-            foundOption,
-            searchingFor: selectedExistingApplication,
-          });
 
           if (foundOption) {
             selectedItem = foundOption; // modulesOptions already has the right format
@@ -311,11 +270,6 @@ const ConFormApplicatieStage = memo(
 
         // Get schema defaults for moduleVersie
         const moduleVersieDefaults = getModuleVersieDefaults();
-
-        console.log(
-          '🔧 Initializing single applicatie module with moduleVersie defaults:',
-          moduleVersieDefaults
-        );
 
         // Initialize the first module with product data + moduleVersies with schema defaults
         const newModule = {
@@ -704,7 +658,6 @@ const ConFormApplicatieStage = memo(
                         isLoading={modulesLoading}
                         onInputChange={(inputValue, actionMeta) => {
                           if (actionMeta.action === 'input-change') {
-                            console.log('🔍 ReactSelect search input:', inputValue);
                             if (searchModules) {
                               searchModules(inputValue);
                             }

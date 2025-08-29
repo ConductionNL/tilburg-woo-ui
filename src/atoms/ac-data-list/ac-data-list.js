@@ -1,5 +1,5 @@
-import { Link } from '@utrecht/component-library-react/dist/css-module';
 import {
+  Link,
   Table,
   TableBody,
   TableRow,

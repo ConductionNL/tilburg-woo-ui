@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader } from '@components';
+import { AcContainer, AcFlex , AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcLoader , ConDetailsActionsMenu } from '@components';
 import { AcTable, AcLink } from '@molecules';
 import { withStore } from '@stores';
 import { ENDPOINTS, LABELS, VISUALS } from '@constants';
@@ -13,13 +13,11 @@ import {
   Heading,
   BadgeCounter,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { commongroundApiUrl } from '@config';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
-import { ConDetailsActionsMenu } from '@components';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { canReadField } from '@utils/field-authorization';

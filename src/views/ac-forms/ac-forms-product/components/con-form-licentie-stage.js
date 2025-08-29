@@ -28,12 +28,12 @@ const ConFormLicentieStage = memo(
   ({
     product,
     setProduct,
-    isMultiApplicatie: _isMultiApplicatie,
+    // isMultiApplicatie: _isMultiApplicatie,
     loading,
-    schemas: _schemas,
+    // schemas: _schemas,
     getNewModulesWithApplicatieData,
     existingModulesLookup,
-    getAllModulesForStages: _getAllModulesForStages,
+    // getAllModulesForStages: _getAllModulesForStages,
   }) => {
     const [sameForAll, setSameForAll] = useState(true);
 

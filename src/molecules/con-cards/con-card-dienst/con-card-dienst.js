@@ -44,7 +44,7 @@ const ConCardDienst = ({
           <Paragraph small>{category}</Paragraph>
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
-          <span class='sr-only'>
+          <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT} {title}
           </span>
           <VISUALS.ARROW_RIGHT />

@@ -10,7 +10,7 @@ import { VISUALS } from '@src/constants';
  * - Voor eigen organisatie: Service on a product from this organization
  * - Voor andere organisatie: Service on a product from another organization
  */
-const ConFormSoortDienstStage = ({ dienstType, setDienstType, loading, dienst }) => {
+const ConFormSoortDienstStage = ({ dienstType, setDienstType }) => {
   return (
     <div
       className='ac-register-form-section'
@@ -26,12 +26,15 @@ const ConFormSoortDienstStage = ({ dienstType, setDienstType, loading, dienst })
         <br />
         Een dienst kan bestaan uit:
         <br />
-        <strong>Voor eigen organisatie:</strong> Een dienst op een product van uw organisatie. U beheert zowel de dienst als het onderliggende product.
+        <strong>Voor eigen organisatie:</strong> Een dienst op een product van uw
+        organisatie. U beheert zowel de dienst als het onderliggende product.
         <br />
-        <strong>Voor andere organisatie:</strong> Een dienst op een product van een andere organisatie. U biedt een dienst aan op een bestaand extern product.
+        <strong>Voor andere organisatie:</strong> Een dienst op een product van een
+        andere organisatie. U biedt een dienst aan op een bestaand extern product.
         <br />
         <i>
-          Deze keuze helpt organisaties om te begrijpen hoe uw dienst is gepositioneerd en maakt de catalogus overzichtelijker.
+          Deze keuze helpt organisaties om te begrijpen hoe uw dienst is
+          gepositioneerd en maakt de catalogus overzichtelijker.
         </i>
       </Paragraph>
 
@@ -41,8 +44,7 @@ const ConFormSoortDienstStage = ({ dienstType, setDienstType, loading, dienst })
             <Paragraph>
               {dienstType === 'eigen-organisatie'
                 ? 'U heeft gekozen voor dienst op eigen product. In de volgende stappen selecteert u een product van uw organisatie en definieert de dienst.'
-                : 'U heeft gekozen voor dienst op extern product. In de volgende stappen selecteert u een product van een andere organisatie en definieert uw dienst daarop.'
-              }
+                : 'U heeft gekozen voor dienst op extern product. In de volgende stappen selecteert u een product van een andere organisatie en definieert uw dienst daarop.'}
             </Paragraph>
           </Alert>
         </div>
@@ -58,7 +60,9 @@ const ConFormSoortDienstStage = ({ dienstType, setDienstType, loading, dienst })
             color={'blue'}
             size='medium'
             className={`ac-dashboard-wizard-tile ${
-              dienstType === 'eigen-organisatie' ? 'ac-tile--selected' : 'ac-tile--not-selected'
+              dienstType === 'eigen-organisatie'
+                ? 'ac-tile--selected'
+                : 'ac-tile--not-selected'
             }`}
             onClick={() => setDienstType('eigen-organisatie')}
           />
@@ -71,7 +75,9 @@ const ConFormSoortDienstStage = ({ dienstType, setDienstType, loading, dienst })
             color={'blue'}
             size='medium'
             className={`ac-dashboard-wizard-tile ${
-              dienstType === 'andere-organisatie' ? 'ac-tile--selected' : 'ac-tile--not-selected'
+              dienstType === 'andere-organisatie'
+                ? 'ac-tile--selected'
+                : 'ac-tile--not-selected'
             }`}
             onClick={() => setDienstType('andere-organisatie')}
           />
