@@ -1,4 +1,4 @@
-import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
@@ -36,7 +36,7 @@ const AcRegister = () => {
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState({ message: null, errors: null });
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(1);
   const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
     name: '',
@@ -927,7 +927,6 @@ const OrganizationOptionalForm = memo(
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
-    let localSummary = organization.summary || '';
 
     // Debounced functions for all optional fields
     const debouncedSetSummary = useDebouncedInput(
@@ -971,13 +970,15 @@ const OrganizationOptionalForm = memo(
 
     return (
       <div className='ac-register-form-section'>
-        <Alert type='info'>
-          <Paragraph>
-            Optionele velden helpen ons om uw organisatie beter zichtbaar en
-            herkenbaar te maken in de catalogus (bijvoorbeeld met een logo en korte
-            beschrijving).
-          </Paragraph>
-        </Alert>
+        <div className='ac-register-form-alert'>
+          <Alert type='info'>
+            <Paragraph>
+              Optionele velden helpen ons om uw organisatie beter zichtbaar en
+              herkenbaar te maken in de catalogus (bijvoorbeeld met een logo en korte
+              beschrijving).
+            </Paragraph>
+          </Alert>
+        </div>
         <AcGrid columns={2}>
           <div>
             <AcFormField
@@ -988,7 +989,6 @@ const OrganizationOptionalForm = memo(
               tooltip='Een korte beschrijving van de organisatie'
               value={organization.summary}
               onChange={(e) => {
-                localSummary = e;
                 updateCounter(e);
                 debouncedSetSummary(e);
               }}
@@ -1003,43 +1003,43 @@ const OrganizationOptionalForm = memo(
             <span ref={counterRef} className='character-count' />
           </div>
 
-          <div>
-            <AcFormField
-              label='Telefoonnummer (organisatie)'
-              placeholder='06 12345678'
-              value={organization.phone}
-              type='tel'
-              onChange={(e) => debouncedSetPhone(e)}
-              hasError={organization.phone && !validatePhone(organization.phone)}
-              id='phone-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {organization.phone &&
-                !validatePhone(organization.phone) &&
-                'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
-            </span>
-          </div>
-
-          <div>
-            <AcFormField
-              label='E-mailadres (organisatie)'
-              placeholder='john.doe@example.com'
-              value={organization.email}
-              type='email'
-              onChange={(e) => debouncedSetEmail(e)}
-              hasError={organization.email && !validateEmail(organization.email)}
-              id='email-field'
-              disabled={loading}
-            />
-            <span className='ac-register-form-field-error'>
-              {organization.email &&
-                !validateEmail(organization.email) &&
-                'Ongeldig e-mailadres'}
-            </span>
-          </div>
-
           <AcFlex column spacing='sm'>
+            <div>
+              <AcFormField
+                label='Telefoonnummer (organisatie)'
+                placeholder='06 12345678'
+                value={organization.phone}
+                type='tel'
+                onChange={(e) => debouncedSetPhone(e)}
+                hasError={organization.phone && !validatePhone(organization.phone)}
+                id='phone-field'
+                disabled={loading}
+              />
+              {organization.phone && !validatePhone(organization.phone) && (
+                <span className='ac-register-form-field-error'>
+                  {'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <AcFormField
+                label='E-mailadres (organisatie)'
+                placeholder='john.doe@example.com'
+                value={organization.email}
+                type='email'
+                onChange={(e) => debouncedSetEmail(e)}
+                hasError={organization.email && !validateEmail(organization.email)}
+                id='email-field'
+                disabled={loading}
+              />
+              {organization.email && !validateEmail(organization.email) && (
+                <span className='ac-register-form-field-error'>
+                  {'Ongeldig e-mailadres'}
+                </span>
+              )}
+            </div>
+
             <AcFlex column>
               <label className='utrecht-form-label'>
                 <h4 className='utrecht-heading-4'>Logo</h4>
@@ -1089,13 +1089,15 @@ const OrganizationOptionalForm = memo(
             </AcFlex>
 
             {organization.organizationType === 'Leverancier' && (
-              <AcFormField
-                label='KvK nummer'
-                placeholder='12345678'
-                value={organization.kvkNumber}
-                onChange={(e) => debouncedSetKvkNumber(e)}
-                disabled={loading}
-              />
+              <div>
+                <AcFormField
+                  label='KvK nummer'
+                  placeholder='12345678'
+                  value={organization.kvkNumber}
+                  onChange={(e) => debouncedSetKvkNumber(e)}
+                  disabled={loading}
+                />
+              </div>
             )}
 
             {(organization.organizationType === 'Gemeente' ||

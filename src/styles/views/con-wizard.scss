@@ -41,3 +41,26 @@
     min-inline-size: var(--utrecht-radio-button-min-inline-size) !important;
   }
 }
+
+.ac-wizard-form-alert {
+  margin-block-end: var(--tilburg-space-block-rat);
+}
+
+// Add a close (X) button for alerts
+.ac-wizard-form-alert-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  color: var(--tilburg-color-gray-700);
+  z-index: 2;
+  padding: 3px;
+}
+
+.ac-wizard-form-alert-link {
+  display: inline !important;
+}
