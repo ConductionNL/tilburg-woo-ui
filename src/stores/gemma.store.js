@@ -1,7 +1,6 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
-import { LABELS, LABELS_DYNAMIC } from '@constants';
 
 let app = {};
 
@@ -188,8 +187,6 @@ export class GemmaStore {
   fetchVoorzieningGebruik = async (_id) => {
     this.loading.status = true;
 
-    console.log('fetchVoorzieningGebruik', _id);
-
     app.store.api.gemma
       .voorzieningGebruik(
         _id,
@@ -198,7 +195,6 @@ export class GemmaStore {
         ).toString()
       )
       .then((response) => {
-        console.log('response', response);
         this.setVoorzieningGebruik(response);
       })
       .catch((e) => console.error(e))

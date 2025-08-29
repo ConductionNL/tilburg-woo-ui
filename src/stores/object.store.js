@@ -1117,7 +1117,7 @@ export class ObjectStore {
     } catch (error) {
       // Don't throw error if request was cancelled
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
-        console.log(`Request cancelled for ${type}`);
+        console.info(`Request cancelled for ${type}`);
         return;
       }
 
@@ -1181,7 +1181,7 @@ export class ObjectStore {
     } catch (error) {
       // Don't throw error if request was cancelled
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
-        console.log(`Request cancelled for ${requestType}`);
+        console.info(`Request cancelled for ${requestType}`);
         return;
       }
 
@@ -1270,7 +1270,7 @@ export class ObjectStore {
     } catch (error) {
       // Don't throw error if request was cancelled
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
-        console.log(`Request cancelled for ${requestType}`);
+        console.info(`Request cancelled for ${requestType}`);
         return;
       }
 
@@ -1331,7 +1331,7 @@ export class ObjectStore {
     } catch (error) {
       // Don't throw error if request was cancelled
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
-        console.log(`Schema request cancelled for ${schemaType}`);
+        console.info(`Schema request cancelled for ${schemaType}`);
         return;
       }
 
@@ -1419,7 +1419,7 @@ export class ObjectStore {
     } catch (error) {
       // Don't throw error if request was cancelled
       if (error.code === 'ERR_CANCELED' || error instanceof CanceledError) {
-        console.log(`Schema related request cancelled for ${schemaType}`);
+        console.info(`Schema related request cancelled for ${schemaType}`);
         return;
       }
 
@@ -1694,7 +1694,7 @@ export class ObjectStore {
     this.setSuccess(requestType, null);
 
     try {
-      console.log('🌐 PATCH Request:', {
+      console.info('🌐 PATCH Request:', {
         url: this._constructApiUrl(register, schema, id),
         data: JSON.stringify(data),
         dataKeys: Object.keys(data)
@@ -1706,7 +1706,7 @@ export class ObjectStore {
       );
       if (!response.ok) throw new Error(`Failed to patch ${type} object`);
       
-      console.log('✅ PATCH Response:', {
+      console.info('✅ PATCH Response:', {
         status: response.status,
         dataKeys: Object.keys(response.data || {}),
         responseId: response.data?.id

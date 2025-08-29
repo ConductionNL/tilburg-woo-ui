@@ -30,14 +30,14 @@ const getGroupDisplayName = (group) => {
 };
 
 // Legacy function name for backward compatibility
-const getRole = (role) => {
+export const getRole = (role) => {
   return getGroupDisplayName(role);
 };
 
 // Format groups for display (new preferred method)
 export const AcFormatGroup = (group) => {
   let result = group;
-  const pattern = new RegExp(/\,/gi);
+  const pattern = new RegExp(/,/gi);
 
   if (AcIsArray(group) || pattern.test(group)) {
     const arr = AcIsArray(group) ? group : group.split(',');

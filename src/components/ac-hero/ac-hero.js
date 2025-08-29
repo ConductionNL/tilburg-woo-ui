@@ -1,8 +1,7 @@
 import clsx from 'clsx';
-import { LABELS, VISUALS } from '@constants';
+import { LABELS } from '@constants';
 import { AcCard, AcContainer, AcSection } from '@atoms';
 import { AcSearchBox } from '@components';
-import { AcLink } from '@molecules';
 import { useNavigate } from 'react-router';
 
 // Try to import container constants (generated at runtime)
@@ -10,7 +9,9 @@ let containerConfig;
 try {
   containerConfig = require('@constants/container.constants');
 } catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
+  console.warn(
+    'Container constants not available, falling back to hostname-based logic'
+  );
   containerConfig = null;
 }
 

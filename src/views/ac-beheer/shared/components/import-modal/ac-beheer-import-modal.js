@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcLoader, AcModal } from '@components';
+import { AcModal } from '@components';
 import { AcFlex } from '@atoms';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from '@views/ac-beheer/shared/components/import-modal/con-file-dropzone';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
-import { AcButton } from '@src/molecules';
 import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
 
 /**
@@ -51,7 +50,6 @@ const AcBeheerImportModal = ({
 
   const handleOpenModal = () => modalRef?.current?.showModal();
 
-  const [error, setError] = useState(null);
   const importFile = async (file) => {
     try {
       await object?.importObjects(register, schema, file);
@@ -66,7 +64,6 @@ const AcBeheerImportModal = ({
     } catch (err) {
       updateFileStatus(file, 'error');
       console.error(err);
-      setError(err);
     }
   };
 

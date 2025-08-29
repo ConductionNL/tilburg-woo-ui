@@ -6,10 +6,9 @@ import {
   useRef,
   useEffect,
   useCallback,
-// eslint-disable-next-line import/no-unresolved
-} from 'react';
-// eslint-disable-next-line import/no-unresolved
-import { createPortal } from 'react-dom';
+  createPortal,
+  // react and react-dom both resolve to preact/compact, so to avoid duplicate import errors we use this
+} from 'preact/compat';
 import clsx from 'clsx';
 import { AcButton, AcCheckbox } from '@src/molecules';
 import { VISUALS } from '@src/constants';
@@ -149,7 +148,7 @@ const ConActionMenu = ({ children, className }) => {
  * @example
  * <ConActionMenu.Trigger>Options</ConActionMenu.Trigger>
  */
-ConActionMenu.Trigger = ({ children, ...props }) => {
+const Trigger = ({ children, ...props }) => {
   const { handleToggle, triggerRef } = useConActionMenuContext();
 
   return (
@@ -160,7 +159,8 @@ ConActionMenu.Trigger = ({ children, ...props }) => {
     </div>
   );
 };
-ConActionMenu.Trigger.displayName = 'ConActionMenu.Trigger';
+Trigger.displayName = 'ConActionMenu.Trigger';
+ConActionMenu.Trigger = Trigger;
 
 /**
  * A sub-component of ConActionMenu that renders the list of menu items.
@@ -178,7 +178,7 @@ ConActionMenu.Trigger.displayName = 'ConActionMenu.Trigger';
  *   <ConActionMenu.Item>{(close) => <CustomContent onDone={close} />}</ConActionMenu.Item>
  * </ConActionMenu.Menu>
  */
-ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
+const Menu = ({ children, position = 'left', ...props }) => {
   const { isOpen, triggerRef, portalRef } = useConActionMenuContext();
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
@@ -186,7 +186,7 @@ ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
     if (isOpen && triggerRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
       const scrollTop = window.scrollY;
-      const scrollLeft = window.scrollX;
+      // const scrollLeft = window.scrollX;
 
       let left = 0;
       switch (position) {
@@ -234,7 +234,8 @@ ConActionMenu.Menu = ({ children, position = 'left', ...props }) => {
 
   return createPortal(menuContent, document.body);
 };
-ConActionMenu.Menu.displayName = 'ConActionMenu.Menu';
+Menu.displayName = 'ConActionMenu.Menu';
+ConActionMenu.Menu = Menu;
 
 /**
  * A sub-component of ConActionMenu that creates a nested submenu.
@@ -257,7 +258,7 @@ ConActionMenu.Menu.displayName = 'ConActionMenu.Menu';
  *   </ConActionMenu.SubMenu>
  * </ConActionMenu.Menu>
  */
-ConActionMenu.SubMenu = ({
+const SubMenu = ({
   label,
   icon,
   children,
@@ -305,7 +306,8 @@ ConActionMenu.SubMenu = ({
     </div>
   );
 };
-ConActionMenu.SubMenu.displayName = 'ConActionMenu.SubMenu';
+SubMenu.displayName = 'ConActionMenu.SubMenu';
+ConActionMenu.SubMenu = SubMenu;
 
 /**
  * A sub-component of ConActionMenu that creates a dropdown menu.
@@ -326,7 +328,7 @@ ConActionMenu.SubMenu.displayName = 'ConActionMenu.SubMenu';
  *   </ConActionMenu.Dropdown>
  * </ConActionMenu.Menu>
  */
-ConActionMenu.Dropdown = ({ label, icon, children, disabled, ...props }) => {
+const Dropdown = ({ label, icon, children, disabled, ...props }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -374,7 +376,8 @@ ConActionMenu.Dropdown = ({ label, icon, children, disabled, ...props }) => {
     </div>
   );
 };
-ConActionMenu.Dropdown.displayName = 'ConActionMenu.Dropdown';
+Dropdown.displayName = 'ConActionMenu.Dropdown';
+ConActionMenu.Dropdown = Dropdown;
 
 /**
  * A sub-component of ConActionMenu that represents a generic container for menu items.
@@ -397,7 +400,7 @@ ConActionMenu.Dropdown.displayName = 'ConActionMenu.Dropdown';
  *   )}
  * </ConActionMenu.Item>
  */
-ConActionMenu.Item = ({ children, className, ...props }) => {
+const Item = ({ children, className, ...props }) => {
   const { setIsOpen } = useConActionMenuContext();
   const close = useCallback(() => setIsOpen(false), [setIsOpen]);
 
@@ -407,7 +410,8 @@ ConActionMenu.Item = ({ children, className, ...props }) => {
     </div>
   );
 };
-ConActionMenu.Item.displayName = 'ConActionMenu.Item';
+Item.displayName = 'ConActionMenu.Item';
+ConActionMenu.Item = Item;
 
 /**
  * A sub-component of ConActionMenu that renders a horizontal divider using the Utrecht Separator component.
@@ -422,10 +426,11 @@ ConActionMenu.Item.displayName = 'ConActionMenu.Item';
  *   <ConActionMenu.Button>Button 2</ConActionMenu.Button>
  * </ConActionMenu.Menu>
  */
-ConActionMenu.Divider = () => {
+const Divider = () => {
   return <Separator className='con-action-divider' />;
 };
-ConActionMenu.Divider.displayName = 'ConActionMenu.Divider';
+Divider.displayName = 'ConActionMenu.Divider';
+ConActionMenu.Divider = Divider;
 
 /**
  * A sub-component of ConActionMenu that represents a clickable button menu item.
@@ -448,14 +453,7 @@ ConActionMenu.Divider.displayName = 'ConActionMenu.Divider';
  *   Menu Option
  * </ConActionMenu.Button>
  */
-ConActionMenu.Button = ({
-  children,
-  onClick,
-  doNotClose,
-  icon,
-  className,
-  ...props
-}) => {
+const Button = ({ children, onClick, doNotClose, icon, className, ...props }) => {
   const { setIsOpen } = useConActionMenuContext();
 
   const handleClick = (e) => {
@@ -482,7 +480,8 @@ ConActionMenu.Button = ({
     </button>
   );
 };
-ConActionMenu.Button.displayName = 'ConActionMenu.Button';
+Button.displayName = 'ConActionMenu.Button';
+ConActionMenu.Button = Button;
 
 /**
  * A sub-component of ConActionMenu that renders a checkbox menu item.
@@ -514,7 +513,7 @@ ConActionMenu.Button.displayName = 'ConActionMenu.Button';
  *   Enable Option
  * </ConActionMenu.Checkbox>
  */
-ConActionMenu.Checkbox = ({
+const Checkbox = ({
   children,
   checked,
   onChange,
@@ -562,6 +561,7 @@ ConActionMenu.Checkbox = ({
     </div>
   );
 };
-ConActionMenu.Checkbox.displayName = 'ConActionMenu.Checkbox';
+Checkbox.displayName = 'ConActionMenu.Checkbox';
+ConActionMenu.Checkbox = Checkbox;
 
 export default ConActionMenu;

@@ -13,7 +13,6 @@ import {
 import AcColumn from '@atoms/ac-column/ac-column';
 import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
-import config from '@src/config';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 /**
@@ -54,7 +53,7 @@ function getCookie(name) {
   return null;
 }
 
-const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
+const AcNextcloudAuthorization = () => {
   const nextcloud_user_id = getCookie('nextcloud_user_id');
   const navigate = useNavigate();
 
@@ -65,6 +64,91 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
   // fetch client id and secret key from local storage
   const clientId = getCookie('nextcloud_client_id');
   const secretKey = getCookie('nextcloud_secret_key');
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const [searchParams] = useSearchParams();
+  // const state = searchParams.get('state');
+  const code = searchParams.get('code');
+
+  const redirect_url = sessionStorage.getItem('redirect_url');
+  sessionStorage.removeItem('redirect_url');
+
+  useEffect(() => {
+    if (!clientId || !secretKey) {
+      return;
+    }
+
+    const handleAuthorization = async () => {
+      let response;
+      try {
+        response = await fetch(`${BASE_URL}/oauth2/api/v1/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            grant_type: 'authorization_code',
+            code,
+            redirect_uri: `${window.location.origin}/authorization`,
+            client_id: clientId,
+            client_secret: secretKey,
+          }).toString(),
+        });
+
+        // check if response is good
+        if (!response.ok) {
+          setError(response.statusText);
+          setIsLoading(false);
+          return;
+        }
+      } catch (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      const { access_token, expires_in, refresh_token, user_id } =
+        await response.json();
+
+      // check if expires_in is set
+      if (!expires_in) {
+        setError(
+          'Er is een fout opgetreden bij het autoriseren. Probeer het opnieuw.'
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      // set cookies
+      setCookie('nextcloud_access_token', access_token, expires_in, {
+        secure: true,
+        httpOnly: false,
+        sameSite: 'strict',
+      });
+      setCookie('nextcloud_refresh_token', refresh_token, expires_in, {
+        secure: true,
+        httpOnly: false,
+        sameSite: 'strict',
+      });
+      setCookie('nextcloud_user_id', user_id, expires_in, {
+        secure: true,
+        httpOnly: false,
+        sameSite: 'strict',
+      });
+
+      if (redirect_url) {
+        setTimeout(() => {
+          navigate(redirect_url);
+        }, 500);
+      }
+
+      setIsLoading(false);
+    };
+
+    handleAuthorization();
+  }, []);
 
   if (!clientId || !secretKey) {
     return (
@@ -87,87 +171,6 @@ const AcNextcloudAuthorization = ({ store: { publications, themes } }) => {
       </AcSection>
     );
   }
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const [searchParams, setSearchParams] = useSearchParams();
-  const state = searchParams.get('state');
-  const code = searchParams.get('code');
-
-  const redirect_url = sessionStorage.getItem('redirect_url');
-  sessionStorage.removeItem('redirect_url');
-
-  useEffect(() => {
-    const handleAuthorization = async () => {
-      let response;
-      try {
-        response = await fetch(`${BASE_URL}/oauth2/api/v1/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          grant_type: 'authorization_code',
-          code,
-          redirect_uri: `${window.location.origin}/authorization`,
-          client_id: clientId,
-          client_secret: secretKey,
-        }).toString(),
-      });
-
-      // check if response is good
-      if (!response.ok) {
-        setError(response.statusText);
-        setIsLoading(false);
-        return;
-      }
-    } catch (error) {
-      setError(error.message);
-      setIsLoading(false);
-      return;
-    }
-
-    const { access_token, expires_in, refresh_token, user_id } =
-      await response.json();
-
-    // check if expires_in is set
-    if (!expires_in) {
-      setError(
-        'Er is een fout opgetreden bij het autoriseren. Probeer het opnieuw.'
-      );
-      setIsLoading(false);
-      return;
-    }
-
-    // set cookies
-    setCookie('nextcloud_access_token', access_token, expires_in, {
-      secure: true,
-      httpOnly: false,
-      sameSite: 'strict',
-    });
-    setCookie('nextcloud_refresh_token', refresh_token, expires_in, {
-      secure: true,
-      httpOnly: false,
-      sameSite: 'strict',
-    });
-    setCookie('nextcloud_user_id', user_id, expires_in, {
-      secure: true,
-      httpOnly: false,
-      sameSite: 'strict',
-    });
-
-    if (redirect_url) {
-      setTimeout(() => {
-        navigate(redirect_url);
-      }, 500);
-    }
-
-    setIsLoading(false);
-    };
-
-    handleAuthorization();
-  }, []);
 
   return (
     <AcSection spacing>
