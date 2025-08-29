@@ -1,5 +1,4 @@
 // Imports => Dependencies
-import React, { createContext } from 'react';
 import { makeObservable, observable, computed, action, runInAction } from 'mobx';
 
 // Imports => API
@@ -68,14 +67,14 @@ class Store {
   }
 
   @action
-  handleSWFreshContentReady = (event) => {
+  handleSWFreshContentReady = () => {
     runInAction(() => {
       this.freshContentReady = true;
     });
   };
 
   @action
-  handleSWCacheReady = (event) => {
+  handleSWCacheReady = () => {
     this.toasters.add({
       variant: 'info',
       title: 'Cache is gereed',

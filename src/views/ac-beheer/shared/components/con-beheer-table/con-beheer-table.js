@@ -1,21 +1,14 @@
-import {
-  forwardRef,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from 'react';
+import { forwardRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
-import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { canReadField } from '@utils/field-authorization';
+import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
+import _ from 'lodash';
 
 // Local navigation builder based on config.routeType
 const buildNavigateView = (navigate, config) => (id) =>
@@ -90,7 +83,6 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
 
   const [data, setData] = useState([]);
   const [dataProperties, setDataProperties] = useState({});
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const [tableHeaders, setTableHeaders] = useState([]);
@@ -159,7 +151,6 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
       }));
       return { results: col.results || [], ...pag };
     } catch (e) {
-      setError(e);
       return { error: e?.message };
     }
   };
@@ -173,7 +164,6 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
       setDataProperties(props);
       return { properties: props };
     } catch (e) {
-      setError(e);
       return { error: e?.message };
     }
   };
@@ -196,7 +186,6 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
       }
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError(err);
     } finally {
       setLoading(false);
       getLoading?.(false);
@@ -225,7 +214,6 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
       await fetchObjectData();
     } catch (err) {
       console.error('Error fetching data:', err);
-      setError(err);
     } finally {
       setLoading(false);
       getLoading?.(false);
@@ -238,9 +226,9 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
 
     const schemaHeaders = Object.entries(dataProperties)
       .filter(
-        ([key, value]) => value.visible !== false && value.hideOnCollection !== true
+        ([, value]) => value.visible !== false && value.hideOnCollection !== true
       )
-      .filter(([key, value]) => canReadField(user, value))
+      .filter(([, value]) => canReadField(user, value))
       .flatMap(([key, value]) => {
         // leverancier from diensten is a special case as its referenced twice
         if (headerOverrides && type === 'diensten' && key === 'leverancier') {
@@ -414,5 +402,6 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
     />
   );
 });
+BeheerTable.displayName = 'BeheerTable';
 
 export default withStore(observer(BeheerTable));

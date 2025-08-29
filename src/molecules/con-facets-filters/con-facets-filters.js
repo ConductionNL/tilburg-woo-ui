@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AcCheckbox } from '@molecules';
 import { withStore } from '@stores';
-import { AcLoader } from '@components';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
@@ -14,7 +13,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     toggleSearchArrayValue, 
     updateQuery, 
     fetchPublications, 
-    fetchFacets, 
+    // fetchFacets, 
     all_facets, 
     is_facets_loading, 
     is_facets_config_loaded,

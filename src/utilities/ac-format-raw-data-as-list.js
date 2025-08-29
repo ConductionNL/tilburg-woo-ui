@@ -25,7 +25,6 @@ export const AcFormatRawDataAsList = class {
     } else if (AcIsArray(item)) {
       const len = item.length;
       let n = 0;
-      let result = null;
       output = [];
 
       for (n; n < len; n++) {
