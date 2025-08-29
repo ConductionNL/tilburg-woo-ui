@@ -63,7 +63,6 @@ const AcRegister = () => {
     kvkNumber: '',
     email: '',
   });
-
   const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
@@ -106,18 +105,19 @@ const AcRegister = () => {
     'image/svg+xml',
   ];
 
-  const handleLogoFileSelect = useCallback((e) => {
-    if (!e.target.files.length) {
-      setLogoDataUrl(null);
-      return;
-    }
+  const handleLogoFileSelect = useCallback(
+    (e) => {
+      if (!e.target.files.length) {
+        setLogoDataUrl(null);
+        return;
+      }
 
     const file = e.target.files[0];
 
-    if (!acceptedLogoFileTypes.includes(file.type)) {
-      setLogoDataUrl(null);
-      return;
-    }
+      if (!acceptedLogoFileTypes.includes(file.type)) {
+        setLogoDataUrl(null);
+        return;
+      }
 
     file.getDataUrl = async () => {
       return new Promise((resolve, reject) => {
@@ -128,11 +128,13 @@ const AcRegister = () => {
       });
     };
 
-    (async () => {
-      const dataUrl = await file.getDataUrl();
-      setLogoDataUrl(dataUrl);
-    })();
-  }, []);
+      (async () => {
+        const dataUrl = await file.getDataUrl();
+        setLogoDataUrl(dataUrl);
+      })();
+    },
+    []
+  );
 
   const setOrganizationData = useCallback((key, value) => {
     if (key.includes('contactPersons')) {
@@ -244,10 +246,21 @@ const AcRegister = () => {
   };
 
   const focusForm = () => {
-    const form = document.querySelector('#formStart');
-    if (form) {
-      form.focus();
-    }
+    let curAttempt = 0;
+    const maxAttempts = 8
+    const tryFocus = () => {
+      curAttempt += 1;
+      const input = document.querySelector(
+        '.ac-register-form-container input:not([disabled]):not([tabindex="-1"]),' +
+          '.ac-register-form-container textarea:not([disabled]):not([tabindex="-1"])'
+      );
+      if (input && input.getClientRects().length) {
+        input.focus();
+        return;
+      }
+      if (curAttempt < maxAttempts) requestAnimationFrame(tryFocus); // try next frame
+    };
+    requestAnimationFrame(tryFocus);
   };
 
   const resetForm = () => {
@@ -759,8 +772,8 @@ const OrganizationRequiredForm = memo(
                   <Paragraph>
                     Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
                     Softwarecatalogus. Controleer daarom eerst de lijst &quot;Alle
-                    samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband
-                    ertussen? Vraag dan toegang aan bij de beheerder - vaak de
+                    samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband ertussen?
+                    Vraag dan toegang aan bij de beheerder - vaak de
                     ICT-verantwoordelijke.{' '}
                   </Paragraph>
                   <Paragraph>

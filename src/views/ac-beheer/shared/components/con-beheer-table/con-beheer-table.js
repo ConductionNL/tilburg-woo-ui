@@ -1,241 +1,18 @@
-import {
-  forwardRef,
-  useEffect,
-  useMemo,
-  useState,
-  useCallback,
-} from 'react';
+import { forwardRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
-import { AcColumn } from '@src/atoms';
-import useNextcloudRequests from '@src/hooks/con-nextcloud-requests';
 import { VISUALS } from '@src/constants';
 import { useLaterEffect } from '@src/hooks';
-import { sortPropertiesByOrder } from '@src/utilities';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { canReadField } from '@utils/field-authorization';
-import { ConSorterLogic } from '@src/utilities/con-sorter';
+import BeheerPageConfigFactory from '@views/ac-beheer/core/factories/con-beheer-page-config-factory';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
 import _ from 'lodash';
 
-const GET_CONFIG = (type, metadata, navigate) => {
-  let typeGetFailed = false;
-
-  const config = {
-    navigateView: null,
-    registerSlug: 'voorzieningen',
-    schemaSlug: null,
-    extend: [],
-    defaultHeaders: [],
-    removeHeaders: [],
-  };
-
-  if (type) {
-    switch (type) {
-      case 'voorziening':
-      case 'applicaties':
-        config.navigateView = (id) => navigate(`/beheer/applicaties/${id}`);
-        config.schemaSlug = 'voorziening';
-        // config.extend = [['_extend[]', 'standaarden']]; // Removed extends
-        config.defaultHeaders = [
-          'naam',
-          'referentieComponenten',
-          'standaarden',
-          'categorie',
-          'links',
-        ];
-        break;
-
-      case 'voorzieningaanboden':
-      case 'voorzieningaanbod':
-      case 'diensten':
-        config.navigateView = (id) => navigate(`/beheer/diensten/${id}`);
-        config.schemaSlug = 'voorzieningaanbod';
-        // config.extend = [
-        //   ['_extend[]', 'voorziening'],
-        //   ['_extend[]', 'leverancier'],
-        // ]; // Removed extends
-        config.defaultHeaders = ['name', 'voorzieningName', 'email'];
-        config.removeHeaders = ['ondersteundeStandaarden'];
-        config.headerOverrides = {
-          voorziening: {
-            id: 'voorzieningName',
-            label: 'Applicatie',
-            key: 'voorziening',
-            customContent: (row) => {
-              return row?.voorziening?.naam || '-';
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-
-              const nameA = a?.voorziening?.naam || '';
-              const nameB = b?.voorziening?.naam || '';
-
-              return ConSorterLogic(nameA, nameB, direction);
-            },
-          },
-          leverancier_naam: {
-            id: 'leverancier',
-            label: 'Leverancier',
-            key: '',
-            customContent: (row) => {
-              return (
-                <AcColumn key={row.id}>
-                  <span>{row?.leverancier?.naam ?? '-'}</span>
-                </AcColumn>
-              );
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-
-              const idA = a?.leverancier?.id || '';
-              const idB = b?.leverancier?.id || '';
-
-              return ConSorterLogic(idA, idB, direction);
-            },
-          },
-          leverancier_email: {
-            id: 'email',
-            label: 'Email',
-            key: '',
-            customContent: (row) => {
-              return row?.leverancier?.contactgegevens?.email || '-';
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-
-              const emailA = a?.leverancier?.contactgegevens?.email || '';
-              const emailB = b?.leverancier?.contactgegevens?.email || '';
-
-              return ConSorterLogic(emailA, emailB, direction);
-            },
-          },
-        };
-        break;
-
-      case 'voorzieninggebruiken':
-      case 'gebruiken':
-        config.navigateView = (id) => navigate(`/beheer/gebruiken/${id}`);
-        config.schemaSlug = 'voorzieninggebruik';
-        config.defaultHeaders = ['id', 'versionId', 'eindDatum', 'status'];
-        break;
-
-      case 'voorzieningversies':
-      case 'voorzieningversie':
-      case 'versies':
-        config.navigateView = (id) => navigate(`/beheer/voorzieningen-versie/${id}`);
-        config.schemaSlug = 'voorzieningversie';
-        config.defaultHeaders = ['name', 'versienummer', 'releaseDatum', 'status'];
-        config.headerOverrides = {
-          kwetsbaarheden: {
-            id: 'kwetsbaarheden',
-            label: 'Kwetsbaarheden',
-            key: '',
-            customContent: (row) => {
-              return (
-                row?.kwetsbaarheden
-                  ?.map((kwetsbaarheid) => kwetsbaarheid.titel)
-                  .join(', ') || '-'
-              );
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-              const aTitle = a?.kwetsbaarheden?.[0]?.titel;
-              const bTitle = b?.kwetsbaarheden?.[0]?.titel;
-              return ConSorterLogic(aTitle, bTitle, direction);
-            },
-          },
-          voorziening: {
-            id: 'voorziening',
-            label: 'Applicatie',
-            key: '',
-            customContent: (row) => {
-              return row?.voorziening?.naam || '-';
-            },
-            sortComparator: (a, b, direction) => {
-              if (direction === null) return 0;
-              const aTitle = a?.voorziening?.naam || '';
-              const bTitle = b?.voorziening?.naam || '';
-              return ConSorterLogic(aTitle, bTitle, direction);
-            },
-          },
-        };
-        break;
-
-      case 'contracten':
-      case 'overeenkomsten':
-        config.navigateView = (id) => navigate(`/beheer/overeenkomsten/${id}`);
-        config.schemaSlug = 'contract';
-        config.defaultHeaders = [
-          'name',
-          'startDatum',
-          'eindDatum',
-          'contactPersonProvider',
-        ];
-        break;
-
-      case 'organisaties':
-      case 'organisatie':
-        config.navigateView = (id) => navigate(`/beheer/organisaties/${id}`);
-        config.schemaSlug = 'organisatie';
-        // config.extend = [['_extend[]', 'contactgegevens']]; // Removed extends
-        config.defaultHeaders = ['organizationName', 'logo', 'contactDetails'];
-        break;
-
-      case 'kwetsbaarheden':
-        config.navigateView = (id) => navigate(`/beheer/kwetsbaarheden/${id}`);
-        config.schemaSlug = 'kwetsbaarheid';
-        config.defaultHeaders = ['titel', 'ernst', 'detectedOn', 'status'];
-        break;
-
-      case 'gebruiker':
-      case 'contactpersoon':
-      case 'contactpersonen':
-        config.navigateView = (id) => navigate(`/beheer/contactpersonen/${id}`);
-        config.schemaSlug = 'contactpersoon';
-        config.defaultHeaders = [
-          'name',
-          'status',
-          'lastActivity',
-          'email',
-          'organisatie',
-        ];
-        config.headerOverrides = {
-          voornaam: {
-            id: 'name',
-            label: 'Naam',
-            key: 'voornaam',
-            customContent: (row) => `${row.voornaam} ${row.achternaam}`,
-          },
-          organisatie: {
-            id: 'organisatie',
-            label: 'Organisatie',
-            key: 'organisatie',
-            customContent: (row) => row.organisatie?.naam || row.organisatie || '-',
-          },
-          actief: {
-            id: 'status',
-            label: 'Status',
-            key: 'actief',
-            customContent: (row) => (
-              <span>{row.actief ? 'Actief' : 'Inactief'}</span>
-            ),
-          },
-        };
-        break;
-
-      default:
-        typeGetFailed = true;
-    }
-  }
-
-  if ((metadata && !type) || (metadata && typeGetFailed)) {
-    config.registerSlug = metadata.register?.id ?? metadata.register;
-    config.schemaSlug = metadata.schema?.id ?? metadata.schema;
-    // config.extend = [['_extend[]', 'all']]; // Removed extends
-  }
-
-  return config;
-};
+// Local navigation builder based on config.routeType
+const buildNavigateView = (navigate, config) => (id) =>
+  navigate(`/beheer/${config.routeType}/${id}`);
 
 /**
  * @typedef {Object} typeProps
@@ -271,7 +48,7 @@ const GET_CONFIG = (type, metadata, navigate) => {
  * @param {(searchValues: { [headerId: string]: string }) => void} props.onHeaderSearch - Callback function called when any header search value changes. Receives an object with all current search values as parameters.
  * @returns
  */
-const BeheerTable = forwardRef((props, ref) => {
+const BeheerTable = forwardRef(({ store, ...props }, ref) => {
   const {
     type,
     metadata,
@@ -299,7 +76,7 @@ const BeheerTable = forwardRef((props, ref) => {
   }
 
   const navigate = useNavigate();
-  const { makeRequest } = useNextcloudRequests();
+  const objectStore = store?.object;
 
   const shouldFetchData = !providedData?.length;
   const shouldFetchDataProperties = !providedDataProperties?.length;
@@ -311,63 +88,84 @@ const BeheerTable = forwardRef((props, ref) => {
   const [tableHeaders, setTableHeaders] = useState([]);
 
   const config = useMemo(() => {
-    const config = GET_CONFIG(type, metadata, navigate);
-    getConfig?.(config);
-    return config;
+    // Prefer factory when type is provided; otherwise derive minimal config from metadata
+    let cfg = null;
+    if (type) {
+      try {
+        cfg = BeheerPageConfigFactory.createConfig(type);
+      } catch (e) {
+        cfg = null;
+      }
+    }
+    if (!cfg && metadata) {
+      cfg = {
+        registerSlug: metadata.register?.id ?? metadata.register ?? 'voorzieningen',
+        schemaSlug: metadata.schema?.id ?? metadata.schema,
+        routeType: metadata.schema?.slug || metadata.schema || type || 'objects',
+        extend: ['all'],
+        defaultHeaders: [],
+        customHeaders: {},
+        removeHeaders: [],
+      };
+    }
+    if (!cfg) {
+      // Fallback to type as-is
+      cfg = BeheerPageConfigFactory.createConfig(type);
+    }
+    // Compose navigateView locally
+    const navigateView = buildNavigateView(navigate, cfg);
+    const finalCfg = { ...cfg, navigateView };
+    getConfig?.(finalCfg);
+    return finalCfg;
   }, [type, navigate, metadata]);
 
   const fetchObjectData = async (searchParams = {}) => {
-    // ✅ Transform search parameters to handle extended properties
-    const transformedSearchParams = {};
+    if (!objectStore) return;
 
-    Object.entries(searchParams).forEach(([key, value]) => {
-      // Since we removed extends, use the key as-is for all properties
-      transformedSearchParams[key] = value;
-    });
+    const params = {
+      _limit: pagination?.limit || 9999,
+      _page: pagination?.page || 1,
+      ...searchParams,
+    };
 
-    const response = await makeRequest(
-      `openregister/api/objects/${config.registerSlug}/${config.schemaSlug}`,
-      {
-        params: [
-          ...config.extend,
-          ['_limit', pagination?.limit || 9999],
-          ['_page', pagination?.page || 1],
-          ...Object.entries(transformedSearchParams),
-        ],
-        redirectPath: '/beheer/diensten',
-      }
-    );
+    try {
+      await objectStore.fetchCollection(
+        config.registerSlug,
+        config.schemaSlug,
+        params
+      );
 
-    const data = response.data;
-    if (data.error) {
-      // TODO: handle error
-    } else {
-      setData(data.results);
+      const typeKey = objectStore.getTypeFromParams(
+        config.registerSlug,
+        config.schemaSlug
+      );
+      const col = objectStore.getCollection(typeKey);
+      const pag = objectStore.getPagination(typeKey);
+
+      setData(col.results || []);
       setPagination((prev) => ({
         ...prev,
-        total: data.total,
-        pages: data.pages,
-        offset: data.offset,
+        total: pag.total,
+        pages: pag.pages,
+        offset: pag.offset,
       }));
+      return { results: col.results || [], ...pag };
+    } catch (e) {
+      return { error: e?.message };
     }
-    return data;
   };
 
   const fetchSchemaData = async () => {
-    const response = await makeRequest(
-      `openregister/api/schemas/${config.schemaSlug}`,
-      {
-        redirectPath: '/beheer/diensten',
-      }
-    );
-
-    const data = response.data;
-    if (data.error) {
-      return data;
+    if (!objectStore) return;
+    try {
+      await objectStore.fetchSchema(config.schemaSlug);
+      const schemaType = objectStore.getSchemaType(config.schemaSlug);
+      const props = objectStore.getSchemaProperties(schemaType);
+      setDataProperties(props);
+      return { properties: props };
+    } catch (e) {
+      return { error: e?.message };
     }
-
-    setDataProperties(sortPropertiesByOrder(data.properties));
-    return data;
   };
 
   useEffect(async () => {
@@ -440,14 +238,14 @@ const BeheerTable = forwardRef((props, ref) => {
           ];
         }
 
-        // Check if we have a custom override for this header
+        // Check if we have a custom override for this header (component-level)
         if (headerOverrides?.[key]) {
           return { ...headerOverrides[key], sourceKey: key };
         }
 
-        // Try config.headerOverrides if headerOverrides doesn't exist
-        if (config.headerOverrides?.[key]) {
-          return { ...config.headerOverrides[key], sourceKey: key };
+        // Try factory config custom headers if override doesn't exist
+        if (config.customHeaders?.[key]) {
+          return { ...config.customHeaders[key], sourceKey: key };
         }
 
         // Generate standard header from schema
@@ -606,4 +404,4 @@ const BeheerTable = forwardRef((props, ref) => {
 });
 BeheerTable.displayName = 'BeheerTable';
 
-export default BeheerTable;
+export default withStore(observer(BeheerTable));
