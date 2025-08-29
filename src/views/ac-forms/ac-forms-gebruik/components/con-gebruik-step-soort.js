@@ -43,7 +43,7 @@ const ConGebruikStepSoort = ({
           opgebouwd en maakt de catalogus overzichtelijker.
         </i>
         {gebruikType && (
-          <div className='ac-register-form-alert' style={{ marginTop: '1rem' }}>
+          <div className='ac-wizard-form-alert' style={{ marginTop: '1rem' }}>
             <Alert type='info'>
               <Paragraph>
                 {gebruikType === 'eigen-organisatie'
