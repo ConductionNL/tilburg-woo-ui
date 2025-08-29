@@ -150,94 +150,13 @@ const AcPublication = observer(
       setActionMenuItems(items);
     }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
-    // Table
-    // TODO: this just needs a code fix, headers and rows is not being used
-    // eslint-disable-next-line no-unused-vars
-    const [headers, setHeaders] = useState([]);
-    // eslint-disable-next-line no-unused-vars
-    const [rows, setRows] = useState([]);
-
-    const getFilteredData = (data) => {
-      const checkIfVisible = (property) => {
-        return data['@self']?.schema?.properties?.[property]?.visible !== false;
-      };
-
-      const excludeKeys = [
-        '@self',
-        'title',
-        'titel',
-        'name',
-        'naam',
-        'id',
-        ...Object.keys(data['@self']?.schema?.properties || {}).filter(
-          (key) => !checkIfVisible(key)
-        ),
-      ];
-
-      // It is possible to enricht the data with custom properties. This is not used for now.
-      // const enrichedData = {
-      //   publicatieDatum: data['@self']?.published,
-      //   categorie: data['@self']?.schema?.title,
-      //   ...data,
-      // };
-
-      return Object.entries(data)
-        .filter(([key, value]) => {
-          if (excludeKeys.includes(key)) return false;
-          if (typeof value === 'object') return false;
-          return true;
-        })
-        .sort((a, b) => {
-          const orderA = data['@self']?.schema?.properties?.[a[0]]?.order;
-          const orderB = data['@self']?.schema?.properties?.[b[0]]?.order;
-
-          // If both have valid non-zero orders, sort normally
-          if (orderA && orderB && orderA !== 0 && orderB !== 0) {
-            return orderA - orderB;
-          }
-
-          // If orderA is valid and non-zero, it comes first
-          if (orderA && orderA !== 0) return -1;
-          // If orderB is valid and non-zero, it comes first
-          if (orderB && orderB !== 0) return 1;
-
-          // If orderA is 0 and orderB is null/undefined, orderA comes first
-          if (orderA === 0 && !orderB) return -1;
-          // If orderB is 0 and orderA is null/undefined, orderB comes first
-          if (orderB === 0 && !orderA) return 1;
-
-          // If both are 0 or both are null/undefined, maintain original order
-          return 0;
-        })
-        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
-    };
-
-    const getFilterdRows = (data) => {
-      return Object.entries(data).map(([key, value]) => [
-        <strong key={key}>{_.upperFirst(key)}</strong>,
-        <>{getValueField(key, value)}</>,
-      ]);
-    };
-
-    useEffect(() => {
-      setHeaders(['Titel', 'Waarde']);
-      setRows(getFilterdRows(getFilteredData(get_single)));
-    }, [get_single]);
-
     // Tabs
     const [tabIndexUses, setTabIndexUses] = useState(0);
     const [tabIndexUsed, setTabIndexUsed] = useState(0);
     const [uses, setUses] = useState([]);
     const [used, setUsed] = useState([]);
-    // TODO: this just needs a code fix, usesLoading and usedLoading is not being used
-    // eslint-disable-next-line no-unused-vars
-    const [usesLoading, setUsesLoading] = useState(false);
-    // eslint-disable-next-line no-unused-vars
-    const [usedLoading, setUsedLoading] = useState(false);
 
     const fetchUses = async () => {
-      setUsesLoading(true);
-
       const response = await fetch(
         `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?extend[]=@self.schema`,
         {
@@ -248,18 +167,14 @@ const AcPublication = observer(
         }
       );
       if (!response.ok) {
-        console.error('Error fetching uses:', response.statusText);
-        setUsesLoading(false);
+        console.error('Error fetching uses:', response.statusText)
         return;
       }
       const data = await response.json();
 
       setUses(data.results);
-      setUsesLoading(false);
     };
     const fetchUsed = async () => {
-      setUsedLoading(true);
-
       const response = await fetch(
         `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?extend[]=@self.schema`,
         {
@@ -271,13 +186,11 @@ const AcPublication = observer(
       );
       if (!response.ok) {
         console.error('Error fetching used:', response.statusText);
-        setUsedLoading(false);
         return;
       }
       const data = await response.json();
 
       setUsed(data.results);
-      setUsedLoading(false);
     };
 
     const configuredMetaFields = useMemo(() => {
