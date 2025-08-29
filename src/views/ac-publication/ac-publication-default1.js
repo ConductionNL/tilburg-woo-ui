@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 
-import { AcCard, AcContainer, AcFlex } from '@atoms';
+import { AcCard, AcContainer, AcFlex , AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcLoader } from '@components';
 import { AcLink, AcTable } from '@molecules';
 import { withStore } from '@stores';
@@ -19,10 +19,9 @@ import acFormatDate from '@src/utilities/ac-format-date';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
-import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import _ from 'lodash';
-;
+
 
 const AcPublicationDefault = ({ store: { publications } }) => {
   const {

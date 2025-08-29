@@ -85,9 +85,9 @@ const AcModal = React.forwardRef(
                     style='button'
                     aria-label={button.label}
                   >
-                    <div class='particles'>
+                    <div className='particles'>
                       <VISUALS.CHECK />
-                      <div class='particles-inner'>
+                      <div className='particles-inner'>
                         <VISUALS.PARTICLES />
                       </div>
                     </div>

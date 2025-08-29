@@ -2,7 +2,7 @@ import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
-import { AcContainer, AcSection, AcFlex, AcGrid , AcColumn } from '@src/atoms';
+import { AcContainer, AcSection, AcFlex, AcGrid, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
@@ -971,6 +971,13 @@ const OrganizationOptionalForm = memo(
 
     return (
       <div className='ac-register-form-section'>
+        <Alert type='info'>
+          <Paragraph>
+            Optionele velden helpen ons om uw organisatie beter zichtbaar en
+            herkenbaar te maken in de catalogus (bijvoorbeeld met een logo en korte
+            beschrijving).
+          </Paragraph>
+        </Alert>
         <AcGrid columns={2}>
           <div>
             <AcFormField
@@ -996,28 +1003,43 @@ const OrganizationOptionalForm = memo(
             <span ref={counterRef} className='character-count' />
           </div>
 
+          <div>
+            <AcFormField
+              label='Telefoonnummer (organisatie)'
+              placeholder='06 12345678'
+              value={organization.phone}
+              type='tel'
+              onChange={(e) => debouncedSetPhone(e)}
+              hasError={organization.phone && !validatePhone(organization.phone)}
+              id='phone-field'
+              disabled={loading}
+            />
+            <span className='ac-register-form-field-error'>
+              {organization.phone &&
+                !validatePhone(organization.phone) &&
+                'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
+            </span>
+          </div>
+
+          <div>
+            <AcFormField
+              label='E-mailadres (organisatie)'
+              placeholder='john.doe@example.com'
+              value={organization.email}
+              type='email'
+              onChange={(e) => debouncedSetEmail(e)}
+              hasError={organization.email && !validateEmail(organization.email)}
+              id='email-field'
+              disabled={loading}
+            />
+            <span className='ac-register-form-field-error'>
+              {organization.email &&
+                !validateEmail(organization.email) &&
+                'Ongeldig e-mailadres'}
+            </span>
+          </div>
+
           <AcFlex column spacing='sm'>
-            {organization.organizationType === 'Leverancier' && (
-              <AcFormField
-                label='KvK nummer'
-                placeholder='12345678'
-                value={organization.kvkNumber}
-                onChange={(e) => debouncedSetKvkNumber(e)}
-                disabled={loading}
-              />
-            )}
-
-            {(organization.organizationType === 'Gemeente' ||
-              organization.organizationType === 'Samenwerking') && (
-              <AcFormField
-                label='OIN'
-                placeholder='00000001002564440000'
-                value={organization.oin}
-                onChange={(e) => debouncedSetOin(e)}
-                disabled={loading}
-              />
-            )}
-
             <AcFlex column>
               <label className='utrecht-form-label'>
                 <h4 className='utrecht-heading-4'>Logo</h4>
@@ -1066,41 +1088,26 @@ const OrganizationOptionalForm = memo(
               </small>
             </AcFlex>
 
-            <div>
+            {organization.organizationType === 'Leverancier' && (
               <AcFormField
-                label='Telefoonnummer (organisatie)'
-                placeholder='06 12345678'
-                value={organization.phone}
-                type='tel'
-                onChange={(e) => debouncedSetPhone(e)}
-                hasError={organization.phone && !validatePhone(organization.phone)}
-                id='phone-field'
+                label='KvK nummer'
+                placeholder='12345678'
+                value={organization.kvkNumber}
+                onChange={(e) => debouncedSetKvkNumber(e)}
                 disabled={loading}
               />
-              <span className='ac-register-form-field-error'>
-                {organization.phone &&
-                  !validatePhone(organization.phone) &&
-                  'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
-              </span>
-            </div>
+            )}
 
-            <div>
+            {(organization.organizationType === 'Gemeente' ||
+              organization.organizationType === 'Samenwerking') && (
               <AcFormField
-                label='E-mailadres (organisatie)'
-                placeholder='john.doe@example.com'
-                value={organization.email}
-                type='email'
-                onChange={(e) => debouncedSetEmail(e)}
-                hasError={organization.email && !validateEmail(organization.email)}
-                id='email-field'
+                label='OIN'
+                placeholder='00000001002564440000'
+                value={organization.oin}
+                onChange={(e) => debouncedSetOin(e)}
                 disabled={loading}
               />
-              <span className='ac-register-form-field-error'>
-                {organization.email &&
-                  !validateEmail(organization.email) &&
-                  'Ongeldig e-mailadres'}
-              </span>
-            </div>
+            )}
           </AcFlex>
         </AcGrid>
       </div>
@@ -1190,6 +1197,7 @@ const ContactInformationForm = memo(
               }
               id='name-field'
               disabled={loading}
+              autoFocus
             />
             <span className='ac-register-form-field-error'>
               {touched.contactPersons.firstName &&

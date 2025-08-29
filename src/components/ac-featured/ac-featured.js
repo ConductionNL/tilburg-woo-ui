@@ -7,10 +7,10 @@ const AcFeatured = () => {
   return (
     <AcSection className='ac-featured' spacing>
       <AcContainer>
-        <div class='ac-featured__heading'>
+        <div className='ac-featured__heading'>
           <Heading>{LABELS.HIGHLIGHTED}</Heading>
         </div>
-        <div class='ac-featured__content'>
+        <div className='ac-featured__content'>
           <AcSearchResult />
           <AcSearchResult />
           <AcSearchResult />

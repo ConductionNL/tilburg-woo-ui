@@ -1,4 +1,4 @@
-import React, { useState, memo, useCallback } from 'react';
+import React, { useState, memo } from 'react';
 import ReactSelect from 'react-select';
 import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
 
@@ -27,12 +27,12 @@ import {
  */
 const ConFormReferentiecomponentenStage = memo(
   ({
-    product,
+    // product,
     setProduct,
     referentieComponentenOptions,
-    referentieComponentenWithStandards,
+    // referentieComponentenWithStandards,
     setReferentieComponentenWithStandards,
-    schemas,
+    // schemas,
     loading,
     getNewModulesWithApplicatieData,
     existingModulesLookup,
@@ -45,11 +45,6 @@ const ConFormReferentiecomponentenStage = memo(
       ? getNewModulesWithApplicatieData()
       : [];
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
-
-    const applicatieOptions = applicatieIndices.map((i) => ({
-      value: i,
-      label: newModules[i]?.naam || `Applicatie ${i + 1}`,
-    }));
 
     // Check if there are multiple NEW applications that need referentiecomponenten configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
@@ -114,7 +109,6 @@ const ConFormReferentiecomponentenStage = memo(
         });
 
         const result = [...filtered, ...newEntries];
-        console.log('🔍 Updated referentieComponentenWithStandards:', result);
         return result;
       });
     };

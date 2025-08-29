@@ -6,7 +6,7 @@ export const AcSupportsWEBP = () => {
 	let result = false;
 	const elem = document.createElement('canvas');
 
-	if (!!(elem.getContext && elem.getContext('2d'))) {
+	if (elem.getContext && elem.getContext('2d')) {
 		// was able or not to get WebP representation
 		result = elem.toDataURL('image/webp').indexOf('data:image/webp') === 0;
 	}

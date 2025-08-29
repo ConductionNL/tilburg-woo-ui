@@ -31,12 +31,12 @@ const ConFormModuleVersieStage = memo(
   ({
     product,
     setProduct,
-    isMultiApplicatie: _isMultiApplicatie,
+    // isMultiApplicatie: _isMultiApplicatie,
     loading,
     schemas,
     getNewModulesWithApplicatieData,
     existingModulesLookup,
-    getAllModulesForStages: _getAllModulesForStages,
+    // getAllModulesForStages: _getAllModulesForStages,
   }) => {
     const [sameForAll, setSameForAll] = useState(true);
 

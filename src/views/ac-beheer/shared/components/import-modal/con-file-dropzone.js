@@ -106,7 +106,7 @@ export function ConFileDropZone({
     const rawFiles = Array.from(e.dataTransfer.files);
     const realFiles = rawFiles.filter((f) => f.size > 0);
 
-    if (!!realFiles.length) setFiles(realFiles);
+    if (realFiles.length) setFiles(realFiles);
   };
 
   const handleFileSelect = (e) => {
@@ -114,7 +114,7 @@ export function ConFileDropZone({
     const selected = Array.from(e.target.files);
     const realFiles = selected.filter((f) => f.size > 0);
 
-    if (!!realFiles.length) setFiles(realFiles);
+    if (realFiles.length) setFiles(realFiles);
   };
 
   const acceptedTypes = allowedFileTypes.join(',') || undefined;

@@ -25,7 +25,7 @@ import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
 import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
 
-const AcFormsKoppeling = ({ _store }) => {
+const AcFormsKoppeling = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [koppelingsType, setKoppelingsType] = useState(null); // 'eigen-organisatie' or 'aanbieden-koppeling'
@@ -990,16 +990,20 @@ const AcFormsKoppeling = ({ _store }) => {
                           borderRadius: '2px',
                         }}
                       >
-                        {JSON.stringify({
-                          koppelingsType,
-                          ownApp,
-                          rows,
-                          selectedAppAByRow,
-                          selectedAppBByRow,
-                          directionByRow,
-                          typeByRow,
-                          payloads: serializeRowsToPayload()
-                        }, null, 2)}
+                        {JSON.stringify(
+                          {
+                            koppelingsType,
+                            ownApp,
+                            rows,
+                            selectedAppAByRow,
+                            selectedAppBByRow,
+                            directionByRow,
+                            typeByRow,
+                            payloads: serializeRowsToPayload(),
+                          },
+                          null,
+                          2
+                        )}
                       </pre>
                     </details>
                   </div>

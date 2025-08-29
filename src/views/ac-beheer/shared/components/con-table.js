@@ -15,12 +15,11 @@ import {
 } from '@utrecht/component-library-react';
 import { ConSorter, AcUUID } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
-import { ConHorizontalOverflowWrapper } from '@components';
+import { ConHorizontalOverflowWrapper , ConTableSearch } from '@components';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { AcCheckbox } from '@molecules';
-import { ConTableSearch } from '@components';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.

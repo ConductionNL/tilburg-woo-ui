@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 
-import { AcCard, AcContainer, AcFlex } from '@atoms';
+import { AcCard, AcContainer, AcFlex , AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcLoader } from '@components';
 import { AcLink, AcTable } from '@molecules';
 import { withStore } from '@stores';
@@ -18,7 +18,6 @@ import {
 import { LABELS, VISUALS } from '@constants';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
-import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 

@@ -19,11 +19,10 @@ import {
 import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
-import { StatusBadge } from '@utrecht/component-library-react';
+import { StatusBadge , Heading2, Heading3 } from '@utrecht/component-library-react';
 import _ from 'lodash';
 import { MOCK_CONCEPTS } from '@constants/mock.data.constants';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
-import { Heading2, Heading3 } from '@utrecht/component-library-react';
 
 const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
