@@ -1,6 +1,7 @@
 import loadable from '@loadable/component';
 
-/* eslint react-app/import/no-webpack-loader-syntax: off */
+/* eslint-disable import/no-unresolved */
+// this is some weird stuff that Acato made, and I have no clue how it works, but it works...
 const ARROW_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/arrow-right.svg')
 );

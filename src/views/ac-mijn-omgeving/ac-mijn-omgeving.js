@@ -1,3 +1,5 @@
+// TODO: do something with this file
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import {  useNavigate } from 'react-router-dom';
@@ -13,7 +15,7 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { Pagination } from '@amsterdam/design-system-react';
+// import { Pagination } from '@amsterdam/design-system-react';
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
@@ -44,9 +46,9 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   const {
     // search_query,
     pagination,
-    setPage,
+    // setPage,
     // updateQuery,
-    setSearchQuery,
+    // setSearchQuery,
     // fetchAggregations,
     // fetchPublications,
     is_loading,
@@ -87,32 +89,34 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   //   fetchPublications();
   // }, [location.mijnOmgeving]);
 
-  const users = [
-    {
-      name: 'Lisa',
-      last_name: 'Smith',
-      function: 'Developer',
-    },
-    {
-      name: 'Bram',
-      last_name: 'van der Veen',
-      function: 'Manager',
-    },
-    {
-      name: 'Jeroen',
-      last_name: 'Molenaar',
-      function: 'Lead Developer',
-    },
-  ];
+//   const users = [
+//     {
+//       name: 'Lisa',
+//       last_name: 'Smith',
+//       function: 'Developer',
+//     },
+//     {
+//       name: 'Bram',
+//       last_name: 'van der Veen',
+//       function: 'Manager',
+//     },
+//     {
+//       name: 'Jeroen',
+//       last_name: 'Molenaar',
+//       function: 'Lead Developer',
+//     },
+//   ];
 
+  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
   const mapConfigurationRow = (row) => {
     return [
-      <span>{row.name}</span>,
-      <span>{row.last_name}</span>,
-      <span>{row.function}</span>,
+      <span key={row.name}>{row.name}</span>,
+      <span key={row.last_name}>{row.last_name}</span>,
+      <span key={row.function}>{row.function}</span>,
     ];
   };
 
+  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
   const screenReaderText = useMemo(() => {
     if (is_loading === true) {
       return LABELS.SEARCH_RESULTS_LOADING;
@@ -123,6 +127,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     )} ${LABELS.FOUND.toLowerCase()}.`;
   }, [is_loading, all_publications?.length]);
 
+  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
   const renderPublications = useMemo(() => {
     if (is_loading) {
       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
@@ -151,6 +156,7 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
   // Add Voorziening Modal
   const addVoorzieningModalRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
   const [addVoorzieningFormData, setAddVoorzieningFormData] = useState({
     name: '',
     description: '',
@@ -172,7 +178,6 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
   const handleAddVoorzieningSubmit = () => {
     // Here you can make your POST request with the formData
-    console.log('Form data to submit:', addVoorzieningFormData);
   };
 
   const renderAddVoorzieningModal = (

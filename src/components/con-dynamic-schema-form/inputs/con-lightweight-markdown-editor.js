@@ -24,7 +24,6 @@ const ConLightweightMarkdownEditor = ({
   required,
   disabled,
 }) => {
-  const [showPreview, setShowPreview] = useState(true);
   const [activeView, setActiveView] = useState('split'); // 'edit', 'preview', 'split'
   const textareaRef = useRef(null);
 
