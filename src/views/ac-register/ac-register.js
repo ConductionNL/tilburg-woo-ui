@@ -64,9 +64,6 @@ const AcRegister = () => {
     email: '',
   });
 
-  // TODO: this just needs a code fix, logoFile is not being used
-  // eslint-disable-next-line no-unused-vars
-  const [logoFile, setLogoFile] = useState(null);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
@@ -109,40 +106,33 @@ const AcRegister = () => {
     'image/svg+xml',
   ];
 
-  const handleLogoFileSelect = useCallback(
-    (e) => {
-      if (!e.target.files.length) {
-        setLogoFile(null);
-        setLogoDataUrl(null);
-        return;
-      }
+  const handleLogoFileSelect = useCallback((e) => {
+    if (!e.target.files.length) {
+      setLogoDataUrl(null);
+      return;
+    }
 
-      const file = e.target.files[0];
+    const file = e.target.files[0];
 
-      if (!acceptedLogoFileTypes.includes(file.type)) {
-        setLogoFile(null);
-        setLogoDataUrl(null);
-        return;
-      }
+    if (!acceptedLogoFileTypes.includes(file.type)) {
+      setLogoDataUrl(null);
+      return;
+    }
 
-      file.getDataUrl = async () => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(file);
-        });
-      };
+    file.getDataUrl = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
 
-      setLogoFile(file);
-
-      (async () => {
-        const dataUrl = await file.getDataUrl();
-        setLogoDataUrl(dataUrl);
-      })();
-    },
-    [setLogoFile]
-  );
+    (async () => {
+      const dataUrl = await file.getDataUrl();
+      setLogoDataUrl(dataUrl);
+    })();
+  }, []);
 
   const setOrganizationData = useCallback((key, value) => {
     if (key.includes('contactPersons')) {
@@ -273,7 +263,6 @@ const AcRegister = () => {
         email: false,
       },
     });
-    setLogoFile(null);
     setCurrentStep(0);
   };
 
