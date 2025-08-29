@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import {  useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { AcSearchResult, AcButton, AcFormField } from '@molecules';
 import { AcFlex, AcSection } from '@atoms';
@@ -34,7 +34,7 @@ function getCookie(name) {
   return null;
 }
 
-const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
+const AcMijnOmgeving = () => {
   const navigate = useNavigate();
 
   const nextcloud_user_id = getCookie('nextcloud_user_id');
@@ -43,20 +43,20 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
     navigate('/login?redirect_url=/mijn-omgeving');
   }, [nextcloud_user_id]);
 
-  const {
-    // search_query,
-    pagination,
-    // setPage,
-    // updateQuery,
-    // setSearchQuery,
-    // fetchAggregations,
-    // fetchPublications,
-    is_loading,
-    // getSearchPageURL,
-    all_publications,
-    // resetSearchQuery,
-    // resetAggregations,
-  } = mijnOmgeving;
+  //   const {
+  //     search_query,
+  //     pagination,
+  //     setPage,
+  //     updateQuery,
+  //     setSearchQuery,
+  //     fetchAggregations,
+  //     fetchPublications,
+  //     is_loading,
+  //     getSearchPageURL,
+  //     all_publications,
+  //     resetSearchQuery,
+  //     resetAggregations,
+  //   } = mijnOmgeving; // import mijnOmgeving from store
 
   // useEffect(() => {
   //   setQuery();
@@ -89,70 +89,67 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   //   fetchPublications();
   // }, [location.mijnOmgeving]);
 
-//   const users = [
-//     {
-//       name: 'Lisa',
-//       last_name: 'Smith',
-//       function: 'Developer',
-//     },
-//     {
-//       name: 'Bram',
-//       last_name: 'van der Veen',
-//       function: 'Manager',
-//     },
-//     {
-//       name: 'Jeroen',
-//       last_name: 'Molenaar',
-//       function: 'Lead Developer',
-//     },
-//   ];
+  //   const users = [
+  //     {
+  //       name: 'Lisa',
+  //       last_name: 'Smith',
+  //       function: 'Developer',
+  //     },
+  //     {
+  //       name: 'Bram',
+  //       last_name: 'van der Veen',
+  //       function: 'Manager',
+  //     },
+  //     {
+  //       name: 'Jeroen',
+  //       last_name: 'Molenaar',
+  //       function: 'Lead Developer',
+  //     },
+  //   ];
 
-  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
-  const mapConfigurationRow = (row) => {
-    return [
-      <span key={row.name}>{row.name}</span>,
-      <span key={row.last_name}>{row.last_name}</span>,
-      <span key={row.function}>{row.function}</span>,
-    ];
-  };
+  //   const mapConfigurationRow = (row) => {
+  //     return [
+  //       <span key={row.name}>{row.name}</span>,
+  //       <span key={row.last_name}>{row.last_name}</span>,
+  //       <span key={row.function}>{row.function}</span>,
+  //     ];
+  //   };
 
-  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
-  const screenReaderText = useMemo(() => {
-    if (is_loading === true) {
-      return LABELS.SEARCH_RESULTS_LOADING;
-    }
+  //   const screenReaderText = useMemo(() => {
+  //     if (is_loading === true) {
+  //       return LABELS.SEARCH_RESULTS_LOADING;
+  //     }
 
-    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
-      all_publications?.length
-    )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_publications?.length]);
+  //     return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
+  //       all_publications?.length
+  //     )} ${LABELS.FOUND.toLowerCase()}.`;
+  //   }, [is_loading, all_publications?.length]);
 
-  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
-  const renderPublications = useMemo(() => {
-    if (is_loading) {
-      return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
-        <AcSearchResult skeleton key={index} />
-      ));
-    }
+  //   const renderPublications = useMemo(() => {
+  //     if (is_loading) {
+  //       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
+  //         <AcSearchResult skeleton key={index} />
+  //       ));
+  //     }
 
-    if (all_publications?.length < 1) {
-      return (
-        <Alert type='info'>
-          <AcFlex spacing='sm'>
-            <VISUALS.INFO_BLUE />
-            <AcFlex column spacing='xs'>
-              <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
-              <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
-            </AcFlex>
-          </AcFlex>
-        </Alert>
-      );
-    }
+  //     if (all_publications?.length < 1) {
+  //       return (
+  //         <Alert type='info'>
+  //           <AcFlex spacing='sm'>
+  //             <VISUALS.INFO_BLUE />
+  //             <AcFlex column spacing='xs'>
+  //               <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
+  //               <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
+  //             </AcFlex>
+  //           </AcFlex>
+  //         </Alert>
+  //       );
+  //     }
 
-    return all_publications?.map((publication, index) => (
-      <AcSearchResult {...publication} key={index} />
-    ));
-  }, [is_loading, all_publications, pagination?.limit]);
+  //     return all_publications?.map((publication, index) => (
+  //       <AcSearchResult {...publication} key={index} />
+  //     ));
+  //   }, [is_loading, all_publications, pagination?.limit]);
 
   // Add Voorziening Modal
   const addVoorzieningModalRef = useRef(null);
