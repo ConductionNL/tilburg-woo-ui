@@ -8,7 +8,7 @@ const validateWebsite = (website) => {
   // More permissive domain validation - allow domains with or without protocol
   // Matches: example.com, www.example.com, https://example.com, sub.domain.co.uk, etc.
   const domainRegex =
-    /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
+    /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
 
   return domainRegex.test(website);
 };

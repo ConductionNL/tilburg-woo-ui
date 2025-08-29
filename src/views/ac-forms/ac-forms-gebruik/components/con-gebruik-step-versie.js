@@ -34,8 +34,6 @@ const ConGebruikStepVersie = ({
           optionsProvider={versionOptions}
           width='full'
         />
-
-
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ import {
   AcTabs,
   ConLogo,
 } from '@atoms';
-import { ConDynamicSidenav, AcLoader } from '@components';
+import { ConDynamicSidenav, AcLoader , ConDetailsActionsMenu } from '@components';
 import {
   Heading,
   Paragraph,
@@ -28,7 +28,6 @@ import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import { canReadField } from '@utils/field-authorization';
 import _ from 'lodash';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
-import { ConDetailsActionsMenu } from '@components';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';

@@ -146,8 +146,8 @@ const ConFormsDienst = ({ store, userStore }) => {
   // useEffect(() => {
   //   const actualUserStore = userStore || store?.user;
   //   if (actualUserStore?.activeOrganization && !dienst.aanbieder) {
-  //     const orgId = actualUserStore.activeOrganization.uuid || 
-  //                  actualUserStore.activeOrganization.id || 
+  //     const orgId = actualUserStore.activeOrganization.uuid ||
+  //                  actualUserStore.activeOrganization.id ||
   //                  actualUserStore.activeOrganization.slug;
   //     setDienstData('aanbieder', orgId || '');
   //   }
@@ -163,19 +163,19 @@ const ConFormsDienst = ({ store, userStore }) => {
     try {
       const params = new URLSearchParams({ _limit: '20', _page: '1' });
       if (term && term.trim()) params.set('_search', term.trim());
-      
+
       // TODO: Filter by own organization when dienst type is 'eigen-organisatie'
       // Use @self[organisation] parameter to filter products by organization
       // const actualUserStore = userStore || store?.user;
       // if (dienstType === 'eigen-organisatie' && actualUserStore?.activeOrganization) {
-      //   const orgId = actualUserStore.activeOrganization.uuid || 
-      //                actualUserStore.activeOrganization.id || 
+      //   const orgId = actualUserStore.activeOrganization.uuid ||
+      //                actualUserStore.activeOrganization.id ||
       //                actualUserStore.activeOrganization.slug;
       //   if (orgId) {
       //     params.set('@self[organisation]', String(orgId));
       //   }
       // }
-      
+
       const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product?${params}`;
       const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -241,31 +241,35 @@ const ConFormsDienst = ({ store, userStore }) => {
           if (productRes.ok) {
             const productItem = await productRes.json();
             const prodLabel = String(
-              productItem?.naam || productItem?.name || productItem?.title || productItem?.label || prodId
+              productItem?.naam ||
+                productItem?.name ||
+                productItem?.title ||
+                productItem?.label ||
+                prodId
             );
             labels[prodId] = prodLabel;
           }
 
           // Then, fetch modules directly from module endpoint filtered by product
-          const moduleParams = new URLSearchParams({ 
-            _limit: '50', 
-            product: prodId // Filter modules by product ID
+          const moduleParams = new URLSearchParams({
+            _limit: '50',
+            product: prodId, // Filter modules by product ID
           });
           const moduleEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${moduleParams}`;
           const moduleRes = await fetch(moduleEndpoint, {
             headers: { Accept: 'application/json' },
           });
-          
+
           if (!moduleRes.ok) throw new Error('HTTP ' + moduleRes.status);
           const moduleData = await moduleRes.json();
-          
+
           // Handle both array and paginated response formats
-          const modules = Array.isArray(moduleData) 
-            ? moduleData 
-            : Array.isArray(moduleData?.results) 
-            ? moduleData.results 
+          const modules = Array.isArray(moduleData)
+            ? moduleData
+            : Array.isArray(moduleData?.results)
+            ? moduleData.results
             : [];
-            
+
           lookup[prodId] = modules
             .map((m, idx) => {
               const id = String(m?.id || m?.value || m?.uuid || m);

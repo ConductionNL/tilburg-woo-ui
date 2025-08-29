@@ -250,7 +250,6 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [touched, setTouched] = useState({
     productName: false,
   });
-  const [allSameType, setAllSameType] = useState(false);
 
   // Separate state for existing modules lookup cache (for UI display)
   const [existingModulesLookup, setExistingModulesLookup] = useState({});
@@ -263,14 +262,6 @@ const AcFormsProduct = ({ userStore, store }) => {
     selectedDienstByRow: {},
     dienstBeschrijvingByRow: {}, // Track custom descriptions for each dienst
     allAppsDienst: null,
-  });
-
-  // Persist UI state for ReferentiecomponentenForm across steps
-  const [refCompFormState, setRefCompFormState] = useState({
-    rows: [0],
-    nextRowId: 1,
-    selectedApplication: {},
-    selectedRefCompsByRow: {}, // rowId -> array of values
   });
 
   // Separate array to track chosen referentieComponenten with their standards
@@ -464,64 +455,6 @@ const AcFormsProduct = ({ userStore, store }) => {
 
     fetchSchemas();
   }, [createDefaultProductFromSchema]);
-
-  /**
-   * Utility function to get field information from schemas
-   * @param {string} schemaType - The schema type (product, module, dienst, koppeling, compliancy)
-   * @param {string} fieldName - The field name to look up
-   * @returns {object|null} Field schema information or null if not found
-   */
-  const getFieldFromSchema = (schemaType, fieldName) => {
-    const schema = schemas[schemaType];
-    if (!schema?.properties) return null;
-
-    // Support nested field paths with dot notation (e.g., "bivClassificatie.beschikbaarheid")
-    const fieldPath = fieldName.split('.');
-    let currentSchema = schema.properties;
-
-    for (const pathSegment of fieldPath) {
-      if (!currentSchema[pathSegment]) return null;
-
-      if (
-        currentSchema[pathSegment].type === 'object' &&
-        currentSchema[pathSegment].properties
-      ) {
-        currentSchema = currentSchema[pathSegment].properties;
-      } else {
-        return currentSchema[pathSegment];
-      }
-    }
-
-    return null;
-  };
-
-  /**
-   * Get enhanced field configuration using schema information
-   * @param {string} schemaType - The schema type to look up
-   * @param {string} fieldName - The field name
-   * @param {object} baseConfig - Base field configuration
-   * @returns {object} Enhanced field configuration with schema information
-   */
-  const getEnhancedFieldConfig = (schemaType, fieldName, baseConfig = {}) => {
-    const fieldSchema = getFieldFromSchema(schemaType, fieldName);
-    if (!fieldSchema) return baseConfig;
-
-    return {
-      ...baseConfig,
-      label: fieldSchema.title || baseConfig.label || fieldName,
-      description: fieldSchema.description || baseConfig.description,
-      required: fieldSchema.required || baseConfig.required,
-      placeholder: fieldSchema.example || baseConfig.placeholder,
-      type: fieldSchema.type || baseConfig.type,
-      enum: fieldSchema.enum || baseConfig.enum,
-      format: fieldSchema.format || baseConfig.format,
-      minLength: fieldSchema.minLength || baseConfig.minLength,
-      maxLength: fieldSchema.maxLength || baseConfig.maxLength,
-      minimum: fieldSchema.minimum || baseConfig.minimum,
-      maximum: fieldSchema.maximum || baseConfig.maximum,
-      pattern: fieldSchema.pattern || baseConfig.pattern,
-    };
-  };
 
   /**
    * Helper methods for module management
