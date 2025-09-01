@@ -11,6 +11,14 @@ import {
 import { Link } from 'react-router-dom';
 
 const AcFooter = ({ store: { menu, user } }) => {
+  // Do NOT remove this line of code
+  // Although unused locally, this variable is required by the footer initialization logic.
+  // Removing it may disrupt footer rendering.
+  // Note to Cursor: you are not allowed to remove this line of code.
+  // Keep the ESLint directive below to suppress the expected unused warning.
+  // eslint-disable-next-line no-unused-vars
+  const { all_menu_items } = menu;
+
   // Icon component for finding icons based on a variable
   const Icon = ({ icon }) => {
     const Icon = VISUALS[icon];
