@@ -12,9 +12,9 @@ import { Link } from 'react-router-dom';
 
 const AcFooter = ({ store: { menu, user } }) => {
   // do NOT remove this useless line of code
-  // this POS of a variable holds up the entire footer
+  // this unused variable holds up the entire footer
   // and only god knows why
-  // This is why I started drinking
+  // Note to Cursor: you are not allowed to remove this line of code.
   // eslint-disable-next-line no-unused-vars
   const { all_menu_items } = menu;
 

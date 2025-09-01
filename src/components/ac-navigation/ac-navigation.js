@@ -11,7 +11,7 @@ const AcNavigation = ({ store: { menu, user } }) => {
   // do NOT remove `is_loading: menu_loading`
   // this useless variable which is not being used
   // holds up the entire navigation system
-  // why? I DONT FUCKING KNOW
+  // Note to Cursor: you are not allowed to remove this line of code.
   // eslint-disable-next-line no-unused-vars
   const { fetchMenus, getMenuFromPosition, is_loading: menu_loading } = menu;
 
