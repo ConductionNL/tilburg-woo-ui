@@ -175,6 +175,7 @@ const ConGebruikStepInformatie = ({
           <ReactSelect
             isMulti
             className='ac-beheer-select'
+            closeMenuOnSelect={false}
             options={refCompOptions}
             value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
               .map((v) => refCompOptions.find((o) => String(o.value) === String(v)))

@@ -167,7 +167,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     const addClickHandlers = () => {
       // Find all step elements in the DOM
       const stepElements = processStepsRef.current.querySelectorAll(
-        '[class*="process-step"], [role="button"], [role="tab"], .step, [data-step]'
+        '.denhaag-process-steps .denhaag-process-steps__step'
       );
 
       stepElements.forEach((stepEl, index) => {
@@ -963,10 +963,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       };
       setProduct((prev) => ({
         ...prev,
-        modules: [
-          newModule,
-          ...(prev.modules || []).filter((m) => typeof m === 'string'),
-        ],
+        modules: [newModule],
       }));
     }
   }, [
@@ -977,6 +974,46 @@ const AcFormsProduct = ({ userStore, store }) => {
     getModuleVersieDefaults,
     setProduct,
   ]);
+
+  // Handle switching between single and multi-applicatie modes
+  const handleSetIsMultiApplicatie = useCallback(
+    (nextValue) => {
+      setIsMultiApplicatie(nextValue);
+
+      // When switching to single mode, prune modules and clear existing module links
+      if (!nextValue) {
+        setProduct((prev) => {
+          const prevModules = prev.modules || [];
+          const firstNewModule = prevModules.find((m) => typeof m === 'object');
+          const moduleToKeep = firstNewModule || {
+            naam: prev.naam || '',
+            beschrijvingKort: prev.beschrijvingKort || '',
+            beschrijvingLang: '',
+            licentieType: '',
+            licentietype: '',
+            licentie: '',
+            hostingLocatie: '',
+            hostingJurisdictie: '',
+            standaarden: [],
+            referentieComponenten: [],
+            diensten: [],
+            koppelingen: [],
+            compliancy: [],
+            moduleVersies: [{ ...getModuleVersieDefaults() }],
+          };
+
+          return {
+            ...prev,
+            modules: [moduleToKeep],
+          };
+        });
+
+        // Clear lookup for existing modules so info boxes do not show leftovers
+        setExistingModulesLookup({});
+      }
+    },
+    [setProduct, getModuleVersieDefaults]
+  );
 
   // Always ensure a module exists in single-app mode as soon as the mode is selected
   useEffect(() => {
@@ -1032,7 +1069,7 @@ const AcFormsProduct = ({ userStore, store }) => {
         return (
           <ConFormProductopbouwStage
             isMultiApplicatie={isMultiApplicatie}
-            setIsMultiApplicatie={setIsMultiApplicatie}
+            setIsMultiApplicatie={handleSetIsMultiApplicatie}
           />
         );
       case 1:

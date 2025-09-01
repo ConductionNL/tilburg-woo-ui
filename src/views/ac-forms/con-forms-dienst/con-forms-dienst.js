@@ -72,6 +72,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   // productId -> module options derived from product details
   const [productToModulesLookup, setProductToModulesLookup] = useState({});
   const [selectedModuleIds, setSelectedModuleIds] = useState([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
 
   const [koppelingOptions, setKoppelingOptions] = useState([]);
   const [selectedKoppelingIds, setSelectedKoppelingIds] = useState([]);
@@ -84,7 +85,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     if (!processStepsRef.current) return;
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
-        '[class*="process-step"], [role="button"], [role="tab"], .step'
+        '.denhaag-process-steps .denhaag-process-steps__step'
       );
       stepElements.forEach((el, index) => {
         el.style.cursor = '';
@@ -225,76 +226,96 @@ const ConFormsDienst = ({ store, userStore }) => {
   //   }
   // }, [dienstType]);
 
-  // When products selected, fetch their modules to build lookup
-  useEffect(() => {
-    let cancelled = false;
-    const loadModulesForProducts = async () => {
-      const lookup = {};
-      const labels = {};
-      for (const prodId of selectedProductIds) {
-        try {
-          // First, get product details for the label
-          const productEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product/${prodId}`;
-          const productRes = await fetch(productEndpoint, {
-            headers: { Accept: 'application/json' },
-          });
-          if (productRes.ok) {
-            const productItem = await productRes.json();
-            const prodLabel = String(
+  // Fetch helpers that can be invoked when transitioning to the next step
+  const loadModulesForProducts = async () => {
+    setModulesLoading(true);
+    try {
+      if (!selectedProductIds || selectedProductIds.length === 0) {
+        setProductToModulesLookup({});
+        return;
+      }
+
+      const perProductTasks = selectedProductIds.map(async (prodId) => {
+        const productEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product/${prodId}`;
+        const moduleParams = new URLSearchParams({ _limit: '50', product: prodId });
+        const moduleEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${moduleParams}`;
+
+        const productPromise = fetch(productEndpoint, {
+          headers: { Accept: 'application/json' },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+
+        const modulesPromise = fetch(moduleEndpoint, {
+          headers: { Accept: 'application/json' },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null);
+
+        const [productRes, modulesRes] = await Promise.allSettled([
+          productPromise,
+          modulesPromise,
+        ]);
+
+        const productItem =
+          productRes.status === 'fulfilled' ? productRes.value : null;
+        const moduleData =
+          modulesRes.status === 'fulfilled' ? modulesRes.value : null;
+
+        // Determine label using multiple fallbacks
+        const fromDetail = productItem
+          ? String(
               productItem?.naam ||
                 productItem?.name ||
                 productItem?.title ||
                 productItem?.label ||
-                prodId
+                ''
+            )
+          : '';
+        const fromSelected =
+          (selectedProductOptions || []).find((p) => p.value === prodId)?.label ||
+          '';
+        const fromOptions =
+          (productOptions || []).find((p) => p.value === prodId)?.label || '';
+        const label = fromDetail || fromSelected || fromOptions || String(prodId);
+
+        // Normalize modules
+        const modules = Array.isArray(moduleData)
+          ? moduleData
+          : Array.isArray(moduleData?.results)
+          ? moduleData.results
+          : [];
+
+        const normalized = modules
+          .map((m, idx) => {
+            const id = String(m?.id || m?.value || m?.uuid || m);
+            const mLabel = String(
+              m?.naam || m?.name || m?.title || `Applicatie ${idx + 1}`
             );
-            labels[prodId] = prodLabel;
-          }
+            return { value: id, label: mLabel, data: m };
+          })
+          .filter((o) => o.value && o.label);
 
-          // Then, fetch modules directly from module endpoint filtered by product
-          const moduleParams = new URLSearchParams({
-            _limit: '50',
-            product: prodId, // Filter modules by product ID
-          });
-          const moduleEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${moduleParams}`;
-          const moduleRes = await fetch(moduleEndpoint, {
-            headers: { Accept: 'application/json' },
-          });
+        return { prodId, label, normalized };
+      });
 
-          if (!moduleRes.ok) throw new Error('HTTP ' + moduleRes.status);
-          const moduleData = await moduleRes.json();
+      const settled = await Promise.allSettled(perProductTasks);
+      const lookup = {};
+      const labels = {};
+      settled.forEach((res) => {
+        if (res.status !== 'fulfilled') return;
+        const { prodId, label, normalized } = res.value || {};
+        if (!prodId) return;
+        lookup[prodId] = Array.isArray(normalized) ? normalized : [];
+        if (label) labels[prodId] = label;
+      });
 
-          // Handle both array and paginated response formats
-          const modules = Array.isArray(moduleData)
-            ? moduleData
-            : Array.isArray(moduleData?.results)
-            ? moduleData.results
-            : [];
-
-          lookup[prodId] = modules
-            .map((m, idx) => {
-              const id = String(m?.id || m?.value || m?.uuid || m);
-              const label = String(
-                m?.naam || m?.name || m?.title || `Applicatie ${idx + 1}`
-              );
-              return { value: id, label, data: m };
-            })
-            .filter((o) => o.value && o.label);
-        } catch (error) {
-          console.error(`Failed to load modules for product ${prodId}:`, error);
-          lookup[prodId] = [];
-        }
-      }
-      if (!cancelled) {
-        setProductToModulesLookup(lookup);
-        setProductLabels((prev) => ({ ...prev, ...labels }));
-      }
-    };
-    if (selectedProductIds.length) loadModulesForProducts();
-    else setProductToModulesLookup({});
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedProductIds]);
+      setProductToModulesLookup(lookup);
+      setProductLabels((prev) => ({ ...prev, ...labels }));
+    } finally {
+      setModulesLoading(false);
+    }
+  };
 
   // Keep dienst.producten in sync with current selection
   useEffect(() => {
@@ -314,53 +335,59 @@ const ConFormsDienst = ({ store, userStore }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKoppelingIds]);
 
-  // Load koppelingen filtered by selected module ids using server-side search
-  useEffect(() => {
-    const loadKoppelingenForModules = async () => {
-      try {
-        if (!selectedModuleIds || selectedModuleIds.length === 0) {
-          setKoppelingOptions([]);
-          return;
-        }
-
-        // Single request using multiple _search[]=<id> params (IDs only)
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
-        selectedModuleIds.forEach((id) => params.append('_search[]', String(id)));
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) {
-          setKoppelingOptions([]);
-          return;
-        }
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-
-        const seen = new Map();
-        list.forEach((item, index) => {
-          const id = String(
-            item?.id || item?.['@self']?.id || item?.value || `koppeling-${index}`
-          );
-          if (seen.has(id)) return;
-          const label = String(
-            item?.naam || `${item?.moduleA || '-'} ↔ ${item?.moduleB || '-'}`
-          );
-          seen.set(id, { value: id, label, data: item });
-        });
-
-        setKoppelingOptions(Array.from(seen.values()));
-      } catch (e) {
+  const loadKoppelingenForModules = async () => {
+    try {
+      if (!selectedModuleIds || selectedModuleIds.length === 0) {
         setKoppelingOptions([]);
+        return;
       }
-    };
 
-    loadKoppelingenForModules();
-  }, [selectedModuleIds]);
+      // Single request using multiple _search[]=<id> params (IDs only)
+      const params = new URLSearchParams({ _limit: '50', _page: '1' });
+      selectedModuleIds.forEach((id) => params.append('_search[]', String(id)));
+      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
+      const res = await fetch(endpoint, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) {
+        setKoppelingOptions([]);
+        return;
+      }
+      const data = await res.json();
+      const list = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.results)
+        ? data.results
+        : [];
+
+      const seen = new Map();
+      list.forEach((item, index) => {
+        const id = String(
+          item?.id || item?.['@self']?.id || item?.value || `koppeling-${index}`
+        );
+        if (seen.has(id)) return;
+        const label = String(
+          item?.naam || `${item?.moduleA || '-'} ↔ ${item?.moduleB || '-'}`
+        );
+        seen.set(id, { value: id, label, data: item });
+      });
+
+      setKoppelingOptions(Array.from(seen.values()));
+    } catch (e) {
+      setKoppelingOptions([]);
+    }
+  };
+
+  const handleNextStep = async () => {
+    const next = currentStep + 1;
+    setCurrentStep(next);
+    if (next === 3) {
+      await loadModulesForProducts();
+    }
+    if (next === 4) {
+      await loadKoppelingenForModules();
+    }
+  };
 
   const getStatus = (active, step) => {
     if (active === step) return 'current';
@@ -413,6 +440,7 @@ const ConFormsDienst = ({ store, userStore }) => {
             productLabels={productLabels}
             selectedModuleIds={selectedModuleIds}
             setSelectedModuleIds={setSelectedModuleIds}
+            loadingModules={modulesLoading}
             dienstType={dienstType}
           />
         );
@@ -784,7 +812,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                             currentStep === 0 && 'ac-register-form-next-button'
                           )}
                           icon={<VISUALS.ARROW_RIGHT />}
-                          onClick={() => setCurrentStep(currentStep + 1)}
+                          onClick={handleNextStep}
                           disabled={
                             getDisabledStatus(currentStep) ||
                             saving ||

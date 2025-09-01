@@ -14,6 +14,7 @@ const ConFormApplicatiesStage = memo(
     productLabels,
     selectedModuleIds,
     setSelectedModuleIds,
+    loadingModules,
   }) => {
     const groupedModules = useMemo(() => {
       // Build groups per selected product id with product label
@@ -54,7 +55,9 @@ const ConFormApplicatiesStage = memo(
           applicaties uit de gekozen producten worden getoond.
         </Paragraph>
 
-        {groupedModules.length === 0 ? (
+        {loadingModules ? (
+          <Paragraph>Bezig met laden van applicaties…</Paragraph>
+        ) : groupedModules.length === 0 ? (
           <Paragraph>
             Geen applicaties beschikbaar voor de geselecteerde producten.
           </Paragraph>
