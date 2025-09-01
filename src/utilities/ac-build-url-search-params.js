@@ -1,4 +1,3 @@
-import { toJS } from 'mobx';
 import { DEFAULT_SEARCH_QUERY } from '@stores/publications.store';
 
 const INVALID_VALUES = [null, undefined, ''];

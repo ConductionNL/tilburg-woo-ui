@@ -21,15 +21,16 @@ function getActualType(value) {
  */
 function isExtendedObjectsArray(array) {
   if (!Array.isArray(array) || array.length === 0) return false;
-  
+
   // Check if at least one item has the required @self properties
-  return array.some(item => 
-    item && 
-    typeof item === 'object' && 
-    item['@self'] && 
-    item['@self'].name && 
-    item['@self'].schema && 
-    item['@self'].id
+  return array.some(
+    (item) =>
+      item &&
+      typeof item === 'object' &&
+      item['@self'] &&
+      item['@self'].name &&
+      item['@self'].schema &&
+      item['@self'].id
   );
 }
 
@@ -130,7 +131,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
 
     case 'array': {
       if (!Array.isArray(value)) return <em>Invalid array</em>;
-      
+
       // Get current options for this array (might be configured via profile)
       let currentOptions = {
         inline: options.inline,
@@ -141,53 +142,45 @@ function formatBySchema(schema, data, dataKey, options = {}) {
       // Use profile options for this specific dataKey if defined
       if (dataKey && currentOptions.profile[dataKey]) {
         currentOptions = {
-          inline: currentOptions.profile[dataKey].inline !== undefined 
-            ? currentOptions.profile[dataKey].inline 
-            : currentOptions.inline,
-          includeUnknown: currentOptions.profile[dataKey].includeUnknown !== undefined
-            ? currentOptions.profile[dataKey].includeUnknown 
-            : currentOptions.includeUnknown,
+          inline:
+            currentOptions.profile[dataKey].inline !== undefined
+              ? currentOptions.profile[dataKey].inline
+              : currentOptions.inline,
+          includeUnknown:
+            currentOptions.profile[dataKey].includeUnknown !== undefined
+              ? currentOptions.profile[dataKey].includeUnknown
+              : currentOptions.includeUnknown,
           profile: currentOptions.profile[dataKey].profile || {},
         };
       }
-      
+
       // Check if this is an array of extended objects (with @self properties)
       if (isExtendedObjectsArray(value)) {
         // For extended objects, always use ConRelatedObjectsLinks (which renders inline by default)
         return <ConRelatedObjectsLinks objects={value} />;
       }
-      
+
       // For regular arrays, check if inline rendering is requested
       if (currentOptions.inline && value.length > 0) {
         return (
           <span>
             {value.map((item, i) => (
               <React.Fragment key={i}>
-                {formatBySchema(
-                  schema.items,
-                  item,
-                  null,
-                  currentOptions
-                )}
+                {formatBySchema(schema.items, item, null, currentOptions)}
                 {i < value.length - 1 ? ', ' : ''}
               </React.Fragment>
             ))}
           </span>
         );
       }
-      
+
       // Default array rendering (bullet list)
       return (
         <ul>
           {value.length === 0 && <span>-</span>}
           {value.map((item, i) => (
             <li style={{ marginInlineStart: '16px' }} key={i}>
-              {formatBySchema(
-                schema.items,
-                item,
-                null,
-                currentOptions
-              )}
+              {formatBySchema(schema.items, item, null, currentOptions)}
             </li>
           ))}
         </ul>
@@ -221,7 +214,9 @@ function formatBySchema(schema, data, dataKey, options = {}) {
       // Simplified key selection: unknown first, then known; then apply include filter.
       const knownKeys = Object.keys(props);
       const unknownKeys = currentOptions.includeUnknown
-        ? Object.keys(value).filter((k) => !props.hasOwnProperty(k))
+        ? Object.keys(value).filter(
+            (k) => !Object.prototype.hasOwnProperty.call(props, k)
+          )
         : [];
       let keys = [...unknownKeys, ...knownKeys];
 
@@ -291,7 +286,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
     }
 
     default:
-      return <code>Unsupported type "{actualType}"</code>;
+      return <code>Unsupported type &quot;{actualType}&quot;</code>;
   }
 }
 

@@ -44,7 +44,7 @@ module.exports = {
     },
     'import/resolver': {
       node: {
-        extensions: ['.js', '.jsx'],
+        extensions: ['.web.js', '.js', '.web.jsx', '.jsx'],
         moduleDirectory: ['node_modules', 'src'],
       },
       alias: {
@@ -71,7 +71,7 @@ module.exports = {
           ['@stores', './src/stores'],
           ['@utils', './src/utilities'],
         ],
-        extensions: ['.js', '.jsx'],
+        extensions: ['.web.js', '.js', '.web.jsx', '.jsx'],
       },
     },
     // Avoid resolving problematic package subpaths that are not exported in Node
@@ -90,7 +90,10 @@ module.exports = {
   ],
   rules: {
     // Keep warnings as errors in CI-style scripts
-    'no-console': ['error', { allow: ['warn', 'error', 'info', 'debug'] }],
+    'no-console': [
+      'error',
+      { allow: ['warn', 'error', 'info', 'debug', 'group', 'groupEnd'] },
+    ],
     'no-debugger': 'warn',
 
     // React specific

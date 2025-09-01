@@ -5,11 +5,7 @@ import { withStore } from '@stores';
 import { dia, shapes } from 'jointjs';
 // import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
-import {
-  Select,
-  SelectOption,
-  PrimaryActionButton,
-} from '@utrecht/component-library-react/dist/css-module';
+import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
@@ -24,8 +20,8 @@ const AcGemmaView = ({ store: { gemma } }) => {
     resetViews,
     fetchView,
     resetView,
-    fetchVoorzieningGebruik,
-    resetVoorzieningGebruik,
+    // fetchVoorzieningGebruik,
+    // resetVoorzieningGebruik,
     fetchAllVoorzieningGebruik,
     resetAllVoorzieningGebruik,
   } = gemma;
@@ -33,7 +29,6 @@ const AcGemmaView = ({ store: { gemma } }) => {
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
-  const [voorzieningGebruikNodes, setVoorzieningGebruikNodes] = useState(null);
   const [propertyDefinitions, setPropertyDefinitions] = useState(null);
 
   const getPropertyDefinitions = async () => {
@@ -342,31 +337,13 @@ const AcGemmaView = ({ store: { gemma } }) => {
     });
 
     // Add click handler to the paper
-    paper.on('element:pointerclick', (elementView, evt) => {
+    paper.on('element:pointerclick', (elementView) => {
       const model = elementView.model;
       const onClick = model.prop('onClick');
       if (typeof onClick === 'function') {
         onClick();
       }
     });
-
-    // Helper function to recursively collect all child nodes
-    const getAllChildNodes = (nodes) => {
-      return nodes.reduce((acc, node) => {
-        if (!node.nodes) return acc;
-
-        // Add immediate child nodes
-        const children = node.nodes.map((child) => ({
-          ...child,
-          isChildNode: true,
-        }));
-
-        // Recursively get children of children
-        const grandchildren = getAllChildNodes(node.nodes);
-
-        return [...acc, ...children, ...grandchildren];
-      }, []);
-    };
 
     const convertToViewNode = (node) => {
       // Create a memoized map of viewNodesData for faster lookups
@@ -507,7 +484,7 @@ const AcGemmaView = ({ store: { gemma } }) => {
       .filter(Boolean)
       .filter((node) => node.type && node.name && node.viewNodeId);
 
-    const convertToViewRelationship = (relationship, idx) => {
+    const convertToViewRelationship = (relationship) => {
       const relationshipData = viewRelationsData.find(
         (item) => item.id === relationship.relationshipRef
       );
