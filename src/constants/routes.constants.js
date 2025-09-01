@@ -18,6 +18,7 @@ import {
   AcBeheer,
   AcRegister,
   AcViews,
+  AcObjects,
   AcMyAccount,
   AcLogin,
   ConDirectory,
@@ -44,6 +45,7 @@ export const PATHS = AcLockObject({
   BEHEER: '/beheer',
   BEHEER_TYPE: '/beheer/:type',
   BEHEER_TYPE_DETAILS: '/beheer/:type/:id',
+  OBJECTS: '/objects/:register/:schema',
   REGISTER: '/register',
   AANMELDEN: '/aanmelden',
   FORMS_REGISTER: '/forms/register',
@@ -52,6 +54,7 @@ export const PATHS = AcLockObject({
   FORMS_KOPPELING: '/forms/koppeling',
   FORMS_DIENST: '/forms/dienst',
   VIEWS: '/views/:id',
+  EXTENDEDVIEW: '/extendedview/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
 });
@@ -62,6 +65,7 @@ export const NAVIGATE_TO = AcLockObject({
   BEHEER_TYPE_DETAILS: (type, id) =>
     PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
   VIEWS: (id) => PATHS.VIEWS.replace(':id', id),
+  EXTENDEDVIEW: (id) => PATHS.EXTENDEDVIEW.replace(':id', id),
 });
 
 // Try to import container constants (generated at runtime)
@@ -305,6 +309,14 @@ export const ROUTES = {
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
     component: AcViews,
   },
+  EXTENDEDVIEW: {
+    id: AcUUID(),
+    name: 'ExtendedView',
+    label: LABELS.VIEWS,
+    path: PATHS.EXTENDEDVIEW,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Views`,
+    component: AcViews,
+  },
   ACCOUNT: {
     id: AcUUID(),
     name: 'Beheer Mijn Account',
@@ -320,6 +332,14 @@ export const ROUTES = {
     path: PATHS.DIRECTORY,
     title: 'Directory',
     component: ConDirectory,
+  },
+  OBJECTS: {
+    id: AcUUID(),
+    name: 'Objects',
+    label: 'Objects',
+    path: PATHS.OBJECTS,
+    title: 'Objects',
+    component: AcObjects,
   },
 };
 

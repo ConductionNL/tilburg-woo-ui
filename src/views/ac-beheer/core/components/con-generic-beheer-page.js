@@ -148,6 +148,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+  const showManageActions = !['extendview', 'view'].includes(config?.routeType);
 
   // Related create actions via shared hook
   const { makeActionsForContext } = useRelatedCreateActions({
@@ -517,58 +518,61 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
               >
                 <VISUALS.FILTER />
               </SecondaryActionButton>
-
-              <AcButton
-                style='button'
-                buttonType='primary'
-                onClick={() => setOpenModal('add')}
-                icon={<VISUALS.PLUS />}
-              >
-                Toevoegen
-              </AcButton>
-
-              <ConActionMenu>
-                <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
-                  Acties
-                </ConActionMenu.Trigger>
-
-                <ConActionMenu.Menu position='right'>
-                  <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                    Weergeven als view
-                  </ConActionMenu.Button>
-
-                  <ConActionMenu.SubMenu
-                    label='Exporteren'
-                    icon={<VISUALS.DOWNLOAD />}
-                    position='left'
+              {showManageActions && (
+                <>
+                  <AcButton
+                    style='button'
+                    buttonType='primary'
+                    onClick={() => setOpenModal('add')}
+                    icon={<VISUALS.PLUS />}
                   >
-                    <ConActionMenu.Button onClick={() => downloadData('csv')}>
-                      Als CSV
-                    </ConActionMenu.Button>
-                    <ConActionMenu.Button onClick={() => downloadData('excel')}>
-                      Als Excel
-                    </ConActionMenu.Button>
-                  </ConActionMenu.SubMenu>
+                    Toevoegen
+                  </AcButton>
 
-                  <ConActionMenu.Button
-                    icon={<VISUALS.UPLOAD />}
-                    onClick={() => setOpenModal('import')}
-                  >
-                    Importeren
-                  </ConActionMenu.Button>
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                      Acties
+                    </ConActionMenu.Trigger>
 
-                  <ConActionMenu.Divider />
+                    <ConActionMenu.Menu position='right'>
+                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                        Weergeven als view
+                      </ConActionMenu.Button>
 
-                  <ConActionMenu.Button
-                    icon={<VISUALS.TRASHCAN />}
-                    disabled={selectedRows.length === 0}
-                    onClick={handleMultipleDelete}
-                  >
-                    Delete {selectedRows.length}{' '}
-                    {selectedRows.length === 1 ? 'item' : 'items'}
-                  </ConActionMenu.Button>
-                </ConActionMenu.Menu>
-              </ConActionMenu>
+                      <ConActionMenu.SubMenu
+                        label='Exporteren'
+                        icon={<VISUALS.DOWNLOAD />}
+                        position='left'
+                      >
+                        <ConActionMenu.Button onClick={() => downloadData('csv')}>
+                          Als CSV
+                        </ConActionMenu.Button>
+                        <ConActionMenu.Button onClick={() => downloadData('excel')}>
+                          Als Excel
+                        </ConActionMenu.Button>
+                      </ConActionMenu.SubMenu>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.UPLOAD />}
+                        onClick={() => setOpenModal('import')}
+                      >
+                        Importeren
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Divider />
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.TRASHCAN />}
+                        disabled={selectedRows.length === 0}
+                        onClick={handleMultipleDelete}
+                      >
+                        Delete {selectedRows.length}{' '}
+                        {selectedRows.length === 1 ? 'item' : 'items'}
+                      </ConActionMenu.Button>
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
+                </>
+              )}
             </AcFlex>
           </AcFlex>
 
@@ -576,37 +580,41 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             data={data}
             tableHeaders={[
               ...finalTableHeaders,
-              {
-                id: 'actions',
-                label: 'Acties',
-                key: '',
-                static: true,
-                customContent: (row) => (
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger
-                      icon={<VISUALS.ELLIPSIS />}
-                      buttonType='secondary'
-                    >
-                      Acties
-                    </ConActionMenu.Trigger>
+              ...(showManageActions
+                ? [
+                    {
+                      id: 'actions',
+                      label: 'Acties',
+                      key: '',
+                      static: true,
+                      customContent: (row) => (
+                        <ConActionMenu>
+                          <ConActionMenu.Trigger
+                            icon={<VISUALS.ELLIPSIS />}
+                            buttonType='secondary'
+                          >
+                            Acties
+                          </ConActionMenu.Trigger>
 
-                    <ConActionMenu.Menu position='right'>
-                      {generateActionButtons(row).map((action) => (
-                        <ConActionMenu.Button
-                          key={action.key}
-                          icon={action.icon}
-                          onClick={action.onClick}
-                        >
-                          {action.label}
-                        </ConActionMenu.Button>
-                      ))}
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
-                ),
-              },
+                          <ConActionMenu.Menu position='right'>
+                            {generateActionButtons(row).map((action) => (
+                              <ConActionMenu.Button
+                                key={action.key}
+                                icon={action.icon}
+                                onClick={action.onClick}
+                              >
+                                {action.label}
+                              </ConActionMenu.Button>
+                            ))}
+                          </ConActionMenu.Menu>
+                        </ConActionMenu>
+                      ),
+                    },
+                  ]
+                : []),
             ]}
             getSelectedRows={setSelectedRows}
-            renderSelectRowButtons
+            renderSelectRowButtons={showManageActions}
             ref={tableRef}
             truncateLines={3}
             showSortButtons
