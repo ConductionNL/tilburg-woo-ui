@@ -26,9 +26,12 @@ export class GemmaAPI {
   }
 
   view(id, params) {
-    return this.Client.get(ENDPOINTS.GEMMA.VIEW(id, params)).then(
-      (response) => response.data
-    );
+    const baseUrl = ENDPOINTS.GEMMA.VIEW(id);
+    const qs =
+      params && Object.keys(params).length
+        ? `?${new URLSearchParams(params).toString()}`
+        : '';
+    return this.Client.get(`${baseUrl}${qs}`).then((response) => response.data);
   }
 
   elementReferences(id, params) {
