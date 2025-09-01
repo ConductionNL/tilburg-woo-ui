@@ -15,21 +15,10 @@ const ConCardOrganisationApplication = ({
   id,
   logo,
   cardType,
-  user,
-  published,
-  ...rest // Capture additional object data
+  // user,
+  // published,
+  // ...rest // Capture additional object data
 }) => {
-  // Reconstruct the full object for organization permission checks
-  const fullObject = {
-    id,
-    title,
-    summary,
-    type,
-    logo,
-    published,
-    cardType,
-    ...rest
-  };
   const icon = useMemo(() => {
     switch (cardType) {
       case 'voorziening':

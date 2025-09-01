@@ -9,7 +9,7 @@ const ConCardDienst = ({
   skeleton,
   title,
   summary,
-  published,
+  // published,
   updated,
   category,
   themes,

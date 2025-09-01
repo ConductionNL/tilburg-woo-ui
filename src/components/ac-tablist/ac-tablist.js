@@ -6,7 +6,7 @@ const AcTabList = ({ tabs }) => {
   const tabRefs = useRef([]);
 
   // Handle keyboard navigation
-  const handleKeyDown = (event, index) => {
+  const handleKeyDown = (event) => {
     const tabCount = tabs.length;
     let nextIndex = activeTab;
 

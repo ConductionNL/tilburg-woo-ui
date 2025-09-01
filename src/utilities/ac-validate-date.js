@@ -1,6 +1,6 @@
 export const AcValidateDate = (date) => {
   // Assumes s is "dd/mm/yyyy"
-  if (!/^\d\d\-\d\d\-\d\d\d\d$/.test(date)) {
+  if (!/^\d\d-\d\d-\d\d\d\d$/.test(date)) {
     return false;
   }
   const parts = date.split('-').map((p) => parseInt(p, 10));

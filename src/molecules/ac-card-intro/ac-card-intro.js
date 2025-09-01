@@ -3,7 +3,7 @@ import { Button, Paragraph } from '@utrecht/component-library-react';
 import { VISUALS } from '@constants';
 import { AcCard } from '@atoms';
 
-const AcCardIntro = ({ title, description, image }) => {
+const AcCardIntro = () => {
   return (
     <AcCard blue>
       <Heading>Samenvatting</Heading>

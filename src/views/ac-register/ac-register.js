@@ -112,21 +112,21 @@ const AcRegister = () => {
         return;
       }
 
-      const file = e.target.files[0];
+    const file = e.target.files[0];
 
       if (!acceptedLogoFileTypes.includes(file.type)) {
         setLogoDataUrl(null);
         return;
       }
 
-      file.getDataUrl = async () => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(file);
-        });
-      };
+    file.getDataUrl = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
 
       (async () => {
         const dataUrl = await file.getDataUrl();
@@ -805,8 +805,9 @@ const OrganizationRequiredForm = memo(
                     Met een community wordt een samenwerkingsverband van gemeenten
                     die gezamenlijk applicaties (door)ontwikkelen en de software
                     beschikbaar stellen voor hergebruik bedoelt. Controleer eerst de
-                    lijst &quot;Alle communities&quot; of de community al bestaat. Staat de
-                    community ertussen? Vraag dan toegang aan bij de beheerder.
+                    lijst &quot;Alle communities&quot; of de community al bestaat.
+                    Staat de community ertussen? Vraag dan toegang aan bij de
+                    beheerder.
                   </Paragraph>
                   <Paragraph>
                     De community niet gevonden? Vul dan het aanmeldformulier in.

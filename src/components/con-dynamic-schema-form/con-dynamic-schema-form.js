@@ -6,40 +6,25 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import clsx from 'clsx';
-import { AcFormField } from '@src/molecules';
-import ReactSelect from 'react-select';
 import { sortPropertiesByOrder } from '@src/utilities/con-sort-properties-by-order';
-import { shouldShowFormField } from '@src/utilities/con-authentication-filters';
-import {
-  getFieldAuthorizationState,
-  debugFieldAuthorization,
-} from '@utils/field-authorization';
 // Import reusable field utilities
 import {
   getFieldConfig as utilGetFieldConfig,
   getFieldVisibility as utilGetFieldVisibility,
-  getFieldOptions as utilGetFieldOptions,
+  //   getFieldOptions as utilGetFieldOptions,
   getFieldDisabled as utilGetFieldDisabled,
   getFieldValidation as utilGetFieldValidation,
-  handleFieldChange as utilHandleFieldChange,
+  //   handleFieldChange as utilHandleFieldChange,
   getFieldSizeClass as utilGetFieldSizeClass,
-  getNestedValue,
-  setNestedValue,
-  extractSchemaSlugFromRef,
-  getFieldRefSchemaSlug,
 } from './utils/field-utilities';
 // Import reusable field renderer
 import { renderField as utilRenderField } from './utils/field-renderers';
 import { Tooltip } from 'react-tooltip';
 import { TOOLTIP_ID } from '@src/index.web';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@src/constants';
 
 // ReactSelectWithGlobalHack is now imported in field-renderers.js
 
 // Field components are now imported in field-renderers.js
-import { validateArray, validateNumber, validateString } from './utils/validation';
 
 /**
  * A dynamic form component that automatically generates form fields based on a JSON schema.
@@ -324,8 +309,8 @@ const ConDynamicSchemaForm = forwardRef(
       loadingStates = {},
       disabledStates = {},
       validationStates = {},
-      columns = 2,
-      className = '',
+      // columns = 2,
+      // className = '',
       context = {},
       getIsValid = () => {},
       honorImmutable = false,
@@ -368,10 +353,6 @@ const ConDynamicSchemaForm = forwardRef(
           (!prevOptions || prevOptions.length === 0)
         ) {
           hasNewOptions = true;
-          console.log(
-            `🔧 HACK: Force re-render for new options in ${key}:`,
-            currentOptions
-          );
         }
       });
 
@@ -403,7 +384,7 @@ const ConDynamicSchemaForm = forwardRef(
     // }, [optionsProviders]);
 
     // Extract search handler
-    const { handleSearch } = onSearchHandlers;
+    // const { handleSearch } = onSearchHandlers;
 
     // Expose reset function through ref
     useImperativeHandle(ref, () => ({
@@ -504,14 +485,14 @@ const ConDynamicSchemaForm = forwardRef(
     /**
      * Get field options using the reusable utility
      */
-    const getFieldOptions = (propertyPath, propertySchema) => {
-      return utilGetFieldOptions(
-        propertyPath,
-        propertySchema,
-        optionsProviders,
-        formData
-      );
-    };
+    // const getFieldOptions = (propertyPath, propertySchema) => {
+    //   return utilGetFieldOptions(
+    //     propertyPath,
+    //     propertySchema,
+    //     optionsProviders,
+    //     formData
+    //   );
+    // };
 
     /**
      * Gets the loading state for a specific field from the loadingStates prop.
@@ -520,9 +501,9 @@ const ConDynamicSchemaForm = forwardRef(
      * getFieldLoading("bivClassificatie.beschikbaarheid")
      * // Returns: true if loadingStates["bivClassificatie.beschikbaarheid"] is true
      */
-    const getFieldLoading = (propertyPath) => {
-      return loadingStates[propertyPath] || false;
-    };
+    // const getFieldLoading = (propertyPath) => {
+    //   return loadingStates[propertyPath] || false;
+    // };
 
     /**
      * Get field disabled state using the reusable utility
@@ -599,14 +580,14 @@ const ConDynamicSchemaForm = forwardRef(
     /**
      * Handle field changes using the reusable utility
      */
-    const handleFieldChange = (propertyPath, fieldConfig) => {
-      return utilHandleFieldChange(
-        propertyPath,
-        fieldConfig,
-        onFieldChange,
-        formData
-      );
-    };
+    // const handleFieldChange = (propertyPath, fieldConfig) => {
+    //   return utilHandleFieldChange(
+    //     propertyPath,
+    //     fieldConfig,
+    //     onFieldChange,
+    //     formData
+    //   );
+    // };
 
     /**
      * Render a field using the reusable field renderer utility

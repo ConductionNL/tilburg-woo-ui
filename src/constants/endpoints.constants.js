@@ -4,15 +4,14 @@ const HOSTNAME = window.location.hostname;
 
 // Try to import container constants (generated at runtime)
 let containerConfig;
-let getApiUrl;
 try {
   const containerConstants = require('@constants/container.constants');
   containerConfig = containerConstants;
-  getApiUrl = containerConstants.getApiUrl;
 } catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
+  console.warn(
+    'Container constants not available, falling back to hostname-based logic'
+  );
   containerConfig = null;
-  getApiUrl = () => '/api';
 }
 
 const getGemmaEndpoint = () => {
@@ -55,18 +54,15 @@ export const ENDPOINTS = AcLockObject({
       `/opencatalogi/api/publications/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
     RELATIONS: (_uri) =>
       `/opencatalogi/api/publications?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
-    ATTACHMENTS: (_id) =>
-      `/opencatalogi/api/publications/${_id}/attachments`, // GET
+    ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
   },
   MIJN_OMGEVING: {
     SEARCH: `/mijn-omgeving`, // GET
-    SINGLE: (_id) =>
-      `/mijn-omgeving/${_id}`, // GET
+    SINGLE: (_id) => `/mijn-omgeving/${_id}`, // GET
   },
   AUTHENTICATION: {
     SEARCH: `/publications`, // GET
-    SINGLE: (_id) =>
-      `/publications/${_id}`, // GET
+    SINGLE: (_id) => `/publications/${_id}`, // GET
   },
   FAQS: {
     INDEX: `/faqs`, // GET
@@ -92,7 +88,7 @@ export const ENDPOINTS = AcLockObject({
 
     // VOORZIENING_GEBRUIK: (_id) =>
     //   `${OPENCONNECTOR}${API}${ENDPOINT}${VOORZIENING_GEBRUIK}`,
-    VOORZIENING_GEBRUIK: (_id) =>
+    VOORZIENING_GEBRUIK: () =>
       `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken?extend[]=voorzieningId`,
   }, // GET
   MENU: {
