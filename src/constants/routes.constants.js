@@ -12,6 +12,7 @@ import {
   AcPublication,
   AcSearch,
   AcThemes,
+  AcAuthentication,
   AcMijnOmgeving,
   AcGemma,
   AcNextcloudAuthorization,

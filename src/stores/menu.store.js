@@ -1,4 +1,5 @@
 // Imports => MOBX
+import { ActionSingle } from '@gemeente-denhaag/components-react';
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { processUserTemplate } from '@src/utilities/con-template-processor';
 
@@ -239,6 +240,7 @@ export class MenuStore {
   @action
   fetchMenus = async () => {
     this.setLoadingStatus(true);
+    const hostname = window.location.hostname;
 
     app.store.api.menu
       .list()

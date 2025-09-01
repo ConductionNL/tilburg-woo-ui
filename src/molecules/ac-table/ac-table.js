@@ -15,7 +15,7 @@ const AcTable = ({ header = [], rows = [], footer = [] }) => {
         <TableHeader>
           <TableRow>
             {header.map((column) => (
-              <TableHeaderCell key={column} scope='col'>{column}</TableHeaderCell>
+              <TableHeaderCell scope='col'>{column}</TableHeaderCell>
             ))}
           </TableRow>
         </TableHeader>
@@ -23,9 +23,9 @@ const AcTable = ({ header = [], rows = [], footer = [] }) => {
       {Array.isArray(rows) && (
         <TableBody>
           {rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow>
               {row.map((cell) => (
-                <TableCell key={cell}>{cell}</TableCell>
+                <TableCell>{cell}</TableCell>
               ))}
             </TableRow>
           ))}
@@ -35,7 +35,7 @@ const AcTable = ({ header = [], rows = [], footer = [] }) => {
         <TableFooter>
           <TableRow>
             {footer.map((column) => (
-              <TableCell key={column}>{column}</TableCell>
+              <TableCell>{column}</TableCell>
             ))}
           </TableRow>
         </TableFooter>

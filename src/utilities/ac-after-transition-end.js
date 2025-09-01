@@ -7,7 +7,7 @@ let TransitionEndEvent = null;
 let TransitionStartEvent = null;
 let _delay = null;
 
-export const getAnimationEndEvent = () => {
+const getAnimationEndEvent = () => {
   if (!AcIsNull(AnimationEndEvent)) return AnimationEndEvent;
 
   const el = document.createElement('div');

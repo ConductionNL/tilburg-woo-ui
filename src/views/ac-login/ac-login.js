@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
 import { useSearchParams } from 'react-router-dom';
+import AcAuthentication from '../ac-authentication/ac-authentication';
 import { AcFormField } from '@molecules';
 import {
   Heading,
@@ -14,6 +15,7 @@ import AcButton from '@molecules/ac-button/ac-button';
 import { useDebouncedInput } from '@src/hooks/index';
 
 const AcLogin = ({ store }) => {
+  const [nextcloudLogin, setNextcloudLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
@@ -99,6 +101,10 @@ const AcLogin = ({ store }) => {
     }
 
     setIsLoading(false);
+  };
+
+  const handleNextcloudLogin = () => {
+    setNextcloudLogin(true);
   };
 
   const debouncedSetUsername = useDebouncedInput(
@@ -198,6 +204,8 @@ const AcLogin = ({ store }) => {
           )}
         </form>
       </div>
+
+      {nextcloudLogin && <AcAuthentication />}
     </div>
   );
 };

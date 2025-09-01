@@ -76,7 +76,9 @@ export class AuthStore {
   @computed
   get current_last_activity() {
     const sharedLastActivity = AcGetState(KEYS.LAST_ACTIVITY);
+    console.log('sharedLastActivity', sharedLastActivity);
     if (sharedLastActivity) return parseInt(sharedLastActivity);
+    console.log('this.last_activity', this.last_activity);
     return toJS(this.last_activity);
   }
 
@@ -105,13 +107,13 @@ export class AuthStore {
     }
 
     console.group('[store] Auth => Is Authorized');
-    console.info('Expires_at: ', dayjs(expires_at, 'x').format('LLLL'));
-    console.info('Now:', dayjs(now).format('LLLL'));
-    console.info('Is Expired: ', expired);
+    console.log('Expires_at: ', dayjs(expires_at, 'x').format('LLLL'));
+    console.log('Now:', dayjs(now).format('LLLL'));
+    console.log('Is Expired: ', expired);
 
     authorized = AcIsSet(access_token) && !expired ? true : false;
 
-    console.info('Authorized: ', authorized);
+    console.log('Authorized: ', authorized);
     console.groupEnd();
 
     return authorized === true;
@@ -141,6 +143,8 @@ export class AuthStore {
 
   @action
   handleAuthentication = (response) => {
+    console.log('response', response);
+
     return new Promise((resolve) => {
       if (response?.access_token) {
         this.set(KEYS.ACCESS_TOKEN, response.access_token);
@@ -277,18 +281,19 @@ export class AuthStore {
     const cancelRequestsEvent = new CustomEvent('cancelRequests');
     window.dispatchEvent(cancelRequestsEvent);
 
-    return new Promise((resolve) => {
-      Promise.all([this.logout(), this.clearAuthentication()]).then(() => {
-        app.store.toasters.clear_queue();
-        app.store.toasters.add({
-          variant: 'error',
-          title: 'De huidige sessie is beeindigd.',
-          description:
-            'Wegens inactiviteit ben je automatisch uitgelogd en is de actieve sessie beëindigd.',
-        });
+    return new Promise(async (resolve) => {
+      await this.logout();
+      await this.clearAuthentication();
 
-        resolve();
+      app.store.toasters.clear_queue();
+      app.store.toasters.add({
+        variant: 'error',
+        title: 'De huidige sessie is beeindigd.',
+        description:
+          'Wegens inactiviteit ben je automatisch uitgelogd en is de actieve sessie beëindigd.',
       });
+
+      resolve();
     });
   };
 
@@ -321,19 +326,14 @@ export class AuthStore {
     if (!AcIsSet(target)) return;
     if (AcIsUndefined(this[target])) return;
 
-    // developer note: idk what is going on here but im too scared to find out
     return new Promise((resolve) => {
-      // eslint-disable-next-line no-undef
       runInAction(() => {
-        // eslint-disable-next-line no-undef
         this[target] = _default[target];
       });
 
-      // eslint-disable-next-line no-undef
       if (save && AcIsNull(_default[target])) {
         AcRemoveState(target);
       } else if (save) {
-        // eslint-disable-next-line no-undef
         AcSaveState(target, _default[target]);
       }
 

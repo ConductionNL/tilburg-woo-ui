@@ -106,6 +106,7 @@ export class PagesStore {
   @action
   fetchPages = async () => {
     this.loading.status = true;
+    const hostname = window.location.hostname;
 
     app.store.api.pages
       .list()

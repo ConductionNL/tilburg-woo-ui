@@ -37,7 +37,7 @@ const ConEditableDescription = ({
   maxLength = 2000,
   isMarkdown = false,
   value,
-  // serialize = (v) => v,
+  serialize = (v) => v,
   deserialize = (v) => v ?? '',
 }) => {
   const [isEditing, setIsEditing] = useState(false);

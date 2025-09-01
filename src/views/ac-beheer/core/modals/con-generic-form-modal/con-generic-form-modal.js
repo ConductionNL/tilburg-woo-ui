@@ -4,7 +4,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
-import { AcFlex } from '@atoms';
+import { AcGrid, AcFlex } from '@atoms';
 // eslint-disable-next-line import/no-unresolved
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
@@ -103,12 +103,12 @@ const ConGenericFormModal = ({
   // Generate disabled states for pre-selected fields
   const preSelectedDisabledStates = useMemo(() => {
     const disabledStates = {};
-
+    
     // Automatically disable any pre-selected fields to prevent user modification
     Object.keys(preSelected || {}).forEach((fieldName) => {
       disabledStates[fieldName] = true;
     });
-
+    
     return disabledStates;
   }, [preSelected]);
 
@@ -118,25 +118,16 @@ const ConGenericFormModal = ({
     loadingStates: refLoadingStates,
     disabledStates: refDisabledStates,
     handleSearch,
-  } = useRefOptions(
-    { object, user },
-    currentRegister,
-    schema,
-    config?.fieldConfigs,
-    {
-      preSelected,
-      preSelectedLabels: metadata?.preSelectedLabels || {},
-    }
-  );
+  } = useRefOptions({ object, user }, currentRegister, schema, config?.fieldConfigs, {
+    preSelected,
+    preSelectedLabels: metadata?.preSelectedLabels || {}
+  });
 
   // Merge pre-selected disabled states with ref disabled states
-  const combinedDisabledStates = useMemo(
-    () => ({
-      ...refDisabledStates,
-      ...preSelectedDisabledStates,
-    }),
-    [refDisabledStates, preSelectedDisabledStates]
-  );
+  const combinedDisabledStates = useMemo(() => ({
+    ...refDisabledStates,
+    ...preSelectedDisabledStates,
+  }), [refDisabledStates, preSelectedDisabledStates]);
 
   const schemaLoading = schemaType ? object.isSchemaLoading(schemaType) : false;
 
@@ -431,22 +422,16 @@ const ConGenericFormModal = ({
   }, [optionsLoading, refLoadingStates]);
 
   // Merge options providers to prevent unnecessary re-renders
-  const combinedOptionsProviders = useMemo(
-    () => ({
-      ...optionsProviders,
-      ...refOptionsProviders,
-    }),
-    [optionsProviders, refOptionsProviders]
-  );
+  const combinedOptionsProviders = useMemo(() => ({
+    ...optionsProviders,
+    ...refOptionsProviders,
+  }), [optionsProviders, refOptionsProviders]);
 
-  // Merge loading states to prevent unnecessary re-renders
-  const combinedLoadingStates = useMemo(
-    () => ({
-      ...loadingStates,
-      ...refLoadingStates,
-    }),
-    [loadingStates, refLoadingStates]
-  );
+  // Merge loading states to prevent unnecessary re-renders  
+  const combinedLoadingStates = useMemo(() => ({
+    ...loadingStates,
+    ...refLoadingStates,
+  }), [loadingStates, refLoadingStates]);
 
   // Generate field configurations for ConDynamicSchemaForm
   const fieldConfigs = useMemo(() => {
@@ -539,65 +524,59 @@ const ConGenericFormModal = ({
       }
 
       // Handle outgoing relationship updates
-      if (
-        !isEdit &&
-        metadata?.isOutgoing &&
-        metadata?.currentObjectId &&
-        metadata?.relationshipField
-      ) {
+      if (!isEdit && metadata?.isOutgoing && metadata?.currentObjectId && metadata?.relationshipField) {
         try {
+          console.log('🔗 Updating outgoing relationship:', {
+            currentObjectId: metadata.currentObjectId,
+            relationshipField: metadata.relationshipField,
+            newItemId: response.id,
+            metadata: metadata
+          });
+
           // Get the current object to update - use the CURRENT object's register/schema, not the target's
-          const currentObjectRegister =
-            metadata.currentObjectRegister || config.beheerConfig.registerSlug;
+          const currentObjectRegister = metadata.currentObjectRegister || config.beheerConfig.registerSlug;
           const currentObjectSchema = metadata.currentObjectSchema || 'voorziening'; // fallback for products
+          
+          console.log('🎯 Looking for current object with:', {
+            register: currentObjectRegister,
+            schema: currentObjectSchema,
+            currentObjectId: metadata.currentObjectId
+          });
 
           // Try different type suffixes to find the object in the store
           const possibleTypes = [
-            object.getTypeFromParams(
-              currentObjectRegister,
-              currentObjectSchema,
-              metadata.currentObjectId,
-              null
-            ), // details page
-            object.getTypeFromParams(
-              currentObjectRegister,
-              currentObjectSchema,
-              null,
-              'list'
-            ), // list page
-            object.getTypeFromParams(
-              currentObjectRegister,
-              currentObjectSchema,
-              null,
-              null
-            ), // generic
+            object.getTypeFromParams(currentObjectRegister, currentObjectSchema, metadata.currentObjectId, null), // details page
+            object.getTypeFromParams(currentObjectRegister, currentObjectSchema, null, 'list'), // list page
+            object.getTypeFromParams(currentObjectRegister, currentObjectSchema, null, null), // generic
             `${currentObjectRegister}_${currentObjectSchema}`, // simple format
           ];
-
+          
           let currentObject = null;
-
+          let usedType = null;
+          
           for (const objectType of possibleTypes) {
             currentObject = object.getObject(objectType, metadata.currentObjectId);
             if (currentObject) {
+              usedType = objectType;
               break;
             }
           }
-
+          
+          console.log('🔍 Searched object types:', possibleTypes);
+          console.log('📦 Found current object in type:', usedType);
+          console.log('🎯 Current object:', currentObject);
+          
           // If object not found in store, try to fetch it fresh
           if (!currentObject) {
+            console.log('⚠️ Current object not found in store, fetching fresh...');
             try {
-              await object.fetchObject(
-                currentObjectRegister,
-                currentObjectSchema,
-                metadata.currentObjectId
-              );
+              await object.fetchObject(currentObjectRegister, currentObjectSchema, metadata.currentObjectId);
               // Try to find it again after fetching
               for (const objectType of possibleTypes) {
-                currentObject = object.getObject(
-                  objectType,
-                  metadata.currentObjectId
-                );
+                currentObject = object.getObject(objectType, metadata.currentObjectId);
                 if (currentObject) {
+                  usedType = objectType;
+                  console.log('✅ Found current object after fresh fetch:', usedType);
                   break;
                 }
               }
@@ -605,7 +584,7 @@ const ConGenericFormModal = ({
               console.warn('Failed to fetch current object:', fetchError);
             }
           }
-
+          
           if (currentObject) {
             const currentFieldValue = currentObject[metadata.relationshipField];
             let updatedFieldValue;
@@ -614,8 +593,7 @@ const ConGenericFormModal = ({
             const extractId = (value) => {
               if (typeof value === 'string') return value;
               if (typeof value === 'object' && value?.id) return value.id;
-              if (typeof value === 'object' && value?.['@self']?.id)
-                return value['@self'].id;
+              if (typeof value === 'object' && value?.['@self']?.id) return value['@self'].id;
               return value;
             };
 
@@ -623,24 +601,31 @@ const ConGenericFormModal = ({
               // Convert existing extended objects to IDs and add new ID
               const existingIds = currentFieldValue.map(extractId).filter(Boolean);
               updatedFieldValue = [...existingIds, response.id];
-            } else if (
-              currentFieldValue === null ||
-              currentFieldValue === undefined
-            ) {
+            } else if (currentFieldValue === null || currentFieldValue === undefined) {
               // Initialize as array with new item
               updatedFieldValue = [response.id];
             } else {
               // Field exists but not array - convert to array with extracted ID
               const existingId = extractId(currentFieldValue);
-              updatedFieldValue = existingId
-                ? [existingId, response.id]
-                : [response.id];
+              updatedFieldValue = existingId ? [existingId, response.id] : [response.id];
             }
 
             // Update the current object using PATCH (partial update)
             // Create a clean object with ONLY the field we want to update
             const patchData = {};
             patchData[metadata.relationshipField] = updatedFieldValue;
+            
+            console.log('🩹 About to PATCH current object:', {
+              register: currentObjectRegister,
+              schema: currentObjectSchema,
+              id: metadata.currentObjectId,
+              field: metadata.relationshipField,
+              currentValue: Array.isArray(currentFieldValue) ? currentFieldValue.map(extractId) : currentFieldValue,
+              newValue: updatedFieldValue,
+              patchDataKeys: Object.keys(patchData),
+              patchDataSize: JSON.stringify(patchData).length,
+              actualPatchData: JSON.stringify(patchData, null, 2)
+            });
 
             await object.patchObject(
               currentObjectRegister,
@@ -649,38 +634,32 @@ const ConGenericFormModal = ({
               patchData
             );
 
+            console.log('✅ Outgoing relationship updated successfully');
+            
             // Refresh the current object to get the updated relationship
+            console.log('🔄 Refreshing current object with updated relationship...');
             await object.fetchObject(
               currentObjectRegister,
               currentObjectSchema,
               metadata.currentObjectId,
               { _extend: '@self.schema' }
             );
-
+            
             // Also refresh the related data (uses/used) to show the new item in tabs
-            await object.setActiveObject(
-              currentObjectRegister,
-              currentObjectSchema,
-              {
-                id: metadata.currentObjectId,
-              }
-            );
+            console.log('🔄 Refreshing related data for current object...');
+            await object.setActiveObject(currentObjectRegister, currentObjectSchema, {
+              id: metadata.currentObjectId
+            });
           } else {
-            console.error(
-              '❌ Could not find current object in store after all attempts:',
-              {
-                searchedTypes: possibleTypes,
-                currentObjectId: metadata.currentObjectId,
-                register: currentObjectRegister,
-                schema: currentObjectSchema,
-              }
-            );
+            console.error('❌ Could not find current object in store after all attempts:', {
+              searchedTypes: possibleTypes,
+              currentObjectId: metadata.currentObjectId,
+              register: currentObjectRegister,
+              schema: currentObjectSchema
+            });
           }
         } catch (relationshipError) {
-          console.error(
-            '❌ Failed to update outgoing relationship:',
-            relationshipError
-          );
+          console.error('❌ Failed to update outgoing relationship:', relationshipError);
           // Don't fail the entire operation if relationship update fails
         }
       }
@@ -707,7 +686,7 @@ const ConGenericFormModal = ({
   useEffect(() => {
     if (showSuccessCountdown && countdownSeconds > 0) {
       const timer = setTimeout(() => {
-        setCountdownSeconds((prev) => prev - 1);
+        setCountdownSeconds(prev => prev - 1);
       }, 1000);
       return () => clearTimeout(timer);
     } else if (showSuccessCountdown && countdownSeconds === 0) {
@@ -798,7 +777,9 @@ const ConGenericFormModal = ({
 
   // Generate title - prefer schema title over type slug
   const schemaTitle = schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
-  const title = isEdit ? `${schemaTitle} bewerken` : `${schemaTitle} toevoegen`;
+  const title = isEdit
+    ? `${schemaTitle} bewerken`
+    : `${schemaTitle} toevoegen`;
 
   return (
     <AcModal
@@ -834,7 +815,7 @@ const ConGenericFormModal = ({
 
       {/* Form content - hide during success countdown */}
       {!showSuccessCountdown && (
-        <div className='con-dynamic-form-container'>
+        <div className="con-dynamic-form-container">
           {schemaLoading ? (
             <div>Schema wordt geladen...</div>
           ) : schema ? (

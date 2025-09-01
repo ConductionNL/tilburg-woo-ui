@@ -7,8 +7,8 @@ import ConTable from '@views/ac-beheer/shared/components/con-table';
 import { commongroundApiUrl } from '@config';
 
 const ConDirectory = ({ store: { publications, themes } }) => {
-  const { fetchPublications, is_loading } = publications;
-  const { fetchThemes } = themes;
+  const { fetchPublications, is_loading, getSearchPageURL } = publications;
+  const { fetchThemes, all_themes } = themes;
   const [directories, setDirectories] = useState([]);
   const [isLoadingDirectories, setIsLoadingDirectories] = useState(false);
 

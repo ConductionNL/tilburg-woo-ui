@@ -12,7 +12,7 @@ import {
 import { KEYS } from '@constants';
 
 // Imports => Utilities
-import { AcUUID, AcIsSet, AcIsUndefined } from '@utils';
+import { AcUUID, AcIsSet, AcIsUndefined, AcSaveState } from '@utils';
 
 let app = {};
 
@@ -72,6 +72,7 @@ export class ToastersStore {
     const collection = this.queue.slice();
     const len = collection.length;
     let n = 0;
+    let result = collection;
     let found = null;
     let index = null;
 

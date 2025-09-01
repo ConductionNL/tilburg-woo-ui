@@ -15,22 +15,23 @@ import AuthenticationAPI from '@api/authentication.api';
 import MijnOmgevingAPI from '@api/mijnOmgeving.api';
 import GemmaAPI from '@api/gemma.api';
 
+
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
-  console.info('Event: ', event);
+  console.log('Event: ', event);
   console.groupEnd();
 };
 
 const onDownloadProgress = (event) => {
   console.group('[Axios] => fn.onDownloadProgress');
-  console.info('Event: ', event);
+  console.log('Event: ', event);
   console.groupEnd();
 };
 
 let _timeOut = null;
 let _errorTokens = [];
 
-const unauthenticatedState = () => {
+const unauthenticatedState = (state) => {
   const unauthenticatedEvent = new CustomEvent('unAuthenticate');
   window.dispatchEvent(unauthenticatedEvent);
 };

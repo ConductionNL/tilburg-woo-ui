@@ -2,7 +2,6 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 import { AcSection, AcContainer } from '@atoms';
 import { AcSearchResult } from '@molecules';
-import { LABELS } from '@src/constants';
 
 const AcFeatured = () => {
   return (

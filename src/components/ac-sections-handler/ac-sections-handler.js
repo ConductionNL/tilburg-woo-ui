@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import clsx from 'clsx';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
@@ -20,6 +21,13 @@ const AcSectionsHandler = ({ store: { user }, contents = [] }) => {
 
   // Filter sections based on authentication state
   const filteredContents = filterPageSections(contents, user.isAuthenticated);
+
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('AcSectionsHandler - user.isAuthenticated:', user.isAuthenticated);
+    console.log('AcSectionsHandler - original contents:', contents);
+    console.log('AcSectionsHandler - filtered contents:', filteredContents);
+  }
 
   return (
     <div className={_CLASSES}>

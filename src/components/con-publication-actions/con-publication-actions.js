@@ -29,7 +29,7 @@ const ConPublicationActions = ({
   user,
   id,
   schemaSlug,
-  // title,
+  title,
   published,
   object,
   triggerStyle = 'buttonSlim',
@@ -48,6 +48,8 @@ const ConPublicationActions = ({
 
   // Check organization permissions for edit and publish actions
   const { canEdit, reason } = checkOrganizationPermissions(user, object);
+
+  console.log('ConPublicationActions additionalActions:', additionalActions);
 
   const beheerUrl = `/beheer/${schemaSlug}/${id}`;
 
@@ -91,6 +93,7 @@ const ConPublicationActions = ({
                 onPublish(id);
               } else {
                 // Default publish action - could open a modal or make an API call
+                console.log('Publish action for:', id);
               }
             } : undefined}
             disabled={!canEdit}
@@ -109,6 +112,7 @@ const ConPublicationActions = ({
                 onDepublish(id);
               } else {
                 // Default depublish action - could open a modal or make an API call
+                console.log('Depublish action for:', id);
               }
             } : undefined}
             disabled={!canEdit}

@@ -13,10 +13,21 @@ const AcSearchResult = ({
   category,
   themes,
   id,
-  // user,
-  // schemaSlug,
-  // ...rest // This will capture the full object data
+  user,
+  schemaSlug,
+  ...rest // This will capture the full object data
 }) => {
+  // Reconstruct the full object for organization permission checks
+  const fullObject = {
+    id,
+    title,
+    summary,
+    published,
+    category,
+    themes,
+    schemaSlug,
+    ...rest
+  };
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
       <Heading level={3}>{title}</Heading>

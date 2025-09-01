@@ -1,6 +1,6 @@
 import { LABELS } from '@constants';
 import { AcLink } from '@molecules';
-import _ from 'lodash';
+import { withStore } from '@stores';
 
 export const AcGetAdditionalInfoRow = (
   get_single,
@@ -17,7 +17,6 @@ export const AcGetAdditionalInfoRow = (
     infoArray.push([
       LABELS.CATEGORY,
       <AcLink
-        key={get_single?.category}
         href={getSearchPageURL({
           category: [get_single?.category],
         })}
@@ -32,7 +31,6 @@ export const AcGetAdditionalInfoRow = (
       get_single?.themes?.length
         ? get_single?.themes?.map((theme) => (
             <AcLink
-              key={theme.id}
               href={getSearchPageURL({
                 themes: [theme.id],
               })}
@@ -44,35 +42,35 @@ export const AcGetAdditionalInfoRow = (
     ]);
 
   get_single.license &&
-    infoArray.push(['Licentie', <span key={get_single?.license}>{get_single?.license}</span>]);
+    infoArray.push(['Licentie', <span>{get_single?.license}</span>]);
 
   get_single.data?.status &&
-    infoArray.push(['Status', <span key={get_single?.data?.status}>{get_single?.data?.status}</span>]);
+    infoArray.push(['Status', <span>{get_single?.data?.status}</span>]);
   get_single.data?.software_type &&
     infoArray.push([
       'Software type',
-      <span key={get_single?.data?.software_type}>{get_single?.data?.software_type}</span>,
+      <span>{get_single?.data?.software_type}</span>,
     ]);
   get_single.data?.maintenance_type &&
     infoArray.push([
       'Onderhouds type',
-      <span key={get_single?.data?.maintenance_type}>{get_single?.data?.maintenance_type}</span>,
+      <span>{get_single?.data?.maintenance_type}</span>,
     ]);
   get_single.data?.products &&
     infoArray.push([
       'Products',
-      <span className='ac-publication-products' key={get_single?.data?.products}>
+      <span className='ac-publication-products'>
         {JSON.parse(get_single?.data?.products || '{}')?.length > 0
           ? JSON.parse(get_single?.data?.products || '{}')?.map((product, idx) =>
               product.url ? (
-                <AcLink key={product.url} href={product.url} target='_blank'>
+                <AcLink href={product.url} target='_blank'>
                   {product.label}
                   {idx < JSON.parse(get_single?.data?.products || '{}')?.length - 1
                     ? ', '
                     : ''}
                 </AcLink>
               ) : (
-                <span key={product.label}>
+                <span>
                   {product.label}
                   {idx < JSON.parse(get_single?.data?.products || '{}')?.length - 1
                     ? ', '
@@ -106,15 +104,15 @@ export const AcGetAdditionalInfoRow = (
 
         switch (propertyType) {
           case 'string':
-            infoArray.push([_.upperFirst(key), <span key={value}>{value}</span>]);
+            infoArray.push([_.upperFirst(key), <span>{value}</span>]);
             break;
           case 'array':
             if (typeof value === 'string' && propertyFormat === 'uri') {
               infoArray.push([
                 _.upperFirst(key),
-                <span key={value}>
+                <span>
                   {value.split(/ *, */g)?.map((_value, idx) => (
-                    <AcLink key={_value.replace(/\s/g, '')} href={_value.replace(/\s/g, '')}>
+                    <AcLink href={_value.replace(/\s/g, '')}>
                       {_value.replace(/\s/g, '')}
                       {idx < value.split(/ *, */g)?.length - 1 ? ', ' : ''}{' '}
                     </AcLink>
@@ -124,9 +122,9 @@ export const AcGetAdditionalInfoRow = (
             } else {
               infoArray.push([
                 _.upperFirst(key),
-                <span className='ac-publication-products' key={value}>
+                <span className='ac-publication-products'>
                   {value.split(/ *, */g)?.map((_value, idx) => (
-                    <span key={_value.replace(/\s/g, '')}>
+                    <span>
                       {_value.replace(/\s/g, '')}
                       {idx < value.split(/ *, */g)?.length - 1 ? ', ' : ''}{' '}
                     </span>
@@ -138,11 +136,11 @@ export const AcGetAdditionalInfoRow = (
           case 'object':
             infoArray.push([
               _.upperFirst(key),
-              <pre key={value}>{JSON.stringify(JSON.parse(value), null, 2)}</pre>,
+              <pre>{JSON.stringify(JSON.parse(value), null, 2)}</pre>,
             ]);
             break;
           default:
-            infoArray.push([_.upperFirst(key), <span key={value}>{value}</span>]);
+            infoArray.push([_.upperFirst(key), <span>{value}</span>]);
             break;
         }
 

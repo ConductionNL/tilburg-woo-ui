@@ -1,19 +1,23 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcContainer, AcFlex , AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcLoader , ConDetailsActionsMenu } from '@components';
 import { AcTable, AcLink } from '@molecules';
 import { withStore } from '@stores';
-import { LABELS, VISUALS } from '@constants';
+import { ENDPOINTS, LABELS, VISUALS } from '@constants';
 import { Pagination } from '@amsterdam/design-system-react';
-import { sortPropertiesByOrder } from '@src/utilities';
+import { getCookie, sortPropertiesByOrder } from '@src/utilities';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  BadgeCounter,
+} from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 
 import _ from 'lodash';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { canReadField } from '@utils/field-authorization';
@@ -110,13 +114,15 @@ const AcPublication = observer(
 
     const navigate = useNavigate();
 
+    const isLoggedIn = !!getCookie('nextcloud_user_id');
+
     // Use the same related actions hook as beheer pages
     const openDynamicCreate = useCallback(
       (targetType, preSelected, metadata = {}) => {
         // For publication pages, we'll navigate to the beheer page with modal open
         // TODO: Handle outgoing relationship metadata in beheer page URL params
         if (metadata.isOutgoing) {
-          // handle outgoing relationship metadata
+          console.log('🔄 Outgoing relationship from publication page:', metadata);
         }
         navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
       },
@@ -147,16 +153,92 @@ const AcPublication = observer(
         icon: <VISUALS.PLUS />,
       }));
 
+      console.log('Publication related action items:', items);
       setActionMenuItems(items);
     }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+
+    // Table
+    const [headers, setHeaders] = useState([]);
+    const [rows, setRows] = useState([]);
+
+    const getFilteredData = (data) => {
+      const checkIfVisible = (property) => {
+        return data['@self']?.schema?.properties?.[property]?.visible !== false;
+      };
+
+      const excludeKeys = [
+        '@self',
+        'title',
+        'titel',
+        'name',
+        'naam',
+        'id',
+        ...Object.keys(data['@self']?.schema?.properties || {}).filter(
+          (key) => !checkIfVisible(key)
+        ),
+      ];
+
+      // It is possible to enricht the data with custom properties. This is not used for now.
+      // const enrichedData = {
+      //   publicatieDatum: data['@self']?.published,
+      //   categorie: data['@self']?.schema?.title,
+      //   ...data,
+      // };
+
+      return Object.entries(data)
+        .filter(([key, value]) => {
+          if (excludeKeys.includes(key)) return false;
+          if (typeof value === 'object') return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const orderA = data['@self']?.schema?.properties?.[a[0]]?.order;
+          const orderB = data['@self']?.schema?.properties?.[b[0]]?.order;
+
+          // If both have valid non-zero orders, sort normally
+          if (orderA && orderB && orderA !== 0 && orderB !== 0) {
+            return orderA - orderB;
+          }
+
+          // If orderA is valid and non-zero, it comes first
+          if (orderA && orderA !== 0) return -1;
+          // If orderB is valid and non-zero, it comes first
+          if (orderB && orderB !== 0) return 1;
+
+          // If orderA is 0 and orderB is null/undefined, orderA comes first
+          if (orderA === 0 && !orderB) return -1;
+          // If orderB is 0 and orderA is null/undefined, orderB comes first
+          if (orderB === 0 && !orderA) return 1;
+
+          // If both are 0 or both are null/undefined, maintain original order
+          return 0;
+        })
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
+    };
+
+    const getFilterdRows = (data) => {
+      return Object.entries(data).map(([key, value]) => [
+        <strong>{_.upperFirst(key)}</strong>,
+        <>{getValueField(key, value)}</>,
+      ]);
+    };
+
+    useEffect(() => {
+      setHeaders(['Titel', 'Waarde']);
+      setRows(getFilterdRows(getFilteredData(get_single)));
+    }, [get_single]);
 
     // Tabs
     const [tabIndexUses, setTabIndexUses] = useState(0);
     const [tabIndexUsed, setTabIndexUsed] = useState(0);
     const [uses, setUses] = useState([]);
     const [used, setUsed] = useState([]);
+    const [usesLoading, setUsesLoading] = useState(false);
+    const [usedLoading, setUsedLoading] = useState(false);
 
     const fetchUses = async () => {
+      setUsesLoading(true);
+
       const response = await fetch(
         `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?extend[]=@self.schema`,
         {
@@ -167,14 +249,18 @@ const AcPublication = observer(
         }
       );
       if (!response.ok) {
-        console.error('Error fetching uses:', response.statusText)
+        console.error('Error fetching uses:', response.statusText);
+        setUsesLoading(false);
         return;
       }
       const data = await response.json();
 
       setUses(data.results);
+      setUsesLoading(false);
     };
     const fetchUsed = async () => {
+      setUsedLoading(true);
+
       const response = await fetch(
         `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?extend[]=@self.schema`,
         {
@@ -186,11 +272,13 @@ const AcPublication = observer(
       );
       if (!response.ok) {
         console.error('Error fetching used:', response.statusText);
+        setUsedLoading(false);
         return;
       }
       const data = await response.json();
 
       setUsed(data.results);
+      setUsedLoading(false);
     };
 
     const configuredMetaFields = useMemo(() => {
@@ -247,6 +335,7 @@ const AcPublication = observer(
                     label: 'Verwijderen',
                     icon: VISUALS.TRASHCAN,
                     onClick: () => {
+                      console.log('Delete action for publication:', id);
                       // TODO: Implement delete modal for publications
                     },
                   },
@@ -289,8 +378,7 @@ const AcPublication = observer(
                     !schema?.configuration?.excludedProperties?.includes(key)
                 )
                 .filter(([key]) => !configuredMetaFields.includes(key))
-                // eslint-disable-next-line no-unused-vars
-                .filter(([_, fieldSchema]) =>
+                .filter(([key, fieldSchema]) =>
                   user?.isAuthenticated ? canReadField(user, fieldSchema) : true
                 )
                 .map(([key, schema]) => {
@@ -412,7 +500,7 @@ const AcPublication = observer(
                             // show unique headers
                             _.uniqBy(uses, (use) => use['@self'].schema.id).map(
                               (use, idx) => (
-                                <AcTab key={use['@self'].schema.id} selected={tabIndexUses === idx}>
+                                <AcTab selected={tabIndexUses === idx}>
                                   <span>{use['@self'].schema.title}</span>
                                 </AcTab>
                               )
@@ -447,9 +535,8 @@ const AcPublication = observer(
                             // Description: use 'beschrijving' or fallback to empty string
                             getValueField('beschrijving', item.beschrijving ?? ''),
                             <button
-                              key={item.id}
                               className='utrecht-button slim'
-                              // variant='secondary'
+                              variant='secondary'
                               onClick={() => {
                                 window.location.href = `/publicatie/${item.id}`;
                               }}
@@ -460,7 +547,7 @@ const AcPublication = observer(
 
                           // 4. Render the table
                           return (
-                            <AcTabPanel key={idx} selected={tabIndexUses === idx}>
+                            <AcTabPanel selected={tabIndexUses === idx}>
                               <AcTable header={tabHeaders} rows={tabRows} />
                             </AcTabPanel>
                           );
@@ -485,7 +572,7 @@ const AcPublication = observer(
                             // show unique headers
                             _.uniqBy(used, (use) => use['@self'].schema.id).map(
                               (use, idx) => (
-                                <AcTab key={use['@self'].schema.id} selected={tabIndexUsed === idx}>
+                                <AcTab selected={tabIndexUsed === idx}>
                                   <span>{use['@self'].schema.title}</span>
                                 </AcTab>
                               )
@@ -520,9 +607,8 @@ const AcPublication = observer(
                             // Description: use 'beschrijving' or fallback to empty string
                             getValueField('beschrijving', item.beschrijving ?? ''),
                             <button
-                              key={item.id}
                               className='utrecht-button slim'
-                              // variant='secondary'
+                              variant='secondary'
                               onClick={() => {
                                 window.location.href = `/publicatie/${item.id}`;
                               }}
@@ -533,7 +619,7 @@ const AcPublication = observer(
 
                           // 4. Render the table
                           return (
-                            <AcTabPanel key={idx} selected={tabIndexUsed === idx}>
+                            <AcTabPanel selected={tabIndexUsed === idx}>
                               <AcTable header={tabHeaders} rows={tabRows} />
                             </AcTabPanel>
                           );

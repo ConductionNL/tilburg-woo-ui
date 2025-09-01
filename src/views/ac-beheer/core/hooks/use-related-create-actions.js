@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import _ from 'lodash';
 import { VISUALS } from '@constants';
@@ -81,9 +82,9 @@ export const useRelatedCreateActions = ({
         // Deduplicate by slug to prevent duplicate menu items
         const deduplicatedResults = relatedResults.reduce((acc, rs) => {
           if (!rs?.slug) return acc;
-
+          
           // Check if we already have this slug
-          const existing = acc.find((item) => item.slug === rs.slug);
+          const existing = acc.find(item => item.slug === rs.slug);
           if (!existing) {
             acc.push(rs);
           }
@@ -110,6 +111,14 @@ export const useRelatedCreateActions = ({
           if (createGroups.includes('public')) return true;
           return createGroups.some((grp) => userGroups.includes(grp));
         });
+
+        // Development debug info for related schemas
+        if (process.env.NODE_ENV === 'development' && creatable.length > 0) {
+          console.log('🔍 Related schemas:', {
+            schemaRef,
+            creatableCount: creatable.length,
+          });
+        }
 
         setCreatableRelated(creatable);
       } catch (e) {
@@ -143,20 +152,26 @@ export const useRelatedCreateActions = ({
         )) {
           if (fieldSchema.$ref) {
             // Extract schema slug from $ref
-            const refMatch = fieldSchema.$ref.match(/\/schemas\/([^/]+)$/);
+            const refMatch = fieldSchema.$ref.match(/\/schemas\/([^\/]+)$/);
             const referencedSchemaSlug = refMatch?.[1];
 
             if (referencedSchemaSlug === targetType) {
+              console.log(
+                `✅ Found outgoing relationship field: ${fieldName} -> ${targetType}`
+              );
               return fieldName;
             }
           }
 
           // Handle array items that reference the target schema
           if (fieldSchema.type === 'array' && fieldSchema.items?.$ref) {
-            const refMatch = fieldSchema.items.$ref.match(/\/schemas\/([^/]+)$/);
+            const refMatch = fieldSchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
             const referencedSchemaSlug = refMatch?.[1];
 
             if (referencedSchemaSlug === targetType) {
+              console.log(
+                `✅ Found outgoing array relationship field: ${fieldName} -> ${targetType}`
+              );
               return fieldName;
             }
           }
@@ -185,6 +200,7 @@ export const useRelatedCreateActions = ({
 
         // If schema is not loaded, try to fetch it
         if (!targetSchema) {
+          console.log(`🔄 Fetching schema for ${targetType}...`);
           await object.fetchSchema(targetType);
           const updatedTargetSchemaType = object.getSchemaType(targetType);
           targetSchema = updatedTargetSchemaType
@@ -193,6 +209,7 @@ export const useRelatedCreateActions = ({
         }
 
         if (!targetSchema?.properties) {
+          console.log('❌ No schema properties found for target type:', targetType);
           return { preSelected, preSelectedLabels };
         }
 
@@ -200,6 +217,7 @@ export const useRelatedCreateActions = ({
         const currentSchemaSlug =
           typeof schemaRef === 'string' ? schemaRef : schemaRef?.slug;
         if (!currentSchemaSlug) {
+          console.log('❌ No current schema slug found');
           return { preSelected, preSelectedLabels };
         }
 
@@ -218,10 +236,13 @@ export const useRelatedCreateActions = ({
           ([fieldName, fieldSchema]) => {
             if (fieldSchema.$ref) {
               // Extract schema slug from $ref (e.g., "#/components/schemas/voorziening" -> "voorziening")
-              const refMatch = fieldSchema.$ref.match(/\/schemas\/([^/]+)$/);
+              const refMatch = fieldSchema.$ref.match(/\/schemas\/([^\/]+)$/);
               const referencedSchemaSlug = refMatch?.[1];
 
               if (referencedSchemaSlug === currentSchemaSlug) {
+                console.log(
+                  `✅ Found reference: ${fieldName} -> ${currentSchemaSlug}`
+                );
                 preSelected[fieldName] = ctxId;
                 preSelectedLabels[fieldName] = currentObjectLabel;
               }
@@ -229,16 +250,30 @@ export const useRelatedCreateActions = ({
 
             // Handle array items that reference our schema
             if (fieldSchema.type === 'array' && fieldSchema.items?.$ref) {
-              const refMatch = fieldSchema.items.$ref.match(/\/schemas\/([^/]+)$/);
+              const refMatch = fieldSchema.items.$ref.match(/\/schemas\/([^\/]+)$/);
               const referencedSchemaSlug = refMatch?.[1];
 
               if (referencedSchemaSlug === currentSchemaSlug) {
+                console.log(
+                  `✅ Found array reference: ${fieldName} -> ${currentSchemaSlug}`
+                );
                 preSelected[fieldName] = [ctxId]; // Array field gets array value
                 preSelectedLabels[fieldName] = [currentObjectLabel]; // Array labels
               }
             }
           }
         );
+
+        // Development debug for preSelected fields
+        if (
+          process.env.NODE_ENV === 'development' &&
+          Object.keys(preSelected).length > 0
+        ) {
+          console.log('🎯 Pre-selected fields:', {
+            targetType,
+            fields: Object.keys(preSelected),
+          });
+        }
       } catch (error) {
         console.error('Error building schema-driven preSelected:', error);
         // Fallback to empty preSelected on error

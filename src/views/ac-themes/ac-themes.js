@@ -3,7 +3,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 
 import { AcCardCategory } from '@molecules';
-import { LABELS } from '@constants';
+import { LABELS, PATHS } from '@constants';
 import AcGrid from '@atoms/ac-grid/ac-grid';
 import { AcLoader } from '@components';
 import { AcContainer, AcSection } from '@atoms';
@@ -12,6 +12,7 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
+import { AcBuildURLSearchParams } from '@utils';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
 
 const AcSubjects = ({ store: { publications, themes } }) => {

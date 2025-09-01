@@ -1,12 +1,18 @@
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
+import {
+  Textbox,
+  PrimaryActionButton,
+  BadgeCounter,
+} from '@utrecht/component-library-react/dist/css-module';
 import { useNavigate } from 'react-router';
 import {
   Sidenav,
   SidenavList,
   SidenavItem,
   SidenavLink,
+  SidenavLinkLabel,
 } from '@gemeente-denhaag/components-react';
 
 const AcSideNav = () => {

@@ -121,7 +121,7 @@ export function ConFileDropZone({
 
   const getAllowedFileTypesText = () => {
     const allowedFileTypesText = allowedFileTypes
-      .map((type) => type.split(/[/+]/g)[1])
+      .map((type) => type.split(/[\/\+]/g)[1])
       .join(', ');
     return `Toegestane bestandstypen: ${allowedFileTypesText}`;
   };

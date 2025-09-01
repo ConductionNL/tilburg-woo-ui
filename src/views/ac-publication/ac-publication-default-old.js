@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useParams } from 'react-router-dom';
 import { toJS } from 'mobx';
 
 import { AcCard, AcContainer, AcFlex } from '@atoms';
@@ -10,22 +11,24 @@ import { withStore } from '@stores';
 import {
   Heading,
   Paragraph,
+  Link,
   Textbox,
+  PrimaryActionButton,
   SecondaryActionButton,
-  Button,
 } from '@utrecht/component-library-react/dist/css-module';
 import { LABELS, VISUALS } from '@constants';
 import acFormatDate from '@src/utilities/ac-format-date';
 import { Pagination } from '@amsterdam/design-system-react';
-import { StatusBadge, Heading2, Heading3 } from '@utrecht/component-library-react';
+import { StatusBadge , Heading2, Heading3 } from '@utrecht/component-library-react';
 import _ from 'lodash';
 import { MOCK_CONCEPTS } from '@constants/mock.data.constants';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 
 const AcPublication = observer(({ store: { publications } }) => {
+  const { id } = useParams();
   const {
-    // fetchPublication,
-    // resetPublication,
+    fetchPublication,
+    resetPublication,
     get_single,
     loading,
     attachmentPagination,
@@ -34,9 +37,9 @@ const AcPublication = observer(({ store: { publications } }) => {
     getFilteredAttachments,
     setAttachmentSearch,
     attachmentSearch,
-    // fetchAttachments,
+    fetchAttachments,
     attachments,
-    // resetAttachments,
+    resetAttachments,
   } = publications;
 
   const drawerRef = useRef(null);
@@ -163,7 +166,7 @@ const AcPublication = observer(({ store: { publications } }) => {
 
     if (!primary) {
       return [
-        <AcLink key={row.accessUrl} to={row.accessUrl} target='_blank'>
+        <AcLink to={row.accessUrl} target='_blank'>
           {`${row.title}` || 'Naamloos bestand'}
           <span className='sr-only'>Opent in een nieuw tabblad</span>
           <VISUALS.EXTERNAL_LINK_PINK />
@@ -173,7 +176,7 @@ const AcPublication = observer(({ store: { publications } }) => {
     }
 
     return [
-      <AcLink key={row.accessUrl} to={row.accessUrl} target='_blank'>
+      <AcLink to={row.accessUrl} target='_blank'>
         {`${row.title}` || 'Naamloos bestand'}
         <span className='sr-only'>Opent in een nieuw tabblad</span>
         <VISUALS.EXTERNAL_LINK_PINK />

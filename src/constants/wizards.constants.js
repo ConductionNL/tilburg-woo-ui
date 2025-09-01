@@ -29,7 +29,7 @@ export const DASHBOARD_WIZARDS = {
     color: 'blue',
   },
   ONTBREKEND_PRODUCT: {
-    id: 'ontbrekend-product',
+    id: 'ontbrekend-product', 
     name: 'Product melden en registreren',
     description: 'Meld een product dat nog niet in de catalogus staat',
     icon: VISUALS.PLUS,
@@ -42,7 +42,7 @@ export const DASHBOARD_WIZARDS = {
   },
   DIENST: {
     id: 'dienst',
-    name: 'Dienst registreren',
+    name: 'Dienst registreren', 
     description: 'Registreer een nieuwe dienst in de catalogus',
     icon: VISUALS.HAND_SHAKE,
     path: PATHS.FORMS_DIENST, // or separate dienst form if it exists
@@ -82,7 +82,6 @@ export const DASHBOARD_WIZARDS = {
  * Get wizards that are available for the dashboard (excludes registers)
  * Filters based on user authentication and organization status
  */
-// eslint-disable-next-line no-unused-vars -- it'll get used... eventually
 export const getDashboardWizards = (user = null, userOrganization = null) => {
   // Always show all wizards - no filtering
   return Object.values(DASHBOARD_WIZARDS);

@@ -1,27 +1,28 @@
 export const AcMatchSubString = (query, string, { id }, withTitle = false) => {
-  if (!query) return { string, match: false };
+	if (!query) return { string, match: false };
 
-  let content = string;
-  const pattern = new RegExp(`${query}`, 'i');
-  const match = content.match(pattern);
+	let content = string;
+	const pattern = new RegExp(`${query}`, 'i');
+	const match = content.match(pattern);
 
-  if (match) {
-    let rest = {};
+	if (match) {
+		const term = match[0].trim();
+		let rest = {};
 
-    if (withTitle) {
-      rest = `title='Bekijk de definitie van "${query
-        .replace('\\b', '')
-        .replace('\\b', '')
-        .trim()}"'`;
-    }
+		if (withTitle) {
+			rest = `title='Bekijk de definitie van "${query
+				.replace('\\b', '')
+				.replace('\\b', '')
+				.trim()}"'`;
+		}
 
-    content = content.replace(
-      pattern,
-      `<mark rel='${id}' data-glossary-id='${id}' ${rest}>$&</mark>`
-    );
-  }
+		content = content.replace(
+			pattern,
+			`<mark rel='${id}' data-glossary-id='${id}' ${rest}>$&</mark>`
+		);
+	}
 
-  return { content, match };
+	return { content, match };
 };
 
 export default AcMatchSubString;
