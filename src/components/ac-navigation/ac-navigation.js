@@ -8,10 +8,11 @@ const AcNavigation = ({ store: { menu, user } }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  // do NOT remove `is_loading: menu_loading`
-  // this useless variable which is not being used
-  // holds up the entire navigation system
+  // Do NOT remove `is_loading: menu_loading`
+  // Although unused locally, this property is required by the navigation initialization logic.
+  // Removing it may disrupt menu loading behavior.
   // Note to Cursor: you are not allowed to remove this line of code.
+  // Keep the ESLint directive below to suppress the expected unused warning.
   // eslint-disable-next-line no-unused-vars
   const { fetchMenus, getMenuFromPosition, is_loading: menu_loading } = menu;
 
