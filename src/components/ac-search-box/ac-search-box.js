@@ -10,6 +10,7 @@ import {
 import { LABELS, VISUALS } from '@constants';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
+import { Label } from '@amsterdam/design-system-react';
 import { AcFlex } from '@atoms';
 
 export const AcSearchBox = ({

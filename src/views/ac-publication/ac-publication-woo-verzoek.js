@@ -95,7 +95,6 @@ const AcPublicationWooVerzoek = ({ store: { publications } }) => {
                 [
                   LABELS.CATEGORY,
                   <AcLink
-                    key={get_single?.category}
                     href={getSearchPageURL({
                       category: [get_single?.category],
                     })}
@@ -108,7 +107,6 @@ const AcPublicationWooVerzoek = ({ store: { publications } }) => {
                   get_single?.themes?.length
                     ? get_single?.themes?.map((theme) => (
                         <AcLink
-                          key={theme.id}
                           href={getSearchPageURL({
                             themes: [theme.id],
                           })}

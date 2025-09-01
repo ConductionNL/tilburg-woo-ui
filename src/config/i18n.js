@@ -1,6 +1,4 @@
-// eslint-disable-next-line import/no-unresolved
 import i18n from 'i18next';
-// eslint-disable-next-line import/no-unresolved
 import { reactI18nextModule } from 'react-i18next';
 
 // Imports => Constants

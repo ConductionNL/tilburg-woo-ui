@@ -3,8 +3,13 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import AcModal from '@components/ac-modal/ac-modal';
 import AcFormField from '@molecules/ac-form-field/ac-form-field';
+import AcButton from '@molecules/ac-button/ac-button';
 import { VISUALS } from '@constants';
-import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  Paragraph,
+  Alert,
+} from '@utrecht/component-library-react/dist/css-module';
 import AcColumn from '@atoms/ac-column/ac-column';
 
 const AcMyAccountModal = ({
@@ -12,7 +17,7 @@ const AcMyAccountModal = ({
   onClose,
   onSuccess,
   formData: initialFormData,
-  // touched: initialTouched,
+  touched: initialTouched,
   validateEmail: parentValidateEmail,
   store: { user },
 }) => {

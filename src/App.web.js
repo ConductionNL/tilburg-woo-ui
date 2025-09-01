@@ -1,10 +1,12 @@
 // Imports => React
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAutoFocus, useDocumentTitleFromPath } from '@hooks';
+import { AcSetDocumentTitle, AcCapitalize } from '@utils';
 import loadable from '@loadable/component';
+import clsx from 'clsx';
 
 // Imports => SCSS
 import '@styles/index.scss';
@@ -15,8 +17,9 @@ import '@styles/index.scss';
 import { DEFAULT_ROUTE, ROUTES, AUTHENTICATION_REQUIRED_ROUTES } from '@constants';
 
 // Imports => Utilities
-import { AcHome, AcFallbackErrorPage } from '@views';
+import { AcHome } from '@views';
 import AcContent from '@views/ac-content/ac-content';
+import { AcFallbackErrorPage } from '@views';
 
 // Imports => Components
 import AcProtectedRoute from '@components/ac-protected-route/ac-protected-route';
@@ -27,38 +30,36 @@ const AcHeader = loadable(() => import('@components/ac-header/ac-header'));
 const AcFooter = loadable(() => import('@components/ac-footer/ac-footer'));
 
 // Logout component
-const AcLogout = withStore(
-  observer(({ store }) => {
-    const navigate = useNavigate();
-    const { user } = store;
+const AcLogout = withStore(observer(({ store }) => {
+  const navigate = useNavigate();
+  const { user } = store;
 
-    useEffect(() => {
-      const performLogout = async () => {
-        try {
-          console.info('Logging out user...');
-          await user.logout();
-          console.info('Logout successful, redirecting to home...');
-          navigate('/');
-        } catch (error) {
-          console.error('Logout failed:', error);
-          // Redirect anyway in case of error
-          navigate('/');
-        }
-      };
+  useEffect(() => {
+    const performLogout = async () => {
+      try {
+        console.log('Logging out user...');
+        await user.logout();
+        console.log('Logout successful, redirecting to home...');
+        navigate('/');
+      } catch (error) {
+        console.error('Logout failed:', error);
+        // Redirect anyway in case of error
+        navigate('/');
+      }
+    };
 
-      performLogout();
-    }, [user, navigate]);
+    performLogout();
+  }, [user, navigate]);
 
-    return (
-      <div className='ac-logout-page'>
-        <AcLoader />
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <p>Aan het uitloggen...</p>
-        </div>
+  return (
+    <div className="ac-logout-page">
+      <AcLoader />
+      <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+        <p>Aan het uitloggen...</p>
       </div>
-    );
-  })
-);
+    </div>
+  );
+}));
 
 const App = ({ store }) => {
   const { fetchPages, all_pages, getFilteredPages } = store.pages;
@@ -86,9 +87,7 @@ const App = ({ store }) => {
   try {
     containerConfig = require('@constants/container.constants');
   } catch (error) {
-    console.warn(
-      'Container constants not available, falling back to hostname-based theme logic'
-    );
+    console.warn('Container constants not available, falling back to hostname-based theme logic');
     containerConfig = null;
   }
 
@@ -265,23 +264,21 @@ const App = ({ store }) => {
               element={getView(page)}
             />
           ))}
-
+          
           {/* Static routes */}
           {Object.values(ROUTES)
             .filter((route) => route.component)
             .map((route) => {
               // Check if this route requires authentication
-              const requiresAuth = AUTHENTICATION_REQUIRED_ROUTES.includes(
-                route.path
-              );
-
+              const requiresAuth = AUTHENTICATION_REQUIRED_ROUTES.includes(route.path);
+              
               return (
                 <Route
                   key={`default-route-${route.id}`}
                   path={route.path}
                   element={
                     requiresAuth ? (
-                      <AcProtectedRoute requireAuth={true} fallbackPath='/login'>
+                      <AcProtectedRoute requireAuth={true} fallbackPath="/login">
                         <route.component store={store} />
                       </AcProtectedRoute>
                     ) : (
@@ -291,14 +288,14 @@ const App = ({ store }) => {
                 />
               );
             })}
-
+            
           {/* Logout route */}
           <Route
-            key='logout-route'
-            path='/logout'
+            key="logout-route"
+            path="/logout"
             element={<AcLogout store={store} />}
           />
-
+          
           {/* Fallback route */}
           <Route
             key={`default-route-${DEFAULT_ROUTE.id}`}

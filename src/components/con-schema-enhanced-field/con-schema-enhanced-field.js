@@ -124,7 +124,7 @@ const ConSchemaEnhancedField = ({
   showDescription = true, // NEW: Whether to show field description/info
   store = null, // MobX store injected by withStore
 }) => {
-  const [resetKey] = useState(0);
+  const [resetKey, setResetKey] = useState(0);
 
   // Handle two usage patterns:
   // 1. schemaProperty is a string - look up in schema
@@ -143,7 +143,24 @@ const ConSchemaEnhancedField = ({
       'field';
   } else if (typeof schemaProperty === 'string') {
     // Property name provided - need to look up in schema
-    // Note: early returns moved to bottom to avoid hook order issues
+    if (!schemaType) {
+      console.warn('schemaType is required when schemaProperty is a string');
+      return (
+        <div className={`schema-field-error ${className}`} style={style}>
+          Schema type ontbreekt
+        </div>
+      );
+    }
+
+    const schema = schemas[schemaType];
+    if (!schema) {
+      console.warn(`Schema not found for type: ${schemaType}`);
+      return (
+        <div className={`schema-field-loading ${className}`} style={style}>
+          Schema laden...
+        </div>
+      );
+    }
 
     // Get field schema - support nested properties with dot notation
     const getFieldFromSchema = (schemaType, fieldName) => {
@@ -174,8 +191,14 @@ const ConSchemaEnhancedField = ({
     fieldName = schemaProperty;
   }
 
-  const schemaNotFound = typeof schemaProperty === 'string' && !schemas[schemaType];
-  const propertySchemaNotFound = !propertySchema;
+  if (!propertySchema) {
+    console.warn(`Property schema not available:`, { schemaType, schemaProperty });
+    return (
+      <div className={`schema-field-error ${className}`} style={style}>
+        Schema eigenschap niet gevonden
+      </div>
+    );
+  }
 
   // Apply default if undefined
   let fieldValue = value;
@@ -206,12 +229,19 @@ const ConSchemaEnhancedField = ({
   // Use useRefOptions for automatic $ref field handling ONLY when no custom search is provided
   const shouldUseRefOptions =
     store && store.object && !useCustomSearch && mockSchemaForRefOptions;
-  // Always call hook with safe defaults to keep hook order stable
-  const safeStore = store || { object: null };
-  const safeSchema = mockSchemaForRefOptions || { properties: {} };
-  const refOptionsResult = useRefOptions(safeStore, 'openregister', safeSchema, {
-    [fieldName]: customProps,
-  });
+  const refOptionsResult = shouldUseRefOptions
+    ? useRefOptions(
+        store,
+        'openregister', // Current register - hardcoded for now
+        mockSchemaForRefOptions,
+        { [fieldName]: customProps }, // Field configs
+        {} // Optimizations
+      )
+    : {
+        optionsProviders: {},
+        loadingStates: {},
+        fetchOptions: null,
+      };
 
   // Debug RefOptions status
   if (process.env.NODE_ENV === 'development' && fieldName === 'modules') {
@@ -249,12 +279,12 @@ const ConSchemaEnhancedField = ({
 
   const effectiveOptionsProvider = hasExternalOptionsProvider
     ? optionsProvider
-    : hasRefProperty && !useCustomSearch && shouldUseRefOptions
+    : hasRefProperty && !useCustomSearch
     ? refOptionsResult?.optionsProviders?.[fieldName] || []
     : optionsProvider;
   const effectiveIsLoading = hasExternalOptionsProvider
     ? isLoading
-    : hasRefProperty && !useCustomSearch && shouldUseRefOptions
+    : hasRefProperty && !useCustomSearch
     ? refOptionsResult?.loadingStates?.[fieldName] || false
     : isLoading;
 
@@ -294,7 +324,7 @@ const ConSchemaEnhancedField = ({
     }
 
     // Fallback to internal $ref search if no custom handler
-    if (!hasRefProperty || !refOptionsResult?.fetchOptions || !shouldUseRefOptions) {
+    if (!hasRefProperty || !refOptionsResult?.fetchOptions) {
       return {};
     }
 
@@ -357,36 +387,6 @@ const ConSchemaEnhancedField = ({
     resetKey,
     forceRenderKey: 0,
   });
-
-  // Render early error/loading states after hooks to maintain order
-  if (typeof schemaProperty === 'string') {
-    if (!schemaType) {
-      console.warn('schemaType is required when schemaProperty is a string');
-      return (
-        <div className={`schema-field-error ${className}`} style={style}>
-          Schema type ontbreekt
-        </div>
-      );
-    }
-
-    if (schemaNotFound) {
-      console.warn(`Schema not found for type: ${schemaType}`);
-      return (
-        <div className={`schema-field-loading ${className}`} style={style}>
-          Schema laden...
-        </div>
-      );
-    }
-  }
-
-  if (propertySchemaNotFound) {
-    console.warn(`Property schema not available:`, { schemaType, schemaProperty });
-    return (
-      <div className={`schema-field-error ${className}`} style={style}>
-        Schema eigenschap niet gevonden
-      </div>
-    );
-  }
 
   // Apply size wrapper like ConDynamicSchemaForm does
   const sizeClass = utilGetFieldSizeClass(fieldName, propertySchema, fieldConfig);

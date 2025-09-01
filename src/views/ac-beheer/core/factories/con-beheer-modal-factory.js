@@ -265,7 +265,7 @@ const BeheerModalFactory = {
               data: null,
               isEdit: false,
               preSelected: { organisatie: params?.singleSelectedRow?.id },
-              onSuccess: () => {
+              onSuccess: (_created) => {
                 tableRef.current?.resetSelectedRows();
                 setOpenModal(null);
                 if (typeof fetchData === 'function') fetchData();

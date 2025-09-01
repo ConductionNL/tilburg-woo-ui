@@ -2,7 +2,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useEffect } from 'react';
 
-import { AcAbout, AcHero, AcLoader } from '@components';
+import { AcAbout, AcHero, AcIntro, AcLoader } from '@components';
 import { AcRemoveParagraphTags, AcRemoveTags, AcSanitizeHtml } from '@utils';
 import { AcContainer, AcSection } from '@atoms';
 import AcColumn from '@atoms/ac-column/ac-column';

@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { AcSearchFilters, AcSearchResult } from '@molecules';
 import { AcCard, AcContainer, AcFlex } from '@atoms';
@@ -19,6 +19,7 @@ import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-ca
 
 const AcSearch = ({ store: { publications, user } }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const {
@@ -29,7 +30,7 @@ const AcSearch = ({ store: { publications, user } }) => {
     setSearchQuery,
     fetchPublications,
     is_loading,
-    // getSearchPageURL,
+    getSearchPageURL,
     all_publications,
   } = publications;
 

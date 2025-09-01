@@ -11,7 +11,7 @@ export const sortPropertiesByOrder = (properties) => {
   if (!properties) return {};
 
   return Object.entries(properties)
-    .sort(([, defA], [, defB]) => {
+    .sort(([keyA, defA], [keyB, defB]) => {
       const orderA = defA.order;
       const orderB = defB.order;
 

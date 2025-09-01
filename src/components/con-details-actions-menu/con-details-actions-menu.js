@@ -1,15 +1,12 @@
 import React from 'react';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { VISUALS } from '@constants';
-import {
-  checkOrganizationPermissions,
-  getDisabledActionTooltip,
-} from '@utils/organization-permissions';
+import { checkOrganizationPermissions, getDisabledActionTooltip } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Reusable Details Actions Menu Component
- *
+ * 
  * @param {Object} props
  * @param {Object} props.user - User store object
  * @param {string} props.id - Object ID
@@ -19,7 +16,7 @@ import { TOOLTIP_ID } from '@src/index.web';
  * @param {Object} props.object - Full object data with @self property for organization checks
  * @param {string} props.triggerStyle - Style for trigger button ('button', 'buttonSlim')
  * @param {boolean} props.showViewAction - Whether to show "Bekijken" action
- * @param {boolean} props.showEditAction - Whether to show "Bewerken" action
+ * @param {boolean} props.showEditAction - Whether to show "Bewerken" action  
  * @param {boolean} props.showPublishActions - Whether to show publish/depublish actions
  * @param {Array} props.uniqueActions - Array of unique actions specific to this object type
  * @param {Array} props.relatedActions - Array of related schema "toevoegen" actions
@@ -31,7 +28,7 @@ const ConDetailsActionsMenu = ({
   user,
   id,
   schemaSlug,
-  // title,
+  title,
   published,
   object,
   triggerStyle = 'button',
@@ -71,19 +68,23 @@ const ConDetailsActionsMenu = ({
   const handlePublish = () => {
     if (onPublish) {
       onPublish(id);
+    } else {
+      console.log('Publish action for:', id);
     }
   };
 
   const handleDepublish = () => {
     if (onDepublish) {
       onDepublish(id);
+    } else {
+      console.log('Depublish action for:', id);
     }
   };
 
   return (
     <ConActionMenu>
-      <ConActionMenu.Trigger
-        icon={<VISUALS.ELLIPSIS />}
+      <ConActionMenu.Trigger 
+        icon={<VISUALS.ELLIPSIS />} 
         buttonType={triggerStyle === 'buttonSlim' ? 'secondary' : 'primary'}
         style={triggerStyle}
       >
@@ -93,7 +94,10 @@ const ConDetailsActionsMenu = ({
       <ConActionMenu.Menu position='right'>
         {/* Standard actions */}
         {showViewAction && (
-          <ConActionMenu.Button icon={<VISUALS.EYE />} onClick={handleView}>
+          <ConActionMenu.Button
+            icon={<VISUALS.EYE />}
+            onClick={handleView}
+          >
             Bekijken
           </ConActionMenu.Button>
         )}
@@ -104,9 +108,7 @@ const ConDetailsActionsMenu = ({
             onClick={canEdit ? handleEdit : undefined}
             disabled={!canEdit}
             data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('edit', reason) : undefined
-            }
+            data-tooltip-content={!canEdit ? getDisabledActionTooltip('edit', reason) : undefined}
           >
             Bewerken
           </ConActionMenu.Button>
@@ -119,9 +121,7 @@ const ConDetailsActionsMenu = ({
             onClick={canEdit ? handlePublish : undefined}
             disabled={!canEdit}
             data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('publish', reason) : undefined
-            }
+            data-tooltip-content={!canEdit ? getDisabledActionTooltip('publish', reason) : undefined}
           >
             Publiceren
           </ConActionMenu.Button>
@@ -133,9 +133,7 @@ const ConDetailsActionsMenu = ({
             onClick={canEdit ? handleDepublish : undefined}
             disabled={!canEdit}
             data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('depublish', reason) : undefined
-            }
+            data-tooltip-content={!canEdit ? getDisabledActionTooltip('depublish', reason) : undefined}
           >
             Depubliceren
           </ConActionMenu.Button>
@@ -144,11 +142,9 @@ const ConDetailsActionsMenu = ({
         {/* Unique actions (type-specific) */}
         {uniqueActions.map((action) => {
           // Apply permission check for destructive actions (delete)
-          const isDestructiveAction =
-            action.key === 'delete' ||
-            action.label?.toLowerCase().includes('verwijder');
+          const isDestructiveAction = action.key === 'delete' || action.label?.toLowerCase().includes('verwijder');
           const actionDisabled = isDestructiveAction && !canEdit;
-
+          
           return (
             <ConActionMenu.Button
               key={action.key || action.label}
@@ -159,22 +155,14 @@ const ConDetailsActionsMenu = ({
                   <action.icon />
                 ) : null
               }
-              onClick={
-                actionDisabled
-                  ? undefined
-                  : () => {
-                      if (typeof action.onClick === 'function') {
-                        action.onClick();
-                      }
-                    }
-              }
+              onClick={actionDisabled ? undefined : () => {
+                if (typeof action.onClick === 'function') {
+                  action.onClick();
+                }
+              }}
               disabled={actionDisabled}
               data-tooltip-id={actionDisabled ? TOOLTIP_ID : undefined}
-              data-tooltip-content={
-                actionDisabled
-                  ? getDisabledActionTooltip('delete', reason)
-                  : undefined
-              }
+              data-tooltip-content={actionDisabled ? getDisabledActionTooltip('delete', reason) : undefined}
             >
               {action.label}
             </ConActionMenu.Button>

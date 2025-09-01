@@ -284,7 +284,7 @@ const AcViews = ({ store: { gemma } }) => {
     });
 
     // Add click handler to the paper
-    paper.on('element:pointerclick', (elementView) => {
+    paper.on('element:pointerclick', (elementView, evt) => {
       const model = elementView.model;
       const onClick = model.prop('onClick');
       if (typeof onClick === 'function') {
@@ -407,7 +407,7 @@ const AcViews = ({ store: { gemma } }) => {
       .filter(Boolean)
       .filter((node) => node.type && node.name && node.viewNodeId);
 
-    const convertToViewRelationship = (relationship) => {
+    const convertToViewRelationship = (relationship, idx) => {
       const relationshipData = viewRelationsData.find(
         (item) => item.id === relationship.relationshipRef
       );
@@ -531,8 +531,6 @@ const AcViews = ({ store: { gemma } }) => {
 
   //////////////////// Scrolling ///////////////////////////
 
-  // TODO: this just needs a code fix, panZoomInstance is not being used
-  // eslint-disable-next-line no-unused-vars
   const [panZoomInstance, setPanZoomInstance] = useState(null);
 
   useEffect(() => {

@@ -7,8 +7,9 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcCheckbox = ({ label, value, checked, onChange, className, id }) => {
-  const memoizedId = useMemo(() => `${label}_${value}`, [label, value]);
-  const _id = id || memoizedId;
+
+
+  const _id = id || useMemo(() => `${label}_${value}`, [label, value]);
 
   const onChangeHandler = (e) => {
     if (onChange instanceof Function) onChange(e.target.checked);

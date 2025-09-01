@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
@@ -9,11 +9,15 @@ import {
   AcTabList,
   AcTabPanel,
   AcTabs,
+  ConLogo,
 } from '@atoms';
 import { ConDynamicSidenav, AcLoader , ConDetailsActionsMenu } from '@components';
 import {
   Heading,
   Paragraph,
+  Button,
+  SecondaryActionButton,
+  PrimaryActionButton,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
@@ -23,15 +27,16 @@ import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-detail
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import { canReadField } from '@utils/field-authorization';
 import _ from 'lodash';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { TOOLTIP_ID } from '@src/index.web';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
+import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
-import { AcButton } from '@src/molecules';
 
 /**
  * Generic Beheer Details Page
@@ -144,7 +149,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
 
   // If Files tab is hidden, default to first dynamic tab (index 1)
   useEffect(() => {
-    setTabIndex(() => (!showFilesTab ? 1 : 0));
+    setTabIndex((prev) => (!showFilesTab ? 1 : 0));
   }, [showFilesTab]);
 
   // Uses/Used unique schemas for tabs
@@ -273,7 +278,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                     <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
                     <Paragraph>
                       Dit object is momenteel niet zichtbaar in de zoekfunctie van{' '}
-                      {config?.title || 'de catalogus'}. Gebruik de &quot;Publiceren&quot;
+                      {config?.title || 'de catalogus'}. Gebruik de "Publiceren"
                       actie om het object beschikbaar te maken voor bezoekers.
                     </Paragraph>
                   </Alert>
@@ -324,7 +329,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       {Object.entries(dataProperties)
                         .filter(([key]) => !config.excludedProperties.includes(key))
                         .filter(([key]) => !configuredMetaFields.includes(key))
-                        .filter(([, schema]) => canReadField(user, schema))
+                        .filter(([key, schema]) => canReadField(user, schema))
                         .map(([key, schema]) => {
                           // Check if this property should be displayed inline
                           const isInline =
@@ -451,16 +456,16 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                           key: '',
                                           customContent: (row) => (
                                             <AcFlex column spacing='xs'>
-                                              <AcButton
-                                                style='buttonSlim'
-                                                buttonType='secondary'
+                                              <button
+                                                className='utrecht-button slim'
+                                                variant='secondary'
                                                 onClick={() =>
                                                   config.navigateView(row.id)
                                                 }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
                                                 Bekijken
-                                              </AcButton>
+                                              </button>
                                             </AcFlex>
                                           ),
                                         }
@@ -508,16 +513,16 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                           key: '',
                                           customContent: (row) => (
                                             <AcFlex column spacing='xs'>
-                                              <AcButton
-                                                style='buttonSlim'
-                                                buttonType='secondary'
+                                              <button
+                                                className='utrecht-button slim'
+                                                variant='secondary'
                                                 onClick={() =>
                                                   config.navigateView(row.id)
                                                 }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
                                                 Bekijken
-                                              </AcButton>
+                                              </button>
                                             </AcFlex>
                                           ),
                                         }

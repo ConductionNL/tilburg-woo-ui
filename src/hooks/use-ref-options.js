@@ -18,10 +18,12 @@ window.FORCE_DROPDOWN_UPDATE = window.FORCE_DROPDOWN_UPDATE || new Map();
 // Helper function to clear cache (useful for development or when data changes)
 export const clearRefOptionsCache = () => {
   API_CACHE.clear();
+  console.log('🧹 API cache cleared');
 };
 
 // Helper function to inspect cache (useful for debugging)
 export const inspectRefOptionsCache = () => {
+  console.log('🔍 API cache contents:', Array.from(API_CACHE.entries()));
   return API_CACHE;
 };
 
@@ -29,7 +31,7 @@ export const useRefOptions = (
   store,
   currentRegister,
   schema,
-  // fieldConfigs = {},
+  fieldConfigs = {},
   optimizations = {}
 ) => {
   const [optionsProviders, setOptionsProviders] = useState({});
@@ -74,6 +76,9 @@ export const useRefOptions = (
    */
   const getRegisterForSchema = (schemaSlug) => {
     const mappedRegister = SCHEMA_REGISTER_MAPPING[schemaSlug] || currentRegister;
+    console.log(
+      `🗺️ Register mapping for ${schemaSlug}: ${mappedRegister} (current: ${currentRegister})`
+    );
     return mappedRegister;
   };
 
@@ -147,6 +152,8 @@ export const useRefOptions = (
       }
 
       if (queryParamsString) {
+        console.log(`🔧 Found queryParams for ${fieldPath}: ${queryParamsString}`);
+
         // Parse the queryParams string into an object
         const params = {};
         const urlParams = new URLSearchParams(queryParamsString);
@@ -275,6 +282,8 @@ export const useRefOptions = (
           ...schemaQueryParams, // Add schema-defined query parameters
         };
 
+        console.log(`📋 API params for ${fieldPath}:`, fetchParams);
+
         await object.fetchCollection(
           targetRegister,
           refSchemaSlug,
@@ -286,11 +295,14 @@ export const useRefOptions = (
         // Get the data from the store after fetching using the suffixed type
         const collectionType = `${targetRegister}_${refSchemaSlug}_${optionsTypeSuffix}`;
 
+        console.log(
+          `🔍 useRefOptions: Fetching from ${targetRegister}/${refSchemaSlug} for field ${fieldPath}`
+        );
         const collection = object.getCollection(collectionType);
 
         if (collection && collection.results && collection.results.length > 0) {
           const options = collection.results
-            .map((item) => {
+            .map((item, index) => {
               // Always use @self.id for the value
               const value = item['@self']?.id;
 

@@ -1,6 +1,7 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
+import { LABELS, LABELS_DYNAMIC } from '@constants';
 import { commongroundApiUrl } from '@config';
 
 let app = {};
@@ -254,8 +255,8 @@ export class PublicationsStore {
   @action
   setQueryDate = (key, value) => {
     console.group('SET QUERY DATE');
-    console.info(key, value, 'SET QUERY DATE');
-    console.info('CURRENT QUERY:', toJS(this.query));
+    console.log(key, value, 'SET QUERY DATE');
+    console.log('CURRENT QUERY:', toJS(this.query));
 
     if (!this.query.published) {
       this.query.published = {};
@@ -264,7 +265,7 @@ export class PublicationsStore {
     this.setPage(1);
     this.query.published[key] = value;
 
-    console.info('NEW QUERY:', toJS(this.query));
+    console.log('NEW QUERY:', toJS(this.query));
     console.groupEnd();
   };
 
@@ -296,8 +297,8 @@ export class PublicationsStore {
   @action
   setSort = (key, value) => {
     console.group('SET SORT');
-    console.info(key, value);
-    console.info('VALUE', value);
+    console.log(key, value);
+    console.log('VALUE', value);
     this.query._order = {};
     this.query._order[key] = value;
     console.groupEnd();
@@ -306,16 +307,16 @@ export class PublicationsStore {
   @action
   toggleSearchArrayValue = (key, value) => {
     console.group('TOGGLE SEARCH ARRAY VALUE');
-    console.info(key, value);
+    console.log(key, value);
     if (!this.query[key]) {
-      console.info('KEY DOES NOT EXIST, CREATING ARRAY');
+      console.log('KEY DOES NOT EXIST, CREATING ARRAY');
       this.query[key] = [];
     }
 
     const index = this.query[key]?.indexOf(value);
     // Remove item if we find it in the array.
     if (index !== -1) {
-      console.info(index, this.query[key]);
+      console.log(index, this.query[key]);
       this.query[key] = this.query[key].filter((cat) => cat !== value);
       return;
     }
@@ -448,7 +449,7 @@ export class PublicationsStore {
       });
 
       console.group('MAKING FACETS API CALL');
-      console.info('FACETS SEARCH QUERY:', toJS(search_query));
+      console.log('FACETS SEARCH QUERY:', toJS(search_query));
       console.groupEnd();
 
       const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`, {
@@ -513,11 +514,11 @@ export class PublicationsStore {
     }
 
     console.group('MAKING API CALL - Publications + Facetable');
-    console.info('SEARCH QUERY:', toJS(search_query));
+    console.log('SEARCH QUERY:', toJS(search_query));
     
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`;
-    console.info('FULL URL:', fullUrl);
-    console.info('WORKING URL WAS: http://localhost:3000/api/apps/opencatalogi/api/publications?_facetable=true');
+    console.log('FULL URL:', fullUrl);
+    console.log('WORKING URL WAS: http://localhost:3000/api/apps/opencatalogi/api/publications?_facetable=true');
     console.groupEnd();
 
     // Use fetch with credentials to include session cookies
@@ -561,7 +562,7 @@ export class PublicationsStore {
   fetchAttachments = async (_id) => {
     this.loading.status = true;
     console.group('MAKING API CALL');
-    console.info('SEARCH QUERY:', toJS(this.search_query));
+    console.log('SEARCH QUERY:', toJS(this.search_query));
     console.groupEnd();
 
     app.store.api.publications

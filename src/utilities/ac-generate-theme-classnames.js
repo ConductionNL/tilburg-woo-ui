@@ -1,4 +1,4 @@
-export const AcGenerateThemeClassNames = (prefix) => {
+export const AcGenerateThemeClassNames = prefix => {
   return {
     ALPHA: `${prefix}--alpha`,
     ALPHA_LIGHT: `${prefix}--alpha-light`,
@@ -43,7 +43,7 @@ export const AcGenerateThemeClassNames = (prefix) => {
   };
 };
 
-export const AcGenerateThemeKeys = () => {
+export const AcGenerateThemeKeys = prefix => {
   return [
     'alpha',
     'alpha_light',
@@ -88,7 +88,7 @@ export const AcGenerateThemeKeys = () => {
   ];
 };
 
-export const AcGenerateThemeList = () => {
+export const AcGenerateThemeList = prefix => {
   return [
     'alpha',
     'alpha_light',
