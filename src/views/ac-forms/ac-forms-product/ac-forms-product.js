@@ -564,13 +564,12 @@ const AcFormsProduct = ({ userStore, store }) => {
     } else {
       // Fallback to hardcoded if schema doesn't have queryParams
       baseParams.gemmaType = 'Referentiecomponent';
-      // baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+      // Ensure standards are included with referentiecomponenten
+      baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
     }
 
-    // // Ensure we do not send schema-provided _extend for referentiecomponenten requests
-    if (baseParams._extend) {
-      delete baseParams._extend;
-    }
+    // Keep _extend for referentiecomponenten so we get standaarden in results
+    // Remove array-style param variant if present
     if (baseParams['_extend[]']) {
       delete baseParams['_extend[]'];
     }

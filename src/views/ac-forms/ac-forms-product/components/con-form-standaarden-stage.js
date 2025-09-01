@@ -42,7 +42,12 @@ const ConFormStandaardenStage = ({
     if (!standard) return null;
     if (typeof standard === 'string') return standard;
     return (
-      standard.id || standard.identifier || standard.value || standard.slug || null
+      standard.id ||
+      standard?.['@self']?.id ||
+      standard.identifier ||
+      standard.value ||
+      standard.slug ||
+      null
     );
   };
 
