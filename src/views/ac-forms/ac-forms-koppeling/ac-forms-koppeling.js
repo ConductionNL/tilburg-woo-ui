@@ -31,7 +31,7 @@ const AcFormsKoppeling = () => {
 
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
-        '[class*="process-step"], [role="button"], [role="tab"], .step'
+        '.denhaag-process-steps .denhaag-process-steps__step'
       );
 
       stepElements.forEach((stepEl, index) => {

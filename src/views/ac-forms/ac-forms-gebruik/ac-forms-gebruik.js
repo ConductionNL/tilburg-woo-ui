@@ -49,7 +49,7 @@ const AcFormsGebruik = ({ store }) => {
 
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
-        '[class*="process-step"], [role="button"], [role="tab"], .step'
+        '.denhaag-process-steps .denhaag-process-steps__step'
       );
 
       stepElements.forEach((stepEl, index) => {
@@ -429,6 +429,7 @@ const AcFormsGebruik = ({ store }) => {
             item?.moduleA ||
             item?.bronApplicatie ||
             item?.source ||
+            item?.naam ||
             `A${index + 1}`;
           const appB =
             item?.applicatie2 ||
@@ -436,9 +437,12 @@ const AcFormsGebruik = ({ store }) => {
             item?.moduleB ||
             item?.doelApplicatie ||
             item?.target ||
+            item?.naam ||
             `B${index + 1}`;
 
-          const label = `${appA} ↔ ${appB}`;
+          const direction = item?.gegevensuitwisselingRichting;
+          const arrow = direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+          const label = `${appA} ${arrow} ${appB}`;
           const value = item?.value || item?.id || label;
           return { value: String(value), label: String(label) };
         });
@@ -851,27 +855,29 @@ const AcFormsGebruik = ({ store }) => {
 
               <div style={{ marginTop: '1rem' }}>
                 <div className='utrecht-alert utrecht-alert--success'>
-                  <Paragraph>
-                    <strong>Uw gebruik is succesvol geregistreerd!</strong>
-                  </Paragraph>
-                  <Paragraph>
-                    Het gebruik van{' '}
-                    {gebruik?.product?.naam ||
-                      gebruik?.module?.naam ||
-                      'het geselecteerde product'}
-                    {gebruikType === 'eigen-organisatie'
-                      ? ` door uw organisatie`
-                      : ` door ${
-                          gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
-                        }`}{' '}
-                    is opgeslagen in de software catalogus.
-                  </Paragraph>
-                  <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
-                    Type registratie:{' '}
-                    {gebruikType === 'eigen-organisatie'
-                      ? 'Gebruik voor eigen organisatie'
-                      : 'Gebruik voor andere organisatie (klant)'}
-                  </Paragraph>
+                  <div className='utrecht-alert__content'>
+                    <Paragraph>
+                      <strong>Uw gebruik is succesvol geregistreerd!</strong>
+                    </Paragraph>
+                    <Paragraph>
+                      Het gebruik van{' '}
+                      {gebruik?.product?.naam ||
+                        gebruik?.module?.naam ||
+                        'het geselecteerde product'}
+                      {gebruikType === 'eigen-organisatie'
+                        ? ` door uw organisatie`
+                        : ` door ${
+                            gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
+                          }`}{' '}
+                      is opgeslagen in de software catalogus.
+                    </Paragraph>
+                    <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
+                      Type registratie:{' '}
+                      {gebruikType === 'eigen-organisatie'
+                        ? 'Gebruik voor eigen organisatie'
+                        : 'Gebruik voor andere organisatie (klant)'}
+                    </Paragraph>
+                  </div>
                 </div>
               </div>
 

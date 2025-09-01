@@ -196,6 +196,7 @@ const ConFormDienstenStage = memo(
                   <TableCell>
                     <ReactSelect
                       options={appOptions}
+                      isClearable
                       value={
                         selectedApplication[rowId] != null
                           ? appOptions.find(
