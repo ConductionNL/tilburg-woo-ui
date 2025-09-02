@@ -18,7 +18,17 @@ const DEFAULT_QUERY = {
 
 
 
-// Function to build facetsQueries from available facets
+// Optimized: Only request essential facets instead of all available ones
+export const buildEssentialFacetsQueries = () => {
+  // Only request the most important facets for performance
+  return [
+    [['@self', 'register'], 'terms'],     // Publication register
+    [['@self', 'schema'], 'terms'],       // Publication schema
+    ['cloudDienstverleningsmodel', 'terms'], // Service delivery model
+  ];
+};
+
+// Legacy function for backward compatibility (if needed)
 export const buildFacetsQueries = (availableFacets) => {
   const queries = [];
 
@@ -419,39 +429,36 @@ export class PublicationsStore {
     this.setFacetsLoadingStatus(true);
     
     try {
-      // Use facets configuration 
-      const facetsConfig = this.facetsConfig;
+      // 🚀 OPTIMIZED: Use essential facets only for better performance  
+      const essentialFacetsQueries = buildEssentialFacetsQueries();
       
-      if (!facetsConfig) {
-        console.error('No facets config found. Make sure fetchPublications was called first.');
-        this.setFacetsLoadingStatus(false);
-        return;
-      }
-
-      // Build dynamic facets queries
-      const dynamicFacetsQueries = buildFacetsQueries(facetsConfig);
-      
-      // Create search query with facets (full query like user specified)
+      // 🚀 OPTIMIZED: Use _limit=0 for facet-only queries (no objects needed)
       const search_query = {
         ...buildPublicationsSearchQuery(this.search_query),
-        _facetable: true,
+        _limit: 0, // Only get facets, not actual objects - MAJOR performance boost!
+        // No _facetable needed here - we already have config from first call
       };
 
-      // Add facets parameters
-      dynamicFacetsQueries.forEach(([key, value]) => {
+      // 🚀 OPTIMIZED: Proper URL encoding using URLSearchParams
+      const urlParams = new URLSearchParams(search_query);
+      
+      // Add essential facets with proper URL encoding
+      essentialFacetsQueries.forEach(([key, value]) => {
         if (Array.isArray(key)) {
-          const brackets = key.map((val) => `[${val}]`).join('');
-          search_query[`_facets${brackets}`] = value;
+          // Use proper bracket notation: _facets[@self][register]=terms
+          const facetParam = `_facets[${key.join('][')}]`;
+          urlParams.set(facetParam, value);
         } else {
-          search_query[`_facets[${key}]`] = value;
+          urlParams.set(`_facets[${key}]`, value);
         }
       });
 
-      console.group('MAKING FACETS API CALL');
-      console.info('FACETS SEARCH QUERY:', toJS(search_query));
+      console.group('🚀 OPTIMIZED FACETS API CALL');
+      console.log('Essential facets only:', essentialFacetsQueries.length, 'facets instead of all available');
+      console.log('Query params:', urlParams.toString());
       console.groupEnd();
 
-      const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`, {
+      const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${urlParams.toString()}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -466,10 +473,8 @@ export class PublicationsStore {
         return res.json();
       });
 
-
-
       if (response.facets) {
-        // Add titles to facets from available facets
+        // Add basic titles to facets (simplified since we only use essential ones)
         const facetsWithTitles = {};
         for (const [key, value] of Object.entries(response.facets)) {
           if (key === '@self') {
@@ -477,13 +482,13 @@ export class PublicationsStore {
             for (const [subKey, subValue] of Object.entries(value)) {
               facetsWithTitles[key][subKey] = {
                 ...subValue,
-                title: facetsConfig?.object_fields?.[subKey]?.title || subKey,
+                title: this.getFacetTitle(subKey),
               };
             }
           } else {
             facetsWithTitles[key] = {
               ...value,
-              title: facetsConfig?.object_fields?.[key]?.title || key,
+              title: this.getFacetTitle(key),
             };
           }
         }
@@ -498,13 +503,23 @@ export class PublicationsStore {
     }
   };
 
+  // Helper method to get facet titles
+  getFacetTitle = (key) => {
+    const titleMap = {
+      'register': 'Register',
+      'schema': 'Schema',
+      'cloudDienstverleningsmodel': 'Cloud Dienstverleningsmodel',
+    };
+    return titleMap[key] || key;
+  };
+
   @action
   fetchPublications = async () => {
     this.loading.status = true;
 
-    // For the first call, include search term if it exists, plus _facetable
+    // 🚀 OPTIMIZED: Keep _facetable for facets config, but we'll optimize the facets call separately
     const search_query = {
-      _facetable: true // Essential for faceting
+      _facetable: true, // Still needed to get facets config for second call
     };
     
     // Add search term if user has entered one
@@ -512,12 +527,11 @@ export class PublicationsStore {
       search_query._search = this.search_query._search;
     }
 
-    console.group('MAKING API CALL - Publications + Facetable');
-    console.info('SEARCH QUERY:', toJS(search_query));
+    console.group('🚀 HYBRID API CALL - Publications + Facets Config');
+    console.log('SEARCH QUERY:', toJS(search_query));
     
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`;
-    console.info('FULL URL:', fullUrl);
-    console.info('WORKING URL WAS: http://localhost:3000/api/apps/opencatalogi/api/publications?_facetable=true');
+    console.log('URL (with _facetable for config):', fullUrl);
     console.groupEnd();
 
     // Use fetch with credentials to include session cookies
