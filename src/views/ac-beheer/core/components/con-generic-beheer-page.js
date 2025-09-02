@@ -362,6 +362,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Generate action buttons for table rows
   const generateActionButtons = useCallback(
     (row) => {
+      const isViewOnlyRoute = ['extendview', 'view'].includes(config.routeType);
+
       const baseActions = [
         {
           key: 'view',
@@ -433,6 +435,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           setOpenModal('delete');
         },
       };
+
+      if (isViewOnlyRoute) {
+        return baseActions.filter((action) => action.key === 'view');
+      }
 
       return [
         ...baseActions,
@@ -580,38 +586,34 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             data={data}
             tableHeaders={[
               ...finalTableHeaders,
-              ...(showManageActions
-                ? [
-                    {
-                      id: 'actions',
-                      label: 'Acties',
-                      key: '',
-                      static: true,
-                      customContent: (row) => (
-                        <ConActionMenu>
-                          <ConActionMenu.Trigger
-                            icon={<VISUALS.ELLIPSIS />}
-                            buttonType='secondary'
-                          >
-                            Acties
-                          </ConActionMenu.Trigger>
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                static: true,
+                customContent: (row) => (
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
+                    >
+                      Acties
+                    </ConActionMenu.Trigger>
 
-                          <ConActionMenu.Menu position='right'>
-                            {generateActionButtons(row).map((action) => (
-                              <ConActionMenu.Button
-                                key={action.key}
-                                icon={action.icon}
-                                onClick={action.onClick}
-                              >
-                                {action.label}
-                              </ConActionMenu.Button>
-                            ))}
-                          </ConActionMenu.Menu>
-                        </ConActionMenu>
-                      ),
-                    },
-                  ]
-                : []),
+                    <ConActionMenu.Menu position='right'>
+                      {generateActionButtons(row).map((action) => (
+                        <ConActionMenu.Button
+                          key={action.key}
+                          icon={action.icon}
+                          onClick={action.onClick}
+                        >
+                          {action.label}
+                        </ConActionMenu.Button>
+                      ))}
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
+                ),
+              },
             ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons={showManageActions}

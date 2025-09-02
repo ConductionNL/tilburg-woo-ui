@@ -60,6 +60,7 @@ export const PATHS = AcLockObject({
   EXTENDEDVIEW: '/extendedview/:id',
   BEHEER_VIEWS: '/beheer/views',
   BEHEER_VIEWS_DETAIL: '/beheer/views/:id',
+  BEHEER_VIEW_DETAIL: '/beheer/view/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
 });
@@ -74,6 +75,7 @@ export const NAVIGATE_TO = AcLockObject({
   EXTENDEDVIEW: (id) => PATHS.EXTENDEDVIEW.replace(':id', id),
   BEHEER_VIEWS: () => PATHS.BEHEER_VIEWS,
   BEHEER_VIEWS_DETAIL: (id) => PATHS.BEHEER_VIEWS_DETAIL.replace(':id', id),
+  BEHEER_VIEW_DETAIL: (id) => PATHS.BEHEER_VIEW_DETAIL.replace(':id', id),
 });
 
 // Try to import container constants (generated at runtime)
@@ -339,6 +341,16 @@ export const ROUTES = {
     } | GEMMA weergaven beheer`,
     component: ConBeheerViews,
   },
+  BEHEER_VIEW_DETAIL: {
+    id: AcUUID(),
+    name: 'Beheer View Detail',
+    label: 'GEMMA weergaven beheer',
+    path: PATHS.BEHEER_VIEW_DETAIL,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven beheer`,
+    component: ConBeheerViews,
+  },
   VIEWS: {
     id: AcUUID(),
     name: 'Views',
@@ -571,6 +583,7 @@ export const AUTHENTICATION_REQUIRED_ROUTES = [
   PATHS.BEHEER_TYPE_DETAILS,
   PATHS.BEHEER_VIEWS,
   PATHS.BEHEER_VIEWS_DETAIL,
+  PATHS.BEHEER_VIEW_DETAIL,
   PATHS.MY_ACCOUNT,
 ];
 
