@@ -531,7 +531,7 @@ const BeheerPageConfigFactory = {
               label: 'Organisatie',
               key: 'organisatie',
               customContent: (row) =>
-                row.organisatie?.naam || row.organisatie || '-',
+                String(row.organisatie?.naam || row.organisatie || '-'),
             },
             actief: {
               id: 'status',
