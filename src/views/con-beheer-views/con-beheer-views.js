@@ -73,28 +73,42 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  // Process view data for rendering - using nested data directly
+  // Process view data for rendering - prefer new API (viewNodes/viewRelationships)
   useEffect(() => {
-    if (!gemma.get_view) {
+    if (!gemma || !gemma.get_view) {
       setViewIsDoneLoading(false);
       return;
     }
 
-    // Reset loading state
     setViewIsDoneLoading(false);
 
-    // Extract nodes and relationships directly from the view response
-    const nodes = gemma.get_view.nodes || gemma.get_view.viewNodes || [];
-    const relationships =
-      gemma.get_view.connections || gemma.get_view.viewRelationships || [];
+    if (Array.isArray(gemma.get_view.viewNodes)) {
+      const sanitizedNodes = (gemma.get_view.viewNodes || []).map((node) => ({
+        ...node,
+        viewNodeId:
+          node.viewNodeId ||
+          node.id ||
+          node.identifier ||
+          node.modelNodeId ||
+          'unknown',
+        name: node.name || node.elementProperties?.name || 'unknown',
+        type: (
+          node.type ||
+          node.elementProperties?.gemmaType ||
+          'dataobject'
+        ).toLowerCase(),
+      }));
+      setViewNodesData(sanitizedNodes);
+      setViewRelationsData(gemma.get_view.viewRelationships || []);
+      return;
+    }
 
-    // Set the data directly - no additional API calls needed
+    // Fallback to legacy structures if present
+    const nodes = gemma.get_view.nodes || [];
+    const relationships = gemma.get_view.connections || [];
     setViewNodesData(nodes);
     setViewRelationsData(relationships);
-
-    // Set loading complete
-    setViewIsDoneLoading(true);
-  }, [gemma.get_view]);
+  }, [gemma && gemma.get_view]);
 
   // Render view when data is ready (same logic as public version)
   useEffect(() => {
@@ -123,7 +137,7 @@ const ConBeheerViews = ({ store }) => {
         el: container,
         model: outputGraph,
         width: 1168,
-        height: 800,
+        height: 'auto',
         gridSize: 1,
         interactive: {
           elementMove: false,
@@ -142,55 +156,52 @@ const ConBeheerViews = ({ store }) => {
         },
       });
 
-      // Convert nodes function - data is already nested in API response
-      const convertToViewNode = (node) => {
-        // Handle both API response structures
-        return {
-          modelNodeId: node.modelNodeId || node.elementRef || node.identifier,
-          viewNodeId: node.viewNodeId || node.identifier || node.modelNodeId,
-          name: node.name || 'Unknown',
-          type: node.type || 'dataobject',
-          x: node.x || 0,
-          y: node.y || 0,
-          width: node.width || 120,
-          height: node.height || 80,
-          style: {
-            fillColor: node.color || '#ffffff',
-            color: node.borderColor || '#000000',
-          },
-          description: node.description || null,
-        };
-      };
+      let viewNodes = [];
+      let viewRelationships = [];
 
-      // Convert relationships function - data is already nested in API response
-      const convertToViewRelationship = (relationship) => {
-        return {
-          modelRelationshipId:
-            relationship.modelRelationshipId ||
-            relationship.relationshipRef ||
-            relationship.identifier,
-          viewRelationshipId:
-            relationship.viewRelationshipId || relationship.identifier,
-          name: relationship.name || relationship.label || '',
-          type: relationship.type || 'association',
-          sourceId:
-            relationship.sourceId ||
-            relationship.sourceElementRef ||
-            relationship.source,
-          targetId:
-            relationship.targetId ||
-            relationship.targetElementRef ||
-            relationship.target,
-        };
-      };
-
-      // Convert nodes for rendering - use already processed data
-      const viewNodes = (viewNodesData || []).map(convertToViewNode).filter(Boolean);
-
-      // Convert relationships for rendering - use already processed data
-      const viewRelationships = (viewRelationsData || [])
-        .map(convertToViewRelationship)
-        .filter(Boolean);
+      if (Array.isArray(gemma.get_view.viewNodes)) {
+        viewNodes = viewNodesData || [];
+        viewRelationships = (viewRelationsData || []).map((r) => ({
+          modelRelationshipId: r.modelRelationshipId,
+          sourceId: r.sourceId,
+          targetId: r.targetId,
+          viewRelationshipId: r.viewRelationshipId,
+          type: (r.type || 'relationship').toLowerCase(),
+          bendpoints: Array.isArray(r.bendpoints)
+            ? r.bendpoints.map((b) => ({
+                x: parseFloat(b.x) || 0,
+                y: parseFloat(b.y) || 0,
+              }))
+            : [],
+          label: {},
+        }));
+      } else {
+        // Legacy fallback: map minimal fields
+        viewNodes = (viewNodesData || []).map((n) => ({
+          modelNodeId: n.elementRef || n.identifier || n.modelNodeId,
+          viewNodeId: n.identifier || n.viewNodeId || n.modelNodeId,
+          name: n.name || 'unknown',
+          type: (n.type || 'dataobject').toLowerCase(),
+          x: n.position?.x || n.x || 0,
+          y: n.position?.y || n.y || 0,
+          width: n.position?.w || n.width || 120,
+          height: n.position?.h || n.height || 80,
+        }));
+        viewRelationships = (viewRelationsData || []).map((r) => ({
+          modelRelationshipId: r.relationshipRef || r.identifier,
+          sourceId: r.source || r.sourceElementRef,
+          targetId: r.target || r.targetElementRef,
+          viewRelationshipId: r.identifier,
+          type: (r.type || 'relationship').toLowerCase(),
+          bendpoints: Array.isArray(r.bendpoints)
+            ? r.bendpoints.map((b) => ({
+                x: parseFloat(b.x) || 0,
+                y: parseFloat(b.y) || 0,
+              }))
+            : [],
+          label: {},
+        }));
+      }
 
       // Render the graph (match public views list for consistent colors)
       ViewRenderer.renderToGraph(
