@@ -518,7 +518,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'contactpersoon',
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
-          defaultHeaders: ['name', 'status', 'lastActivity', 'email', 'organisatie'],
+          defaultHeaders: ['name', 'isAanspreekpunt', 'functie', 'e-mailadres'],
           customHeaders: {
             voornaam: {
               id: 'name',
@@ -531,25 +531,16 @@ const BeheerPageConfigFactory = {
               label: 'Organisatie',
               key: 'organisatie',
               customContent: (row) =>
-                String(row.organisatie?.naam || row.organisatie || '-'),
-            },
-            actief: {
-              id: 'status',
-              label: 'Status',
-              key: 'actief',
-              customContent: (row) => (
-                <span>{row.actief ? 'Actief' : 'Inactief'}</span>
+                String(
+                  row.organisatie?.naam ||
+                    row.organisatie?.value ||
+                    row.organisatie ||
+                    '-'
+                ),
+              sortComparator: byNested(
+                (r) =>
+                  r?.organisatie?.naam || r?.organisatie?.value || r?.organisatie
               ),
-            },
-            voorkeuren: {
-              id: 'preferences',
-              label: 'Voorkeuren',
-              key: 'voorkeuren',
-              customContent: (row) => {
-                if (!row?.voorkeuren) return '-';
-                return `Taal: ${row.voorkeuren.taal}, Thema: ${row.voorkeuren.thema}`;
-              },
-              sortComparator: byNested((r) => r?.voorkeuren?.taal),
             },
           },
           uniqueActions: [
