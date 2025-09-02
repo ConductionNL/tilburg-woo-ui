@@ -80,6 +80,11 @@ const ConViewsList = ({ store }) => {
   // Handle view selection from dropdown
   const handleViewSelection = (selectedOption) => {
     if (selectedOption) {
+      // Set loading state immediately when switching views
+      setViewIsDoneLoading(false);
+      setViewNodesData(null);
+      setViewRelationsData(null);
+      
       setSelectedView(selectedOption);
       
       // Update URL with selected view ID
@@ -112,6 +117,14 @@ const ConViewsList = ({ store }) => {
     const relationships = gemma.get_view.connections || gemma.get_view.viewRelationships || [];
 
     console.log('🎯 Found', nodes.length, 'nodes and', relationships.length, 'relationships in view data');
+    
+    // Debug: Log first few nodes to understand structure
+    if (nodes.length > 0) {
+      console.log('🔍 First node structure:', JSON.stringify(nodes[0], null, 2));
+      console.log('🔍 Node has elementRef:', !!nodes[0].elementRef);
+      console.log('🔍 Node has referentieComponenten:', !!nodes[0].referentieComponenten, nodes[0].referentieComponenten);
+      console.log('🔍 Node has style:', !!nodes[0].style, nodes[0].style);
+    }
 
     // Set the data directly - no additional API calls needed
     setViewNodesData(nodes);
@@ -171,42 +184,131 @@ const ConViewsList = ({ store }) => {
         },
       });
 
-      // Convert nodes function - data is already nested in API response
+      // Convert nodes function - enhanced to handle referentie componenten and styling
       const convertToViewNode = (node) => {
-        // Handle both API response structures
+        // Helper function to get RGBA color string
+        const getRGBAColor = (colorObj) => {
+          if (!colorObj || typeof colorObj !== 'object') return null;
+          const { r = 255, g = 255, b = 255, a = 1 } = colorObj;
+          return `rgba(${r}, ${g}, ${b}, ${a})`;
+        };
+
+        // Handle nodes without elementRef (including referentie componenten)
+        if (!node.elementRef) {
+          // Handle Label type nodes
+          if (node.type === 'Label') {
+            return {
+              modelNodeId: node.identifier,
+              viewNodeId: node.identifier || 'unknown',
+              name: node.label,
+              type: node.type?.toLowerCase() || 'label',
+              x: node.position?.x || 0,
+              y: node.position?.y || 0,
+              width: node.position?.w || 120,
+              height: node.position?.h || 30,
+              parent: null,
+              description: node.label,
+              font: node.style?.font || null,
+              elementRef: null,
+            };
+          }
+
+          // Handle referentieComponenten - create multiple nodes
+          if (node.referentieComponenten && Array.isArray(node.referentieComponenten)) {
+            return node.referentieComponenten.map((refComponent) => {
+              const uniqueId = `${node.id}_${refComponent}`;
+              
+              return {
+                modelNodeId: uniqueId,
+                viewNodeId: uniqueId,
+                name: refComponent || 'Referentie Component',
+                type: 'referentiecomponent',
+                x: node.position?.x || 0,
+                y: node.position?.y || 0,
+                width: node.position?.w || 120,
+                height: node.position?.h || 80,
+                parent: node.id,
+                description: `Referentie component: ${refComponent}`,
+                elementRef: null,
+                color: getRGBAColor(node.style?.fillColor) || '#e6f3ff',
+                borderColor: getRGBAColor(node.style?.lineColor) || '#0066cc',
+                font: node.style?.font ? {
+                  name: node.style.font.name,
+                  size: node.style.font.size,
+                  color: getRGBAColor(node.style.color) || '#000000',
+                } : null,
+              };
+            }).filter(Boolean);
+          }
+
+          // For debugging: don't skip nodes, create a basic node instead
+          console.warn('⚠️ Creating basic node for unprocessed node:', node);
+          return {
+            modelNodeId: node.identifier || node.id || `unknown-${Date.now()}`,
+            viewNodeId: node.identifier || node.id || `unknown-${Date.now()}`,
+            name: node.name || node.label || 'Unknown Node',
+            type: node.type?.toLowerCase() || 'unknown',
+            x: node.position?.x || 0,
+            y: node.position?.y || 0,
+            width: node.position?.w || 120,
+            height: node.position?.h || 80,
+            parent: null,
+            color: '#ffffff',
+            borderColor: '#000000',
+            description: 'Unprocessed node type',
+            elementRef: null,
+          };
+        }
+
+        // Handle regular nodes with elementRef
         return {
-          modelNodeId: node.modelNodeId || node.elementRef || node.identifier,
-          viewNodeId: node.viewNodeId || node.identifier || node.modelNodeId,
+          modelNodeId: node.isChildNode ? node.identifier : node.elementRef,
+          viewNodeId: node.identifier || 'unknown',
           name: node.name || 'Unknown',
-          type: node.type || 'dataobject',
-          x: node.x || 0,
-          y: node.y || 0,
-          width: node.width || 120,
-          height: node.height || 80,
-          style: {
-            fillColor: node.color || '#ffffff',
-            color: node.borderColor || '#000000',
-          },
+          type: node.type?.toLowerCase() || 'dataobject',
+          x: node.position?.x || 0,
+          y: node.position?.y || 0,
+          width: node.position?.w || 120,
+          height: node.position?.h || 80,
+          parent: null,
+          // Enhanced styling from node.style
+          color: getRGBAColor(node.style?.fillColor) || '#ffffff',
+          borderColor: getRGBAColor(node.style?.lineColor) || '#000000',
+          font: node.style?.font ? {
+            name: node.style.font.name,
+            size: node.style.font.size,
+            color: getRGBAColor(node.style.color) || '#000000',
+          } : null,
           description: node.description || null,
+          elementRef: node.elementRef || null,
+          onClick: node.elementRef ? () => {
+            window.open(
+              `https://www.gemmaonline.nl/wiki/GEMMA/${node.elementRef}`,
+              '_blank'
+            );
+          } : null,
         };
       };
 
-      // Convert relationships function - data is already nested in API response
+      // Convert relationships function - enhanced to handle various API formats
       const convertToViewRelationship = (relationship) => {
-        return {
-          modelRelationshipId: relationship.modelRelationshipId || relationship.relationshipRef || relationship.identifier,
-          viewRelationshipId: relationship.viewRelationshipId || relationship.identifier,
+        // Debug log raw relationship data
+        const converted = {
+          modelRelationshipId: relationship.modelRelationshipId || relationship.relationshipRef || relationship.identifier || relationship.id,
+          viewRelationshipId: relationship.viewRelationshipId || relationship.identifier || relationship.id,
           name: relationship.name || relationship.label || '',
           type: relationship.type || 'association',
-          sourceId: relationship.sourceId || relationship.sourceElementRef || relationship.source,
-          targetId: relationship.targetId || relationship.targetElementRef || relationship.target,
+          sourceId: relationship.sourceId || relationship.sourceElementRef || relationship.source || relationship.sourceViewNodeRef,
+          targetId: relationship.targetId || relationship.targetElementRef || relationship.target || relationship.targetViewNodeRef,
         };
+        return converted;
       };
 
-      // Convert nodes for rendering - use already processed data
+      // Convert nodes for rendering - handle both single nodes and arrays (referentieComponenten)
       const viewNodes = (viewNodesData || [])
         .map(convertToViewNode)
-        .filter(Boolean);
+        .filter(Boolean)
+        .flat(); // Flatten arrays from referentieComponenten
 
       // Convert relationships for rendering - use already processed data
       const viewRelationships = (viewRelationsData || [])
@@ -214,6 +316,19 @@ const ConViewsList = ({ store }) => {
         .filter(Boolean);
 
       console.log('🎯 Rendering with nodes:', viewNodes.length, 'relationships:', viewRelationships.length);
+      
+      // Debug: Log node and relationship counts and structures
+      console.log('🔍 Total nodes after conversion:', viewNodes.length);
+      console.log('🔍 Total relationships:', viewRelationships.length);
+      console.log('🔍 Node IDs:', viewNodes.map(n => ({ id: n.modelNodeId, viewId: n.viewNodeId, name: n.name })));
+      console.log('🔍 Relationship source/targets:', viewRelationships.map(r => ({ 
+        sourceId: r.sourceId, 
+        targetId: r.targetId,
+        name: r.name 
+      })));
+      
+      // For now, let's try with ALL relationships to see what happens
+      console.log('⚠️ Using ALL relationships without filtering to debug rendering issue');
 
       // Render the graph
       ViewRenderer.renderToGraph(
@@ -302,10 +417,11 @@ const ConViewsList = ({ store }) => {
             value={selectedView}
             onChange={handleViewSelection}
             placeholder="Selecteer een weergave..."
-            isLoading={gemma.is_loading}
+            isLoading={gemma.is_loading || (selectedView && !viewIsDoneLoading)}
             isDisabled={gemma.is_loading || viewOptions.length === 0}
             className="con-views-dropdown"
             classNamePrefix="con-views-dropdown"
+            loadingMessage={() => "Schema wordt geladen..."}
           />
           
           {/* Download SVG Button - Next to dropdown */}
@@ -323,8 +439,17 @@ const ConViewsList = ({ store }) => {
         </div>
       </div>
 
-      {/* Loading State */}
-      {gemma.is_loading && !gemma.get_view && <AcLoader />}
+      {/* Loading States */}
+      {(gemma.is_loading || (selectedView && gemma.get_view && !viewIsDoneLoading)) && (
+        <div className='con-views-loading'>
+          <AcLoader />
+          <p>
+            {gemma.is_loading && !gemma.get_view ? 
+              'Schema wordt geladen...' : 
+              'Weergave wordt gerenderd...'}
+          </p>
+        </div>
+      )}
 
       {/* Error State */}
       {gemma.get_viewError && (
@@ -335,22 +460,9 @@ const ConViewsList = ({ store }) => {
         </div>
       )}
 
-      {/* View Content */}
-      {gemma.get_view && !gemma.get_viewError && (
-        <>
-          {/* Graph Container */}
-          {viewNodesData && viewRelationsData && (
-            <div className='con-views-graph-container' id='graph-container'></div>
-          )}
-          
-          {/* Loading indicator for graph rendering */}
-          {gemma.get_view && !viewIsDoneLoading && (
-            <div className='con-views-graph-loading'>
-              <AcLoader />
-              <p>Weergave wordt geladen...</p>
-            </div>
-          )}
-        </>
+      {/* View Content - Only show when fully loaded and rendered */}
+      {gemma.get_view && !gemma.get_viewError && viewIsDoneLoading && viewNodesData && viewRelationsData && (
+        <div className='con-views-graph-container' id='graph-container'></div>
       )}
 
       {/* No Views Available */}

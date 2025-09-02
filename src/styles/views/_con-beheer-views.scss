@@ -78,6 +78,7 @@
   }
 }
 
+.con-beheer-views-loading,
 .con-beheer-views-graph-loading {
   display: flex;
   flex-direction: column;
@@ -89,6 +90,7 @@
   p {
     margin-top: 1rem;
     color: var(--nlds-color-neutral-60);
+    font-weight: 500;
   }
 }
 
