@@ -26,6 +26,8 @@ import {
   AcFormsProduct,
   AcFormsKoppeling,
   ConFormsDienst,
+  ConViewsList,
+  ConBeheerViews,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -54,7 +56,10 @@ export const PATHS = AcLockObject({
   FORMS_KOPPELING: '/forms/koppeling',
   FORMS_DIENST: '/forms/dienst',
   VIEWS: '/views/:id',
+  VIEWS_LIST: '/views',
   EXTENDEDVIEW: '/extendedview/:id',
+  BEHEER_VIEWS: '/beheer/views',
+  BEHEER_VIEWS_DETAIL: '/beheer/views/:id',
   MY_ACCOUNT: '/account',
   DIRECTORY: '/directory',
 });
@@ -65,7 +70,10 @@ export const NAVIGATE_TO = AcLockObject({
   BEHEER_TYPE_DETAILS: (type, id) =>
     PATHS.BEHEER_TYPE_DETAILS.replace(':type', type).replace(':id', id),
   VIEWS: (id) => PATHS.VIEWS.replace(':id', id),
+  VIEWS_LIST: () => PATHS.VIEWS_LIST,
   EXTENDEDVIEW: (id) => PATHS.EXTENDEDVIEW.replace(':id', id),
+  BEHEER_VIEWS: () => PATHS.BEHEER_VIEWS,
+  BEHEER_VIEWS_DETAIL: (id) => PATHS.BEHEER_VIEWS_DETAIL.replace(':id', id),
 });
 
 // Try to import container constants (generated at runtime)
@@ -301,6 +309,36 @@ export const ROUTES = {
     } | Formulier Dienst`,
     component: ConFormsDienst,
   },
+  VIEWS_LIST: {
+    id: AcUUID(),
+    name: 'Views List',
+    label: 'GEMMA weergaven',
+    path: PATHS.VIEWS_LIST,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven`,
+    component: ConViewsList,
+  },
+  BEHEER_VIEWS: {
+    id: AcUUID(),
+    name: 'Beheer Views',
+    label: 'GEMMA weergaven beheer',
+    path: PATHS.BEHEER_VIEWS,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven beheer`,
+    component: ConBeheerViews,
+  },
+  BEHEER_VIEWS_DETAIL: {
+    id: AcUUID(),
+    name: 'Beheer Views Detail',
+    label: 'GEMMA weergaven beheer',
+    path: PATHS.BEHEER_VIEWS_DETAIL,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | GEMMA weergaven beheer`,
+    component: ConBeheerViews,
+  },
   VIEWS: {
     id: AcUUID(),
     name: 'Views',
@@ -531,6 +569,8 @@ export const AUTHENTICATION_REQUIRED_ROUTES = [
   PATHS.BEHEER,
   PATHS.BEHEER_TYPE,
   PATHS.BEHEER_TYPE_DETAILS,
+  PATHS.BEHEER_VIEWS,
+  PATHS.BEHEER_VIEWS_DETAIL,
   PATHS.MY_ACCOUNT,
 ];
 
