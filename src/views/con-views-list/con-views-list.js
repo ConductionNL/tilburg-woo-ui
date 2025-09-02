@@ -27,64 +27,12 @@ const ConViewsList = ({ store }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [panZoomInstance, setPanZoomInstance] = useState(null);
-  const [propertyDefinitions, setPropertyDefinitions] = useState([]);
-  const getPropertyDefinitions = async () => {
-    try {
-      const response = await fetch(
-        '/openconnector/api/endpoint/models?_fields[]=propertyDefinitions'
-      );
-      const data = await response.json();
-      const defs = Array.isArray(data)
-        ? data.flatMap((m) => m.propertyDefinitions || [])
-        : data?.propertyDefinitions || [];
-      setPropertyDefinitions(defs);
-    } catch (_e) {
-      /* ignore fetch errors */
-    }
-  };
 
   const getViewName = (view) => {
-    // 0) Prefer direct field if provided by API
-    const inlineTitle = view?.titelViewSwc;
-    if (typeof inlineTitle === 'string' && inlineTitle.trim()) {
-      return inlineTitle;
-    }
-
-    const namePropId =
-      propertyDefinitions?.find((property) => property.name === 'Titel view SWC')
-        ?.identifier || 'propid-70';
-
-    let foundName;
-
-    // 1) Top-level properties array
-    if (Array.isArray(view?.properties)) {
-      const match = view.properties.find(
-        (property) =>
-          property.propertyDefinitionRef === namePropId ||
-          property?.propertyDefinition?.identifier === namePropId
-      );
-      if (match?.value) {
-        foundName = match.value;
-      }
-    }
-
-    // 2) Nested xml.properties.property array
-    if (!foundName && Array.isArray(view?.xml?.properties?.property)) {
-      const match = view.xml.properties.property.find(
-        (property) =>
-          property._propertyDefinitionRef === namePropId ||
-          property.___propertyDefinitionRef === namePropId ||
-          property.__propertyDefinitionRef === namePropId ||
-          property.propertyDefinitionRef === namePropId
-      );
-      if (match?.value?._value) {
-        foundName = match.value._value;
-      } else if (typeof match?.value === 'string') {
-        foundName = match.value;
-      }
-    }
-
-    return foundName || view?.name || 'Unnamed View';
+    const inlineTitle =
+      typeof view?.titelViewSwc === 'string' ? view.titelViewSwc.trim() : '';
+    if (inlineTitle) return inlineTitle;
+    return view?.name || 'Unnamed View';
   };
 
   // Load views list on component mount
@@ -94,11 +42,6 @@ const ConViewsList = ({ store }) => {
       gemma.fetchViews();
     }
   }, [gemma]);
-
-  // Load property definitions once
-  useEffect(() => {
-    getPropertyDefinitions();
-  }, []);
 
   // Handle URL query parameter for selected view
   useEffect(() => {
