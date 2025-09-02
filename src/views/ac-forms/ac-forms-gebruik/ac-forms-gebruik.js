@@ -35,7 +35,7 @@ const mapToOption = (item, index) => {
 const AcFormsGebruik = ({ store }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  
+
   // Submission state management (following product wizard pattern)
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [error, setError] = useState({ message: null, errors: null });
@@ -49,7 +49,7 @@ const AcFormsGebruik = ({ store }) => {
 
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
-        '[class*="process-step"], [role="button"], [role="tab"], .step'
+        '.denhaag-process-steps .denhaag-process-steps__step'
       );
 
       stepElements.forEach((stepEl, index) => {
@@ -429,6 +429,7 @@ const AcFormsGebruik = ({ store }) => {
             item?.moduleA ||
             item?.bronApplicatie ||
             item?.source ||
+            item?.naam ||
             `A${index + 1}`;
           const appB =
             item?.applicatie2 ||
@@ -436,9 +437,12 @@ const AcFormsGebruik = ({ store }) => {
             item?.moduleB ||
             item?.doelApplicatie ||
             item?.target ||
+            item?.naam ||
             `B${index + 1}`;
 
-          const label = `${appA} ↔ ${appB}`;
+          const direction = item?.gegevensuitwisselingRichting;
+          const arrow = direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+          const label = `${appA} ${arrow} ${appB}`;
           const value = item?.value || item?.id || label;
           return { value: String(value), label: String(label) };
         });
@@ -533,7 +537,7 @@ const AcFormsGebruik = ({ store }) => {
   const stepsList = (() => {
     const base = [
       'Soort gebruik',
-      'Gebruik informatie', 
+      'Gebruik informatie',
       'Product en applicatie',
       'Versie',
       'Koppelingen',
@@ -685,126 +689,129 @@ const AcFormsGebruik = ({ store }) => {
               <div>
                 <Heading1>{getPageTitle()}</Heading1>
                 <Paragraph>
-                  Selecteer een applicatie, vul aanvullende informatie aan en controleer
-                  uw invoer.
+                  Selecteer een applicatie, vul aanvullende informatie aan en
+                  controleer uw invoer.
                 </Paragraph>
               </div>
 
-          <div>
-            <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-              {currentStepName(currentStep)}
-            </h3>
-
-            <div className='ac-register-container ac-forms-product'>
-              <div ref={processStepsRef} className='ac-register-process-steps'>
-                <ProcessSteps
-                  steps={stepsList.map((title, index) => ({
-                    id: `step-${index}`,
-                    marker: index + 1,
-                    status: getStatus(currentStep, index),
-                    title,
-                  }))}
-                />
-              </div>
-
-              <div className='ac-register-form-container'>
-                <div
-                  className='sr-only'
-                  role='status'
-                  aria-live='polite'
-                  id='form-status'
+              <div>
+                <h3
+                  className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
                 >
                   {currentStepName(currentStep)}
-                </div>
+                </h3>
 
-                {process.env.NODE_ENV === 'development' && (
-                  <div
-                    style={{
-                      marginBottom: '2rem',
-                      padding: '1rem',
-                      backgroundColor: '#f8f9fa',
-                      border: '1px solid #dee2e6',
-                      borderRadius: '4px',
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    <details>
-                      <summary
-                        style={{
-                          cursor: 'pointer',
-                          fontWeight: 'bold',
-                          marginBottom: '0.5rem',
-                        }}
-                      >
-                        🐛 Debug: Gebruik Object (Click to expand)
-                      </summary>
-                      <pre
-                        style={{
-                          whiteSpace: 'pre-wrap',
-                          wordBreak: 'break-word',
-                          maxHeight: '300px',
-                          overflow: 'auto',
-                          backgroundColor: '#ffffff',
-                          padding: '0.5rem',
-                          border: '1px solid #ccc',
-                          borderRadius: '2px',
-                        }}
-                      >
-                        {JSON.stringify(gebruik, null, 2)}
-                      </pre>
-                    </details>
+                <div className='ac-register-container ac-forms-product'>
+                  <div ref={processStepsRef} className='ac-register-process-steps'>
+                    <ProcessSteps
+                      steps={stepsList.map((title, index) => ({
+                        id: `step-${index}`,
+                        marker: index + 1,
+                        status: getStatus(currentStep, index),
+                        title,
+                      }))}
+                    />
                   </div>
-                )}
 
-                {renderStep(currentStep)}
-
-                <div
-                  className={clsx(
-                    'ac-register-form-buttons',
-                    currentStep !== 0 && 'ac-register-form-buttons-not-first-step'
-                  )}
-                >
-                  {currentStep !== 0 && (
-                    <AcButton
-                      style='button'
-                      buttonType='secondary'
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                      disabled={loading}
+                  <div className='ac-register-form-container'>
+                    <div
+                      className='sr-only'
+                      role='status'
+                      aria-live='polite'
+                      id='form-status'
                     >
-                      Vorige
-                    </AcButton>
-                  )}
-
-                  {currentStep !== stepsList.length - 1 && (
-                    <div className='ac-register-button-wrapper'>
-                      <AcButton
-                        style='button'
-                        className={clsx(
-                          currentStep === 0 && 'ac-register-form-next-button'
-                        )}
-                        onClick={() => setCurrentStep(currentStep + 1)}
-                        disabled={!canGoNext() || loading}
-                      >
-                        Volgende
-                      </AcButton>
+                      {currentStepName(currentStep)}
                     </div>
-                  )}
 
-                  {currentStep === stepsList.length - 1 && (
-                    <AcButton 
-                      style='button' 
-                      buttonType='primary'
-                      onClick={handleRegister}
-                      loading={loading}
-                      disabled={loading}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div
+                        style={{
+                          marginBottom: '2rem',
+                          padding: '1rem',
+                          backgroundColor: '#f8f9fa',
+                          border: '1px solid #dee2e6',
+                          borderRadius: '4px',
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        <details>
+                          <summary
+                            style={{
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              marginBottom: '0.5rem',
+                            }}
+                          >
+                            🐛 Debug: Gebruik Object (Click to expand)
+                          </summary>
+                          <pre
+                            style={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              maxHeight: '300px',
+                              overflow: 'auto',
+                              backgroundColor: '#ffffff',
+                              padding: '0.5rem',
+                              border: '1px solid #ccc',
+                              borderRadius: '2px',
+                            }}
+                          >
+                            {JSON.stringify(gebruik, null, 2)}
+                          </pre>
+                        </details>
+                      </div>
+                    )}
+
+                    {renderStep(currentStep)}
+
+                    <div
+                      className={clsx(
+                        'ac-register-form-buttons',
+                        currentStep !== 0 &&
+                          'ac-register-form-buttons-not-first-step'
+                      )}
                     >
-                      Gebruik registreren
-                    </AcButton>
-                  )}
+                      {currentStep !== 0 && (
+                        <AcButton
+                          style='button'
+                          buttonType='secondary'
+                          onClick={() => setCurrentStep(currentStep - 1)}
+                          disabled={loading}
+                        >
+                          Vorige
+                        </AcButton>
+                      )}
+
+                      {currentStep !== stepsList.length - 1 && (
+                        <div className='ac-register-button-wrapper'>
+                          <AcButton
+                            style='button'
+                            className={clsx(
+                              currentStep === 0 && 'ac-register-form-next-button'
+                            )}
+                            onClick={() => setCurrentStep(currentStep + 1)}
+                            disabled={!canGoNext() || loading}
+                          >
+                            Volgende
+                          </AcButton>
+                        </div>
+                      )}
+
+                      {currentStep === stepsList.length - 1 && (
+                        <AcButton
+                          style='button'
+                          buttonType='primary'
+                          onClick={handleRegister}
+                          loading={loading}
+                          disabled={loading}
+                        >
+                          Gebruik registreren
+                        </AcButton>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
             </>
           )}
 
@@ -813,7 +820,7 @@ const AcFormsGebruik = ({ store }) => {
             <div>
               <Heading1>❌ Registratie mislukt</Heading1>
               <div style={{ marginTop: '1rem' }}>
-                <div className="utrecht-alert utrecht-alert--error">
+                <div className='utrecht-alert utrecht-alert--error'>
                   <Paragraph>{error.message}</Paragraph>
                   {error.errors && (
                     <ul>
@@ -847,23 +854,30 @@ const AcFormsGebruik = ({ store }) => {
               <Heading1>🎉 Gebruik succesvol geregistreerd!</Heading1>
 
               <div style={{ marginTop: '1rem' }}>
-                <div className="utrecht-alert utrecht-alert--success">
-                  <Paragraph>
-                    <strong>Uw gebruik is succesvol geregistreerd!</strong>
-                  </Paragraph>
-                  <Paragraph>
-                    Het gebruik van {gebruik?.product?.naam || gebruik?.module?.naam || 'het geselecteerde product'} 
-                    {gebruikType === 'eigen-organisatie' 
-                      ? ` door uw organisatie` 
-                      : ` door ${gebruik?.afnemer?.naam || 'de geselecteerde organisatie'}`
-                    } is opgeslagen in de software catalogus.
-                  </Paragraph>
-                  <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
-                    Type registratie: {gebruikType === 'eigen-organisatie' 
-                      ? 'Gebruik voor eigen organisatie' 
-                      : 'Gebruik voor andere organisatie (klant)'
-                    }
-                  </Paragraph>
+                <div className='utrecht-alert utrecht-alert--success'>
+                  <div className='utrecht-alert__content'>
+                    <Paragraph>
+                      <strong>Uw gebruik is succesvol geregistreerd!</strong>
+                    </Paragraph>
+                    <Paragraph>
+                      Het gebruik van{' '}
+                      {gebruik?.product?.naam ||
+                        gebruik?.module?.naam ||
+                        'het geselecteerde product'}
+                      {gebruikType === 'eigen-organisatie'
+                        ? ` door uw organisatie`
+                        : ` door ${
+                            gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
+                          }`}{' '}
+                      is opgeslagen in de software catalogus.
+                    </Paragraph>
+                    <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
+                      Type registratie:{' '}
+                      {gebruikType === 'eigen-organisatie'
+                        ? 'Gebruik voor eigen organisatie'
+                        : 'Gebruik voor andere organisatie (klant)'}
+                    </Paragraph>
+                  </div>
                 </div>
               </div>
 
@@ -871,19 +885,30 @@ const AcFormsGebruik = ({ store }) => {
                 <Paragraph>
                   <strong>Wat gebeurt er nu?</strong>
                 </Paragraph>
-                <ul className="utrecht-unordered-list">
+                <ul className='utrecht-unordered-list'>
                   {gebruikType === 'eigen-organisatie' ? (
                     <>
                       <li>Het gebruik wordt zichtbaar in de software catalogus</li>
-                      <li>Andere organisaties kunnen zien welke producten u gebruikt</li>
-                      <li>Dit helpt bij het delen van ervaringen en best practices</li>
+                      <li>
+                        Andere organisaties kunnen zien welke producten u gebruikt
+                      </li>
+                      <li>
+                        Dit helpt bij het delen van ervaringen en best practices
+                      </li>
                       <li>U kunt het gebruik beheren via het beheer dashboard</li>
                     </>
                   ) : (
                     <>
-                      <li>De klantorganisatie wordt geïnformeerd over deze registratie</li>
-                      <li>De klant moet het gebruik goedkeuren voordat het definitief wordt</li>
-                      <li>Na goedkeuring wordt het gebruik zichtbaar in de catalogus</li>
+                      <li>
+                        De klantorganisatie wordt geïnformeerd over deze registratie
+                      </li>
+                      <li>
+                        De klant moet het gebruik goedkeuren voordat het definitief
+                        wordt
+                      </li>
+                      <li>
+                        Na goedkeuring wordt het gebruik zichtbaar in de catalogus
+                      </li>
                       <li>U kunt het gebruik beheren via het beheer dashboard</li>
                     </>
                   )}

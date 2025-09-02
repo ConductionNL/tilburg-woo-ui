@@ -39,6 +39,7 @@ const ConFormProductenStage = memo(
           options={productOptions}
           value={value}
           isLoading={productsLoading}
+          closeMenuOnSelect={false}
           onChange={(opts) => {
             const arr = opts || [];
             setSelectedProductIds(arr.map((o) => o.value));

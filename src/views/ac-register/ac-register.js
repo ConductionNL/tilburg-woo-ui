@@ -1,8 +1,8 @@
-import { useState, useCallback, memo, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, memo, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { Heading } from '@amsterdam/design-system-react';
-import { AcContainer, AcSection, AcFlex, AcGrid , AcColumn } from '@src/atoms';
+import { AcContainer, AcSection, AcFlex, AcGrid, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcFormField, AcButton, AcCheckbox, AcLink } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
@@ -63,7 +63,6 @@ const AcRegister = () => {
     kvkNumber: '',
     email: '',
   });
-  const [logoFile, setLogoFile] = useState(null);
   const [logoDataUrl, setLogoDataUrl] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
@@ -109,36 +108,32 @@ const AcRegister = () => {
   const handleLogoFileSelect = useCallback(
     (e) => {
       if (!e.target.files.length) {
-        setLogoFile(null);
         setLogoDataUrl(null);
         return;
       }
 
-      const file = e.target.files[0];
+    const file = e.target.files[0];
 
       if (!acceptedLogoFileTypes.includes(file.type)) {
-        setLogoFile(null);
         setLogoDataUrl(null);
         return;
       }
 
-      file.getDataUrl = async () => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = (error) => reject(error);
-          reader.readAsDataURL(file);
-        });
-      };
-
-      setLogoFile(file);
+    file.getDataUrl = async () => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(file);
+      });
+    };
 
       (async () => {
         const dataUrl = await file.getDataUrl();
         setLogoDataUrl(dataUrl);
       })();
     },
-    [setLogoFile]
+    []
   );
 
   const setOrganizationData = useCallback((key, value) => {
@@ -251,10 +246,21 @@ const AcRegister = () => {
   };
 
   const focusForm = () => {
-    const form = document.querySelector('#formStart');
-    if (form) {
-      form.focus();
-    }
+    let curAttempt = 0;
+    const maxAttempts = 8
+    const tryFocus = () => {
+      curAttempt += 1;
+      const input = document.querySelector(
+        '.ac-register-form-container input:not([disabled]):not([tabindex="-1"]),' +
+          '.ac-register-form-container textarea:not([disabled]):not([tabindex="-1"])'
+      );
+      if (input && input.getClientRects().length) {
+        input.focus();
+        return;
+      }
+      if (curAttempt < maxAttempts) requestAnimationFrame(tryFocus); // try next frame
+    };
+    requestAnimationFrame(tryFocus);
   };
 
   const resetForm = () => {
@@ -270,7 +276,6 @@ const AcRegister = () => {
         email: false,
       },
     });
-    setLogoFile(null);
     setCurrentStep(0);
   };
 
@@ -733,11 +738,11 @@ const OrganizationRequiredForm = memo(
                   <Paragraph>
                     Alle Nederlandse gemeenten zijn al opgenomen in de
                     Softwarecatalogus. Ook is voor elke gemeente een inlogaccount
-                    beschikbaar om het gemeentelijk applicatieportfolio te beheren.​
+                    beschikbaar om het gemeentelijk applicatieportfolio te beheren.
                     Bent u gemeentemedewerker en heeft u zelf nog geen persoonlijk
                     account? Vraag dan binnen uw gemeente na wie een beheeraccount
                     heeft. Dit is vaak de informatiemanager of de coördinator I&A.
-                    Deze collega kan u eenvoudig toegang verlenen.​
+                    Deze collega kan u eenvoudig toegang verlenen.
                   </Paragraph>
                   <Paragraph>
                     Heeft u vragen of komt u er niet uit? Neem dan gerust contact met
@@ -766,9 +771,9 @@ const OrganizationRequiredForm = memo(
                   </Heading>
                   <Paragraph>
                     Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
-                    Softwarecatalogus. Controleer daarom eerst de lijst "Alle
-                    samenwerkingsverbanden". Staat uw samenwerkingsverband ertussen?
-                    Vraag dan toegang aan bij de beheerder – vaak de
+                    Softwarecatalogus. Controleer daarom eerst de lijst &quot;Alle
+                    samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband ertussen?
+                    Vraag dan toegang aan bij de beheerder - vaak de
                     ICT-verantwoordelijke.{' '}
                   </Paragraph>
                   <Paragraph>
@@ -800,8 +805,9 @@ const OrganizationRequiredForm = memo(
                     Met een community wordt een samenwerkingsverband van gemeenten
                     die gezamenlijk applicaties (door)ontwikkelen en de software
                     beschikbaar stellen voor hergebruik bedoelt. Controleer eerst de
-                    lijst "Alle communities" of de community al bestaat. Staat de
-                    community ertussen? Vraag dan toegang aan bij de beheerder.
+                    lijst &quot;Alle communities&quot; of de community al bestaat.
+                    Staat de community ertussen? Vraag dan toegang aan bij de
+                    beheerder.
                   </Paragraph>
                   <Paragraph>
                     De community niet gevonden? Vul dan het aanmeldformulier in.
@@ -927,7 +933,6 @@ const OrganizationOptionalForm = memo(
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
-    let localSummary = organization.summary || '';
 
     // Debounced functions for all optional fields
     const debouncedSetSummary = useDebouncedInput(
@@ -971,6 +976,15 @@ const OrganizationOptionalForm = memo(
 
     return (
       <div className='ac-register-form-section'>
+        <div className='ac-register-form-alert'>
+          <Alert type='info'>
+            <Paragraph>
+              Optionele velden helpen ons om uw organisatie beter zichtbaar en
+              herkenbaar te maken in de catalogus (bijvoorbeeld met een logo en korte
+              beschrijving).
+            </Paragraph>
+          </Alert>
+        </div>
         <AcGrid columns={2}>
           <div>
             <AcFormField
@@ -981,7 +995,6 @@ const OrganizationOptionalForm = memo(
               tooltip='Een korte beschrijving van de organisatie'
               value={organization.summary}
               onChange={(e) => {
-                localSummary = e;
                 updateCounter(e);
                 debouncedSetSummary(e);
               }}
@@ -997,26 +1010,41 @@ const OrganizationOptionalForm = memo(
           </div>
 
           <AcFlex column spacing='sm'>
-            {organization.organizationType === 'Leverancier' && (
+            <div>
               <AcFormField
-                label='KvK nummer'
-                placeholder='12345678'
-                value={organization.kvkNumber}
-                onChange={(e) => debouncedSetKvkNumber(e)}
+                label='Telefoonnummer (organisatie)'
+                placeholder='06 12345678'
+                value={organization.phone}
+                type='tel'
+                onChange={(e) => debouncedSetPhone(e)}
+                hasError={organization.phone && !validatePhone(organization.phone)}
+                id='phone-field'
                 disabled={loading}
               />
-            )}
+              {organization.phone && !validatePhone(organization.phone) && (
+                <span className='ac-register-form-field-error'>
+                  {'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
+                </span>
+              )}
+            </div>
 
-            {(organization.organizationType === 'Gemeente' ||
-              organization.organizationType === 'Samenwerking') && (
+            <div>
               <AcFormField
-                label='OIN'
-                placeholder='00000001002564440000'
-                value={organization.oin}
-                onChange={(e) => debouncedSetOin(e)}
+                label='E-mailadres (organisatie)'
+                placeholder='john.doe@example.com'
+                value={organization.email}
+                type='email'
+                onChange={(e) => debouncedSetEmail(e)}
+                hasError={organization.email && !validateEmail(organization.email)}
+                id='email-field'
                 disabled={loading}
               />
-            )}
+              {organization.email && !validateEmail(organization.email) && (
+                <span className='ac-register-form-field-error'>
+                  {'Ongeldig e-mailadres'}
+                </span>
+              )}
+            </div>
 
             <AcFlex column>
               <label className='utrecht-form-label'>
@@ -1066,41 +1094,28 @@ const OrganizationOptionalForm = memo(
               </small>
             </AcFlex>
 
-            <div>
-              <AcFormField
-                label='Telefoonnummer (organisatie)'
-                placeholder='06 12345678'
-                value={organization.phone}
-                type='tel'
-                onChange={(e) => debouncedSetPhone(e)}
-                hasError={organization.phone && !validatePhone(organization.phone)}
-                id='phone-field'
-                disabled={loading}
-              />
-              <span className='ac-register-form-field-error'>
-                {organization.phone &&
-                  !validatePhone(organization.phone) &&
-                  'Ongeldig telefoonnummer. (+31 6 1234 5678)'}
-              </span>
-            </div>
+            {organization.organizationType === 'Leverancier' && (
+              <div>
+                <AcFormField
+                  label='KvK nummer'
+                  placeholder='12345678'
+                  value={organization.kvkNumber}
+                  onChange={(e) => debouncedSetKvkNumber(e)}
+                  disabled={loading}
+                />
+              </div>
+            )}
 
-            <div>
+            {(organization.organizationType === 'Gemeente' ||
+              organization.organizationType === 'Samenwerking') && (
               <AcFormField
-                label='E-mailadres (organisatie)'
-                placeholder='john.doe@example.com'
-                value={organization.email}
-                type='email'
-                onChange={(e) => debouncedSetEmail(e)}
-                hasError={organization.email && !validateEmail(organization.email)}
-                id='email-field'
+                label='OIN'
+                placeholder='00000001002564440000'
+                value={organization.oin}
+                onChange={(e) => debouncedSetOin(e)}
                 disabled={loading}
               />
-              <span className='ac-register-form-field-error'>
-                {organization.email &&
-                  !validateEmail(organization.email) &&
-                  'Ongeldig e-mailadres'}
-              </span>
-            </div>
+            )}
           </AcFlex>
         </AcGrid>
       </div>
@@ -1190,6 +1205,7 @@ const ContactInformationForm = memo(
               }
               id='name-field'
               disabled={loading}
+              autoFocus
             />
             <span className='ac-register-form-field-error'>
               {touched.contactPersons.firstName &&

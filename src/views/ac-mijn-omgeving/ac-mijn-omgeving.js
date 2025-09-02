@@ -1,11 +1,13 @@
+// TODO: do something with this file
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { AcSearchResult, AcButton, AcFormField } from '@molecules';
 import { AcFlex, AcSection } from '@atoms';
 import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
-import { AcModal } from '@components';
+import { AcModal, AcSideNav } from '@components';
 import { withStore } from '@stores';
 
 import {
@@ -13,9 +15,7 @@ import {
   Heading,
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
-import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject } from '@utils';
-import { AcSideNav } from '@components';
+// import { Pagination } from '@amsterdam/design-system-react';
 
 function getCookie(name) {
   // Split document.cookie on `;` to handle multiple cookies
@@ -34,60 +34,29 @@ function getCookie(name) {
   return null;
 }
 
-const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
+const AcMijnOmgeving = () => {
   const navigate = useNavigate();
 
-  if (!getCookie('nextcloud_user_id')) {
-    useEffect(() => {
-      navigate('/login?redirect_url=/mijn-omgeving');
-    }, []);
-  }
+  const nextcloud_user_id = getCookie('nextcloud_user_id');
+  useEffect(() => {
+    if (!nextcloud_user_id) return;
+    navigate('/login?redirect_url=/mijn-omgeving');
+  }, [nextcloud_user_id]);
 
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const [tabIndex, setTabIndex] = useState(0);
-  const [catalogId, setCatalogId] = useState(null);
-  const [publicationTypeId, setPublicationTypeId] = useState(null);
-  const [selectedPublicationType, setSelectedPublicationType] = useState(null);
-
-  const {
-    search_query,
-    pagination,
-    setPage,
-    updateQuery,
-    setSearchQuery,
-    fetchAggregations,
-    fetchPublications,
-    is_loading,
-    getSearchPageURL,
-    all_publications,
-    resetSearchQuery,
-    resetAggregations,
-  } = mijnOmgeving;
-
-  const getSelectedPublicationType = (catalog_id, publication_type_id) => {
-    console.log(catalog_id, publication_type_id);
-    const catalog = all_publications.find((catalog) => catalog.id === catalog_id);
-    console.log(catalog);
-    const publicationType = catalog.publicationTypes.find(
-      (publicationType) => publicationType.id === publication_type_id
-    );
-    setSelectedPublicationType(publicationType);
-  };
-
-  const publicationRow = () => {
-    const test = JSON.parse(JSON.stringify(selectedPublicationType));
-    console.log(test.title);
-
-    return [
-      <span>{test.title}</span>,
-      <span>{test.summary || 'Geen samenvatting beschikbaar'}</span>,
-    ];
-  };
-
-  const setQuery = () => {
-    updateQuery(AcSearchParamsToObject(searchParams));
-  };
+  //   const {
+  //     search_query,
+  //     pagination,
+  //     setPage,
+  //     updateQuery,
+  //     setSearchQuery,
+  //     fetchAggregations,
+  //     fetchPublications,
+  //     is_loading,
+  //     getSearchPageURL,
+  //     all_publications,
+  //     resetSearchQuery,
+  //     resetAggregations,
+  //   } = mijnOmgeving; // import mijnOmgeving from store
 
   // useEffect(() => {
   //   setQuery();
@@ -120,97 +89,71 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
   //   fetchPublications();
   // }, [location.mijnOmgeving]);
 
-  const onPaginationChange = (page) => {
-    setPage(page);
-  };
+  //   const users = [
+  //     {
+  //       name: 'Lisa',
+  //       last_name: 'Smith',
+  //       function: 'Developer',
+  //     },
+  //     {
+  //       name: 'Bram',
+  //       last_name: 'van der Veen',
+  //       function: 'Manager',
+  //     },
+  //     {
+  //       name: 'Jeroen',
+  //       last_name: 'Molenaar',
+  //       function: 'Lead Developer',
+  //     },
+  //   ];
 
-  const renderPagination = useMemo(() => {
-    // Pagination component does not update with updated props. It will keep the 'page' prop internally.
-    // To force an update, we need to rerender the component.
-    if (is_loading) {
-      return null;
-    }
+  //   const mapConfigurationRow = (row) => {
+  //     return [
+  //       <span key={row.name}>{row.name}</span>,
+  //       <span key={row.last_name}>{row.last_name}</span>,
+  //       <span key={row.function}>{row.function}</span>,
+  //     ];
+  //   };
 
-    return (
-      <Pagination
-        totalPages={pagination?.pages}
-        page={parseInt(pagination?.page, 10)}
-        onPageChange={onPaginationChange}
-        nextLabel=''
-        previousLabel=''
-        maxVisiblePages={7}
-      />
-    );
-  }, [is_loading, pagination?.page]);
+  //   const screenReaderText = useMemo(() => {
+  //     if (is_loading === true) {
+  //       return LABELS.SEARCH_RESULTS_LOADING;
+  //     }
 
-  const onSearchSubmit = (query) => {
-    setSearchQuery(query);
-  };
+  //     return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
+  //       all_publications?.length
+  //     )} ${LABELS.FOUND.toLowerCase()}.`;
+  //   }, [is_loading, all_publications?.length]);
 
-  const users = [
-    {
-      name: 'Lisa',
-      last_name: 'Smith',
-      function: 'Developer',
-    },
-    {
-      name: 'Bram',
-      last_name: 'van der Veen',
-      function: 'Manager',
-    },
-    {
-      name: 'Jeroen',
-      last_name: 'Molenaar',
-      function: 'Lead Developer',
-    },
-  ];
+  //   const renderPublications = useMemo(() => {
+  //     if (is_loading) {
+  //       return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
+  //         <AcSearchResult skeleton key={index} />
+  //       ));
+  //     }
 
-  const mapConfigurationRow = (row) => {
-    return [
-      <span>{row.name}</span>,
-      <span>{row.last_name}</span>,
-      <span>{row.function}</span>,
-    ];
-  };
+  //     if (all_publications?.length < 1) {
+  //       return (
+  //         <Alert type='info'>
+  //           <AcFlex spacing='sm'>
+  //             <VISUALS.INFO_BLUE />
+  //             <AcFlex column spacing='xs'>
+  //               <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
+  //               <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
+  //             </AcFlex>
+  //           </AcFlex>
+  //         </Alert>
+  //       );
+  //     }
 
-  const screenReaderText = useMemo(() => {
-    if (is_loading === true) {
-      return LABELS.SEARCH_RESULTS_LOADING;
-    }
-
-    return `${LABELS.SEARCH_RESULTS_LOADED} ${LABELS_DYNAMIC.RESULTS(
-      all_publications?.length
-    )} ${LABELS.FOUND.toLowerCase()}.`;
-  }, [is_loading, all_publications?.length]);
-
-  const renderPublications = useMemo(() => {
-    if (is_loading) {
-      return Array.from({ length: pagination?.limit || 15 }).map((_, index) => (
-        <AcSearchResult skeleton key={index} />
-      ));
-    }
-
-    if (all_publications?.length < 1) {
-      return (
-        <Alert type='info'>
-          <AcFlex spacing='sm'>
-            <VISUALS.INFO_BLUE />
-            <AcFlex column spacing='xs'>
-              <Heading level={3}>{LABELS.NO_RESULTS}</Heading>
-              <Paragraph>{LABELS.REFINE_SEARCH}</Paragraph>
-            </AcFlex>
-          </AcFlex>
-        </Alert>
-      );
-    }
-
-    return all_publications?.map((publication, index) => (
-      <AcSearchResult {...publication} key={index} />
-    ));
-  }, [is_loading, all_publications, pagination?.limit]);
+  //     return all_publications?.map((publication, index) => (
+  //       <AcSearchResult {...publication} key={index} />
+  //     ));
+  //   }, [is_loading, all_publications, pagination?.limit]);
 
   // Add Voorziening Modal
   const addVoorzieningModalRef = useRef(null);
+  // eslint-disable-next-line no-unused-vars -- is going to be used in the future
   const [addVoorzieningFormData, setAddVoorzieningFormData] = useState({
     name: '',
     description: '',
@@ -232,7 +175,6 @@ const AcMijnOmgeving = ({ store: { mijnOmgeving } }) => {
 
   const handleAddVoorzieningSubmit = () => {
     // Here you can make your POST request with the formData
-    console.log('Form data to submit:', addVoorzieningFormData);
   };
 
   const renderAddVoorzieningModal = (

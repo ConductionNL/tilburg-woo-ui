@@ -1,7 +1,6 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
-import { LABELS, LABELS_DYNAMIC } from '@constants';
 
 let app = {};
 
@@ -12,8 +11,6 @@ export const DEFAULT_SEARCH_QUERY = {
 };
 
 const DEFAULT_QUERY = {};
-
-
 
 export class MijnOmgevingStore {
   constructor(store) {
@@ -165,8 +162,8 @@ export class MijnOmgevingStore {
   @action
   setQueryDate = (key, value) => {
     console.group('SET QUERY DATE');
-    console.log(key, value, 'SET QUERY DATE');
-    console.log('CURRENT QUERY:', toJS(this.query));
+    console.info(key, value, 'SET QUERY DATE');
+    console.info('CURRENT QUERY:', toJS(this.query));
 
     if (!this.query.published) {
       this.query.published = {};
@@ -175,7 +172,7 @@ export class MijnOmgevingStore {
     this.setPage(1);
     this.query.published[key] = value;
 
-    console.log('NEW QUERY:', toJS(this.query));
+    console.info('NEW QUERY:', toJS(this.query));
     console.groupEnd();
   };
 
@@ -205,8 +202,8 @@ export class MijnOmgevingStore {
   @action
   setSort = (key, value) => {
     console.group('SET SORT');
-    console.log(key, value);
-    console.log('VALUE', value);
+    console.info(key, value);
+    console.info('VALUE', value);
     this.query._order = {};
     this.query._order[key] = value;
     console.groupEnd();
@@ -215,16 +212,16 @@ export class MijnOmgevingStore {
   @action
   toggleSearchArrayValue = (key, value) => {
     console.group('TOGGLE SEARCH ARRAY VALUE');
-    console.log(key, value);
+    console.info(key, value);
     if (!this.query[key]) {
-      console.log('KEY DOES NOT EXIST, CREATING ARRAY');
+      console.info('KEY DOES NOT EXIST, CREATING ARRAY');
       this.query[key] = [];
     }
 
     const index = this.query[key]?.indexOf(value);
     // Remove item if we find it in the array.
     if (index !== -1) {
-      console.log(index, this.query[key]);
+      console.info(index, this.query[key]);
       this.query[key] = this.query[key].filter((cat) => cat !== value);
       return;
     }
@@ -279,7 +276,7 @@ export class MijnOmgevingStore {
   fetchPublications = async () => {
     this.loading.status = true;
     console.group('MAKING API CALL');
-    console.log('SEARCH QUERY:', toJS(this.search_query));
+    console.info('SEARCH QUERY:', toJS(this.search_query));
     console.groupEnd();
 
     app.store.api.mijnOmgeving

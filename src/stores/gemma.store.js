@@ -1,7 +1,6 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
-import { LABELS, LABELS_DYNAMIC } from '@constants';
 
 let app = {};
 
@@ -144,17 +143,12 @@ export class GemmaStore {
   };
 
   @action
-  fetchView = async (_id) => {
+  fetchView = async (_id, extraParams = {}) => {
     this.loading.status = true;
     this.setViewError(null);
 
     app.store.api.gemma
-      .view(
-        _id,
-        new URLSearchParams(
-          AcBuildURLSearchParams({ _id, ...this.defaultQuery })
-        ).toString()
-      )
+      .view(_id, { ...this.defaultQuery, ...extraParams })
       .then((response) => {
         this.setView(response);
       })
@@ -168,45 +162,8 @@ export class GemmaStore {
       });
   };
 
-  @action
-  fetchAllVoorzieningGebruik = async () => {
-    this.loading.status = true;
-
-    app.store.api.gemma
-      .voorzieningGebruik()
-      .then((response) => {
-        this.setAllVoorzieningGebruik(response.results);
-        delete response.results;
-      })
-      .catch((e) => console.error(e))
-      .finally(() => {
-        this.setLoadingStatus(false);
-      });
-  };
-
-  @action
-  fetchVoorzieningGebruik = async (_id) => {
-    this.loading.status = true;
-
-    console.log('fetchVoorzieningGebruik', _id);
-
-    app.store.api.gemma
-      .voorzieningGebruik(
-        _id,
-        new URLSearchParams(
-          AcBuildURLSearchParams({ _id, ...this.defaultQuery })
-        ).toString()
-      )
-      .then((response) => {
-        console.log('response', response);
-        this.setVoorzieningGebruik(response);
-      })
-      .catch((e) => console.error(e))
-      .finally(() => {
-        this.setLoadingStatus(false);
-      });
-  };
-
+  // Removed voorzieningGebruik fetch
+  // Removed voorzieningGebruik fetch by id
   @action
   fetchElementReferences = async (_id) => {
     this.loading.status = true;

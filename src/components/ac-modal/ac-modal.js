@@ -79,15 +79,16 @@ const AcModal = React.forwardRef(
               if (button.shareLink) {
                 return (
                   <AcButton
+                    key={button.label}
                     {...button}
                     className={clsx(button.className, 'copy-button')}
                     data-status={button.shareLinkStatus}
                     style='button'
                     aria-label={button.label}
                   >
-                    <div class='particles'>
+                    <div className='particles'>
                       <VISUALS.CHECK />
-                      <div class='particles-inner'>
+                      <div className='particles-inner'>
                         <VISUALS.PARTICLES />
                       </div>
                     </div>
@@ -98,6 +99,7 @@ const AcModal = React.forwardRef(
 
               return (
                 <AcButton
+                  key={button.label}
                   {...button}
                   style='button'
                   icon={button.icon}
@@ -113,5 +115,7 @@ const AcModal = React.forwardRef(
     );
   }
 );
+
+AcModal.displayName = 'AcModal';
 
 export default AcModal;

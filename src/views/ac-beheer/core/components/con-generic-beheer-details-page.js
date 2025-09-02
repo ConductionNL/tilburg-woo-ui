@@ -1,23 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
-import {
-  AcFlex,
-  AcSection,
-  AcTab,
-  AcTabList,
-  AcTabPanel,
-  AcTabs,
-  ConLogo,
-} from '@atoms';
-import { ConDynamicSidenav, AcLoader } from '@components';
+import { AcFlex, AcSection, AcTab, AcTabList, AcTabPanel, AcTabs } from '@atoms';
+import { ConDynamicSidenav, AcLoader, ConDetailsActionsMenu } from '@components';
 import {
   Heading,
   Paragraph,
-  Button,
-  SecondaryActionButton,
-  PrimaryActionButton,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
@@ -27,17 +16,16 @@ import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-detail
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
 import { canReadField } from '@utils/field-authorization';
 import _ from 'lodash';
-import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
-import { ConDetailsActionsMenu } from '@components';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { TOOLTIP_ID } from '@src/index.web';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
-import { BEHEER_RENAMES } from '@views/ac-beheer/core/utils/beheer-renames';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
+import { AcButton } from '@src/molecules';
+import AcGemmaView from '@views/ac-gemma/ac-gemma-view';
 
 /**
  * Generic Beheer Details Page
@@ -52,6 +40,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   const navigate = useNavigate();
   const params = useParams();
   const id = propId || params?.id;
+  const isExtendView = type === 'extendview' || type === 'view';
 
   const [openModal, setOpenModal] = useState(null);
   const [tabIndex, setTabIndex] = useState(0);
@@ -115,19 +104,21 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
 
   // Fetch data
   useEffect(() => {
+    if (isExtendView) return;
     if (!config || !id) return;
     const extendParams = Array.isArray(config.extend) ? config.extend : [];
     object.fetchObject(config.registerSlug, config.schemaSlug, id, {
       _extend: extendParams,
     });
     object.fetchSchema(config.schemaSlug);
-  }, [config?.schemaSlug, config?.registerSlug, id]);
+  }, [config?.schemaSlug, config?.registerSlug, id, isExtendView]);
 
   // When object becomes active, ensure related data are fetched by setActiveObject helper
   useEffect(() => {
+    if (isExtendView) return;
     if (!config || !data) return;
     object.setActiveObject(config.registerSlug, config.schemaSlug, data);
-  }, [config?.schemaSlug, config?.registerSlug, data?.id]);
+  }, [config?.schemaSlug, config?.registerSlug, data?.id, isExtendView]);
 
   // Tabs: Files always, plus dynamic Uses/Used
   const registerSlug = config?.registerSlug;
@@ -150,8 +141,9 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
 
   // If Files tab is hidden, default to first dynamic tab (index 1)
   useEffect(() => {
-    setTabIndex((prev) => (!showFilesTab ? 1 : 0));
-  }, [showFilesTab]);
+    if (isExtendView) return;
+    setTabIndex(() => (!showFilesTab ? 1 : 0));
+  }, [showFilesTab, isExtendView]);
 
   // Uses/Used unique schemas for tabs
   const uniqueSchemasFrom = useCallback((rel) => {
@@ -195,6 +187,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   });
 
   useEffect(() => {
+    if (isExtendView) return;
     if (!config?.schemaSlug || !data?.id) return;
     const items = makeActionsForContext(data.id).map(({ key, label, onClick }) => ({
       key,
@@ -202,7 +195,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
       onClick,
     }));
     setActionMenuItems(items);
-  }, [config?.schemaSlug, data?.id, makeActionsForContext]);
+  }, [config?.schemaSlug, data?.id, makeActionsForContext, isExtendView]);
 
   if (!config) {
     return <AcBeheerError error={'Onbekend detailtype'} store={store} />;
@@ -210,6 +203,19 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
 
   if (error) {
     return <AcBeheerError error={error.message} store={store} />;
+  }
+
+  if (isExtendView) {
+    return (
+      <AcSection spacing className='ac-mijn-omgeving-section'>
+        <AcFlex spacing='xl'>
+          <ConDynamicSidenav store={store} />
+          <div className='ac-beheer-details--100-width'>
+            <AcGemmaView viewId={id} />
+          </div>
+        </AcFlex>
+      </AcSection>
+    );
   }
 
   return (
@@ -235,42 +241,42 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       {data['@self']?.name || data.id}
                     </Heading>
                   </div>
-                  <ConDetailsActionsMenu
-                    user={user}
-                    id={id}
-                    schemaSlug={config?.schemaSlug}
-                    title={data['@self']?.name || data.id}
-                    published={data?.['@self']?.published}
-                    object={data}
-                    showViewAction={false}
-                    showEditAction={true}
-                    showPublishActions={true}
-                    uniqueActions={[
-                      // Add unique actions from config
-                      ...(config.uniqueActions
-                        ?.filter((action) => action.condition?.(data))
-                        .map((action) => ({
-                          key: action.key,
-                          label: action.label,
-                          icon: action.icon,
-                          onClick: () =>
-                            typeof action.onClick === 'function'
-                              ? action.onClick(data)
-                              : setOpenModal(action.action),
-                        })) || []),
-                      // Add delete action
-                      {
-                        key: 'delete',
-                        label: 'Verwijderen',
-                        icon: VISUALS.TRASHCAN,
-                        onClick: () => setOpenModal('delete'),
-                      },
-                    ]}
-                    relatedActions={actionMenuItems}
-                    onEdit={() => setOpenModal('edit')}
-                    onPublish={() => setOpenModal('publish')}
-                    onDepublish={() => setOpenModal('depublish')}
-                  />
+                  {config?.routeType !== 'extendview' && (
+                    <ConDetailsActionsMenu
+                      user={user}
+                      id={id}
+                      schemaSlug={config?.schemaSlug}
+                      title={data['@self']?.name || data.id}
+                      published={data?.['@self']?.published}
+                      object={data}
+                      showViewAction={false}
+                      showEditAction={true}
+                      showPublishActions={true}
+                      uniqueActions={[
+                        ...(config.uniqueActions
+                          ?.filter((action) => action.condition?.(data))
+                          .map((action) => ({
+                            key: action.key,
+                            label: action.label,
+                            icon: action.icon,
+                            onClick: () =>
+                              typeof action.onClick === 'function'
+                                ? action.onClick(data)
+                                : setOpenModal(action.action),
+                          })) || []),
+                        {
+                          key: 'delete',
+                          label: 'Verwijderen',
+                          icon: VISUALS.TRASHCAN,
+                          onClick: () => setOpenModal('delete'),
+                        },
+                      ]}
+                      relatedActions={actionMenuItems}
+                      onEdit={() => setOpenModal('edit')}
+                      onPublish={() => setOpenModal('publish')}
+                      onDepublish={() => setOpenModal('depublish')}
+                    />
+                  )}
                 </AcFlex>
 
                 {/* Warning card for unpublished objects */}
@@ -279,8 +285,9 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                     <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
                     <Paragraph>
                       Dit object is momenteel niet zichtbaar in de zoekfunctie van{' '}
-                      {config?.title || 'de catalogus'}. Gebruik de "Publiceren"
-                      actie om het object beschikbaar te maken voor bezoekers.
+                      {config?.title || 'de catalogus'}. Gebruik de
+                      &quot;Publiceren&quot; actie om het object beschikbaar te maken
+                      voor bezoekers.
                     </Paragraph>
                   </Alert>
                 )}
@@ -330,7 +337,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       {Object.entries(dataProperties)
                         .filter(([key]) => !config.excludedProperties.includes(key))
                         .filter(([key]) => !configuredMetaFields.includes(key))
-                        .filter(([key, schema]) => canReadField(user, schema))
+                        .filter(([, schema]) => canReadField(user, schema))
                         .map(([key, schema]) => {
                           // Check if this property should be displayed inline
                           const isInline =
@@ -457,16 +464,16 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                           key: '',
                                           customContent: (row) => (
                                             <AcFlex column spacing='xs'>
-                                              <button
-                                                className='utrecht-button slim'
-                                                variant='secondary'
+                                              <AcButton
+                                                style='buttonSlim'
+                                                buttonType='secondary'
                                                 onClick={() =>
                                                   config.navigateView(row.id)
                                                 }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
                                                 Bekijken
-                                              </button>
+                                              </AcButton>
                                             </AcFlex>
                                           ),
                                         }
@@ -514,16 +521,16 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                           key: '',
                                           customContent: (row) => (
                                             <AcFlex column spacing='xs'>
-                                              <button
-                                                className='utrecht-button slim'
-                                                variant='secondary'
+                                              <AcButton
+                                                style='buttonSlim'
+                                                buttonType='secondary'
                                                 onClick={() =>
                                                   config.navigateView(row.id)
                                                 }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
                                                 Bekijken
-                                              </button>
+                                              </AcButton>
                                             </AcFlex>
                                           ),
                                         }

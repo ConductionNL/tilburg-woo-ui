@@ -11,7 +11,7 @@ import {
   BreadcrumbNavSeparator,
 } from '@utrecht/component-library-react/dist/css-module';
 
-const AcBreadcrumbs = ({ store: { pages, publications, gemma }, items }) => {
+const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
   const { get_single: get_single_page } = pages;
   const { get_single: get_single_document } = publications;
   const { view: single_view } = gemma;

@@ -4,10 +4,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection, AcContainer } from '@atoms';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import {
-  PrimaryActionButton,
-  SecondaryActionButton,
-} from '@utrecht/component-library-react';
+import { SecondaryActionButton } from '@utrecht/component-library-react';
 import { VISUALS, LABELS } from '@constants';
 import { NAVIGATE_TO } from '@src/constants/routes.constants';
 import { ConDynamicSidenav } from '@components';
@@ -109,8 +106,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       // Only enhance if we have a generic config (no predefined defaultHeaders)
       if (baseConfig.defaultHeaders && baseConfig.defaultHeaders.length === 0) {
         const schemaPropertyKeys = Object.entries(dataProperties)
-          .filter(([key, value]) => value.hideOnCollection !== true)
-          .map(([key, value]) => key);
+          .filter(([, value]) => value.hideOnCollection !== true)
+          .map(([key]) => key);
 
         // Use schema title if available, otherwise capitalize the type without "Beheer" prefix
         let dynamicTitle = baseConfig.title;
@@ -134,21 +131,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
   }, [baseConfig, dataProperties, schemaData, schemaLoading, schemaError, type]);
 
-  // If no configuration exists for this type, show wrong page
-  if (!config) {
-    return (
-      <AcSection spacing>
-        <AcContainer>
-          <AcColumn gap='tiger'>
-            <AcColumn>
-              <Heading>{LABELS.WRONG_PAGE}</Heading>
-            </AcColumn>
-          </AcColumn>
-        </AcContainer>
-      </AcSection>
-    );
-  }
-
   // Use the custom hook for pagination limit management
   const [limit, setLimit] = usePaginationLimit(config.paginationKey);
 
@@ -166,6 +148,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
+  const showManageActions = !['extendview', 'view'].includes(config?.routeType);
 
   // Related create actions via shared hook
   const { makeActionsForContext } = useRelatedCreateActions({
@@ -176,7 +159,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     openDynamicCreate: (targetType, preSelected, metadata = {}) => {
       setDynamicCreateTargetType(targetType);
       setDynamicCreatePreSelected(preSelected);
-      // Handle outgoing relationship metadata  
+      // Handle outgoing relationship metadata
       if (metadata.isOutgoing) {
         // Store metadata for post-creation relationship updates
         // (handled by the form modal after successful creation)
@@ -256,12 +239,12 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Fetch data when component is ready and pagination changes
   useEffect(() => {
-    if (objectType) {
+    if (!!config && objectType) {
       // Only fetch when objectType is available
       fetchData();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [objectType, pagination.limit, pagination.page]);
+  }, [objectType, pagination.limit, pagination.page, !config]);
 
   // Open create modal when query param is present, but only after the 'add' modal has actually mounted
   const openAddModal = useCallback(() => {
@@ -275,6 +258,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Handle object store cancellation when objectType changes (separate effect)
   const prevObjectTypeRef = useRef();
   useEffect(() => {
+    if (!config) return;
+
     const prevObjectType = prevObjectTypeRef.current;
     prevObjectTypeRef.current = objectType;
 
@@ -286,6 +271,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Refetch data when beoordelingFilter changes
   useEffect(() => {
+    if (!config) return;
     if (type === 'organisaties') {
       fetchData();
     }
@@ -298,13 +284,14 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
+    if (!config) return [];
     if (!dataProperties) return [];
 
     return Object.entries(dataProperties)
       .filter(
-        ([key, value]) => value.visible !== false && value.hideOnCollection !== true
+        ([value]) => value.visible !== false && value.hideOnCollection !== true
       )
-      .filter(([key, value]) => canReadField(user, value))
+      .filter(([value]) => canReadField(user, value))
       .map(([key, value]) => {
         // Check if we have a custom override for this header
         if (config.customHeaders[key]) {
@@ -328,7 +315,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   // Stable keys to avoid re-running effects on new array/object references
   const { defaultHeaderIds, shouldShowAllHeaders } = useMemo(() => {
-    if (!dataProperties) return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+    if (!config || !dataProperties)
+      return { defaultHeaderIds: [], shouldShowAllHeaders: true };
 
     const entries = Object.entries(dataProperties);
     const anyTable = entries.some(([, value]) => !!value?.table);
@@ -353,7 +341,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   );
 
   useEffect(() => {
-    if (headers.length === 0) return;
+    if (!config || headers.length === 0) return;
 
     const next = shouldShowAllHeaders
       ? headers
@@ -457,22 +445,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     [config.routeType, config.uniqueActions, navigate, makeActionsForContext]
   );
 
-  if (error) {
-    return (
-      <AcBeheerError title={config.title} error={error.message} store={store} />
-    );
-  }
-
-  if (schemaError) {
-    return (
-      <AcBeheerError
-        title={config.title}
-        error={schemaError.message}
-        store={store}
-      />
-    );
-  }
-
   // Build table headers with status icon if configured
   const finalTableHeaders = useMemo(() => {
     const headers = [...tableHeaders];
@@ -489,6 +461,37 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
     return headers;
   }, [tableHeaders, config.statusIcon]);
+
+  // If no configuration exists for this type, show wrong page
+  if (!config) {
+    return (
+      <AcSection spacing>
+        <AcContainer>
+          <AcColumn gap='tiger'>
+            <AcColumn>
+              <Heading>{LABELS.WRONG_PAGE}</Heading>
+            </AcColumn>
+          </AcColumn>
+        </AcContainer>
+      </AcSection>
+    );
+  }
+
+  if (error) {
+    return (
+      <AcBeheerError title={config.title} error={error.message} store={store} />
+    );
+  }
+
+  if (schemaError) {
+    return (
+      <AcBeheerError
+        title={config.title}
+        error={schemaError.message}
+        store={store}
+      />
+    );
+  }
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -515,58 +518,61 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
               >
                 <VISUALS.FILTER />
               </SecondaryActionButton>
-
-              <AcButton
-                style='button'
-                buttonType='primary'
-                onClick={() => setOpenModal('add')}
-                icon={<VISUALS.PLUS />}
-              >
-                Toevoegen
-              </AcButton>
-
-              <ConActionMenu>
-                <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
-                  Acties
-                </ConActionMenu.Trigger>
-
-                <ConActionMenu.Menu position='right'>
-                  <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                    Weergeven als view
-                  </ConActionMenu.Button>
-
-                  <ConActionMenu.SubMenu
-                    label='Exporteren'
-                    icon={<VISUALS.DOWNLOAD />}
-                    position='left'
+              {showManageActions && (
+                <>
+                  <AcButton
+                    style='button'
+                    buttonType='primary'
+                    onClick={() => setOpenModal('add')}
+                    icon={<VISUALS.PLUS />}
                   >
-                    <ConActionMenu.Button onClick={() => downloadData('csv')}>
-                      Als CSV
-                    </ConActionMenu.Button>
-                    <ConActionMenu.Button onClick={() => downloadData('excel')}>
-                      Als Excel
-                    </ConActionMenu.Button>
-                  </ConActionMenu.SubMenu>
+                    Toevoegen
+                  </AcButton>
 
-                  <ConActionMenu.Button
-                    icon={<VISUALS.UPLOAD />}
-                    onClick={() => setOpenModal('import')}
-                  >
-                    Importeren
-                  </ConActionMenu.Button>
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                      Acties
+                    </ConActionMenu.Trigger>
 
-                  <ConActionMenu.Divider />
+                    <ConActionMenu.Menu position='right'>
+                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                        Weergeven als view
+                      </ConActionMenu.Button>
 
-                  <ConActionMenu.Button
-                    icon={<VISUALS.TRASHCAN />}
-                    disabled={selectedRows.length === 0}
-                    onClick={handleMultipleDelete}
-                  >
-                    Delete {selectedRows.length}{' '}
-                    {selectedRows.length === 1 ? 'item' : 'items'}
-                  </ConActionMenu.Button>
-                </ConActionMenu.Menu>
-              </ConActionMenu>
+                      <ConActionMenu.SubMenu
+                        label='Exporteren'
+                        icon={<VISUALS.DOWNLOAD />}
+                        position='left'
+                      >
+                        <ConActionMenu.Button onClick={() => downloadData('csv')}>
+                          Als CSV
+                        </ConActionMenu.Button>
+                        <ConActionMenu.Button onClick={() => downloadData('excel')}>
+                          Als Excel
+                        </ConActionMenu.Button>
+                      </ConActionMenu.SubMenu>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.UPLOAD />}
+                        onClick={() => setOpenModal('import')}
+                      >
+                        Importeren
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Divider />
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.TRASHCAN />}
+                        disabled={selectedRows.length === 0}
+                        onClick={handleMultipleDelete}
+                      >
+                        Delete {selectedRows.length}{' '}
+                        {selectedRows.length === 1 ? 'item' : 'items'}
+                      </ConActionMenu.Button>
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
+                </>
+              )}
             </AcFlex>
           </AcFlex>
 
@@ -574,37 +580,41 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             data={data}
             tableHeaders={[
               ...finalTableHeaders,
-              {
-                id: 'actions',
-                label: 'Acties',
-                key: '',
-                static: true,
-                customContent: (row) => (
-                  <ConActionMenu>
-                    <ConActionMenu.Trigger
-                      icon={<VISUALS.ELLIPSIS />}
-                      buttonType='secondary'
-                    >
-                      Acties
-                    </ConActionMenu.Trigger>
+              ...(showManageActions
+                ? [
+                    {
+                      id: 'actions',
+                      label: 'Acties',
+                      key: '',
+                      static: true,
+                      customContent: (row) => (
+                        <ConActionMenu>
+                          <ConActionMenu.Trigger
+                            icon={<VISUALS.ELLIPSIS />}
+                            buttonType='secondary'
+                          >
+                            Acties
+                          </ConActionMenu.Trigger>
 
-                    <ConActionMenu.Menu position='right'>
-                      {generateActionButtons(row).map((action) => (
-                        <ConActionMenu.Button
-                          key={action.key}
-                          icon={action.icon}
-                          onClick={action.onClick}
-                        >
-                          {action.label}
-                        </ConActionMenu.Button>
-                      ))}
-                    </ConActionMenu.Menu>
-                  </ConActionMenu>
-                ),
-              },
+                          <ConActionMenu.Menu position='right'>
+                            {generateActionButtons(row).map((action) => (
+                              <ConActionMenu.Button
+                                key={action.key}
+                                icon={action.icon}
+                                onClick={action.onClick}
+                              >
+                                {action.label}
+                              </ConActionMenu.Button>
+                            ))}
+                          </ConActionMenu.Menu>
+                        </ConActionMenu>
+                      ),
+                    },
+                  ]
+                : []),
             ]}
             getSelectedRows={setSelectedRows}
-            renderSelectRowButtons
+            renderSelectRowButtons={showManageActions}
             ref={tableRef}
             truncateLines={3}
             showSortButtons

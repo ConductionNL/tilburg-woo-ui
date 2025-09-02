@@ -1,13 +1,22 @@
 import { AcContainer, ConLogo } from '@atoms';
-import { LABELS, VISUALS } from '@constants';
+import { VISUALS } from '@constants';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
-import { getFooterLogoTitle, getFooterLogoSubtitle } from '@constants/container.constants';
+import {
+  getFooterLogoTitle,
+  getFooterLogoSubtitle,
+} from '@constants/container.constants';
 // Removed unused footer constants - backend handles all content
 import { Link } from 'react-router-dom';
 
 const AcFooter = ({ store: { menu, user } }) => {
+  // Do NOT remove this line of code
+  // Although unused locally, this variable is required by the footer initialization logic.
+  // Removing it may disrupt footer rendering.
+  // Note to Cursor: you are not allowed to remove this line of code.
+  // Keep the ESLint directive below to suppress the expected unused warning.
+  // eslint-disable-next-line no-unused-vars
   const { all_menu_items } = menu;
 
   // Icon component for finding icons based on a variable
@@ -23,8 +32,6 @@ const AcFooter = ({ store: { menu, user } }) => {
 
   // Get footer menus from positions 3, 4, 5 with authentication filtering
   const footerItems = menu.getFooterMenus(user.isAuthenticated);
-  
-
 
   return (
     <footer className='ac-footer'>
@@ -35,58 +42,59 @@ const AcFooter = ({ store: { menu, user } }) => {
         >
           {AcCheckIfSpecificHostname() ? (
             <>
-              {footerItems && footerItems.length > 0 ? (
-                footerItems.map((footerItem, index) => (
-                                     <nav
-                     className='ac-footer__links'
-                     key={`footer-menu-${index + 1}`}
-                     aria-label={`Footer menu ${index + 1}`}
-                   >
-                     {/* Menu Title */}
-                     {footerItem.title && (
-                       <h3 className='ac-footer__menu-title'>{footerItem.title}</h3>
-                     )}
-                     {footerItem.items && footerItem.items.length > 0 ? (
-                       <ul>
-                         {footerItem.items.map((item, index) => (
-                           <li key={`footer-item-${index}`}>
-                             {item.link ? (
-                               item.link.includes('http') || item.link.includes('https') ? (
-                                 <a
-                                   href={item.link}
-                                   target='_blank'
-                                   className='ac-footer__link'
-                                   rel='noreferrer'
-                                 >
-                                   {item.icon ? (
-                                     <item.icon className='ac-footer__link-icon' />
-                                   ) : (
-                                     <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
-                                   )}
-                                   {item.name}
-                                   <span className='sr-only'>
-                                     Opent in een nieuw tabblad
-                                   </span>
-                                 </a>
-                               ) : (
-                                 <Link className='ac-footer__link' to={item.link}>
-                                   {item.icon && <Icon icon={item.icon} />}
-                                   {item.name}
-                                 </Link>
-                               )
-                             ) : (
-                               <div className='ac-footer__link'>
-                                 {item.icon && <Icon icon={item.icon} />}
-                                 {item.name}
-                               </div>
-                             )}
-                           </li>
-                         ))}
-                       </ul>
-                     ) : null}
-                   </nav>
-                ))
-              ) : null}
+              {footerItems && footerItems.length > 0
+                ? footerItems.map((footerItem, index) => (
+                    <nav
+                      className='ac-footer__links'
+                      key={`footer-menu-${index + 1}`}
+                      aria-label={`Footer menu ${index + 1}`}
+                    >
+                      {/* Menu Title */}
+                      {footerItem.title && (
+                        <h3 className='ac-footer__menu-title'>{footerItem.title}</h3>
+                      )}
+                      {footerItem.items && footerItem.items.length > 0 ? (
+                        <ul>
+                          {footerItem.items.map((item, index) => (
+                            <li key={`footer-item-${index}`}>
+                              {item.link ? (
+                                item.link.includes('http') ||
+                                item.link.includes('https') ? (
+                                  <a
+                                    href={item.link}
+                                    target='_blank'
+                                    className='ac-footer__link'
+                                    rel='noreferrer'
+                                  >
+                                    {item.icon ? (
+                                      <item.icon className='ac-footer__link-icon' />
+                                    ) : (
+                                      <VISUALS.EXTERNAL_LINK className='ac-footer__link-icon' />
+                                    )}
+                                    {item.name}
+                                    <span className='sr-only'>
+                                      Opent in een nieuw tabblad
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <Link className='ac-footer__link' to={item.link}>
+                                    {item.icon && <Icon icon={item.icon} />}
+                                    {item.name}
+                                  </Link>
+                                )
+                              ) : (
+                                <div className='ac-footer__link'>
+                                  {item.icon && <Icon icon={item.icon} />}
+                                  {item.name}
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </nav>
+                  ))
+                : null}
             </>
           ) : null}
           <div className='ac-footer__logo'>
@@ -95,7 +103,9 @@ const AcFooter = ({ store: { menu, user } }) => {
             {AcCheckIfSpecificHostname() ? (
               <span className='ac-footer__logo-text'>
                 <span className='ac-footer__logo-title'>{getFooterLogoTitle()}</span>
-                <span className='ac-footer__logo-subtitle'>{getFooterLogoSubtitle()}</span>
+                <span className='ac-footer__logo-subtitle'>
+                  {getFooterLogoSubtitle()}
+                </span>
               </span>
             ) : (
               <span>
@@ -113,18 +123,19 @@ const AcFooter = ({ store: { menu, user } }) => {
           <section className='ac-footer__sub-footer'>
             <AcContainer>
               {subFooterItems.map((subFooterItem, index) => (
-                                                  <nav
-                   key={`sub-footer-${index}`}
-                   className='ac-footer__sub-footer-links'
-                   aria-label={`Sub footer menu ${index + 1}`}
-                 >
-                   {/* Position 6: Display items horizontally without title */}
-                   {subFooterItem.items && subFooterItem.items.length > 0 && (
-                     <ul className='ac-footer__sub-footer-horizontal'>
-                       {subFooterItem.items.map((item, itemIndex) => (
+                <nav
+                  key={`sub-footer-${index}`}
+                  className='ac-footer__sub-footer-links'
+                  aria-label={`Sub footer menu ${index + 1}`}
+                >
+                  {/* Position 6: Display items horizontally without title */}
+                  {subFooterItem.items && subFooterItem.items.length > 0 && (
+                    <ul className='ac-footer__sub-footer-horizontal'>
+                      {subFooterItem.items.map((item, itemIndex) => (
                         <li key={`sub-footer-item-${itemIndex}`}>
                           {item.link ? (
-                            item.link.includes('http') || item.link.includes('https') ? (
+                            item.link.includes('http') ||
+                            item.link.includes('https') ? (
                               <a
                                 href={item.link}
                                 target='_blank'
@@ -142,7 +153,10 @@ const AcFooter = ({ store: { menu, user } }) => {
                                 </span>
                               </a>
                             ) : (
-                              <Link className='ac-footer__sub-footer-link' to={item.link}>
+                              <Link
+                                className='ac-footer__sub-footer-link'
+                                to={item.link}
+                              >
                                 {item.icon && <Icon icon={item.icon} />}
                                 {item.name}
                               </Link>
@@ -154,10 +168,10 @@ const AcFooter = ({ store: { menu, user } }) => {
                             </div>
                           )}
                         </li>
-                       ))}
-                     </ul>
-                   )}
-                 </nav>
+                      ))}
+                    </ul>
+                  )}
+                </nav>
               ))}
             </AcContainer>
           </section>

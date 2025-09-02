@@ -31,9 +31,39 @@ const BeheerPageConfigFactory = {
       modals: ['add', 'edit', 'delete', 'import', 'publish', 'depublish'],
       uniqueActions: [],
       statusIcon: null,
+      routeType: null,
     };
 
     switch (type) {
+      case 'view':
+        return {
+          ...baseConfig,
+          registerSlug: 'vng-gemma',
+          schemaSlug: 'view',
+          paginationKey: 'views',
+          title: 'Beheer Views',
+          routeType: 'view',
+          defaultHeaders: [],
+          customHeaders: {},
+          modals: [...baseConfig.modals],
+        };
+
+      // removed plural alias 'views'
+
+      case 'extendview':
+        return {
+          ...baseConfig,
+          registerSlug: 'vng-gemma',
+          schemaSlug: 'extendview',
+          paginationKey: 'extendviews',
+          title: 'Beheer Extend Views',
+          routeType: 'extendview',
+          defaultHeaders: [],
+          customHeaders: {},
+          modals: [...baseConfig.modals],
+        };
+
+      // removed plural alias 'extendviews'
       case 'applicaties':
         return {
           ...baseConfig,

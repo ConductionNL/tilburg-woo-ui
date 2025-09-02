@@ -1,33 +1,18 @@
-import { useLocation } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
-import { LABELS, VISUALS } from '@constants';
+import { LABELS } from '@constants';
 import { SkipLink } from '@utrecht/component-library-react/dist/css-module';
 
-import { AcNavigation } from '@components';
+import { AcNavigation, AcCNavigation } from '@components';
 import { AcBreadcrumbs } from '@molecules';
 import { AcContainer, ConLogo } from '@atoms';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
-import { AcCNavigation } from '@components';
 import { getTitle } from '@services/con-get-title';
-
-// Try to import container constants (generated at runtime)
-let containerConfig;
-try {
-  containerConfig = require('@constants/container.constants');
-} catch (error) {
-  console.warn(
-    'Container constants not available, falling back to hostname-based logic'
-  );
-  containerConfig = null;
-}
 
 const AcHeader = ({ store: { menu, user } }) => {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
-
-  const { all_menu_items } = menu;
 
   // Get sub menu items from position 2 with authentication and group filtering
   const menuItems =

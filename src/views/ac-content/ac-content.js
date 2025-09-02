@@ -7,7 +7,6 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
 import { AcContainer } from '@atoms';
 import { AcLoader, AcSectionsHandler } from '@components';
-import AcAuthentication from '@views/ac-authentication/ac-authentication';
 
 const AcContent = ({ store: { pages, user } }) => {
   const { fetchPage, get_single, loading, resetPage, shouldShowPage } = pages;
@@ -34,7 +33,7 @@ const AcContent = ({ store: { pages, user } }) => {
       return (
         <AcContainer compact>
           <Heading level={1}>Access Denied</Heading>
-          <p>You don't have permission to view this page.</p>
+          <p>You don&apos;t have permission to view this page.</p>
         </AcContainer>
       );
     }
@@ -44,7 +43,8 @@ const AcContent = ({ store: { pages, user } }) => {
     <AcContainer compact>
       <Heading level={1}>{get_single?.name}</Heading>
       <AcSectionsHandler contents={get_single?.contents} />
-      {get_single?.slug === 'login' ? <AcAuthentication /> : <></>}
+      {/* TODO: needs to be fixed to NOT rely on AcAuthentication */}
+      {/* {get_single?.slug === 'login' ? <AcAuthentication /> : <></>} */}
     </AcContainer>
   );
 };

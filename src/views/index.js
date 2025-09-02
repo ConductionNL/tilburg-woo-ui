@@ -4,9 +4,6 @@ const AcHome = loadable(() => import('@views/ac-home/ac-home'));
 const AcSearch = loadable(() => import('@views/ac-search/ac-search'));
 const AcThemes = loadable(() => import('@views/ac-themes/ac-themes'));
 const AcPublication = loadable(() => import('@views/ac-publication/ac-publication'));
-const AcAuthentication = loadable(() =>
-  import('@views/ac-authentication/ac-authentication')
-);
 const AcMijnOmgeving = loadable(() =>
   import('@views/ac-mijn-omgeving/ac-mijn-omgeving')
 );
@@ -25,17 +22,25 @@ const AcViews = loadable(() => import('@views/ac-views/ac-views'));
 const AcMyAccount = loadable(() => import('@views/ac-my-account/ac-my-account'));
 const AcLogin = loadable(() => import('@views/ac-login/ac-login'));
 const ConDirectory = loadable(() => import('@views/con-directory/con-directory'));
-const AcFormsGebruik = loadable(() => import('@views/ac-forms/ac-forms-gebruik/ac-forms-gebruik'));
-const AcFormsProduct = loadable(() => import('@views/ac-forms/ac-forms-product/ac-forms-product'));
-const AcFormsKoppeling = loadable(() => import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling'));
-const ConFormsDienst = loadable(() => import('@views/ac-forms/con-forms-dienst/con-forms-dienst'));
+const AcObjects = loadable(() => import('@views/ac-beheer/ac-objects'));
+const AcFormsGebruik = loadable(() =>
+  import('@views/ac-forms/ac-forms-gebruik/ac-forms-gebruik')
+);
+const AcFormsProduct = loadable(() =>
+  import('@views/ac-forms/ac-forms-product/ac-forms-product')
+);
+const AcFormsKoppeling = loadable(() =>
+  import('@views/ac-forms/ac-forms-koppeling/ac-forms-koppeling')
+);
+const ConFormsDienst = loadable(() =>
+  import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
+);
 
 export {
   AcHome,
   AcSearch,
   AcThemes,
   AcPublication,
-  AcAuthentication,
   AcMijnOmgeving,
   AcGemma,
   AcNextcloudAuthorization,
@@ -46,6 +51,7 @@ export {
   AcMyAccount,
   AcLogin,
   ConDirectory,
+  AcObjects,
   AcFormsGebruik,
   AcFormsProduct,
   AcFormsKoppeling,

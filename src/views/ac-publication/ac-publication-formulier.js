@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useParams } from 'react-router-dom';
 
-import { AcCard, AcContainer, AcFlex } from '@atoms';
+import {
+  AcCard,
+  AcContainer,
+  AcFlex,
+  AcTabs,
+  AcTabList,
+  AcTab,
+  AcTabPanel,
+} from '@atoms';
 import { AcLoader } from '@components';
 import { AcLink, AcTable } from '@molecules';
 import { withStore } from '@stores';
@@ -18,12 +25,10 @@ import {
 import { LABELS, VISUALS } from '@constants';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2 } from '@utrecht/component-library-react';
-import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 
 const AcPublicationFormulier = ({ store: { publications } }) => {
-  const { id } = useParams();
   const {
     get_single,
     loading,
@@ -45,17 +50,16 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
 
   const tabsContent = JSON.parse(get_single?.data?.tabsData || '{}');
 
-
   const mapDependencyRow = (row) => {
     return [
-      <span>{row.name}</span>,
-      <span>{row.version}</span>,
-      <span>{row.description}</span>,
-      <AcLink to={row.viewLink} target='_blank'>
+      <span key={row.name}>{row.name}</span>,
+      <span key={row.version}>{row.version}</span>,
+      <span key={row.description}>{row.description}</span>,
+      <AcLink key={row.viewLink} to={row.viewLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
         <Link>Bekijk</Link>
       </AcLink>,
-      <AcLink to={row.downloadLink} target='_blank'>
+      <AcLink key={row.downloadLink} to={row.downloadLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
         <Link>Download</Link>
       </AcLink>,
@@ -63,12 +67,12 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
   };
   const mapReuseRow = (row) => {
     return [
-      <span>{row.name}</span>,
-      <AcLink to={row.website} target='_blank'>
+      <span key={row.name}>{row.name}</span>,
+      <AcLink key={row.website} to={row.website} target='_blank'>
         <VISUALS.WORLD />
         <Link>Website</Link>
       </AcLink>,
-      <AcLink to={row.github} target='_blank'>
+      <AcLink key={row.github} to={row.github} target='_blank'>
         <VISUALS.GITHUB />
         <Link>Github</Link>
       </AcLink>,
@@ -76,14 +80,14 @@ const AcPublicationFormulier = ({ store: { publications } }) => {
   };
   const mapConfigurationRow = (row) => {
     return [
-      <span>{row.name}</span>,
-      <span>{row.organization}</span>,
-      <span>{row.supports}</span>,
-      <AcLink to={row.viewLink} target='_blank'>
+      <span key={row.name}>{row.name}</span>,
+      <span key={row.organization}>{row.organization}</span>,
+      <span key={row.supports}>{row.supports}</span>,
+      <AcLink key={row.viewLink} to={row.viewLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
         <Link>Bekijk</Link>
       </AcLink>,
-      <AcLink to={row.downloadLink} target='_blank'>
+      <AcLink key={row.downloadLink} to={row.downloadLink} target='_blank'>
         <VISUALS.EXTERNAL_LINK />
         <Link>Download</Link>
       </AcLink>,

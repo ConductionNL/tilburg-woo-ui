@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AcContainer } from '@atoms';
+import { AcCheckbox } from '@molecules';
 import { withStore } from '@stores';
 import { dia, shapes } from 'jointjs';
 // import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
-import {
-  Select,
-  SelectOption,
-  PrimaryActionButton,
-} from '@utrecht/component-library-react/dist/css-module';
+import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
@@ -18,32 +15,32 @@ import clsx from 'clsx';
 import svgPanZoom from 'svg-pan-zoom';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
-const AcGemmaView = ({ store: { gemma } }) => {
-  const {
-    fetchViews,
-    resetViews,
-    fetchView,
-    resetView,
-    fetchVoorzieningGebruik,
-    resetVoorzieningGebruik,
-    fetchAllVoorzieningGebruik,
-    resetAllVoorzieningGebruik,
-  } = gemma;
+const AcGemmaView = ({ store: { gemma }, viewId }) => {
+  const { fetchViews, resetViews, fetchView, resetView } = gemma;
   const [view, setView] = useState(null);
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
-  const [voorzieningGebruikNodes, setVoorzieningGebruikNodes] = useState(null);
-  const [propertyDefinitions, setPropertyDefinitions] = useState(null);
+  // Removed voorzieningenGebruik state and usage
+  const [propertyDefinitions, setPropertyDefinitions] = useState([
+    { name: 'Titel view SWC', identifier: 'propid-title' },
+    { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
+  ]);
+  const [filters, setFilters] = useState({ gebruik: false, product: false });
+
+  const _propertyDefinitions = [
+    { name: 'Titel view SWC', identifier: 'propid-title' },
+    { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
+  ];
 
   const getPropertyDefinitions = async () => {
     try {
       const response = await fetch(
         `${BASE_URL}/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
       );
-      const data = await response.json();
+      await response.json();
 
-      setPropertyDefinitions(data.results[0].propertyDefinitions);
+      setPropertyDefinitions(_propertyDefinitions);
     } catch (error) {
       console.error(`Error fetching node data: ${error}`);
       return null;
@@ -64,7 +61,9 @@ const AcGemmaView = ({ store: { gemma } }) => {
   useEffect(() => {
     getPropertyDefinitions()
       .then(() => {
-        fetchViews();
+        if (!viewId) {
+          fetchViews();
+        }
       })
       .catch((error) => {
         console.error(`Error fetching property definitions: ${error}`);
@@ -76,6 +75,13 @@ const AcGemmaView = ({ store: { gemma } }) => {
     return () => resetViews();
   }, []);
 
+  // If a viewId is provided, use it to set the view
+  useEffect(() => {
+    if (viewId) {
+      setView(viewId);
+    }
+  }, [viewId]);
+
   useEffect(() => {
     if (!view) return;
 
@@ -83,16 +89,20 @@ const AcGemmaView = ({ store: { gemma } }) => {
     setViewRelationsData(null);
     setViewIsDoneLoading(false);
 
-    fetchAllVoorzieningGebruik();
-    fetchView(view);
+    const params = {
+      ...(filters.gebruik ? { gebruik: true } : {}),
+      ...(filters.product ? { product: true } : {}),
+    };
+    fetchView(view, params);
     return () => {
       resetView();
-      resetAllVoorzieningGebruik();
     };
-  }, [view]);
+  }, [view, filters]);
+
+  // console.log({ gemma: gemma.get_view });
 
   useEffect(() => {
-    if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
+    if (!gemma.get_view) return;
     let viewNodesData = [];
 
     const getViewNodesData = () => {
@@ -154,79 +164,6 @@ const AcGemmaView = ({ store: { gemma } }) => {
     getViewNodesData();
     getChildNodesData();
 
-    // Process voorziening nodes
-    const parentChildrenCount = {};
-
-    // First pass: count children per parent node
-    gemma.get_allVoorzieningGebruik.forEach((voorzieningGebruik) => {
-      if (!voorzieningGebruik.voorzieningId?.referentieComponenten) return;
-
-      voorzieningGebruik.voorzieningId.referentieComponenten.forEach((parentId) => {
-        parentChildrenCount[parentId] = (parentChildrenCount[parentId] || 0) + 1;
-      });
-    });
-
-    // Second pass: create and position child nodes
-    gemma.get_allVoorzieningGebruik.forEach((voorzieningGebruik) => {
-      if (!voorzieningGebruik.voorzieningId?.referentieComponenten) return;
-
-      voorzieningGebruik.voorzieningId.referentieComponenten.forEach((parentId) => {
-        // Find the parent node in the view
-        const parentNode = gemma.get_view.nodes.find(
-          (node) => node.elementRef === parentId
-        );
-
-        if (!parentNode) return;
-
-        // Calculate child node position
-        const totalChildren = parentChildrenCount[parentId];
-        const childIndex = viewNodesData.filter(
-          (node) => node.parent === parentNode.identifier
-        ).length;
-
-        const PARENT_PADDING = 20;
-        const CHILD_SPACING = 8;
-        const parentWidth = parseInt(parentNode.position.w);
-        const parentHeight = parseInt(parentNode.position.h);
-
-        // Calculate dimensions
-        const childWidth = Math.min(
-          (parentWidth - PARENT_PADDING * 2 - CHILD_SPACING * (totalChildren - 1)) /
-            totalChildren,
-          120 // Max width cap
-        );
-        const childHeight = Math.min(parentHeight * 0.35, 30);
-
-        // Calculate absolute position based on parent's position
-        const absoluteX =
-          parseInt(parentNode.position.x) +
-          PARENT_PADDING +
-          childIndex * (childWidth + CHILD_SPACING);
-        // Position from bottom of parent instead of top
-        const absoluteY =
-          parseInt(parentNode.position.y) +
-          parseInt(parentNode.position.h) - // Parent height
-          childHeight - // Child height
-          10; // 10px padding from bottom
-
-        // Create child node
-        viewNodesData.push({
-          name: voorzieningGebruik.voorzieningId.naam || 'eDiensten',
-          id: `${voorzieningGebruik.voorzieningId.id}_${parentId}`,
-          viewNodeId: `${voorzieningGebruik.voorzieningId.id}_${parentId}`,
-          type: 'dataobject',
-          position: {
-            x: absoluteX,
-            y: absoluteY,
-            w: childWidth,
-            h: childHeight,
-          },
-          font: parentNode.style.font,
-          parent: parentNode.identifier,
-        });
-      });
-    });
-
     // Update state with the complete data
     setViewNodesData(viewNodesData);
 
@@ -264,7 +201,7 @@ const AcGemmaView = ({ store: { gemma } }) => {
     };
 
     getViewRelationsData();
-  }, [gemma.get_view, gemma.get_allVoorzieningGebruik]);
+  }, [gemma.get_view]);
 
   useEffect(() => {
     if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
@@ -342,31 +279,13 @@ const AcGemmaView = ({ store: { gemma } }) => {
     });
 
     // Add click handler to the paper
-    paper.on('element:pointerclick', (elementView, evt) => {
+    paper.on('element:pointerclick', (elementView) => {
       const model = elementView.model;
       const onClick = model.prop('onClick');
       if (typeof onClick === 'function') {
         onClick();
       }
     });
-
-    // Helper function to recursively collect all child nodes
-    const getAllChildNodes = (nodes) => {
-      return nodes.reduce((acc, node) => {
-        if (!node.nodes) return acc;
-
-        // Add immediate child nodes
-        const children = node.nodes.map((child) => ({
-          ...child,
-          isChildNode: true,
-        }));
-
-        // Recursively get children of children
-        const grandchildren = getAllChildNodes(node.nodes);
-
-        return [...acc, ...children, ...grandchildren];
-      }, []);
-    };
 
     const convertToViewNode = (node) => {
       // Create a memoized map of viewNodesData for faster lookups
@@ -498,16 +417,14 @@ const AcGemmaView = ({ store: { gemma } }) => {
     // Get ordered nodes and process them
     const orderedNodes = getOrderedNodes();
     const gemmaNodes = orderedNodes;
-    const voorzieningNodes = gemma.get_allVoorzieningGebruik;
-
-    const allNodes = [...gemmaNodes, ...voorzieningNodes];
+    const allNodes = [...gemmaNodes];
 
     const viewNodes = allNodes
       .flatMap(convertToViewNode)
       .filter(Boolean)
       .filter((node) => node.type && node.name && node.viewNodeId);
 
-    const convertToViewRelationship = (relationship, idx) => {
+    const convertToViewRelationship = (relationship) => {
       const relationshipData = viewRelationsData.find(
         (item) => item.id === relationship.relationshipRef
       );
@@ -558,19 +475,24 @@ const AcGemmaView = ({ store: { gemma } }) => {
       (relationship) => relationship !== undefined
     );
 
-    const addSuffix = (id, suffix = '-sc') => {
-      return id.endsWith(suffix) ? id : `${id}${suffix}`;
-    };
+    // const addSuffix = (id, suffix = '-sc') => {
+    //   return id.endsWith(suffix) ? id : `${id}${suffix}`;
+    // };
+
+    // Example nodes removed
+
+    // Example relationships removed
 
     // Render the graph
     ViewRenderer.renderToGraph(
       outputGraph,
       viewNodes,
-      viewRelationships.map((rel) => ({
-        ...rel,
-        sourceId: addSuffix(rel.sourceId),
-        targetId: addSuffix(rel.targetId),
-      })),
+      // viewRelationships.map((rel) => ({
+      //   ...rel,
+      //   sourceId: addSuffix(rel.sourceId),
+      //   targetId: addSuffix(rel.targetId),
+      // })),
+      viewRelationships,
       new ViewSettings({
         archimateVersion: '<=3.1',
         style: 'hybrid',
@@ -585,6 +507,8 @@ const AcGemmaView = ({ store: { gemma } }) => {
         interactive: false,
       })
     );
+
+    // console.log({ viewNodes, viewRelationships });
 
     viewNodes.forEach((node) => {
       setNodeColor(node);
@@ -1004,19 +928,45 @@ const AcGemmaView = ({ store: { gemma } }) => {
     // Clean up
     URL.revokeObjectURL(url);
   };
+  if (viewId) {
+    return (
+      <AcContainer spacing='lg'>
+        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <AcCheckbox
+            label='Gebruik'
+            checked={filters.gebruik}
+            onChange={(checked) => setFilters((f) => ({ ...f, gebruik: checked }))}
+          />
+          <AcCheckbox
+            label='Product'
+            checked={filters.product}
+            onChange={(checked) => setFilters((f) => ({ ...f, product: checked }))}
+          />
+        </div>
+        {gemma.get_view && !viewIsDoneLoading && (
+          <div className='ac-gemma-graph-container-loading'>
+            <AcLoader className='ac-gemma-graph-container-loading-loader' />
+          </div>
+        )}
+        <div className='ac-gemma-graph-container' id='graph-container'></div>
+      </AcContainer>
+    );
+  }
+
   return (
     <AcContainer spacing='lg'>
-      {gemma.all_views?.length === 0 && <AcLoader />}
-      {gemma.all_views?.length > 0 && (
+      {!gemma.all_views || gemma.all_views?.length === 0 ? (
+        <AcLoader />
+      ) : (
         <>
           <ReactSelect
             placeholder='Selecteer een view'
             className={clsx('ac-gemma-select')}
             onChange={(e) => setView(e.value)}
-            loading={gemma.all_views?.length === 0}
-            options={gemma.all_views?.map((view) => ({
-              value: view.id,
-              label: getViewName(view),
+            loading={!gemma.all_views || gemma.all_views.length === 0}
+            options={gemma.all_views.map((v) => ({
+              value: v.id,
+              label: getViewName(v),
             }))}
           />
 
@@ -1055,7 +1005,6 @@ const AcGemmaView = ({ store: { gemma } }) => {
           )}
         </>
       )}
-      {/* <div className='ac-gemma-graph-container' id='graph-container'></div> */}
     </AcContainer>
   );
 };

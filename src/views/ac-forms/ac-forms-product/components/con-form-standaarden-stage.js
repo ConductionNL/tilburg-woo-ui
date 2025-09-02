@@ -20,10 +20,10 @@ import {
  * 4. Bewijs (file upload when compliant)
  */
 const ConFormStandaardenStage = ({
-  _product,
+  // _product,
   setProduct,
   referentieComponentenWithStandards,
-  _schemas,
+  // _schemas,
   getNewModulesWithApplicatieData,
   setStandaardenLoading: setParentStandaardenLoading,
   standaardenOptions,
@@ -42,7 +42,12 @@ const ConFormStandaardenStage = ({
     if (!standard) return null;
     if (typeof standard === 'string') return standard;
     return (
-      standard.id || standard.identifier || standard.value || standard.slug || null
+      standard.id ||
+      standard?.['@self']?.id ||
+      standard.identifier ||
+      standard.value ||
+      standard.slug ||
+      null
     );
   };
 
@@ -462,7 +467,7 @@ const ConFormStandaardenStage = ({
   });
 
   // Generate table rows with correct rowspan logic
-  Object.entries(moduleGroups).forEach(([_moduleId, entries]) => {
+  Object.values(moduleGroups).forEach((entries) => {
     // Sort entries within each module for consistent display
     entries.sort((a, b) => {
       // Sort by type first (verplicht before aanbevolen), then by name

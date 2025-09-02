@@ -5,7 +5,6 @@ import { AcFlex } from '@atoms';
 import { VISUALS } from '@constants';
 import { ConFileDropZone } from '@views/ac-beheer/shared/components/import-modal/con-file-dropzone';
 import ConTable from '@views/ac-beheer/shared/components/con-table';
-import { AcButton } from '@src/molecules';
 import SpinLoader from '@src/components/con-spin-loader/con-spin-loader';
 import ReactSelect from 'react-select';
 import { Heading } from '@amsterdam/design-system-react';
@@ -45,7 +44,6 @@ const ConObjectUploadFiles = ({
 
   const [files, setFiles] = useState([]);
   const [onlineFiles, setOnlineFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [labelOptions, setLabelOptions] = useState([createOption('Geen label')]);
   const [selectedLabels, setSelectedLabels] = useState([createOption('Geen label')]);
@@ -63,7 +61,6 @@ const ConObjectUploadFiles = ({
 
   const fetchOnlineFiles = async () => {
     try {
-      setLoading(true);
       await objectStore.fetchObjectFiles(register, schema, id, {
         _limit: 500,
         _page: 1,
@@ -73,8 +70,6 @@ const ConObjectUploadFiles = ({
       setOnlineFiles(filesData);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -108,8 +103,6 @@ const ConObjectUploadFiles = ({
       })
     );
   };
-
-  const [error, setError] = useState(null);
 
   const handleDeleteMultiple = async () => {
     if (selectedRows.length === 0) return;
@@ -243,7 +236,6 @@ const ConObjectUploadFiles = ({
     } catch (err) {
       updateFileStatus(file, 'error');
       console.error(err);
-      setError(err);
       return {
         success: false,
         file: file,

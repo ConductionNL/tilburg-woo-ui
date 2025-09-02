@@ -16,7 +16,7 @@ const ConGebruikStepInformatie = ({
   loading,
   refCompOptions,
   schemas,
-  _schemasLoading,
+  // schemasLoading,
   gebruikType,
 }) => {
   return (
@@ -46,11 +46,18 @@ const ConGebruikStepInformatie = ({
             <>
               <label className='utrecht-form-label'>Afnemer (uw organisatie)</label>
               <Textbox
-                value={gebruik?.afnemer?.naam || gebruik?.afnemer?.name || 'Huidige organisatie'}
+                value={
+                  gebruik?.afnemer?.naam ||
+                  gebruik?.afnemer?.name ||
+                  'Huidige organisatie'
+                }
                 disabled
               />
-              <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-                Voor gebruik door eigen organisatie is de afnemer automatisch uw organisatie.
+              <div
+                style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}
+              >
+                Voor gebruik door eigen organisatie is de afnemer automatisch uw
+                organisatie.
               </div>
             </>
           ) : gebruikType === 'andere-organisatie' ? (
@@ -65,19 +72,25 @@ const ConGebruikStepInformatie = ({
                 schemas={schemas}
                 placeholder='Selecteer de klantorganisatie...'
               />
-              <div style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}>
-                Selecteer de organisatie die uw product gebruikt. Deze organisatie wordt geïnformeerd en moet het gebruik goedkeuren.
+              <div
+                style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}
+              >
+                Selecteer de organisatie die uw product gebruikt. Deze organisatie
+                wordt geïnformeerd en moet het gebruik goedkeuren.
               </div>
             </>
           ) : (
             <>
               <label className='utrecht-form-label'>Afnemer</label>
-              <Textbox
-                placeholder='Selecteer eerst het type gebruik'
-                disabled
-              />
-              <div style={{ fontSize: '0.875rem', color: '#orange', marginTop: '0.25rem' }}>
-                Ga terug naar "Soort gebruik" om het type registratie te selecteren.
+              <Textbox placeholder='Selecteer eerst het type gebruik' disabled />
+              <div
+                style={{
+                  fontSize: '0.875rem',
+                  color: '#orange',
+                  marginTop: '0.25rem',
+                }}
+              >
+                Ga terug naar &quot;Soort gebruik&quot; om het type registratie te selecteren.
               </div>
             </>
           )}
@@ -162,6 +175,7 @@ const ConGebruikStepInformatie = ({
           <ReactSelect
             isMulti
             className='ac-beheer-select'
+            closeMenuOnSelect={false}
             options={refCompOptions}
             value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
               .map((v) => refCompOptions.find((o) => String(o.value) === String(v)))
@@ -175,8 +189,6 @@ const ConGebruikStepInformatie = ({
             placeholder='Selecteer referentiecomponenten...'
           />
         </div>
-
-
       </div>
     </div>
   );

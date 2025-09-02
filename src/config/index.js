@@ -1,11 +1,16 @@
 // Imports => Utilities
-import { AcGetAccessToken, AcLockObject, ACIsHttps } from '@utils';
+import { AcGetAccessToken, AcLockObject } from '@utils';
 
 // Helper function to get basic auth credentials from user store
 const getBasicAuthCredentials = () => {
   try {
     // Access the user store through the global app object
-    if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+    if (
+      window.app &&
+      window.app.store &&
+      window.app.store.user &&
+      window.app.store.user.basicAuthCredentials
+    ) {
       return window.app.store.user.basicAuthCredentials;
     }
   } catch (error) {
@@ -21,29 +26,33 @@ let containerConfig;
 try {
   containerConfig = require('@constants/container.constants');
 } catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
+  console.warn(
+    'Container constants not available, falling back to hostname-based logic'
+  );
   containerConfig = null;
 }
-
-const hostname = window.location.hostname;
 
 const apiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getApiUrl) {
-    console.warn('Container constants not available, falling back to default API URL');
+    console.warn(
+      'Container constants not available, falling back to default API URL'
+    );
     return '/api/apps'; // Fallback to default
   }
-  
+
   return containerConfig.getApiUrl();
 };
 
 export const commongroundApiUrl = () => {
   // Always use container config - no hardcoded fallbacks in main codebase
   if (!containerConfig || !containerConfig.getCommongroundApiUrl) {
-    console.warn('Container constants not available, falling back to default CommonGround API URL');
+    console.warn(
+      'Container constants not available, falling back to default CommonGround API URL'
+    );
     return '/api/apps'; // Fallback to default
   }
-  
+
   return containerConfig.getCommongroundApiUrl();
 };
 
@@ -57,14 +66,14 @@ const _api_commonground_headers_ = {
   Accept: 'application/json',
 };
 
-const _site_ = process.env.SITE;
+// const _site_ = process.env.SITE;
 const _mode_ = process.env.MODE;
-const _provider_ = process.env.PROVIDER;
+// const _provider_ = process.env.PROVIDER;
 
 const _auto_logout = process.env.AUTO_LOGOUT;
 const _auto_logout_time = process.env.AUTO_LOGOUT_TIME;
 
-const _register_uri_ = process.env.REGISTER_URL;
+// const _register_uri_ = process.env.REGISTER_URL;
 
 export default {
   mode: _mode_,

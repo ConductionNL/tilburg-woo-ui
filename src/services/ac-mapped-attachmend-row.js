@@ -10,7 +10,7 @@ export const AcMappedAttachmentRow = (row, primary) => {
 
   if (!primary) {
     return [
-      <AcLink to={row.accessUrl} target='_blank'>
+      <AcLink key={row.id} to={row.accessUrl} target='_blank'>
         <VISUALS.DOCUMENT />
         <Link>
           {`${row.title}${
@@ -22,7 +22,7 @@ export const AcMappedAttachmentRow = (row, primary) => {
   }
 
   return [
-    <AcLink to={row.accessUrl} target='_blank'>
+    <AcLink key={row.id} to={row.accessUrl} target='_blank'>
       <VISUALS.DOCUMENT />
       <Link>
         {`${row.title}${checkIfTitleContainsExtension ? '' : '.' + row.extension}` ||

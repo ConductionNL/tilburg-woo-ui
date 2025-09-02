@@ -12,12 +12,7 @@ import svgPanZoom from 'svg-pan-zoom';
 import { useParams } from 'react-router';
 
 const AcViews = ({ store: { gemma } }) => {
-  const {
-    fetchView,
-    resetView,
-    fetchAllVoorzieningGebruik,
-    resetAllVoorzieningGebruik,
-  } = gemma;
+  const { fetchView, resetView } = gemma;
   const [viewNodesData, setViewNodesData] = useState(null);
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
@@ -37,11 +32,9 @@ const AcViews = ({ store: { gemma } }) => {
     setViewRelationsData(null);
     setViewIsDoneLoading(false);
 
-    fetchAllVoorzieningGebruik();
     fetchView(id);
     return () => {
       resetView();
-      resetAllVoorzieningGebruik();
     };
   }, [id]);
 
@@ -129,89 +122,7 @@ const AcViews = ({ store: { gemma } }) => {
     getViewNodesData()
       .then(() => getChildNodesData())
       .then(() => {
-        const processVoorzieningNodes = new Promise((resolve) => {
-          // Create a map of parent nodes and their children count
-          const parentChildrenCount = {};
-
-          // First pass: count children per parent node
-          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-            if (!voorziening?.referentieComponenten) return;
-
-            voorziening.referentieComponenten.forEach((parentId) => {
-              parentChildrenCount[parentId] =
-                (parentChildrenCount[parentId] || 0) + 1;
-            });
-          });
-
-          // Second pass: create and position child nodes
-          gemma.get_allVoorzieningGebruik.forEach((voorziening) => {
-            if (!voorziening?.referentieComponenten) return;
-
-            voorziening.referentieComponenten.forEach((parentId) => {
-              // Find the parent node in the view
-              const parentNode = gemma.get_view.nodes.find(
-                (node) => node.elementRef === parentId
-              );
-
-              if (!parentNode) return;
-
-              // Calculate child node position
-              const totalChildren = parentChildrenCount[parentId];
-              const childIndex = viewNodesData.filter(
-                (node) => node.parent === parentNode.identifier
-              ).length;
-
-              const PARENT_PADDING = 20;
-              const CHILD_SPACING = 8;
-              const parentWidth = parseInt(parentNode.position.w);
-              const parentHeight = parseInt(parentNode.position.h);
-
-              // Calculate dimensions
-              const childWidth = Math.min(
-                (parentWidth -
-                  PARENT_PADDING * 2 -
-                  CHILD_SPACING * (totalChildren - 1)) /
-                  totalChildren,
-                120 // Max width cap
-              );
-              const childHeight = Math.min(parentHeight * 0.35, 30);
-
-              // Calculate absolute position based on parent's position
-              const absoluteX =
-                parseInt(parentNode.position.x) +
-                PARENT_PADDING +
-                childIndex * (childWidth + CHILD_SPACING);
-              // Position from bottom of parent instead of top
-              const absoluteY =
-                parseInt(parentNode.position.y) +
-                parseInt(parentNode.position.h) - // Parent height
-                childHeight - // Child height
-                10; // 10px padding from bottom
-
-              // Create child node
-              viewNodesData.push({
-                name: voorziening.opmerkingen || 'eDiensten',
-                id: `${voorziening.id}_${parentId}`,
-                viewNodeId: `${voorziening.id}_${parentId}`,
-                type: 'dataobject',
-                position: {
-                  x: absoluteX,
-                  y: absoluteY,
-                  w: childWidth,
-                  h: childHeight,
-                },
-                font: parentNode.style.font,
-                parent: parentNode.identifier,
-              });
-            });
-          });
-
-          resolve();
-        });
-
-        processVoorzieningNodes.finally(() => {
-          setViewNodesData(viewNodesData);
-        });
+        setViewNodesData(viewNodesData);
       });
 
     const getViewRelationsData = () => {
@@ -256,7 +167,6 @@ const AcViews = ({ store: { gemma } }) => {
 
   useEffect(() => {
     if (!gemma.get_view) return;
-    if (!gemma.get_allVoorzieningGebruik) return;
     if (!viewNodesData) return;
     if (!viewRelationsData) return;
 
@@ -284,7 +194,7 @@ const AcViews = ({ store: { gemma } }) => {
     });
 
     // Add click handler to the paper
-    paper.on('element:pointerclick', (elementView, evt) => {
+    paper.on('element:pointerclick', (elementView) => {
       const model = elementView.model;
       const onClick = model.prop('onClick');
       if (typeof onClick === 'function') {
@@ -378,7 +288,6 @@ const AcViews = ({ store: { gemma } }) => {
     };
 
     const gemmaNodes = gemma.get_view.nodes;
-    const voorzieningNodes = gemma.get_allVoorzieningGebruik;
 
     // Helper function to recursively collect all child nodes
     const getAllChildNodes = (nodes) => {
@@ -400,14 +309,14 @@ const AcViews = ({ store: { gemma } }) => {
 
     const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes).filter(Boolean);
 
-    const allNodes = [...gemmaNodes, ...voorzieningNodes, ...gemmaChildNodes];
+    const allNodes = [...gemmaNodes, ...gemmaChildNodes];
 
     const viewNodes = allNodes
       .flatMap(convertToViewNode)
       .filter(Boolean)
       .filter((node) => node.type && node.name && node.viewNodeId);
 
-    const convertToViewRelationship = (relationship, idx) => {
+    const convertToViewRelationship = (relationship) => {
       const relationshipData = viewRelationsData.find(
         (item) => item.id === relationship.relationshipRef
       );
@@ -531,6 +440,8 @@ const AcViews = ({ store: { gemma } }) => {
 
   //////////////////// Scrolling ///////////////////////////
 
+  // TODO: this just needs a code fix, panZoomInstance is not being used
+  // eslint-disable-next-line no-unused-vars
   const [panZoomInstance, setPanZoomInstance] = useState(null);
 
   useEffect(() => {

@@ -128,14 +128,16 @@ const AcFormField = ({
         })}
       </FormField>
       {touched ? (
-        <span className='ac-register-form-field-error'>
-          {touched[touchedKey] && restProps.errorMessage}
-        </span>
-      ) : (
+        touched[touchedKey] && hasError ? (
+          <span className='ac-register-form-field-error'>
+            {restProps.errorMessage}
+          </span>
+        ) : null
+      ) : hasError ? (
         <span className='ac-register-form-field-error'>
           {restProps.errorMessage}
         </span>
-      )}
+      ) : null}
     </>
   );
 };

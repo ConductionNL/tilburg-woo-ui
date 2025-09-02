@@ -1,39 +1,6 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 
-const HOSTNAME = window.location.hostname;
-
-// Try to import container constants (generated at runtime)
-let containerConfig;
-let getApiUrl;
-try {
-  const containerConstants = require('@constants/container.constants');
-  containerConfig = containerConstants;
-  getApiUrl = containerConstants.getApiUrl;
-} catch (error) {
-  console.warn('Container constants not available, falling back to hostname-based logic');
-  containerConfig = null;
-  getApiUrl = () => '/api';
-}
-
-const getGemmaEndpoint = () => {
-  // Use container config if available
-  if (containerConfig && containerConfig.getGemmaEndpoint) {
-    return containerConfig.getGemmaEndpoint();
-  }
-
-  // Fallback to hostname-based logic for production builds
-  switch (HOSTNAME) {
-    // return 'http://localhost:8080';
-    case 'vng.test.opencatalogi.nl':
-      return 'https://vng.test.commonground.nu';
-    case 'localhost':
-    case 'vng.opencatalogi.nl':
-    case 'acceptatie.softwarecatalogus.nl':
-      return 'https://vng.accept.commonground.nu';
-    default:
-      return 'https://vng.accept.commonground.nu';
-  }
-};
+// Note: Using relative endpoints for GEMMA; base resolved by proxy configuration
 
 export const ENDPOINTS = AcLockObject({
   OAUTH: {
@@ -55,18 +22,15 @@ export const ENDPOINTS = AcLockObject({
       `/opencatalogi/api/publications/${_id}?extend[]=themes&extend[]=catalog&extend[]=publicationType&extend[]=organization&extend[]=@self.schema`, // GET
     RELATIONS: (_uri) =>
       `/opencatalogi/api/publications?extend[]=publicationType&extend[]=catalog&_relations=${_uri}`, // GET
-    ATTACHMENTS: (_id) =>
-      `/opencatalogi/api/publications/${_id}/attachments`, // GET
+    ATTACHMENTS: (_id) => `/opencatalogi/api/publications/${_id}/attachments`, // GET
   },
   MIJN_OMGEVING: {
     SEARCH: `/mijn-omgeving`, // GET
-    SINGLE: (_id) =>
-      `/mijn-omgeving/${_id}`, // GET
+    SINGLE: (_id) => `/mijn-omgeving/${_id}`, // GET
   },
   AUTHENTICATION: {
     SEARCH: `/publications`, // GET
-    SINGLE: (_id) =>
-      `/publications/${_id}`, // GET
+    SINGLE: (_id) => `/publications/${_id}`, // GET
   },
   FAQS: {
     INDEX: `/faqs`, // GET
@@ -80,20 +44,10 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `/opencatalogi/api/themes`, // GET
   },
   GEMMA: {
-    // VIEWS: `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}`,
-    VIEWS: `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views?_fields[]=name&_fields[]=id&_fields[]=identifier&_fields[]=properties`,
-    // VIEW: (_id) => `${OPENCONNECTOR}${API}${ENDPOINT}${VIEWS}/${_id}?extend=all`,
-    VIEW: (_id) =>
-      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/views/${_id}`,
-    // ELEMENTS: (_id) =>
-    //   `${OPENCONNECTOR}${API}${ENDPOINT}${ELEMENTS}/${_id}?extend=all`,
+    VIEWS: `openconnector/api/endpoint/views`,
+    VIEW: (_id) => `openconnector/api/endpoint/views/${_id}`,
     ELEMENT_REFERENCES: (_id) =>
-      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/elements?identifier=${_id}`,
-
-    // VOORZIENING_GEBRUIK: (_id) =>
-    //   `${OPENCONNECTOR}${API}${ENDPOINT}${VOORZIENING_GEBRUIK}`,
-    VOORZIENING_GEBRUIK: (_id) =>
-      `${getGemmaEndpoint()}/apps/openconnector/api/endpoint/voorzieninggebruiken?extend[]=voorzieningId`,
+      `openconnector/api/endpoint/elements?identifier=${_id}`,
   }, // GET
   MENU: {
     INDEX: `/opencatalogi/api/menus`, // GET

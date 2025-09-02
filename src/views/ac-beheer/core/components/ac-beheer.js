@@ -4,17 +4,7 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
 import { getCookie } from '@src/utilities';
-import {
-  AcDashboard,
-  AcBeheerDienstDetails,
-  AcBeheerGebruikenDetails,
-  AcBeheerVoorzieningenVersieDetails,
-  AcBeheerOvereenkomstenDetails,
-  AcBeheerOrganisatieDetails,
-  AcBeheerKwetsbaarheidDetails,
-  AcBeheerContactpersoonDetails,
-  AcBeheerApplicatiesDetails,
-} from '@views/ac-beheer';
+import { AcDashboard } from '@views/ac-beheer';
 import ConBeheerPageWrapper from './con-beheer-page-wrapper';
 import ConGenericBeheerDetailsPage from './con-generic-beheer-details-page';
 

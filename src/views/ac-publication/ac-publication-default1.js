@@ -1,28 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 
 import { AcCard, AcContainer, AcFlex } from '@atoms';
 import { AcLoader } from '@components';
-import { AcLink, AcTable } from '@molecules';
+import { AcTable } from '@molecules';
 import { withStore } from '@stores';
 
 import {
   Heading,
   Paragraph,
-  Link,
   Button,
-  BadgeCounter,
 } from '@utrecht/component-library-react/dist/css-module';
 
 import { LABELS, VISUALS } from '@constants';
-import acFormatDate from '@src/utilities/ac-format-date';
 import { AcGetAdditionalInfoRow } from '@src/services/ac-get-additional-info-row';
 import { Pagination } from '@amsterdam/design-system-react';
 import { Heading2, Heading3 } from '@utrecht/component-library-react';
-import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
-import _ from 'lodash';
-;
 
 const AcPublicationDefault = ({ store: { publications } }) => {
   const {
@@ -32,14 +26,12 @@ const AcPublicationDefault = ({ store: { publications } }) => {
     getSearchPageURL,
     setAttachmentsPage,
     getFilteredAttachments,
-    get_relations,
-    resetRelations,
-    resetPublication,
-    fetchRelations,
-    fetchPublication,
+    // get_relations,
+    // resetRelations,
+    // resetPublication,
+    // fetchRelations,
+    // fetchPublication,
   } = publications;
-
-  const [tabIndex, setTabIndex] = useState(0);
 
   useEffect(() => {
     document.title = get_single?.title || 'Open Ac | Publicatie';

@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
-import { AcFlex, AcGrid, AcSection, AcContainer } from '@atoms';
-import { useNavigate } from 'react-router';
+import { AcSection, AcContainer } from '@atoms';
 import { AcLoader } from '@components';
 import {
   Heading,
@@ -36,7 +35,6 @@ const AcMyAccount = ({ store }) => {
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
 
-  const navigate = useNavigate();
   const { user } = store;
 
   // Email validation function
@@ -138,20 +136,20 @@ const AcMyAccount = ({ store }) => {
     setShowOrgModal(true);
   };
 
-  // Function to open contact person edit modal  
+  // Function to open contact person edit modal
   const handleEditContact = () => {
     if (!userData) return;
     setShowContactModal(true);
   };
 
   // Handle successful form submissions
-  const handleOrgFormSuccess = async (response) => {
+  const handleOrgFormSuccess = async () => {
     setShowOrgModal(false);
     // Refresh user data to get updated organization info
     await fetchUserData();
   };
 
-  const handleContactFormSuccess = async (response) => {
+  const handleContactFormSuccess = async () => {
     setShowContactModal(false);
     // Refresh user data
     await fetchUserData();
@@ -224,7 +222,7 @@ const AcMyAccount = ({ store }) => {
                     </div>
                   </div>
                   <Separator className='ac-register-review-header__separator' />
-                  
+
                   {switchingOrg && (
                     <div style={{ marginBottom: '1.5rem' }}>
                       <Paragraph
@@ -275,13 +273,13 @@ const AcMyAccount = ({ store }) => {
               <div className='ac-register-review__section'>
                 <div className='ac-register-review__header'>
                   <Heading level={4}>Gebruikersgegevens</Heading>
-                                      <AcButton
-                      style='button'
-                      icon={<VISUALS.PENCIL />}
-                      onClick={() => setShowModal(true)}
-                    >
-                      Bewerken
-                    </AcButton>
+                  <AcButton
+                    style='button'
+                    icon={<VISUALS.PENCIL />}
+                    onClick={() => setShowModal(true)}
+                  >
+                    Bewerken
+                  </AcButton>
                 </div>
                 <Separator className='ac-register-review-header__separator' />
 
@@ -317,13 +315,13 @@ const AcMyAccount = ({ store }) => {
               <div className='ac-register-review__section'>
                 <div className='ac-register-review__header'>
                   <Heading level={4}>Contact gegevens</Heading>
-                                        <AcButton
-                        style='button'
-                        icon={<VISUALS.PENCIL />}
-                        onClick={handleEditContact}
-                      >
-                        Bewerken
-                      </AcButton>
+                  <AcButton
+                    style='button'
+                    icon={<VISUALS.PENCIL />}
+                    onClick={handleEditContact}
+                  >
+                    Bewerken
+                  </AcButton>
                 </div>
                 <Separator className='ac-register-review-header__separator' />
 
@@ -390,11 +388,13 @@ const AcMyAccount = ({ store }) => {
                   <div>
                     {userData.backendCapabilities ? (
                       <AcColumn gap='xs'>
-                        {Object.entries(userData.backendCapabilities).map(([k, v]) => (
-                          <Paragraph key={k} style={{ margin: 0 }}>
-                            {k}: {v ? 'Ja' : 'Nee'}
-                          </Paragraph>
-                        ))}
+                        {Object.entries(userData.backendCapabilities).map(
+                          ([k, v]) => (
+                            <Paragraph key={k} style={{ margin: 0 }}>
+                              {k}: {v ? 'Ja' : 'Nee'}
+                            </Paragraph>
+                          )
+                        )}
                       </AcColumn>
                     ) : (
                       <span>-</span>
@@ -420,7 +420,7 @@ const AcMyAccount = ({ store }) => {
               showModal={showOrgModal}
               onClose={() => setShowOrgModal(false)}
               onSuccess={handleOrgFormSuccess}
-              type="organisaties"
+              type='organisaties'
               isEdit={true}
               data={activeOrganisation}
             />
@@ -432,7 +432,7 @@ const AcMyAccount = ({ store }) => {
               showModal={showContactModal}
               onClose={() => setShowContactModal(false)}
               onSuccess={handleContactFormSuccess}
-              type="contactpersonen"
+              type='contactpersonen'
               isEdit={true}
               data={{
                 voornaam: userData.firstName,
@@ -440,7 +440,7 @@ const AcMyAccount = ({ store }) => {
                 achternaam: userData.lastName,
                 'e-mailadres': userData.email,
                 telefoonnummer: userData.phone || '',
-                functie: userData.function || ''
+                functie: userData.function || '',
               }}
             />
           )}
