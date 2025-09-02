@@ -84,6 +84,16 @@ const AcFormsGebruik = ({ store }) => {
   // Usage type selection state
   const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
 
+  // Clear certain fields when gebruikType changes to 'andere-organisatie'
+  useEffect(() => {
+    if (gebruikType === 'andere-organisatie') {
+      // Voor andere organisatie gebruik hoeven contactpersoon en referentiecomponenten niet getoond te worden
+      // We wissen deze velden om verwarring te voorkomen
+      setGebruikData('contactpersoon', '');
+      setGebruikData('gebruiktVoorReferentiecomponenten', []);
+    }
+  }, [gebruikType]);
+
   // Options state (UI-only)
   const [productOptions, setProductOptions] = useState([]);
   const [modulesOptions, setModulesOptions] = useState([]);
@@ -147,24 +157,20 @@ const AcFormsGebruik = ({ store }) => {
     if (org) setGebruikData('afnemer', org);
   }, [store?.userStore?.activeOrganization]);
 
-  // Fetch product and referentiecomponenten options on mount
+  // Preload all slow API calls at component mount (hotloading like in product form)
   useEffect(() => {
     let isMounted = true;
 
     const fetchProducts = async () => {
       try {
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
+        // Use authenticated API client instead of raw fetch
+        await store.object.fetchCollection('voorzieningen', 'product', { 
+          _limit: '50', 
+          _page: '1', 
+          _extend: '@self.schema' 
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
+        const collection = store.object.getCollection('voorzieningen_product');
+        const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
         if (isMounted) setProductOptions(options);
       } catch (e) {
@@ -172,21 +178,59 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
+    const fetchModules = async () => {
+      try {
+        // Use authenticated API client instead of raw fetch
+        await store.object.fetchCollection('voorzieningen', 'module', { 
+          _limit: '50', 
+          _page: '1', 
+          _extend: '@self.schema' 
+        });
+        const collection = store.object.getCollection('voorzieningen_module');
+        const list = collection?.results || collection || [];
+        const options = list.map(mapToOption);
+        if (isMounted) setModulesOptions(options);
+      } catch (e) {
+        if (isMounted) setModulesOptions([]);
+      }
+    };
+
+    const fetchOrganisaties = async () => {
+      try {
+        // Use authenticated API client instead of raw fetch
+        await store.object.fetchCollection('voorzieningen', 'organisatie', { 
+          _limit: '50', 
+          _page: '1', 
+          _extend: '@self.schema' 
+        });
+        const collection = store.object.getCollection('voorzieningen_organisatie');
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            `Organisatie ${index + 1}`;
+          const value = item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        });
+        if (isMounted) setOrganisatieOptions(options);
+      } catch (e) {
+        if (isMounted) setOrganisatieOptions([]);
+      }
+    };
+
     const fetchRefComps = async () => {
       try {
-        const params = new URLSearchParams({ _limit: '500', _page: '1' });
-        params.set('gemmaType', 'Referentiecomponent');
-        const endpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
+        // Use authenticated API client instead of raw fetch
+        await store.object.fetchCollection('vng-gemma', 'element', { 
+          _limit: '500', 
+          _page: '1', 
+          gemmaType: 'Referentiecomponent' 
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
+        const collection = store.object.getCollection('vng-gemma_element');
+        const list = collection?.results || collection || [];
         const options = list.map((item, index) => {
           const label =
             item?.xml?.name?._value ||
@@ -204,48 +248,47 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
+    // Preload all APIs in parallel for better performance
     fetchProducts();
+    fetchModules();
+    fetchOrganisaties();
     fetchRefComps();
+    
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // When product changes, fetch modules
+  // When product changes, filter preloaded modules (no additional API calls needed)
   useEffect(() => {
-    const fetchModulesForProduct = async () => {
-      try {
-        setModulesLoading(true);
-        setModulesOptions([]);
-        setGebruikData('module', null);
-        const p = gebruik?.product;
-        if (!p) return;
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
-        const searchLabel = p?.naam || p?.name || p?.title;
-        if (searchLabel) params.set('_search', searchLabel);
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map(mapToOption);
-        setModulesOptions(options);
-        if (options.length === 1)
-          setGebruikData('module', options[0].data || options[0]);
-      } catch (e) {
-        setModulesOptions([]);
-      } finally {
-        setModulesLoading(false);
+    const p = gebruik?.product;
+    if (!p) {
+      setModulesOptions([]);
+      setGebruikData('module', null);
+      return;
+    }
+    
+    // Filter preloaded modules based on product selection
+    // Since modules are now preloaded, we can use them directly instead of making API calls
+    const searchLabel = p?.naam || p?.name || p?.title;
+    if (searchLabel && modulesOptions.length > 0) {
+      // Filter modules that match the product name
+      const filteredOptions = modulesOptions.filter(option => {
+        const moduleLabel = option.label?.toLowerCase() || '';
+        const productLabel = searchLabel.toLowerCase();
+        return moduleLabel.includes(productLabel) || productLabel.includes(moduleLabel);
+      });
+      
+      if (filteredOptions.length > 0) {
+        // Use filtered options if we found matches
+        setModulesOptions(filteredOptions);
+        if (filteredOptions.length === 1) {
+          setGebruikData('module', filteredOptions[0].data || filteredOptions[0]);
+        }
       }
-    };
-    fetchModulesForProduct();
-  }, [gebruik?.product]);
+      // If no specific matches found, keep all preloaded modules available
+    }
+  }, [gebruik?.product, modulesOptions]);
 
   // Server-side search for modules
   const searchModules = async (query) => {
@@ -256,17 +299,14 @@ const AcFormsGebruik = ({ store }) => {
         setModulesOptions([]);
         return;
       }
-      const params = new URLSearchParams({ _limit: '50', _page: '1' });
-      params.set('_search', q);
-      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
-      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+      // Use authenticated API client instead of raw fetch
+      await store.object.fetchCollection('voorzieningen', 'module', { 
+        _limit: '50', 
+        _page: '1', 
+        _search: q 
+      });
+      const collection = store.object.getCollection('voorzieningen_module');
+      const list = collection?.results || collection || [];
       const options = list.map(mapToOption);
       setModulesOptions(options);
     } catch (e) {
@@ -454,38 +494,14 @@ const AcFormsGebruik = ({ store }) => {
     fetchKoppelingen();
   }, [gebruik?.module]);
 
-  // When afnemer is samenwerking, fetch organisaties for deelnemers step
+  // When afnemer is samenwerking, organisaties are already preloaded - no additional API calls needed
   useEffect(() => {
-    const fetchOrganisaties = async () => {
-      try {
-        if (!isAfnemerSamenwerking()) {
-          setOrganisatieOptions([]);
-          return;
-        }
-        const params = new URLSearchParams({ _limit: '100', _page: '1' });
-        const endpoint = `${BASE_URL}/openregister/api/objects/organisatie?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
-        const options = list.map((item, index) => {
-          const label =
-            item?.naam || item?.name || item?.title || `Organisatie ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label) };
-        });
-        setOrganisatieOptions(options);
-      } catch (e) {
-        setOrganisatieOptions([]);
-      }
-    };
-    fetchOrganisaties();
+    // Organisaties are now preloaded at component mount, so we don't need conditional fetching
+    // The preloaded organisatie options are always available for both afnemer selection and deelnemers
+    if (!isAfnemerSamenwerking()) {
+      // Keep organisatie options available as they're also used for afnemer selection
+      // No need to clear them as they're useful for the afnemer field
+    }
   }, [gebruik?.afnemer]);
 
   const getStatus = (active, step) => {
@@ -553,7 +569,14 @@ const AcFormsGebruik = ({ store }) => {
       return !!gebruikType; // Must select usage type
     }
     if (currentStep === 1) {
-      return !!gebruik?.contactpersoon; // Gebruik informatie step
+      // Gebruik informatie step - contactpersoon required for eigen organisatie only
+      if (gebruikType === 'andere-organisatie') {
+        // For andere organisatie: only afnemer and status required
+        return !!gebruik?.afnemer && !!gebruik?.status;
+      } else {
+        // For eigen organisatie: contactpersoon, afnemer and status required
+        return !!gebruik?.contactpersoon && !!gebruik?.afnemer && !!gebruik?.status;
+      }
     }
     if (currentStep === 2) {
       return !!gebruik?.module; // Product en applicatie step
@@ -591,6 +614,7 @@ const AcFormsGebruik = ({ store }) => {
             setGebruikData={setGebruikData}
             loading={loading}
             refCompOptions={refCompOptions}
+            organisatieOptions={organisatieOptions}
             schemas={schemas}
             schemasLoading={schemasLoading}
             gebruikType={gebruikType}

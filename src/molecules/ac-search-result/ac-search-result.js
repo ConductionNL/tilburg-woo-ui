@@ -3,6 +3,7 @@ import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
+import { extractText, extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 
 const AcSearchResult = ({
@@ -19,13 +20,13 @@ const AcSearchResult = ({
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
-      <Heading level={3}>{title}</Heading>
-      <Paragraph>{summary}</Paragraph>
+      <Heading level={3}>{extractTitle(title)}</Heading>
+      <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
           {themes?.length > 0 && (
             <>
-              <StatusBadge>{themes[0]?.title}</StatusBadge>
+              <StatusBadge>{extractText(themes[0]?.title)}</StatusBadge>
               <VISUALS.ELLIPSE />
             </>
           )}
@@ -37,11 +38,11 @@ const AcSearchResult = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-          <Paragraph small>{category}</Paragraph>
+          <Paragraph small>{extractText(category)}</Paragraph>
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {title}
+            {LABELS.READ_MORE_ABOUT} {extractTitle(title)}
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>
