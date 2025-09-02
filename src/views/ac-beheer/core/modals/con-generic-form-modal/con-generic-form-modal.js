@@ -317,11 +317,17 @@ const ConGenericFormModal = ({
 
     const schemaInitialData = generateInitialDataFromSchema(schema);
 
+    // Resolve config initial data (supports function for contextual defaults)
+    const resolvedConfigInitialData =
+      typeof config.initialData === 'function'
+        ? config.initialData({ user, isEdit, data, preSelected, schema })
+        : _.cloneDeep(config.initialData);
+
     const initialFormData = {
       // Start with schema-generated initial data
       ...schemaInitialData,
       // Override with explicit initial data from config (allows custom defaults)
-      ..._.cloneDeep(config.initialData),
+      ...resolvedConfigInitialData,
       // Apply pre-selected values
       ...preSelected,
       // If editing, apply the data directly (no field mappings needed)

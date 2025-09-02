@@ -12,6 +12,7 @@
 - [🎛️ **Configuration Options**](#️-configuration-options)
   - [**Core Configuration Structure**](#core-configuration-structure)
   - [**initialData**](#initialdata)
+    - [Functional initialData (context-aware defaults)](#functional-initialdata-context-aware-defaults)
   - [**fieldMappings (Deprecated)**](#fieldmappings-deprecated)
 - [🎯 **Dropdown Options Configuration**](#-dropdown-options-configuration)
   - [**1. Static Options (Function-based)**](#1-static-options-function-based)
@@ -168,7 +169,9 @@ case 'my-new-entity':
   schemaType: beheerConfig.schemaSlug,
 
   // Form-specific configuration
-  initialData: {},              // Default form values (overrides for schema defaults)
+  // Default form values (overrides for schema defaults). Supports object or function.
+  // Function receives context: { user, isEdit, data, preSelected, schema }
+  initialData: {} | (({ user, isEdit, data, preSelected, schema }) => ({})),
   optionsProviders: {},        // Dropdown options configuration
   fieldConfigs: {},            // Field visibility/behavior rules
   customComponents: {},        // Custom field components
@@ -199,13 +202,42 @@ initialData: {
 }
 ```
 
+#### Functional initialData (context-aware defaults)
+
+You can provide `initialData` as a function to compute defaults using runtime context.
+
+The function receives an object with:
+- `user`: user store instance (e.g., `user.activeOrganization`)
+- `isEdit`: boolean indicating edit mode
+- `data`: the object being edited (when `isEdit` is true)
+- `preSelected`: values passed via modal props that should not be overridden
+- `schema`: the resolved schema object for the form
+
+Example – prefill `organisatie` from the active organisation when creating a contact person:
+
+```javascript
+initialData: ({ user, isEdit, preSelected }) => {
+  const activeOrg = user?.activeOrganization || null;
+  const orgId = String(activeOrg?.id);
+
+  return {
+    voorkeuren: { taal: 'NL-nl', thema: 'licht' },
+    // Do not override when editing or when a preSelected organisatie exists
+    ...(orgId && !(isEdit || (preSelected && preSelected.organisatie)) && {
+      organisatie: orgId,
+    }),
+  };
+}
+```
+
 **How it works:**
 
 1. **Schema-based generation**: Initial data is automatically created from schema properties
 2. **Default value priority**: If a schema property has a `default` value, it's used
 3. **Type-based defaults**: Otherwise, appropriate defaults are generated based on the field type
-4. **Config overrides**: Any values in `initialData` override the schema-generated defaults
-5. **Edit mode**: When editing, actual data values override both schema and config defaults
+4. **Config overrides**: If `initialData` is an object, it overrides schema defaults. If it's a function, it's called with `{ user, isEdit, data, preSelected, schema }` and the returned object overrides schema defaults
+5. **Pre-selected values**: Values provided via `preSelected` always override `initialData`
+6. **Edit mode**: When editing, actual data values override schema defaults, `initialData`, and `preSelected`
 
 ### **fieldMappings (Deprecated)**
 

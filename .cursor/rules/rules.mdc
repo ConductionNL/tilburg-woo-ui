@@ -1,5 +1,6 @@
 ---
-alwaysApply: true
+description: Infinite loops with the useEffect hook cannot be fixed by changing useEffect code or adding dependecies.
+alwaysApply: false
 ---
 you cant fix an infinite loop in a useEffect by adding more dependencies or changing the useEffect code.
 
