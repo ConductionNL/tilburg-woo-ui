@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import {
   Heading,
@@ -23,42 +23,8 @@ export const AcSearchBox = ({
   store: { publications },
 }) => {
   const [searchQuery, setSearchQuery] = useState(defaultValue || '');
-  const debounceTimer = useRef(null);
-  const isFirstRender = useRef(true);
 
   const { mobileFiltersOpen, toggleMobileFilters } = publications;
-
-  // Debounced search effect - triggers search 500ms after user stops typing
-  useEffect(() => {
-    // Skip debounced search on initial render OR if searchQuery matches defaultValue
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-
-    // Don't trigger search if the value is still the same as defaultValue
-    // This prevents triggering search when component initializes with URL parameters
-    if (searchQuery === (defaultValue || '')) {
-      return;
-    }
-
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    debounceTimer.current = setTimeout(() => {
-      if (onSubmitCallback instanceof Function) {
-        onSubmitCallback(searchQuery);
-      }
-    }, 500); // 500ms delay
-
-    // Cleanup timeout on component unmount
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-  }, [searchQuery, defaultValue]); // Added defaultValue to dependencies
 
   const renderHeading = useMemo(() => {
     return title && <Heading level={1}>{title}</Heading>;
@@ -66,11 +32,6 @@ export const AcSearchBox = ({
 
   const submitCallback = (e) => {
     e.preventDefault();
-
-    // Clear debounce timer since user clicked search button
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
 
     if (!(onSubmitCallback instanceof Function)) {
       return;
@@ -97,9 +58,7 @@ export const AcSearchBox = ({
     <>
       <form className={_CLASSES} onSubmit={submitCallback}>
         {renderHeading && (
-          <div className='ac-search-box__title-wrapper'>
-            {renderHeading}
-          </div>
+          <div className='ac-search-box__title-wrapper'>{renderHeading}</div>
         )}
 
         <AcFlex column spacing='sm'>
