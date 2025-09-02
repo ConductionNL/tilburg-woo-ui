@@ -3,13 +3,15 @@ import { observer } from 'mobx-react-lite';
 import { useParams, useLocation } from 'react-router';
 import { AcFlex, AcSection } from '@atoms';
 import { withStore } from '@stores';
-import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
+// import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader, ConDynamicSidenav } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
+import { VISUALS } from '@constants';
 import { dia, shapes } from 'jointjs';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import svgPanZoom from 'svg-pan-zoom';
 import { AcCheckbox } from '@molecules';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 
 /**
  * Beheer Views Component
@@ -25,14 +27,19 @@ const ConBeheerViews = ({ store }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [panZoomInstance, setPanZoomInstance] = useState(null);
-  const [filters, setFilters] = useState({ gebruik: false, product: false });
+  const [filters, setFilters] = useState({
+    gebruik: false,
+    product: false,
+    deelnames: false,
+  });
 
   // Sync filters from URL
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const gebruik = sp.get('gebruik') === 'true';
     const product = sp.get('product') === 'true';
-    setFilters({ gebruik, product });
+    const deelnames = sp.get('deelnames') === 'true';
+    setFilters({ gebruik, product, deelnames });
   }, [location.search]);
 
   // Load view by route param when present (include filters)
@@ -43,8 +50,9 @@ const ConBeheerViews = ({ store }) => {
     const q = {};
     if (filters.gebruik) q.gebruik = true;
     if (filters.product) q.product = true;
+    if (filters.deelnames) q.deelnames = true;
     gemma.fetchView(params.id, q);
-  }, [gemma, params?.id, filters.gebruik, filters.product]);
+  }, [gemma, params?.id, filters.gebruik, filters.product, filters.deelnames]);
 
   // Helper function to get view name
   const getViewName = (view) => {
@@ -63,6 +71,8 @@ const ConBeheerViews = ({ store }) => {
       else sp.delete('gebruik');
       if (next.product) sp.set('product', 'true');
       else sp.delete('product');
+      if (next.deelnames) sp.set('deelnames', 'true');
+      else sp.delete('deelnames');
       const qs = sp.toString();
       window.history.replaceState(
         null,
@@ -590,7 +600,7 @@ const ConBeheerViews = ({ store }) => {
               </p>
             </div>
 
-            {/* Filters and Download Button */}
+            {/* Filters en acties */}
             <div className='con-views-dropdown-container'>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <AcCheckbox
@@ -603,19 +613,43 @@ const ConBeheerViews = ({ store }) => {
                   checked={filters.product}
                   onChange={(checked) => handleToggleFilter('product')(checked)}
                 />
+                <AcCheckbox
+                  label='Deelnames'
+                  checked={filters.deelnames}
+                  onChange={(checked) => handleToggleFilter('deelnames')(checked)}
+                />
               </div>
 
-              {/* Download SVG Button - Next to dropdown */}
+              {/* Acties */}
               {gemma?.get_view && !gemma?.get_viewError && (
-                <PrimaryActionButton
-                  onClick={downloadSvg}
-                  disabled={!viewIsDoneLoading}
-                  data-tooltip-id={TOOLTIP_ID}
-                  data-tooltip-content='Download weergave als SVG'
-                  style={{ marginLeft: '1rem' }}
-                >
-                  Download SVG
-                </PrimaryActionButton>
+                <ConActionMenu className='ac-gemma-view-header-download-button'>
+                  <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                    Acties
+                  </ConActionMenu.Trigger>
+
+                  <ConActionMenu.Menu position='right'>
+                    <ConActionMenu.Button
+                      icon={<VISUALS.DOWNLOAD />}
+                      onClick={downloadSvg}
+                      disabled={!viewIsDoneLoading}
+                    >
+                      Download SVG
+                    </ConActionMenu.Button>
+                    <ConActionMenu.Button
+                      icon={<VISUALS.DOWNLOAD />}
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/amef/download', { method: 'POST' });
+                        } catch (_e) {
+                          /* ignore */
+                        }
+                      }}
+                      disabled={!viewIsDoneLoading}
+                    >
+                      Download AMEF
+                    </ConActionMenu.Button>
+                  </ConActionMenu.Menu>
+                </ConActionMenu>
               )}
             </div>
           </div>
