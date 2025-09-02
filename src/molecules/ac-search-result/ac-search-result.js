@@ -19,13 +19,13 @@ const AcSearchResult = ({
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
-      <Heading level={3}>{title}</Heading>
-      <Paragraph>{summary}</Paragraph>
+      <Heading level={3}>{String(title)}</Heading>
+      <Paragraph>{String(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
           {themes?.length > 0 && (
             <>
-              <StatusBadge>{themes[0]?.title}</StatusBadge>
+              <StatusBadge>{String(themes[0]?.title)}</StatusBadge>
               <VISUALS.ELLIPSE />
             </>
           )}
@@ -37,11 +37,11 @@ const AcSearchResult = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-          <Paragraph small>{category}</Paragraph>
+          <Paragraph small>{String(category)}</Paragraph>
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {title}
+            {LABELS.READ_MORE_ABOUT} {String(title)}
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>

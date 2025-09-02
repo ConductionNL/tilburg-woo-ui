@@ -111,7 +111,7 @@ const AcSearch = ({ store: { publications, user } }) => {
 
     return all_publications?.map((publication, index) => {
       switch (publication['@self'].schema.slug) {
-        case 'voorziening':
+        case 'product':
         case 'organisatie':
           return (
             <ConCardOrganisationApplication
@@ -126,7 +126,7 @@ const AcSearch = ({ store: { publications, user } }) => {
               key={index}
             />
           );
-        case 'voorzieningaanbod':
+        case 'dienst':
           return (
             <ConCardDienst
               {...publication}
