@@ -34,6 +34,8 @@ const AcMyAccount = ({ store }) => {
   const [switchingOrg, setSwitchingOrg] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showDepublishModal, setShowDepublishModal] = useState(false);
 
   const { user } = store;
 
@@ -142,6 +144,18 @@ const AcMyAccount = ({ store }) => {
     setShowContactModal(true);
   };
 
+  // Function to open publish modal
+  const handlePublishOrganization = () => {
+    if (!activeOrganisation) return;
+    setShowPublishModal(true);
+  };
+
+  // Function to open depublish modal
+  const handleDepublishOrganization = () => {
+    if (!activeOrganisation) return;
+    setShowDepublishModal(true);
+  };
+
   // Handle successful form submissions
   const handleOrgFormSuccess = async () => {
     setShowOrgModal(false);
@@ -151,6 +165,18 @@ const AcMyAccount = ({ store }) => {
 
   const handleContactFormSuccess = async () => {
     setShowContactModal(false);
+    // Refresh user data
+    await fetchUserData();
+  };
+
+  const handlePublishFormSuccess = async () => {
+    setShowPublishModal(false);
+    // Refresh user data
+    await fetchUserData();
+  };
+
+  const handleDepublishFormSuccess = async () => {
+    setShowDepublishModal(false);
     // Refresh user data
     await fetchUserData();
   };
@@ -212,13 +238,33 @@ const AcMyAccount = ({ store }) => {
                           }}
                         />
                       )}
-                      <AcButton
-                        style='button'
-                        icon={<VISUALS.PENCIL />}
-                        onClick={handleEditOrganization}
-                      >
-                        Bewerken
-                      </AcButton>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <AcButton
+                          style='button'
+                          icon={<VISUALS.PENCIL />}
+                          onClick={handleEditOrganization}
+                        >
+                          Bewerken
+                        </AcButton>
+                        {activeOrganisation && !activeOrganisation.published && (
+                          <AcButton
+                            style='button'
+                            icon={<VISUALS.PUBLISH />}
+                            onClick={handlePublishOrganization}
+                          >
+                            Publiceren
+                          </AcButton>
+                        )}
+                        {activeOrganisation && activeOrganisation.published && (
+                          <AcButton
+                            style='secondary'
+                            icon={<VISUALS.PUBLISH_OFF />}
+                            onClick={handleDepublishOrganization}
+                          >
+                            Depubliceren
+                          </AcButton>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <Separator className='ac-register-review-header__separator' />
@@ -442,6 +488,30 @@ const AcMyAccount = ({ store }) => {
                 telefoonnummer: userData.phone || '',
                 functie: userData.function || '',
               }}
+            />
+          )}
+
+          {/* Publish modal */}
+          {showPublishModal && activeOrganisation && (
+            <ConGenericFormModal
+              showModal={showPublishModal}
+              onClose={() => setShowPublishModal(false)}
+              onSuccess={handlePublishFormSuccess}
+              type='organisaties'
+              isPublish={true}
+              data={activeOrganisation}
+            />
+          )}
+
+          {/* Depublish modal */}
+          {showDepublishModal && activeOrganisation && (
+            <ConGenericFormModal
+              showModal={showDepublishModal}
+              onClose={() => setShowDepublishModal(false)}
+              onSuccess={handleDepublishFormSuccess}
+              type='organisaties'
+              isDepublish={true}
+              data={activeOrganisation}
             />
           )}
         </AcColumn>
