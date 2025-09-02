@@ -65,7 +65,7 @@ export const AcSearchBox = ({
           <FormLabel>{label}</FormLabel>
           <div className='ac-search-box__search'>
             <Textbox
-              placeholder={LABELS.ENTER_QUERY}
+              placeholder="Zoek op naam, organisatie of trefwoord"
               onChange={changeCallback}
               defaultValue={defaultValue}
             />
