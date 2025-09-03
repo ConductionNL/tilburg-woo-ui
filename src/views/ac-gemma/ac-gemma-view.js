@@ -13,7 +13,7 @@ import { VISUALS } from '@constants';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import svgPanZoom from 'svg-pan-zoom';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
+// import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 
 const AcGemmaView = ({ store: { gemma }, viewId }) => {
   const { fetchViews, resetViews, fetchView, resetView } = gemma;
@@ -22,52 +22,48 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   // Removed voorzieningenGebruik state and usage
-  const [propertyDefinitions, setPropertyDefinitions] = useState([
-    { name: 'Titel view SWC', identifier: 'propid-title' },
-    { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
-  ]);
+  // Legacy property definitions (no longer used with new viewNodes/viewRelationships API)
+  // const [propertyDefinitions, setPropertyDefinitions] = useState([
+  //   { name: 'Titel view SWC', identifier: 'propid-title' },
+  //   { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
+  // ]);
   const [filters, setFilters] = useState({ gebruik: false, product: false });
 
-  const _propertyDefinitions = [
-    { name: 'Titel view SWC', identifier: 'propid-title' },
-    { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
-  ];
+  // const _propertyDefinitions = [
+  //   { name: 'Titel view SWC', identifier: 'propid-title' },
+  //   { name: 'Verbindingsrol', identifier: 'propid-verbinding' },
+  // ];
 
-  const getPropertyDefinitions = async () => {
-    try {
-      const response = await fetch(
-        `${BASE_URL}/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
-      );
-      await response.json();
+  // const getPropertyDefinitions = async () => {
+  //   try {
+  //     const response = await fetch(
+  //       `${BASE_URL}/openconnector/api/endpoint/models?_fields[]=propertyDefinitions`
+  //     );
+  //     await response.json();
+  //
+  //     setPropertyDefinitions(_propertyDefinitions);
+  //   } catch (error) {
+  //     console.error(`Error fetching node data: ${error}`);
+  //     return null;
+  //   }
+  // };
 
-      setPropertyDefinitions(_propertyDefinitions);
-    } catch (error) {
-      console.error(`Error fetching node data: ${error}`);
-      return null;
-    }
-  };
-
-  const getViewName = (view) => {
-    const propertyDefinitionRef = propertyDefinitions.find(
-      (property) => property.name === 'Titel view SWC'
-    )?.identifier;
-    return (
-      view.properties.find(
-        (property) => property.propertyDefinitionRef === propertyDefinitionRef
-      )?.value || view.name
-    );
-  };
+  // const getViewName = (view) => {
+  //   const propertyDefinitionRef = propertyDefinitions.find(
+  //     (property) => property.name === 'Titel view SWC'
+  //   )?.identifier;
+  //   return (
+  //     view.properties.find(
+  //       (property) => property.propertyDefinitionRef === propertyDefinitionRef
+  //     )?.value || view.name
+  //   );
+  // };
 
   useEffect(() => {
-    getPropertyDefinitions()
-      .then(() => {
-        if (!viewId) {
-          fetchViews();
-        }
-      })
-      .catch((error) => {
-        console.error(`Error fetching property definitions: ${error}`);
-      });
+    // Property definitions are not needed for the new API; directly load views when no viewId is provided
+    if (!viewId) {
+      fetchViews();
+    }
     setViewNodesData(null);
     setViewRelationsData(null);
     setViewIsDoneLoading(false);
@@ -103,6 +99,41 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
 
   useEffect(() => {
     if (!gemma.get_view) return;
+    // New view object may not contain nodes/relationships; render empty graph in that case
+    if (Array.isArray(gemma.get_view.viewNodes)) {
+      // New API: viewNodes/viewRelationships provided directly
+      // setViewNodesData(gemma.get_view.viewNodes || []);
+      // Sanitize nodes to ensure minimal required fields
+      const sanitizedNodes = (gemma.get_view.viewNodes || []).map((node) => ({
+        ...node,
+        viewNodeId:
+          node.viewNodeId ||
+          node.id ||
+          node.identifier ||
+          node.modelNodeId ||
+          'unknown',
+        name: node.name || node.elementProperties?.name || 'unknown',
+        type: (
+          node.type ||
+          node.elementProperties?.gemmaType ||
+          'dataobject'
+        ).toLowerCase(),
+      }));
+      setViewNodesData(sanitizedNodes);
+      setViewRelationsData(gemma.get_view.viewRelationships || []);
+      setViewIsDoneLoading(true);
+      return;
+    }
+    /* Legacy fallback retained for reference
+    if (
+      !Array.isArray(gemma.get_view.nodes) ||
+      !Array.isArray(gemma.get_view.connections)
+    ) {
+      setViewNodesData([]);
+      setViewRelationsData([]);
+      setViewIsDoneLoading(true);
+      return;
+    }
     let viewNodesData = [];
 
     const getViewNodesData = () => {
@@ -201,44 +232,40 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
     };
 
     getViewRelationsData();
+    */
   }, [gemma.get_view]);
 
   useEffect(() => {
-    if (!gemma.get_view || !gemma.get_allVoorzieningGebruik) return;
-    if (!viewNodesData) return;
-    if (!viewRelationsData) return;
+    if (!gemma.get_view) return;
+    // Wait until we at least have empty arrays; allow rendering with empty data
+    if (viewNodesData === null || viewRelationsData === null) return;
 
-    // Order nodes hierarchically
+    // Legacy hierarchical ordering no longer used with new API; kept for reference.
+    /*
     const getOrderedNodes = () => {
       const orderedNodes = [];
 
       try {
-        // Get all top-level nodes, including Labels and other types
-        const topLevelNodes = gemma.get_view.nodes;
+        const topLevelNodes = Array.isArray(gemma.get_view.nodes)
+          ? gemma.get_view.nodes
+          : [];
 
-        // Helper function to recursively process nodes and their children
         const processNode = (node) => {
-          // Add the current node (without isChildNode flag for root nodes)
           orderedNodes.push(node);
 
           if (node.nodes) {
-            // Process each child node
             node.nodes.forEach((child) => {
-              // Add child with isChildNode flag
               orderedNodes.push({
                 ...child,
                 isChildNode: true,
               });
 
-              // Recursively process child's nodes if they exist
               if (child.nodes) {
                 child.nodes.forEach((grandchild) => {
-                  // Add grandchild with isChildNode flag
                   orderedNodes.push({
                     ...grandchild,
                     isChildNode: true,
                   });
-                  // Continue recursion if needed
                   processNode(grandchild);
                 });
               }
@@ -246,7 +273,6 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
           }
         };
 
-        // Process all top-level nodes
         topLevelNodes.forEach(processNode);
       } catch (error) {
         console.error('Error ordering nodes:', error);
@@ -254,6 +280,7 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
 
       return orderedNodes;
     };
+    */
 
     // Create container in HTML
     const container = document.getElementById('graph-container');
@@ -287,46 +314,27 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
       }
     });
 
+    // Legacy convertToViewNode retained for reference; not used with new API.
+    /*
     const convertToViewNode = (node) => {
-      // Create a memoized map of viewNodesData for faster lookups
       const nodeDataMap = new Map(viewNodesData.map((item) => [item.id, item]));
       const nodeDataNode = node.elementRef ? nodeDataMap.get(node.elementRef) : null;
 
-      // Helper function to create style object - reduces repeated code
       const createStyleObject = (style) => ({
         color: style?.color?.a
-          ? `rgba(${style?.color?.r ?? 0}, ${style?.color?.g ?? 0}, ${
-              style?.color?.b ?? 0
-            }, ${style?.color?.a ?? 1})`
-          : `rgb(${style?.color?.r ?? 0}, ${style?.color?.g ?? 0}, ${
-              style?.color?.b ?? 0
-            })`,
+          ? `rgba(${style?.color?.r ?? 0}, ${style?.color?.g ?? 0}, ${style?.color?.b ?? 0}, ${style?.color?.a ?? 1})`
+          : `rgb(${style?.color?.r ?? 0}, ${style?.color?.g ?? 0}, ${style?.color?.b ?? 0})`,
         fillColor: style?.fillColor?.a
-          ? `rgba(${style?.fillColor?.r ?? 0}, ${style?.fillColor?.g ?? 0}, ${
-              style?.fillColor?.b ?? 0
-            }, ${style?.fillColor?.a ?? 1})`
-          : `rgb(${style?.fillColor?.r ?? 0}, ${style?.fillColor?.g ?? 0}, ${
-              style?.fillColor?.b ?? 0
-            })`,
+          ? `rgba(${style?.fillColor?.r ?? 0}, ${style?.fillColor?.g ?? 0}, ${style?.fillColor?.b ?? 0}, ${style?.fillColor?.a ?? 1})`
+          : `rgb(${style?.fillColor?.r ?? 0}, ${style?.fillColor?.g ?? 0}, ${style?.fillColor?.b ?? 0})`,
         lineColor: style?.lineColor?.a
-          ? `rgba(${style?.lineColor?.r ?? 0}, ${style?.lineColor?.g ?? 0}, ${
-              style?.lineColor?.b ?? 0
-            }, ${style?.lineColor?.a ?? 1})`
-          : `rgb(${style?.lineColor?.r ?? 0}, ${style?.lineColor?.g ?? 0}, ${
-              style?.lineColor?.b ?? 0
-            })`,
-        font: {
-          name: style?.font?.name ?? 'Arial',
-          size: style?.font?.size ?? 12,
-          style: style?.font?.style ?? 'normal',
-        },
+          ? `rgba(${style?.lineColor?.r ?? 0}, ${style?.lineColor?.g ?? 0}, ${style?.lineColor?.b ?? 0}, ${style?.lineColor?.a ?? 1})`
+          : `rgb(${style?.lineColor?.r ?? 0}, ${style?.lineColor?.g ?? 0}, ${style?.lineColor?.b ?? 0})`,
+        font: { name: style?.font?.name ?? 'Arial', size: style?.font?.size ?? 12, style: style?.font?.style ?? 'normal' },
       });
 
-      // Base node properties
       const baseNode = {
-        modelNodeId: node.isChildNode
-          ? node.identifier
-          : node.elementRef || node.identifier,
+        modelNodeId: node.isChildNode ? node.identifier : node.elementRef || node.identifier,
         viewNodeId: node.identifier || 'unknown',
         x: node.position?.x,
         y: node.position?.y,
@@ -335,20 +343,10 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
         parent: null,
       };
 
-      // Handle special node types
       if (!node.elementRef) {
         if (['Label', 'Container'].includes(node.type)) {
           const style = createStyleObject(node.style);
-          return {
-            ...baseNode,
-            name: node.label ?? ' ',
-            type: node.type?.toLowerCase(),
-            color: style.fillColor,
-            borderColor: style.lineColor,
-            description: node.label,
-            font: { ...style.font, color: style.color },
-            elementRef: null,
-          };
+          return { ...baseNode, name: node.label ?? ' ', type: node.type?.toLowerCase(), color: style.fillColor, borderColor: style.lineColor, description: node.label, font: { ...style.font, color: style.color }, elementRef: null };
         }
 
         if (node.voorzieningId.referentieComponenten) {
@@ -357,123 +355,76 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
               const uniqueId = `${node.voorzieningId.id}_${refComponent}`;
               const nodeData = nodeDataMap.get(uniqueId);
               if (!nodeData) return null;
-
               const style = createStyleObject(node.style);
-              return {
-                ...baseNode,
-                modelNodeId: nodeData.id,
-                viewNodeId: nodeData.viewNodeId || 'unknown',
-                name: nodeData.name || 'unknown',
-                type: nodeData.type?.toLowerCase() || 'dataobject',
-                x: nodeData.position?.x || 0,
-                y: nodeData.position?.y || 0,
-                width: nodeData.position?.w || 0,
-                height: nodeData.position?.h || 0,
-                font: { ...style.font, color: style.color },
-                description: nodeData.description || null,
-                elementRef: null,
-              };
+              return { ...baseNode, modelNodeId: nodeData.id, viewNodeId: nodeData.viewNodeId || 'unknown', name: nodeData.name || 'unknown', type: nodeData.type?.toLowerCase() || 'dataobject', x: nodeData.position?.x || 0, y: nodeData.position?.y || 0, width: nodeData.position?.w || 0, height: nodeData.position?.h || 0, font: { ...style.font, color: style.color }, description: nodeData.description || null, elementRef: null };
             })
             .filter(Boolean);
         }
 
-        // Handle regular nodes without elementRef
         const style = createStyleObject(node.style);
-        return {
-          ...baseNode,
-          name: node.label,
-          type: node.type?.toLowerCase() || 'dataobject',
-          color: style.fillColor,
-          borderColor: style.lineColor,
-          font: { ...style.font, color: style.color },
-          description: node.label,
-          elementRef: null,
-        };
+        return { ...baseNode, name: node.label, type: node.type?.toLowerCase() || 'dataobject', color: style.fillColor, borderColor: style.lineColor, font: { ...style.font, color: style.color }, description: node.label, elementRef: null };
       }
 
-      // Handle nodes with elementRef
       const style = createStyleObject(node.style);
-      return {
-        ...baseNode,
-        name: nodeDataNode?.name || 'unknown',
-        type: nodeDataNode?.type?.toLowerCase() || 'dataobject',
-        color: style.fillColor,
-        borderColor: style.lineColor,
-        font: { ...style.font, color: style.color },
-        description: nodeDataNode?.description || null,
-        elementRef: node.elementRef || null,
-        onClick: () => {
-          const propertyId = nodeDataNode?.properties?.find(
-            (item) => item.propertyDefinitionRef === 'propid-2'
-          )?.value;
-          const url = `https://www.gemmaonline.nl/wiki/GEMMA/${
-            propertyId ? `id-${propertyId}` : node.elementRef
-          }`;
-          window.open(url, '_blank');
-        },
-      };
+      return { ...baseNode, name: nodeDataNode?.name || 'unknown', type: nodeDataNode?.type?.toLowerCase() || 'dataobject', color: style.fillColor, borderColor: style.lineColor, font: { ...style.font, color: style.color }, description: nodeDataNode?.description || null, elementRef: node.elementRef || null, onClick: () => {
+        const propertyId = nodeDataNode?.properties?.find((item) => item.propertyDefinitionRef === 'propid-2')?.value;
+        const url = `https://www.gemmaonline.nl/wiki/GEMMA/${propertyId ? `id-${propertyId}` : node.elementRef}`;
+        window.open(url, '_blank');
+      } };
     };
+    */
 
-    // Get ordered nodes and process them
-    const orderedNodes = getOrderedNodes();
-    const gemmaNodes = orderedNodes;
-    const allNodes = [...gemmaNodes];
+    let viewNodes = [];
+    let viewRelationships = [];
 
-    const viewNodes = allNodes
-      .flatMap(convertToViewNode)
-      .filter(Boolean)
-      .filter((node) => node.type && node.name && node.viewNodeId);
+    if (Array.isArray(gemma.get_view.viewNodes)) {
+      // New API shape: use provided nodes/relationships directly
+      viewNodes = viewNodesData || [];
+      viewRelationships = (viewRelationsData || []).map((r) => ({
+        modelRelationshipId: r.modelRelationshipId,
+        sourceId: r.sourceId,
+        targetId: r.targetId,
+        viewRelationshipId: r.viewRelationshipId,
+        type: (r.type || 'relationship').toLowerCase(),
+        bendpoints: Array.isArray(r.bendpoints)
+          ? r.bendpoints.map((b) => ({
+              x: parseFloat(b.x) || 0,
+              y: parseFloat(b.y) || 0,
+            }))
+          : [],
+        label: {},
+      }));
+    }
+    // Legacy shape derivation kept for reference.
+    /*
+    } else {
+      const orderedNodes = getOrderedNodes();
+      const gemmaNodes = orderedNodes;
+      const allNodes = [...gemmaNodes];
 
-    const convertToViewRelationship = (relationship) => {
-      const relationshipData = viewRelationsData.find(
-        (item) => item.id === relationship.relationshipRef
-      );
+      viewNodes = allNodes
+        .flatMap(convertToViewNode)
+        .filter(Boolean)
+        .filter((node) => node.type && node.name && node.viewNodeId);
 
-      // Convert bendpoint to array with numeric coordinates or return empty array
-      const bendpoints = relationship.bendpoints
-        ? relationship.bendpoints.map((bendpoint) => ({
-            x: parseFloat(bendpoint.x) || 0,
-            y: parseFloat(bendpoint.y) || 0,
-          }))
-        : [];
-      return {
-        modelRelationshipId: relationship.relationshipRef,
-        sourceId: relationship.source,
-        targetId: relationship.target,
-        viewRelationshipId: relationship.identifier,
-        type: relationshipData?.type?.toLowerCase() || 'access',
-        bendpoints: bendpoints,
-        label: {
-          text: relationshipData?.name || undefined,
-          ...(relationshipData?.name && {
-            markup: [
-              {
-                style: {
-                  fontSize: relationship?.style?.font?.size,
-                  fontFamily: relationship?.style?.font?.name,
-                  fontColor: relationship?.style?.color?.a
-                    ? `rgba(${relationship?.style?.color?.r}, ${relationship?.style?.color?.g}, ${relationship?.style?.color?.b}, ${relationship?.style?.color?.a})`
-                    : `rgb(${relationship?.style?.color?.r}, ${relationship?.style?.color?.g}, ${relationship?.style?.color?.b})`,
-                  fontStyle: relationship?.style?.font?.style,
-                  fontWeight: relationship?.style?.font?.style,
-                },
-              },
-            ],
-          }),
-        },
+      const convertToViewRelationship = (relationship) => {
+        const relationshipData = viewRelationsData.find((item) => item.id === relationship.relationshipRef);
+        const bendpoints = relationship.bendpoints ? relationship.bendpoints.map((bendpoint) => ({ x: parseFloat(bendpoint.x) || 0, y: parseFloat(bendpoint.y) || 0 })) : [];
+        return {
+          modelRelationshipId: relationship.relationshipRef,
+          sourceId: relationship.source,
+          targetId: relationship.target,
+          viewRelationshipId: relationship.identifier,
+          type: relationshipData?.type?.toLowerCase() || 'access',
+          bendpoints: bendpoints,
+          label: { text: relationshipData?.name || undefined },
+        };
       };
-    };
 
-    const viewRelationshipsArray =
-      gemma.get_view.connections.length > 0
-        ? gemma.get_view.connections.map((relationship, idx) =>
-            convertToViewRelationship(relationship, idx)
-          )
-        : [];
-
-    const viewRelationships = viewRelationshipsArray.filter(
-      (relationship) => relationship !== undefined
-    );
+      const viewRelationshipsArray = gemma.get_view.connections.length > 0 ? gemma.get_view.connections.map((relationship) => convertToViewRelationship(relationship)) : [];
+      viewRelationships = viewRelationshipsArray.filter((relationship) => relationship !== undefined);
+    }
+    */
 
     // const addSuffix = (id, suffix = '-sc') => {
     //   return id.endsWith(suffix) ? id : `${id}${suffix}`;
@@ -964,19 +915,15 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
             className={clsx('ac-gemma-select')}
             onChange={(e) => setView(e.value)}
             loading={!gemma.all_views || gemma.all_views.length === 0}
-            options={gemma.all_views.map((v) => ({
-              value: v.id,
-              label: getViewName(v),
-            }))}
+            options={gemma.all_views.map((v) => ({ value: v.id, label: v.name }))}
           />
 
           {gemma.get_view && (
             <div className='ac-gemma-view-header'>
               <div className='ac-gemma-view-header-title-container'>
-                <h1 className='ac-gemma-view-header-title'>
-                  {getViewName(gemma.get_view)}
-                </h1>
-                <div>{gemma.get_view.documentation}</div>
+                {/* New view object provides 'name' and 'description' fields */}
+                <h1 className='ac-gemma-view-header-title'>{gemma.get_view.name}</h1>
+                <div>{gemma.get_view.description}</div>
               </div>
 
               <PrimaryActionButton
@@ -989,9 +936,13 @@ const AcGemmaView = ({ store: { gemma }, viewId }) => {
             </div>
           )}
 
-          {gemma.get_view && viewNodesData && viewRelationsData && (
-            <div className='ac-gemma-graph-container' id='graph-container'></div>
-          )}
+          {/* Only render graph when new view object contains detailed nodes/relationships */}
+          {Array.isArray(gemma.get_view?.viewNodes) &&
+            Array.isArray(gemma.get_view?.viewRelationships) &&
+            viewNodesData &&
+            viewRelationsData && (
+              <div className='ac-gemma-graph-container' id='graph-container'></div>
+            )}
           {!gemma.get_view &&
             !viewNodesData &&
             !viewRelationsData &&

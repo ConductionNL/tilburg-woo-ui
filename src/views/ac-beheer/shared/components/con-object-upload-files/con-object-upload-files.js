@@ -497,6 +497,16 @@ const ConObjectUploadFiles = ({
 
             <ConActionMenu.Menu position='right'>
               <ConActionMenu.Button
+                icon={<VISUALS.SPINNER />}
+                onClick={refetchFiles}
+                disabled={isLoading}
+              >
+                Vernieuwen
+              </ConActionMenu.Button>
+
+              <ConActionMenu.Divider />
+
+              <ConActionMenu.Button
                 icon={<VISUALS.TRASHCAN />}
                 onClick={handleDeleteMultiple}
                 disabled={getDeletableFilesCount() === 0}

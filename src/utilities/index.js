@@ -116,3 +116,8 @@ export {
   processUserTemplate 
 } from './con-template-processor';
 export { withTemplateProcessing, createTemplateComponents } from './con-with-template-processing';
+export { 
+  extractText, 
+  extractTitle, 
+  extractSummary 
+} from './con-extract-text';

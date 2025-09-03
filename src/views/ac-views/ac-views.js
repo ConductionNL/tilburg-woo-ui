@@ -20,10 +20,11 @@ const AcViews = ({ store: { gemma } }) => {
   const { id } = useParams();
 
   const getViewName = (view) => {
+    if (!view) return 'Unnamed View';
     return (
-      view.properties.find(
+      view.properties?.find(
         (property) => property.propertyDefinitionRef === 'propid-70'
-      )?.value || view.name
+      )?.value || view.name || 'Unnamed View'
     );
   };
 
@@ -40,6 +41,19 @@ const AcViews = ({ store: { gemma } }) => {
 
   useEffect(() => {
     if (!gemma.get_view) return;
+    
+    // Handle both old and new API response structures
+    const nodes = gemma.get_view.nodes || gemma.get_view.viewNodes || [];
+    const connections = gemma.get_view.connections || gemma.get_view.viewRelationships || [];
+
+    // Additional safety check to ensure view has required structure
+    if (nodes.length === 0 && connections.length === 0) {
+      console.warn('View data is missing nodes and connections:', gemma.get_view);
+      return;
+    }
+    
+    console.log('✅ Old component found nodes:', nodes.length, 'connections:', connections.length);
+    
     let viewNodesData = [];
     const hostname = window.location.hostname;
     const baseUrl =
@@ -48,6 +62,11 @@ const AcViews = ({ store: { gemma } }) => {
         : 'https://vng.accept.commonground.nu/apps';
 
     const getViewNodesData = () => {
+      if (!gemma.get_view.nodes || !Array.isArray(gemma.get_view.nodes)) {
+        console.warn('No nodes found in view data:', gemma.get_view);
+        return Promise.resolve([]);
+      }
+      
       const promises = gemma.get_view.nodes.map(async (node) => {
         if (!node.elementRef) return null;
 
@@ -76,7 +95,12 @@ const AcViews = ({ store: { gemma } }) => {
       });
     };
 
-    const getChildNodesData = async (nodes = gemma.get_view.nodes) => {
+    const getChildNodesData = async (nodes = gemma.get_view?.nodes) => {
+      if (!nodes || !Array.isArray(nodes)) {
+        console.warn('No nodes provided for child processing');
+        return Promise.resolve([]);
+      }
+      
       const childPromises = nodes.reduce((promises, node) => {
         if (!node.nodes) return promises;
 
@@ -126,6 +150,12 @@ const AcViews = ({ store: { gemma } }) => {
       });
 
     const getViewRelationsData = () => {
+      if (!gemma.get_view.connections || !Array.isArray(gemma.get_view.connections)) {
+        console.warn('No connections found in view data:', gemma.get_view);
+        setViewRelationsData([]);
+        return Promise.resolve([]);
+      }
+      
       const relationshipPromises = gemma.get_view.connections.map(
         async (relationship) => {
           if (!relationship.relationshipRef) return null;
@@ -154,7 +184,7 @@ const AcViews = ({ store: { gemma } }) => {
 
       return Promise.all(relationshipPromises).then((results) => {
         const validRelations = results.filter(Boolean);
-        if (gemma.get_view.connections.length > 0) {
+        if ((gemma.get_view.connections || []).length > 0) {
           setViewRelationsData(validRelations);
         } else {
           setViewRelationsData([]);
@@ -287,7 +317,7 @@ const AcViews = ({ store: { gemma } }) => {
       }
     };
 
-    const gemmaNodes = gemma.get_view.nodes;
+    const gemmaNodes = gemma.get_view.nodes || [];
 
     // Helper function to recursively collect all child nodes
     const getAllChildNodes = (nodes) => {
@@ -307,7 +337,7 @@ const AcViews = ({ store: { gemma } }) => {
       }, []);
     };
 
-    const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes).filter(Boolean);
+    const gemmaChildNodes = getAllChildNodes(gemma.get_view.nodes || []).filter(Boolean);
 
     const allNodes = [...gemmaNodes, ...gemmaChildNodes];
 
@@ -353,8 +383,8 @@ const AcViews = ({ store: { gemma } }) => {
     };
 
     const viewRelationshipsArray =
-      gemma.get_view.connections.length > 0
-        ? gemma.get_view.connections.map((relationship, idx) =>
+      (gemma.get_view.connections || []).length > 0
+        ? (gemma.get_view.connections || []).map((relationship, idx) =>
             convertToViewRelationship(relationship, idx)
           )
         : [];
