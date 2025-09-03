@@ -114,45 +114,24 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
   // Render skeleton loading cards for facets
   const renderSkeletonFacets = () => {
-    const skeletonFacets = [
-      { title: 'Type', items: 1 },
-      { title: 'Organisatie', items: 1 },
-      { title: 'Status', items: 1 },
-      { title: 'Categorie', items: 1 },
-    ];
-
-    return skeletonFacets.map((facet, index) => (
-      <AcFlex
-        key={`skeleton-${index}`}
-        column
-        spacing='xs'
-        className='ac-search-filters__subjects'
-      >
-        <AcCard skeleton>
-          <Heading level={4}>{facet.title}</Heading>
+    return (
+      <AcFlex column spacing='xs' className='ac-search-filters__subjects'>
+        <AcCard skeleton style={{ minHeight: '1.5rem', marginLeft: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div
+              style={{
+                width: '1rem',
+                height: '1rem',
+                backgroundColor: 'transparent',
+              }}
+            ></div>
+            <div
+              style={{ flex: 1, height: '1rem', backgroundColor: 'transparent' }}
+            ></div>
+          </div>
         </AcCard>
-        {Array.from({ length: facet.items }).map((_, itemIndex) => (
-          <AcCard
-            key={`skeleton-item-${itemIndex}`}
-            skeleton
-            style={{ minHeight: '1.5rem', marginLeft: '1rem' }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div
-                style={{
-                  width: '1rem',
-                  height: '1rem',
-                  backgroundColor: 'transparent',
-                }}
-              ></div>
-              <div
-                style={{ flex: 1, height: '1rem', backgroundColor: 'transparent' }}
-              ></div>
-            </div>
-          </AcCard>
-        ))}
       </AcFlex>
-    ));
+    );
   };
 
   const facets = all_facets;
