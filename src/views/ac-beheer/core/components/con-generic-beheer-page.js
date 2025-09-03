@@ -541,9 +541,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                        Weergeven als view
+                      <ConActionMenu.Button 
+                        icon={<VISUALS.SPINNER />} 
+                        onClick={() => fetchData()}
+                        disabled={loading}
+                      >
+                        Vernieuwen
                       </ConActionMenu.Button>
+
+                      <ConActionMenu.Divider />
 
                       <ConActionMenu.SubMenu
                         label='Exporteren'
@@ -563,6 +569,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         onClick={() => setOpenModal('import')}
                       >
                         Importeren
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                        Weergeven als view
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Divider />
@@ -664,6 +674,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow,
             tableRef,
             fetchData,
+            store: { object, user }, // Pass store for cross-collection refreshes
             config: {
               ...config,
               // Ensure dynamicCreate is available everywhere

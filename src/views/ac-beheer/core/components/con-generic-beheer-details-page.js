@@ -569,6 +569,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
         setSingleSelectedRow: () => {},
         tableRef: { current: { resetSelectedRows: () => {} } },
         navigate,
+        store: { object, user }, // Pass store for cross-collection refreshes
         fetchData: () => {
           // After delete, navigate back to list; otherwise refetch the object
           if (openModal === 'delete') {
