@@ -35,8 +35,13 @@ const AcFormsKoppeling = loadable(() =>
 const ConFormsDienst = loadable(() =>
   import('@views/ac-forms/con-forms-dienst/con-forms-dienst')
 );
+const ConFormsIndex = loadable(() =>
+  import('@views/ac-forms/con-forms-index/con-forms-index')
+);
 const ConViewsList = loadable(() => import('@views/con-views-list/con-views-list'));
-const ConBeheerViews = loadable(() => import('@views/con-beheer-views/con-beheer-views'));
+const ConBeheerViews = loadable(() =>
+  import('@views/con-beheer-views/con-beheer-views')
+);
 
 export {
   AcHome,
@@ -58,6 +63,7 @@ export {
   AcFormsProduct,
   AcFormsKoppeling,
   ConFormsDienst,
+  ConFormsIndex,
   ConViewsList,
   ConBeheerViews,
 };

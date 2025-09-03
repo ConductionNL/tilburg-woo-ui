@@ -11,6 +11,7 @@ import {
   Paragraph,
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@src/constants';
 
 const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
@@ -29,7 +30,14 @@ const AcDashboard = ({ store }) => {
             {/* Wizard Tiles */}
             {availableWizards.length > 0 && (
               <div className='ac-dashboard-wizards'>
-                <Heading level={3}>Wizards</Heading>
+                <Heading level={3}>
+                  <AcFlex spacing='xs' alignItems='center'>
+                    <VISUALS.WAND_SPARKLES_SOLID
+                      style={{ width: '24px', height: '24px' }}
+                    />
+                    Wizards
+                  </AcFlex>
+                </Heading>
                 <AcGrid columns={5} gap='xl' className='ac-dashboard-wizard-grid'>
                   {availableWizards.map((wizard) => (
                     <AcTile
