@@ -129,6 +129,7 @@ const BeheerModalFactory = {
       tableRef,
       fetchData,
       config,
+      store,
     } = params;
 
     const baseProps = {
@@ -137,9 +138,18 @@ const BeheerModalFactory = {
         setOpenModal(null);
         setSingleSelectedRow(null);
       },
-      onSuccess: () => {
+      onSuccess: async () => {
         tableRef.current?.resetSelectedRows();
-        fetchData();
+        
+        // Call fetchData with a small delay to ensure ObjectStore state has been updated
+        if (typeof fetchData === 'function') {
+          try {
+            await fetchData();
+            console.info(`✅ Refreshed ${type} collection after modal operation`);
+          } catch (error) {
+            console.error(`❌ Failed to refresh ${type} collection:`, error);
+          }
+        }
       },
     };
 
@@ -265,9 +275,30 @@ const BeheerModalFactory = {
               data: null,
               isEdit: false,
               preSelected: { organisatie: params?.singleSelectedRow?.id },
-              onSuccess: () => {
+              onSuccess: async () => {
                 tableRef.current?.resetSelectedRows();
                 setOpenModal(null);
+                
+                // Refresh the contactpersonen collection since that's what was modified
+                try {
+                  if (store?.object) {
+                    console.info('🔄 Refreshing contactpersonen collection after creation...');
+                    
+                    // Use the correct register: voorzieningen (same as organisaties)
+                    await store.object.fetchCollection('voorzieningen', 'contactpersoon');
+                    console.info('✅ Refreshed contactpersonen collection after creation');
+                    
+                    // Also force a re-render by updating the success state
+                    const contactpersonenType = store.object.getTypeFromParams('voorzieningen', 'contactpersoon');
+                    store.object.setSuccess(contactpersonenType, true);
+                  } else {
+                    console.warn('⚠️ Store not available for refreshing contactpersonen collection');
+                  }
+                } catch (error) {
+                  console.error('❌ Failed to refresh contactpersonen collection:', error);
+                }
+                
+                // Also call the original fetchData in case we're in a context that needs it
                 if (typeof fetchData === 'function') fetchData();
               },
             };

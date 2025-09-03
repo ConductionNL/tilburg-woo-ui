@@ -5,6 +5,7 @@ import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
+import { extractText, extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 
 const ConCardOrganisationApplication = ({
@@ -39,7 +40,7 @@ const ConCardOrganisationApplication = ({
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           {icon}
-          <Heading level={3}>{title}</Heading>
+          <Heading level={3}>{extractTitle(title)}</Heading>
         </AcFlex>
         {logo && (
           <ConLogoPreview
@@ -49,14 +50,14 @@ const ConCardOrganisationApplication = ({
           />
         )}
       </AcFlex>
-      <Paragraph>{summary}</Paragraph>
+      <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
-          <Paragraph small>{type}</Paragraph>
+          <Paragraph small>{extractText(type)}</Paragraph>
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {title}
+            {LABELS.READ_MORE_ABOUT} {extractTitle(title)}
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>

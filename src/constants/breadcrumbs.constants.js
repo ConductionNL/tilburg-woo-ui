@@ -17,6 +17,8 @@ export const BREADCRUMB_ITEMS = {
   }),
   REGISTER: { label: 'Aanmelden', href: '/register' },
   VIEWS: { label: 'Views' },
+  VIEWS_LIST: { label: 'GEMMA weergaven', href: '/views' },
+  BEHEER_VIEWS: { label: 'GEMMA weergaven beheer' },
   MY_ACCOUNT: { label: 'Mijn account' },
   DIRECTORY: { label: 'Directory', href: '/directory' }
 };
@@ -59,6 +61,8 @@ export const BREADCRUMBS = {
     }
     return items;
   },
+  VIEWS_LIST: [BREADCRUMB_ITEMS.VIEWS_LIST],
+  BEHEER_VIEWS: [BREADCRUMB_ITEMS.BEHEER_VIEWS],
   MY_ACCOUNT: [BREADCRUMB_ITEMS.MY_ACCOUNT],
   DIRECTORY: [BREADCRUMB_ITEMS.DIRECTORY]
 };

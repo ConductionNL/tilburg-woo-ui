@@ -15,6 +15,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
 import { AcSearchParamsToObject } from '@utils';
+import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications, user } }) => {
@@ -116,8 +117,8 @@ const AcSearch = ({ store: { publications, user } }) => {
           return (
             <ConCardOrganisationApplication
               {...publication}
-              title={publication['@self'].name}
-              summary={publication['@self'].description}
+              title={extractTitle(publication['@self'].name)}
+              summary={extractSummary(publication['@self'].description)}
               logo={publication['@self'].logo}
               cardType={publication['@self'].schema.slug}
               type={publication['@self'].schema.type}
@@ -133,14 +134,14 @@ const AcSearch = ({ store: { publications, user } }) => {
               updated={publication['@self'].updated}
               published={publication['@self'].published}
               category={publication['@self'].schema.title}
-              title={
+              title={extractTitle(
                 publication.title ??
                 publication.titel ??
                 publication.name ??
                 publication.naam ??
                 publication.id
-              }
-              summary={publication?.beschrijvingKort}
+              )}
+              summary={extractSummary(publication?.beschrijvingKort)}
               organisationData={publication?.organisatie}
               key={index}
             />
@@ -151,13 +152,14 @@ const AcSearch = ({ store: { publications, user } }) => {
               {...publication}
               published={publication['@self'].published}
               category={publication['@self'].schema.title}
-              title={
+              title={extractTitle(
                 publication.title ??
                 publication.titel ??
                 publication.name ??
                 publication.naam ??
                 publication.id
-              }
+              )}
+              summary={extractSummary(publication?.summary || publication?.beschrijving)}
               user={user}
               schemaSlug={publication['@self']?.schema?.slug}
               key={index}

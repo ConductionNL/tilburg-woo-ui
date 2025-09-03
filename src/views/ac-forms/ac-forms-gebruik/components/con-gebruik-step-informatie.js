@@ -15,6 +15,7 @@ const ConGebruikStepInformatie = ({
   setGebruikData,
   loading,
   refCompOptions,
+  organisatieOptions,
   schemas,
   // schemasLoading,
   gebruikType,
@@ -30,17 +31,20 @@ const ConGebruikStepInformatie = ({
       </h2>
 
       <div className='ac-register-form-grid'>
-        <div style={{ gridColumn: 'span 2' }}>
-          <ConSchemaEnhancedField
-            schemaType='gebruik'
-            schemaProperty='contactpersoon'
-            value={gebruik?.contactpersoon || ''}
-            onChange={(value) => setGebruikData('contactpersoon', value)}
-            isDisabled={loading}
-            width='full'
-            schemas={schemas}
-          />
-        </div>
+        {/* Contactpersoon - alleen tonen voor eigen organisatie gebruik */}
+        {gebruikType !== 'andere-organisatie' && (
+          <div style={{ gridColumn: 'span 2' }}>
+            <ConSchemaEnhancedField
+              schemaType='gebruik'
+              schemaProperty='contactpersoon'
+              value={gebruik?.contactpersoon || ''}
+              onChange={(value) => setGebruikData('contactpersoon', value)}
+              isDisabled={loading}
+              width='full'
+              schemas={schemas}
+            />
+          </div>
+        )}
         <div style={{ gridColumn: 'span 2' }}>
           {gebruikType === 'eigen-organisatie' ? (
             <>
@@ -70,6 +74,7 @@ const ConGebruikStepInformatie = ({
                 isDisabled={loading}
                 width='full'
                 schemas={schemas}
+                optionsProvider={organisatieOptions}
                 placeholder='Selecteer de klantorganisatie...'
               />
               <div
@@ -170,25 +175,28 @@ const ConGebruikStepInformatie = ({
             />
           </div>
         )}
-        <div style={{ gridColumn: 'span 2' }}>
-          <label className='utrecht-form-label'>Referentiecomponenten</label>
-          <ReactSelect
-            isMulti
-            className='ac-beheer-select'
-            closeMenuOnSelect={false}
-            options={refCompOptions}
-            value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
-              .map((v) => refCompOptions.find((o) => String(o.value) === String(v)))
-              .filter(Boolean)}
-            onChange={(opts) =>
-              setGebruikData(
-                'gebruiktVoorReferentiecomponenten',
-                Array.isArray(opts) ? opts.map((o) => String(o.value)) : []
-              )
-            }
-            placeholder='Selecteer referentiecomponenten...'
-          />
-        </div>
+        {/* Referentiecomponenten - alleen tonen voor eigen organisatie gebruik */}
+        {gebruikType !== 'andere-organisatie' && (
+          <div style={{ gridColumn: 'span 2' }}>
+            <label className='utrecht-form-label'>Referentiecomponenten</label>
+            <ReactSelect
+              isMulti
+              className='ac-beheer-select'
+              closeMenuOnSelect={false}
+              options={refCompOptions}
+              value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
+                .map((v) => refCompOptions.find((o) => String(o.value) === String(v)))
+                .filter(Boolean)}
+              onChange={(opts) =>
+                setGebruikData(
+                  'gebruiktVoorReferentiecomponenten',
+                  Array.isArray(opts) ? opts.map((o) => String(o.value)) : []
+                )
+              }
+              placeholder='Selecteer referentiecomponenten...'
+            />
+          </div>
+        )}
       </div>
     </div>
   );

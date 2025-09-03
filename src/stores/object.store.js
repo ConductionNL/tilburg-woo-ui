@@ -1523,6 +1523,7 @@ export class ObjectStore {
       });
 
       await this.fetchCollection(register, schema);
+      console.info(`✅ Collection refreshed after creating ${type} object:`, newObject.id);
       await this.setActiveObject(register, schema, newObject);
       this.setSuccess(type, true);
 
@@ -1599,6 +1600,7 @@ export class ObjectStore {
       // Refresh the entire collection to ensure data consistency
       await this.fetchCollection(registerId, schemaId);
 
+      console.info(`✅ Collection refreshed after saving ${type} object:`, data.id);
       this.setSuccess(type, true);
       return { response, data };
     } catch (error) {
@@ -1649,6 +1651,7 @@ export class ObjectStore {
       });
 
       await this.fetchCollection(register, schema);
+      console.info(`✅ Collection refreshed after updating ${type} object:`, id);
 
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
@@ -1720,6 +1723,7 @@ export class ObjectStore {
       });
 
       await this.fetchCollection(register, schema);
+      console.info(`✅ Collection refreshed after patching ${type} object:`, id);
 
       runInAction(() => {
         // run in action to avoid Strict MobX warnings

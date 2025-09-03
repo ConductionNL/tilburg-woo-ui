@@ -391,6 +391,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // Generate action buttons for table rows
   const generateActionButtons = useCallback(
     (row) => {
+      const isViewOnlyRoute = ['extendview', 'view'].includes(config.routeType);
+
       const baseActions = [
         {
           key: 'view',
@@ -462,6 +464,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           setOpenModal('delete');
         },
       };
+
+      if (isViewOnlyRoute) {
+        return baseActions.filter((action) => action.key === 'view');
+      }
 
       return [
         ...baseActions,
@@ -564,9 +570,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
-                        Weergeven als view
+                      <ConActionMenu.Button 
+                        icon={<VISUALS.SPINNER />} 
+                        onClick={() => fetchData()}
+                        disabled={loading}
+                      >
+                        Vernieuwen
                       </ConActionMenu.Button>
+
+                      <ConActionMenu.Divider />
 
                       <ConActionMenu.SubMenu
                         label='Exporteren'
@@ -586,6 +598,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                         onClick={() => setOpenModal('import')}
                       >
                         Importeren
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
+                        Weergeven als view
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Divider />
@@ -609,38 +625,34 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             data={data}
             tableHeaders={[
               ...finalTableHeaders,
-              ...(showManageActions
-                ? [
-                    {
-                      id: 'actions',
-                      label: 'Acties',
-                      key: '',
-                      static: true,
-                      customContent: (row) => (
-                        <ConActionMenu>
-                          <ConActionMenu.Trigger
-                            icon={<VISUALS.ELLIPSIS />}
-                            buttonType='secondary'
-                          >
-                            Acties
-                          </ConActionMenu.Trigger>
+              {
+                id: 'actions',
+                label: 'Acties',
+                key: '',
+                static: true,
+                customContent: (row) => (
+                  <ConActionMenu>
+                    <ConActionMenu.Trigger
+                      icon={<VISUALS.ELLIPSIS />}
+                      buttonType='secondary'
+                    >
+                      Acties
+                    </ConActionMenu.Trigger>
 
-                          <ConActionMenu.Menu position='right'>
-                            {generateActionButtons(row).map((action) => (
-                              <ConActionMenu.Button
-                                key={action.key}
-                                icon={action.icon}
-                                onClick={action.onClick}
-                              >
-                                {action.label}
-                              </ConActionMenu.Button>
-                            ))}
-                          </ConActionMenu.Menu>
-                        </ConActionMenu>
-                      ),
-                    },
-                  ]
-                : []),
+                    <ConActionMenu.Menu position='right'>
+                      {generateActionButtons(row).map((action) => (
+                        <ConActionMenu.Button
+                          key={action.key}
+                          icon={action.icon}
+                          onClick={action.onClick}
+                        >
+                          {action.label}
+                        </ConActionMenu.Button>
+                      ))}
+                    </ConActionMenu.Menu>
+                  </ConActionMenu>
+                ),
+              },
             ]}
             getSelectedRows={setSelectedRows}
             renderSelectRowButtons={showManageActions}
@@ -691,6 +703,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             setSingleSelectedRow,
             tableRef,
             fetchData,
+            store: { object, user }, // Pass store for cross-collection refreshes
             config: {
               ...config,
               // Ensure dynamicCreate is available everywhere
