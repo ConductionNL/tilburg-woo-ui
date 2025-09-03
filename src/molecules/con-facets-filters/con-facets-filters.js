@@ -216,9 +216,18 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     );
   }
 
+  // Filter out empty facets from the facets object. For '@self' facets, only keep them if they have schema buckets.
+  // For all other facets, keep them if they have any buckets. This ensures we only show facets that have actual filter options.
+  const filteredFacets = Object.entries(facets).filter(([key, value]) => {
+    if (key === '@self') {
+      return value.schema?.buckets && value.schema.buckets.length > 0;
+    }
+    return value.buckets && value.buckets.length > 0;
+  });
+
   return (
     <>
-      {Object.entries(facets).map(([key, value]) => {
+      {filteredFacets.map(([key, value]) => {
         return key === '@self' ? (
           <React.Fragment key={key}>
             {Object.entries(value).map(([_key, _value]) => {
