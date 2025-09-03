@@ -1,5 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
 import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { AcCheckbox } from '@molecules';
 import { withStore } from '@stores';
@@ -7,17 +8,19 @@ import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
 import _ from 'lodash';
+import { AcBuildURLSearchParams } from '@utils';
 
 const ConFacetsFilters = ({ store: { publications } }) => {
-  const { 
-    toggleSearchArrayValue, 
-    updateQuery, 
-    fetchPublications, 
-    // fetchFacets, 
-    all_facets, 
-    is_facets_loading, 
+  const [, setSearchParams] = useSearchParams();
+  const {
+    toggleSearchArrayValue,
+    updateQuery,
+    // fetchPublications,
+    // fetchFacets,
+    all_facets,
+    is_facets_loading,
     is_facets_config_loaded,
-    facetsConfig 
+    facetsConfig,
   } = publications;
 
   // Custom function to handle nested facet toggling
@@ -54,14 +57,26 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         },
       };
 
-      updateQuery(updatedQuery);
-      // Trigger search results update - facets will reload automatically via config system
-      fetchPublications();
+      // Reset to first page when filters change
+      const withPageReset = { ...updatedQuery, _page: 1 };
+
+      // Sync to URL first (source of truth)
+      const paramsString = AcBuildURLSearchParams(withPageReset);
+      setSearchParams(new URLSearchParams(paramsString));
+
+      // Update store
+      updateQuery(withPageReset);
+
+      // Fetch is triggered by URL change effect in AcSearch
     } else {
       // Use the existing function for regular keys
       toggleSearchArrayValue(facetKey, value);
-      // Trigger search results update - facets will reload automatically via config system
-      fetchPublications();
+      // Reset to first page when filters change and sync URL from current query
+      const nextQuery = { ...publications.query, _page: 1 };
+      const paramsString = AcBuildURLSearchParams(nextQuery);
+      setSearchParams(new URLSearchParams(paramsString));
+
+      // Fetch is triggered by URL change effect in AcSearch
     }
   };
 
@@ -100,10 +115,10 @@ const ConFacetsFilters = ({ store: { publications } }) => {
   // Render skeleton loading cards for facets
   const renderSkeletonFacets = () => {
     const skeletonFacets = [
-      { title: 'Type', items: 3 },
-      { title: 'Organisatie', items: 4 },
-      { title: 'Status', items: 2 },
-      { title: 'Categorie', items: 5 }
+      { title: 'Type', items: 1 },
+      { title: 'Organisatie', items: 1 },
+      { title: 'Status', items: 1 },
+      { title: 'Categorie', items: 1 },
     ];
 
     return skeletonFacets.map((facet, index) => (
@@ -117,10 +132,22 @@ const ConFacetsFilters = ({ store: { publications } }) => {
           <Heading level={4}>{facet.title}</Heading>
         </AcCard>
         {Array.from({ length: facet.items }).map((_, itemIndex) => (
-          <AcCard key={`skeleton-item-${itemIndex}`} skeleton style={{ minHeight: '1.5rem', marginLeft: '1rem' }}>
+          <AcCard
+            key={`skeleton-item-${itemIndex}`}
+            skeleton
+            style={{ minHeight: '1.5rem', marginLeft: '1rem' }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '1rem', height: '1rem', backgroundColor: 'transparent' }}></div>
-              <div style={{ flex: 1, height: '1rem', backgroundColor: 'transparent' }}></div>
+              <div
+                style={{
+                  width: '1rem',
+                  height: '1rem',
+                  backgroundColor: 'transparent',
+                }}
+              ></div>
+              <div
+                style={{ flex: 1, height: '1rem', backgroundColor: 'transparent' }}
+              ></div>
             </div>
           </AcCard>
         ))}
@@ -130,15 +157,12 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
   const facets = all_facets;
 
-
-
   // Only show skeleton loading when:
   // 1. Config is not loaded yet, OR
   // 2. We're loading facets AND don't have existing facets to show
-  const shouldShowSkeleton = (
-    !is_facets_config_loaded || 
-    (is_facets_loading && (!facets || Object.keys(facets).length === 0))
-  );
+  const shouldShowSkeleton =
+    !is_facets_config_loaded ||
+    (is_facets_loading && (!facets || Object.keys(facets).length === 0));
 
   if (shouldShowSkeleton) {
     return <>{renderSkeletonFacets()}</>;
@@ -154,12 +178,10 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     );
   }
 
-
-
   // Show helpful message when all facets are empty
   const hasAnyFacetData = Object.entries(facets).some(([key, value]) => {
     if (key === '@self') {
-      return Object.values(value).some(v => v.buckets && v.buckets.length > 0);
+      return Object.values(value).some((v) => v.buckets && v.buckets.length > 0);
     }
     return value.buckets && value.buckets.length > 0;
   });
@@ -167,23 +189,28 @@ const ConFacetsFilters = ({ store: { publications } }) => {
   if (!hasAnyFacetData) {
     return (
       <AcFlex column spacing='sm'>
-        <p style={{ 
-          color: '#6c757d', 
-          margin: '0 0 0.5rem 0',
-          fontWeight: '500',
-          textAlign: 'left'
-        }}>
+        <p
+          style={{
+            color: '#6c757d',
+            margin: '0 0 0.5rem 0',
+            fontWeight: '500',
+            textAlign: 'left',
+          }}
+        >
           Geen filters beschikbaar
         </p>
-        <p style={{ 
-          color: '#6c757d', 
-          fontSize: '0.9em',
-          margin: '0',
-          lineHeight: '1.4',
-          textAlign: 'left'
-        }}>
-          Er zijn momenteel geen filteropties beschikbaar voor deze zoekopdracht. 
-          Dit kan komen doordat er geen publicaties zijn gevonden met faceteerbare gegevens.
+        <p
+          style={{
+            color: '#6c757d',
+            fontSize: '0.9em',
+            margin: '0',
+            lineHeight: '1.4',
+            textAlign: 'left',
+          }}
+        >
+          Er zijn momenteel geen filteropties beschikbaar voor deze zoekopdracht. Dit
+          kan komen doordat er geen publicaties zijn gevonden met faceteerbare
+          gegevens.
         </p>
       </AcFlex>
     );
@@ -196,8 +223,14 @@ const ConFacetsFilters = ({ store: { publications } }) => {
           <React.Fragment key={key}>
             {Object.entries(value).map(([_key, _value]) => {
               const hasData = _value.buckets && _value.buckets.length > 0;
-              const shouldShowFacet = !['register', 'directory', 'catalogs', 'organisation', 'name'].includes(_key.toLowerCase());
-              
+              const shouldShowFacet = ![
+                'register',
+                'directory',
+                'catalogs',
+                'organisation',
+                'name',
+              ].includes(_key.toLowerCase());
+
               return shouldShowFacet ? (
                 <AcFlex
                   key={`${key}-${_key}`}
@@ -206,9 +239,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                   className='ac-search-filters__subjects'
                 >
                   <Heading level={4}>
-                    {_key === 'schema'
-                      ? 'Type'
-                      : _.upperFirst(_value.title ?? _key)}
+                    {_key === 'schema' ? 'Type' : _.upperFirst(_value.title ?? _key)}
                   </Heading>
                   {hasData ? (
                     _value.buckets.map((bucket) => (
@@ -223,7 +254,13 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                       />
                     ))
                   ) : (
-                    <p style={{ color: '#666', fontStyle: 'italic', fontSize: '0.9em' }}>
+                    <p
+                      style={{
+                        color: '#666',
+                        fontStyle: 'italic',
+                        fontSize: '0.9em',
+                      }}
+                    >
                       No options available
                     </p>
                   )}
@@ -243,12 +280,17 @@ const ConFacetsFilters = ({ store: { publications } }) => {
               value.buckets.map((bucketValue) => (
                 <AcCheckbox
                   key={bucketValue.key}
-                  label={`${bucketValue.label ?? bucketValue.key} (${bucketValue.results})`}
+                  label={`${bucketValue.label ?? bucketValue.key} (${
+                    bucketValue.results
+                  })`}
                   value={bucketValue.key}
                   checked={isFacetChecked(key, bucketValue.key)}
                   onChange={() => {
                     toggleSearchArrayValue(key, bucketValue.key);
-                    fetchPublications();
+                    const nextQuery = { ...publications.query, _page: 1 };
+                    const paramsString = AcBuildURLSearchParams(nextQuery);
+                    setSearchParams(new URLSearchParams(paramsString));
+                    // Fetch is triggered by URL change effect in AcSearch
                   }}
                 />
               ))
