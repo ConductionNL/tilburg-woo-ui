@@ -24,6 +24,7 @@ import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 /**
  * Generic Beheer Page Component
@@ -282,6 +283,26 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
 
+  // Handle create action → open corresponding wizard when available
+  const handleCreateClick = useCallback(() => {
+    if (!config?.schemaSlug) {
+      setOpenModal('add');
+      return;
+    }
+
+    const matchingWizards = Object.values(DASHBOARD_WIZARDS).filter(
+      (w) => w.schema === config.schemaSlug
+    );
+
+    if (matchingWizards) {
+      navigate(getWizardUrl(matchingWizards[0]));
+      return;
+    }
+
+    // Fallback to legacy modal when no wizard is defined for this schema
+    setOpenModal('add');
+  }, [config?.schemaSlug, navigate]);
+
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
     if (!config) return [];
@@ -529,7 +550,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                   <AcButton
                     style='button'
                     buttonType='primary'
-                    onClick={() => setOpenModal('add')}
+                    onClick={handleCreateClick}
                     icon={<VISUALS.PLUS />}
                   >
                     Toevoegen
@@ -541,8 +562,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button 
-                        icon={<VISUALS.SPINNER />} 
+                      <ConActionMenu.Button
+                        icon={<VISUALS.SPINNER />}
                         onClick={() => fetchData()}
                         disabled={loading}
                       >

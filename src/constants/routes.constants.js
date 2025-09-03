@@ -28,6 +28,7 @@ import {
   ConFormsDienst,
   ConViewsList,
   ConBeheerViews,
+  ConFormsIndex,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -50,6 +51,7 @@ export const PATHS = AcLockObject({
   OBJECTS: '/objects/:register/:schema',
   REGISTER: '/register',
   AANMELDEN: '/aanmelden',
+  FORMS: '/forms',
   FORMS_REGISTER: '/forms/register',
   FORMS_GEBRUIK: '/forms/gebruik',
   FORMS_PRODUCT: '/forms/product',
@@ -260,6 +262,16 @@ export const ROUTES = {
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Aanmelden`,
     component: AcRegister,
+  },
+  FORMS_INDEX: {
+    id: AcUUID(),
+    name: 'Formulieren',
+    label: 'Formulieren',
+    path: PATHS.FORMS,
+    title: `${
+      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
+    } | Formulieren`,
+    component: ConFormsIndex,
   },
   FORMS_REGISTER: {
     id: AcUUID(),
