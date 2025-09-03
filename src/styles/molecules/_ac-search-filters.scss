@@ -68,6 +68,10 @@
     .utrecht-form-field--checkbox:not(:last-child) {
       margin-block-end: var(--tilburg-space-block-beetle);
     }
+
+    .ac-card__content {
+        padding: 0 !important;
+      }
   }
 
   &__sort {

@@ -1,27 +1,33 @@
 export const AcSearchParamsToObject = (searchParams) => {
   const params = {};
   for (const [key, value] of searchParams.entries()) {
-    if (key.includes('[]')) {
-      const newKey = key.replace('[]', '');
-      if (!params[newKey]) {
-        params[newKey] = [];
-      }
-      params[newKey].push(decodeURIComponent(value));
+    // Match nested array: parent[child][]=value
+    const nestedArrayMatch = key.match(/^([^[]+)\[([^[]+)\]\[\]$/);
+    if (nestedArrayMatch) {
+      const parent = nestedArrayMatch[1];
+      const child = nestedArrayMatch[2];
+      if (!params[parent]) params[parent] = {};
+      if (!params[parent][child]) params[parent][child] = [];
+      params[parent][child].push(decodeURIComponent(value));
       continue;
     }
 
-    if (key.includes('[') && key.includes(']')) {
-      const newKeys = key.split('[');
-      if (newKeys.length !== 2) {
-        return;
-      }
+    // Match parent array: parent[]=value
+    const parentArrayMatch = key.match(/^([^[]+)\[\]$/);
+    if (parentArrayMatch) {
+      const parent = parentArrayMatch[1];
+      if (!params[parent]) params[parent] = [];
+      params[parent].push(decodeURIComponent(value));
+      continue;
+    }
 
-      if (!params[newKeys[0]]) {
-        params[newKeys[0]] = {};
-      }
-
-      params[newKeys[0]][newKeys[1].substring(0, newKeys[1].length - 1)] =
-        decodeURIComponent(value);
+    // Match nested single value: parent[child]=value
+    const nestedSingleMatch = key.match(/^([^[]+)\[([^[]+)\]$/);
+    if (nestedSingleMatch) {
+      const parent = nestedSingleMatch[1];
+      const child = nestedSingleMatch[2];
+      if (!params[parent]) params[parent] = {};
+      params[parent][child] = decodeURIComponent(value);
       continue;
     }
 
