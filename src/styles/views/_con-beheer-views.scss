@@ -8,6 +8,7 @@
   max-width: calc(100% - 300px); // Account for sidenav width
 }
 
+
 .con-beheer-views-header {
   display: flex;
   justify-content: space-between;
@@ -85,7 +86,7 @@
   justify-content: center;
   padding: 4rem 2rem;
   text-align: center;
-  
+
   p {
     margin-top: 1rem;
     color: var(--nlds-color-neutral-60);
@@ -122,7 +123,7 @@
   .con-beheer-views-content {
     flex: 1;
   }
-  
+
   .con-beheer-views-graph-container {
     max-width: 100%;
     overflow-x: auto;
