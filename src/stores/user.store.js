@@ -320,6 +320,16 @@ export class UserStore {
       // Save user state to localStorage for persistence across tabs
       this.saveToStorage();
 
+      // Pre-warm backend cache in background (non-blocking) - only once per session
+      if (!app.store.object.initialCacheWarmingCompleted) {
+        // Fire and forget - don't await, don't block login success
+        app.store.object.cacheLoad().then(() => {
+          console.info('✅ Background cache warming completed successfully');
+        }).catch((cacheError) => {
+          console.warn('⚠️ Background cache warming failed:', cacheError);
+        });
+      }
+
       this.setLoading(false);
       return { success: true, user: this.user };
     } catch (error) {
@@ -499,6 +509,11 @@ export class UserStore {
 
       // Clear localStorage
       this.clearStorage();
+
+      // Reset cache warming flag to allow cache warming on next login
+      if (app.store.object) {
+        app.store.object.resetCacheWarmingFlag();
+      }
 
       this.setLoading(false);
 

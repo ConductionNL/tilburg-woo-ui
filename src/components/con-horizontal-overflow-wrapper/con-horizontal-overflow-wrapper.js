@@ -28,6 +28,9 @@ const ConHorizontalOverflowWrapper = ({ children, ariaLabels }) => {
     if (!wrapperRef.current || !contentRef.current) return;
 
     requestAnimationFrame(() => {
+      // Check again inside requestAnimationFrame in case component unmounted
+      if (!wrapperRef.current || !contentRef.current) return;
+      
       const hasHorizontalOverflow =
         contentRef.current.scrollWidth > wrapperRef.current.clientWidth;
 

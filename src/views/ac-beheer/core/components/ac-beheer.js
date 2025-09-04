@@ -38,6 +38,7 @@ const AcBeheer = ({ store }) => {
     checkAuth();
   }, [user, navigate]);
 
+
   const { type, id } = useParams();
 
   if (window.location.pathname === '/beheer') {
