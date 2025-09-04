@@ -43,6 +43,14 @@ export const AcBuildURLSearchParams = (data) => {
         if (!subValue) {
           return;
         }
+        // Support nested arrays: key[subKey][]=a&key[subKey][]=b
+        if (Array.isArray(subValue)) {
+          subValue.forEach((arrVal) => {
+            if (!arrVal) return;
+            params.append(`${key}[${subKey}][]`, getValue(arrVal));
+          });
+          return;
+        }
         params.append(`${key}[${subKey}]`, getValue(subValue));
       });
       return;
