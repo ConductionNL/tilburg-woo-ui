@@ -15,6 +15,8 @@ import AcButton from '@molecules/ac-button/ac-button';
 import AcMyAccountModal from './ac-my-account-modal';
 import ReactSelect from 'react-select';
 import clsx from 'clsx';
+import ConLogoPreview from '@views/ac-register/con-logo-preview';
+import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import ConGenericFormModal from '@views/ac-beheer/core/modals/con-generic-form-modal/con-generic-form-modal';
 
 const AcMyAccount = ({ store }) => {
@@ -31,18 +33,52 @@ const AcMyAccount = ({ store }) => {
   const [showModal, setShowModal] = useState(false);
   const [organisations, setOrganisations] = useState(null);
   const [activeOrganisation, setActiveOrganisation] = useState(null);
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null); // New state for full org data
   const [switchingOrg, setSwitchingOrg] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDepublishModal, setShowDepublishModal] = useState(false);
 
-  const { user } = store;
+  const { user, object } = store; // Add object store
 
   // Email validation function
   const validateEmail = useCallback((email) => {
     return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   }, []);
+
+  // Function to fetch full organization data
+  const fetchFullOrganisationData = useCallback(
+    async (organisationId) => {
+      if (!organisationId) return;
+
+      try {
+        // Fetch the full organization data using the object store
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          _extend: ['@self.schema'],
+        });
+
+        // Get the fetched organization data
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+        }
+      } catch (err) {
+        console.error('Error fetching full organization data:', err);
+        // Don't set error here as it's not critical for the main functionality
+      }
+    },
+    [object]
+  );
+
+  const setNewFieldDataAndFetch = (v, field) => {
+    fullActiveOrganisation[field] = v;
+
+    fetchFullOrganisationData(fullActiveOrganisation?.['@self'].id);
+  };
 
   // Refetch logic
   const fetchUserData = async () => {
@@ -58,6 +94,11 @@ const AcMyAccount = ({ store }) => {
         if (userData.organisations) {
           setOrganisations(userData.organisations);
           setActiveOrganisation(userData.organisations.active);
+
+          // Fetch full organization data if we have an active organization
+          if (userData.organisations.active?.uuid) {
+            await fetchFullOrganisationData(userData.organisations.active.uuid);
+          }
         }
 
         setFormData({
@@ -112,6 +153,11 @@ const AcMyAccount = ({ store }) => {
       if (updatedUser.organisations) {
         setOrganisations(updatedUser.organisations);
         setActiveOrganisation(updatedUser.organisations.active);
+
+        // Fetch full organization data for the newly selected organization
+        if (updatedUser.organisations.active?.uuid) {
+          await fetchFullOrganisationData(updatedUser.organisations.active.uuid);
+        }
       }
 
       // Update form data with new user data
@@ -135,6 +181,7 @@ const AcMyAccount = ({ store }) => {
   // Function to open organization edit modal
   const handleEditOrganization = () => {
     if (!activeOrganisation) return;
+    if (!fullActiveOrganisation) return;
     setShowOrgModal(true);
   };
 
@@ -181,6 +228,41 @@ const AcMyAccount = ({ store }) => {
     await fetchUserData();
   };
 
+  // Handle form field changes
+  const handleFormChange = (field, value) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handle form submission
+  const handleFormSubmit = async () => {
+    if (!activeOrganisation || !fullActiveOrganisation) return;
+
+    try {
+      // Update the organization using the object store
+      await object.patchObject(
+        'voorzieningen',
+        'organisatie',
+        activeOrganisation.uuid || activeOrganisation.id,
+        editFormData
+      );
+
+      // Close the form and refresh data
+      setIsEditingOrg(false);
+      await fetchUserData();
+    } catch (error) {
+      console.error('Error updating organization:', error);
+      // You could add error handling here
+    }
+  };
+
+  const shortTooltip = (type) =>
+    `Een korte beschrijving van de ${type.slice(0, -1)}`;
+  const longTooltip = (type) =>
+    `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
+
   if (error) {
     return <AcBeheerError error={error} />;
   }
@@ -200,7 +282,21 @@ const AcMyAccount = ({ store }) => {
               !!organisations.results?.length && (
                 <div className='ac-register-review__section'>
                   <div className='ac-register-review__header'>
-                    <Heading level={4}>Organisatie gegevens</Heading>
+                    <Heading level={4}>
+                      <div className='con-beheer-details--header-container'>
+                        {fullActiveOrganisation?.['@self']?.image && (
+                          <ConLogoPreview
+                            className='con-beheer-details--logo-container'
+                            logoUrl={fullActiveOrganisation?.['@self']?.image}
+                          />
+                        )}
+
+                        <Heading className='con-beheer-details--title'>
+                          {fullActiveOrganisation?.['@self']?.name ||
+                            fullActiveOrganisation.id}
+                        </Heading>
+                      </div>
+                    </Heading>
                     <div className='ac-register-review__header-controls'>
                       {organisations.results.length > 1 && (
                         <ReactSelect
@@ -243,6 +339,7 @@ const AcMyAccount = ({ store }) => {
                           style='button'
                           icon={<VISUALS.PENCIL />}
                           onClick={handleEditOrganization}
+                          disabled={!fullActiveOrganisation}
                         >
                           Bewerken
                         </AcButton>
@@ -266,6 +363,63 @@ const AcMyAccount = ({ store }) => {
                         )}
                       </div>
                     </div>
+                  </div>
+                  <div>
+                    <ConEditableDescription
+                      registerSlug={
+                        fullActiveOrganisation?.['@self']?.register?.slug ||
+                        'voorzieningen'
+                      }
+                      schemaSlug={
+                        fullActiveOrganisation?.['@self']?.schema?.slug ||
+                        'organisatie'
+                      }
+                      objectId={fullActiveOrganisation.id}
+                      field='beschrijvingKort'
+                      label='Korte beschrijving'
+                      placeholder={shortTooltip('organisatie')}
+                      tooltip={shortTooltip('organisatie')}
+                      maxLength={255}
+                      isMarkdown={false}
+                      value={fullActiveOrganisation.beschrijvingKort}
+                      serialize={(v) => v}
+                      deserialize={(v) => v || ''}
+                      onSuccess={(v) =>
+                        setNewFieldDataAndFetch(v, 'beschrijvingKort')
+                      }
+                    />
+                    <br />
+                    <ConEditableDescription
+                      markdownPreviewClassName='con-my-account-description'
+                      registerSlug={
+                        fullActiveOrganisation?.['@self']?.register?.slug ||
+                        'voorzieningen'
+                      }
+                      schemaSlug={
+                        fullActiveOrganisation?.['@self']?.schema?.slug ||
+                        'organisatie'
+                      }
+                      objectId={fullActiveOrganisation.id}
+                      field='beschrijvingLang'
+                      label='Lange beschrijving'
+                      placeholder={longTooltip('organisatie')}
+                      tooltip={longTooltip('organisatie')}
+                      maxLength={2000}
+                      isMarkdown={true}
+                      value={fullActiveOrganisation.beschrijvingLang}
+                      serialize={(v) => JSON.stringify(v || '')}
+                      deserialize={(v) => {
+                        if (!v) return '';
+                        try {
+                          return JSON.parse(v) || '';
+                        } catch (e) {
+                          return v;
+                        }
+                      }}
+                      onSuccess={(v) =>
+                        setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                      }
+                    />
                   </div>
                   <Separator className='ac-register-review-header__separator' />
 
@@ -309,6 +463,61 @@ const AcMyAccount = ({ store }) => {
                         <strong>Aantal leden:</strong>
                         <span>{activeOrganisation.users?.length || 0}</span>
                       </div>
+
+                      {/* Display additional fields from full organization data */}
+                      {fullActiveOrganisation && (
+                        <>
+                          <div className='ac-register-review__field'>
+                            <strong>KvK nummer:</strong>
+                            <span>{fullActiveOrganisation.kvkNummer || '-'}</span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>RSIN:</strong>
+                            <span>{fullActiveOrganisation.rsin || '-'}</span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>Website:</strong>
+                            <span>{fullActiveOrganisation.website || '-'}</span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>Adres:</strong>
+                            <span>
+                              {fullActiveOrganisation.adres?.straatnaam &&
+                              fullActiveOrganisation.adres?.huisnummer
+                                ? `${fullActiveOrganisation.adres.straatnaam} ${fullActiveOrganisation.adres.huisnummer}`
+                                : '-'}
+                            </span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>Postcode:</strong>
+                            <span>
+                              {fullActiveOrganisation.adres?.postcode || '-'}
+                            </span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>Plaats:</strong>
+                            <span>
+                              {fullActiveOrganisation.adres?.woonplaats || '-'}
+                            </span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>Land:</strong>
+                            <span>{fullActiveOrganisation.adres?.land || '-'}</span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>Telefoon:</strong>
+                            <span>
+                              {fullActiveOrganisation.telefoonnummer || '-'}
+                            </span>
+                          </div>
+                          <div className='ac-register-review__field'>
+                            <strong>E-mail:</strong>
+                            <span>
+                              {fullActiveOrganisation['e-mailadres'] || '-'}
+                            </span>
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
@@ -468,7 +677,7 @@ const AcMyAccount = ({ store }) => {
               onSuccess={handleOrgFormSuccess}
               type='organisaties'
               isEdit={true}
-              data={activeOrganisation}
+              data={fullActiveOrganisation || activeOrganisation}
             />
           )}
 
