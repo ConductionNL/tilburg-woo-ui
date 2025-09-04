@@ -524,7 +524,12 @@ const BeheerPageConfigFactory = {
               id: 'name',
               label: 'Naam',
               key: 'voornaam',
-              customContent: (row) => `${row.voornaam} ${row.achternaam}`,
+              customContent: (row) => {
+                const voornaam = (row.voornaam && row.voornaam !== 'null') ? row.voornaam : '';
+                const achternaam = (row.achternaam && row.achternaam !== 'null') ? row.achternaam : '';
+                const fullName = [voornaam, achternaam].filter(Boolean).join(' ');
+                return fullName || '-';
+              },
             },
             organisatie: {
               id: 'organisatie',
