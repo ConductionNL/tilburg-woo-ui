@@ -9,6 +9,7 @@ import { AcButton } from '@src/molecules';
 import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
+import { getCookie } from '@src/utilities';
 
 import {
   Heading1,
@@ -610,6 +611,31 @@ const AcFormsProduct = ({ userStore, store }) => {
     return baseParams;
   }, [schemas]);
 
+  // Helper function to get authentication headers (same logic as object store)
+  const getAuthHeaders = useCallback(() => {
+    const headers = { Accept: 'application/json' };
+    
+    // Try Bearer token first (from cookies)
+    const accessToken = getCookie('nextcloud_access_token');
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+      return headers;
+    }
+    
+    // Fallback to basic auth (from user store)
+    try {
+      const basicAuth = userStore?.basicAuthCredentials;
+      if (basicAuth && basicAuth.username && basicAuth.password) {
+        const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+        headers.Authorization = `Basic ${credentials}`;
+      }
+    } catch (error) {
+      console.warn('Failed to get basic auth credentials:', error);
+    }
+    
+    return headers;
+  }, [userStore]);
+
   // Function to load all referentiecomponenten upfront
   // ✅ Simplified function to load 500 referentiecomponenten
   const loadReferentieComponenten = useCallback(async () => {
@@ -627,7 +653,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       // console.debug('Full endpoint:', endpoint);
 
       const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -662,7 +688,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     } finally {
       setReferentieComponentenLoading(false);
     }
-  }, [schemas, getReferentieComponentenQueryParams, getStandaardenQueryParams]);
+  }, [schemas, getReferentieComponentenQueryParams, getStandaardenQueryParams, getAuthHeaders]);
 
   // Add this after loadReferentieComponenten()
   const loadStandaarden = useCallback(async () => {
@@ -679,7 +705,7 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       // console.debug('Full endpoint (standaarden):', endpoint);
 
-      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+      const res = await fetch(endpoint, { headers: getAuthHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const data = await res.json();
@@ -711,7 +737,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     } finally {
       setStandaardenOptionsLoading(false);
     }
-  }, [schemas, getStandaardenQueryParams]);
+  }, [schemas, getStandaardenQueryParams, getAuthHeaders]);
 
   // ✅ Load referentiecomponenten and standaarden when schemas are available
   useEffect(() => {
@@ -762,7 +788,7 @@ const AcFormsProduct = ({ userStore, store }) => {
       const endpoint = `${baseEndpoint}?${params}`;
 
       const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
+        headers: getAuthHeaders(),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -797,7 +823,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     } finally {
       setModulesLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   // ✅ Debounced search function for modules
   const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
