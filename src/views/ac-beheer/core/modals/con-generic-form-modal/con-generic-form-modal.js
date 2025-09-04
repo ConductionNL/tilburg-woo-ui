@@ -237,8 +237,8 @@ const ConGenericFormModal = ({
 
   // Load all static and collection-based options when modal opens
   useEffect(() => {
-    // Only run when modal is actually opened and type is not 'init'
-    if (!showModal || !config || type === 'init') {
+    // Only run when modal is actually opened
+    if (!showModal || !config) {
       return;
     }
 
@@ -262,7 +262,7 @@ const ConGenericFormModal = ({
         }
       }
     );
-  }, [showModal, config?.beheerConfig?.schemaSlug, type]);
+  }, [showModal, config?.beheerConfig?.schemaSlug]);
 
   // Helper function to generate initial data from schema properties
   // This automatically creates form defaults based on API schema definitions
@@ -312,7 +312,7 @@ const ConGenericFormModal = ({
   // Initialize form data when modal opens or data changes
   const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (!config || !showModal || hasInitializedRef.current || type === 'init') return;
+    if (!config || !showModal || hasInitializedRef.current) return;
     if (schemaLoading || !schema?.properties) return; // wait for stable schema
 
     const schemaInitialData = generateInitialDataFromSchema(schema);
@@ -353,7 +353,6 @@ const ConGenericFormModal = ({
     preSelected,
     schemaLoading,
     schema?.properties,
-    type,
   ]);
 
   // Reset the guard when closing or changing type
@@ -364,8 +363,8 @@ const ConGenericFormModal = ({
   // Handle additional effects when form data changes
   const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
   useEffect(() => {
-    // Only run additional effects when modal is open and type is not 'init'
-    if (!showModal || !config?.additionalEffects?.length || !formData || type === 'init') {
+    // Only run additional effects when modal is open
+    if (!showModal || !config?.additionalEffects?.length || !formData) {
       return;
     }
 
@@ -390,7 +389,7 @@ const ConGenericFormModal = ({
 
     // Update previous form data reference
     previousFormDataRef.current = { ...formData };
-  }, [showModal, config?.additionalEffects, formData, type]);
+  }, [showModal, config?.additionalEffects, formData]);
 
   // Generate options providers for ConDynamicSchemaForm
   const optionsProviders = useMemo(() => {
@@ -486,7 +485,7 @@ const ConGenericFormModal = ({
 
   // Handle form submission
   const handleSubmit = useCallback(async () => {
-    if (!config || !isValid || type === 'init') return;
+    if (!config || !isValid) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -800,9 +799,6 @@ const ConGenericFormModal = ({
   // Generate title - prefer schema title over type slug
   const schemaTitle = schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
   const title = isEdit ? `${schemaTitle} bewerken` : `${schemaTitle} toevoegen`;
-
-  console.log({ title });
-  console.log({ formData });
 
   return (
     <AcModal
