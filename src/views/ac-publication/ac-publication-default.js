@@ -12,7 +12,6 @@ import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
-import ConGenericBeheerPublishDepublishModal from '@views/ac-beheer/core/modals/ac-generic-beheer-publish-depublish-modal/ac-generic-beheer-publish-depublish-modal';
 
 import _ from 'lodash';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
@@ -138,16 +137,8 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   // Generate action menu items
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
-  // Depublish modal state
-  const [showDepublishModal, setShowDepublishModal] = useState(false);
-
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // Open depublish modal from actions menu
-  const handleDepublish = useCallback(() => {
-    setShowDepublishModal(true);
-  }, []);
 
   // Open delete modal from actions menu
   const handleDelete = useCallback(() => {
@@ -259,7 +250,6 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
               showViewAction={false}
               showEditAction={true}
               showPublishActions={true}
-              onDepublish={handleDepublish}
               onDelete={handleDelete}
               uniqueActions={[
                 {
@@ -565,14 +555,6 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             )}
           </div>
         </AcFlex>
-
-        <ConGenericBeheerPublishDepublishModal
-          publish={false}
-          objects={get_single ? [get_single] : []}
-          showModal={showDepublishModal}
-          onClose={() => setShowDepublishModal(false)}
-          onSuccess={() => navigate('/zoeken')}
-        />
 
         <AcGenericBeheerDeleteModal
           objects={get_single ? [get_single] : []}
