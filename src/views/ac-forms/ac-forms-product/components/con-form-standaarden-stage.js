@@ -37,7 +37,7 @@ const ConFormStandaardenStage = ({
   // State to track compliance and bewijs for each module-standard combination
   const [tableState, setTableState] = useState({});
 
-  // Normalize a standard reference to its id string
+  // Enhanced function to get standard ID with better matching
   const getStandardId = (standard) => {
     if (!standard) return null;
     if (typeof standard === 'string') return standard;
@@ -47,22 +47,100 @@ const ConFormStandaardenStage = ({
       standard.identifier ||
       standard.value ||
       standard.slug ||
+      standard.naam ||
+      standard.name ||
       null
     );
   };
 
-  // Build lookup map from provided standaarden options
+  // Enhanced lookup map with multiple matching strategies
   const standaardenMap = useMemo(() => {
     const map = {};
+    const nameMap = {}; // Additional map for name-based matching
+    const identifierMap = {}; // Additional map for identifier-based matching
+
     (standaardenOptions || []).forEach((opt) => {
-      const d = opt?.data || {};
+      const d = opt?.data || opt || {};
+
+      // Primary ID mapping
       const id = d?.id || d?.identifier || d?.value || d?.slug || opt?.value;
       if (id != null) {
         map[String(id)] = d;
       }
+
+      // Name-based mapping for fallback matching
+      const name = d?.name || d?.naam || d?.title || d?.label;
+      if (name) {
+        nameMap[String(name).toLowerCase()] = d;
+      }
+
+      // Identifier mapping
+      const identifier = d?.identifier || d?.value;
+      if (identifier) {
+        identifierMap[String(identifier)] = d;
+      }
     });
-    return map;
+
+    return { byId: map, byName: nameMap, byIdentifier: identifierMap };
   }, [standaardenOptions]);
+
+  // Enhanced function to find matching standard data
+  const findMatchingStandardData = (standard) => {
+    const standardId = getStandardId(standard);
+
+    // Try direct ID match first
+    if (standardId && standaardenMap.byId[String(standardId)]) {
+      return standaardenMap.byId[String(standardId)];
+    }
+
+    // Try identifier match
+    if (standardId && standaardenMap.byIdentifier[String(standardId)]) {
+      return standaardenMap.byIdentifier[String(standardId)];
+    }
+
+    // Try name-based matching as fallback
+    const standardName =
+      standard?.name || standard?.naam || standard?.title || standard?.label;
+    if (standardName && standaardenMap.byName[String(standardName).toLowerCase()]) {
+      return standaardenMap.byName[String(standardName).toLowerCase()];
+    }
+
+    // Return empty object if no match found
+    return {};
+  };
+
+  // Enhanced function to extract standard information
+  const extractStandardInfo = (standard, fetchedData = {}) => {
+    // Prioritize fetched data, fall back to original standard data
+    const name =
+      fetchedData.name ||
+      fetchedData.xml?.name?._value ||
+      fetchedData.afkorting ||
+      fetchedData.naam ||
+      fetchedData.title ||
+      fetchedData.label ||
+      standard?.name ||
+      standard?.xml?.name?._value ||
+      standard?.naam ||
+      standard?.title ||
+      standard?.label ||
+      (typeof standard === 'string' ? standard : getStandardId(standard));
+
+    const description =
+      fetchedData.summary ||
+      fetchedData.xml?.documentation?._value ||
+      fetchedData.documentation ||
+      fetchedData.beschrijving ||
+      fetchedData.description ||
+      standard?.summary ||
+      standard?.xml?.documentation?._value ||
+      standard?.documentation ||
+      standard?.beschrijving ||
+      standard?.description ||
+      '';
+
+    return { name, description };
+  };
 
   // Reflect loading to parent if provided
   useEffect(() => {
@@ -78,7 +156,7 @@ const ConFormStandaardenStage = ({
     referentieComponentenWithStandards.forEach((refComp) => {
       const refCompName = refComp.naam || `Component ${refComp.id}`;
 
-      // Add aanbevolen standaarden
+      // Process aanbevolen standaarden
       if (
         refComp.aanbevolenStandaarden &&
         Array.isArray(refComp.aanbevolenStandaarden)
@@ -86,41 +164,22 @@ const ConFormStandaardenStage = ({
         refComp.aanbevolenStandaarden.forEach((standard) => {
           const standardId = getStandardId(standard);
           if (standardId) {
-            // Extract name from various possible locations
-            const fetched = standaardenMap[String(standardId)] || {};
-            const standardName =
-              fetched.name ||
-              fetched.xml?.name?._value ||
-              fetched.afkorting ||
-              fetched.naam ||
-              fetched.title ||
-              fetched.label ||
-              standard.name ||
-              standard.xml?.name?._value ||
-              standard.naam ||
-              standard.title ||
-              standard.label ||
-              (typeof standard === 'string' ? standard : standardId);
-
-            // Extract description from various possible locations
-            const standardDescription =
-              fetched.summary ||
-              fetched.xml?.documentation?._value ||
-              fetched.documentation ||
-              fetched.beschrijving ||
-              fetched.description ||
-              standard.summary ||
-              standard.xml?.documentation?._value ||
-              standard.documentation ||
-              standard.beschrijving ||
-              standard.description ||
-              '';
+            // Find matching data from fetched standards
+            const fetchedData = findMatchingStandardData(standard);
+            const { name: standardName, description: standardDescription } =
+              extractStandardInfo(standard, fetchedData);
 
             if (standardsMap.has(standardId)) {
               // Standard already exists, add this component to the aanbevolen list
               const existing = standardsMap.get(standardId);
               if (!existing.aanbevolenComponents.includes(refCompName)) {
                 existing.aanbevolenComponents.push(refCompName);
+              }
+              // Update with better data if available
+              if (fetchedData && Object.keys(fetchedData).length > 0) {
+                existing.naam = standardName;
+                existing.beschrijving = standardDescription;
+                existing.fetchedData = fetchedData; // Store complete fetched data for reference
               }
             } else {
               // New standard
@@ -131,13 +190,14 @@ const ConFormStandaardenStage = ({
                 moduleId: refComp.moduleId,
                 aanbevolenComponents: [refCompName],
                 verplichteComponents: [],
+                fetchedData: fetchedData, // Store complete fetched data for reference
               });
             }
           }
         });
       }
 
-      // Add verplichte standaarden
+      // Process verplichte standaarden
       if (
         refComp.verplichteStandaarden &&
         Array.isArray(refComp.verplichteStandaarden)
@@ -145,41 +205,22 @@ const ConFormStandaardenStage = ({
         refComp.verplichteStandaarden.forEach((standard) => {
           const standardId = getStandardId(standard);
           if (standardId) {
-            // Extract name from various possible locations
-            const fetched = standaardenMap[String(standardId)] || {};
-            const standardName =
-              fetched.name ||
-              fetched.xml?.name?._value ||
-              fetched.afkorting ||
-              fetched.naam ||
-              fetched.title ||
-              fetched.label ||
-              standard.name ||
-              standard.xml?.name?._value ||
-              standard.naam ||
-              standard.title ||
-              standard.label ||
-              (typeof standard === 'string' ? standard : standardId);
-
-            // Extract description from various possible locations
-            const standardDescription =
-              fetched.summary ||
-              fetched.xml?.documentation?._value ||
-              fetched.documentation ||
-              fetched.beschrijving ||
-              fetched.description ||
-              standard.summary ||
-              standard.xml?.documentation?._value ||
-              standard.documentation ||
-              standard.beschrijving ||
-              standard.description ||
-              '';
+            // Find matching data from fetched standards
+            const fetchedData = findMatchingStandardData(standard);
+            const { name: standardName, description: standardDescription } =
+              extractStandardInfo(standard, fetchedData);
 
             if (standardsMap.has(standardId)) {
               // Standard already exists, add this component to the verplichte list
               const existing = standardsMap.get(standardId);
               if (!existing.verplichteComponents.includes(refCompName)) {
                 existing.verplichteComponents.push(refCompName);
+              }
+              // Update with better data if available
+              if (fetchedData && Object.keys(fetchedData).length > 0) {
+                existing.naam = standardName;
+                existing.beschrijving = standardDescription;
+                existing.fetchedData = fetchedData; // Store complete fetched data for reference
               }
             } else {
               // New standard
@@ -190,6 +231,7 @@ const ConFormStandaardenStage = ({
                 moduleId: refComp.moduleId,
                 aanbevolenComponents: [],
                 verplichteComponents: [refCompName],
+                fetchedData: fetchedData, // Store complete fetched data for reference
               });
             }
           }

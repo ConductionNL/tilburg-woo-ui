@@ -552,16 +552,16 @@ const AcFormsProductInner = ({ userStore, store, formType }) => {
     };
 
     if (queryParamsString) {
-      // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
-      const urlParams = new URLSearchParams(queryParamsString);
-      urlParams.forEach((value, key) => {
-        baseParams[key] = value;
-      });
+      // // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
+      // const urlParams = new URLSearchParams(queryParamsString);
+      // urlParams.forEach((value, key) => {
+      //   baseParams[key] = value;
+      // });
     } else {
       // Fallback to hardcoded if schema doesn't have queryParams
       baseParams.gemmaType = 'Referentiecomponent';
       // Ensure standards are included with referentiecomponenten
-      baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+      // baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
     }
 
     // Keep _extend for referentiecomponenten so we get standaarden in results
