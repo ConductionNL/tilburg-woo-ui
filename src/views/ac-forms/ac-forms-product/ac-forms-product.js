@@ -6,7 +6,6 @@ import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
 
@@ -610,32 +609,20 @@ const AcFormsProduct = ({ userStore, store }) => {
     return baseParams;
   }, [schemas]);
 
-  // Function to load all referentiecomponenten upfront
-  // ✅ Simplified function to load 500 referentiecomponenten
+
+  // Function to load all referentiecomponenten upfront using object store cache
+  // ✅ Uses cache-first strategy for immediate response
   const loadReferentieComponenten = useCallback(async () => {
     if (!schemas?.module) return; // Wait for schemas to load
 
-    // console.debug('Loading all referentiecomponenten (500 limit)...');
+    console.info('📋 Loading referentiecomponenten via object store cache...');
     setReferentieComponentenLoading(true);
 
     try {
-      const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
       const queryParams = getReferentieComponentenQueryParams();
-      const params = new URLSearchParams(queryParams);
-      const endpoint = `${baseEndpoint}?${params}`;
-
-      // console.debug('Full endpoint:', endpoint);
-
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+      
+      // Use object store cache-first method for immediate response
+      const list = await store.object.fetchGemmaElementsCacheFirst('referentiecomponent', queryParams);
 
       const mapToOption = (item, index) => {
         const label =
@@ -655,39 +642,28 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setReferentieComponentenOptions(options);
-      // console.debug(`Loaded ${options.length} referentiecomponenten successfully`);
+      console.info(`✅ Loaded ${options.length} referentiecomponenten (cache-first)`);
     } catch (e) {
       console.error('Failed to load referentie componenten:', e);
       setReferentieComponentenOptions([]);
     } finally {
       setReferentieComponentenLoading(false);
     }
-  }, [schemas, getReferentieComponentenQueryParams, getStandaardenQueryParams]);
+  }, [schemas, getReferentieComponentenQueryParams, store]);
 
-  // Add this after loadReferentieComponenten()
+  // Function to load standaarden using object store cache
+  // ✅ Uses cache-first strategy for immediate response
   const loadStandaarden = useCallback(async () => {
     if (!schemas?.module) return;
 
-    // console.debug('Loading standaarden (500 limit)...');
+    console.info('📋 Loading standaarden via object store cache...');
     setStandaardenOptionsLoading(true);
 
     try {
-      const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
       const queryParams = getStandaardenQueryParams();
-      const params = new URLSearchParams(queryParams);
-      const endpoint = `${baseEndpoint}?${params}`;
-
-      // console.debug('Full endpoint (standaarden):', endpoint);
-
-      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+      
+      // Use object store cache-first method for immediate response
+      const list = await store.object.fetchGemmaElementsCacheFirst('standaard', queryParams);
 
       const options = list
         .map((item, index) => {
@@ -704,14 +680,14 @@ const AcFormsProduct = ({ userStore, store }) => {
         .filter((o) => o.label && o.value);
 
       setStandaardenOptions(options);
-      // console.debug(`Loaded ${options.length} standaarden successfully`);
+      console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
     } catch (e) {
       console.error('Failed to load standaarden:', e);
       setStandaardenOptions([]);
     } finally {
       setStandaardenOptionsLoading(false);
     }
-  }, [schemas, getStandaardenQueryParams]);
+  }, [schemas, getStandaardenQueryParams, store]);
 
   // ✅ Load referentiecomponenten and standaarden when schemas are available
   useEffect(() => {
@@ -742,36 +718,26 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
 
-  // Function to search modules with debouncing
-  // ✅ Core search function for modules
+  // Function to search modules with debouncing using object store cache
+  // ✅ Uses cache-first strategy for immediate response
   const performModulesSearch = useCallback(async (searchTerm = '') => {
     setModulesLoading(true);
 
     try {
-      const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
-      const params = new URLSearchParams({
+      const queryParams = {
         _limit: '20',
         _page: '1',
-      });
+      };
 
       // Add search parameter if provided
       if (searchTerm && searchTerm.trim()) {
-        params.set('_search', searchTerm.trim());
+        queryParams._search = searchTerm.trim();
       }
 
-      const endpoint = `${baseEndpoint}?${params}`;
+      console.info(`📋 Searching modules via object store cache (term: "${searchTerm}")...`);
 
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+      // Use object store cache-first method for immediate response
+      const list = await store.object.fetchModulesCacheFirst(queryParams);
 
       const mapToOption = (item, index) => {
         const label =
@@ -791,13 +757,14 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setModulesOptions(options);
+      console.info(`✅ Loaded ${options.length} modules (cache-first)`);
     } catch (e) {
       console.error('Failed to fetch modules:', e);
       setModulesOptions([]);
     } finally {
       setModulesLoading(false);
     }
-  }, []);
+  }, [store]);
 
   // ✅ Debounced search function for modules
   const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
