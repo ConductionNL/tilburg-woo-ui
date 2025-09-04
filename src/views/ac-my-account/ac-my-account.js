@@ -18,6 +18,12 @@ import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import AcMyAccountDynamicModal from './ac-my-account-dynamic-modal';
+import AcMyAccountPublishModal from './ac-my-account-publish-modal';
+import {
+  checkOrganizationPermissions,
+  getDisabledActionTooltip,
+} from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
 
 const AcMyAccount = ({ store }) => {
   const [userData, setUserData] = useState(null);
@@ -42,10 +48,49 @@ const AcMyAccount = ({ store }) => {
 
   const { user, object } = store; // Add object store
 
+  // Check organization permissions for publish/depublish actions
+  const { canEdit, reason } = fullActiveOrganisation
+    ? checkOrganizationPermissions(user, fullActiveOrganisation)
+    : {
+        canEdit: false,
+        reason: 'Kan niet bewerken omdat de organisatie niet gevonden is',
+      };
+
   // Email validation function
   const validateEmail = useCallback((email) => {
     return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
   }, []);
+
+  // Function to create fallback organization data from activeOrganisation
+  const createFallbackOrganisationData = useCallback(() => {
+    if (!activeOrganisation) {
+      console.warn('No activeOrganisation available for fallback data');
+      return;
+    }
+
+    // Create a fallback object with the structure expected by the UI
+    const fallbackData = {
+      id: activeOrganisation.uuid || activeOrganisation.id || 'unknown',
+      naam: activeOrganisation.name || 'Organisatie',
+      name: activeOrganisation.name || 'Organisatie',
+      beschrijvingKort: activeOrganisation.description || '',
+      beschrijvingLang: activeOrganisation.description || '',
+      '@self': {
+        id: activeOrganisation.uuid || activeOrganisation.id || 'unknown',
+        name: activeOrganisation.name || 'Organisatie',
+        published: activeOrganisation.published || false,
+        schema: {
+          title: 'Organisatie',
+          slug: 'organisatie',
+        },
+        register: {
+          slug: 'voorzieningen',
+        },
+      },
+    };
+
+    setFullActiveOrganisation(fallbackData);
+  }, [activeOrganisation]);
 
   // Function to fetch full organization data
   const fetchFullOrganisationData = useCallback(
@@ -65,24 +110,43 @@ const AcMyAccount = ({ store }) => {
         );
         if (fullOrgData) {
           setFullActiveOrganisation(fullOrgData);
+        } else {
+          // If no full data available, create fallback from activeOrganisation
+          createFallbackOrganisationData();
         }
       } catch (err) {
         console.error('Error fetching full organization data:', err);
-        // Don't set error here as it's not critical for the main functionality
+
+        // Check if it's a 404 error or similar, and create fallback data
+        if (
+          err.response?.status === 404 ||
+          err.status === 404 ||
+          err.message?.includes('404')
+        ) {
+          console.warn(
+            'Organization not found (404), using fallback data from activeOrganisation'
+          );
+          createFallbackOrganisationData();
+        } else {
+          // For other errors, still try to create fallback data
+          createFallbackOrganisationData();
+        }
       }
     },
-    [object]
+    [object, createFallbackOrganisationData]
   );
 
   const setNewFieldDataAndFetch = (v, field) => {
-    fullActiveOrganisation[field] = v;
-
-    fetchFullOrganisationData(fullActiveOrganisation?.['@self'].id);
+    if (fullActiveOrganisation) {
+      fullActiveOrganisation[field] = v;
+      fetchFullOrganisationData(fullActiveOrganisation?.['@self']?.id);
+    }
   };
   const setNewDataAndFetch = (v) => {
     setFullActiveOrganisation(v);
-
-    fetchFullOrganisationData(fullActiveOrganisation?.['@self'].id);
+    if (v?.['@self']?.id) {
+      fetchFullOrganisationData(v['@self'].id);
+    }
   };
 
   // Refetch logic
@@ -198,19 +262,18 @@ const AcMyAccount = ({ store }) => {
 
   // Function to open publish modal
   const handlePublishOrganization = () => {
-    if (!activeOrganisation) return;
+    if (!fullActiveOrganisation || !canEdit) return;
     setShowPublishModal(true);
   };
 
   // Function to open depublish modal
   const handleDepublishOrganization = () => {
-    if (!activeOrganisation) return;
+    if (!fullActiveOrganisation || !canEdit) return;
     setShowDepublishModal(true);
   };
 
   // Handle successful form submissions
   const handleOrgFormSuccess = async (v) => {
-    console.log('handleOrgFormSuccess', v);
     setNewDataAndFetch(v);
     setShowOrgModal(false);
     // Refresh user data to get updated organization info
@@ -225,14 +288,20 @@ const AcMyAccount = ({ store }) => {
 
   const handlePublishFormSuccess = async () => {
     setShowPublishModal(false);
-    // Refresh user data
+    // Refresh user data and organization data
     await fetchUserData();
+    if (fullActiveOrganisation?.['@self']?.id) {
+      await fetchFullOrganisationData(fullActiveOrganisation['@self'].id);
+    }
   };
 
   const handleDepublishFormSuccess = async () => {
     setShowDepublishModal(false);
-    // Refresh user data
+    // Refresh user data and organization data
     await fetchUserData();
+    if (fullActiveOrganisation?.['@self']?.id) {
+      await fetchFullOrganisationData(fullActiveOrganisation['@self'].id);
+    }
   };
 
   const shortTooltip = (type) =>
@@ -270,7 +339,9 @@ const AcMyAccount = ({ store }) => {
 
                         <Heading className='con-beheer-details--title'>
                           {fullActiveOrganisation?.['@self']?.name ||
-                            fullActiveOrganisation.id}
+                            fullActiveOrganisation?.id ||
+                            activeOrganisation?.name ||
+                            'Organisatie'}
                         </Heading>
                       </div>
                     </Heading>
@@ -317,87 +388,118 @@ const AcMyAccount = ({ store }) => {
                           icon={<VISUALS.PENCIL />}
                           onClick={handleEditOrganization}
                           disabled={!fullActiveOrganisation}
+                          data-tooltip-id={
+                            !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                          }
+                          data-tooltip-content={
+                            !fullActiveOrganisation
+                              ? 'Kan niet bewerken omdat de organisatie niet gevonden is'
+                              : undefined
+                          }
                         >
                           Bewerken
                         </AcButton>
-                        {activeOrganisation && !activeOrganisation.published && (
-                          <AcButton
-                            style='button'
-                            icon={<VISUALS.PUBLISH />}
-                            onClick={handlePublishOrganization}
-                          >
-                            Publiceren
-                          </AcButton>
-                        )}
-                        {activeOrganisation && activeOrganisation.published && (
-                          <AcButton
-                            style='secondary'
-                            icon={<VISUALS.PUBLISH_OFF />}
-                            onClick={handleDepublishOrganization}
-                          >
-                            Depubliceren
-                          </AcButton>
-                        )}
+
+                        {fullActiveOrganisation &&
+                          !fullActiveOrganisation['@self']?.published && (
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.PUBLISH />}
+                              onClick={
+                                canEdit ? handlePublishOrganization : undefined
+                              }
+                              disabled={!canEdit}
+                              data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                              data-tooltip-content={
+                                !canEdit
+                                  ? getDisabledActionTooltip('publish', reason)
+                                  : undefined
+                              }
+                            >
+                              Publiceren
+                            </AcButton>
+                          )}
+                        {fullActiveOrganisation &&
+                          fullActiveOrganisation['@self']?.published && (
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.PUBLISH_OFF />}
+                              onClick={
+                                canEdit ? handleDepublishOrganization : undefined
+                              }
+                              disabled={!canEdit}
+                              data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                              data-tooltip-content={
+                                !canEdit
+                                  ? getDisabledActionTooltip('depublish', reason)
+                                  : undefined
+                              }
+                            >
+                              Depubliceren
+                            </AcButton>
+                          )}
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <ConEditableDescription
-                      registerSlug={
-                        fullActiveOrganisation?.['@self']?.register?.slug ||
-                        'voorzieningen'
-                      }
-                      schemaSlug={
-                        fullActiveOrganisation?.['@self']?.schema?.slug ||
-                        'organisatie'
-                      }
-                      objectId={fullActiveOrganisation.id}
-                      field='beschrijvingKort'
-                      label='Korte beschrijving'
-                      placeholder={shortTooltip('organisatie')}
-                      tooltip={shortTooltip('organisatie')}
-                      maxLength={255}
-                      isMarkdown={false}
-                      value={fullActiveOrganisation.beschrijvingKort}
-                      serialize={(v) => v}
-                      deserialize={(v) => v || ''}
-                      onSuccess={(v) =>
-                        setNewFieldDataAndFetch(v, 'beschrijvingKort')
-                      }
-                    />
-                    <br />
-                    <ConEditableDescription
-                      markdownPreviewClassName='con-my-account-description'
-                      registerSlug={
-                        fullActiveOrganisation?.['@self']?.register?.slug ||
-                        'voorzieningen'
-                      }
-                      schemaSlug={
-                        fullActiveOrganisation?.['@self']?.schema?.slug ||
-                        'organisatie'
-                      }
-                      objectId={fullActiveOrganisation.id}
-                      field='beschrijvingLang'
-                      label='Lange beschrijving'
-                      placeholder={longTooltip('organisatie')}
-                      tooltip={longTooltip('organisatie')}
-                      maxLength={2000}
-                      isMarkdown={true}
-                      value={fullActiveOrganisation.beschrijvingLang}
-                      serialize={(v) => JSON.stringify(v || '')}
-                      deserialize={(v) => {
-                        if (!v) return '';
-                        try {
-                          return JSON.parse(v) || '';
-                        } catch (e) {
-                          return v;
+                  {fullActiveOrganisation && (
+                    <div>
+                      <ConEditableDescription
+                        registerSlug={
+                          fullActiveOrganisation?.['@self']?.register?.slug ||
+                          'voorzieningen'
                         }
-                      }}
-                      onSuccess={(v) =>
-                        setNewFieldDataAndFetch(v, 'beschrijvingLang')
-                      }
-                    />
-                  </div>
+                        schemaSlug={
+                          fullActiveOrganisation?.['@self']?.schema?.slug ||
+                          'organisatie'
+                        }
+                        objectId={fullActiveOrganisation?.id}
+                        field='beschrijvingKort'
+                        label='Korte beschrijving'
+                        placeholder={shortTooltip('organisatie')}
+                        tooltip={shortTooltip('organisatie')}
+                        maxLength={255}
+                        isMarkdown={false}
+                        value={fullActiveOrganisation?.beschrijvingKort}
+                        serialize={(v) => v}
+                        deserialize={(v) => v || ''}
+                        onSuccess={(v) =>
+                          setNewFieldDataAndFetch(v, 'beschrijvingKort')
+                        }
+                      />
+                      <br />
+                      <ConEditableDescription
+                        markdownPreviewClassName='con-my-account-description'
+                        registerSlug={
+                          fullActiveOrganisation?.['@self']?.register?.slug ||
+                          'voorzieningen'
+                        }
+                        schemaSlug={
+                          fullActiveOrganisation?.['@self']?.schema?.slug ||
+                          'organisatie'
+                        }
+                        objectId={fullActiveOrganisation?.id}
+                        field='beschrijvingLang'
+                        label='Lange beschrijving'
+                        placeholder={longTooltip('organisatie')}
+                        tooltip={longTooltip('organisatie')}
+                        maxLength={2000}
+                        isMarkdown={true}
+                        value={fullActiveOrganisation?.beschrijvingLang}
+                        serialize={(v) => JSON.stringify(v || '')}
+                        deserialize={(v) => {
+                          if (!v) return '';
+                          try {
+                            return JSON.parse(v) || '';
+                          } catch (e) {
+                            return v;
+                          }
+                        }}
+                        onSuccess={(v) =>
+                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                        }
+                      />
+                    </div>
+                  )}
                   <Separator className='ac-register-review-header__separator' />
 
                   {switchingOrg && (
@@ -683,28 +785,22 @@ const AcMyAccount = ({ store }) => {
           )}
 
           {/* Publish modal */}
-          {showPublishModal && activeOrganisation && (
-            <AcMyAccountDynamicModal
-              showModal={showPublishModal}
-              onClose={() => setShowPublishModal(false)}
-              onSuccess={handlePublishFormSuccess}
-              type='organisaties'
-              isPublish={true}
-              data={activeOrganisation}
-            />
-          )}
+          <AcMyAccountPublishModal
+            showModal={showPublishModal}
+            onClose={() => setShowPublishModal(false)}
+            onSuccess={handlePublishFormSuccess}
+            data={fullActiveOrganisation}
+            isPublish={true}
+          />
 
           {/* Depublish modal */}
-          {showDepublishModal && activeOrganisation && (
-            <AcMyAccountDynamicModal
-              showModal={showDepublishModal}
-              onClose={() => setShowDepublishModal(false)}
-              onSuccess={handleDepublishFormSuccess}
-              type='organisaties'
-              isDepublish={true}
-              data={activeOrganisation}
-            />
-          )}
+          <AcMyAccountPublishModal
+            showModal={showDepublishModal}
+            onClose={() => setShowDepublishModal(false)}
+            onSuccess={handleDepublishFormSuccess}
+            data={fullActiveOrganisation}
+            isPublish={false}
+          />
         </AcColumn>
       </AcContainer>
     </AcSection>
