@@ -28,7 +28,6 @@ export const DASHBOARD_WIZARDS = {
     params: { type: 'eigen' },
     color: 'blue',
     schema: 'product',
-    type: 'eigen',
   },
   ONTBREKEND_PRODUCT: {
     id: 'ontbrekend-product',
@@ -42,7 +41,6 @@ export const DASHBOARD_WIZARDS = {
     params: { type: 'ontbrekend' },
     color: 'blue',
     schema: 'product',
-    type: 'ontbrekend',
   },
   DIENST: {
     id: 'dienst',
@@ -56,7 +54,6 @@ export const DASHBOARD_WIZARDS = {
     params: { type: 'dienst' },
     color: 'blue',
     schema: 'dienst',
-    type: 'dienst',
   },
   GEBRUIK: {
     id: 'gebruik',
@@ -70,7 +67,6 @@ export const DASHBOARD_WIZARDS = {
     params: {},
     color: 'blue',
     schema: 'gebruik',
-    type: null,
   },
   KOPPELING: {
     id: 'koppeling',
@@ -84,7 +80,6 @@ export const DASHBOARD_WIZARDS = {
     params: {},
     color: 'blue',
     schema: 'koppeling',
-    type: null,
   },
 };
 
@@ -101,11 +96,11 @@ export const getDashboardWizards = (user = null, userOrganization = null) => {
 /**
  * Get the full URL for a wizard, including any required parameters
  */
-export const getWizardUrl = (wizard) => {
+export const getWizardUrl = (wizard, useParams = true) => {
   if (!wizard) return null;
   let url = wizard.path;
 
-  if (wizard.params && Object.keys(wizard.params).length > 0) {
+  if (wizard.params && useParams && Object.keys(wizard.params).length > 0) {
     const params = new URLSearchParams(wizard.params);
     url += `?${params.toString()}`;
   }
