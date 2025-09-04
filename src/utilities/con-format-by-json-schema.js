@@ -249,7 +249,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                   formatBySchema(childSchema, value, key, currentOptions)
                 ) : (
                   <span>
-                    {value[key] === undefined || value[key] === null
+                    {value[key] === undefined || value[key] === null || value[key] === 'null'
                       ? '-'
                       : typeof value[key] === 'object'
                       ? JSON.stringify(value[key])
@@ -272,7 +272,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
               </strong>
               {childSchema ? (
                 formatBySchema(childSchema, value, key, currentOptions)
-              ) : value[key] === undefined || value[key] === null ? (
+              ) : value[key] === undefined || value[key] === null || value[key] === 'null' ? (
                 <span>-</span>
               ) : typeof value[key] === 'object' ? (
                 <pre>{JSON.stringify(value[key], null, 2)}</pre>
