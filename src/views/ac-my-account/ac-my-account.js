@@ -18,6 +18,7 @@ import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import AcMyAccountDynamicModal from './ac-my-account-dynamic-modal';
+import AcMyAccountPublishModal from './ac-my-account-publish-modal';
 
 const AcMyAccount = ({ store }) => {
   const [userData, setUserData] = useState(null);
@@ -198,19 +199,18 @@ const AcMyAccount = ({ store }) => {
 
   // Function to open publish modal
   const handlePublishOrganization = () => {
-    if (!activeOrganisation) return;
+    if (!fullActiveOrganisation) return;
     setShowPublishModal(true);
   };
 
   // Function to open depublish modal
   const handleDepublishOrganization = () => {
-    if (!activeOrganisation) return;
+    if (!fullActiveOrganisation) return;
     setShowDepublishModal(true);
   };
 
   // Handle successful form submissions
   const handleOrgFormSuccess = async (v) => {
-    console.log('handleOrgFormSuccess', v);
     setNewDataAndFetch(v);
     setShowOrgModal(false);
     // Refresh user data to get updated organization info
@@ -225,14 +225,20 @@ const AcMyAccount = ({ store }) => {
 
   const handlePublishFormSuccess = async () => {
     setShowPublishModal(false);
-    // Refresh user data
+    // Refresh user data and organization data
     await fetchUserData();
+    if (fullActiveOrganisation?.['@self']?.id) {
+      await fetchFullOrganisationData(fullActiveOrganisation['@self'].id);
+    }
   };
 
   const handleDepublishFormSuccess = async () => {
     setShowDepublishModal(false);
-    // Refresh user data
+    // Refresh user data and organization data
     await fetchUserData();
+    if (fullActiveOrganisation?.['@self']?.id) {
+      await fetchFullOrganisationData(fullActiveOrganisation['@self'].id);
+    }
   };
 
   const shortTooltip = (type) =>
@@ -320,24 +326,26 @@ const AcMyAccount = ({ store }) => {
                         >
                           Bewerken
                         </AcButton>
-                        {activeOrganisation && !activeOrganisation.published && (
-                          <AcButton
-                            style='button'
-                            icon={<VISUALS.PUBLISH />}
-                            onClick={handlePublishOrganization}
-                          >
-                            Publiceren
-                          </AcButton>
-                        )}
-                        {activeOrganisation && activeOrganisation.published && (
-                          <AcButton
-                            style='secondary'
-                            icon={<VISUALS.PUBLISH_OFF />}
-                            onClick={handleDepublishOrganization}
-                          >
-                            Depubliceren
-                          </AcButton>
-                        )}
+                        {fullActiveOrganisation &&
+                          !fullActiveOrganisation['@self']?.published && (
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.PUBLISH />}
+                              onClick={handlePublishOrganization}
+                            >
+                              Publiceren
+                            </AcButton>
+                          )}
+                        {fullActiveOrganisation &&
+                          fullActiveOrganisation['@self']?.published && (
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.PUBLISH_OFF />}
+                              onClick={handleDepublishOrganization}
+                            >
+                              Depubliceren
+                            </AcButton>
+                          )}
                       </div>
                     </div>
                   </div>
@@ -683,28 +691,22 @@ const AcMyAccount = ({ store }) => {
           )}
 
           {/* Publish modal */}
-          {showPublishModal && activeOrganisation && (
-            <AcMyAccountDynamicModal
-              showModal={showPublishModal}
-              onClose={() => setShowPublishModal(false)}
-              onSuccess={handlePublishFormSuccess}
-              type='organisaties'
-              isPublish={true}
-              data={activeOrganisation}
-            />
-          )}
+          <AcMyAccountPublishModal
+            showModal={showPublishModal}
+            onClose={() => setShowPublishModal(false)}
+            onSuccess={handlePublishFormSuccess}
+            data={fullActiveOrganisation}
+            isPublish={true}
+          />
 
           {/* Depublish modal */}
-          {showDepublishModal && activeOrganisation && (
-            <AcMyAccountDynamicModal
-              showModal={showDepublishModal}
-              onClose={() => setShowDepublishModal(false)}
-              onSuccess={handleDepublishFormSuccess}
-              type='organisaties'
-              isDepublish={true}
-              data={activeOrganisation}
-            />
-          )}
+          <AcMyAccountPublishModal
+            showModal={showDepublishModal}
+            onClose={() => setShowDepublishModal(false)}
+            onSuccess={handleDepublishFormSuccess}
+            data={fullActiveOrganisation}
+            isPublish={false}
+          />
         </AcColumn>
       </AcContainer>
     </AcSection>
