@@ -349,7 +349,7 @@ const ConTable = (
         return renderCustomElement(header.customContent, row);
       }
 
-      if (!row[header.key]) {
+      if (!row[header.key] || row[header.key] === 'null') {
         return '-';
       }
 

@@ -1,12 +1,12 @@
 // eslint-disable-next-line import/no-unresolved
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcModal } from '@components';
 
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * Generic modal to delete 1 or multiple objects
@@ -47,16 +47,128 @@ const ConGenericBeheerDeleteModal = ({
 
   const displayMetadata = getDisplayMetadata();
 
-  const handleDelete = async () => {
+  // State for usage checking
+  const [usageChecking, setUsageChecking] = useState(false);
+  const [usageData, setUsageData] = useState(null);
+  const [usageError, setUsageError] = useState(null);
+  const [usageCheckComplete, setUsageCheckComplete] = useState(false);
+
+  // State for delete operation
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check if objects are used by other objects
+  const checkObjectUsage = useCallback(async () => {
+    if (!objects || objects.length === 0) return;
+
+    setUsageChecking(true);
+    setUsageError(null);
+    setUsageData(null);
+    setUsageCheckComplete(false);
+
     try {
+      console.log('🔍 Checking usage for objects:', objects.map(obj => obj.id));
+
+      // For multiple objects, we'll check each one individually
+      const usageResults = await Promise.allSettled(
+        objects.map(async (obj) => {
+          const metadata = obj['@self'];
+          if (!metadata) {
+            console.warn('Object missing @self metadata:', obj);
+            return { objectId: obj.id, used: [], error: 'Missing metadata' };
+          }
+
+          try {
+            // Use object store's fetchRelatedData method for consistency
+            await object.fetchRelatedData(
+              metadata.register, 
+              metadata.schema, 
+              obj.id, 
+              'used',
+              { _limit: 100 } // Limit to prevent performance issues
+            );
+
+            // Get the related data from the store
+            const type = `${metadata.register}_${metadata.schema}`;
+            const relatedData = object.getRelatedData(type, 'used');
+            const usedObjects = relatedData?.results || [];
+
+            console.log(`📊 Usage check for ${obj.id}: ${usedObjects.length} dependencies found`);
+
+            return {
+              objectId: obj.id,
+              objectName: metadata.name || obj.naam || obj.name || obj.id,
+              used: usedObjects,
+              error: null
+            };
+          } catch (err) {
+            console.error(`❌ Failed to check usage for ${obj.id}:`, err);
+            return { 
+              objectId: obj.id, 
+              objectName: metadata.name || obj.naam || obj.name || obj.id,
+              used: [], 
+              error: err.message 
+            };
+          }
+        })
+      );
+
+      // Process results
+      const processedResults = usageResults.map(result => {
+        if (result.status === 'fulfilled') {
+          return result.value;
+        } else {
+          return { 
+            objectId: 'unknown', 
+            objectName: 'Unknown', 
+            used: [], 
+            error: result.reason?.message || 'Unknown error' 
+          };
+        }
+      });
+
+      setUsageData(processedResults);
+      console.log('✅ Usage check completed:', processedResults);
+    } catch (err) {
+      console.error('❌ Failed to check object usage:', err);
+      setUsageError(err.message || 'Er is een fout opgetreden bij het controleren van object gebruik');
+    } finally {
+      setUsageChecking(false);
+      setUsageCheckComplete(true);
+    }
+  }, [objects, object]);
+
+  // Check usage when modal opens
+  useEffect(() => {
+    if (showModal && objects && objects.length > 0) {
+      checkObjectUsage();
+    }
+  }, [showModal, checkObjectUsage]);
+
+  const handleDelete = async () => {
+    if (isDeleting) return; // Prevent double-clicks
+
+    setIsDeleting(true);
+    
+    try {
+      console.log(`🗑️ Deleting objects:`, objects.map(obj => obj.id));
+      
       const results = await object.massDeleteObjects(objects);
 
       if (results.successful.length > 0) {
-        onSuccess?.();
+        console.log(`✅ Successfully deleted ${results.successful.length} objects`);
+        
+        // Close modal first to prevent state conflicts
         modalRef?.current?.close();
+        
+        // Call onSuccess after a small delay to ensure modal is closed
+        setTimeout(() => {
+          onSuccess?.();
+        }, 100);
       }
     } catch (err) {
-      console.error('Error deleting objects:', err);
+      console.error('❌ Failed to delete objects:', err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -66,13 +178,30 @@ const ConGenericBeheerDeleteModal = ({
     }
   }, [showModal]);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
+    // Reset usage check state when modal closes
+    setUsageChecking(false);
+    setUsageData(null);
+    setUsageError(null);
+    setUsageCheckComplete(false);
+    
+    // Reset delete state
+    setIsDeleting(false);
+    
     onClose?.();
-  };
+  }, [onClose]);
 
   useEffect(() => {
-    modalRef?.current?.addEventListener('close', handleCloseModal);
-  }, [modalRef.current]);
+    const modal = modalRef?.current;
+    if (modal) {
+      modal.addEventListener('close', handleCloseModal);
+      
+      // Cleanup function to remove event listener
+      return () => {
+        modal.removeEventListener('close', handleCloseModal);
+      };
+    }
+  }, [modalRef.current, handleCloseModal]);
 
   // Early return if no metadata or objects
   if (!displayMetadata || !objects || objects.length === 0) {
@@ -84,6 +213,13 @@ const ConGenericBeheerDeleteModal = ({
   const displayName =
     displayMetadata.schemaTitle || displayMetadata.name || 'object';
 
+  // Helper functions for usage data
+  const hasUsageData = usageData && usageData.length > 0;
+  const hasUsedObjects = hasUsageData && usageData.some(result => result.used && result.used.length > 0);
+  const totalUsedObjects = hasUsageData ? usageData.reduce((total, result) => total + (result.used?.length || 0), 0) : 0;
+  const canDelete = usageCheckComplete && !hasUsedObjects;
+  const shouldDisableDelete = usageChecking || isDeleting || (usageCheckComplete && hasUsedObjects);
+
   const renderDeleteModal = (
     <AcModal
       ref={modalRef}
@@ -91,28 +227,122 @@ const ConGenericBeheerDeleteModal = ({
       title={`${isSingular ? displayName : `${displayName}s`} verwijderen`}
       buttons={[
         {
-          label: 'annuleren',
+          label: 'Annuleren',
           icon: <VISUALS.CLOSE />,
           onClick: () => modalRef?.current?.close(),
           buttonType: 'secondary',
+          disabled: isDeleting,
         },
         {
-          label: 'verwijderen',
-          icon: <VISUALS.TRASHCAN />,
+          label: usageChecking ? 'Controleren...' : (isDeleting ? 'Verwijderen...' : 'Verwijderen'),
+          icon: (usageChecking || isDeleting) ? <VISUALS.SPINNER /> : <VISUALS.TRASHCAN />,
           onClick: handleDelete,
+          disabled: shouldDisableDelete,
+          loading: usageChecking || isDeleting,
         },
       ]}
       buttonPosition='end'
       disableDefaultButton
     >
       <AcFlex column spacing='sm'>
-        Weet je zeker dat je deze {isSingular ? displayName : `${displayName}s`} wilt
-        verwijderen?
-        {objects.map((object) => (
-          <Paragraph key={object.id}>
-            {object['@self']?.name || object.naam || object.name || object.id}
+        {/* Loading State */}
+        {usageChecking && (
+          <Alert type='info'>
+            <AcFlex spacing='sm'>
+              <VISUALS.SPINNER />
+              <Paragraph>
+                Controleren of {isSingular ? `dit ${displayName.toLowerCase()}` : `deze ${displayName.toLowerCase()}s`} wordt gebruikt door andere objecten...
+              </Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+
+        {/* Error State */}
+        {usageError && (
+          <Alert type='error'>
+            <AcFlex spacing='sm'>
+              <VISUALS.CIRCLE_EXCLAMATION />
+              <Paragraph>{usageError}</Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+
+        {/* Usage Results - No Dependencies (Success) */}
+        {usageCheckComplete && !usageError && !hasUsedObjects && (
+          <Alert type='success'>
+            <AcFlex spacing='sm'>
+              <VISUALS.CHECK />
+              <Paragraph>
+                {isSingular 
+                  ? `Dit ${displayName.toLowerCase()} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
+                  : `Deze ${displayName.toLowerCase()}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`
+                }
+              </Paragraph>
+            </AcFlex>
+          </Alert>
+        )}
+
+        {/* Usage Results - Has Dependencies (Red) */}
+        {usageCheckComplete && !usageError && hasUsedObjects && (
+          <Alert type='error'>
+            <AcFlex column spacing='sm'>
+              <AcFlex spacing='sm'>
+                <VISUALS.CIRCLE_EXCLAMATION />
+                <Paragraph>
+                  <strong>
+                    {isSingular 
+                      ? `Dit ${displayName.toLowerCase()} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${totalUsedObjects === 1 ? 'ander object' : 'andere objecten'}.`
+                      : `Deze ${displayName.toLowerCase()}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`
+                    }
+                  </strong>
+                </Paragraph>
+              </AcFlex>
+              
+              {/* List of dependent objects */}
+              {usageData.map((result, index) => {
+                if (!result.used || result.used.length === 0) return null;
+                
+                return (
+                  <div key={result.objectId || index} style={{ marginLeft: '1rem' }}>
+                    <Paragraph style={{ fontWeight: '600', margin: '0.5rem 0' }}>
+                      {result.objectName} wordt gebruikt door:
+                    </Paragraph>
+                    {result.used.slice(0, 10).map((usedObj, usedIndex) => (
+                      <Paragraph key={usedObj.id || usedIndex} style={{ marginLeft: '1rem', fontSize: '0.9rem' }}>
+                        • {usedObj['@self']?.name || usedObj.naam || usedObj.name || usedObj.id} ({usedObj['@self']?.schema?.title || 'Onbekend type'})
+                      </Paragraph>
+                    ))}
+                    {result.used.length > 10 && (
+                      <Paragraph style={{ marginLeft: '1rem', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                        ... en nog {result.used.length - 10} andere objecten
+                      </Paragraph>
+                    )}
+                  </div>
+                );
+              })}
+            </AcFlex>
+          </Alert>
+        )}
+
+        {/* Always show confirmation text and object list */}
+        <Paragraph>
+          {usageCheckComplete && hasUsedObjects 
+            ? `Je kunt ${isSingular ? `dit ${displayName.toLowerCase()}` : `deze ${displayName.toLowerCase()}s`} pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
+            : `Weet je zeker dat je ${isSingular ? `dit ${displayName.toLowerCase()}` : `deze ${displayName.toLowerCase()}s`} wilt verwijderen?`
+          }
+        </Paragraph>
+        
+        {/* Show objects being deleted - always visible */}
+        <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '4px' }}>
+          <Paragraph style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+            {isSingular ? 'Te verwijderen object:' : 'Te verwijderen objecten:'}
           </Paragraph>
-        ))}
+          {objects.map((obj) => (
+            <Paragraph key={obj.id} style={{ marginLeft: '1rem' }}>
+              • {obj['@self']?.name || obj.naam || obj.name || obj.id}
+            </Paragraph>
+          ))}
+        </div>
       </AcFlex>
     </AcModal>
   );

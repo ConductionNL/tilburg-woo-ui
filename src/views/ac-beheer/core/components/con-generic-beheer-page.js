@@ -292,12 +292,13 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       return;
     }
 
-    const matchingWizards = Object.values(DASHBOARD_WIZARDS).filter(
-      (w) => w.schema === config.schemaSlug
-    );
+    const wizards = Object.values(DASHBOARD_WIZARDS);
+    const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+    const areThereMultipleOptions =
+      wizards.filter((w) => w.schema === config.schemaSlug).length > 1;
 
-    if (matchingWizards) {
-      navigate(getWizardUrl(matchingWizards[0]));
+    if (wizard) {
+      navigate(getWizardUrl(wizard, !areThereMultipleOptions));
       return;
     }
 

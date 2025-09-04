@@ -11,8 +11,8 @@
  * @returns {string} - Plain text string safe for React rendering, or empty string if not a valid text type
  */
 export const extractText = (value) => {
-  // Return empty string for null/undefined
-  if (value == null) {
+  // Return empty string for null/undefined/string 'null'
+  if (value == null || value === 'null') {
     return '';
   }
 

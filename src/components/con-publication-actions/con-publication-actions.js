@@ -25,9 +25,12 @@ const attemptWizard = (action) => () => {
   const schema = action?.schema || schemaFromKey;
 
   if (schema) {
-    const wizard = Object.values(DASHBOARD_WIZARDS).find((w) => w.schema === schema);
+    const wizards = Object.values(DASHBOARD_WIZARDS);
+    const wizard = wizards.find((w) => w.schema === schema);
+    const areThereMultipleOptions =
+      wizards.filter((w) => w.schema === schema).length > 1;
     if (wizard) {
-      const url = getWizardUrl(wizard);
+      const url = getWizardUrl(wizard, !areThereMultipleOptions);
       if (url) {
         window.open(url, '_blank');
         return true;
