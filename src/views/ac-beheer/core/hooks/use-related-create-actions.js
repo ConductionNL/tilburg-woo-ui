@@ -265,9 +265,11 @@ export const useRelatedCreateActions = ({
           const label = `${rs?.title ?? _.startCase(slug)} toevoegen`;
 
           const isOutgoing = outgoingSchemas.has(slug);
-          const wizard = Object.values(DASHBOARD_WIZARDS).find(
-            (w) => w.schema === slug
-          );
+          const wizards = Object.values(DASHBOARD_WIZARDS);
+          const wizard = wizards.find((w) => w.schema === slug);
+          const areThereMultipleOptions =
+            wizards.filter((w) => w.schema === slug).length > 1;
+
           const iconElement = wizard ? (
             <VISUALS.WAND_SPARKLES_SOLID />
           ) : (
@@ -282,7 +284,7 @@ export const useRelatedCreateActions = ({
             onClick: async () => {
               // Prefer wizard when available
               if (wizard) {
-                const url = getWizardUrl(wizard);
+                const url = getWizardUrl(wizard, !areThereMultipleOptions);
                 if (url) {
                   navigate(url);
                   return;
