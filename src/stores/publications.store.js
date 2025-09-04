@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
 import { commongroundApiUrl } from '@config';
+import { getCookie } from '@src/utilities';
 
 let app = {};
 
@@ -58,6 +59,37 @@ export const buildPublicationsSearchQuery = (baseQuery) => {
     ...baseQuery,
     extend: '@self.schema',
   };
+};
+
+// Helper function to get authentication headers (same logic as object store)
+const getAuthHeaders = () => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': '*/*',
+    'Referer': window.location.origin + '/zoeken',
+  };
+  
+  // Try Bearer token first (from cookies)
+  const accessToken = getCookie('nextcloud_access_token');
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+    return headers;
+  }
+  
+  // Fallback to basic auth (from user store)
+  try {
+    if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+      const basicAuth = window.app.store.user.basicAuthCredentials;
+      if (basicAuth && basicAuth.username && basicAuth.password) {
+        const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+        headers.Authorization = `Basic ${credentials}`;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get basic auth credentials:', error);
+  }
+  
+  return headers;
 };
 
 export class PublicationsStore {
@@ -460,11 +492,7 @@ export class PublicationsStore {
 
       const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${urlParams.toString()}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': '*/*',
-          'Referer': window.location.origin + '/zoeken',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include', // Include cookies like the browser
       }).then(res => {
         if (!res.ok) {
@@ -473,10 +501,15 @@ export class PublicationsStore {
         return res.json();
       });
 
-      if (response.facets) {
+      // Handle nested facets structure - API returns facets.facets
+      const facetsData = response.facets?.facets || response.facets || {};
+      
+      if (facetsData && Object.keys(facetsData).length > 0) {
+        console.log('📊 Processing facets data:', facetsData);
+        
         // Add basic titles to facets (simplified since we only use essential ones)
         const facetsWithTitles = {};
-        for (const [key, value] of Object.entries(response.facets)) {
+        for (const [key, value] of Object.entries(facetsData)) {
           if (key === '@self') {
             facetsWithTitles[key] = {};
             for (const [subKey, subValue] of Object.entries(value)) {
@@ -493,8 +526,10 @@ export class PublicationsStore {
           }
         }
         this.setFacets(facetsWithTitles);
+        console.log('✅ Facets processed and set:', Object.keys(facetsWithTitles));
       } else {
-        console.warn('No facets in response');
+        console.warn('No facets in response. Available keys:', Object.keys(response));
+        console.warn('Facets data structure:', response.facets);
       }
     } catch (error) {
       console.error('Error fetching facets:', error);
@@ -534,14 +569,10 @@ export class PublicationsStore {
     console.log('URL (with _facetable for config):', fullUrl);
     console.groupEnd();
 
-    // Use fetch with credentials to include session cookies
+    // Use fetch with proper authentication headers
     fetch(fullUrl, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': '*/*',
-        'Referer': window.location.origin + '/zoeken',
-      },
+      headers: getAuthHeaders(),
       credentials: 'include', // Include cookies like the browser
     })
     .then(response => {
