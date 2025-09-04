@@ -6,7 +6,6 @@ import { withStore } from '@stores';
 import { AcContainer, AcSection, AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import { useDebouncedInput } from '@src/hooks/index';
 
@@ -19,6 +18,7 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import ConFormProductTypeSelectStage from './con-form-product-type-select-stage';
 
 // Stage Components
 import ConFormProductopbouwStage from './components/con-form-productopbouw-stage';
@@ -110,11 +110,7 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
  *       to automatically populate field labels, types, validation, and descriptions from schemas.
  */
 
-const AcFormsProduct = ({ userStore, store }) => {
-  // Get URL search parameters to determine form type
-  const [searchParams] = useSearchParams();
-  const formType = searchParams.get('type') || '';
-
+const AcFormsProductInner = ({ userStore, store, formType }) => {
   // Debug logging in development (disabled per lint rules)
 
   const [registerCallBack, setRegisterCallBack] = useState(null);
@@ -610,32 +606,22 @@ const AcFormsProduct = ({ userStore, store }) => {
     return baseParams;
   }, [schemas]);
 
-  // Function to load all referentiecomponenten upfront
-  // ✅ Simplified function to load 500 referentiecomponenten
+  // Function to load all referentiecomponenten upfront using object store cache
+  // ✅ Uses cache-first strategy for immediate response
   const loadReferentieComponenten = useCallback(async () => {
     if (!schemas?.module) return; // Wait for schemas to load
 
-    // console.debug('Loading all referentiecomponenten (500 limit)...');
+    console.info('📋 Loading referentiecomponenten via object store cache...');
     setReferentieComponentenLoading(true);
 
     try {
-      const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
       const queryParams = getReferentieComponentenQueryParams();
-      const params = new URLSearchParams(queryParams);
-      const endpoint = `${baseEndpoint}?${params}`;
 
-      // console.debug('Full endpoint:', endpoint);
-
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+      // Use object store cache-first method for immediate response
+      const list = await store.object.fetchGemmaElementsCacheFirst(
+        'referentiecomponent',
+        queryParams
+      );
 
       const mapToOption = (item, index) => {
         const label =
@@ -655,39 +641,33 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setReferentieComponentenOptions(options);
-      // console.debug(`Loaded ${options.length} referentiecomponenten successfully`);
+      console.info(
+        `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
+      );
     } catch (e) {
       console.error('Failed to load referentie componenten:', e);
       setReferentieComponentenOptions([]);
     } finally {
       setReferentieComponentenLoading(false);
     }
-  }, [schemas, getReferentieComponentenQueryParams, getStandaardenQueryParams]);
+  }, [schemas, getReferentieComponentenQueryParams, store]);
 
-  // Add this after loadReferentieComponenten()
+  // Function to load standaarden using object store cache
+  // ✅ Uses cache-first strategy for immediate response
   const loadStandaarden = useCallback(async () => {
     if (!schemas?.module) return;
 
-    // console.debug('Loading standaarden (500 limit)...');
+    console.info('📋 Loading standaarden via object store cache...');
     setStandaardenOptionsLoading(true);
 
     try {
-      const baseEndpoint = `${BASE_URL}/openregister/api/objects/vng-gemma/element`;
       const queryParams = getStandaardenQueryParams();
-      const params = new URLSearchParams(queryParams);
-      const endpoint = `${baseEndpoint}?${params}`;
 
-      // console.debug('Full endpoint (standaarden):', endpoint);
-
-      const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+      // Use object store cache-first method for immediate response
+      const list = await store.object.fetchGemmaElementsCacheFirst(
+        'standaard',
+        queryParams
+      );
 
       const options = list
         .map((item, index) => {
@@ -704,14 +684,14 @@ const AcFormsProduct = ({ userStore, store }) => {
         .filter((o) => o.label && o.value);
 
       setStandaardenOptions(options);
-      // console.debug(`Loaded ${options.length} standaarden successfully`);
+      console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
     } catch (e) {
       console.error('Failed to load standaarden:', e);
       setStandaardenOptions([]);
     } finally {
       setStandaardenOptionsLoading(false);
     }
-  }, [schemas, getStandaardenQueryParams]);
+  }, [schemas, getStandaardenQueryParams, store]);
 
   // ✅ Load referentiecomponenten and standaarden when schemas are available
   useEffect(() => {
@@ -742,62 +722,58 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
 
-  // Function to search modules with debouncing
-  // ✅ Core search function for modules
-  const performModulesSearch = useCallback(async (searchTerm = '') => {
-    setModulesLoading(true);
+  // Function to search modules with debouncing using object store cache
+  // ✅ Uses cache-first strategy for immediate response
+  const performModulesSearch = useCallback(
+    async (searchTerm = '') => {
+      setModulesLoading(true);
 
-    try {
-      const baseEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module`;
-      const params = new URLSearchParams({
-        _limit: '20',
-        _page: '1',
-      });
-
-      // Add search parameter if provided
-      if (searchTerm && searchTerm.trim()) {
-        params.set('_search', searchTerm.trim());
-      }
-
-      const endpoint = `${baseEndpoint}?${params}`;
-
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
-
-      const mapToOption = (item, index) => {
-        const label =
-          item?.naam ||
-          item?.['@self']?.name ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          (item?.id ? String(item.id) : `Module ${index + 1}`);
-        const value = item?.value || item?.id || item?.slug || label;
-        return {
-          value: String(value),
-          label: String(label),
-          data: item, // Store the full API data for later access
+      try {
+        const queryParams = {
+          _limit: '20',
+          _page: '1',
         };
-      };
 
-      const options = list.map(mapToOption).filter((o) => o.label && o.value);
-      setModulesOptions(options);
-    } catch (e) {
-      console.error('Failed to fetch modules:', e);
-      setModulesOptions([]);
-    } finally {
-      setModulesLoading(false);
-    }
-  }, []);
+        // Add search parameter if provided
+        if (searchTerm && searchTerm.trim()) {
+          queryParams._search = searchTerm.trim();
+        }
+
+        console.info(
+          `📋 Searching modules via object store cache (term: "${searchTerm}")...`
+        );
+
+        // Use object store cache-first method for immediate response
+        const list = await store.object.fetchModulesCacheFirst(queryParams);
+
+        const mapToOption = (item, index) => {
+          const label =
+            item?.naam ||
+            item?.['@self']?.name ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            (item?.id ? String(item.id) : `Module ${index + 1}`);
+          const value = item?.value || item?.id || item?.slug || label;
+          return {
+            value: String(value),
+            label: String(label),
+            data: item, // Store the full API data for later access
+          };
+        };
+
+        const options = list.map(mapToOption).filter((o) => o.label && o.value);
+        setModulesOptions(options);
+        console.info(`✅ Loaded ${options.length} modules (cache-first)`);
+      } catch (e) {
+        console.error('Failed to fetch modules:', e);
+        setModulesOptions([]);
+      } finally {
+        setModulesLoading(false);
+      }
+    },
+    [store]
+  );
 
   // ✅ Debounced search function for modules
   const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
@@ -1960,6 +1936,19 @@ const AcFormsProduct = ({ userStore, store }) => {
         </AcColumn>
       </AcContainer>
     </AcSection>
+  );
+};
+
+const AcFormsProduct = ({ userStore, store }) => {
+  const [searchParams] = useSearchParams();
+  const formType = searchParams.get('type') || '';
+
+  if (!formType) {
+    return <ConFormProductTypeSelectStage />;
+  }
+
+  return (
+    <AcFormsProductInner userStore={userStore} store={store} formType={formType} />
   );
 };
 

@@ -20,14 +20,12 @@ import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-ca
 
 const AcSearch = ({ store: { publications, user } }) => {
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     search_query,
     pagination,
-    setPage,
     updateQuery,
-    setSearchQuery,
     fetchPublications,
     is_loading,
     // getSearchPageURL,
@@ -35,7 +33,11 @@ const AcSearch = ({ store: { publications, user } }) => {
   } = publications;
 
   const setQuery = () => {
-    updateQuery(AcSearchParamsToObject(searchParams));
+    const paramsObj = AcSearchParamsToObject(searchParams);
+    if (!paramsObj._search) {
+      paramsObj._search = null;
+    }
+    updateQuery(paramsObj);
   };
 
   // DISABLED: This effect was competing with URL processing and causing the deep linking issue
@@ -53,7 +55,9 @@ const AcSearch = ({ store: { publications, user } }) => {
   }, [location.search]);
 
   const onPaginationChange = (page) => {
-    setPage(page);
+    const params = new URLSearchParams(searchParams);
+    params.set('_page', page);
+    setSearchParams(params);
   };
 
   const renderPagination = useMemo(() => {
@@ -76,7 +80,14 @@ const AcSearch = ({ store: { publications, user } }) => {
   }, [is_loading, pagination?.page]);
 
   const onSearchSubmit = (query) => {
-    setSearchQuery(query);
+    const params = new URLSearchParams(searchParams);
+    if (query && query.trim()) {
+      params.set('_search', query.trim());
+    } else {
+      params.delete('_search');
+    }
+    params.set('_page', 1);
+    setSearchParams(params);
   };
 
   const screenReaderText = useMemo(() => {
@@ -136,10 +147,10 @@ const AcSearch = ({ store: { publications, user } }) => {
               category={publication['@self'].schema.title}
               title={extractTitle(
                 publication.title ??
-                publication.titel ??
-                publication.name ??
-                publication.naam ??
-                publication.id
+                  publication.titel ??
+                  publication.name ??
+                  publication.naam ??
+                  publication.id
               )}
               summary={extractSummary(publication?.beschrijvingKort)}
               organisationData={publication?.organisatie}
@@ -154,12 +165,14 @@ const AcSearch = ({ store: { publications, user } }) => {
               category={publication['@self'].schema.title}
               title={extractTitle(
                 publication.title ??
-                publication.titel ??
-                publication.name ??
-                publication.naam ??
-                publication.id
+                  publication.titel ??
+                  publication.name ??
+                  publication.naam ??
+                  publication.id
               )}
-              summary={extractSummary(publication?.summary || publication?.beschrijving)}
+              summary={extractSummary(
+                publication?.summary || publication?.beschrijving
+              )}
               user={user}
               schemaSlug={publication['@self']?.schema?.slug}
               key={index}

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router';
 import _ from 'lodash';
 import { VISUALS } from '@constants';
 import { checkOrganizationPermissions } from '@utils/organization-permissions';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@constants/wizards.constants';
 
 /**
  * Hook to build dynamic related-create actions based on schema relations and user groups
@@ -29,6 +31,7 @@ export const useRelatedCreateActions = ({
   currentObjectRegister = null, // Add current object register information
   currentObjectSchema = null, // Add current object schema information
 }) => {
+  const navigate = useNavigate();
   const [creatableRelated, setCreatableRelated] = useState([]);
   const [outgoingSchemas, setOutgoingSchemas] = useState(new Set());
 
@@ -262,12 +265,32 @@ export const useRelatedCreateActions = ({
           const label = `${rs?.title ?? _.startCase(slug)} toevoegen`;
 
           const isOutgoing = outgoingSchemas.has(slug);
+          const wizards = Object.values(DASHBOARD_WIZARDS);
+          const wizard = wizards.find((w) => w.schema === slug);
+          const areThereMultipleOptions =
+            wizards.filter((w) => w.schema === slug).length > 1;
+
+          const iconElement = wizard ? (
+            <VISUALS.WAND_SPARKLES_SOLID />
+          ) : (
+            <VISUALS.PLUS />
+          );
 
           return {
             key: `create-${slug}`,
+            schema: slug,
             label,
-            icon: <VISUALS.PLUS />,
+            icon: iconElement,
             onClick: async () => {
+              // Prefer wizard when available
+              if (wizard) {
+                const url = getWizardUrl(wizard, !areThereMultipleOptions);
+                if (url) {
+                  navigate(url);
+                  return;
+                }
+              }
+
               const { preSelected, preSelectedLabels } = await buildPreSelected(
                 targetType,
                 ctxId

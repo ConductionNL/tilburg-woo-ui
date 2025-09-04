@@ -31,6 +31,8 @@ const ConEditableDescription = ({
   schemaSlug,
   objectId,
   field,
+  markdownPreviewClassName,
+
   label,
   placeholder = '',
   tooltip = '',
@@ -39,6 +41,7 @@ const ConEditableDescription = ({
   value,
   // serialize = (v) => v,
   deserialize = (v) => v ?? '',
+  onSuccess,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState('');
@@ -63,6 +66,9 @@ const ConEditableDescription = ({
     try {
       await objectStore.patchObject(registerSlug, schemaSlug, objectId, payload);
       setIsEditing(false);
+      if (onSuccess) {
+        onSuccess(tempValue);
+      }
     } catch (e) {
       // TODO: replace with project-wide notification
       // eslint-disable-next-line no-console
@@ -203,6 +209,7 @@ const ConEditableDescription = ({
                   wrapperElement={{
                     'data-color-mode': 'light',
                   }}
+                  className={markdownPreviewClassName}
                   source={v}
                   remarkPlugins={[
                     [remarkGfm, { singleTilde: false }],

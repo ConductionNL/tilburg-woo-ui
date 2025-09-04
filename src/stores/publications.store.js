@@ -2,6 +2,7 @@
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
 import { AcBuildURLSearchParams } from '@utils';
 import { commongroundApiUrl } from '@config';
+import { getCookie } from '@src/utilities';
 
 let app = {};
 
@@ -16,14 +17,12 @@ const DEFAULT_QUERY = {
   extend: 'themes',
 };
 
-
-
 // Optimized: Only request essential facets instead of all available ones
 export const buildEssentialFacetsQueries = () => {
   // Only request the most important facets for performance
   return [
-    [['@self', 'register'], 'terms'],     // Publication register
-    [['@self', 'schema'], 'terms'],       // Publication schema
+    [['@self', 'register'], 'terms'], // Publication register
+    [['@self', 'schema'], 'terms'], // Publication schema
     ['cloudDienstverleningsmodel', 'terms'], // Service delivery model
   ];
 };
@@ -58,6 +57,37 @@ export const buildPublicationsSearchQuery = (baseQuery) => {
     ...baseQuery,
     extend: '@self.schema',
   };
+};
+
+// Helper function to get authentication headers (same logic as object store)
+const getAuthHeaders = () => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': '*/*',
+    'Referer': window.location.origin + '/zoeken',
+  };
+  
+  // Try Bearer token first (from cookies)
+  const accessToken = getCookie('nextcloud_access_token');
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+    return headers;
+  }
+  
+  // Fallback to basic auth (from user store)
+  try {
+    if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+      const basicAuth = window.app.store.user.basicAuthCredentials;
+      if (basicAuth && basicAuth.username && basicAuth.password) {
+        const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
+        headers.Authorization = `Basic ${credentials}`;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get basic auth credentials:', error);
+  }
+  
+  return headers;
 };
 
 export class PublicationsStore {
@@ -380,10 +410,11 @@ export class PublicationsStore {
 
   @action
   setFacetsConfig = (config) => {
-    const configChanged = JSON.stringify(this.facetsConfig) !== JSON.stringify(config);
+    const configChanged =
+      JSON.stringify(this.facetsConfig) !== JSON.stringify(config);
     this.facetsConfig = config;
     this.facetsConfigLoaded = true;
-    
+
     // If config changed, trigger facets reload
     if (configChanged && config) {
       this.triggerFacetsReload();
@@ -427,44 +458,37 @@ export class PublicationsStore {
   @action
   fetchFacets = async () => {
     this.setFacetsLoadingStatus(true);
-    
+
     try {
-      // 🚀 OPTIMIZED: Use essential facets only for better performance  
+      // 🚀 OPTIMIZED: Use essential facets only for better performance
       const essentialFacetsQueries = buildEssentialFacetsQueries();
-      
-      // 🚀 OPTIMIZED: Use _limit=0 for facet-only queries (no objects needed)
-      const search_query = {
-        ...buildPublicationsSearchQuery(this.search_query),
-        _limit: 0, // Only get facets, not actual objects - MAJOR performance boost!
-        // No _facetable needed here - we already have config from first call
-      };
 
-      // 🚀 OPTIMIZED: Proper URL encoding using URLSearchParams
-      const urlParams = new URLSearchParams(search_query);
-      
-      // Add essential facets with proper URL encoding
-      essentialFacetsQueries.forEach(([key, value]) => {
-        if (Array.isArray(key)) {
-          // Use proper bracket notation: _facets[@self][register]=terms
-          const facetParam = `_facets[${key.join('][')}]`;
-          urlParams.set(facetParam, value);
-        } else {
-          urlParams.set(`_facets[${key}]`, value);
-        }
-      });
+      // 🚀 OPTIMIZED: Build base query from current filters
+      const baseQueryString = AcBuildURLSearchParams(this.search_query);
+      const baseWithLimit = baseQueryString
+        ? `${baseQueryString}&_limit=0`
+        : `_limit=0`;
 
-      console.group('🚀 OPTIMIZED FACETS API CALL');
-      console.log('Essential facets only:', essentialFacetsQueries.length, 'facets instead of all available');
-      console.log('Query params:', urlParams.toString());
-      console.groupEnd();
+      // Add essential facets with proper URL encoding (append manually)
+      const facetParams = essentialFacetsQueries
+        .map(([key, value]) =>
+          Array.isArray(key)
+            ? `_facets[${key.join('][')}]=${encodeURIComponent(value)}`
+            : `_facets[${key}]=${encodeURIComponent(value)}`
+        )
+        .join('&');
+      const finalQueryString = facetParams
+        ? `${baseWithLimit}&${facetParams}`
+        : baseWithLimit;
 
-      const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${urlParams.toString()}`, {
+       console.group('🚀 OPTIMIZED FACETS API CALL');
+       console.log('Essential facets only:', essentialFacetsQueries.length, 'facets instead of all available');
+       console.log('Final query string:', finalQueryString);
+       console.groupEnd();
+
+       const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${finalQueryString}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': '*/*',
-          'Referer': window.location.origin + '/zoeken',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include', // Include cookies like the browser
       }).then(res => {
         if (!res.ok) {
@@ -473,10 +497,15 @@ export class PublicationsStore {
         return res.json();
       });
 
-      if (response.facets) {
+      // Handle nested facets structure - API returns facets.facets
+      const facetsData = response.facets?.facets || response.facets || {};
+      
+      if (facetsData && Object.keys(facetsData).length > 0) {
+        console.log('📊 Processing facets data:', facetsData);
+        
         // Add basic titles to facets (simplified since we only use essential ones)
         const facetsWithTitles = {};
-        for (const [key, value] of Object.entries(response.facets)) {
+        for (const [key, value] of Object.entries(facetsData)) {
           if (key === '@self') {
             facetsWithTitles[key] = {};
             for (const [subKey, subValue] of Object.entries(value)) {
@@ -493,8 +522,10 @@ export class PublicationsStore {
           }
         }
         this.setFacets(facetsWithTitles);
+        console.log('✅ Facets processed and set:', Object.keys(facetsWithTitles));
       } else {
-        console.warn('No facets in response');
+        console.warn('No facets in response. Available keys:', Object.keys(response));
+        console.warn('Facets data structure:', response.facets);
       }
     } catch (error) {
       console.error('Error fetching facets:', error);
@@ -506,9 +537,9 @@ export class PublicationsStore {
   // Helper method to get facet titles
   getFacetTitle = (key) => {
     const titleMap = {
-      'register': 'Register',
-      'schema': 'Schema',
-      'cloudDienstverleningsmodel': 'Cloud Dienstverleningsmodel',
+      register: 'Register',
+      schema: 'Schema',
+      cloudDienstverleningsmodel: 'Cloud Dienstverleningsmodel',
     };
     return titleMap[key] || key;
   };
@@ -517,49 +548,51 @@ export class PublicationsStore {
   fetchPublications = async () => {
     this.loading.status = true;
 
-    // 🚀 OPTIMIZED: Keep _facetable for facets config, but we'll optimize the facets call separately
-    const search_query = {
-      _facetable: true, // Still needed to get facets config for second call
-    };
-    
-    // Add search term if user has entered one
-    if (this.search_query._search) {
-      search_query._search = this.search_query._search;
-    }
+    // Reset facets UI while fetching, so counts reflect new filters after reload
+    this.setFacetsLoadingStatus(true);
+    this.setFacets({});
+
+    // Build query including current filters/facets and request facetable config
+    const baseQuery = { ...this.search_query, _facetable: true };
+    const queryString = AcBuildURLSearchParams(baseQuery);
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
     console.group('🚀 HYBRID API CALL - Publications + Facets Config');
-    console.log('SEARCH QUERY:', toJS(search_query));
-    
-    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${new URLSearchParams(search_query)}`;
-    console.log('URL (with _facetable for config):', fullUrl);
+    console.info('SEARCH QUERY:', toJS(baseQuery));
+    console.info('URL:', fullUrl);
     console.groupEnd();
 
-    // Use fetch with credentials to include session cookies
+    // Use fetch with proper authentication headers
     fetch(fullUrl, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': '*/*',
-        'Referer': window.location.origin + '/zoeken',
-      },
+      headers: getAuthHeaders(),
       credentials: 'include', // Include cookies like the browser
     })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      return response.json();
-    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((response) => {
         // Set search results immediately
         this.setItems(response.results);
-        
+
         // Store facetable configuration for facets call
         if (response.facetable) {
+          const configChanged =
+            JSON.stringify(this.facetsConfig) !== JSON.stringify(response.facetable);
           this.setAvailableFacets(response.facetable);
-          this.setFacetsConfig(response.facetable); // This will trigger facets reload if config changed
+          this.setFacetsConfig(response.facetable); // Triggers reload if config changed
+          // If config didn't change, still reload facets to reflect new filters
+          if (!configChanged) {
+            this.triggerFacetsReload();
+          }
+        } else {
+          // No config received, but ensure we try to refresh facets for new filters
+          this.triggerFacetsReload();
         }
-        
+
         // Clean up response and set pagination
         delete response.results;
         delete response.facetable;

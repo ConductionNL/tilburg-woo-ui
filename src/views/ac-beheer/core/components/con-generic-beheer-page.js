@@ -24,6 +24,7 @@ import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 /**
  * Generic Beheer Page Component
@@ -150,24 +151,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
   const showManageActions = !['extendview', 'view'].includes(config?.routeType);
 
-  // Related create actions via shared hook
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: config?.schemaSlug,
-    currentType: type,
-    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
-      setDynamicCreateTargetType(targetType);
-      setDynamicCreatePreSelected(preSelected);
-      // Handle outgoing relationship metadata
-      if (metadata.isOutgoing) {
-        // Store metadata for post-creation relationship updates
-        // (handled by the form modal after successful creation)
-      }
-      setOpenModal('dynamicCreate');
-    },
-    currentObject: null, // List page doesn't have a single current object
-  });
+  // Related create actions via shared hook (declared after cancelAllRequests effect
+  // to avoid its initial fetch being aborted on type changes)
+  let makeActionsForContext; // will be assigned below
 
   const fetchData = useCallback(
     async (searchParams = {}) => {
@@ -237,6 +223,23 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setShowSearch(false);
   }, [type]);
 
+  // Initialize related create actions after cancellation effect definition
+  ({ makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      if (metadata.isOutgoing) {
+        // handled by the form modal after successful creation
+      }
+      setOpenModal('dynamicCreate');
+    },
+    currentObject: null,
+  }));
+
   // Fetch data when component is ready and pagination changes
   useEffect(() => {
     if (!!config && objectType) {
@@ -281,6 +284,27 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
+
+  // Handle create action → open corresponding wizard when available
+  const handleCreateClick = useCallback(() => {
+    if (!config?.schemaSlug) {
+      setOpenModal('add');
+      return;
+    }
+
+    const wizards = Object.values(DASHBOARD_WIZARDS);
+    const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+    const areThereMultipleOptions =
+      wizards.filter((w) => w.schema === config.schemaSlug).length > 1;
+
+    if (wizard) {
+      navigate(getWizardUrl(wizard, !areThereMultipleOptions));
+      return;
+    }
+
+    // Fallback to legacy modal when no wizard is defined for this schema
+    setOpenModal('add');
+  }, [config?.schemaSlug, navigate]);
 
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
@@ -558,7 +582,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                   <AcButton
                     style='button'
                     buttonType='primary'
-                    onClick={() => setOpenModal('add')}
+                    onClick={handleCreateClick}
                     icon={<VISUALS.PLUS />}
                   >
                     Toevoegen
@@ -570,8 +594,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button 
-                        icon={<VISUALS.SPINNER />} 
+                      <ConActionMenu.Button
+                        icon={<VISUALS.SPINNER />}
                         onClick={() => fetchData()}
                         disabled={loading}
                       >

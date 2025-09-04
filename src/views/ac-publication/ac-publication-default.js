@@ -157,11 +157,12 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   useEffect(() => {
     if (!get_single?.['@self']?.schema?.slug || !id) return;
 
-    const items = makeActionsForContext(id).map(({ key, label, onClick }) => ({
+    const items = makeActionsForContext(id).map(({ key, label, onClick, schema, icon }) => ({
       key,
       label,
       onClick,
-      icon: <VISUALS.PLUS />,
+      schema,
+      icon,
     }));
 
     setActionMenuItems(items);
@@ -412,32 +413,32 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             </div>
           )}
 
-          <div>
-            {uses && uses.length > 0 && (
-              <>
-                <Heading level={2}>Gebruiken</Heading>
-                <AcTabs
-                  selectedIndex={tabIndexUses}
-                  onSelect={(index) => setTabIndexUses(index)}
-                >
-                  <AcTabList>
-                    {uses && uses.length > 0 && (
-                      <>
-                        {uses &&
-                          // show unique headers
-                          _.uniqBy(uses, (use) => use['@self'].schema.id).map(
-                            (use, idx) => (
-                              <AcTab
-                                key={use['@self'].schema.id}
-                                selected={tabIndexUses === idx}
-                              >
-                                <span>{use['@self'].schema.title}</span>
-                              </AcTab>
-                            )
-                          )}
-                      </>
-                    )}
-                  </AcTabList>
+            <div>
+              {uses && uses.length > 0 && (
+                <>
+                  <Heading level={2}>Gebruiken</Heading>
+                  <AcTabs
+                    selectedIndex={tabIndexUses}
+                    onSelect={(index) => setTabIndexUses(index)}
+                  >
+                    <AcTabList>
+                      {uses && uses.length > 0 && (
+                        <>
+                          {uses &&
+                            // show unique headers
+                            _.uniqBy(uses, (use) => use['@self'].schema.id).map(
+                              (use, idx) => (
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUses === idx}
+                                >
+                                  <span>{use['@self'].schema.title}</span>
+                                </AcTab>
+                              )
+                            )}
+                        </>
+                      )}
+                    </AcTabList>
 
                   {uses &&
                     _.uniqBy(uses, (use) => use['@self'].schema.id)
@@ -488,32 +489,32 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             )}
           </div>
 
-          <div>
-            {used && used.length > 0 && (
-              <>
-                <Heading level={2}>Wordt gebruikt door</Heading>
-                <AcTabs
-                  selectedIndex={tabIndexUsed}
-                  onSelect={(index) => setTabIndexUsed(index)}
-                >
-                  <AcTabList>
-                    {used && used.length > 0 && (
-                      <>
-                        {used &&
-                          // show unique headers
-                          _.uniqBy(used, (use) => use['@self'].schema.id).map(
-                            (use, idx) => (
-                              <AcTab
-                                key={use['@self'].schema.id}
-                                selected={tabIndexUsed === idx}
-                              >
-                                <span>{use['@self'].schema.title}</span>
-                              </AcTab>
-                            )
-                          )}
-                      </>
-                    )}
-                  </AcTabList>
+            <div>
+              {used && used.length > 0 && (
+                <>
+                  <Heading level={2}>Wordt gebruikt door</Heading>
+                  <AcTabs
+                    selectedIndex={tabIndexUsed}
+                    onSelect={(index) => setTabIndexUsed(index)}
+                  >
+                    <AcTabList>
+                      {used && used.length > 0 && (
+                        <>
+                          {used &&
+                            // show unique headers
+                            _.uniqBy(used, (use) => use['@self'].schema.id).map(
+                              (use, idx) => (
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUsed === idx}
+                                >
+                                  <span>{use['@self'].schema.title}</span>
+                                </AcTab>
+                              )
+                            )}
+                        </>
+                      )}
+                    </AcTabList>
 
                   {used &&
                     _.uniqBy(used, (use) => use['@self'].schema.id)

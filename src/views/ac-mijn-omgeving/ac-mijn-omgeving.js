@@ -1,20 +1,16 @@
 // TODO: do something with this file
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate } from 'react-router-dom';
 
-import { AcSearchResult, AcButton, AcFormField } from '@molecules';
+import { AcButton, AcFormField } from '@molecules';
 import { AcFlex, AcSection } from '@atoms';
-import { LABELS, LABELS_DYNAMIC, VISUALS } from '@constants';
+import { VISUALS } from '@constants';
 import { AcModal, AcSideNav } from '@components';
 import { withStore } from '@stores';
 
-import {
-  Alert,
-  Heading,
-  Paragraph,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 // import { Pagination } from '@amsterdam/design-system-react';
 
 function getCookie(name) {

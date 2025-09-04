@@ -186,6 +186,16 @@ nextcloudApi.interceptors.response.use(
  * - `getTypeFromObject(objectItem)` - Gets object type from item
  * - `getTypeFromParams(register, schema, id, suffix)` - Gets object type from register, schema, id, suffic
  *
+ * ### Backend Cache Loading System
+ * - `cacheLoad()` - Pre-warms backend cache for all core registers (voorzieningen, vng-gemma)
+ * - `cacheLoadRegister(registerSlug)` - Cache loads all schemas in a specific register
+ * - `fetchRegister(registerSlug)` - Fetches register information including schemas
+ * - `triggerBackendCacheLoad(registerId, schemaId)` - Triggers cache load for specific register/schema
+ * - `isCacheLoading(registerSlug)` - Checks if cache loading is in progress for a register
+ * - `getCacheLoadingError(registerSlug)` - Gets cache loading error for a register
+ * - `isFullyCacheLoaded()` - Checks if all core registers are fully cache loaded
+ * - `clearCacheLoadingState()` - Clears cache loading state and errors
+ *
  * ## Operation-Specific State Tracking
  *
  * All operations now use operation-specific identifiers for loading, error, and success states:
@@ -313,6 +323,14 @@ nextcloudApi.interceptors.response.use(
  *
  * // Clear active object
  * store.object.clearActiveObject('register-slug', 'schema-slug');
+ *
+ * // Backend cache loading (call during login)
+ * await store.object.cacheLoad();
+ *
+ * // Check cache loading status
+ * const isLoading = store.object.isCacheLoading('voorzieningen');
+ * const error = store.object.getCacheLoadingError('voorzieningen');
+ * const fullyLoaded = store.object.isFullyCacheLoaded();
  */
 export class ObjectStore {
   constructor(store) {
@@ -337,6 +355,22 @@ export class ObjectStore {
    * */
   @observable
   collections = {};
+
+  /**
+   * Multi-dimensional cache for immediate responses: register -> schema -> cached response
+   * @type {{[register: string]: {[schema: string]: {data: object[], timestamp: number, params: object}}}}
+   */
+  @observable
+  listCache = {};
+
+  /**
+   * Cache metadata and settings
+   * @type {{maxAge: number, backgroundRefreshThreshold: number}}
+   */
+  cacheConfig = {
+    maxAge: 5 * 60 * 1000, // 5 minutes in milliseconds
+    backgroundRefreshThreshold: 2 * 60 * 1000, // 2 minutes - when to refresh in background
+  };
 
   /**
    * Loading states for different operations (fetch, create, update, etc.)
@@ -1524,6 +1558,11 @@ export class ObjectStore {
 
       await this.fetchCollection(register, schema);
       console.info(`✅ Collection refreshed after creating ${type} object:`, newObject.id);
+      
+      // Clear list cache since new object was created
+      this.clearListCache(register, schema);
+      console.info(`🗑️ Cleared list cache for ${register}/${schema} after creation`);
+      
       await this.setActiveObject(register, schema, newObject);
       this.setSuccess(type, true);
 
@@ -1599,6 +1638,10 @@ export class ObjectStore {
 
       // Refresh the entire collection to ensure data consistency
       await this.fetchCollection(registerId, schemaId);
+      
+      // Clear list cache since object was saved
+      this.clearListCache(registerId, schemaId);
+      console.info(`🗑️ Cleared list cache for ${registerId}/${schemaId} after save`);
 
       console.info(`✅ Collection refreshed after saving ${type} object:`, data.id);
       this.setSuccess(type, true);
@@ -1652,6 +1695,10 @@ export class ObjectStore {
 
       await this.fetchCollection(register, schema);
       console.info(`✅ Collection refreshed after updating ${type} object:`, id);
+      
+      // Clear list cache since object was updated
+      this.clearListCache(register, schema);
+      console.info(`🗑️ Cleared list cache for ${register}/${schema} after update`);
 
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
@@ -1792,6 +1839,10 @@ export class ObjectStore {
         );
         this.setSelectedObjects(remainingSelected);
       }
+
+      // Clear list cache since object was deleted
+      this.clearListCache(registerId, schemaId);
+      console.info(`🗑️ Cleared list cache for ${registerId}/${schemaId} after deletion`);
 
       this.setSuccess(requestType, true);
       return true;
@@ -3007,6 +3058,496 @@ export class ObjectStore {
     });
 
     return results;
+  };
+
+  // ===============================
+  // CACHE-FIRST METHODS FOR IMMEDIATE RESPONSES
+  // ===============================
+
+  /**
+   * Gets cached data for immediate response, triggers background refresh if needed
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   * @returns {Object|null} Cached data or null if no cache exists
+   */
+  @action
+  getCachedList = (register, schema, params = {}) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) return null;
+
+    const cached = this.listCache[registerId]?.[schemaId];
+    if (!cached) return null;
+
+    // Check if cache is still valid
+    const now = Date.now();
+    const age = now - cached.timestamp;
+    
+    if (age > this.cacheConfig.maxAge) {
+      // Cache is too old, remove it
+      this.clearListCache(register, schema);
+      return null;
+    }
+
+    // Check if we should refresh in background
+    if (age > this.cacheConfig.backgroundRefreshThreshold) {
+      // Trigger background refresh (don't await)
+      this.refreshListInBackground(register, schema, params);
+    }
+
+    return cached.data;
+  };
+
+  /**
+   * Sets cached data for a register/schema combination
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Array} data - Array of objects to cache
+   * @param {Object} [params={}] - Query parameters used for the request
+   */
+  @action
+  setCachedList = (register, schema, data, params = {}) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) return;
+
+    if (!this.listCache[registerId]) {
+      this.listCache[registerId] = {};
+    }
+
+    this.listCache[registerId][schemaId] = {
+      data: data || [],
+      timestamp: Date.now(),
+      params: { ...params }
+    };
+  };
+
+  /**
+   * Clears cached data for a specific register/schema combination
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   */
+  @action
+  clearListCache = (register, schema) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) return;
+
+    if (this.listCache[registerId]?.[schemaId]) {
+      delete this.listCache[registerId][schemaId];
+    }
+  };
+
+  /**
+   * Clears all cached data
+   */
+  @action
+  clearAllListCaches = () => {
+    this.listCache = {};
+  };
+
+  /**
+   * Refreshes cached data in the background without blocking the UI
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   */
+  refreshListInBackground = async (register, schema, params = {}) => {
+    try {
+      const registerId = this.extractId(register);
+      const schemaId = this.extractId(schema);
+      
+      console.info(`🔄 Background refresh for ${registerId}/${schemaId}`);
+      
+      // Fetch fresh data without updating loading states (background operation)
+      const response = await nextcloudApi.get(
+        this._constructApiUrl(register, schema),
+        {
+          params: this._constructQueryParams(params),
+        }
+      );
+
+      if (response.ok) {
+        const data = response.data;
+        const results = data.results || [];
+        
+        // Update cache with fresh data
+        this.setCachedList(register, schema, results, params);
+        
+        console.info(`✅ Background refresh completed for ${registerId}/${schemaId} (${results.length} items)`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Background refresh failed for ${register}/${schema}:`, error.message);
+      // Don't throw - this is a background operation
+    }
+  };
+
+  /**
+   * Cache-first fetch method that provides immediate response from cache,
+   * then refreshes data in background if needed
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   * @returns {Array} Array of objects (from cache or fresh fetch)
+   */
+  @action
+  fetchListCacheFirst = async (register, schema, params = {}) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) {
+      throw new Error('Could not extract register or schema ID');
+    }
+
+    // Try to get cached data first
+    const cachedData = this.getCachedList(register, schema, params);
+    if (cachedData) {
+      console.info(`⚡ Immediate response from cache for ${registerId}/${schemaId} (${cachedData.length} items)`);
+      return cachedData;
+    }
+
+    // No cache available, do a fresh fetch
+    console.info(`🌐 Fresh fetch for ${registerId}/${schemaId} (no cache)`);
+    
+    const type = this.getTypeFromParams(registerId, schemaId);
+    this.setLoading(type, true);
+    
+    try {
+      const response = await nextcloudApi.get(
+        this._constructApiUrl(register, schema),
+        {
+          params: this._constructQueryParams(params),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${registerId}/${schemaId}`);
+      }
+
+      const data = response.data;
+      const results = data.results || [];
+      
+      // Cache the fresh data
+      this.setCachedList(register, schema, results, params);
+      
+      console.info(`✅ Fresh fetch completed for ${registerId}/${schemaId} (${results.length} items)`);
+      
+      return results;
+    } catch (error) {
+      console.error(`❌ Failed to fetch ${registerId}/${schemaId}:`, error);
+      throw error;
+    } finally {
+      this.setLoading(type, false);
+    }
+  };
+
+  /**
+   * Convenience method for fetching VNG-GEMMA elements with cache-first strategy
+   * @param {string} gemmaType - Type of GEMMA element ('referentiecomponent', 'standaard', etc.)
+   * @param {Object} [params={}] - Additional query parameters
+   * @returns {Array} Array of GEMMA elements
+   */
+  @action
+  fetchGemmaElementsCacheFirst = async (gemmaType, params = {}) => {
+    const queryParams = {
+      _limit: params._limit || 500,
+      _page: params._page || 1,
+      gemmaType: gemmaType,
+      ...params
+    };
+
+    return this.fetchListCacheFirst('vng-gemma', 'element', queryParams);
+  };
+
+  /**
+   * Convenience method for fetching modules with cache-first strategy
+   * @param {Object} [params={}] - Additional query parameters
+   * @returns {Array} Array of modules
+   */
+  @action
+  fetchModulesCacheFirst = async (params = {}) => {
+    const queryParams = {
+      _limit: params._limit || 20,
+      _page: params._page || 1,
+      ...params
+    };
+
+    return this.fetchListCacheFirst('voorzieningen', 'module', queryParams);
+  };
+
+  // ===============================
+  // BACKEND CACHE WARMING SYSTEM
+  // ===============================
+
+  /**
+   * Core registers that should be cache-loaded for optimal performance
+   */
+  CORE_REGISTERS = ['voorzieningen', 'vng-gemma'];
+
+  /**
+   * Cache loading state tracking
+   * @type {{[register: string]: boolean}}
+   */
+  @observable
+  cacheLoadingState = {};
+
+  /**
+   * Cache loading errors
+   * @type {{[register: string]: string}}
+   */
+  @observable
+  cacheLoadingErrors = {};
+
+  /**
+   * Flag to track if initial cache warming has been completed for this session
+   * Prevents redundant cache loading on every /beheer page visit
+   * @type {boolean}
+   */
+  @observable
+  initialCacheWarmingCompleted = false;
+
+  /**
+   * Fetches register information including all schemas
+   * @param {string} registerSlug - The register slug (e.g., 'voorzieningen', 'vng-gemma')
+   * @returns {Object} Register data with schemas
+   */
+  @action
+  fetchRegister = async (registerSlug) => {
+    const requestType = `register_${registerSlug}`;
+    this.setLoading(requestType, true);
+    this.setError(requestType, null);
+
+    try {
+      const endpoint = `/openregister/api/registers/${registerSlug}`;
+      const response = await nextcloudApi.get(endpoint);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch register ${registerSlug}: ${response.status} ${response.statusText}`);
+      }
+
+      console.info(`✅ Fetched register ${registerSlug}:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Error fetching register ${registerSlug}:`, error);
+      this.setError(requestType, error.message);
+      throw error;
+    } finally {
+      this.setLoading(requestType, false);
+    }
+  };
+
+  /**
+   * Triggers backend cache loading for a specific register/schema combination
+   * @param {string} registerId - The register ID
+   * @param {string} schemaId - The schema ID
+   * @returns {boolean} True if cache loading was successful
+   */
+  @action
+  triggerBackendCacheLoad = async (registerId, schemaId) => {
+    try {
+      const endpoint = `/openregister/api/objects/${registerId}/${schemaId}`;
+      const params = {
+        _limit: 20,  // Load first 20 items to properly warm backend cache
+        _page: 1,
+        _extend: '@self.schema'
+      };
+
+      console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);
+
+      const response = await nextcloudApi.get(endpoint, {
+        params: this._constructQueryParams(params)
+      });
+
+      if (response.ok) {
+        console.info(`✅ Backend cache loaded for ${registerId}/${schemaId}`);
+        return true;
+      } else {
+        console.warn(`⚠️ Failed to load backend cache for ${registerId}/${schemaId}:`, response.status);
+        return false;
+      }
+    } catch (error) {
+      console.warn(`⚠️ Error loading backend cache for ${registerId}/${schemaId}:`, error.message);
+      return false;
+    }
+  };
+
+  /**
+   * Loads backend cache for all schemas in a specific register
+   * @param {string} registerSlug - The register slug
+   * @returns {Object} Results with successful and failed cache loads
+   */
+  @action
+  cacheLoadRegister = async (registerSlug) => {
+    const requestType = `cache_load_${registerSlug}`;
+    
+    runInAction(() => {
+      this.cacheLoadingState[registerSlug] = true;
+      this.cacheLoadingErrors[registerSlug] = null;
+    });
+
+    try {
+      // Fetch register data to get all schemas
+      const registerData = await this.fetchRegister(registerSlug);
+      
+      if (!registerData?.schemas || !Array.isArray(registerData.schemas)) {
+        throw new Error(`Register ${registerSlug} does not contain schemas array`);
+      }
+
+      console.info(`🔄 Cache loading ${registerData.schemas.length} schemas for register ${registerSlug}`);
+
+      // Trigger cache loading for each schema in parallel
+      const cacheLoadPromises = registerData.schemas.map(async (schema) => {
+        const schemaId = this.extractId(schema);
+        if (!schemaId) {
+          console.warn(`⚠️ Could not extract schema ID from:`, schema);
+          return { success: false, schema, error: 'Invalid schema ID' };
+        }
+
+        try {
+          const success = await this.triggerBackendCacheLoad(registerData.id, schemaId);
+          return { success, schema, registerId: registerData.id, schemaId };
+        } catch (error) {
+          return { success: false, schema, error: error.message, registerId: registerData.id, schemaId };
+        }
+      });
+
+      const results = await Promise.allSettled(cacheLoadPromises);
+      
+      const successful = results
+        .filter(r => r.status === 'fulfilled' && r.value.success)
+        .map(r => r.value);
+      
+      const failed = results
+        .filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
+        .map(r => r.value || { success: false, error: 'Unknown error' });
+
+      console.info(`✅ Cache loading completed for ${registerSlug}:`, {
+        successful: successful.length,
+        failed: failed.length,
+        total: registerData.schemas.length
+      });
+
+      return { successful, failed, registerData };
+
+    } catch (error) {
+      const errorMessage = error.message || 'Unknown error during cache loading';
+      console.error(`❌ Cache loading failed for ${registerSlug}:`, error);
+      
+      runInAction(() => {
+        this.cacheLoadingErrors[registerSlug] = errorMessage;
+      });
+
+      throw error;
+    } finally {
+      runInAction(() => {
+        this.cacheLoadingState[registerSlug] = false;
+      });
+    }
+  };
+
+  /**
+   * Loads backend cache for all core registers (voorzieningen and vng-gemma)
+   * This function should be called during user login to pre-warm the backend cache
+   * @returns {Object} Combined results from all register cache loads
+   */
+  @action
+  cacheLoad = async () => {
+    console.info('🚀 Starting backend cache loading for core registers:', this.CORE_REGISTERS);
+    
+    const startTime = Date.now();
+    const allResults = {
+      successful: [],
+      failed: [],
+      registers: {}
+    };
+
+    // Load cache for all core registers in parallel
+    const registerPromises = this.CORE_REGISTERS.map(async (registerSlug) => {
+      try {
+        const result = await this.cacheLoadRegister(registerSlug);
+        allResults.registers[registerSlug] = result;
+        allResults.successful.push(...result.successful);
+        allResults.failed.push(...result.failed);
+        return { registerSlug, success: true, result };
+      } catch (error) {
+        const failedResult = { success: false, error: error.message, registerSlug };
+        allResults.registers[registerSlug] = failedResult;
+        allResults.failed.push(failedResult);
+        return { registerSlug, success: false, error: error.message };
+      }
+    });
+
+    const registerResults = await Promise.allSettled(registerPromises);
+    const duration = Date.now() - startTime;
+
+    const stats = {
+      duration,
+      totalSuccessful: allResults.successful.length,
+      totalFailed: allResults.failed.length,
+      registersProcessed: registerResults.length,
+      registersSuccessful: registerResults.filter(r => r.status === 'fulfilled' && r.value.success).length
+    };
+
+    console.info(`🎉 Backend cache loading completed in ${duration}ms:`, stats);
+
+    // Mark initial cache warming as completed to prevent redundant calls
+    runInAction(() => {
+      this.initialCacheWarmingCompleted = true;
+    });
+
+    return {
+      ...allResults,
+      stats
+    };
+  };
+
+  /**
+   * Gets cache loading state for a specific register
+   * @param {string} registerSlug - The register slug
+   * @returns {boolean} True if cache loading is in progress
+   */
+  isCacheLoading = (registerSlug) => {
+    return this.cacheLoadingState[registerSlug] || false;
+  };
+
+  /**
+   * Gets cache loading error for a specific register
+   * @param {string} registerSlug - The register slug
+   * @returns {string|null} Error message or null if no error
+   */
+  getCacheLoadingError = (registerSlug) => {
+    return this.cacheLoadingErrors[registerSlug] || null;
+  };
+
+  /**
+   * Checks if all core registers have been successfully cache loaded
+   * @returns {boolean} True if all core registers are cache loaded
+   */
+  isFullyCacheLoaded = () => {
+    return this.CORE_REGISTERS.every(register => {
+      return !this.isCacheLoading(register) && !this.getCacheLoadingError(register);
+    });
+  };
+
+  /**
+   * Clears cache loading state and errors
+   */
+  @action
+  clearCacheLoadingState = () => {
+    this.cacheLoadingState = {};
+    this.cacheLoadingErrors = {};
+  };
+
+  /**
+   * Resets the initial cache warming flag (call on logout to allow cache warming on next login)
+   */
+  @action
+  resetCacheWarmingFlag = () => {
+    this.initialCacheWarmingCompleted = false;
   };
 }
 
