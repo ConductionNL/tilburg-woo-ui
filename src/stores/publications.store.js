@@ -481,9 +481,12 @@ export class PublicationsStore {
         ? `${baseWithLimit}&${facetParams}`
         : baseWithLimit;
 
-      // NOTE: Keep logs minimal to avoid noisy console and linter errors
+       console.group('🚀 OPTIMIZED FACETS API CALL');
+       console.log('Essential facets only:', essentialFacetsQueries.length, 'facets instead of all available');
+       console.log('Final query string:', finalQueryString);
+       console.groupEnd();
 
-      const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${urlParams.toString()}`, {
+       const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${finalQueryString}`, {
         method: 'GET',
         headers: getAuthHeaders(),
         credentials: 'include', // Include cookies like the browser
