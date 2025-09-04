@@ -499,7 +499,13 @@ const ConObjectUploadFiles = ({
               <ConActionMenu.Button
                 icon={<VISUALS.SPINNER />}
                 onClick={fetchOnlineFiles}
-                disabled={uploadLoading}
+                disabled={
+                  uploadLoading ||
+                  uploadingFiles.size > 0 ||
+                  deletingFiles.size > 0 ||
+                  publishingFiles.size > 0 ||
+                  depublishingFiles.size > 0
+                }
               >
                 Vernieuwen
               </ConActionMenu.Button>

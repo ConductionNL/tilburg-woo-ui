@@ -27,6 +27,8 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'eigen' },
     color: 'blue',
+    schema: 'product',
+    type: 'eigen',
   },
   ONTBREKEND_PRODUCT: {
     id: 'ontbrekend-product',
@@ -39,6 +41,8 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['leverancier', 'gemeente', 'samenwerking', 'community'],
     params: { type: 'ontbrekend' },
     color: 'blue',
+    schema: 'product',
+    type: 'ontbrekend',
   },
   DIENST: {
     id: 'dienst',
@@ -51,6 +55,8 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['leverancier', 'gemeente', 'samenwerking'],
     params: { type: 'dienst' },
     color: 'blue',
+    schema: 'dienst',
+    type: 'dienst',
   },
   GEBRUIK: {
     id: 'gebruik',
@@ -63,6 +69,8 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
     color: 'blue',
+    schema: 'gebruik',
+    type: null,
   },
   KOPPELING: {
     id: 'koppeling',
@@ -75,6 +83,8 @@ export const DASHBOARD_WIZARDS = {
     groupTypes: ['gemeente', 'samenwerking', 'community'],
     params: {},
     color: 'blue',
+    schema: 'koppeling',
+    type: null,
   },
 };
 
@@ -92,6 +102,7 @@ export const getDashboardWizards = (user = null, userOrganization = null) => {
  * Get the full URL for a wizard, including any required parameters
  */
 export const getWizardUrl = (wizard) => {
+  if (!wizard) return null;
   let url = wizard.path;
 
   if (wizard.params && Object.keys(wizard.params).length > 0) {
