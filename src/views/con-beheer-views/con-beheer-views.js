@@ -3,13 +3,15 @@ import { observer } from 'mobx-react-lite';
 import { useParams, useLocation } from 'react-router';
 import { AcFlex, AcSection } from '@atoms';
 import { withStore } from '@stores';
-import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
+// import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader, ConDynamicSidenav } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
+import { VISUALS } from '@constants';
 import { dia, shapes } from 'jointjs';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import svgPanZoom from 'svg-pan-zoom';
 import { AcCheckbox } from '@molecules';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 
 /**
  * Beheer Views Component
@@ -25,14 +27,19 @@ const ConBeheerViews = ({ store }) => {
   const [viewRelationsData, setViewRelationsData] = useState(null);
   const [viewIsDoneLoading, setViewIsDoneLoading] = useState(false);
   const [panZoomInstance, setPanZoomInstance] = useState(null);
-  const [filters, setFilters] = useState({ gebruik: false, product: false });
+  const [filters, setFilters] = useState({
+    gebruik: false,
+    product: false,
+    deelnames: false,
+  });
 
   // Sync filters from URL
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const gebruik = sp.get('gebruik') === 'true';
     const product = sp.get('product') === 'true';
-    setFilters({ gebruik, product });
+    const deelnames = sp.get('deelnames') === 'true';
+    setFilters({ gebruik, product, deelnames });
   }, [location.search]);
 
   // Load view by route param when present (include filters)
@@ -43,8 +50,9 @@ const ConBeheerViews = ({ store }) => {
     const q = {};
     if (filters.gebruik) q.gebruik = true;
     if (filters.product) q.product = true;
+    if (filters.deelnames) q.deelnames = true;
     gemma.fetchView(params.id, q);
-  }, [gemma, params?.id, filters.gebruik, filters.product]);
+  }, [gemma, params?.id, filters.gebruik, filters.product, filters.deelnames]);
 
   // Helper function to get view name
   const getViewName = (view) => {
@@ -63,6 +71,8 @@ const ConBeheerViews = ({ store }) => {
       else sp.delete('gebruik');
       if (next.product) sp.set('product', 'true');
       else sp.delete('product');
+      if (next.deelnames) sp.set('deelnames', 'true');
+      else sp.delete('deelnames');
       const qs = sp.toString();
       window.history.replaceState(
         null,
@@ -73,28 +83,42 @@ const ConBeheerViews = ({ store }) => {
     });
   };
 
-  // Process view data for rendering - using nested data directly
+  // Process view data for rendering - prefer new API (viewNodes/viewRelationships)
   useEffect(() => {
-    if (!gemma.get_view) {
+    if (!gemma || !gemma.get_view) {
       setViewIsDoneLoading(false);
       return;
     }
 
-    // Reset loading state
     setViewIsDoneLoading(false);
 
-    // Extract nodes and relationships directly from the view response
-    const nodes = gemma.get_view.nodes || gemma.get_view.viewNodes || [];
-    const relationships =
-      gemma.get_view.connections || gemma.get_view.viewRelationships || [];
+    if (Array.isArray(gemma.get_view.viewNodes)) {
+      const sanitizedNodes = (gemma.get_view.viewNodes || []).map((node) => ({
+        ...node,
+        viewNodeId:
+          node.viewNodeId ||
+          node.id ||
+          node.identifier ||
+          node.modelNodeId ||
+          'unknown',
+        name: node.name || node.elementProperties?.name || 'unknown',
+        type: (
+          node.type ||
+          node.elementProperties?.gemmaType ||
+          'dataobject'
+        ).toLowerCase(),
+      }));
+      setViewNodesData(sanitizedNodes);
+      setViewRelationsData(gemma.get_view.viewRelationships || []);
+      return;
+    }
 
-    // Set the data directly - no additional API calls needed
+    // Fallback to legacy structures if present
+    const nodes = gemma.get_view.nodes || [];
+    const relationships = gemma.get_view.connections || [];
     setViewNodesData(nodes);
     setViewRelationsData(relationships);
-
-    // Set loading complete
-    setViewIsDoneLoading(true);
-  }, [gemma.get_view]);
+  }, [gemma && gemma.get_view]);
 
   // Render view when data is ready (same logic as public version)
   useEffect(() => {
@@ -123,7 +147,7 @@ const ConBeheerViews = ({ store }) => {
         el: container,
         model: outputGraph,
         width: 1168,
-        height: 800,
+        height: 'auto',
         gridSize: 1,
         interactive: {
           elementMove: false,
@@ -142,55 +166,52 @@ const ConBeheerViews = ({ store }) => {
         },
       });
 
-      // Convert nodes function - data is already nested in API response
-      const convertToViewNode = (node) => {
-        // Handle both API response structures
-        return {
-          modelNodeId: node.modelNodeId || node.elementRef || node.identifier,
-          viewNodeId: node.viewNodeId || node.identifier || node.modelNodeId,
-          name: node.name || 'Unknown',
-          type: node.type || 'dataobject',
-          x: node.x || 0,
-          y: node.y || 0,
-          width: node.width || 120,
-          height: node.height || 80,
-          style: {
-            fillColor: node.color || '#ffffff',
-            color: node.borderColor || '#000000',
-          },
-          description: node.description || null,
-        };
-      };
+      let viewNodes = [];
+      let viewRelationships = [];
 
-      // Convert relationships function - data is already nested in API response
-      const convertToViewRelationship = (relationship) => {
-        return {
-          modelRelationshipId:
-            relationship.modelRelationshipId ||
-            relationship.relationshipRef ||
-            relationship.identifier,
-          viewRelationshipId:
-            relationship.viewRelationshipId || relationship.identifier,
-          name: relationship.name || relationship.label || '',
-          type: relationship.type || 'association',
-          sourceId:
-            relationship.sourceId ||
-            relationship.sourceElementRef ||
-            relationship.source,
-          targetId:
-            relationship.targetId ||
-            relationship.targetElementRef ||
-            relationship.target,
-        };
-      };
-
-      // Convert nodes for rendering - use already processed data
-      const viewNodes = (viewNodesData || []).map(convertToViewNode).filter(Boolean);
-
-      // Convert relationships for rendering - use already processed data
-      const viewRelationships = (viewRelationsData || [])
-        .map(convertToViewRelationship)
-        .filter(Boolean);
+      if (Array.isArray(gemma.get_view.viewNodes)) {
+        viewNodes = viewNodesData || [];
+        viewRelationships = (viewRelationsData || []).map((r) => ({
+          modelRelationshipId: r.modelRelationshipId,
+          sourceId: r.sourceId,
+          targetId: r.targetId,
+          viewRelationshipId: r.viewRelationshipId,
+          type: (r.type || 'relationship').toLowerCase(),
+          bendpoints: Array.isArray(r.bendpoints)
+            ? r.bendpoints.map((b) => ({
+                x: parseFloat(b.x) || 0,
+                y: parseFloat(b.y) || 0,
+              }))
+            : [],
+          label: {},
+        }));
+      } else {
+        // Legacy fallback: map minimal fields
+        viewNodes = (viewNodesData || []).map((n) => ({
+          modelNodeId: n.elementRef || n.identifier || n.modelNodeId,
+          viewNodeId: n.identifier || n.viewNodeId || n.modelNodeId,
+          name: n.name || 'unknown',
+          type: (n.type || 'dataobject').toLowerCase(),
+          x: n.position?.x || n.x || 0,
+          y: n.position?.y || n.y || 0,
+          width: n.position?.w || n.width || 120,
+          height: n.position?.h || n.height || 80,
+        }));
+        viewRelationships = (viewRelationsData || []).map((r) => ({
+          modelRelationshipId: r.relationshipRef || r.identifier,
+          sourceId: r.source || r.sourceElementRef,
+          targetId: r.target || r.targetElementRef,
+          viewRelationshipId: r.identifier,
+          type: (r.type || 'relationship').toLowerCase(),
+          bendpoints: Array.isArray(r.bendpoints)
+            ? r.bendpoints.map((b) => ({
+                x: parseFloat(b.x) || 0,
+                y: parseFloat(b.y) || 0,
+              }))
+            : [],
+          label: {},
+        }));
+      }
 
       // Render the graph (match public views list for consistent colors)
       ViewRenderer.renderToGraph(
@@ -579,7 +600,7 @@ const ConBeheerViews = ({ store }) => {
               </p>
             </div>
 
-            {/* Filters and Download Button */}
+            {/* Filters en acties */}
             <div className='con-views-dropdown-container'>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                 <AcCheckbox
@@ -592,19 +613,43 @@ const ConBeheerViews = ({ store }) => {
                   checked={filters.product}
                   onChange={(checked) => handleToggleFilter('product')(checked)}
                 />
+                <AcCheckbox
+                  label='Deelnames'
+                  checked={filters.deelnames}
+                  onChange={(checked) => handleToggleFilter('deelnames')(checked)}
+                />
               </div>
 
-              {/* Download SVG Button - Next to dropdown */}
+              {/* Acties */}
               {gemma?.get_view && !gemma?.get_viewError && (
-                <PrimaryActionButton
-                  onClick={downloadSvg}
-                  disabled={!viewIsDoneLoading}
-                  data-tooltip-id={TOOLTIP_ID}
-                  data-tooltip-content='Download weergave als SVG'
-                  style={{ marginLeft: '1rem' }}
-                >
-                  Download SVG
-                </PrimaryActionButton>
+                <ConActionMenu className='ac-gemma-view-header-download-button'>
+                  <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
+                    Acties
+                  </ConActionMenu.Trigger>
+
+                  <ConActionMenu.Menu position='right'>
+                    <ConActionMenu.Button
+                      icon={<VISUALS.DOWNLOAD />}
+                      onClick={downloadSvg}
+                      disabled={!viewIsDoneLoading}
+                    >
+                      Download SVG
+                    </ConActionMenu.Button>
+                    <ConActionMenu.Button
+                      icon={<VISUALS.DOWNLOAD />}
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/amef/download', { method: 'POST' });
+                        } catch (_e) {
+                          /* ignore */
+                        }
+                      }}
+                      disabled={!viewIsDoneLoading}
+                    >
+                      Download AMEF
+                    </ConActionMenu.Button>
+                  </ConActionMenu.Menu>
+                </ConActionMenu>
               )}
             </div>
           </div>
