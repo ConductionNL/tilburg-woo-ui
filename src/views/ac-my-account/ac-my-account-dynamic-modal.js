@@ -1,61 +1,32 @@
-// eslint-disable-next-line import/no-unresolved
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal, ConDynamicSchemaForm } from '@components';
+import AcModal from '@components/ac-modal/ac-modal';
 import { VISUALS } from '@constants';
-import { AcFlex } from '@atoms';
-// eslint-disable-next-line import/no-unresolved
-import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
-
-import { collapseExtendedObjects } from '@src/utilities';
+import { Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
+import ConDynamicSchemaForm from '@components/con-dynamic-schema-form/con-dynamic-schema-form';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
 import _ from 'lodash';
+import { collapseExtendedObjects } from '@src/utilities';
+import { AcFlex } from '@atoms';
 
 const DEFAULT_CONFIG_OVERRIDES = {};
 const DEFAULT_PRE_SELECTED = {};
 
-/**
- * Generic Form Modal Component
- * This component can handle all form modal types through configuration
- *
- * Key Features:
- * - Uses FormModalConfigFactory for type-specific configurations
- * - Automatically constructs API endpoints from beheer page config
- * - Supports dynamic options loading and field dependencies
- * - Handles field mappings between schema and internal form state
- * - Integrates with object store for schema management
- *
- * @param {Object} props - Component props
- * @param {string} props.type - The form type (e.g., 'applicaties', 'organisaties')
- * @param {Object} props.data - The data object to edit (for edit mode)
- * @param {boolean} props.showModal - Controls modal visibility
- * @param {function} props.onClose - Called when modal closes
- * @param {function} props.onSuccess - Called on successful submission
- * @param {boolean} props.isEdit - Whether this is an edit operation
- * @param {Object} props.preSelected - Pre-selected values for the form
- * @param {Object} props.configOverrides - Configuration overrides
- */
-const ConGenericFormModal = ({
+const AcMyAccountDynamicModal = ({
   store: { object, user },
-  type,
-  data = null,
   showModal = false,
   onClose,
   onSuccess,
+  data = null,
+  //   formData: initialFormData,
+  type,
+  configOverrides = DEFAULT_CONFIG_OVERRIDES,
   isEdit = false,
   preSelected = DEFAULT_PRE_SELECTED,
-  configOverrides = DEFAULT_CONFIG_OVERRIDES,
-  onMounted,
   metadata = {},
 }) => {
-  // Signal to parent that this modal component has mounted
-  useEffect(() => {
-    onMounted?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const modalRef = useRef(null);
   const formRef = useRef(null);
 
@@ -76,7 +47,6 @@ const ConGenericFormModal = ({
     }
   }, [type, configOverrides]);
 
-  // Form state
   const [formData, setFormData] = useState({});
   const [isValid, setIsValid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,56 +151,6 @@ const ConGenericFormModal = ({
         setFieldOptions(fieldName, optionConfig());
         return;
       }
-
-      if (optionConfig.type === 'collection') {
-        // Dynamic options from API collection
-
-        setFieldOptionsLoading(fieldName, true);
-
-        try {
-          await object.fetchCollection(
-            optionConfig.register,
-            optionConfig.schema,
-            { ...optionConfig.params, page: 1, limit: 9999 },
-            false,
-            'form-options'
-          );
-
-          const objectType = object.getTypeFromParams(
-            optionConfig.register,
-            optionConfig.schema,
-            null,
-            'form-options'
-          );
-
-          const collection = object.getCollection(objectType);
-          let results = collection.results || [];
-
-          // Apply filter if provided
-          if (optionConfig.filter && typeof optionConfig.filter === 'function') {
-            results = results.filter((item) => optionConfig.filter(item, formData));
-          }
-
-          // Map results to options format
-          const fieldOptions = results.map((item) => ({
-            value:
-              typeof optionConfig.valueField === 'function'
-                ? optionConfig.valueField(item)
-                : item[optionConfig.valueField],
-            label:
-              typeof optionConfig.labelField === 'function'
-                ? optionConfig.labelField(item)
-                : item[optionConfig.labelField],
-          }));
-
-          setFieldOptions(fieldName, fieldOptions);
-        } catch (error) {
-          console.error(`Error loading options for ${fieldName}:`, error);
-          setFieldOptions(fieldName, []);
-        } finally {
-          setFieldOptionsLoading(fieldName, false);
-        }
-      }
     },
     [object]
   );
@@ -312,7 +232,8 @@ const ConGenericFormModal = ({
   // Initialize form data when modal opens or data changes
   const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (!config || !showModal || hasInitializedRef.current || type === 'init') return;
+    if (!config || !showModal || hasInitializedRef.current || type === 'init')
+      return;
     if (schemaLoading || !schema?.properties) return; // wait for stable schema
 
     const schemaInitialData = generateInitialDataFromSchema(schema);
@@ -365,7 +286,12 @@ const ConGenericFormModal = ({
   const previousFormDataRef = useRef({}); // Track previous form data for dependency comparison
   useEffect(() => {
     // Only run additional effects when modal is open and type is not 'init'
-    if (!showModal || !config?.additionalEffects?.length || !formData || type === 'init') {
+    if (
+      !showModal ||
+      !config?.additionalEffects?.length ||
+      !formData ||
+      type === 'init'
+    ) {
       return;
     }
 
@@ -751,9 +677,6 @@ const ConGenericFormModal = ({
     ];
   };
 
-  // Handle modal open
-  const handleModalOpen = () => modalRef?.current?.showModal();
-
   // Handle modal close
   const handleModalClose = () => {
     if (!config) return;
@@ -770,13 +693,6 @@ const ConGenericFormModal = ({
     onClose?.();
   };
 
-  // Open modal when showModal prop changes
-  useEffect(() => {
-    if (showModal) {
-      handleModalOpen();
-    }
-  }, [showModal]);
-
   // Add event listener for modal close
   useEffect(() => {
     const modal = modalRef.current;
@@ -786,23 +702,16 @@ const ConGenericFormModal = ({
     }
   }, [modalRef.current]);
 
-  // Don't render if no configuration
-  if (!config) {
-    console.error(`No configuration found for form type: ${type}`);
-    return null;
-  }
-
-  // Don't render if modal should not be shown
-  if (!showModal) {
-    return null;
-  }
-
   // Generate title - prefer schema title over type slug
   const schemaTitle = schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
   const title = isEdit ? `${schemaTitle} bewerken` : `${schemaTitle} toevoegen`;
 
-  console.log({ title });
-  console.log({ formData });
+  useEffect(() => {
+    if (showModal) {
+      setFormData(data);
+      modalRef?.current?.showModal();
+    }
+  }, [showModal, data]);
 
   return (
     <AcModal
@@ -870,4 +779,4 @@ const ConGenericFormModal = ({
   );
 };
 
-export default withStore(observer(ConGenericFormModal));
+export default withStore(observer(AcMyAccountDynamicModal));

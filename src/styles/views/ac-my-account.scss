@@ -18,11 +18,11 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    
+
     .ac-register-review__org-select {
       min-width: 200px;
     }
-    
+
     // Ensure button styling is consistent
     .ac-button {
       flex-shrink: 0;
@@ -74,4 +74,8 @@
   .utrecht-alert__content {
     width: 100%;
   }
+}
+
+.con-my-account-description {
+  background-color: inherit !important;
 }

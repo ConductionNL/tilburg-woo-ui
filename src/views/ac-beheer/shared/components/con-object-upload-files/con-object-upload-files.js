@@ -498,8 +498,8 @@ const ConObjectUploadFiles = ({
             <ConActionMenu.Menu position='right'>
               <ConActionMenu.Button
                 icon={<VISUALS.SPINNER />}
-                onClick={refetchFiles}
-                disabled={isLoading}
+                onClick={fetchOnlineFiles}
+                disabled={uploadLoading}
               >
                 Vernieuwen
               </ConActionMenu.Button>

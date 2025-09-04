@@ -17,7 +17,7 @@ import ReactSelect from 'react-select';
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
-import ConGenericFormModal from '@views/ac-beheer/core/modals/con-generic-form-modal/con-generic-form-modal';
+import AcMyAccountDynamicModal from './ac-my-account-dynamic-modal';
 
 const AcMyAccount = ({ store }) => {
   const [userData, setUserData] = useState(null);
@@ -76,6 +76,11 @@ const AcMyAccount = ({ store }) => {
 
   const setNewFieldDataAndFetch = (v, field) => {
     fullActiveOrganisation[field] = v;
+
+    fetchFullOrganisationData(fullActiveOrganisation?.['@self'].id);
+  };
+  const setNewDataAndFetch = (v) => {
+    setFullActiveOrganisation(v);
 
     fetchFullOrganisationData(fullActiveOrganisation?.['@self'].id);
   };
@@ -204,7 +209,9 @@ const AcMyAccount = ({ store }) => {
   };
 
   // Handle successful form submissions
-  const handleOrgFormSuccess = async () => {
+  const handleOrgFormSuccess = async (v) => {
+    console.log('handleOrgFormSuccess', v);
+    setNewDataAndFetch(v);
     setShowOrgModal(false);
     // Refresh user data to get updated organization info
     await fetchUserData();
@@ -226,36 +233,6 @@ const AcMyAccount = ({ store }) => {
     setShowDepublishModal(false);
     // Refresh user data
     await fetchUserData();
-  };
-
-  // Handle form field changes
-  const handleFormChange = (field, value) => {
-    setEditFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // Handle form submission
-  const handleFormSubmit = async () => {
-    if (!activeOrganisation || !fullActiveOrganisation) return;
-
-    try {
-      // Update the organization using the object store
-      await object.patchObject(
-        'voorzieningen',
-        'organisatie',
-        activeOrganisation.uuid || activeOrganisation.id,
-        editFormData
-      );
-
-      // Close the form and refresh data
-      setIsEditingOrg(false);
-      await fetchUserData();
-    } catch (error) {
-      console.error('Error updating organization:', error);
-      // You could add error handling here
-    }
   };
 
   const shortTooltip = (type) =>
@@ -670,20 +647,25 @@ const AcMyAccount = ({ store }) => {
           />
 
           {/* Dynamic form modal for organization editing */}
-          {showOrgModal && activeOrganisation && (
-            <ConGenericFormModal
+          {showOrgModal && fullActiveOrganisation && (
+            <AcMyAccountDynamicModal
               showModal={showOrgModal}
               onClose={() => setShowOrgModal(false)}
               onSuccess={handleOrgFormSuccess}
               type='organisaties'
               isEdit={true}
-              data={fullActiveOrganisation || activeOrganisation}
+              fieldConfigs={{
+                status: {
+                  visible: false,
+                },
+              }}
+              data={fullActiveOrganisation}
             />
           )}
 
           {/* Dynamic form modal for contact person editing */}
           {showContactModal && userData && (
-            <ConGenericFormModal
+            <AcMyAccountDynamicModal
               showModal={showContactModal}
               onClose={() => setShowContactModal(false)}
               onSuccess={handleContactFormSuccess}
@@ -702,7 +684,7 @@ const AcMyAccount = ({ store }) => {
 
           {/* Publish modal */}
           {showPublishModal && activeOrganisation && (
-            <ConGenericFormModal
+            <AcMyAccountDynamicModal
               showModal={showPublishModal}
               onClose={() => setShowPublishModal(false)}
               onSuccess={handlePublishFormSuccess}
@@ -714,7 +696,7 @@ const AcMyAccount = ({ store }) => {
 
           {/* Depublish modal */}
           {showDepublishModal && activeOrganisation && (
-            <ConGenericFormModal
+            <AcMyAccountDynamicModal
               showModal={showDepublishModal}
               onClose={() => setShowDepublishModal(false)}
               onSuccess={handleDepublishFormSuccess}
