@@ -262,13 +262,48 @@ export const renderField = ({
   // Render based on component type
   if (fieldConfig.component === 'Boolean') {
     return (
-      <BooleanField
-        key={path}
-        label={fieldConfig.label}
-        value={!!value}
-        onChange={handleChange}
-        disabled={isDisabled}
-      />
+      <div key={`${path}-${resetKey}`}>
+        <label className='utrecht-form-label'>
+          <Heading
+            level={4}
+            className={clsx({
+              'ac-form-field-header-info': fieldConfig.description,
+            })}
+          >
+            <div>
+              {fieldConfig.label}
+              {validation.required && (
+                <>
+                  <span className='required-indicator' aria-hidden='true'>
+                    *
+                  </span>
+                  <span className='sr-only'>(verplicht)</span>
+                </>
+              )}
+            </div>
+            {fieldConfig.description && (
+              <>
+                <span
+                  data-tooltip-id={TOOLTIP_ID}
+                  data-tooltip-content={fieldConfig.description}
+                  className='info-indicator'
+                  role='img'
+                  aria-label={fieldConfig.description}
+                >
+                  <VISUALS.INFO />
+                </span>
+              </>
+            )}
+          </Heading>
+        </label>
+        <BooleanField
+          key={path}
+          label="Ja/Nee"
+          value={!!value}
+          onChange={handleChange}
+          disabled={isDisabled}
+        />
+      </div>
     );
   }
 

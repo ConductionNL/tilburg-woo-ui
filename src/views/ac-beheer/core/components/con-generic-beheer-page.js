@@ -342,21 +342,50 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     if (!config || !dataProperties)
       return { defaultHeaderIds: [], shouldShowAllHeaders: true };
 
+    const headersList = headers;
+
+    // Helper to map schema keys or custom header ids to actual header ids
+    const mapKeysToHeaderIds = (keys) => {
+      const result = new Set();
+      keys.forEach((keyOrId) => {
+        const match = headersList.find((h) => h.id === keyOrId || h.key === keyOrId);
+        if (match) result.add(match.id);
+      });
+      return result;
+    };
+
+    // 1) Prefer explicit defaults from config.defaultHeaders if provided
+    const explicitDefaults = Array.isArray(config.defaultHeaders)
+      ? config.defaultHeaders
+      : [];
+    const explicitDefaultIds = mapKeysToHeaderIds(explicitDefaults);
+    if (explicitDefaultIds.size > 0) {
+      return {
+        defaultHeaderIds: Array.from(explicitDefaultIds),
+        shouldShowAllHeaders: false,
+      };
+    }
+
+    // 2) Fallback to schema-based table.default flags
     const entries = Object.entries(dataProperties);
     const anyTable = entries.some(([, value]) => !!value?.table);
-    const defaultTrueKeys = new Set(
-      entries.filter(([, value]) => value?.table?.default === true).map(([k]) => k)
-    );
+    const defaultTrueKeys = entries
+      .filter(([, value]) => value?.table?.default === true)
+      .map(([k]) => k);
+    const defaultTrueIds = mapKeysToHeaderIds(defaultTrueKeys);
 
-    const showAll = !anyTable || defaultTrueKeys.size === 0;
+    const showAll = !anyTable || defaultTrueIds.size === 0;
     if (showAll) {
       return { defaultHeaderIds: [], shouldShowAllHeaders: true };
     }
 
-    const ids = headers.filter((h) => defaultTrueKeys.has(h.id)).map((h) => h.id);
-
-    return { defaultHeaderIds: ids, shouldShowAllHeaders: false };
-  }, [dataProperties, headers]);
+    return {
+      defaultHeaderIds: headersList
+        .filter((h) => defaultTrueIds.has(h.id))
+        .map((h) => h.id),
+      shouldShowAllHeaders: false,
+    };
+  }, [dataProperties, headers, config && config.defaultHeaders]);
 
   const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
   const defaultHeaderIdsKey = useMemo(
