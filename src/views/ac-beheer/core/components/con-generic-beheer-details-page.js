@@ -189,11 +189,15 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   useEffect(() => {
     if (isExtendView) return;
     if (!config?.schemaSlug || !data?.id) return;
-    const items = makeActionsForContext(data.id).map(({ key, label, onClick }) => ({
-      key,
-      label,
-      onClick,
-    }));
+    const items = makeActionsForContext(data.id).map(
+      ({ key, label, onClick, schema, icon }) => ({
+        key,
+        label,
+        onClick,
+        schema,
+        icon,
+      })
+    );
     setActionMenuItems(items);
   }, [config?.schemaSlug, data?.id, makeActionsForContext, isExtendView]);
 

@@ -6,6 +6,8 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@constants/wizards.constants';
+import { useNavigate } from 'react-router';
 
 /**
  * Reusable Details Actions Menu Component
@@ -44,6 +46,8 @@ const ConDetailsActionsMenu = ({
   onDepublish,
   onEdit,
 }) => {
+  const navigate = useNavigate();
+
   // Don't render if user is not authenticated
   if (!user?.isAuthenticated) {
     return null;
@@ -78,6 +82,36 @@ const ConDetailsActionsMenu = ({
     if (onDepublish) {
       onDepublish(id);
     }
+  };
+
+  /**
+   * Attempts to open a wizard for a create action if available.
+   * It infers the schema from `action.schema` or from a key formatted as `create-<schema>`.
+   * If a wizard is found and opened, returns true. Otherwise returns false.
+   * @param {Object} action - The action object containing schema and/or key
+   * @returns {boolean} True if wizard was opened, false otherwise
+   */
+  const attemptWizard = (action) => {
+    const schemaFromKey =
+      typeof action?.key === 'string' && action.key.startsWith('create-')
+        ? action.key.replace('create-', '')
+        : null;
+    const schema = action?.schema || schemaFromKey;
+
+    if (schema) {
+      const wizard = Object.values(DASHBOARD_WIZARDS).find(
+        (w) => w.schema === schema
+      );
+      if (wizard) {
+        const url = getWizardUrl(wizard);
+        if (url) {
+          navigate(url);
+          return true;
+        }
+      }
+    }
+
+    return false;
   };
 
   return (
@@ -185,15 +219,24 @@ const ConDetailsActionsMenu = ({
         {relatedActions.length > 0 && <ConActionMenu.Divider />}
 
         {/* Related schema actions */}
-        {relatedActions.map((action) => (
-          <ConActionMenu.Button
-            key={action.key || action.label}
-            icon={action.icon || <VISUALS.PLUS />}
-            onClick={action.onClick}
-          >
-            {action.label}
-          </ConActionMenu.Button>
-        ))}
+        {relatedActions.map((action) => {
+          const handleClick = () => {
+            const opened = attemptWizard(action);
+            if (opened) return;
+
+            action?.onClick?.();
+          };
+
+          return (
+            <ConActionMenu.Button
+              key={action.key || action.label}
+              icon={action.icon || <VISUALS.PLUS />}
+              onClick={handleClick}
+            >
+              {action.label}
+            </ConActionMenu.Button>
+          );
+        })}
       </ConActionMenu.Menu>
     </ConActionMenu>
   );

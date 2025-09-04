@@ -151,24 +151,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
   const showManageActions = !['extendview', 'view'].includes(config?.routeType);
 
-  // Related create actions via shared hook
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: config?.schemaSlug,
-    currentType: type,
-    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
-      setDynamicCreateTargetType(targetType);
-      setDynamicCreatePreSelected(preSelected);
-      // Handle outgoing relationship metadata
-      if (metadata.isOutgoing) {
-        // Store metadata for post-creation relationship updates
-        // (handled by the form modal after successful creation)
-      }
-      setOpenModal('dynamicCreate');
-    },
-    currentObject: null, // List page doesn't have a single current object
-  });
+  // Related create actions via shared hook (declared after cancelAllRequests effect
+  // to avoid its initial fetch being aborted on type changes)
+  let makeActionsForContext; // will be assigned below
 
   const fetchData = useCallback(
     async (searchParams = {}) => {
@@ -237,6 +222,23 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setTableHeaders([]);
     setShowSearch(false);
   }, [type]);
+
+  // Initialize related create actions after cancellation effect definition
+  ({ makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      if (metadata.isOutgoing) {
+        // handled by the form modal after successful creation
+      }
+      setOpenModal('dynamicCreate');
+    },
+    currentObject: null,
+  }));
 
   // Fetch data when component is ready and pagination changes
   useEffect(() => {
