@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Fragment } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -200,6 +200,19 @@ const AcMyAccount = ({ store }) => {
 
     loadUserData();
   }, []);
+
+  // Handle hash scrolling after data is loaded
+  useEffect(() => {
+    if (!loading && userData && window.location.hash) {
+      // Let browser handle hash scrolling after content is loaded
+      setTimeout(() => {
+        const element = document.querySelector(window.location.hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+  }, [loading, userData]);
 
   // Handle organization switching using existing updateUser function
   const handleOrganisationSwitch = async (selectedOption) => {
@@ -601,6 +614,7 @@ const AcMyAccount = ({ store }) => {
                   )}
                 </div>
               )}
+            <div id='gebruikersgegevens' />
 
             {/* Gebruikersgegevens Section */}
             {userData && (
