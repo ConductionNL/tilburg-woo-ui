@@ -339,6 +339,22 @@ export class ObjectStore {
   collections = {};
 
   /**
+   * Multi-dimensional cache for immediate responses: register -> schema -> cached response
+   * @type {{[register: string]: {[schema: string]: {data: object[], timestamp: number, params: object}}}}
+   */
+  @observable
+  listCache = {};
+
+  /**
+   * Cache metadata and settings
+   * @type {{maxAge: number, backgroundRefreshThreshold: number}}
+   */
+  cacheConfig = {
+    maxAge: 5 * 60 * 1000, // 5 minutes in milliseconds
+    backgroundRefreshThreshold: 2 * 60 * 1000, // 2 minutes - when to refresh in background
+  };
+
+  /**
    * Loading states for different operations (fetch, create, update, etc.)
    * @type {{[type: string]: boolean}}
    * */
@@ -1524,6 +1540,11 @@ export class ObjectStore {
 
       await this.fetchCollection(register, schema);
       console.info(`✅ Collection refreshed after creating ${type} object:`, newObject.id);
+      
+      // Clear list cache since new object was created
+      this.clearListCache(register, schema);
+      console.info(`🗑️ Cleared list cache for ${register}/${schema} after creation`);
+      
       await this.setActiveObject(register, schema, newObject);
       this.setSuccess(type, true);
 
@@ -1599,6 +1620,10 @@ export class ObjectStore {
 
       // Refresh the entire collection to ensure data consistency
       await this.fetchCollection(registerId, schemaId);
+      
+      // Clear list cache since object was saved
+      this.clearListCache(registerId, schemaId);
+      console.info(`🗑️ Cleared list cache for ${registerId}/${schemaId} after save`);
 
       console.info(`✅ Collection refreshed after saving ${type} object:`, data.id);
       this.setSuccess(type, true);
@@ -1652,6 +1677,10 @@ export class ObjectStore {
 
       await this.fetchCollection(register, schema);
       console.info(`✅ Collection refreshed after updating ${type} object:`, id);
+      
+      // Clear list cache since object was updated
+      this.clearListCache(register, schema);
+      console.info(`🗑️ Cleared list cache for ${register}/${schema} after update`);
 
       runInAction(() => {
         // run in action to avoid Strict MobX warnings
@@ -1792,6 +1821,10 @@ export class ObjectStore {
         );
         this.setSelectedObjects(remainingSelected);
       }
+
+      // Clear list cache since object was deleted
+      this.clearListCache(registerId, schemaId);
+      console.info(`🗑️ Cleared list cache for ${registerId}/${schemaId} after deletion`);
 
       this.setSuccess(requestType, true);
       return true;
@@ -3007,6 +3040,225 @@ export class ObjectStore {
     });
 
     return results;
+  };
+
+  // ===============================
+  // CACHE-FIRST METHODS FOR IMMEDIATE RESPONSES
+  // ===============================
+
+  /**
+   * Gets cached data for immediate response, triggers background refresh if needed
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   * @returns {Object|null} Cached data or null if no cache exists
+   */
+  @action
+  getCachedList = (register, schema, params = {}) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) return null;
+
+    const cached = this.listCache[registerId]?.[schemaId];
+    if (!cached) return null;
+
+    // Check if cache is still valid
+    const now = Date.now();
+    const age = now - cached.timestamp;
+    
+    if (age > this.cacheConfig.maxAge) {
+      // Cache is too old, remove it
+      this.clearListCache(register, schema);
+      return null;
+    }
+
+    // Check if we should refresh in background
+    if (age > this.cacheConfig.backgroundRefreshThreshold) {
+      // Trigger background refresh (don't await)
+      this.refreshListInBackground(register, schema, params);
+    }
+
+    return cached.data;
+  };
+
+  /**
+   * Sets cached data for a register/schema combination
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Array} data - Array of objects to cache
+   * @param {Object} [params={}] - Query parameters used for the request
+   */
+  @action
+  setCachedList = (register, schema, data, params = {}) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) return;
+
+    if (!this.listCache[registerId]) {
+      this.listCache[registerId] = {};
+    }
+
+    this.listCache[registerId][schemaId] = {
+      data: data || [],
+      timestamp: Date.now(),
+      params: { ...params }
+    };
+  };
+
+  /**
+   * Clears cached data for a specific register/schema combination
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   */
+  @action
+  clearListCache = (register, schema) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) return;
+
+    if (this.listCache[registerId]?.[schemaId]) {
+      delete this.listCache[registerId][schemaId];
+    }
+  };
+
+  /**
+   * Clears all cached data
+   */
+  @action
+  clearAllListCaches = () => {
+    this.listCache = {};
+  };
+
+  /**
+   * Refreshes cached data in the background without blocking the UI
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   */
+  refreshListInBackground = async (register, schema, params = {}) => {
+    try {
+      const registerId = this.extractId(register);
+      const schemaId = this.extractId(schema);
+      
+      console.info(`🔄 Background refresh for ${registerId}/${schemaId}`);
+      
+      // Fetch fresh data without updating loading states (background operation)
+      const response = await nextcloudApi.get(
+        this._constructApiUrl(register, schema),
+        {
+          params: this._constructQueryParams(params),
+        }
+      );
+
+      if (response.ok) {
+        const data = response.data;
+        const results = data.results || [];
+        
+        // Update cache with fresh data
+        this.setCachedList(register, schema, results, params);
+        
+        console.info(`✅ Background refresh completed for ${registerId}/${schemaId} (${results.length} items)`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ Background refresh failed for ${register}/${schema}:`, error.message);
+      // Don't throw - this is a background operation
+    }
+  };
+
+  /**
+   * Cache-first fetch method that provides immediate response from cache,
+   * then refreshes data in background if needed
+   * @param {string|Object} register - Register identifier or object
+   * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters for the request
+   * @returns {Array} Array of objects (from cache or fresh fetch)
+   */
+  @action
+  fetchListCacheFirst = async (register, schema, params = {}) => {
+    const registerId = this.extractId(register);
+    const schemaId = this.extractId(schema);
+    
+    if (!registerId || !schemaId) {
+      throw new Error('Could not extract register or schema ID');
+    }
+
+    // Try to get cached data first
+    const cachedData = this.getCachedList(register, schema, params);
+    if (cachedData) {
+      console.info(`⚡ Immediate response from cache for ${registerId}/${schemaId} (${cachedData.length} items)`);
+      return cachedData;
+    }
+
+    // No cache available, do a fresh fetch
+    console.info(`🌐 Fresh fetch for ${registerId}/${schemaId} (no cache)`);
+    
+    const type = this.getTypeFromParams(registerId, schemaId);
+    this.setLoading(type, true);
+    
+    try {
+      const response = await nextcloudApi.get(
+        this._constructApiUrl(register, schema),
+        {
+          params: this._constructQueryParams(params),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${registerId}/${schemaId}`);
+      }
+
+      const data = response.data;
+      const results = data.results || [];
+      
+      // Cache the fresh data
+      this.setCachedList(register, schema, results, params);
+      
+      console.info(`✅ Fresh fetch completed for ${registerId}/${schemaId} (${results.length} items)`);
+      
+      return results;
+    } catch (error) {
+      console.error(`❌ Failed to fetch ${registerId}/${schemaId}:`, error);
+      throw error;
+    } finally {
+      this.setLoading(type, false);
+    }
+  };
+
+  /**
+   * Convenience method for fetching VNG-GEMMA elements with cache-first strategy
+   * @param {string} gemmaType - Type of GEMMA element ('referentiecomponent', 'standaard', etc.)
+   * @param {Object} [params={}] - Additional query parameters
+   * @returns {Array} Array of GEMMA elements
+   */
+  @action
+  fetchGemmaElementsCacheFirst = async (gemmaType, params = {}) => {
+    const queryParams = {
+      _limit: params._limit || 500,
+      _page: params._page || 1,
+      gemmaType: gemmaType,
+      ...params
+    };
+
+    return this.fetchListCacheFirst('vng-gemma', 'element', queryParams);
+  };
+
+  /**
+   * Convenience method for fetching modules with cache-first strategy
+   * @param {Object} [params={}] - Additional query parameters
+   * @returns {Array} Array of modules
+   */
+  @action
+  fetchModulesCacheFirst = async (params = {}) => {
+    const queryParams = {
+      _limit: params._limit || 20,
+      _page: params._page || 1,
+      ...params
+    };
+
+    return this.fetchListCacheFirst('voorzieningen', 'module', queryParams);
   };
 }
 
