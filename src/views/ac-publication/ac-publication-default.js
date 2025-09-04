@@ -140,12 +140,15 @@ const AcPublication = observer(
     useEffect(() => {
       if (!get_single?.['@self']?.schema?.slug || !id) return;
 
-      const items = makeActionsForContext(id).map(({ key, label, onClick }) => ({
-        key,
-        label,
-        onClick,
-        icon: <VISUALS.PLUS />,
-      }));
+      const items = makeActionsForContext(id).map(
+        ({ key, label, onClick, schema, icon }) => ({
+          key,
+          label,
+          onClick,
+          schema,
+          icon,
+        })
+      );
 
       setActionMenuItems(items);
     }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
@@ -167,7 +170,7 @@ const AcPublication = observer(
         }
       );
       if (!response.ok) {
-        console.error('Error fetching uses:', response.statusText)
+        console.error('Error fetching uses:', response.statusText);
         return;
       }
       const data = await response.json();
@@ -412,7 +415,10 @@ const AcPublication = observer(
                             // show unique headers
                             _.uniqBy(uses, (use) => use['@self'].schema.id).map(
                               (use, idx) => (
-                                <AcTab key={use['@self'].schema.id} selected={tabIndexUses === idx}>
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUses === idx}
+                                >
                                   <span>{use['@self'].schema.title}</span>
                                 </AcTab>
                               )
@@ -485,7 +491,10 @@ const AcPublication = observer(
                             // show unique headers
                             _.uniqBy(used, (use) => use['@self'].schema.id).map(
                               (use, idx) => (
-                                <AcTab key={use['@self'].schema.id} selected={tabIndexUsed === idx}>
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUsed === idx}
+                                >
                                   <span>{use['@self'].schema.title}</span>
                                 </AcTab>
                               )

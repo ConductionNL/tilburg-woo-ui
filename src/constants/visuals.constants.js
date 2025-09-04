@@ -201,6 +201,10 @@ const ENVELOPES_BULK = loadable(() =>
   import('-!svg-react-loader!@assets/images/envelopes-bulk.svg')
 );
 
+const WAND_SPARKLES_SOLID = loadable(() =>
+  import('-!svg-react-loader!@assets/images/wand-sparkles-solid.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -273,6 +277,7 @@ export const VISUALS = {
   MINUS,
   ENVELOPE,
   ENVELOPES_BULK,
+  WAND_SPARKLES_SOLID,
 };
 
 export default {};
