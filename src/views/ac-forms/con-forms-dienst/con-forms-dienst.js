@@ -1,5 +1,6 @@
 import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useSearchParams } from 'react-router-dom';
 import { withStore } from '@stores';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn } from '@src/atoms';
@@ -25,6 +26,9 @@ import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
 
 const ConFormsDienst = ({ store, userStore }) => {
+  const [searchParams] = useSearchParams();
+  const dienstId = searchParams.get('id') || '';
+  const isEditMode = !!dienstId;
   const [currentStep, setCurrentStep] = useState(0);
   const processStepsRef = useRef(null);
 
@@ -36,6 +40,11 @@ const ConFormsDienst = ({ store, userStore }) => {
     koppeling: null,
   });
   const [schemasLoading, setSchemasLoading] = useState(true);
+
+  // Edit-mode prefill state
+  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillError, setPrefillError] = useState(null);
+  const [prefillRetry, setPrefillRetry] = useState(0);
 
   // Dienst object (schema-compliant)
   const [dienst, setDienst] = useState({
@@ -80,9 +89,113 @@ const ConFormsDienst = ({ store, userStore }) => {
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null);
 
+  // Prefill dienst data when editing
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isEditMode) return;
+      setPrefillLoading(true);
+      setPrefillError(null);
+      try {
+        // Skip first stage in edit mode (start at step 1: Producten)
+        setCurrentStep(1);
+        await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
+          _extend: ['@self.schema', 'producten', 'modules', 'koppelingen'],
+        });
+        if (cancelled) return;
+
+        const fetched = store.object.getObject(
+          'voorzieningen_dienst',
+          String(dienstId)
+        );
+        if (!fetched) return;
+
+        // Map fetched dienst to local state shape
+        const mapId = (item) =>
+          item && typeof item === 'object'
+            ? String(item.id || item.value || item.uuid || item.slug || '')
+            : String(item || '');
+        const mapLabel = (item, fallback) => {
+          if (!item || typeof item !== 'object') return fallback || '';
+          return String(
+            item.naam || item.name || item.title || item.label || fallback || ''
+          );
+        };
+
+        const prefilledProductIds = Array.isArray(fetched.producten)
+          ? fetched.producten.map((p) => mapId(p)).filter(Boolean)
+          : [];
+        const prefilledModuleIds = Array.isArray(fetched.modules)
+          ? fetched.modules.map((m) => mapId(m)).filter(Boolean)
+          : [];
+        const prefilledKoppelingIds = Array.isArray(fetched.koppelingen)
+          ? fetched.koppelingen.map((k) => mapId(k)).filter(Boolean)
+          : [];
+
+        // Update main dienst object
+        setDienst((prev) => ({
+          ...prev,
+          naam: fetched.naam || '',
+          beschrijvingKort: fetched.beschrijvingKort || '',
+          beschrijvingLang: fetched.beschrijvingLang || '',
+          website: fetched.website || '',
+          logo: fetched.logo || '',
+          contactpersoon: fetched.contactpersoon || null,
+          aanbieder: fetched.aanbieder || '',
+          type: fetched.type || '',
+          producten: prefilledProductIds,
+          modules: prefilledModuleIds,
+          koppelingen: prefilledKoppelingIds,
+        }));
+
+        // Initialize dienstType from API or default to 'eigen-organisatie'
+        setDienstType(
+          (typeof fetched.dienstType === 'string' && fetched.dienstType) ||
+            'eigen-organisatie'
+        );
+
+        // Prefill selections and labels/options for UI components
+        setSelectedProductIds(prefilledProductIds);
+        setSelectedModuleIds(prefilledModuleIds);
+        setSelectedKoppelingIds(prefilledKoppelingIds);
+
+        // Ensure selected product options exist so chips/inputs can render labels
+        const productOptionsFromFetched = (
+          Array.isArray(fetched.producten) ? fetched.producten : []
+        )
+          .map((p, idx) => ({
+            value: mapId(p),
+            label: mapLabel(p, `Product ${idx + 1}`),
+            data: p,
+          }))
+          .filter((o) => o.value && o.label);
+        if (productOptionsFromFetched.length > 0) {
+          setSelectedProductOptions(productOptionsFromFetched);
+          const labels = {};
+          productOptionsFromFetched.forEach((o) => {
+            labels[o.value] = o.label;
+          });
+          setProductLabels((prev) => ({ ...prev, ...labels }));
+        }
+      } catch (e) {
+        setPrefillError(
+          'Het laden van de dienst is mislukt. Probeer het opnieuw of start een nieuwe dienst.'
+        );
+      } finally {
+        if (!cancelled) setPrefillLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, dienstId, prefillRetry, store]);
+
   // Clickable previous steps
   useEffect(() => {
     if (!processStepsRef.current) return;
+    if (prefillLoading || prefillError) return;
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
         '.denhaag-process-steps .denhaag-process-steps__step'
@@ -102,7 +215,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     };
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentStep]);
+  }, [currentStep, prefillLoading, prefillError]);
 
   // Ensure /me is refreshed when the wizard mounts (so stages can read active organisation)
   useEffect(() => {
@@ -600,7 +713,16 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Include service type for processing
         dienstType: dienstType,
       };
-      await store.object.createObject('voorzieningen', 'dienst', payload);
+      if (isEditMode) {
+        await store.object.updateObject(
+          'voorzieningen',
+          'dienst',
+          String(dienstId),
+          payload
+        );
+      } else {
+        await store.object.createObject('voorzieningen', 'dienst', payload);
+      }
       setSaveResult('success');
     } catch (e) {
       setSaveResult('error');
@@ -614,10 +736,11 @@ const ConFormsDienst = ({ store, userStore }) => {
       <AcContainer>
         <AcColumn gap='tiger'>
           <div>
-            <Heading1>{getPageTitle()}</Heading1>
+            <Heading1>{isEditMode ? 'Dienst updaten' : getPageTitle()}</Heading1>
             <Paragraph>
-              Voer de gegevens van de dienst in, selecteer relevante producten,
-              applicaties en koppelingen en controleer uw invoer.
+              {isEditMode
+                ? 'Werk uw dienstgegevens bij in onze catalogus.'
+                : 'Voer de gegevens van de dienst in, selecteer relevante producten, applicaties en koppelingen en controleer uw invoer.'}
             </Paragraph>
           </div>
 
@@ -625,10 +748,18 @@ const ConFormsDienst = ({ store, userStore }) => {
 
           {saveResult === 'success' ? (
             <div>
-              <Heading1>🎉 Dienst succesvol aangemeld!</Heading1>
+              <Heading1>
+                {isEditMode
+                  ? '🎉 Dienst succesvol geüpdatet!'
+                  : '🎉 Dienst succesvol aangemeld!'}
+              </Heading1>
               <Alert type='success'>
                 <Paragraph>
-                  <strong>Uw dienst is succesvol geregistreerd!</strong>
+                  <strong>
+                    {isEditMode
+                      ? 'Uw dienst is succesvol bijgewerkt!'
+                      : 'Uw dienst is succesvol geregistreerd!'}
+                  </strong>
                 </Paragraph>
                 <Paragraph>
                   De dienst {dienst.naam || 'Onbekende dienst'} en de geselecteerde
@@ -784,7 +915,33 @@ const ConFormsDienst = ({ store, userStore }) => {
                     </Alert>
                   )}
 
-                  {renderStep(currentStep)}
+                  {/* Prefill error UI */}
+                  {prefillError && (
+                    <Alert type='error'>
+                      <Paragraph>{prefillError}</Paragraph>
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '0.5rem',
+                          marginTop: '0.5rem',
+                        }}
+                      >
+                        <AcButton
+                          style='button'
+                          icon={<VISUALS.ARROW_RIGHT />}
+                          onClick={() => {
+                            // Retry prefill by re-running effect
+                            setPrefillError(null);
+                            setPrefillRetry((n) => n + 1);
+                          }}
+                        >
+                          Opnieuw proberen
+                        </AcButton>
+                      </div>
+                    </Alert>
+                  )}
+
+                  {!prefillError && renderStep(currentStep)}
 
                   <div
                     className={clsx(
@@ -815,6 +972,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                           onClick={handleNextStep}
                           disabled={
                             getDisabledStatus(currentStep) ||
+                            prefillLoading ||
                             saving ||
                             schemasLoading
                           }
@@ -836,9 +994,13 @@ const ConFormsDienst = ({ store, userStore }) => {
                         icon={<VISUALS.CLIPBOARD_CHECK />}
                         onClick={handleSaveDienst}
                         loading={saving}
-                        disabled={saving}
+                        disabled={saving || prefillLoading}
                       >
-                        {saving ? 'Bezig met opslaan...' : 'Dienst aanmelden'}
+                        {saving
+                          ? 'Bezig met opslaan...'
+                          : isEditMode
+                          ? 'Dienst updaten'
+                          : 'Dienst aanmelden'}
                       </AcButton>
                     )}
                   </div>
