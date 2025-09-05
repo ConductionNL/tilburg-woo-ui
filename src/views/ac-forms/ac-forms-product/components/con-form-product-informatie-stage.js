@@ -22,6 +22,7 @@ const ConFormProductInformatieStage = memo(
         className='ac-register-form-section'
         role='group'
         aria-labelledby='product-informatie-section-title'
+        aria-busy={loading ? 'true' : 'false'}
       >
         <h2 id='product-informatie-section-title' className='sr-only'>
           Product informatie
