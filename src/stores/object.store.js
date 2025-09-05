@@ -3065,6 +3065,27 @@ export class ObjectStore {
   // ===============================
 
   /**
+   * Generates a cache key that includes critical query parameters
+   * @param {string} registerId - Register identifier
+   * @param {string} schemaId - Schema identifier  
+   * @param {Object} params - Query parameters
+   * @returns {string} Cache key
+   */
+  generateCacheKey = (registerId, schemaId, params = {}) => {
+    const baseKey = `${registerId}_${schemaId}`;
+    
+    // For VNG-GEMMA elements, include gemmaType in cache key since it's critical
+    if (registerId === 'vng-gemma' && schemaId === 'element' && params.gemmaType) {
+      return `${baseKey}_${params.gemmaType}`;
+    }
+    
+    // Add other critical parameters as needed for different schemas
+    // For example, if there are other schemas where specific params affect results
+    
+    return baseKey;
+  };
+
+  /**
    * Gets cached data for immediate response, triggers background refresh if needed
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
@@ -3078,7 +3099,10 @@ export class ObjectStore {
     
     if (!registerId || !schemaId) return null;
 
-    const cached = this.listCache[registerId]?.[schemaId];
+    // Generate cache key that includes critical parameters
+    const cacheKey = this.generateCacheKey(registerId, schemaId, params);
+    
+    const cached = this.listCache[cacheKey];
     if (!cached) return null;
 
     // Check if cache is still valid
@@ -3087,7 +3111,7 @@ export class ObjectStore {
     
     if (age > this.cacheConfig.maxAge) {
       // Cache is too old, remove it
-      this.clearListCache(register, schema);
+      this.clearListCache(register, schema, params);
       return null;
     }
 
@@ -3114,11 +3138,10 @@ export class ObjectStore {
     
     if (!registerId || !schemaId) return;
 
-    if (!this.listCache[registerId]) {
-      this.listCache[registerId] = {};
-    }
-
-    this.listCache[registerId][schemaId] = {
+    // Generate cache key that includes critical parameters
+    const cacheKey = this.generateCacheKey(registerId, schemaId, params);
+    
+    this.listCache[cacheKey] = {
       data: data || [],
       timestamp: Date.now(),
       params: { ...params }
@@ -3129,16 +3152,20 @@ export class ObjectStore {
    * Clears cached data for a specific register/schema combination
    * @param {string|Object} register - Register identifier or object
    * @param {string|Object} schema - Schema identifier or object
+   * @param {Object} [params={}] - Query parameters to identify specific cache entry
    */
   @action
-  clearListCache = (register, schema) => {
+  clearListCache = (register, schema, params = {}) => {
     const registerId = this.extractId(register);
     const schemaId = this.extractId(schema);
     
     if (!registerId || !schemaId) return;
 
-    if (this.listCache[registerId]?.[schemaId]) {
-      delete this.listCache[registerId][schemaId];
+    // Generate cache key that includes critical parameters
+    const cacheKey = this.generateCacheKey(registerId, schemaId, params);
+    
+    if (this.listCache[cacheKey]) {
+      delete this.listCache[cacheKey];
     }
   };
 
