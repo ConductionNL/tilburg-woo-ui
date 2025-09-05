@@ -121,4 +121,4 @@ export {
   extractTitle, 
   extractSummary 
 } from './con-extract-text';
-export { AcFormatDutchNumber } from './ac-format-dutch-number';
+export { ConFormatDutchNumber } from './con-format-dutch-number';

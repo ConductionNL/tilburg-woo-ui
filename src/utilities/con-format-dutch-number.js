@@ -3,7 +3,7 @@
  * @param {number} number - The number to format
  * @returns {string} - Formatted number string (e.g., 1234567 → "1.234.567")
  */
-export const AcFormatDutchNumber = (number) => {
+export const ConFormatDutchNumber = (number) => {
   if (typeof number !== 'number' || isNaN(number)) {
     return '0';
   }
@@ -15,4 +15,4 @@ export const AcFormatDutchNumber = (number) => {
   }).format(number);
 };
 
-export default AcFormatDutchNumber;
+export default ConFormatDutchNumber;
