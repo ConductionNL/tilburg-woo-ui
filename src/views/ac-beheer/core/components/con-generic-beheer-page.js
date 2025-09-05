@@ -431,6 +431,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Prefer wizard editing when available; fallback to legacy modal
+            if (config?.schemaSlug) {
+              const wizards = Object.values(DASHBOARD_WIZARDS);
+              const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+
+              if (wizard) {
+                const baseUrl = getWizardUrl(wizard);
+                const url = new URL(baseUrl, window.location.origin);
+                url.searchParams.set('id', row.id);
+                navigate(url.pathname + url.search);
+                return;
+              }
+            }
+
             setSingleSelectedRow(row);
             setOpenModal('edit');
           },

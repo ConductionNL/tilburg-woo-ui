@@ -26,6 +26,7 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { AcButton } from '@src/molecules';
 import AcGemmaView from '@views/ac-gemma/ac-gemma-view';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 /**
  * Generic Beheer Details Page
@@ -276,7 +277,23 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                         },
                       ]}
                       relatedActions={actionMenuItems}
-                      onEdit={() => setOpenModal('edit')}
+                      onEdit={() => {
+                        // Prefer wizard editing when available; fallback to legacy modal
+                        if (config?.schemaSlug) {
+                          const wizards = Object.values(DASHBOARD_WIZARDS);
+                          const wizard = wizards.find(
+                            (w) => w.schema === config.schemaSlug
+                          );
+                          if (wizard) {
+                            const baseUrl = getWizardUrl(wizard);
+                            const url = new URL(baseUrl, window.location.origin);
+                            url.searchParams.set('id', data?.id);
+                            navigate(url.pathname + url.search);
+                            return;
+                          }
+                        }
+                        setOpenModal('edit');
+                      }}
                       onPublish={() => setOpenModal('publish')}
                       onDepublish={() => setOpenModal('depublish')}
                     />
