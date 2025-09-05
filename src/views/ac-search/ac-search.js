@@ -14,7 +14,7 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject } from '@utils';
+import { AcSearchParamsToObject, ConFormatDutchNumber } from '@utils';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
 
@@ -204,7 +204,7 @@ const AcSearch = ({ store: { publications, user } }) => {
             <AcFlex column spacing='sm' margin='sm'>
               <AcFlex justifyContent='between'>
                 <Heading level={2}>
-                  {pagination.total}{' '}
+                  {ConFormatDutchNumber(pagination.total)}{' '}
                   {LABELS_DYNAMIC.RESULTS(pagination.total).toLowerCase()}
                 </Heading>
                 <div className='desktop-sorting'>

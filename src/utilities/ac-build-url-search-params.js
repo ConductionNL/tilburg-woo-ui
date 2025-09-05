@@ -3,7 +3,8 @@ import { DEFAULT_SEARCH_QUERY } from '@stores/publications.store';
 const INVALID_VALUES = [null, undefined, ''];
 
 const getValue = (value) => {
-  if (typeof value == 'string' && decodeURIComponent(value) !== value) {
+  // If value is already encoded, return as-is to prevent double encoding
+  if (typeof value === 'string' && decodeURIComponent(value) !== value) {
     return value;
   }
 
@@ -11,11 +12,13 @@ const getValue = (value) => {
     return null;
   }
 
+  // Only encode the value, not the key
   return encodeURIComponent(value.toString());
 };
 
 export const AcBuildURLSearchParams = (data) => {
-  const params = new URLSearchParams();
+  const paramPairs = [];
+
   Object.entries(data).forEach(([key, value]) => {
     if (key === 'search' && value === '') {
       return;
@@ -47,23 +50,27 @@ export const AcBuildURLSearchParams = (data) => {
         if (Array.isArray(subValue)) {
           subValue.forEach((arrVal) => {
             if (!arrVal) return;
-            params.append(`${key}[${subKey}][]`, getValue(arrVal));
+            // Don't encode the key, only the value
+            paramPairs.push(`${key}[${subKey}][]=${getValue(arrVal)}`);
           });
           return;
         }
-        params.append(`${key}[${subKey}]`, getValue(subValue));
+        // Don't encode the key, only the value
+        paramPairs.push(`${key}[${subKey}]=${getValue(subValue)}`);
       });
       return;
     }
 
     if (Array.isArray(value)) {
       value.forEach((subValue) => {
-        params.append(`${key}[]`, getValue(subValue));
+        // Don't encode the key, only the value
+        paramPairs.push(`${key}[]=${getValue(subValue)}`);
       });
       return;
     }
-    params.append(key, getValue(value));
+    // Don't encode the key, only the value
+    paramPairs.push(`${key}=${getValue(value)}`);
   });
 
-  return params.toString();
+  return paramPairs.join('&');
 };
