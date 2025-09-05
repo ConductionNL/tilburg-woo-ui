@@ -1,8 +1,7 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
-import { AcBuildURLSearchParams } from '@utils';
+import { AcBuildURLSearchParams, getCookie } from '@utils';
 import { commongroundApiUrl } from '@config';
-import { getCookie } from '@src/utilities';
 
 let app = {};
 
@@ -488,12 +487,12 @@ export class PublicationsStore {
         : baseWithLimit;
 
       console.group('🚀 OPTIMIZED FACETS API CALL');
-      console.log(
+      console.info(
         'Essential facets only:',
         essentialFacetsQueries.length,
         'facets instead of all available'
       );
-      console.log('Final query string:', finalQueryString);
+      console.info('Final query string:', finalQueryString);
       console.groupEnd();
 
       const response = await fetch(
@@ -512,10 +511,10 @@ export class PublicationsStore {
 
       // Handle nested facets structure - API returns facets.facets
       const facetsData = response.facets?.facets || response.facets || {};
-      
+
       if (facetsData && Object.keys(facetsData).length > 0) {
-        console.log('📊 Processing facets data:', facetsData);
-        
+        console.info('📊 Processing facets data:', facetsData);
+
         // Add basic titles to facets (simplified since we only use essential ones)
         const facetsWithTitles = {};
         for (const [key, value] of Object.entries(facetsData)) {
@@ -535,7 +534,7 @@ export class PublicationsStore {
           }
         }
         this.setFacets(facetsWithTitles);
-        console.log('✅ Facets processed and set:', Object.keys(facetsWithTitles));
+        console.info('✅ Facets processed and set:', Object.keys(facetsWithTitles));
       } else {
         console.warn(
           'No facets in response. Available keys:',
