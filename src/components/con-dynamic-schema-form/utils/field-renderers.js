@@ -214,13 +214,13 @@ export const renderField = ({
 
   // Handle file upload fields (triggered by type="file" or format="base64" etc.)
   if (
-    propertySchema.type === 'file' ||
-    fieldConfig.type === 'file' ||
-    fieldConfig.component === 'File' ||
-    fieldConfig.inputType === 'file' ||
-    propertySchema.format === 'base64' ||
-    (propertySchema.type === 'string' &&
-      (propertySchema.format === 'binary' || propertySchema.format === 'byte'))
+    propertySchema?.type === 'file' ||
+    fieldConfig?.type === 'file' ||
+    fieldConfig?.component === 'File' ||
+    fieldConfig?.inputType === 'file' ||
+    propertySchema?.format === 'base64' ||
+    (propertySchema?.type === 'string' &&
+      (propertySchema?.format === 'binary' || propertySchema?.format === 'byte'))
   ) {
     // Extract filename field from path (assume fieldname + "Filename")
     const filenamePath = path + 'Filename';
@@ -298,7 +298,7 @@ export const renderField = ({
         </label>
         <BooleanField
           key={path}
-          label='Ja/Nee'
+          label={`Huidige keuze: ${value ? 'Ja' : 'Nee'}`}
           value={!!value}
           onChange={handleChange}
           disabled={isDisabled}

@@ -18,6 +18,7 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { canReadField } from '@utils/field-authorization';
 import { TOOLTIP_ID } from '@src/index.web';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 // Markdown Editor
 import MDEditor from '@uiw/react-md-editor';
@@ -148,13 +149,15 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   useEffect(() => {
     if (!get_single?.['@self']?.schema?.slug || !id) return;
 
-    const items = makeActionsForContext(id).map(({ key, label, onClick, schema, icon }) => ({
-      key,
-      label,
-      onClick,
-      schema,
-      icon,
-    }));
+    const items = makeActionsForContext(id).map(
+      ({ key, label, onClick, schema, icon }) => ({
+        key,
+        label,
+        onClick,
+        schema,
+        icon,
+      })
+    );
 
     setActionMenuItems(items);
   }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
@@ -251,6 +254,24 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
               showEditAction={true}
               showPublishActions={true}
               onDelete={handleDelete}
+              onEdit={() => {
+                const schemaSlug = get_single?.['@self']?.schema?.slug;
+                if (schemaSlug) {
+                  const wizards = Object.values(DASHBOARD_WIZARDS);
+                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+
+                  if (wizard) {
+                    const baseUrl = getWizardUrl(wizard);
+                    const url = new URL(baseUrl, window.location.origin);
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                    return;
+                  }
+                }
+                // Fallback to beheer legacy edit page in new tab
+                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                window.open(beheerUrl, '_blank');
+              }}
               uniqueActions={[
                 {
                   key: 'delete',
@@ -403,32 +424,32 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             </div>
           )}
 
-            <div>
-              {uses && uses.length > 0 && (
-                <>
-                  <Heading level={2}>Gebruiken</Heading>
-                  <AcTabs
-                    selectedIndex={tabIndexUses}
-                    onSelect={(index) => setTabIndexUses(index)}
-                  >
-                    <AcTabList>
-                      {uses && uses.length > 0 && (
-                        <>
-                          {uses &&
-                            // show unique headers
-                            _.uniqBy(uses, (use) => use['@self'].schema.id).map(
-                              (use, idx) => (
-                                <AcTab
-                                  key={use['@self'].schema.id}
-                                  selected={tabIndexUses === idx}
-                                >
-                                  <span>{use['@self'].schema.title}</span>
-                                </AcTab>
-                              )
-                            )}
-                        </>
-                      )}
-                    </AcTabList>
+          <div>
+            {uses && uses.length > 0 && (
+              <>
+                <Heading level={2}>Gebruiken</Heading>
+                <AcTabs
+                  selectedIndex={tabIndexUses}
+                  onSelect={(index) => setTabIndexUses(index)}
+                >
+                  <AcTabList>
+                    {uses && uses.length > 0 && (
+                      <>
+                        {uses &&
+                          // show unique headers
+                          _.uniqBy(uses, (use) => use['@self'].schema.id).map(
+                            (use, idx) => (
+                              <AcTab
+                                key={use['@self'].schema.id}
+                                selected={tabIndexUses === idx}
+                              >
+                                <span>{use['@self'].schema.title}</span>
+                              </AcTab>
+                            )
+                          )}
+                      </>
+                    )}
+                  </AcTabList>
 
                   {uses &&
                     _.uniqBy(uses, (use) => use['@self'].schema.id)
@@ -479,32 +500,32 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             )}
           </div>
 
-            <div>
-              {used && used.length > 0 && (
-                <>
-                  <Heading level={2}>Wordt gebruikt door</Heading>
-                  <AcTabs
-                    selectedIndex={tabIndexUsed}
-                    onSelect={(index) => setTabIndexUsed(index)}
-                  >
-                    <AcTabList>
-                      {used && used.length > 0 && (
-                        <>
-                          {used &&
-                            // show unique headers
-                            _.uniqBy(used, (use) => use['@self'].schema.id).map(
-                              (use, idx) => (
-                                <AcTab
-                                  key={use['@self'].schema.id}
-                                  selected={tabIndexUsed === idx}
-                                >
-                                  <span>{use['@self'].schema.title}</span>
-                                </AcTab>
-                              )
-                            )}
-                        </>
-                      )}
-                    </AcTabList>
+          <div>
+            {used && used.length > 0 && (
+              <>
+                <Heading level={2}>Wordt gebruikt door</Heading>
+                <AcTabs
+                  selectedIndex={tabIndexUsed}
+                  onSelect={(index) => setTabIndexUsed(index)}
+                >
+                  <AcTabList>
+                    {used && used.length > 0 && (
+                      <>
+                        {used &&
+                          // show unique headers
+                          _.uniqBy(used, (use) => use['@self'].schema.id).map(
+                            (use, idx) => (
+                              <AcTab
+                                key={use['@self'].schema.id}
+                                selected={tabIndexUsed === idx}
+                              >
+                                <span>{use['@self'].schema.title}</span>
+                              </AcTab>
+                            )
+                          )}
+                      </>
+                    )}
+                  </AcTabList>
 
                   {used &&
                     _.uniqBy(used, (use) => use['@self'].schema.id)
