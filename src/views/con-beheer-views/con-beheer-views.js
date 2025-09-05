@@ -656,7 +656,7 @@ const ConBeheerViews = ({ store }) => {
                   tooltip={
                     'Toon elementen gerelateerd aan het gebruik van diensten en applicaties'
                   }
-                  onChange={(checked) => handleToggleFilter('gebruik')(checked)}
+                  onChange={handleToggleFilter('gebruik')}
                 />
 
                 <AcCheckbox
@@ -665,7 +665,7 @@ const ConBeheerViews = ({ store }) => {
                   tooltip={
                     'Toon product-gerelateerde elementen en hun onderlinge relaties'
                   }
-                  onChange={(checked) => handleToggleFilter('product')(checked)}
+                  onChange={handleToggleFilter('product')}
                 />
 
                 <AcCheckbox
@@ -674,7 +674,7 @@ const ConBeheerViews = ({ store }) => {
                   tooltip={
                     'Toon deelname-gerelateerde elementen en participatie-aspecten'
                   }
-                  onChange={(checked) => handleToggleFilter('deelnames')(checked)}
+                  onChange={handleToggleFilter('deelnames')}
                 />
               </div>
             </div>
