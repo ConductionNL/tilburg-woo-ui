@@ -329,7 +329,7 @@ const ConSchemaEnhancedField = ({
   const fieldRenderer = utilRenderField({
     path: fieldName,
     propertySchema,
-    required: propertySchema.required || false,
+    required: propertySchema?.required || false,
     touched: touched,
     formData: updatedFormData,
     fieldConfigs: { [fieldName]: fieldConfig },
