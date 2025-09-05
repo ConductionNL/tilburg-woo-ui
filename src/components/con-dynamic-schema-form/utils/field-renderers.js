@@ -298,7 +298,7 @@ export const renderField = ({
         </label>
         <BooleanField
           key={path}
-          label="Ja/Nee"
+          label={`Huidige keuze: ${value ? 'ja' : 'nee'}`}
           value={!!value}
           onChange={handleChange}
           disabled={isDisabled}
