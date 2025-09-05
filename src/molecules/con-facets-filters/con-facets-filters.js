@@ -2,13 +2,14 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import { AcCheckbox } from '@molecules';
+import { AcCheckbox, AcButton } from '@molecules';
 import { withStore } from '@stores';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
 import _ from 'lodash';
 import { AcBuildURLSearchParams } from '@utils';
+import { DEFAULT_SEARCH_QUERY } from '@stores/publications.store';
 
 const ConFacetsFilters = ({ store: { publications } }) => {
   const [, setSearchParams] = useSearchParams();
@@ -103,6 +104,43 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     return query[facetKey]?.includes(value) || false;
   };
 
+  const hasActiveFilters = () => {
+    const { query } = publications;
+
+    // Check for other filters (excluding default query params and search)
+    const filterKeys = Object.keys(query).filter(
+      (key) => !['extend', '_limit', '_page', '_search'].includes(key)
+    );
+
+    return filterKeys.some((key) => {
+      const value = query[key];
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      if (typeof value === 'object' && value !== null) {
+        return Object.values(value).some((v) =>
+          Array.isArray(v) ? v.length > 0 : Boolean(v)
+        );
+      }
+      return Boolean(value);
+    });
+  };
+
+  const clearAllFilters = () => {
+    // Preserve the current search term when clearing filters
+    const currentSearch = publications.query._search;
+
+    const newParams = new URLSearchParams();
+    newParams.set('_page', '1');
+
+    // Keep the search term if it exists
+    if (currentSearch && currentSearch.trim()) {
+      newParams.set('_search', currentSearch.trim());
+    }
+
+    setSearchParams(newParams, { replace: true });
+  };
+
   useEffect(() => {
     // Only trigger facets fetch when config is loaded and search query changes
     // The config change will automatically trigger facets reload via triggerFacetsReload
@@ -121,7 +159,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             <div
               style={{
                 width: '1rem',
-                height: '1rem',
+                height: '750px',
                 backgroundColor: 'transparent',
               }}
             ></div>
@@ -206,6 +244,17 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
   return (
     <>
+      <AcFlex spacing='sm' style={{ marginBottom: '1rem' }}>
+        <AcButton
+          style='buttonSlim'
+          buttonType='primary'
+          onClick={clearAllFilters}
+          disabled={!hasActiveFilters()}
+          aria-label='Wis alle filters'
+        >
+          Wis alle filters
+        </AcButton>
+      </AcFlex>
       {filteredFacets.map(([key, value]) => {
         return key === '@self' ? (
           <React.Fragment key={key}>

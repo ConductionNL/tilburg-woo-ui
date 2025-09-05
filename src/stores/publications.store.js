@@ -1,8 +1,7 @@
 // Imports => MOBX
 import { observable, computed, makeObservable, action, toJS } from 'mobx';
-import { AcBuildURLSearchParams } from '@utils';
+import { AcBuildURLSearchParams, getCookie } from '@utils';
 import { commongroundApiUrl } from '@config';
-import { getCookie } from '@src/utilities';
 
 let app = {};
 
@@ -63,20 +62,25 @@ export const buildPublicationsSearchQuery = (baseQuery) => {
 const getAuthHeaders = () => {
   const headers = {
     'Content-Type': 'application/json',
-    'Accept': '*/*',
-    'Referer': window.location.origin + '/zoeken',
+    Accept: '*/*',
+    Referer: window.location.origin + '/zoeken',
   };
-  
+
   // Try Bearer token first (from cookies)
   const accessToken = getCookie('nextcloud_access_token');
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
     return headers;
   }
-  
+
   // Fallback to basic auth (from user store)
   try {
-    if (window.app && window.app.store && window.app.store.user && window.app.store.user.basicAuthCredentials) {
+    if (
+      window.app &&
+      window.app.store &&
+      window.app.store.user &&
+      window.app.store.user.basicAuthCredentials
+    ) {
       const basicAuth = window.app.store.user.basicAuthCredentials;
       if (basicAuth && basicAuth.username && basicAuth.password) {
         const credentials = btoa(`${basicAuth.username}:${basicAuth.password}`);
@@ -310,7 +314,8 @@ export class PublicationsStore {
 
   @action
   updateQuery = (query) => {
-    this.query = { ...this.query, ...query };
+    // Replace the entire query instead of merging to prevent old filters from persisting
+    this.query = { ...DEFAULT_SEARCH_QUERY, ...query };
   };
 
   @action
@@ -481,16 +486,23 @@ export class PublicationsStore {
         ? `${baseWithLimit}&${facetParams}`
         : baseWithLimit;
 
-       console.group('🚀 OPTIMIZED FACETS API CALL');
-       console.log('Essential facets only:', essentialFacetsQueries.length, 'facets instead of all available');
-       console.log('Final query string:', finalQueryString);
-       console.groupEnd();
+      console.group('🚀 OPTIMIZED FACETS API CALL');
+      console.info(
+        'Essential facets only:',
+        essentialFacetsQueries.length,
+        'facets instead of all available'
+      );
+      console.info('Final query string:', finalQueryString);
+      console.groupEnd();
 
-       const response = await fetch(`${commongroundApiUrl()}/opencatalogi/api/publications?${finalQueryString}`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-        credentials: 'include', // Include cookies like the browser
-      }).then(res => {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications?${finalQueryString}`,
+        {
+          method: 'GET',
+          headers: getAuthHeaders(),
+          credentials: 'include', // Include cookies like the browser
+        }
+      ).then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -499,10 +511,10 @@ export class PublicationsStore {
 
       // Handle nested facets structure - API returns facets.facets
       const facetsData = response.facets?.facets || response.facets || {};
-      
+
       if (facetsData && Object.keys(facetsData).length > 0) {
-        console.log('📊 Processing facets data:', facetsData);
-        
+        console.info('📊 Processing facets data:', facetsData);
+
         // Add basic titles to facets (simplified since we only use essential ones)
         const facetsWithTitles = {};
         for (const [key, value] of Object.entries(facetsData)) {
@@ -522,9 +534,12 @@ export class PublicationsStore {
           }
         }
         this.setFacets(facetsWithTitles);
-        console.log('✅ Facets processed and set:', Object.keys(facetsWithTitles));
+        console.info('✅ Facets processed and set:', Object.keys(facetsWithTitles));
       } else {
-        console.warn('No facets in response. Available keys:', Object.keys(response));
+        console.warn(
+          'No facets in response. Available keys:',
+          Object.keys(response)
+        );
         console.warn('Facets data structure:', response.facets);
       }
     } catch (error) {
