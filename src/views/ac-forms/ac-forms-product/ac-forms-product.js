@@ -1573,24 +1573,6 @@ const AcFormsProductInner = ({ userStore, store, formType }) => {
               <div>
                 <Heading1>{getPageTitle()}</Heading1>
                 <Paragraph>{getPageDescription()}</Paragraph>
-
-                {/* Show loading state while schemas are being fetched */}
-                {schemasLoading && (
-                  <div
-                    className='ac-forms-product-loading'
-                    style={{
-                      padding: '1rem',
-                      backgroundColor: '#f0f4ff',
-                      border: '1px solid #d1e7ff',
-                      borderRadius: '4px',
-                      margin: '1rem 0',
-                    }}
-                  >
-                    <p style={{ margin: 0, color: '#0066cc' }}>
-                      📋 Formulier definities aan het laden...
-                    </p>
-                  </div>
-                )}
               </div>
               <div>
                 <h3
