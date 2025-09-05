@@ -621,7 +621,7 @@ const ConBeheerViews = ({ store }) => {
                       onClick={async () => {
                         try {
                           await fetch(
-                            '/api/apps/softwarecatalog//api/archimate/download/LV01 BGT basisregistratie en SVB view',
+                            '/api/apps/softwarecatalog/api/archimate/export',
                             { method: 'POST' }
                           );
                         } catch (_e) {
