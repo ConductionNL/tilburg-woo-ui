@@ -3382,7 +3382,7 @@ export class ObjectStore {
    */
   @action
   cacheLoadRegister = async (registerSlug) => {
-    const requestType = `cache_load_${registerSlug}`;
+    // const requestType = `cache_load_${registerSlug}`;
     
     runInAction(() => {
       this.cacheLoadingState[registerSlug] = true;
