@@ -128,6 +128,7 @@ const AcSearch = ({ store: { publications, user } }) => {
           return (
             <ConCardOrganisationApplication
               {...publication}
+              id={publication.id || publication['@self']?.id}
               title={extractTitle(publication['@self'].name)}
               summary={extractSummary(publication['@self'].description)}
               logo={publication['@self'].logo}
@@ -142,6 +143,7 @@ const AcSearch = ({ store: { publications, user } }) => {
           return (
             <ConCardDienst
               {...publication}
+              id={publication.id || publication['@self']?.id}
               updated={publication['@self'].updated}
               published={publication['@self'].published}
               category={publication['@self'].schema.title}
@@ -161,6 +163,7 @@ const AcSearch = ({ store: { publications, user } }) => {
           return (
             <AcSearchResult
               {...publication}
+              id={publication.id || publication['@self']?.id}
               published={publication['@self'].published}
               category={publication['@self'].schema.title}
               title={extractTitle(
