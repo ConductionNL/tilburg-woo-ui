@@ -37,9 +37,9 @@ const AcHero = (contents) => {
     // Fallback to hostname-based logic for production builds
     const hostname = window.location.hostname;
     switch (hostname) {
-      case 'vng.opencatalogi.nl':
+      case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
-      case 'vng.test.opencatalogi.nl':
+      case 'softwarecatalogus.test.opencatalogi.nl':
         return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'opencatalogi.nl':
       case 'developer.opencatalogi.nl':
