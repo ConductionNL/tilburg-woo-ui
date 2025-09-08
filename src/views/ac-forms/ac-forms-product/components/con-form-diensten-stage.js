@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
@@ -8,7 +8,7 @@ import {
   TableCell,
   TableContainer,
   TableRow,
-  Textbox,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -32,121 +32,163 @@ const ConFormDienstenStage = memo(
     setDienstenFormState,
     getAllModulesForStages,
   }) => {
+    // State for controlling alert visibility - persists until page refresh
+    const [showInfoAlert, setShowInfoAlert] = useState(() => {
+      // Check if alert was previously closed in this session
+      return !sessionStorage.getItem('diensten-info-alert-closed');
+    });
+
+    // Handle closing the alert and remember the choice
+    const handleCloseAlert = () => {
+      setShowInfoAlert(false);
+      sessionStorage.setItem('diensten-info-alert-closed', 'true');
+    };
+
     // Keep UI state in parent so it persists across steps
     const {
       rows,
       selectedApplication,
       selectedDienstByRow,
-      dienstBeschrijvingByRow,
+      dienstIdByRow, // Track dienst IDs by row
+      moduleIndexByRow, // Track which module each row belongs to
     } = dienstenFormState;
 
-    const addDienst = (
-      moduleIndex,
-      dienstVal,
-      dienstOptions,
-      customDescription = ''
-    ) => {
+    const generateLocalId = () =>
+      `dienst_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const setDienstValue = (rowId, updater) => {
+      setDienstenFormState((prev) => ({ ...prev, ...updater(prev) }));
+    };
+
+    // Accept overrides so we can persist immediately with the newly selected value(s)
+    const persistRowIntoProduct = (rowId, overrides = {}) => {
+      const appId = overrides.appId ?? selectedApplication[rowId];
+      const dienstVal = overrides.dienstVal ?? selectedDienstByRow[rowId];
+
+      if (appId == null || dienstVal == null) return;
+
+      let localId = dienstIdByRow?.[rowId];
+      if (!localId) {
+        localId = generateLocalId();
+        setDienstenFormState((prev) => ({
+          ...prev,
+          dienstIdByRow: { ...(prev.dienstIdByRow || {}), [rowId]: localId },
+        }));
+      }
+
+      const prevModuleIndex = moduleIndexByRow?.[rowId];
+
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
-        const targetModule = modules[moduleIndex];
+
+        // If dienst moved from another module, remove it there first
+        if (prevModuleIndex != null && prevModuleIndex !== appId) {
+          const prevModule = modules[prevModuleIndex];
+          if (typeof prevModule === 'object') {
+            const prevList = Array.isArray(prevModule.diensten)
+              ? prevModule.diensten
+              : [];
+            modules[prevModuleIndex] = {
+              ...prevModule,
+              diensten: prevList.filter((d) => d._localId !== localId),
+            };
+          }
+        }
+
+        const targetModule = modules[appId];
 
         // Only modify if it's an object (new module), not string (existing module)
         if (typeof targetModule !== 'object') {
           console.warn(
             'Cannot modify existing module diensten:',
-            moduleIndex,
+            appId,
             targetModule
           );
-          // TODO: Voor externe modules moeten diensten via aparte API calls worden aangemaakt
           return prev;
         }
 
-        // Create dienst object with proper structure - let backend generate ID
+        // Create or update dienst object with proper structure
         const dienstOption = dienstOptions.find((opt) => opt.value === dienstVal);
         const dienstObject = {
+          _localId: localId, // Add local ID for tracking
           type: dienstVal, // The service type (e.g., "Functioneel beheer")
-          naam: customDescription || dienstOption?.label || dienstVal,
+          naam: dienstOption?.label || dienstVal,
           aanbieder: prev.aanbieder, // Add active organization as aanbieder
         };
 
-        // Check if dienst already exists (by type)
         const prevDiensten = Array.isArray(targetModule.diensten)
           ? targetModule.diensten
           : [];
-        const exists = prevDiensten.some((d) =>
-          typeof d === 'object' ? d.type === dienstVal : d === dienstVal
-        );
 
-        if (exists) {
-          return prev; // Don't add duplicate
+        // Find existing dienst by localId and update, or add new one
+        const existingIndex = prevDiensten.findIndex((d) => d._localId === localId);
+        let nextDiensten;
+
+        if (existingIndex !== -1) {
+          // Update existing dienst
+          nextDiensten = [...prevDiensten];
+          nextDiensten[existingIndex] = dienstObject;
+        } else {
+          // Add new dienst
+          nextDiensten = [...prevDiensten, dienstObject];
         }
 
-        const nextDiensten = [...prevDiensten, dienstObject];
+        modules[appId] = { ...targetModule, diensten: nextDiensten };
 
-        modules[moduleIndex] = { ...targetModule, diensten: nextDiensten };
+        // Track which module this row belongs to
+        setDienstValue(rowId, (prev) => ({
+          moduleIndexByRow: { ...(prev.moduleIndexByRow || {}), [rowId]: appId },
+        }));
+
         return { ...prev, modules };
       });
     };
 
-    const removeDienst = (moduleIndex, dienstVal) => {
-      setProduct((prev) => {
-        const modules = [...(prev.modules || [])];
-        const targetModule = modules[moduleIndex];
+    const removeRow = (rowId) => {
+      const appId = selectedApplication[rowId];
+      const localId = dienstIdByRow?.[rowId];
 
-        // Only modify if it's an object (new module), not string (existing module)
-        if (typeof targetModule !== 'object') {
-          console.warn(
-            'Cannot modify existing module diensten:',
-            moduleIndex,
-            targetModule
-          );
-          // TODO: Voor externe modules moeten diensten via aparte API calls worden verwijderd
-          return prev;
-        }
+      if (appId != null && localId != null) {
+        setProduct((prev) => {
+          const modules = [...(prev.modules || [])];
+          const targetModule = modules[appId];
 
-        // Filter out the dienst by type/value
-        const prevDiensten = Array.isArray(targetModule.diensten)
-          ? targetModule.diensten
-          : [];
-        const nextDiensten = prevDiensten.filter((d) =>
-          typeof d === 'object' ? d.type !== dienstVal : d !== dienstVal
-        );
+          if (typeof targetModule === 'object') {
+            const prevDiensten = Array.isArray(targetModule.diensten)
+              ? targetModule.diensten
+              : [];
+            const nextDiensten = prevDiensten.filter((d) => d._localId !== localId);
+            modules[appId] = { ...targetModule, diensten: nextDiensten };
+          }
 
-        modules[moduleIndex] = { ...targetModule, diensten: nextDiensten };
-        return { ...prev, modules };
-      });
-    };
-
-    // Function to update dienst description
-    const updateDienstDescription = (moduleIndex, dienstVal, newDescription) => {
-      setProduct((prev) => {
-        const modules = [...(prev.modules || [])];
-        const targetModule = modules[moduleIndex];
-
-        // Only modify if it's an object (new module)
-        if (typeof targetModule !== 'object') {
-          return prev;
-        }
-
-        const diensten = Array.isArray(targetModule.diensten)
-          ? [...targetModule.diensten]
-          : [];
-        const dienstIndex = diensten.findIndex((d) =>
-          typeof d === 'object' ? d.type === dienstVal : d === dienstVal
-        );
-
-        if (dienstIndex !== -1 && typeof diensten[dienstIndex] === 'object') {
-          diensten[dienstIndex] = {
-            ...diensten[dienstIndex],
-            naam: newDescription || diensten[dienstIndex].naam,
-          };
-
-          modules[moduleIndex] = { ...targetModule, diensten };
           return { ...prev, modules };
-        }
+        });
+      }
 
-        return prev;
-      });
+      setDienstenFormState((prev) => ({
+        ...prev,
+        rows: prev.rows.filter((id) => id !== rowId),
+        selectedApplication: Object.fromEntries(
+          Object.entries(prev.selectedApplication || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+        selectedDienstByRow: Object.fromEntries(
+          Object.entries(prev.selectedDienstByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+        dienstIdByRow: Object.fromEntries(
+          Object.entries(prev.dienstIdByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+        moduleIndexByRow: Object.fromEntries(
+          Object.entries(prev.moduleIndexByRow || {}).filter(
+            ([k]) => Number(k) !== rowId
+          )
+        ),
+      }));
     };
 
     // ✅ SIMPLIFIED: Use helper method to get all modules (new + existing) for diensten
@@ -172,6 +214,33 @@ const ConFormDienstenStage = memo(
           aansluit bij hun dienstverlening
         </Paragraph>
 
+        {/* Closeable info alert about updating dienst details later */}
+        {showInfoAlert && (
+          <Alert severity='info' className='ac-forms-product-info-alert'>
+            <button
+              onClick={handleCloseAlert}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Dienst details aanpassen</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  U selecteert hier alleen het type dienst. Na het opslaan van uw
+                  product kunt u op de detailpagina van elke dienst aanvullende
+                  informatie toevoegen zoals een naam, beschrijvingen,
+                  contactgegevens en specifieke voorwaarden.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
+
         <TableContainer className='con-form-wizard-table-container'>
           <Table>
             <thead>
@@ -181,9 +250,6 @@ const ConFormDienstenStage = memo(
                 </TableCell>
                 <TableCell>
                   <b>Dienst Type</b>
-                </TableCell>
-                <TableCell>
-                  <b>Beschrijving</b>
                 </TableCell>
                 <TableCell>
                   <b>Acties</b>
@@ -205,29 +271,17 @@ const ConFormDienstenStage = memo(
                           : null
                       }
                       onChange={(selectedOption) => {
-                        const prevAppId = selectedApplication[rowId];
-                        const prevDienst = selectedDienstByRow[rowId];
-
-                        if (prevAppId != null && prevDienst != null) {
-                          removeDienst(prevAppId, prevDienst);
-                        }
-
+                        // Clear dienst selection when app changes
                         setDienstenFormState((prev) => ({
                           ...prev,
                           selectedApplication: {
                             ...prev.selectedApplication,
                             [rowId]: selectedOption?.value,
                           },
-                          selectedDienstByRow: Object.fromEntries(
-                            Object.entries(prev.selectedDienstByRow).filter(
-                              ([k]) => Number(k) !== rowId
-                            )
-                          ),
-                          dienstBeschrijvingByRow: Object.fromEntries(
-                            Object.entries(prev.dienstBeschrijvingByRow).filter(
-                              ([k]) => Number(k) !== rowId
-                            )
-                          ),
+                          selectedDienstByRow: {
+                            ...(prev.selectedDienstByRow || {}),
+                            [rowId]: undefined,
+                          },
                         }));
                       }}
                     />
@@ -250,16 +304,22 @@ const ConFormDienstenStage = memo(
                         const appId = selectedApplication[rowId];
                         if (appId == null) return true;
 
-                        // Check if this dienst is already selected for this module
+                        // Check if this dienst is already selected for this module (excluding current row)
                         const targetModule = (product.modules || [])[appId];
                         if (
                           typeof targetModule === 'object' &&
                           Array.isArray(targetModule.diensten)
                         ) {
                           const optVal = String(opt.value);
-                          return targetModule.diensten.some((d) =>
-                            typeof d === 'object' ? d.type === optVal : d === optVal
-                          );
+                          const currentLocalId = dienstIdByRow?.[rowId];
+                          return targetModule.diensten.some((d) => {
+                            if (typeof d === 'object') {
+                              return (
+                                d.type === optVal && d._localId !== currentLocalId
+                              );
+                            }
+                            return d === optVal;
+                          });
                         }
                         return false;
                       }}
@@ -268,33 +328,16 @@ const ConFormDienstenStage = memo(
                         if (appId == null) return;
 
                         if (!selectedOption) {
-                          const prevDienst = selectedDienstByRow[rowId];
-                          if (prevDienst != null) {
-                            removeDienst(appId, prevDienst);
-                          }
                           setDienstenFormState((prev) => ({
                             ...prev,
-                            selectedDienstByRow: Object.fromEntries(
-                              Object.entries(prev.selectedDienstByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            dienstBeschrijvingByRow: Object.fromEntries(
-                              Object.entries(prev.dienstBeschrijvingByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
+                            selectedDienstByRow: {
+                              ...(prev.selectedDienstByRow || {}),
+                              [rowId]: undefined,
+                            },
                           }));
                           return;
                         }
 
-                        const customDesc = dienstBeschrijvingByRow[rowId] || '';
-                        addDienst(
-                          appId,
-                          selectedOption.value,
-                          dienstOptions,
-                          customDesc
-                        );
                         setDienstenFormState((prev) => ({
                           ...prev,
                           selectedDienstByRow: {
@@ -302,34 +345,12 @@ const ConFormDienstenStage = memo(
                             [rowId]: String(selectedOption.value),
                           },
                         }));
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Textbox
-                      value={dienstBeschrijvingByRow[rowId] || ''}
-                      onChange={(e) => {
-                        const newDescription = e.target.value;
-                        setDienstenFormState((prev) => ({
-                          ...prev,
-                          dienstBeschrijvingByRow: {
-                            ...prev.dienstBeschrijvingByRow,
-                            [rowId]: newDescription,
-                          },
-                        }));
 
-                        // Also update the product immediately if both app and dienst are selected
-                        const appId = selectedApplication[rowId];
-                        const dienstVal = selectedDienstByRow[rowId];
-                        if (appId != null && dienstVal != null) {
-                          updateDienstDescription(appId, dienstVal, newDescription);
-                        }
+                        // Persist immediately
+                        persistRowIntoProduct(rowId, {
+                          dienstVal: selectedOption.value,
+                        });
                       }}
-                      placeholder='Beschrijving van de dienst'
-                      disabled={
-                        selectedApplication[rowId] == null ||
-                        selectedDienstByRow[rowId] == null
-                      }
                     />
                   </TableCell>
                   <TableCell>
@@ -339,59 +360,32 @@ const ConFormDienstenStage = memo(
                         buttonType='secondary'
                         icon={<VISUALS.TRASHCAN />}
                         disabled={rows.length === 1}
-                        onClick={() => {
-                          const appId = selectedApplication[rowId];
-                          const dienstVal = selectedDienstByRow[rowId];
-
-                          if (appId != null && dienstVal != null) {
-                            removeDienst(appId, dienstVal);
-                          }
-
-                          setDienstenFormState((prev) => ({
-                            ...prev,
-                            rows: prev.rows.filter((id) => id !== rowId),
-                            selectedApplication: Object.fromEntries(
-                              Object.entries(prev.selectedApplication).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            selectedDienstByRow: Object.fromEntries(
-                              Object.entries(prev.selectedDienstByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                            dienstBeschrijvingByRow: Object.fromEntries(
-                              Object.entries(prev.dienstBeschrijvingByRow).filter(
-                                ([k]) => Number(k) !== rowId
-                              )
-                            ),
-                          }));
-                        }}
+                        onClick={() => removeRow(rowId)}
                         title='Rij verwijderen'
-                      ></AcButton>
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
               ))}
-
-              <div style={{ marginTop: '1rem' }}>
-                <AcButton
-                  style='button'
-                  icon={<VISUALS.PLUS />}
-                  onClick={() =>
-                    setDienstenFormState((prev) => ({
-                      ...prev,
-                      rows: [...prev.rows, prev.nextRowId],
-                      nextRowId: prev.nextRowId + 1,
-                    }))
-                  }
-                >
-                  Nieuwe dienst toevoegen
-                </AcButton>
-              </div>
             </TableBody>
           </Table>
         </TableContainer>
+
+        <div style={{ marginTop: '1rem' }}>
+          <AcButton
+            style='button'
+            icon={<VISUALS.PLUS />}
+            onClick={() =>
+              setDienstenFormState((prev) => ({
+                ...prev,
+                rows: [...prev.rows, prev.nextRowId],
+                nextRowId: prev.nextRowId + 1,
+              }))
+            }
+          >
+            Nieuwe dienst toevoegen
+          </AcButton>
+        </div>
       </div>
     );
   }
