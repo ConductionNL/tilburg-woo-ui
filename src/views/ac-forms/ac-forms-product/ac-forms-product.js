@@ -1253,6 +1253,37 @@ const AcFormsProductInner = ({
     }
   }, [isMultiApplicatie, ensureSingleModuleInitialized]);
 
+  // Sync module name and description with product in single-app mode
+  useEffect(() => {
+    if (!isMultiApplicatie && !isEditMode && product.modules?.length > 0) {
+      const firstModule = product.modules[0];
+      if (typeof firstModule === 'object') {
+        // Only update if the module name/description differs from product
+        const needsNameUpdate = firstModule.naam !== (product.naam || '');
+        const needsDescUpdate =
+          firstModule.beschrijvingKort !== (product.beschrijvingKort || '');
+
+        if (needsNameUpdate || needsDescUpdate) {
+          setProduct((prev) => {
+            const modules = [...(prev.modules || [])];
+            modules[0] = {
+              ...modules[0],
+              naam: prev.naam || '',
+              beschrijvingKort: prev.beschrijvingKort || '',
+            };
+            return { ...prev, modules };
+          });
+        }
+      }
+    }
+  }, [
+    isMultiApplicatie,
+    isEditMode,
+    product.naam,
+    product.beschrijvingKort,
+    product.modules,
+  ]);
+
   // Navigation helpers to skip Applicatie step in single-app mode
   const getNextStepIndex = (stepIndex) =>
     utilGetNextStepIndex(stepIndex, formType, product, isMultiApplicatie);
