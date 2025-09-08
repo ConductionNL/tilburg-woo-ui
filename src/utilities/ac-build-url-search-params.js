@@ -50,8 +50,13 @@ export const AcBuildURLSearchParams = (data) => {
         if (Array.isArray(subValue)) {
           subValue.forEach((arrVal) => {
             if (!arrVal) return;
-            // Don't encode the key, only the value
-            paramPairs.push(`${key}[${subKey}][]=${getValue(arrVal)}`);
+            // Special case for @self - don't add [] brackets
+            if (key === '@self') {
+              paramPairs.push(`${key}[${subKey}]=${getValue(arrVal)}`);
+            } else {
+              // Don't encode the key, only the value
+              paramPairs.push(`${key}[${subKey}][]=${getValue(arrVal)}`);
+            }
           });
           return;
         }
