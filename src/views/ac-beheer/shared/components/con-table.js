@@ -381,16 +381,20 @@ const ConTable = (
         );
       }
 
-      // Check if this value should be resolved to a name
+      // Check if this value should be resolved to a name (handles both single and array references)
       if (schema?.properties?.[header.key] && objectStore) {
         const property = { ...schema.properties[header.key], key: header.key };
         if (shouldResolveToName(property, row[header.key])) {
           const resolvedValue = getDisplayValue(row[header.key], property, namesMap);
           if (resolvedValue !== row[header.key]) {
-            // Show resolved name with original ID in tooltip
+            // Show resolved name(s) with original ID(s) in tooltip
+            const originalValue = Array.isArray(row[header.key]) 
+              ? `Original IDs: ${row[header.key].join(', ')}` 
+              : `Original ID: ${row[header.key]}`;
+            
             return (
               <span 
-                title={`Original ID: ${row[header.key]}`} 
+                title={originalValue} 
                 data-tooltip-id={TOOLTIP_ID}
                 style={{ cursor: 'help' }}
               >
@@ -401,6 +405,7 @@ const ConTable = (
         }
       }
 
+      // Generic array handler (only for non-reference arrays)
       if (Array.isArray(row[header.key])) {
         return row[header.key].map(String).join(', ') || '-';
       }

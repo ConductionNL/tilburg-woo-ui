@@ -600,22 +600,48 @@ export class PublicationsStore {
 
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
+          console.group('🏷️ PROCESSING RELATED NAMES FROM SEARCH');
+          console.info('Related names received:', Object.keys(response.relatedNames).length, 'entries');
+          console.info('Names data:', response.relatedNames);
           app.store.object.processRelatedNamesFromResponse(response);
+          console.info('Names cache after processing:', Object.keys(app.store.object.namesCache).length, 'entries');
+          console.groupEnd();
         } else if (app.store?.object && response.results?.length > 0) {
           // Fallback: manually extract reference IDs and resolve names if _relatedNames is not supported
+          console.group('⚠️ FALLBACK: Manual reference extraction in search');
+          console.info('No relatedNames in response, falling back to manual extraction');
+          console.info('Search results count:', response.results.length);
           try {
             const { extractReferenceIdsFromCollection } = require('@src/utilities/con-detect-object-references');
             const referenceIds = extractReferenceIdsFromCollection(response.results);
+            console.info('Extracted reference IDs:', referenceIds.length, 'IDs');
+            console.info('Reference IDs:', referenceIds);
             
             if (referenceIds.length > 0) {
               // Asynchronously resolve names in background (don't wait for this)
-              app.store.object.getNamesForMultipleIds(referenceIds).catch(error => {
-                console.warn('Failed to resolve reference names in search:', error);
-              });
+              console.info('Starting background names resolution...');
+              app.store.object.getNamesForMultipleIds(referenceIds)
+                .then(resolvedNames => {
+                  console.info('Background names resolved:', Object.keys(resolvedNames).length, 'names');
+                  console.info('Resolved names:', resolvedNames);
+                })
+                .catch(error => {
+                  console.warn('Failed to resolve reference names in search:', error);
+                });
+            } else {
+              console.info('No reference IDs found to resolve');
             }
           } catch (error) {
             console.warn('Reference resolution fallback failed in search:', error);
           }
+          console.groupEnd();
+        } else {
+          console.group('ℹ️ SEARCH NAMES INFO');
+          console.info('No names processing needed');
+          console.info('Has object store:', !!app.store?.object);
+          console.info('Results count:', response.results?.length || 0);
+          console.info('Has relatedNames:', !!response.relatedNames);
+          console.groupEnd();
         }
 
         // Store facetable configuration for facets call

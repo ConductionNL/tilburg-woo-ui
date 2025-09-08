@@ -2,7 +2,7 @@
 
 ## Overview
 
-Het Names Cache System is een geavanceerd frontend systeem voor het **snel omzetten van UUIDs naar leesbare namen** in de Tilburg WOO UI applicatie. Het systeem gebruikt een multi-layer caching strategie voor optimale performance en gebruikerservaring.
+Het Names Cache System is een geavanceerd frontend systeem voor het **snel omzetten van UUIDs naar leesbare namen** in de Tilburg WOO UI applicatie. Het systeem ondersteunt **single references** en **arrays van references** met een multi-layer caching strategie voor optimale performance en gebruikerservaring.
 
 ## System Architecture
 
@@ -96,23 +96,60 @@ Smart detectie van UUID referenties in `src/utilities/con-detect-object-referenc
 flowchart LR
     A[Object Property] --> B{Schema Analysis}
     
-    B --> C{Type = 'object'?}
-    C -->|Yes + UUID Value| D[Reference Detected]
+    B --> C{Type = 'array'?}
+    C -->|Yes| D{Items = objects?}
+    D -->|Yes + All UUIDs| E[Array Reference Detected]
+    D -->|No| F[Skip Array]
     
-    B --> E{Has $ref?}
-    E -->|Yes + UUID Value| D
+    C -->|No| G{Type = 'object'?}
+    G -->|Yes + UUID Value| H[Single Reference Detected]
     
-    B --> F{Format = 'uuid'?}
-    F -->|Yes + UUID Value| D
+    G -->|No| I{Has $ref?}
+    I -->|Yes + UUID Value| H
     
-    B --> G{Field Name Pattern?}
-    G -->|*Id, *Ref, *organisatie| D
+    I -->|No| J{Format = 'uuid'?}
+    J -->|Yes + UUID Value| H
     
-    D --> H[Add to Resolution Queue]
+    J -->|No| K{Field Name Pattern?}
+    K -->|*Id, *Ref, *organisatie| H
+    K -->|No| F
     
-    style D fill:#c8e6c9
-    style H fill:#bbdefb
+    E --> L[Add Array IDs to Queue]
+    H --> M[Add Single ID to Queue]
+    
+    style E fill:#e1f5fe
+    style H fill:#c8e6c9
+    style L fill:#bbdefb
+    style M fill:#bbdefb
+    style F fill:#f5f5f5
 ```
+
+### 2.1 Array Reference Support
+
+Het systeem ondersteunt nu ook **arrays van object referenties**. Wanneer een schema property `type: "array"` heeft met `items: { type: "object" }`, worden arrays van UUID strings automatisch gedetecteerd en opgelost:
+
+```javascript
+// Schema Example
+{
+  "organisaties": {
+    "type": "array",
+    "items": { "type": "object" }
+  }
+}
+
+// API Response
+{
+  "organisaties": ["uuid-1", "uuid-2", "uuid-3"]
+}
+
+// Display Result
+"Gemeente Amsterdam, VNG Realisatie, +1 meer"
+```
+
+**Weergave Logica**:
+- **≤ 3 items**: Alle namen weergegeven (`"Naam 1, Naam 2, Naam 3"`)  
+- **> 3 items**: Eerste 2 namen + aantal overige (`"Naam 1, Naam 2, +2 meer"`)
+- **Tooltip**: Toont originele UUID array voor debugging
 
 ## Cache Resolution Flow
 

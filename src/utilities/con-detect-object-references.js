@@ -27,6 +27,16 @@ export const isUUID = (value) => {
 export const shouldResolveToName = (property, value) => {
   if (!property || !value) return false;
   
+  // Handle arrays of object references
+  if (property.type === 'array' && Array.isArray(value)) {
+    // Check if array items should be object references
+    if (property.items?.type === 'object' && value.length > 0) {
+      // If all items in array are UUIDs, treat as array of references
+      return value.every(item => typeof item === 'string' && isUUID(item));
+    }
+    return false;
+  }
+  
   // If schema says it's an object but value is a string UUID, it's a reference
   if (property.type === 'object' && typeof value === 'string' && isUUID(value)) {
     return true;
@@ -71,7 +81,17 @@ export const extractReferenceIds = (obj, schema) => {
   Object.entries(obj).forEach(([key, value]) => {
     const property = schema.properties[key];
     if (property && shouldResolveToName(property, value)) {
-      referenceIds.push(value);
+      if (Array.isArray(value)) {
+        // For arrays of references, add all UUID items
+        value.forEach(item => {
+          if (typeof item === 'string' && isUUID(item)) {
+            referenceIds.push(item);
+          }
+        });
+      } else {
+        // Single reference
+        referenceIds.push(value);
+      }
     }
   });
   
@@ -112,10 +132,30 @@ export const resolveObjectReferencesToNames = (obj, schema, nameMap = {}) => {
   
   Object.entries(obj).forEach(([key, value]) => {
     const property = schema.properties[key];
-    if (property && shouldResolveToName(property, value) && nameMap[value]) {
-      resolved[key] = nameMap[value];
-      // Optionally keep the original ID in a separate field
-      resolved[`${key}_original`] = value;
+    if (property && shouldResolveToName(property, value)) {
+      if (Array.isArray(value)) {
+        // Handle arrays of references
+        const resolvedArray = value.map(item => {
+          if (typeof item === 'string' && isUUID(item) && nameMap[item]) {
+            return nameMap[item];
+          }
+          return item;
+        });
+        
+        // Only update if we resolved at least one item
+        const hasResolvedItems = resolvedArray.some((item, index) => 
+          item !== value[index] && nameMap[value[index]]
+        );
+        
+        if (hasResolvedItems) {
+          resolved[key] = resolvedArray;
+          resolved[`${key}_original`] = value;
+        }
+      } else if (typeof value === 'string' && nameMap[value]) {
+        // Handle single reference
+        resolved[key] = nameMap[value];
+        resolved[`${key}_original`] = value;
+      }
     }
   });
   
@@ -143,9 +183,33 @@ export const resolveCollectionReferencesToNames = (objects, schema, nameMap = {}
  * @returns {any} Display value (name if reference, original value otherwise)
  */
 export const getDisplayValue = (value, property, nameMap = {}) => {
-  if (shouldResolveToName(property, value) && nameMap[value]) {
+  if (!shouldResolveToName(property, value)) {
+    return value;
+  }
+  
+  if (Array.isArray(value)) {
+    // Handle arrays of references
+    const resolvedNames = value
+      .filter(item => typeof item === 'string' && isUUID(item))
+      .map(id => nameMap[id] || id)
+      .filter(Boolean);
+    
+    if (resolvedNames.length === 0) return value;
+    
+    // Format array display
+    if (resolvedNames.length <= 3) {
+      return resolvedNames.join(', ');
+    } else {
+      // Show first 2 names + count of remaining
+      const visible = resolvedNames.slice(0, 2);
+      const remaining = resolvedNames.length - 2;
+      return `${visible.join(', ')}, +${remaining} meer`;
+    }
+  } else if (typeof value === 'string' && nameMap[value]) {
+    // Handle single reference
     return nameMap[value];
   }
+  
   return value;
 };
 
