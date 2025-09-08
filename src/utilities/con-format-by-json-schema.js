@@ -107,7 +107,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         case 'email':
         case 'ipv4':
         case 'ipv6':
-        case 'kvv':
+        case 'kvk':
         case 'bsn':
         case 'rsin':
         case 'telephone':

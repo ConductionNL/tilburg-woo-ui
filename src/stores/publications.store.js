@@ -693,14 +693,37 @@ export class PublicationsStore {
   fetchPublication = async (_id) => {
     this.loading.status = true;
 
+    console.group('📄 FETCHING SINGLE PUBLICATION WITH NAMES');
+    console.info('Publication ID:', _id);
+    console.groupEnd();
+
     app.store.api.publications
       .single(
         _id,
         new URLSearchParams(
-          AcBuildURLSearchParams({ _id, ...this.defaultQuery })
+          AcBuildURLSearchParams({ 
+            _id, 
+            ...this.defaultQuery,
+            _related: true,
+            _relatedNames: true
+          })
         ).toString()
       )
       .then((response) => {
+        console.group('📄 PROCESSING SINGLE PUBLICATION RESPONSE');
+        console.info('Publication response:', response);
+        
+        // Process related names data to populate the names cache
+        if (response.relatedNames && app.store?.object) {
+          console.info('Related names received:', Object.keys(response.relatedNames).length, 'entries');
+          console.info('Names data:', response.relatedNames);
+          app.store.object.processRelatedNamesFromResponse(response);
+          console.info('Names cache after processing:', Object.keys(app.store.object.namesCache).length, 'entries');
+        } else {
+          console.info('No related names in publication response');
+        }
+        console.groupEnd();
+
         this.setPublication(response);
       })
       .catch((e) => console.error(e))
