@@ -18,8 +18,8 @@ export const shouldShowAanbiederStep = (formType) => {
  * @returns {boolean}
  */
 export const shouldShowVersiesStep = (product) => {
-  return (
-    (product?.cloudDienstverleningsmodel || '') === 'On-premises (self-managed)'
+  return (product?.cloudDienstverleningsmodel || '').includes(
+    'On-premises (self-managed)'
   );
 };
 

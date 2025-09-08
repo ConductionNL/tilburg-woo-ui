@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
@@ -290,7 +290,8 @@ const AcFormsProductInner = ({
     nextRowId: 1,
     selectedApplication: {},
     selectedDienstByRow: {},
-    dienstBeschrijvingByRow: {}, // Track custom descriptions for each dienst
+    dienstIdByRow: {}, // Track dienst IDs by row
+    moduleIndexByRow: {}, // Track which module each row belongs to
     allAppsDienst: null,
   });
 
@@ -708,22 +709,27 @@ const AcFormsProductInner = ({
   const [referentieComponentenLoading, setReferentieComponentenLoading] =
     useState(false);
 
-  // Diensten static options
-  const dienstOptions = [
-    {
-      value: 'Functioneel beheer',
-      label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
-    },
-    {
-      value: 'Technisch beheer',
-      label: 'Technisch beheer: installatie, updates en systeembeheer.',
-    },
-    { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
-    {
-      value: 'Implementatie-ondersteuning',
-      label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
-    },
-  ];
+  // Diensten options from schema enum
+  const dienstOptions = useMemo(() => {
+    const dienstSchema = schemas?.dienst;
+    const typeProperty = dienstSchema?.properties?.type;
+
+    if (typeProperty?.enum && Array.isArray(typeProperty.enum)) {
+      return typeProperty.enum.map((value) => {
+        // Try to get description from schema first, then fall back to the enum value itself
+        const schemaDescription =
+          typeProperty.enumDescriptions?.[typeProperty.enum.indexOf(value)];
+
+        // Use schema description if available, otherwise use the enum value as the label
+        const label = schemaDescription || value;
+
+        return {
+          value,
+          label,
+        };
+      });
+    }
+  }, [schemas?.dienst]);
 
   // Get query parameters from schema property configuration
   const getReferentieComponentenQueryParams = useCallback(() => {
@@ -1260,6 +1266,37 @@ const AcFormsProductInner = ({
     }
   }, [isMultiApplicatie, ensureSingleModuleInitialized]);
 
+  // Sync module name and description with product in single-app mode
+  useEffect(() => {
+    if (!isMultiApplicatie && !isEditMode && product.modules?.length > 0) {
+      const firstModule = product.modules[0];
+      if (typeof firstModule === 'object') {
+        // Only update if the module name/description differs from product
+        const needsNameUpdate = firstModule.naam !== (product.naam || '');
+        const needsDescUpdate =
+          firstModule.beschrijvingKort !== (product.beschrijvingKort || '');
+
+        if (needsNameUpdate || needsDescUpdate) {
+          setProduct((prev) => {
+            const modules = [...(prev.modules || [])];
+            modules[0] = {
+              ...modules[0],
+              naam: prev.naam || '',
+              beschrijvingKort: prev.beschrijvingKort || '',
+            };
+            return { ...prev, modules };
+          });
+        }
+      }
+    }
+  }, [
+    isMultiApplicatie,
+    isEditMode,
+    product.naam,
+    product.beschrijvingKort,
+    product.modules,
+  ]);
+
   // Navigation helpers to skip Applicatie step in single-app mode
   const getNextStepIndex = (stepIndex) =>
     utilGetNextStepIndex(stepIndex, formType, product, isMultiApplicatie);
@@ -1552,8 +1589,9 @@ const AcFormsProductInner = ({
                                   title: 'Licentie',
                                 },
                                 // Conditionally include Versies only for On-premise cloudDienstverleningsmodel
-                                ...((product?.cloudDienstverleningsmodel || '') ===
-                                'On-premises (self-managed)'
+                                ...((
+                                  product?.cloudDienstverleningsmodel || ''
+                                ).includes('On-premises (self-managed)')
                                   ? [
                                       {
                                         id: 'a2b3c4d5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',

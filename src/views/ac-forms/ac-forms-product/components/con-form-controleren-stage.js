@@ -8,6 +8,16 @@ import {
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
 
+// Import MDEditor for markdown rendering
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import { remarkMark } from 'remark-mark-highlight';
+import rehypeSlug from 'rehype-slug';
+
 /**
  * Controleren Stage Component
  *
@@ -87,8 +97,50 @@ const ConFormControlerenStage = memo(
 
             <div className='ac-register-review__field'>
               <strong>Korte beschrijving:</strong>
-              <span>{product.beschrijvingKort || '-'}</span>
+              <span
+                style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  hyphens: 'auto',
+                }}
+              >
+                {product.beschrijvingKort || '-'}
+              </span>
             </div>
+
+            {product.beschrijvingLang && (
+              <div className='ac-register-review__description'>
+                <strong className='ac-register-review__description__heading'>
+                  Lange beschrijving:
+                </strong>
+                <div
+                  style={{
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    hyphens: 'auto',
+                  }}
+                >
+                  <MDEditor.Markdown
+                    wrapperElement={{
+                      'data-color-mode': 'light',
+                    }}
+                    className='con-my-account-description'
+                    source={product.beschrijvingLang}
+                    remarkPlugins={[
+                      [remarkGfm, { singleTilde: false }],
+                      remarkDefinitionList,
+                      remarkEmoji,
+                      remarkSupersub,
+                      remarkMark,
+                    ]}
+                    rehypePlugins={[
+                      rehypeSlug,
+                      [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                    ]}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className='ac-register-review__field'>
               <strong>Website:</strong>{' '}
@@ -129,9 +181,52 @@ const ConFormControlerenStage = memo(
                     <div className='ac-register-review__field'>
                       <strong>Korte beschrijving:</strong>
                       <div>
-                        <div>{module.beschrijvingKort || ''}</div>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
+                          {module.beschrijvingKort || ''}
+                        </div>
                       </div>
                     </div>
+
+                    {module.beschrijvingLang && (
+                      <div className='ac-register-review__description'>
+                        <strong>Lange beschrijving:</strong>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
+                          <MDEditor.Markdown
+                            wrapperElement={{
+                              'data-color-mode': 'light',
+                            }}
+                            className='con-my-account-description'
+                            source={module.beschrijvingLang}
+                            remarkPlugins={[
+                              [remarkGfm, { singleTilde: false }],
+                              remarkDefinitionList,
+                              remarkEmoji,
+                              remarkSupersub,
+                              remarkMark,
+                            ]}
+                            rehypePlugins={[
+                              rehypeSlug,
+                              [
+                                remarkRehype,
+                                { handlers: { ...defListHastHandlers } },
+                              ],
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className='ac-register-review__field'>
                       <strong>Licentietype:</strong>
@@ -283,16 +378,19 @@ const ConFormControlerenStage = memo(
                                 // Handle both object and string formats
                                 const dienstType =
                                   typeof dienst === 'object' ? dienst.type : dienst;
-                                const dienstNaam =
-                                  typeof dienst === 'object' ? dienst.naam : null;
                                 const dienstId =
                                   typeof dienst === 'object' ? dienst.id : null;
 
                                 const dienstOption = dienstOptions.find(
                                   (option) => option.value === dienstType
                                 );
-                                const displayName =
-                                  dienstNaam || dienstOption?.label || dienstType;
+
+                                // Get the application name and format as "Application - Dienst Type"
+                                const applicationName =
+                                  module.naam || 'Unnamed Application';
+                                const dienstTypeDisplay =
+                                  dienstOption?.label || dienstType;
+                                const displayName = `${applicationName} - ${dienstTypeDisplay}`;
 
                                 return (
                                   <UnorderedListItem
@@ -339,12 +437,53 @@ const ConFormControlerenStage = memo(
                     <div className='ac-register-review__field'>
                       <strong>Korte beschrijving:</strong>
                       <div>
-                        <div>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
                           {moduleData.beschrijvingKort ||
                             'Geen beschrijving beschikbaar'}
                         </div>
                       </div>
                     </div>
+
+                    {moduleData.beschrijvingLang && (
+                      <div className='ac-register-review__description'>
+                        <strong>Lange beschrijving:</strong>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
+                          <MDEditor.Markdown
+                            wrapperElement={{
+                              'data-color-mode': 'light',
+                            }}
+                            className='con-my-account-description'
+                            source={moduleData.beschrijvingLang}
+                            remarkPlugins={[
+                              [remarkGfm, { singleTilde: false }],
+                              remarkDefinitionList,
+                              remarkEmoji,
+                              remarkSupersub,
+                              remarkMark,
+                            ]}
+                            rehypePlugins={[
+                              rehypeSlug,
+                              [
+                                remarkRehype,
+                                { handlers: { ...defListHastHandlers } },
+                              ],
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className='ac-register-review__field'>
                       <strong>Licentietype:</strong>
