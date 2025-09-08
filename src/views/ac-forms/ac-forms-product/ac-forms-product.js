@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
@@ -290,7 +290,8 @@ const AcFormsProductInner = ({
     nextRowId: 1,
     selectedApplication: {},
     selectedDienstByRow: {},
-    dienstBeschrijvingByRow: {}, // Track custom descriptions for each dienst
+    dienstIdByRow: {}, // Track dienst IDs by row
+    moduleIndexByRow: {}, // Track which module each row belongs to
     allAppsDienst: null,
   });
 
@@ -701,22 +702,45 @@ const AcFormsProductInner = ({
   const [referentieComponentenLoading, setReferentieComponentenLoading] =
     useState(false);
 
-  // Diensten static options
-  const dienstOptions = [
-    {
-      value: 'Functioneel beheer',
-      label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
-    },
-    {
-      value: 'Technisch beheer',
-      label: 'Technisch beheer: installatie, updates en systeembeheer.',
-    },
-    { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
-    {
-      value: 'Implementatie-ondersteuning',
-      label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
-    },
-  ];
+  // Diensten options from schema enum
+  const dienstOptions = useMemo(() => {
+    const dienstSchema = schemas?.dienst;
+    const typeProperty = dienstSchema?.properties?.type;
+
+    if (typeProperty?.enum && Array.isArray(typeProperty.enum)) {
+      return typeProperty.enum.map((value) => {
+        // Try to get description from schema first, then fall back to the enum value itself
+        const schemaDescription =
+          typeProperty.enumDescriptions?.[typeProperty.enum.indexOf(value)];
+
+        // Use schema description if available, otherwise use the enum value as the label
+        const label = schemaDescription || value;
+
+        return {
+          value,
+          label,
+        };
+      });
+    }
+
+    // Fallback to hardcoded options if schema is not available
+    return [
+      {
+        value: 'Functioneel beheer',
+        label:
+          'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
+      },
+      {
+        value: 'Technisch beheer',
+        label: 'Technisch beheer: installatie, updates en systeembeheer.',
+      },
+      { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
+      {
+        value: 'Implementatie-ondersteuning',
+        label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
+      },
+    ];
+  }, [schemas?.dienst]);
 
   // Get query parameters from schema property configuration
   const getReferentieComponentenQueryParams = useCallback(() => {
