@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
@@ -8,6 +8,7 @@ import {
   TableCell,
   TableContainer,
   TableRow,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -31,6 +32,18 @@ const ConFormDienstenStage = memo(
     setDienstenFormState,
     getAllModulesForStages,
   }) => {
+    // State for controlling alert visibility - persists until page refresh
+    const [showInfoAlert, setShowInfoAlert] = useState(() => {
+      // Check if alert was previously closed in this session
+      return !sessionStorage.getItem('diensten-info-alert-closed');
+    });
+
+    // Handle closing the alert and remember the choice
+    const handleCloseAlert = () => {
+      setShowInfoAlert(false);
+      sessionStorage.setItem('diensten-info-alert-closed', 'true');
+    };
+
     // Keep UI state in parent so it persists across steps
     const {
       rows,
@@ -200,6 +213,33 @@ const ConFormDienstenStage = memo(
           gemeenten. Door dit vast te leggen, zien organisaties hoe uw software
           aansluit bij hun dienstverlening
         </Paragraph>
+
+        {/* Closeable info alert about updating dienst details later */}
+        {showInfoAlert && (
+          <Alert severity='info' className='ac-forms-product-info-alert'>
+            <button
+              onClick={handleCloseAlert}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Dienst details aanpassen</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  U selecteert hier alleen het type dienst. Na het opslaan van uw
+                  product kunt u op de detailpagina van elke dienst aanvullende
+                  informatie toevoegen zoals een naam, beschrijvingen,
+                  contactgegevens en specifieke voorwaarden.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
 
         <TableContainer className='con-form-wizard-table-container'>
           <Table>
