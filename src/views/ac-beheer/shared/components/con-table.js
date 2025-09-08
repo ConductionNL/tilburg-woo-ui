@@ -13,7 +13,12 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
-import { ConSorter, AcUUID } from '@src/utilities';
+import { 
+  ConSorter, 
+  AcUUID, 
+  shouldResolveToName, 
+  getDisplayValue 
+} from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
 import { ConHorizontalOverflowWrapper , ConTableSearch } from '@components';
 import { VISUALS } from '@src/constants';
@@ -200,6 +205,9 @@ const ConTable = (
     onHeaderSearch,
     dataProperties = {},
     showSearch = false,
+    // Names resolution props
+    objectStore = null,
+    schema = null,
   },
   ref
 ) => {
@@ -343,6 +351,17 @@ const ConTable = (
     };
   }, [truncateLines]);
 
+  // Create names map from object store cache for resolving references
+  const namesMap = useMemo(() => {
+    if (!objectStore?.namesCache) return {};
+    
+    const map = {};
+    Object.entries(objectStore.namesCache).forEach(([id, { name }]) => {
+      map[id] = name;
+    });
+    return map;
+  }, [objectStore?.namesCache]);
+
   const handleDataCellRender = useCallback(
     (header, row) => {
       if (header.customContent) {
@@ -362,6 +381,26 @@ const ConTable = (
         );
       }
 
+      // Check if this value should be resolved to a name
+      if (schema?.properties?.[header.key] && objectStore) {
+        const property = { ...schema.properties[header.key], key: header.key };
+        if (shouldResolveToName(property, row[header.key])) {
+          const resolvedValue = getDisplayValue(row[header.key], property, namesMap);
+          if (resolvedValue !== row[header.key]) {
+            // Show resolved name with original ID in tooltip
+            return (
+              <span 
+                title={`Original ID: ${row[header.key]}`} 
+                data-tooltip-id={TOOLTIP_ID}
+                style={{ cursor: 'help' }}
+              >
+                {resolvedValue}
+              </span>
+            );
+          }
+        }
+      }
+
       if (Array.isArray(row[header.key])) {
         return row[header.key].join(', ') || '-';
       }
@@ -377,7 +416,7 @@ const ConTable = (
       return row[header.key];
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [renderCustomElement, removeUniqueSymbol]
+    [renderCustomElement, removeUniqueSymbol, schema, objectStore, namesMap]
   );
 
   const tableHeader = useMemo(() => {

@@ -24,6 +24,10 @@ import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
+import { 
+  extractReferenceIdsFromCollection,
+  createReferenceResolver 
+} from '@src/utilities';
 
 /**
  * Generic Beheer Page Component
@@ -169,6 +173,11 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     currentObject: null, // List page doesn't have a single current object
   });
 
+  // Create reference resolver for UUID to name resolution
+  const referenceResolver = useMemo(() => {
+    return createReferenceResolver(object);
+  }, [object]);
+
   const fetchData = useCallback(
     async (searchParams = {}) => {
       if (!objectType || !config) {
@@ -184,10 +193,14 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           _page: pagination.page,
           _limit: pagination.limit,
           _extend: extend,
+          _related: true, // Request related object data
+          _relatedNames: true, // Request ID to name mappings
           ...searchParams,
         };
 
         if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
+
+        console.log(`🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`);
 
         // Use object store for collection data - this handles loading/error states automatically
         await object.fetchCollection(
@@ -198,6 +211,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
         // Fetch schema using object store
         await object.fetchSchema(config.schemaSlug);
+
+        // Additional fallback: manually resolve any remaining reference IDs 
+        // (for cases where backend doesn't support _relatedNames yet)
+        const collection = object.getCollection(objectType);
+        const schema = object.getSchema(schemaType);
+        
+        if (collection.results?.length && schema) {
+          const referenceIds = extractReferenceIdsFromCollection(collection.results, schema);
+          if (referenceIds.length > 0) {
+            console.log(`📋 Found ${referenceIds.length} additional reference IDs to resolve`);
+            // This will fetch any missing names and cache them
+            await object.getNamesForMultipleIds(referenceIds);
+          }
+        }
       } catch (err) {
         // Don't set error if request was cancelled - object store handles collection errors
         if (err.code === 'ERR_CANCELED' || err instanceof CanceledError) {
@@ -634,6 +661,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             dataProperties={dataProperties}
             loading={loading || schemaLoading}
             showSearch={showSearch}
+            // Names resolution props
+            objectStore={object}
+            schema={schemaData}
           />
 
           <AcFlex justifyContent='between' alignItems='center'>

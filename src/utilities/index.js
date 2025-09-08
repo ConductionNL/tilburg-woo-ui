@@ -121,3 +121,13 @@ export {
   extractTitle, 
   extractSummary 
 } from './con-extract-text';
+export {
+  isUUID,
+  shouldResolveToName,
+  extractReferenceIds,
+  extractReferenceIdsFromCollection,
+  resolveObjectReferencesToNames,
+  resolveCollectionReferencesToNames,
+  getDisplayValue,
+  createReferenceResolver,
+} from './con-detect-object-references';
