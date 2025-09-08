@@ -1,4 +1,5 @@
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
@@ -33,8 +34,13 @@ const mapToOption = (item, index) => {
 };
 
 const AcFormsGebruik = ({ store }) => {
+  const [searchParams] = useSearchParams();
+  const gebruikId = searchParams.get('id') || '';
+  const isEditMode = !!gebruikId;
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillError, setPrefillError] = useState(null);
 
   // Submission state management (following product wizard pattern)
   const [registerCallBack, setRegisterCallBack] = useState(null);
@@ -46,6 +52,7 @@ const AcFormsGebruik = ({ store }) => {
   // Add click handlers to steps
   useEffect(() => {
     if (!processStepsRef.current) return;
+    if (prefillLoading || prefillError) return;
 
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
@@ -69,7 +76,75 @@ const AcFormsGebruik = ({ store }) => {
 
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentStep]);
+  }, [currentStep, prefillLoading, prefillError]);
+
+  // Helper to extract id string from various API reference shapes
+  const getIdString = useCallback((ref) => {
+    if (!ref) return '';
+    if (typeof ref === 'string' || typeof ref === 'number') return String(ref);
+    return (
+      String(
+        ref.id || ref.value || ref?.['@self']?.id || ref?.['@self']?.value || ''
+      ) || ''
+    );
+  }, []);
+
+  // Map fetched gebruik object into the local state shape expected by this form
+  const mapFetchedGebruikToLocalState = useCallback(
+    (api) => {
+      if (!api || typeof api !== 'object') return {};
+
+      const mapped = {
+        id: api.id || api?.['@self']?.id || '',
+        status: api.status || 'Verwerving',
+        contactpersoon: api.contactpersoon || '',
+        // Keep full objects for entities used for labels in UI
+        afnemer: api.afnemer || api?.['@self']?.relations?.afnemer || null,
+        product: api.product || api?.['@self']?.relations?.product || null,
+        // Use string ids for fields used as identifiers in requests
+        module:
+          getIdString(
+            api.module || api.moduleId || api?.['@self']?.relations?.module
+          ) || '',
+        moduleVersie:
+          getIdString(
+            api.moduleVersie ||
+              api.moduleversie ||
+              api?.['@self']?.relations?.moduleVersie
+          ) || '',
+        gebruiktVoorReferentiecomponenten: Array.isArray(
+          api.gebruiktVoorReferentiecomponenten
+        )
+          ? api.gebruiktVoorReferentiecomponenten.map((x) => getIdString(x) || x)
+          : [],
+        deelnemers: Array.isArray(api.deelnemers) ? api.deelnemers : [],
+        koppelingen: Array.isArray(api.koppelingen)
+          ? api.koppelingen.map((k) => getIdString(k) || k)
+          : [],
+        diensten: Array.isArray(api.diensten)
+          ? api.diensten.map((d) =>
+              typeof d === 'string' ? d : d?.value || d?.type || d?.naam || ''
+            )
+          : [],
+      };
+
+      // Determine gebruikType from API or infer based on afnemer vs active org
+      const apiGebruikType = api.gebruikType || api.type || api.soortGebruik;
+      if (apiGebruikType) {
+        mapped.gebruikType = apiGebruikType;
+      } else {
+        const activeOrgId = getIdString(store?.userStore?.activeOrganization);
+        const afnemerId = getIdString(mapped.afnemer);
+        mapped.gebruikType =
+          activeOrgId && afnemerId && activeOrgId !== afnemerId
+            ? 'andere-organisatie'
+            : 'eigen-organisatie';
+      }
+
+      return mapped;
+    },
+    [getIdString, store?.userStore?.activeOrganization]
+  );
 
   // Schema management
   const [schemas, setSchemas] = useState({});
@@ -138,7 +213,7 @@ const AcFormsGebruik = ({ store }) => {
             'gebruik',
             { status: 'Verwerving' }
           );
-          setGebruik(defaultGebruik);
+          if (!isEditMode) setGebruik(defaultGebruik);
           setSchemas({ gebruik: gebruikSchema });
           setSchemasLoading(false);
         }
@@ -149,7 +224,54 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
     fetchSchemaAndInit();
-  }, [store]);
+  }, [store, isEditMode]);
+
+  // Prefill for edit mode: fetch existing gebruik and map to local state; jump to step 1
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isEditMode) return;
+      setPrefillLoading(true);
+      setPrefillError(null);
+      try {
+        await store.object.fetchObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          {
+            _extend: [
+              '@self.schema',
+              'afnemer',
+              'product',
+              'module',
+              'moduleVersie',
+            ],
+          }
+        );
+        if (cancelled) return;
+        const apiObj = store.object.getObject(
+          'voorzieningen_gebruik',
+          String(gebruikId)
+        );
+        const mapped = mapFetchedGebruikToLocalState(apiObj);
+        setGebruik(mapped);
+        setGebruikType(mapped.gebruikType || null);
+        setCurrentStep(1); // Skip "Soort gebruik" step when editing
+      } catch (e) {
+        if (!cancelled) {
+          setPrefillError(
+            'Het laden van de gebruiksregistratie is mislukt. Probeer het opnieuw of start een nieuwe registratie.'
+          );
+        }
+      } finally {
+        if (!cancelled) setPrefillLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, gebruikId, mapFetchedGebruikToLocalState, store]);
 
   // Prefill afnemer from active organization (if present)
   useEffect(() => {
@@ -164,10 +286,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchProducts = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'product', { 
-          _limit: '50', 
-          _page: '1', 
-          _extend: '@self.schema' 
+        await store.object.fetchCollection('voorzieningen', 'product', {
+          _limit: '50',
+          _page: '1',
+          _extend: '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_product');
         const list = collection?.results || collection || [];
@@ -181,10 +303,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchModules = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'module', { 
-          _limit: '50', 
-          _page: '1', 
-          _extend: '@self.schema' 
+        await store.object.fetchCollection('voorzieningen', 'module', {
+          _limit: '50',
+          _page: '1',
+          _extend: '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_module');
         const list = collection?.results || collection || [];
@@ -198,10 +320,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchOrganisaties = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'organisatie', { 
-          _limit: '50', 
-          _page: '1', 
-          _extend: '@self.schema' 
+        await store.object.fetchCollection('voorzieningen', 'organisatie', {
+          _limit: '50',
+          _page: '1',
+          _extend: '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_organisatie');
         const list = collection?.results || collection || [];
@@ -224,10 +346,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchRefComps = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('vng-gemma', 'element', { 
-          _limit: '500', 
-          _page: '1', 
-          gemmaType: 'Referentiecomponent' 
+        await store.object.fetchCollection('vng-gemma', 'element', {
+          _limit: '500',
+          _page: '1',
+          gemmaType: 'Referentiecomponent',
         });
         const collection = store.object.getCollection('vng-gemma_element');
         const list = collection?.results || collection || [];
@@ -253,7 +375,7 @@ const AcFormsGebruik = ({ store }) => {
     fetchModules();
     fetchOrganisaties();
     fetchRefComps();
-    
+
     return () => {
       isMounted = false;
     };
@@ -267,18 +389,20 @@ const AcFormsGebruik = ({ store }) => {
       setGebruikData('module', null);
       return;
     }
-    
+
     // Filter preloaded modules based on product selection
     // Since modules are now preloaded, we can use them directly instead of making API calls
     const searchLabel = p?.naam || p?.name || p?.title;
     if (searchLabel && modulesOptions.length > 0) {
       // Filter modules that match the product name
-      const filteredOptions = modulesOptions.filter(option => {
+      const filteredOptions = modulesOptions.filter((option) => {
         const moduleLabel = option.label?.toLowerCase() || '';
         const productLabel = searchLabel.toLowerCase();
-        return moduleLabel.includes(productLabel) || productLabel.includes(moduleLabel);
+        return (
+          moduleLabel.includes(productLabel) || productLabel.includes(moduleLabel)
+        );
       });
-      
+
       if (filteredOptions.length > 0) {
         // Use filtered options if we found matches
         setModulesOptions(filteredOptions);
@@ -300,10 +424,10 @@ const AcFormsGebruik = ({ store }) => {
         return;
       }
       // Use authenticated API client instead of raw fetch
-      await store.object.fetchCollection('voorzieningen', 'module', { 
-        _limit: '50', 
-        _page: '1', 
-        _search: q 
+      await store.object.fetchCollection('voorzieningen', 'module', {
+        _limit: '50',
+        _page: '1',
+        _search: q,
       });
       const collection = store.object.getCollection('voorzieningen_module');
       const list = collection?.results || collection || [];
@@ -481,7 +605,8 @@ const AcFormsGebruik = ({ store }) => {
             `B${index + 1}`;
 
           const direction = item?.gegevensuitwisselingRichting;
-          const arrow = direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+          const arrow =
+            direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
           const label = `${appA} ${arrow} ${appB}`;
           const value = item?.value || item?.id || label;
           return { value: String(value), label: String(label) };
@@ -534,7 +659,16 @@ const AcFormsGebruik = ({ store }) => {
       };
 
       // Submit to the gebruik endpoint using the object store
-      await store.object.createObject('voorzieningen', 'gebruik', gebruikData);
+      if (isEditMode) {
+        await store.object.updateObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          gebruikData
+        );
+      } else {
+        await store.object.createObject('voorzieningen', 'gebruik', gebruikData);
+      }
 
       // On success, show success page
       setRegisterCallBack('success');
@@ -694,6 +828,7 @@ const AcFormsGebruik = ({ store }) => {
 
   // Determine page title based on gebruik type
   const getPageTitle = () => {
+    if (isEditMode) return 'Gebruik bewerken';
     if (gebruikType === 'eigen-organisatie') {
       return 'Gebruik Aanmelden voor eigen organisatie';
     }
@@ -800,7 +935,7 @@ const AcFormsGebruik = ({ store }) => {
                           style='button'
                           buttonType='secondary'
                           onClick={() => setCurrentStep(currentStep - 1)}
-                          disabled={loading}
+                          disabled={loading || prefillLoading || !!prefillError}
                         >
                           Vorige
                         </AcButton>
@@ -814,7 +949,12 @@ const AcFormsGebruik = ({ store }) => {
                               currentStep === 0 && 'ac-register-form-next-button'
                             )}
                             onClick={() => setCurrentStep(currentStep + 1)}
-                            disabled={!canGoNext() || loading}
+                            disabled={
+                              !canGoNext() ||
+                              loading ||
+                              prefillLoading ||
+                              !!prefillError
+                            }
                           >
                             Volgende
                           </AcButton>
@@ -827,9 +967,9 @@ const AcFormsGebruik = ({ store }) => {
                           buttonType='primary'
                           onClick={handleRegister}
                           loading={loading}
-                          disabled={loading}
+                          disabled={loading || prefillLoading}
                         >
-                          Gebruik registreren
+                          {isEditMode ? 'Gebruik updaten' : 'Gebruik registreren'}
                         </AcButton>
                       )}
                     </div>
@@ -875,13 +1015,21 @@ const AcFormsGebruik = ({ store }) => {
           {/* Success Page */}
           {registerCallBack === 'success' && (
             <div>
-              <Heading1>🎉 Gebruik succesvol geregistreerd!</Heading1>
+              <Heading1>
+                {isEditMode
+                  ? '🎉 Gebruik succesvol geüpdatet!'
+                  : '🎉 Gebruik succesvol geregistreerd!'}
+              </Heading1>
 
               <div style={{ marginTop: '1rem' }}>
                 <div className='utrecht-alert utrecht-alert--success'>
                   <div className='utrecht-alert__content'>
                     <Paragraph>
-                      <strong>Uw gebruik is succesvol geregistreerd!</strong>
+                      <strong>
+                        {isEditMode
+                          ? 'Uw gebruik is succesvol bijgewerkt!'
+                          : 'Uw gebruik is succesvol geregistreerd!'}
+                      </strong>
                     </Paragraph>
                     <Paragraph>
                       Het gebruik van{' '}

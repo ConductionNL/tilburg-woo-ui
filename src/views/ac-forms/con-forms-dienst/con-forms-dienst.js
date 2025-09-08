@@ -350,30 +350,12 @@ const ConFormsDienst = ({ store, userStore }) => {
 
       const perProductTasks = selectedProductIds.map(async (prodId) => {
         const productEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/product/${prodId}`;
-        const moduleParams = new URLSearchParams({ _limit: '50', product: prodId });
-        const moduleEndpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${moduleParams}`;
 
-        const productPromise = fetch(productEndpoint, {
+        const productItem = await fetch(productEndpoint, {
           headers: { Accept: 'application/json' },
         })
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null);
-
-        const modulesPromise = fetch(moduleEndpoint, {
-          headers: { Accept: 'application/json' },
-        })
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null);
-
-        const [productRes, modulesRes] = await Promise.allSettled([
-          productPromise,
-          modulesPromise,
-        ]);
-
-        const productItem =
-          productRes.status === 'fulfilled' ? productRes.value : null;
-        const moduleData =
-          modulesRes.status === 'fulfilled' ? modulesRes.value : null;
 
         // Determine label using multiple fallbacks
         const fromDetail = productItem
@@ -392,22 +374,48 @@ const ConFormsDienst = ({ store, userStore }) => {
           (productOptions || []).find((p) => p.value === prodId)?.label || '';
         const label = fromDetail || fromSelected || fromOptions || String(prodId);
 
-        // Normalize modules
-        const modules = Array.isArray(moduleData)
-          ? moduleData
-          : Array.isArray(moduleData?.results)
-          ? moduleData.results
+        // Use modules array on product to fetch each module individually
+        const moduleIds = Array.isArray(productItem?.modules)
+          ? productItem.modules
+              .map((m) =>
+                String(
+                  typeof m === 'object'
+                    ? m?.id ||
+                        m?.value ||
+                        m?.uuid ||
+                        m?.slug ||
+                        m?.['@self']?.id ||
+                        ''
+                    : m || ''
+                )
+              )
+              .filter(Boolean)
           : [];
 
-        const normalized = modules
-          .map((m, idx) => {
-            const id = String(m?.id || m?.value || m?.uuid || m);
+        const moduleFetches = moduleIds.map((id) =>
+          fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}`, {
+            headers: { Accept: 'application/json' },
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null)
+        );
+
+        const moduleResults = await Promise.allSettled(moduleFetches);
+
+        const normalized = moduleResults
+          .map((res, idx) => {
+            if (res.status !== 'fulfilled' || !res.value) return null;
+            const m = res.value;
+            const id = String(
+              m?.id || m?.value || m?.uuid || m?.slug || moduleIds[idx] || ''
+            );
+            if (!id) return null;
             const mLabel = String(
               m?.naam || m?.name || m?.title || `Applicatie ${idx + 1}`
             );
             return { value: id, label: mLabel, data: m };
           })
-          .filter((o) => o.value && o.label);
+          .filter(Boolean);
 
         return { prodId, label, normalized };
       });
@@ -455,30 +463,55 @@ const ConFormsDienst = ({ store, userStore }) => {
         return;
       }
 
-      // Single request using multiple _search[]=<id> params (IDs only)
-      const params = new URLSearchParams({ _limit: '50', _page: '1' });
-      selectedModuleIds.forEach((id) => params.append('_search[]', String(id)));
-      const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
-      const res = await fetch(endpoint, {
-        headers: { Accept: 'application/json' },
+      // Fetch each selected module to read its koppelingen array
+      const moduleFetches = selectedModuleIds.map((id) =>
+        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/module/${id}`, {
+          headers: { Accept: 'application/json' },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
+      );
+      const moduleResults = await Promise.allSettled(moduleFetches);
+
+      // Collect koppeling UUIDs from all modules (duplicates may exist)
+      const collectedKoppelingIds = [];
+      moduleResults.forEach((res) => {
+        const mod = res.status === 'fulfilled' ? res.value : null;
+        const ids = Array.isArray(mod?.koppelingen) ? mod.koppelingen : [];
+        ids.forEach((k) => {
+          const id = String(
+            typeof k === 'object'
+              ? k?.id || k?.value || k?.uuid || k?.slug || k?.['@self']?.id || ''
+              : k || ''
+          );
+          if (id) collectedKoppelingIds.push(id);
+        });
       });
-      if (!res.ok) {
+
+      if (collectedKoppelingIds.length === 0) {
         setKoppelingOptions([]);
         return;
       }
-      const data = await res.json();
-      const list = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.results)
-        ? data.results
-        : [];
+
+      // Deduplicate and fetch each koppeling by ID
+      const uniqueKoppelingIds = Array.from(new Set(collectedKoppelingIds));
+      const koppelingFetches = uniqueKoppelingIds.map((id) =>
+        fetch(`${BASE_URL}/openregister/api/objects/voorzieningen/koppeling/${id}`, {
+          headers: { Accept: 'application/json' },
+        })
+          .then((r) => (r.ok ? r.json() : null))
+          .catch(() => null)
+      );
+      const koppelingResults = await Promise.allSettled(koppelingFetches);
 
       const seen = new Map();
-      list.forEach((item, index) => {
+      koppelingResults.forEach((res, idx) => {
+        const item = res.status === 'fulfilled' ? res.value : null;
+        if (!item) return;
         const id = String(
-          item?.id || item?.['@self']?.id || item?.value || `koppeling-${index}`
+          item?.id || item?.['@self']?.id || uniqueKoppelingIds[idx] || ''
         );
-        if (seen.has(id)) return;
+        if (!id || seen.has(id)) return;
         const label = String(
           item?.naam || `${item?.moduleA || '-'} ↔ ${item?.moduleB || '-'}`
         );

@@ -372,10 +372,17 @@ const AcFormsProductInner = ({
         // Applicatie A is the module index (since edit-mode modules are objects)
         nextSelectedAppAByRow[rowId] = moduleIndex;
         // Try to prefill Applicatie B by id when present in API data
-        const moduleBId =
-          (kpl && (kpl.moduleBId || kpl.moduleB?.id)) != null
-            ? String(kpl.moduleBId || kpl.moduleB?.id)
-            : null;
+        const moduleBId = (() => {
+          if (!kpl) return null;
+          if (kpl.moduleBId != null) return String(kpl.moduleBId);
+          if (kpl.moduleB != null) {
+            // Accept both object reference and primitive id
+            return String(
+              typeof kpl.moduleB === 'object' ? kpl.moduleB?.id : kpl.moduleB
+            );
+          }
+          return null;
+        })();
         if (moduleBId != null) {
           nextSelectedAppBByRow[rowId] = moduleBId;
         }
@@ -1843,6 +1850,8 @@ const AcFormsProductInner = ({
                     setRegisterCallBack(null);
                     setCurrentStep(0);
                     // Reset form for new product
+                    // remove params from the url
+                    window.history.replaceState(null, '', window.location.pathname);
                     window.location.reload();
                   }}
                   sx={{ marginLeft: '1rem' }}
