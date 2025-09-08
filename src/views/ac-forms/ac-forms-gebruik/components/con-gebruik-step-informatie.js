@@ -42,6 +42,9 @@ const ConGebruikStepInformatie = ({
               isDisabled={loading}
               width='full'
               schemas={schemas}
+              // Avoid internal $ref search churn for contactpersoon on this step
+              // by providing an empty, stable optionsProvider (store-driven options may be prefilled elsewhere)
+              optionsProvider={[]}
             />
           </div>
         )}
@@ -95,7 +98,8 @@ const ConGebruikStepInformatie = ({
                   marginTop: '0.25rem',
                 }}
               >
-                Ga terug naar &quot;Soort gebruik&quot; om het type registratie te selecteren.
+                Ga terug naar &quot;Soort gebruik&quot; om het type registratie te
+                selecteren.
               </div>
             </>
           )}
@@ -185,7 +189,9 @@ const ConGebruikStepInformatie = ({
               closeMenuOnSelect={false}
               options={refCompOptions}
               value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
-                .map((v) => refCompOptions.find((o) => String(o.value) === String(v)))
+                .map((v) =>
+                  refCompOptions.find((o) => String(o.value) === String(v))
+                )
                 .filter(Boolean)}
               onChange={(opts) =>
                 setGebruikData(

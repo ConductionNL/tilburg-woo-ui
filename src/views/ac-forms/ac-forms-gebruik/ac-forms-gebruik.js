@@ -385,34 +385,45 @@ const AcFormsGebruik = ({ store }) => {
   useEffect(() => {
     const p = gebruik?.product;
     if (!p) {
-      setModulesOptions([]);
-      setGebruikData('module', null);
+      if (modulesOptions.length > 0) setModulesOptions([]);
+      if (gebruik?.module != null) setGebruikData('module', null);
       return;
     }
 
-    // Filter preloaded modules based on product selection
-    // Since modules are now preloaded, we can use them directly instead of making API calls
     const searchLabel = p?.naam || p?.name || p?.title;
-    if (searchLabel && modulesOptions.length > 0) {
-      // Filter modules that match the product name
-      const filteredOptions = modulesOptions.filter((option) => {
-        const moduleLabel = option.label?.toLowerCase() || '';
-        const productLabel = searchLabel.toLowerCase();
-        return (
-          moduleLabel.includes(productLabel) || productLabel.includes(moduleLabel)
-        );
-      });
+    if (!searchLabel || modulesOptions.length === 0) return;
 
-      if (filteredOptions.length > 0) {
-        // Use filtered options if we found matches
-        setModulesOptions(filteredOptions);
-        if (filteredOptions.length === 1) {
-          setGebruikData('module', filteredOptions[0].data || filteredOptions[0]);
-        }
-      }
-      // If no specific matches found, keep all preloaded modules available
+    const filteredOptions = modulesOptions.filter((option) => {
+      const moduleLabel = option.label?.toLowerCase() || '';
+      const productLabel = searchLabel.toLowerCase();
+      return (
+        moduleLabel.includes(productLabel) || productLabel.includes(moduleLabel)
+      );
+    });
+
+    if (filteredOptions.length === 0) return;
+
+    // Only update options if they actually changed (prevent loops)
+    const arraysEqual =
+      filteredOptions.length === modulesOptions.length &&
+      filteredOptions.every(
+        (opt, idx) =>
+          opt.value === modulesOptions[idx]?.value &&
+          opt.label === modulesOptions[idx]?.label
+      );
+
+    if (!arraysEqual) {
+      setModulesOptions(filteredOptions);
     }
-  }, [gebruik?.product, modulesOptions]);
+
+    // If exactly one match and module differs, set module to the matching id (string)
+    if (filteredOptions.length === 1) {
+      const nextModuleId = String(filteredOptions[0].value);
+      if (String(gebruik?.module || '') !== nextModuleId) {
+        setGebruikData('module', nextModuleId);
+      }
+    }
+  }, [gebruik?.product, modulesOptions, gebruik?.module]);
 
   // Server-side search for modules
   const searchModules = async (query) => {
