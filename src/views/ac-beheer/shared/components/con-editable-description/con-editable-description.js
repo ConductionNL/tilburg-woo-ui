@@ -112,7 +112,7 @@ const ConEditableDescription = ({
                   }}
                   data-color-mode='light'
                   visibleDragBar={false}
-                  preview='live'
+                  preview='edit'
                   hideToolbar={saving}
                   // Stops the toolbar from being focused when tabbing through the form
                   commandsFilter={(cmd) => ({
