@@ -159,9 +159,9 @@ const App = ({ store }) => {
 
   const setIcon = () => {
     switch (hostname) {
-      case 'vng.opencatalogi.nl':
+      case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
-      case 'vng.test.opencatalogi.nl':
+      case 'softwarecatalogus.test.opencatalogi.nl':
         return (
           (document.getElementById('favicon').href =
             'https://vng.nl/themes/custom/vng/favicon.ico'),

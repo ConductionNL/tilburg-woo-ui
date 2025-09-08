@@ -833,14 +833,7 @@ const AcFormsProductInner = ({
     } finally {
       setReferentieComponentenLoading(false);
     }
-  }, [
-    schemas,
-    getReferentieComponentenQueryParams,
-    store,
-    isEditMode,
-    product.modules,
-    prefillReferentieComponentenWithStandardsForEdit,
-  ]);
+  }, [schemas, getReferentieComponentenQueryParams, store]);
 
   // Function to load standaarden using object store cache
   // ✅ Uses cache-first strategy for immediate response
@@ -887,6 +880,7 @@ const AcFormsProductInner = ({
   useEffect(() => {
     if (!schemas?.module) return;
 
+    // Only load if we haven't loaded yet and we're not currently loading
     const shouldLoadRefs =
       referentieComponentenOptions.length === 0 && !referentieComponentenLoading;
     const shouldLoadStandards =
@@ -898,15 +892,7 @@ const AcFormsProductInner = ({
       if (shouldLoadStandards) tasks.push(loadStandaarden());
       Promise.all(tasks).catch(() => {});
     }
-  }, [
-    schemas?.module,
-    referentieComponentenOptions.length,
-    referentieComponentenLoading,
-    loadReferentieComponenten,
-    standaardenOptions.length,
-    standaardenOptionsLoading,
-    loadStandaarden,
-  ]);
+  }, [schemas?.module]);
 
   // Modules options with search functionality
   const [modulesOptions, setModulesOptions] = useState([]);
