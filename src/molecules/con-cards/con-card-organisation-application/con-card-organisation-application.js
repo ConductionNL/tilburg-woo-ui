@@ -22,7 +22,7 @@ const ConCardOrganisationApplication = ({
 }) => {
   const icon = useMemo(() => {
     switch (cardType) {
-      case 'voorziening':
+      case 'product':
         return (
           <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />
         );

@@ -17,7 +17,29 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 
-import { validateWebsite } from '@views/ac-forms/validation/form-validations';
+import ConFormProductTypeSelectStage from './con-form-product-type-select-stage';
+
+// Utils
+import {
+  shouldShowAanbiederStep,
+  shouldShowVersiesStep,
+  getAdjustedStepIndex as utilGetAdjustedStepIndex,
+  getLogicalStepFromIndex as utilGetLogicalStepFromIndex,
+  getStatus,
+  getStatusMultiStep,
+  currentStepName as utilCurrentStepName,
+  getNextStepIndex as utilGetNextStepIndex,
+  getPrevStepIndex as utilGetPrevStepIndex,
+} from './utils/steps.utils';
+import { stripLocalIds } from './utils/serialization.utils';
+import {
+  getDisabledStatus as utilGetDisabledStatus,
+  getDisabledTooltip as utilGetDisabledTooltip,
+} from './utils/validation.utils';
+import {
+  getPageTitle as utilGetPageTitle,
+  getPageDescription as utilGetPageDescription,
+} from './utils/texts.utils';
 
 // Stage Components
 import ConFormProductopbouwStage from './components/con-form-productopbouw-stage';
@@ -109,15 +131,22 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
  *       to automatically populate field labels, types, validation, and descriptions from schemas.
  */
 
-const AcFormsProduct = ({ userStore, store }) => {
-  // Get URL search parameters to determine form type
-  const [searchParams] = useSearchParams();
-  const formType = searchParams.get('type') || '';
-
-  // Debug logging in development (disabled per lint rules)
+const AcFormsProductInner = ({
+  userStore,
+  store,
+  formType,
+  productId,
+  onClearProductId,
+}) => {
+  // Determine edit mode from productId
+  const isEditMode = !!productId;
 
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
+  // Edit mode prefill state
+  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillError, setPrefillError] = useState(null);
+  const [prefillRetry, setPrefillRetry] = useState(0);
   const [error, setError] = useState({ message: null, errors: null });
   const [currentStep, setCurrentStep] = useState(0);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
@@ -145,7 +174,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     // 9: Diensten (step 8 or 9)
     // 10: Controleren (step 9 or 10)
 
-    const showsAanbiederStep = shouldShowAanbiederStep();
+    const showsAanbiederStep = shouldShowAanbiederStep(formType);
     let targetStep = visualStepIndex;
 
     // Adjust for the aanbieder step offset
@@ -162,6 +191,8 @@ const AcFormsProduct = ({ userStore, store }) => {
   // Add click handlers to ProcessSteps after each render
   useEffect(() => {
     if (!processStepsRef.current) return;
+    // Disable step clicks while prefill is in progress or when there is a prefill error
+    if (prefillLoading || prefillError) return;
 
     const addClickHandlers = () => {
       // Find all step elements in the DOM
@@ -197,7 +228,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [currentStep, handleStepNavigation]); // Re-run when currentStep changes
+  }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
   /**
    * Product State Object
    *
@@ -268,6 +299,44 @@ const AcFormsProduct = ({ userStore, store }) => {
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
 
+  // Prefill referentiecomponenten state for edit mode without relying on effects
+  // Accepts optional modules/options to avoid stale state during async updates
+  const prefillReferentieComponentenWithStandardsForEdit = useCallback(
+    (modulesInput, optionsInput) => {
+      if (!isEditMode) return;
+      const options = Array.isArray(optionsInput) ? optionsInput : [];
+      if (options.length === 0) return;
+      const modules = Array.isArray(modulesInput) ? modulesInput : product.modules;
+      const firstModule = modules?.[0];
+      if (!firstModule || typeof firstModule !== 'object') return;
+      const rcIds = Array.isArray(firstModule.referentieComponenten)
+        ? firstModule.referentieComponenten
+        : [];
+      if (rcIds.length === 0) return;
+
+      setReferentieComponentenWithStandards((prev) => {
+        const filtered = prev.filter((entry) => entry.applicatieId !== 0);
+        const entries = rcIds.map((refId) => {
+          const refOption = options.find(
+            (opt) => String(opt.value) === String(refId)
+          );
+          const refData = refOption?.data || {};
+          return {
+            id: refId,
+            naam: refOption?.label || String(refId),
+            moduleId: 0,
+            applicatieId: 0,
+            aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
+            verplichteStandaarden: refData.verplichteStandaarden || [],
+            fullData: refData,
+          };
+        });
+        return [...filtered, ...entries];
+      });
+    },
+    [isEditMode, product.modules]
+  );
+
   // Persist UI state for KoppelingenForm across steps
   const [koppelingenFormState, setKoppelingenFormState] = useState({
     rows: [0],
@@ -279,6 +348,113 @@ const AcFormsProduct = ({ userStore, store }) => {
     koppelingIdByRow: {}, // rowId -> local koppeling id
     moduleIndexByRow: {}, // rowId -> last persisted module (Applicatie A index)
   });
+
+  // Prepare koppelingen form UI state from a modules array (used for edit-mode prefill)
+  const prepareKoppelingenFormStateFromModules = (modulesInput) => {
+    const modules = Array.isArray(modulesInput) ? modulesInput : [];
+    let rowCounter = 0;
+    const nextRows = [];
+    const nextSelectedAppAByRow = {};
+    const nextSelectedAppBByRow = {};
+    const nextDirectionByRow = {};
+    const nextTypeByRow = {};
+    const nextKoppelingIdByRow = {};
+    const nextModuleIndexByRow = {};
+
+    modules.forEach((module, moduleIndex) => {
+      if (!module || typeof module !== 'object') return;
+      const koppelingen = Array.isArray(module.koppelingen)
+        ? module.koppelingen
+        : [];
+      koppelingen.forEach((kpl) => {
+        const rowId = rowCounter++;
+        nextRows.push(rowId);
+        // Applicatie A is the module index (since edit-mode modules are objects)
+        nextSelectedAppAByRow[rowId] = moduleIndex;
+        // Try to prefill Applicatie B by id when present in API data
+        const moduleBId =
+          (kpl && (kpl.moduleBId || kpl.moduleB?.id)) != null
+            ? String(kpl.moduleBId || kpl.moduleB?.id)
+            : null;
+        if (moduleBId != null) {
+          nextSelectedAppBByRow[rowId] = moduleBId;
+        }
+        if (kpl && kpl.richtingDataUitwisseling) {
+          nextDirectionByRow[rowId] = kpl.richtingDataUitwisseling;
+        }
+        if (kpl && kpl.soortKoppeling) {
+          nextTypeByRow[rowId] = kpl.soortKoppeling;
+        }
+        const localId =
+          (kpl && kpl._localId) ||
+          `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+        nextKoppelingIdByRow[rowId] = localId;
+        nextModuleIndexByRow[rowId] = moduleIndex;
+      });
+    });
+
+    if (nextRows.length === 0) return; // nothing to prefill
+
+    setKoppelingenFormState((prev) => ({
+      ...prev,
+      rows: nextRows,
+      nextRowId: nextRows.length,
+      selectedAppAByRow: { ...prev.selectedAppAByRow, ...nextSelectedAppAByRow },
+      selectedAppBByRow: { ...prev.selectedAppBByRow, ...nextSelectedAppBByRow },
+      directionByRow: { ...prev.directionByRow, ...nextDirectionByRow },
+      typeByRow: { ...prev.typeByRow, ...nextTypeByRow },
+      koppelingIdByRow: { ...prev.koppelingIdByRow, ...nextKoppelingIdByRow },
+      moduleIndexByRow: { ...prev.moduleIndexByRow, ...nextModuleIndexByRow },
+    }));
+  };
+
+  // Prepare diensten form UI state from a modules array (used for edit-mode prefill)
+  const prepareDienstenFormStateFromModules = (modulesInput) => {
+    const modules = Array.isArray(modulesInput) ? modulesInput : [];
+    let rowCounter = 0;
+    const nextRows = [];
+    const nextSelectedApplication = {};
+    const nextSelectedDienstByRow = {};
+    const nextDienstBeschrijvingByRow = {};
+
+    modules.forEach((module, moduleIndex) => {
+      if (!module || typeof module !== 'object') return;
+      const diensten = Array.isArray(module.diensten) ? module.diensten : [];
+      diensten.forEach((dienst) => {
+        const rowId = rowCounter++;
+        nextRows.push(rowId);
+        nextSelectedApplication[rowId] = moduleIndex;
+        if (dienst && typeof dienst === 'object') {
+          if (dienst.type != null)
+            nextSelectedDienstByRow[rowId] = String(dienst.type);
+          if (dienst.naam != null)
+            nextDienstBeschrijvingByRow[rowId] = String(dienst.naam);
+        } else if (dienst != null) {
+          nextSelectedDienstByRow[rowId] = String(dienst);
+        }
+      });
+    });
+
+    if (nextRows.length === 0) return;
+
+    setDienstenFormState((prev) => ({
+      ...prev,
+      rows: nextRows,
+      nextRowId: nextRows.length,
+      selectedApplication: {
+        ...prev.selectedApplication,
+        ...nextSelectedApplication,
+      },
+      selectedDienstByRow: {
+        ...prev.selectedDienstByRow,
+        ...nextSelectedDienstByRow,
+      },
+      dienstBeschrijvingByRow: {
+        ...prev.dienstBeschrijvingByRow,
+        ...nextDienstBeschrijvingByRow,
+      },
+    }));
+  };
 
   const setProductData = useCallback((key, value) => {
     // No more applicaties handling - all new module data is stored directly in modules array
@@ -555,16 +731,16 @@ const AcFormsProduct = ({ userStore, store }) => {
     };
 
     if (queryParamsString) {
-      // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
-      const urlParams = new URLSearchParams(queryParamsString);
-      urlParams.forEach((value, key) => {
-        baseParams[key] = value;
-      });
+      // // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
+      // const urlParams = new URLSearchParams(queryParamsString);
+      // urlParams.forEach((value, key) => {
+      //   baseParams[key] = value;
+      // });
     } else {
       // Fallback to hardcoded if schema doesn't have queryParams
       baseParams.gemmaType = 'Referentiecomponent';
       // Ensure standards are included with referentiecomponenten
-      baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
+      // baseParams._extend = 'aanbevolenStandaarden,verplichteStandaarden';
     }
 
     // Keep _extend for referentiecomponenten so we get standaarden in results
@@ -609,7 +785,6 @@ const AcFormsProduct = ({ userStore, store }) => {
     return baseParams;
   }, [schemas]);
 
-
   // Function to load all referentiecomponenten upfront using object store cache
   // ✅ Uses cache-first strategy for immediate response
   const loadReferentieComponenten = useCallback(async () => {
@@ -620,9 +795,12 @@ const AcFormsProduct = ({ userStore, store }) => {
 
     try {
       const queryParams = getReferentieComponentenQueryParams();
-      
+
       // Use object store cache-first method for immediate response
-      const list = await store.object.fetchGemmaElementsCacheFirst('referentiecomponent', queryParams);
+      const list = await store.object.fetchGemmaElementsCacheFirst(
+        'referentiecomponent',
+        queryParams
+      );
 
       const mapToOption = (item, index) => {
         const label =
@@ -642,14 +820,27 @@ const AcFormsProduct = ({ userStore, store }) => {
 
       const options = list.map(mapToOption).filter((o) => o.label && o.value);
       setReferentieComponentenOptions(options);
-      console.info(`✅ Loaded ${options.length} referentiecomponenten (cache-first)`);
+      console.info(
+        `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
+      );
+      // Prefill edit-mode selections as soon as options are available
+      if (isEditMode) {
+        prefillReferentieComponentenWithStandardsForEdit(product.modules, options);
+      }
     } catch (e) {
       console.error('Failed to load referentie componenten:', e);
       setReferentieComponentenOptions([]);
     } finally {
       setReferentieComponentenLoading(false);
     }
-  }, [schemas, getReferentieComponentenQueryParams, store]);
+  }, [
+    schemas,
+    getReferentieComponentenQueryParams,
+    store,
+    isEditMode,
+    product.modules,
+    prefillReferentieComponentenWithStandardsForEdit,
+  ]);
 
   // Function to load standaarden using object store cache
   // ✅ Uses cache-first strategy for immediate response
@@ -661,9 +852,12 @@ const AcFormsProduct = ({ userStore, store }) => {
 
     try {
       const queryParams = getStandaardenQueryParams();
-      
+
       // Use object store cache-first method for immediate response
-      const list = await store.object.fetchGemmaElementsCacheFirst('standaard', queryParams);
+      const list = await store.object.fetchGemmaElementsCacheFirst(
+        'standaard',
+        queryParams
+      );
 
       const options = list
         .map((item, index) => {
@@ -720,51 +914,56 @@ const AcFormsProduct = ({ userStore, store }) => {
 
   // Function to search modules with debouncing using object store cache
   // ✅ Uses cache-first strategy for immediate response
-  const performModulesSearch = useCallback(async (searchTerm = '') => {
-    setModulesLoading(true);
+  const performModulesSearch = useCallback(
+    async (searchTerm = '') => {
+      setModulesLoading(true);
 
-    try {
-      const queryParams = {
-        _limit: '20',
-        _page: '1',
-      };
-
-      // Add search parameter if provided
-      if (searchTerm && searchTerm.trim()) {
-        queryParams._search = searchTerm.trim();
-      }
-
-      console.info(`📋 Searching modules via object store cache (term: "${searchTerm}")...`);
-
-      // Use object store cache-first method for immediate response
-      const list = await store.object.fetchModulesCacheFirst(queryParams);
-
-      const mapToOption = (item, index) => {
-        const label =
-          item?.naam ||
-          item?.['@self']?.name ||
-          item?.name ||
-          item?.title ||
-          item?.label ||
-          (item?.id ? String(item.id) : `Module ${index + 1}`);
-        const value = item?.value || item?.id || item?.slug || label;
-        return {
-          value: String(value),
-          label: String(label),
-          data: item, // Store the full API data for later access
+      try {
+        const queryParams = {
+          _limit: '20',
+          _page: '1',
         };
-      };
 
-      const options = list.map(mapToOption).filter((o) => o.label && o.value);
-      setModulesOptions(options);
-      console.info(`✅ Loaded ${options.length} modules (cache-first)`);
-    } catch (e) {
-      console.error('Failed to fetch modules:', e);
-      setModulesOptions([]);
-    } finally {
-      setModulesLoading(false);
-    }
-  }, [store]);
+        // Add search parameter if provided
+        if (searchTerm && searchTerm.trim()) {
+          queryParams._search = searchTerm.trim();
+        }
+
+        console.info(
+          `📋 Searching modules via object store cache (term: "${searchTerm}")...`
+        );
+
+        // Use object store cache-first method for immediate response
+        const list = await store.object.fetchModulesCacheFirst(queryParams);
+
+        const mapToOption = (item, index) => {
+          const label =
+            item?.naam ||
+            item?.['@self']?.name ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            (item?.id ? String(item.id) : `Module ${index + 1}`);
+          const value = item?.value || item?.id || item?.slug || label;
+          return {
+            value: String(value),
+            label: String(label),
+            data: item, // Store the full API data for later access
+          };
+        };
+
+        const options = list.map(mapToOption).filter((o) => o.label && o.value);
+        setModulesOptions(options);
+        console.info(`✅ Loaded ${options.length} modules (cache-first)`);
+      } catch (e) {
+        console.error('Failed to fetch modules:', e);
+        setModulesOptions([]);
+      } finally {
+        setModulesLoading(false);
+      }
+    },
+    [store]
+  );
 
   // ✅ Debounced search function for modules
   const debouncedModulesSearch = useDebouncedInput(performModulesSearch, 500);
@@ -784,6 +983,127 @@ const AcFormsProduct = ({ userStore, store }) => {
     performModulesSearch('');
   }, [performModulesSearch]);
 
+  // Map fetched API product to local state structure used by the wizard
+  const mapFetchedProductToLocalState = useCallback(
+    (apiProduct) => {
+      if (!apiProduct) return null;
+
+      const markedModules = apiProduct.modules.map((module) => ({
+        ...module,
+        koppelingen: module.koppelingen.map((kpl) => ({
+          _localId: `kpl_${Date.now().toString(36)}_${Math.random()
+            .toString(36)
+            .slice(2, 8)}`,
+          ...kpl,
+        })),
+      }));
+
+      // cloudDienstverleningsmodel comes as array; we use single string (first value) for UI logic
+      const cloudModel = Array.isArray(apiProduct.cloudDienstverleningsmodel)
+        ? apiProduct.cloudDienstverleningsmodel[0] || ''
+        : apiProduct.cloudDienstverleningsmodel || '';
+
+      const mappedProduct = {
+        // Schema-compliant properties
+        naam: apiProduct.naam || '',
+        beschrijvingKort: apiProduct.beschrijvingKort || '',
+        beschrijvingLang: apiProduct.beschrijvingLang || '',
+        website: apiProduct.website || '',
+        logo: apiProduct.logo || '',
+        logoFilename: '',
+        hostingLocatie: apiProduct.hostingLocatie || '',
+        hostingJurisdictie: apiProduct.hostingJurisdictie || '',
+        contactpersoon: apiProduct.contactpersoon || '',
+        cloudDienstverleningsmodel: cloudModel,
+        modules: markedModules,
+
+        // Aanbieder reference if present
+        aanbieder: apiProduct.aanbieder || null,
+
+        // Keep create-only fields untouched
+        aanbiederNaam: '',
+        aanbiederType: '',
+        aanbiederWebsite: '',
+        aanbiederBeschrijvingKort: '',
+        aanbiederBeschrijvingLang: '',
+        aanbiederEmail: '',
+        aanbiederTelefoonnummer: '',
+        aanbiederKvkNummer: '',
+        aanbiederLogo: '',
+      };
+
+      // Prepare koppelingen UI state from mapped modules immediately (edit mode path)
+      try {
+        prepareKoppelingenFormStateFromModules(mappedProduct.modules);
+      } catch (e) {
+        // TODO: If needed, add error reporting here
+      }
+
+      // Prepare diensten UI state from mapped modules immediately (edit mode path)
+      try {
+        prepareDienstenFormStateFromModules(mappedProduct.modules);
+      } catch (e) {
+        // TODO: If needed, add error reporting here
+      }
+
+      return mappedProduct;
+    },
+    [store]
+  );
+
+  // Prefill product data in edit mode
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isEditMode) return;
+      setPrefillLoading(true);
+      setPrefillError(null);
+      try {
+        // Skip first stage in edit mode
+        setCurrentStep(getAdjustedStepIndex(1));
+        setIsMultiApplicatie(true);
+        // Fetch the product
+        await store.object.fetchObject(
+          'voorzieningen',
+          'product',
+          String(productId),
+          {
+            _extend: [
+              '@self.schema',
+              'modules',
+              'modules.koppelingen',
+              'modules.diensten',
+            ],
+          }
+        );
+        const fetched = store.object.getObject(
+          'voorzieningen_product',
+          String(productId)
+        );
+        if (cancelled) return;
+        const mapped = mapFetchedProductToLocalState(fetched);
+        if (mapped) {
+          // Attempt prefill immediately when product modules are known (may no-op if options not yet loaded)
+          prefillReferentieComponentenWithStandardsForEdit(
+            mapped.modules,
+            referentieComponentenOptions
+          );
+          setProduct({ ...mapped, modules: mapped.modules || [] });
+        }
+      } catch (e) {
+        setPrefillError(
+          'Het laden van het product is mislukt. Probeer het opnieuw of start een nieuw product.'
+        );
+      } finally {
+        if (!cancelled) setPrefillLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, productId, mapFetchedProductToLocalState, store, prefillRetry]);
+
   // Auto-set aanbieder to user's active organization
   useEffect(() => {
     if (userStore?.activeOrganization && !product.aanbieder) {
@@ -793,24 +1113,6 @@ const AcFormsProduct = ({ userStore, store }) => {
 
   // State for aanbieder selection
   const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
-
-  // Remove any local-only IDs (like _localId) before submitting
-  const stripLocalIds = (value) => {
-    if (Array.isArray(value)) {
-      return value.map(stripLocalIds).filter((v) => v != null);
-    }
-    if (value && typeof value === 'object') {
-      const out = {};
-      Object.keys(value).forEach((k) => {
-        if (k === '_localId') return;
-        // Remove UI-only fields from compliancy objects
-        if (k === 'standaardnaam') return;
-        out[k] = stripLocalIds(value[k]);
-      });
-      return out;
-    }
-    return value;
-  };
 
   const handleRegister = async () => {
     setLoading(true);
@@ -822,8 +1124,18 @@ const AcFormsProduct = ({ userStore, store }) => {
       };
       const sanitized = stripLocalIds(productData);
 
-      // Use object store's createObject method which includes authentication
-      await store.object.createObject('voorzieningen', 'product', sanitized);
+      if (productId) {
+        // Edit mode: update existing product via PUT
+        await store.object.updateObject(
+          'voorzieningen',
+          'product',
+          String(productId),
+          sanitized
+        );
+      } else {
+        // Create mode: create new product via POST
+        await store.object.createObject('voorzieningen', 'product', sanitized);
+      }
 
       // createObject returns the created object directly on success
       setRegisterCallBack('success');
@@ -845,48 +1157,13 @@ const AcFormsProduct = ({ userStore, store }) => {
     }
   };
 
-  // Helper function to determine if aanbieder step should be shown
-  const shouldShowAanbiederStep = () => {
-    return formType === 'ontbrekend';
-  };
+  // Helper function to get the correct step index accounting for optional steps (util wrapper)
+  const getAdjustedStepIndex = (logicalStep) =>
+    utilGetAdjustedStepIndex(logicalStep, formType, product);
 
-  // Helper to determine if Versies step should be shown (On-premise only)
-  const shouldShowVersiesStep = () => {
-    return (
-      (product?.cloudDienstverleningsmodel || '') === 'On-premises (self-managed)'
-    );
-  };
-
-  // Helper function to get the correct step index accounting for optional aanbieder step
-  const getAdjustedStepIndex = (logicalStep) => {
-    let index = logicalStep;
-    // If aanbieder step is not shown, shift all steps after step 1 down by 1
-    if (!shouldShowAanbiederStep() && logicalStep > 1) {
-      index -= 1;
-    }
-    // If versies step is not shown, shift all steps after logical step 5 down by 1
-    if (!shouldShowVersiesStep() && logicalStep > 5) {
-      index -= 1;
-    }
-    return index;
-  };
-
-  // Helper function to get logical step from actual step index
-  const getLogicalStepFromIndex = (stepIndex) => {
-    // Base logical mapping, accounting for optional aanbieder step (logical 2)
-    let logical = stepIndex;
-    if (!shouldShowAanbiederStep() && stepIndex >= 2) {
-      logical = stepIndex + 1;
-    }
-    // Additionally account for optional versies step (logical 5)
-    if (!shouldShowVersiesStep()) {
-      const versiesPhysicalIndex = getAdjustedStepIndex(5);
-      if (stepIndex >= versiesPhysicalIndex) {
-        logical += 1; // Skip logical step 5
-      }
-    }
-    return logical;
-  };
+  // Helper function to get logical step from actual step index (util wrapper)
+  const getLogicalStepFromIndex = (stepIndex) =>
+    utilGetLogicalStepFromIndex(stepIndex, formType, product);
 
   // Defaults for moduleVersie based on schema, used when auto-creating a module in single-app mode
   const getModuleVersieDefaults = useCallback(() => {
@@ -907,6 +1184,7 @@ const AcFormsProduct = ({ userStore, store }) => {
 
   // Ensure a single-app module exists and is prefilled from product fields
   const ensureSingleModuleInitialized = useCallback(() => {
+    if (isEditMode) return; // Do not auto-create modules when editing
     if (isMultiApplicatie) return;
     const firstModule = product.modules?.[0];
     if (!firstModule || typeof firstModule === 'string') {
@@ -939,6 +1217,7 @@ const AcFormsProduct = ({ userStore, store }) => {
     product.beschrijvingKort,
     getModuleVersieDefaults,
     setProduct,
+    isEditMode,
   ]);
 
   // Handle switching between single and multi-applicatie modes
@@ -989,40 +1268,11 @@ const AcFormsProduct = ({ userStore, store }) => {
   }, [isMultiApplicatie, ensureSingleModuleInitialized]);
 
   // Navigation helpers to skip Applicatie step in single-app mode
-  const getNextStepIndex = (stepIndex) => {
-    const logical = getLogicalStepFromIndex(stepIndex);
-    if (!isMultiApplicatie) {
-      // From Productinformatie → either Aanbieder (if shown) or directly to Licentie
-      if (logical === 1) {
-        if (shouldShowAanbiederStep()) {
-          return stepIndex + 1; // go to Aanbieder
-        }
-        return getAdjustedStepIndex(4); // skip Applicatie → Licentie
-      }
-      // From Aanbieder → skip Applicatie → go to Licentie
-      if (logical === 2) {
-        return getAdjustedStepIndex(4);
-      }
-    }
-    // From Licentie → skip Versies when not On-premise
-    if (!shouldShowVersiesStep() && logical === 4) {
-      return getAdjustedStepIndex(6);
-    }
-    return stepIndex + 1;
-  };
+  const getNextStepIndex = (stepIndex) =>
+    utilGetNextStepIndex(stepIndex, formType, product, isMultiApplicatie);
 
-  const getPrevStepIndex = (stepIndex) => {
-    const logical = getLogicalStepFromIndex(stepIndex);
-    // From Licentie back to Productinformatie in single-app mode
-    if (!isMultiApplicatie && logical === 4) {
-      return getAdjustedStepIndex(1);
-    }
-    // From Referentiecomponenten back to Licentie when Versies is hidden
-    if (!shouldShowVersiesStep() && logical === 6) {
-      return getAdjustedStepIndex(4);
-    }
-    return stepIndex - 1;
-  };
+  const getPrevStepIndex = (stepIndex) =>
+    utilGetPrevStepIndex(stepIndex, formType, product, isMultiApplicatie);
 
   const renderStep = (step) => {
     // Get the logical step number (accounting for optional aanbieder step)
@@ -1043,7 +1293,7 @@ const AcFormsProduct = ({ userStore, store }) => {
           <ConFormProductInformatieStage
             product={product}
             setProductData={setProductData}
-            loading={loading}
+            loading={loading || (isEditMode && prefillLoading)}
             touched={touched}
             schemas={schemas}
             isMultiApplicatie={isMultiApplicatie}
@@ -1051,7 +1301,7 @@ const AcFormsProduct = ({ userStore, store }) => {
         );
       case 2:
         // Aanbieder informatie step - only shown for 'ontbrekend' type
-        if (shouldShowAanbiederStep()) {
+        if (shouldShowAanbiederStep(formType)) {
           return (
             <ConFormAanbiederInformatieStage
               product={product}
@@ -1097,7 +1347,7 @@ const AcFormsProduct = ({ userStore, store }) => {
           />
         );
       case 5:
-        return shouldShowVersiesStep() ? (
+        return shouldShowVersiesStep(product) ? (
           <ConFormModuleVersieStage
             product={product}
             setProduct={setProduct}
@@ -1180,380 +1430,27 @@ const AcFormsProduct = ({ userStore, store }) => {
     }
   };
 
-  const getStatus = (currentStep, step) => {
-    const result =
-      currentStep === step
-        ? 'current'
-        : currentStep < step
-        ? 'not-checked'
-        : 'checked';
+  const currentStepName = (currentStep) =>
+    utilCurrentStepName(currentStep, formType, product, isMultiApplicatie);
 
-    return result;
-  };
+  const getDisabledStatus = (currentStep) =>
+    utilGetDisabledStatus(
+      currentStep,
+      product,
+      dienstenFormState,
+      isMultiApplicatie,
+      formType
+    );
 
-  const getStatusMultiStep = (currentStep, step, firstStep, lastStep) => {
-    if (currentStep >= firstStep && currentStep <= lastStep) {
-      return 'current';
-    } else if (currentStep < step) {
-      return 'not-checked';
-    } else if (currentStep > step) {
-      return 'checked';
-    }
-  };
-
-  const currentStepName = (currentStep) => {
-    // Get the logical step number (accounting for optional aanbieder step)
-    const logicalStep = getLogicalStepFromIndex(currentStep);
-
-    switch (logicalStep) {
-      case 0:
-        return 'Productopbouw';
-      case 1:
-        return 'Productinformatie';
-      case 2:
-        if (shouldShowAanbiederStep()) {
-          return 'Aanbieder informatie';
-        }
-      // Fall through to next case if aanbieder step is not shown
-      case 3:
-        return isMultiApplicatie ? 'Applicaties' : 'Applicatie';
-      case 4:
-        return 'Licentie';
-      case 5:
-        return shouldShowVersiesStep() ? 'Versies' : 'Referentiecomponenten';
-      case 6:
-        return 'Referentiecomponenten';
-      case 7:
-        return 'Standaarden';
-      case 8:
-        return 'Koppelingen';
-      case 9:
-        return 'Diensten';
-      case 10:
-        return 'Controleer uw gegevens';
-    }
-  };
-
-  const getDisabledStatus = (currentStep) => {
-    // Convert physical step to logical step for consistent validation
-    const logicalStep = getLogicalStepFromIndex(currentStep);
-
-    // TODO: uncomment at the end
-    if (logicalStep === 0) {
-      return false;
-    }
-    if (logicalStep === 1) {
-      // Productinformatie step validation
-      const requiredFields = ['naam', 'website'];
-      const missingFields = requiredFields.filter(
-        (field) => !product[field] || !product[field].trim()
-      );
-
-      // Check website format (allow URLs without http/https)
-      if (product.website && product.website.trim()) {
-        const website = product.website.trim();
-        if (!validateWebsite(website)) {
-          return true; // Invalid website format
-        }
-      }
-
-      return missingFields.length > 0;
-    }
-    if (logicalStep === 3) {
-      // Applicaties step validation - check modules array
-      const totalModules = product.modules?.length || 0;
-
-      // Must have at least one module (new or existing)
-      if (totalModules === 0) {
-        return true;
-      }
-
-      // All new modules must have naam and beschrijving
-      const newModules = getNewModules();
-      const hasIncompleteNewModules = newModules.some((module) => {
-        return (
-          !module.naam ||
-          !module.naam.trim() ||
-          !module.beschrijvingKort ||
-          !module.beschrijvingKort.trim()
-        );
-      });
-
-      return hasIncompleteNewModules;
-    }
-
-    if (logicalStep === 4) {
-      // Licentie step validation - check new modules
-      const newModules = getNewModules();
-      const hasIncompleteLicenses = newModules.some((module) => {
-        // Check both possible field names (schema uses 'licentietype', code uses 'licentieType')
-        const licenseType = module.licentietype || module.licentieType;
-
-        // License type is required for all modules
-        if (!licenseType || !licenseType.trim()) {
-          return true;
-        }
-
-        // If licentietype is "Open Source", then licentie is required
-        if (
-          licenseType === 'Open Source' &&
-          (!module.licentie || !module.licentie.trim())
-        ) {
-          return true;
-        }
-
-        return false;
-      });
-
-      return hasIncompleteLicenses;
-    }
-
-    // TODO: Koppelingen validation temporarily removed - too strict
-    // if (logicalStep === 8) {
-    //   // Koppelingen step validation - check if all koppeling rows are complete
-    //   const { rows, selectedAppAByRow, selectedAppBByRow, directionByRow, typeByRow } = koppelingenFormState;
-    //
-    //   // Allow empty koppelingen (user might not want to add any connections)
-    //   if (rows.length === 0) {
-    //     return false;
-    //   }
-    //
-    //   // Check if any row has incomplete data
-    //   const hasIncompleteKoppelingen = rows.some(rowId => {
-    //     const appA = selectedAppAByRow[rowId];
-    //     const appB = selectedAppBByRow[rowId];
-    //     const direction = directionByRow[rowId];
-    //     const type = typeByRow[rowId];
-    //
-    //     // If any field in a row is filled, all fields must be filled
-    //     const hasAnyData = appA || appB || direction || type;
-    //     const hasAllData = appA && appB && direction && type;
-    //
-    //     return hasAnyData && !hasAllData;
-    //   });
-    //
-    //   return hasIncompleteKoppelingen;
-    // }
-
-    if (logicalStep === 9) {
-      // Diensten step validation - check if all dienst rows are complete
-      const { rows, selectedApplication, selectedDienstByRow } = dienstenFormState;
-
-      // Allow empty diensten (user might not want to add any services)
-      if (rows.length === 0) {
-        return false;
-      }
-
-      // Check if any row has incomplete data
-      const hasIncompleteDiensten = rows.some((rowId) => {
-        const appId = selectedApplication[rowId];
-        const dienstVal = selectedDienstByRow[rowId];
-
-        // If any field in a row is filled, all fields must be filled
-        const hasAnyData = appId != null || dienstVal != null;
-        const hasAllData = appId != null && dienstVal != null;
-
-        return hasAnyData && !hasAllData;
-      });
-
-      return hasIncompleteDiensten;
-    }
-
-    return false;
-  };
-
-  // Add this function to generate the tooltip message
-  const getDisabledTooltip = (currentStep, product) => {
-    // Convert physical step to logical step for consistent validation
-    const logicalStep = getLogicalStepFromIndex(currentStep);
-
-    // Example
-    if (logicalStep === 1) {
-      const messages = [];
-
-      // Check required fields
-      if (!product.naam || !product.naam.trim()) {
-        messages.push('Productnaam is verplicht');
-      }
-      if (!product.website || !product.website.trim()) {
-        messages.push('Website is verplicht');
-      }
-
-      // Check website format
-      if (product.website && product.website.trim()) {
-        const website = product.website.trim();
-        // More permissive domain validation - allow domains with or without protocol
-        const domainRegex =
-          /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
-        if (!domainRegex.test(website)) {
-          messages.push(
-            'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)'
-          );
-        }
-      }
-
-      return messages.join('\n');
-    }
-
-    if (logicalStep === 3) {
-      const messages = [];
-      const totalModules = product.modules?.length || 0;
-
-      // Check if no modules exist
-      if (totalModules === 0) {
-        messages.push(
-          'Een product moet bestaan uit minimaal één applicatie (nieuwe of bestaande)'
-        );
-        return messages.join('\n');
-      }
-
-      // Check for incomplete new modules
-      const newModules = getNewModules();
-      const incompleteModules = [];
-
-      newModules.forEach((module, index) => {
-        const missingFields = [];
-        if (!module.naam || !module.naam.trim()) {
-          missingFields.push('naam');
-        }
-        if (!module.beschrijvingKort || !module.beschrijvingKort.trim()) {
-          missingFields.push('beschrijving');
-        }
-
-        if (missingFields.length > 0) {
-          // Use the actual module name if available, otherwise fall back to "Nieuwe applicatie X"
-          const moduleName =
-            module.naam && module.naam.trim()
-              ? module.naam.trim()
-              : `Nieuwe applicatie ${index + 1}`;
-          incompleteModules.push(
-            `${moduleName}: ${missingFields.join(', ')} ontbreekt`
-          );
-        }
-      });
-
-      if (incompleteModules.length > 0) {
-        messages.push(
-          'Alle nieuwe applicaties moeten een naam en beschrijving hebben:'
-        );
-        messages.push(...incompleteModules);
-      }
-
-      return messages.join('\n');
-    }
-
-    if (logicalStep === 4) {
-      // Licentie step validation messages
-      const messages = [];
-      const newModules = getNewModules();
-      const incompleteLicenses = [];
-
-      newModules.forEach((module, index) => {
-        // Check both possible field names (schema uses 'licentietype', code uses 'licentieType')
-        const licenseType = module.licentietype || module.licentieType;
-        const moduleName =
-          module.naam && module.naam.trim()
-            ? module.naam.trim()
-            : `Nieuwe applicatie ${index + 1}`;
-
-        // Check if license type is missing
-        if (!licenseType || !licenseType.trim()) {
-          incompleteLicenses.push(`${moduleName}: licentie type is verplicht`);
-        }
-        // Check if Open Source but no specific license
-        else if (
-          licenseType === 'Open Source' &&
-          (!module.licentie || !module.licentie.trim())
-        ) {
-          incompleteLicenses.push(
-            `${moduleName}: specifieke licentie is verplicht bij Open Source`
-          );
-        }
-      });
-
-      if (incompleteLicenses.length > 0) {
-        messages.push(
-          'Alle nieuwe applicaties hebben volledige licentie-informatie nodig:'
-        );
-        messages.push(...incompleteLicenses);
-      }
-
-      return messages.join('\n');
-    }
-
-    // TODO: Koppelingen tooltip validation temporarily removed - too strict
-    // if (logicalStep === 8) {
-    //   const { rows, selectedAppAByRow, selectedAppBByRow, directionByRow, typeByRow } = koppelingenFormState;
-    //   const messages = [];
-    //
-    //   // Check each row for missing fields
-    //   rows.forEach((rowId, index) => {
-    //     const appA = selectedAppAByRow[rowId];
-    //     const appB = selectedAppBByRow[rowId];
-    //     const direction = directionByRow[rowId];
-    //     const type = typeByRow[rowId];
-    //
-    //     const missingFields = [];
-    //     if (!appA) missingFields.push('Applicatie A');
-    //     if (!appB) missingFields.push('Applicatie B');
-    //     if (!direction) missingFields.push('Richting data-uitwisseling');
-    //     if (!type) missingFields.push('Soort koppeling');
-    //
-    //     if (missingFields.length > 0) {
-    //       messages.push(`Rij ${index + 1}: ${missingFields.join(', ')} ontbreekt`);
-    //     }
-    //   });
-    //
-    //   return messages.join('\n');
-    // }
-
-    if (logicalStep === 9) {
-      const { rows, selectedApplication, selectedDienstByRow } = dienstenFormState;
-      const messages = [];
-
-      // Check each row for missing fields
-      rows.forEach((rowId, index) => {
-        const appId = selectedApplication[rowId];
-        const dienstVal = selectedDienstByRow[rowId];
-
-        const missingFields = [];
-        if (appId == null) missingFields.push('Applicatie');
-        if (dienstVal == null) missingFields.push('Dienst Type');
-
-        if (missingFields.length > 0) {
-          messages.push(`Rij ${index + 1}: ${missingFields.join(', ')} ontbreekt`);
-        }
-      });
-
-      return messages.join('\n');
-    }
-
-    return '';
-  };
-
-  // Determine page title based on form type
-  const getPageTitle = () => {
-    switch (formType) {
-      case 'eigen':
-        return 'Eigen product aanmelden';
-      case 'ontbrekend':
-        return 'Ontbrekend product melden';
-      default:
-        return 'Product Aanmelden';
-    }
-  };
-
-  // Determine page description based on form type
-  const getPageDescription = () => {
-    switch (formType) {
-      case 'eigen':
-        return 'Vul dit formulier in om uw eigen product aan te melden in onze catalogus.';
-      case 'ontbrekend':
-        return 'Vul dit formulier in om een ontbrekend product te melden dat toegevoegd zou moeten worden aan onze catalogus.';
-      default:
-        return 'Vul dit formulier in om een product aan te melden in onze catalogus.';
-    }
-  };
+  // Tooltip text for disabled Next button - util wrapper
+  const getDisabledTooltip = (currentStep, product) =>
+    utilGetDisabledTooltip(
+      currentStep,
+      product,
+      dienstenFormState,
+      isMultiApplicatie,
+      formType
+    );
 
   return (
     <AcSection spacing>
@@ -1562,26 +1459,14 @@ const AcFormsProduct = ({ userStore, store }) => {
           {!registerCallBack && (
             <>
               <div>
-                <Heading1>{getPageTitle()}</Heading1>
-                <Paragraph>{getPageDescription()}</Paragraph>
-
-                {/* Show loading state while schemas are being fetched */}
-                {schemasLoading && (
-                  <div
-                    className='ac-forms-product-loading'
-                    style={{
-                      padding: '1rem',
-                      backgroundColor: '#f0f4ff',
-                      border: '1px solid #d1e7ff',
-                      borderRadius: '4px',
-                      margin: '1rem 0',
-                    }}
-                  >
-                    <p style={{ margin: 0, color: '#0066cc' }}>
-                      📋 Formulier definities aan het laden...
-                    </p>
-                  </div>
-                )}
+                <Heading1>
+                  {isEditMode ? 'Product updaten' : utilGetPageTitle(formType)}
+                </Heading1>
+                <Paragraph>
+                  {isEditMode
+                    ? 'Werk uw productgegevens bij in onze catalogus.'
+                    : utilGetPageDescription(formType)}
+                </Paragraph>
               </div>
               <div>
                 <h3
@@ -1624,7 +1509,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                 getAdjustedStepIndex(0),
                                 getAdjustedStepIndex(0),
                                 getAdjustedStepIndex(
-                                  shouldShowAanbiederStep() ? 2 : 1
+                                  shouldShowAanbiederStep(formType) ? 2 : 1
                                 )
                               ),
                               title: 'Productopbouw',
@@ -1638,7 +1523,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                   title: 'Product informatie',
                                 },
                                 // Conditionally add aanbieder step
-                                ...(shouldShowAanbiederStep()
+                                ...(shouldShowAanbiederStep(formType)
                                   ? [
                                       {
                                         id: 'w7x8y9z0-1a2b-3c4d-5e6f-7g8h9i0j1k2l',
@@ -1662,7 +1547,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                                 getAdjustedStepIndex(9)
                               ),
                               title: currentStepName(
-                                shouldShowAanbiederStep() ? 3 : 2
+                                shouldShowAanbiederStep(formType) ? 3 : 2
                               ),
                               steps: [
                                 {
@@ -1803,7 +1688,7 @@ const AcFormsProduct = ({ userStore, store }) => {
                             onClick={() =>
                               setCurrentStep(getPrevStepIndex(currentStep))
                             }
-                            disabled={loading}
+                            disabled={loading || prefillLoading || !!prefillError}
                           >
                             Vorige
                           </AcButton>
@@ -1817,6 +1702,8 @@ const AcFormsProduct = ({ userStore, store }) => {
                               )}
                               icon={<VISUALS.ARROW_RIGHT />}
                               disabled={
+                                prefillLoading ||
+                                !!prefillError ||
                                 getDisabledStatus(currentStep) ||
                                 loading ||
                                 (getLogicalStepFromIndex(currentStep) === 7 &&
@@ -1825,7 +1712,9 @@ const AcFormsProduct = ({ userStore, store }) => {
                               onClick={() => {
                                 focusForm();
                                 // In single-app mode, ensure a module exists before jumping to Licentie
-                                ensureSingleModuleInitialized();
+                                if (!isEditMode) {
+                                  ensureSingleModuleInitialized();
+                                }
                                 setCurrentStep(getNextStepIndex(currentStep));
                               }}
                               title={
@@ -1842,12 +1731,18 @@ const AcFormsProduct = ({ userStore, store }) => {
                         {currentStep === getAdjustedStepIndex(10) && (
                           <AcButton
                             style='button'
-                            icon={<VISUALS.CLIPBOARD_CHECK />}
+                            icon={
+                              isEditMode ? (
+                                <VISUALS.SAVE />
+                              ) : (
+                                <VISUALS.CLIPBOARD_CHECK />
+                              )
+                            }
                             onClick={handleRegister}
                             loading={loading}
                             disabled={loading}
                           >
-                            Product aanmelden
+                            {isEditMode ? 'Product updaten' : 'Product aanmelden'}
                           </AcButton>
                         )}
                       </div>
@@ -1855,6 +1750,45 @@ const AcFormsProduct = ({ userStore, store }) => {
                       {/* Info boxes now handled within individual stage components via ConExistingModulesInfoBox */}
                       {/* Exception: Standaarden stage still uses the old renderExistingAppsInfoBox */}
                       {currentStep === 7 && renderExistingAppsInfoBox('standaarden')}
+                      {/* Prefill error UI */}
+                      {prefillError && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <Alert type='error'>
+                            <Paragraph>{prefillError}</Paragraph>
+                          </Alert>
+                          <div
+                            style={{
+                              display: 'flex',
+                              gap: '0.5rem',
+                              marginTop: '0.5rem',
+                            }}
+                          >
+                            <AcButton
+                              style='button'
+                              icon={<VISUALS.ARROW_RIGHT />}
+                              onClick={() => {
+                                // Retry prefill by re-running effect
+                                setPrefillError(null);
+                                setPrefillRetry((n) => n + 1);
+                              }}
+                            >
+                              Opnieuw proberen
+                            </AcButton>
+                            <AcButton
+                              style='button'
+                              buttonType='secondary'
+                              icon={<VISUALS.CUBE />}
+                              onClick={() => {
+                                // Explicitly start a new product instead of editing
+                                onClearProductId?.();
+                                setCurrentStep(getAdjustedStepIndex(0));
+                              }}
+                            >
+                              Nieuw product starten
+                            </AcButton>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </AcColumn>
@@ -1865,11 +1799,19 @@ const AcFormsProduct = ({ userStore, store }) => {
           {/* Success Feedback Page */}
           {registerCallBack === 'success' && (
             <div>
-              <Heading1>🎉 Product succesvol aangemeld!</Heading1>
+              <Heading1>
+                {isEditMode
+                  ? '🎉 Product succesvol geüpdatet!'
+                  : '🎉 Product succesvol aangemeld!'}
+              </Heading1>
 
               <Alert type='success'>
                 <Paragraph>
-                  <strong>Uw product is succesvol geregistreerd!</strong>
+                  <strong>
+                    {isEditMode
+                      ? 'Uw product is succesvol bijgewerkt!'
+                      : 'Uw product is succesvol geregistreerd!'}
+                  </strong>
                 </Paragraph>
                 <Paragraph>
                   Het product {product.naam || 'Onbekend product'} en alle
@@ -1927,6 +1869,34 @@ const AcFormsProduct = ({ userStore, store }) => {
         </AcColumn>
       </AcContainer>
     </AcSection>
+  );
+};
+
+const AcFormsProduct = ({ userStore, store }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const formType = searchParams.get('type') || '';
+  const productId = searchParams.get('id') || '';
+
+  const handleClearProductId = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('id');
+    setSearchParams(next);
+    // Hard reset form UI to initial state
+    // Keep current route, only drop id
+  }, [searchParams, setSearchParams]);
+
+  if (!formType) {
+    return <ConFormProductTypeSelectStage />;
+  }
+
+  return (
+    <AcFormsProductInner
+      userStore={userStore}
+      store={store}
+      formType={formType}
+      productId={productId}
+      onClearProductId={handleClearProductId}
+    />
   );
 };
 

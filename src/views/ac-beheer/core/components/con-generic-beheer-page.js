@@ -24,6 +24,7 @@ import { CanceledError } from 'axios';
 import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import { 
   extractReferenceIdsFromCollection,
   createReferenceResolver 
@@ -154,24 +155,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
   const showManageActions = !['extendview', 'view'].includes(config?.routeType);
 
-  // Related create actions via shared hook
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: config?.schemaSlug,
-    currentType: type,
-    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
-      setDynamicCreateTargetType(targetType);
-      setDynamicCreatePreSelected(preSelected);
-      // Handle outgoing relationship metadata
-      if (metadata.isOutgoing) {
-        // Store metadata for post-creation relationship updates
-        // (handled by the form modal after successful creation)
-      }
-      setOpenModal('dynamicCreate');
-    },
-    currentObject: null, // List page doesn't have a single current object
-  });
+  // Related create actions via shared hook (declared after cancelAllRequests effect
+  // to avoid its initial fetch being aborted on type changes)
+  let makeActionsForContext; // will be assigned below
 
   // Create reference resolver for UUID to name resolution
   const referenceResolver = useMemo(() => {
@@ -264,6 +250,23 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setShowSearch(false);
   }, [type]);
 
+  // Initialize related create actions after cancellation effect definition
+  ({ makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: config?.schemaSlug,
+    currentType: type,
+    openDynamicCreate: (targetType, preSelected, metadata = {}) => {
+      setDynamicCreateTargetType(targetType);
+      setDynamicCreatePreSelected(preSelected);
+      if (metadata.isOutgoing) {
+        // handled by the form modal after successful creation
+      }
+      setOpenModal('dynamicCreate');
+    },
+    currentObject: null,
+  }));
+
   // Fetch data when component is ready and pagination changes
   useEffect(() => {
     if (!!config && objectType) {
@@ -309,6 +312,27 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   const [singleSelectedRow, setSingleSelectedRow] = useState(null);
   const [openModal, setOpenModal] = useState(null);
 
+  // Handle create action → open corresponding wizard when available
+  const handleCreateClick = useCallback(() => {
+    if (!config?.schemaSlug) {
+      setOpenModal('add');
+      return;
+    }
+
+    const wizards = Object.values(DASHBOARD_WIZARDS);
+    const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+    const areThereMultipleOptions =
+      wizards.filter((w) => w.schema === config.schemaSlug).length > 1;
+
+    if (wizard) {
+      navigate(getWizardUrl(wizard, !areThereMultipleOptions));
+      return;
+    }
+
+    // Fallback to legacy modal when no wizard is defined for this schema
+    setOpenModal('add');
+  }, [config?.schemaSlug, navigate]);
+
   // Generate headers from dataProperties schema
   const headers = useMemo(() => {
     if (!config) return [];
@@ -345,21 +369,50 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     if (!config || !dataProperties)
       return { defaultHeaderIds: [], shouldShowAllHeaders: true };
 
+    const headersList = headers;
+
+    // Helper to map schema keys or custom header ids to actual header ids
+    const mapKeysToHeaderIds = (keys) => {
+      const result = new Set();
+      keys.forEach((keyOrId) => {
+        const match = headersList.find((h) => h.id === keyOrId || h.key === keyOrId);
+        if (match) result.add(match.id);
+      });
+      return result;
+    };
+
+    // 1) Prefer explicit defaults from config.defaultHeaders if provided
+    const explicitDefaults = Array.isArray(config.defaultHeaders)
+      ? config.defaultHeaders
+      : [];
+    const explicitDefaultIds = mapKeysToHeaderIds(explicitDefaults);
+    if (explicitDefaultIds.size > 0) {
+      return {
+        defaultHeaderIds: Array.from(explicitDefaultIds),
+        shouldShowAllHeaders: false,
+      };
+    }
+
+    // 2) Fallback to schema-based table.default flags
     const entries = Object.entries(dataProperties);
     const anyTable = entries.some(([, value]) => !!value?.table);
-    const defaultTrueKeys = new Set(
-      entries.filter(([, value]) => value?.table?.default === true).map(([k]) => k)
-    );
+    const defaultTrueKeys = entries
+      .filter(([, value]) => value?.table?.default === true)
+      .map(([k]) => k);
+    const defaultTrueIds = mapKeysToHeaderIds(defaultTrueKeys);
 
-    const showAll = !anyTable || defaultTrueKeys.size === 0;
+    const showAll = !anyTable || defaultTrueIds.size === 0;
     if (showAll) {
       return { defaultHeaderIds: [], shouldShowAllHeaders: true };
     }
 
-    const ids = headers.filter((h) => defaultTrueKeys.has(h.id)).map((h) => h.id);
-
-    return { defaultHeaderIds: ids, shouldShowAllHeaders: false };
-  }, [dataProperties, headers]);
+    return {
+      defaultHeaderIds: headersList
+        .filter((h) => defaultTrueIds.has(h.id))
+        .map((h) => h.id),
+      shouldShowAllHeaders: false,
+    };
+  }, [dataProperties, headers, config && config.defaultHeaders]);
 
   const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
   const defaultHeaderIdsKey = useMemo(
@@ -405,6 +458,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bewerken',
           icon: <VISUALS.PENCIL />,
           onClick: () => {
+            // Prefer wizard editing when available; fallback to legacy modal
+            if (config?.schemaSlug) {
+              const wizards = Object.values(DASHBOARD_WIZARDS);
+              const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+
+              if (wizard) {
+                const baseUrl = getWizardUrl(wizard);
+                const url = new URL(baseUrl, window.location.origin);
+                url.searchParams.set('id', row.id);
+                navigate(url.pathname + url.search);
+                return;
+              }
+            }
+
             setSingleSelectedRow(row);
             setOpenModal('edit');
           },
@@ -556,7 +623,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                   <AcButton
                     style='button'
                     buttonType='primary'
-                    onClick={() => setOpenModal('add')}
+                    onClick={handleCreateClick}
                     icon={<VISUALS.PLUS />}
                   >
                     Toevoegen
@@ -568,8 +635,8 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
                     </ConActionMenu.Trigger>
 
                     <ConActionMenu.Menu position='right'>
-                      <ConActionMenu.Button 
-                        icon={<VISUALS.SPINNER />} 
+                      <ConActionMenu.Button
+                        icon={<VISUALS.SPINNER />}
                         onClick={() => fetchData()}
                         disabled={loading}
                       >

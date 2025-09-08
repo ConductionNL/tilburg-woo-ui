@@ -586,7 +586,7 @@ const ConBeheerViews = ({ store }) => {
         <div className='ac-beheer-details--100-width'>
           {/* View Selection Header */}
           <div className='con-beheer-views-header'>
-            <div>
+            <div className='con-beheer-views-title-section'>
               <h1>
                 {gemma.get_view
                   ? getViewName(gemma.get_view)
@@ -600,28 +600,9 @@ const ConBeheerViews = ({ store }) => {
               </p>
             </div>
 
-            {/* Filters en acties */}
-            <div className='con-views-dropdown-container'>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <AcCheckbox
-                  label='Gebruik'
-                  checked={filters.gebruik}
-                  onChange={(checked) => handleToggleFilter('gebruik')(checked)}
-                />
-                <AcCheckbox
-                  label='Product'
-                  checked={filters.product}
-                  onChange={(checked) => handleToggleFilter('product')(checked)}
-                />
-                <AcCheckbox
-                  label='Deelnames'
-                  checked={filters.deelnames}
-                  onChange={(checked) => handleToggleFilter('deelnames')(checked)}
-                />
-              </div>
-
-              {/* Acties */}
-              {gemma?.get_view && !gemma?.get_viewError && (
+            {/* Acties */}
+            {gemma?.get_view && !gemma?.get_viewError && (
+              <div className='con-beheer-views-actions'>
                 <ConActionMenu className='ac-gemma-view-header-download-button'>
                   <ConActionMenu.Trigger icon={<VISUALS.ELLIPSIS />}>
                     Acties
@@ -639,7 +620,10 @@ const ConBeheerViews = ({ store }) => {
                       icon={<VISUALS.DOWNLOAD />}
                       onClick={async () => {
                         try {
-                          await fetch('/api/amef/download', { method: 'POST' });
+                          await fetch(
+                            '/api/apps/softwarecatalog/api/archimate/export',
+                            { method: 'POST' }
+                          );
                         } catch (_e) {
                           /* ignore */
                         }
@@ -650,9 +634,51 @@ const ConBeheerViews = ({ store }) => {
                     </ConActionMenu.Button>
                   </ConActionMenu.Menu>
                 </ConActionMenu>
-              )}
-            </div>
+              </div>
+            )}
           </div>
+
+          {/* Filters Section */}
+          {gemma?.get_view && !gemma?.get_viewError && (
+            <div className='con-beheer-views-filters-section'>
+              <div className='con-beheer-views-filters-header'>
+                <h3>Weergave filters</h3>
+                <p>
+                  Pas de weergave aan door specifieke elementen te tonen of te
+                  verbergen
+                </p>
+              </div>
+
+              <div className='con-beheer-views-filters-flex'>
+                <AcCheckbox
+                  label='Gebruik'
+                  checked={filters.gebruik}
+                  tooltip={
+                    'Toon elementen gerelateerd aan het gebruik van diensten en applicaties'
+                  }
+                  onChange={handleToggleFilter('gebruik')}
+                />
+
+                <AcCheckbox
+                  label='Product'
+                  checked={filters.product}
+                  tooltip={
+                    'Toon product-gerelateerde elementen en hun onderlinge relaties'
+                  }
+                  onChange={handleToggleFilter('product')}
+                />
+
+                <AcCheckbox
+                  label='Deelnames'
+                  checked={filters.deelnames}
+                  tooltip={
+                    'Toon deelname-gerelateerde elementen en participatie-aspecten'
+                  }
+                  onChange={handleToggleFilter('deelnames')}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Loading State */}
           {gemma?.is_loading && !gemma?.get_view && <AcLoader />}

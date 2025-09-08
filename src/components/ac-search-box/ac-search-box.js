@@ -50,7 +50,7 @@ export const AcSearchBox = ({
       if (onSubmitCallback instanceof Function) {
         onSubmitCallback(searchQuery);
       }
-    }, 500); // 500ms delay
+    }, 750); // 750ms delay
 
     // Cleanup timeout on component unmount
     return () => {
@@ -97,9 +97,7 @@ export const AcSearchBox = ({
     <>
       <form className={_CLASSES} onSubmit={submitCallback}>
         {renderHeading && (
-          <div className='ac-search-box__title-wrapper'>
-            {renderHeading}
-          </div>
+          <div className='ac-search-box__title-wrapper'>{renderHeading}</div>
         )}
 
         <AcFlex column spacing='sm'>

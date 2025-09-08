@@ -78,14 +78,13 @@ const FormModalConfigFactory = {
           // Only specify custom defaults or overrides here
           initialData: {},
           optionsProviders: {
-            voorzieningstype: () =>
-              [
-                { value: 'Toepassing', label: 'Toepassing' },
-                { value: 'Platform', label: 'Platform' },
-                { value: 'GeneriekComponent', label: 'GeneriekComponent' },
-                { value: 'Service', label: 'Service' },
-                { value: 'Anders', label: 'Anders' },
-              ],
+            voorzieningstype: () => [
+              { value: 'Toepassing', label: 'Toepassing' },
+              { value: 'Platform', label: 'Platform' },
+              { value: 'GeneriekComponent', label: 'GeneriekComponent' },
+              { value: 'Service', label: 'Service' },
+              { value: 'Anders', label: 'Anders' },
+            ],
             licentie: () =>
               licenses.map((license) => ({
                 label: license.name,
@@ -355,13 +354,27 @@ const FormModalConfigFactory = {
         };
 
       case 'contactpersonen':
+      case 'contactpersoon':
         return {
           ...baseConfig,
           // Most initial data is automatically generated from schema properties
           // Only specify custom defaults or overrides here
-          initialData: {
-            organisatie: 'ce0391a9-2006-426c-88cd-adedc10579b7', // Always set to this specific organisation
-            voorkeuren: { taal: 'NL-nl', thema: 'licht' }, // Custom default for nested object
+          /**
+           * Compute initial defaults for contactpersoon
+           * - Prefill organisatie from active organisation when creating (not editing) and when not pre-selected
+           */
+          initialData: ({ user, isEdit, preSelected } = {}) => {
+            const activeOrg = user?.activeOrganization || null;
+            const orgId = String(activeOrg?.id);
+
+            return {
+              voorkeuren: { taal: 'NL-nl', thema: 'licht' },
+              // Do not override when editing or when a preSelected organisatie exists
+              ...(orgId &&
+                !(isEdit || (preSelected && preSelected.organisatie)) && {
+                  organisatie: orgId,
+                }),
+            };
           },
           optionsProviders: {
             rollen: () => [
@@ -390,7 +403,6 @@ const FormModalConfigFactory = {
             // Disable organisatie field for non-admin users
             organisatie: {
               visible: true,
-              disabled: true, // Always disabled
             },
             // Make telefoonnummer required when aanspreekPunt is true
             telefoonnummer: {
@@ -651,11 +663,11 @@ const FormModalConfigFactory = {
         try {
           // Get the beheer page config for this type to reuse registerSlug and schemaSlug
           const beheerConfig = BeheerPageConfigFactory.createConfig(type);
-          
+
           return {
             // Beheer page configuration (for API endpoint construction)
             beheerConfig,
-            
+
             // Form configuration
             title: type.charAt(0).toUpperCase() + type.slice(1),
             fields: [], // Will be populated dynamically from schema
@@ -670,7 +682,9 @@ const FormModalConfigFactory = {
           };
         } catch (error) {
           // If beheer config also doesn't exist, create a minimal fallback
-          console.warn(`No beheer config found for type: ${type}, using minimal fallback`);
+          console.warn(
+            `No beheer config found for type: ${type}, using minimal fallback`
+          );
           return {
             // Minimal configuration without beheerConfig
             title: type.charAt(0).toUpperCase() + type.slice(1),

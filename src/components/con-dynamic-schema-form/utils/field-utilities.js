@@ -50,7 +50,7 @@ export const getFieldRefSchemaSlug = (propertySchema) => {
     return refMatch?.[1] || null;
   }
 
-  if (propertySchema.type === 'array' && propertySchema.items?.$ref) {
+  if (propertySchema?.type === 'array' && propertySchema.items?.$ref) {
     const refMatch = propertySchema.items.$ref.match(/\/schemas\/([^/]+)$/);
     return refMatch?.[1] || null;
   }
@@ -76,19 +76,19 @@ export const getFieldConfig = (
 ) => {
   const baseConfig = {
     label:
-      propertySchema.title ||
+      propertySchema?.title ||
       propertyPath.split('.').pop().charAt(0).toUpperCase() +
         propertyPath.split('.').pop().slice(1),
     required: isRequired,
-    visible: propertySchema.visible !== false,
-    description: propertySchema.description,
-    placeholder: propertySchema.example || undefined,
+    visible: propertySchema?.visible !== false,
+    description: propertySchema?.description,
+    placeholder: propertySchema?.example || undefined,
   };
 
   // Handle different field types based on schema
   let schemaConfig = baseConfig;
 
-  if (propertySchema.type === 'array') {
+  if (propertySchema?.type === 'array') {
     const arrayItemsRefSchemaSlug = propertySchema.items?.$ref
       ? extractSchemaSlugFromRef(propertySchema.items.$ref)
       : undefined;
@@ -105,7 +105,7 @@ export const getFieldConfig = (
         isSearchable: true,
       }),
     };
-  } else if (propertySchema.enum) {
+  } else if (propertySchema?.enum) {
     schemaConfig = {
       ...baseConfig,
       type: 'select',
@@ -116,7 +116,7 @@ export const getFieldConfig = (
       })),
       placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
     };
-  } else if (propertySchema.$ref) {
+  } else if (propertySchema?.$ref) {
     // Handle object references with $ref
     const refSchemaSlug = extractSchemaSlugFromRef(propertySchema.$ref);
     schemaConfig = {
@@ -128,7 +128,7 @@ export const getFieldConfig = (
       isSearchable: true, // Enable search if more than 20 results
     };
   } else if (
-    propertySchema.type === 'string' &&
+    propertySchema?.type === 'string' &&
     optionsProviders[propertyPath]?.length > 0
   ) {
     schemaConfig = {
@@ -137,27 +137,27 @@ export const getFieldConfig = (
       component: 'ReactSelect',
       placeholder: `Selecteer ${baseConfig.label.toLowerCase()}`,
     };
-  } else if (propertySchema.type === 'boolean') {
+  } else if (propertySchema?.type === 'boolean') {
     schemaConfig = {
       ...baseConfig,
       type: 'boolean',
       component: 'Boolean',
     };
-  } else if (propertySchema.type === 'number' || propertySchema.type === 'integer') {
+  } else if (propertySchema?.type === 'number' || propertySchema?.type === 'integer') {
     schemaConfig = {
       ...baseConfig,
       type: 'number',
       component: 'Number',
-      integer: propertySchema.type === 'integer',
+      integer: propertySchema?.type === 'integer',
     };
-  } else if (propertySchema.type === 'object' && !propertySchema.properties) {
+  } else if (propertySchema?.type === 'object' && !propertySchema?.properties) {
     // Object without properties: JSON textarea
     schemaConfig = {
       ...baseConfig,
       type: 'json',
       component: 'JsonObject',
     };
-  } else if (propertySchema.type === 'string') {
+  } else if (propertySchema?.type === 'string') {
     // Supported string formats only
     const format = propertySchema.format;
 
@@ -330,7 +330,7 @@ export const getFieldOptions = (
   formData = {}
 ) => {
   // Priority 1: Schema enum takes highest priority
-  if (propertySchema.enum) {
+  if (propertySchema?.enum) {
     return propertySchema.enum.map((option) => ({
       value: option,
       label: option,
@@ -338,7 +338,7 @@ export const getFieldOptions = (
   }
 
   // Arrays of primitives may have items.enum
-  if (propertySchema.type === 'array' && propertySchema.items?.enum) {
+  if (propertySchema?.type === 'array' && propertySchema?.items?.enum) {
     return propertySchema.items.enum.map((option) => ({
       value: option,
       label: option,
@@ -549,7 +549,7 @@ export const getFieldSizeClass = (propertyPath, propertySchema, fieldConfig) => 
   if (
     component === 'File' ||
     fieldConfig.type === 'file' ||
-    propertySchema.type === 'file' ||
+    propertySchema?.type === 'file' ||
     format === 'base64' ||
     format === 'binary' ||
     format === 'byte'

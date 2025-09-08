@@ -402,7 +402,7 @@ const ConTable = (
       }
 
       if (Array.isArray(row[header.key])) {
-        return row[header.key].join(', ') || '-';
+        return row[header.key].map(String).join(', ') || '-';
       }
 
       if (typeof row[header.key] === 'object') {
@@ -413,7 +413,7 @@ const ConTable = (
         return row[header.key] ? 'Ja' : 'Nee';
       }
 
-      return row[header.key];
+      return String(row[header.key]);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [renderCustomElement, removeUniqueSymbol, schema, objectStore, namesMap]
