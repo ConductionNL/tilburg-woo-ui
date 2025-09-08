@@ -1,5 +1,87 @@
-// Clean CSS for ac-forms-product without conflicting classes
-// Now that we removed all ac-register-* classes, we can use simple, clean CSS
+// Merged CSS for ac-forms-product - prioritizing ac-forms-product-fix.scss styles
+// This ensures perfect alignment between the new con-form-fields-container system
+// and the existing form styles
+
+// More specific selectors to override any conflicting styles
+.ac-register-container.ac-forms-product {
+  .con-dynamic-form-container {
+    width: 100%;
+
+    .con-form-fields-container {
+      // No !important needed - no conflicts!
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--tilburg-space-block-snail);
+      align-items: flex-start;
+      width: 100%;
+
+      .con-form-field-wrapper {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+
+        // Force proper flexbox behavior with maximum specificity
+        &.field-size-full {
+          flex: 0 0 100% !important;
+          flex-basis: 100% !important;
+          width: 100% !important;
+          max-width: 100% !important;
+        }
+
+        &.field-size-half {
+          flex: 0 0 calc(50% - calc(var(--tilburg-space-block-snail) / 2)) !important;
+          flex-basis: calc(
+            50% - calc(var(--tilburg-space-block-snail) / 2)
+          ) !important;
+          width: calc(50% - calc(var(--tilburg-space-block-snail) / 2)) !important;
+          max-width: calc(
+            50% - calc(var(--tilburg-space-block-snail) / 2)
+          ) !important;
+
+          @media (max-width: 768px) {
+            flex: 0 0 100% !important;
+            flex-basis: 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+        }
+
+        // Ensure nested elements don't interfere
+        > * {
+          width: 100% !important;
+          box-sizing: border-box !important;
+        }
+      }
+    }
+  }
+
+  // Override conflicting select styles
+  .ac-beheer-select,
+  .react-select__control {
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  // Additional safety: force all field-size-full to be actually full width
+  .con-form-field-wrapper.field-size-full {
+    flex: 0 0 100% !important;
+    flex-basis: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    // Ensure select elements are also full width
+    .ac-beheer-select,
+    .react-select__control,
+    .react-select__value-container {
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+    }
+  }
+}
 
 // Main container
 .ac-forms-product-container {
@@ -10,50 +92,101 @@
 // Step sections (replacement for ac-register-form-section)
 .ac-forms-product-step-section {
   margin-bottom: var(--tilburg-space-block-xl);
-  
-  // Clean container without Grid conflicts
-  .con-dynamic-form-container {
-    width: 100%;
-  }
-  
-  // Our Flexbox layout works perfectly now
-  .con-form-fields-container {
-    // No !important needed - no conflicts!
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: var(--tilburg-space-block-snail);
-    align-items: flex-start;
-    width: 100%;
-    
-    .con-form-field-wrapper {
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      
-      &.field-size-full {
-        flex-basis: 100%;
-        width: 100%;
-      }
-      
-      &.field-size-half {
-        flex-basis: calc(50% - calc(var(--tilburg-space-block-snail) / 2));
-        
-        @media (max-width: 768px) {
-          flex-basis: 100%;
-        }
-      }
-    }
-  }
 }
 
-// Basic grid layout for other form sections (replacement for ac-register-form-grid) 
+// Basic grid layout for other form sections (replacement for ac-register-form-grid)
 .ac-forms-product-basic-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--tilburg-space-block-rat);
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
+}
+
+// Full width button style for application blocks
+.ac-forms-full-width-button {
+  width: 100% !important;
+  display: block !important;
+}
+
+// Simple CSS for clickable steps - minimal styling to avoid layout disruption
+.ac-register-process-steps .ac-step-clickable {
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ac-register-process-steps .ac-step-clickable:hover {
+  opacity: 0.8;
+}
+
+// Error styling for required license fields
+.ac-beheer-select--error .react-select__control {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.ac-beheer-select--error .react-select__control:hover {
+  border-color: #dc3545 !important;
+}
+
+// Font consistency for Alert components
+.MuiAlert-root {
+  font-family: 'Avenir', sans-serif !important;
+
+  * {
+    font-family: 'Avenir', sans-serif !important;
+  }
+}
+
+// Info alert styles for diensten and koppelingen stages
+.ac-forms-product-info-alert {
+  margin-bottom: 1.5rem;
+  background-color: #e3f2fd !important;
+  border: 1px solid #bbdefb;
+  border-radius: 8px !important;
+  position: relative;
+}
+
+.ac-forms-product-info-alert__close-button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &:focus {
+    outline: 2px solid var(--tilburg-color-blue-400);
+    outline-offset: 2px;
+  }
+}
+
+.ac-forms-product-info-alert__content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding-right: 2rem;
+}
+
+.ac-forms-product-info-alert__icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.ac-forms-product-info-alert__text {
+  font-size: 0.875rem;
 }

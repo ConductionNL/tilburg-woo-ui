@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
@@ -8,6 +8,7 @@ import {
   TableCell,
   TableContainer,
   TableRow,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -32,6 +33,18 @@ const ConFormKoppelingenStage = memo(
     getAllModulesForStages,
     searchModules,
   }) => {
+    // State for controlling alert visibility - persists until page refresh
+    const [showInfoAlert, setShowInfoAlert] = useState(() => {
+      // Check if alert was previously closed in this session
+      return !sessionStorage.getItem('koppelingen-info-alert-closed');
+    });
+
+    // Handle closing the alert and remember the choice
+    const handleCloseAlert = () => {
+      setShowInfoAlert(false);
+      sessionStorage.setItem('koppelingen-info-alert-closed', 'true');
+    };
+
     const {
       rows,
       selectedAppAByRow,
@@ -234,6 +247,33 @@ const ConFormKoppelingenStage = memo(
           de richting van de uitwisseling en het type koppeling (bijv. API, bestand,
           bericht).
         </Paragraph>
+
+        {/* Closeable info alert about updating koppeling details later */}
+        {showInfoAlert && (
+          <Alert severity='info' className='ac-forms-product-info-alert'>
+            <button
+              onClick={handleCloseAlert}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Koppeling details aanpassen</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  U definieert hier de basis koppelingen tussen applicaties. Na het
+                  opslaan van uw product kunt u op de detailpagina van elke koppeling
+                  aanvullende technische details toevoegen zoals een naam,
+                  beschrijvingen en status.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
 
         <TableContainer className='con-form-wizard-table-container'>
           <Table>
