@@ -722,24 +722,6 @@ const AcFormsProductInner = ({
         };
       });
     }
-
-    // Fallback to hardcoded options if schema is not available
-    return [
-      {
-        value: 'Functioneel beheer',
-        label:
-          'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
-      },
-      {
-        value: 'Technisch beheer',
-        label: 'Technisch beheer: installatie, updates en systeembeheer.',
-      },
-      { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
-      {
-        value: 'Implementatie-ondersteuning',
-        label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
-      },
-    ];
   }, [schemas?.dienst]);
 
   // Get query parameters from schema property configuration
