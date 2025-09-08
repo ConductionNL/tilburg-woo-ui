@@ -567,8 +567,13 @@ export class PublicationsStore {
     this.setFacetsLoadingStatus(true);
     this.setFacets({});
 
-    // Build query including current filters/facets and request facetable config
-    const baseQuery = { ...this.search_query, _facetable: true };
+    // Build query including current filters/facets and request facetable config plus names data
+    const baseQuery = { 
+      ...this.search_query, 
+      _facetable: true,
+      _related: true,
+      _relatedNames: true
+    };
     const queryString = AcBuildURLSearchParams(baseQuery);
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
@@ -593,6 +598,26 @@ export class PublicationsStore {
         // Set search results immediately
         this.setItems(response.results);
 
+        // Process related names data to populate the names cache
+        if (response.relatedNames && app.store?.object) {
+          app.store.object.processRelatedNamesFromResponse(response);
+        } else if (app.store?.object && response.results?.length > 0) {
+          // Fallback: manually extract reference IDs and resolve names if _relatedNames is not supported
+          try {
+            const { extractReferenceIdsFromCollection } = require('@src/utilities/con-detect-object-references');
+            const referenceIds = extractReferenceIdsFromCollection(response.results);
+            
+            if (referenceIds.length > 0) {
+              // Asynchronously resolve names in background (don't wait for this)
+              app.store.object.getNamesForMultipleIds(referenceIds).catch(error => {
+                console.warn('Failed to resolve reference names in search:', error);
+              });
+            }
+          } catch (error) {
+            console.warn('Reference resolution fallback failed in search:', error);
+          }
+        }
+
         // Store facetable configuration for facets call
         if (response.facetable) {
           const configChanged =
@@ -611,6 +636,7 @@ export class PublicationsStore {
         // Clean up response and set pagination
         delete response.results;
         delete response.facetable;
+        delete response.relatedNames;
         this.setPagination(response);
       })
       .catch((e) => console.error(e))

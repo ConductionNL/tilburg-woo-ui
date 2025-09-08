@@ -205,6 +205,37 @@ sequenceDiagram
     Note over Table: Users see names instead of UUIDs! ✨
 ```
 
+## Search Page Integration
+
+Namen cache integratie voor de search pagina zorgt voor betere UX door UUIDs te vervangen met leesbare namen:
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant Search as Search Page
+    participant Store as Publications Store
+    participant API as Publications API
+    participant Cache as Names Cache
+    
+    User->>Search: Search for publications
+    Search->>Store: fetchPublications()
+    Store->>API: GET /publications?_related=true&_relatedNames=true
+    API-->>Store: Publications + relatedNames
+    
+    alt If relatedNames provided
+        Store->>Cache: processRelatedNamesFromResponse()
+        Cache->>Cache: Store UUID→Name mappings
+    else Fallback: No relatedNames
+        Store->>Store: extractReferenceIdsFromCollection()
+        Store->>Cache: getNamesForMultipleIds() (background)
+    end
+    
+    Store-->>Search: Publications with cached names
+    Search->>Search: Render cards with resolved names
+    
+    Note over Search: Cards show names instead of UUIDs! 🎯
+```
+
 ## API Integration Patterns
 
 Het systeem integreert naadloos met alle backend Names API endpoints:
@@ -660,11 +691,12 @@ timeline
         Core Implementation    : ObjectStore integration
                               : Reference detection
                               : Table integration
+                              : Search page names
+                              : Publication cards
     
     section Phase 2 🔄
-        Search Integration     : Search page names
-                              : Publication cards
-                              : Filter improvements
+        Filter improvements    : Advanced facets
+                              : Smart suggestions
     
     section Phase 3 📋
         Advanced Features      : Real-time updates
