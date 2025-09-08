@@ -12,6 +12,7 @@ import {
   TableCell,
   TableRow,
   Textbox,
+  Heading3,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -71,8 +72,9 @@ const ConFormModuleVersieStage = memo(
     const schemaDefaults = getSchemaDefaults();
 
     // Only show versions when cloud dienstverleningsmodel is On-premises (self-managed)
-    const isOnPremise =
-      (product?.cloudDienstverleningsmodel || '') === 'On-premises (self-managed)';
+    const isOnPremise = (product?.cloudDienstverleningsmodel || '').includes(
+      'On-premises (self-managed)'
+    );
     if (!isOnPremise) {
       return null;
     }
@@ -83,25 +85,8 @@ const ConFormModuleVersieStage = memo(
       : [];
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
 
-    // const applicatieOptions = applicatieIndices.map((i) => ({
-    //   value: i,
-    //   label: newModules[i]?.naam || `Applicatie ${i + 1}`,
-    // }));
-
     // Check if there are multiple NEW applications that need versie configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
-
-    // No console logging per eslint rules
-
-    // Removed single-version updater in favor of multi-row helpers
-
-    // const applyToAll = (fields) => {
-    //   applicatieIndices.forEach((index) => {
-    //     Object.entries(fields).forEach(([field, value]) => {
-    //       updateModuleVersie(index, field, value);
-    //     });
-    //   });
-    // };
 
     // Helpers to manage multiple version rows
     const updateModuleVersieAt = (moduleIndex, versionIndex, field, value) => {
@@ -157,15 +142,138 @@ const ConFormModuleVersieStage = memo(
       });
     };
 
-    // const applyToAllAtIndex = (versionIndex, fields) => {
-    //   applicatieIndices.forEach((moduleIndex) => {
-    //     Object.entries(fields).forEach(([field, value]) => {
-    //       updateModuleVersieAt(moduleIndex, versionIndex, field, value);
-    //     });
-    //   });
-    // };
+    // Render a single module's version table
+    const renderModuleVersionTable = (module, moduleIndex) => {
+      const versions =
+        Array.isArray(module.moduleVersies) && module.moduleVersies.length > 0
+          ? module.moduleVersies
+          : [{ ...schemaDefaults }];
 
-    // Removed inline field renderer in favor of table layout
+      return (
+        <div key={`module-${moduleIndex}`} style={{ marginBottom: '2rem' }}>
+          <Heading3 style={{ marginBottom: '1rem' }}>
+            {module.naam || `Applicatie ${moduleIndex + 1}`}
+          </Heading3>
+
+          <Table>
+            <thead>
+              <TableRow>
+                <TableCell>
+                  <b>Versie</b>
+                </TableCell>
+                <TableCell>
+                  <b>Status</b>
+                </TableCell>
+                <TableCell>
+                  <b>Beschrijving</b>
+                </TableCell>
+                <TableCell>
+                  <b>Acties</b>
+                </TableCell>
+              </TableRow>
+            </thead>
+            <TableBody>
+              {versions.map((moduleVersie, vIdx) => (
+                <TableRow key={`${moduleIndex}-${vIdx}`}>
+                  <TableCell>
+                    <Textbox
+                      value={moduleVersie.versie || schemaDefaults.versie || ''}
+                      onChange={(e) =>
+                        updateModuleVersieAt(
+                          moduleIndex,
+                          vIdx,
+                          'versie',
+                          e.target.value
+                        )
+                      }
+                      placeholder={
+                        schemaDefaults.versie ||
+                        moduleVersieSchema?.properties?.versie?.example ||
+                        '1.0.0'
+                      }
+                      disabled={loading}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <ReactSelect
+                      className={clsx(
+                        'ac-beheer-select',
+                        loading && 'ac-beheer-select--disabled'
+                      )}
+                      value={
+                        statusOptions.find(
+                          (opt) =>
+                            opt.value ===
+                            (moduleVersie.status || schemaDefaults.status)
+                        ) || null
+                      }
+                      onChange={(opt) =>
+                        updateModuleVersieAt(
+                          moduleIndex,
+                          vIdx,
+                          'status',
+                          opt?.value || null
+                        )
+                      }
+                      options={statusOptions}
+                      isDisabled={loading}
+                      placeholder={schemaDefaults.status || 'Selecteer status'}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Textbox
+                      value={
+                        moduleVersie.beschrijvingKort ||
+                        schemaDefaults.beschrijvingKort ||
+                        ''
+                      }
+                      onChange={(e) =>
+                        updateModuleVersieAt(
+                          moduleIndex,
+                          vIdx,
+                          'beschrijvingKort',
+                          e.target.value
+                        )
+                      }
+                      placeholder={
+                        schemaDefaults.beschrijvingKort ||
+                        moduleVersieSchema?.properties?.beschrijvingKort?.example ||
+                        'Beschrijving'
+                      }
+                      disabled={loading}
+                      maxLength={255}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <AcButton
+                        style='button'
+                        buttonType='secondary'
+                        icon={<VISUALS.TRASHCAN />}
+                        disabled={versions.length <= 1 || loading}
+                        onClick={() => removeModuleVersie(moduleIndex, vIdx)}
+                        title='Versie verwijderen'
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div style={{ marginTop: '1rem' }}>
+            <AcButton
+              style='button'
+              icon={<VISUALS.PLUS />}
+              onClick={() => addModuleVersie(moduleIndex)}
+              disabled={loading}
+            >
+              Rij toevoegen voor {module.naam || `Applicatie ${moduleIndex + 1}`}
+            </AcButton>
+          </div>
+        </div>
+      );
+    };
 
     return (
       <div
@@ -321,140 +429,10 @@ const ConFormModuleVersieStage = memo(
           </div>
         ) : applicatieIndices.length > 0 ? (
           <div>
-            <Table>
-              <thead>
-                <TableRow>
-                  <TableCell>
-                    <b>Nieuwe applicatie</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Versie</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Status</b>
-                  </TableCell>
-                  <TableCell>
-                    <b>Beschrijving</b>
-                  </TableCell>
-                </TableRow>
-              </thead>
-              <TableBody>
-                {newModules.map((module, mIdx) => {
-                  const app = module;
-                  const versions =
-                    Array.isArray(app.moduleVersies) && app.moduleVersies.length > 0
-                      ? app.moduleVersies
-                      : [{ ...schemaDefaults }];
-
-                  return versions.map((moduleVersie, vIdx) => (
-                    <TableRow key={`${mIdx}-${vIdx}`}>
-                      <TableCell>
-                        {vIdx === 0 ? (
-                          <span>{app.naam || `Applicatie ${mIdx + 1}`}</span>
-                        ) : (
-                          <span style={{ color: '#888' }}>&nbsp;</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Textbox
-                          value={moduleVersie.versie || schemaDefaults.versie || ''}
-                          onChange={(e) =>
-                            updateModuleVersieAt(
-                              mIdx,
-                              vIdx,
-                              'versie',
-                              e.target.value
-                            )
-                          }
-                          placeholder={
-                            schemaDefaults.versie ||
-                            moduleVersieSchema?.properties?.versie?.example ||
-                            '1.0.0'
-                          }
-                          disabled={loading}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <ReactSelect
-                          className={clsx(
-                            'ac-beheer-select',
-                            loading && 'ac-beheer-select--disabled'
-                          )}
-                          value={
-                            statusOptions.find(
-                              (opt) =>
-                                opt.value ===
-                                (moduleVersie.status || schemaDefaults.status)
-                            ) || null
-                          }
-                          onChange={(opt) =>
-                            updateModuleVersieAt(
-                              mIdx,
-                              vIdx,
-                              'status',
-                              opt?.value || null
-                            )
-                          }
-                          options={statusOptions}
-                          isDisabled={loading}
-                          placeholder={schemaDefaults.status || 'Selecteer status'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Textbox
-                          value={
-                            moduleVersie.beschrijvingKort ||
-                            schemaDefaults.beschrijvingKort ||
-                            ''
-                          }
-                          onChange={(e) =>
-                            updateModuleVersieAt(
-                              mIdx,
-                              vIdx,
-                              'beschrijvingKort',
-                              e.target.value
-                            )
-                          }
-                          placeholder={
-                            schemaDefaults.beschrijvingKort ||
-                            moduleVersieSchema?.properties?.beschrijvingKort
-                              ?.example ||
-                            'Beschrijving'
-                          }
-                          disabled={loading}
-                          maxLength={255}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div style={{ display: 'flex', justifyContent: 'center' }}>
-                          <AcButton
-                            style='button'
-                            buttonType='secondary'
-                            icon={<VISUALS.TRASHCAN />}
-                            disabled={versions.length <= 1 || loading}
-                            onClick={() => removeModuleVersie(mIdx, vIdx)}
-                            title='Versie verwijderen'
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ));
-                })}
-              </TableBody>
-            </Table>
-            <div style={{ marginTop: '1rem' }}>
-              {newModules.map((module, mIdx) => (
-                <AcButton
-                  key={`add-${mIdx}`}
-                  style='button'
-                  icon={<VISUALS.PLUS />}
-                  onClick={() => addModuleVersie(mIdx)}
-                  disabled={loading}
-                >
-                  Rij toevoegen voor {module.naam || `Applicatie ${mIdx + 1}`}
-                </AcButton>
-              ))}
-            </div>
+            {/* Render separate tables for each module */}
+            {newModules.map((module, moduleIndex) =>
+              renderModuleVersionTable(module, moduleIndex)
+            )}
           </div>
         ) : null}
 

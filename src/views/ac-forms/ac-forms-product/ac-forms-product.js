@@ -1582,8 +1582,9 @@ const AcFormsProductInner = ({
                                   title: 'Licentie',
                                 },
                                 // Conditionally include Versies only for On-premise cloudDienstverleningsmodel
-                                ...((product?.cloudDienstverleningsmodel || '') ===
-                                'On-premises (self-managed)'
+                                ...((
+                                  product?.cloudDienstverleningsmodel || ''
+                                ).includes('On-premises (self-managed)')
                                   ? [
                                       {
                                         id: 'a2b3c4d5-f6g7-h8i9-j0k1-l2m3n4o5p6q7',
