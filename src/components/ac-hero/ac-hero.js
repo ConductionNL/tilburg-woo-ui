@@ -40,11 +40,11 @@ const AcHero = (contents) => {
       case 'softwarecatalogus.accept.opencatalogi.nl':
       case 'acceptatie.softwarecatalogus.nl':
       case 'softwarecatalogus.test.opencatalogi.nl':
-        return 'https://vng.nl/sites/default/files/styles/banner_header_xl/public/2023-07/illustratie_homepage.png?itok=VWuXeA1E';
+        return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'opencatalogi.nl':
       case 'developer.opencatalogi.nl':
       case 'test.opencatalogi.nl':
-        return 'https://vng.nl/sites/default/files/styles/banner_header_xl/public/2023-07/illustratie_homepage.png?itok=VWuXeA1E';
+        return 'https://vng.accept.commonground.nu/apps/files_sharing/publicpreview/qHsxmR6oYQYZ2kS?file=/&fileId=9210&x=3440&y=1440&a=true&etag=e5dd0f097d1cff7f69ca40287ab71d72';
       case 'open-dimpact.accept.commonground.nu':
       case 'dimpact.opencatalogi.nl':
         return 'https://dimpact.commonground.nu/apps/files_sharing/publicpreview/G5XqJGzXpRpXG7e?file=/&fileId=939&x=3440&y=1440&a=true&etag=6260a8405435f97dae86dc65cee6e37b';

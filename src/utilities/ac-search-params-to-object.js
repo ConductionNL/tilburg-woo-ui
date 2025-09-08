@@ -27,21 +27,7 @@ export const AcSearchParamsToObject = (searchParams) => {
       const parent = nestedSingleMatch[1];
       const child = nestedSingleMatch[2];
       if (!params[parent]) params[parent] = {};
-
-      // Special handling for @self - allow multiple values with same key to become array
-      if (parent === '@self') {
-        if (!params[parent][child]) {
-          params[parent][child] = [];
-        }
-        // If it's already an array, push to it; if it's a string, convert to array
-        if (Array.isArray(params[parent][child])) {
-          params[parent][child].push(decodeURIComponent(value));
-        } else {
-          params[parent][child] = [params[parent][child], decodeURIComponent(value)];
-        }
-      } else {
-        params[parent][child] = decodeURIComponent(value);
-      }
+      params[parent][child] = decodeURIComponent(value);
       continue;
     }
 
