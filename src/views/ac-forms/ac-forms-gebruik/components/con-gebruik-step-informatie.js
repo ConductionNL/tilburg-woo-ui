@@ -48,44 +48,50 @@ const ConGebruikStepInformatie = ({
             />
           </div>
         )}
-        <div style={{ gridColumn: 'span 2' }}>
-          {gebruikType === 'andere-organisatie' ? (
-            <>
-              <ConSchemaEnhancedField
-                schemaType='gebruik'
-                schemaProperty='afnemer'
-                value={gebruik?.afnemer || null}
-                onChange={(value) => setGebruikData('afnemer', value)}
-                isDisabled={loading}
-                width='full'
-                schemas={schemas}
-                optionsProvider={organisatieOptions}
-                placeholder='Selecteer de klantorganisatie...'
-              />
-              <div
-                style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}
-              >
-                Selecteer de organisatie die uw product gebruikt. Deze organisatie
-                wordt geïnformeerd en moet het gebruik goedkeuren.
-              </div>
-            </>
-          ) : (
-            <>
-              <label className='utrecht-form-label'>Afnemer</label>
-              <Textbox placeholder='Selecteer eerst het type gebruik' disabled />
-              <div
-                style={{
-                  fontSize: '0.875rem',
-                  color: '#orange',
-                  marginTop: '0.25rem',
-                }}
-              >
-                Ga terug naar &quot;Soort gebruik&quot; om het type registratie te
-                selecteren.
-              </div>
-            </>
-          )}
-        </div>
+        {gebruikType !== 'eigen-organisatie' && (
+          <div style={{ gridColumn: 'span 2' }}>
+            {gebruikType === 'andere-organisatie' ? (
+              <>
+                <ConSchemaEnhancedField
+                  schemaType='gebruik'
+                  schemaProperty='afnemer'
+                  value={gebruik?.afnemer || null}
+                  onChange={(value) => setGebruikData('afnemer', value)}
+                  isDisabled={loading}
+                  width='full'
+                  schemas={schemas}
+                  optionsProvider={organisatieOptions}
+                  placeholder='Selecteer de klantorganisatie...'
+                />
+                <div
+                  style={{
+                    fontSize: '0.875rem',
+                    color: '#666',
+                    marginTop: '0.25rem',
+                  }}
+                >
+                  Selecteer de organisatie die uw product gebruikt. Deze organisatie
+                  wordt geïnformeerd en moet het gebruik goedkeuren.
+                </div>
+              </>
+            ) : (
+              <>
+                <label className='utrecht-form-label'>Afnemer</label>
+                <Textbox placeholder='Selecteer eerst het type gebruik' disabled />
+                <div
+                  style={{
+                    fontSize: '0.875rem',
+                    color: '#orange',
+                    marginTop: '0.25rem',
+                  }}
+                >
+                  Ga terug naar &quot;Soort gebruik&quot; om het type registratie te
+                  selecteren.
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <div style={{ gridColumn: 'span 2' }}>
           <ConSchemaEnhancedField
             schemaType='gebruik'
