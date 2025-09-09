@@ -103,6 +103,17 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
 
   const usedData = objectType ? object.getRelatedData(objectType, 'used') : null;
 
+  // Names cache for UUID resolution
+  const namesMap = useMemo(() => {
+    const map = {};
+    Object.entries(object.namesCache || {}).forEach(([id, cacheEntry]) => {
+      if (cacheEntry.name) {
+        map[id] = cacheEntry.name;
+      }
+    });
+    return map;
+  }, [object?.namesCache]);
+
   // Fetch data
   useEffect(() => {
     if (isExtendView) return;
@@ -110,6 +121,8 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
     const extendParams = Array.isArray(config.extend) ? config.extend : [];
     object.fetchObject(config.registerSlug, config.schemaSlug, id, {
       _extend: extendParams,
+      _related: true,
+      _relatedNames: true,
     });
     object.fetchSchema(config.schemaSlug);
   }, [config?.schemaSlug, config?.registerSlug, id, isExtendView]);
@@ -389,7 +402,11 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                   schema,
                                   data,
                                   key,
-                                  config.formatBySchemaOptions || {}
+                                  { 
+                                    ...(config.formatBySchemaOptions || {}),
+                                    objectStore: object,
+                                    namesMap
+                                  }
                                 )}
                               </div>
                             );
@@ -411,7 +428,11 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                   schema,
                                   data,
                                   key,
-                                  config.formatBySchemaOptions || {}
+                                  { 
+                                    ...(config.formatBySchemaOptions || {}),
+                                    objectStore: object,
+                                    namesMap
+                                  }
                                 )}
                               </div>
                             );
