@@ -850,45 +850,49 @@ const AcFormsKoppeling = () => {
           </div>
 
           <div>
-            <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-              {currentStepName(currentStep)}
-            </h3>
+            {saveResult !== 'success' && saveResult !== 'error' && (
+              <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
+                {currentStepName(currentStep)}
+              </h3>
+            )}
 
             <div className='ac-register-container ac-forms-product'>
-              <div ref={processStepsRef} className='ac-register-process-steps'>
-                <ProcessSteps
-                  steps={(() => {
-                    const steps = [
-                      {
-                        id: 'grp-soort',
-                        marker: 1,
-                        status: getStatus(currentStep, 0),
-                        title: 'Soort koppeling',
-                      },
-                      {
-                        id: 'grp-koppeling',
-                        marker: 2,
-                        status: getStatusMulti(currentStep, 1, 2),
-                        title: 'Koppeling zoeken',
-                        steps: [
-                          {
-                            id: 'sub-toevoegen',
-                            status: getStatus(currentStep, 2),
-                            title: isEditMode ? 'Bewerken' : 'Toevoegen',
-                          },
-                        ],
-                      },
-                      {
-                        id: 'grp-review',
-                        marker: 3,
-                        status: getStatus(currentStep, 3),
-                        title: 'Controleren',
-                      },
-                    ];
-                    return steps;
-                  })()}
-                />
-              </div>
+              {saveResult !== 'success' && saveResult !== 'error' && (
+                <div ref={processStepsRef} className='ac-register-process-steps'>
+                  <ProcessSteps
+                    steps={(() => {
+                      const steps = [
+                        {
+                          id: 'grp-soort',
+                          marker: 1,
+                          status: getStatus(currentStep, 0),
+                          title: 'Soort koppeling',
+                        },
+                        {
+                          id: 'grp-koppeling',
+                          marker: 2,
+                          status: getStatusMulti(currentStep, 1, 2),
+                          title: 'Koppeling zoeken',
+                          steps: [
+                            {
+                              id: 'sub-toevoegen',
+                              status: getStatus(currentStep, 2),
+                              title: isEditMode ? 'Bewerken' : 'Toevoegen',
+                            },
+                          ],
+                        },
+                        {
+                          id: 'grp-review',
+                          marker: 3,
+                          status: getStatus(currentStep, 3),
+                          title: 'Controleren',
+                        },
+                      ];
+                      return steps;
+                    })()}
+                  />
+                </div>
+              )}
 
               <div className='ac-register-form-container'>
                 <div
