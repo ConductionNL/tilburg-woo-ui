@@ -86,3 +86,4 @@ export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
 export const getDefaultConfig = () => CONTAINER_CONFIG;
+ => CONTAINER_CONFIG;

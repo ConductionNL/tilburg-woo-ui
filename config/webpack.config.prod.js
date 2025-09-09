@@ -58,6 +58,10 @@ const sassModuleRegex = /\.module\.(scss|sass)$/;
 
 const swSrc = paths.swSrc;
 
+// Generate build version for cache busting
+const BUILD_TIMESTAMP = new Date().toISOString();
+const BUILD_VERSION = `${new Date().getFullYear()}.${(new Date().getMonth() + 1).toString().padStart(2, '0')}.${new Date().getDate().toString().padStart(2, '0')}-${Date.now()}`;
+
 // reduce it to a nice object, the same as before
 const enrichEnvVariables = (type) => {
   let _env = {
@@ -70,6 +74,8 @@ const enrichEnvVariables = (type) => {
     raw: {
       PUBLIC_URL: '',
       PUBLIC_PATH: '',
+      BUILD_TIMESTAMP: BUILD_TIMESTAMP,
+      BUILD_VERSION: BUILD_VERSION,
     },
   };
   const _type = type ? type : 'stringified';
@@ -85,6 +91,12 @@ const enrichEnvVariables = (type) => {
 
     return prev;
   }, {});
+
+  // Add build info to both raw and stringified
+  _env.raw.BUILD_TIMESTAMP = BUILD_TIMESTAMP;
+  _env.raw.BUILD_VERSION = BUILD_VERSION;
+  _env.stringified['process.env'].BUILD_TIMESTAMP = JSON.stringify(BUILD_TIMESTAMP);
+  _env.stringified['process.env'].BUILD_VERSION = JSON.stringify(BUILD_VERSION);
 
   return _env[_type];
 };
@@ -543,7 +555,8 @@ module.exports = function (webpackEnv) {
       new WorkboxWebpackPlugin.InjectManifest({
         swSrc: swSrc,
         swDest: 'service-worker.js',
-        dontCacheBustURLsMatching: /\.[0-9a-f]{8}\./,
+        // Only skip cache busting for files that already have proper hashes
+        dontCacheBustURLsMatching: /\.[0-9a-f]{8,13}\.(js|css|woff|woff2|png|jpg|jpeg|gif|svg)$/,
         exclude: [
           /\.map$/,
           /asset-manifest\.json$/,
@@ -558,6 +571,13 @@ module.exports = function (webpackEnv) {
         // to make lazy-loading failure scenarios less likely.
         // See https://github.com/cra-template/pwa/issues/13#issuecomment-722667270
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        // Force update when build changes
+        additionalManifestEntries: [
+          {
+            url: '/',
+            revision: BUILD_VERSION, // Use build version as revision
+          }
+        ],
       }),
     ],
     optimization: {

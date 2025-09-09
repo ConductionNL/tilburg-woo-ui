@@ -240,6 +240,107 @@ const handleAction = async () => {
 }
 ```
 
+## Complete Modal Workflows
+
+### Enhanced Delete Modal with Content Visibility
+
+This enhanced workflow shows how the modal maintains content visibility throughout the entire delete process:
+
+```mermaid
+flowchart TD
+    A[Modal Opens] --> B[Show Content Layout]
+    
+    B --> B1[Loading Info Box - Blue]
+    B --> B2[Confirmatie Tekst - Always Visible]
+    B --> B3[Object Lijst - Always Visible]
+    
+    B1 --> C[Usage Check API Call]
+    
+    C --> D{Usage Results?}
+    D -->|No Dependencies| E[Success Info Box - Green]
+    D -->|Has Dependencies| F[Error Info Box + List - Red]
+    D -->|API Error| G[Error Info Box - Red]
+    
+    E --> H[Content Still Visible]
+    F --> I[Content Still Visible]
+    G --> J[Content Still Visible]
+    
+    H --> H1[Confirmatie Tekst Updated]
+    H --> H2[Object Lijst Unchanged]
+    H --> K[Delete Button Enabled]
+    
+    I --> I1[Confirmatie Tekst Updated]
+    I --> I2[Object Lijst Unchanged]
+    I --> L[Delete Button Disabled]
+    
+    J --> J1[Confirmatie Tekst Unchanged]
+    J --> J2[Object Lijst Unchanged]
+    J --> M[Delete Button Disabled]
+    
+    K --> N[User Clicks Delete]
+    N --> O[Delete Button Shows Spinner]
+    N --> P[Cancel Button Disabled]
+    N --> Q[API Delete Call]
+    
+    Q --> R{Delete Success?}
+    R -->|Success| S[Modal Closes]
+    R -->|Error| T[Show Error State]
+    
+    S --> U[Collection Refreshed]
+    T --> V[Re-enable Buttons]
+    
+    style B2 fill:#fff3e0
+    style B3 fill:#f8f9fa
+    style H2 fill:#f8f9fa
+    style I2 fill:#f8f9fa
+    style J2 fill:#f8f9fa
+    style E fill:#c8e6c9
+    style F fill:#ffcdd2
+    style G fill:#ffcdd2
+    style O fill:#bbdefb
+    style P fill:#ffecb3
+```
+
+### Enhanced Publish/Depublish Modal
+
+Shows the improved modal behavior where content remains consistent during processing:
+
+```mermaid
+flowchart TD
+    A[Modal Opens] --> B[Show Content Layout]
+    
+    B --> B1[Confirmatie Tekst - Always Visible]
+    B --> B2[Object Lijst - Always Visible]
+    B --> B3[Action Buttons]
+    
+    B3 --> C[User Clicks Publish/Depublish]
+    
+    C --> D[Button Shows Loading State]
+    C --> E[Cancel Button Disabled]
+    C --> F[Content Remains Visible]
+    
+    D --> G[API Call Execute]
+    G --> H{API Success?}
+    
+    H -->|Success| I[Modal Closes First]
+    H -->|Error| J[Show Error State]
+    
+    I --> K[onSuccess Callback Delayed]
+    K --> L[Collection Refreshed]
+    
+    J --> M[Re-enable Buttons]
+    J --> N[Content Still Visible]
+    
+    style B1 fill:#fff3e0
+    style B2 fill:#f8f9fa
+    style F fill:#f8f9fa
+    style N fill:#f8f9fa
+    style D fill:#bbdefb
+    style E fill:#ffecb3
+    style I fill:#c8e6c9
+    style J fill:#ffcdd2
+```
+
 ## Testing Guidelines
 
 ### Manual Testing Checklist

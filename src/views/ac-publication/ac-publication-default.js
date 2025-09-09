@@ -109,6 +109,17 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     attachments,
   } = publications;
 
+  // Names cache for UUID resolution
+  const namesMap = useMemo(() => {
+    const map = {};
+    Object.entries(object.namesCache || {}).forEach(([id, cacheEntry]) => {
+      if (cacheEntry.name) {
+        map[id] = cacheEntry.name;
+      }
+    });
+    return map;
+  }, [object?.namesCache]);
+
   const navigate = useNavigate();
 
   // Use the same related actions hook as beheer pages
@@ -352,7 +363,11 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                         schema,
                         get_single,
                         key,
-                        schema?.configuration?.formatBySchemaOptions || {}
+                        { 
+                          ...(schema?.configuration?.formatBySchemaOptions || {}),
+                          objectStore: object,
+                          namesMap
+                        }
                       )}
                     </div>
                   );
@@ -374,7 +389,11 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                         schema,
                         get_single,
                         key,
-                        schema?.configuration?.formatBySchemaOptions || {}
+                        { 
+                          ...(schema?.configuration?.formatBySchemaOptions || {}),
+                          objectStore: object,
+                          namesMap
+                        }
                       )}
                     </div>
                   );
