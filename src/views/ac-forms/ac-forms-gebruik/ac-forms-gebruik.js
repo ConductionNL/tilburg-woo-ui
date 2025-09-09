@@ -121,9 +121,9 @@ const AcFormsGebruik = ({ store }) => {
           ? api.koppelingen.map((k) => getIdString(k) || k)
           : [],
         diensten: Array.isArray(api.diensten)
-          ? api.diensten.map((d) =>
-              typeof d === 'string' ? d : d?.value || d?.type || d?.naam || ''
-            )
+          ? api.diensten
+              .map((d) => getIdString(d))
+              .filter((id) => typeof id === 'string' && id !== '')
           : [],
       };
 
@@ -189,21 +189,7 @@ const AcFormsGebruik = ({ store }) => {
   const [modulesLoading, setModulesLoading] = useState(false);
   // Version dropdown loading not used anymore (derived locally from module data)
   const [koppelingOptions, setKoppelingOptions] = useState([]);
-  const [dienstOptions] = useState([
-    {
-      value: 'Functioneel beheer',
-      label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
-    },
-    {
-      value: 'Technisch beheer',
-      label: 'Technisch beheer: installatie, updates en systeembeheer.',
-    },
-    { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
-    {
-      value: 'Implementatie-ondersteuning',
-      label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
-    },
-  ]);
+  const [dienstOptions, setDienstOptions] = useState([]);
 
   // Deelnemers (organisaties) options
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
@@ -567,6 +553,75 @@ const AcFormsGebruik = ({ store }) => {
       setGebruikData('moduleVersie', options[0].value);
     }
   }, [selectedModule]);
+
+  // When product changes, fetch diensten filtered by product id and map options to dienst IDs
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const p = gebruik?.product;
+      const productId = getIdString(p);
+
+      if (!productId) {
+        if (!cancelled) {
+          setDienstOptions([]);
+          if (Array.isArray(gebruik?.diensten) && gebruik.diensten.length) {
+            setGebruikData('diensten', []);
+          }
+        }
+        return;
+      }
+
+      try {
+        await store.object.fetchCollection('voorzieningen', 'dienst', {
+          producten: String(productId),
+          _limit: '100',
+          _page: '1',
+        });
+
+        if (cancelled) return;
+
+        const type = store.object.getTypeFromParams('voorzieningen', 'dienst');
+        const collection = store.object.getCollection(type);
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Dienst ${index + 1}`;
+          const value = item?.id;
+          return { value: String(value), label: String(label), data: item };
+        });
+
+        setDienstOptions(options);
+
+        // Prune selected diensten to those still available for current product
+        if (Array.isArray(gebruik?.diensten) && gebruik.diensten.length) {
+          const allowed = new Set(options.map((o) => String(o.value)));
+          const next = gebruik.diensten
+            .map((d) => String(d))
+            .filter((id) => allowed.has(id));
+          if (next.length !== gebruik.diensten.length) {
+            setGebruikData('diensten', next);
+          }
+        }
+      } catch (_) {
+        if (!cancelled) {
+          setDienstOptions([]);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+    // Only react to product changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gebruik?.product]);
 
   // When module changes, resolve koppelingen by IDs from selected module
   useEffect(() => {
