@@ -292,6 +292,8 @@ const ConFormStandaardenStage = ({
             aanbevolenComponents: standard.aanbevolenComponents,
             isCompliant: !!existingCompliancy,
             bewijs: existingCompliancy?.bewijs || null,
+            // ✅ NEW: Track filename for internal use (not displayed in UI)
+            bewijsFilename: existingCompliancy?.bewijsFilename || null,
           };
         }
       });
@@ -315,8 +317,9 @@ const ConFormStandaardenStage = ({
       [key]: {
         ...prev[key],
         isCompliant,
-        // Clear bewijs if not compliant
+        // Clear bewijs and filename if not compliant
         bewijs: isCompliant ? prev[key]?.bewijs || null : null,
+        bewijsFilename: isCompliant ? prev[key]?.bewijsFilename || null : null,
       },
     }));
 
@@ -347,6 +350,8 @@ const ConFormStandaardenStage = ({
           standaardnaam: currentEntry.standardName,
           // ✅ REMOVED: module property - backend handles this with inversedBy logic
           bewijs: currentEntry.bewijs || null,
+          // ✅ NEW: Add filename field for internal tracking
+          bewijsFilename: currentEntry.bewijsFilename || null,
         };
 
         if (existingIndex >= 0) {
@@ -392,7 +397,99 @@ const ConFormStandaardenStage = ({
 
       const updatedCompliancy = compliancy.map((c) =>
         c.standaardversie === entry.standardId
-          ? { ...c, standaardnaam: entry.standardName, bewijs }
+          ? {
+              ...c,
+              standaardnaam: entry.standardName,
+              bewijs,
+              // ✅ NEW: Keep existing filename when updating bewijs
+              bewijsFilename: c.bewijsFilename || entry.bewijsFilename || null,
+            }
+          : c
+      );
+
+      if (typeof app === 'object') {
+        modules[moduleIndex] = {
+          ...app,
+          compliancy: updatedCompliancy,
+        };
+        return { ...prev, modules };
+      }
+      return prev;
+    });
+  };
+
+  // ✅ NEW: Update bewijs filename for a specific module-standard combination
+  const updateBewijsFilename = (key, filename) => {
+    setTableState((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        bewijsFilename: filename,
+      },
+    }));
+
+    // Update product data
+    const entry = tableState[key];
+    if (!entry) return;
+
+    setProduct((prev) => {
+      const modules = [...(prev.modules || [])];
+      const moduleIndex = entry.moduleId;
+      const app = modules[moduleIndex];
+      const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+      const updatedCompliancy = compliancy.map((c) =>
+        c.standaardversie === entry.standardId
+          ? {
+              ...c,
+              standaardnaam: entry.standardName,
+              bewijsFilename: filename,
+              // Keep existing bewijs data
+              bewijs: c.bewijs || entry.bewijs || null,
+            }
+          : c
+      );
+
+      if (typeof app === 'object') {
+        modules[moduleIndex] = {
+          ...app,
+          compliancy: updatedCompliancy,
+        };
+        return { ...prev, modules };
+      }
+      return prev;
+    });
+  };
+
+  // ✅ NEW: Clear both bewijs and filename
+  const clearBewijs = (key) => {
+    setTableState((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        bewijs: null,
+        bewijsFilename: null,
+      },
+    }));
+
+    // Update product data
+    const entry = tableState[key];
+    if (!entry) return;
+
+    setProduct((prev) => {
+      const modules = [...(prev.modules || [])];
+      const moduleIndex = entry.moduleId;
+      const app = modules[moduleIndex];
+      const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+      const updatedCompliancy = compliancy.map((c) =>
+        c.standaardversie === entry.standardId
+          ? {
+              ...c,
+              standaardnaam: entry.standardName,
+              bewijs: null,
+              bewijsFilename: null,
+            }
           : c
       );
 
@@ -643,15 +740,22 @@ const ConFormStandaardenStage = ({
               <LogoUploadField
                 fieldConfig={{
                   label: '',
+                  // Don't display filename in UI - just show generic message
                   filename: entry.bewijs ? 'Bestand geüpload' : '',
                 }}
                 _value={entry.bewijs || ''}
                 onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
-                onClear={() => updateBewijs(entry.key, null)}
+                // ✅ NEW: Add filename change handler (for internal tracking only)
+                onChangeFileName={(filename) =>
+                  updateBewijsFilename(entry.key, filename)
+                }
+                // ✅ NEW: Update clear handler to clear both bewijs and filename
+                onClear={() => clearBewijs(entry.key)}
                 accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                 showPreview={false}
                 validation={{ required: false }}
                 propertyName={`bewijs-${entry.key}`}
+                size='small'
               />
             )}
           </TableCell>
