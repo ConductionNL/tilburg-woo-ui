@@ -49,25 +49,7 @@ const ConGebruikStepInformatie = ({
           </div>
         )}
         <div style={{ gridColumn: 'span 2' }}>
-          {gebruikType === 'eigen-organisatie' ? (
-            <>
-              <label className='utrecht-form-label'>Afnemer (uw organisatie)</label>
-              <Textbox
-                value={
-                  gebruik?.afnemer?.naam ||
-                  gebruik?.afnemer?.name ||
-                  'Huidige organisatie'
-                }
-                disabled
-              />
-              <div
-                style={{ fontSize: '0.875rem', color: '#666', marginTop: '0.25rem' }}
-              >
-                Voor gebruik door eigen organisatie is de afnemer automatisch uw
-                organisatie.
-              </div>
-            </>
-          ) : gebruikType === 'andere-organisatie' ? (
+          {gebruikType === 'andere-organisatie' ? (
             <>
               <ConSchemaEnhancedField
                 schemaType='gebruik'
