@@ -1455,6 +1455,7 @@ const AcFormsProductInner = ({
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             existingModulesLookup={existingModulesLookup}
             getAllModulesForStages={getAllModulesForStages}
+            modulesOptions={modulesOptions}
           />
         );
     }
