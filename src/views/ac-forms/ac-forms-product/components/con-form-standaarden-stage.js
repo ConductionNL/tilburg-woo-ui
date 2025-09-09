@@ -544,7 +544,6 @@ const ConFormStandaardenStage = ({
         setProduct((prev) => {
           const modules = [...(prev.modules || [])];
           let hasChanges = false;
-          let updatedCount = 0;
 
           entriesWithCompliancy.forEach(([key, entry]) => {
             const moduleIndex = entry.moduleId;
@@ -595,17 +594,9 @@ const ConFormStandaardenStage = ({
 
                 modules[moduleIndex] = { ...app, compliancy };
                 hasChanges = true;
-                updatedCount++;
               }
             }
           });
-
-          // Single consolidated log message instead of detailed per-entry logs
-          if (updatedCount > 0) {
-            console.log(
-              `🔄 Updated ${updatedCount} compliancy object(s) with missing properties`
-            );
-          }
 
           return hasChanges ? { ...prev, modules } : prev;
         });

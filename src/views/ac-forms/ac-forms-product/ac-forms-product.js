@@ -317,9 +317,16 @@ const AcFormsProductInner = ({
 
       // ✅ FIX: Normalize referentieComponenten IDs the same way as the stage component
       const normalizeReferentieComponentenId = (refId) => {
-        if (typeof refId === 'object' && refId !== null) {
-          return String(refId.id || refId.value || refId.naam || refId);
+        // Handle null, undefined, or empty values
+        if (refId == null || refId === '') {
+          return null; // or return '' if you prefer empty string
         }
+
+        if (typeof refId === 'object') {
+          const extractedId = refId.id || refId.value || refId.naam;
+          return extractedId != null ? String(extractedId) : null;
+        }
+
         return String(refId);
       };
 

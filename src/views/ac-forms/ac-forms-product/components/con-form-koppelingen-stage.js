@@ -235,8 +235,6 @@ const ConFormKoppelingenStage = memo(
       // Initialize koppelingen data when form state is prefilled in edit mode
       // This ensures that prefilled koppelingen are actually persisted to the product
       if (rows.length > 0) {
-        let initializedCount = 0;
-
         rows.forEach((rowId) => {
           const appAId = selectedAppAByRow[rowId];
           const appBId = selectedAppBByRow[rowId];
@@ -251,14 +249,8 @@ const ConFormKoppelingenStage = memo(
               richting,
               soort,
             });
-            initializedCount++;
           }
         });
-
-        // Single consolidated log message instead of one per row
-        if (initializedCount > 0) {
-          console.log(`🔄 Initialized ${initializedCount} koppeling(en)`);
-        }
       }
     }, [
       // Only run when the actual koppeling data changes, not on every state update

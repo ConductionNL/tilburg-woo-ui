@@ -76,13 +76,22 @@ const ConFormReferentiecomponentenStage = memo(
     const normalizeValues = (values) => {
       if (!values || !Array.isArray(values)) return [];
 
-      return values.map((value) => {
-        // Handle both object format {id: "...", naam: "..."} and string format
-        if (typeof value === 'object' && value !== null) {
-          return String(value.id || value.value || value.naam || value);
-        }
-        return String(value);
-      });
+      return values
+        .map((value) => {
+          // Handle null, undefined, or empty values
+          if (value == null || value === '') {
+            return null;
+          }
+
+          // Handle both object format {id: "...", naam: "..."} and string format
+          if (typeof value === 'object') {
+            const extractedId = value.id || value.value || value.naam;
+            return extractedId != null ? String(extractedId) : null;
+          }
+
+          return String(value);
+        })
+        .filter((id) => id != null); // Remove null values from the array
     };
 
     const updateReferentieComponentenWithStandards = (appId, refs) => {
@@ -122,7 +131,6 @@ const ConFormReferentiecomponentenStage = memo(
       // Trigger updateReferentieComponentenWithStandards for edit mode initialization
       // This ensures standards are populated when referentieComponenten are prefilled
       if (newModules.length > 0 && referentieComponentenOptions.length > 0) {
-        let totalRefsInitialized = 0;
 
         newModules.forEach((module, index) => {
           const currentRefs = module.referentieComponenten || [];
@@ -133,17 +141,9 @@ const ConFormReferentiecomponentenStage = memo(
             // Only update if we have valid normalized refs
             if (normalizedRefs.length > 0) {
               updateReferentieComponentenWithStandards(index, normalizedRefs);
-              totalRefsInitialized += normalizedRefs.length;
             }
           }
         });
-
-        // Single consolidated log message instead of one per module
-        if (totalRefsInitialized > 0) {
-          console.log(
-            `🔄 Initialized ${totalRefsInitialized} referentiecomponenten across ${newModules.length} module(s)`
-          );
-        }
       }
     }, [
       // Only run when the actual referentieComponenten data changes, not on every module update
