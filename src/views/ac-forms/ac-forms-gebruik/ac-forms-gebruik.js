@@ -167,7 +167,10 @@ const AcFormsGebruik = ({ store }) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
 
   // Usage type selection state
-  const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
+  const [gebruikType, setGebruikType] = useState(
+    // default to eigen-organisatie for edit mode since you should only be able to edit gebruik from your organization
+    isEditMode ? 'eigen-organisatie' : null
+  ); // 'eigen-organisatie' or 'andere-organisatie'
 
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
@@ -814,6 +817,7 @@ const AcFormsGebruik = ({ store }) => {
             setGebruikType={setGebruikType}
             loading={loading}
             gebruik={gebruik}
+            isEditMode={isEditMode}
           />
         );
       case 1:
