@@ -1,6 +1,6 @@
 /**
  * stripLocalIds
- * Recursively removes UI-only fields (like _localId, standaardnaam) from a value
+ * Recursively removes UI-only fields (like _localId, standaardnaam, bewijsFilename) from a value
  * before sending to the API.
  *
  * @param {any} value - Arbitrary value to sanitize
@@ -16,6 +16,8 @@ export const stripLocalIds = (value) => {
       if (k === '_localId') return;
       // Remove UI-only fields from compliancy objects
       if (k === 'standaardnaam') return;
+      // ✅ NEW: Remove filename field before saving
+      if (k === 'bewijsFilename') return;
       out[k] = stripLocalIds(value[k]);
     });
     return out;

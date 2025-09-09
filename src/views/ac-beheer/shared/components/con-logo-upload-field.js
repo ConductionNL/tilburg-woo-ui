@@ -1,11 +1,14 @@
 // eslint-disable-next-line import/no-unresolved
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { AcFlex } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 
 /**
  * Custom Logo Upload Component for form fields
  * Handles file selection and validation for logo uploads
+ *
+ * @param {Object} props
+ * @param {'normal'|'small'} props.size - Size variant of the component
  */
 export const LogoUploadField = ({
   fieldConfig,
@@ -18,17 +21,22 @@ export const LogoUploadField = ({
   isDisabled,
   accept,
   showPreview = true,
+  size = 'normal',
 }) => {
   const inputRef = useRef(null);
+  const [selectedFileName, setSelectedFileName] = useState('');
+
   const handleLogoFileSelect = (e) => {
     const files = e?.target?.files;
     if (!files || !files.length) {
       onChange('');
+      setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
       return;
     }
 
     const file = files[0];
+    setSelectedFileName(file.name);
     if (onChangeFileName) onChangeFileName(file.name);
     const reader = new FileReader();
     reader.onload = () => {
@@ -37,9 +45,16 @@ export const LogoUploadField = ({
     reader.onerror = () => {
       // TODO: show user-friendly error state if needed
       onChange('');
+      setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleButtonClick = () => {
+    if (inputRef.current) {
+      inputRef.current.click();
+    }
   };
 
   const defaultAccept = [
@@ -82,6 +97,13 @@ export const LogoUploadField = ({
     });
   }, [acceptAttr]);
 
+  // Validate size prop
+  const validSizes = ['normal', 'small'];
+  const componentSize = validSizes.includes(size) ? size : 'normal';
+
+  // Get the display filename
+  const displayFileName = selectedFileName || fieldConfig?.filename;
+
   return (
     <AcFlex column>
       <label className='utrecht-form-label'>
@@ -98,45 +120,116 @@ export const LogoUploadField = ({
         </h4>
       </label>
 
-      <input
-        ref={inputRef}
-        id={`fileInput-${propertyName}`}
-        type='file'
-        accept={acceptAttr}
-        multiple={false}
-        onChange={handleLogoFileSelect}
-        disabled={isDisabled}
-        style={{
-          width: '100%',
-          padding: '10px 12px',
-          border: '1px solid var(--utrecht-textbox-border-color)',
-          borderRadius: 'var(--utrecht-select-border-radius)',
-          backgroundColor: 'white',
-          cursor: 'pointer',
-          fontSize: '1em',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            backgroundColor: '#f0f0f0',
-            borderColor: 'var(--utrecht-button-primary-action-border-color)',
-          },
-        }}
-      />
+      {componentSize === 'small' ? (
+        <>
+          <input
+            ref={inputRef}
+            id={`fileInput-${propertyName}`}
+            type='file'
+            accept={acceptAttr}
+            multiple={false}
+            onChange={handleLogoFileSelect}
+            disabled={isDisabled}
+            style={{ display: 'none' }}
+          />
+          <div
+            style={{
+              width: '100%',
+              padding: '10px 12px',
+              border: '1px solid var(--utrecht-textbox-border-color)',
+              borderRadius: 'var(--utrecht-select-border-radius)',
+              textAlign: 'center',
+            }}
+          >
+            <button
+              type='button'
+              onClick={handleButtonClick}
+              disabled={isDisabled}
+              style={{
+                padding: '1px 6px',
+                border: '1px solid #767676',
+                borderRadius: '2px',
+                backgroundColor: '#f0f0f0',
+                color: '#000',
+                fontSize: '16px',
+                fontFamily: 'system-ui, -apple-system, sans-serif',
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                marginRight: '8px',
+                minWidth: '125px',
+                height: '25px',
+                boxSizing: 'border-box',
+                transition: 'background-color 0.1s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (!isDisabled) {
+                  e.target.style.backgroundColor = '#e0e0e0';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isDisabled) {
+                  e.target.style.backgroundColor = '#f0f0f0';
+                }
+              }}
+              onMouseDown={(e) => {
+                if (!isDisabled) {
+                  e.target.style.backgroundColor = '#d0d0d0';
+                  e.target.style.borderColor = '#5a5a5a';
+                }
+              }}
+              onMouseUp={(e) => {
+                if (!isDisabled) {
+                  e.target.style.backgroundColor = '#e0e0e0';
+                  e.target.style.borderColor = '#767676';
+                }
+              }}
+            >
+              Bestand kiezen
+            </button>
+          </div>
+        </>
+      ) : (
+        <input
+          ref={inputRef}
+          id={`fileInput-${propertyName}`}
+          type='file'
+          accept={acceptAttr}
+          multiple={false}
+          onChange={handleLogoFileSelect}
+          disabled={isDisabled}
+          style={{
+            width: '100%',
+            padding: '10px 12px',
+            border: '1px solid var(--utrecht-textbox-border-color)',
+            borderRadius: 'var(--utrecht-select-border-radius)',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            fontSize: '1em',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: '#f0f0f0',
+              borderColor: 'var(--utrecht-button-primary-action-border-color)',
+            },
+          }}
+        />
+      )}
 
-      <small
-        style={{
-          display: 'block',
-          marginTop: '0.5em',
-          color: 'var(--utrecht-paragraph-color)',
-          fontSize: '0.85em',
-          fontStyle: 'italic',
-          opacity: 0.85,
-          userSelect: 'none',
-        }}
-      >
-        Toegestane bestandstypen: {readableAccept.join(', ')}
-      </small>
+      {componentSize !== 'small' && (
+        <small
+          style={{
+            display: 'block',
+            marginTop: '0.5em',
+            color: 'var(--utrecht-paragraph-color)',
+            fontSize: '0.85em',
+            fontStyle: 'italic',
+            opacity: 0.85,
+            userSelect: 'none',
+          }}
+        >
+          Toegestane bestandstypen: {readableAccept.join(', ')}
+        </small>
+      )}
 
-      {(_value || fieldConfig?.filename) && (
+      {(_value || displayFileName) && (
         <div
           style={{
             marginTop: '0.5rem',
@@ -146,18 +239,25 @@ export const LogoUploadField = ({
             flexWrap: 'wrap',
           }}
         >
-          {fieldConfig?.filename ? (
+          {displayFileName && (
             <span style={{ fontSize: '0.9em' }}>
-              Geselecteerd: <b>{fieldConfig.filename}</b>
+              {componentSize === 'small' ? (
+                <b>{displayFileName}</b>
+              ) : (
+                <>
+                  Geselecteerd: <b>{displayFileName}</b>
+                </>
+              )}
             </span>
-          ) : null}
-          {(_value || fieldConfig?.filename) && (
+          )}
+          {(_value || displayFileName) && (
             <AcButton
               style='buttonSlim'
               buttonType='secondary'
               onClick={() => {
                 if (inputRef.current) inputRef.current.value = null;
                 onChange('');
+                setSelectedFileName('');
                 if (onChangeFileName) onChangeFileName('');
                 if (onClear) onClear();
               }}
