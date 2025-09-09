@@ -13,6 +13,7 @@ import { VISUALS } from '@src/constants';
 const ConGebruikStepSoort = ({
   gebruikType,
   setGebruikType,
+  isEditMode,
   // loading,
   // gebruik,
 }) => {
@@ -60,6 +61,7 @@ const ConGebruikStepSoort = ({
         <AcGrid columns={2} gap='xl'>
           <AcTile
             key={'eigen-organisatie'}
+            disabled={isEditMode}
             icon={VISUALS.BUILDING}
             text={'Voor eigen organisatie'}
             to={''}
@@ -70,11 +72,12 @@ const ConGebruikStepSoort = ({
                 ? 'ac-tile--selected'
                 : 'ac-tile--not-selected'
             }`}
-            onClick={() => setGebruikType('eigen-organisatie')}
+            onClick={() => !isEditMode && setGebruikType('eigen-organisatie')}
           />
 
           <AcTile
             key={'andere-organisatie'}
+            disabled={isEditMode}
             icon={VISUALS.HAND_SHAKE}
             text={'Voor andere organisatie'}
             to={''}
@@ -85,7 +88,7 @@ const ConGebruikStepSoort = ({
                 ? 'ac-tile--selected'
                 : 'ac-tile--not-selected'
             }`}
-            onClick={() => setGebruikType('andere-organisatie')}
+            onClick={() => !isEditMode && setGebruikType('andere-organisatie')}
           />
         </AcGrid>
       </div>
