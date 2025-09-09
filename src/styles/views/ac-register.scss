@@ -2,8 +2,10 @@
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
-  margin: -1px;
+  padding-block: 0;
+  padding-inline: 0;
+  margin-block: -1px;
+  margin-inline: -1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
@@ -18,7 +20,7 @@
 
 .required-indicator {
   color: var(--tilburg-color-red-400);
-  margin-left: 0.25rem;
+  margin-inline-start: 0.25rem;
 }
 
 .ac-register__error-list {
@@ -55,13 +57,13 @@
 }
 
 .form-group {
-  margin-bottom: var(--tilburg-space-block-rat);
+  margin-block-end: var(--tilburg-space-block-rat);
 }
 
 // Style for form labels to match the design
 .utrecht-heading-4,
 .ac-form-field__label {
-  margin-bottom: var(--tilburg-space-block-mouse);
+  margin-block-end: var(--tilburg-space-block-mouse);
   font-weight: 500;
 }
 
@@ -120,23 +122,40 @@
 
   .utrecht-heading-4 {
     color: var(--tilburg-color-gray-900);
-    margin-bottom: var(--tilburg-space-block-mouse);
+    margin-block-end: var(--tilburg-space-block-mouse);
   }
 
   &__field {
-    margin-bottom: var(--tilburg-space-block-snail);
+    margin-block-end: var(--tilburg-space-block-snail);
     display: grid;
     grid-template-columns: 200px 1fr;
     gap: var(--tilburg-space-block-mouse);
     align-items: baseline;
 
     &:last-child {
-      margin-bottom: 0;
+      margin-block-end: 0;
     }
 
     strong {
       color: var(--tilburg-color-gray-700);
       font-weight: 600;
+    }
+  }
+
+  // New class for description fields that need full width
+  &__description {
+    margin-block-end: var(--tilburg-space-block-mouse);
+    // Remove grid layout - content flows vertically
+
+    &:last-child {
+      margin-block-end: 0;
+    }
+
+    &__heading {
+      color: var(--tilburg-color-gray-700);
+      font-weight: 600;
+      display: block;
+      margin-block-end: var(--tilburg-space-block-snail);
     }
   }
 
@@ -155,7 +174,7 @@
     width: auto;
     max-width: 200px;
     height: 40px;
-    margin-left: var(--tilburg-space-block-cat);
+    margin-inline-start: var(--tilburg-space-block-cat);
     display: flex;
     align-items: center;
 
@@ -178,7 +197,7 @@
 .ac-register-form-field-error {
   color: var(--tilburg-color-red-400);
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-block-start: 0.25rem;
   display: block;
   font-weight: 500;
 }
@@ -186,14 +205,14 @@
 .ac-register-form-field-info {
   color: var(--tilburg-color-blue-400);
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-block-start: 0.25rem;
   display: block;
 }
 
 .ac-register-form-field-help {
   color: var(--tilburg-color-gray-700);
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-block-start: 0.25rem;
   display: block;
   user-select: none;
 }
@@ -222,7 +241,8 @@
 }
 
 .preview-button {
-  padding: 8px 16px;
+  padding-block: 8px;
+  padding-inline: 16px;
   border-radius: var(--tilburg-border-radius-md);
   border: 1px solid var(--tilburg-form-control-border-color);
   background: var(--tilburg-form-control-background-color);
@@ -265,14 +285,15 @@
 
 .preview-button {
   font-size: 14px;
-  padding: 4px 8px;
+  padding-block: 4px;
+  padding-inline: 8px;
 }
 
 .character-count {
   display: block;
   font-size: 0.875rem;
   color: #666;
-  margin-top: 0.5rem;
+  margin-block-start: 0.5rem;
 }
 
 .ac-register-form-alert {

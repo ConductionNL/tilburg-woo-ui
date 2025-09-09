@@ -8,6 +8,130 @@ import {
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
 
+// Import MDEditor for markdown rendering
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import { remarkMark } from 'remark-mark-highlight';
+import rehypeSlug from 'rehype-slug';
+
+// Helper function to detect MIME type from file content
+const detectMimeTypeFromContent = (uint8Array) => {
+  // Check for PDF signature
+  if (
+    uint8Array[0] === 0x25 &&
+    uint8Array[1] === 0x50 &&
+    uint8Array[2] === 0x44 &&
+    uint8Array[3] === 0x46
+  ) {
+    return 'application/pdf';
+  }
+  // Check for PNG signature
+  else if (
+    uint8Array[0] === 0x89 &&
+    uint8Array[1] === 0x50 &&
+    uint8Array[2] === 0x4e &&
+    uint8Array[3] === 0x47
+  ) {
+    return 'image/png';
+  }
+  // Check for JPEG signature
+  else if (uint8Array[0] === 0xff && uint8Array[1] === 0xd8) {
+    return 'image/jpeg';
+  }
+  // Check for GIF signature
+  else if (
+    uint8Array[0] === 0x47 &&
+    uint8Array[1] === 0x49 &&
+    uint8Array[2] === 0x46
+  ) {
+    return 'image/gif';
+  }
+  // Check for ZIP/Office documents (PK header)
+  else if (uint8Array[0] === 0x50 && uint8Array[1] === 0x4b) {
+    return 'application/zip';
+  }
+  // Check for Word document signature
+  else if (
+    uint8Array[0] === 0xd0 &&
+    uint8Array[1] === 0xcf &&
+    uint8Array[2] === 0x11 &&
+    uint8Array[3] === 0xe0
+  ) {
+    return 'application/msword';
+  }
+
+  return 'application/octet-stream'; // default fallback
+};
+
+// Helper function to create blob URL from base64 data
+const createBlobUrlFromBase64 = (base64Data) => {
+  if (!base64Data) return null;
+
+  try {
+    let decodedData;
+    let mimeType = 'application/octet-stream';
+
+    // Handle data URLs (e.g., "data:application/pdf;base64,...")
+    if (base64Data.startsWith('data:')) {
+      const [header, base64Content] = base64Data.split(',');
+      if (base64Content) {
+        decodedData = atob(base64Content);
+        // Extract MIME type from data URL header
+        const mimeMatch = header.match(/data:([^;]+)/);
+        if (mimeMatch) {
+          mimeType = mimeMatch[1];
+        }
+      } else {
+        return null;
+      }
+    }
+    // Check if it's already a regular URL
+    else if (base64Data.startsWith('http://') || base64Data.startsWith('https://')) {
+      return base64Data;
+    }
+    // Assume it's raw base64 encoded data
+    else {
+      decodedData = atob(base64Data);
+      // Convert to uint8Array to detect MIME type from content
+      const uint8Array = new Uint8Array(decodedData.length);
+      for (let i = 0; i < decodedData.length; i++) {
+        uint8Array[i] = decodedData.charCodeAt(i);
+      }
+      mimeType = detectMimeTypeFromContent(uint8Array);
+    }
+
+    // Convert decoded data to Uint8Array for blob creation
+    const uint8Array = new Uint8Array(decodedData.length);
+    for (let i = 0; i < decodedData.length; i++) {
+      uint8Array[i] = decodedData.charCodeAt(i);
+    }
+
+    const blob = new Blob([uint8Array], { type: mimeType });
+    return URL.createObjectURL(blob);
+  } catch (error) {
+    console.error('Error creating blob URL from base64:', error);
+    return null;
+  }
+};
+
+// Helper function to handle bewijs link click
+const handleBewijsClick = (bewijs) => {
+  const blobUrl = createBlobUrlFromBase64(bewijs);
+  if (blobUrl) {
+    window.open(blobUrl, '_blank');
+    // Clean up the blob URL after a delay to allow the browser to load it
+    setTimeout(() => {
+      if (blobUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    }, 10000); // 10 seconds should be enough for browser to process
+  }
+};
+
 /**
  * Controleren Stage Component
  *
@@ -65,8 +189,8 @@ const ConFormControlerenStage = memo(
       <div>
         <Paragraph>
           Bekijk hieronder de ingevulde gegevens. Controleer of alle informatie klopt
-          voordat u uw product aanmeldt. U kunt velden nog aanpassen via de ‘Vorige’
-          knop of op een later moment via uw eigen omgeving.
+          voordat u uw product aanmeldt. U kunt velden nog aanpassen via de
+          &apos;Vorige&apos; knop of op een later moment via uw eigen omgeving.
         </Paragraph>
         <br />
         <div className='con-form-wizard-review-heading-container'>
@@ -87,8 +211,50 @@ const ConFormControlerenStage = memo(
 
             <div className='ac-register-review__field'>
               <strong>Korte beschrijving:</strong>
-              <span>{product.beschrijvingKort || '-'}</span>
+              <span
+                style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  hyphens: 'auto',
+                }}
+              >
+                {product.beschrijvingKort || '-'}
+              </span>
             </div>
+
+            {product.beschrijvingLang && (
+              <div className='ac-register-review__description'>
+                <strong className='ac-register-review__description__heading'>
+                  Lange beschrijving:
+                </strong>
+                <div
+                  style={{
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    hyphens: 'auto',
+                  }}
+                >
+                  <MDEditor.Markdown
+                    wrapperElement={{
+                      'data-color-mode': 'light',
+                    }}
+                    className='con-my-account-description'
+                    source={product.beschrijvingLang}
+                    remarkPlugins={[
+                      [remarkGfm, { singleTilde: false }],
+                      remarkDefinitionList,
+                      remarkEmoji,
+                      remarkSupersub,
+                      remarkMark,
+                    ]}
+                    rehypePlugins={[
+                      rehypeSlug,
+                      [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                    ]}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className='ac-register-review__field'>
               <strong>Website:</strong>{' '}
@@ -129,9 +295,52 @@ const ConFormControlerenStage = memo(
                     <div className='ac-register-review__field'>
                       <strong>Korte beschrijving:</strong>
                       <div>
-                        <div>{module.beschrijvingKort || ''}</div>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
+                          {module.beschrijvingKort || ''}
+                        </div>
                       </div>
                     </div>
+
+                    {module.beschrijvingLang && (
+                      <div className='ac-register-review__description'>
+                        <strong>Lange beschrijving:</strong>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
+                          <MDEditor.Markdown
+                            wrapperElement={{
+                              'data-color-mode': 'light',
+                            }}
+                            className='con-my-account-description'
+                            source={module.beschrijvingLang}
+                            remarkPlugins={[
+                              [remarkGfm, { singleTilde: false }],
+                              remarkDefinitionList,
+                              remarkEmoji,
+                              remarkSupersub,
+                              remarkMark,
+                            ]}
+                            rehypePlugins={[
+                              rehypeSlug,
+                              [
+                                remarkRehype,
+                                { handlers: { ...defListHastHandlers } },
+                              ],
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className='ac-register-review__field'>
                       <strong>Licentietype:</strong>
@@ -212,6 +421,51 @@ const ConFormControlerenStage = memo(
                                 const displayName =
                                   comp.standaardnaam ||
                                   getStandardNameFromId(comp.standaardversie);
+
+                                // ✅ NEW: Function to create middle ellipsis for long filenames
+                                const createMiddleEllipsis = (
+                                  filename,
+                                  maxLength = 25
+                                ) => {
+                                  if (!filename) return 'bewijs';
+
+                                  // If filename is short enough, return as is
+                                  if (filename.length <= maxLength) {
+                                    return filename;
+                                  }
+
+                                  // Find the extension
+                                  const lastDotIndex = filename.lastIndexOf('.');
+                                  if (lastDotIndex === -1) {
+                                    // No extension, truncate from end
+                                    return (
+                                      filename.substring(0, maxLength - 3) + '...'
+                                    );
+                                  }
+
+                                  const name = filename.substring(0, lastDotIndex);
+                                  const extension = filename.substring(lastDotIndex);
+
+                                  // Calculate how much space we have for the name part
+                                  const availableLength =
+                                    maxLength - extension.length - 3; // 3 for "..."
+
+                                  if (availableLength <= 0) {
+                                    return '...' + extension;
+                                  }
+
+                                  // Split the available space between start and end of filename
+                                  const startLength = Math.ceil(availableLength / 2);
+                                  const endLength = Math.floor(availableLength / 2);
+
+                                  const startPart = name.substring(0, startLength);
+                                  const endPart = name.substring(
+                                    name.length - endLength
+                                  );
+
+                                  return startPart + '...' + endPart + extension;
+                                };
+
                                 return (
                                   <UnorderedListItem key={comp.standaardversie || i}>
                                     <span
@@ -224,9 +478,18 @@ const ConFormControlerenStage = memo(
                                       <span>{displayName}</span>
                                       {comp.bewijs ? (
                                         <>
-                                          <span>-</span>
-                                          <AcLink href={comp.bewijs} target='_blank'>
-                                            bewijs
+                                          <span>- bewijs:</span>
+                                          <AcLink
+                                            href='#'
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              handleBewijsClick(comp.bewijs);
+                                            }}
+                                            title={comp.bewijsFilename || 'bewijs'}
+                                          >
+                                            {createMiddleEllipsis(
+                                              comp.bewijsFilename
+                                            )}
                                           </AcLink>
                                         </>
                                       ) : (
@@ -283,16 +546,19 @@ const ConFormControlerenStage = memo(
                                 // Handle both object and string formats
                                 const dienstType =
                                   typeof dienst === 'object' ? dienst.type : dienst;
-                                const dienstNaam =
-                                  typeof dienst === 'object' ? dienst.naam : null;
                                 const dienstId =
                                   typeof dienst === 'object' ? dienst.id : null;
 
                                 const dienstOption = dienstOptions.find(
                                   (option) => option.value === dienstType
                                 );
-                                const displayName =
-                                  dienstNaam || dienstOption?.label || dienstType;
+
+                                // Get the application name and format as "Application - Dienst Type"
+                                const applicationName =
+                                  module.naam || 'Unnamed Application';
+                                const dienstTypeDisplay =
+                                  dienstOption?.label || dienstType;
+                                const displayName = `${applicationName} - ${dienstTypeDisplay}`;
 
                                 return (
                                   <UnorderedListItem
@@ -339,12 +605,53 @@ const ConFormControlerenStage = memo(
                     <div className='ac-register-review__field'>
                       <strong>Korte beschrijving:</strong>
                       <div>
-                        <div>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
                           {moduleData.beschrijvingKort ||
                             'Geen beschrijving beschikbaar'}
                         </div>
                       </div>
                     </div>
+
+                    {moduleData.beschrijvingLang && (
+                      <div className='ac-register-review__description'>
+                        <strong>Lange beschrijving:</strong>
+                        <div
+                          style={{
+                            wordBreak: 'break-word',
+                            overflowWrap: 'break-word',
+                            hyphens: 'auto',
+                          }}
+                        >
+                          <MDEditor.Markdown
+                            wrapperElement={{
+                              'data-color-mode': 'light',
+                            }}
+                            className='con-my-account-description'
+                            source={moduleData.beschrijvingLang}
+                            remarkPlugins={[
+                              [remarkGfm, { singleTilde: false }],
+                              remarkDefinitionList,
+                              remarkEmoji,
+                              remarkSupersub,
+                              remarkMark,
+                            ]}
+                            rehypePlugins={[
+                              rehypeSlug,
+                              [
+                                remarkRehype,
+                                { handlers: { ...defListHastHandlers } },
+                              ],
+                            ]}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className='ac-register-review__field'>
                       <strong>Licentietype:</strong>
