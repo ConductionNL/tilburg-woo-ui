@@ -122,6 +122,8 @@ const ConFormReferentiecomponentenStage = memo(
       // Trigger updateReferentieComponentenWithStandards for edit mode initialization
       // This ensures standards are populated when referentieComponenten are prefilled
       if (newModules.length > 0 && referentieComponentenOptions.length > 0) {
+        let totalRefsInitialized = 0;
+
         newModules.forEach((module, index) => {
           const currentRefs = module.referentieComponenten || [];
           if (currentRefs.length > 0) {
@@ -130,16 +132,24 @@ const ConFormReferentiecomponentenStage = memo(
 
             // Only update if we have valid normalized refs
             if (normalizedRefs.length > 0) {
-              console.log(
-                `🔄 Initializing standards for module ${index} with refs:`,
-                normalizedRefs
-              );
               updateReferentieComponentenWithStandards(index, normalizedRefs);
+              totalRefsInitialized += normalizedRefs.length;
             }
           }
         });
+
+        // Single consolidated log message instead of one per module
+        if (totalRefsInitialized > 0) {
+          console.log(
+            `🔄 Initialized ${totalRefsInitialized} referentiecomponenten across ${newModules.length} module(s)`
+          );
+        }
       }
-    }, [newModules, referentieComponentenOptions]); // Re-run when modules or options change
+    }, [
+      // Only run when the actual referentieComponenten data changes, not on every module update
+      JSON.stringify(newModules.map((m) => m.referentieComponenten)),
+      referentieComponentenOptions.length,
+    ]);
 
     // Don't early return - let the component continue to show ConExistingModulesInfoBox
 

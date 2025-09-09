@@ -504,6 +504,126 @@ const ConFormStandaardenStage = ({
     });
   };
 
+  // Add this helper function at the top of the component:
+  const generateFilenameFromDataUrl = (dataUrl, standardName) => {
+    if (!dataUrl || typeof dataUrl !== 'string') return null;
+
+    // Extract MIME type from data URL
+    const mimeMatch = dataUrl.match(/data:([^;]+)/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+
+    // Map MIME types to extensions
+    const extensionMap = {
+      'application/pdf': 'pdf',
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'application/msword': 'doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        'docx',
+    };
+
+    const extension = extensionMap[mimeType] || 'file';
+    const safeName = standardName.replace(/[^a-zA-Z0-9]/g, '_');
+
+    return `bewijs_${safeName}.${extension}`;
+  };
+
+  // Ensure compliancy objects have standardName and bewijsFilename properties
+  // This fixes edit mode where existing compliancy data might be missing these properties
+  useEffect(() => {
+    // Ensure compliancy objects have standardName and bewijsFilename properties
+    // This fixes edit mode where existing compliancy data might be missing these properties
+    if (Object.keys(tableState).length > 0) {
+      const entriesWithCompliancy = Object.entries(tableState).filter(
+        ([key, entry]) => entry.isCompliant
+      );
+
+      if (entriesWithCompliancy.length > 0) {
+        setProduct((prev) => {
+          const modules = [...(prev.modules || [])];
+          let hasChanges = false;
+          let updatedCount = 0;
+
+          entriesWithCompliancy.forEach(([key, entry]) => {
+            const moduleIndex = entry.moduleId;
+            const app = modules[moduleIndex];
+
+            if (typeof app !== 'object') {
+              console.warn(
+                'Cannot update compliancy on existing module:',
+                moduleIndex,
+                app
+              );
+              return;
+            }
+
+            let compliancy = Array.isArray(app.compliancy)
+              ? [...app.compliancy]
+              : [];
+
+            // Find existing compliancy object
+            const existingIndex = compliancy.findIndex(
+              (c) => c.standaardversie === entry.standardId
+            );
+
+            if (existingIndex >= 0) {
+              const existing = compliancy[existingIndex];
+
+              // Check if we need to add missing properties
+              const needsStandardName = !existing.standaardnaam;
+              const needsFilename =
+                existing.bewijs && !existing.bewijsFilename && entry.bewijsFilename;
+
+              if (needsStandardName || needsFilename) {
+                // Generate filename if missing and we have bewijs data
+                const generatedFilename =
+                  needsFilename && !entry.bewijsFilename
+                    ? generateFilenameFromDataUrl(
+                        existing.bewijs,
+                        entry.standardName
+                      )
+                    : entry.bewijsFilename;
+
+                compliancy[existingIndex] = {
+                  ...existing,
+                  ...(needsStandardName && { standaardnaam: entry.standardName }),
+                  ...(needsFilename &&
+                    generatedFilename && { bewijsFilename: generatedFilename }),
+                };
+
+                modules[moduleIndex] = { ...app, compliancy };
+                hasChanges = true;
+                updatedCount++;
+              }
+            }
+          });
+
+          // Single consolidated log message instead of detailed per-entry logs
+          if (updatedCount > 0) {
+            console.log(
+              `🔄 Updated ${updatedCount} compliancy object(s) with missing properties`
+            );
+          }
+
+          return hasChanges ? { ...prev, modules } : prev;
+        });
+      }
+    }
+  }, [
+    // Only run when the compliancy status actually changes, not on every tableState update
+    JSON.stringify(
+      Object.entries(tableState)
+        .filter(([key, entry]) => entry.isCompliant)
+        .map(([key, entry]) => ({
+          key,
+          standardId: entry.standardId,
+          isCompliant: entry.isCompliant,
+        }))
+    ),
+  ]);
+
   // If no new modules exist, show a message
   if (newModules.length === 0) {
     return (

@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
@@ -230,6 +230,47 @@ const ConFormKoppelingenStage = memo(
         ),
       }));
     };
+
+    useEffect(() => {
+      // Initialize koppelingen data when form state is prefilled in edit mode
+      // This ensures that prefilled koppelingen are actually persisted to the product
+      if (rows.length > 0) {
+        let initializedCount = 0;
+
+        rows.forEach((rowId) => {
+          const appAId = selectedAppAByRow[rowId];
+          const appBId = selectedAppBByRow[rowId];
+          const richting = directionByRow[rowId];
+          const soort = typeByRow[rowId];
+
+          // Only persist if we have the minimum required data (appA and appB)
+          if (appAId != null && appBId != null) {
+            persistRowIntoProduct(rowId, {
+              appAId,
+              appBId,
+              richting,
+              soort,
+            });
+            initializedCount++;
+          }
+        });
+
+        // Single consolidated log message instead of one per row
+        if (initializedCount > 0) {
+          console.log(`🔄 Initialized ${initializedCount} koppeling(en)`);
+        }
+      }
+    }, [
+      // Only run when the actual koppeling data changes, not on every state update
+      JSON.stringify(
+        rows.map((rowId) => ({
+          appA: selectedAppAByRow[rowId],
+          appB: selectedAppBByRow[rowId],
+          richting: directionByRow[rowId],
+          soort: typeByRow[rowId],
+        }))
+      ),
+    ]);
 
     return (
       <div>
