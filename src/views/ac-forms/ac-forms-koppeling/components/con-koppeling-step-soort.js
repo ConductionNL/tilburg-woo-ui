@@ -11,7 +11,11 @@ import { VISUALS } from '@src/constants';
  * - Voor eigen organisatie: Report usage of connections on software within own organization
  * - Aanbieden koppeling: Offer connections on existing products (potentially adding services for other parties)
  */
-const ConKoppelingStepSoort = ({ koppelingsType, setKoppelingsType }) => {
+const ConKoppelingStepSoort = ({
+  koppelingsType,
+  setKoppelingsType,
+  isEditMode,
+}) => {
   return (
     <div
       className='ac-register-form-section'
@@ -19,14 +23,16 @@ const ConKoppelingStepSoort = ({ koppelingsType, setKoppelingsType }) => {
       aria-labelledby='soort-section-title'
     >
       <h2 id='soort-section-title' className='sr-only'>
-        Soort koppeling
+        {isEditMode ? 'Koppeling bewerken' : 'Soort koppeling'}
       </h2>
 
-      <Paragraph>
-        <strong>Definieer het type koppeling dat u wilt registreren</strong>
-        <br />
-        Een koppeling kan bestaan uit:
-      </Paragraph>
+      {!isEditMode && (
+        <Paragraph>
+          <strong>Definieer het type koppeling dat u wilt registreren</strong>
+          <br />
+          Een koppeling kan bestaan uit:
+        </Paragraph>
+      )}
 
       <Paragraph>
         <strong>Voor eigen organisatie:</strong> Het opgeven van gebruik van een
@@ -37,40 +43,42 @@ const ConKoppelingStepSoort = ({ koppelingsType, setKoppelingsType }) => {
         partij(en) kan tevens meteen een dienst worden toegevoegd.
       </Paragraph>
 
-      <div className='ac-register-form-checkbox-wrapper'>
-        <AcGrid columns={2} gap='xl'>
-          <AcTile
-            key={'eigen-organisatie'}
-            icon={VISUALS.BUILDING}
-            text={'Voor eigen organisatie'}
-            to={''}
-            color={'blue'}
-            size='medium'
-            className={`ac-dashboard-wizard-tile ${
-              koppelingsType === 'eigen-organisatie'
-                ? 'ac-tile--selected'
-                : 'ac-tile--not-selected'
-            }`}
-            onClick={() => setKoppelingsType('eigen-organisatie')}
-          />
-          <AcTile
-            key={'aanbieden-koppeling'}
-            icon={VISUALS.HAND_SHAKE}
-            text={'Aanbieden koppeling'}
-            to={''}
-            color={'blue'}
-            size='medium'
-            className={`ac-dashboard-wizard-tile ${
-              koppelingsType === 'aanbieden-koppeling'
-                ? 'ac-tile--selected'
-                : 'ac-tile--not-selected'
-            }`}
-            onClick={() => setKoppelingsType('aanbieden-koppeling')}
-          />
-        </AcGrid>
-      </div>
+      {!isEditMode && (
+        <div className='ac-register-form-checkbox-wrapper'>
+          <AcGrid columns={2} gap='xl'>
+            <AcTile
+              key={'eigen-organisatie'}
+              icon={VISUALS.BUILDING}
+              text={'Voor eigen organisatie'}
+              to={''}
+              color={'blue'}
+              size='medium'
+              className={`ac-dashboard-wizard-tile ${
+                koppelingsType === 'eigen-organisatie'
+                  ? 'ac-tile--selected'
+                  : 'ac-tile--not-selected'
+              }`}
+              onClick={() => setKoppelingsType('eigen-organisatie')}
+            />
+            <AcTile
+              key={'aanbieden-koppeling'}
+              icon={VISUALS.HAND_SHAKE}
+              text={'Aanbieden koppeling'}
+              to={''}
+              color={'blue'}
+              size='medium'
+              className={`ac-dashboard-wizard-tile ${
+                koppelingsType === 'aanbieden-koppeling'
+                  ? 'ac-tile--selected'
+                  : 'ac-tile--not-selected'
+              }`}
+              onClick={() => setKoppelingsType('aanbieden-koppeling')}
+            />
+          </AcGrid>
+        </div>
+      )}
 
-      {koppelingsType && (
+      {koppelingsType && !isEditMode && (
         <Alert type='info' style={{ marginTop: '1rem' }}>
           {koppelingsType === 'eigen-organisatie'
             ? 'U gaat het gebruik van een koppeling binnen uw organisatie registreren. Dit helpt bij het beheer van uw softwarelandschap.'

@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import clsx from 'clsx';
@@ -18,6 +19,9 @@ import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoeg
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
 
 const AcFormsKoppeling = () => {
+  const [searchParams] = useSearchParams();
+  const koppelingId = searchParams.get('id') || '';
+  const isEditMode = !!koppelingId;
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [koppelingsType, setKoppelingsType] = useState(null); // 'eigen-organisatie' or 'aanbieden-koppeling'
@@ -84,11 +88,13 @@ const AcFormsKoppeling = () => {
   const [statusByRow, setStatusByRow] = useState({});
   const [nameByRow, setNameByRow] = useState({});
   const [selectedModuleLabels, setSelectedModuleLabels] = useState({}); // id -> label
+  const [koppelingIdByRow, setKoppelingIdByRow] = useState({}); // rowId -> koppeling id (for edit)
 
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveResult, setSaveResult] = useState(null); // 'success' | 'error' | null
   const [saveErrors, setSaveErrors] = useState([]); // array of error messages
   const [redirectCountdown, setRedirectCountdown] = useState(0);
+  const [prefillLoading, setPrefillLoading] = useState(false);
 
   const directionOptions = [
     { value: 'AnaarB', label: 'A → B' },
@@ -180,6 +186,117 @@ const AcFormsKoppeling = () => {
     };
   }, []);
 
+  // Helper to ensure a module option exists and return its label
+  const ensureModuleOptionAndGetLabel = async (id) => {
+    if (!id) return '';
+    const existing = (modulesOptions || []).find(
+      (o) => String(o.value) === String(id)
+    );
+    if (existing) return existing.label || String(id);
+    try {
+      const res = await fetch(
+        `/api/apps/openregister/api/objects/voorzieningen/module/${encodeURIComponent(
+          String(id)
+        )}`,
+        { headers: { Accept: 'application/json' } }
+      );
+      if (!res.ok) return String(id);
+      const item = await res.json();
+      const label =
+        item?.naam ||
+        item?.name ||
+        item?.title ||
+        item?.label ||
+        item?.['@self']?.name ||
+        String(id);
+      const option = { value: String(id), label: String(label), data: item };
+      setModulesOptions((prev) => {
+        const exists = (prev || []).some((o) => String(o.value) === String(id));
+        return exists ? prev : [...(prev || []), option];
+      });
+      setOwnAppOptions((prev) => {
+        const exists = (prev || []).some((o) => String(o.value) === String(id));
+        return exists ? prev : [...(prev || []), option];
+      });
+      return String(label);
+    } catch {
+      return String(id);
+    }
+  };
+
+  // Prefill in edit mode
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!isEditMode) return;
+      // Jump to edit step
+      setCurrentStep(2);
+      setPrefillLoading(true);
+      try {
+        const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
+          koppelingId
+        )}?_extend[]=@self.schema&_extend[]=@self.relations`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        const rels = data?.['@self']?.relations || {};
+        const moduleAIdRaw = data?.moduleA ?? rels?.moduleA;
+        const moduleBIdRaw = data?.moduleB ?? rels?.moduleB;
+        const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
+        const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
+
+        const richting = data?.gegevensuitwisselingRichting || '';
+        const soort = data?.type || '';
+        const beschrijving = data?.beschrijvingKort || '';
+        const status = data?.status || '';
+        const naam = data?.naam || '';
+
+        // Resolve labels and ensure options exist
+        const [labelA, labelB] = await Promise.all([
+          ensureModuleOptionAndGetLabel(moduleAId),
+          ensureModuleOptionAndGetLabel(moduleBId),
+        ]);
+
+        if (cancelled) return;
+
+        setSelectedModuleLabels((prev) => ({
+          ...prev,
+          [moduleAId]: labelA || moduleAId,
+          [moduleBId]: labelB || moduleBId,
+        }));
+
+        // Set own app to moduleA for anchor behavior
+        if (moduleAId) {
+          setOwnApp({ value: moduleAId, label: labelA || moduleAId });
+        }
+
+        // Prefill single row
+        setRows([0]);
+        setNextRowId(1);
+        setSelectedAppAByRow({ 0: moduleAId });
+        setSelectedAppBByRow({ 0: moduleBId });
+        setDirectionByRow({ 0: richting });
+        setTypeByRow({ 0: soort });
+        setBeschrijvingByRow({ 0: beschrijving });
+        setStatusByRow({ 0: status });
+        setNameByRow({ 0: naam });
+        setKoppelingIdByRow({ 0: String(koppelingId) });
+
+        // Default koppelings type so step 0 isn't blocking
+        setKoppelingsType('eigen-organisatie');
+      } catch (e) {
+        if (!cancelled) console.error('Het laden van de koppeling is mislukt.');
+      } finally {
+        if (!cancelled) setPrefillLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, koppelingId]);
+
   // Debounced server-side search on modules for the own-app select only
   useEffect(() => {
     let cancelled = false;
@@ -237,55 +354,6 @@ const AcFormsKoppeling = () => {
       cancelled = true;
     };
   }, [debouncedOwnAppInput, modulesOptions]);
-
-  /*
-   * Search koppelingen by app name (client + server tolerant)
-   * const handleSearch = async (qOverride) => {
-   *   const raw = (qOverride ?? searchQuery) || '';
-   *   const trimmed = raw.trim();
-   *
-   *   if (!trimmed) {
-   *     setSearchResults([]);
-   *     setResolvedModulesFromResults([]);
-   *     setResultsLoading(false);
-   *     return;
-   *   }
-   *
-   *   setLoading(true);
-   *   setResultsLoading(true);
-   *   try {
-   *     const results = [];
-   *     const params = new URLSearchParams({
-   *       _limit: '20',
-   *       _page: '1',
-   *       _extend: '@self.schema,@self.relations',
-   *     });
-   *     params.set('_search', trimmed);
-   *     const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
-   *
-   *     let list = [];
-   *     try {
-   *       const res = await fetch(endpoint, { headers: { Accept: 'application/json' } });
-   *       if (res.ok) {
-   *         const data = await res.json();
-   *         list = Array.isArray(data) ? data : Array.isArray(data?.results) ? data.results : [];
-   *       }
-   *     } catch {}
-   *
-   *     const q = trimmed.toLowerCase();
-   *     const filtered = list.filter((k) => {
-   *       const a = k?.applicatie1 || k?.applicatieA || k?.appA || k?.bronApplicatie || k?.source || '';
-   *       const b = k?.applicatie2 || k?.applicatieB || k?.appB || k?.doelApplicatie || k?.target || '';
-   *       return String(a).toLowerCase().includes(q) || String(b).toLowerCase().includes(q);
-   *     });
-   *
-   *     results.push(...filtered);
-   *     setSearchResults(results);
-   *   } finally {
-   *     setLoading(false);
-   *   }
-   * };
-   */
 
   // Helper: extract relation id from various shapes (mirrors example.js)
   const extractRelationId = (rel) => {
@@ -516,6 +584,7 @@ const AcFormsKoppeling = () => {
   // (Removed) Previously triggered koppeling search from the own-app select input
 
   const addRow = () => {
+    if (isEditMode) return; // In edit mode, limit to a single row
     setRows((prev) => [...prev, nextRowId]);
     setNextRowId((n) => n + 1);
   };
@@ -579,16 +648,26 @@ const AcFormsKoppeling = () => {
 
     try {
       const endpoint = '/api/apps/openregister/api/objects/voorzieningen/koppeling';
-      const requests = payloads.map((body) =>
-        fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify(body),
+      // Align payloads with rows to decide POST vs PUT per row
+      const requests = rows
+        .map((rowId, index) => {
+          const body = payloads[index];
+          if (!body) return null;
+          const existingId = koppelingIdByRow[rowId];
+          const url = existingId
+            ? `${endpoint}/${encodeURIComponent(String(existingId))}`
+            : endpoint;
+          const method = existingId ? 'PUT' : 'POST';
+          return fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify(body),
+          });
         })
-      );
+        .filter(Boolean);
 
       const responses = await Promise.all(requests);
       const failures = [];
@@ -635,6 +714,7 @@ const AcFormsKoppeling = () => {
           <ConKoppelingStepSoort
             koppelingsType={koppelingsType}
             setKoppelingsType={setKoppelingsType}
+            isEditMode={isEditMode}
           />
         );
       case 1:
@@ -652,6 +732,7 @@ const AcFormsKoppeling = () => {
             resolvedModulesFromResults={resolvedModulesFromResults}
             resultsLoading={resultsLoading}
             getArrowForDirection={getArrowForDirection}
+            isEditMode={isEditMode}
           />
         );
 
@@ -683,6 +764,7 @@ const AcFormsKoppeling = () => {
             setStatusByRow={setStatusByRow}
             nameByRow={nameByRow}
             setNameByRow={setNameByRow}
+            isEditMode={isEditMode}
           />
         );
 
@@ -706,6 +788,7 @@ const AcFormsKoppeling = () => {
             saveResult={saveResult}
             saveErrors={saveErrors}
             redirectCountdown={redirectCountdown}
+            isEditMode={isEditMode}
           />
         );
 
@@ -721,7 +804,7 @@ const AcFormsKoppeling = () => {
       case 1:
         return 'Koppeling zoeken';
       case 2:
-        return 'Toevoegen';
+        return isEditMode ? 'Bewerken' : 'Toevoegen';
       case 3:
         return 'Controleren';
       default:
@@ -742,6 +825,9 @@ const AcFormsKoppeling = () => {
 
   // Determine page title based on koppelings type
   const getPageTitle = () => {
+    if (isEditMode) {
+      return 'Koppeling bewerken';
+    }
     if (koppelingsType === 'eigen-organisatie') {
       return 'Koppeling registreren voor eigen organisatie';
     }
@@ -788,7 +874,7 @@ const AcFormsKoppeling = () => {
                           {
                             id: 'sub-toevoegen',
                             status: getStatus(currentStep, 2),
-                            title: 'Toevoegen',
+                            title: isEditMode ? 'Bewerken' : 'Toevoegen',
                           },
                         ],
                       },
@@ -856,6 +942,7 @@ const AcFormsKoppeling = () => {
                             selectedAppBByRow,
                             directionByRow,
                             typeByRow,
+                            koppelingIdByRow,
                             payloads: serializeRowsToPayload(),
                           },
                           null,
@@ -881,7 +968,7 @@ const AcFormsKoppeling = () => {
                         buttonType='secondary'
                         icon={<VISUALS.ARROW_LEFT />}
                         onClick={() => setCurrentStep(currentStep - 1)}
-                        disabled={loading || saveLoading}
+                        disabled={loading || saveLoading || prefillLoading}
                       >
                         Vorige
                       </AcButton>
@@ -896,7 +983,9 @@ const AcFormsKoppeling = () => {
                           )}
                           icon={<VISUALS.ARROW_RIGHT />}
                           onClick={() => setCurrentStep(currentStep + 1)}
-                          disabled={!canGoNext() || loading || saveLoading}
+                          disabled={
+                            !canGoNext() || loading || saveLoading || prefillLoading
+                          }
                           title={!canGoNext() ? getNextDisabledTooltip() : ''}
                         >
                           Volgende
@@ -911,7 +1000,7 @@ const AcFormsKoppeling = () => {
                         icon={<VISUALS.CLIPBOARD_CHECK />}
                         onClick={handleSave}
                         loading={saveLoading}
-                        disabled={saveLoading || !canSave()}
+                        disabled={saveLoading || prefillLoading || !canSave()}
                       >
                         {saveLoading ? 'Bezig met opslaan...' : 'Opslaan'}
                       </AcButton>
