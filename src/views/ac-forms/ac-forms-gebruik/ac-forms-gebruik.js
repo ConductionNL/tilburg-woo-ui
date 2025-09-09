@@ -140,6 +140,13 @@ const AcFormsGebruik = ({ store }) => {
             : 'eigen-organisatie';
       }
 
+      // map the date dependent on the status (it comes from the API as a string like `2025-09-10`)
+      mapped.startDatumVerwerving = api.startDatumVerwerving || '';
+      mapped.startDatumGepland = api.startDatumGepland || '';
+      mapped.startDatumInProductie = api.startDatumInProductie || '';
+      mapped.startDatumUitTeFaseren = api.startDatumUitTeFaseren || '';
+      mapped.startDatumUitGefaseerd = api.startDatumUitGefaseerd || '';
+
       return mapped;
     },
     [getIdString, store?.user?.activeOrganization]
@@ -240,6 +247,7 @@ const AcFormsGebruik = ({ store }) => {
     let cancelled = false;
     const run = async () => {
       if (!isEditMode) return;
+      setCurrentStep(1);
       setPrefillLoading(true);
       setPrefillError(null);
       try {
@@ -248,7 +256,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            _extend: ['@self.schema', 'product', 'module', 'moduleVersie'],
+            _extend: ['@self.schema'],
           }
         );
         if (cancelled) return;
@@ -259,7 +267,6 @@ const AcFormsGebruik = ({ store }) => {
         const mapped = mapFetchedGebruikToLocalState(apiObj);
         setGebruik(mapped);
         setGebruikType(mapped.gebruikType || null);
-        setCurrentStep(1); // Skip "Soort gebruik" step when editing
       } catch (e) {
         if (!cancelled) {
           setPrefillError(
@@ -658,7 +665,7 @@ const AcFormsGebruik = ({ store }) => {
         ...gebruik,
         // Ensure required fields are properly set
         contactpersoon: gebruik?.contactpersoon,
-        afnemer: gebruik?.afnemer,
+        afnemer: gebruik?.afnemer?.uuid || gebruik?.afnemer?.id || gebruik?.afnemer,
         product: gebruik?.product,
         module: gebruik?.module,
         moduleVersie: gebruik?.moduleVersie,

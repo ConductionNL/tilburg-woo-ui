@@ -72,9 +72,13 @@ const ReactSelectWithGlobalHack = (props) => {
     };
   }, [fieldPath]);
 
-  // Use global options if available, otherwise fall back to prop options
+  // Prefer prop-provided options when available; fall back to global cache
   const effectiveOptions =
-    globalOptions.length > 0 ? globalOptions : propOptions || [];
+    propOptions && propOptions.length > 0
+      ? propOptions
+      : globalOptions.length > 0
+      ? globalOptions
+      : propOptions || [];
 
   return <ReactSelect {...selectProps} options={effectiveOptions} />;
 };
