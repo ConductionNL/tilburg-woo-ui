@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import ReactSelect from 'react-select';
 import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
 
@@ -72,12 +72,17 @@ const ConFormReferentiecomponentenStage = memo(
       });
     };
 
+    // Around line 75, add a helper function to normalize referentieComponenten values
     const normalizeValues = (values) => {
-      if (!values) return [];
-      if (Array.isArray(values)) {
-        return values.map((v) => (typeof v === 'object' ? v.value || v.id : v));
-      }
-      return Array.from(new Set(values));
+      if (!values || !Array.isArray(values)) return [];
+
+      return values.map((value) => {
+        // Handle both object format {id: "...", naam: "..."} and string format
+        if (typeof value === 'object' && value !== null) {
+          return String(value.id || value.value || value.naam || value);
+        }
+        return String(value);
+      });
     };
 
     const updateReferentieComponentenWithStandards = (appId, refs) => {
@@ -112,6 +117,29 @@ const ConFormReferentiecomponentenStage = memo(
         return result;
       });
     };
+
+    useEffect(() => {
+      // Trigger updateReferentieComponentenWithStandards for edit mode initialization
+      // This ensures standards are populated when referentieComponenten are prefilled
+      if (newModules.length > 0 && referentieComponentenOptions.length > 0) {
+        newModules.forEach((module, index) => {
+          const currentRefs = module.referentieComponenten || [];
+          if (currentRefs.length > 0) {
+            // Normalize the refs the same way the onChange handler does
+            const normalizedRefs = normalizeValues(currentRefs);
+
+            // Only update if we have valid normalized refs
+            if (normalizedRefs.length > 0) {
+              console.log(
+                `🔄 Initializing standards for module ${index} with refs:`,
+                normalizedRefs
+              );
+              updateReferentieComponentenWithStandards(index, normalizedRefs);
+            }
+          }
+        });
+      }
+    }, [newModules, referentieComponentenOptions]); // Re-run when modules or options change
 
     // Don't early return - let the component continue to show ConExistingModulesInfoBox
 
@@ -150,9 +178,11 @@ const ConFormReferentiecomponentenStage = memo(
                 <ReactSelect
                   value={(() => {
                     const currentModule = newModules[0] || {};
-                    const selectedValues = currentModule.referentieComponenten || [];
+                    const selectedValues = normalizeValues(
+                      currentModule.referentieComponenten || []
+                    );
                     return referentieComponentenOptions.filter((opt) =>
-                      selectedValues.includes(opt.value)
+                      selectedValues.includes(String(opt.value))
                     );
                   })()}
                   onChange={(selectedOptions) => {
@@ -247,9 +277,14 @@ const ConFormReferentiecomponentenStage = memo(
                       </TableCell>
                       <TableCell>
                         <ReactSelect
-                          value={referentieComponentenOptions.filter((opt) =>
-                            currentRefs.includes(opt.value)
-                          )}
+                          value={(() => {
+                            const currentRefs = normalizeValues(
+                              app.referentieComponenten || []
+                            );
+                            return referentieComponentenOptions.filter((opt) =>
+                              currentRefs.includes(String(opt.value))
+                            );
+                          })()}
                           onChange={(selectedOptions) => {
                             const refsArray = selectedOptions
                               ? selectedOptions.map((opt) => opt.value)

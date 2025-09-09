@@ -315,16 +315,26 @@ const AcFormsProductInner = ({
         : [];
       if (rcIds.length === 0) return;
 
+      // ✅ FIX: Normalize referentieComponenten IDs the same way as the stage component
+      const normalizeReferentieComponentenId = (refId) => {
+        if (typeof refId === 'object' && refId !== null) {
+          return String(refId.id || refId.value || refId.naam || refId);
+        }
+        return String(refId);
+      };
+
       setReferentieComponentenWithStandards((prev) => {
         const filtered = prev.filter((entry) => entry.applicatieId !== 0);
         const entries = rcIds.map((refId) => {
+          // Normalize the ID before matching
+          const normalizedRefId = normalizeReferentieComponentenId(refId);
           const refOption = options.find(
-            (opt) => String(opt.value) === String(refId)
+            (opt) => String(opt.value) === normalizedRefId
           );
           const refData = refOption?.data || {};
           return {
-            id: refId,
-            naam: refOption?.label || String(refId),
+            id: normalizedRefId, // Use normalized ID
+            naam: refOption?.label || normalizedRefId,
             moduleId: 0,
             applicatieId: 0,
             aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
