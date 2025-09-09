@@ -97,7 +97,10 @@ const AcFormsGebruik = ({ store }) => {
       const mapped = {
         id: api.id || api?.['@self']?.id || '',
         status: api.status || 'Verwerving',
-        contactpersoon: api.contactpersoon || '',
+        contactpersoon:
+          getIdString(
+            api.contactpersoon || api?.['@self']?.relations?.contactpersoon
+          ) || '',
         // Keep full objects for entities used for labels in UI
         afnemer: api.afnemer || api?.['@self']?.relations?.afnemer || null,
         product: api.product || api?.['@self']?.relations?.product || null,
