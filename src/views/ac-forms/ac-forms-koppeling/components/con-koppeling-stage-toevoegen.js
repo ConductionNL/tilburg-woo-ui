@@ -37,6 +37,7 @@ const ConKoppelingStageToevoegen = ({
   setStatusByRow,
   nameByRow,
   setNameByRow,
+  isEditMode,
 }) => {
   const [appAOptionsByRow, setAppAOptionsByRow] = useState({});
   const [appBOptionsByRow, setAppBOptionsByRow] = useState({});
@@ -482,31 +483,40 @@ const ConKoppelingStageToevoegen = ({
                 </Paragraph>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  marginTop: '0.75rem',
-                }}
-              >
-                <AcButton
-                  style='button'
-                  buttonType='secondary'
-                  onClick={() => removeRow(rowId)}
-                  disabled={rows.length === 1}
-                  icon={<VISUALS.TRASHCAN />}
-                />
-              </div>
+              {!isEditMode && (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    marginTop: '0.75rem',
+                  }}
+                >
+                  <AcButton
+                    style='button'
+                    buttonType='secondary'
+                    onClick={() => removeRow(rowId)}
+                    disabled={rows.length === 1}
+                    icon={<VISUALS.TRASHCAN />}
+                  />
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div style={{ marginTop: '1rem' }}>
-        <AcButton style='button' onClick={addRow} icon={<VISUALS.PLUS />}>
-          Nieuwe koppeling toevoegen
-        </AcButton>
-      </div>
+      {!isEditMode && (
+        <div style={{ marginTop: '1rem' }}>
+          <AcButton
+            style='button'
+            disabled={isEditMode}
+            onClick={addRow}
+            icon={<VISUALS.PLUS />}
+          >
+            Nieuwe koppeling toevoegen
+          </AcButton>
+        </div>
+      )}
     </div>
   );
 };

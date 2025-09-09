@@ -1,4 +1,5 @@
-import { useState, useEffect, memo, useRef } from 'react';
+import { useState, useEffect, memo, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
@@ -6,7 +7,6 @@ import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn } from '@src/atoms';
 import { AcButton } from '@src/molecules';
 import { ProcessSteps } from '@gemeente-denhaag/components-react';
-import { BASE_URL } from '@views/ac-beheer/core/utils/constants';
 import {
   Heading1,
   Paragraph,
@@ -19,6 +19,7 @@ import ConGebruikStepKoppelingen from './components/con-gebruik-step-koppelingen
 import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
 import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
+import { VISUALS } from '@src/constants';
 
 const mapToOption = (item, index) => {
   const label =
@@ -33,8 +34,13 @@ const mapToOption = (item, index) => {
 };
 
 const AcFormsGebruik = ({ store }) => {
+  const [searchParams] = useSearchParams();
+  const gebruikId = searchParams.get('id') || '';
+  const isEditMode = !!gebruikId;
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [prefillLoading, setPrefillLoading] = useState(false);
+  const [prefillError, setPrefillError] = useState(null);
 
   // Submission state management (following product wizard pattern)
   const [registerCallBack, setRegisterCallBack] = useState(null);
@@ -46,6 +52,7 @@ const AcFormsGebruik = ({ store }) => {
   // Add click handlers to steps
   useEffect(() => {
     if (!processStepsRef.current) return;
+    if (prefillLoading || prefillError) return;
 
     const addClickHandlers = () => {
       const stepElements = processStepsRef.current.querySelectorAll(
@@ -69,7 +76,85 @@ const AcFormsGebruik = ({ store }) => {
 
     const timeoutId = setTimeout(addClickHandlers, 100);
     return () => clearTimeout(timeoutId);
-  }, [currentStep]);
+  }, [currentStep, prefillLoading, prefillError]);
+
+  // Helper to extract id string from various API reference shapes
+  const getIdString = useCallback((ref) => {
+    if (!ref) return '';
+    if (typeof ref === 'string' || typeof ref === 'number') return String(ref);
+    return (
+      String(
+        ref.id || ref.value || ref?.['@self']?.id || ref?.['@self']?.value || ''
+      ) || ''
+    );
+  }, []);
+
+  // Map fetched gebruik object into the local state shape expected by this form
+  const mapFetchedGebruikToLocalState = useCallback(
+    (api) => {
+      if (!api || typeof api !== 'object') return {};
+
+      const mapped = {
+        id: api.id || api?.['@self']?.id || '',
+        status: api.status || 'Verwerving',
+        contactpersoon:
+          getIdString(
+            api.contactpersoon || api?.['@self']?.relations?.contactpersoon
+          ) || '',
+        // Keep full objects for entities used for labels in UI
+        afnemer: api.afnemer || api?.['@self']?.relations?.afnemer || null,
+        product: api.product || api?.['@self']?.relations?.product || null,
+        // Use string ids for fields used as identifiers in requests
+        module:
+          getIdString(
+            api.module || api.moduleId || api?.['@self']?.relations?.module
+          ) || '',
+        moduleVersie:
+          getIdString(
+            api.moduleVersie ||
+              api.moduleversie ||
+              api?.['@self']?.relations?.moduleVersie
+          ) || '',
+        gebruiktVoorReferentiecomponenten: Array.isArray(
+          api.gebruiktVoorReferentiecomponenten
+        )
+          ? api.gebruiktVoorReferentiecomponenten.map((x) => getIdString(x) || x)
+          : [],
+        deelnemers: Array.isArray(api.deelnemers) ? api.deelnemers : [],
+        koppelingen: Array.isArray(api.koppelingen)
+          ? api.koppelingen.map((k) => getIdString(k) || k)
+          : [],
+        diensten: Array.isArray(api.diensten)
+          ? api.diensten
+              .map((d) => getIdString(d))
+              .filter((id) => typeof id === 'string' && id !== '')
+          : [],
+      };
+
+      // Determine gebruikType from API or infer based on afnemer vs active org
+      const apiGebruikType = api.gebruikType || api.type || api.soortGebruik;
+      if (apiGebruikType) {
+        mapped.gebruikType = apiGebruikType;
+      } else {
+        const activeOrgId = getIdString(store?.user?.activeOrganization);
+        const afnemerId = getIdString(mapped.afnemer);
+        mapped.gebruikType =
+          activeOrgId && afnemerId && activeOrgId !== afnemerId
+            ? 'andere-organisatie'
+            : 'eigen-organisatie';
+      }
+
+      // map the date dependent on the status (it comes from the API as a string like `2025-09-10`)
+      mapped.startDatumVerwerving = api.startDatumVerwerving || '';
+      mapped.startDatumGepland = api.startDatumGepland || '';
+      mapped.startDatumInProductie = api.startDatumInProductie || '';
+      mapped.startDatumUitTeFaseren = api.startDatumUitTeFaseren || '';
+      mapped.startDatumUitGefaseerd = api.startDatumUitGefaseerd || '';
+
+      return mapped;
+    },
+    [getIdString, store?.user?.activeOrganization]
+  );
 
   // Schema management
   const [schemas, setSchemas] = useState({});
@@ -82,7 +167,10 @@ const AcFormsGebruik = ({ store }) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
 
   // Usage type selection state
-  const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
+  const [gebruikType, setGebruikType] = useState(
+    // default to eigen-organisatie for edit mode since you should only be able to edit gebruik from your organization
+    isEditMode ? 'eigen-organisatie' : null
+  ); // 'eigen-organisatie' or 'andere-organisatie'
 
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
@@ -94,33 +182,29 @@ const AcFormsGebruik = ({ store }) => {
     }
   }, [gebruikType]);
 
+  // When gebruikType is 'eigen-organisatie', ensure afnemer is the active organization
+  useEffect(() => {
+    if (gebruikType !== 'eigen-organisatie') return;
+    const org = store?.user?.activeOrganization;
+    if (!org) return;
+    setGebruikData('afnemer', org);
+  }, [gebruikType]);
+
   // Options state (UI-only)
   const [productOptions, setProductOptions] = useState([]);
   const [modulesOptions, setModulesOptions] = useState([]);
   const [modulesLoading, setModulesLoading] = useState(false);
-  const [versionsLoading, setVersionsLoading] = useState(false);
+  // Version dropdown loading not used anymore (derived locally from module data)
   const [koppelingOptions, setKoppelingOptions] = useState([]);
-  const [dienstOptions] = useState([
-    {
-      value: 'Functioneel beheer',
-      label: 'Functioneel beheer: ondersteuning bij dagelijks gebruik en inrichting',
-    },
-    {
-      value: 'Technisch beheer',
-      label: 'Technisch beheer: installatie, updates en systeembeheer.',
-    },
-    { value: 'Training', label: 'Training: gebruikers- of beheerdersopleiding.' },
-    {
-      value: 'Implementatie-ondersteuning',
-      label: 'Implementatie-ondersteuning: hulp bij implementatie en adoptie.',
-    },
-  ]);
+  const [dienstOptions, setDienstOptions] = useState([]);
 
   // Deelnemers (organisaties) options
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
 
   // Versies
   const [versionOptions, setVersionOptions] = useState([]);
+  // Resolved selected module object (for consistent downstream usage)
+  const [selectedModule, setSelectedModule] = useState(null);
 
   // Referentiecomponenten
   const [refCompOptions, setRefCompOptions] = useState([]);
@@ -138,7 +222,7 @@ const AcFormsGebruik = ({ store }) => {
             'gebruik',
             { status: 'Verwerving' }
           );
-          setGebruik(defaultGebruik);
+          if (!isEditMode) setGebruik((prev) => ({ ...defaultGebruik, ...prev }));
           setSchemas({ gebruik: gebruikSchema });
           setSchemasLoading(false);
         }
@@ -149,13 +233,48 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
     fetchSchemaAndInit();
-  }, [store]);
+  }, [store, isEditMode]);
 
-  // Prefill afnemer from active organization (if present)
+  // Prefill for edit mode: fetch existing gebruik and map to local state; jump to step 1
   useEffect(() => {
-    const org = store?.userStore?.activeOrganization;
-    if (org) setGebruikData('afnemer', org);
-  }, [store?.userStore?.activeOrganization]);
+    let cancelled = false;
+    const run = async () => {
+      if (!isEditMode) return;
+      setCurrentStep(1);
+      setPrefillLoading(true);
+      setPrefillError(null);
+      try {
+        await store.object.fetchObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          {
+            _extend: ['@self.schema'],
+          }
+        );
+        if (cancelled) return;
+        const apiObj = store.object.getObject(
+          'voorzieningen_gebruik',
+          String(gebruikId)
+        );
+        const mapped = mapFetchedGebruikToLocalState(apiObj);
+        setGebruik(mapped);
+        setGebruikType(mapped.gebruikType || null);
+      } catch (e) {
+        if (!cancelled) {
+          setPrefillError(
+            'Het laden van de gebruiksregistratie is mislukt. Probeer het opnieuw of start een nieuwe registratie.'
+          );
+        }
+      } finally {
+        if (!cancelled) setPrefillLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditMode, gebruikId, mapFetchedGebruikToLocalState, store]);
 
   // Preload all slow API calls at component mount (hotloading like in product form)
   useEffect(() => {
@@ -164,10 +283,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchProducts = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'product', { 
-          _limit: '50', 
-          _page: '1', 
-          _extend: '@self.schema' 
+        await store.object.fetchCollection('voorzieningen', 'product', {
+          _limit: '50',
+          _page: '1',
+          _extend: '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_product');
         const list = collection?.results || collection || [];
@@ -181,10 +300,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchModules = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'module', { 
-          _limit: '50', 
-          _page: '1', 
-          _extend: '@self.schema' 
+        await store.object.fetchCollection('voorzieningen', 'module', {
+          _limit: '50',
+          _page: '1',
+          _extend: '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_module');
         const list = collection?.results || collection || [];
@@ -198,10 +317,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchOrganisaties = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'organisatie', { 
-          _limit: '50', 
-          _page: '1', 
-          _extend: '@self.schema' 
+        await store.object.fetchCollection('voorzieningen', 'organisatie', {
+          _limit: '50',
+          _page: '1',
+          _extend: '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_organisatie');
         const list = collection?.results || collection || [];
@@ -224,10 +343,10 @@ const AcFormsGebruik = ({ store }) => {
     const fetchRefComps = async () => {
       try {
         // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('vng-gemma', 'element', { 
-          _limit: '500', 
-          _page: '1', 
-          gemmaType: 'Referentiecomponent' 
+        await store.object.fetchCollection('vng-gemma', 'element', {
+          _limit: '500',
+          _page: '1',
+          gemmaType: 'referentiecomponent',
         });
         const collection = store.object.getCollection('vng-gemma_element');
         const list = collection?.results || collection || [];
@@ -253,42 +372,101 @@ const AcFormsGebruik = ({ store }) => {
     fetchModules();
     fetchOrganisaties();
     fetchRefComps();
-    
+
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // When product changes, filter preloaded modules (no additional API calls needed)
+  // When product changes, load only its modules by ID (restrict module selection to selected product)
   useEffect(() => {
-    const p = gebruik?.product;
-    if (!p) {
-      setModulesOptions([]);
-      setGebruikData('module', null);
-      return;
-    }
-    
-    // Filter preloaded modules based on product selection
-    // Since modules are now preloaded, we can use them directly instead of making API calls
-    const searchLabel = p?.naam || p?.name || p?.title;
-    if (searchLabel && modulesOptions.length > 0) {
-      // Filter modules that match the product name
-      const filteredOptions = modulesOptions.filter(option => {
-        const moduleLabel = option.label?.toLowerCase() || '';
-        const productLabel = searchLabel.toLowerCase();
-        return moduleLabel.includes(productLabel) || productLabel.includes(moduleLabel);
-      });
-      
-      if (filteredOptions.length > 0) {
-        // Use filtered options if we found matches
-        setModulesOptions(filteredOptions);
-        if (filteredOptions.length === 1) {
-          setGebruikData('module', filteredOptions[0].data || filteredOptions[0]);
+    let cancelled = false;
+    const run = async () => {
+      const p = gebruik?.product;
+      if (p === null || p === undefined || (typeof p === 'string' && p === '')) {
+        if (!cancelled) {
+          setModulesOptions([]);
+          if (gebruik?.module != null) setGebruikData('module', null);
+        }
+        return;
+      }
+
+      // Resolve product object when value might be an id; fetch if needed
+      let productData = null;
+      if (typeof p === 'object') {
+        productData = p;
+      } else {
+        const fromOptions = productOptions.find(
+          (opt) => String(opt.value) === String(p)
+        )?.data;
+        if (fromOptions) {
+          productData = fromOptions;
+        } else {
+          try {
+            await store.object.fetchObject('voorzieningen', 'product', String(p), {
+              _extend: '@self.schema',
+            });
+            productData = store.object.getObject('voorzieningen_product', String(p));
+          } catch (_) {
+            productData = null;
+          }
         }
       }
-      // If no specific matches found, keep all preloaded modules available
-    }
-  }, [gebruik?.product, modulesOptions]);
+
+      const moduleIds = Array.isArray(productData?.modules)
+        ? productData.modules
+        : [];
+
+      if (moduleIds.length === 0) {
+        if (!cancelled) {
+          setModulesOptions([]);
+          if (gebruik?.module != null) setGebruikData('module', null);
+        }
+        return;
+      }
+
+      setModulesLoading(true);
+      try {
+        await Promise.all(
+          moduleIds.map((id) =>
+            store.object.fetchObject('voorzieningen', 'module', String(id), {
+              _extend: '@self.schema,@self.relations',
+            })
+          )
+        );
+        if (cancelled) return;
+
+        const modules = moduleIds
+          .map((id) => store.object.getObject('voorzieningen_module', String(id)))
+          .filter(Boolean);
+        const options = modules.map(mapToOption);
+        setModulesOptions(options);
+
+        const currentModule = String(gebruik?.module || '');
+        if (!options.some((o) => String(o.value) === currentModule)) {
+          setGebruikData('module', null);
+        }
+
+        if (options.length === 1) {
+          const nextId = String(options[0].value);
+          if (currentModule !== nextId) {
+            setGebruikData('module', nextId);
+          }
+        }
+      } catch (_) {
+        if (!cancelled) {
+          setModulesOptions([]);
+          if (gebruik?.module != null) setGebruikData('module', null);
+        }
+      } finally {
+        if (!cancelled) setModulesLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [gebruik?.product]);
 
   // Server-side search for modules
   const searchModules = async (query) => {
@@ -300,10 +478,10 @@ const AcFormsGebruik = ({ store }) => {
         return;
       }
       // Use authenticated API client instead of raw fetch
-      await store.object.fetchCollection('voorzieningen', 'module', { 
-        _limit: '50', 
-        _page: '1', 
-        _search: q 
+      await store.object.fetchCollection('voorzieningen', 'module', {
+        _limit: '50',
+        _page: '1',
+        _search: q,
       });
       const collection = store.object.getCollection('voorzieningen_module');
       const list = collection?.results || collection || [];
@@ -316,183 +494,208 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
-  // When module changes, fetch versions (and later koppelingen/diensten)
+  // Resolve selected module object whenever selection changes
   useEffect(() => {
-    const fetchVersions = async () => {
-      setVersionsLoading(true);
-      try {
-        setVersionOptions([]);
-        if (!gebruik?.module) return;
+    let cancelled = false;
+    const run = async () => {
+      const mod = gebruik?.module;
+      if (!mod) {
+        if (!cancelled) setSelectedModule(null);
+        return;
+      }
 
-        // Fetch module versions via the dedicated endpoint with pagination
-        // Filter by relation @self.relations.module; fallback to client-side filtering
-        const moduleId = gebruik?.module;
-        const limit = 20;
-        let page = 1;
-        let allItems = [];
-        let hasMore = true;
+      let modData =
+        typeof mod === 'object'
+          ? mod
+          : modulesOptions.find((m) => String(m.value) === String(mod))?.data;
 
-        // Helper to build URL with optional relation filter param
-        const buildUrl = (pageNum, relationKey) => {
-          const url = new URL(
-            '/api/apps/openregister/api/objects/voorzieningen/moduleversie',
-            window.location.origin
-          );
-          url.searchParams.set('_limit', String(limit));
-          url.searchParams.set('_page', String(pageNum));
-          url.searchParams.set('_extend', '@self.schema,@self.relations');
-          if (relationKey) {
-            url.searchParams.set(relationKey, moduleId);
-          }
-          return url.toString();
-        };
+      const versiesArray =
+        (modData && (modData.moduleVersies || modData.moduleversies)) || null;
 
-        // Try relation keys that include @self.relations.module
-        const relationKeysToTry = ['@self.relations.module'];
-        let fetchedWithServerFilter = false;
-
-        for (const relationKey of relationKeysToTry) {
-          page = 1;
-          allItems = [];
-          hasMore = true;
-
-          while (hasMore && page <= 10) {
-            const res = await fetch(buildUrl(page, relationKey), {
-              headers: { Accept: 'application/json' },
-            });
-            if (!res.ok) {
-              allItems = [];
-              break;
-            }
-            const data = await res.json();
-            const list = data?.results;
-
-            allItems = allItems.concat(list);
-            hasMore = !!data?.next;
-            page += 1;
-          }
-
-          if (allItems.length > 0) {
-            fetchedWithServerFilter = true;
-            break;
-          }
-        }
-
-        // If server-side filter yielded nothing, fetch without filter and filter client-side
-        if (!fetchedWithServerFilter) {
-          page = 1;
-          allItems = [];
-          hasMore = true;
-          while (hasMore && page <= 10) {
-            const res = await fetch(buildUrl(page, null), {
-              headers: { Accept: 'application/json' },
-            });
-            if (!res.ok) break;
-            const data = await res.json();
-            const list = Array.isArray(data)
-              ? data
-              : Array.isArray(data?.results)
-              ? data.results
-              : [];
-            allItems = allItems.concat(list);
-            hasMore = list.length === limit;
-            page += 1;
-          }
-
-          // Client-side filter by @self.relations.module common shapes
-          allItems = allItems.filter((v) => {
-            const rel = v?.['@self']?.relations?.module || v?.module;
-            if (!rel) return false;
-            const relId =
-              (typeof rel === 'string' && rel) ||
-              rel?.id ||
-              rel?.['@self']?.id ||
-              rel?.value;
-            return String(relId) === moduleId;
+      if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
+        try {
+          await store.object.fetchObject('voorzieningen', 'module', String(mod), {
+            _extend: '@self.schema,@self.relations',
           });
+          if (cancelled) return;
+          modData = store.object.getObject('voorzieningen_module', String(mod));
+        } catch (e) {
+          if (!cancelled) setSelectedModule(null);
+          return;
         }
+      }
 
-        const options = allItems.map((v) => {
-          const label =
-            v?.['@self']?.name ||
-            v?.nummer ||
-            v?.version ||
-            v?.naam ||
-            v?.label ||
-            v?.title ||
-            v?.semanticVersion ||
-            v?.versie ||
-            v?.id;
-          const value =
-            v?.id || v?.nummer || v?.version || v?.versie || String(label);
-          return { value: String(value), label: String(label) };
+      if (!cancelled) setSelectedModule(modData || null);
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [gebruik?.module, modulesOptions]);
+
+  // When selected module object changes, derive versions from module.moduleVersies (no external API)
+  useEffect(() => {
+    setVersionOptions([]);
+    if (!selectedModule) {
+      if (gebruik?.moduleVersie != null) setGebruikData('moduleVersie', null);
+      return;
+    }
+
+    const versies =
+      selectedModule.moduleVersies || selectedModule.moduleversies || [];
+    const options = versies.map((v, idx) => {
+      const label = v?.versie || v?.version || v?.nummer || `Versie ${idx + 1}`;
+      const value = String(v?.versie || v?.version || v?.nummer || label);
+      return { value, label, data: v };
+    });
+    setVersionOptions(options);
+
+    const current = String(gebruik?.moduleVersie || '');
+    if (current && !options.some((o) => o.value === current)) {
+      setGebruikData('moduleVersie', null);
+    }
+    if (options.length === 1 && current !== options[0].value) {
+      setGebruikData('moduleVersie', options[0].value);
+    }
+  }, [selectedModule]);
+
+  // When product changes, fetch diensten filtered by product id and map options to dienst IDs
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      const p = gebruik?.product;
+      const productId = getIdString(p);
+
+      if (!productId) {
+        if (!cancelled) {
+          setDienstOptions([]);
+          if (Array.isArray(gebruik?.diensten) && gebruik.diensten.length) {
+            setGebruikData('diensten', []);
+          }
+        }
+        return;
+      }
+
+      try {
+        await store.object.fetchCollection('voorzieningen', 'dienst', {
+          producten: String(productId),
+          _limit: '100',
+          _page: '1',
         });
 
-        setVersionOptions(options);
-      } catch {
-        setVersionOptions([]);
-      } finally {
-        setVersionsLoading(false);
+        if (cancelled) return;
+
+        const type = store.object.getTypeFromParams('voorzieningen', 'dienst');
+        const collection = store.object.getCollection(type);
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            item?.label ||
+            `Dienst ${index + 1}`;
+          const value = item?.id;
+          return { value: String(value), label: String(label), data: item };
+        });
+
+        setDienstOptions(options);
+
+        // Prune selected diensten to those still available for current product
+        if (Array.isArray(gebruik?.diensten) && gebruik.diensten.length) {
+          const allowed = new Set(options.map((o) => String(o.value)));
+          const next = gebruik.diensten
+            .map((d) => String(d))
+            .filter((id) => allowed.has(id));
+          if (next.length !== gebruik.diensten.length) {
+            setGebruikData('diensten', next);
+          }
+        }
+      } catch (_) {
+        if (!cancelled) {
+          setDienstOptions([]);
+        }
       }
     };
-    fetchVersions();
-  }, [gebruik?.module]);
 
-  // When module changes, fetch koppelingen options using _search on module label
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+    // Only react to product changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gebruik?.product]);
+
+  // When module changes, resolve koppelingen by IDs from selected module
   useEffect(() => {
-    const fetchKoppelingen = async () => {
+    const fetchKoppelingenByIds = async () => {
       try {
-        const modId = gebruik?.module;
-        const mod = modulesOptions.find((m) => m.value === modId)?.data;
+        const mod = selectedModule;
         if (!mod) {
           setKoppelingOptions([]);
           return;
         }
-        const searchLabel = mod?.naam || mod?.name || mod?.title;
-        const params = new URLSearchParams({ _limit: '50', _page: '1' });
-        if (searchLabel) params.set('_search', searchLabel);
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
+
+        const ids = Array.isArray(mod.koppelingen)
+          ? mod.koppelingen.map((id) => String(id))
           : [];
+
+        if (ids.length === 0) {
+          setKoppelingOptions([]);
+          return;
+        }
+
+        await Promise.all(
+          ids.map((id) =>
+            store.object.fetchObject('voorzieningen', 'koppeling', id, {
+              _extend: ['@self.schema', 'moduleA', 'moduleB'],
+            })
+          )
+        );
+
+        const list = ids
+          .map((id) => store.object.getObject('voorzieningen_koppeling', String(id)))
+          .filter(Boolean);
+
         const options = list.map((item, index) => {
-          const appA =
-            item?.applicatie1 ||
-            item?.applicatieA ||
-            item?.moduleA ||
-            item?.bronApplicatie ||
-            item?.source ||
-            item?.naam ||
-            `A${index + 1}`;
-          const appB =
-            item?.applicatie2 ||
-            item?.applicatieB ||
-            item?.moduleB ||
-            item?.doelApplicatie ||
-            item?.target ||
-            item?.naam ||
-            `B${index + 1}`;
+          const appAName =
+            typeof item?.moduleA === 'string'
+              ? item.moduleA
+              : item?.moduleA?.naam
+              ? item.moduleA.naam
+              : Array.isArray(item?.moduleA) && item.moduleA[0]?.naam
+              ? item.moduleA[0].naam
+              : item?.['@self']?.relations?.moduleA || `A${index + 1}`;
+
+          const appBName =
+            typeof item?.moduleB === 'string'
+              ? item.moduleB
+              : item?.moduleB?.naam
+              ? item.moduleB.naam
+              : Array.isArray(item?.moduleB) && item.moduleB[0]?.naam
+              ? item.moduleB[0].naam
+              : item?.['@self']?.relations?.moduleB || `B${index + 1}`;
 
           const direction = item?.gegevensuitwisselingRichting;
-          const arrow = direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
-          const label = `${appA} ${arrow} ${appB}`;
+          const arrow =
+            direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+          const label = `${appAName} ${arrow} ${appBName}`;
           const value = item?.value || item?.id || label;
           return { value: String(value), label: String(label) };
         });
+
         setKoppelingOptions(options);
       } catch (e) {
         setKoppelingOptions([]);
       }
     };
-    fetchKoppelingen();
-  }, [gebruik?.module]);
+
+    fetchKoppelingenByIds();
+  }, [selectedModule]);
 
   // When afnemer is samenwerking, organisaties are already preloaded - no additional API calls needed
   useEffect(() => {
@@ -524,7 +727,7 @@ const AcFormsGebruik = ({ store }) => {
         ...gebruik,
         // Ensure required fields are properly set
         contactpersoon: gebruik?.contactpersoon,
-        afnemer: gebruik?.afnemer,
+        afnemer: gebruik?.afnemer?.uuid || gebruik?.afnemer?.id || gebruik?.afnemer,
         product: gebruik?.product,
         module: gebruik?.module,
         moduleVersie: gebruik?.moduleVersie,
@@ -534,7 +737,16 @@ const AcFormsGebruik = ({ store }) => {
       };
 
       // Submit to the gebruik endpoint using the object store
-      await store.object.createObject('voorzieningen', 'gebruik', gebruikData);
+      if (isEditMode) {
+        await store.object.updateObject(
+          'voorzieningen',
+          'gebruik',
+          String(gebruikId),
+          gebruikData
+        );
+      } else {
+        await store.object.createObject('voorzieningen', 'gebruik', gebruikData);
+      }
 
       // On success, show success page
       setRegisterCallBack('success');
@@ -582,7 +794,7 @@ const AcFormsGebruik = ({ store }) => {
       return !!gebruik?.module; // Product en applicatie step
     }
     if (currentStep === 3) {
-      return !!gebruik?.moduleVersie && !versionsLoading; // Versie step
+      return !!gebruik?.moduleVersie; // Versie step
     }
     if (currentStep === 4) {
       return true; // koppelingen optional
@@ -605,6 +817,7 @@ const AcFormsGebruik = ({ store }) => {
             setGebruikType={setGebruikType}
             loading={loading}
             gebruik={gebruik}
+            isEditMode={isEditMode}
           />
         );
       case 1:
@@ -640,7 +853,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             versionOptions={versionOptions}
-            versionsLoading={versionsLoading}
+            versionsLoading={false}
             schemas={schemas}
           />
         );
@@ -694,6 +907,7 @@ const AcFormsGebruik = ({ store }) => {
 
   // Determine page title based on gebruik type
   const getPageTitle = () => {
+    if (isEditMode) return 'Gebruik bewerken';
     if (gebruikType === 'eigen-organisatie') {
       return 'Gebruik Aanmelden voor eigen organisatie';
     }
@@ -800,7 +1014,7 @@ const AcFormsGebruik = ({ store }) => {
                           style='button'
                           buttonType='secondary'
                           onClick={() => setCurrentStep(currentStep - 1)}
-                          disabled={loading}
+                          disabled={loading || prefillLoading || !!prefillError}
                         >
                           Vorige
                         </AcButton>
@@ -814,7 +1028,12 @@ const AcFormsGebruik = ({ store }) => {
                               currentStep === 0 && 'ac-register-form-next-button'
                             )}
                             onClick={() => setCurrentStep(currentStep + 1)}
-                            disabled={!canGoNext() || loading}
+                            disabled={
+                              !canGoNext() ||
+                              loading ||
+                              prefillLoading ||
+                              !!prefillError
+                            }
                           >
                             Volgende
                           </AcButton>
@@ -827,9 +1046,9 @@ const AcFormsGebruik = ({ store }) => {
                           buttonType='primary'
                           onClick={handleRegister}
                           loading={loading}
-                          disabled={loading}
+                          disabled={loading || prefillLoading}
                         >
-                          Gebruik registreren
+                          {isEditMode ? 'Gebruik updaten' : 'Gebruik registreren'}
                         </AcButton>
                       )}
                     </div>
@@ -875,13 +1094,21 @@ const AcFormsGebruik = ({ store }) => {
           {/* Success Page */}
           {registerCallBack === 'success' && (
             <div>
-              <Heading1>🎉 Gebruik succesvol geregistreerd!</Heading1>
+              <Heading1>
+                {isEditMode
+                  ? '🎉 Gebruik succesvol geüpdatet!'
+                  : '🎉 Gebruik succesvol geregistreerd!'}
+              </Heading1>
 
               <div style={{ marginTop: '1rem' }}>
                 <div className='utrecht-alert utrecht-alert--success'>
                   <div className='utrecht-alert__content'>
                     <Paragraph>
-                      <strong>Uw gebruik is succesvol geregistreerd!</strong>
+                      <strong>
+                        {isEditMode
+                          ? 'Uw gebruik is succesvol bijgewerkt!'
+                          : 'Uw gebruik is succesvol geregistreerd!'}
+                      </strong>
                     </Paragraph>
                     <Paragraph>
                       Het gebruik van{' '}
@@ -943,6 +1170,7 @@ const AcFormsGebruik = ({ store }) => {
               <div style={{ marginTop: '2rem', display: 'flex', gap: '10px' }}>
                 <AcButton
                   style='button'
+                  icon={<VISUALS.HOUSE />}
                   onClick={() => (window.location.href = '/beheer')}
                 >
                   Terug naar beheer dashboard
@@ -951,6 +1179,7 @@ const AcFormsGebruik = ({ store }) => {
                 <AcButton
                   style='button'
                   buttonType='secondary'
+                  icon={<VISUALS.CLIPBOARD_CHECK />}
                   onClick={() => {
                     setRegisterCallBack(null);
                     setCurrentStep(0);

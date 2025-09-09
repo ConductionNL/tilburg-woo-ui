@@ -149,6 +149,8 @@ const ConFormControlerenStage = memo(
     referentieComponentenOptions,
     referentieComponentenWithStandards,
     existingModulesLookup,
+    getAllModulesForStages,
+    modulesOptions,
   }) => {
     // Debug logging removed per lint rules
 
@@ -183,6 +185,47 @@ const ConFormControlerenStage = memo(
       }
 
       return standardId; // Fallback to ID if name not found
+    };
+
+    // Helper function to resolve moduleB ID to display name
+    const getModuleBDisplayName = (moduleBId) => {
+      if (!moduleBId) return moduleBId;
+
+      // First try to find in modulesOptions (external modules)
+      if (modulesOptions && Array.isArray(modulesOptions)) {
+        const foundOption = modulesOptions.find(
+          (opt) => String(opt.value) === String(moduleBId)
+        );
+        if (foundOption) {
+          return foundOption.label;
+        }
+      }
+
+      // Fallback: try to find in product's own modules
+      const allModules = getAllModulesForStages ? getAllModulesForStages() : [];
+
+      // Create lookup for all modules by their value
+      const moduleLookup = {};
+      allModules.forEach((module) => {
+        const moduleValue = module.isExisting ? module.id : module.moduleIndex;
+        const displayName =
+          module.naam ||
+          module?.['@self']?.name ||
+          module?.fullData?.['@self']?.name ||
+          (module.id ? String(module.id) : `Module ${moduleValue}`);
+
+        moduleLookup[String(moduleValue)] = displayName;
+        moduleLookup[moduleValue] = displayName;
+      });
+
+      // Also check existing modules lookup for additional data
+      if (existingModulesLookup && existingModulesLookup[moduleBId]) {
+        const existingModule = existingModulesLookup[moduleBId];
+        return existingModule.naam || existingModule?.['@self']?.name || moduleBId;
+      }
+
+      // Return the resolved name or fallback to the ID
+      return moduleLookup[moduleBId] || moduleLookup[String(moduleBId)] || moduleBId;
     };
 
     return (
@@ -522,11 +565,17 @@ const ConFormControlerenStage = memo(
                                     : richting === 'BnaarA'
                                     ? '←'
                                     : '↔';
+
+                                // Resolve moduleB ID to display name
+                                const moduleBDisplayName = getModuleBDisplayName(
+                                  kp.moduleB
+                                );
+
                                 return (
                                   <UnorderedListItem
                                     key={`${kp.moduleA}-${kp.moduleB}-${kIdx}`}
                                   >
-                                    {kp.moduleA} {arrow} {kp.moduleB}
+                                    {kp.moduleA} {arrow} {moduleBDisplayName}
                                     {soortLabel ? ` (${soortLabel})` : ''}
                                   </UnorderedListItem>
                                 );

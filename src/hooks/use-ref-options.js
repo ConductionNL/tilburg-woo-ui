@@ -241,8 +241,8 @@ export const useRefOptions = (
         const labels = isArray ? fieldPreselectedLabel : [fieldPreselectedLabel];
 
         const options = values.map((value, index) => ({
-          value: value,
-          label: labels[index] || value,
+          value: String(value),
+          label: String(labels[index] || value),
           data: { id: value, name: labels[index] }, // Minimal data object
         }));
 
@@ -292,19 +292,19 @@ export const useRefOptions = (
           const options = collection.results
             .map((item) => {
               // Always use @self.id for the value
-              const value = item['@self']?.id;
+              const rawValue = item['@self']?.id;
 
               // Always use @self.name for the label
-              const label = item['@self']?.name || 'Unnamed';
+              const rawLabel = item['@self']?.name || 'Unnamed';
 
               // Skip items without @self.id
-              if (!value) {
+              if (!rawValue) {
                 return null;
               }
 
               return {
-                value,
-                label,
+                value: String(rawValue),
+                label: String(rawLabel),
                 data: item, // Store full object for reference
               };
             })

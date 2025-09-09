@@ -148,13 +148,12 @@ const ConFormKoppelingenStage = memo(
         const idx = list.findIndex((k) => k?._localId === localId);
 
         const moduleALabel = appOptions.find((o) => o.value === appAId)?.label;
-        const moduleBLabel = (modulesOptions || []).find(
-          (o) => o.value === appBId
-        )?.label;
+        // Persist moduleB as its identifier so edit-mode can preselect by id
+        const moduleBId = appBId;
 
         const fields = {
           moduleA: moduleALabel,
-          moduleB: moduleBLabel,
+          moduleB: moduleBId,
           richtingDataUitwisseling: richting,
           soortKoppeling: soort,
         };
@@ -325,13 +324,20 @@ const ConFormKoppelingenStage = memo(
                   <TableCell>
                     <ReactSelect
                       options={modulesOptions}
-                      value={
-                        selectedAppBByRow[rowId] != null
-                          ? (modulesOptions || []).find(
-                              (o) => o.value === selectedAppBByRow[rowId]
-                            )
-                          : null
-                      }
+                      value={(() => {
+                        const selected = selectedAppBByRow[rowId];
+                        if (selected == null) return null;
+                        const opts = modulesOptions || [];
+                        let found = opts.find(
+                          (o) => String(o.value) === String(selected)
+                        );
+                        if (!found) {
+                          found = opts.find(
+                            (o) => String(o.label) === String(selected)
+                          );
+                        }
+                        return found || null;
+                      })()}
                       onInputChange={(inputValue, meta) => {
                         if (meta && meta.action === 'input-change') {
                           searchModules(inputValue || '');

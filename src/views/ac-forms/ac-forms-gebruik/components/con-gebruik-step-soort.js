@@ -13,6 +13,7 @@ import { VISUALS } from '@src/constants';
 const ConGebruikStepSoort = ({
   gebruikType,
   setGebruikType,
+  isEditMode,
   // loading,
   // gebruik,
 }) => {
@@ -42,23 +43,25 @@ const ConGebruikStepSoort = ({
           Deze keuze helpt organisaties om te begrijpen hoe uw registratie is
           opgebouwd en maakt de catalogus overzichtelijker.
         </i>
-        {gebruikType && (
-          <div className='ac-wizard-form-alert' style={{ marginTop: '1rem' }}>
-            <Alert type='info'>
-              <Paragraph>
-                {gebruikType === 'eigen-organisatie'
-                  ? 'U heeft gekozen voor gebruik door eigen organisatie. In de volgende stappen selecteert u een product uit de catalogus dat uw organisatie gebruikt.'
-                  : 'U heeft gekozen voor gebruik door andere organisatie. In de volgende stappen selecteert u een klantorganisatie en een product van uw organisatie.'}
-              </Paragraph>
-            </Alert>
-          </div>
-        )}
       </Paragraph>
+
+      {gebruikType && (
+        <div className='ac-wizard-form-alert' style={{ marginTop: '1rem' }}>
+          <Alert type='info'>
+            <Paragraph>
+              {gebruikType === 'eigen-organisatie'
+                ? 'U heeft gekozen voor gebruik door eigen organisatie. In de volgende stappen selecteert u een product uit de catalogus dat uw organisatie gebruikt.'
+                : 'U heeft gekozen voor gebruik door andere organisatie. In de volgende stappen selecteert u een klantorganisatie en een product van uw organisatie.'}
+            </Paragraph>
+          </Alert>
+        </div>
+      )}
 
       <div className='ac-register-form-checkbox-wrapper'>
         <AcGrid columns={2} gap='xl'>
           <AcTile
             key={'eigen-organisatie'}
+            disabled={isEditMode}
             icon={VISUALS.BUILDING}
             text={'Voor eigen organisatie'}
             to={''}
@@ -69,11 +72,12 @@ const ConGebruikStepSoort = ({
                 ? 'ac-tile--selected'
                 : 'ac-tile--not-selected'
             }`}
-            onClick={() => setGebruikType('eigen-organisatie')}
+            onClick={() => !isEditMode && setGebruikType('eigen-organisatie')}
           />
 
           <AcTile
             key={'andere-organisatie'}
+            disabled={isEditMode}
             icon={VISUALS.HAND_SHAKE}
             text={'Voor andere organisatie'}
             to={''}
@@ -84,7 +88,7 @@ const ConGebruikStepSoort = ({
                 ? 'ac-tile--selected'
                 : 'ac-tile--not-selected'
             }`}
-            onClick={() => setGebruikType('andere-organisatie')}
+            onClick={() => !isEditMode && setGebruikType('andere-organisatie')}
           />
         </AcGrid>
       </div>

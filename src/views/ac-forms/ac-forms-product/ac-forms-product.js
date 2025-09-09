@@ -362,6 +362,37 @@ const AcFormsProductInner = ({
     const nextKoppelingIdByRow = {};
     const nextModuleIndexByRow = {};
 
+    /**
+     * Edit-mode: UI stores Applicatie A as a modules array index, while
+     * kpl['@self'].relations.moduleA is an id/object reference.
+     * We normalize that id and look up the correct index, handling mixed module shapes
+     * (new module objects vs existing module ids). If no relation is present or no match
+     * can be found, we fall back to the containing module's index so the row stays usable.
+     */
+    const resolveModuleAIndexFromRelation = (kpl, fallbackIndex) => {
+      try {
+        const relation = kpl?.['@self']?.relations?.moduleA;
+        if (relation == null) return fallbackIndex;
+
+        // Relation may be an id (string/number) or an object containing an id
+        const relatedModuleId =
+          typeof relation === 'object'
+            ? String(relation.id ?? relation.value ?? '')
+            : String(relation);
+        if (!relatedModuleId) return fallbackIndex;
+
+        const idx = modules.findIndex((mod) => {
+          if (!mod || typeof mod !== 'object') return false;
+          const modId = mod?.id ?? mod?.['@self']?.id;
+          return String(modId) === relatedModuleId;
+        });
+        return idx >= 0 ? idx : fallbackIndex;
+      } catch (e) {
+        // TODO: consider reporting if needed; keep robust fallback behavior for now
+        return fallbackIndex;
+      }
+    };
+
     modules.forEach((module, moduleIndex) => {
       if (!module || typeof module !== 'object') return;
       const koppelingen = Array.isArray(module.koppelingen)
@@ -370,13 +401,21 @@ const AcFormsProductInner = ({
       koppelingen.forEach((kpl) => {
         const rowId = rowCounter++;
         nextRows.push(rowId);
-        // Applicatie A is the module index (since edit-mode modules are objects)
-        nextSelectedAppAByRow[rowId] = moduleIndex;
+        // Applicatie A: prefer koppeling relation to moduleA when present in API data
+        const appAIndex = resolveModuleAIndexFromRelation(kpl, moduleIndex);
+        nextSelectedAppAByRow[rowId] = appAIndex;
         // Try to prefill Applicatie B by id when present in API data
-        const moduleBId =
-          (kpl && (kpl.moduleBId || kpl.moduleB?.id)) != null
-            ? String(kpl.moduleBId || kpl.moduleB?.id)
-            : null;
+        const moduleBId = (() => {
+          if (!kpl) return null;
+          if (kpl.moduleBId != null) return String(kpl.moduleBId);
+          if (kpl.moduleB != null) {
+            // Accept both object reference and primitive id
+            return String(
+              typeof kpl.moduleB === 'object' ? kpl.moduleB?.id : kpl.moduleB
+            );
+          }
+          return null;
+        })();
         if (moduleBId != null) {
           nextSelectedAppBByRow[rowId] = moduleBId;
         }
@@ -390,7 +429,8 @@ const AcFormsProductInner = ({
           (kpl && kpl._localId) ||
           `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
         nextKoppelingIdByRow[rowId] = localId;
-        nextModuleIndexByRow[rowId] = moduleIndex;
+        // Track last persisted module index based on resolved Applicatie A
+        nextModuleIndexByRow[rowId] = appAIndex;
       });
     });
 
@@ -1448,6 +1488,7 @@ const AcFormsProductInner = ({
             referentieComponentenWithStandards={referentieComponentenWithStandards}
             existingModulesLookup={existingModulesLookup}
             getAllModulesForStages={getAllModulesForStages}
+            modulesOptions={modulesOptions}
           />
         );
     }
@@ -1881,6 +1922,8 @@ const AcFormsProductInner = ({
                     setRegisterCallBack(null);
                     setCurrentStep(0);
                     // Reset form for new product
+                    // remove params from the url
+                    window.history.replaceState(null, '', window.location.pathname);
                     window.location.reload();
                   }}
                   sx={{ marginLeft: '1rem' }}

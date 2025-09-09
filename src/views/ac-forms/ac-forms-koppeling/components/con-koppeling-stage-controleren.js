@@ -28,6 +28,7 @@ const ConKoppelingStageControleren = ({
   saveResult,
   saveErrors,
   // redirectCountdown,
+  isEditMode,
 }) => {
   if (saveResult === 'error') {
     return (
@@ -76,11 +77,19 @@ const ConKoppelingStageControleren = ({
   if (saveResult === 'success') {
     return (
       <div className='ac-register-form-section'>
-        <Heading1>🎉 Koppelingen succesvol opgeslagen!</Heading1>
+        <Heading1>
+          {isEditMode
+            ? '🎉 Koppeling succesvol bijgewerkt!'
+            : '🎉 Koppelingen succesvol opgeslagen!'}
+        </Heading1>
 
         <Alert type='success'>
           <Paragraph>
-            <strong>Uw koppelingen zijn succesvol geregistreerd!</strong>
+            <strong>
+              {isEditMode
+                ? 'Uw koppeling is succesvol bijgewerkt!'
+                : 'Uw koppelingen zijn succesvol geregistreerd!'}
+            </strong>
           </Paragraph>
           <Paragraph>
             Alle ingevoerde koppelingen zijn opgeslagen in de softwarecatalogus.
