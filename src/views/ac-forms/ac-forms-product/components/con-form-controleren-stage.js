@@ -486,14 +486,6 @@ const ConFormControlerenStage = memo(
                                               handleBewijsClick(comp.bewijs);
                                             }}
                                             title={comp.bewijsFilename || 'bewijs'}
-                                            style={{
-                                              marginLeft: '0.25rem',
-                                              maxWidth: '150px',
-                                              overflow: 'hidden',
-                                              textOverflow: 'ellipsis',
-                                              whiteSpace: 'nowrap',
-                                              display: 'inline-block',
-                                            }}
                                           >
                                             {createMiddleEllipsis(
                                               comp.bewijsFilename
