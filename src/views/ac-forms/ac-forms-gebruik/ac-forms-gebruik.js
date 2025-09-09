@@ -19,6 +19,7 @@ import ConGebruikStepKoppelingen from './components/con-gebruik-step-koppelingen
 import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
 import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
+import { VISUALS } from '@src/constants';
 
 const mapToOption = (item, index) => {
   const label =
@@ -1162,6 +1163,7 @@ const AcFormsGebruik = ({ store }) => {
               <div style={{ marginTop: '2rem', display: 'flex', gap: '10px' }}>
                 <AcButton
                   style='button'
+                  icon={<VISUALS.HOUSE />}
                   onClick={() => (window.location.href = '/beheer')}
                 >
                   Terug naar beheer dashboard
@@ -1170,6 +1172,7 @@ const AcFormsGebruik = ({ store }) => {
                 <AcButton
                   style='button'
                   buttonType='secondary'
+                  icon={<VISUALS.CLIPBOARD_CHECK />}
                   onClick={() => {
                     setRegisterCallBack(null);
                     setCurrentStep(0);
