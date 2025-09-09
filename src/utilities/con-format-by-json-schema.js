@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from '@utrecht/component-library-react/dist/css-module';
 import { ConRelatedObjectsLinks } from '@components';
+import { shouldResolveToName, getDisplayValue } from './con-detect-object-references';
 
 /**
  * Helper function to determine the actual runtime type of a value
@@ -46,6 +47,8 @@ function isExtendedObjectsArray(array) {
  * - inline: boolean, if true render object as inline text (default: false)
  * - includeUnknown: boolean, if true render object properties not defined in schema (default: false)
  * - profile: object mapping property keys to per-key option overrides
+ * - objectStore: ObjectStore instance for Names Cache resolution
+ * - namesMap: Map of UUID to name for reference resolution
  */
 function formatBySchema(schema, data, dataKey, options = {}) {
   // if dataKey is passed, grab that property; otherwise data itself is the value
@@ -112,10 +115,46 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         case 'byte':
         case 'extension':
         case 'filename':
+          // Check if UUID should be resolved to a name
+          if (schema?.format === 'uuid' && options.objectStore && options.namesMap && dataKey) {
+            const property = { ...schema, key: dataKey };
+            if (shouldResolveToName(property, value)) {
+              const resolvedValue = getDisplayValue(value, property, options.namesMap);
+              if (resolvedValue !== value) {
+                // Show resolved name with original ID in tooltip
+                return (
+                  <span 
+                    title={`Original ID: ${value}`}
+                    style={{ cursor: 'help' }}
+                  >
+                    {resolvedValue}
+                  </span>
+                );
+              }
+            }
+          }
           return <span>{value}</span>;
 
         // fallback: unknown format
         default:
+          // Check if this string value should be resolved to a name (non-uuid format references)
+          if (options.objectStore && options.namesMap && dataKey) {
+            const property = { ...schema, key: dataKey };
+            if (shouldResolveToName(property, value)) {
+              const resolvedValue = getDisplayValue(value, property, options.namesMap);
+              if (resolvedValue !== value) {
+                // Show resolved name with original ID in tooltip
+                return (
+                  <span 
+                    title={`Original ID: ${value}`}
+                    style={{ cursor: 'help' }}
+                  >
+                    {resolvedValue}
+                  </span>
+                );
+              }
+            }
+          }
           return <span>{value}</span>;
       }
     }
@@ -158,6 +197,29 @@ function formatBySchema(schema, data, dataKey, options = {}) {
       if (isExtendedObjectsArray(value)) {
         // For extended objects, always use ConRelatedObjectsLinks (which renders inline by default)
         return <ConRelatedObjectsLinks objects={value} />;
+      }
+
+      // Check if this is an array of references that should be resolved to names
+      if (options.objectStore && options.namesMap && dataKey && schema) {
+        const property = { ...schema, key: dataKey };
+        if (shouldResolveToName(property, value)) {
+          const resolvedValue = getDisplayValue(value, property, options.namesMap);
+          if (resolvedValue !== value) {
+            // Show resolved names with original IDs in tooltip
+            const originalValue = Array.isArray(value) 
+              ? `Original IDs: ${value.join(', ')}` 
+              : `Original ID: ${value}`;
+            
+            return (
+              <span 
+                title={originalValue}
+                style={{ cursor: 'help' }}
+              >
+                {resolvedValue}
+              </span>
+            );
+          }
+        }
       }
 
       // For regular arrays, check if inline rendering is requested

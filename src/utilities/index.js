@@ -122,3 +122,13 @@ export {
   extractSummary 
 } from './con-extract-text';
 export { ConFormatDutchNumber } from './con-format-dutch-number';
+export {
+  isUUID,
+  shouldResolveToName,
+  extractReferenceIds,
+  extractReferenceIdsFromCollection,
+  resolveObjectReferencesToNames,
+  resolveCollectionReferencesToNames,
+  getDisplayValue,
+  createReferenceResolver,
+} from './con-detect-object-references';
