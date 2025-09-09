@@ -100,7 +100,7 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Skip first stage in edit mode (start at step 1: Producten)
         setCurrentStep(1);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
-          _extend: ['@self.schema', 'producten', 'modules', 'koppelingen'],
+          _extend: ['@self.schema'],
         });
         if (cancelled) return;
 
