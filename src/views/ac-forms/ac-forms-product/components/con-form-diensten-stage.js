@@ -205,7 +205,7 @@ const ConFormDienstenStage = memo(
           Diensten
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Digitale dienstverlening en functionaliteit</strong>
           <br />
           Geef aan welke diensten uw software ondersteunt. Diensten beschrijven de

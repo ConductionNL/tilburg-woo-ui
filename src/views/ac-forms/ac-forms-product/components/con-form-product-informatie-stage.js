@@ -28,7 +28,7 @@ const ConFormProductInformatieStage = memo(
           Product informatie
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Basisinformatie voor vindbaarheid in de catalogus</strong>
           <br />
           Deze gegevens maken uw applicatie vindbaar in de catalogus. Een duidelijke

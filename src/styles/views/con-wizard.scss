@@ -46,6 +46,10 @@
   margin-block-end: var(--tilburg-space-block-rat);
 }
 
+.con-form-wizard-paragraph {
+  margin-block-end: var(--tilburg-space-block-cat) !important;
+}
+
 // Add a close (X) button for alerts
 .ac-wizard-form-alert-close-btn {
   position: absolute;

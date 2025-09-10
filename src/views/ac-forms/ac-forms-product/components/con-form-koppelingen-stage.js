@@ -270,7 +270,7 @@ const ConFormKoppelingenStage = memo(
           Koppelingen
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Integraties en gegevensuitwisseling</strong>
           <br />
           Geef hier aan hoe uw applicatie gegevens uitwisselt met andere systemen.

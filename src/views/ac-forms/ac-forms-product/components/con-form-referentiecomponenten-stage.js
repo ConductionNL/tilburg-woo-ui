@@ -131,7 +131,6 @@ const ConFormReferentiecomponentenStage = memo(
       // Trigger updateReferentieComponentenWithStandards for edit mode initialization
       // This ensures standards are populated when referentieComponenten are prefilled
       if (newModules.length > 0 && referentieComponentenOptions.length > 0) {
-
         newModules.forEach((module, index) => {
           const currentRefs = module.referentieComponenten || [];
           if (currentRefs.length > 0) {
@@ -159,7 +158,7 @@ const ConFormReferentiecomponentenStage = memo(
           Referentiecomponenten
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong>
           <br />
           Koppel uw applicatie aan de GEMMA-referentiecomponenten die de

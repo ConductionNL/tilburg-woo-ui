@@ -13,6 +13,7 @@ import {
   TableRow,
   Textbox,
   Heading3,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ReactSelect from 'react-select';
 
@@ -40,6 +41,18 @@ const ConFormModuleVersieStage = memo(
     // getAllModulesForStages: _getAllModulesForStages,
   }) => {
     const [sameForAll, setSameForAll] = useState(true);
+
+    // State for controlling alert visibility - persists until page refresh
+    const [showInfoAlert, setShowInfoAlert] = useState(() => {
+      // Check if alert was previously closed in this session
+      return !sessionStorage.getItem('module-versie-info-alert-closed');
+    });
+
+    // Handle closing the alert and remember the choice
+    const handleCloseAlert = () => {
+      setShowInfoAlert(false);
+      sessionStorage.setItem('module-versie-info-alert-closed', 'true');
+    };
 
     // Get moduleVersie schema for status options and defaults
     const moduleVersieSchema = schemas?.moduleversie;
@@ -165,9 +178,6 @@ const ConFormModuleVersieStage = memo(
                   <b>Status</b>
                 </TableCell>
                 <TableCell>
-                  <b>Beschrijving</b>
-                </TableCell>
-                <TableCell>
                   <b>Acties</b>
                 </TableCell>
               </TableRow>
@@ -221,30 +231,6 @@ const ConFormModuleVersieStage = memo(
                     />
                   </TableCell>
                   <TableCell>
-                    <Textbox
-                      value={
-                        moduleVersie.beschrijvingKort ||
-                        schemaDefaults.beschrijvingKort ||
-                        ''
-                      }
-                      onChange={(e) =>
-                        updateModuleVersieAt(
-                          moduleIndex,
-                          vIdx,
-                          'beschrijvingKort',
-                          e.target.value
-                        )
-                      }
-                      placeholder={
-                        schemaDefaults.beschrijvingKort ||
-                        moduleVersieSchema?.properties?.beschrijvingKort?.example ||
-                        'Beschrijving'
-                      }
-                      disabled={loading}
-                      maxLength={255}
-                    />
-                  </TableCell>
-                  <TableCell>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <AcButton
                         style='button'
@@ -284,7 +270,7 @@ const ConFormModuleVersieStage = memo(
         <h2 id='versie-section-title' className='sr-only'>
           Versies
         </h2>
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Versie-informatie voor beheer en planning</strong>
           <br />
           Versie-informatie laat zien hoe actueel uw software is en helpt
@@ -292,6 +278,33 @@ const ConFormModuleVersieStage = memo(
           status (bijv. in gebruik, ontwikkeling, uitgefaseerd) en een korte
           toelichting op.
         </Paragraph>
+
+        {/* Closeable info alert about updating versie details later */}
+        {showInfoAlert && (
+          <Alert severity='info' className='ac-forms-product-info-alert'>
+            <button
+              onClick={handleCloseAlert}
+              className='ac-forms-product-info-alert__close-button'
+              title='Sluiten'
+              aria-label='Alert sluiten'
+            >
+              <VISUALS.CLOSE />
+            </button>
+            <div className='ac-forms-product-info-alert__content'>
+              <VISUALS.INFO className='ac-forms-product-info-alert__icon' />
+              <div>
+                <strong>Versie details aanpassen</strong>
+                <br />
+                <span className='ac-forms-product-info-alert__text'>
+                  U definieert hier de basis versie-informatie voor uw applicaties.
+                  Na het opslaan van uw product kunt u op de detailpagina van elke
+                  module-versie aanvullende details toevoegen zoals beschrijvingen en
+                  andere metadata.
+                </span>
+              </div>
+            </div>
+          </Alert>
+        )}
 
         <ConModulesChoiceSwitch
           isMultiNewApplicatie={isMultiNewApplicatie}
@@ -301,7 +314,7 @@ const ConFormModuleVersieStage = memo(
         />
 
         {applicatieIndices.length > 0 && (!isMultiNewApplicatie || sameForAll) ? (
-          <div>
+          <div className='con-form-wizard-table-container'>
             <h3>Versie informatie</h3>
             {(() => {
               const appIndex = applicatieIndices[0];
@@ -317,9 +330,6 @@ const ConFormModuleVersieStage = memo(
                       </TableCell>
                       <TableCell>
                         <b>Status</b>
-                      </TableCell>
-                      <TableCell>
-                        <b>Beschrijving</b>
                       </TableCell>
                       <TableCell>
                         <b>Acties</b>
@@ -371,31 +381,6 @@ const ConFormModuleVersieStage = memo(
                             options={statusOptions}
                             isDisabled={loading}
                             placeholder={schemaDefaults.status || 'Selecteer status'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Textbox
-                            value={
-                              mv.beschrijvingKort ||
-                              schemaDefaults.beschrijvingKort ||
-                              ''
-                            }
-                            onChange={(e) =>
-                              updateModuleVersieAt(
-                                appIndex,
-                                vIdx,
-                                'beschrijvingKort',
-                                e.target.value
-                              )
-                            }
-                            placeholder={
-                              schemaDefaults.beschrijvingKort ||
-                              moduleVersieSchema?.properties?.beschrijvingKort
-                                ?.example ||
-                              'Beschrijving'
-                            }
-                            disabled={loading}
-                            maxLength={255}
                           />
                         </TableCell>
                         <TableCell>
