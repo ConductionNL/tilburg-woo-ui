@@ -7,13 +7,13 @@ import clsx from 'clsx';
  * @param {boolean} props.horizontalOverflowWrapper - Whether to wrap the children in a horizontal overflow wrapper.
  * @returns {React.ReactNode} The rendered component.
  */
-const AcColumn = ({ gap, children, horizontalOverflowWrapper }) => {
+const AcColumn = ({ gap, children, horizontalOverflowWrapper, style }) => {
   const _CLASSES = clsx(
     'ac-column',
     gap && `ac-column--gap-${gap}`,
     horizontalOverflowWrapper && 'ac-column--horizontal-overflow-wrapper'
   );
-  return <div className={_CLASSES}>{children}</div>;
+  return <div className={_CLASSES} style={style}>{children}</div>;
 };
 
 export default AcColumn;
