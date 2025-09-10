@@ -20,6 +20,7 @@ export const AcSearchBox = ({
   spacing,
   defaultValue,
   onSubmitCallback,
+  disableAutoSearch = false,
   store: { publications },
 }) => {
   const [searchQuery, setSearchQuery] = useState(defaultValue || '');
@@ -29,7 +30,13 @@ export const AcSearchBox = ({
   const { mobileFiltersOpen, toggleMobileFilters } = publications;
 
   // Debounced search effect - triggers search 500ms after user stops typing
+  // Only runs if disableAutoSearch is false
   useEffect(() => {
+    // Skip if auto search is disabled
+    if (disableAutoSearch) {
+      return;
+    }
+
     // Skip debounced search on initial render OR if searchQuery matches defaultValue
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -58,7 +65,7 @@ export const AcSearchBox = ({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [searchQuery, defaultValue]); // Added defaultValue to dependencies
+  }, [searchQuery, defaultValue, disableAutoSearch]); // Added disableAutoSearch to dependencies
 
   const renderHeading = useMemo(() => {
     return title && <Heading level={1}>{title}</Heading>;

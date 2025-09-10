@@ -25,7 +25,7 @@ const AcHero = (contents) => {
       navigate('/zoeken');
       return;
     }
-    navigate(`/zoeken?_search=${query}`);
+    navigate(`/zoeken?_page=1&_search=${query}`);
   };
 
   const getHeroImage = () => {
@@ -72,6 +72,7 @@ const AcHero = (contents) => {
         <AcCard blue padding='lg'>
           <AcSearchBox
             onSubmitCallback={submitSearch}
+            disableAutoSearch
             page='home'
             label={LABELS.WHAT_ARE_YOU_LOOKING_FOR}
             title={_contents[0]?.data?.content}
