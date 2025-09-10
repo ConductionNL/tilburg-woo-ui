@@ -211,9 +211,9 @@ const AcSearch = ({ store: { publications, user } }) => {
         </AcCard>
       </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
-        <AcFlex spacing='xl' className='ac-search-results'>
-          <AcSearchFilters />
-          <AcFlex column grow spacing='xs'>
+        <div className='ac-search-layout'>
+          {/* Results and pagination come first in DOM/tab order */}
+          <div className='ac-search-layout__main'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
               {screenReaderText}
             </div>
@@ -230,8 +230,13 @@ const AcSearch = ({ store: { publications, user } }) => {
               {renderPublications}
               {pagination?.pages > 1 && renderPagination}
             </AcFlex>
-          </AcFlex>
-        </AcFlex>
+          </div>
+
+          {/* Filters come last in DOM/tab order */}
+          <div className='ac-search-layout__filters'>
+            <AcSearchFilters />
+          </div>
+        </div>
       </AcContainer>
     </>
   );
