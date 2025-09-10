@@ -238,7 +238,7 @@ const AcMyAccountDeelnamesModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && (
-          <Paragraph style={{ color: '#a00', margin: 0 }}>{error}</Paragraph>
+          <Paragraph className='con-my-account-deelnames-modal__error'>{error}</Paragraph>
         )}
 
         <div>
@@ -247,8 +247,7 @@ const AcMyAccountDeelnamesModal = ({
             placeholder='Filter op naam...'
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className='utrecht-textbox'
-            style={{ width: '100%' }}
+            className='utrecht-textbox con-my-account-deelnames-modal__input'
           />
         </div>
 
@@ -256,11 +255,11 @@ const AcMyAccountDeelnamesModal = ({
           <Heading level={5}>Communities</Heading>
           <AcColumn
             gap='sm'
-            style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}
+            className='con-my-account-deelnames-modal__column'
           >
-            {loading && <Paragraph style={{ margin: 0 }}>Loading...</Paragraph>}
+            {loading && <Paragraph className='con-my-account-deelnames-modal__paragraph'>Loading...</Paragraph>}
             {filteredCommunities.length === 0 && !loading && (
-              <Paragraph style={{ margin: 0 }}>Geen resultaten</Paragraph>
+              <Paragraph className='con-my-account-deelnames-modal__paragraph'>Geen resultaten</Paragraph>
             )}
             {filteredCommunities.map((item) => (
               <AcCheckbox
@@ -279,11 +278,11 @@ const AcMyAccountDeelnamesModal = ({
           <Heading level={5}>Samenwerkingsverbanden</Heading>
           <AcColumn
             gap='sm'
-            style={{ maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}
+            className='con-my-account-deelnames-modal__column'
           >
-            {loading && <Paragraph style={{ margin: 0 }}>Loading...</Paragraph>}
+            {loading && <Paragraph className='con-my-account-deelnames-modal__paragraph'>Loading...</Paragraph>}
             {filteredSamenwerkingen.length === 0 && !loading && (
-              <Paragraph style={{ margin: 0 }}>Geen resultaten</Paragraph>
+              <Paragraph className='con-my-account-deelnames-modal__paragraph'>Geen resultaten</Paragraph>
             )}
             {filteredSamenwerkingen.map((item) => (
               <AcCheckbox
