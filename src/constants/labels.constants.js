@@ -3,7 +3,7 @@ export const LABELS = {
   CLOSE: 'Sluiten',
   CLOSE_SINGULAR: 'Sluit',
   CONCEPTS_LIST: 'Begrippenlijst',
-  ENTER_QUERY: 'Vul je zoekterm in',
+  ENTER_QUERY: 'Zoek op naam of trefwoord',
   FILTER: 'Filter & sorteer',
   MENU: 'Menu',
   SEARCH: 'Zoeken',
