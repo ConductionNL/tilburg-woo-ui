@@ -11,12 +11,12 @@ import {
 import AcCheckbox from '@molecules/ac-checkbox/ac-checkbox';
 
 /**
- * Modal to manage deelnames (participations) for the active organisation.
+ * Modal to manage deelnemers (participations) for the active organisation.
  * - Fetches organisations of type Samenwerking and Community
  * - Displays them under subtitles with checkboxes
  * - Allows filtering and persists selections on save via PATCH
  */
-const AcMyAccountDeelnamesModal = ({
+const AcMyAccountDeelnemersModal = ({
   store: { object },
   showModal = false,
   onClose,
@@ -35,7 +35,7 @@ const AcMyAccountDeelnamesModal = ({
         'voorzieningen',
         'organisatie',
         null,
-        'deelname-opties'
+        'deelnemers-opties'
       ),
     [object]
   );
@@ -67,7 +67,7 @@ const AcMyAccountDeelnamesModal = ({
         'organisatie',
         { 'type[]': ['samenwerking', 'community'], _limit: 300 },
         false,
-        'deelname-opties'
+        'deelnemers-opties'
       );
 
       const collection = object.getCollection(typeKey);
@@ -77,13 +77,13 @@ const AcMyAccountDeelnamesModal = ({
         // Exclude self
         .filter((o) => String(o?.id) !== orgId)
         .map((o) => {
-          const deelnameIds = Array.isArray(o?.deelnames)
-            ? o.deelnames
+          const deelnemersIds = Array.isArray(o?.deelnemers)
+            ? o.deelnemers
                 .map((d) => (typeof d === 'object' ? d?.id || d?.['@self']?.id : d))
                 .filter(Boolean)
                 .map(String)
             : [];
-          const checked = deelnameIds.includes(orgId);
+          const checked = deelnemersIds.includes(orgId);
           return {
             id: String(o.id),
             label: getOrgLabel(o),
@@ -127,8 +127,8 @@ const AcMyAccountDeelnamesModal = ({
     modalRef?.current?.addEventListener('close', handleModalClose);
   }, [handleModalClose, modalRef.current]);
 
-  /** Ensure we have the latest target org, return its deelnames as string IDs */
-  const getTargetOrgDeelnames = useCallback(
+  /** Ensure we have the latest target org, return its deelnemers as string IDs */
+  const getTargetOrgDeelnemers = useCallback(
     async (targetId) => {
       // Try get from store first
       const type = object.getTypeFromParams(
@@ -145,12 +145,12 @@ const AcMyAccountDeelnamesModal = ({
         } catch (e) {
           // eslint-disable-next-line no-console
           console.warn(
-            'Kon organisatie niet ophalen, ga door met lege deelnames',
+            'Kon organisatie niet ophalen, ga door met lege deelnemers',
             e
           );
         }
       }
-      const arr = Array.isArray(target?.deelnames) ? target.deelnames : [];
+      const arr = Array.isArray(target?.deelnemers) ? target.deelnemers : [];
       return arr
         .map((d) => (typeof d === 'object' ? d?.id || d?.['@self']?.id : d))
         .filter(Boolean)
@@ -176,21 +176,21 @@ const AcMyAccountDeelnamesModal = ({
       }
 
       try {
-        const current = await getTargetOrgDeelnames(targetId);
+        const current = await getTargetOrgDeelnemers(targetId);
         const setIds = new Set(current);
         const myId = String(orgId);
         if (nextChecked) setIds.add(myId);
         else setIds.delete(myId);
 
         await object.patchObject('voorzieningen', 'organisatie', targetId, {
-          deelnames: Array.from(setIds).map(String),
+          deelnemers: Array.from(setIds).map(String),
         });
         onSuccess?.();
       } catch (e) {
         // Revert UI state on error and show error
         // eslint-disable-next-line no-console
         console.error(e);
-        setError('Wijzigen van deelnames is mislukt. Probeer het opnieuw.');
+        setError('Wijzigen van deelnemers is mislukt. Probeer het opnieuw.');
         const revert = !nextChecked;
         if (group === 'community') {
           setCommunities((prev) =>
@@ -205,7 +205,7 @@ const AcMyAccountDeelnamesModal = ({
         setSaving((prev) => ({ ...prev, [targetId]: false }));
       }
     },
-    [getTargetOrgDeelnames, object, orgId]
+    [getTargetOrgDeelnemers, object, orgId]
   );
 
   /** Filtered views */
@@ -222,8 +222,8 @@ const AcMyAccountDeelnamesModal = ({
   return (
     <AcModal
       ref={modalRef}
-      id='deelnames-form-modal'
-      title='Deelnames bewerken'
+      id='deelnemers-form-modal'
+      title='Deelnemers bewerken'
       buttons={[
         {
           label: 'Sluiten',
@@ -301,4 +301,4 @@ const AcMyAccountDeelnamesModal = ({
   );
 };
 
-export default withStore(observer(AcMyAccountDeelnamesModal));
+export default withStore(observer(AcMyAccountDeelnemersModal));

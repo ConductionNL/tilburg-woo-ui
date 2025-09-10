@@ -19,7 +19,7 @@ import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import AcMyAccountDynamicModal from './ac-my-account-dynamic-modal';
 import AcMyAccountPublishModal from './ac-my-account-publish-modal';
-import AcMyAccountDeelnamesModal from './ac-my-account-deelnames-modal';
+import AcMyAccountDeelnemersModal from './ac-my-account-deelnemers-modal';
 import {
   checkOrganizationPermissions,
   getDisabledActionTooltip,
@@ -845,7 +845,7 @@ const AcMyAccount = ({ store }) => {
 
           {/* Deelnames modal */}
           {showDeelnamesModal && fullActiveOrganisation && (
-            <AcMyAccountDeelnamesModal
+            <AcMyAccountDeelnemersModal
               showModal={showDeelnamesModal}
               onClose={() => setShowDeelnamesModal(false)}
               onSuccess={async () => {
