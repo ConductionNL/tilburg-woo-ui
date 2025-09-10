@@ -122,7 +122,7 @@ const ConFormLicentieStage = memo(
         <h2 id='license-hosting-section-title' className='sr-only'>
           Licentie
         </h2>
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Licentie-informatie voor transparantie en compliance</strong>
           <br />
           Licentie-informatie geeft duidelijkheid over de voorwaarden waaronder uw

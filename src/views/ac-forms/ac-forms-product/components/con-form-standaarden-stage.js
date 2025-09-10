@@ -623,7 +623,7 @@ const ConFormStandaardenStage = ({
           Standaarden
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Compliance met standaarden voor vertrouwen en kwaliteit</strong>
           <br />
           Geef aan welke standaarden uw product ondersteunt, zoals API-specificaties
