@@ -16,7 +16,7 @@ import AcCheckbox from '@molecules/ac-checkbox/ac-checkbox';
  * - Displays them under subtitles with checkboxes
  * - Allows filtering and persists selections on save via PATCH
  */
-const AcMyAccountDeelnemersModal = ({
+const AcMyAccountDeelnamesModal = ({
   store: { object },
   showModal = false,
   onClose,
@@ -223,7 +223,7 @@ const AcMyAccountDeelnemersModal = ({
     <AcModal
       ref={modalRef}
       id='deelnemers-form-modal'
-      title='Deelnemers bewerken'
+      title='Deelnames bewerken'
       buttons={[
         {
           label: 'Sluiten',
@@ -301,4 +301,4 @@ const AcMyAccountDeelnemersModal = ({
   );
 };
 
-export default withStore(observer(AcMyAccountDeelnemersModal));
+export default withStore(observer(AcMyAccountDeelnamesModal));
