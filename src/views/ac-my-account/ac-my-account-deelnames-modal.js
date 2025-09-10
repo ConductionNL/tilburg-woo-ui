@@ -9,7 +9,6 @@ import {
   Heading,
 } from '@utrecht/component-library-react/dist/css-module';
 import AcCheckbox from '@molecules/ac-checkbox/ac-checkbox';
-import { AcLoader } from '@src/components';
 
 /**
  * Modal to manage deelnames (participations) for the active organisation.
