@@ -317,10 +317,8 @@ const AcMyAccount = ({ store }) => {
     }
   };
 
-  const shortTooltip = (type) =>
-    `Een korte beschrijving van de ${type.slice(0, -1)}`;
-  const longTooltip = (type) =>
-    `Een uitgebreide beschrijving van de ${type.slice(0, -1)}`;
+  const shortTooltip = (type) => `Een korte beschrijving van de ${type}`;
+  const longTooltip = (type) => `Een uitgebreide beschrijving van de ${type}`;
 
   if (error) {
     return <AcBeheerError error={error} />;
