@@ -222,6 +222,7 @@ const ConFormReferentiecomponentenStage = memo(
                   isSearchable={true}
                   isLoading={referentieComponentenLoading}
                   isDisabled={loading}
+                  closeMenuOnSelect={false}
                   styles={{
                     control: (provided) => ({
                       ...provided,
@@ -240,6 +241,7 @@ const ConFormReferentiecomponentenStage = memo(
                       display: 'flex',
                       flexWrap: 'wrap',
                       alignItems: 'flex-start',
+                      alignContent: 'flex-start',
                     }),
                     multiValue: (provided) => ({
                       ...provided,
