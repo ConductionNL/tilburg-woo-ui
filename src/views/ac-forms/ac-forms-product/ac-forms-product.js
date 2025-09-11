@@ -1110,7 +1110,6 @@ const AcFormsProductInner = ({
       try {
         // Skip first stage in edit mode
         setCurrentStep(getAdjustedStepIndex(1));
-        setIsMultiApplicatie(true);
         // Fetch the product
         await store.object.fetchObject(
           'voorzieningen',
@@ -1131,6 +1130,7 @@ const AcFormsProductInner = ({
         );
         if (cancelled) return;
         const mapped = mapFetchedProductToLocalState(fetched);
+        setIsMultiApplicatie(mapped.modules.length > 1);
         if (mapped) {
           // Attempt prefill immediately when product modules are known (may no-op if options not yet loaded)
           prefillReferentieComponentenWithStandardsForEdit(
