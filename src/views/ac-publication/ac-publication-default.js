@@ -256,8 +256,6 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             />
           )}
 
-          {console.log(configuredMetaFields)}
-
           <div className='ac-beheer-details--grid'>
             {Object.entries(
               sortPropertiesByOrder(get_single?.['@self']?.schema?.properties)
