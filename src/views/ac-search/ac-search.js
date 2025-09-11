@@ -136,6 +136,7 @@ const AcSearch = ({ store: { publications, user } }) => {
     return all_publications?.map((publication, index) => {
       switch (publication['@self'].schema.slug) {
         case 'product':
+        case 'module':
         case 'organisatie':
           return (
             <ConCardOrganisationApplication
@@ -145,9 +146,12 @@ const AcSearch = ({ store: { publications, user } }) => {
               summary={extractSummary(publication['@self'].summary)}
               logo={getImageFromPublication(publication)}
               cardType={publication['@self'].schema.slug}
-              type={publication['@self'].schema.type}
+              type={publication['@self'].schema.title}
               user={user}
+              referenceComponents={publication.referentieComponenten}
+              updated={publication['@self'].updated}
               published={publication['@self'].published}
+              organisation={publication['@self'].organisation}
               key={index}
             />
           );

@@ -14,11 +14,21 @@ export function isDataUrl(url) {
  */
 export function isUrl(str) {
   if (typeof str !== 'string') return false;
+
+  // First try as-is (for URLs with protocol)
   try {
     new URL(str);
     return true;
   } catch {
-    return false;
+    // If that fails, try with https:// prefix (for URLs without protocol)
+    try {
+      new URL(`https://${str}`);
+      // Additional check to ensure it looks like a domain
+      // Must contain at least one dot and no spaces
+      return str.includes('.') && !str.includes(' ') && !str.startsWith('/');
+    } catch {
+      return false;
+    }
   }
 }
 

@@ -122,10 +122,24 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           }
 
           // Regular URLs - render as clickable link to external page
+          // Use regular <a> tag for external URLs, not Utrecht Link component
+          const href =
+            value.startsWith('http://') || value.startsWith('https://')
+              ? value
+              : `https://${value}`;
+
           return (
-            <Link href={value} target='_blank' rel='noopener noreferrer'>
+            <a
+              href={href}
+              target='_blank'
+              rel='noopener noreferrer'
+              style={{
+                textDecoration: 'underline',
+                color: 'var(--utrecht-link-color, #0066cc)',
+              }}
+            >
               {value}
-            </Link>
+            </a>
           );
         }
         // passthrough formats:
@@ -435,14 +449,25 @@ function formatBySchema(schema, data, dataKey, options = {}) {
 
                   // Check if it's a regular URL
                   if (isUrl(stringValue)) {
+                    // Use regular <a> tag for external URLs
+                    const href =
+                      stringValue.startsWith('http://') ||
+                      stringValue.startsWith('https://')
+                        ? stringValue
+                        : `https://${stringValue}`;
+
                     return (
-                      <Link
-                        href={stringValue}
+                      <a
+                        href={href}
                         target='_blank'
                         rel='noopener noreferrer'
+                        style={{
+                          textDecoration: 'underline',
+                          color: 'var(--utrecht-link-color, #0066cc)',
+                        }}
                       >
                         {stringValue}
-                      </Link>
+                      </a>
                     );
                   }
 

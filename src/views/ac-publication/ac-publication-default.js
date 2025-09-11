@@ -31,73 +31,6 @@ import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 
-const getValueField = (key, value) => {
-  if (!value) return <div>-</div>;
-
-  const strValue = String(value);
-
-  if (strValue.includes('https://')) {
-    if (strValue.length > 50) {
-      return (
-        <AcLink to={strValue} target='_blank'>
-          <span className='ellipsis-cell' title={strValue}>
-            {strValue}
-          </span>
-          <span className='sr-only'>Opent in een nieuw tabblad</span>
-          <VISUALS.EXTERNAL_LINK_PINK />
-        </AcLink>
-      );
-    }
-    return (
-      <AcLink to={strValue} target='_blank'>
-        {strValue}
-        <span className='sr-only'>Opent in een nieuw tabblad</span>
-        <VISUALS.EXTERNAL_LINK_PINK />
-      </AcLink>
-    );
-  }
-
-  if (key === 'logo') {
-    return (
-      <ConLogoPreview className='ac-publication-logo-container' logoUrl={strValue} />
-    );
-  }
-
-  if (/\\[bfnrt"\\]/.test(strValue)) {
-    const formattedValue = strValue
-      .replace(/\\b/g, '\b')
-      .replace(/\\f/g, '\f')
-      .replace(/\\n/g, '\n')
-      .replace(/\\r/g, '\r')
-      .replace(/\\t/g, '\t')
-      .replace(/\\"/g, '"')
-      .replace(/\\\\/g, '\\');
-    if (formattedValue.length > 50) {
-      return (
-        <span
-          className='ellipsis-cell'
-          title={formattedValue}
-          style={{ whiteSpace: 'pre-wrap' }}
-        >
-          {formattedValue}
-        </span>
-      );
-    }
-    return <span style={{ whiteSpace: 'pre-wrap' }}>{formattedValue}</span>;
-  }
-
-  // Only ellipsis for values longer than 50 characters
-  if (strValue.length > 50) {
-    return (
-      <span className='ellipsis-cell' title={strValue}>
-        {strValue}
-      </span>
-    );
-  }
-
-  return <span>{strValue}</span>;
-};
-
 const AcPublication = ({ store: { publications, object, user }, schema }) => {
   const { id } = useParams();
   const {
@@ -217,14 +150,17 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   };
 
   const configuredMetaFields = useMemo(() => {
-    const cfg = schema?.configuration;
-    return [
+    // Get configuration from the actual object's schema, not the schema parameter
+    const cfg = get_single?.['@self']?.schema?.configuration;
+    const fields = [
       cfg?.objectDescriptionField,
       cfg?.objectImageField,
       cfg?.objectNameField,
       cfg?.objectSummaryField,
     ].filter(Boolean);
-  }, [schema]);
+
+    return fields;
+  }, [get_single?.['@self']?.schema?.configuration]);
 
   useEffect(() => {
     fetchUses();
@@ -320,6 +256,8 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
             />
           )}
 
+          {console.log(configuredMetaFields)}
+
           <div className='ac-beheer-details--grid'>
             {Object.entries(
               sortPropertiesByOrder(get_single?.['@self']?.schema?.properties)
@@ -359,16 +297,13 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                       >
                         {_.startCase(key)}:
                       </strong>
-                      {formatBySchema(
-                        schema,
-                        get_single,
-                        key,
-                        { 
-                          ...(schema?.configuration?.formatBySchemaOptions || {}),
-                          objectStore: object,
-                          namesMap
-                        }
-                      )}
+                      {formatBySchema(schema, get_single, key, {
+                        ...(schema?.configuration?.formatBySchemaOptions || {}),
+                        objectStore: object,
+                        namesMap,
+                        // Add the missing includeUnknown option that the beheer page has
+                        includeUnknown: true,
+                      })}
                     </div>
                   );
                 } else {
@@ -385,16 +320,13 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                       >
                         {_.startCase(key)}:
                       </strong>{' '}
-                      {formatBySchema(
-                        schema,
-                        get_single,
-                        key,
-                        { 
-                          ...(schema?.configuration?.formatBySchemaOptions || {}),
-                          objectStore: object,
-                          namesMap
-                        }
-                      )}
+                      {formatBySchema(schema, get_single, key, {
+                        ...(schema?.configuration?.formatBySchemaOptions || {}),
+                        objectStore: object,
+                        namesMap,
+                        // Add the missing includeUnknown option that the beheer page has
+                        includeUnknown: true,
+                      })}
                     </div>
                   );
                 }
@@ -484,17 +416,33 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
                         // 3. Each row: [Naam, Beschrijving]
                         const tabRows = itemsWithThisSchema.map((item) => [
-                          // Naam: fallback order
-                          getValueField(
-                            'naam',
-                            item.title ??
-                              item.titel ??
-                              item.name ??
-                              item.naam ??
-                              item.id
+                          // Naam: use formatBySchema with a basic string schema
+                          formatBySchema(
+                            { type: 'string' },
+                            {
+                              value:
+                                item.title ??
+                                item.titel ??
+                                item.name ??
+                                item.naam ??
+                                item.id,
+                            },
+                            'value',
+                            {
+                              objectStore: object,
+                              namesMap,
+                            }
                           ),
-                          // Description: use 'beschrijving' or fallback to empty string
-                          getValueField('beschrijving', item.beschrijving ?? ''),
+                          // Description: use formatBySchema with a basic string schema
+                          formatBySchema(
+                            { type: 'string' },
+                            { value: item.beschrijving ?? '' },
+                            'value',
+                            {
+                              objectStore: object,
+                              namesMap,
+                            }
+                          ),
                           <button
                             key={item.id}
                             className='utrecht-button slim'
@@ -558,19 +506,35 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                           (u) => u['@self'].schema.id === metadata.schema.id
                         );
 
-                        // 3. Each row: [Naam, Beschrijving]
+                        // 3. Each row: [Naam, Beschrijving] (second occurrence)
                         const tabRows = itemsWithThisSchema.map((item) => [
-                          // Naam: fallback order
-                          getValueField(
-                            'naam',
-                            item.title ??
-                              item.titel ??
-                              item.name ??
-                              item.naam ??
-                              item.id
+                          // Naam: use formatBySchema with a basic string schema
+                          formatBySchema(
+                            { type: 'string' },
+                            {
+                              value:
+                                item.title ??
+                                item.titel ??
+                                item.name ??
+                                item.naam ??
+                                item.id,
+                            },
+                            'value',
+                            {
+                              objectStore: object,
+                              namesMap,
+                            }
                           ),
-                          // Description: use 'beschrijving' or fallback to empty string
-                          getValueField('beschrijving', item.beschrijving ?? ''),
+                          // Description: use formatBySchema with a basic string schema
+                          formatBySchema(
+                            { type: 'string' },
+                            { value: item.beschrijving ?? '' },
+                            'value',
+                            {
+                              objectStore: object,
+                              namesMap,
+                            }
+                          ),
                           <button
                             key={item.id}
                             className='utrecht-button slim'
