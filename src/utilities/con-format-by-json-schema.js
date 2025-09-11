@@ -103,27 +103,26 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           if (isDataUrl(value)) {
             const displayName = getDataUrlDisplayName(value, dataKey || 'file');
             return (
-              <a
+              <Link
                 href='#'
                 onClick={(e) => {
                   e.preventDefault();
                   handleFileClick(value);
                 }}
                 title={`View ${displayName}`}
-                style={{
-                  textDecoration: 'underline',
-                  color: 'var(--utrecht-link-color, #0066cc)',
-                  cursor: 'pointer',
-                }}
               >
                 {displayName}
-              </a>
+              </Link>
             );
           }
 
-          // Regular URLs - render as clickable link to external page
+          const href =
+            value.startsWith('http://') || value.startsWith('https://')
+              ? value
+              : `https://${value}`;
+
           return (
-            <Link href={value} target='_blank' rel='noopener noreferrer'>
+            <Link href={href} target='_blank' rel='noopener noreferrer'>
               {value}
             </Link>
           );
@@ -193,21 +192,16 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           if (isDataUrl(value)) {
             const displayName = getDataUrlDisplayName(value, dataKey || 'file');
             return (
-              <a
+              <Link
                 href='#'
                 onClick={(e) => {
                   e.preventDefault();
                   handleFileClick(value);
                 }}
                 title={`View ${displayName}`}
-                style={{
-                  textDecoration: 'underline',
-                  color: 'var(--utrecht-link-color, #0066cc)',
-                  cursor: 'pointer',
-                }}
               >
                 {displayName}
-              </a>
+              </Link>
             );
           }
 
@@ -415,7 +409,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                       key || 'file'
                     );
                     return (
-                      <a
+                      <Link
                         href='#'
                         onClick={(e) => {
                           e.preventDefault();
@@ -429,17 +423,28 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                         }}
                       >
                         {displayName}
-                      </a>
+                      </Link>
                     );
                   }
 
                   // Check if it's a regular URL
                   if (isUrl(stringValue)) {
+                    // Use regular <a> tag for external URLs
+                    const href =
+                      stringValue.startsWith('http://') ||
+                      stringValue.startsWith('https://')
+                        ? stringValue
+                        : `https://${stringValue}`;
+
                     return (
                       <Link
-                        href={stringValue}
+                        href={href}
                         target='_blank'
                         rel='noopener noreferrer'
+                        style={{
+                          textDecoration: 'underline',
+                          color: 'var(--utrecht-link-color, #0066cc)',
+                        }}
                       >
                         {stringValue}
                       </Link>
