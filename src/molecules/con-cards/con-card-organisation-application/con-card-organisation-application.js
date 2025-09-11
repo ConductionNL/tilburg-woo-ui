@@ -65,7 +65,6 @@ const ConCardOrganisationApplication = ({
               Geschikt voor:{' '}
               {referenceComponents
                 ?.slice(0, 2) // Only take the first two components
-                .map((component) => component)
                 .filter(Boolean)
                 .join(', ')}
             </Paragraph>
