@@ -10,6 +10,7 @@ import {
   Heading,
   Paragraph,
   Separator,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 
@@ -101,9 +102,10 @@ const AcDashboard = ({ store }) => {
                 <span>leg vast welke koppelingen uw organisatie gebruikt.</span>
               </div>
 
-              <Paragraph>
-                Voor account- en organisatiedetails gaat u naar{' '}
-                <a
+              <Paragraph className='ac-dashboard-link-container'>
+                Voor account- en organisatiedetails gaat u naar
+                <Link
+                  className='ac-dashboard-link'
                   href='/account'
                   onClick={(e) => {
                     e.preventDefault();
@@ -111,7 +113,7 @@ const AcDashboard = ({ store }) => {
                   }}
                 >
                   Mijn Account
-                </a>
+                </Link>
                 .
               </Paragraph>
             </div>
