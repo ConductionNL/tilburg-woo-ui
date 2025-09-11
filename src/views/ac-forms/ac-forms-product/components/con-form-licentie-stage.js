@@ -35,7 +35,45 @@ const ConFormLicentieStage = memo(
     existingModulesLookup,
     // getAllModulesForStages: _getAllModulesForStages,
   }) => {
-    const [sameForAll, setSameForAll] = useState(true);
+    // ✅ SIMPLIFIED: Use helper method to get new modules that need license configuration
+    const newModules = getNewModulesWithApplicatieData
+      ? getNewModulesWithApplicatieData()
+      : [];
+
+    // Check if any module has different licenties from other modules
+    const areValuesDifferent =
+      newModules.length > 1 &&
+      newModules.some((module, moduleIndex) => {
+        // Get sorted licentie arrays for comparison
+        const currentLicenties = [...(module.licenties || [])].sort((a, b) =>
+          `${a.licentietype}-${a.licentie}`.localeCompare(
+            `${b.licentietype}-${b.licentie}`
+          )
+        );
+
+        // Compare with all other modules
+        return newModules.some((otherModule, otherIndex) => {
+          if (moduleIndex === otherIndex) return false;
+
+          const otherLicenties = [...(otherModule.licenties || [])].sort((a, b) =>
+            `${a.licentietype}-${a.licentie}`.localeCompare(
+              `${b.licentietype}-${b.licentie}`
+            )
+          );
+
+          // Check if arrays have different lengths
+          if (currentLicenties.length !== otherLicenties.length) return true;
+
+          // Compare each licentie
+          return currentLicenties.some(
+            (licentie, i) =>
+              licentie.licentietype !== otherLicenties[i].licentietype ||
+              licentie.licentie !== otherLicenties[i].licentie
+          );
+        });
+      });
+    // if there is a difference between values set sameForAll to false
+    const [sameForAll, setSameForAll] = useState(!areValuesDifferent);
 
     // ✅ NEW: Separate state for "same for all" configuration values
     // This ensures immediate reactivity without waiting for product state sync
@@ -54,11 +92,6 @@ const ConFormLicentieStage = memo(
       value: l['SPDX ID'],
       label: l.name,
     }));
-
-    // ✅ SIMPLIFIED: Use helper method to get new modules that need license configuration
-    const newModules = getNewModulesWithApplicatieData
-      ? getNewModulesWithApplicatieData()
-      : [];
 
     // ✅ CRITICAL FIX: Get the actual indices in product.modules where new modules are located
     const applicatieIndices = [];
