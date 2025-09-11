@@ -132,3 +132,4 @@ export {
   getDisplayValue,
   createReferenceResolver,
 } from './con-detect-object-references';
+export { isDataUrl, isUrl, getDataUrlDisplayName, handleFileClick } from './con-data-url-utils';
