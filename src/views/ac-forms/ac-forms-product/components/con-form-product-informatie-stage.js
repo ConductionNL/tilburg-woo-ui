@@ -161,6 +161,14 @@ const ConFormProductInformatieStage = memo(
               isDisabled={loading}
               width='half'
               schemas={schemas}
+              customProps={{
+                getOptionLabel: (opt) => {
+                  const c = opt?.data ?? opt;
+                  return [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+                    .filter(Boolean)
+                    .join(' ');
+                },
+              }}
             />
 
             {/* Cloud Service Model */}

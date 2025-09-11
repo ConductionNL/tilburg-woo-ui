@@ -58,6 +58,28 @@
  *   width="full" // Force full width instead of default half width
  * />
  * ```
+ *
+ * **ReactSelect labeling (getOptionLabel):**
+ * For `$ref` select fields (and provided option arrays), you can override how option labels are rendered
+ * by passing ReactSelect's native `getOptionLabel` in `customProps`. It receives the option object; when the
+ * options come from `$ref`, the full object is available on `option.data`.
+ *
+ * ```jsx
+ * <ConSchemaEnhancedField
+ *   schemaType="product"
+ *   schemaProperty="contactpersoon"
+ *   value={product.contactpersoon}
+ *   onChange={(v) => setProduct({...product, contactpersoon: v})}
+ *   customProps={{
+ *     getOptionLabel: (opt) => {
+ *       const c = opt?.data ?? opt;
+ *       return [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+ *         .filter(Boolean)
+ *         .join(' ');
+ *     },
+ *   }}
+ * />
+ * ```
  */
 
 import React, { useState, useMemo } from 'react';
