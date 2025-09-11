@@ -103,43 +103,28 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           if (isDataUrl(value)) {
             const displayName = getDataUrlDisplayName(value, dataKey || 'file');
             return (
-              <a
+              <Link
                 href='#'
                 onClick={(e) => {
                   e.preventDefault();
                   handleFileClick(value);
                 }}
                 title={`View ${displayName}`}
-                style={{
-                  textDecoration: 'underline',
-                  color: 'var(--utrecht-link-color, #0066cc)',
-                  cursor: 'pointer',
-                }}
               >
                 {displayName}
-              </a>
+              </Link>
             );
           }
 
-          // Regular URLs - render as clickable link to external page
-          // Use regular <a> tag for external URLs, not Utrecht Link component
           const href =
             value.startsWith('http://') || value.startsWith('https://')
               ? value
               : `https://${value}`;
 
           return (
-            <a
-              href={href}
-              target='_blank'
-              rel='noopener noreferrer'
-              style={{
-                textDecoration: 'underline',
-                color: 'var(--utrecht-link-color, #0066cc)',
-              }}
-            >
+            <Link href={href} target='_blank' rel='noopener noreferrer'>
               {value}
-            </a>
+            </Link>
           );
         }
         // passthrough formats:
@@ -207,21 +192,16 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           if (isDataUrl(value)) {
             const displayName = getDataUrlDisplayName(value, dataKey || 'file');
             return (
-              <a
+              <Link
                 href='#'
                 onClick={(e) => {
                   e.preventDefault();
                   handleFileClick(value);
                 }}
                 title={`View ${displayName}`}
-                style={{
-                  textDecoration: 'underline',
-                  color: 'var(--utrecht-link-color, #0066cc)',
-                  cursor: 'pointer',
-                }}
               >
                 {displayName}
-              </a>
+              </Link>
             );
           }
 
@@ -429,7 +409,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                       key || 'file'
                     );
                     return (
-                      <a
+                      <Link
                         href='#'
                         onClick={(e) => {
                           e.preventDefault();
@@ -443,7 +423,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                         }}
                       >
                         {displayName}
-                      </a>
+                      </Link>
                     );
                   }
 
@@ -457,7 +437,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                         : `https://${stringValue}`;
 
                     return (
-                      <a
+                      <Link
                         href={href}
                         target='_blank'
                         rel='noopener noreferrer'
@@ -467,7 +447,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                         }}
                       >
                         {stringValue}
-                      </a>
+                      </Link>
                     );
                   }
 

@@ -451,13 +451,13 @@ export const useRefOptions = (
       return () => clearTimeout(timeoutId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema?.slug, currentRegister, object]);
+  }, [schema?.properties, schema?.slug, currentRegister, object]);
 
   // Reset the guard when schema changes (similar to modal pattern)
   useEffect(() => {
     hasInitializedRef.current = false;
     fetchingFieldsRef.current.clear(); // Clear fetching state
-  }, [schema?.slug, currentRegister]);
+  }, [schema?.properties, schema?.slug, currentRegister]);
 
   // Cleanup effect to clear any pending search timeouts (only on unmount)
   useEffect(() => {

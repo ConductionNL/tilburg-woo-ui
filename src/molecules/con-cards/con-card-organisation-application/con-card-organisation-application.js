@@ -40,51 +40,49 @@ const ConCardOrganisationApplication = ({
   }, [cardType]);
 
   return (
-    <>
-      <AcCard organisation padding='md' skeleton={skeleton}>
-        <AcFlex alignItems='center' justifyContent='space-between'>
-          <AcFlex alignItems='center' spacing='xs'>
-            {icon}
-            <Heading level={3}>{extractTitle(title)}</Heading>
-            {organisation && (cardType === 'product' || cardType === 'module') && (
-              <Paragraph small>(Aangeboden door {organisation})</Paragraph>
-            )}
-          </AcFlex>
-          {logo && (
-            <ConLogoPreview
-              logoUrl={logo}
-              className='ac-register-review__logo'
-              style={{ margin: 0, aspectRatio: 'auto', height: '32px' }}
-            />
+    <AcCard organisation padding='md' skeleton={skeleton}>
+      <AcFlex alignItems='center' justifyContent='space-between'>
+        <AcFlex alignItems='center' spacing='xs'>
+          {icon}
+          <Heading level={3}>{extractTitle(title)}</Heading>
+          {organisation && (cardType === 'product' || cardType === 'module') && (
+            <Paragraph small>(Aangeboden door {organisation})</Paragraph>
           )}
         </AcFlex>
-        <Paragraph>{extractSummary(summary)}</Paragraph>
-        <AcFlex justifyContent='between' className='meta'>
-          <AcFlex column>
-            {!!referenceComponents?.length && (
-              <Paragraph small>
-                Geschikt voor:{' '}
-                {referenceComponents
-                  ?.slice(0, 2) // Only take the first two components
-                  .map((component) => component)
-                  .filter(Boolean)
-                  .join(', ')}
-              </Paragraph>
-            )}
-            <Paragraph className='organisation-card__updated'>
-              Laatst bijgewerkt:{' '}
-              {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-            </Paragraph>{' '}
-          </AcFlex>
-          <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
-            <span className='sr-only'>
-              {LABELS.READ_MORE_ABOUT} {title}
-            </span>
-            <VISUALS.ARROW_RIGHT />
-          </AcLink>
+        {logo && (
+          <ConLogoPreview
+            logoUrl={logo}
+            className='ac-register-review__logo'
+            style={{ margin: 0, aspectRatio: 'auto', height: '32px' }}
+          />
+        )}
+      </AcFlex>
+      <Paragraph>{extractSummary(summary)}</Paragraph>
+      <AcFlex justifyContent='between' className='meta'>
+        <AcFlex column>
+          {!!referenceComponents?.length && (
+            <Paragraph small>
+              Geschikt voor:{' '}
+              {referenceComponents
+                ?.slice(0, 2) // Only take the first two components
+                .map((component) => component)
+                .filter(Boolean)
+                .join(', ')}
+            </Paragraph>
+          )}
+          <Paragraph className='organisation-card__updated'>
+            Laatst bijgewerkt:{' '}
+            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+          </Paragraph>{' '}
         </AcFlex>
-      </AcCard>
-    </>
+        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+          <span className='sr-only'>
+            {LABELS.READ_MORE_ABOUT} {title}
+          </span>
+          <VISUALS.ARROW_RIGHT />
+        </AcLink>
+      </AcFlex>
+    </AcCard>
   );
 };
 
