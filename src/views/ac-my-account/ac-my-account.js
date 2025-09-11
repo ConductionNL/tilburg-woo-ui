@@ -19,6 +19,7 @@ import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import AcMyAccountDynamicModal from './ac-my-account-dynamic-modal';
 import AcMyAccountPublishModal from './ac-my-account-publish-modal';
+import AcMyAccountDeelnamesModal from './ac-my-account-deelnames-modal';
 import {
   checkOrganizationPermissions,
   getDisabledActionTooltip,
@@ -45,6 +46,7 @@ const AcMyAccount = ({ store }) => {
   const [showContactModal, setShowContactModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDepublishModal, setShowDepublishModal] = useState(false);
+  const [showDeelnamesModal, setShowDeelnamesModal] = useState(false);
 
   const { user, object } = store; // Add object store
 
@@ -285,6 +287,12 @@ const AcMyAccount = ({ store }) => {
     setShowDepublishModal(true);
   };
 
+  // Function to open deelnames modal
+  const handleEditDeelnames = () => {
+    if (!fullActiveOrganisation || !canEdit) return;
+    setShowDeelnamesModal(true);
+  };
+
   // Handle successful form submissions
   const handleOrgFormSuccess = async (v) => {
     setNewDataAndFetch(v);
@@ -409,6 +417,27 @@ const AcMyAccount = ({ store }) => {
                           }
                         >
                           Bewerken
+                        </AcButton>
+
+                        <AcButton
+                          style='button'
+                          icon={<VISUALS.USERS />}
+                          onClick={canEdit ? handleEditDeelnames : undefined}
+                          disabled={!canEdit || !fullActiveOrganisation}
+                          data-tooltip-id={
+                            !canEdit || !fullActiveOrganisation
+                              ? TOOLTIP_ID
+                              : undefined
+                          }
+                          data-tooltip-content={
+                            !fullActiveOrganisation
+                              ? 'Kan deelnames niet bewerken omdat de organisatie niet gevonden is'
+                              : !canEdit
+                              ? getDisabledActionTooltip('bewerken', reason)
+                              : undefined
+                          }
+                        >
+                          Deelnames
                         </AcButton>
 
                         {fullActiveOrganisation &&
@@ -813,6 +842,23 @@ const AcMyAccount = ({ store }) => {
             data={fullActiveOrganisation}
             isPublish={false}
           />
+
+          {/* Deelnames modal */}
+          {showDeelnamesModal && fullActiveOrganisation && (
+            <AcMyAccountDeelnamesModal
+              showModal={showDeelnamesModal}
+              onClose={() => setShowDeelnamesModal(false)}
+              onSuccess={async () => {
+                await fetchUserData();
+                if (fullActiveOrganisation?.['@self']?.id) {
+                  await fetchFullOrganisationData(
+                    fullActiveOrganisation['@self'].id
+                  );
+                }
+              }}
+              data={fullActiveOrganisation}
+            />
+          )}
         </AcColumn>
       </AcContainer>
     </AcSection>
