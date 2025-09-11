@@ -110,17 +110,16 @@ export { collapseExtendedObjects } from './con-collapse-extended-objects';
 export { smartSplit } from './con-smart-split';
 export { sortPropertiesByOrder } from './con-sort-properties-by-order';
 export { isJsonString } from './con-is-json-string';
-export { 
-  TemplateProcessor, 
-  createUserTemplateProcessor, 
-  processUserTemplate 
+export {
+  TemplateProcessor,
+  createUserTemplateProcessor,
+  processUserTemplate,
 } from './con-template-processor';
-export { withTemplateProcessing, createTemplateComponents } from './con-with-template-processing';
-export { 
-  extractText, 
-  extractTitle, 
-  extractSummary 
-} from './con-extract-text';
+export {
+  withTemplateProcessing,
+  createTemplateComponents,
+} from './con-with-template-processing';
+export { extractText, extractTitle, extractSummary } from './con-extract-text';
 export { ConFormatDutchNumber } from './con-format-dutch-number';
 export {
   isUUID,
@@ -132,3 +131,9 @@ export {
   getDisplayValue,
   createReferenceResolver,
 } from './con-detect-object-references';
+export {
+  isDataUrl,
+  isUrl,
+  getDataUrlDisplayName,
+  handleFileClick,
+} from './con-data-url-utils';
