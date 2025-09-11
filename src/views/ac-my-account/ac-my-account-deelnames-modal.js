@@ -73,24 +73,23 @@ const AcMyAccountDeelnamesModal = ({
       const collection = object.getCollection(typeKey);
       const results = Array.isArray(collection?.results) ? collection.results : [];
 
+      // Determine initial selections based on the current organisation's deelnames
+      const myDeelnamesIds = Array.isArray(data?.deelnames)
+        ? data.deelnames
+            .map((d) => (typeof d === 'object' ? d?.id || d?.['@self']?.id : d))
+            .filter(Boolean)
+            .map(String)
+        : [];
+
       const items = results
         // Exclude self
         .filter((o) => String(o?.id) !== orgId)
-        .map((o) => {
-          const deelnemersIds = Array.isArray(o?.deelnemers)
-            ? o.deelnemers
-                .map((d) => (typeof d === 'object' ? d?.id || d?.['@self']?.id : d))
-                .filter(Boolean)
-                .map(String)
-            : [];
-          const checked = deelnemersIds.includes(orgId);
-          return {
-            id: String(o.id),
-            label: getOrgLabel(o),
-            type: String(o?.type || '').toLowerCase(),
-            checked,
-          };
-        })
+        .map((o) => ({
+          id: String(o.id),
+          label: getOrgLabel(o),
+          type: String(o?.type || '').toLowerCase(),
+          checked: myDeelnamesIds.includes(String(o.id)),
+        }))
         // Sort alphabetically by label
         .sort((a, b) =>
           a.label.localeCompare(b.label, 'nl', { sensitivity: 'base' })
@@ -116,7 +115,7 @@ const AcMyAccountDeelnamesModal = ({
       modalRef?.current?.showModal();
       fetchOrganisations();
     }
-  }, [showModal, fetchOrganisations]);
+  }, [showModal]);
 
   /** Close handler */
   const handleModalClose = useCallback(() => {
@@ -126,38 +125,6 @@ const AcMyAccountDeelnamesModal = ({
   useEffect(() => {
     modalRef?.current?.addEventListener('close', handleModalClose);
   }, [handleModalClose, modalRef.current]);
-
-  /** Ensure we have the latest target org, return its deelnemers as string IDs */
-  const getTargetOrgDeelnemers = useCallback(
-    async (targetId) => {
-      // Try get from store first
-      const type = object.getTypeFromParams(
-        'voorzieningen',
-        'organisatie',
-        targetId,
-        null
-      );
-      let target = object.getObject(type, targetId);
-      if (!target) {
-        try {
-          await object.fetchObject('voorzieningen', 'organisatie', targetId);
-          target = object.getObject(type, targetId);
-        } catch (e) {
-          // eslint-disable-next-line no-console
-          console.warn(
-            'Kon organisatie niet ophalen, ga door met lege deelnemers',
-            e
-          );
-        }
-      }
-      const arr = Array.isArray(target?.deelnemers) ? target.deelnemers : [];
-      return arr
-        .map((d) => (typeof d === 'object' ? d?.id || d?.['@self']?.id : d))
-        .filter(Boolean)
-        .map(String);
-    },
-    [object]
-  );
 
   /** Toggle checkbox state with immediate PATCH on the selected organisation */
   const handleToggle = useCallback(
@@ -176,21 +143,25 @@ const AcMyAccountDeelnamesModal = ({
       }
 
       try {
-        const current = await getTargetOrgDeelnemers(targetId);
-        const setIds = new Set(current);
-        const myId = String(orgId);
-        if (nextChecked) setIds.add(myId);
-        else setIds.delete(myId);
+        // Determine next selection set based on current UI state and the toggle
+        const selectedBefore = new Set(
+          [...communities, ...samenwerkingen]
+            .filter((x) => x.checked)
+            .map((x) => String(x.id))
+        );
+        if (nextChecked) selectedBefore.add(String(targetId));
+        else selectedBefore.delete(String(targetId));
 
-        await object.patchObject('voorzieningen', 'organisatie', targetId, {
-          deelnemers: Array.from(setIds).map(String),
+        // Patch the current organisation with updated deelnames
+        await object.patchObject('voorzieningen', 'organisatie', orgId, {
+          deelnames: Array.from(selectedBefore),
         });
         onSuccess?.();
       } catch (e) {
         // Revert UI state on error and show error
         // eslint-disable-next-line no-console
         console.error(e);
-        setError('Wijzigen van deelnemers is mislukt. Probeer het opnieuw.');
+        setError('Wijzigen van deelnames is mislukt. Probeer het opnieuw.');
         const revert = !nextChecked;
         if (group === 'community') {
           setCommunities((prev) =>
@@ -205,7 +176,7 @@ const AcMyAccountDeelnamesModal = ({
         setSaving((prev) => ({ ...prev, [targetId]: false }));
       }
     },
-    [getTargetOrgDeelnemers, object, orgId]
+    [object, orgId, communities, samenwerkingen, onSuccess]
   );
 
   /** Filtered views */
@@ -238,7 +209,9 @@ const AcMyAccountDeelnamesModal = ({
     >
       <AcFlex column spacing='sm'>
         {error && (
-          <Paragraph className='con-my-account-deelnames-modal__error'>{error}</Paragraph>
+          <Paragraph className='con-my-account-deelnames-modal__error'>
+            {error}
+          </Paragraph>
         )}
 
         <div>
@@ -253,13 +226,16 @@ const AcMyAccountDeelnamesModal = ({
 
         <div>
           <Heading level={5}>Communities</Heading>
-          <AcColumn
-            gap='sm'
-            className='con-my-account-deelnames-modal__column'
-          >
-            {loading && <Paragraph className='con-my-account-deelnames-modal__paragraph'>Loading...</Paragraph>}
+          <AcColumn gap='sm' className='con-my-account-deelnames-modal__column'>
+            {loading && (
+              <Paragraph className='con-my-account-deelnames-modal__paragraph'>
+                Loading...
+              </Paragraph>
+            )}
             {filteredCommunities.length === 0 && !loading && (
-              <Paragraph className='con-my-account-deelnames-modal__paragraph'>Geen resultaten</Paragraph>
+              <Paragraph className='con-my-account-deelnames-modal__paragraph'>
+                Geen resultaten
+              </Paragraph>
             )}
             {filteredCommunities.map((item) => (
               <AcCheckbox
@@ -276,13 +252,16 @@ const AcMyAccountDeelnamesModal = ({
 
         <div>
           <Heading level={5}>Samenwerkingsverbanden</Heading>
-          <AcColumn
-            gap='sm'
-            className='con-my-account-deelnames-modal__column'
-          >
-            {loading && <Paragraph className='con-my-account-deelnames-modal__paragraph'>Loading...</Paragraph>}
+          <AcColumn gap='sm' className='con-my-account-deelnames-modal__column'>
+            {loading && (
+              <Paragraph className='con-my-account-deelnames-modal__paragraph'>
+                Loading...
+              </Paragraph>
+            )}
             {filteredSamenwerkingen.length === 0 && !loading && (
-              <Paragraph className='con-my-account-deelnames-modal__paragraph'>Geen resultaten</Paragraph>
+              <Paragraph className='con-my-account-deelnames-modal__paragraph'>
+                Geen resultaten
+              </Paragraph>
             )}
             {filteredSamenwerkingen.map((item) => (
               <AcCheckbox
