@@ -40,7 +40,38 @@ const ConFormModuleVersieStage = memo(
     existingModulesLookup,
     // getAllModulesForStages: _getAllModulesForStages,
   }) => {
-    const [sameForAll, setSameForAll] = useState(true);
+    // ✅ SIMPLIFIED: Use helper method to get new modules that need versie configuration
+    const newModules = getNewModulesWithApplicatieData
+      ? getNewModulesWithApplicatieData()
+      : [];
+
+    // Check if any module has different versies from other modules
+    const areValuesDifferent = newModules.length > 1 && newModules.some((module, moduleIndex) => {
+      // Get sorted versies arrays for comparison
+      const currentVersies = [...(module.moduleVersies || [])].sort((a, b) => 
+        `${a.versie}-${a.status}`.localeCompare(`${b.versie}-${b.status}`)
+      );
+      
+      // Compare with all other modules
+      return newModules.some((otherModule, otherIndex) => {
+        if (moduleIndex === otherIndex) return false;
+        
+        const otherVersies = [...(otherModule.moduleVersies || [])].sort((a, b) =>
+          `${a.versie}-${a.status}`.localeCompare(`${b.versie}-${b.status}`)
+        );
+
+        // Check if arrays have different lengths
+        if (currentVersies.length !== otherVersies.length) return true;
+
+        // Compare each versie
+        return currentVersies.some((versie, i) => 
+          versie.versie !== otherVersies[i].versie || 
+          versie.status !== otherVersies[i].status
+        );
+      });
+    });
+    // if there is a difference between values set sameForAll to false
+    const [sameForAll, setSameForAll] = useState(!areValuesDifferent);
 
     // State for controlling alert visibility - persists until page refresh
     const [showInfoAlert, setShowInfoAlert] = useState(() => {
@@ -92,10 +123,6 @@ const ConFormModuleVersieStage = memo(
       return null;
     }
 
-    // ✅ SIMPLIFIED: Use helper method to get new modules that need versie configuration
-    const newModules = getNewModulesWithApplicatieData
-      ? getNewModulesWithApplicatieData()
-      : [];
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
 
     // Check if there are multiple NEW applications that need versie configuration

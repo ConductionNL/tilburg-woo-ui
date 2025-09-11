@@ -38,12 +38,44 @@ const ConFormReferentiecomponentenStage = memo(
     existingModulesLookup,
     referentieComponentenLoading,
   }) => {
-    const [sameForAll, setSameForAll] = useState(true);
-
     // ✅ SIMPLIFIED: Use helper method to get new modules that need referentiecomponenten configuration
     const newModules = getNewModulesWithApplicatieData
       ? getNewModulesWithApplicatieData()
       : [];
+
+    // Check if any module has different referentiecomponenten from other modules
+    const areValuesDifferent =
+      newModules.length > 1 &&
+      newModules.some((module, moduleIndex) => {
+        // Get sorted referentiecomponenten arrays for comparison
+        const currentReferentieComponenten = [
+          ...(module.referentieComponenten || []),
+        ].sort();
+
+        // Compare with all other modules
+        return newModules.some((otherModule, otherIndex) => {
+          if (moduleIndex === otherIndex) return false;
+
+          const otherReferentieComponenten = [
+            ...(otherModule.referentieComponenten || []),
+          ].sort();
+
+          // Check if arrays have different lengths
+          if (
+            currentReferentieComponenten.length !== otherReferentieComponenten.length
+          )
+            return true;
+
+          // Compare each referentiecomponenten
+          return currentReferentieComponenten.some(
+            (referentieComponenten, i) =>
+              referentieComponenten !== otherReferentieComponenten[i]
+          );
+        });
+      });
+    // if there is a difference between values set sameForAll to false
+    const [sameForAll, setSameForAll] = useState(!areValuesDifferent);
+
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
 
     // Check if there are multiple NEW applications that need referentiecomponenten configuration
@@ -279,7 +311,6 @@ const ConFormReferentiecomponentenStage = memo(
               <TableBody>
                 {newModules.map((module, index) => {
                   const app = module;
-                  const currentRefs = app.referentieComponenten || [];
 
                   return (
                     <TableRow key={index}>
@@ -319,6 +350,7 @@ const ConFormReferentiecomponentenStage = memo(
                           isMulti={true}
                           isSearchable={true}
                           isLoading={referentieComponentenLoading}
+                          closeMenuOnSelect={false}
                           isDisabled={loading}
                           styles={{
                             control: (provided) => ({
