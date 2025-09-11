@@ -592,6 +592,9 @@ export const renderField = ({
           isMulti={fieldConfig.isMulti}
           closeMenuOnSelect={fieldConfig.closeMenuOnSelect}
           isSearchable={shouldBeSearchable}
+          {...(typeof fieldConfig.getOptionLabel === 'function' && {
+            getOptionLabel: fieldConfig.getOptionLabel,
+          })}
           onInputChange={
             handleSearch && getFieldRefSchemaSlug(propertySchema)
               ? (inputValue, actionMeta) => {
