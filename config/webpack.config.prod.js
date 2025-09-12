@@ -60,7 +60,11 @@ const swSrc = paths.swSrc;
 
 // Generate build version for cache busting
 const BUILD_TIMESTAMP = new Date().toISOString();
-const BUILD_VERSION = `${new Date().getFullYear()}.${(new Date().getMonth() + 1).toString().padStart(2, '0')}.${new Date().getDate().toString().padStart(2, '0')}-${Date.now()}`;
+
+// Use GitHub CI information if available, otherwise use timestamp
+const BUILD_VERSION = process.env.GITHUB_SHA 
+  ? `${process.env.GITHUB_RUN_NUMBER || 'build'}-${process.env.GITHUB_SHA.substring(0, 7)}-${Date.now()}`
+  : `${new Date().getFullYear()}.${(new Date().getMonth() + 1).toString().padStart(2, '0')}.${new Date().getDate().toString().padStart(2, '0')}-${Date.now()}`;
 
 // reduce it to a nice object, the same as before
 const enrichEnvVariables = (type) => {

@@ -70,15 +70,43 @@ http {
             }
         }
 
+        # CRITICAL: HTML files must NEVER be cached (they reference hashed assets)
+        location ~* \.(html|htm)$ {
+            expires -1;
+            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
+            add_header Pragma "no-cache" always;
+            add_header Last-Modified $date_gmt always;
+            etag off;
+        }
+
+        # Service worker must NEVER be cached
+        location = /service-worker.js {
+            expires -1;
+            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
+        }
+
+        # Cache static assets with hash for 1 year (webpack provides unique hashes)
+        location ~* \.[0-9a-f]{8,13}\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable" always;
+            add_header Vary "Accept-Encoding" always;
+        }
+
+        # Assets without hash - cache for shorter time (fallback)
+        location ~* ^(?!.*\.[0-9a-f]{8,13}\.).*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1d;
+            add_header Cache-Control "public, must-revalidate" always;
+        }
+
         # Static file serving with SPA routing
         location / {
             try_files $uri $uri/ /index.html;
-        }
-
-        # Cache static assets
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-            expires 1h;
-            add_header Cache-Control "public, immutable";
+            
+            # Ensure HTML is not cached even in fallback
+            if ($uri ~* \.(html|htm)$) {
+                expires -1;
+                add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
+            }
         }
     }
 } 

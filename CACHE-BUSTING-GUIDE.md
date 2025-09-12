@@ -19,6 +19,12 @@ Your webpack build now includes **advanced cache busting** features:
 - CSS files: `[contenthash:8]` → `main.e5f6g7h8.css`
 - Assets: `[hash:13]` → `logo.a1b2c3d4e5f6g.svg`
 
+### 4. **GitHub Actions Integration**
+- Workflow now passes Git commit info to build process
+- Build version format in CI: `123-a1b2c3d-1705123456789`
+- Automated verification that cache busting is working
+- Fails build if cache busting setup is broken
+
 ## 🔧 Server Configuration (Required)
 
 **Add these cache headers to your nginx/server config:**
@@ -83,21 +89,34 @@ location / {
 
 ## 🚀 Deployment Process
 
-### 1. **Build Process**
-```bash
-npm run build
+### 1. **Automated GitHub Actions Build**
+
+Your workflow now automatically handles cache busting:
+
+```yaml
+# Pushes to main branches trigger builds with:
+- Git commit SHA in build version
+- Automatic verification of cache busting
+- Docker image with proper nginx cache headers
 ```
 
 Each build will:
-- Generate new file hashes for changed files
-- Inject unique build timestamp into HTML
+- Generate new file hashes for changed files  
+- Inject unique build timestamp + Git info into HTML
 - Update service worker with new revision
+- Verify cache busting is working correctly
+- Build Docker image with optimized nginx config
 
-### 2. **Deploy to Server**
-- Upload entire build folder
-- Restart nginx/web server
-- HTML will reference new hashed files
-- Browsers will fetch new assets automatically
+### 2. **Manual Build (Development)**
+```bash
+yarn build:web
+```
+
+### 3. **Deploy to Server** 
+- GitHub Actions builds and pushes Docker image
+- Deploy the new image to your container environment
+- nginx serves with proper cache headers
+- Users automatically get new code
 
 ### 3. **Verification**
 
