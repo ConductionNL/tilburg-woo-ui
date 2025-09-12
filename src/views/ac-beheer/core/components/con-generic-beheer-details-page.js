@@ -138,6 +138,22 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
   const registerSlug = config?.registerSlug;
   const schemaSlug = config?.schemaSlug;
 
+  // Memoize modal config to keep identity stable and avoid remount loops in modal factory
+  const modalConfig = useMemo(() => {
+    const availableKeys = BeheerModalFactory.modalComponents[type]
+      ? Object.keys(BeheerModalFactory.modalComponents[type])
+      : ['edit', 'delete', 'publish', 'depublish'];
+    const filtered = availableKeys.filter((m) => m !== 'add' && m !== 'import');
+    const modals = filtered.includes('dynamicCreate')
+      ? filtered
+      : [...filtered, 'dynamicCreate'];
+    return {
+      registerSlug,
+      schemaSlug,
+      modals,
+    };
+  }, [type, registerSlug, schemaSlug]);
+
   // Respect schema configuration for files and tags
   const showFilesTab = !!schema?.configuration?.allowFiles;
   const allowedTags = Array.isArray(schema?.configuration?.allowedTags)
@@ -398,16 +414,11 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                 >
                                   {_.startCase(key)}:
                                 </strong>
-                                {formatBySchema(
-                                  schema,
-                                  data,
-                                  key,
-                                  { 
-                                    ...(config.formatBySchemaOptions || {}),
-                                    objectStore: object,
-                                    namesMap
-                                  }
-                                )}
+                                {formatBySchema(schema, data, key, {
+                                  ...(config.formatBySchemaOptions || {}),
+                                  objectStore: object,
+                                  namesMap,
+                                })}
                               </div>
                             );
                           } else {
@@ -424,16 +435,11 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                 >
                                   {_.startCase(key)}:
                                 </strong>{' '}
-                                {formatBySchema(
-                                  schema,
-                                  data,
-                                  key,
-                                  { 
-                                    ...(config.formatBySchemaOptions || {}),
-                                    objectStore: object,
-                                    namesMap
-                                  }
-                                )}
+                                {formatBySchema(schema, data, key, {
+                                  ...(config.formatBySchemaOptions || {}),
+                                  objectStore: object,
+                                  namesMap,
+                                })}
                               </div>
                             );
                           }
@@ -623,17 +629,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
             _extend: config.extend,
           });
         },
-        config: {
-          registerSlug,
-          schemaSlug,
-          // Include all available modals for this type plus dynamicCreate, exclude add/import
-          modals: (BeheerModalFactory.modalComponents[type]
-            ? Object.keys(BeheerModalFactory.modalComponents[type])
-            : ['edit', 'delete', 'publish', 'depublish']
-          ) // Default base modals for unknown types
-            .filter((m) => m !== 'add' && m !== 'import')
-            .concat('dynamicCreate'),
-        },
+        config: modalConfig,
         dynamicCreateTargetType,
         dynamicCreatePreSelected,
         dynamicCreateMetadata,
