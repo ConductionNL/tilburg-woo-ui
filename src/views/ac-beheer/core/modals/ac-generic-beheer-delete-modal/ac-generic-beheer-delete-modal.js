@@ -66,6 +66,8 @@ const ConGenericBeheerDeleteModal = ({
     setUsageCheckComplete(false);
 
     try {
+      console.log('🔍 Checking usage for objects:', objects.map(obj => obj.id));
+
       // For multiple objects, we'll check each one individually
       const usageResults = await Promise.allSettled(
         objects.map(async (obj) => {
@@ -78,9 +80,9 @@ const ConGenericBeheerDeleteModal = ({
           try {
             // Use object store's fetchRelatedData method for consistency
             await object.fetchRelatedData(
-              metadata.register,
-              metadata.schema,
-              obj.id,
+              metadata.register, 
+              metadata.schema, 
+              obj.id, 
               'used',
               { _limit: 100 } // Limit to prevent performance issues
             );
@@ -90,76 +92,74 @@ const ConGenericBeheerDeleteModal = ({
             const relatedData = object.getRelatedData(type, 'used');
             const usedObjects = relatedData?.results || [];
 
+            console.log(`📊 Usage check for ${obj.id}: ${usedObjects.length} dependencies found`);
+
             return {
               objectId: obj.id,
               objectName: metadata.name || obj.naam || obj.name || obj.id,
               used: usedObjects,
-              error: null,
+              error: null
             };
           } catch (err) {
             console.error(`❌ Failed to check usage for ${obj.id}:`, err);
-            return {
-              objectId: obj.id,
+            return { 
+              objectId: obj.id, 
               objectName: metadata.name || obj.naam || obj.name || obj.id,
-              used: [],
-              error: err.message,
+              used: [], 
+              error: err.message 
             };
           }
         })
       );
 
       // Process results
-      const processedResults = usageResults.map((result) => {
+      const processedResults = usageResults.map(result => {
         if (result.status === 'fulfilled') {
           return result.value;
         } else {
-          return {
-            objectId: 'unknown',
-            objectName: 'Unknown',
-            used: [],
-            error: result.reason?.message || 'Unknown error',
+          return { 
+            objectId: 'unknown', 
+            objectName: 'Unknown', 
+            used: [], 
+            error: result.reason?.message || 'Unknown error' 
           };
         }
       });
 
       setUsageData(processedResults);
+      console.log('✅ Usage check completed:', processedResults);
     } catch (err) {
       console.error('❌ Failed to check object usage:', err);
-      setUsageError(
-        err.message ||
-          'Er is een fout opgetreden bij het controleren van object gebruik'
-      );
+      setUsageError(err.message || 'Er is een fout opgetreden bij het controleren van object gebruik');
     } finally {
       setUsageChecking(false);
       setUsageCheckComplete(true);
     }
-  }, [object, objects]);
+  }, [objects, object]);
 
-  // Ensure we only check once per modal open
-  const hasCheckedRef = useRef(false);
-
-  // Check usage when modal opens (once per open)
+  // Check usage when modal opens
   useEffect(() => {
-    if (!showModal) return;
-    if (hasCheckedRef.current) return;
-    if (!objects || objects.length === 0) return;
-
-    hasCheckedRef.current = true;
-    checkObjectUsage();
-  }, [showModal]);
+    if (showModal && objects && objects.length > 0) {
+      checkObjectUsage();
+    }
+  }, [showModal, checkObjectUsage]);
 
   const handleDelete = async () => {
     if (isDeleting) return; // Prevent double-clicks
 
     setIsDeleting(true);
-
+    
     try {
+      console.log(`🗑️ Deleting objects:`, objects.map(obj => obj.id));
+      
       const results = await object.massDeleteObjects(objects);
 
       if (results.successful.length > 0) {
+        console.log(`✅ Successfully deleted ${results.successful.length} objects`);
+        
         // Close modal first to prevent state conflicts
         modalRef?.current?.close();
-
+        
         // Call onSuccess after a small delay to ensure modal is closed
         setTimeout(() => {
           onSuccess?.();
@@ -184,27 +184,24 @@ const ConGenericBeheerDeleteModal = ({
     setUsageData(null);
     setUsageError(null);
     setUsageCheckComplete(false);
-
+    
     // Reset delete state
     setIsDeleting(false);
-
-    // Allow usage check to run again on next open
-    hasCheckedRef.current = false;
-
+    
     onClose?.();
   }, [onClose]);
 
   useEffect(() => {
     const modal = modalRef?.current;
-    if (!modal) return;
-
-    modal.addEventListener('close', handleCloseModal);
-
-    // Cleanup function to remove event listener
-    return () => {
-      modal.removeEventListener('close', handleCloseModal);
-    };
-  }, [handleCloseModal]);
+    if (modal) {
+      modal.addEventListener('close', handleCloseModal);
+      
+      // Cleanup function to remove event listener
+      return () => {
+        modal.removeEventListener('close', handleCloseModal);
+      };
+    }
+  }, [modalRef.current, handleCloseModal]);
 
   // Early return if no metadata or objects
   if (!displayMetadata || !objects || objects.length === 0) {
@@ -218,14 +215,10 @@ const ConGenericBeheerDeleteModal = ({
 
   // Helper functions for usage data
   const hasUsageData = usageData && usageData.length > 0;
-  const hasUsedObjects =
-    hasUsageData &&
-    usageData.some((result) => result.used && result.used.length > 0);
-  const totalUsedObjects = hasUsageData
-    ? usageData.reduce((total, result) => total + (result.used?.length || 0), 0)
-    : 0;
-  const shouldDisableDelete =
-    usageChecking || isDeleting || (usageCheckComplete && hasUsedObjects);
+  const hasUsedObjects = hasUsageData && usageData.some(result => result.used && result.used.length > 0);
+  const totalUsedObjects = hasUsageData ? usageData.reduce((total, result) => total + (result.used?.length || 0), 0) : 0;
+  const canDelete = usageCheckComplete && !hasUsedObjects;
+  const shouldDisableDelete = usageChecking || isDeleting || (usageCheckComplete && hasUsedObjects);
 
   const renderDeleteModal = (
     <AcModal
@@ -241,13 +234,8 @@ const ConGenericBeheerDeleteModal = ({
           disabled: isDeleting,
         },
         {
-          label: usageChecking
-            ? 'Controleren...'
-            : isDeleting
-            ? 'Verwijderen...'
-            : 'Verwijderen',
-          icon:
-            usageChecking || isDeleting ? <VISUALS.SPINNER /> : <VISUALS.TRASHCAN />,
+          label: usageChecking ? 'Controleren...' : (isDeleting ? 'Verwijderen...' : 'Verwijderen'),
+          icon: (usageChecking || isDeleting) ? <VISUALS.SPINNER /> : <VISUALS.TRASHCAN />,
           onClick: handleDelete,
           disabled: shouldDisableDelete,
           loading: usageChecking || isDeleting,
@@ -263,11 +251,7 @@ const ConGenericBeheerDeleteModal = ({
             <AcFlex spacing='sm'>
               <VISUALS.SPINNER />
               <Paragraph>
-                Controleren of{' '}
-                {isSingular
-                  ? `dit ${displayName.toLowerCase()}`
-                  : `deze ${displayName.toLowerCase()}s`}{' '}
-                wordt gebruikt door andere objecten...
+                Controleren of {isSingular ? `dit ${displayName.toLowerCase()}` : `deze ${displayName.toLowerCase()}s`} wordt gebruikt door andere objecten...
               </Paragraph>
             </AcFlex>
           </Alert>
@@ -285,13 +269,14 @@ const ConGenericBeheerDeleteModal = ({
 
         {/* Usage Results - No Dependencies (Success) */}
         {usageCheckComplete && !usageError && !hasUsedObjects && (
-          <Alert type='info'>
+          <Alert type='success'>
             <AcFlex spacing='sm'>
               <VISUALS.CHECK />
               <Paragraph>
-                {isSingular
+                {isSingular 
                   ? `Dit ${displayName.toLowerCase()} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
-                  : `Deze ${displayName.toLowerCase()}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`}
+                  : `Deze ${displayName.toLowerCase()}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`
+                }
               </Paragraph>
             </AcFlex>
           </Alert>
@@ -305,45 +290,30 @@ const ConGenericBeheerDeleteModal = ({
                 <VISUALS.CIRCLE_EXCLAMATION />
                 <Paragraph>
                   <strong>
-                    {isSingular
-                      ? `Dit ${displayName.toLowerCase()} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${
-                          totalUsedObjects === 1 ? 'ander object' : 'andere objecten'
-                        }.`
-                      : `Deze ${displayName.toLowerCase()}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`}
+                    {isSingular 
+                      ? `Dit ${displayName.toLowerCase()} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${totalUsedObjects === 1 ? 'ander object' : 'andere objecten'}.`
+                      : `Deze ${displayName.toLowerCase()}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`
+                    }
                   </strong>
                 </Paragraph>
               </AcFlex>
-
+              
               {/* List of dependent objects */}
               {usageData.map((result, index) => {
                 if (!result.used || result.used.length === 0) return null;
-
+                
                 return (
                   <div key={result.objectId || index} style={{ marginLeft: '1rem' }}>
                     <Paragraph style={{ fontWeight: '600', margin: '0.5rem 0' }}>
                       {result.objectName} wordt gebruikt door:
                     </Paragraph>
                     {result.used.slice(0, 10).map((usedObj, usedIndex) => (
-                      <Paragraph
-                        key={usedObj.id || usedIndex}
-                        style={{ marginLeft: '1rem', fontSize: '0.9rem' }}
-                      >
-                        •{' '}
-                        {usedObj['@self']?.name ||
-                          usedObj.naam ||
-                          usedObj.name ||
-                          usedObj.id}{' '}
-                        ({usedObj['@self']?.schema?.title || 'Onbekend type'})
+                      <Paragraph key={usedObj.id || usedIndex} style={{ marginLeft: '1rem', fontSize: '0.9rem' }}>
+                        • {usedObj['@self']?.name || usedObj.naam || usedObj.name || usedObj.id} ({usedObj['@self']?.schema?.title || 'Onbekend type'})
                       </Paragraph>
                     ))}
                     {result.used.length > 10 && (
-                      <Paragraph
-                        style={{
-                          marginLeft: '1rem',
-                          fontSize: '0.9rem',
-                          fontStyle: 'italic',
-                        }}
-                      >
+                      <Paragraph style={{ marginLeft: '1rem', fontSize: '0.9rem', fontStyle: 'italic' }}>
                         ... en nog {result.used.length - 10} andere objecten
                       </Paragraph>
                     )}
@@ -356,27 +326,14 @@ const ConGenericBeheerDeleteModal = ({
 
         {/* Always show confirmation text and object list */}
         <Paragraph>
-          {usageCheckComplete && hasUsedObjects
-            ? `Je kunt ${
-                isSingular
-                  ? `dit ${displayName.toLowerCase()}`
-                  : `deze ${displayName.toLowerCase()}s`
-              } pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
-            : `Weet je zeker dat je ${
-                isSingular
-                  ? `dit ${displayName.toLowerCase()}`
-                  : `deze ${displayName.toLowerCase()}s`
-              } wilt verwijderen?`}
+          {usageCheckComplete && hasUsedObjects 
+            ? `Je kunt ${isSingular ? `dit ${displayName.toLowerCase()}` : `deze ${displayName.toLowerCase()}s`} pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
+            : `Weet je zeker dat je ${isSingular ? `dit ${displayName.toLowerCase()}` : `deze ${displayName.toLowerCase()}s`} wilt verwijderen?`
+          }
         </Paragraph>
-
+        
         {/* Show objects being deleted - always visible */}
-        <div
-          style={{
-            backgroundColor: '#f8f9fa',
-            padding: '1rem',
-            borderRadius: '4px',
-          }}
-        >
+        <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '4px' }}>
           <Paragraph style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
             {isSingular ? 'Te verwijderen object:' : 'Te verwijderen objecten:'}
           </Paragraph>
