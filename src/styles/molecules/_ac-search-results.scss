@@ -7,3 +7,32 @@
     }
   }
 }
+
+// New layout for proper tab order
+.ac-search-layout {
+  display: flex;
+  gap: var(--spacing-xl, 2rem);
+
+  @include respond-max($screen-md) {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.ac-search-layout__main {
+  flex: 1;
+  order: 2; // Visually appears on the right
+
+  @include respond-max($screen-md) {
+    order: 2; // On mobile, results come after filters
+  }
+}
+
+.ac-search-layout__filters {
+  flex: 0 0 auto;
+  order: 1; // Visually appears on the left
+
+  @include respond-max($screen-md) {
+    order: 1; // On mobile, filters come first
+  }
+}

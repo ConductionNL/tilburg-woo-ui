@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from '@utrecht/component-library-react/dist/css-module';
 import { ConRelatedObjectsLinks } from '@components';
-import { shouldResolveToName, getDisplayValue } from './con-detect-object-references';
+import {
+  shouldResolveToName,
+  getDisplayValue,
+} from './con-detect-object-references';
+import { isDataUrl, isUrl, getDataUrlDisplayName, handleFileClick } from '@utils';
 
 /**
  * Helper function to determine the actual runtime type of a value
@@ -95,9 +99,30 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         }
         case 'url':
         case 'uri': {
-          // render as clickable link
+          // Handle data URLs differently from regular URLs
+          if (isDataUrl(value)) {
+            const displayName = getDataUrlDisplayName(value, dataKey || 'file');
+            return (
+              <Link
+                href='#'
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleFileClick(value);
+                }}
+                title={`View ${displayName}`}
+              >
+                {displayName}
+              </Link>
+            );
+          }
+
+          const href =
+            value.startsWith('http://') || value.startsWith('https://')
+              ? value
+              : `https://${value}`;
+
           return (
-            <Link href={value} target='_blank' rel='noopener noreferrer'>
+            <Link href={href} target='_blank' rel='noopener noreferrer'>
               {value}
             </Link>
           );
@@ -116,17 +141,23 @@ function formatBySchema(schema, data, dataKey, options = {}) {
         case 'extension':
         case 'filename':
           // Check if UUID should be resolved to a name
-          if (schema?.format === 'uuid' && options.objectStore && options.namesMap && dataKey) {
+          if (
+            schema?.format === 'uuid' &&
+            options.objectStore &&
+            options.namesMap &&
+            dataKey
+          ) {
             const property = { ...schema, key: dataKey };
             if (shouldResolveToName(property, value)) {
-              const resolvedValue = getDisplayValue(value, property, options.namesMap);
+              const resolvedValue = getDisplayValue(
+                value,
+                property,
+                options.namesMap
+              );
               if (resolvedValue !== value) {
                 // Show resolved name with original ID in tooltip
                 return (
-                  <span 
-                    title={`Original ID: ${value}`}
-                    style={{ cursor: 'help' }}
-                  >
+                  <span title={`Original ID: ${value}`} style={{ cursor: 'help' }}>
                     {resolvedValue}
                   </span>
                 );
@@ -141,20 +172,47 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           if (options.objectStore && options.namesMap && dataKey) {
             const property = { ...schema, key: dataKey };
             if (shouldResolveToName(property, value)) {
-              const resolvedValue = getDisplayValue(value, property, options.namesMap);
+              const resolvedValue = getDisplayValue(
+                value,
+                property,
+                options.namesMap
+              );
               if (resolvedValue !== value) {
                 // Show resolved name with original ID in tooltip
                 return (
-                  <span 
-                    title={`Original ID: ${value}`}
-                    style={{ cursor: 'help' }}
-                  >
+                  <span title={`Original ID: ${value}`} style={{ cursor: 'help' }}>
                     {resolvedValue}
                   </span>
                 );
               }
             }
           }
+
+          // Check if it's a data URL or regular URL (for object properties that are URLs but not marked as format: 'url')
+          if (isDataUrl(value)) {
+            const displayName = getDataUrlDisplayName(value, dataKey || 'file');
+            return (
+              <Link
+                href='#'
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleFileClick(value);
+                }}
+                title={`View ${displayName}`}
+              >
+                {displayName}
+              </Link>
+            );
+          }
+
+          if (isUrl(value)) {
+            return (
+              <Link href={value} target='_blank' rel='noopener noreferrer'>
+                {value}
+              </Link>
+            );
+          }
+
           return <span>{value}</span>;
       }
     }
@@ -206,15 +264,12 @@ function formatBySchema(schema, data, dataKey, options = {}) {
           const resolvedValue = getDisplayValue(value, property, options.namesMap);
           if (resolvedValue !== value) {
             // Show resolved names with original IDs in tooltip
-            const originalValue = Array.isArray(value) 
-              ? `Original IDs: ${value.join(', ')}` 
+            const originalValue = Array.isArray(value)
+              ? `Original IDs: ${value.join(', ')}`
               : `Original ID: ${value}`;
-            
+
             return (
-              <span 
-                title={originalValue}
-                style={{ cursor: 'help' }}
-              >
+              <span title={originalValue} style={{ cursor: 'help' }}>
                 {resolvedValue}
               </span>
             );
@@ -311,7 +366,9 @@ function formatBySchema(schema, data, dataKey, options = {}) {
                   formatBySchema(childSchema, value, key, currentOptions)
                 ) : (
                   <span>
-                    {value[key] === undefined || value[key] === null || value[key] === 'null'
+                    {value[key] === undefined ||
+                    value[key] === null ||
+                    value[key] === 'null'
                       ? '-'
                       : typeof value[key] === 'object'
                       ? JSON.stringify(value[key])
@@ -334,10 +391,69 @@ function formatBySchema(schema, data, dataKey, options = {}) {
               </strong>
               {childSchema ? (
                 formatBySchema(childSchema, value, key, currentOptions)
-              ) : value[key] === undefined || value[key] === null || value[key] === 'null' ? (
+              ) : value[key] === undefined ||
+                value[key] === null ||
+                value[key] === 'null' ? (
                 <span>-</span>
               ) : typeof value[key] === 'object' ? (
                 <pre>{JSON.stringify(value[key], null, 2)}</pre>
+              ) : typeof value[key] === 'string' ? (
+                // Handle string values in objects - check for URLs and data URLs
+                (() => {
+                  const stringValue = value[key];
+
+                  // Check if it's a data URL
+                  if (isDataUrl(stringValue)) {
+                    const displayName = getDataUrlDisplayName(
+                      stringValue,
+                      key || 'file'
+                    );
+                    return (
+                      <Link
+                        href='#'
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleFileClick(stringValue);
+                        }}
+                        title={`View ${displayName}`}
+                        style={{
+                          textDecoration: 'underline',
+                          color: 'var(--utrecht-link-color, #0066cc)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {displayName}
+                      </Link>
+                    );
+                  }
+
+                  // Check if it's a regular URL
+                  if (isUrl(stringValue)) {
+                    // Use regular <a> tag for external URLs
+                    const href =
+                      stringValue.startsWith('http://') ||
+                      stringValue.startsWith('https://')
+                        ? stringValue
+                        : `https://${stringValue}`;
+
+                    return (
+                      <Link
+                        href={href}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        style={{
+                          textDecoration: 'underline',
+                          color: 'var(--utrecht-link-color, #0066cc)',
+                        }}
+                      >
+                        {stringValue}
+                      </Link>
+                    );
+                  }
+
+                  // Regular string
+                  return <span>{stringValue}</span>;
+                })()
               ) : (
                 <span>{value[key]}</span>
               )}

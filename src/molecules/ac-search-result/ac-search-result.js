@@ -3,7 +3,11 @@ import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
-import { extractText, extractTitle, extractSummary } from '@src/utilities/con-extract-text';
+import {
+  extractText,
+  extractTitle,
+  extractSummary,
+} from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 
 const AcSearchResult = ({

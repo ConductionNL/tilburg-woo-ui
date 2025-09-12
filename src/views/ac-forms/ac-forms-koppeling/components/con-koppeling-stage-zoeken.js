@@ -20,6 +20,7 @@ const ConKoppelingStageZoeken = ({
   resolvedModulesFromResults = [],
   resultsLoading = false,
   getArrowForDirection,
+  isEditMode,
 }) => {
   const [ownAppMenuOpen, setOwnAppMenuOpen] = useState(false);
   const idToLabel = Object.fromEntries(
@@ -62,15 +63,17 @@ const ConKoppelingStageZoeken = ({
       aria-labelledby='koppeling-zoek-title'
     >
       <h2 id='koppeling-zoek-title' className='sr-only'>
-        Koppeling zoeken
+        {isEditMode ? 'Koppeling bekijken' : 'Koppeling zoeken'}
       </h2>
 
-      <Paragraph>
-        Leveranciers hebben vaak al opgegeven met welke applicaties of voorzieningen
-        hun product kan koppelen. Zoek hieronder of de gewenste koppeling al bestaat.
-        Als deze nog niet is opgevoerd, kunt u de koppeling zelf toevoegen in de
-        volgende stap.
-      </Paragraph>
+      {!isEditMode && (
+        <Paragraph>
+          Leveranciers hebben vaak al opgegeven met welke applicaties of
+          voorzieningen hun product kan koppelen. Zoek hieronder of de gewenste
+          koppeling al bestaat. Als deze nog niet is opgevoerd, kunt u de koppeling
+          zelf toevoegen in de volgende stap.
+        </Paragraph>
+      )}
 
       <div className='ac-register-form-grid'>
         <div style={{ gridColumn: 'span 2' }}>
@@ -89,7 +92,7 @@ const ConKoppelingStageZoeken = ({
               // Close the menu after selection
               setOwnAppMenuOpen(false);
             }}
-            isDisabled={loading}
+            isDisabled={loading || isEditMode}
             placeholder='Selecteer uw applicatie...'
             isClearable
             isLoading={ownAppLoading}
@@ -97,10 +100,11 @@ const ConKoppelingStageZoeken = ({
             loadingMessage={() => 'Bezig met laden…'}
             menuIsOpen={ownAppMenuOpen}
             onInputChange={(input, { action }) => {
-              if (action === 'input-change') {
+              if (action === 'input-change' && !isEditMode) {
                 setOwnAppInput(input || '');
                 setOwnAppMenuOpen(true);
               }
+              return input;
             }}
             onMenuOpen={() => setOwnAppMenuOpen(true)}
             onMenuClose={() => setOwnAppMenuOpen(false)}
@@ -130,7 +134,7 @@ const ConKoppelingStageZoeken = ({
 
       <div style={{ marginTop: '1rem' }}>
         <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
-          Zoekresultaten
+          {isEditMode ? 'Bestaande koppelingen' : 'Zoekresultaten'}
         </h3>
         {!resultsLoading && searchResults.length ? (
           <div className='ac-register-review'>

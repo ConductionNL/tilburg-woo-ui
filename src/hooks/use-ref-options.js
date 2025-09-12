@@ -241,8 +241,8 @@ export const useRefOptions = (
         const labels = isArray ? fieldPreselectedLabel : [fieldPreselectedLabel];
 
         const options = values.map((value, index) => ({
-          value: value,
-          label: labels[index] || value,
+          value: String(value),
+          label: String(labels[index] || value),
           data: { id: value, name: labels[index] }, // Minimal data object
         }));
 
@@ -292,19 +292,19 @@ export const useRefOptions = (
           const options = collection.results
             .map((item) => {
               // Always use @self.id for the value
-              const value = item['@self']?.id;
+              const rawValue = item['@self']?.id;
 
               // Always use @self.name for the label
-              const label = item['@self']?.name || 'Unnamed';
+              const rawLabel = item['@self']?.name || 'Unnamed';
 
               // Skip items without @self.id
-              if (!value) {
+              if (!rawValue) {
                 return null;
               }
 
               return {
-                value,
-                label,
+                value: String(rawValue),
+                label: String(rawLabel),
                 data: item, // Store full object for reference
               };
             })
@@ -451,13 +451,13 @@ export const useRefOptions = (
       return () => clearTimeout(timeoutId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [schema?.slug, currentRegister, object]);
+  }, [schema?.properties, schema?.slug, currentRegister, object]);
 
   // Reset the guard when schema changes (similar to modal pattern)
   useEffect(() => {
     hasInitializedRef.current = false;
     fetchingFieldsRef.current.clear(); // Clear fetching state
-  }, [schema?.slug, currentRegister]);
+  }, [schema?.properties, schema?.slug, currentRegister]);
 
   // Cleanup effect to clear any pending search timeouts (only on unmount)
   useEffect(() => {

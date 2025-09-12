@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { VISUALS } from '@src/constants';
 import { AcButton } from '@src/molecules';
 import {
@@ -148,13 +148,12 @@ const ConFormKoppelingenStage = memo(
         const idx = list.findIndex((k) => k?._localId === localId);
 
         const moduleALabel = appOptions.find((o) => o.value === appAId)?.label;
-        const moduleBLabel = (modulesOptions || []).find(
-          (o) => o.value === appBId
-        )?.label;
+        // Persist moduleB as its identifier so edit-mode can preselect by id
+        const moduleBId = appBId;
 
         const fields = {
           moduleA: moduleALabel,
-          moduleB: moduleBLabel,
+          moduleB: moduleBId,
           richtingDataUitwisseling: richting,
           soortKoppeling: soort,
         };
@@ -232,13 +231,46 @@ const ConFormKoppelingenStage = memo(
       }));
     };
 
+    useEffect(() => {
+      // Initialize koppelingen data when form state is prefilled in edit mode
+      // This ensures that prefilled koppelingen are actually persisted to the product
+      if (rows.length > 0) {
+        rows.forEach((rowId) => {
+          const appAId = selectedAppAByRow[rowId];
+          const appBId = selectedAppBByRow[rowId];
+          const richting = directionByRow[rowId];
+          const soort = typeByRow[rowId];
+
+          // Only persist if we have the minimum required data (appA and appB)
+          if (appAId != null && appBId != null) {
+            persistRowIntoProduct(rowId, {
+              appAId,
+              appBId,
+              richting,
+              soort,
+            });
+          }
+        });
+      }
+    }, [
+      // Only run when the actual koppeling data changes, not on every state update
+      JSON.stringify(
+        rows.map((rowId) => ({
+          appA: selectedAppAByRow[rowId],
+          appB: selectedAppBByRow[rowId],
+          richting: directionByRow[rowId],
+          soort: typeByRow[rowId],
+        }))
+      ),
+    ]);
+
     return (
       <div>
         <h2 id='koppelingen-section-title' className='sr-only'>
           Koppelingen
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>Integraties en gegevensuitwisseling</strong>
           <br />
           Geef hier aan hoe uw applicatie gegevens uitwisselt met andere systemen.
@@ -325,13 +357,20 @@ const ConFormKoppelingenStage = memo(
                   <TableCell>
                     <ReactSelect
                       options={modulesOptions}
-                      value={
-                        selectedAppBByRow[rowId] != null
-                          ? (modulesOptions || []).find(
-                              (o) => o.value === selectedAppBByRow[rowId]
-                            )
-                          : null
-                      }
+                      value={(() => {
+                        const selected = selectedAppBByRow[rowId];
+                        if (selected == null) return null;
+                        const opts = modulesOptions || [];
+                        let found = opts.find(
+                          (o) => String(o.value) === String(selected)
+                        );
+                        if (!found) {
+                          found = opts.find(
+                            (o) => String(o.label) === String(selected)
+                          );
+                        }
+                        return found || null;
+                      })()}
                       onInputChange={(inputValue, meta) => {
                         if (meta && meta.action === 'input-change') {
                           searchModules(inputValue || '');

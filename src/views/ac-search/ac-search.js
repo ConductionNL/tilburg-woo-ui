@@ -18,6 +18,18 @@ import { AcSearchParamsToObject, ConFormatDutchNumber } from '@utils';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
 
+// Helper function to get the image field based on schema configuration
+const getImageFromPublication = (publication) => {
+  const imageField = publication['@self']?.schema?.configuration?.objectImageField;
+  if (!imageField) {
+    // Fallback to 'logo' if no objectImageField is configured
+    return publication['@self']?.logo;
+  }
+
+  // Use the configured image field from the publication data
+  return publication['@self']?.[imageField] || publication[imageField];
+};
+
 const AcSearch = ({ store: { publications, user } }) => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -124,18 +136,22 @@ const AcSearch = ({ store: { publications, user } }) => {
     return all_publications?.map((publication, index) => {
       switch (publication['@self'].schema.slug) {
         case 'product':
+        case 'module':
         case 'organisatie':
           return (
             <ConCardOrganisationApplication
               {...publication}
               id={publication.id || publication['@self']?.id}
               title={extractTitle(publication['@self'].name)}
-              summary={extractSummary(publication['@self'].description)}
-              logo={publication['@self'].logo}
+              summary={extractSummary(publication['@self'].summary)}
+              logo={getImageFromPublication(publication)}
               cardType={publication['@self'].schema.slug}
-              type={publication['@self'].schema.type}
+              type={publication['@self'].schema.title}
               user={user}
+              referenceComponents={publication.referentieComponenten}
+              updated={publication['@self'].updated}
               published={publication['@self'].published}
+              organisation={publication['@self'].organisation}
               key={index}
             />
           );
@@ -190,6 +206,7 @@ const AcSearch = ({ store: { publications, user } }) => {
       <AcContainer spacing='lg'>
         <AcCard blue padding='md'>
           <AcSearchBox
+            key={search_query._search || 'empty'} // Force re-render when search changes
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
@@ -198,9 +215,9 @@ const AcSearch = ({ store: { publications, user } }) => {
         </AcCard>
       </AcContainer>
       <AcContainer spacing='sm' margin='xl'>
-        <AcFlex spacing='xl' className='ac-search-results'>
-          <AcSearchFilters />
-          <AcFlex column grow spacing='xs'>
+        <div className='ac-search-layout'>
+          {/* Results and pagination come first in DOM/tab order */}
+          <div className='ac-search-layout__main'>
             <div className='sr-only' aria-live='polite' aria-atomic='true'>
               {screenReaderText}
             </div>
@@ -217,8 +234,13 @@ const AcSearch = ({ store: { publications, user } }) => {
               {renderPublications}
               {pagination?.pages > 1 && renderPagination}
             </AcFlex>
-          </AcFlex>
-        </AcFlex>
+          </div>
+
+          {/* Filters come last in DOM/tab order */}
+          <div className='ac-search-layout__filters'>
+            <AcSearchFilters />
+          </div>
+        </div>
       </AcContainer>
     </>
   );

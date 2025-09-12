@@ -79,3 +79,24 @@
 .con-my-account-description {
   background-color: inherit !important;
 }
+
+.con-my-account-deelnames-modal {
+  &__error {
+    color: '#a00';
+    margin: 0;
+  }
+
+  &__paragraph {
+    margin: 0;
+  }
+
+  &__input {
+    width: 100%;
+  }
+
+  &__column {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+}

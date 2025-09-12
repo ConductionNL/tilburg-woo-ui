@@ -8,8 +8,7 @@ import { withStore } from '@stores';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
 import _ from 'lodash';
-import { AcBuildURLSearchParams } from '@utils';
-import { DEFAULT_SEARCH_QUERY } from '@stores/publications.store';
+import { AcBuildURLSearchParams, ConFormatDutchNumber } from '@utils';
 
 const ConFacetsFilters = ({ store: { publications } }) => {
   const [, setSearchParams] = useSearchParams();
@@ -282,7 +281,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                     _value.buckets.map((bucket) => (
                       <AcCheckbox
                         key={bucket.key}
-                        label={`${bucket.label ?? bucket.key} (${bucket.results})`}
+                        label={`${
+                          bucket.label ?? bucket.key
+                        } (${ConFormatDutchNumber(bucket.results)})`}
                         value={bucket.key}
                         checked={isFacetChecked(`${key}[${_key}]`, bucket.key)}
                         onChange={() => {

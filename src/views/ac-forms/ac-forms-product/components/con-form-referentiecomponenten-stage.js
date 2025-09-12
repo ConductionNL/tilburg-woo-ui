@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import ReactSelect from 'react-select';
 import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
 
@@ -38,12 +38,44 @@ const ConFormReferentiecomponentenStage = memo(
     existingModulesLookup,
     referentieComponentenLoading,
   }) => {
-    const [sameForAll, setSameForAll] = useState(true);
-
     // ✅ SIMPLIFIED: Use helper method to get new modules that need referentiecomponenten configuration
     const newModules = getNewModulesWithApplicatieData
       ? getNewModulesWithApplicatieData()
       : [];
+
+    // Check if any module has different referentiecomponenten from other modules
+    const areValuesDifferent =
+      newModules.length > 1 &&
+      newModules.some((module, moduleIndex) => {
+        // Get sorted referentiecomponenten arrays for comparison
+        const currentReferentieComponenten = [
+          ...(module.referentieComponenten || []),
+        ].sort();
+
+        // Compare with all other modules
+        return newModules.some((otherModule, otherIndex) => {
+          if (moduleIndex === otherIndex) return false;
+
+          const otherReferentieComponenten = [
+            ...(otherModule.referentieComponenten || []),
+          ].sort();
+
+          // Check if arrays have different lengths
+          if (
+            currentReferentieComponenten.length !== otherReferentieComponenten.length
+          )
+            return true;
+
+          // Compare each referentiecomponenten
+          return currentReferentieComponenten.some(
+            (referentieComponenten, i) =>
+              referentieComponenten !== otherReferentieComponenten[i]
+          );
+        });
+      });
+    // if there is a difference between values set sameForAll to false
+    const [sameForAll, setSameForAll] = useState(!areValuesDifferent);
+
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
 
     // Check if there are multiple NEW applications that need referentiecomponenten configuration
@@ -72,12 +104,26 @@ const ConFormReferentiecomponentenStage = memo(
       });
     };
 
+    // Around line 75, add a helper function to normalize referentieComponenten values
     const normalizeValues = (values) => {
-      if (!values) return [];
-      if (Array.isArray(values)) {
-        return values.map((v) => (typeof v === 'object' ? v.value || v.id : v));
-      }
-      return Array.from(new Set(values));
+      if (!values || !Array.isArray(values)) return [];
+
+      return values
+        .map((value) => {
+          // Handle null, undefined, or empty values
+          if (value == null || value === '') {
+            return null;
+          }
+
+          // Handle both object format {id: "...", naam: "..."} and string format
+          if (typeof value === 'object') {
+            const extractedId = value.id || value.value || value.naam;
+            return extractedId != null ? String(extractedId) : null;
+          }
+
+          return String(value);
+        })
+        .filter((id) => id != null); // Remove null values from the array
     };
 
     const updateReferentieComponentenWithStandards = (appId, refs) => {
@@ -113,6 +159,29 @@ const ConFormReferentiecomponentenStage = memo(
       });
     };
 
+    useEffect(() => {
+      // Trigger updateReferentieComponentenWithStandards for edit mode initialization
+      // This ensures standards are populated when referentieComponenten are prefilled
+      if (newModules.length > 0 && referentieComponentenOptions.length > 0) {
+        newModules.forEach((module, index) => {
+          const currentRefs = module.referentieComponenten || [];
+          if (currentRefs.length > 0) {
+            // Normalize the refs the same way the onChange handler does
+            const normalizedRefs = normalizeValues(currentRefs);
+
+            // Only update if we have valid normalized refs
+            if (normalizedRefs.length > 0) {
+              updateReferentieComponentenWithStandards(index, normalizedRefs);
+            }
+          }
+        });
+      }
+    }, [
+      // Only run when the actual referentieComponenten data changes, not on every module update
+      JSON.stringify(newModules.map((m) => m.referentieComponenten)),
+      referentieComponentenOptions.length,
+    ]);
+
     // Don't early return - let the component continue to show ConExistingModulesInfoBox
 
     return (
@@ -121,7 +190,7 @@ const ConFormReferentiecomponentenStage = memo(
           Referentiecomponenten
         </h2>
 
-        <Paragraph style={{ marginBottom: '2rem' }}>
+        <Paragraph className='con-form-wizard-paragraph'>
           <strong>GEMMA referentiecomponenten voor interoperabiliteit</strong>
           <br />
           Koppel uw applicatie aan de GEMMA-referentiecomponenten die de
@@ -150,9 +219,11 @@ const ConFormReferentiecomponentenStage = memo(
                 <ReactSelect
                   value={(() => {
                     const currentModule = newModules[0] || {};
-                    const selectedValues = currentModule.referentieComponenten || [];
+                    const selectedValues = normalizeValues(
+                      currentModule.referentieComponenten || []
+                    );
                     return referentieComponentenOptions.filter((opt) =>
-                      selectedValues.includes(opt.value)
+                      selectedValues.includes(String(opt.value))
                     );
                   })()}
                   onChange={(selectedOptions) => {
@@ -183,6 +254,7 @@ const ConFormReferentiecomponentenStage = memo(
                   isSearchable={true}
                   isLoading={referentieComponentenLoading}
                   isDisabled={loading}
+                  closeMenuOnSelect={false}
                   styles={{
                     control: (provided) => ({
                       ...provided,
@@ -201,6 +273,7 @@ const ConFormReferentiecomponentenStage = memo(
                       display: 'flex',
                       flexWrap: 'wrap',
                       alignItems: 'flex-start',
+                      alignContent: 'flex-start',
                     }),
                     multiValue: (provided) => ({
                       ...provided,
@@ -238,7 +311,6 @@ const ConFormReferentiecomponentenStage = memo(
               <TableBody>
                 {newModules.map((module, index) => {
                   const app = module;
-                  const currentRefs = app.referentieComponenten || [];
 
                   return (
                     <TableRow key={index}>
@@ -247,9 +319,14 @@ const ConFormReferentiecomponentenStage = memo(
                       </TableCell>
                       <TableCell>
                         <ReactSelect
-                          value={referentieComponentenOptions.filter((opt) =>
-                            currentRefs.includes(opt.value)
-                          )}
+                          value={(() => {
+                            const currentRefs = normalizeValues(
+                              app.referentieComponenten || []
+                            );
+                            return referentieComponentenOptions.filter((opt) =>
+                              currentRefs.includes(String(opt.value))
+                            );
+                          })()}
                           onChange={(selectedOptions) => {
                             const refsArray = selectedOptions
                               ? selectedOptions.map((opt) => opt.value)
@@ -273,6 +350,7 @@ const ConFormReferentiecomponentenStage = memo(
                           isMulti={true}
                           isSearchable={true}
                           isLoading={referentieComponentenLoading}
+                          closeMenuOnSelect={false}
                           isDisabled={loading}
                           styles={{
                             control: (provided) => ({

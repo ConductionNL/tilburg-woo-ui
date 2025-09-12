@@ -5,17 +5,20 @@ import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph } from '@utrecht/component-library-react';
 import { NAVIGATE_TO } from '@constants/routes.constants';
-import { extractText, extractTitle, extractSummary } from '@src/utilities/con-extract-text';
+import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
+import acFormatDate from '@src/utilities/ac-format-date';
 
 const ConCardOrganisationApplication = ({
   skeleton,
   title,
   summary,
-  type,
   id,
   logo,
   cardType,
+  referenceComponents,
+  updated,
+  organisation,
   // user,
   // published,
   // ...rest // Capture additional object data
@@ -23,6 +26,7 @@ const ConCardOrganisationApplication = ({
   const icon = useMemo(() => {
     switch (cardType) {
       case 'product':
+      case 'module':
         return (
           <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />
         );
@@ -41,6 +45,9 @@ const ConCardOrganisationApplication = ({
         <AcFlex alignItems='center' spacing='xs'>
           {icon}
           <Heading level={3}>{extractTitle(title)}</Heading>
+          {organisation && (cardType === 'product' || cardType === 'module') && (
+            <Paragraph small>(Aangeboden door {organisation})</Paragraph>
+          )}
         </AcFlex>
         {logo && (
           <ConLogoPreview
@@ -52,12 +59,24 @@ const ConCardOrganisationApplication = ({
       </AcFlex>
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
-        <AcFlex alignItems='center' spacing='sm'>
-          <Paragraph small>{extractText(type)}</Paragraph>
+        <AcFlex column>
+          {!!referenceComponents?.length && (
+            <Paragraph small>
+              Geschikt voor:{' '}
+              {referenceComponents
+                ?.slice(0, 2) // Only take the first two components
+                .filter(Boolean)
+                .join(', ')}
+            </Paragraph>
+          )}
+          <Paragraph className='organisation-card__updated'>
+            Laatst bijgewerkt:{' '}
+            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+          </Paragraph>{' '}
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {extractTitle(title)}
+            {LABELS.READ_MORE_ABOUT} {title}
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>
