@@ -205,6 +205,10 @@ const WAND_SPARKLES_SOLID = loadable(() =>
   import('-!svg-react-loader!@assets/images/wand-sparkles-solid.svg')
 );
 
+const ROTATE_RIGHT = loadable(() =>
+  import('-!svg-react-loader!@assets/images/rotate-right.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -278,6 +282,8 @@ export const VISUALS = {
   ENVELOPE,
   ENVELOPES_BULK,
   WAND_SPARKLES_SOLID,
+  ROTATE_RIGHT,
+  RELOAD: ROTATE_RIGHT,
 };
 
 export default {};

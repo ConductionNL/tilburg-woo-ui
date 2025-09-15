@@ -44,6 +44,7 @@ const ConObjectUploadFiles = ({
 
   const [files, setFiles] = useState([]);
   const [onlineFiles, setOnlineFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [labelOptions, setLabelOptions] = useState([createOption('Geen label')]);
   const [selectedLabels, setSelectedLabels] = useState([createOption('Geen label')]);
@@ -61,6 +62,7 @@ const ConObjectUploadFiles = ({
 
   const fetchOnlineFiles = async () => {
     try {
+      setLoading(true);
       await objectStore.fetchObjectFiles(register, schema, id, {
         _limit: 500,
         _page: 1,
@@ -70,6 +72,8 @@ const ConObjectUploadFiles = ({
       setOnlineFiles(filesData);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -466,14 +470,19 @@ const ConObjectUploadFiles = ({
           placeholder='Labels toevoegen of aanmaken'
           isMulti
           isClearable
-          onChange={(newValue) => setSelectedLabels(newValue)}
-          options={labelOptions.map((option) => ({
-            ...option,
-            isDisabled:
-              option.value === 'Geen label' &&
-              selectedLabels?.length &&
-              selectedLabels[0].value !== 'Geen label',
-          }))}
+          onChange={(newValue) => setSelectedLabels(newValue || [])}
+          options={labelOptions.map((option) => {
+            const hasGeenLabel = selectedLabels?.some(
+              (l) => l.value === 'Geen label'
+            );
+            const hasAnySelection = !!selectedLabels?.length;
+            return {
+              ...option,
+              isDisabled: hasGeenLabel
+                ? option.value !== 'Geen label'
+                : hasAnySelection && option.value === 'Geen label',
+            };
+          })}
           value={selectedLabels}
         />
 
@@ -490,14 +499,14 @@ const ConObjectUploadFiles = ({
               icon={<VISUALS.ELLIPSIS />}
               buttonType='primary'
               style='buttonSlim'
-              disabled={selectedRows.length === 0}
+              disabled={loading}
             >
               Acties {selectedRows.length > 0 && `(${selectedRows.length})`}
             </ConActionMenu.Trigger>
 
             <ConActionMenu.Menu position='right'>
               <ConActionMenu.Button
-                icon={<VISUALS.SPINNER />}
+                icon={<VISUALS.RELOAD />}
                 onClick={fetchOnlineFiles}
                 disabled={
                   uploadLoading ||
@@ -544,7 +553,7 @@ const ConObjectUploadFiles = ({
 
         <ConTable
           ref={tableRef}
-          loading={false}
+          loading={loading}
           data={tableData}
           tableHeaders={tableHeaders}
           renderSelectRowButtons={true}

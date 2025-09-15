@@ -6,7 +6,7 @@ import { AcModal } from '@components';
 
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
-import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
+import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 /**
  * Generic modal to publish or depublish one or multiple objects
@@ -55,27 +55,37 @@ const ConGenericBeheerPublishDepublishModal = ({
     if (isProcessing) return; // Prevent double-clicks
 
     setIsProcessing(true);
-    
+
     try {
-      console.log(`🚀 ${publish ? 'Publishing' : 'Depublishing'} objects:`, objects.map(obj => obj.id));
-      
+      console.info(
+        `🚀 ${publish ? 'Publishing' : 'Depublishing'} objects:`,
+        objects.map((obj) => obj.id)
+      );
+
       const results = publish
         ? await object.massPublishObjects(objects)
         : await object.massDepublishObjects(objects);
 
       if (results.successful.length > 0) {
-        console.log(`✅ Successfully ${publish ? 'published' : 'depublished'} ${results.successful.length} objects`);
-        
+        console.info(
+          `✅ Successfully ${publish ? 'published' : 'depublished'} ${
+            results.successful.length
+          } objects`
+        );
+
         // Close modal first to prevent state conflicts
         modalRef?.current?.close();
-        
+
         // Call onSuccess after a small delay to ensure modal is closed
         setTimeout(() => {
           onSuccess?.();
         }, 100);
       }
     } catch (err) {
-      console.error(`❌ Failed to ${publish ? 'publish' : 'depublish'} objects:`, err);
+      console.error(
+        `❌ Failed to ${publish ? 'publish' : 'depublish'} objects:`,
+        err
+      );
       // TODO: add user-facing error handling if required by UX guidelines
     } finally {
       setIsProcessing(false);
@@ -91,7 +101,7 @@ const ConGenericBeheerPublishDepublishModal = ({
   const handleCloseModal = useCallback(() => {
     // Reset processing state when modal closes
     setIsProcessing(false);
-    
+
     onClose?.();
   }, [onClose]);
 
@@ -99,7 +109,7 @@ const ConGenericBeheerPublishDepublishModal = ({
     const modal = modalRef?.current;
     if (modal) {
       modal.addEventListener('close', handleCloseModal);
-      
+
       // Cleanup function to remove event listener
       return () => {
         modal.removeEventListener('close', handleCloseModal);
@@ -133,9 +143,13 @@ const ConGenericBeheerPublishDepublishModal = ({
           disabled: isProcessing,
         },
         {
-          label: isProcessing 
-            ? (publish ? 'Publiceren...' : 'Depubliceren...')
-            : (publish ? 'Publiceren' : 'Depubliceren'),
+          label: isProcessing
+            ? publish
+              ? 'Publiceren...'
+              : 'Depubliceren...'
+            : publish
+            ? 'Publiceren'
+            : 'Depubliceren',
           icon: isProcessing ? (
             <VISUALS.SPINNER />
           ) : publish ? (
@@ -153,16 +167,22 @@ const ConGenericBeheerPublishDepublishModal = ({
     >
       <AcFlex column spacing='sm'>
         {/* Always show confirmation text and object list */}
-        Weet je zeker dat je deze {isSingular ? displayName : `${displayName}s`} wilt{' '}
-        {publish ? 'publiceren' : 'depubliceren'}?
-        
+        Weet je zeker dat je deze {isSingular
+          ? displayName
+          : `${displayName}s`} wilt {publish ? 'publiceren' : 'depubliceren'}?
         {/* Show objects being published/depublished */}
-        <div style={{ backgroundColor: '#f8f9fa', padding: '1rem', borderRadius: '4px', marginTop: '1rem' }}>
+        <div
+          style={{
+            backgroundColor: '#f8f9fa',
+            padding: '1rem',
+            borderRadius: '4px',
+            marginTop: '1rem',
+          }}
+        >
           <Paragraph style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
-            {isSingular 
-              ? `Te ${publish ? 'publiceren' : 'depubliceren'} object:` 
-              : `Te ${publish ? 'publiceren' : 'depubliceren'} objecten:`
-            }
+            {isSingular
+              ? `Te ${publish ? 'publiceren' : 'depubliceren'} object:`
+              : `Te ${publish ? 'publiceren' : 'depubliceren'} objecten:`}
           </Paragraph>
           {objects.map((obj) => (
             <Paragraph key={obj.id} style={{ marginLeft: '1rem' }}>

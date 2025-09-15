@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu } from '@components';
-import { AcTable, AcLink } from '@molecules';
+import { AcTable } from '@molecules';
 import { withStore } from '@stores';
 import { LABELS, VISUALS } from '@constants';
 import { Pagination } from '@amsterdam/design-system-react';

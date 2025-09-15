@@ -13,14 +13,14 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
-import { 
-  ConSorter, 
-  AcUUID, 
-  shouldResolveToName, 
-  getDisplayValue 
+import {
+  ConSorter,
+  AcUUID,
+  shouldResolveToName,
+  getDisplayValue,
 } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
-import { ConHorizontalOverflowWrapper , ConTableSearch } from '@components';
+import { ConHorizontalOverflowWrapper, ConTableSearch } from '@components';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
@@ -272,11 +272,29 @@ const ConTable = (
     [uniqueSymbol]
   );
 
+  // When the data changes, drop selections that no longer exist and announce via getSelectedRows
   useEffect(() => {
-    setSelectedAll(
-      selectedRows.length === sortedData.length && sortedData.length > 0
+    if (!selectedRows.length) return;
+    const stillSelected = sortedData.filter((row) =>
+      selectedRows.some((sel) => sel[uniqueSymbol] === row[uniqueSymbol])
     );
-  }, [selectedRows, sortedData.length]);
+    if (stillSelected.length !== selectedRows.length) {
+      setSelectedRows(stillSelected);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortedData, selectedRows, uniqueSymbol]);
+
+  // when the data changes, update the selected all state based on the selected rows
+  useEffect(() => {
+    const allSelected =
+      sortedData.length > 0 &&
+      sortedData.every((row) =>
+        selectedRows.some(
+          (selectedRow) => selectedRow[uniqueSymbol] === row[uniqueSymbol]
+        )
+      );
+    setSelectedAll(allSelected);
+  }, [selectedRows, sortedData, uniqueSymbol]);
 
   const renderCustomElement = useMemo(() => {
     return (element, row) => {
@@ -354,7 +372,7 @@ const ConTable = (
   // Create names map from object store cache for resolving references
   const namesMap = useMemo(() => {
     if (!objectStore?.namesCache) return {};
-    
+
     const map = {};
     Object.entries(objectStore.namesCache).forEach(([id, { name }]) => {
       map[id] = name;
@@ -388,13 +406,13 @@ const ConTable = (
           const resolvedValue = getDisplayValue(row[header.key], property, namesMap);
           if (resolvedValue !== row[header.key]) {
             // Show resolved name(s) with original ID(s) in tooltip
-            const originalValue = Array.isArray(row[header.key]) 
-              ? `Original IDs: ${row[header.key].join(', ')}` 
+            const originalValue = Array.isArray(row[header.key])
+              ? `Original IDs: ${row[header.key].join(', ')}`
               : `Original ID: ${row[header.key]}`;
-            
+
             return (
-              <span 
-                title={originalValue} 
+              <span
+                title={originalValue}
                 data-tooltip-id={TOOLTIP_ID}
                 style={{ cursor: 'help' }}
               >

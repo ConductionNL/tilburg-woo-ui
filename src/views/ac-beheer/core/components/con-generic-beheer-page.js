@@ -645,7 +645,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                     <ConActionMenu.Menu position='right'>
                       <ConActionMenu.Button
-                        icon={<VISUALS.SPINNER />}
+                        icon={<VISUALS.RELOAD />}
                         onClick={() => fetchData()}
                         disabled={loading}
                       >
