@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { AcCheckbox } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
+import { ConExistingModulesInfoBox } from '@components';
 import {
   Paragraph,
   Table,
@@ -28,6 +29,7 @@ const ConFormStandaardenStage = ({
   setStandaardenLoading: setParentStandaardenLoading,
   standaardenOptions,
   standaardenOptionsLoading,
+  existingModulesLookup,
 }) => {
   // ✅ SIMPLIFIED: Use helper method to get new modules with applicatie data
   const newModules = useMemo(() => {
@@ -536,8 +538,8 @@ const ConFormStandaardenStage = ({
     // Ensure compliancy objects have standardName and bewijsFilename properties
     // This fixes edit mode where existing compliancy data might be missing these properties
     if (Object.keys(tableState).length > 0) {
-      const entriesWithCompliancy = Object.entries(tableState).filter(
-        ([key, entry]) => entry.isCompliant
+      const entriesWithCompliancy = Object.values(tableState).filter(
+        (entry) => entry.isCompliant
       );
 
       if (entriesWithCompliancy.length > 0) {
@@ -545,7 +547,7 @@ const ConFormStandaardenStage = ({
           const modules = [...(prev.modules || [])];
           let hasChanges = false;
 
-          entriesWithCompliancy.forEach(([key, entry]) => {
+          entriesWithCompliancy.forEach((entry) => {
             const moduleIndex = entry.moduleId;
             const app = modules[moduleIndex];
 
@@ -606,7 +608,7 @@ const ConFormStandaardenStage = ({
     // Only run when the compliancy status actually changes, not on every tableState update
     JSON.stringify(
       Object.entries(tableState)
-        .filter(([key, entry]) => entry.isCompliant)
+        .filter(([, entry]) => entry.isCompliant)
         .map(([key, entry]) => ({
           key,
           standardId: entry.standardId,
@@ -648,6 +650,12 @@ const ConFormStandaardenStage = ({
             worden.
           </Paragraph>
         </div>
+
+        <ConExistingModulesInfoBox
+          key='standaarden-stage-existing-modules-info'
+          existingModulesLookup={existingModulesLookup}
+          configType='standaarden'
+        />
       </div>
     );
   }
@@ -660,6 +668,12 @@ const ConFormStandaardenStage = ({
           Standaarden
         </h2>
         <Paragraph>Standaarden laden...</Paragraph>
+
+        <ConExistingModulesInfoBox
+          key='standaarden-stage-existing-modules-info'
+          existingModulesLookup={existingModulesLookup}
+          configType='standaarden'
+        />
       </div>
     );
   }
@@ -700,6 +714,12 @@ const ConFormStandaardenStage = ({
             te selecteren of doorgaan zonder standaarden.
           </Paragraph>
         </div>
+
+        <ConExistingModulesInfoBox
+          key='standaarden-stage-existing-modules-info'
+          existingModulesLookup={existingModulesLookup}
+          configType='standaarden'
+        />
       </div>
     );
   }
@@ -960,6 +980,12 @@ const ConFormStandaardenStage = ({
           );
         })()}
       </div>
+
+      <ConExistingModulesInfoBox
+        key='standaarden-stage-existing-modules-info'
+        existingModulesLookup={existingModulesLookup}
+        configType='standaarden'
+      />
     </div>
   );
 };

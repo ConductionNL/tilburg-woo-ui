@@ -201,6 +201,26 @@ const ConFormReferentiecomponentenStage = memo(
           kunt u terecht op GEMMA Online.
         </Paragraph>
 
+        {newModules.length === 0 && (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '2rem',
+              background: '#f8f9fa',
+              borderRadius: '8px',
+            }}
+          >
+            <Paragraph>
+              <strong>Geen nieuwe applicaties gevonden</strong>
+            </Paragraph>
+            <Paragraph>
+              Alle applicaties in dit product zijn bestaande applicaties die al hun
+              eigen referentiecomponenten hebben vastgelegd in de catalogus. Er
+              hoeven geen referentiecomponenten geconfigureerd te worden.
+            </Paragraph>
+          </div>
+        )}
+
         <ConModulesChoiceSwitch
           isMultiNewApplicatie={isMultiNewApplicatie}
           sameForAll={sameForAll}

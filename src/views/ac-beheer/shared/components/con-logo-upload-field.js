@@ -25,6 +25,20 @@ export const LogoUploadField = ({
 }) => {
   const inputRef = useRef(null);
   const [selectedFileName, setSelectedFileName] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const defaultAccept = [
+    'image/png',
+    'image/jpeg',
+    'image/jpg',
+    'image/webp',
+    'image/svg+xml',
+  ];
+  const acceptAttr = Array.isArray(accept)
+    ? accept.join(',')
+    : typeof accept === 'string' && accept.length > 0
+    ? accept
+    : defaultAccept.join(',');
 
   const handleLogoFileSelect = (e) => {
     const files = e?.target?.files;
@@ -32,10 +46,54 @@ export const LogoUploadField = ({
       onChange('');
       setSelectedFileName('');
       if (onChangeFileName) onChangeFileName('');
+      setErrorMessage('');
       return;
     }
 
     const file = files[0];
+
+    // Build normalized tokens from `accept` supporting:
+    // - extensions: ".png"
+    // - exact MIME types: "image/png"
+    // - wildcard types: "image/*"
+    const tokens = acceptAttr
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    const fileType = (file.type || '').toLowerCase();
+    const fileExt =
+      file.name && file.name.includes('.')
+        ? `.${file.name.split('.').pop().toLowerCase()}`
+        : '';
+
+    const isAllowed = tokens.some((token) => {
+      // Match explicit extension (e.g. ".png")
+      if (token.startsWith('.')) return fileExt === token;
+      // Match wildcard groups (e.g. "image/*")
+      if (token.endsWith('/*')) {
+        const base = token.slice(0, -2);
+        return fileType.startsWith(`${base}/`);
+      }
+      // Match exact MIME types (e.g. "image/png")
+      if (token.includes('/')) return fileType === token;
+      // Fallback for bare extensions without a dot (e.g. 'png')
+      return token === fileExt.replace('.', '');
+    });
+
+    if (!isAllowed) {
+      if (inputRef.current) inputRef.current.value = null;
+      onChange('');
+      setSelectedFileName('');
+      if (onChangeFileName) onChangeFileName('');
+      setErrorMessage(
+        `Bestandstype niet toegestaan. Toegestane typen: ${readableAccept.join(
+          ', '
+        )}`
+      );
+      return;
+    }
+
+    setErrorMessage('');
     setSelectedFileName(file.name);
     if (onChangeFileName) onChangeFileName(file.name);
     const reader = new FileReader();
@@ -56,19 +114,6 @@ export const LogoUploadField = ({
       inputRef.current.click();
     }
   };
-
-  const defaultAccept = [
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp',
-    'image/svg+xml',
-  ];
-  const acceptAttr = Array.isArray(accept)
-    ? accept.join(',')
-    : typeof accept === 'string' && accept.length > 0
-    ? accept
-    : defaultAccept.join(',');
 
   /**
    * Convert the accept attribute to a readable format
@@ -226,6 +271,21 @@ export const LogoUploadField = ({
           }}
         >
           Toegestane bestandstypen: {readableAccept.join(', ')}
+        </small>
+      )}
+
+      {errorMessage && (
+        <small
+          role='alert'
+          style={{
+            display: 'block',
+            marginTop: '0.5em',
+            color: 'var(--utrecht-form-input-invalid-color, #d52b1e)',
+            fontSize: '0.85em',
+          }}
+        >
+          {/* Accessible inline error for invalid file types */}
+          {errorMessage}
         </small>
       )}
 

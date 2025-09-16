@@ -45,6 +45,14 @@ const ConGebruikStepInformatie = ({
               // Avoid internal $ref search churn for contactpersoon on this step
               // by providing an empty, stable optionsProvider (store-driven options may be prefilled elsewhere)
               optionsProvider={[]}
+              customProps={{
+                getOptionLabel: (opt) => {
+                  const c = opt?.data ?? opt;
+                  return [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+                    .filter(Boolean)
+                    .join(' ');
+                },
+              }}
             />
           </div>
         )}
