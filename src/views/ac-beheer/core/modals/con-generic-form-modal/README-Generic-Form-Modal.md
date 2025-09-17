@@ -178,6 +178,7 @@ case 'my-new-entity':
   transformSubmitData: (data) => data,  // Data transformation before submit
   additionalEffects: [],       // Complex field dependencies
   customValidation: null,      // Custom validation logic
+  title: null,                 // Optional: base modal title. Falls back to schema title or type
 }
 ```
 

@@ -68,6 +68,9 @@ const FormModalConfigFactory = {
 
       // Custom validation logic
       customValidation: null,
+
+      // Custom name for the form modal (gets applied as `${title} toevoegen` or `${title} bewerken`)
+      title: null,
     };
 
     switch (type) {
@@ -333,13 +336,13 @@ const FormModalConfigFactory = {
             oin: { visible: false },
             rol: { visible: false },
             cbs: {
-              visible: (formData) => formData.type?.toLowerCase() === 'gemeente',
+              visible: (formData) => formData.type?.toLowerCase() !== 'leverancier',
             },
             samenwerkingen: { visible: false },
             deelnames: { visible: false },
             deelnemers: { visible: false },
             kvkNummer: {
-              visible: (formData) => formData.type?.toLowerCase() === 'leverancier',
+              visible: (formData) => !['gemeente', 'samenwerking'].includes(formData.type?.toLowerCase()),
             },
             contactpersonen: { visible: false },
             verklaringen: { visible: false },
@@ -363,15 +366,16 @@ const FormModalConfigFactory = {
            * Compute initial defaults for contactpersoon
            * - Prefill organisatie from active organisation when creating (not editing) and when not pre-selected
            */
+          title: 'Gebruiker',
           initialData: ({ user, isEdit, preSelected } = {}) => {
             const activeOrg = user?.activeOrganization || null;
-            const orgId = String(activeOrg?.id);
+            const orgId = String(activeOrg?.uuid);
 
             return {
               voorkeuren: { taal: 'NL-nl', thema: 'licht' },
               // Do not override when editing or when a preSelected organisatie exists
               ...(orgId &&
-                !(isEdit || (preSelected && preSelected.organisatie)) && {
+                !(isEdit || !!preSelected?.organisatie) && {
                   organisatie: orgId,
                 }),
             };
@@ -385,13 +389,6 @@ const FormModalConfigFactory = {
               { label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
               { label: 'Bezoeker', value: 'Bezoeker' },
             ],
-            organisatie: {
-              type: 'collection',
-              register: 'voorzieningen',
-              schema: 'organisatie',
-              labelField: (item) => item.naam || item.id,
-              valueField: 'id',
-            },
           },
           fieldConfigs: {
             // Hide fields that are not in the current form
@@ -400,10 +397,8 @@ const FormModalConfigFactory = {
             aanmaakdatum: { visible: false },
             wijzigingsdatum: { visible: false },
             voorkeuren: { visible: false },
-            // Disable organisatie field for non-admin users
-            organisatie: {
-              visible: true,
-            },
+            // Disable organisatie field since you can only edit for your own organisation anyway
+            organisatie: { visible: false },
             // Make telefoonnummer required when aanspreekPunt is true
             telefoonnummer: {
               visible: true,
