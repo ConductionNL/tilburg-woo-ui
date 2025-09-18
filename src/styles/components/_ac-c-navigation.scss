@@ -211,6 +211,11 @@
   display: block;
   color: var(--conduction-primary-top-nav-color);
 }
+.ac-c-navigation__primary .ac-c-navigation__icon {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
 
 .ac-c-navigation__primary
   .ac-c-navigation__link:not(.ac-c-navigation__current-link)
@@ -224,8 +229,18 @@
   font-weight: var(--conduction-primary-top-nav-hover-font-weight);
 }
 
-.ac-c-navigation__primary .ac-c-navigation__li:hover svg path {
+.ac-c-navigation__primary
+  .ac-c-navigation__li:hover:not(.ac-c-navigation__dropdown-li)
+  svg
+  path {
   fill: var(--conduction-primary-top-nav-hover-color);
+}
+
+.ac-c-navigation__primary .ac-c-navigation__dropdown-li svg path {
+  fill: var(--conduction-primary-top-nav-dropdown-color) !important;
+}
+.ac-c-navigation__primary .ac-c-navigation__dropdown-li:hover svg path {
+  fill: var(--conduction-primary-top-nav-dropdown-hover-color) !important;
 }
 
 .ac-c-navigation__link > * {
@@ -274,6 +289,15 @@
 }
 
 .ac-c-navigation__primary
+  .ac-c-navigation__li
+  .ac-c-navigation__label
+  .ac-c-navigation__icon {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-c-navigation__primary
   .ac-c-navigation__dropdown
   .ac-c-navigation__li:hover
   .ac-c-navigation__label {
@@ -306,9 +330,15 @@
 .ac-c-navigation__dropdown > .ac-c-navigation__li {
   padding-inline-start: 18px;
   font-weight: var(--conduction-primary-top-nav-dropdown-font-weight);
-  border-bottom-width: var(--conduction-primary-top-nav-dropdown-item-border-bottom-width);
-  border-bottom-style: var(--conduction-primary-top-nav-dropdown-item-border-bottom-style);
-  border-bottom-color: var(--conduction-primary-top-nav-dropdown-item-border-bottom-color);
+  border-bottom-width: var(
+    --conduction-primary-top-nav-dropdown-item-border-bottom-width
+  );
+  border-bottom-style: var(
+    --conduction-primary-top-nav-dropdown-item-border-bottom-style
+  );
+  border-bottom-color: var(
+    --conduction-primary-top-nav-dropdown-item-border-bottom-color
+  );
 }
 
 .ac-c-navigation__toggle-icon {
@@ -322,10 +352,16 @@
 }
 
 .ac-c-navigation__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--conduction-primary-top-nav-item-icon-margin);
+}
+
+.ac-c-navigation__text {
   overflow: hidden;
-  max-width: 37ch;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 37ch;
 }
 
 .ac-c-navigation__label > :not(:last-child) {
