@@ -38,7 +38,7 @@ export const ENDPOINTS = AcLockObject({
   },
   PAGES: {
     INDEX: `/opencatalogi/api/pages`, // GET
-    SHOW: (_slug) => `/opencatalogi/api/pages/${_slug}`, // GET
+    SHOW: (_slug) => `/opencatalogi/api/pages${_slug}`, // GET
   },
   THEMES: {
     INDEX: `/opencatalogi/api/themes`, // GET
