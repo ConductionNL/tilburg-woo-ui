@@ -25,10 +25,7 @@ import { AcButton } from '@molecules';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { canReadField } from '@utils/field-authorization';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { 
-  extractReferenceIdsFromCollection,
-  createReferenceResolver 
-} from '@src/utilities';
+import { extractReferenceIdsFromCollection } from '@src/utilities';
 
 /**
  * Generic Beheer Page Component
@@ -159,11 +156,6 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   // to avoid its initial fetch being aborted on type changes)
   let makeActionsForContext; // will be assigned below
 
-  // Create reference resolver for UUID to name resolution
-  const referenceResolver = useMemo(() => {
-    return createReferenceResolver(object);
-  }, [object]);
-
   const fetchData = useCallback(
     async (searchParams = {}) => {
       if (!objectType || !config) {
@@ -186,7 +178,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
         if (beoordelingFilter) storeParams['beoordeling'] = beoordelingFilter;
 
-        console.log(`🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`);
+        console.info(
+          `🔗 Fetching collection for ${config.registerSlug}/${config.schemaSlug} with related names`
+        );
 
         // Use object store for collection data - this handles loading/error states automatically
         await object.fetchCollection(
@@ -198,15 +192,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         // Fetch schema using object store
         await object.fetchSchema(config.schemaSlug);
 
-        // Additional fallback: manually resolve any remaining reference IDs 
+        // Additional fallback: manually resolve any remaining reference IDs
         // (for cases where backend doesn't support _relatedNames yet)
         const collection = object.getCollection(objectType);
         const schema = object.getSchema(schemaType);
-        
+
         if (collection.results?.length && schema) {
-          const referenceIds = extractReferenceIdsFromCollection(collection.results, schema);
+          const referenceIds = extractReferenceIdsFromCollection(
+            collection.results,
+            schema
+          );
           if (referenceIds.length > 0) {
-            console.log(`📋 Found ${referenceIds.length} additional reference IDs to resolve`);
+            console.info(
+              `📋 Found ${referenceIds.length} additional reference IDs to resolve`
+            );
             // This will fetch any missing names and cache them
             await object.getNamesForMultipleIds(referenceIds);
           }
@@ -562,6 +561,16 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     return headers;
   }, [tableHeaders, config.statusIcon]);
 
+  // Memoize modal config to keep identity stable and avoid remount loops in modal factory
+  const modalConfig = useMemo(() => {
+    if (!config) return null;
+    const baseModals = Array.isArray(config.modals) ? config.modals : [];
+    const modals = baseModals.includes('dynamicCreate')
+      ? baseModals
+      : [...baseModals, 'dynamicCreate'];
+    return { ...config, modals };
+  }, [config]);
+
   // If no configuration exists for this type, show wrong page
   if (!config) {
     return (
@@ -636,7 +645,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                     <ConActionMenu.Menu position='right'>
                       <ConActionMenu.Button
-                        icon={<VISUALS.SPINNER />}
+                        icon={<VISUALS.RELOAD />}
                         onClick={() => fetchData()}
                         disabled={loading}
                       >
@@ -772,11 +781,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             tableRef,
             fetchData,
             store: { object, user }, // Pass store for cross-collection refreshes
-            config: {
-              ...config,
-              // Ensure dynamicCreate is available everywhere
-              modals: [...(config.modals || []), 'dynamicCreate'],
-            },
+            config: modalConfig,
             dynamicCreateTargetType,
             dynamicCreatePreSelected,
             onModalMounted: (modalType) => {

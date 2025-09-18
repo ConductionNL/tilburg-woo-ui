@@ -1469,6 +1469,7 @@ const AcFormsProductInner = ({
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
             setStandaardenLoading={setStandaardenLoading}
             standaardenOptions={standaardenOptions}
+            existingModulesLookup={existingModulesLookup}
             standaardenOptionsLoading={standaardenOptionsLoading}
           />
         );

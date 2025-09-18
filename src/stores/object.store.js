@@ -3305,12 +3305,12 @@ export class ObjectStore {
       if (response.ok) {
         const data = response.data;
         const results = data.results || [];
-        
+
         // Process related names if present in response
         if (data.relatedNames) {
           this.processRelatedNamesFromResponse(data);
         }
-        
+
         // Update cache with fresh data
         this.setCachedList(register, schema, results, params);
 
@@ -3373,12 +3373,12 @@ export class ObjectStore {
 
       const data = response.data;
       const results = data.results || [];
-      
+
       // Process related names if present in response
       if (data.relatedNames) {
         this.processRelatedNamesFromResponse(data);
       }
-      
+
       // Cache the fresh data
       this.setCachedList(register, schema, results, params);
 
@@ -3447,7 +3447,7 @@ export class ObjectStore {
     if (cached) {
       const age = Date.now() - cached.timestamp;
       if (age < this.namesCacheConfig.maxAge) {
-        console.log(`📋 Name cache hit for ${id}: ${cached.name}`);
+        console.info(`📋 Name cache hit for ${id}: ${cached.name}`);
         return cached.name;
       }
       // Cache expired, remove it
@@ -3456,19 +3456,19 @@ export class ObjectStore {
 
     // Fallback to backend
     try {
-      console.log(`🌐 Fetching name for ${id} from backend`);
+      console.info(`🌐 Fetching name for ${id} from backend`);
       const response = await nextcloudApi.get(`/openregister/api/names/${id}`);
-      
+
       if (response.ok && response.data?.names?.[id]) {
         const name = response.data.names[id];
         this.setNamesInCache({ [id]: name });
-        console.log(`✅ Single name fetched for ${id}: ${name}`);
+        console.info(`✅ Single name fetched for ${id}: ${name}`);
         return name;
       } else if (response.ok && response.data?.name) {
         // Fallback for different response format
         const name = response.data.name;
         this.setNamesInCache({ [id]: name });
-        console.log(`✅ Single name fetched (alt format) for ${id}: ${name}`);
+        console.info(`✅ Single name fetched (alt format) for ${id}: ${name}`);
         return name;
       }
     } catch (error) {
@@ -3492,7 +3492,7 @@ export class ObjectStore {
     const missingIds = [];
 
     // Check cache for existing names
-    ids.forEach(id => {
+    ids.forEach((id) => {
       if (!id) {
         results[id] = id;
         return;
@@ -3508,31 +3508,35 @@ export class ObjectStore {
         // Cache expired, remove it
         delete this.namesCache[id];
       }
-      
+
       missingIds.push(id);
     });
 
-    console.log(`📋 Names cache hits: ${Object.keys(results).length}, misses: ${missingIds.length}`);
+    console.info(
+      `📋 Names cache hits: ${Object.keys(results).length}, misses: ${
+        missingIds.length
+      }`
+    );
 
     // Fetch missing names from backend
     if (missingIds.length > 0) {
       try {
-        console.log(`🌐 Fetching names for ${missingIds.length} IDs from backend`);
+        console.info(`🌐 Fetching names for ${missingIds.length} IDs from backend`);
         const response = await nextcloudApi.post('/openregister/api/names', {
-          ids: missingIds
+          ids: missingIds,
         });
-        
+
         if (response.ok && response.data?.names) {
           const fetchedNames = response.data.names;
           this.setNamesInCache(fetchedNames);
-          
-          console.log(`✅ Multiple names fetched:`, {
+
+          console.info(`✅ Multiple names fetched:`, {
             total: response.data.total,
             requested: response.data.requested,
             cached: response.data.cached,
-            executionTime: response.data.execution_time
+            executionTime: response.data.execution_time,
           });
-          
+
           // Add fetched names to results
           Object.entries(fetchedNames).forEach(([id, name]) => {
             results[id] = name;
@@ -3544,7 +3548,7 @@ export class ObjectStore {
     }
 
     // Fill in missing names with IDs as fallback
-    missingIds.forEach(id => {
+    missingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
       }
@@ -3555,16 +3559,16 @@ export class ObjectStore {
 
   /**
    * Sets a single name in the cache
-   * @param {string} id - The UUID 
+   * @param {string} id - The UUID
    * @param {string} name - The name to cache
    */
   @action
   setNamesInCacheSingle = (id, name) => {
     if (!id || !name) return;
-    
+
     this.namesCache[id] = {
       name,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   };
 
@@ -3587,7 +3591,7 @@ export class ObjectStore {
     });
 
     if (count > 0) {
-      console.log(`💾 Cached ${count} names in names cache`);
+      console.info(`💾 Cached ${count} names in names cache`);
     }
   };
 
@@ -3599,7 +3603,11 @@ export class ObjectStore {
   processRelatedNamesFromResponse = (apiResponse) => {
     if (!apiResponse?.relatedNames) return;
 
-    console.log(`📥 Processing ${Object.keys(apiResponse.relatedNames).length} related names from API response`);
+    console.info(
+      `📥 Processing ${
+        Object.keys(apiResponse.relatedNames).length
+      } related names from API response`
+    );
     this.setNamesInCache(apiResponse.relatedNames);
   };
 
@@ -3614,14 +3622,16 @@ export class ObjectStore {
     this.setError(requestType, null);
 
     try {
-      console.log('🔥 Triggering manual names cache warmup');
+      console.info('🔥 Triggering manual names cache warmup');
       const response = await nextcloudApi.post('/openregister/api/names/warmup');
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to trigger names warmup: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to trigger names warmup: ${response.status} ${response.statusText}`
+        );
       }
 
-      console.log('✅ Names cache warmup triggered:', response.data);
+      console.info('✅ Names cache warmup triggered:', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ Names cache warmup trigger failed:', error);
@@ -3643,14 +3653,16 @@ export class ObjectStore {
     this.setError(requestType, null);
 
     try {
-      console.log('📊 Fetching names cache stats from backend');
+      console.info('📊 Fetching names cache stats from backend');
       const response = await nextcloudApi.get('/openregister/api/names/stats');
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch names stats: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch names stats: ${response.status} ${response.statusText}`
+        );
       }
 
-      console.log('✅ Names cache stats fetched:', response.data);
+      console.info('✅ Names cache stats fetched:', response.data);
       return response.data;
     } catch (error) {
       console.error('❌ Failed to fetch names cache stats:', error);
@@ -3672,23 +3684,25 @@ export class ObjectStore {
     this.setError(requestType, null);
 
     try {
-      console.log('🔥 Starting names cache warmup');
+      console.info('🔥 Starting names cache warmup');
       const response = await nextcloudApi.get('/openregister/api/names');
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to warmup names cache: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to warmup names cache: ${response.status} ${response.statusText}`
+        );
       }
 
       const allNames = response.data?.names || {};
       const count = Object.keys(allNames).length;
-      
+
       this.setNamesInCache(allNames);
-      
-      console.log(`✅ Names cache warmed up with ${count} names:`, {
+
+      console.info(`✅ Names cache warmed up with ${count} names:`, {
         total: response.data?.total,
         cached: response.data?.cached,
         executionTime: response.data?.execution_time,
-        cacheStats: response.data?.cache_stats
+        cacheStats: response.data?.cache_stats,
       });
       return count;
     } catch (error) {
@@ -3707,7 +3721,7 @@ export class ObjectStore {
   clearNamesCache = () => {
     const count = Object.keys(this.namesCache).length;
     this.namesCache = {};
-    console.log(`🗑️ Cleared ${count} names from cache`);
+    console.info(`🗑️ Cleared ${count} names from cache`);
   };
 
   /**
@@ -3752,7 +3766,7 @@ export class ObjectStore {
     });
 
     if (removed > 0) {
-      console.log(`🧹 Cleaned ${removed} expired entries from names cache`);
+      console.info(`🧹 Cleaned ${removed} expired entries from names cache`);
     }
 
     return removed;
@@ -3870,7 +3884,7 @@ export class ObjectStore {
   @action
   cacheLoadRegister = async (registerSlug) => {
     // const requestType = `cache_load_${registerSlug}`;
-    
+
     runInAction(() => {
       this.cacheLoadingState[registerSlug] = true;
       this.cacheLoadingErrors[registerSlug] = null;

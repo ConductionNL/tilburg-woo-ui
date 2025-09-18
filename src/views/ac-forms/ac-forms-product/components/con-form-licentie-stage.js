@@ -121,6 +121,9 @@ const ConFormLicentieStage = memo(
       }
     }, [newModules.length, isMultiNewApplicatie]);
 
+    // ✅ Use the real index inside product.modules for the first new module
+    const firstNewModuleIndex = applicatieIndices[0];
+
     const updateModuleField = (moduleIndex, key, value) => {
       setProduct((prev) => {
         const modules = [...(prev.modules || [])];
@@ -251,10 +254,20 @@ const ConFormLicentieStage = memo(
                         ...(value !== 'Open Source' ? { licentie: '' } : {}),
                       });
                     } else {
-                      updateModuleField(0, 'licentietype', value);
-                      updateModuleField(0, 'licentieType', value);
-                      if (value !== 'Open Source')
-                        updateModuleField(0, 'licentie', '');
+                      if (typeof firstNewModuleIndex === 'number') {
+                        updateModuleField(
+                          firstNewModuleIndex,
+                          'licentietype',
+                          value
+                        );
+                        updateModuleField(
+                          firstNewModuleIndex,
+                          'licentieType',
+                          value
+                        );
+                        if (value !== 'Open Source')
+                          updateModuleField(firstNewModuleIndex, 'licentie', '');
+                      }
                     }
                   }}
                   options={licentieTypeOptions}
@@ -329,7 +342,9 @@ const ConFormLicentieStage = memo(
                       // Then update all modules
                       applyToAll({ licentie: value });
                     } else {
-                      updateModuleField(0, 'licentie', value);
+                      if (typeof firstNewModuleIndex === 'number') {
+                        updateModuleField(firstNewModuleIndex, 'licentie', value);
+                      }
                     }
                   }}
                   options={licentieOptions}
@@ -425,6 +440,7 @@ const ConFormLicentieStage = memo(
               <TableBody>
                 {newModules.map((module, index) => {
                   const app = module;
+                  const realIndex = applicatieIndices[index];
                   const selectedType =
                     licentieTypeOptions.find(
                       (o) => o.value === (app.licentietype || app.licentieType)
@@ -449,11 +465,11 @@ const ConFormLicentieStage = memo(
                           onChange={(opt) => {
                             const value = opt?.value || null;
                             // Store as both schema field name and camelCase for compatibility
-                            updateModuleField(index, 'licentietype', value);
-                            updateModuleField(index, 'licentieType', value);
+                            updateModuleField(realIndex, 'licentietype', value);
+                            updateModuleField(realIndex, 'licentieType', value);
                             // Clear license if not Open Source
                             if (value !== 'Open Source') {
-                              updateModuleField(index, 'licentie', '');
+                              updateModuleField(realIndex, 'licentie', '');
                             }
                           }}
                           options={licentieTypeOptions}
@@ -472,7 +488,11 @@ const ConFormLicentieStage = memo(
                           )}
                           value={selectedLicentie}
                           onChange={(opt) =>
-                            updateModuleField(index, 'licentie', opt?.value || null)
+                            updateModuleField(
+                              realIndex,
+                              'licentie',
+                              opt?.value || null
+                            )
                           }
                           options={licentieOptions}
                           isDisabled={
