@@ -22,6 +22,7 @@ export const LogoUploadField = ({
   accept,
   showPreview = true,
   size = 'normal',
+  maxFileSize = 2048, // in KB (default 2 MB)
 }) => {
   const inputRef = useRef(null);
   const [selectedFileName, setSelectedFileName] = useState('');
@@ -93,6 +94,20 @@ export const LogoUploadField = ({
       return;
     }
 
+    // Validate file size against maxFileSize (KB)
+    const limitBytes = (Number(maxFileSize) || 0) * 1024;
+    const fileSizeBytes = file.size || 0;
+    if (limitBytes > 0 && fileSizeBytes > limitBytes) {
+      if (inputRef.current) inputRef.current.value = null;
+      onChange('');
+      setSelectedFileName('');
+      if (onChangeFileName) onChangeFileName('');
+      setErrorMessage(
+        `Bestand is te groot. Maximale grootte is ${readableMaxFileSize}.`
+      );
+      return;
+    }
+
     setErrorMessage('');
     setSelectedFileName(file.name);
     if (onChangeFileName) onChangeFileName(file.name);
@@ -141,6 +156,20 @@ export const LogoUploadField = ({
       return type.includes('+') ? type.split('+')[0] : type;
     });
   }, [acceptAttr]);
+
+  // Human-readable max file size (uses highest fitting unit)
+  const readableMaxFileSize = useMemo(() => {
+    let sizeValue = Number(maxFileSize) || 0; // in KB
+    const units = ['KB', 'MB', 'GB'];
+    let unitIndex = 0;
+    while (sizeValue >= 1024 && unitIndex < units.length - 1) {
+      sizeValue = sizeValue / 1024;
+      unitIndex += 1;
+    }
+    const isInteger = Number.isInteger(sizeValue);
+    const displayValue = isInteger ? sizeValue : Math.round(sizeValue * 10) / 10; // one decimal
+    return `${displayValue} ${units[unitIndex]}`;
+  }, [maxFileSize]);
 
   // Validate size prop
   const validSizes = ['normal', 'small'];
