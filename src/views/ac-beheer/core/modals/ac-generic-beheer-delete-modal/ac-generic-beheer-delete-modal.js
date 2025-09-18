@@ -265,8 +265,8 @@ const ConGenericBeheerDeleteModal = ({
               <Paragraph>
                 Controleren of{' '}
                 {isSingular
-                  ? `dit ${displayName.toLowerCase()}`
-                  : `deze ${displayName.toLowerCase()}s`}{' '}
+                  ? `dit ${displayName?.toLowerCase()}`
+                  : `deze ${displayName?.toLowerCase()}s`}{' '}
                 wordt gebruikt door andere objecten...
               </Paragraph>
             </AcFlex>
@@ -290,8 +290,8 @@ const ConGenericBeheerDeleteModal = ({
               <VISUALS.CHECK />
               <Paragraph>
                 {isSingular
-                  ? `Dit ${displayName.toLowerCase()} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
-                  : `Deze ${displayName.toLowerCase()}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`}
+                  ? `Dit ${displayName?.toLowerCase()} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
+                  : `Deze ${displayName?.toLowerCase()}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`}
               </Paragraph>
             </AcFlex>
           </Alert>
@@ -306,10 +306,10 @@ const ConGenericBeheerDeleteModal = ({
                 <Paragraph>
                   <strong>
                     {isSingular
-                      ? `Dit ${displayName.toLowerCase()} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${
+                      ? `Dit ${displayName?.toLowerCase()} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${
                           totalUsedObjects === 1 ? 'ander object' : 'andere objecten'
                         }.`
-                      : `Deze ${displayName.toLowerCase()}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`}
+                      : `Deze ${displayName?.toLowerCase()}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`}
                   </strong>
                 </Paragraph>
               </AcFlex>
@@ -359,13 +359,13 @@ const ConGenericBeheerDeleteModal = ({
           {usageCheckComplete && hasUsedObjects
             ? `Je kunt ${
                 isSingular
-                  ? `dit ${displayName.toLowerCase()}`
-                  : `deze ${displayName.toLowerCase()}s`
+                  ? `dit ${displayName?.toLowerCase()}`
+                  : `deze ${displayName?.toLowerCase()}s`
               } pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
             : `Weet je zeker dat je ${
                 isSingular
-                  ? `dit ${displayName.toLowerCase()}`
-                  : `deze ${displayName.toLowerCase()}s`
+                  ? `dit ${displayName?.toLowerCase()}`
+                  : `deze ${displayName?.toLowerCase()}s`
               } wilt verwijderen?`}
         </Paragraph>
 
