@@ -20,7 +20,7 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
 
   // Get admin dashboard menu from position 7 with user groups
   const dashboardMenu = menu.getAdminDashboardMenu(
-    user.isAuthenticated, 
+    user.isAuthenticated,
     user.userGroups || []
   );
 
@@ -28,18 +28,18 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
   const getIconForMenuItem = (menuItem) => {
     // Map menu item names or links to icons
     const iconMap = {
-      'Dashboard': VISUALS.CHART_LINE,
-      'Producten': VISUALS.CUBE,
-      'Applicaties': VISUALS.CUBE,
-      'Diensten': VISUALS.HAND_HOLDING,
-      'Gebruik': VISUALS.CLOUD,
-      'Versie': VISUALS.INFO,
-      'Contracten': VISUALS.HAND_SHAKE,
-      'Overeenkomsten': VISUALS.HAND_SHAKE,
-      'Organisaties': VISUALS.BUILDING,
-      'Kwetsbaarheden': VISUALS.TRIANGLE_EXCLAMATION,
-      'Koppelingen': VISUALS.LINK,
-      'Contactpersonen': VISUALS.USERS,
+      Dashboard: VISUALS.CHART_LINE,
+      Producten: VISUALS.CUBE,
+      Applicaties: VISUALS.CUBE,
+      Diensten: VISUALS.HAND_HOLDING,
+      Gebruik: VISUALS.CLOUD,
+      Versie: VISUALS.INFO,
+      Contracten: VISUALS.HAND_SHAKE,
+      Overeenkomsten: VISUALS.HAND_SHAKE,
+      Organisaties: VISUALS.BUILDING,
+      Kwetsbaarheden: VISUALS.TRIANGLE_EXCLAMATION,
+      Koppelingen: VISUALS.LINK,
+      Contactpersonen: VISUALS.USERS,
     };
 
     // Try to match by name first
@@ -53,7 +53,8 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
     if (linkPath.includes('/diensten')) return VISUALS.HAND_HOLDING;
     if (linkPath.includes('/gebruik')) return VISUALS.CLOUD;
     if (linkPath.includes('/versie')) return VISUALS.INFO;
-    if (linkPath.includes('/contracten') || linkPath.includes('/overeenkomsten')) return VISUALS.HAND_SHAKE;
+    if (linkPath.includes('/contracten') || linkPath.includes('/overeenkomsten'))
+      return VISUALS.HAND_SHAKE;
     if (linkPath.includes('/organisaties')) return VISUALS.BUILDING;
     if (linkPath.includes('/kwetsbaarheden')) return VISUALS.TRIANGLE_EXCLAMATION;
     if (linkPath.includes('/contactpersonen')) return VISUALS.USERS;
@@ -69,12 +70,12 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
   const isCurrentPath = (menuItem) => {
     const currentPath = location.pathname;
     const itemLink = menuItem.link || '';
-    
+
     // Exact match for dashboard
     if (itemLink === '/beheer' && currentPath === '/beheer') {
       return true;
     }
-    
+
     // For other paths, ensure exact match or path with trailing content
     if (itemLink !== '/beheer' && itemLink !== '') {
       // Exact match
@@ -82,11 +83,14 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
         return true;
       }
       // Match with trailing slash or path segments
-      if (currentPath.startsWith(itemLink + '/') || currentPath.startsWith(itemLink + '?')) {
+      if (
+        currentPath.startsWith(itemLink + '/') ||
+        currentPath.startsWith(itemLink + '?')
+      ) {
         return true;
       }
     }
-    
+
     return false;
   };
 
@@ -100,7 +104,7 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
       <SidenavList>
         {dashboardMenu.items.map((menuItem, index) => {
           const IconComponent = getIconForMenuItem(menuItem);
-          
+
           return (
             <SidenavItem key={menuItem.id || `${menuItem.name}-${index}`}>
               <SidenavLink
@@ -119,4 +123,3 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
 };
 
 export default withStore(observer(ConDynamicSidenav));
-
