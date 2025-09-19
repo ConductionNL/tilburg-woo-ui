@@ -791,10 +791,10 @@ const AcFormsGebruik = ({ store }) => {
       }
     }
     if (currentStep === 2) {
-      return !!gebruik?.module; // Product en applicatie step
+      return !!gebruik?.product; // Product en applicatie step
     }
     if (currentStep === 3) {
-      return !!gebruik?.moduleVersie; // Versie step
+      return true; // Versie step
     }
     if (currentStep === 4) {
       return true; // koppelingen optional
