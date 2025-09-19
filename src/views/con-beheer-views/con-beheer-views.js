@@ -59,7 +59,7 @@ const ConBeheerViews = ({ store }) => {
     const inlineTitle =
       typeof view?.titelViewSwc === 'string' ? view.titelViewSwc.trim() : '';
     if (inlineTitle) return inlineTitle;
-    return view?.name || 'Unnamed View';
+    return view?.name || view['@self'].name || 'Unnamed View';
   };
 
   // Update URL when filters change (keep existing params)

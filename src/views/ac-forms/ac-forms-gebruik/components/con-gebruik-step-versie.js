@@ -26,12 +26,13 @@ const ConGebruikStepVersie = ({
         <ConSchemaEnhancedField
           schemaType='gebruik'
           schemaProperty='moduleVersie'
-          value={gebruik?.moduleVersie || null}
-          onChange={(value) => setGebruikData('moduleVersie', value)}
+          value={gebruik?.moduleversie || null}
+          onChange={(value) => setGebruikData('moduleversie', value)}
           isDisabled={versionsLoading}
           isLoading={versionsLoading}
           schemas={schemas}
           optionsProvider={versionOptions}
+          onSearch={() => {}}
           width='full'
         />
       </div>
