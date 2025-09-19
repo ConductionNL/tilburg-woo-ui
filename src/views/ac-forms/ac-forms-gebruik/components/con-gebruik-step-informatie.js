@@ -16,6 +16,8 @@ const ConGebruikStepInformatie = ({
   loading,
   refCompOptions,
   organisatieOptions,
+  organisatieLoading,
+  searchOrganisaties,
   schemas,
   // schemasLoading,
   gebruikType,
@@ -69,6 +71,8 @@ const ConGebruikStepInformatie = ({
                   width='full'
                   schemas={schemas}
                   optionsProvider={organisatieOptions}
+                  isLoading={organisatieLoading}
+                  onSearch={(_path, _refSlug, q) => searchOrganisaties(q)}
                   placeholder='Selecteer de klantorganisatie...'
                 />
                 <div
