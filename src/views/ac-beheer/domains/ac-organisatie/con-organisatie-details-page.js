@@ -14,13 +14,10 @@ import { VISUALS } from '@constants';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-details-page-config-factory';
-import formatBySchema from '@src/utilities/con-format-by-json-schema';
-import { canReadField } from '@utils/field-authorization';
 import _ from 'lodash';
 import ConObjectUploadFiles from '@views/ac-beheer/shared/components/con-object-upload-files/con-object-upload-files';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
-import { TOOLTIP_ID } from '@src/index.web';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
@@ -76,8 +73,6 @@ const ConOrganisatieDetailsPage = ({ store }) => {
   const data =
     object.getObject(objectType, id) || object.getActiveObject(objectType) || null;
 
-  const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : {};
-
   const error = objectType
     ? (() => {
         const storeError = object.getError(objectType);
@@ -94,17 +89,6 @@ const ConOrganisatieDetailsPage = ({ store }) => {
           object.isLoading(objectType) ||
           object.isSchemaLoading(schemaType))
       : false;
-
-  // Names cache for UUID resolution
-  const namesMap = useMemo(() => {
-    const map = {};
-    Object.entries(object.namesCache || {}).forEach(([id, cacheEntry]) => {
-      if (cacheEntry.name) {
-        map[id] = cacheEntry.name;
-      }
-    });
-    return map;
-  }, [object?.namesCache]);
 
   // Fetch data
   useEffect(() => {
@@ -143,15 +127,6 @@ const ConOrganisatieDetailsPage = ({ store }) => {
       modals,
     };
   }, [pageType, registerSlug, schemaSlug]);
-
-  const configuredMetaFields = useMemo(() => {
-    const cfg = schema?.configuration;
-    return [
-      cfg?.objectDescriptionField,
-      cfg?.objectImageField,
-      cfg?.objectNameField,
-    ].filter(Boolean);
-  }, [schema]);
 
   const shortTooltip = (type) =>
     `Een korte beschrijving van de ${type.slice(0, -1)}`;
@@ -202,12 +177,6 @@ const ConOrganisatieDetailsPage = ({ store }) => {
   if (error) {
     return <AcBeheerError error={error.message} store={store} />;
   }
-
-  console.log({
-    ...(config.formatBySchemaOptions || {}),
-    objectStore: object,
-    namesMap,
-  });
 
   const pageContent = () => {
     if (loading || !data) return null;
