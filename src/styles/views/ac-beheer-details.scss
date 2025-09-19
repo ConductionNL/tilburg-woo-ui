@@ -85,3 +85,26 @@
     hyphens: auto; /* nicer word breaks when possible */
   }
 }
+
+.con-organisatie-details {
+    &--header {
+        display: flex;
+        gap: 2rem; /* Add some spacing between the flex items */
+
+        /* Target AcFlex column that contains main content */
+        > div:first-child {
+            flex: 1; /* Allow growing to fill available space */
+            min-width: 0; /* Enable proper shrinking */
+        }
+
+        /* Target contact person container */
+        > div:last-child {
+            flex: 0 0 auto; /* Keep at content width */
+            max-width: 300px; /* Prevent from getting too wide */
+        }
+
+        &-hosting-types {
+            margin-block-start: 1rem;
+        }
+    }
+}

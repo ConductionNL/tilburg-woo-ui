@@ -8,6 +8,7 @@ import {
   Heading,
   Paragraph,
   Alert,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -73,9 +74,7 @@ const ConOrganisatieDetailsPage = ({ store }) => {
 
   // Reactive data (read directly to enable MobX tracking)
   const data =
-    objectType && id
-      ? object.getObject(objectType, id) || object.getActiveObject(objectType)
-      : null;
+    object.getObject(objectType, id) || object.getActiveObject(objectType) || null;
 
   const dataProperties = schemaType ? object.getSchemaProperties(schemaType) : {};
 
@@ -259,8 +258,8 @@ const ConOrganisatieDetailsPage = ({ store }) => {
           />
         </AcFlex>
 
-        <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <AcFlex column spacing='sm'>
+        <div className='con-organisatie-details--header'>
+          <AcFlex column spacing='xs'>
             <div className='con-beheer-details--header-container'>
               {data?.['@self']?.image && (
                 <ConLogoPreview
@@ -276,7 +275,11 @@ const ConOrganisatieDetailsPage = ({ store }) => {
 
             <Paragraph>{data?.['@self']?.summary || ''}</Paragraph>
 
-            <AcFlex spacing='sm'>
+            {/* @TODO: This data does not exist on the organisatie (yet?), don't know what to do with it */}
+            <AcFlex
+              spacing='sm'
+              className='con-organisatie-details--header-hosting-types'
+            >
               <div>
                 <b>Hostingtypes:</b>
                 <br />
@@ -294,7 +297,38 @@ const ConOrganisatieDetailsPage = ({ store }) => {
               </div>
             </AcFlex>
           </AcFlex>
-        </AcFlex>
+
+          {!!data.contactpersonen.length && (
+            <AcFlex column spacing='xs' alignItems='end'>
+              {/* @TODO: contactpersoon doesn't have a logo / image */}
+              <ConLogoPreview logoUrl={data.contactpersonen[0]['@self'].image} />
+
+              <b>Contactpersoon</b>
+              <p>
+                {[
+                  data.contactpersonen[0].voornaam,
+                  data.contactpersonen[0].tussenvoegsel,
+                  data.contactpersonen[0].achternaam,
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              </p>
+              <Link href={`mailto:${data.contactpersonen[0]['e-mailadres']}`}>
+                {data.contactpersonen[0]['e-mailadres']}
+              </Link>
+              <Link
+                // expects a `+31 6 12345678` format, `06 12345678` may or may not be supported by the `tel:` href
+                href={`tel:${data.contactpersonen[0].telefoonnummer
+                  .split('')
+                  .filter((i) => i !== ' ')
+                  .join('')}`}
+              >
+                {data.contactpersonen[0].telefoonnummer}
+              </Link>
+              <p>{data.contactpersonen[0].functie}</p>
+            </AcFlex>
+          )}
+        </div>
 
         <UnpublishedWarning data={data} config={config} />
 
@@ -400,15 +434,30 @@ const ConOrganisatieDetailsPage = ({ store }) => {
                 })}
             </div>
 
-            <DetailsPageTabs
-              schema={schema}
-              objectType={objectType}
-              registerSlug={registerSlug}
-              schemaSlug={schemaSlug}
-              id={id}
-              store={store}
-            />
+            <AcFlex column spacing='xs'>
+              <Link href={`mailto:${data['e-mailadres']}`}>
+                📬 {data['e-mailadres']}
+              </Link>
+              <Link
+                // expects a `+31 6 12345678` format, `06 12345678` may or may not be supported by the `tel:` href
+                href={`tel:${data.telefoonnummer
+                  .split('')
+                  .filter((i) => i !== ' ')
+                  .join('')}`}
+              >
+                📞 {data.telefoonnummer}
+              </Link>
+            </AcFlex>
           </AcFlex>
+
+          <DetailsPageTabs
+            schema={schema}
+            objectType={objectType}
+            registerSlug={registerSlug}
+            schemaSlug={schemaSlug}
+            id={id}
+            store={store}
+          />
         </AcColumn>
       </AcFlex>
     );
