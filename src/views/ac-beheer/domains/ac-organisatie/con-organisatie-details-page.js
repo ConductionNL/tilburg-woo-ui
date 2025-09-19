@@ -203,6 +203,12 @@ const ConOrganisatieDetailsPage = ({ store }) => {
     return <AcBeheerError error={error.message} store={store} />;
   }
 
+  console.log({
+    ...(config.formatBySchemaOptions || {}),
+    objectStore: object,
+    namesMap,
+  });
+
   const pageContent = () => {
     if (loading || !data) return null;
     return (
@@ -278,23 +284,36 @@ const ConOrganisatieDetailsPage = ({ store }) => {
             {/* @TODO: This data does not exist on the organisatie (yet?), don't know what to do with it */}
             <AcFlex
               spacing='sm'
-              className='con-organisatie-details--header-hosting-types'
+              className='con-organisatie-details--header-short-stats'
             >
-              <div>
-                <b>Hostingtypes:</b>
-                <br />
-                {data?.hostingTypes?.join?.(', ') || '-'}
-              </div>
-              <div>
-                <b>De data wordt opgeslagen in:</b>
-                <br />
-                {data?.hostingLocatie || '-'}
-              </div>
-              <div>
-                <b>Aantal afnemers:</b>
-                <br />
-                {data?.aantalAfnemers || '-'}
-              </div>
+              <table className='con-organisatie-details--header-short-stats-table'>
+                <thead>
+                  <tr>
+                    <th>Website</th>
+                    <th>Telefoonnummer</th>
+                    <th>
+                      {data?.type?.toLowerCase() === 'leverancier'
+                        ? 'KvK nummer'
+                        : data?.type?.toLowerCase() === 'gemeente'
+                        ? 'CBS code'
+                        : data?.type?.toLowerCase() || '-'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{data?.website || '-'}</td>
+                    <td>{data?.telefoonnummer || '-'}</td>
+                    <td>
+                      {data?.type?.toLowerCase() === 'leverancier'
+                        ? data?.kvkNummer || '-'
+                        : data?.type?.toLowerCase() === 'gemeente'
+                        ? data?.cbsCode || '-'
+                        : data?.type?.toLowerCase() || '-'}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </AcFlex>
           </AcFlex>
 
@@ -369,86 +388,6 @@ const ConOrganisatieDetailsPage = ({ store }) => {
               }
             }}
           />
-
-          <AcFlex column spacing='sm'>
-            <div className='ac-beheer-details--grid'>
-              {Object.entries(dataProperties)
-                .filter(([key]) => !config.excludedProperties.includes(key))
-                .filter(([key]) => !configuredMetaFields.includes(key))
-                .filter(([, schema]) => canReadField(user, schema))
-                .map(([key, schema]) => {
-                  // Check if this property should be displayed inline
-                  const isInline =
-                    config.formatBySchemaOptions?.profile?.[key]?.inline;
-
-                  if (isInline) {
-                    // Inline rendering: label and value on same line
-                    return (
-                      <div
-                        key={key}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          gap: '8px',
-                        }}
-                      >
-                        <strong
-                          {...(schema?.description
-                            ? {
-                                'data-tooltip-id': TOOLTIP_ID,
-                                'data-tooltip-content': schema.description,
-                              }
-                            : {})}
-                        >
-                          {_.startCase(key)}:
-                        </strong>
-                        {formatBySchema(schema, data, key, {
-                          ...(config.formatBySchemaOptions || {}),
-                          objectStore: object,
-                          namesMap,
-                        })}
-                      </div>
-                    );
-                  } else {
-                    // Default block rendering: label above value
-                    return (
-                      <div key={key}>
-                        <strong
-                          {...(schema?.description
-                            ? {
-                                'data-tooltip-id': TOOLTIP_ID,
-                                'data-tooltip-content': schema.description,
-                              }
-                            : {})}
-                        >
-                          {_.startCase(key)}:
-                        </strong>{' '}
-                        {formatBySchema(schema, data, key, {
-                          ...(config.formatBySchemaOptions || {}),
-                          objectStore: object,
-                          namesMap,
-                        })}
-                      </div>
-                    );
-                  }
-                })}
-            </div>
-
-            <AcFlex column spacing='xs'>
-              <Link href={`mailto:${data['e-mailadres']}`}>
-                📬 {data['e-mailadres']}
-              </Link>
-              <Link
-                // expects a `+31 6 12345678` format, `06 12345678` may or may not be supported by the `tel:` href
-                href={`tel:${data.telefoonnummer
-                  .split('')
-                  .filter((i) => i !== ' ')
-                  .join('')}`}
-              >
-                📞 {data.telefoonnummer}
-              </Link>
-            </AcFlex>
-          </AcFlex>
 
           <DetailsPageTabs
             schema={schema}

@@ -103,8 +103,23 @@
             max-width: 300px; /* Prevent from getting too wide */
         }
 
-        &-hosting-types {
+        &-short-stats {
             margin-block-start: 1rem;
+
+            &-table {
+                width: auto;
+
+                & th {
+                    text-align: left;
+                    padding: 0 0.5rem;
+                    font-weight: normal;
+                }
+
+                & td {
+                    padding: 0 0.5rem;
+                    font-weight: bold;
+                }
+            }
         }
     }
 }
