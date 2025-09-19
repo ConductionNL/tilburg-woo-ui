@@ -92,6 +92,15 @@ const DetailsPageConfigFactory = {
           ],
         };
 
+      case 'product':
+        return {
+          ...baseDetailsConfig,
+          extend: [...beheerConfig.extend, 'contactpersoon', 'aanbieder', 'modules'],
+          formatBySchemaOptions: {
+            exclude: ['@self'],
+          },
+        };
+
       case 'diensten':
         return {
           ...baseDetailsConfig,
