@@ -231,7 +231,7 @@ const ConSchemaEnhancedField = ({
   // Always call hook with safe defaults to keep hook order stable
   const safeStore = store || { object: null };
   const safeSchema = mockSchemaForRefOptions || { properties: {} };
-  const refOptionsResult = useRefOptions(safeStore, 'openregister', safeSchema, {
+  const refOptionsResult = useRefOptions(safeStore, 'voorzieningen', safeSchema, {
     [fieldName]: customProps,
   });
 
