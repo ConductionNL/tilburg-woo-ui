@@ -50,7 +50,8 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                   className={clsx(
                     'ac-c-navigation__label',
                     items && 'ac-c-navigation__mobile-link',
-                    isCurrent(slug) && 'ac-c-navigation__current-link'
+                    isCurrent(slug) && 'ac-c-navigation__current-link',
+                    icon && 'ac-c-navigation__icon'
                   )}
                 >
                   {icon && icon}
@@ -68,6 +69,7 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                         key={idx}
                         className={clsx(
                           'ac-c-navigation__li',
+                          'ac-c-navigation__dropdown-li',
                           isCurrent(slug) && 'ac-c-navigation__dropdown-current'
                         )}
                         onClick={() => handleSubItemClick(() => navigate(link))}
@@ -76,7 +78,8 @@ const AcCNavigation = ({ items = [], mobileLogo, layoutClassName }) => {
                           className={clsx(
                             'ac-c-navigation__label',
                             isCurrent(slug) &&
-                              'ac-c-navigation__dropdown-current-link'
+                              'ac-c-navigation__dropdown-current-link',
+                              icon && 'ac-c-navigation__icon'
                           )}
                         >
                           {icon}
