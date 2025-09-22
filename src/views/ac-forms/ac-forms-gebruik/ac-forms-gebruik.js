@@ -30,7 +30,7 @@ const mapToOption = (item, index) => {
     item?.title ||
     item?.label ||
     `Applicatie ${index + 1}`;
-  const value = item?.id || item?.slug || label;
+  const value = item?.['@self']?.id || item?.id || item?.slug || label;
   return { value: String(value), label: String(label), data: item };
 };
 
@@ -253,7 +253,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            _extend: ['@self.schema'],
+            '_extend[]': ['@self.schema'],
           }
         );
         if (cancelled) return;
@@ -290,7 +290,7 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('voorzieningen', 'product', {
           _limit: '50',
           _page: '1',
-          _extend: '@self.schema',
+          '_extend[]': '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_product');
         const list = collection?.results || collection || [];
@@ -301,22 +301,7 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
-    const fetchModules = async () => {
-      try {
-        // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'module', {
-          _limit: '50',
-          _page: '1',
-          _extend: '@self.schema',
-        });
-        const collection = store.object.getCollection('voorzieningen_module');
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-        if (isMounted) setModulesOptions(options);
-      } catch (e) {
-        if (isMounted) setModulesOptions([]);
-      }
-    };
+    // Do not preload all modules globally; modules are fetched per selected product
 
     const fetchOrganisaties = async () => {
       try {
@@ -324,7 +309,7 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('voorzieningen', 'organisatie', {
           _limit: '50',
           _page: '1',
-          _extend: '@self.schema',
+          '_extend[]': '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_organisatie');
         const list = collection?.results || collection || [];
@@ -373,7 +358,6 @@ const AcFormsGebruik = ({ store }) => {
 
     // Preload all APIs in parallel for better performance
     fetchProducts();
-    fetchModules();
     fetchOrganisaties();
     fetchRefComps();
 
@@ -395,6 +379,13 @@ const AcFormsGebruik = ({ store }) => {
         return;
       }
 
+      // Product changed to a valid value: clear dependent selections and options immediately
+      if (!cancelled) {
+        setGebruikData('module', null);
+        setGebruikData('moduleVersie', null);
+        setModulesOptions([]);
+      }
+
       // Resolve product object when value might be an id; fetch if needed
       let productData = null;
       if (typeof p === 'object') {
@@ -408,7 +399,7 @@ const AcFormsGebruik = ({ store }) => {
         } else {
           try {
             await store.object.fetchObject('voorzieningen', 'product', String(p), {
-              _extend: '@self.schema',
+              '_extend[]': '@self.schema',
             });
             productData = store.object.getObject('voorzieningen_product', String(p));
           } catch (_) {
@@ -416,6 +407,18 @@ const AcFormsGebruik = ({ store }) => {
           }
         }
       }
+
+ // Ensure modules are available; if missing, fetch with relations
+ if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
+  try {
+    await store.object.fetchObject('voorzieningen', 'product', String(getIdString(productData?.id || p)), {
+      '_extend[]': '@self.schema,@self.relations',
+    });
+    productData = store.object.getObject('voorzieningen_product', String(getIdString(productData?.id || p)));
+  } catch (_) {
+    // keep existing productData
+  }
+}
 
       const moduleIds = Array.isArray(productData?.modules)
         ? productData.modules
@@ -434,7 +437,7 @@ const AcFormsGebruik = ({ store }) => {
         await Promise.all(
           moduleIds.map((id) =>
             store.object.fetchObject('voorzieningen', 'module', String(id), {
-              _extend: '@self.schema,@self.relations',
+              '_extend[]': '@self.schema,@self.relations',
             })
           )
         );
@@ -477,11 +480,52 @@ const AcFormsGebruik = ({ store }) => {
     try {
       setModulesLoading(true);
       const q = String(query || '').trim();
-      if (!q) {
+
+      // Only allow searching within the currently selected product's modules
+      const selectedProduct = gebruik?.product;
+      const productId = getIdString(selectedProduct);
+
+      if (!productId) {
+        // No product selected: no modules available
+        if (!q) return; // preserve current options
         setModulesOptions([]);
         return;
       }
-      // Use authenticated API client instead of raw fetch
+
+      // Resolve the selected product object to get its module IDs
+      let productData = null;
+      if (typeof selectedProduct === 'object') {
+        productData = selectedProduct;
+      } else {
+        productData =
+          productOptions.find((opt) => String(opt.value) === String(productId))?.data || null;
+        if (!productData) {
+          try {
+            await store.object.fetchObject('voorzieningen', 'product', String(productId), {
+              '_extend[]': '@self.schema',
+            });
+            productData = store.object.getObject('voorzieningen_product', String(productId));
+          } catch (_) {
+            productData = null;
+          }
+        }
+      }
+
+      const allowedModuleIds = Array.isArray(productData?.modules)
+        ? productData.modules.map((id) => String(id))
+        : [];
+
+      if (allowedModuleIds.length === 0) {
+        setModulesOptions([]);
+        return;
+      }
+
+      if (!q) {
+        // No query: keep current options populated by product-change effect
+        return;
+      }
+
+      // Fetch modules by search, then filter to those belonging to the selected product
       await store.object.fetchCollection('voorzieningen', 'module', {
         _limit: '50',
         _page: '1',
@@ -489,7 +533,11 @@ const AcFormsGebruik = ({ store }) => {
       });
       const collection = store.object.getCollection('voorzieningen_module');
       const list = collection?.results || collection || [];
-      const options = list.map(mapToOption);
+      const filtered = list.filter((m) => {
+        const id = String(m?.id || m?.value || '');
+        return allowedModuleIds.includes(id);
+      });
+      const options = filtered.map(mapToOption);
       setModulesOptions(options);
     } catch (e) {
       setModulesOptions([]);
@@ -592,7 +640,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            _extend: '@self.schema,@self.relations',
+            '_extend[]': '@self.schema,@self.relations',
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
@@ -734,36 +782,31 @@ const AcFormsGebruik = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gebruik?.product]);
 
-  // When module changes, resolve koppelingen by IDs from selected module
+  // When module changes, fetch koppelingen where moduleA or moduleB equals the selected module
   useEffect(() => {
-    const fetchKoppelingenByIds = async () => {
+    const fetchKoppelingenByModule = async () => {
       try {
-        const mod = selectedModule;
-        if (!mod) {
+        const moduleId = getIdString(gebruik?.module);
+        if (!moduleId) {
           setKoppelingOptions([]);
           return;
         }
 
-        const ids = Array.isArray(mod.koppelingen)
-          ? mod.koppelingen.map((id) => String(id))
-          : [];
+        // Fetch koppelingen where moduleA or moduleB equals the selected module ID
+        await store.object.fetchCollection('voorzieningen', 'koppeling', {
+          _limit: '100',
+          _page: '1',
+          '_extend[]': ['@self.schema', 'moduleA', 'moduleB'],
+          // Use OR filter to find koppelingen where either moduleA or moduleB matches
+          $or: [
+            { moduleA: moduleId },
+            { moduleB: moduleId }
+          ]
+        });
 
-        if (ids.length === 0) {
-          setKoppelingOptions([]);
-          return;
-        }
-
-        await Promise.all(
-          ids.map((id) =>
-            store.object.fetchObject('voorzieningen', 'koppeling', id, {
-              _extend: ['@self.schema', 'moduleA', 'moduleB'],
-            })
-          )
-        );
-
-        const list = ids
-          .map((id) => store.object.getObject('voorzieningen_koppeling', String(id)))
-          .filter(Boolean);
+        const type = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+        const collection = store.object.getCollection(type);
+        const list = collection?.results || collection || [];
 
         const options = list.map((item, index) => {
           const appAName =
@@ -798,8 +841,8 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
-    fetchKoppelingenByIds();
-  }, [selectedModule]);
+    fetchKoppelingenByModule();
+  }, [gebruik?.module, getIdString]);
 
   // When afnemer is samenwerking, organisaties are already preloaded - no additional API calls needed
   useEffect(() => {
@@ -891,7 +934,7 @@ const AcFormsGebruik = ({ store }) => {
         return !!gebruik?.afnemer && !!gebruik?.status;
       } else {
         // For eigen organisatie: contactpersoon, afnemer and status required
-        return !!gebruik?.contactpersoon && !!gebruik?.afnemer && !!gebruik?.status;
+        return !!gebruik?.afnemer && !!gebruik?.status;
       }
     }
     if (currentStep === 2) {

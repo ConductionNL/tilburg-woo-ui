@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import { ConSchemaEnhancedField } from '@src/components';
 
 /**
@@ -15,11 +15,14 @@ const ConGebruikStepProductApplicatie = ({
   productLoading,
   moduleOptions,
   modulesLoading,
+  searchModules,
   searchProducts,
   loading,
   schemas,
   gebruikType,
 }) => {
+  const [moduleFieldKey, setModuleFieldKey] = useState(0);
+  const resetModuleField = useCallback(() => setModuleFieldKey((k) => k + 1), []);
   return (
     <div
       className='ac-register-form-section'
@@ -62,7 +65,18 @@ const ConGebruikStepProductApplicatie = ({
             schemaType='gebruik'
             schemaProperty='product'
             value={gebruik?.product || null}
-            onChange={(value) => setGebruikData('product', value)}
+            onChange={(value) => {
+              const nextId =
+                (value && value.data && (value.data.id || value.data.value)) ||
+                (value && value.value) ||
+                value;
+              setGebruikData('product', nextId);
+              // reset dependent fields when product changes
+              setGebruikData('module', null);
+              setGebruikData('moduleVersie', null);
+              // force-remount module field to clear internal ReactSelect state
+              resetModuleField();
+            }}
             isDisabled={loading}
             isLoading={productLoading}
             width='full'
@@ -74,17 +88,24 @@ const ConGebruikStepProductApplicatie = ({
 
         <div style={{ gridColumn: 'span 2', maxWidth: '640px' }}>
           <ConSchemaEnhancedField
+            key={moduleFieldKey}
             schemaType='gebruik'
             schemaProperty='module'
             value={gebruik?.module || null}
             onChange={(value) => {
-              setGebruikData('module', value);
+              const nextId =
+                (value && value.data && (value.data.id || value.data.value)) ||
+                (value && value.value) ||
+                value;
+              setGebruikData('module', nextId);
             }}
             isDisabled={modulesLoading || !gebruik?.product}
             isLoading={modulesLoading}
             width='full'
             schemas={schemas}
             optionsProvider={moduleOptions}
+            onSearch={(_path, _refSlug, q) => searchModules && searchModules(q)}
+            customProps={{ label: 'Applicatie', placeholder: 'Selecteer een applicatie' }}
           />
         </div>
       </div>

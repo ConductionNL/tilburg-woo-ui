@@ -1156,7 +1156,7 @@ export class ObjectStore {
         page: pagination.page,
         limit: pagination.limit,
         ...params,
-        _extend: params._extend || params.extend || '@self.schema',
+        '_extend[]': params._extend || params.extend || '@self.schema',
       };
 
       const response = await nextcloudApi.get(
