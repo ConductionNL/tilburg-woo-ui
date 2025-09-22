@@ -252,13 +252,13 @@ const AcPublicationProduct = ({
               return (
                 <div className='con-product-details--header-short-stats'>
                   {items.map((item) => (
-                    <div
+                    <p
                       key={item.label}
                       className='con-product-details--header-short-stats-item'
                     >
-                      <div>{item.label}</div>
-                      <div style={{ fontWeight: 600 }}>{item.value || '-'}</div>
-                    </div>
+                      <span>{item.label}:</span>
+                      <span style={{ fontWeight: 600 }}>{item.value || '-'}</span>
+                    </p>
                   ))}
                 </div>
               );
@@ -270,8 +270,22 @@ const AcPublicationProduct = ({
               <Separator />
 
               <AcFlex column spacing='xs' alignItems='end'>
+                <div className='ac-register-review__contact-image'>
+                  {data?.contactpersoon?.image ? (
+                    <ConLogoPreview
+                      logoUrl={data.contactpersoon.image}
+                      className='ac-register-review__contact-image--round'
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className='ac-register-review__contact-image--round'>
+                      <VISUALS.USER_CIRCLE />
+                    </div>
+                  )}
+                </div>
+
                 {/* @TODO: contactpersoon has no logo / image, so its hard to show a contact persoon image */}
-                <b>Contactpersoon</b>
+                <i>Contactinformatie:</i>
                 {(() => {
                   // Glitch: sometimes an array with two objects is returned; use the first
                   const contact = Array.isArray(data.contactpersoon)
@@ -327,8 +341,6 @@ const AcPublicationProduct = ({
 
         <AcFlex spacing='xl' className='con-product-details--content'>
           <AcColumn gap='tiger' className='con-product-details--content-main'>
-            <p>{data.beschrijvingKort}</p>
-
             <MDEditor.Markdown
               wrapperElement={{
                 'data-color-mode': 'light',

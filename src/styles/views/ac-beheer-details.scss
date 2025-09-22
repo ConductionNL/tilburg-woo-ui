@@ -110,9 +110,8 @@
             gap: 8px;
 
             &-item {
-                border: 1px solid #e0e0e0;
-                border-radius: 4px;
-                padding: 8px;
+                display: flex;
+                gap: 4px;
             }
         }
     }
@@ -127,7 +126,7 @@
         /* Target contact person container */
         > div:last-child {
             flex: 0 0 auto; /* Keep at content width */
-            max-width: 450px; /* Prevent from getting too wide */
+            max-width: 400px; /* Prevent from getting too wide */
         }
     }
 }
