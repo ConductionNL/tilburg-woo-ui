@@ -85,8 +85,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
   const fetchUses = async () => {
     const response = await fetch(
-      `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/uses?_extend[]=@self.schema`,
-      //   `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/uses`,
+      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
       {
         method: 'GET',
         headers: {
@@ -104,8 +103,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   };
   const fetchUsed = async () => {
     const response = await fetch(
-      `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/used?_extend[]=@self.schema`,
-      //   `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/used`,
+      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
       {
         method: 'GET',
         headers: {
