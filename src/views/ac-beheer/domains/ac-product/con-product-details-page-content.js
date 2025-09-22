@@ -87,14 +87,14 @@ const ConProductDetailsPageContent = ({
             )}
 
             <Heading className='con-beheer-details--title'>
-              {data?.naam || data?.['@self']?.name || data.id}
+              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
             </Heading>
           </div>
 
           <ConEditableDescription
             registerSlug={data['@self'].register.slug}
             schemaSlug={data['@self'].schema.slug}
-            objectId={data.id}
+            objectId={data?.['@self']?.id}
             field='beschrijvingKort'
             label='Korte beschrijving'
             placeholder='Een korte beschrijving van de product'
@@ -235,7 +235,7 @@ const ConProductDetailsPageContent = ({
           <ConEditableDescription
             registerSlug={data['@self'].register.slug}
             schemaSlug={data['@self'].schema.slug}
-            objectId={data.id}
+            objectId={data?.['@self']?.id}
             field='beschrijvingLang'
             label='Lange beschrijving'
             placeholder='Een uitgebreide beschrijving van de product'
@@ -281,13 +281,13 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
     return uniq
       .map((item) => item['@self']?.schema)
       .filter(Boolean)
-      .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+      .sort((a, b) => String(a?.['@self']?.id).localeCompare(String(b?.['@self']?.id)));
   }, []);
 
   // Mark schemas that have duplicate titles between uses/used
   const filterWantedSchemas = useCallback((schemas) => {
     const wanted = new Set(['standaard', 'koppeling', 'dienst']);
-    return (schemas || []).filter((s) => wanted.has(s.slug || s.id || s));
+    return (schemas || []).filter((s) => wanted.has(s.slug || ''));
   }, []);
 
   const usesSchemas = useMemo(
@@ -301,13 +301,13 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
 
   const getUsesCount = useCallback(
     (schema) => {
-      return usesData?.filter((r) => r['@self']?.schema?.id === schema.id).length;
+      return usesData?.filter((r) => r['@self']?.schema?.id === schema?.['@self']?.id).length;
     },
     [usesData]
   );
   const getUsedCount = useCallback(
     (schema) => {
-      return usedData?.filter((r) => r['@self']?.schema?.id === schema.id).length;
+      return usedData?.filter((r) => r['@self']?.schema?.id === schema?.['@self']?.id).length;
     },
     [usedData]
   );
@@ -320,18 +320,18 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
         <AcTabList>
           {usesSchemas.length > 0 &&
             usesSchemas.map((schema, idx) => (
-              <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx + 1}>
-                {schema.title || schema.id}{' '}
+              <AcTab key={`uses-${schema?.['@self']?.id}`} selected={tabIndex === idx + 1}>
+                {schema.title || schema?.['@self']?.id}{' '}
                 {getUsesCount(schema) ? `(${getUsesCount(schema)})` : ''}
               </AcTab>
             ))}
           {usedSchemas.length > 0 &&
             usedSchemas.map((schema, idx) => (
               <AcTab
-                key={`used-${schema.id}`}
+                key={`used-${schema?.['@self']?.id}`}
                 selected={tabIndex === idx + 1 + usesSchemas.length}
               >
-                {schema.title || schema.id}{' '}
+                {schema.title || schema?.['@self']?.id}{' '}
                 {getUsedCount(schema) ? `(${getUsedCount(schema)})` : ''}
               </AcTab>
             ))}
@@ -339,13 +339,13 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
         {usesSchemas.length > 0 &&
           usesSchemas.map((schema, idx) => {
             const metadata = usesData?.find(
-              (r) => r['@self']?.schema?.id === schema.id
+              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
             )?.['@self'];
             const rows = (usesData || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
+              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
             );
             return (
-              <AcTabPanel key={`uses-${schema.id}`} selected={tabIndex === idx + 1}>
+              <AcTabPanel key={`uses-${schema?.['@self']?.id}`} selected={tabIndex === idx + 1}>
                 {metadata ? (
                   <BeheerTable
                     type={schema.slug}
@@ -388,14 +388,14 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
         {usedSchemas.length > 0 &&
           usedSchemas.map((schema, idx) => {
             const metadata = usedData?.find(
-              (r) => r['@self']?.schema?.id === schema.id
+              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
             )?.['@self'];
             const rows = (usedData || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
+              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
             );
             return (
               <AcTabPanel
-                key={`used-${schema.id}`}
+                key={`used-${schema?.['@self']?.id}`}
                 selected={tabIndex === idx + 1 + usesSchemas.length}
               >
                 {metadata ? (
@@ -416,7 +416,7 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
                             <AcButton
                               style='buttonSlim'
                               buttonType='secondary'
-                              onClick={() => config.navigateView(row.id)}
+                              onClick={() => config.navigateView(row?.['@self']?.id)}
                             >
                               <VISUALS.EYE className='ac-button__icon' /> Bekijken
                             </AcButton>
@@ -458,7 +458,7 @@ const SuitableForList = ({ modules }) => {
       </AcFlex>
       <ul style={{ marginLeft: '1rem' }}>
         {modules.map((m) => (
-          <li key={m.id}>{m['@self']?.name || m.naam}</li>
+          <li key={m?.['@self']?.id}>{m['@self']?.name || m.naam}</li>
         ))}
       </ul>
     </AcFlex>
