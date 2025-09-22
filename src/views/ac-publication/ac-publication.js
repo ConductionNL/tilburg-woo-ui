@@ -8,6 +8,7 @@ import { getTitle } from '@services/con-get-title';
 import AcPublicationWooVerzoek from '@views/ac-publication/ac-publication-woo-verzoek';
 import AcPublicationSoftwarecatalogus from '@views/ac-publication/ac-publication-softwarecatalogus';
 import AcPublicationDefault from '@views/ac-publication/ac-publication-default';
+import AcPublicationOrganisation from '@views/ac-publication/ac-publication-organisation';
 import AcPublicationFormulier from './ac-publication-formulier';
 
 const AcPublication = observer(({ store: { publications } }) => {
@@ -72,6 +73,9 @@ const AcPublication = observer(({ store: { publications } }) => {
       case 'Woo-verzoeken en -besluiten':
         return <AcPublicationWooVerzoek />;
       default:
+        if (get_single?.['@self']?.schema?.slug === 'organisatie') {
+          return <AcPublicationOrganisation />;
+        }
         return <AcPublicationDefault schema={schema} />;
     }
   }

@@ -90,7 +90,6 @@ const getAuthHeaders = () => {
   } catch (error) {
     console.warn('Failed to get basic auth credentials:', error);
   }
-  
   return headers;
 };
 
@@ -568,11 +567,11 @@ export class PublicationsStore {
     this.setFacets({});
 
     // Build query including current filters/facets and request facetable config plus names data
-    const baseQuery = { 
-      ...this.search_query, 
+    const baseQuery = {
+      ...this.search_query,
       _facetable: true,
       _related: true,
-      _relatedNames: true
+      _relatedNames: true,
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
@@ -601,32 +600,52 @@ export class PublicationsStore {
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
           console.group('🏷️ PROCESSING RELATED NAMES FROM SEARCH');
-          console.info('Related names received:', Object.keys(response.relatedNames).length, 'entries');
+          console.info(
+            'Related names received:',
+            Object.keys(response.relatedNames).length,
+            'entries'
+          );
           console.info('Names data:', response.relatedNames);
           app.store.object.processRelatedNamesFromResponse(response);
-          console.info('Names cache after processing:', Object.keys(app.store.object.namesCache).length, 'entries');
+          console.info(
+            'Names cache after processing:',
+            Object.keys(app.store.object.namesCache).length,
+            'entries'
+          );
           console.groupEnd();
         } else if (app.store?.object && response.results?.length > 0) {
           // Fallback: manually extract reference IDs and resolve names if _relatedNames is not supported
           console.group('⚠️ FALLBACK: Manual reference extraction in search');
-          console.info('No relatedNames in response, falling back to manual extraction');
+          console.info(
+            'No relatedNames in response, falling back to manual extraction'
+          );
           console.info('Search results count:', response.results.length);
           try {
-            const { extractReferenceIdsFromCollection } = require('@src/utilities/con-detect-object-references');
+            const {
+              extractReferenceIdsFromCollection,
+            } = require('@src/utilities/con-detect-object-references');
             const referenceIds = extractReferenceIdsFromCollection(response.results);
             console.info('Extracted reference IDs:', referenceIds.length, 'IDs');
             console.info('Reference IDs:', referenceIds);
-            
+
             if (referenceIds.length > 0) {
               // Asynchronously resolve names in background (don't wait for this)
               console.info('Starting background names resolution...');
-              app.store.object.getNamesForMultipleIds(referenceIds)
-                .then(resolvedNames => {
-                  console.info('Background names resolved:', Object.keys(resolvedNames).length, 'names');
+              app.store.object
+                .getNamesForMultipleIds(referenceIds)
+                .then((resolvedNames) => {
+                  console.info(
+                    'Background names resolved:',
+                    Object.keys(resolvedNames).length,
+                    'names'
+                  );
                   console.info('Resolved names:', resolvedNames);
                 })
-                .catch(error => {
-                  console.warn('Failed to resolve reference names in search:', error);
+                .catch((error) => {
+                  console.warn(
+                    'Failed to resolve reference names in search:',
+                    error
+                  );
                 });
             } else {
               console.info('No reference IDs found to resolve');
@@ -701,24 +720,32 @@ export class PublicationsStore {
       .single(
         _id,
         new URLSearchParams(
-          AcBuildURLSearchParams({ 
-            _id, 
+          AcBuildURLSearchParams({
+            _id,
             ...this.defaultQuery,
             _related: true,
-            _relatedNames: true
+            _relatedNames: true,
           })
         ).toString()
       )
       .then((response) => {
         console.group('📄 PROCESSING SINGLE PUBLICATION RESPONSE');
         console.info('Publication response:', response);
-        
+
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
-          console.info('Related names received:', Object.keys(response.relatedNames).length, 'entries');
+          console.info(
+            'Related names received:',
+            Object.keys(response.relatedNames).length,
+            'entries'
+          );
           console.info('Names data:', response.relatedNames);
           app.store.object.processRelatedNamesFromResponse(response);
-          console.info('Names cache after processing:', Object.keys(app.store.object.namesCache).length, 'entries');
+          console.info(
+            'Names cache after processing:',
+            Object.keys(app.store.object.namesCache).length,
+            'entries'
+          );
         } else {
           console.info('No related names in publication response');
         }

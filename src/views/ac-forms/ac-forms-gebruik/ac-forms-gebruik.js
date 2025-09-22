@@ -350,7 +350,7 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('vng-gemma', 'element', {
           _limit: '500',
           _page: '1',
-          gemmaType: 'referentiecomponent',
+          gemmaType: 'Referentiecomponent',
         });
         const collection = store.object.getCollection('vng-gemma_element');
         const list = collection?.results || collection || [];
@@ -895,10 +895,10 @@ const AcFormsGebruik = ({ store }) => {
       }
     }
     if (currentStep === 2) {
-      return !!gebruik?.module; // Product en applicatie step
+      return !!gebruik?.product; // Product en applicatie step
     }
     if (currentStep === 3) {
-      return !!gebruik?.moduleVersie; // Versie step
+      return true; // Versie step
     }
     if (currentStep === 4) {
       return true; // koppelingen optional

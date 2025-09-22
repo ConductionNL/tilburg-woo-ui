@@ -516,7 +516,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                                 style='buttonSlim'
                                                 buttonType='secondary'
                                                 onClick={() =>
-                                                  config.navigateView(row.id)
+                                                  config.navigateView(row)
                                                 }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
@@ -573,7 +573,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                                                 style='buttonSlim'
                                                 buttonType='secondary'
                                                 onClick={() =>
-                                                  config.navigateView(row.id)
+                                                  config.navigateView(row)
                                                 }
                                               >
                                                 <VISUALS.EYE className='ac-button__icon' />{' '}
