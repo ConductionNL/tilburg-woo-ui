@@ -364,7 +364,7 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
                             <AcButton
                               style='buttonSlim'
                               buttonType='secondary'
-                              onClick={() => config.navigateView(row.id)}
+                              onClick={() => config.navigateView(row['@self'].id)}
                             >
                               <VISUALS.EYE className='ac-button__icon' /> Bekijken
                             </AcButton>
