@@ -39,6 +39,7 @@ const AcSearch = ({ store: { publications, user } }) => {
     pagination,
     updateQuery,
     fetchPublications,
+    fetchFacets,
     is_loading,
     // getSearchPageURL,
     all_publications,
@@ -64,6 +65,7 @@ const AcSearch = ({ store: { publications, user } }) => {
   useEffect(() => {
     setQuery();
     fetchPublications();
+    fetchFacets();
   }, [location.search]);
 
   const onPaginationChange = (page) => {

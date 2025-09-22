@@ -471,6 +471,9 @@ export class PublicationsStore {
         _facets: 'extend', // Request extended facets
       };
       
+      // Remove pagination parameters since we're not fetching results
+      delete baseQuery._page;
+      
       const queryString = AcBuildURLSearchParams(baseQuery);
       const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
