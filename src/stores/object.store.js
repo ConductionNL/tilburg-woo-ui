@@ -3397,7 +3397,7 @@ export class ObjectStore {
 
   /**
    * Convenience method for fetching VNG-GEMMA elements with cache-first strategy
-   * @param {string} gemmaType - Type of GEMMA element ('referentiecomponent', 'standaard', etc.)
+   * @param {string} gemmaType - Type of GEMMA element ('Referentiecomponent', 'standaard', etc.)
    * @param {Object} [params={}] - Additional query parameters
    * @returns {Array} Array of GEMMA elements
    */

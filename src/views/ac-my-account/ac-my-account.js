@@ -617,7 +617,7 @@ const AcMyAccount = ({ store }) => {
                             <div>
                               KVK-nummer:
                               <div>
-                                {fullActiveOrganisation?.['@self']?.kvkNummer || '-'}
+                                {fullActiveOrganisation?.kvkNummer || '-'}
                               </div>
                             </div>
                           )}

@@ -554,7 +554,7 @@ const DetailsPageTabs = observer(
                               <AcButton
                                 style='buttonSlim'
                                 buttonType='secondary'
-                                onClick={() => config.navigateView(row.id)}
+                                onClick={() => config.navigateView(row)}
                               >
                                 <VISUALS.EYE className='ac-button__icon' /> Bekijken
                               </AcButton>
@@ -605,7 +605,7 @@ const DetailsPageTabs = observer(
                               <AcButton
                                 style='buttonSlim'
                                 buttonType='secondary'
-                                onClick={() => config.navigateView(row.id)}
+                                onClick={() => config.navigateView(row)}
                               >
                                 <VISUALS.EYE className='ac-button__icon' /> Bekijken
                               </AcButton>

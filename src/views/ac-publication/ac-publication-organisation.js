@@ -1,66 +1,361 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { withStore } from '@stores';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader } from '@components';
+import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { withStore } from '@stores';
+import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
-import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { commongroundApiUrl } from '@config';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import ConLogoPreview from '../ac-register/con-logo-preview';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
-const PublicationOrganisationTabs = ({ publicationId }) => {
-  const [tabIndex, setTabIndex] = useState(0);
+// Markdown Editor
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import { remarkMark } from 'remark-mark-highlight';
+import rehypeSlug from 'rehype-slug';
+import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
+
+const AcPublication = ({ store: { publications, object, user } }) => {
+  const { id } = useParams();
+  const { get_single, loading, attachments } = publications;
+
+  const navigate = useNavigate();
+
+  // Use the same related actions hook as beheer pages
+  const openDynamicCreate = useCallback(
+    (targetType, preSelected, metadata = {}) => {
+      // For publication pages, we'll navigate to the beheer page with modal open
+      // TODO: Handle outgoing relationship metadata in beheer page URL params
+      if (metadata.isOutgoing) {
+        // handle outgoing relationship metadata
+      }
+      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
+    },
+    [navigate, id]
+  );
+
+  const { makeActionsForContext } = useRelatedCreateActions({
+    object,
+    user,
+    schemaRef: get_single?.['@self']?.schema?.slug,
+    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
+    openDynamicCreate,
+    currentObject: get_single, // Pass current object for organization permission checks
+    currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
+    currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
+  });
+
+  // Generate action menu items
+  const [actionMenuItems, setActionMenuItems] = useState([]);
+
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Open delete modal from actions menu
+  const handleDelete = useCallback(() => {
+    setShowDeleteModal(true);
+  }, []);
+
+  useEffect(() => {
+    if (!get_single?.['@self']?.schema?.slug || !id) return;
+
+    const items = makeActionsForContext(id).map(
+      ({ key, label, onClick, schema, icon }) => ({
+        key,
+        label,
+        onClick,
+        schema,
+        icon,
+      })
+    );
+
+    setActionMenuItems(items);
+  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+
+  // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
 
+  const fetchUses = async () => {
+    const response = await fetch(
+      `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/uses?_extend[]=@self.schema`,
+      //   `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/uses`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.ok) {
+      console.error('Error fetching uses:', response.statusText);
+      return;
+    }
+    const data = await response.json();
+
+    setUses(data.results);
+  };
+  const fetchUsed = async () => {
+    const response = await fetch(
+      `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/used?_extend[]=@self.schema`,
+      //   `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/organisatie/${id}/used`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    if (!response.ok) {
+      console.error('Error fetching used:', response.statusText);
+      return;
+    }
+    const data = await response.json();
+
+    setUsed(data.results);
+  };
+
   useEffect(() => {
-    let cancelled = false;
-    const fetchUses = async () => {
-      try {
-        const res = await fetch(
-          `${commongroundApiUrl()}/opencatalogi/api/publications/${publicationId}/uses?extend[]=@self.schema`,
-          { headers: { 'Content-Type': 'application/json' } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setUses(Array.isArray(data.results) ? data.results : []);
-      } catch (e) {
-        // ignore network errors for this lightweight listing
-      }
-    };
-    const fetchUsed = async () => {
-      try {
-        const res = await fetch(
-          `${commongroundApiUrl()}/opencatalogi/api/publications/${publicationId}/used?extend[]=@self.schema`,
-          { headers: { 'Content-Type': 'application/json' } }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled) setUsed(Array.isArray(data.results) ? data.results : []);
-      } catch (e) {
-        // ignore network errors for this lightweight listing
-      }
-    };
     fetchUses();
     fetchUsed();
-    return () => {
-      cancelled = true;
-    };
-  }, [publicationId]);
+  }, []);
 
-  const uniqueSchemasFrom = useCallback((arr) => {
-    if (!arr?.length) return [];
+  // Loading
+  if (loading.status || !get_single || !attachments) {
+    return <AcLoader />;
+  }
+
+  return (
+    <>
+      <AcContainer margin='xl'>
+        <div className='con-publication-detail__organisation_actions'>
+          <ConDetailsActionsMenu
+            user={user}
+            id={id}
+            schemaSlug={get_single?.['@self']?.schema?.slug}
+            title={get_single?.['@self']?.name || get_single?.id}
+            published={get_single?.['@self']?.published}
+            object={get_single}
+            showViewAction={false}
+            showEditAction={true}
+            showPublishActions={true}
+            onDelete={handleDelete}
+            onEdit={() => {
+              const schemaSlug = get_single?.['@self']?.schema?.slug;
+              if (schemaSlug) {
+                const wizards = Object.values(DASHBOARD_WIZARDS);
+                const wizard = wizards.find((w) => w.schema === schemaSlug);
+
+                if (wizard) {
+                  const baseUrl = getWizardUrl(wizard);
+                  const url = new URL(baseUrl, window.location.origin);
+                  url.searchParams.set('id', id);
+                  navigate(url.pathname + url.search);
+                  return;
+                }
+              }
+              // Fallback to beheer legacy edit page in new tab
+              const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+              window.open(beheerUrl, '_blank');
+            }}
+            uniqueActions={[
+              {
+                key: 'delete',
+                label: 'Verwijderen',
+                icon: VISUALS.TRASHCAN,
+                onClick: handleDelete,
+              },
+            ]}
+            triggerStyle='button'
+            relatedActions={actionMenuItems}
+          />
+        </div>
+        <AcFlex column spacing={'lg'}>
+          <div className='con-publication-detail__organisation_header'>
+            <div>
+              <Heading level={4}>
+                <div className='con-beheer-details--header-container'>
+                  {get_single?.['@self']?.image && (
+                    <ConLogoPreview
+                      className='con-beheer-details--logo-container'
+                      logoUrl={get_single?.['@self']?.image}
+                    />
+                  )}
+
+                  <Heading className='con-beheer-details--title'>
+                    {get_single?.['@self']?.name ||
+                      get_single?.id ||
+                      get_single?.name ||
+                      'Organisatie'}
+                  </Heading>
+                </div>
+              </Heading>
+              {!!get_single?.['@self']?.summary && (
+                <div>{get_single?.['@self']?.summary}</div>
+              )}
+              <br />
+              <br />
+              <br />
+              <div className='con-publication-detail__organisation_header_info'>
+                <div>
+                  Website:
+                  <div>
+                    {get_single?.website ? (
+                      <Link
+                        href={
+                          get_single?.website.startsWith('http')
+                            ? get_single?.website
+                            : `https://${get_single?.website}`
+                        }
+                        target='_blank'
+                        rel='noreferrer'
+                      >
+                        {get_single?.website}
+                      </Link>
+                    ) : (
+                      '-'
+                    )}
+                  </div>
+                </div>
+                <div>
+                  Telefoon:
+                  <div>
+                    {get_single?.telefoonnummer ? (
+                      <Link href={`tel:${get_single?.telefoonnummer}`}>
+                        {get_single?.telefoonnummer}
+                      </Link>
+                    ) : (
+                      '-'
+                    )}
+                  </div>
+                </div>
+                <div>{get_single?.type || '-'}</div>
+                {get_single?.type === 'Leverancier' && (
+                  <div>
+                    KVK-nummer:
+                    <div>{get_single?.kvkNummer || '-'}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className='con-publication-detail__organisation_header_contact'>
+              <div className='ac-register-review__contact-details'>
+                <div className='ac-register-review__contact-image'>
+                  {get_single?.contactpersonen[0]?.image ? (
+                    <img
+                      src={get_single?.contactpersonen[0].image}
+                      alt='Contactpersoon'
+                      className='ac-register-review__contact-image--round'
+                      style={{ objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div className='ac-register-review__contact-image--round'>
+                      <VISUALS.USER_CIRCLE />
+                    </div>
+                  )}
+                </div>
+                <Heading level={5}>Contactpersoon</Heading>
+                <div className='ac-register-review__contact-info'>
+                  <div>
+                    {[
+                      get_single?.contactpersonen[0]?.voornaam,
+                      get_single?.contactpersonen[0]?.tussenvoegsel,
+                      get_single?.contactpersonen[0]?.achternaam,
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </div>
+                  <div>
+                    {get_single?.contactpersonen[0]?.['e-mailadres'] ? (
+                      <Link
+                        href={`mailto:${get_single?.contactpersonen[0]?.['e-mailadres']}`}
+                      >
+                        {get_single?.contactpersonen[0]?.['e-mailadres']}
+                      </Link>
+                    ) : (
+                      '-'
+                    )}
+                  </div>
+                  <div>
+                    {get_single?.contactpersonen[0]?.telefoonnummer ? (
+                      <Link
+                        href={`tel:${get_single?.contactpersonen[0]?.telefoonnummer}`}
+                      >
+                        {get_single?.contactpersonen[0]?.telefoonnummer}
+                      </Link>
+                    ) : (
+                      '-'
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {!!get_single?.beschrijvingLang && (
+            <MDEditor.Markdown
+              wrapperElement={{
+                'data-color-mode': 'light',
+              }}
+              source={get_single?.beschrijvingLang}
+              remarkPlugins={[
+                [remarkGfm, { singleTilde: false }],
+                remarkDefinitionList,
+                remarkEmoji,
+                remarkSupersub,
+                remarkMark,
+              ]}
+              rehypePlugins={[
+                rehypeSlug,
+                [remarkRehype, { handlers: { ...defListHastHandlers } }],
+              ]}
+            />
+          )}
+
+          <div style={{ marginTop: '1rem' }}>
+            <AccountOrganisationTabs uses={uses} used={used} />
+          </div>
+        </AcFlex>
+
+        <AcGenericBeheerDeleteModal
+          objects={get_single ? [get_single] : []}
+          showModal={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onSuccess={() => navigate('/zoeken')}
+        />
+      </AcContainer>
+    </>
+  );
+};
+
+const AccountOrganisationTabs = observer(({ uses, used }) => {
+  // Pull related data for tabs
+
+  const uniqueSchemasFrom = useCallback((rel) => {
+    const items = Array.isArray(rel) ? rel : rel?.results;
+    if (!items) return [];
+
     const map = new Map();
-    for (const item of arr) {
+    for (const item of items) {
       const schema = item?.['@self']?.schema;
       if (!schema) continue;
-      if (!map.has(schema.id)) map.set(schema.id, schema);
+      const key = schema.id || schema.slug || schema;
+      if (!map.has(key)) map.set(key, schema);
     }
+
     return Array.from(map.values()).sort((a, b) =>
-      String(a.id).localeCompare(String(b.id))
+      String(a.id || a.slug || a).localeCompare(String(b.id || b.slug || b))
     );
   }, []);
 
+  // Only show specific categories: producten, diensten, koppelingen, modules
   const filterWantedSchemas = useCallback((schemas) => {
     const wanted = new Set(['product', 'dienst', 'koppeling', 'module']);
     return (schemas || []).filter((s) => wanted.has(s.slug || s.id || s));
@@ -75,15 +370,20 @@ const PublicationOrganisationTabs = ({ publicationId }) => {
     [used]
   );
 
-  if (!usesSchemas.length && !usedSchemas.length) return null;
+  const [tabIndex, setTabIndex] = useState(0);
+
+  if (!usesSchemas?.length && !usedSchemas?.length) return null;
 
   return (
     <div className='ac-account--tabs-container'>
       <AcTabs selectedIndex={tabIndex} onSelect={(i) => setTabIndex(i)}>
         <AcTabList>
           {usesSchemas.map((schema, idx) => {
-            const count = (uses || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
+            const items = Array.isArray(uses) ? uses : uses?.results || [];
+            const count = items.filter(
+              (r) =>
+                (r['@self']?.schema?.id || r['@self']?.schema?.slug) ===
+                (schema.id || schema.slug)
             ).length;
             return (
               <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx}>
@@ -100,8 +400,11 @@ const PublicationOrganisationTabs = ({ publicationId }) => {
             );
           })}
           {usedSchemas.map((schema, idx) => {
-            const count = (used || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
+            const items = Array.isArray(used) ? used : used?.results || [];
+            const count = items.filter(
+              (r) =>
+                (r['@self']?.schema?.id || r['@self']?.schema?.slug) ===
+                (schema.id || schema.slug)
             ).length;
             return (
               <AcTab
@@ -123,29 +426,43 @@ const PublicationOrganisationTabs = ({ publicationId }) => {
         </AcTabList>
 
         {usesSchemas.map((schema, idx) => {
-          const rows = (uses || []).filter(
-            (r) => r['@self']?.schema?.id === schema.id
+          const items = Array.isArray(uses) ? uses : uses?.results || [];
+          const rows = items.filter(
+            (r) =>
+              (r['@self']?.schema?.id || r['@self']?.schema?.slug) ===
+              (schema.id || schema.slug)
           );
           return (
             <AcTabPanel key={`uses-panel-${schema.id}`} selected={tabIndex === idx}>
               <ul
                 style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
               >
-                {rows.map((r) => (
-                  <li key={r.id || r['@self']?.id}>
-                    <Link href={`/publicatie/${r.id || r['@self']?.id}`}>
-                      {r['@self']?.name || r.title || r.naam || r.id}
-                    </Link>
-                  </li>
-                ))}
+                {rows.map((r) => {
+                  const href =
+                    r['@self']?.schema?.slug && r['@self']?.id
+                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
+                      : undefined;
+                  return (
+                    <li key={r.id || r['@self']?.id}>
+                      {href ? (
+                        <Link href={href}>{r['@self']?.name || r.id}</Link>
+                      ) : (
+                        r['@self']?.name || r.id
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </AcTabPanel>
           );
         })}
 
         {usedSchemas.map((schema, idx) => {
-          const rows = (used || []).filter(
-            (r) => r['@self']?.schema?.id === schema.id
+          const items = Array.isArray(used) ? used : used?.results || [];
+          const rows = items.filter(
+            (r) =>
+              (r['@self']?.schema?.id || r['@self']?.schema?.slug) ===
+              (schema.id || schema.slug)
           );
           const index = idx + usesSchemas.length;
           return (
@@ -156,13 +473,21 @@ const PublicationOrganisationTabs = ({ publicationId }) => {
               <ul
                 style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
               >
-                {rows.map((r) => (
-                  <li key={r.id || r['@self']?.id}>
-                    <Link href={`/publicatie/${r.id || r['@self']?.id}`}>
-                      {r['@self']?.name || r.title || r.naam || r.id}
-                    </Link>
-                  </li>
-                ))}
+                {rows.map((r) => {
+                  const href =
+                    r['@self']?.schema?.slug && r['@self']?.id
+                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
+                      : undefined;
+                  return (
+                    <li key={r.id || r['@self']?.id}>
+                      {href ? (
+                        <Link href={href}>{r['@self']?.name || r.id}</Link>
+                      ) : (
+                        r['@self']?.name || r.id
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </AcTabPanel>
           );
@@ -170,132 +495,6 @@ const PublicationOrganisationTabs = ({ publicationId }) => {
       </AcTabs>
     </div>
   );
-};
+});
 
-const AcPublicationOrganisation = ({ store: { publications } }) => {
-  const { id } = useParams();
-  const { get_single, loading } = publications;
-
-  if (loading.status || !get_single) {
-    return <AcLoader />;
-  }
-
-  const contact = (get_single?.contactpersonen || [])[0] || {};
-
-  return (
-    <AcContainer compact margin='xl'>
-      <AcFlex column gap='lg'>
-        <div className='ac-register-review__section'>
-          <div className='ac-account-review__header'>
-            <div>
-              <Heading level={4}>
-                <div className='con-beheer-details--header-container'>
-                  {get_single?.['@self']?.image && (
-                    <ConLogoPreview
-                      className='con-beheer-details--logo-container'
-                      logoUrl={get_single?.['@self']?.image}
-                    />
-                  )}
-
-                  <Heading className='con-beheer-details--title'>
-                    {get_single?.['@self']?.name || get_single?.id}
-                  </Heading>
-                </div>
-              </Heading>
-
-              {!!get_single?.['@self']?.summary && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  {get_single?.['@self']?.summary}
-                </div>
-              )}
-
-              <div className='ac-account-review__header-info'>
-                <div>
-                  Website:
-                  <div>
-                    {get_single?.website ? (
-                      <Link
-                        href={
-                          get_single.website.startsWith('http')
-                            ? get_single.website
-                            : `https://${get_single.website}`
-                        }
-                        target='_blank'
-                        rel='noreferrer'
-                      >
-                        {get_single.website}
-                      </Link>
-                    ) : (
-                      '-'
-                    )}
-                  </div>
-                </div>
-                <div>
-                  Telefoon:
-                  <div>
-                    {get_single?.telefoonnummer ? (
-                      <Link href={`tel:${get_single.telefoonnummer}`}>
-                        {get_single.telefoonnummer}
-                      </Link>
-                    ) : (
-                      '-'
-                    )}
-                  </div>
-                </div>
-                <div>{get_single?.type || '-'}</div>
-                {get_single?.type === 'Leverancier' && (
-                  <div>
-                    KVK-nummer:
-                    <div>{get_single?.['@self']?.kvkNummer || '-'}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className='ac-register-review__contact'>
-              <div className='ac-register-review__contact-details'>
-                <Heading level={5}>Contactpersoon</Heading>
-                <div className='ac-register-review__contact-info'>
-                  <div>
-                    {[contact?.voornaam, contact?.tussenvoegsel, contact?.achternaam]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </div>
-                  <div>
-                    {contact?.['e-mailadres'] ? (
-                      <Link href={`mailto:${contact['e-mailadres']}`}>
-                        {contact['e-mailadres']}
-                      </Link>
-                    ) : (
-                      '-'
-                    )}
-                  </div>
-                  <div>
-                    {contact?.telefoonnummer ? (
-                      <Link href={`tel:${contact.telefoonnummer}`}>
-                        {contact.telefoonnummer}
-                      </Link>
-                    ) : (
-                      '-'
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Long description (markdown is already stored as string) */}
-          {!!get_single?.beschrijvingLang && (
-            <div style={{ marginTop: '1rem' }}>{get_single?.beschrijvingLang}</div>
-          )}
-
-          {/* Tabs */}
-          <div style={{ marginTop: '1rem' }}>
-            <PublicationOrganisationTabs publicationId={id} />
-          </div>
-        </div>
-      </AcFlex>
-    </AcContainer>
-  );
-};
-
-export default withStore(observer(AcPublicationOrganisation));
+export default withStore(observer(AcPublication));

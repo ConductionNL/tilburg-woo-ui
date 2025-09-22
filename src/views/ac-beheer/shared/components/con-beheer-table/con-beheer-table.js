@@ -11,8 +11,14 @@ import { observer } from 'mobx-react-lite';
 import _ from 'lodash';
 
 // Local navigation builder based on config.routeType
-const buildNavigateView = (navigate, config) => (id) =>
-  navigate(`/beheer/${config.routeType}/${id}`);
+const buildNavigateView = (navigate, config) => (rowOrId) => {
+  const id =
+    typeof rowOrId === 'object' && rowOrId !== null
+      ? rowOrId?.['@self']?.id ?? rowOrId?.id
+      : rowOrId;
+
+  return navigate(`/beheer/${config.routeType}/${id}`);
+};
 
 /**
  * @typedef {Object} typeProps
@@ -338,7 +344,7 @@ const BeheerTable = forwardRef(({ store, ...props }, ref) => {
               <ConActionMenu.Button
                 icon={<VISUALS.EYE />}
                 onClick={() => {
-                  config.navigateView(row.id);
+                  config.navigateView(row);
                 }}
               >
                 Bekijken

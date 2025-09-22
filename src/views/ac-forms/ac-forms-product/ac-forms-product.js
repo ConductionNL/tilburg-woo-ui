@@ -794,7 +794,7 @@ const AcFormsProductInner = ({
     };
 
     if (queryParamsString) {
-      // // Parse the queryParams string: "gemmaType=referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
+      // // Parse the queryParams string: "gemmaType=Referentiecomponent&_extend=aanbevolenStandaarden,verplichteStandaarden"
       // const urlParams = new URLSearchParams(queryParamsString);
       // urlParams.forEach((value, key) => {
       //   baseParams[key] = value;
@@ -861,7 +861,7 @@ const AcFormsProductInner = ({
 
       // Use object store cache-first method for immediate response
       const list = await store.object.fetchGemmaElementsCacheFirst(
-        'referentiecomponent',
+        'Referentiecomponent',
         queryParams
       );
 
@@ -1155,10 +1155,10 @@ const AcFormsProductInner = ({
 
   // Auto-set aanbieder to user's active organization
   useEffect(() => {
-    if (userStore?.activeOrganization && !product.aanbieder) {
-      setProductData('aanbieder', userStore.activeOrganization);
+    if (store.user.activeOrganization && !product.aanbieder) {
+      setProductData('aanbieder', store.user.activeOrganization.uuid);
     }
-  }, [userStore?.activeOrganization, product.aanbieder]);
+  }, [store.user.activeOrganization, product.aanbieder]);
 
   // State for aanbieder selection
   const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
