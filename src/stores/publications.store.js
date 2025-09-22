@@ -90,7 +90,6 @@ const getAuthHeaders = () => {
   } catch (error) {
     console.warn('Failed to get basic auth credentials:', error);
   }
-  
   return headers;
 };
 
@@ -465,74 +464,66 @@ export class PublicationsStore {
     this.setFacetsLoadingStatus(true);
 
     try {
-      // 🚀 OPTIMIZED: Use essential facets only for better performance
-      const essentialFacetsQueries = buildEssentialFacetsQueries();
+      // Build base query from current filters and add _facets=extend
+      const baseQuery = {
+        ...this.search_query,
+        _limit: 0, // We only want facets, not results
+        _facets: 'extend', // Request extended facets
+      };
+      
+      const queryString = AcBuildURLSearchParams(baseQuery);
+      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
-      // 🚀 OPTIMIZED: Build base query from current filters
-      const baseQueryString = AcBuildURLSearchParams(this.search_query);
-      const baseWithLimit = baseQueryString
-        ? `${baseQueryString}&_limit=0`
-        : `_limit=0`;
-
-      // Add essential facets with proper URL encoding (append manually)
-      const facetParams = essentialFacetsQueries
-        .map(([key, value]) =>
-          Array.isArray(key)
-            ? `_facets[${key.join('][')}]=${encodeURIComponent(value)}`
-            : `_facets[${key}]=${encodeURIComponent(value)}`
-        )
-        .join('&');
-      const finalQueryString = facetParams
-        ? `${baseWithLimit}&${facetParams}`
-        : baseWithLimit;
-
-      console.group('🚀 OPTIMIZED FACETS API CALL');
-      console.info(
-        'Essential facets only:',
-        essentialFacetsQueries.length,
-        'facets instead of all available'
-      );
-      console.info('Final query string:', finalQueryString);
+      console.group('🚀 INDEPENDENT FACETS API CALL');
+      console.info('FACETS QUERY:', toJS(baseQuery));
+      console.info('URL:', fullUrl);
       console.groupEnd();
 
-      const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications?${finalQueryString}`,
-        {
-          method: 'GET',
-          headers: getAuthHeaders(),
-          credentials: 'include', // Include cookies like the browser
-        }
-      ).then((res) => {
+      const response = await fetch(fullUrl, {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        credentials: 'include',
+      }).then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         return res.json();
       });
 
-      // Handle nested facets structure - API returns facets.facets
-      const facetsData = response.facets?.facets || response.facets || {};
+      // Handle new facets structure - API returns facets with data.buckets
+      const facetsData = response.facets || {};
 
       if (facetsData && Object.keys(facetsData).length > 0) {
         console.info('📊 Processing facets data:', facetsData);
 
-        // Add basic titles to facets (simplified since we only use essential ones)
+        // Process facets with new structure
         const facetsWithTitles = {};
-        for (const [key, value] of Object.entries(facetsData)) {
-          if (key === '@self') {
-            facetsWithTitles[key] = {};
-            for (const [subKey, subValue] of Object.entries(value)) {
-              facetsWithTitles[key][subKey] = {
-                ...subValue,
-                title: this.getFacetTitle(subKey),
-              };
+        for (const [key, facetConfig] of Object.entries(facetsData)) {
+          // Check if this is a @self facet (starts with _)
+          if (key.startsWith('_')) {
+            // Handle @self facets - group them under @self key
+            if (!facetsWithTitles['@self']) {
+              facetsWithTitles['@self'] = {};
             }
+            
+            const cleanKey = key.substring(1); // Remove the _ prefix
+            facetsWithTitles['@self'][cleanKey] = {
+              buckets: facetConfig.data?.buckets || [],
+              title: this.getFacetTitle(facetConfig.title || facetConfig.name || cleanKey),
+              type: facetConfig.type,
+              queryParameter: facetConfig.queryParameter,
+            };
           } else {
+            // Handle regular facets
             facetsWithTitles[key] = {
-              ...value,
-              title: this.getFacetTitle(key),
+              buckets: facetConfig.data?.buckets || [],
+              title: this.getFacetTitle(facetConfig.title || facetConfig.name || key),
+              type: facetConfig.type,
+              queryParameter: facetConfig.queryParameter,
             };
           }
         }
+        
         this.setFacets(facetsWithTitles);
         console.info('✅ Facets processed and set:', Object.keys(facetsWithTitles));
       } else {
@@ -550,34 +541,45 @@ export class PublicationsStore {
   };
 
   // Helper method to get facet titles
-  getFacetTitle = (key) => {
+  // Use title first, if no title use name but remove the _ and make it upperfirst
+  getFacetTitle = (titleOrName) => {
+    if (!titleOrName) return '';
+    
+    // If it's already a clean title, return it
+    if (typeof titleOrName === 'string' && !titleOrName.startsWith('_')) {
+      return titleOrName;
+    }
+    
+    // Remove _ prefix and make upperfirst
+    const cleanName = titleOrName.startsWith('_') ? titleOrName.substring(1) : titleOrName;
+    
+    // Special mappings for known keys
     const titleMap = {
       register: 'Register',
       schema: 'Schema',
-      cloudDienstverleningsmodel: 'Cloud Dienstverleningsmodel',
+      organisation: 'Organisatie',
+      created: 'Aangemaakt',
+      updated: 'Bijgewerkt',
     };
-    return titleMap[key] || key;
+    
+    // Return mapped title or upperfirst the clean name
+    return titleMap[cleanName] || cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
   };
 
   @action
   fetchPublications = async () => {
     this.loading.status = true;
 
-    // Reset facets UI while fetching, so counts reflect new filters after reload
-    this.setFacetsLoadingStatus(true);
-    this.setFacets({});
-
-    // Build query including current filters/facets and request facetable config plus names data
-    const baseQuery = { 
-      ...this.search_query, 
-      _facetable: true,
+    // Build query including current filters/facets and request names data (no facetable)
+    const baseQuery = {
+      ...this.search_query,
       _related: true,
-      _relatedNames: true
+      _relatedNames: true,
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
     const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
 
-    console.group('🚀 HYBRID API CALL - Publications + Facets Config');
+    console.group('🚀 INDEPENDENT PUBLICATIONS API CALL');
     console.info('SEARCH QUERY:', toJS(baseQuery));
     console.info('URL:', fullUrl);
     console.groupEnd();
@@ -601,32 +603,52 @@ export class PublicationsStore {
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
           console.group('🏷️ PROCESSING RELATED NAMES FROM SEARCH');
-          console.info('Related names received:', Object.keys(response.relatedNames).length, 'entries');
+          console.info(
+            'Related names received:',
+            Object.keys(response.relatedNames).length,
+            'entries'
+          );
           console.info('Names data:', response.relatedNames);
           app.store.object.processRelatedNamesFromResponse(response);
-          console.info('Names cache after processing:', Object.keys(app.store.object.namesCache).length, 'entries');
+          console.info(
+            'Names cache after processing:',
+            Object.keys(app.store.object.namesCache).length,
+            'entries'
+          );
           console.groupEnd();
         } else if (app.store?.object && response.results?.length > 0) {
           // Fallback: manually extract reference IDs and resolve names if _relatedNames is not supported
           console.group('⚠️ FALLBACK: Manual reference extraction in search');
-          console.info('No relatedNames in response, falling back to manual extraction');
+          console.info(
+            'No relatedNames in response, falling back to manual extraction'
+          );
           console.info('Search results count:', response.results.length);
           try {
-            const { extractReferenceIdsFromCollection } = require('@src/utilities/con-detect-object-references');
+            const {
+              extractReferenceIdsFromCollection,
+            } = require('@src/utilities/con-detect-object-references');
             const referenceIds = extractReferenceIdsFromCollection(response.results);
             console.info('Extracted reference IDs:', referenceIds.length, 'IDs');
             console.info('Reference IDs:', referenceIds);
-            
+
             if (referenceIds.length > 0) {
               // Asynchronously resolve names in background (don't wait for this)
               console.info('Starting background names resolution...');
-              app.store.object.getNamesForMultipleIds(referenceIds)
-                .then(resolvedNames => {
-                  console.info('Background names resolved:', Object.keys(resolvedNames).length, 'names');
+              app.store.object
+                .getNamesForMultipleIds(referenceIds)
+                .then((resolvedNames) => {
+                  console.info(
+                    'Background names resolved:',
+                    Object.keys(resolvedNames).length,
+                    'names'
+                  );
                   console.info('Resolved names:', resolvedNames);
                 })
-                .catch(error => {
-                  console.warn('Failed to resolve reference names in search:', error);
+                .catch((error) => {
+                  console.warn(
+                    'Failed to resolve reference names in search:',
+                    error
+                  );
                 });
             } else {
               console.info('No reference IDs found to resolve');
@@ -644,24 +666,8 @@ export class PublicationsStore {
           console.groupEnd();
         }
 
-        // Store facetable configuration for facets call
-        if (response.facetable) {
-          const configChanged =
-            JSON.stringify(this.facetsConfig) !== JSON.stringify(response.facetable);
-          this.setAvailableFacets(response.facetable);
-          this.setFacetsConfig(response.facetable); // Triggers reload if config changed
-          // If config didn't change, still reload facets to reflect new filters
-          if (!configChanged) {
-            this.triggerFacetsReload();
-          }
-        } else {
-          // No config received, but ensure we try to refresh facets for new filters
-          this.triggerFacetsReload();
-        }
-
         // Clean up response and set pagination
         delete response.results;
-        delete response.facetable;
         delete response.relatedNames;
         this.setPagination(response);
       })
@@ -701,24 +707,32 @@ export class PublicationsStore {
       .single(
         _id,
         new URLSearchParams(
-          AcBuildURLSearchParams({ 
-            _id, 
+          AcBuildURLSearchParams({
+            _id,
             ...this.defaultQuery,
             _related: true,
-            _relatedNames: true
+            _relatedNames: true,
           })
         ).toString()
       )
       .then((response) => {
         console.group('📄 PROCESSING SINGLE PUBLICATION RESPONSE');
         console.info('Publication response:', response);
-        
+
         // Process related names data to populate the names cache
         if (response.relatedNames && app.store?.object) {
-          console.info('Related names received:', Object.keys(response.relatedNames).length, 'entries');
+          console.info(
+            'Related names received:',
+            Object.keys(response.relatedNames).length,
+            'entries'
+          );
           console.info('Names data:', response.relatedNames);
           app.store.object.processRelatedNamesFromResponse(response);
-          console.info('Names cache after processing:', Object.keys(app.store.object.namesCache).length, 'entries');
+          console.info(
+            'Names cache after processing:',
+            Object.keys(app.store.object.namesCache).length,
+            'entries'
+          );
         } else {
           console.info('No related names in publication response');
         }

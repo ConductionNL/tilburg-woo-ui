@@ -209,6 +209,10 @@ const ROTATE_RIGHT = loadable(() =>
   import('-!svg-react-loader!@assets/images/rotate-right.svg')
 );
 
+const USER_CIRCLE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/user-circle.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -284,6 +288,7 @@ export const VISUALS = {
   WAND_SPARKLES_SOLID,
   ROTATE_RIGHT,
   RELOAD: ROTATE_RIGHT,
+  USER_CIRCLE,
 };
 
 export default {};

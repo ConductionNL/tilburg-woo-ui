@@ -90,6 +90,10 @@ const ConModulesChoiceSwitch = loadable(() =>
   import('@src/components/con-modules-choice-switch/con-modules-choice-switch')
 );
 
+const ConDebugViewer = loadable(() =>
+  import('@src/components/con-debug-viewer/con-debug-viewer')
+);
+
 export {
   AcAbout,
   AcCNavigation,
@@ -126,4 +130,5 @@ export {
   ConRelatedObjectsLinks,
   ConExistingModulesInfoBox,
   ConModulesChoiceSwitch,
+  ConDebugViewer,
 };

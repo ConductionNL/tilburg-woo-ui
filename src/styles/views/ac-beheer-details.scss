@@ -5,6 +5,7 @@
 
   &--100-width {
     width: 100%;
+    min-width: 0;
   }
 
   &--list {
@@ -83,4 +84,49 @@
     word-break: break-word; /* WebKit fallback */
     hyphens: auto; /* nicer word breaks when possible */
   }
+}
+
+.con-product-details {
+    &--header {
+        display: flex;
+        gap: 2rem; /* Add some spacing between the flex items */
+
+        /* Target AcFlex column that contains main content */
+        > div:first-child {
+            flex: 1; /* Allow growing to fill available space */
+            min-width: 0; /* Enable proper shrinking */
+        }
+
+        /* Target contact person container */
+        > div:last-child {
+            flex: 0 0 auto; /* Keep at content width */
+            max-width: 300px; /* Prevent from getting too wide */
+        }
+
+        &-short-stats {
+            margin-block-start: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+
+            &-item {
+                display: flex;
+                gap: 4px;
+            }
+        }
+    }
+
+    &--content {
+        /* Target AcFlex column that contains main content */
+        > div:first-child {
+            flex: 1; /* Allow growing to fill available space */
+            min-width: 0; /* Enable proper shrinking */
+        }
+
+        /* Target contact person container */
+        > div:last-child {
+            flex: 0 0 auto; /* Keep at content width */
+            max-width: 400px; /* Prevent from getting too wide */
+        }
+    }
 }

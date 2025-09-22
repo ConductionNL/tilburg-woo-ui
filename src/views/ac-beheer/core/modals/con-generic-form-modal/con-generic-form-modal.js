@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcModal, ConDynamicSchemaForm } from '@components';
+import { AcModal, ConDebugViewer, ConDynamicSchemaForm } from '@components';
 import { VISUALS } from '@constants';
 import { AcFlex } from '@atoms';
 // eslint-disable-next-line import/no-unresolved
@@ -802,8 +802,9 @@ const ConGenericFormModal = ({
     return null;
   }
 
-  // Generate title - prefer schema title over type slug
-  const schemaTitle = schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
+  // Generate title - prefer custom config name over schema title over type slug
+  const schemaTitle =
+    config?.title || schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
   const title = isEdit ? `${schemaTitle} bewerken` : `${schemaTitle} toevoegen`;
 
   return (
@@ -816,6 +817,8 @@ const ConGenericFormModal = ({
       buttonPosition='end'
       disableDefaultButton
     >
+      <ConDebugViewer data={formData} title='Form Data' />
+
       {/* Status messages */}
       {(submitError || submitSuccess) && (
         <AcFlex column spacing='sm' style={{ marginBottom: '1rem' }}>
