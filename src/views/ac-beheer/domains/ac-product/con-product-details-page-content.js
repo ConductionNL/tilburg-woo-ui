@@ -97,8 +97,8 @@ const ConProductDetailsPageContent = ({
             objectId={data.id}
             field='beschrijvingKort'
             label='Korte beschrijving'
-            placeholder="Een korte beschrijving van de product"
-            tooltip="Een korte beschrijving van de product"
+            placeholder='Een korte beschrijving van de product'
+            tooltip='Een korte beschrijving van de product'
             maxLength={255}
             isMarkdown={false}
             value={data.beschrijvingKort}
@@ -352,6 +352,7 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
                     metadata={metadata}
                     data={rows}
                     dataProperties={schema.properties}
+                    headers={[{ id: 'naam', label: 'Naam', key: 'naam' }]}
                     user={user}
                     actionButtons={(config) =>
                       !!config.navigateView && {
@@ -403,6 +404,7 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
                     metadata={metadata}
                     data={rows}
                     dataProperties={schema.properties}
+                    headers={[{ id: 'naam', label: 'Naam', key: 'naam' }]}
                     user={user}
                     actionButtons={(config) =>
                       !!config.navigateView && {
