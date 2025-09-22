@@ -124,6 +124,7 @@ const ConEditableDescription = ({
   // serialize = (v) => v,
   deserialize = (v) => v ?? '',
   onSuccess,
+  canEdit = true,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState('');
@@ -159,7 +160,7 @@ const ConEditableDescription = ({
 
   return (
     <div className='ac-description-row'>
-      {isEditing ? (
+      {isEditing && canEdit ? (
         <div className='ac-organisatie-detail-form-wrapper'>
           <div className='ac-organisatie-detail-form'>
             {isMarkdown ? (
@@ -310,20 +311,22 @@ const ConEditableDescription = ({
               );
             })()}
           </div>
-          <AcButton
-            className='ac-description-edit-btn'
-            icon={<VISUALS.PENCIL />}
-            style='button'
-            buttonType='secondary'
-            onClick={() => {
-              const v = deserialize(value);
-              setIsEditing(true);
-              setTempValue(v || '');
-              setCharCount((v || '').length);
-            }}
-          >
-            Bewerken
-          </AcButton>
+          {canEdit && (
+            <AcButton
+              className='ac-description-edit-btn'
+              icon={<VISUALS.PENCIL />}
+              style='button'
+              buttonType='secondary'
+              onClick={() => {
+                const v = deserialize(value);
+                setIsEditing(true);
+                setTempValue(v || '');
+                setCharCount((v || '').length);
+              }}
+            >
+              Bewerken
+            </AcButton>
+          )}
         </>
       )}
     </div>
