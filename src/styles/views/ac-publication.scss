@@ -111,3 +111,11 @@
   vertical-align: bottom;
   cursor: pointer;
 }
+
+// Publication detail page specific tab styling
+.ac-publication-container {
+  .ac-tabs [class*='react-tabs__tab-panel--selected'] {
+    padding-inline-start: 0;
+    padding-inline-end: 0;
+  }
+}

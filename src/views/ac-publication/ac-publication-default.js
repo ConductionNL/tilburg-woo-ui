@@ -114,7 +114,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
   const fetchUses = async () => {
     const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?extend[]=@self.schema`,
+      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
       {
         method: 'GET',
         headers: {
@@ -132,7 +132,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   };
   const fetchUsed = async () => {
     const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?extend[]=@self.schema`,
+      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
       {
         method: 'GET',
         headers: {
@@ -174,7 +174,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
   return (
     <>
-      <AcContainer compact margin='xl'>
+      <AcContainer compact margin='xl' className='ac-publication-container'>
         <AcFlex column spacing={'lg'}>
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
             <div className='con-beheer-details--header-container'>
@@ -376,7 +376,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
           <div>
             {uses && uses.length > 0 && (
               <>
-                <Heading level={2}>Gebruiken</Heading>
+                <Heading level={2}>Maakt gebruik van</Heading>
                 <AcTabs
                   selectedIndex={tabIndexUses}
                   onSelect={(index) => setTabIndexUses(index)}
