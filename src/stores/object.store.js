@@ -1736,7 +1736,7 @@ export class ObjectStore {
     this.setSuccess(requestType, null);
 
     try {
-      const response = await nextcloudApi.put(
+      const response = await nextcloudApi.patch(
         this._constructApiUrl(register, schema, id),
         data
       );

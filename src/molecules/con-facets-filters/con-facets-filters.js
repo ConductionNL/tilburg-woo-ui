@@ -19,8 +19,6 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     // fetchFacets,
     all_facets,
     is_facets_loading,
-    is_facets_config_loaded,
-    facetsConfig,
   } = publications;
 
   // Custom function to handle nested facet toggling
@@ -40,11 +38,13 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         ? currentArray
         : [currentArray];
 
-      // Toggle the value
+      // Toggle the value - always add if not present, remove if present
       let newArray;
       if (arrayToCheck.includes(value)) {
+        // Remove the value
         newArray = arrayToCheck.filter((item) => item !== value);
       } else {
+        // Add the value
         newArray = [...arrayToCheck, value];
       }
 
@@ -53,9 +53,14 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         ...query,
         [mainKey]: {
           ...currentNested,
-          [cleanSubKey]: newArray,
+          [cleanSubKey]: newArray.length > 0 ? newArray : undefined, // Remove empty arrays
         },
       };
+
+      // Clean up empty nested objects
+      if (updatedQuery[mainKey] && Object.keys(updatedQuery[mainKey]).length === 0) {
+        delete updatedQuery[mainKey];
+      }
 
       // Reset to first page when filters change
       const withPageReset = { ...updatedQuery, _page: 1 };
@@ -67,6 +72,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
       // Update store
       updateQuery(withPageReset);
 
+      // Trigger facets fetch to update counts with new filters
+      publications.fetchFacets();
+
       // Fetch is triggered by URL change effect in AcSearch
     } else {
       // Use the existing function for regular keys
@@ -76,6 +84,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
       const paramsString = AcBuildURLSearchParams(nextQuery);
       setSearchParams(new URLSearchParams(paramsString));
 
+      // Trigger facets fetch to update counts with new filters
+      publications.fetchFacets();
+
       // Fetch is triggered by URL change effect in AcSearch
     }
   };
@@ -83,6 +94,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
   // Generic function to check if a value is checked for any facet key
   const isFacetChecked = (facetKey, value) => {
     const { query } = publications;
+
+    // Convert value to string for comparison (URL params are always strings)
+    const valueStr = String(value);
 
     // Handle nested keys like @self[schema]
     if (facetKey.includes('[') && facetKey.includes(']')) {
@@ -92,15 +106,21 @@ const ConFacetsFilters = ({ store: { publications } }) => {
       // Check if the nested structure exists and contains the value
       const nestedValue = query[mainKey]?.[cleanSubKey];
       if (Array.isArray(nestedValue)) {
-        return nestedValue.includes(value);
-      } else if (typeof nestedValue === 'string') {
-        return nestedValue === value;
+        return nestedValue.some(v => String(v) === valueStr);
+      } else if (nestedValue !== undefined) {
+        return String(nestedValue) === valueStr;
       }
       return false;
     }
 
     // Handle regular keys
-    return query[facetKey]?.includes(value) || false;
+    const queryValue = query[facetKey];
+    if (Array.isArray(queryValue)) {
+      return queryValue.some(v => String(v) === valueStr);
+    } else if (queryValue !== undefined) {
+      return String(queryValue) === valueStr;
+    }
+    return false;
   };
 
   const hasActiveFilters = () => {
@@ -141,13 +161,10 @@ const ConFacetsFilters = ({ store: { publications } }) => {
   };
 
   useEffect(() => {
-    // Only trigger facets fetch when config is loaded and search query changes
-    // The config change will automatically trigger facets reload via triggerFacetsReload
-    if (is_facets_config_loaded && facetsConfig) {
-      // Don't call fetchFacets here - it's handled by triggerFacetsReload in the store
-      // This prevents continuous loading animations
-    }
-  }, [publications.search_query, is_facets_config_loaded, facetsConfig]); // Track config loaded state
+    // Trigger initial facets fetch when component mounts
+    // Subsequent facets fetches are triggered by facet selection changes
+    publications.fetchFacets();
+  }, []); // Only run once on mount
 
   // Render skeleton loading cards for facets
   const renderSkeletonFacets = () => {
@@ -174,11 +191,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
   const facets = all_facets;
 
   // Only show skeleton loading when:
-  // 1. Config is not loaded yet, OR
-  // 2. We're loading facets AND don't have existing facets to show
+  // We're loading facets AND don't have existing facets to show
   const shouldShowSkeleton =
-    !is_facets_config_loaded ||
-    (is_facets_loading && (!facets || Object.keys(facets).length === 0));
+    is_facets_loading && (!facets || Object.keys(facets).length === 0);
 
   if (shouldShowSkeleton) {
     return <>{renderSkeletonFacets()}</>;
@@ -232,11 +247,17 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     );
   }
 
-  // Filter out empty facets from the facets object. For '@self' facets, only keep them if they have schema buckets.
+  // Filter out empty facets from the facets object. For '@self' facets, only keep them if they have buckets.
   // For all other facets, keep them if they have any buckets. This ensures we only show facets that have actual filter options.
+  // Also skip date histogram facets as they have a different structure
   const filteredFacets = Object.entries(facets).filter(([key, value]) => {
     if (key === '@self') {
-      return value.schema?.buckets && value.schema.buckets.length > 0;
+      // Check if any @self sub-facets have buckets
+      return Object.values(value).some((subValue) => subValue.buckets && subValue.buckets.length > 0);
+    }
+    // Skip date histogram facets (they have data.brackets instead of data.buckets)
+    if (value.type === 'date_histogram') {
+      return false;
     }
     return value.buckets && value.buckets.length > 0;
   });
@@ -280,14 +301,14 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                   {hasData ? (
                     _value.buckets.map((bucket) => (
                       <AcCheckbox
-                        key={bucket.key}
+                        key={bucket.value || bucket.key}
                         label={`${
-                          bucket.label ?? bucket.key
-                        } (${ConFormatDutchNumber(bucket.results)})`}
-                        value={bucket.key}
-                        checked={isFacetChecked(`${key}[${_key}]`, bucket.key)}
+                          bucket.label ?? bucket.value ?? bucket.key
+                        } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
+                        value={bucket.value || bucket.key}
+                        checked={isFacetChecked(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key)}
                         onChange={() => {
-                          toggleNestedFacet(`${key}[${_key}]`, bucket.key);
+                          toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
                         }}
                       />
                     ))
@@ -317,17 +338,21 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             {value.buckets && value.buckets.length > 0 ? (
               value.buckets.map((bucketValue) => (
                 <AcCheckbox
-                  key={bucketValue.key}
-                  label={`${bucketValue.label ?? bucketValue.key} (${
-                    bucketValue.results
+                  key={bucketValue.value || bucketValue.key}
+                  label={`${bucketValue.label ?? bucketValue.value ?? bucketValue.key} (${
+                    bucketValue.count || bucketValue.results
                   })`}
-                  value={bucketValue.key}
-                  checked={isFacetChecked(key, bucketValue.key)}
+                  value={bucketValue.value || bucketValue.key}
+                  checked={isFacetChecked(value.queryParameter || key, bucketValue.value || bucketValue.key)}
                   onChange={() => {
-                    toggleSearchArrayValue(key, bucketValue.key);
+                    toggleSearchArrayValue(value.queryParameter || key, bucketValue.value || bucketValue.key);
                     const nextQuery = { ...publications.query, _page: 1 };
                     const paramsString = AcBuildURLSearchParams(nextQuery);
                     setSearchParams(new URLSearchParams(paramsString));
+                    
+                    // Trigger facets fetch to update counts with new filters
+                    publications.fetchFacets();
+                    
                     // Fetch is triggered by URL change effect in AcSearch
                   }}
                 />
