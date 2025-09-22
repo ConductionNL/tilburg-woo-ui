@@ -24,11 +24,11 @@ export const AcBuildURLSearchParams = (data) => {
       return;
     }
 
-    if (!value) {
+    if (!value && !(key === '_limit' && value === 0)) {
       return;
     }
 
-    if (Object.keys(DEFAULT_SEARCH_QUERY).includes(key)) {
+    if (Object.keys(DEFAULT_SEARCH_QUERY).includes(key) && value === DEFAULT_SEARCH_QUERY[key]) {
       return;
     }
 
