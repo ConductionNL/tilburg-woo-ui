@@ -277,7 +277,7 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
   // Uses/Used unique schemas for tabs
   const uniqueSchemasFrom = useCallback((rel) => {
     if (!rel) return [];
-    const uniq = _.uniqBy(rel, (item) => item['@self']?.schema?.id);
+    const uniq = _.uniqBy(rel, (item) => item['@self']?.schema?.['@self']?.id);
     return uniq
       .map((item) => item['@self']?.schema)
       .filter(Boolean)
