@@ -20,6 +20,7 @@ import ConGebruikStepDiensten from './components/con-gebruik-step-diensten';
 import ConGebruikStepReview from './components/con-gebruik-step-review';
 import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 import { VISUALS } from '@src/constants';
+import { useDebouncedInput } from '@src/hooks';
 
 const mapToOption = (item, index) => {
   const label =
@@ -200,9 +201,12 @@ const AcFormsGebruik = ({ store }) => {
 
   // Deelnemers (organisaties) options
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
-
+  const [organisatieLoading, setOrganisatieLoading] = useState(false);
+  // Producten
+  const [productLoading, setProductLoading] = useState(false);
   // Versies
   const [versionOptions, setVersionOptions] = useState([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
   // Resolved selected module object (for consistent downstream usage)
   const [selectedModule, setSelectedModule] = useState(null);
 
@@ -346,7 +350,7 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('vng-gemma', 'element', {
           _limit: '500',
           _page: '1',
-          gemmaType: 'referentiecomponent',
+          gemmaType: 'Referentiecomponent',
         });
         const collection = store.object.getCollection('vng-gemma_element');
         const list = collection?.results || collection || [];
@@ -494,6 +498,79 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
+  // Server-side search for producten
+  const searchProducts = useCallback(
+    async (query) => {
+      try {
+        setProductLoading(true);
+        const q = String(query || '').trim();
+        if (!q) {
+          setProductOptions([]);
+          return;
+        }
+        await store.object.fetchCollection('voorzieningen', 'product', {
+          _limit: '50',
+          _page: '1',
+          _search: q,
+        });
+        const collection = store.object.getCollection('voorzieningen_product');
+        const list = collection?.results || collection || [];
+        const options = list.map(mapToOption);
+        setProductOptions(options);
+      } catch (e) {
+        setProductOptions([]);
+      } finally {
+        setProductLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // Server-side search for organisaties
+  const searchOrganisaties = useCallback(
+    async (query) => {
+      try {
+        setOrganisatieLoading(true);
+        const q = String(query || '').trim();
+        if (!q) {
+          setOrganisatieOptions([]);
+          return;
+        }
+        await store.object.fetchCollection('voorzieningen', 'organisatie', {
+          _limit: '50',
+          _page: '1',
+          _search: q,
+        });
+        const collection = store.object.getCollection('voorzieningen_organisatie');
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const label =
+            item?.['@self']?.name ||
+            item?.naam ||
+            item?.name ||
+            item?.title ||
+            `Organisatie ${index + 1}`;
+          const value = item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        });
+        setOrganisatieOptions(options);
+      } catch (e) {
+        setOrganisatieOptions([]);
+      } finally {
+        setOrganisatieLoading(false);
+      }
+    },
+    [store]
+  );
+
+  // Debounced search functions (500ms)
+  const debouncedSearchProducts = useDebouncedInput(searchProducts, 500, {
+    disableInstantValidation: true,
+  });
+  const debouncedSearchOrganisaties = useDebouncedInput(searchOrganisaties, 500, {
+    disableInstantValidation: true,
+  });
+
   // Resolve selected module object whenever selection changes
   useEffect(() => {
     let cancelled = false;
@@ -536,30 +613,57 @@ const AcFormsGebruik = ({ store }) => {
   }, [gebruik?.module, modulesOptions]);
 
   // When selected module object changes, derive versions from module.moduleVersies (no external API)
+  // When module changes, fetch moduleversies filtered by module id
   useEffect(() => {
     setVersionOptions([]);
-    if (!selectedModule) {
+    const mod = gebruik?.module;
+    const moduleId = getIdString(mod);
+    if (!moduleId) {
       if (gebruik?.moduleVersie != null) setGebruikData('moduleVersie', null);
       return;
     }
 
-    const versies =
-      selectedModule.moduleVersies || selectedModule.moduleversies || [];
-    const options = versies.map((v, idx) => {
-      const label = v?.versie || v?.version || v?.nummer || `Versie ${idx + 1}`;
-      const value = String(v?.versie || v?.version || v?.nummer || label);
-      return { value, label, data: v };
-    });
-    setVersionOptions(options);
+    let cancelled = false;
+    const run = async () => {
+      setVersionsLoading(true);
+      try {
+        await store.object.fetchCollection('voorzieningen', 'moduleversie', {
+          module: String(moduleId),
+          _limit: '100',
+          _page: '1',
+        });
+        if (cancelled) return;
 
-    const current = String(gebruik?.moduleVersie || '');
-    if (current && !options.some((o) => o.value === current)) {
-      setGebruikData('moduleVersie', null);
-    }
-    if (options.length === 1 && current !== options[0].value) {
-      setGebruikData('moduleVersie', options[0].value);
-    }
-  }, [selectedModule]);
+        const type = store.object.getTypeFromParams('voorzieningen', 'moduleversie');
+        const collection = store.object.getCollection(type);
+        const list = collection?.results || collection || [];
+        const options = list.map((v, idx) => {
+          const label = v?.versie || v?.version || v?.nummer || `Versie ${idx + 1}`;
+          const value = v?.id ?? label;
+          return { value: String(value), label: String(label), data: v };
+        });
+
+        setVersionOptions(options);
+
+        const current = String(gebruik?.moduleVersie || '');
+        if (current && !options.some((o) => o.value === current)) {
+          setGebruikData('moduleVersie', null);
+        }
+        if (options.length === 1 && current !== options[0].value) {
+          setGebruikData('moduleVersie', options[0].value);
+        }
+      } catch (_) {
+        if (!cancelled) setVersionOptions([]);
+      } finally {
+        if (!cancelled) setVersionsLoading(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [gebruik?.module, store]);
 
   // When product changes, fetch diensten filtered by product id and map options to dienst IDs
   useEffect(() => {
@@ -791,10 +895,10 @@ const AcFormsGebruik = ({ store }) => {
       }
     }
     if (currentStep === 2) {
-      return !!gebruik?.module; // Product en applicatie step
+      return !!gebruik?.product; // Product en applicatie step
     }
     if (currentStep === 3) {
-      return !!gebruik?.moduleVersie; // Versie step
+      return true; // Versie step
     }
     if (currentStep === 4) {
       return true; // koppelingen optional
@@ -828,6 +932,8 @@ const AcFormsGebruik = ({ store }) => {
             loading={loading}
             refCompOptions={refCompOptions}
             organisatieOptions={organisatieOptions}
+            organisatieLoading={organisatieLoading}
+            searchOrganisaties={debouncedSearchOrganisaties}
             schemas={schemas}
             schemasLoading={schemasLoading}
             gebruikType={gebruikType}
@@ -839,9 +945,11 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             productOptions={productOptions}
+            productLoading={productLoading}
             moduleOptions={modulesOptions}
             modulesLoading={modulesLoading}
             searchModules={searchModules}
+            searchProducts={debouncedSearchProducts}
             loading={loading}
             schemas={schemas}
             gebruikType={gebruikType}
@@ -853,7 +961,7 @@ const AcFormsGebruik = ({ store }) => {
             gebruik={gebruik}
             setGebruikData={setGebruikData}
             versionOptions={versionOptions}
-            versionsLoading={false}
+            versionsLoading={versionsLoading}
             schemas={schemas}
           />
         );

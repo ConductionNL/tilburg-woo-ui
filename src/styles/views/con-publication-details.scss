@@ -1,0 +1,27 @@
+.con-publication-detail {
+  &__organisation {
+    &_actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-block-end: 32px;
+    }
+    &_header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 100px;
+      margin-block-end: 50px;
+      &_info {
+        display: flex;
+        justify-content: space-between;
+      }
+      &_contact {
+        align-self: center;
+        text-align: -webkit-right;
+        & * a {
+          display: block;
+        }
+      }
+    }
+  }
+}

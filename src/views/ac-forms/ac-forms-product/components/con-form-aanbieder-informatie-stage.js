@@ -31,7 +31,7 @@ const ConFormAanbiederInformatieStage = memo(
     loading,
     // touched,
     schemas,
-    userStore,
+    store,
     aanbiederkeuze,
     setAanbiederKeuze,
   }) => {
@@ -39,12 +39,12 @@ const ConFormAanbiederInformatieStage = memo(
     useEffect(() => {
       if (
         aanbiederkeuze === 'bestaand' &&
-        userStore?.activeOrganization &&
+        store.user.activeOrganization &&
         !product.aanbieder
       ) {
-        setProductData('aanbieder', userStore.activeOrganization);
+        setProductData('aanbieder', store.user.activeOrganization.uuid);
       }
-    }, [aanbiederkeuze, userStore?.activeOrganization, product.aanbieder]);
+    }, [aanbiederkeuze, store.user.activeOrganization, product.aanbieder]);
 
     // Handle choice change between existing and new
     const handleChoiceChange = (choice) => {
@@ -61,8 +61,8 @@ const ConFormAanbiederInformatieStage = memo(
         setProductData('aanbiederKvkNummer', '');
         setProductData('aanbiederLogo', '');
         // Set to default organization (user's active organization)
-        if (userStore?.activeOrganization) {
-          setProductData('aanbieder', userStore.activeOrganization);
+        if (store.user.activeOrganization) {
+          setProductData('aanbieder', store.user.activeOrganization.uuid);
         }
       } else {
         // Clear existing organization selection

@@ -449,7 +449,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           label: 'Bekijken',
           icon: <VISUALS.EYE />,
           onClick: () => {
-            navigate(NAVIGATE_TO.BEHEER_TYPE_DETAILS(config.routeType, row.id));
+            navigate(
+              NAVIGATE_TO.BEHEER_TYPE_DETAILS(config.routeType, row['@self'].id)
+            );
           },
         },
         {
@@ -465,7 +467,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
               if (wizard) {
                 const baseUrl = getWizardUrl(wizard);
                 const url = new URL(baseUrl, window.location.origin);
-                url.searchParams.set('id', row.id);
+                url.searchParams.set('id', row['@self'].id);
                 navigate(url.pathname + url.search);
                 return;
               }

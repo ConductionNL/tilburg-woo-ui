@@ -7,6 +7,7 @@ import { getCookie } from '@src/utilities';
 import { AcDashboard } from '@views/ac-beheer';
 import ConBeheerPageWrapper from './con-beheer-page-wrapper';
 import ConGenericBeheerDetailsPage from './con-generic-beheer-details-page';
+import ConOrganisatieDetailsPage from '@views/ac-beheer/domains/ac-organisatie/con-organisatie-details-page';
 import ConProductDetailsPage from '../../domains/ac-product/con-product-details-page';
 
 const AcBeheer = ({ store }) => {
@@ -39,7 +40,6 @@ const AcBeheer = ({ store }) => {
     checkAuth();
   }, [user, navigate]);
 
-
   const { type, id } = useParams();
 
   if (window.location.pathname === '/beheer') {
@@ -50,6 +50,9 @@ const AcBeheer = ({ store }) => {
     return <ConBeheerPageWrapper type={type} />;
   }
 
+  if (type === 'organisaties') {
+    return <ConOrganisatieDetailsPage />;
+  }
   if (type === 'product') {
     return <ConProductDetailsPage />;
   }

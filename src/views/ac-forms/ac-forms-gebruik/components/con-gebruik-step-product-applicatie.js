@@ -12,8 +12,10 @@ const ConGebruikStepProductApplicatie = ({
   gebruik,
   setGebruikData,
   productOptions,
+  productLoading,
   moduleOptions,
   modulesLoading,
+  searchProducts,
   loading,
   schemas,
   gebruikType,
@@ -62,9 +64,11 @@ const ConGebruikStepProductApplicatie = ({
             value={gebruik?.product || null}
             onChange={(value) => setGebruikData('product', value)}
             isDisabled={loading}
+            isLoading={productLoading}
             width='full'
             schemas={schemas}
             optionsProvider={productOptions}
+            onSearch={(_path, _refSlug, q) => searchProducts && searchProducts(q)}
           />
         </div>
 

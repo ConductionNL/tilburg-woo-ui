@@ -144,6 +144,7 @@ const DetailsPageConfigFactory = {
           ...baseDetailsConfig,
           // Creation is handled dynamically; preserve existing beheer unique actions
           uniqueActions: [...beheerConfig.uniqueActions],
+          extend: [...beheerConfig.extend, 'contactpersonen'],
           excludedProperties: [
             'id',
             'naam',

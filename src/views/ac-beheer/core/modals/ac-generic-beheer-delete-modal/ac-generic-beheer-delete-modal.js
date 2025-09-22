@@ -213,8 +213,21 @@ const ConGenericBeheerDeleteModal = ({
 
   const objectCount = objects.length;
   const isSingular = objectCount === 1;
-  const displayName =
-    displayMetadata.schemaTitle || displayMetadata.name || 'object';
+  // Normalize display name to a safe string and precompute lowercase variant to avoid runtime errors
+  const normalizeDisplayName = (value, fallback = 'object') => {
+    if (typeof value === 'string' && value.trim()) return value;
+    if (value == null) return fallback;
+    const stringValue = value.toString?.();
+    return typeof stringValue === 'string' && stringValue.trim()
+      ? stringValue
+      : fallback;
+  };
+
+  const displayName = normalizeDisplayName(
+    displayMetadata.schemaTitle ?? displayMetadata.name,
+    'object'
+  );
+  const displayNameLower = displayName.toLowerCase();
 
   // Helper functions for usage data
   const hasUsageData = usageData && usageData.length > 0;
@@ -265,8 +278,8 @@ const ConGenericBeheerDeleteModal = ({
               <Paragraph>
                 Controleren of{' '}
                 {isSingular
-                  ? `dit ${displayName?.toLowerCase()}`
-                  : `deze ${displayName?.toLowerCase()}s`}{' '}
+                  ? `dit ${displayNameLower}`
+                  : `deze ${displayNameLower}s`}{' '}
                 wordt gebruikt door andere objecten...
               </Paragraph>
             </AcFlex>
@@ -290,8 +303,8 @@ const ConGenericBeheerDeleteModal = ({
               <VISUALS.CHECK />
               <Paragraph>
                 {isSingular
-                  ? `Dit ${displayName?.toLowerCase()} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
-                  : `Deze ${displayName?.toLowerCase()}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`}
+                  ? `Dit ${displayNameLower} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
+                  : `Deze ${displayNameLower}s worden niet gebruikt door andere objecten en kunnen veilig worden verwijderd.`}
               </Paragraph>
             </AcFlex>
           </Alert>
@@ -306,10 +319,10 @@ const ConGenericBeheerDeleteModal = ({
                 <Paragraph>
                   <strong>
                     {isSingular
-                      ? `Dit ${displayName?.toLowerCase()} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${
+                      ? `Dit ${displayNameLower} kan niet worden verwijderd omdat het gebruikt wordt door ${totalUsedObjects} ${
                           totalUsedObjects === 1 ? 'ander object' : 'andere objecten'
                         }.`
-                      : `Deze ${displayName?.toLowerCase()}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`}
+                      : `Deze ${displayNameLower}s kunnen niet worden verwijderd omdat ze gebruikt worden door andere objecten.`}
                   </strong>
                 </Paragraph>
               </AcFlex>
@@ -358,14 +371,10 @@ const ConGenericBeheerDeleteModal = ({
         <Paragraph>
           {usageCheckComplete && hasUsedObjects
             ? `Je kunt ${
-                isSingular
-                  ? `dit ${displayName?.toLowerCase()}`
-                  : `deze ${displayName?.toLowerCase()}s`
+                isSingular ? `dit ${displayNameLower}` : `deze ${displayNameLower}s`
               } pas verwijderen nadat alle afhankelijkheden zijn weggenomen.`
             : `Weet je zeker dat je ${
-                isSingular
-                  ? `dit ${displayName?.toLowerCase()}`
-                  : `deze ${displayName?.toLowerCase()}s`
+                isSingular ? `dit ${displayNameLower}` : `deze ${displayNameLower}s`
               } wilt verwijderen?`}
         </Paragraph>
 

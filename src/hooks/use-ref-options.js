@@ -55,6 +55,7 @@ export const useRefOptions = (
     organisatie: 'voorzieningen',
     product: 'voorzieningen',
     module: 'voorzieningen',
+    moduleversie: 'voorzieningen',
     element: 'vng-gemma', // Referentiecomponenten live in vng-gemma register
     // Add more mappings as needed
     // By default, schemas without mapping use the currentRegister
@@ -75,6 +76,18 @@ export const useRefOptions = (
   const getRegisterForSchema = (schemaSlug) => {
     const mappedRegister = SCHEMA_REGISTER_MAPPING[schemaSlug] || currentRegister;
     return mappedRegister;
+  };
+
+  /**
+   * Convert a schema ref slug to the actual collection slug expected by the API.
+   * Keep schema names (e.g., moduleVersie) in UI/schema, but fetch from 'moduleversies'.
+   */
+  const getCollectionSlugForRef = (refSchemaSlug) => {
+    const mapping = {
+      moduleVersie: 'moduleversie',
+      moduleversie: 'moduleversie',
+    };
+    return mapping[refSchemaSlug] || refSchemaSlug;
   };
 
   /**
@@ -199,8 +212,9 @@ export const useRefOptions = (
       const schemaQueryParams = getQueryParamsFromSchema(fieldPath);
 
       // Create a unique key for this fetch operation (include schema params in cache key)
-      const fetchKey = `${fieldPath}-${refSchemaSlug}-${searchQuery || 'initial'}`;
-      const cacheKey = `${targetRegister}-${refSchemaSlug}-${
+      const collectionSlug = getCollectionSlugForRef(refSchemaSlug);
+      const fetchKey = `${fieldPath}-${collectionSlug}-${searchQuery || 'initial'}`;
+      const cacheKey = `${targetRegister}-${collectionSlug}-${
         searchQuery || 'initial'
       }-${JSON.stringify(schemaQueryParams)}`;
 
@@ -277,14 +291,14 @@ export const useRefOptions = (
 
         await object.fetchCollection(
           targetRegister,
-          refSchemaSlug,
+          collectionSlug,
           fetchParams,
           false,
           optionsTypeSuffix
         );
 
         // Get the data from the store after fetching using the suffixed type
-        const collectionType = `${targetRegister}_${refSchemaSlug}_${optionsTypeSuffix}`;
+        const collectionType = `${targetRegister}_${collectionSlug}_${optionsTypeSuffix}`;
 
         const collection = object.getCollection(collectionType);
 
