@@ -8,7 +8,7 @@ import { Heading } from '@utrecht/component-library-react/dist/css-module';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
-import ConProductDetailsPageContent from '../ac-beheer/domains/ac-product/con-product-details-page-conten';
+import ConProductDetailsPageContent from '../ac-beheer/domains/ac-product/con-product-details-page-content';
 import { VISUALS } from '@src/constants';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 

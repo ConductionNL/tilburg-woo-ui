@@ -13,7 +13,7 @@ import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-detail
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import ConProductDetailsPageContent from './con-product-details-page-conten';
+import ConProductDetailsPageContent from './con-product-details-page-content';
 
 /**
  * Product Details Page (simplified for fixed type)
