@@ -380,7 +380,25 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       return result;
     };
 
-    // 1) Prefer explicit defaults from config.defaultHeaders if provided
+    // 1) PRIORITY: Schema-based table.default flags always override everything else
+    const entries = Object.entries(dataProperties);
+    const anyTable = entries.some(([, value]) => !!value?.table);
+    const defaultTrueKeys = entries
+      .filter(([, value]) => value?.table?.default === true)
+      .map(([k]) => k);
+    const defaultTrueIds = mapKeysToHeaderIds(defaultTrueKeys);
+
+    // If we have table.default flags, use them regardless of config.defaultHeaders
+    if (anyTable && defaultTrueIds.size > 0) {
+      return {
+        defaultHeaderIds: headersList
+          .filter((h) => defaultTrueIds.has(h.id))
+          .map((h) => h.id),
+        shouldShowAllHeaders: false,
+      };
+    }
+
+    // 2) Fallback to explicit defaults from config.defaultHeaders if no table.default found
     const explicitDefaults = Array.isArray(config.defaultHeaders)
       ? config.defaultHeaders
       : [];
@@ -392,26 +410,21 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       };
     }
 
-    // 2) Fallback to schema-based table.default flags
-    const entries = Object.entries(dataProperties);
-    const anyTable = entries.some(([, value]) => !!value?.table);
-    const defaultTrueKeys = entries
-      .filter(([, value]) => value?.table?.default === true)
-      .map(([k]) => k);
-    const defaultTrueIds = mapKeysToHeaderIds(defaultTrueKeys);
+    // Debug logging to understand what's happening
+    console.log('🔍 Table.default filtering debug:', {
+      type,
+      dataPropertiesKeys: Object.keys(dataProperties || {}),
+      anyTable,
+      defaultTrueKeys,
+      defaultTrueIds: Array.from(defaultTrueIds),
+      explicitDefaults,
+      explicitDefaultIds: Array.from(explicitDefaultIds),
+      headersListIds: headersList.map(h => h.id),
+    });
 
-    const showAll = !anyTable || defaultTrueIds.size === 0;
-    if (showAll) {
-      return { defaultHeaderIds: [], shouldShowAllHeaders: true };
-    }
-
-    return {
-      defaultHeaderIds: headersList
-        .filter((h) => defaultTrueIds.has(h.id))
-        .map((h) => h.id),
-      shouldShowAllHeaders: false,
-    };
-  }, [dataProperties, headers, config && config.defaultHeaders]);
+    // 3) Show all headers if no specific configuration found
+    return { defaultHeaderIds: [], shouldShowAllHeaders: true };
+  }, [dataProperties, headers, config && config.defaultHeaders, type]);
 
   const headerIdsKey = useMemo(() => headers.map((h) => h.id).join(','), [headers]);
   const defaultHeaderIdsKey = useMemo(
