@@ -21,13 +21,13 @@ import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-ca
 // Helper function to get the image field based on schema configuration
 const getImageFromPublication = (publication) => {
   const imageField = publication['@self']?.schema?.configuration?.objectImageField;
-  if (!imageField) {
-    // Fallback to 'logo' if no objectImageField is configured
-    return publication['@self']?.logo;
+  if (imageField && publication['@self']?.[imageField]) {
+    // Use the configured image field from the publication data if it exists
+    return publication['@self']?.[imageField] || publication[imageField];
   }
 
-  // Use the configured image field from the publication data
-  return publication['@self']?.[imageField] || publication[imageField];
+  // Fallback to '@self.image' if no objectImageField is configured or filled
+  return publication['@self']?.image || publication['@self']?.logo;
 };
 
 const AcSearch = ({ store: { publications, user, object } }) => {
