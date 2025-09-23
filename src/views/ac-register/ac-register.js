@@ -651,7 +651,7 @@ const AcRegister = () => {
               </p>
               <p>
                 Er ging iets mis bij het verwerken van je aanmelding voor de
-                Softwarecatalogus. .{' '}
+                Softwarecatalogus.{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
               {!error.errors && !error.message && (
