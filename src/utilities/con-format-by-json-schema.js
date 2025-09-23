@@ -4,6 +4,7 @@ import { ConRelatedObjectsLinks } from '@components';
 import {
   shouldResolveToName,
   getDisplayValue,
+  isUUID,
 } from './con-detect-object-references';
 import { isDataUrl, isUrl, getDataUrlDisplayName, handleFileClick } from '@utils';
 
@@ -187,6 +188,7 @@ function formatBySchema(schema, data, dataKey, options = {}) {
               }
             }
           }
+
 
           // Check if it's a data URL or regular URL (for object properties that are URLs but not marked as format: 'url')
           if (isDataUrl(value)) {
