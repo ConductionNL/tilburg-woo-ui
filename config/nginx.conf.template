@@ -38,11 +38,6 @@ http {
             proxy_cookie_path / /;
             proxy_cookie_domain ${NGINX_NEXTCLOUD_DOMAIN} $host;
             
-            # Make requests appear to come from Nextcloud's own domain
-            proxy_set_header Origin https://${NGINX_TARGET_HOST};
-            proxy_set_header Referer https://${NGINX_TARGET_HOST}/;
-            proxy_set_header X-Forwarded-Host ${NGINX_TARGET_HOST};
-            
             # Hide any CORS headers from backend to prevent conflicts
             proxy_hide_header Access-Control-Allow-Origin;
             proxy_hide_header Access-Control-Allow-Credentials;
@@ -70,43 +65,15 @@ http {
             }
         }
 
-        # CRITICAL: HTML files must NEVER be cached (they reference hashed assets)
-        location ~* \.(html|htm)$ {
-            expires -1;
-            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
-            add_header Pragma "no-cache" always;
-            add_header Last-Modified $date_gmt always;
-            etag off;
-        }
-
-        # Service worker must NEVER be cached
-        location = /service-worker.js {
-            expires -1;
-            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
-        }
-
-        # Cache static assets with hash for 1 year (webpack provides unique hashes)
-        location ~* \.[0-9a-f]{8,13}\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable" always;
-            add_header Vary "Accept-Encoding" always;
-        }
-
-        # Assets without hash - cache for shorter time (fallback)
-        location ~* ^(?!.*\.[0-9a-f]{8,13}\.).*\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-            expires 1d;
-            add_header Cache-Control "public, must-revalidate" always;
-        }
-
         # Static file serving with SPA routing
         location / {
             try_files $uri $uri/ /index.html;
-            
-            # Ensure HTML is not cached even in fallback
-            if ($uri ~* \.(html|htm)$) {
-                expires -1;
-                add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0" always;
-            }
+        }
+
+        # Cache static assets
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1h;
+            add_header Cache-Control "public, immutable";
         }
     }
 } 
