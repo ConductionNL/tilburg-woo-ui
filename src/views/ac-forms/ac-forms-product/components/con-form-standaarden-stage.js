@@ -154,7 +154,7 @@ const ConFormStandaardenStage = ({
   // Get all standards from referentieComponentenWithStandards with component tracking
   const getAllStandards = () => {
     const standardsMap = new Map();
-
+    
     referentieComponentenWithStandards.forEach((refComp) => {
       const refCompName = refComp.naam || `Component ${refComp.id}`;
 
@@ -170,10 +170,14 @@ const ConFormStandaardenStage = ({
             const fetchedData = findMatchingStandardData(standard);
             const { name: standardName, description: standardDescription } =
               extractStandardInfo(standard, fetchedData);
+            // Use composite key to keep the same standard separated per module
+            const compositeKey = `${String(standardId)}::${String(
+              refComp.moduleId
+            )}`;
 
-            if (standardsMap.has(standardId)) {
+            if (standardsMap.has(compositeKey)) {
               // Standard already exists, add this component to the aanbevolen list
-              const existing = standardsMap.get(standardId);
+              const existing = standardsMap.get(compositeKey);
               if (!existing.aanbevolenComponents.includes(refCompName)) {
                 existing.aanbevolenComponents.push(refCompName);
               }
@@ -185,7 +189,7 @@ const ConFormStandaardenStage = ({
               }
             } else {
               // New standard
-              standardsMap.set(standardId, {
+              standardsMap.set(compositeKey, {
                 id: standardId,
                 naam: standardName,
                 beschrijving: standardDescription,
@@ -211,10 +215,14 @@ const ConFormStandaardenStage = ({
             const fetchedData = findMatchingStandardData(standard);
             const { name: standardName, description: standardDescription } =
               extractStandardInfo(standard, fetchedData);
+            // Use composite key to keep the same standard separated per module
+            const compositeKey = `${String(standardId)}::${String(
+              refComp.moduleId
+            )}`;
 
-            if (standardsMap.has(standardId)) {
+            if (standardsMap.has(compositeKey)) {
               // Standard already exists, add this component to the verplichte list
-              const existing = standardsMap.get(standardId);
+              const existing = standardsMap.get(compositeKey);
               if (!existing.verplichteComponents.includes(refCompName)) {
                 existing.verplichteComponents.push(refCompName);
               }
@@ -226,7 +234,7 @@ const ConFormStandaardenStage = ({
               }
             } else {
               // New standard
-              standardsMap.set(standardId, {
+              standardsMap.set(compositeKey, {
                 id: standardId,
                 naam: standardName,
                 beschrijving: standardDescription,
@@ -240,7 +248,6 @@ const ConFormStandaardenStage = ({
         });
       }
     });
-
     return Array.from(standardsMap.values());
   };
 
