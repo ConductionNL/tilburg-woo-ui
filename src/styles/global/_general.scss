@@ -98,6 +98,11 @@ $grid-gutter-size: 1.6rem;
 	}
 }
 
+// unordered list styles
+.utrecht-unordered-list {
+	font-family: "Roboto", arial, sans-serif !important;
+}
+
 // notice element styles conform Figma design
 .notice {
 	margin-block: var(--tilburg-space-column-mouse);
