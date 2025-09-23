@@ -21,16 +21,16 @@ import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-ca
 // Helper function to get the image field based on schema configuration
 const getImageFromPublication = (publication) => {
   const imageField = publication['@self']?.schema?.configuration?.objectImageField;
-  if (!imageField) {
-    // Fallback to 'logo' if no objectImageField is configured
-    return publication['@self']?.logo;
+  if (imageField && publication['@self']?.[imageField]) {
+    // Use the configured image field from the publication data if it exists
+    return publication['@self']?.[imageField] || publication[imageField];
   }
 
-  // Use the configured image field from the publication data
-  return publication['@self']?.[imageField] || publication[imageField];
+  // Fallback to '@self.image' if no objectImageField is configured or filled
+  return publication['@self']?.image || publication['@self']?.logo;
 };
 
-const AcSearch = ({ store: { publications, user } }) => {
+const AcSearch = ({ store: { publications, user, object } }) => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -39,6 +39,7 @@ const AcSearch = ({ store: { publications, user } }) => {
     pagination,
     updateQuery,
     fetchPublications,
+    fetchFacets,
     is_loading,
     // getSearchPageURL,
     all_publications,
@@ -64,6 +65,7 @@ const AcSearch = ({ store: { publications, user } }) => {
   useEffect(() => {
     setQuery();
     fetchPublications();
+    fetchFacets();
   }, [location.search]);
 
   const onPaginationChange = (page) => {
@@ -152,6 +154,7 @@ const AcSearch = ({ store: { publications, user } }) => {
               updated={publication['@self'].updated}
               published={publication['@self'].published}
               organisation={publication['@self'].organisation}
+              objectStore={object}
               key={index}
             />
           );
@@ -181,6 +184,7 @@ const AcSearch = ({ store: { publications, user } }) => {
               {...publication}
               id={publication.id || publication['@self']?.id}
               published={publication['@self'].published}
+              updated={publication['@self'].updated}
               category={publication['@self'].schema.title}
               title={extractTitle(
                 publication.title ??

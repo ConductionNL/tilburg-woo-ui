@@ -34,7 +34,7 @@ const AcSearchResult = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-          {published && (
+          {(published) && (
             <>
               <Paragraph small>
                 {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}

@@ -958,7 +958,8 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      _extend: params._extend || params.extend || '@self.schema',
+      '_extend[]':  '@self.schema',
+      _source: 'database', // Always use database as source
       ...params,
     };
 
@@ -969,8 +970,7 @@ export class ObjectStore {
       queryParams._extend.push('@self.schema');
     }
 
-    // Remove internal parameters
-    delete queryParams._source;
+    // Remove internal parameters (but keep _source)
     delete queryParams._schema;
     delete queryParams._register;
     delete queryParams.extend;
@@ -1156,7 +1156,7 @@ export class ObjectStore {
         page: pagination.page,
         limit: pagination.limit,
         ...params,
-        _extend: params._extend || params.extend || '@self.schema',
+        '_extend[]': params._extend || params.extend || '@self.schema',
       };
 
       const response = await nextcloudApi.get(
@@ -3137,6 +3137,7 @@ export class ObjectStore {
       '_order',
       '_fields',
       '_extend', // Usually for response format, not content filtering
+      '_extend[]', // Usually for response format, not content filtering
       'page',
       'limit',
       'offset',
@@ -3470,8 +3471,19 @@ export class ObjectStore {
         this.setNamesInCache({ [id]: name });
         console.info(`✅ Single name fetched (alt format) for ${id}: ${name}`);
         return name;
+      } else if (response.ok) {
+        // API responded OK but no name found - cache the UUID to prevent future calls
+        console.info(`📝 No name found for ${id}, caching UUID to prevent future API calls`);
+        this.setNamesInCache({ [id]: id });
+        return id;
       }
     } catch (error) {
+      // Handle 404 and other HTTP errors by caching the UUID to prevent repeated calls
+      if (error.response?.status === 404 || error.response?.status >= 400) {
+        console.info(`🚫 Name not found (${error.response?.status || 'error'}) for ${id}, caching UUID to prevent future API calls`);
+        this.setNamesInCache({ [id]: id });
+        return id;
+      }
       console.warn(`⚠️ Failed to fetch name for ${id}:`, error.message);
     }
 
@@ -3544,15 +3556,33 @@ export class ObjectStore {
         }
       } catch (error) {
         console.warn(`⚠️ Failed to fetch names for IDs:`, error.message);
+        
+        // Cache failed lookups to prevent repeated API calls
+        if (error.response?.status === 404 || error.response?.status >= 400) {
+          console.info(`🚫 Bulk names request failed (${error.response?.status || 'error'}), caching UUIDs to prevent future API calls`);
+          const failedLookups = {};
+          missingIds.forEach(id => {
+            failedLookups[id] = id;
+          });
+          this.setNamesInCache(failedLookups);
+        }
       }
     }
 
-    // Fill in missing names with IDs as fallback
+    // Fill in missing names with IDs as fallback and cache them
+    const uncachedFallbacks = {};
     missingIds.forEach((id) => {
       if (!results[id]) {
         results[id] = id;
+        uncachedFallbacks[id] = id;
       }
     });
+    
+    // Cache the fallback UUIDs to prevent future API calls
+    if (Object.keys(uncachedFallbacks).length > 0) {
+      console.info(`📝 Caching ${Object.keys(uncachedFallbacks).length} UUID fallbacks to prevent future API calls`);
+      this.setNamesInCache(uncachedFallbacks);
+    }
 
     return results;
   };
@@ -3848,7 +3878,7 @@ export class ObjectStore {
       const params = {
         _limit: 20, // Load first 20 items to properly warm backend cache
         _page: 1,
-        _extend: '@self.schema',
+        '_extend[]': '@self.schema',
       };
 
       console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);

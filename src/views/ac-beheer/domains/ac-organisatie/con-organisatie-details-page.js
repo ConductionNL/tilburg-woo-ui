@@ -636,7 +636,7 @@ const DetailsPageTabs = observer(
 const UnpublishedWarning = ({ data, config }) => {
   if (data?.['@self']?.published) return null;
   const schemaName = config?.title || data?.['@self']?.schema?.title;
-  const title = schemaName ? `Deze ${schemaName}` : '';
+  const title = schemaName ? `${schemaName}` : '';
   const objectName = data?.['@self']?.name;
 
   return (

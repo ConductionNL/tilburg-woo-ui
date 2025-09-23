@@ -55,6 +55,50 @@ jobs:
         run: yarn build:web
         env:
           CI: false
+          # Add build context for better cache busting
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+
+      - name: Verify cache busting
+        run: |
+          echo "🔍 Verifying cache busting implementation..."
+          
+          # Check if index.html contains build version
+          if grep -q "build-version" public_html/index.html; then
+            BUILD_VERSION=$(grep -o 'content="[^"]*"' public_html/index.html | grep build-version | cut -d'"' -f2)
+            echo "✅ Build version found: $BUILD_VERSION"
+          else
+            echo "❌ Build version not found in HTML"
+            exit 1
+          fi
+          
+          # Check if assets have hash in filename
+          JS_FILES=$(find public_html/static/js -name "*.js" | head -3)
+          CSS_FILES=$(find public_html/static/css -name "*.css" | head -3)
+          
+          echo "📦 Sample JS files with hashes:"
+          echo "$JS_FILES"
+          echo "📦 Sample CSS files with hashes:"  
+          echo "$CSS_FILES"
+          
+          # Verify hash pattern exists
+          if echo "$JS_FILES" | grep -E '\.[a-f0-9]{8,13}\.js$'; then
+            echo "✅ JavaScript files have proper hash-based cache busting"
+          else
+            echo "❌ JavaScript files missing hash-based cache busting"
+            exit 1
+          fi
+          
+          if echo "$CSS_FILES" | grep -E '\.[a-f0-9]{8,13}\.css$'; then
+            echo "✅ CSS files have proper hash-based cache busting"
+          else
+            echo "❌ CSS files missing hash-based cache busting"  
+            exit 1
+          fi
+          
+          echo "🎉 Cache busting verification completed successfully!"
 
       - name: Log in to Container Registry
         uses: docker/login-action@v3
@@ -76,6 +120,7 @@ jobs:
             type=raw,value=dev,enable=${{ github.ref == 'refs/heads/development' }}
 
       - name: Build and push Docker image
+        id: build-and-push
         uses: docker/build-push-action@v5
         with:
           context: .

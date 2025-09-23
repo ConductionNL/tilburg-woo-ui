@@ -204,7 +204,7 @@ If you need extra modals, ensure they exist in `con-beheer-modal-factory.js` und
 - Delete → `ac-generic-beheer-delete-modal`
 - Unique actions → define in config and ensure the modal exists in `con-beheer-modal-factory.js` (e.g., publish/depublish, koppelen)
 
-When edit/delete completes successfully, the page re-fetches the object with the configured `_extend` to stay up-to-date.
+When edit/delete completes successfully, the page re-fetches the object with the configured `_extend[]` to stay up-to-date.
 
 ---
 
@@ -227,6 +227,6 @@ When edit/delete completes successfully, the page re-fetches the object with the
 
 ### Troubleshooting
 
-- Empty tabs for `Gebruikt`/`Gebruikt door`: ensure the backend supports `/used` and `/uses` endpoints for the object type, and that `_extend` (from the default beheer config) includes `@self.schema` where needed.
+- Empty tabs for `Gebruikt`/`Gebruikt door`: ensure the backend supports `/used` and `/uses` endpoints for the object type, and that `_extend[]` (from the default beheer config) includes `@self.schema` where needed.
 - Missing schema fields: check that `fetchSchema(schemaSlug)` succeeds and that the schema defines `properties`.
 - Extra modal not opening: confirm modal is registered in `con-beheer-modal-factory.js` for your `type`, and that an action is configured in the details config.

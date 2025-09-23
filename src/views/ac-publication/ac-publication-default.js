@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
 import { AcTable } from '@molecules';
 import { withStore } from '@stores';
 import { LABELS, VISUALS } from '@constants';
@@ -52,6 +52,45 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     });
     return map;
   }, [object?.namesCache]);
+
+  // Custom format function that wraps values with ConUuidResolver
+  const formatWithUuidResolution = (schema, data, key, options) => {
+    // Get the raw value first
+    const value = key != null ? data[key] : data;
+    
+    // If the value is a string UUID, wrap it directly with ConUuidResolver
+    if (typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+      return <ConUuidResolver>{value}</ConUuidResolver>;
+    }
+    
+    // For arrays, check if they contain UUIDs
+    if (Array.isArray(value)) {
+      const hasUuids = value.some(item => 
+        typeof item === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item)
+      );
+      
+      if (hasUuids) {
+        // Render array with UUID resolution
+        return (
+          <span>
+            {value.map((item, i) => (
+              <React.Fragment key={i}>
+                {typeof item === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item) ? (
+                  <ConUuidResolver>{item}</ConUuidResolver>
+                ) : (
+                  <span>{item}</span>
+                )}
+                {i < value.length - 1 ? ', ' : ''}
+              </React.Fragment>
+            ))}
+          </span>
+        );
+      }
+    }
+    
+    // Otherwise, use the original formatBySchema
+    return formatBySchema(schema, data, key, options);
+  };
 
   const navigate = useNavigate();
 
@@ -114,7 +153,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
   const fetchUses = async () => {
     const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?extend[]=@self.schema`,
+      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
       {
         method: 'GET',
         headers: {
@@ -132,7 +171,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   };
   const fetchUsed = async () => {
     const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?extend[]=@self.schema`,
+      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
       {
         method: 'GET',
         headers: {
@@ -174,7 +213,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
   return (
     <>
-      <AcContainer compact margin='xl'>
+      <AcContainer compact margin='xl' className='ac-publication-container'>
         <AcFlex column spacing={'lg'}>
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
             <div className='con-beheer-details--header-container'>
@@ -295,7 +334,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                       >
                         {_.startCase(key)}:
                       </strong>
-                      {formatBySchema(schema, get_single, key, {
+                      {formatWithUuidResolution(schema, get_single, key, {
                         ...(schema?.configuration?.formatBySchemaOptions || {}),
                         objectStore: object,
                         namesMap,
@@ -318,7 +357,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                       >
                         {_.startCase(key)}:
                       </strong>{' '}
-                      {formatBySchema(schema, get_single, key, {
+                      {formatWithUuidResolution(schema, get_single, key, {
                         ...(schema?.configuration?.formatBySchemaOptions || {}),
                         objectStore: object,
                         namesMap,
@@ -376,7 +415,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
           <div>
             {uses && uses.length > 0 && (
               <>
-                <Heading level={2}>Gebruiken</Heading>
+                <Heading level={2}>Maakt gebruik van</Heading>
                 <AcTabs
                   selectedIndex={tabIndexUses}
                   onSelect={(index) => setTabIndexUses(index)}

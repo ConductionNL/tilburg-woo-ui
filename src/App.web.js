@@ -67,6 +67,10 @@ const App = ({ store }) => {
 
   useEffect(() => {
     fetchPages();
+    // Warm up names cache in background for better UX
+    store.object.warmupNamesCache().catch((error) => {
+      console.warn('⚠️ Names cache warmup failed during app initialization:', error);
+    });
   }, []);
 
   useDocumentTitleFromPath();

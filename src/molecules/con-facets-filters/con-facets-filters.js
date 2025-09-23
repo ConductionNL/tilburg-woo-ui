@@ -40,11 +40,15 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
       // Toggle the value - always add if not present, remove if present
       let newArray;
-      if (arrayToCheck.includes(value)) {
-        // Remove the value
-        newArray = arrayToCheck.filter((item) => item !== value);
+      // Convert both to strings for comparison since URL params are strings
+      const valueStr = String(value);
+      const hasValue = arrayToCheck.some(item => String(item) === valueStr);
+      
+      if (hasValue) {
+        // Remove the value (keep original type in array)
+        newArray = arrayToCheck.filter((item) => String(item) !== valueStr);
       } else {
-        // Add the value
+        // Add the value (preserve original type)
         newArray = [...arrayToCheck, value];
       }
 
@@ -288,7 +292,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                 'name',
               ].includes(_key.toLowerCase());
 
-              return shouldShowFacet ? (
+              return shouldShowFacet && hasData ? (
                 <AcFlex
                   key={`${key}-${_key}`}
                   column
@@ -298,31 +302,19 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                   <Heading level={4}>
                     {_key === 'schema' ? 'Type' : _.upperFirst(_value.title ?? _key)}
                   </Heading>
-                  {hasData ? (
-                    _value.buckets.map((bucket) => (
-                      <AcCheckbox
-                        key={bucket.value || bucket.key}
-                        label={`${
-                          bucket.label ?? bucket.value ?? bucket.key
-                        } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
-                        value={bucket.value || bucket.key}
-                        checked={isFacetChecked(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key)}
-                        onChange={() => {
-                          toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <p
-                      style={{
-                        color: '#666',
-                        fontStyle: 'italic',
-                        fontSize: '0.9em',
+                  {_value.buckets.map((bucket) => (
+                    <AcCheckbox
+                      key={bucket.value || bucket.key}
+                      label={`${
+                        bucket.label ?? bucket.value ?? bucket.key
+                      } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
+                      value={bucket.value || bucket.key}
+                      checked={isFacetChecked(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key)}
+                      onChange={() => {
+                        toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
                       }}
-                    >
-                      No options available
-                    </p>
-                  )}
+                    />
+                  ))}
                 </AcFlex>
               ) : null;
             })}
