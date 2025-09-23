@@ -286,7 +286,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                 'catalogs',
                 'organisation',
                 'name',
-              ].includes(_key.toLowerCase());
+              ].includes(_key.toLowerCase()) && hasData;
 
               return shouldShowFacet ? (
                 <AcFlex
@@ -298,31 +298,19 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                   <Heading level={4}>
                     {_key === 'schema' ? 'Type' : _.upperFirst(_value.title ?? _key)}
                   </Heading>
-                  {hasData ? (
-                    _value.buckets.map((bucket) => (
-                      <AcCheckbox
-                        key={bucket.value || bucket.key}
-                        label={`${
-                          bucket.label ?? bucket.value ?? bucket.key
-                        } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
-                        value={bucket.value || bucket.key}
-                        checked={isFacetChecked(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key)}
-                        onChange={() => {
-                          toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <p
-                      style={{
-                        color: '#666',
-                        fontStyle: 'italic',
-                        fontSize: '0.9em',
+                  {_value.buckets.map((bucket) => (
+                    <AcCheckbox
+                      key={bucket.value || bucket.key}
+                      label={`${
+                        bucket.label ?? bucket.value ?? bucket.key
+                      } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
+                      value={bucket.value || bucket.key}
+                      checked={isFacetChecked(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key)}
+                      onChange={() => {
+                        toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
                       }}
-                    >
-                      No options available
-                    </p>
-                  )}
+                    />
+                  ))}
                 </AcFlex>
               ) : null;
             })}
@@ -335,33 +323,27 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             className='ac-search-filters__subjects'
           >
             <Heading level={4}>{_.upperFirst(value.title ?? key)}</Heading>
-            {value.buckets && value.buckets.length > 0 ? (
-              value.buckets.map((bucketValue) => (
-                <AcCheckbox
-                  key={bucketValue.value || bucketValue.key}
-                  label={`${bucketValue.label ?? bucketValue.value ?? bucketValue.key} (${
-                    bucketValue.count || bucketValue.results
-                  })`}
-                  value={bucketValue.value || bucketValue.key}
-                  checked={isFacetChecked(value.queryParameter || key, bucketValue.value || bucketValue.key)}
-                  onChange={() => {
-                    toggleSearchArrayValue(value.queryParameter || key, bucketValue.value || bucketValue.key);
-                    const nextQuery = { ...publications.query, _page: 1 };
-                    const paramsString = AcBuildURLSearchParams(nextQuery);
-                    setSearchParams(new URLSearchParams(paramsString));
-                    
-                    // Trigger facets fetch to update counts with new filters
-                    publications.fetchFacets();
-                    
-                    // Fetch is triggered by URL change effect in AcSearch
-                  }}
-                />
-              ))
-            ) : (
-              <p style={{ color: '#666', fontStyle: 'italic', fontSize: '0.9em' }}>
-                No options available
-              </p>
-            )}
+            {value.buckets.map((bucketValue) => (
+              <AcCheckbox
+                key={bucketValue.value || bucketValue.key}
+                label={`${bucketValue.label ?? bucketValue.value ?? bucketValue.key} (${
+                  bucketValue.count || bucketValue.results
+                })`}
+                value={bucketValue.value || bucketValue.key}
+                checked={isFacetChecked(value.queryParameter || key, bucketValue.value || bucketValue.key)}
+                onChange={() => {
+                  toggleSearchArrayValue(value.queryParameter || key, bucketValue.value || bucketValue.key);
+                  const nextQuery = { ...publications.query, _page: 1 };
+                  const paramsString = AcBuildURLSearchParams(nextQuery);
+                  setSearchParams(new URLSearchParams(paramsString));
+                  
+                  // Trigger facets fetch to update counts with new filters
+                  publications.fetchFacets();
+                  
+                  // Fetch is triggered by URL change effect in AcSearch
+                }}
+              />
+            ))}
           </AcFlex>
         );
       })}

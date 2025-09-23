@@ -78,6 +78,10 @@ const ConDetailsActionsMenu = loadable(() =>
   import('@src/components/con-details-actions-menu/con-details-actions-menu')
 );
 
+const ConUuidResolver = loadable(() =>
+  import('@src/components/con-uuid-resolver/con-uuid-resolver')
+);
+
 const ConRelatedObjectsLinks = loadable(() =>
   import('@src/components/con-related-objects-links/con-related-objects-links')
 );
@@ -127,6 +131,7 @@ export {
   ConDynamicSidenav,
   ConPublicationActions,
   ConDetailsActionsMenu,
+  ConUuidResolver,
   ConRelatedObjectsLinks,
   ConExistingModulesInfoBox,
   ConModulesChoiceSwitch,

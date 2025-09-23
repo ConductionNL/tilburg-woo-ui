@@ -8,6 +8,7 @@ import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import acFormatDate from '@src/utilities/ac-format-date';
+import { useResolvedText, useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 
 const ConCardOrganisationApplication = ({
   skeleton,
@@ -16,13 +17,21 @@ const ConCardOrganisationApplication = ({
   id,
   logo,
   cardType,
+  type, // Schema type/title
   referenceComponents,
   updated,
   organisation,
+  objectStore, // Add objectStore for names resolution
   // user,
   // published,
   // ...rest // Capture additional object data
 }) => {
+  // Use generic UUID resolver for organisation name
+  const resolvedOrganisation = useResolvedText(organisation, objectStore);
+  
+  // Use generic UUID resolver for reference components
+  const resolvedReferenceComponents = useResolvedArray(referenceComponents, objectStore);
+
   const icon = useMemo(() => {
     switch (cardType) {
       case 'product':
@@ -46,7 +55,7 @@ const ConCardOrganisationApplication = ({
           {icon}
           <Heading level={3}>{extractTitle(title)}</Heading>
           {organisation && (cardType === 'product' || cardType === 'module') && (
-            <Paragraph small>(Aangeboden door {organisation})</Paragraph>
+            <Paragraph small>(Aangeboden door {resolvedOrganisation})</Paragraph>
           )}
         </AcFlex>
         {logo && (
@@ -60,19 +69,26 @@ const ConCardOrganisationApplication = ({
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
-          {!!referenceComponents?.length && (
+          {!!resolvedReferenceComponents?.length && (
             <Paragraph small>
               Geschikt voor:{' '}
-              {referenceComponents
+              {resolvedReferenceComponents
                 ?.slice(0, 2) // Only take the first two components
                 .filter(Boolean)
                 .join(', ')}
             </Paragraph>
           )}
-          <Paragraph className='organisation-card__updated'>
-            Laatst bijgewerkt:{' '}
-            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-          </Paragraph>{' '}
+          <AcFlex alignItems='center' spacing='sm'>
+            <Paragraph small>
+              {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+            </Paragraph>
+            {type && (
+              <>
+                <VISUALS.ELLIPSE />
+                <Paragraph small>{type}</Paragraph>
+              </>
+            )}
+          </AcFlex>
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>

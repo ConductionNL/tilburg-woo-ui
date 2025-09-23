@@ -30,7 +30,7 @@ const getImageFromPublication = (publication) => {
   return publication['@self']?.[imageField] || publication[imageField];
 };
 
-const AcSearch = ({ store: { publications, user } }) => {
+const AcSearch = ({ store: { publications, user, object } }) => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -154,6 +154,7 @@ const AcSearch = ({ store: { publications, user } }) => {
               updated={publication['@self'].updated}
               published={publication['@self'].published}
               organisation={publication['@self'].organisation}
+              objectStore={object}
               key={index}
             />
           );
@@ -183,6 +184,7 @@ const AcSearch = ({ store: { publications, user } }) => {
               {...publication}
               id={publication.id || publication['@self']?.id}
               published={publication['@self'].published}
+              updated={publication['@self'].updated}
               category={publication['@self'].schema.title}
               title={extractTitle(
                 publication.title ??

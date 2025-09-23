@@ -15,6 +15,7 @@ const AcSearchResult = ({
   title,
   summary,
   published,
+  updated, // Add updated field for consistency
   category,
   themes,
   id,
@@ -34,10 +35,10 @@ const AcSearchResult = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-          {published && (
+          {(updated || published) && (
             <>
               <Paragraph small>
-                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+                {acFormatDate(updated || published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
               <VISUALS.ELLIPSE />
             </>
