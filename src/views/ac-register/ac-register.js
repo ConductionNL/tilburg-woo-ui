@@ -24,6 +24,7 @@ import ConLogoPreview from './con-logo-preview';
 import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
 import { ConMarkdown } from '@src/components';
+import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -95,45 +96,6 @@ const AcRegister = () => {
       }
     }
   }, []);
-
-  const acceptedLogoFileTypes = [
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp',
-    'image/svg+xml',
-  ];
-
-  const handleLogoFileSelect = useCallback(
-    (e) => {
-      if (!e.target.files.length) {
-        setLogoDataUrl(null);
-        return;
-      }
-
-    const file = e.target.files[0];
-
-      if (!acceptedLogoFileTypes.includes(file.type)) {
-        setLogoDataUrl(null);
-        return;
-      }
-
-    file.getDataUrl = async () => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(file);
-      });
-    };
-
-      (async () => {
-        const dataUrl = await file.getDataUrl();
-        setLogoDataUrl(dataUrl);
-      })();
-    },
-    []
-  );
 
   const setOrganizationData = useCallback((key, value) => {
     if (key.includes('contactPersons')) {
@@ -245,7 +207,7 @@ const AcRegister = () => {
 
   const focusForm = () => {
     let curAttempt = 0;
-    const maxAttempts = 8
+    const maxAttempts = 8;
     const tryFocus = () => {
       curAttempt += 1;
       const input = document.querySelector(
@@ -301,7 +263,8 @@ const AcRegister = () => {
               validateEmail,
               validatePhone,
               touched,
-              handleLogoFileSelect,
+              logoDataUrl,
+              setLogoDataUrl,
             }}
           />
         );
@@ -770,8 +733,8 @@ const OrganizationRequiredForm = memo(
                   <Paragraph>
                     Veel gemeentelijke samenwerkingsverbanden zijn al opgenomen in de
                     Softwarecatalogus. Controleer daarom eerst de lijst &quot;Alle
-                    samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband ertussen?
-                    Vraag dan toegang aan bij de beheerder - vaak de
+                    samenwerkingsverbanden&quot;. Staat uw samenwerkingsverband
+                    ertussen? Vraag dan toegang aan bij de beheerder - vaak de
                     ICT-verantwoordelijke.{' '}
                   </Paragraph>
                   <Paragraph>
@@ -927,7 +890,8 @@ const OrganizationOptionalForm = memo(
     loading,
     validateEmail,
     validatePhone,
-    handleLogoFileSelect,
+    logoDataUrl,
+    setLogoDataUrl,
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
@@ -1039,53 +1003,18 @@ const OrganizationOptionalForm = memo(
               )}
             </div>
 
-            <AcFlex column>
-              <label className='utrecht-form-label'>
-                <h4 className='utrecht-heading-4'>Logo</h4>
-              </label>
-
-              <input
-                id='fileInput-logo'
-                type='file'
-                accept={[
-                  'image/png',
-                  'image/jpeg',
-                  'image/jpg',
-                  'image/webp',
-                  'image/svg+xml',
-                ].join(',')}
-                multiple={false}
-                onChange={handleLogoFileSelect}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid var(--utrecht-textbox-border-color)',
-                  borderRadius: 'var(--utrecht-select-border-radius)',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  fontSize: '1em',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    backgroundColor: '#f0f0f0',
-                    borderColor: 'var(--utrecht-button-primary-action-border-color)',
-                  },
-                }}
-              />
-
-              <small
-                style={{
-                  display: 'block',
-                  marginTop: '0.5em',
-                  color: 'var(--utrecht-paragraph-color)',
-                  fontSize: '0.85em',
-                  fontStyle: 'italic',
-                  opacity: 0.85,
-                  userSelect: 'none',
-                }}
-              >
-                Toegestane bestandstypen: png, jpeg, jpg, webp, svg
-              </small>
-            </AcFlex>
+            <LogoUploadField
+              fieldConfig={{ label: 'Logo', filename: undefined }}
+              _value={logoDataUrl || ''}
+              onChange={(dataUrl) => setLogoDataUrl(dataUrl || null)}
+              onChangeFileName={() => {}}
+              onClear={() => setLogoDataUrl(null)}
+              validation={{ required: false }}
+              propertyName={'logo'}
+              isDisabled={loading}
+              showPreview={true}
+              size={'normal'}
+            />
 
             {(organization.organizationType === 'Gemeente' ||
               organization.organizationType === 'Samenwerking') && (
