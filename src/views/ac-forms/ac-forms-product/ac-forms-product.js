@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
@@ -140,6 +140,7 @@ const AcFormsProductInner = ({
 }) => {
   // Determine edit mode from productId
   const isEditMode = !!productId;
+  const navigate = useNavigate();
 
   const [registerCallBack, setRegisterCallBack] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -299,6 +300,10 @@ const AcFormsProductInner = ({
   // Structure: [{ id, naam, aanbevolenStandaarden: [], verplichteStandaarden: [], applicatieId }]
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
+
+  // State to track the "same for all" choice from referentiecomponenten stage
+  // This affects how standards are displayed and managed
+  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] = useState(true);
 
   // Prefill referentiecomponenten state for edit mode without relying on effects
   // Accepts optional modules/options to avoid stale state during async updates
@@ -1457,6 +1462,8 @@ const AcFormsProductInner = ({
             getNewModulesWithApplicatieData={getNewModulesWithApplicatieData}
             existingModulesLookup={existingModulesLookup}
             referentieComponentenLoading={referentieComponentenLoading}
+            sameForAll={referentieComponentenSameForAll}
+            setSameForAll={setReferentieComponentenSameForAll}
           />
         );
       case 7:
@@ -1471,6 +1478,7 @@ const AcFormsProductInner = ({
             standaardenOptions={standaardenOptions}
             existingModulesLookup={existingModulesLookup}
             standaardenOptionsLoading={standaardenOptionsLoading}
+            sameForAll={referentieComponentenSameForAll}
           />
         );
       case 8:
@@ -1927,7 +1935,7 @@ const AcFormsProductInner = ({
                 <AcButton
                   style='button'
                   icon={<VISUALS.HOUSE />}
-                  onClick={() => (window.location.href = '/beheer')}
+                  onClick={() => navigate('/beheer')}
                 >
                   Terug naar beheer dashboard
                 </AcButton>
@@ -1937,12 +1945,8 @@ const AcFormsProductInner = ({
                   variant='secondary'
                   icon={<VISUALS.CUBE />}
                   onClick={() => {
-                    setRegisterCallBack(null);
-                    setCurrentStep(0);
-                    // Reset form for new product
-                    // remove params from the url
-                    window.history.replaceState(null, '', window.location.pathname);
-                    window.location.reload();
+                    // Navigate to a clean product form without any query parameters
+                    navigate(window.location.pathname, { replace: true });
                   }}
                   sx={{ marginLeft: '1rem' }}
                 >

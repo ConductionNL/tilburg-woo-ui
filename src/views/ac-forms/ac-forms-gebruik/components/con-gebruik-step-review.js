@@ -4,6 +4,8 @@ import {
   UnorderedListItem,
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
+import conUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { useResolvedText, useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * ConGebruikStepReview
@@ -18,7 +20,9 @@ const ConGebruikStepReview = ({
   organisatieOptions,
   productOptions,
   moduleOptions,
+  objectStore,
 }) => {
+
   return (
     <div
       className='ac-register-form-section'
@@ -38,7 +42,7 @@ const ConGebruikStepReview = ({
 
           <div className='ac-register-review__field'>
             <strong>Contactpersoon:</strong>
-            <div>{gebruik?.contactpersoon || '-'}</div>
+            <div>{useResolvedText(gebruik?.contactpersoon, objectStore) || '-'}</div>
           </div>
           <div className='ac-register-review__field'>
             <strong>Afnemer:</strong>
@@ -137,6 +141,7 @@ const ConGebruikStepReview = ({
             </div>
           </div>
           <div className='ac-register-review__field'>
+            {console.log({"diensten": gebruik?.diensten})}
             <strong>Diensten:</strong>
             <div>
               {(gebruik?.diensten || []).length ? (
@@ -145,9 +150,10 @@ const ConGebruikStepReview = ({
                     const opt = (dienstOptions || []).find(
                       (o) => String(o.value) === String(v)
                     );
+                    console.log({"opt": opt})
                     return (
                       <UnorderedListItem key={v}>
-                        {opt ? opt.label : v}
+                        {opt ? opt.label : useResolvedText(v, objectStore)}
                       </UnorderedListItem>
                     );
                   })}

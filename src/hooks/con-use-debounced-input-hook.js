@@ -107,8 +107,9 @@ import { useCallback, useRef, useEffect } from 'react';
  * @param {number} [delay=500] - The delay in milliseconds before the callback is executed. Defaults to 500ms.
  * @param {Object} [options={}] - Configuration options for the debounced behavior.
  * @param {boolean} [options.disableInstantValidation=false] - When true, disables instant validation on delete/clear, making all changes consistently debounced.
+ * @param {boolean} [options.returnFlushFunction=false] - When true, returns an object with both debouncedCallback and flush functions instead of just the callback.
  *
- * @returns {Function} A debounced callback function that should be called with the input value. This function handles the debouncing logic internally.
+ * @returns {Function|Object} A debounced callback function that should be called with the input value, or an object with both the debounced function and flush function when returnFlushFunction is true.
  *
  * @note The callback function is called with the current input value as its only parameter.
  * @note The hook automatically cleans up any pending timeouts when the component unmounts.
@@ -120,13 +121,16 @@ import { useCallback, useRef, useEffect } from 'react';
  * @author [Author Name]
  */
 const useDebouncedInput = (callback, delay = 500, options = {}) => {
-  const { disableInstantValidation = false } = options;
+  const { disableInstantValidation = false, returnFlushFunction = false } = options;
   const timeoutRef = useRef(null);
   const hasValidatedRef = useRef(false);
   const previousValueRef = useRef('');
+  const pendingValueRef = useRef(null);
 
   const debouncedCallback = useCallback(
     (value) => {
+      pendingValueRef.current = value;
+      
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -140,6 +144,7 @@ const useDebouncedInput = (callback, delay = 500, options = {}) => {
           callback(value);
           hasValidatedRef.current = true;
           previousValueRef.current = value;
+          pendingValueRef.current = null;
         }, delay);
         return;
       }
@@ -149,6 +154,7 @@ const useDebouncedInput = (callback, delay = 500, options = {}) => {
       if (hasValidatedRef.current && (isDeleting || isEmpty)) {
         callback(value);
         previousValueRef.current = value;
+        pendingValueRef.current = null;
         return;
       }
 
@@ -156,10 +162,26 @@ const useDebouncedInput = (callback, delay = 500, options = {}) => {
         callback(value);
         hasValidatedRef.current = true;
         previousValueRef.current = value;
+        pendingValueRef.current = null;
       }, delay);
     },
     [callback, delay, disableInstantValidation]
   );
+
+  const flush = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    if (pendingValueRef.current !== null) {
+      const value = pendingValueRef.current;
+      callback(value);
+      hasValidatedRef.current = true;
+      previousValueRef.current = value;
+      pendingValueRef.current = null;
+    }
+  }, [callback]);
 
   useEffect(() => {
     return () => {
@@ -168,6 +190,10 @@ const useDebouncedInput = (callback, delay = 500, options = {}) => {
       }
     };
   }, []);
+
+  if (returnFlushFunction) {
+    return { debouncedCallback, flush };
+  }
 
   return debouncedCallback;
 };

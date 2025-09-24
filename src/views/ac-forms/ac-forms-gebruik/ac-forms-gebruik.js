@@ -21,6 +21,7 @@ import ConGebruikStepReview from './components/con-gebruik-step-review';
 import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 import { VISUALS } from '@src/constants';
 import { useDebouncedInput } from '@src/hooks';
+import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 
 const mapToOption = (item, index) => {
   const label =
@@ -30,7 +31,7 @@ const mapToOption = (item, index) => {
     item?.title ||
     item?.label ||
     `Applicatie ${index + 1}`;
-  const value = item?.id || item?.slug || label;
+  const value = item?.['@self']?.id || item?.id || item?.slug || label;
   return { value: String(value), label: String(label), data: item };
 };
 
@@ -253,7 +254,7 @@ const AcFormsGebruik = ({ store }) => {
           'gebruik',
           String(gebruikId),
           {
-            _extend: ['@self.schema'],
+            '_extend[]': ['@self.schema'],
           }
         );
         if (cancelled) return;
@@ -290,7 +291,7 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('voorzieningen', 'product', {
           _limit: '50',
           _page: '1',
-          _extend: '@self.schema',
+          '_extend[]': '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_product');
         const list = collection?.results || collection || [];
@@ -301,22 +302,7 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
-    const fetchModules = async () => {
-      try {
-        // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'module', {
-          _limit: '50',
-          _page: '1',
-          _extend: '@self.schema',
-        });
-        const collection = store.object.getCollection('voorzieningen_module');
-        const list = collection?.results || collection || [];
-        const options = list.map(mapToOption);
-        if (isMounted) setModulesOptions(options);
-      } catch (e) {
-        if (isMounted) setModulesOptions([]);
-      }
-    };
+    // Do not preload all modules globally; modules are fetched per selected product
 
     const fetchOrganisaties = async () => {
       try {
@@ -324,7 +310,7 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('voorzieningen', 'organisatie', {
           _limit: '50',
           _page: '1',
-          _extend: '@self.schema',
+          '_extend[]': '@self.schema',
         });
         const collection = store.object.getCollection('voorzieningen_organisatie');
         const list = collection?.results || collection || [];
@@ -373,7 +359,6 @@ const AcFormsGebruik = ({ store }) => {
 
     // Preload all APIs in parallel for better performance
     fetchProducts();
-    fetchModules();
     fetchOrganisaties();
     fetchRefComps();
 
@@ -395,6 +380,13 @@ const AcFormsGebruik = ({ store }) => {
         return;
       }
 
+      // Product changed to a valid value: clear dependent selections and options immediately
+      if (!cancelled) {
+        setGebruikData('module', null);
+        setGebruikData('moduleVersie', null);
+        setModulesOptions([]);
+      }
+
       // Resolve product object when value might be an id; fetch if needed
       let productData = null;
       if (typeof p === 'object') {
@@ -408,7 +400,7 @@ const AcFormsGebruik = ({ store }) => {
         } else {
           try {
             await store.object.fetchObject('voorzieningen', 'product', String(p), {
-              _extend: '@self.schema',
+              '_extend[]': '@self.schema',
             });
             productData = store.object.getObject('voorzieningen_product', String(p));
           } catch (_) {
@@ -416,6 +408,18 @@ const AcFormsGebruik = ({ store }) => {
           }
         }
       }
+
+ // Ensure modules are available; if missing, fetch with relations
+ if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
+  try {
+    await store.object.fetchObject('voorzieningen', 'product', String(getIdString(productData?.id || p)), {
+      '_extend[]': '@self.schema,@self.relations',
+    });
+    productData = store.object.getObject('voorzieningen_product', String(getIdString(productData?.id || p)));
+  } catch (_) {
+    // keep existing productData
+  }
+}
 
       const moduleIds = Array.isArray(productData?.modules)
         ? productData.modules
@@ -434,7 +438,7 @@ const AcFormsGebruik = ({ store }) => {
         await Promise.all(
           moduleIds.map((id) =>
             store.object.fetchObject('voorzieningen', 'module', String(id), {
-              _extend: '@self.schema,@self.relations',
+              '_extend[]': '@self.schema,@self.relations',
             })
           )
         );
@@ -477,11 +481,52 @@ const AcFormsGebruik = ({ store }) => {
     try {
       setModulesLoading(true);
       const q = String(query || '').trim();
-      if (!q) {
+
+      // Only allow searching within the currently selected product's modules
+      const selectedProduct = gebruik?.product;
+      const productId = getIdString(selectedProduct);
+
+      if (!productId) {
+        // No product selected: no modules available
+        if (!q) return; // preserve current options
         setModulesOptions([]);
         return;
       }
-      // Use authenticated API client instead of raw fetch
+
+      // Resolve the selected product object to get its module IDs
+      let productData = null;
+      if (typeof selectedProduct === 'object') {
+        productData = selectedProduct;
+      } else {
+        productData =
+          productOptions.find((opt) => String(opt.value) === String(productId))?.data || null;
+        if (!productData) {
+          try {
+            await store.object.fetchObject('voorzieningen', 'product', String(productId), {
+              '_extend[]': '@self.schema',
+            });
+            productData = store.object.getObject('voorzieningen_product', String(productId));
+          } catch (_) {
+            productData = null;
+          }
+        }
+      }
+
+      const allowedModuleIds = Array.isArray(productData?.modules)
+        ? productData.modules.map((id) => String(id))
+        : [];
+
+      if (allowedModuleIds.length === 0) {
+        setModulesOptions([]);
+        return;
+      }
+
+      if (!q) {
+        // No query: keep current options populated by product-change effect
+        return;
+      }
+
+      // Fetch modules by search, then filter to those belonging to the selected product
       await store.object.fetchCollection('voorzieningen', 'module', {
         _limit: '50',
         _page: '1',
@@ -489,7 +534,11 @@ const AcFormsGebruik = ({ store }) => {
       });
       const collection = store.object.getCollection('voorzieningen_module');
       const list = collection?.results || collection || [];
-      const options = list.map(mapToOption);
+      const filtered = list.filter((m) => {
+        const id = String(m?.id || m?.value || '');
+        return allowedModuleIds.includes(id);
+      });
+      const options = filtered.map(mapToOption);
       setModulesOptions(options);
     } catch (e) {
       setModulesOptions([]);
@@ -592,7 +641,7 @@ const AcFormsGebruik = ({ store }) => {
       if (!modData || !Array.isArray(versiesArray) || versiesArray.length === 0) {
         try {
           await store.object.fetchObject('voorzieningen', 'module', String(mod), {
-            _extend: '@self.schema,@self.relations',
+            '_extend[]': '@self.schema,@self.relations',
           });
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
@@ -734,63 +783,157 @@ const AcFormsGebruik = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gebruik?.product]);
 
-  // When module changes, resolve koppelingen by IDs from selected module
-  useEffect(() => {
-    const fetchKoppelingenByIds = async () => {
+  // Helper function to create koppeling option with proper labels
+  const createKoppelingOption = async (item, index) => {
+    let appAName = `A${index + 1}`;
+    let appBName = `B${index + 1}`;
+
+    // Try to get moduleA name - check relations first, then direct properties
+    const moduleAId = item?.['@self']?.relations?.moduleA || item?.moduleA;
+    
+    if (item?.moduleA?.naam) {
+      appAName = item.moduleA.naam;
+    } else if (Array.isArray(item?.moduleA) && item.moduleA[0]?.naam) {
+      appAName = item.moduleA[0].naam;
+    } else if (moduleAId) {
+      // ModuleA is a UUID, resolve it
       try {
-        const mod = selectedModule;
-        if (!mod) {
-          setKoppelingOptions([]);
-          return;
-        }
-
-        const ids = Array.isArray(mod.koppelingen)
-          ? mod.koppelingen.map((id) => String(id))
-          : [];
-
-        if (ids.length === 0) {
-          setKoppelingOptions([]);
-          return;
-        }
-
-        await Promise.all(
-          ids.map((id) =>
-            store.object.fetchObject('voorzieningen', 'koppeling', id, {
-              _extend: ['@self.schema', 'moduleA', 'moduleB'],
-            })
-          )
+        const resolvedName = await store.object.getNamesForSingleId(
+          String(moduleAId)
         );
+        appAName = resolvedName || String(moduleAId);
+      } catch (e) {
+        appAName = String(moduleAId) || `A${index + 1}`;
+      }
+    }
 
-        const list = ids
-          .map((id) => store.object.getObject('voorzieningen_koppeling', String(id)))
-          .filter(Boolean);
+    // Try to get moduleB name - check relations first, then direct properties
+    const moduleBId = item?.['@self']?.relations?.moduleB || item?.moduleB;
+    
+    if (item?.moduleB?.naam) {
+      appBName = item.moduleB.naam;
+    } else if (Array.isArray(item?.moduleB) && item.moduleB[0]?.naam) {
+      appBName = item.moduleB[0].naam;
+    } else if (moduleBId) {
+      // ModuleB is a UUID, resolve it
+      try {
+        const resolvedName = await store.object.getNamesForSingleId(
+          String(moduleBId)
+        );
+        appBName = resolvedName || String(moduleBId);
+      } catch (e) {
+        appBName = String(moduleBId) || `B${index + 1}`;
+      }
+    }
 
-        const options = list.map((item, index) => {
-          const appAName =
-            typeof item?.moduleA === 'string'
-              ? item.moduleA
-              : item?.moduleA?.naam
-              ? item.moduleA.naam
-              : Array.isArray(item?.moduleA) && item.moduleA[0]?.naam
-              ? item.moduleA[0].naam
-              : item?.['@self']?.relations?.moduleA || `A${index + 1}`;
+    const direction = item?.gegevensuitwisselingRichting;
+    const arrow =
+      direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+    
+    // Get koppeling name
+    const rawKoppelingName = 
+      item?.['@self']?.name || 
+      item?.naam || 
+      item?.name || 
+      item?.title || 
+      item?.label || 
+      '';
+    
+    // Only show koppeling name if it's not a UUID
+    const koppelingName = rawKoppelingName && !isUUID(rawKoppelingName) 
+      ? rawKoppelingName 
+      : '';
+    
+    // Create descriptive label
+    const moduleConnection = `${appAName} ${arrow} ${appBName}`;
+    const label = koppelingName 
+      ? `${koppelingName} (${moduleConnection})`
+      : moduleConnection;
+    
+    // Use the koppeling's ID as the value
+    const value = item?.id || item?.['@self']?.id || item?.value || String(index);
+    return { value: String(value), label: String(label) };
+  };
 
-          const appBName =
-            typeof item?.moduleB === 'string'
-              ? item.moduleB
-              : item?.moduleB?.naam
-              ? item.moduleB.naam
-              : Array.isArray(item?.moduleB) && item.moduleB[0]?.naam
-              ? item.moduleB[0].naam
-              : item?.['@self']?.relations?.moduleB || `B${index + 1}`;
+  // When module changes, fetch koppelingen where moduleA or moduleB equals the selected module
+  useEffect(() => {
+    const fetchKoppelingenByModule = async () => {
+      try {
+        const moduleId = getIdString(gebruik?.module);
+        
+        // If no module selected, fetch all koppelingen
+        if (!moduleId) {
+          try {
+            await store.object.fetchCollection('voorzieningen', 'koppeling', {
+              _limit: '100',
+              _page: '1'
+            });
+            const type = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+            const collection = store.object.getCollection(type);
+            const allKoppelingen = collection?.results || collection || [];
+            
+            const options = await Promise.all(
+              allKoppelingen.map(async (item, index) => {
+                return await createKoppelingOption(item, index);
+              })
+            );
+            
+            setKoppelingOptions(options);
+          } catch (e) {
+            setKoppelingOptions([]);
+          }
+          return;
+        }
 
-          const direction = item?.gegevensuitwisselingRichting;
-          const arrow =
-            direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
-          const label = `${appAName} ${arrow} ${appBName}`;
-          const value = item?.value || item?.id || label;
-          return { value: String(value), label: String(label) };
-        });
+        // Make two separate API calls sequentially to avoid store conflicts
+        let moduleAResults = [];
+        let moduleBResults = [];
+
+        try {
+          // First fetch koppelingen where moduleA equals the selected module ID
+          await store.object.fetchCollection('voorzieningen', 'koppeling', {
+            _limit: '100',
+            _page: '1',
+            moduleA: moduleId
+          });
+          const typeA = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+          const collectionA = store.object.getCollection(typeA);
+          moduleAResults = collectionA?.results || collectionA || [];
+        } catch (e) {
+          moduleAResults = [];
+        }
+
+        try {
+          // Then fetch koppelingen where moduleB equals the selected module ID
+          await store.object.fetchCollection('voorzieningen', 'koppeling', {
+            _limit: '100',
+            _page: '1',
+            moduleB: moduleId
+          });
+          const typeB = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+          const collectionB = store.object.getCollection(typeB);
+          moduleBResults = collectionB?.results || collectionB || [];
+        } catch (e) {
+          moduleBResults = [];
+        }
+
+        // Merge results and remove duplicates based on ID
+        const allKoppelingen = [...moduleAResults, ...moduleBResults];
+        const uniqueKoppelingen = allKoppelingen.filter((item, index, self) => 
+          index === self.findIndex(k => (k?.id || k?.value) === (item?.id || item?.value))
+        );
+        
+        // If no koppelingen found for this module, don't search again - just set empty options
+        if (uniqueKoppelingen.length === 0) {
+          setKoppelingOptions([]);
+          return;
+        }
+
+        const options = await Promise.all(
+          uniqueKoppelingen.map(async (item, index) => {
+            return await createKoppelingOption(item, index);
+          })
+        );
 
         setKoppelingOptions(options);
       } catch (e) {
@@ -798,8 +941,8 @@ const AcFormsGebruik = ({ store }) => {
       }
     };
 
-    fetchKoppelingenByIds();
-  }, [selectedModule]);
+    fetchKoppelingenByModule();
+  }, [gebruik?.module, getIdString]);
 
   // When afnemer is samenwerking, organisaties are already preloaded - no additional API calls needed
   useEffect(() => {
@@ -891,7 +1034,7 @@ const AcFormsGebruik = ({ store }) => {
         return !!gebruik?.afnemer && !!gebruik?.status;
       } else {
         // For eigen organisatie: contactpersoon, afnemer and status required
-        return !!gebruik?.contactpersoon && !!gebruik?.afnemer && !!gebruik?.status;
+        return !!gebruik?.afnemer && !!gebruik?.status;
       }
     }
     if (currentStep === 2) {
