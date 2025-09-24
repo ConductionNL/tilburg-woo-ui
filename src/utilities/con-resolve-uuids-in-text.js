@@ -7,12 +7,12 @@
 
 import React from 'react';
 
-// UUID regex pattern - matches standard UUID format
+// UUID regex pattern - matches standard UUID format (more permissive to handle different UUID versions)
 // NOTE: Use a global regex for extraction (match), but a NON-global regex for testing to avoid lastIndex issues
 const UUID_REGEX =
-  /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
+  /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 const UUID_TEST_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
  * Checks if a string looks like a UUID
