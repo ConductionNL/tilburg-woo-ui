@@ -206,7 +206,7 @@ const ConFormLicentieStage = memo(
                     fontWeight: '600',
                   }}
                 >
-                  Licensevorm <span style={{ color: 'red' }}>*</span>
+                  Licentievorm <span style={{ color: 'red' }}>*</span>
                 </label>
                 <ReactSelect
                   value={(() => {
@@ -258,7 +258,7 @@ const ConFormLicentieStage = memo(
                     }
                   }}
                   options={licentieTypeOptions}
-                  placeholder='Selecteer licensevorm'
+                  placeholder='Selecteer licentievorm'
                   isDisabled={loading}
                   styles={{
                     control: (provided) => ({
