@@ -792,23 +792,47 @@ const AcFormsGebruik = ({ store }) => {
           return;
         }
 
-        // Fetch koppelingen where moduleA or moduleB equals the selected module ID
-        await store.object.fetchCollection('voorzieningen', 'koppeling', {
-          _limit: '100',
-          _page: '1',
-          '_extend[]': ['@self.schema', 'moduleA', 'moduleB'],
-          // Use OR filter to find koppelingen where either moduleA or moduleB matches
-          $or: [
-            { moduleA: moduleId },
-            { moduleB: moduleId }
-          ]
-        });
+        // Make two separate API calls sequentially to avoid store conflicts
+        let moduleAResults = [];
+        let moduleBResults = [];
 
-        const type = store.object.getTypeFromParams('voorzieningen', 'koppeling');
-        const collection = store.object.getCollection(type);
-        const list = collection?.results || collection || [];
+        try {
+          // First fetch koppelingen where moduleA equals the selected module ID
+          await store.object.fetchCollection('voorzieningen', 'koppeling', {
+            _limit: '100',
+            _page: '1',
+            _extend: ['@self.schema', 'moduleA', 'moduleB'],
+            moduleA: moduleId
+          });
+          const typeA = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+          const collectionA = store.object.getCollection(typeA);
+          moduleAResults = collectionA?.results || collectionA || [];
+        } catch (e) {
+          moduleAResults = [];
+        }
 
-        const options = list.map((item, index) => {
+        try {
+          // Then fetch koppelingen where moduleB equals the selected module ID
+          await store.object.fetchCollection('voorzieningen', 'koppeling', {
+            _limit: '100',
+            _page: '1',
+            _extend: ['@self.schema', 'moduleA', 'moduleB'],
+            moduleB: moduleId
+          });
+          const typeB = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+          const collectionB = store.object.getCollection(typeB);
+          moduleBResults = collectionB?.results || collectionB || [];
+        } catch (e) {
+          moduleBResults = [];
+        }
+
+        // Merge results and remove duplicates based on ID
+        const allKoppelingen = [...moduleAResults, ...moduleBResults];
+        const uniqueKoppelingen = allKoppelingen.filter((item, index, self) => 
+          index === self.findIndex(k => (k?.id || k?.value) === (item?.id || item?.value))
+        );
+
+        const options = uniqueKoppelingen.map((item, index) => {
           const appAName =
             typeof item?.moduleA === 'string'
               ? item.moduleA
