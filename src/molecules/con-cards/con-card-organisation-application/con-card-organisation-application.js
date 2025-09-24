@@ -23,7 +23,7 @@ const ConCardOrganisationApplication = ({
   organisation,
   objectStore, // Add objectStore for names resolution
   // user,
-  // published,
+  published,
   // ...rest // Capture additional object data
 }) => {
   // Use generic UUID resolver for organisation name
@@ -79,12 +79,15 @@ const ConCardOrganisationApplication = ({
             </Paragraph>
           )}
           <AcFlex alignItems='center' spacing='sm'>
+           {
+            published && (
             <Paragraph small>
-              {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+              {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
             </Paragraph>
+            )}
             {type && (
               <>
-                <VISUALS.ELLIPSE />
+               { published && <VISUALS.ELLIPSE />}
                 <Paragraph small>{type}</Paragraph>
               </>
             )}

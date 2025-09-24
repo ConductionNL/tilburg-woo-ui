@@ -1,4 +1,5 @@
 import { AcLink } from '@molecules';
+import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
@@ -15,7 +16,6 @@ const AcSearchResult = ({
   title,
   summary,
   published,
-  updated, // Add updated field for consistency
   category,
   themes,
   id,
@@ -25,7 +25,9 @@ const AcSearchResult = ({
 }) => {
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
-      <Heading level={3}>{extractTitle(title)}</Heading>
+      <Heading level={3}>
+        <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
+      </Heading>
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
@@ -35,10 +37,10 @@ const AcSearchResult = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-          {(updated || published) && (
+          {published && (
             <>
               <Paragraph small>
-                {acFormatDate(updated || published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
               </Paragraph>
               <VISUALS.ELLIPSE />
             </>
@@ -47,7 +49,8 @@ const AcSearchResult = ({
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {extractTitle(title)}
+            {LABELS.READ_MORE_ABOUT}{' '}
+            <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>

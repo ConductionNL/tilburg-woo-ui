@@ -40,36 +40,23 @@ const ConFormLicentieStage = memo(
       ? getNewModulesWithApplicatieData()
       : [];
 
-    // Check if any module has different licenties from other modules
+    // Check if any module has different license information from other modules
     const areValuesDifferent =
       newModules.length > 1 &&
       newModules.some((module, moduleIndex) => {
-        // Get sorted licentie arrays for comparison
-        const currentLicenties = [...(module.licenties || [])].sort((a, b) =>
-          `${a.licentietype}-${a.licentie}`.localeCompare(
-            `${b.licentietype}-${b.licentie}`
-          )
-        );
+        // Get current module's license info
+        const currentLicentietype = module.licentietype || module.licentieType || '';
+        const currentLicentie = module.licentie || '';
 
         // Compare with all other modules
         return newModules.some((otherModule, otherIndex) => {
           if (moduleIndex === otherIndex) return false;
 
-          const otherLicenties = [...(otherModule.licenties || [])].sort((a, b) =>
-            `${a.licentietype}-${a.licentie}`.localeCompare(
-              `${b.licentietype}-${b.licentie}`
-            )
-          );
+          const otherLicentietype = otherModule.licentietype || otherModule.licentieType || '';
+          const otherLicentie = otherModule.licentie || '';
 
-          // Check if arrays have different lengths
-          if (currentLicenties.length !== otherLicenties.length) return true;
-
-          // Compare each licentie
-          return currentLicenties.some(
-            (licentie, i) =>
-              licentie.licentietype !== otherLicenties[i].licentietype ||
-              licentie.licentie !== otherLicenties[i].licentie
-          );
+          // Check if license type or specific license is different
+          return currentLicentietype !== otherLicentietype || currentLicentie !== otherLicentie;
         });
       });
     // if there is a difference between values set sameForAll to false
@@ -219,7 +206,7 @@ const ConFormLicentieStage = memo(
                     fontWeight: '600',
                   }}
                 >
-                  Licensevorm <span style={{ color: 'red' }}>*</span>
+                  Licentievorm <span style={{ color: 'red' }}>*</span>
                 </label>
                 <ReactSelect
                   value={(() => {
@@ -271,7 +258,7 @@ const ConFormLicentieStage = memo(
                     }
                   }}
                   options={licentieTypeOptions}
-                  placeholder='Selecteer licensevorm'
+                  placeholder='Selecteer licentievorm'
                   isDisabled={loading}
                   styles={{
                     control: (provided) => ({

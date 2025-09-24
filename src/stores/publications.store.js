@@ -350,17 +350,20 @@ export class PublicationsStore {
   @action
   toggleSearchArrayValue = (key, value) => {
     console.group('TOGGLE SEARCH ARRAY VALUE');
-    console.info(key, value);
+    console.info(key, value, typeof value);
     if (!this.query[key]) {
       console.info('KEY DOES NOT EXIST, CREATING ARRAY');
       this.query[key] = [];
     }
 
-    const index = this.query[key]?.indexOf(value);
+    // Convert to string for comparison since URL params are strings
+    const valueStr = String(value);
+    const hasValue = this.query[key].some(item => String(item) === valueStr);
+    
     // Remove item if we find it in the array.
-    if (index !== -1) {
-      console.info(index, this.query[key]);
-      this.query[key] = this.query[key].filter((cat) => cat !== value);
+    if (hasValue) {
+      console.info('REMOVING VALUE:', value);
+      this.query[key] = this.query[key].filter((item) => String(item) !== valueStr);
       return;
     }
 
@@ -368,6 +371,7 @@ export class PublicationsStore {
       this.setPage(1);
     }
 
+    console.info('ADDING VALUE:', value);
     this.query[key] = [...this.query[key], value];
     console.groupEnd();
   };
@@ -580,7 +584,7 @@ export class PublicationsStore {
       _relatedNames: true,
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
-    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=database&${queryString}`;
 
     console.group('🚀 INDEPENDENT PUBLICATIONS API CALL');
     console.info('SEARCH QUERY:', toJS(baseQuery));

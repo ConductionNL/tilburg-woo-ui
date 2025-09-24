@@ -958,7 +958,8 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      _extend: params._extend || params.extend || '@self.schema',
+      '_extend[]':  '@self.schema',
+      _source: 'database', // Always use database as source
       ...params,
     };
 
@@ -969,8 +970,7 @@ export class ObjectStore {
       queryParams._extend.push('@self.schema');
     }
 
-    // Remove internal parameters
-    delete queryParams._source;
+    // Remove internal parameters (but keep _source)
     delete queryParams._schema;
     delete queryParams._register;
     delete queryParams.extend;
@@ -1156,7 +1156,7 @@ export class ObjectStore {
         page: pagination.page,
         limit: pagination.limit,
         ...params,
-        _extend: params._extend || params.extend || '@self.schema',
+        '_extend[]': params._extend || params.extend || '@self.schema',
       };
 
       const response = await nextcloudApi.get(
@@ -3137,6 +3137,7 @@ export class ObjectStore {
       '_order',
       '_fields',
       '_extend', // Usually for response format, not content filtering
+      '_extend[]', // Usually for response format, not content filtering
       'page',
       'limit',
       'offset',
@@ -3877,7 +3878,7 @@ export class ObjectStore {
       const params = {
         _limit: 20, // Load first 20 items to properly warm backend cache
         _page: 1,
-        _extend: '@self.schema',
+        '_extend[]': '@self.schema',
       };
 
       console.info(`🔥 Triggering backend cache load for ${registerId}/${schemaId}`);

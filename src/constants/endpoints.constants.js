@@ -37,7 +37,7 @@ export const ENDPOINTS = AcLockObject({
     SHOW: (_id) => `/faqs/${_id}`, // GET
   },
   PAGES: {
-    INDEX: `/opencatalogi/api/pages`, // GET
+    INDEX: `/opencatalogi/api/pages?_source=database`, // GET
     SHOW: (_slug) => `/opencatalogi/api/pages${_slug}`, // GET
   },
   THEMES: {
@@ -52,7 +52,7 @@ export const ENDPOINTS = AcLockObject({
       `/openconnector/api/endpoint/relationships?identifier=${_id}`,
   }, // GET
   MENU: {
-    INDEX: `/opencatalogi/api/menus`, // GET
+    INDEX: `/opencatalogi/api/menus?_source=database`, // GET
     SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
 });

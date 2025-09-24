@@ -171,7 +171,7 @@ const ConFormReferentiecomponentenStage = memo(
 
             // Only update if we have valid normalized refs
             if (normalizedRefs.length > 0) {
-              updateReferentieComponentenWithStandards(index, normalizedRefs);
+              updateReferentieComponentenWithStandards(module.moduleIndex, normalizedRefs);
             }
           }
         });
@@ -252,14 +252,14 @@ const ConFormReferentiecomponentenStage = memo(
                       : [];
                     if (sameForAll && isMultiNewApplicatie) {
                       applyToAll({ referentieComponenten: refsArray });
-                      // Update standards data for all applications
-                      applicatieIndices.forEach((appId) => {
-                        updateReferentieComponentenWithStandards(appId, refsArray);
+                      // Update standards data for all applications using their moduleIndex
+                      newModules.forEach((module) => {
+                        updateReferentieComponentenWithStandards(module.moduleIndex, refsArray);
                       });
                     } else {
                       updateModuleField(0, 'referentieComponenten', refsArray);
                       updateReferentieComponentenWithStandards(
-                        applicatieIndices[0],
+                        newModules[0]?.moduleIndex,
                         refsArray
                       );
                     }
@@ -329,38 +329,38 @@ const ConFormReferentiecomponentenStage = memo(
                 </TableRow>
               </thead>
               <TableBody>
-                {newModules.map((module, index) => {
-                  const app = module;
+                        {newModules.map((module, index) => {
+                          const app = module;
 
-                  return (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <strong>{app.naam || `Applicatie ${index + 1}`}</strong>
-                      </TableCell>
-                      <TableCell>
-                        <ReactSelect
-                          value={(() => {
-                            const currentRefs = normalizeValues(
-                              app.referentieComponenten || []
-                            );
-                            return referentieComponentenOptions.filter((opt) =>
-                              currentRefs.includes(String(opt.value))
-                            );
-                          })()}
-                          onChange={(selectedOptions) => {
-                            const refsArray = selectedOptions
-                              ? selectedOptions.map((opt) => opt.value)
-                              : [];
-                            updateModuleField(
-                              index,
-                              'referentieComponenten',
-                              refsArray
-                            );
-                            updateReferentieComponentenWithStandards(
-                              index,
-                              refsArray
-                            );
-                          }}
+                          return (
+                            <TableRow key={index}>
+                              <TableCell>
+                                <strong>{app.naam || `Applicatie ${index + 1}`}</strong>
+                              </TableCell>
+                              <TableCell>
+                                <ReactSelect
+                                  value={(() => {
+                                    const currentRefs = normalizeValues(
+                                      app.referentieComponenten || []
+                                    );
+                                    return referentieComponentenOptions.filter((opt) =>
+                                      currentRefs.includes(String(opt.value))
+                                    );
+                                  })()}
+                                  onChange={(selectedOptions) => {
+                                    const refsArray = selectedOptions
+                                      ? selectedOptions.map((opt) => opt.value)
+                                      : [];
+                                    updateModuleField(
+                                      index,
+                                      'referentieComponenten',
+                                      refsArray
+                                    );
+                                    updateReferentieComponentenWithStandards(
+                                      module.moduleIndex,
+                                      refsArray
+                                    );
+                                  }}
                           options={referentieComponentenOptions}
                           placeholder={
                             referentieComponentenLoading

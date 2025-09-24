@@ -620,12 +620,43 @@ const ConBeheerViews = ({ store }) => {
                       icon={<VISUALS.DOWNLOAD />}
                       onClick={async () => {
                         try {
-                          await fetch(
+                          const response = await fetch(
                             '/api/apps/softwarecatalog/api/archimate/export',
-                            { method: 'POST' }
+                            { 
+                              method: 'POST',
+                              headers: {
+                                'Accept': 'application/xml',
+                              },
+                            }
                           );
-                        } catch (_e) {
-                          /* ignore */
+
+                          if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                          }
+
+                          // Get the XML content
+                          const xmlData = await response.text();
+
+                          // Extract filename from Content-Disposition header if available
+                          const disposition = response.headers.get('content-disposition');
+                          const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
+                          const filename = filenameMatch?.[1] || `${getViewName(gemma.get_view).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_amef.xml`;
+
+                          // Create blob and download
+                          const blob = new Blob([xmlData], { type: 'application/xml;charset=utf-8' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = filename;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          
+                          // Cleanup
+                          URL.revokeObjectURL(url);
+                        } catch (error) {
+                          console.error('Error downloading AMEF:', error);
+                          // You might want to show a user-friendly error message here
                         }
                       }}
                       disabled={!viewIsDoneLoading}

@@ -60,7 +60,6 @@ const AcRegister = () => {
       },
     ],
     organizationType: 'Leverancier',
-    kvkNumber: '',
     email: '',
   });
   const [logoDataUrl, setLogoDataUrl] = useState(null);
@@ -207,7 +206,6 @@ const AcRegister = () => {
           },
         ],
         type: organization.organizationType,
-        kvkNummer: organization.kvkNumber,
         'e-mailadres': organization.email,
       };
 
@@ -651,7 +649,7 @@ const AcRegister = () => {
               </p>
               <p>
                 Er ging iets mis bij het verwerken van je aanmelding voor de
-                Softwarecatalogus. .{' '}
+                Softwarecatalogus.{' '}
                 {error.message ? '' : 'Dit kan verschillende oorzaken hebben:'}
               </p>
               {!error.errors && !error.message && (
@@ -940,11 +938,6 @@ const OrganizationOptionalForm = memo(
       500
     );
 
-    const debouncedSetKvkNumber = useDebouncedInput(
-      (value) => setOrganizationData('kvkNumber', value),
-      500
-    );
-
     const debouncedSetOin = useDebouncedInput(
       (value) => setOrganizationData('oin', value),
       500
@@ -1093,18 +1086,6 @@ const OrganizationOptionalForm = memo(
                 Toegestane bestandstypen: png, jpeg, jpg, webp, svg
               </small>
             </AcFlex>
-
-            {organization.organizationType === 'Leverancier' && (
-              <div>
-                <AcFormField
-                  label='KvK nummer'
-                  placeholder='12345678'
-                  value={organization.kvkNumber}
-                  onChange={(e) => debouncedSetKvkNumber(e)}
-                  disabled={loading}
-                />
-              </div>
-            )}
 
             {(organization.organizationType === 'Gemeente' ||
               organization.organizationType === 'Samenwerking') && (
@@ -1338,12 +1319,6 @@ const ReviewForm = memo(
               </div>
             </div>
 
-            {organization.organizationType === 'Leverancier' && (
-              <div className='ac-register-review__field'>
-                <strong>KvK nummer:</strong>
-                <span>{organization.kvkNumber || '-'}</span>
-              </div>
-            )}
             {(organization.organizationType === 'Gemeente' ||
               organization.organizationType === 'Samenwerking') && (
               <div className='ac-register-review__field'>

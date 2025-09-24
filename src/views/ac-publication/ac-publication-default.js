@@ -12,6 +12,11 @@ import { AcMappedAttachmentRow } from '@src/services/ac-mapped-attachmend-row';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import formatBySchema from '@src/utilities/con-format-by-json-schema';
+import {
+  resolveUUIDsInText,
+  resolveUUIDsInArray,
+  resolveUUIDsInObject,
+} from '@src/utilities/con-resolve-uuids-in-text';
 
 import _ from 'lodash';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
@@ -53,44 +58,64 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     return map;
   }, [object?.namesCache]);
 
-  // Custom format function that wraps values with ConUuidResolver
-  const formatWithUuidResolution = (schema, data, key, options) => {
-    // Get the raw value first
-    const value = key != null ? data[key] : data;
-    
-    // If the value is a string UUID, wrap it directly with ConUuidResolver
-    if (typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
-      return <ConUuidResolver>{value}</ConUuidResolver>;
-    }
-    
-    // For arrays, check if they contain UUIDs
-    if (Array.isArray(value)) {
-      const hasUuids = value.some(item => 
-        typeof item === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item)
-      );
-      
-      if (hasUuids) {
-        // Render array with UUID resolution
-        return (
-          <span>
-            {value.map((item, i) => (
-              <React.Fragment key={i}>
-                {typeof item === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item) ? (
-                  <ConUuidResolver>{item}</ConUuidResolver>
-                ) : (
-                  <span>{item}</span>
-                )}
-                {i < value.length - 1 ? ', ' : ''}
-              </React.Fragment>
-            ))}
-          </span>
-        );
-      }
-    }
-    
-    // Otherwise, use the original formatBySchema
-    return formatBySchema(schema, data, key, options);
+  // Component renderer that resolves UUIDs in strings, arrays, and objects before formatting
+  const UuidFormattedValue = ({ schema, data, fieldKey, options }) => {
+    const rawValue = fieldKey != null ? data[fieldKey] : data;
+    const [resolvedValue, setResolvedValue] = useState(rawValue);
+
+    useEffect(() => {
+      let cancelled = false;
+      const run = async () => {
+        try {
+          let next = rawValue;
+          if (typeof rawValue === 'string') {
+            next = await resolveUUIDsInText(rawValue, object);
+          } else if (Array.isArray(rawValue)) {
+            const allStrings = rawValue.every((v) => typeof v === 'string');
+            if (allStrings) {
+              next = await resolveUUIDsInArray(rawValue, object);
+            } else {
+              const items = await Promise.all(
+                rawValue.map(async (item) => {
+                  if (typeof item === 'string') {
+                    return resolveUUIDsInText(item, object);
+                  }
+                  if (Array.isArray(item) || (typeof item === 'object' && item)) {
+                    return resolveUUIDsInObject(item, object);
+                  }
+                  return item;
+                })
+              );
+              next = items;
+            }
+          } else if (typeof rawValue === 'object' && rawValue !== null) {
+            next = await resolveUUIDsInObject(rawValue, object);
+          }
+          if (!cancelled) setResolvedValue(next);
+        } catch (e) {
+          if (!cancelled) setResolvedValue(rawValue);
+        }
+      };
+      run();
+      return () => {
+        cancelled = true;
+      };
+    }, [rawValue, object]);
+
+    const renderData =
+      fieldKey != null ? { ...data, [fieldKey]: resolvedValue } : resolvedValue;
+    return formatBySchema(schema, renderData, fieldKey, options);
   };
+
+  // Helper that returns a component so we can use hooks safely inside
+  const formatWithUuidResolution = (schema, data, key, options) => (
+    <UuidFormattedValue
+      schema={schema}
+      data={data}
+      fieldKey={key}
+      options={options}
+    />
+  );
 
   const navigate = useNavigate();
 
@@ -453,23 +478,16 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
                         // 3. Each row: [Naam, Beschrijving]
                         const tabRows = itemsWithThisSchema.map((item) => [
-                          // Naam: use formatBySchema with a basic string schema
-                          formatBySchema(
-                            { type: 'string' },
-                            {
-                              value:
-                                item.title ??
+                          // Naam: resolve UUIDs explicitly
+                          <ConUuidResolver key={`uses-name-${item.id}`}>
+                            {String(
+                              item.title ??
                                 item.titel ??
                                 item.name ??
                                 item.naam ??
-                                item.id,
-                            },
-                            'value',
-                            {
-                              objectStore: object,
-                              namesMap,
-                            }
-                          ),
+                                item.id
+                            )}
+                          </ConUuidResolver>,
                           // Description: use formatBySchema with a basic string schema
                           formatBySchema(
                             { type: 'string' },
@@ -545,23 +563,16 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
 
                         // 3. Each row: [Naam, Beschrijving] (second occurrence)
                         const tabRows = itemsWithThisSchema.map((item) => [
-                          // Naam: use formatBySchema with a basic string schema
-                          formatBySchema(
-                            { type: 'string' },
-                            {
-                              value:
-                                item.title ??
+                          // Naam: resolve UUIDs explicitly
+                          <ConUuidResolver key={`used-name-${item.id}`}>
+                            {String(
+                              item.title ??
                                 item.titel ??
                                 item.name ??
                                 item.naam ??
-                                item.id,
-                            },
-                            'value',
-                            {
-                              objectStore: object,
-                              namesMap,
-                            }
-                          ),
+                                item.id
+                            )}
+                          </ConUuidResolver>,
                           // Description: use formatBySchema with a basic string schema
                           formatBySchema(
                             { type: 'string' },

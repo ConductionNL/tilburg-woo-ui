@@ -40,11 +40,15 @@ const ConFacetsFilters = ({ store: { publications } }) => {
 
       // Toggle the value - always add if not present, remove if present
       let newArray;
-      if (arrayToCheck.includes(value)) {
-        // Remove the value
-        newArray = arrayToCheck.filter((item) => item !== value);
+      // Convert both to strings for comparison since URL params are strings
+      const valueStr = String(value);
+      const hasValue = arrayToCheck.some(item => String(item) === valueStr);
+      
+      if (hasValue) {
+        // Remove the value (keep original type in array)
+        newArray = arrayToCheck.filter((item) => String(item) !== valueStr);
       } else {
-        // Add the value
+        // Add the value (preserve original type)
         newArray = [...arrayToCheck, value];
       }
 
@@ -286,9 +290,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                 'catalogs',
                 'organisation',
                 'name',
-              ].includes(_key.toLowerCase()) && hasData;
+              ].includes(_key.toLowerCase());
 
-              return shouldShowFacet ? (
+              return shouldShowFacet && hasData ? (
                 <AcFlex
                   key={`${key}-${_key}`}
                   column
@@ -323,27 +327,33 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             className='ac-search-filters__subjects'
           >
             <Heading level={4}>{_.upperFirst(value.title ?? key)}</Heading>
-            {value.buckets.map((bucketValue) => (
-              <AcCheckbox
-                key={bucketValue.value || bucketValue.key}
-                label={`${bucketValue.label ?? bucketValue.value ?? bucketValue.key} (${
-                  bucketValue.count || bucketValue.results
-                })`}
-                value={bucketValue.value || bucketValue.key}
-                checked={isFacetChecked(value.queryParameter || key, bucketValue.value || bucketValue.key)}
-                onChange={() => {
-                  toggleSearchArrayValue(value.queryParameter || key, bucketValue.value || bucketValue.key);
-                  const nextQuery = { ...publications.query, _page: 1 };
-                  const paramsString = AcBuildURLSearchParams(nextQuery);
-                  setSearchParams(new URLSearchParams(paramsString));
-                  
-                  // Trigger facets fetch to update counts with new filters
-                  publications.fetchFacets();
-                  
-                  // Fetch is triggered by URL change effect in AcSearch
-                }}
-              />
-            ))}
+            {value.buckets && value.buckets.length > 0 ? (
+              value.buckets.map((bucketValue) => (
+                <AcCheckbox
+                  key={bucketValue.value || bucketValue.key}
+                  label={`${bucketValue.label ?? bucketValue.value ?? bucketValue.key} (${
+                    bucketValue.count || bucketValue.results
+                  })`}
+                  value={bucketValue.value || bucketValue.key}
+                  checked={isFacetChecked(value.queryParameter || key, bucketValue.value || bucketValue.key)}
+                  onChange={() => {
+                    toggleSearchArrayValue(value.queryParameter || key, bucketValue.value || bucketValue.key);
+                    const nextQuery = { ...publications.query, _page: 1 };
+                    const paramsString = AcBuildURLSearchParams(nextQuery);
+                    setSearchParams(new URLSearchParams(paramsString));
+                    
+                    // Trigger facets fetch to update counts with new filters
+                    publications.fetchFacets();
+                    
+                    // Fetch is triggered by URL change effect in AcSearch
+                  }}
+                />
+              ))
+            ) : (
+              <p style={{ color: '#666', fontStyle: 'italic', fontSize: '0.9em' }}>
+                No options available
+              </p>
+            )}
           </AcFlex>
         );
       })}

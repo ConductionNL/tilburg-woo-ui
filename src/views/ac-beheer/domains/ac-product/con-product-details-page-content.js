@@ -29,6 +29,7 @@ const ConProductDetailsPageContent = ({
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [contactImageFit, setContactImageFit] = useState('cover');
 
   const fetchUses = async () => {
     const response = await fetch(
@@ -66,6 +67,59 @@ const ConProductDetailsPageContent = ({
 
     setUsed(data.results);
   };
+
+    // Detect if contact image looks already round (square with transparent corners)
+    const handleContactImageLoad = useCallback((e) => {
+      try {
+        const img = e?.target;
+        if (!img) return;
+        const width = img.naturalWidth;
+        const height = img.naturalHeight;
+  
+        // Default behavior: crop to center
+        let nextFit = 'cover';
+  
+        // If not square, we crop to circle center
+        if (width !== height) {
+          setContactImageFit(nextFit);
+          return;
+        }
+  
+        // Try to inspect corner transparency to guess if already circular
+        // This may fail on cross-origin images; fall back to 'cover'.
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          setContactImageFit(nextFit);
+          return;
+        }
+        ctx.drawImage(img, 0, 0);
+        const corners = [
+          [0, 0],
+          [width - 1, 0],
+          [0, height - 1],
+          [width - 1, height - 1],
+        ];
+        let transparentCorners = 0;
+        for (const [x, y] of corners) {
+          const data = ctx.getImageData(x, y, 1, 1).data;
+          if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
+        }
+        if (transparentCorners >= 3) {
+          nextFit = 'contain';
+        }
+        setContactImageFit(nextFit);
+      } catch (err) {
+        // Likely CORS taint; keep default cropping behavior
+        setContactImageFit('cover');
+      }
+    }, []);
+
+    const contact = Array.isArray(data.contactpersoon)
+    ? data.contactpersoon[0]
+    : data.contactpersoon;
 
   useEffect(() => {
     fetchUses();
@@ -154,18 +208,20 @@ const ConProductDetailsPageContent = ({
           })()}
         </AcFlex>
 
-        {data?.contactpersoon && (
+        {contact && (
           <>
             <Separator />
 
             <AcFlex column spacing='xs' alignItems='end'>
               <div className='ac-register-review__contact-image'>
-                {data?.contactpersoon?.image ? (
-                  <ConLogoPreview
-                    logoUrl={data.contactpersoon.image}
-                    className='ac-register-review__contact-image--round'
-                    style={{ objectFit: 'cover' }}
-                  />
+                {contact?.image ? (
+                  <img
+                  src={contact.image}
+                  alt='Contactpersoon'
+                  className='ac-register-review__contact-image--round'
+                  onLoad={handleContactImageLoad}
+                  style={{ objectFit: contactImageFit }}
+                />
                 ) : (
                   <div className='ac-register-review__contact-image--round'>
                     <VISUALS.USER_CIRCLE />
@@ -177,9 +233,7 @@ const ConProductDetailsPageContent = ({
               <i>Contactinformatie:</i>
               {(() => {
                 // Glitch: sometimes an array with two objects is returned; use the first
-                const contact = Array.isArray(data.contactpersoon)
-                  ? data.contactpersoon[0]
-                  : data.contactpersoon;
+
 
                 if (contact && typeof contact === 'object') {
                   return (
@@ -469,7 +523,7 @@ const SuitableForList = ({ modules }) => {
 const UnpublishedWarning = ({ data }) => {
   if (data?.['@self']?.published) return null;
   const schemaName = data?.['@self']?.schema?.title;
-  const title = schemaName ? `Deze ${schemaName}` : '';
+  const title = schemaName ? `${schemaName}` : '';
   const objectName = data?.['@self']?.name;
 
   return (
