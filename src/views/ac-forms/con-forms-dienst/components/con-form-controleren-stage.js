@@ -1,4 +1,5 @@
 import React, { memo } from 'react';
+import { ConUuidResolver } from '@components';
 import {
   UnorderedList,
   UnorderedListItem,
@@ -39,16 +40,36 @@ const ConFormControlerenStage = memo(
           </h3>
           <div className='ac-register-review__section'>
             <div className='ac-register-review__header'>
-              <h4 className='utrecht-heading-4'>{dienst.naam || '-'}</h4>
+              <h4 className='utrecht-heading-4'>
+                {dienst.naam ? (
+                  <ConUuidResolver>{dienst.naam}</ConUuidResolver>
+                ) : (
+                  '-'
+                )}
+              </h4>
             </div>
             <Separator className='con-form-wizard-review-header__separator' />
 
             <div className='ac-register-review__field'>
-              <strong>Website:</strong> <span>{dienst.website || '-'}</span>
+              <strong>Website:</strong>{' '}
+              <span>
+                {dienst.website ? (
+                  <ConUuidResolver>{dienst.website}</ConUuidResolver>
+                ) : (
+                  '-'
+                )}
+              </span>
             </div>
 
             <div className='ac-register-review__field'>
-              <strong>Type:</strong> <span>{dienst.type || '-'}</span>
+              <strong>Type:</strong>{' '}
+              <span>
+                {dienst.type ? (
+                  <ConUuidResolver>{dienst.type}</ConUuidResolver>
+                ) : (
+                  '-'
+                )}
+              </span>
             </div>
           </div>
         </div>
@@ -59,7 +80,9 @@ const ConFormControlerenStage = memo(
             <div className='ac-register-review__field'>
               <UnorderedList>
                 {(productLabels.length ? productLabels : ['-']).map((label, i) => (
-                  <UnorderedListItem key={`prod-${i}`}>{label}</UnorderedListItem>
+                  <UnorderedListItem key={`prod-${i}`}>
+                    <ConUuidResolver>{label}</ConUuidResolver>
+                  </UnorderedListItem>
                 ))}
               </UnorderedList>
             </div>
@@ -72,7 +95,9 @@ const ConFormControlerenStage = memo(
             <div className='ac-register-review__field'>
               <UnorderedList>
                 {(moduleLabels.length ? moduleLabels : ['-']).map((label, i) => (
-                  <UnorderedListItem key={`mod-${i}`}>{label}</UnorderedListItem>
+                  <UnorderedListItem key={`mod-${i}`}>
+                    <ConUuidResolver>{label}</ConUuidResolver>
+                  </UnorderedListItem>
                 ))}
               </UnorderedList>
             </div>
@@ -86,7 +111,9 @@ const ConFormControlerenStage = memo(
               <UnorderedList>
                 {(koppelingLabels.length ? koppelingLabels : ['-']).map(
                   (label, i) => (
-                    <UnorderedListItem key={`kp-${i}`}>{label}</UnorderedListItem>
+                    <UnorderedListItem key={`kp-${i}`}>
+                      <ConUuidResolver>{label}</ConUuidResolver>
+                    </UnorderedListItem>
                   )
                 )}
               </UnorderedList>

@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { ConUuidResolver } from '@components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 /**
@@ -90,7 +91,9 @@ const ConFormKoppelingenStage = memo(
                     checked={selectedKoppelingIds.includes(opt.value)}
                     onChange={() => toggle(opt.value)}
                   />
-                  <span>{title}</span>
+                  <span>
+                    <ConUuidResolver>{title}</ConUuidResolver>
+                  </span>
                 </label>
               );
             })}

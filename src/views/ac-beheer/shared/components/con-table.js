@@ -13,18 +13,18 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react';
-import {
-  ConSorter,
-  AcUUID,
-  shouldResolveToName,
-  getDisplayValue,
-} from '@src/utilities';
+import { AcUUID, shouldResolveToName, getDisplayValue } from '@src/utilities';
 import { TOOLTIP_ID } from '@src/index.web';
-import { ConHorizontalOverflowWrapper, ConTableSearch } from '@components';
+import {
+  ConHorizontalOverflowWrapper,
+  ConTableSearch,
+  ConUuidResolver,
+} from '@components';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import { AcCheckbox } from '@molecules';
+import { extractUUIDs } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * A versatile and highly customizable Conduction table component for displaying and managing tabular data.
@@ -51,10 +51,16 @@ import { AcCheckbox } from '@molecules';
  * - Cells with no data will display a `-`
  * - Custom content (if provided) overrides automatic handling and the `-` for empty cells
  *
+ * **UUID Resolution:**
+ * - When `schema` and `objectStore` are provided, reference fields (single or array) are resolved to names using the names cache and displayed; the original ID(s) are available as a tooltip.
+ * - For generic string and array values (not declared as references in `schema`), any UUIDs present in the text are resolved via a lightweight cache lookup at render time.
+ * - If a UUID is not present in the cache yet, the original value is shown until the cache is populated.
+ *
  * **Sorting:**
  * - Enable sorting by setting `showSortButtons` prop to true
  * - Sort buttons only appear for headers that have a `key` property defined
  * - Click cycle: ascending -> descending -> no sort
+ * - Sorting prefers resolved names when available (using `schema` and the names cache); otherwise falls back to original values.
  * - Default sorting handles different data types appropriately:
  *   - Strings: alphabetical order
  *   - Numbers / booleans: numerical order
@@ -178,6 +184,8 @@ import { AcCheckbox } from '@molecules';
  * @param {Object} props.dataProperties - Schema properties object containing field definitions with enum values.
  * @param {boolean} props.showSortButtons - Whether to show the header sort buttons. Sort buttons only appear for headers with a key property. (default: false)
  * @param {boolean} props.showSearch - Whether to show the search interface above the table. (default: false)
+ * @param {Object} [props.objectStore] - Optional ObjectStore instance used for resolving UUIDs to names via the names cache.
+ * @param {Object} [props.schema] - Optional JSON schema for the data set. When provided together with `objectStore`, reference fields are resolved to names and shown with a tooltip containing the original ID(s).
  * @param {React.Ref} ref - The components ref. Can be used to trigger functions from the parent like `resetSelectedRows()`.
  * @param {Function} ref.resetSelectedRows - The function to reset the selected rows.
  * @param {boolean} props.loading - Whether to show a loading state.
@@ -239,10 +247,77 @@ const ConTable = (
       return [...data].sort((a, b) => h.sortComparator(a, b, headerSort[1]));
     }
 
-    // if no sort comparator is set, use the default sort comparator
-    return ConSorter(data, h.key, headerSort[1]);
+    // on third click (direction === null), reset to default (unsorted)
+    if (headerSort[1] === null) {
+      return data;
+    }
+
+    // Build a local names map from the object store cache (sync)
+    const localNamesMap = (() => {
+      const cache = objectStore?.namesCache;
+      if (!cache) return {};
+      const map = {};
+      Object.entries(cache).forEach(([id, { name }]) => {
+        map[id] = name;
+      });
+      return map;
+    })();
+
+    // Helper to replace UUIDs in a string using the local cache only (sync)
+    const resolveTextWithNamesMap = (text) => {
+      if (typeof text !== 'string') return text;
+      const uuids = extractUUIDs(text);
+      if (!uuids?.length) return text;
+      let out = text;
+      uuids.forEach((uuid) => {
+        const name = localNamesMap[uuid];
+        if (name) {
+          out = out.replace(new RegExp(uuid, 'g'), name);
+        }
+      });
+      return out;
+    };
+
+    // Normalize values for sorting, preferring resolved names when available
+    const normalizeForSort = (val) => {
+      // Use schema-based resolution when applicable
+      if (h?.key && schema?.properties?.[h.key]) {
+        const property = { ...schema.properties[h.key], key: h.key };
+        if (shouldResolveToName(property, val)) {
+          const display = getDisplayValue(val, property, localNamesMap);
+          if (Array.isArray(display)) return display.join(', ');
+          return display != null ? String(display) : '';
+        }
+      }
+
+      // Generic fallback: try to resolve UUIDs in strings/arrays using cache
+      if (Array.isArray(val)) {
+        return val
+          .map((item) =>
+            typeof item === 'string' ? resolveTextWithNamesMap(item) : String(item)
+          )
+          .join(', ');
+      }
+      if (typeof val === 'string') return resolveTextWithNamesMap(val);
+      if (typeof val === 'boolean') return val ? '1' : '0';
+      if (val == null) return '';
+      if (typeof val === 'object') return JSON.stringify(val);
+      return String(val);
+    };
+
+    const sorted = [...data].sort((a, b) => {
+      const aVal = normalizeForSort(h?.key ? a[h.key] : a);
+      const bVal = normalizeForSort(h?.key ? b[h.key] : b);
+      const cmp = String(aVal).localeCompare(String(bVal), 'nl', {
+        sensitivity: 'base',
+        numeric: true,
+      });
+      return headerSort[1] ? cmp : -cmp;
+    });
+
+    return sorted;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, headerSort]);
+  }, [data, headerSort, schema, objectStore?.namesCache, tableHeaders]);
 
   // list of selected rows as a full data object
   const [selectedRows, setSelectedRows] = useState([]);
@@ -369,16 +444,7 @@ const ConTable = (
     };
   }, [truncateLines]);
 
-  // Create names map from object store cache for resolving references
-  const namesMap = useMemo(() => {
-    if (!objectStore?.namesCache) return {};
-
-    const map = {};
-    Object.entries(objectStore.namesCache).forEach(([id, { name }]) => {
-      map[id] = name;
-    });
-    return map;
-  }, [objectStore?.namesCache]);
+  // Removed cache-derived namesMap to prevent re-renders on cache churn
 
   const handleDataCellRender = useCallback(
     (header, row) => {
@@ -399,33 +465,59 @@ const ConTable = (
         );
       }
 
-      // Check if this value should be resolved to a name (handles both single and array references)
+      // Schema-declared references: render with tooltip of original ID(s) and allow async resolution via ConUuidResolver
       if (schema?.properties?.[header.key] && objectStore) {
         const property = { ...schema.properties[header.key], key: header.key };
         if (shouldResolveToName(property, row[header.key])) {
-          const resolvedValue = getDisplayValue(row[header.key], property, namesMap);
-          if (resolvedValue !== row[header.key]) {
-            // Show resolved name(s) with original ID(s) in tooltip
-            const originalValue = Array.isArray(row[header.key])
-              ? `Original IDs: ${row[header.key].join(', ')}`
-              : `Original ID: ${row[header.key]}`;
+          const originalValue = Array.isArray(row[header.key])
+            ? `Original IDs: ${row[header.key].join(', ')}`
+            : `Original ID: ${row[header.key]}`;
 
+          if (Array.isArray(row[header.key])) {
+            const items = row[header.key].filter(Boolean);
+            if (items.length === 0) return '-';
             return (
               <span
                 title={originalValue}
                 data-tooltip-id={TOOLTIP_ID}
                 style={{ cursor: 'help' }}
               >
-                {resolvedValue}
+                {items.map((item, index) => (
+                  <React.Fragment key={index}>
+                    <ConUuidResolver>{String(item)}</ConUuidResolver>
+                    {index < items.length - 1 ? ', ' : ''}
+                  </React.Fragment>
+                ))}
               </span>
             );
           }
+
+          return (
+            <span
+              title={originalValue}
+              data-tooltip-id={TOOLTIP_ID}
+              style={{ cursor: 'help' }}
+            >
+              <ConUuidResolver>{String(row[header.key])}</ConUuidResolver>
+            </span>
+          );
         }
       }
 
       // Generic array handler (only for non-reference arrays)
       if (Array.isArray(row[header.key])) {
-        return row[header.key].map(String).join(', ') || '-';
+        const items = row[header.key].filter(Boolean);
+        if (items.length === 0) return '-';
+        return (
+          <span>
+            {items.map((item, index) => (
+              <React.Fragment key={index}>
+                <ConUuidResolver>{String(item)}</ConUuidResolver>
+                {index < items.length - 1 ? ', ' : ''}
+              </React.Fragment>
+            ))}
+          </span>
+        );
       }
 
       if (typeof row[header.key] === 'object') {
@@ -436,10 +528,10 @@ const ConTable = (
         return row[header.key] ? 'Ja' : 'Nee';
       }
 
-      return String(row[header.key]);
+      return <ConUuidResolver>{String(row[header.key])}</ConUuidResolver>;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [renderCustomElement, removeUniqueSymbol, schema, objectStore, namesMap]
+    // Keep dependencies minimal to avoid unnecessary recalculations
+    [renderCustomElement, schema]
   );
 
   const tableHeader = useMemo(() => {

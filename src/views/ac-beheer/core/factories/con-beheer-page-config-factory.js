@@ -525,27 +525,13 @@ const BeheerPageConfigFactory = {
               label: 'Naam',
               key: 'voornaam',
               customContent: (row) => {
-                const voornaam = (row.voornaam && row.voornaam !== 'null') ? row.voornaam : '';
-                const achternaam = (row.achternaam && row.achternaam !== 'null') ? row.achternaam : '';
+                const voornaam =
+                  row.voornaam && row.voornaam !== 'null' ? row.voornaam : '';
+                const achternaam =
+                  row.achternaam && row.achternaam !== 'null' ? row.achternaam : '';
                 const fullName = [voornaam, achternaam].filter(Boolean).join(' ');
                 return fullName || '-';
               },
-            },
-            organisatie: {
-              id: 'organisatie',
-              label: 'Organisatie',
-              key: 'organisatie',
-              customContent: (row) =>
-                String(
-                  row.organisatie?.naam ||
-                    row.organisatie?.value ||
-                    row.organisatie ||
-                    '-'
-                ),
-              sortComparator: byNested(
-                (r) =>
-                  r?.organisatie?.naam || r?.organisatie?.value || r?.organisatie
-              ),
             },
           },
           uniqueActions: [
