@@ -30,11 +30,15 @@ const ConFormStandaardenStage = ({
   standaardenOptions,
   standaardenOptionsLoading,
   existingModulesLookup,
+  sameForAll, // Passed from referentiecomponenten stage choice
 }) => {
   // ✅ SIMPLIFIED: Use helper method to get new modules with applicatie data
   const newModules = useMemo(() => {
     return getNewModulesWithApplicatieData ? getNewModulesWithApplicatieData() : [];
   }, [getNewModulesWithApplicatieData]);
+
+  // Check if there are multiple NEW applications that need standards configuration
+  const isMultiNewApplicatie = newModules.length > 1;
 
   // State to track compliance and bewijs for each module-standard combination
   const [tableState, setTableState] = useState({});
@@ -311,6 +315,55 @@ const ConFormStandaardenStage = ({
     setTableState(initialState);
   }, [newModules, referentieComponentenWithStandards, standaardenMap]);
 
+  // Apply compliance to all modules for a specific standard
+  const applyComplianceToAll = (standardId, isCompliant, bewijs = null, bewijsFilename = null) => {
+    setProduct((prev) => {
+      const modules = [...(prev.modules || [])];
+      
+      // Find the standard info from allStandards
+      const standardInfo = allStandards.find(s => s.id === standardId);
+      const standardName = standardInfo?.naam || standardId;
+      
+      // Apply to all new modules (objects, not strings)
+      modules.forEach((module, index) => {
+        if (typeof module === 'object') {
+          let compliancy = Array.isArray(module.compliancy) ? [...module.compliancy] : [];
+          
+          if (isCompliant) {
+            // Add or update compliancy object
+            const existingIndex = compliancy.findIndex(
+              (c) => c.standaardversie === standardId
+            );
+            const compliancyObject = {
+              standaardversie: standardId,
+              standaardnaam: standardName,
+              bewijs: bewijs || null,
+              bewijsFilename: bewijsFilename || null,
+            };
+
+            if (existingIndex >= 0) {
+              compliancy[existingIndex] = compliancyObject;
+            } else {
+              compliancy.push(compliancyObject);
+            }
+          } else {
+            // Remove compliancy object
+            compliancy = compliancy.filter(
+              (c) => c.standaardversie !== standardId
+            );
+          }
+
+          modules[index] = {
+            ...module,
+            compliancy,
+          };
+        }
+      });
+
+      return { ...prev, modules };
+    });
+  };
+
   // Toggle compliance for a specific module-standard combination
   const toggleCompliance = (key, isCompliant) => {
     // Get current entry BEFORE updating state to avoid React timing issues
@@ -320,197 +373,281 @@ const ConFormStandaardenStage = ({
       return;
     }
 
-    // Update tableState
-    setTableState((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        isCompliant,
-        // Clear bewijs and filename if not compliant
-        bewijs: isCompliant ? prev[key]?.bewijs || null : null,
-        bewijsFilename: isCompliant ? prev[key]?.bewijsFilename || null : null,
-      },
-    }));
+    if (sameForAll && isMultiNewApplicatie) {
+      // Update all entries for this standard in tableState
+      setTableState((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(entryKey => {
+          if (updated[entryKey].standardId === currentEntry.standardId) {
+            updated[entryKey] = {
+              ...updated[entryKey],
+              isCompliant,
+              // Clear bewijs and filename if not compliant
+              bewijs: isCompliant ? updated[entryKey]?.bewijs || null : null,
+              bewijsFilename: isCompliant ? updated[entryKey]?.bewijsFilename || null : null,
+            };
+          }
+        });
+        return updated;
+      });
 
-    // Update product data using currentEntry (not the updated tableState)
-    setProduct((prev) => {
-      const modules = [...(prev.modules || [])];
-      const moduleIndex = currentEntry.moduleId;
-      const app = modules[moduleIndex];
+      // Apply to all modules
+      applyComplianceToAll(
+        currentEntry.standardId, 
+        isCompliant, 
+        isCompliant ? currentEntry.bewijs : null,
+        isCompliant ? currentEntry.bewijsFilename : null
+      );
+    } else {
+      // Update tableState for single entry
+      setTableState((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          isCompliant,
+          // Clear bewijs and filename if not compliant
+          bewijs: isCompliant ? prev[key]?.bewijs || null : null,
+          bewijsFilename: isCompliant ? prev[key]?.bewijsFilename || null : null,
+        },
+      }));
 
-      if (typeof app !== 'object') {
-        console.warn(
-          'Cannot update compliancy on existing module:',
-          moduleIndex,
-          app
-        );
-        return prev;
-      }
+      // Update product data using currentEntry (not the updated tableState)
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        const moduleIndex = currentEntry.moduleId;
+        const app = modules[moduleIndex];
 
-      let compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+        if (typeof app !== 'object') {
+          console.warn(
+            'Cannot update compliancy on existing module:',
+            moduleIndex,
+            app
+          );
+          return prev;
+        }
 
-      if (isCompliant) {
-        // Add or update compliancy object
-        const existingIndex = compliancy.findIndex(
-          (c) => c.standaardversie === currentEntry.standardId
-        );
-        const compliancyObject = {
-          standaardversie: currentEntry.standardId,
-          standaardnaam: currentEntry.standardName,
-          // ✅ REMOVED: module property - backend handles this with inversedBy logic
-          bewijs: currentEntry.bewijs || null,
-          // ✅ NEW: Add filename field for internal tracking
-          bewijsFilename: currentEntry.bewijsFilename || null,
+        let compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+        if (isCompliant) {
+          // Add or update compliancy object
+          const existingIndex = compliancy.findIndex(
+            (c) => c.standaardversie === currentEntry.standardId
+          );
+          const compliancyObject = {
+            standaardversie: currentEntry.standardId,
+            standaardnaam: currentEntry.standardName,
+            bewijs: currentEntry.bewijs || null,
+            bewijsFilename: currentEntry.bewijsFilename || null,
+          };
+
+          if (existingIndex >= 0) {
+            compliancy[existingIndex] = compliancyObject;
+          } else {
+            compliancy.push(compliancyObject);
+          }
+        } else {
+          // Remove compliancy object
+          compliancy = compliancy.filter(
+            (c) => c.standaardversie !== currentEntry.standardId
+          );
+        }
+
+        modules[moduleIndex] = {
+          ...app,
+          compliancy,
         };
 
-        if (existingIndex >= 0) {
-          compliancy[existingIndex] = compliancyObject;
-        } else {
-          compliancy.push(compliancyObject);
-        }
-      } else {
-        // Remove compliancy object
-        compliancy = compliancy.filter(
-          (c) => c.standaardversie !== currentEntry.standardId
-        );
-      }
-
-      modules[moduleIndex] = {
-        ...app,
-        compliancy,
-      };
-
-      return { ...prev, modules };
-    });
+        return { ...prev, modules };
+      });
+    }
   };
 
   // Update bewijs for a specific module-standard combination
   const updateBewijs = (key, bewijs) => {
-    setTableState((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        bewijs,
-      },
-    }));
-
-    // Update product data
     const entry = tableState[key];
     if (!entry) return;
 
-    setProduct((prev) => {
-      const modules = [...(prev.modules || [])];
-      const moduleIndex = entry.moduleId; // This should now be the direct module index
-      const app = modules[moduleIndex];
-      const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
-
-      const updatedCompliancy = compliancy.map((c) =>
-        c.standaardversie === entry.standardId
-          ? {
-              ...c,
-              standaardnaam: entry.standardName,
+    if (sameForAll && isMultiNewApplicatie) {
+      // Update all entries for this standard in tableState
+      setTableState((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(entryKey => {
+          if (updated[entryKey].standardId === entry.standardId) {
+            updated[entryKey] = {
+              ...updated[entryKey],
               bewijs,
-              // ✅ NEW: Keep existing filename when updating bewijs
-              bewijsFilename: c.bewijsFilename || entry.bewijsFilename || null,
-            }
-          : c
-      );
+            };
+          }
+        });
+        return updated;
+      });
 
-      if (typeof app === 'object') {
-        modules[moduleIndex] = {
-          ...app,
-          compliancy: updatedCompliancy,
-        };
-        return { ...prev, modules };
-      }
-      return prev;
-    });
+      // Apply to all modules
+      applyComplianceToAll(entry.standardId, true, bewijs, entry.bewijsFilename);
+    } else {
+      // Update single entry
+      setTableState((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          bewijs,
+        },
+      }));
+
+      // Update product data
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        const moduleIndex = entry.moduleId;
+        const app = modules[moduleIndex];
+        const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+        const updatedCompliancy = compliancy.map((c) =>
+          c.standaardversie === entry.standardId
+            ? {
+                ...c,
+                standaardnaam: entry.standardName,
+                bewijs,
+                bewijsFilename: c.bewijsFilename || entry.bewijsFilename || null,
+              }
+            : c
+        );
+
+        if (typeof app === 'object') {
+          modules[moduleIndex] = {
+            ...app,
+            compliancy: updatedCompliancy,
+          };
+          return { ...prev, modules };
+        }
+        return prev;
+      });
+    }
   };
 
   // ✅ NEW: Update bewijs filename for a specific module-standard combination
   const updateBewijsFilename = (key, filename) => {
-    setTableState((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        bewijsFilename: filename,
-      },
-    }));
-
-    // Update product data
     const entry = tableState[key];
     if (!entry) return;
 
-    setProduct((prev) => {
-      const modules = [...(prev.modules || [])];
-      const moduleIndex = entry.moduleId;
-      const app = modules[moduleIndex];
-      const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
-
-      const updatedCompliancy = compliancy.map((c) =>
-        c.standaardversie === entry.standardId
-          ? {
-              ...c,
-              standaardnaam: entry.standardName,
+    if (sameForAll && isMultiNewApplicatie) {
+      // Update all entries for this standard in tableState
+      setTableState((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(entryKey => {
+          if (updated[entryKey].standardId === entry.standardId) {
+            updated[entryKey] = {
+              ...updated[entryKey],
               bewijsFilename: filename,
-              // Keep existing bewijs data
-              bewijs: c.bewijs || entry.bewijs || null,
-            }
-          : c
-      );
+            };
+          }
+        });
+        return updated;
+      });
 
-      if (typeof app === 'object') {
-        modules[moduleIndex] = {
-          ...app,
-          compliancy: updatedCompliancy,
-        };
-        return { ...prev, modules };
-      }
-      return prev;
-    });
+      // Apply to all modules
+      applyComplianceToAll(entry.standardId, true, entry.bewijs, filename);
+    } else {
+      // Update single entry
+      setTableState((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          bewijsFilename: filename,
+        },
+      }));
+
+      // Update product data
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        const moduleIndex = entry.moduleId;
+        const app = modules[moduleIndex];
+        const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+        const updatedCompliancy = compliancy.map((c) =>
+          c.standaardversie === entry.standardId
+            ? {
+                ...c,
+                standaardnaam: entry.standardName,
+                bewijsFilename: filename,
+                bewijs: c.bewijs || entry.bewijs || null,
+              }
+            : c
+        );
+
+        if (typeof app === 'object') {
+          modules[moduleIndex] = {
+            ...app,
+            compliancy: updatedCompliancy,
+          };
+          return { ...prev, modules };
+        }
+        return prev;
+      });
+    }
   };
 
   // ✅ NEW: Clear both bewijs and filename
   const clearBewijs = (key) => {
-    setTableState((prev) => ({
-      ...prev,
-      [key]: {
-        ...prev[key],
-        bewijs: null,
-        bewijsFilename: null,
-      },
-    }));
-
-    // Update product data
     const entry = tableState[key];
     if (!entry) return;
 
-    setProduct((prev) => {
-      const modules = [...(prev.modules || [])];
-      const moduleIndex = entry.moduleId;
-      const app = modules[moduleIndex];
-      const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
-
-      const updatedCompliancy = compliancy.map((c) =>
-        c.standaardversie === entry.standardId
-          ? {
-              ...c,
-              standaardnaam: entry.standardName,
+    if (sameForAll && isMultiNewApplicatie) {
+      // Update all entries for this standard in tableState
+      setTableState((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach(entryKey => {
+          if (updated[entryKey].standardId === entry.standardId) {
+            updated[entryKey] = {
+              ...updated[entryKey],
               bewijs: null,
               bewijsFilename: null,
-            }
-          : c
-      );
+            };
+          }
+        });
+        return updated;
+      });
 
-      if (typeof app === 'object') {
-        modules[moduleIndex] = {
-          ...app,
-          compliancy: updatedCompliancy,
-        };
-        return { ...prev, modules };
-      }
-      return prev;
-    });
+      // Apply to all modules
+      applyComplianceToAll(entry.standardId, true, null, null);
+    } else {
+      // Update single entry
+      setTableState((prev) => ({
+        ...prev,
+        [key]: {
+          ...prev[key],
+          bewijs: null,
+          bewijsFilename: null,
+        },
+      }));
+
+      // Update product data
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        const moduleIndex = entry.moduleId;
+        const app = modules[moduleIndex];
+        const compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
+
+        const updatedCompliancy = compliancy.map((c) =>
+          c.standaardversie === entry.standardId
+            ? {
+                ...c,
+                standaardnaam: entry.standardName,
+                bewijs: null,
+                bewijsFilename: null,
+              }
+            : c
+        );
+
+        if (typeof app === 'object') {
+          modules[moduleIndex] = {
+            ...app,
+            compliancy: updatedCompliancy,
+          };
+          return { ...prev, modules };
+        }
+        return prev;
+      });
+    }
   };
 
   // Add this helper function at the top of the component:
@@ -734,35 +871,40 @@ const ConFormStandaardenStage = ({
   // Create table rows with proper module grouping and layout
   const tableRows = [];
 
-  // Group entries by module ID and sort them
-  const moduleGroups = {};
-  Object.entries(tableState).forEach(([key, entry]) => {
-    if (!moduleGroups[entry.moduleId]) {
-      moduleGroups[entry.moduleId] = [];
-    }
-    moduleGroups[entry.moduleId].push({ key, ...entry });
-  });
-
-  // Generate table rows with correct rowspan logic
-  Object.values(moduleGroups).forEach((entries) => {
-    // Sort entries within each module for consistent display
-    entries.sort((a, b) => {
-      // Sort by type first (verplicht before aanbevolen), then by name
-      if (a.standardType !== b.standardType) {
-        return a.standardType === 'verplicht' ? -1 : 1;
+  if (sameForAll && isMultiNewApplicatie) {
+    // When "same for all" is selected, group by standard instead of module
+    const standardGroups = {};
+    Object.entries(tableState).forEach(([key, entry]) => {
+      if (!standardGroups[entry.standardId]) {
+        standardGroups[entry.standardId] = [];
       }
-      return (a.standardName || '').localeCompare(b.standardName || '');
+      standardGroups[entry.standardId].push({ key, ...entry });
     });
 
-    entries.forEach((entry, index) => {
-      const isFirstRowOfModule = index === 0;
+    // Get all unique module names for the header
+    const allUniqueModuleNames = [...new Set(Object.values(tableState).map(entry => entry.moduleName))].join(', ');
+    let isFirstRow = true;
+
+    // Generate table rows grouped by standard
+    Object.values(standardGroups).forEach((entries) => {
+      // Sort entries within each standard for consistent display
+      entries.sort((a, b) => {
+        // Sort by type first (verplicht before aanbevolen), then by module name
+        if (a.standardType !== b.standardType) {
+          return a.standardType === 'verplicht' ? -1 : 1;
+        }
+        return (a.moduleName || '').localeCompare(b.moduleName || '');
+      });
+
+      // Use the first entry as representative (they should all have same compliance status)
+      const representativeEntry = entries[0];
 
       tableRows.push(
-        <TableRow key={entry.key}>
-          {/* Module column - only show on first row of each module */}
-          {isFirstRowOfModule && (
+        <TableRow key={`standard-${representativeEntry.standardId}`}>
+          {/* Combined Module column - only show on first row */}
+          {isFirstRow && (
             <TableCell
-              rowSpan={entries.length}
+              rowSpan={Object.keys(standardGroups).length}
               style={{
                 verticalAlign: 'top',
                 fontWeight: '600',
@@ -772,7 +914,7 @@ const ConFormStandaardenStage = ({
                 minWidth: '150px',
               }}
             >
-              {entry.moduleName}
+              {allUniqueModuleNames}
             </TableCell>
           )}
 
@@ -785,9 +927,9 @@ const ConFormStandaardenStage = ({
                 fontSize: '0.95rem',
               }}
             >
-              {entry.standardName}
+              {representativeEntry.standardName}
             </div>
-            {entry.standardDescription && (
+            {representativeEntry.standardDescription && (
               <div
                 style={{
                   fontSize: '0.85rem',
@@ -796,7 +938,7 @@ const ConFormStandaardenStage = ({
                   marginBottom: '0.5rem',
                 }}
               >
-                {entry.standardDescription}
+                {representativeEntry.standardDescription}
               </div>
             )}
             {/* Component badges - individual badge per component */}
@@ -809,7 +951,7 @@ const ConFormStandaardenStage = ({
               }}
             >
               {/* Render individual badges for verplichte components */}
-              {entry.verplichteComponents.map((componentName, index) => (
+              {representativeEntry.verplichteComponents.map((componentName, index) => (
                 <span
                   key={`verplicht-${index}`}
                   style={{
@@ -829,7 +971,7 @@ const ConFormStandaardenStage = ({
               ))}
 
               {/* Render individual badges for aanbevolen components */}
-              {entry.aanbevolenComponents.map((componentName, index) => (
+              {representativeEntry.aanbevolenComponents.map((componentName, index) => (
                 <span
                   key={`aanbevolen-${index}`}
                   style={{
@@ -860,8 +1002,8 @@ const ConFormStandaardenStage = ({
             }}
           >
             <AcCheckbox
-              checked={entry.isCompliant || false}
-              onChange={(checked) => toggleCompliance(entry.key, checked)}
+              checked={representativeEntry.isCompliant || false}
+              onChange={(checked) => toggleCompliance(representativeEntry.key, checked)}
               label=''
             />
           </TableCell>
@@ -874,33 +1016,198 @@ const ConFormStandaardenStage = ({
               padding: '12px',
             }}
           >
-            {entry.isCompliant && (
+            {representativeEntry.isCompliant && (
               <LogoUploadField
                 fieldConfig={{
                   label: '',
-                  // Don't display filename in UI - just show generic message
-                  filename: entry.bewijs ? 'Bestand geüpload' : '',
+                  filename: representativeEntry.bewijs ? 'Bestand geüpload' : '',
                 }}
-                _value={entry.bewijs || ''}
-                onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
-                // ✅ NEW: Add filename change handler (for internal tracking only)
+                _value={representativeEntry.bewijs || ''}
+                onChange={(dataUrl) => updateBewijs(representativeEntry.key, dataUrl)}
                 onChangeFileName={(filename) =>
-                  updateBewijsFilename(entry.key, filename)
+                  updateBewijsFilename(representativeEntry.key, filename)
                 }
-                // ✅ NEW: Update clear handler to clear both bewijs and filename
-                onClear={() => clearBewijs(entry.key)}
+                onClear={() => clearBewijs(representativeEntry.key)}
                 accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                 showPreview={false}
                 validation={{ required: false }}
-                propertyName={`bewijs-${entry.key}`}
+                propertyName={`bewijs-${representativeEntry.key}`}
                 size='small'
               />
             )}
           </TableCell>
         </TableRow>
       );
+      
+      // After first row, don't show module column anymore
+      isFirstRow = false;
     });
-  });
+  } else {
+    // When "per application" is selected, group by module as before
+    const moduleGroups = {};
+    Object.entries(tableState).forEach(([key, entry]) => {
+      if (!moduleGroups[entry.moduleId]) {
+        moduleGroups[entry.moduleId] = [];
+      }
+      moduleGroups[entry.moduleId].push({ key, ...entry });
+    });
+
+    // Generate table rows with correct rowspan logic
+    Object.values(moduleGroups).forEach((entries) => {
+      // Sort entries within each module for consistent display
+      entries.sort((a, b) => {
+        // Sort by type first (verplicht before aanbevolen), then by name
+        if (a.standardType !== b.standardType) {
+          return a.standardType === 'verplicht' ? -1 : 1;
+        }
+        return (a.standardName || '').localeCompare(b.standardName || '');
+      });
+
+      entries.forEach((entry, index) => {
+        const isFirstRowOfModule = index === 0;
+
+        tableRows.push(
+          <TableRow key={entry.key}>
+            {/* Module column - only show on first row of each module */}
+            {isFirstRowOfModule && (
+              <TableCell
+                rowSpan={entries.length}
+                style={{
+                  verticalAlign: 'top',
+                  fontWeight: '600',
+                  backgroundColor: '#f8f9fa',
+                  borderRight: '2px solid #dee2e6',
+                  padding: '12px',
+                  minWidth: '150px',
+                }}
+              >
+                {entry.moduleName}
+              </TableCell>
+            )}
+
+            {/* Standaard column */}
+            <TableCell style={{ verticalAlign: 'top', padding: '12px' }}>
+              <div
+                style={{
+                  fontWeight: '500',
+                  marginBottom: '0.5rem',
+                  fontSize: '0.95rem',
+                }}
+              >
+                {entry.standardName}
+              </div>
+              {entry.standardDescription && (
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    color: '#6c757d',
+                    lineHeight: '1.4',
+                    marginBottom: '0.5rem',
+                  }}
+                >
+                  {entry.standardDescription}
+                </div>
+              )}
+              {/* Component badges - individual badge per component */}
+              <div
+                style={{
+                  marginBottom: '0.25rem',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.25rem',
+                }}
+              >
+                {/* Render individual badges for verplichte components */}
+                {entry.verplichteComponents.map((componentName, index) => (
+                  <span
+                    key={`verplicht-${index}`}
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#fff',
+                      backgroundColor: '#dc3545',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    VERPLICHT - {componentName}
+                  </span>
+                ))}
+
+                {/* Render individual badges for aanbevolen components */}
+                {entry.aanbevolenComponents.map((componentName, index) => (
+                  <span
+                    key={`aanbevolen-${index}`}
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#fff',
+                      backgroundColor: '#28a745',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    AANBEVOLEN - {componentName}
+                  </span>
+                ))}
+              </div>
+            </TableCell>
+
+            {/* Compliant column */}
+            <TableCell
+              style={{
+                textAlign: 'center',
+                verticalAlign: 'middle',
+                padding: '12px',
+                width: '100px',
+              }}
+            >
+              <AcCheckbox
+                checked={entry.isCompliant || false}
+                onChange={(checked) => toggleCompliance(entry.key, checked)}
+                label=''
+              />
+            </TableCell>
+
+            {/* Bewijs column */}
+            <TableCell
+              style={{
+                verticalAlign: 'top',
+                minWidth: '200px',
+                padding: '12px',
+              }}
+            >
+              {entry.isCompliant && (
+                <LogoUploadField
+                  fieldConfig={{
+                    label: '',
+                    filename: entry.bewijs ? 'Bestand geüpload' : '',
+                  }}
+                  _value={entry.bewijs || ''}
+                  onChange={(dataUrl) => updateBewijs(entry.key, dataUrl)}
+                  onChangeFileName={(filename) =>
+                    updateBewijsFilename(entry.key, filename)
+                  }
+                  onClear={() => clearBewijs(entry.key)}
+                  accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                  showPreview={false}
+                  validation={{ required: false }}
+                  propertyName={`bewijs-${entry.key}`}
+                  size='small'
+                />
+              )}
+            </TableCell>
+          </TableRow>
+        );
+      });
+    });
+  }
 
   return (
     <div>
@@ -950,7 +1257,14 @@ const ConFormStandaardenStage = ({
         }}
       >
         {(() => {
-          const totalModules = Object.keys(moduleGroups).length;
+          // Calculate total modules based on the current display mode
+          const totalModules = sameForAll && isMultiNewApplicatie 
+            ? newModules.length // In "same for all" mode, count actual modules
+            : Object.keys(Object.entries(tableState).reduce((groups, [key, entry]) => {
+                groups[entry.moduleId] = true;
+                return groups;
+              }, {})).length; // In "per application" mode, count unique module IDs
+          
           const allEntries = Object.values(tableState);
 
           // Calculate statistics by type
@@ -961,25 +1275,35 @@ const ConFormStandaardenStage = ({
             (entry) => entry.standardType === 'aanbevolen'
           );
 
-          const verplichteCompliant = verplichteEntries.filter(
-            (entry) => entry.isCompliant
-          ).length;
-          const aanbevolenCompliant = aanbevolenEntries.filter(
-            (entry) => entry.isCompliant
-          ).length;
+          // In "same for all" mode, count unique standards, not per-module entries
+          const verplichteCount = sameForAll && isMultiNewApplicatie
+            ? new Set(verplichteEntries.map(entry => entry.standardId)).size
+            : verplichteEntries.length;
+          
+          const aanbevolenCount = sameForAll && isMultiNewApplicatie
+            ? new Set(aanbevolenEntries.map(entry => entry.standardId)).size
+            : aanbevolenEntries.length;
+
+          const verplichteCompliant = sameForAll && isMultiNewApplicatie
+            ? new Set(verplichteEntries.filter(entry => entry.isCompliant).map(entry => entry.standardId)).size
+            : verplichteEntries.filter(entry => entry.isCompliant).length;
+          
+          const aanbevolenCompliant = sameForAll && isMultiNewApplicatie
+            ? new Set(aanbevolenEntries.filter(entry => entry.isCompliant).map(entry => entry.standardId)).size
+            : aanbevolenEntries.filter(entry => entry.isCompliant).length;
 
           return (
             <Paragraph style={{ margin: 0, fontSize: '0.9rem', color: '#6c757d' }}>
               <strong>Overzicht:</strong> {totalModules} module
               {totalModules !== 1 ? 's' : ''},{' '}
               <span style={{ color: '#dc3545', fontWeight: '600' }}>
-                {verplichteEntries.length} verplichte standaarden (waarvan{' '}
+                {verplichteCount} verplichte standaarden (waarvan{' '}
                 {verplichteCompliant} compliant)
               </span>
-              {verplichteEntries.length > 0 && aanbevolenEntries.length > 0 && ', '}
-              {aanbevolenEntries.length > 0 && (
+              {verplichteCount > 0 && aanbevolenCount > 0 && ', '}
+              {aanbevolenCount > 0 && (
                 <span style={{ color: '#28a745', fontWeight: '600' }}>
-                  {aanbevolenEntries.length} aanbevolen standaarden (waarvan{' '}
+                  {aanbevolenCount} aanbevolen standaarden (waarvan{' '}
                   {aanbevolenCompliant} compliant)
                 </span>
               )}
