@@ -801,7 +801,6 @@ const AcFormsGebruik = ({ store }) => {
           await store.object.fetchCollection('voorzieningen', 'koppeling', {
             _limit: '100',
             _page: '1',
-            _extend: ['@self.schema', 'moduleA', 'moduleB'],
             moduleA: moduleId
           });
           const typeA = store.object.getTypeFromParams('voorzieningen', 'koppeling');
@@ -816,7 +815,6 @@ const AcFormsGebruik = ({ store }) => {
           await store.object.fetchCollection('voorzieningen', 'koppeling', {
             _limit: '100',
             _page: '1',
-            _extend: ['@self.schema', 'moduleA', 'moduleB'],
             moduleB: moduleId
           });
           const typeB = store.object.getTypeFromParams('voorzieningen', 'koppeling');
