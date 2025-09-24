@@ -1,4 +1,5 @@
 import React, { memo, useMemo } from 'react';
+import { ConUuidResolver } from '@components';
 import { Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
 /**
@@ -71,7 +72,11 @@ const ConFormApplicatiesStage = memo(
                     marginBottom: '0.25rem',
                   }}
                 >
-                  {group.productLabel || 'Product'}
+                  {group.productLabel ? (
+                    <ConUuidResolver>{group.productLabel}</ConUuidResolver>
+                  ) : (
+                    'Product'
+                  )}
                 </div>
                 {(group.modules || []).map((opt) => (
                   <label
@@ -89,7 +94,9 @@ const ConFormApplicatiesStage = memo(
                       checked={selectedModuleIds.includes(opt.value)}
                       onChange={() => toggle(opt.value)}
                     />
-                    <span>{opt.label}</span>
+                    <span>
+                      <ConUuidResolver>{opt.label}</ConUuidResolver>
+                    </span>
                   </label>
                 ))}
               </div>
