@@ -21,6 +21,7 @@ import ConGebruikStepReview from './components/con-gebruik-step-review';
 import ConGebruikStepDeelnemers from './components/con-gebruik-step-deelnemers';
 import { VISUALS } from '@src/constants';
 import { useDebouncedInput } from '@src/hooks';
+import { isUUID } from '@src/utilities/con-resolve-uuids-in-text';
 
 const mapToOption = (item, index) => {
   const label =
@@ -782,13 +783,105 @@ const AcFormsGebruik = ({ store }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gebruik?.product]);
 
+  // Helper function to create koppeling option with proper labels
+  const createKoppelingOption = async (item, index) => {
+    let appAName = `A${index + 1}`;
+    let appBName = `B${index + 1}`;
+
+    // Try to get moduleA name - check relations first, then direct properties
+    const moduleAId = item?.['@self']?.relations?.moduleA || item?.moduleA;
+    
+    if (item?.moduleA?.naam) {
+      appAName = item.moduleA.naam;
+    } else if (Array.isArray(item?.moduleA) && item.moduleA[0]?.naam) {
+      appAName = item.moduleA[0].naam;
+    } else if (moduleAId) {
+      // ModuleA is a UUID, resolve it
+      try {
+        const resolvedName = await store.object.getNamesForSingleId(
+          String(moduleAId)
+        );
+        appAName = resolvedName || String(moduleAId);
+      } catch (e) {
+        appAName = String(moduleAId) || `A${index + 1}`;
+      }
+    }
+
+    // Try to get moduleB name - check relations first, then direct properties
+    const moduleBId = item?.['@self']?.relations?.moduleB || item?.moduleB;
+    
+    if (item?.moduleB?.naam) {
+      appBName = item.moduleB.naam;
+    } else if (Array.isArray(item?.moduleB) && item.moduleB[0]?.naam) {
+      appBName = item.moduleB[0].naam;
+    } else if (moduleBId) {
+      // ModuleB is a UUID, resolve it
+      try {
+        const resolvedName = await store.object.getNamesForSingleId(
+          String(moduleBId)
+        );
+        appBName = resolvedName || String(moduleBId);
+      } catch (e) {
+        appBName = String(moduleBId) || `B${index + 1}`;
+      }
+    }
+
+    const direction = item?.gegevensuitwisselingRichting;
+    const arrow =
+      direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+    
+    // Get koppeling name
+    const rawKoppelingName = 
+      item?.['@self']?.name || 
+      item?.naam || 
+      item?.name || 
+      item?.title || 
+      item?.label || 
+      '';
+    
+    // Only show koppeling name if it's not a UUID
+    const koppelingName = rawKoppelingName && !isUUID(rawKoppelingName) 
+      ? rawKoppelingName 
+      : '';
+    
+    // Create descriptive label
+    const moduleConnection = `${appAName} ${arrow} ${appBName}`;
+    const label = koppelingName 
+      ? `${koppelingName} (${moduleConnection})`
+      : moduleConnection;
+    
+    // Use the koppeling's ID as the value
+    const value = item?.id || item?.['@self']?.id || item?.value || String(index);
+    return { value: String(value), label: String(label) };
+  };
+
   // When module changes, fetch koppelingen where moduleA or moduleB equals the selected module
   useEffect(() => {
     const fetchKoppelingenByModule = async () => {
       try {
         const moduleId = getIdString(gebruik?.module);
+        
+        // If no module selected, fetch all koppelingen
         if (!moduleId) {
-          setKoppelingOptions([]);
+          try {
+            await store.object.fetchCollection('voorzieningen', 'koppeling', {
+              _limit: '100',
+              _page: '1'
+            });
+            const type = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+            const collection = store.object.getCollection(type);
+            const allKoppelingen = collection?.results || collection || [];
+            
+            const options = await Promise.all(
+              allKoppelingen.map(async (item, index) => {
+                return await createKoppelingOption(item, index);
+              })
+            );
+            
+            setKoppelingOptions(options);
+          } catch (e) {
+            setKoppelingOptions([]);
+          }
           return;
         }
 
@@ -829,33 +922,18 @@ const AcFormsGebruik = ({ store }) => {
         const uniqueKoppelingen = allKoppelingen.filter((item, index, self) => 
           index === self.findIndex(k => (k?.id || k?.value) === (item?.id || item?.value))
         );
+        
+        // If no koppelingen found for this module, don't search again - just set empty options
+        if (uniqueKoppelingen.length === 0) {
+          setKoppelingOptions([]);
+          return;
+        }
 
-        const options = uniqueKoppelingen.map((item, index) => {
-          const appAName =
-            typeof item?.moduleA === 'string'
-              ? item.moduleA
-              : item?.moduleA?.naam
-              ? item.moduleA.naam
-              : Array.isArray(item?.moduleA) && item.moduleA[0]?.naam
-              ? item.moduleA[0].naam
-              : item?.['@self']?.relations?.moduleA || `A${index + 1}`;
-
-          const appBName =
-            typeof item?.moduleB === 'string'
-              ? item.moduleB
-              : item?.moduleB?.naam
-              ? item.moduleB.naam
-              : Array.isArray(item?.moduleB) && item.moduleB[0]?.naam
-              ? item.moduleB[0].naam
-              : item?.['@self']?.relations?.moduleB || `B${index + 1}`;
-
-          const direction = item?.gegevensuitwisselingRichting;
-          const arrow =
-            direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
-          const label = `${appAName} ${arrow} ${appBName}`;
-          const value = item?.value || item?.id || label;
-          return { value: String(value), label: String(label) };
-        });
+        const options = await Promise.all(
+          uniqueKoppelingen.map(async (item, index) => {
+            return await createKoppelingOption(item, index);
+          })
+        );
 
         setKoppelingOptions(options);
       } catch (e) {

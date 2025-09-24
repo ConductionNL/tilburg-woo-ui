@@ -533,7 +533,7 @@ const AcMyAccount = ({ store }) => {
                   </div>
                   <div className='ac-register-review__section'>
                     <div className='ac-account-review__header'>
-                      <div>
+                      <div style={{flex: 2}}>
                         <Heading level={4}>
                           <div className='con-beheer-details--header-container'>
                             {fullActiveOrganisation?.['@self']?.image && (
@@ -612,7 +612,11 @@ const AcMyAccount = ({ store }) => {
                               )}
                             </div>
                           </div>
-                          <div>{fullActiveOrganisation?.type || '-'}</div>
+                          <div>
+                            Type:
+                            <div>{fullActiveOrganisation?.type || '-'}</div>
+
+                          </div>
                           {fullActiveOrganisation?.type === 'Leverancier' && (
                             <div>
                               KVK-nummer:

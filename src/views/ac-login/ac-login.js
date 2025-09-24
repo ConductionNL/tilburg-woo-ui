@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-unresolved
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
@@ -24,6 +24,15 @@ const AcLogin = ({ store }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = store;
+  
+  // Ref to store flush functions from debounced inputs
+  const flushFunctionsRef = useRef([]);
+  
+  // Ref to store the latest form values (updated immediately, not debounced)
+  const latestFormDataRef = useRef({
+    username: '',
+    password: '',
+  });
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect_url');
@@ -62,14 +71,24 @@ const AcLogin = ({ store }) => {
     }
   };
 
-  const validateForm = () => {
+  const handleImmediateInputChange = (field, value) => {
+    // Update ref immediately (not debounced)
+    latestFormDataRef.current = {
+      ...latestFormDataRef.current,
+      [field]: value,
+    };
+    // Also trigger the debounced update for UI state
+    handleInputChange(field, value);
+  };
+
+  const validateForm = (dataToValidate = formData) => {
     const newErrors = {};
 
-    if (!formData.username) {
+    if (!dataToValidate.username) {
       newErrors.username = 'Gebruikersnaam is verplicht';
     }
 
-    if (!formData.password) {
+    if (!dataToValidate.password) {
       newErrors.password = 'Wachtwoord is verplicht';
     }
 
@@ -80,14 +99,21 @@ const AcLogin = ({ store }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
+    // Flush all pending debounced values before submitting
+    flushFunctionsRef.current.forEach(flush => flush());
+
+    // Use the latest values from the ref for validation and submission
+    const latestData = latestFormDataRef.current;
+
+    if (!validateForm(latestData)) {
       return;
     }
 
     setIsLoading(true);
     setErrors({});
 
-    const result = await user.sessionLogin(formData.username, formData.password);
+
+    const result = await user.sessionLogin(latestData.username, latestData.password);
 
     if (result.success) {
       const targetUrl = redirectUrl || user.getOrganizationDashboardUrl();
@@ -101,15 +127,28 @@ const AcLogin = ({ store }) => {
     setIsLoading(false);
   };
 
-  const debouncedSetUsername = useDebouncedInput(
+  const { debouncedCallback: debouncedSetUsername, flush: flushUsername } = useDebouncedInput(
     (value) => handleInputChange('username', value),
-    500
+    500,
+    { returnFlushFunction: true }
   );
 
-  const debouncedSetPassword = useDebouncedInput(
+  const { debouncedCallback: debouncedSetPassword, flush: flushPassword } = useDebouncedInput(
     (value) => handleInputChange('password', value),
-    500
+    500,
+    { returnFlushFunction: true }
   );
+
+  // Register flush functions
+  useEffect(() => {
+    flushFunctionsRef.current.push(flushUsername, flushPassword);
+    return () => {
+      // Clean up flush functions on unmount
+      flushFunctionsRef.current = flushFunctionsRef.current.filter(
+        fn => fn !== flushUsername && fn !== flushPassword
+      );
+    };
+  }, [flushUsername, flushPassword]);
 
   return (
     <div className='ac-login-container'>
@@ -143,7 +182,10 @@ const AcLogin = ({ store }) => {
               type='text'
               inputType='text'
               value={formData.username}
-              onChange={(value) => debouncedSetUsername(value)}
+              onChange={(value) => {
+                handleImmediateInputChange('username', value);
+                debouncedSetUsername(value);
+              }}
               placeholder='Uw gebruikersnaam'
               required
               disabled={isLoading || user.loading.status}
@@ -157,13 +199,17 @@ const AcLogin = ({ store }) => {
               type='password'
               inputType='password'
               value={formData.password}
-              onChange={(value) => debouncedSetPassword(value)}
+              onChange={(value) => {
+                handleImmediateInputChange('password', value);
+                debouncedSetPassword(value);
+              }}
               placeholder='Uw wachtwoord'
               required
               disabled={isLoading || user.loading.status}
               error={errors.password}
             />
           </div>
+
 
           <AcButton
             style='button'
