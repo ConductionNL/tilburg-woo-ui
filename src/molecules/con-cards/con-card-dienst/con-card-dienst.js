@@ -1,9 +1,14 @@
 import { AcLink } from '@molecules';
+import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
 import acFormatDate from '@src/utilities/ac-format-date';
-import { extractText, extractTitle, extractSummary } from '@src/utilities/con-extract-text';
+import {
+  extractText,
+  extractTitle,
+  extractSummary,
+} from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
 
 const ConCardDienst = ({
@@ -23,16 +28,16 @@ const ConCardDienst = ({
           <VISUALS.HAND_HOLDING
             style={{ color: 'var(--tilburg-interaction-color)' }}
           />
-          <Heading level={3}>{extractTitle(title)}</Heading>
+          <Heading level={3}>
+            <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
+          </Heading>
         </AcFlex>
         <Paragraph className='organisation-card__updated'>
           Laatst bijgewerkt:{' '}
           {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
         </Paragraph>
       </AcFlex>
-      <Paragraph>
-        {extractSummary(summary)}
-      </Paragraph>
+      <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex alignItems='center' spacing='sm'>
           {themes?.length > 0 && (
@@ -46,7 +51,8 @@ const ConCardDienst = ({
         </AcFlex>
         <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
           <span className='sr-only'>
-            {LABELS.READ_MORE_ABOUT} {extractTitle(title)}
+            {LABELS.READ_MORE_ABOUT}{' '}
+            <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
           </span>
           <VISUALS.ARROW_RIGHT />
         </AcLink>
