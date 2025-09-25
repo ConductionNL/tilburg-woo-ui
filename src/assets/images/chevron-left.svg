@@ -1,1 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="136 80 300 480" fill="currentcolor" width="6" height="10"><!--!Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M169.4 297.4C156.9 309.9 156.9 330.2 169.4 342.7L361.4 534.7C373.9 547.2 394.2 547.2 406.7 534.7C419.2 522.2 419.2 501.9 406.7 489.4L237.3 320L406.6 150.6C419.1 138.1 419.1 117.8 406.6 105.3C394.1 92.8 373.8 92.8 361.3 105.3L169.3 297.3z"/></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   aria-hidden="true"
+   width="6"
+   height="10"
+   fill="none"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="chevron-left.svg"
+   inkscape:version="1.4.2 (ebf0e940, 2025-05-08)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="28.563195"
+     inkscape:cx="7.2645935"
+     inkscape:cy="4.7788772"
+     inkscape:window-width="3440"
+     inkscape:window-height="1440"
+     inkscape:window-x="1241"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg1" />
+  <path
+     fill-rule="evenodd"
+     clip-rule="evenodd"
+     d="m 5.4377242,0.529 c -0.26,-0.26 -0.682,-0.26 -0.942,0 l -3.99999995,4 c -0.26,0.26 -0.26,0.682 0,0.942 l 3.99999995,4 a 0.667,0.667 0 1 0 0.941,-0.941 l -3.527,-3.53 3.527,-3.529 a 0.667,0.667 0 0 0 0,-0.942 z"
+     fill="#5b6e8a"
+     id="path1" />
+</svg>
