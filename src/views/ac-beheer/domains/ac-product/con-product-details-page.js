@@ -173,7 +173,7 @@ const ConProductDetailsPage = ({ store }) => {
             {!loading && !data && <Heading>Er is een fout opgetreden</Heading>}
             {!loading && data && (
               <>
-                <AcFlex justifyContent='end'>
+                <AcFlex justifyContent='end' className='ac-beheer-details--actions'>
                   <ConDetailsActionsMenu
                     user={user}
                     id={id}

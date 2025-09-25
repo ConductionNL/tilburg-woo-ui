@@ -94,46 +94,48 @@ const AcPublicationProduct = ({
       {!loading.status && !data && <Heading>Er is een fout opgetreden</Heading>}
       {!loading.status && data && (
         <>
-          <AcFlex justifyContent='end'>
-            <ConDetailsActionsMenu
-              user={user}
-              id={id}
-              schemaSlug={data?.['@self']?.schema?.slug}
-              title={data['@self']?.name || data.id}
-              published={data?.['@self']?.published}
-              object={data}
-              showViewAction={false}
-              showEditAction={true}
-              showPublishActions={true}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
-              relatedActions={actionMenuItems}
-              onEdit={() => {
-                const schemaSlug = data?.['@self']?.schema?.slug;
-                if (schemaSlug) {
-                  const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
+          {user?.isLoggedIn && (
+            <AcFlex justifyContent='end' className='ac-publication-details--actions'>
+              <ConDetailsActionsMenu
+                user={user}
+                id={id}
+                schemaSlug={data?.['@self']?.schema?.slug}
+                title={data['@self']?.name || data.id}
+                published={data?.['@self']?.published}
+                object={data}
+                showViewAction={false}
+                showEditAction={true}
+                showPublishActions={true}
+                uniqueActions={[
+                  {
+                    key: 'delete',
+                    label: 'Verwijderen',
+                    icon: VISUALS.TRASHCAN,
+                    onClick: handleDelete,
+                  },
+                ]}
+                relatedActions={actionMenuItems}
+                onEdit={() => {
+                  const schemaSlug = data?.['@self']?.schema?.slug;
+                  if (schemaSlug) {
+                    const wizards = Object.values(DASHBOARD_WIZARDS);
+                    const wizard = wizards.find((w) => w.schema === schemaSlug);
 
-                  if (wizard) {
-                    const baseUrl = getWizardUrl(wizard);
-                    const url = new URL(baseUrl, window.location.origin);
-                    url.searchParams.set('id', id);
-                    navigate(url.pathname + url.search);
-                    return;
+                    if (wizard) {
+                      const baseUrl = getWizardUrl(wizard);
+                      const url = new URL(baseUrl, window.location.origin);
+                      url.searchParams.set('id', id);
+                      navigate(url.pathname + url.search);
+                      return;
+                    }
                   }
-                }
-                // Fallback to beheer legacy edit page in new tab
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
-              }}
-            />
-          </AcFlex>
+                  // Fallback to beheer legacy edit page in new tab
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                  window.open(beheerUrl, '_blank');
+                }}
+              />
+            </AcFlex>
+          )}
 
           <ConProductDetailsPageContent
             loading={loading.status}
