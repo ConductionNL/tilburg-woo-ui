@@ -9,6 +9,8 @@ import ConBeheerPageWrapper from './con-beheer-page-wrapper';
 import ConGenericBeheerDetailsPage from './con-generic-beheer-details-page';
 import ConOrganisatieDetailsPage from '@views/ac-beheer/domains/ac-organisatie/con-organisatie-details-page';
 import ConProductDetailsPage from '../../domains/ac-product/con-product-details-page';
+import ConMyAccountPage from './custom/con-my-account';
+import ConMyOrganisationPage from './custom/con-my-organisation';
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
@@ -46,6 +48,13 @@ const AcBeheer = ({ store }) => {
     return <AcDashboard store={store} />;
   }
 
+  if (type === 'my-organisation') {
+    return <ConMyOrganisationPage />;
+  }
+  if (type === 'my-account') {
+    return <ConMyAccountPage />;
+  }
+
   if (!id) {
     return <ConBeheerPageWrapper type={type} />;
   }
@@ -56,6 +65,7 @@ const AcBeheer = ({ store }) => {
   if (type === 'product') {
     return <ConProductDetailsPage />;
   }
+
   if (type) {
     return <ConGenericBeheerDetailsPage type={type} id={id} />;
   }
