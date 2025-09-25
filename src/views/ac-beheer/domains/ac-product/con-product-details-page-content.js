@@ -11,6 +11,7 @@ import { AcButton } from '@src/molecules';
 import { commongroundApiUrl } from '@src/config';
 import _ from 'lodash';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
+import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 /**
  * Content for the product details page
@@ -68,58 +69,62 @@ const ConProductDetailsPageContent = ({
     setUsed(data.results);
   };
 
-    // Detect if contact image looks already round (square with transparent corners)
-    const handleContactImageLoad = useCallback((e) => {
-      try {
-        const img = e?.target;
-        if (!img) return;
-        const width = img.naturalWidth;
-        const height = img.naturalHeight;
-  
-        // Default behavior: crop to center
-        let nextFit = 'cover';
-  
-        // If not square, we crop to circle center
-        if (width !== height) {
-          setContactImageFit(nextFit);
-          return;
-        }
-  
-        // Try to inspect corner transparency to guess if already circular
-        // This may fail on cross-origin images; fall back to 'cover'.
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          setContactImageFit(nextFit);
-          return;
-        }
-        ctx.drawImage(img, 0, 0);
-        const corners = [
-          [0, 0],
-          [width - 1, 0],
-          [0, height - 1],
-          [width - 1, height - 1],
-        ];
-        let transparentCorners = 0;
-        for (const [x, y] of corners) {
-          const data = ctx.getImageData(x, y, 1, 1).data;
-          if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
-        }
-        if (transparentCorners >= 3) {
-          nextFit = 'contain';
-        }
-        setContactImageFit(nextFit);
-      } catch (err) {
-        // Likely CORS taint; keep default cropping behavior
-        setContactImageFit('cover');
-      }
-    }, []);
+  // Detect if contact image looks already round (square with transparent corners)
+  const handleContactImageLoad = useCallback((e) => {
+    try {
+      const img = e?.target;
+      if (!img) return;
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
 
-    const contact = Array.isArray(data.contactpersoon)
+      // Default behavior: crop to center
+      let nextFit = 'cover';
+
+      // If not square, we crop to circle center
+      if (width !== height) {
+        setContactImageFit(nextFit);
+        return;
+      }
+
+      // Try to inspect corner transparency to guess if already circular
+      // This may fail on cross-origin images; fall back to 'cover'.
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setContactImageFit(nextFit);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const corners = [
+        [0, 0],
+        [width - 1, 0],
+        [0, height - 1],
+        [width - 1, height - 1],
+      ];
+      let transparentCorners = 0;
+      for (const [x, y] of corners) {
+        const data = ctx.getImageData(x, y, 1, 1).data;
+        if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
+      }
+      if (transparentCorners >= 3) {
+        nextFit = 'contain';
+      }
+      setContactImageFit(nextFit);
+    } catch (err) {
+      // Likely CORS taint; keep default cropping behavior
+      setContactImageFit('cover');
+    }
+  }, []);
+
+  const contact = Array.isArray(data.contactpersoon)
     ? data.contactpersoon[0]
     : data.contactpersoon;
+
+  const aanbieder = Array.isArray(data?.aanbieder)
+    ? data?.aanbieder[0]
+    : data?.aanbieder;
 
   useEffect(() => {
     fetchUses();
@@ -130,44 +135,56 @@ const ConProductDetailsPageContent = ({
 
   return (
     <AcFlex column spacing='xl'>
+      <UnpublishedWarning data={data} />
+
       <div className='con-product-details--header'>
-        <AcFlex column spacing='xs'>
-          <div className='con-beheer-details--header-container'>
-            {(data?.logo || data?.['@self']?.image) && (
-              <ConLogoPreview
-                className='con-beheer-details--logo-container'
-                logoUrl={data?.logo || data?.['@self']?.image}
-              />
-            )}
+        <div className='con-product-details--header--content'>
+          <Heading level={4}>
+            <div className='con-beheer-details--header-container'>
+              {(data?.logo || data?.['@self']?.image) && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={data?.logo || data?.['@self']?.image}
+                />
+              )}
 
-            <Heading className='con-beheer-details--title'>
-              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-            </Heading>
+              <Heading className='con-beheer-details--title'>
+                {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+              </Heading>
+            </div>
+          </Heading>
+          <div className='con-product-details--header--description'>
+            <ConEditableDescription
+              registerSlug={data['@self'].register.slug}
+              schemaSlug={data['@self'].schema.slug}
+              objectId={data?.['@self']?.id}
+              field='beschrijvingKort'
+              label='Korte beschrijving'
+              placeholder='Een korte beschrijving van de product'
+              tooltip='Een korte beschrijving van de product'
+              maxLength={255}
+              isMarkdown={false}
+              value={data.beschrijvingKort}
+              serialize={(v) => v}
+              deserialize={(v) => v || ''}
+              canEdit={canEdit}
+            />
           </div>
-
-          <ConEditableDescription
-            registerSlug={data['@self'].register.slug}
-            schemaSlug={data['@self'].schema.slug}
-            objectId={data?.['@self']?.id}
-            field='beschrijvingKort'
-            label='Korte beschrijving'
-            placeholder='Een korte beschrijving van de product'
-            tooltip='Een korte beschrijving van de product'
-            maxLength={255}
-            isMarkdown={false}
-            value={data.beschrijvingKort}
-            serialize={(v) => v}
-            deserialize={(v) => v || ''}
-            canEdit={canEdit}
-          />
-
           <Separator />
 
           {/* Short stats grid (2 columns x 3 rows) */}
           {(() => {
             // Prefer extended aanbieder, fallback to aanbiederNaam
-            const leverancierNaam =
-              data?.aanbieder?.naam || data?.aanbiederNaam || '-';
+            const leverancierNaam = data?.aanbieder
+              ? Array.isArray(data?.aanbieder)
+                ? data?.aanbieder[0]?.naam || data?.aanbieder[0]?.id
+                : typeof data?.aanbieder === 'object'
+                ? data?.aanbieder.value
+                : data?.aanbieder?.naam ||
+                  data?.aanbieder?.id ||
+                  data?.aanbieder ||
+                  '-'
+              : '-';
             const hostingLocatie = data?.hostingLocatie || '-';
             // TODO: If product status uses another key, adjust here
             const statusLabel =
@@ -200,58 +217,48 @@ const ConProductDetailsPageContent = ({
                     className='con-product-details--header-short-stats-item'
                   >
                     <span>{item.label}:</span>
-                    <span style={{ fontWeight: 600 }}>{item.value || '-'}</span>
+                    <ConUuidResolver style={{ fontWeight: 600 }}>
+                      {item.value || '-'}
+                    </ConUuidResolver>
                   </p>
                 ))}
               </div>
             );
           })()}
-        </AcFlex>
+        </div>
 
         {contact && (
-          <>
-            <Separator />
-
-            <AcFlex column spacing='xs' alignItems='end'>
-              <div className='ac-register-review__contact-image'>
-                {contact?.image ? (
-                  <img
-                  src={contact.image}
-                  alt='Contactpersoon'
-                  className='ac-register-review__contact-image--round'
-                  onLoad={handleContactImageLoad}
-                  style={{ objectFit: contactImageFit }}
+          <div className='con-product-details--contact-info'>
+            <div className='ac-register-review__contact-image'>
+              {aanbieder?.logo && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={aanbieder.logo}
                 />
-                ) : (
-                  <div className='ac-register-review__contact-image--round'>
-                    <VISUALS.USER_CIRCLE />
-                  </div>
-                )}
-              </div>
+              )}
+            </div>
 
-              {/* @TODO: contactpersoon has no logo / image, so its hard to show a contact persoon image */}
-              <i>Contactinformatie:</i>
-              {(() => {
-                // Glitch: sometimes an array with two objects is returned; use the first
+            {/* @TODO: contactpersoon has no logo / image, so its hard to show a contact persoon image */}
+            <i>Contactinformatie:</i>
+            {(() => {
+              // Glitch: sometimes an array with two objects is returned; use the first
 
-
-                if (contact && typeof contact === 'object') {
-                  return (
-                    <>
-                      <p>
-                        {[
-                          contact.voornaam,
-                          contact.tussenvoegsel,
-                          contact.achternaam,
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                      </p>
+              if (contact && typeof contact === 'object') {
+                return (
+                  <div className='con-product-details--contact-info'>
+                    <p>
+                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </p>
+                    <div>
                       {contact['e-mailadres'] && (
                         <Link href={`mailto:${contact['e-mailadres']}`}>
                           {contact['e-mailadres']}
                         </Link>
                       )}
+                    </div>
+                    <div>
                       {contact.telefoonnummer && (
                         <Link
                           href={`tel:${String(contact.telefoonnummer)
@@ -262,29 +269,46 @@ const ConProductDetailsPageContent = ({
                           {contact.telefoonnummer}
                         </Link>
                       )}
-                      {contact.functie && <p>{contact.functie}</p>}
-                    </>
-                  );
-                }
-
-                // Only an ID present
-                return (
-                  <>
-                    {/* @TODO: Only an ID present. Consider extending 'contactpersoon' to show details. */}
-                    <p>ID: {String(contact)}</p>
-                  </>
+                    </div>
+                    {data?.website && (
+                      <Link
+                        href={`${
+                          data?.website.startsWith('http')
+                            ? data?.website
+                            : `https://${data?.website}`
+                        }`}
+                      >
+                        {data?.website}
+                      </Link>
+                    )}
+                    {aanbieder?.website && (
+                      <Link
+                        href={`${
+                          aanbieder?.website.startsWith('http')
+                            ? aanbieder?.website
+                            : `https://${aanbieder?.website}`
+                        }`}
+                      >
+                        {aanbieder?.website}
+                      </Link>
+                    )}
+                  </div>
                 );
-              })()}
-            </AcFlex>
-          </>
+              }
+
+              return (
+                <>
+                  <p>Niet beschikbaar</p>
+                </>
+              );
+            })()}
+          </div>
         )}
       </div>
 
-      <UnpublishedWarning data={data} />
-
       <Separator />
 
-      <AcFlex spacing='xl' className='con-product-details--content'>
+      <div className='con-product-details--content'>
         <AcColumn gap='tiger' className='con-product-details--content-main'>
           <ConEditableDescription
             registerSlug={data['@self'].register.slug}
@@ -313,8 +337,11 @@ const ConProductDetailsPageContent = ({
         <Separator />
 
         {/* Side area next to editable descriptions with mock data */}
-        <SuitableForList modules={data.modules} />
-      </AcFlex>
+        <SuitableForList
+          modules={data.modules}
+          className='con-product-details--content-side'
+        />
+      </div>
 
       <DetailsPageTabs uses={uses} used={used} userStore={user} />
     </AcFlex>
@@ -335,7 +362,9 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
     return uniq
       .map((item) => item['@self']?.schema)
       .filter(Boolean)
-      .sort((a, b) => String(a?.['@self']?.id).localeCompare(String(b?.['@self']?.id)));
+      .sort((a, b) =>
+        String(a?.['@self']?.id).localeCompare(String(b?.['@self']?.id))
+      );
   }, []);
 
   // Mark schemas that have duplicate titles between uses/used
@@ -355,13 +384,17 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
 
   const getUsesCount = useCallback(
     (schema) => {
-      return usesData?.filter((r) => r['@self']?.schema?.id === schema?.['@self']?.id).length;
+      return usesData?.filter(
+        (r) => r['@self']?.schema?.id === schema?.['@self']?.id
+      ).length;
     },
     [usesData]
   );
   const getUsedCount = useCallback(
     (schema) => {
-      return usedData?.filter((r) => r['@self']?.schema?.id === schema?.['@self']?.id).length;
+      return usedData?.filter(
+        (r) => r['@self']?.schema?.id === schema?.['@self']?.id
+      ).length;
     },
     [usedData]
   );
@@ -374,7 +407,10 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
         <AcTabList>
           {usesSchemas.length > 0 &&
             usesSchemas.map((schema, idx) => (
-              <AcTab key={`uses-${schema?.['@self']?.id}`} selected={tabIndex === idx + 1}>
+              <AcTab
+                key={`uses-${schema?.['@self']?.id}`}
+                selected={tabIndex === idx + 1}
+              >
                 {schema.title || schema?.['@self']?.id}{' '}
                 {getUsesCount(schema) ? `(${getUsesCount(schema)})` : ''}
               </AcTab>
@@ -399,7 +435,10 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
               (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
             );
             return (
-              <AcTabPanel key={`uses-${schema?.['@self']?.id}`} selected={tabIndex === idx + 1}>
+              <AcTabPanel
+                key={`uses-${schema?.['@self']?.id}`}
+                selected={tabIndex === idx + 1}
+              >
                 {metadata ? (
                   <BeheerTable
                     type={schema.slug}
@@ -512,7 +551,9 @@ const SuitableForList = ({ modules }) => {
       </AcFlex>
       <ul style={{ marginLeft: '1rem' }}>
         {modules.map((m) => (
-          <li key={m?.['@self']?.id}>{m['@self']?.name || m.naam}</li>
+          <li key={m?.['@self']?.id}>
+            <ConUuidResolver>{m['@self']?.name || m.naam}</ConUuidResolver>
+          </li>
         ))}
       </ul>
     </AcFlex>
