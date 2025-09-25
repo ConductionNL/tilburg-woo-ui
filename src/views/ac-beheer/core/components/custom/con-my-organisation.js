@@ -374,16 +374,15 @@ const ConMyOrganisationPage = ({ store }) => {
     return <AcBeheerError error={error} />;
   }
 
-  if (loading) {
-    return <AcLoader />;
-  }
-
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <ConDynamicSidenav store={store} />
+
         <AcColumn gap='sm' horizontalOverflowWrapper>
-          {organisations &&
+          {loading && <AcLoader />}
+          {!loading &&
+            organisations &&
             organisations.available &&
             !!organisations.results?.length && (
               <>
@@ -711,7 +710,6 @@ const ConMyOrganisationPage = ({ store }) => {
                 </div>
               </>
             )}
-
           {/* Modal for editing account info */}
           <AcMyAccountModal
             showModal={showModal}
@@ -720,7 +718,6 @@ const ConMyOrganisationPage = ({ store }) => {
             formData={formData}
             validateEmail={validateEmail}
           />
-
           {/* Dynamic form modal for organization editing */}
           {showOrgModal && fullActiveOrganisation && (
             <AcMyAccountDynamicModal
@@ -737,7 +734,6 @@ const ConMyOrganisationPage = ({ store }) => {
               data={fullActiveOrganisation}
             />
           )}
-
           {/* Dynamic form modal for contact person editing */}
           {showContactModal && userData && (
             <AcMyAccountDynamicModal
@@ -756,7 +752,6 @@ const ConMyOrganisationPage = ({ store }) => {
               }}
             />
           )}
-
           {/* Publish modal */}
           <AcMyAccountPublishModal
             showModal={showPublishModal}
@@ -765,7 +760,6 @@ const ConMyOrganisationPage = ({ store }) => {
             data={fullActiveOrganisation}
             isPublish={true}
           />
-
           {/* Depublish modal */}
           <AcMyAccountPublishModal
             showModal={showDepublishModal}
@@ -774,7 +768,6 @@ const ConMyOrganisationPage = ({ store }) => {
             data={fullActiveOrganisation}
             isPublish={false}
           />
-
           {/* Deelnames modal */}
           {showDeelnamesModal && fullActiveOrganisation && (
             <AcMyAccountDeelnamesModal

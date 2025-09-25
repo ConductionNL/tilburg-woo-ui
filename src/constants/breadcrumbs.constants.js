@@ -11,6 +11,8 @@ export const BREADCRUMB_ITEMS = {
   GEMMA: { label: 'GEMMA', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
   BEHEER: { label: 'Beheer', href: '/beheer' },
+  BEHEER_MY_ACCOUNT: { label: 'Mijn account', href: '/beheer/my-account' },
+  BEHEER_MY_ORGANISATION: { label: 'Mijn organisatie', href: '/beheer/my-organisation' },
   BEHEER_LIST: (type) => ({
     label: prettifyPathname(type),
     href: `/beheer/${type}`,
