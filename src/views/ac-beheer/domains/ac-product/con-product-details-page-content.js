@@ -179,7 +179,7 @@ const ConProductDetailsPageContent = ({
               ? Array.isArray(data?.aanbieder)
                 ? data?.aanbieder[0]?.naam || data?.aanbieder[0]?.id
                 : typeof data?.aanbieder === 'object'
-                ? data?.aanbieder.value
+                ? data?.aanbieder.value || data?.aanbieder.id || '-'
                 : data?.aanbieder?.naam ||
                   data?.aanbieder?.id ||
                   data?.aanbieder ||
