@@ -40,6 +40,8 @@ const ConDynamicSidenav = ({ store: { menu, user } }) => {
       Kwetsbaarheden: VISUALS.TRIANGLE_EXCLAMATION,
       Koppelingen: VISUALS.LINK,
       Contactpersonen: VISUALS.USERS,
+      'Mijn Account': VISUALS.USER,
+      'Mijn Organisatie': VISUALS.BUILDING,
     };
 
     // Try to match by name first
