@@ -7,7 +7,6 @@ import { Heading, Link } from '@utrecht/component-library-react/dist/css-module'
 import { VISUALS } from '@constants';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcMyAccountModal from '@views/ac-my-account/ac-my-account-modal';
-import AcButton from '@molecules/ac-button/ac-button';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcLoader from '@components/ac-loader/ac-loader';
 import ReactSelect from 'react-select';
@@ -22,6 +21,7 @@ import {
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 
 /**
  * My Organisation Page
@@ -41,6 +41,8 @@ const ConMyOrganisationPage = ({ store }) => {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showDepublishModal, setShowDepublishModal] = useState(false);
   const [showDeelnamesModal, setShowDeelnamesModal] = useState(false);
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
   const [contactImageFit, setContactImageFit] = useState('cover');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -426,50 +428,66 @@ const ConMyOrganisationPage = ({ store }) => {
 
                   <div className='ac-register-review__header-controls'>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <AcButton
-                        style='button'
-                        icon={<VISUALS.PENCIL />}
-                        onClick={handleEditOrganization}
-                        disabled={!fullActiveOrganisation}
-                        data-tooltip-id={
-                          !fullActiveOrganisation ? TOOLTIP_ID : undefined
-                        }
-                        data-tooltip-content={
-                          !fullActiveOrganisation
-                            ? 'Kan niet bewerken omdat de organisatie niet gevonden is'
-                            : undefined
-                        }
-                      >
-                        Bewerken
-                      </AcButton>
+                      <ConActionMenu>
+                        <ConActionMenu.Trigger
+                          icon={<VISUALS.ELLIPSIS />}
+                          buttonType='primary'
+                        >
+                          Acties
+                        </ConActionMenu.Trigger>
 
-                      <AcButton
-                        style='button'
-                        icon={<VISUALS.USERS />}
-                        onClick={canEdit ? handleEditDeelnames : undefined}
-                        disabled={!canEdit || !fullActiveOrganisation}
-                        data-tooltip-id={
-                          !canEdit || !fullActiveOrganisation
-                            ? TOOLTIP_ID
-                            : undefined
-                        }
-                        data-tooltip-content={
-                          !fullActiveOrganisation
-                            ? 'Kan deelnames niet bewerken omdat de organisatie niet gevonden is'
-                            : !canEdit
-                            ? getDisabledActionTooltip('bewerken', reason)
-                            : undefined
-                        }
-                      >
-                        Deelnames
-                      </AcButton>
+                        <ConActionMenu.Menu position='right'>
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PENCIL />}
+                            onClick={handleEditOrganization}
+                            disabled={!fullActiveOrganisation}
+                            data-tooltip-id={
+                              !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                            }
+                            data-tooltip-content={
+                              !fullActiveOrganisation
+                                ? 'Kan niet bewerken omdat de organisatie niet gevonden is'
+                                : undefined
+                            }
+                          >
+                            Bewerken
+                          </ConActionMenu.Button>
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PENCIL />}
+                            onClick={() => setEditingSummary(true)}
+                            disabled={!fullActiveOrganisation}
+                            data-tooltip-id={
+                              !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                            }
+                            data-tooltip-content={
+                              !fullActiveOrganisation
+                                ? 'Kan niet bewerken omdat de samenvatting niet gevonden is'
+                                : undefined
+                            }
+                          >
+                            Bewerk samenvatting
+                          </ConActionMenu.Button>
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PENCIL />}
+                            onClick={() => setEditingDescription(true)}
+                            disabled={!fullActiveOrganisation}
+                            data-tooltip-id={
+                              !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                            }
+                            data-tooltip-content={
+                              !fullActiveOrganisation
+                                ? 'Kan niet bewerken omdat de beschrijving niet gevonden is'
+                                : undefined
+                            }
+                          >
+                            Bewerk beschrijving
+                          </ConActionMenu.Button>
 
-                      {fullActiveOrganisation &&
-                        !fullActiveOrganisation['@self']?.published && (
-                          <AcButton
-                            style='button'
-                            icon={<VISUALS.PUBLISH />}
-                            onClick={canEdit ? handlePublishOrganization : undefined}
+                          <ConActionMenu.Button
+                            icon={<VISUALS.USERS />}
+                            onClick={() => {
+                              handleEditDeelnames();
+                            }}
                             disabled={!canEdit}
                             data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
                             data-tooltip-content={
@@ -478,28 +496,47 @@ const ConMyOrganisationPage = ({ store }) => {
                                 : undefined
                             }
                           >
-                            Publiceren
-                          </AcButton>
-                        )}
-                      {fullActiveOrganisation &&
-                        fullActiveOrganisation['@self']?.published && (
-                          <AcButton
-                            style='button'
-                            icon={<VISUALS.PUBLISH_OFF />}
-                            onClick={
-                              canEdit ? handleDepublishOrganization : undefined
-                            }
-                            disabled={!canEdit}
-                            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-                            data-tooltip-content={
-                              !canEdit
-                                ? getDisabledActionTooltip('depublish', reason)
-                                : undefined
-                            }
-                          >
-                            Depubliceren
-                          </AcButton>
-                        )}
+                            Deelnames
+                          </ConActionMenu.Button>
+
+                          {fullActiveOrganisation &&
+                            !fullActiveOrganisation['@self']?.published && (
+                              <ConActionMenu.Button
+                                icon={<VISUALS.PUBLISH />}
+                                onClick={() => {
+                                  canEdit ? handlePublishOrganization() : undefined;
+                                }}
+                                disabled={!canEdit}
+                                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                                data-tooltip-content={
+                                  !canEdit
+                                    ? getDisabledActionTooltip('publish', reason)
+                                    : undefined
+                                }
+                              >
+                                Publiceren
+                              </ConActionMenu.Button>
+                            )}
+                          {fullActiveOrganisation &&
+                            fullActiveOrganisation['@self']?.published && (
+                              <ConActionMenu.Button
+                                icon={<VISUALS.PUBLISH_OFF />}
+                                onClick={
+                                  canEdit ? handleDepublishOrganization : undefined
+                                }
+                                disabled={!canEdit}
+                                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                                data-tooltip-content={
+                                  !canEdit
+                                    ? getDisabledActionTooltip('depublish', reason)
+                                    : undefined
+                                }
+                              >
+                                Depubliceren
+                              </ConActionMenu.Button>
+                            )}
+                        </ConActionMenu.Menu>
+                      </ConActionMenu>
                     </div>
                   </div>
                 </div>
@@ -540,11 +577,14 @@ const ConMyOrganisationPage = ({ store }) => {
                         maxLength={255}
                         isMarkdown={false}
                         value={fullActiveOrganisation?.beschrijvingKort}
+                        isEditingCustomTrigger={editingSummary}
                         serialize={(v) => v}
                         deserialize={(v) => v || ''}
-                        onSuccess={(v) =>
-                          setNewFieldDataAndFetch(v, 'beschrijvingKort')
-                        }
+                        onSuccess={(v) => (
+                          setEditingSummary(false),
+                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                        )}
+                        onCancel={() => setEditingSummary(false)}
                       />
                       <br />
                       <br />
@@ -682,6 +722,7 @@ const ConMyOrganisationPage = ({ store }) => {
                         tooltip={longTooltip('organisatie')}
                         maxLength={2000}
                         isMarkdown={true}
+                        isEditingCustomTrigger={editingDescription}
                         value={fullActiveOrganisation?.beschrijvingLang}
                         serialize={(v) => JSON.stringify(v || '')}
                         deserialize={(v) => {
@@ -692,9 +733,11 @@ const ConMyOrganisationPage = ({ store }) => {
                             return v;
                           }
                         }}
-                        onSuccess={(v) =>
+                        onCancel={() => setEditingDescription(false)}
+                        onSuccess={(v) => (
+                          setEditingDescription(false),
                           setNewFieldDataAndFetch(v, 'beschrijvingLang')
-                        }
+                        )}
                       />
                     </div>
                   )}
