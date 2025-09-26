@@ -9,8 +9,6 @@ import AcColumn from '@atoms/ac-column/ac-column';
 import AcMyAccountModal from '@views/ac-my-account/ac-my-account-modal';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcLoader from '@components/ac-loader/ac-loader';
-import ReactSelect from 'react-select';
-import clsx from 'clsx';
 import ConLogoPreview from '@views/ac-register/con-logo-preview';
 import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
 import AcMyAccountDynamicModal from '@views/ac-my-account/ac-my-account-dynamic-modal';
@@ -34,7 +32,6 @@ const ConMyOrganisationPage = ({ store }) => {
   const [organisations, setOrganisations] = useState(null);
   const [activeOrganisation, setActiveOrganisation] = useState(null);
   const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
-  const [switchingOrg, setSwitchingOrg] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showOrgModal, setShowOrgModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -251,52 +248,6 @@ const ConMyOrganisationPage = ({ store }) => {
     }
   };
 
-  // Handle organization switching using existing updateUser function
-  const handleOrganisationSwitch = async (selectedOption) => {
-    if (!selectedOption || selectedOption.value === activeOrganisation?.uuid) {
-      return;
-    }
-
-    try {
-      setSwitchingOrg(true);
-
-      // Use UserStore's updateUser method
-      const response = await user.updateUser({
-        activeOrganisation: selectedOption.value,
-      });
-
-      const updatedUser = response.data;
-      setUserData(updatedUser);
-
-      // Update organization data
-      if (updatedUser.organisations) {
-        setOrganisations(updatedUser.organisations);
-        setActiveOrganisation(updatedUser.organisations.active);
-
-        // Fetch full organization data for the newly selected organization
-        if (updatedUser.organisations.active?.uuid) {
-          await fetchFullOrganisationData(updatedUser.organisations.active.uuid);
-        }
-      }
-
-      // Update form data with new user data
-      setFormData({
-        displayName: updatedUser.displayName || '',
-        email: updatedUser.email || '',
-        firstName: updatedUser.firstName || '',
-        middleName: updatedUser.middleName || '',
-        lastName: updatedUser.lastName || '',
-      });
-    } catch (err) {
-      console.error('Error switching organization:', err);
-      setError(
-        new Error('Er is een fout opgetreden bij het wisselen van organisatie.')
-      );
-    } finally {
-      setSwitchingOrg(false);
-    }
-  };
-
   // Function to open organization edit modal
   const handleEditOrganization = () => {
     if (!activeOrganisation) return;
@@ -390,41 +341,6 @@ const ConMyOrganisationPage = ({ store }) => {
               <>
                 <div className='ac-register-review__organisation-header'>
                   <Heading level={1}>Mijn Organisatie</Heading>
-
-                  {organisations.results.length > 1 && (
-                    <ReactSelect
-                      placeholder='Selecteer organisatie'
-                      value={
-                        activeOrganisation
-                          ? {
-                              value: activeOrganisation.uuid,
-                              label:
-                                activeOrganisation.name +
-                                (activeOrganisation.isDefault ? ' (Standaard)' : ''),
-                            }
-                          : null
-                      }
-                      className={clsx(
-                        'ac-beheer-select ac-register-review__org-select',
-                        switchingOrg && 'ac-beheer-select--disabled'
-                      )}
-                      onChange={handleOrganisationSwitch}
-                      options={organisations.results.map((org) => ({
-                        value: org.uuid,
-                        label: org.name + (org.isDefault ? ' (Standaard)' : ''),
-                      }))}
-                      isLoading={switchingOrg}
-                      isDisabled={switchingOrg}
-                      isClearable={false}
-                      styles={{
-                        container: (provided) => ({
-                          ...provided,
-                          minWidth: '200px',
-                          marginRight: '1rem',
-                        }),
-                      }}
-                    />
-                  )}
 
                   <div className='ac-register-review__header-controls'>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -628,12 +544,6 @@ const ConMyOrganisationPage = ({ store }) => {
                           Type:
                           <div>{fullActiveOrganisation?.type || '-'}</div>
                         </div>
-                        {fullActiveOrganisation?.type === 'Leverancier' && (
-                          <div>
-                            KVK-nummer:
-                            <div>{fullActiveOrganisation?.kvkNummer || '-'}</div>
-                          </div>
-                        )}
                       </div>
                     </div>
                     <div className='ac-register-review__contact'>
