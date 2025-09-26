@@ -124,7 +124,9 @@ const ConEditableDescription = ({
   // serialize = (v) => v,
   deserialize = (v) => v ?? '',
   onSuccess,
+  onCancel,
   canEdit = true,
+  isEditingCustomTrigger = undefined,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState('');
@@ -157,6 +159,15 @@ const ConEditableDescription = ({
       setLocalSaving(false); // Clear local saving state
     }
   };
+
+  useEffect(() => {
+    if (isEditingCustomTrigger) {
+      const v = deserialize(value);
+      setIsEditing(true);
+      setTempValue(v || '');
+      setCharCount((v || '').length);
+    }
+  }, [isEditingCustomTrigger, value, deserialize]);
 
   return (
     <div className='ac-description-row'>
@@ -254,6 +265,9 @@ const ConEditableDescription = ({
                 buttonType='secondary'
                 icon={<VISUALS.CLOSE />}
                 onClick={() => {
+                  if (isEditingCustomTrigger) {
+                    onCancel(true);
+                  }
                   const v = deserialize(value);
                   setIsEditing(false);
                   setTempValue(v || '');
@@ -311,7 +325,7 @@ const ConEditableDescription = ({
               );
             })()}
           </div>
-          {canEdit && (
+          {canEdit && isEditingCustomTrigger === undefined && (
             <AcButton
               className='ac-description-edit-btn'
               icon={<VISUALS.PENCIL />}

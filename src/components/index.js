@@ -87,7 +87,9 @@ const ConRelatedObjectsLinks = loadable(() =>
 );
 
 const ConExistingModulesInfoBox = loadable(() =>
-  import('@src/components/con-existing-modules-info-box/con-existing-modules-info-box')
+  import(
+    '@src/components/con-existing-modules-info-box/con-existing-modules-info-box'
+  )
 );
 
 const ConModulesChoiceSwitch = loadable(() =>
@@ -96,6 +98,10 @@ const ConModulesChoiceSwitch = loadable(() =>
 
 const ConDebugViewer = loadable(() =>
   import('@src/components/con-debug-viewer/con-debug-viewer')
+);
+
+const ConOrganizationSelector = loadable(() =>
+  import('@src/components/con-organization-selector/con-organization-selector')
 );
 
 export {
@@ -136,4 +142,5 @@ export {
   ConExistingModulesInfoBox,
   ConModulesChoiceSwitch,
   ConDebugViewer,
+  ConOrganizationSelector,
 };
