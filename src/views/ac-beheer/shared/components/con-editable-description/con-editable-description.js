@@ -160,12 +160,14 @@ const ConEditableDescription = ({
     }
   };
 
-  if (isEditingCustomTrigger) {
-    const v = deserialize(value);
-    setIsEditing(true);
-    setTempValue(v || '');
-    setCharCount((v || '').length);
-  }
+  useEffect(() => {
+    if (isEditingCustomTrigger) {
+      const v = deserialize(value);
+      setIsEditing(true);
+      setTempValue(v || '');
+      setCharCount((v || '').length);
+    }
+  }, [isEditingCustomTrigger, value, deserialize]);
 
   return (
     <div className='ac-description-row'>
