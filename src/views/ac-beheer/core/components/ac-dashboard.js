@@ -105,7 +105,7 @@ const AcDashboard = ({ store }) => {
                   beschikbaar te maken voor bezoekers.
                 </Paragraph>
                 <AcFlex justifyContent='end'>
-                  <Link href='/beheer/my-organisation'>Naam Mijn Organisatie</Link>
+                  <Link href='/beheer/my-organisation'>Naar Mijn Organisatie</Link>
                 </AcFlex>
               </Alert>
             )}
