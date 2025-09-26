@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
@@ -11,12 +11,33 @@ import {
   Paragraph,
   Separator,
   Link,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 
 const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
-  const { user } = store;
+  const { user, object } = store;
+
+  const [orgIsPublished, setOrgIsPublished] = useState(false);
+
+  useEffect(() => {
+    const activeOrganizationId = user?.activeOrganization?.uuid;
+
+    const fetchOrganisatieData = async () => {
+      object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
+
+      const result = object.getObject(
+        'voorzieningen_organisatie',
+        activeOrganizationId
+      );
+      if (result) {
+        setOrgIsPublished(!!result?.['@self']?.published);
+      }
+    };
+
+    fetchOrganisatieData();
+  }, []);
 
   // Get available wizards for this user
   const availableWizards = getDashboardWizards(user, user?.organisation);
@@ -72,6 +93,21 @@ const AcDashboard = ({ store }) => {
                   ))}
                 </AcGrid>
               </div>
+            )}
+
+            {/* Warning card for unpublished objects */}
+            {!orgIsPublished && (
+              <Alert type='warning'>
+                <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
+                <Paragraph>
+                  Deze organisatie is momenteel niet zichtbaar in de zoekfunctie van{' '}
+                  de catalogus. Gebruik de &quot;Publiceren&quot; actie om het object
+                  beschikbaar te maken voor bezoekers.
+                </Paragraph>
+                <AcFlex justifyContent='end'>
+                  <Link href='/beheer/my-organisation'>Naam Mijn Organisatie</Link>
+                </AcFlex>
+              </Alert>
             )}
 
             {/* Welcome Section */}
