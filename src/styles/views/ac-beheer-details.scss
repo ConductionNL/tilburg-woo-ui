@@ -19,6 +19,10 @@
     gap: 1rem;
   }
 
+  &--actions {
+    margin-block-end: var(--tilburg-space-block-cat);
+  }
+
   &--tabs-container {
     width: 100%;
     min-height: 60vh; /* Ensure decent minimum height for tab content */
@@ -63,7 +67,7 @@
     justify-content: center;
     align-items: center;
     height: 80px;
-
+    margin-block-end: 5px;
     // Keep this code commented out for now, but if SVG logos start displaying incorrectly (too small/squished),
     // uncomment to enforce a minimum width of 100px for all logos
     // min-width: 100px;
@@ -87,46 +91,48 @@
 }
 
 .con-product-details {
-    &--header {
+  &--header {
+    display: flex;
+    gap: 100px; /* Add some spacing between the flex items */
+
+    &-short-stats {
+      margin-block-start: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+
+      &-item {
         display: flex;
-        gap: 2rem; /* Add some spacing between the flex items */
-
-        /* Target AcFlex column that contains main content */
-        > div:first-child {
-            flex: 1; /* Allow growing to fill available space */
-            min-width: 0; /* Enable proper shrinking */
-        }
-
-        /* Target contact person container */
-        > div:last-child {
-            flex: 0 0 auto; /* Keep at content width */
-            max-width: 300px; /* Prevent from getting too wide */
-        }
-
-        &-short-stats {
-            margin-block-start: 1rem;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-
-            &-item {
-                display: flex;
-                gap: 4px;
-            }
-        }
+        gap: 4px;
+      }
     }
-
     &--content {
-        /* Target AcFlex column that contains main content */
-        > div:first-child {
-            flex: 1; /* Allow growing to fill available space */
-            min-width: 0; /* Enable proper shrinking */
-        }
-
-        /* Target contact person container */
-        > div:last-child {
-            flex: 0 0 auto; /* Keep at content width */
-            max-width: 400px; /* Prevent from getting too wide */
-        }
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
+    &--description {
+      margin-block-end: var(--tilburg-space-block-mouse);
+    }
+  }
+
+  &--contact-info * a {
+    display: block;
+  }
+  &--contact-info {
+    text-align: -webkit-right;
+  }
+
+  &--content {
+    display: flex;
+    gap: 20px;
+    &-main {
+      flex: 2;
+    }
+    &-side {
+      flex: 1;
+      min-width: 300px;
+    }
+  }
 }

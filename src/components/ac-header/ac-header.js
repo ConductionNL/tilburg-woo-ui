@@ -64,6 +64,8 @@ const AcHeader = ({ store: { menu, user } }) => {
     if (linkPath.includes('/voorzieningen')) return VISUALS.CUBE;
     if (linkPath.includes('/koppelingen')) return VISUALS.LINK;
     if (linkPath === '/beheer') return VISUALS.CHART_LINE;
+    if (linkPath === '/beheer/my-account') return VISUALS.USER;
+    if (linkPath === '/beheer/my-organisation') return VISUALS.BUILDING;
 
     return VISUALS.CHART_LINE;
   };

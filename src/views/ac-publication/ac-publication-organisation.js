@@ -177,7 +177,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
         </div>
         <AcFlex column spacing={'lg'}>
           <div className='con-publication-detail__organisation_header'>
-            <div>
+            <div style={{ flex: 2 }}>
               <Heading level={4}>
                 <div className='con-beheer-details--header-container'>
                   {get_single?.['@self']?.image && (
@@ -234,7 +234,10 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                     )}
                   </div>
                 </div>
-                <div>{get_single?.type || '-'}</div>
+                <div>
+                  Type:
+                  <div>{get_single?.type || '-'}</div>
+                </div>{' '}
                 {get_single?.type === 'Leverancier' && (
                   <div>
                     KVK-nummer:

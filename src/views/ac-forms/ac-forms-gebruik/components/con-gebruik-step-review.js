@@ -4,6 +4,7 @@ import {
   UnorderedListItem,
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
+import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 /**
  * ConGebruikStepReview
@@ -38,7 +39,9 @@ const ConGebruikStepReview = ({
 
           <div className='ac-register-review__field'>
             <strong>Contactpersoon:</strong>
-            <div>{gebruik?.contactpersoon || '-'}</div>
+            <div>
+              <ConUuidResolver>{gebruik?.contactpersoon || '-'}</ConUuidResolver>
+            </div>
           </div>
           <div className='ac-register-review__field'>
             <strong>Afnemer:</strong>
@@ -147,7 +150,7 @@ const ConGebruikStepReview = ({
                     );
                     return (
                       <UnorderedListItem key={v}>
-                        {opt ? opt.label : v}
+                        {opt ? opt.label : <ConUuidResolver>{v}</ConUuidResolver>}
                       </UnorderedListItem>
                     );
                   })}

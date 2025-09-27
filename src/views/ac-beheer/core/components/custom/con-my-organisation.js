@@ -1,0 +1,897 @@
+import React, { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
+import { withStore } from '@stores';
+import { observer } from 'mobx-react-lite';
+import { AcFlex, AcSection, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { ConDynamicSidenav } from '@components';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
+import { VISUALS } from '@constants';
+import AcColumn from '@atoms/ac-column/ac-column';
+import AcMyAccountModal from '@views/ac-my-account/ac-my-account-modal';
+import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
+import AcLoader from '@components/ac-loader/ac-loader';
+import ConLogoPreview from '@views/ac-register/con-logo-preview';
+import ConEditableDescription from '@views/ac-beheer/shared/components/con-editable-description/con-editable-description';
+import AcMyAccountDynamicModal from '@views/ac-my-account/ac-my-account-dynamic-modal';
+import AcMyAccountPublishModal from '@views/ac-my-account/ac-my-account-publish-modal';
+import AcMyAccountDeelnamesModal from '@views/ac-my-account/ac-my-account-deelnames-modal';
+import {
+  checkOrganizationPermissions,
+  getDisabledActionTooltip,
+} from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+
+/**
+ * My Organisation Page
+ * - Shows organization details and management options
+ * - Allows switching between organizations
+ * - Supports editing, publishing, and managing organization data
+ */
+const ConMyOrganisationPage = ({ store }) => {
+  const [userData, setUserData] = useState(null);
+  const [organisations, setOrganisations] = useState(null);
+  const [activeOrganisation, setActiveOrganisation] = useState(null);
+  const [fullActiveOrganisation, setFullActiveOrganisation] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showOrgModal, setShowOrgModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showDepublishModal, setShowDepublishModal] = useState(false);
+  const [showDeelnamesModal, setShowDeelnamesModal] = useState(false);
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [contactImageFit, setContactImageFit] = useState('cover');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    displayName: '',
+    email: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+  });
+  const { user, object } = store;
+
+  // Check organization permissions for publish/depublish actions
+  const { canEdit, reason } = fullActiveOrganisation
+    ? checkOrganizationPermissions(user, fullActiveOrganisation)
+    : {
+        canEdit: false,
+        reason: 'Kan niet bewerken omdat de organisatie niet gevonden is',
+      };
+
+  // Email validation function
+  const validateEmail = useCallback((email) => {
+    return email && email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/);
+  }, []);
+
+  // Function to create fallback organization data from activeOrganisation
+  const createFallbackOrganisationData = useCallback(() => {
+    if (!activeOrganisation) {
+      console.warn('No activeOrganisation available for fallback data');
+      return;
+    }
+
+    // Create a fallback object with the structure expected by the UI
+    const fallbackData = {
+      id: activeOrganisation.uuid || activeOrganisation.id || 'unknown',
+      naam: activeOrganisation.name || 'Organisatie',
+      name: activeOrganisation.name || 'Organisatie',
+      beschrijvingKort: activeOrganisation.description || '',
+      beschrijvingLang: activeOrganisation.description || '',
+      '@self': {
+        id: activeOrganisation.uuid || activeOrganisation.id || 'unknown',
+        name: activeOrganisation.name || 'Organisatie',
+        published: activeOrganisation.published || false,
+        schema: {
+          title: 'Organisatie',
+          slug: 'organisatie',
+        },
+        register: {
+          slug: 'voorzieningen',
+        },
+      },
+    };
+
+    setFullActiveOrganisation(fallbackData);
+  }, [activeOrganisation]);
+
+  // Function to fetch full organization data
+  const fetchFullOrganisationData = useCallback(
+    async (organisationId) => {
+      if (!organisationId) return;
+
+      try {
+        // Fetch the full organization data using the object store
+        await object.fetchObject('voorzieningen', 'organisatie', organisationId, {
+          _extend: ['@self.schema', 'contactpersonen'],
+          _related: true,
+          _relatedNames: true,
+        });
+        // Ensure active object is set so related data selectors work
+        object.setActiveObject('voorzieningen', 'organisatie', {
+          id: organisationId,
+        });
+        // Also fetch schema for tabs configuration if not yet loaded
+        object.fetchSchema('organisatie');
+
+        // Get the fetched organization data
+        const fullOrgData = object.getObject(
+          'voorzieningen_organisatie',
+          organisationId
+        );
+        if (fullOrgData) {
+          setFullActiveOrganisation(fullOrgData);
+          object.setActiveObject('voorzieningen', 'organisatie', fullOrgData);
+        } else {
+          // If no full data available, create fallback from activeOrganisation
+          createFallbackOrganisationData();
+        }
+      } catch (err) {
+        console.error('Error fetching full organization data:', err);
+
+        // Check if it's a 404 error or similar, and create fallback data
+        if (
+          err.response?.status === 404 ||
+          err.status === 404 ||
+          err.message?.includes('404')
+        ) {
+          console.warn(
+            'Organization not found (404), using fallback data from activeOrganisation'
+          );
+          createFallbackOrganisationData();
+        } else {
+          // For other errors, still try to create fallback data
+          createFallbackOrganisationData();
+        }
+      }
+    },
+    [object, createFallbackOrganisationData]
+  );
+
+  const setNewFieldDataAndFetch = (v, field) => {
+    if (fullActiveOrganisation) {
+      fullActiveOrganisation[field] = v;
+      fetchFullOrganisationData(fullActiveOrganisation?.['@self']?.id);
+    }
+  };
+  const setNewDataAndFetch = (v) => {
+    setFullActiveOrganisation(v);
+    if (v?.['@self']?.id) {
+      fetchFullOrganisationData(v['@self'].id);
+    }
+  };
+
+  // Detect if contact image looks already round (square with transparent corners)
+  const handleContactImageLoad = useCallback((e) => {
+    try {
+      const img = e?.target;
+      if (!img) return;
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+
+      // Default behavior: crop to center
+      let nextFit = 'cover';
+
+      // If not square, we crop to circle center
+      if (width !== height) {
+        setContactImageFit(nextFit);
+        return;
+      }
+
+      // Try to inspect corner transparency to guess if already circular
+      // This may fail on cross-origin images; fall back to 'cover'.
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setContactImageFit(nextFit);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const corners = [
+        [0, 0],
+        [width - 1, 0],
+        [0, height - 1],
+        [width - 1, height - 1],
+      ];
+      let transparentCorners = 0;
+      for (const [x, y] of corners) {
+        const data = ctx.getImageData(x, y, 1, 1).data;
+        if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
+      }
+      if (transparentCorners >= 3) {
+        nextFit = 'contain';
+      }
+      setContactImageFit(nextFit);
+    } catch (err) {
+      // Likely CORS taint; keep default cropping behavior
+      setContactImageFit('cover');
+    }
+  }, []);
+
+  // Refetch logic
+  const fetchUserData = async () => {
+    try {
+      // Use UserStore's fetchUserProfile method instead of direct API calls
+      await user.fetchUserProfile();
+      const userData = user.user;
+
+      if (userData) {
+        setUserData(userData);
+
+        // Extract organization data
+        if (userData.organisations) {
+          setOrganisations(userData.organisations);
+          setActiveOrganisation(userData.organisations.active);
+
+          // Fetch full organization data if we have an active organization
+          if (userData.organisations.active?.uuid) {
+            await fetchFullOrganisationData(userData.organisations.active.uuid);
+          }
+        }
+
+        setFormData({
+          displayName: userData.displayName || '',
+          email: userData.email || '',
+          firstName: userData.firstName || '',
+          middleName: userData.middleName || '',
+          lastName: userData.lastName || '',
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching user data:', err);
+      setError(
+        new Error('Er is een fout opgetreden bij het laden van uw gegevens.')
+      );
+    }
+  };
+
+  // Function to open organization edit modal
+  const handleEditOrganization = () => {
+    if (!activeOrganisation) return;
+    if (!fullActiveOrganisation) return;
+    setShowOrgModal(true);
+  };
+
+  // Function to open publish modal
+  const handlePublishOrganization = () => {
+    if (!fullActiveOrganisation || !canEdit) return;
+    setShowPublishModal(true);
+  };
+
+  // Function to open depublish modal
+  const handleDepublishOrganization = () => {
+    if (!fullActiveOrganisation || !canEdit) return;
+    setShowDepublishModal(true);
+  };
+
+  // Function to open deelnames modal
+  const handleEditDeelnames = () => {
+    if (!fullActiveOrganisation || !canEdit) return;
+    setShowDeelnamesModal(true);
+  };
+
+  // Handle successful form submissions
+  const handleOrgFormSuccess = async (v) => {
+    setNewDataAndFetch(v);
+    setShowOrgModal(false);
+    // Refresh user data to get updated organization info
+    await fetchUserData();
+  };
+
+  const handleContactFormSuccess = async () => {
+    setShowContactModal(false);
+    // Refresh user data
+    await fetchUserData();
+  };
+
+  const handlePublishFormSuccess = async () => {
+    setShowPublishModal(false);
+    // Refresh user data and organization data
+    await fetchUserData();
+    if (fullActiveOrganisation?.['@self']?.id) {
+      await fetchFullOrganisationData(fullActiveOrganisation['@self'].id);
+    }
+  };
+
+  const handleDepublishFormSuccess = async () => {
+    setShowDepublishModal(false);
+    // Refresh user data and organization data
+    await fetchUserData();
+    if (fullActiveOrganisation?.['@self']?.id) {
+      await fetchFullOrganisationData(fullActiveOrganisation['@self'].id);
+    }
+  };
+
+  const shortTooltip = (type) => `Een korte beschrijving van de ${type}`;
+  const longTooltip = (type) => `Een uitgebreide beschrijving van de ${type}`;
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        await fetchUserData();
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  if (error) {
+    return <AcBeheerError error={error} />;
+  }
+
+  return (
+    <AcSection spacing className='ac-mijn-omgeving-section'>
+      <AcFlex spacing='xl'>
+        <ConDynamicSidenav store={store} />
+
+        <AcColumn gap='sm' horizontalOverflowWrapper>
+          {loading && <AcLoader />}
+          {!loading &&
+            organisations &&
+            organisations.available &&
+            !!organisations.results?.length && (
+              <>
+                <div className='ac-register-review__organisation-header'>
+                  <Heading level={1}>Mijn Organisatie</Heading>
+
+                  <div className='ac-register-review__header-controls'>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <ConActionMenu>
+                        <ConActionMenu.Trigger
+                          icon={<VISUALS.ELLIPSIS />}
+                          buttonType='primary'
+                        >
+                          Acties
+                        </ConActionMenu.Trigger>
+
+                        <ConActionMenu.Menu position='right'>
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PENCIL />}
+                            onClick={handleEditOrganization}
+                            disabled={!fullActiveOrganisation}
+                            data-tooltip-id={
+                              !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                            }
+                            data-tooltip-content={
+                              !fullActiveOrganisation
+                                ? 'Kan niet bewerken omdat de organisatie niet gevonden is'
+                                : undefined
+                            }
+                          >
+                            Bewerken
+                          </ConActionMenu.Button>
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PENCIL />}
+                            onClick={() => setEditingSummary(true)}
+                            disabled={!fullActiveOrganisation}
+                            data-tooltip-id={
+                              !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                            }
+                            data-tooltip-content={
+                              !fullActiveOrganisation
+                                ? 'Kan niet bewerken omdat de samenvatting niet gevonden is'
+                                : undefined
+                            }
+                          >
+                            Bewerk samenvatting
+                          </ConActionMenu.Button>
+                          <ConActionMenu.Button
+                            icon={<VISUALS.PENCIL />}
+                            onClick={() => setEditingDescription(true)}
+                            disabled={!fullActiveOrganisation}
+                            data-tooltip-id={
+                              !fullActiveOrganisation ? TOOLTIP_ID : undefined
+                            }
+                            data-tooltip-content={
+                              !fullActiveOrganisation
+                                ? 'Kan niet bewerken omdat de beschrijving niet gevonden is'
+                                : undefined
+                            }
+                          >
+                            Bewerk beschrijving
+                          </ConActionMenu.Button>
+
+                          <ConActionMenu.Button
+                            icon={<VISUALS.USERS />}
+                            onClick={() => {
+                              handleEditDeelnames();
+                            }}
+                            disabled={!canEdit}
+                            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                            data-tooltip-content={
+                              !canEdit
+                                ? getDisabledActionTooltip('publish', reason)
+                                : undefined
+                            }
+                          >
+                            Deelnames
+                          </ConActionMenu.Button>
+
+                          {fullActiveOrganisation &&
+                            !fullActiveOrganisation['@self']?.published && (
+                              <ConActionMenu.Button
+                                icon={<VISUALS.PUBLISH />}
+                                onClick={() => {
+                                  canEdit ? handlePublishOrganization() : undefined;
+                                }}
+                                disabled={!canEdit}
+                                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                                data-tooltip-content={
+                                  !canEdit
+                                    ? getDisabledActionTooltip('publish', reason)
+                                    : undefined
+                                }
+                              >
+                                Publiceren
+                              </ConActionMenu.Button>
+                            )}
+                          {fullActiveOrganisation &&
+                            fullActiveOrganisation['@self']?.published && (
+                              <ConActionMenu.Button
+                                icon={<VISUALS.PUBLISH_OFF />}
+                                onClick={
+                                  canEdit ? handleDepublishOrganization : undefined
+                                }
+                                disabled={!canEdit}
+                                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                                data-tooltip-content={
+                                  !canEdit
+                                    ? getDisabledActionTooltip('depublish', reason)
+                                    : undefined
+                                }
+                              >
+                                Depubliceren
+                              </ConActionMenu.Button>
+                            )}
+                        </ConActionMenu.Menu>
+                      </ConActionMenu>
+                    </div>
+                  </div>
+                </div>
+                <div className='ac-register-review__section'>
+                  <div className='ac-account-review__header'>
+                    <div style={{ flex: 2 }}>
+                      <Heading level={4}>
+                        <div className='con-beheer-details--header-container'>
+                          {fullActiveOrganisation?.['@self']?.image && (
+                            <ConLogoPreview
+                              className='con-beheer-details--logo-container'
+                              logoUrl={fullActiveOrganisation?.['@self']?.image}
+                            />
+                          )}
+
+                          <Heading className='con-beheer-details--title'>
+                            {fullActiveOrganisation?.['@self']?.name ||
+                              fullActiveOrganisation?.id ||
+                              activeOrganisation?.name ||
+                              'Organisatie'}
+                          </Heading>
+                        </div>
+                      </Heading>
+                      <ConEditableDescription
+                        registerSlug={
+                          fullActiveOrganisation?.['@self']?.register?.slug ||
+                          'voorzieningen'
+                        }
+                        schemaSlug={
+                          fullActiveOrganisation?.['@self']?.schema?.slug ||
+                          'organisatie'
+                        }
+                        objectId={fullActiveOrganisation?.id}
+                        field='beschrijvingKort'
+                        label='Korte beschrijving'
+                        placeholder={shortTooltip('organisatie')}
+                        tooltip={shortTooltip('organisatie')}
+                        maxLength={255}
+                        isMarkdown={false}
+                        value={fullActiveOrganisation?.beschrijvingKort}
+                        isEditingCustomTrigger={editingSummary}
+                        serialize={(v) => v}
+                        deserialize={(v) => v || ''}
+                        onSuccess={(v) => (
+                          setEditingSummary(false),
+                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                        )}
+                        onCancel={() => setEditingSummary(false)}
+                      />
+                      <br />
+                      <br />
+                      <br />
+                      <div className='ac-account-review__header-info'>
+                        <div>
+                          Website:
+                          <div>
+                            {fullActiveOrganisation?.website ? (
+                              <Link
+                                href={
+                                  fullActiveOrganisation.website.startsWith('http')
+                                    ? fullActiveOrganisation.website
+                                    : `https://${fullActiveOrganisation.website}`
+                                }
+                                target='_blank'
+                                rel='noreferrer'
+                              >
+                                {fullActiveOrganisation.website}
+                              </Link>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          Telefoon:
+                          <div>
+                            {fullActiveOrganisation?.telefoonnummer ? (
+                              <Link
+                                href={`tel:${fullActiveOrganisation.telefoonnummer}`}
+                              >
+                                {fullActiveOrganisation.telefoonnummer}
+                              </Link>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          Type:
+                          <div>{fullActiveOrganisation?.type || '-'}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className='ac-register-review__contact'>
+                      <div className='ac-register-review__contact-details'>
+                        <div className='ac-register-review__contact-image'>
+                          {fullActiveOrganisation?.contactpersonen?.[0]?.image ? (
+                            <img
+                              src={fullActiveOrganisation.contactpersonen[0].image}
+                              alt='Contactpersoon'
+                              className='ac-register-review__contact-image--round'
+                              onLoad={handleContactImageLoad}
+                              style={{ objectFit: contactImageFit }}
+                            />
+                          ) : (
+                            <div className='ac-register-review__contact-image--round'>
+                              <VISUALS.USER_CIRCLE />
+                            </div>
+                          )}
+                        </div>
+                        <Heading level={5}>Contactpersoon</Heading>
+                        <div className='ac-register-review__contact-info'>
+                          <div>
+                            {[
+                              fullActiveOrganisation?.contactpersonen?.[0]?.voornaam,
+                              fullActiveOrganisation?.contactpersonen?.[0]
+                                ?.tussenvoegsel,
+                              fullActiveOrganisation?.contactpersonen?.[0]
+                                ?.achternaam,
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                          </div>
+                          <div>
+                            {fullActiveOrganisation?.contactpersonen?.[0]?.[
+                              'e-mailadres'
+                            ] ? (
+                              <Link
+                                href={`mailto:${fullActiveOrganisation?.contactpersonen?.[0]?.['e-mailadres']}`}
+                              >
+                                {
+                                  fullActiveOrganisation?.contactpersonen?.[0]?.[
+                                    'e-mailadres'
+                                  ]
+                                }
+                              </Link>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
+                          <div>
+                            {fullActiveOrganisation?.contactpersonen?.[0]
+                              ?.telefoonnummer ? (
+                              <Link
+                                href={`tel:${fullActiveOrganisation?.contactpersonen?.[0]?.telefoonnummer}`}
+                              >
+                                {
+                                  fullActiveOrganisation?.contactpersonen?.[0]
+                                    ?.telefoonnummer
+                                }
+                              </Link>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {fullActiveOrganisation && (
+                    <div>
+                      <br />
+                      <ConEditableDescription
+                        markdownPreviewClassName='con-my-account-description'
+                        registerSlug={
+                          fullActiveOrganisation?.['@self']?.register?.slug ||
+                          'voorzieningen'
+                        }
+                        schemaSlug={
+                          fullActiveOrganisation?.['@self']?.schema?.slug ||
+                          'organisatie'
+                        }
+                        objectId={fullActiveOrganisation?.id}
+                        field='beschrijvingLang'
+                        label='Lange beschrijving'
+                        placeholder={longTooltip('organisatie')}
+                        tooltip={longTooltip('organisatie')}
+                        maxLength={2000}
+                        isMarkdown={true}
+                        isEditingCustomTrigger={editingDescription}
+                        value={fullActiveOrganisation?.beschrijvingLang}
+                        serialize={(v) => JSON.stringify(v || '')}
+                        deserialize={(v) => {
+                          if (!v) return '';
+                          try {
+                            return JSON.parse(v) || '';
+                          } catch (e) {
+                            return v;
+                          }
+                        }}
+                        onCancel={() => setEditingDescription(false)}
+                        onSuccess={(v) => (
+                          setEditingDescription(false),
+                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                        )}
+                      />
+                    </div>
+                  )}
+                  {/* Organisation related tabs (similar to details page) */}
+                  {fullActiveOrganisation?.id && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <AccountOrganisationTabs
+                        store={store}
+                        organisationId={fullActiveOrganisation.id}
+                      />
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          {/* Modal for editing account info */}
+          <AcMyAccountModal
+            showModal={showModal}
+            onClose={() => setShowModal(false)}
+            onSuccess={fetchUserData}
+            formData={formData}
+            validateEmail={validateEmail}
+          />
+          {/* Dynamic form modal for organization editing */}
+          {showOrgModal && fullActiveOrganisation && (
+            <AcMyAccountDynamicModal
+              showModal={showOrgModal}
+              onClose={() => setShowOrgModal(false)}
+              onSuccess={handleOrgFormSuccess}
+              type='organisaties'
+              isEdit={true}
+              fieldConfigs={{
+                status: {
+                  visible: false,
+                },
+              }}
+              data={fullActiveOrganisation}
+            />
+          )}
+          {/* Dynamic form modal for contact person editing */}
+          {showContactModal && userData && (
+            <AcMyAccountDynamicModal
+              showModal={showContactModal}
+              onClose={() => setShowContactModal(false)}
+              onSuccess={handleContactFormSuccess}
+              type='contactpersonen'
+              isEdit={true}
+              data={{
+                voornaam: userData.firstName,
+                tussenvoegsel: userData.middleName,
+                achternaam: userData.lastName,
+                'e-mailadres': userData.email,
+                telefoonnummer: userData.phone || '',
+                functie: userData.function || '',
+              }}
+            />
+          )}
+          {/* Publish modal */}
+          <AcMyAccountPublishModal
+            showModal={showPublishModal}
+            onClose={() => setShowPublishModal(false)}
+            onSuccess={handlePublishFormSuccess}
+            data={fullActiveOrganisation}
+            isPublish={true}
+          />
+          {/* Depublish modal */}
+          <AcMyAccountPublishModal
+            showModal={showDepublishModal}
+            onClose={() => setShowDepublishModal(false)}
+            onSuccess={handleDepublishFormSuccess}
+            data={fullActiveOrganisation}
+            isPublish={false}
+          />
+          {/* Deelnames modal */}
+          {showDeelnamesModal && fullActiveOrganisation && (
+            <AcMyAccountDeelnamesModal
+              showModal={showDeelnamesModal}
+              onClose={() => setShowDeelnamesModal(false)}
+              onSuccess={async () => {
+                await fetchUserData();
+                if (fullActiveOrganisation?.['@self']?.id) {
+                  await fetchFullOrganisationData(
+                    fullActiveOrganisation['@self'].id
+                  );
+                }
+              }}
+              data={fullActiveOrganisation}
+            />
+          )}
+        </AcColumn>
+      </AcFlex>
+    </AcSection>
+  );
+};
+
+const AccountOrganisationTabs = observer(({ store }) => {
+  const { object } = store;
+  const objectType = 'voorzieningen_organisatie';
+
+  // Pull related data for tabs
+  const usesData = object.getRelatedData(objectType, 'uses');
+  const usedData = object.getRelatedData(objectType, 'used');
+
+  const uniqueSchemasFrom = useCallback((rel) => {
+    if (!rel?.results) return [];
+    const map = new Map();
+    for (const item of rel.results) {
+      const schema = item['@self']?.schema;
+      if (!schema) continue;
+      if (!map.has(schema.id)) map.set(schema.id, schema);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      String(a.id).localeCompare(String(b.id))
+    );
+  }, []);
+
+  // Only show specific categories: producten, diensten, koppelingen, modules
+  const filterWantedSchemas = useCallback((schemas) => {
+    const wanted = new Set(['product', 'dienst', 'koppeling', 'module']);
+    return (schemas || []).filter((s) => wanted.has(s.slug || s.id || s));
+  }, []);
+
+  const usesSchemas = useMemo(
+    () => filterWantedSchemas(uniqueSchemasFrom(usesData)),
+    [usesData, filterWantedSchemas, uniqueSchemasFrom]
+  );
+  const usedSchemas = useMemo(
+    () => filterWantedSchemas(uniqueSchemasFrom(usedData)),
+    [usedData, filterWantedSchemas, uniqueSchemasFrom]
+  );
+
+  const [tabIndex, setTabIndex] = useState(0);
+
+  if (!usesSchemas?.length && !usedSchemas?.length) return null;
+
+  return (
+    <div className='ac-account--tabs-container'>
+      <AcTabs selectedIndex={tabIndex} onSelect={(i) => setTabIndex(i)}>
+        <AcTabList>
+          {usesSchemas.map((schema, idx) => {
+            const count = (usesData?.results || []).filter(
+              (r) => r['@self']?.schema?.id === schema.id
+            ).length;
+            return (
+              <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx}>
+                {(schema.slug === 'product'
+                  ? 'Producten'
+                  : schema.slug === 'dienst'
+                  ? 'Diensten'
+                  : schema.slug === 'koppeling'
+                  ? 'Koppelingen'
+                  : schema.slug === 'module'
+                  ? 'Applicaties'
+                  : schema.title || schema.id) + (count ? ` (${count})` : '')}
+              </AcTab>
+            );
+          })}
+          {usedSchemas.map((schema, idx) => {
+            const count = (usedData?.results || []).filter(
+              (r) => r['@self']?.schema?.id === schema.id
+            ).length;
+            return (
+              <AcTab
+                key={`used-${schema.id}`}
+                selected={tabIndex === idx + usesSchemas.length}
+              >
+                {(schema.slug === 'product'
+                  ? 'Producten'
+                  : schema.slug === 'dienst'
+                  ? 'Diensten'
+                  : schema.slug === 'koppeling'
+                  ? 'Koppelingen'
+                  : schema.slug === 'module'
+                  ? 'Applicaties'
+                  : schema.title || schema.id) + (count ? ` (${count})` : '')}
+              </AcTab>
+            );
+          })}
+        </AcTabList>
+
+        {usesSchemas.map((schema, idx) => {
+          const rows = (usesData?.results || []).filter(
+            (r) => r['@self']?.schema?.id === schema.id
+          );
+          return (
+            <AcTabPanel key={`uses-panel-${schema.id}`} selected={tabIndex === idx}>
+              <ul
+                style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
+              >
+                {rows.map((r) => {
+                  const href =
+                    r['@self']?.schema?.slug && r['@self']?.id
+                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
+                      : undefined;
+                  return (
+                    <li key={r.id || r['@self']?.id}>
+                      {href ? (
+                        <Link href={href}>{r['@self']?.name || r.id}</Link>
+                      ) : (
+                        r['@self']?.name || r.id
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </AcTabPanel>
+          );
+        })}
+
+        {usedSchemas.map((schema, idx) => {
+          const rows = (usedData?.results || []).filter(
+            (r) => r['@self']?.schema?.id === schema.id
+          );
+          const index = idx + usesSchemas.length;
+          return (
+            <AcTabPanel
+              key={`used-panel-${schema.id}`}
+              selected={tabIndex === index}
+            >
+              <ul
+                style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
+              >
+                {rows.map((r) => {
+                  const href =
+                    r['@self']?.schema?.slug && r['@self']?.id
+                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
+                      : undefined;
+                  return (
+                    <li key={r.id || r['@self']?.id}>
+                      {href ? (
+                        <Link href={href}>{r['@self']?.name || r.id}</Link>
+                      ) : (
+                        r['@self']?.name || r.id
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </AcTabPanel>
+          );
+        })}
+      </AcTabs>
+    </div>
+  );
+});
+
+export default withStore(observer(ConMyOrganisationPage));

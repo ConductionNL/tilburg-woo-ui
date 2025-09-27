@@ -9,6 +9,7 @@ export const AcCheckIfSpecificHostname = () => {
     'softwarecatalogus.accept.opencatalogi.nl',
     'acceptatie.softwarecatalogus.nl',
     'softwarecatalogus.test.opencatalogi.nl',
+    'softwarecatalogus.accept.opencatalogi.nl',
     'opencatalogi.nl',
     'developer.opencatalogi.nl',
     'test.opencatalogi.nl',

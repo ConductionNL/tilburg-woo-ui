@@ -37,7 +37,11 @@ const ConFormReferentiecomponentenStage = memo(
     getNewModulesWithApplicatieData,
     existingModulesLookup,
     referentieComponentenLoading,
+    sameForAll,
+    setSameForAll,
   }) => {
+    // State to save per-module referentiecomponenten when switching from "per application" to "same for all"
+    const [savedPerModuleState, setSavedPerModuleState] = useState(null);
     // ✅ SIMPLIFIED: Use helper method to get new modules that need referentiecomponenten configuration
     const newModules = getNewModulesWithApplicatieData
       ? getNewModulesWithApplicatieData()
@@ -73,8 +77,71 @@ const ConFormReferentiecomponentenStage = memo(
           );
         });
       });
-    // if there is a difference between values set sameForAll to false
-    const [sameForAll, setSameForAll] = useState(!areValuesDifferent);
+    
+    // Update the parent state if values are detected as different
+    React.useEffect(() => {
+      if (areValuesDifferent && sameForAll) {
+        setSameForAll(false);
+      }
+    }, [areValuesDifferent, sameForAll, setSameForAll]);
+
+    // Custom handler for sameForAll changes with state management
+    const handleSameForAllChange = (newSameForAll) => {
+      if (newSameForAll && !sameForAll) {
+        // Switching from "per application" to "same for all"
+        // Save current per-module state
+        const currentPerModuleState = newModules.map((module, index) => ({
+          moduleIndex: index,
+          referentieComponenten: [...(module.referentieComponenten || [])]
+        }));
+        setSavedPerModuleState(currentPerModuleState);
+
+        // Merge all referentiecomponenten from all modules
+        const allReferentieComponenten = new Set();
+        newModules.forEach(module => {
+          if (Array.isArray(module.referentieComponenten)) {
+            module.referentieComponenten.forEach(ref => {
+              if (ref != null && ref !== '') {
+                allReferentieComponenten.add(ref);
+              }
+            });
+          }
+        });
+
+        const mergedReferentieComponenten = Array.from(allReferentieComponenten);
+        
+        // Apply merged referentiecomponenten to all modules
+        applyToAll({ referentieComponenten: mergedReferentieComponenten });
+        
+        // Update standards data for all applications using their moduleIndex
+        newModules.forEach((module) => {
+          updateReferentieComponentenWithStandards(module.moduleIndex, mergedReferentieComponenten);
+        });
+
+      } else if (!newSameForAll && sameForAll && savedPerModuleState) {
+        // Switching from "same for all" to "per application" - restore saved state
+        setProduct((prev) => {
+          const modules = [...(prev.modules || [])];
+          
+          savedPerModuleState.forEach(({ moduleIndex, referentieComponenten }) => {
+            if (typeof modules[moduleIndex] === 'object') {
+              modules[moduleIndex] = { 
+                ...modules[moduleIndex], 
+                referentieComponenten: [...referentieComponenten] 
+              };
+              
+              // Update standards data for this specific module
+              updateReferentieComponentenWithStandards(moduleIndex, referentieComponenten);
+            }
+          });
+          
+          return { ...prev, modules };
+        });
+      }
+
+      // Update the parent state
+      setSameForAll(newSameForAll);
+    };
 
     const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
 
@@ -224,7 +291,7 @@ const ConFormReferentiecomponentenStage = memo(
         <ConModulesChoiceSwitch
           isMultiNewApplicatie={isMultiNewApplicatie}
           sameForAll={sameForAll}
-          onSameForAllChange={setSameForAll}
+          onSameForAllChange={handleSameForAllChange}
           configType='referentiecomponenten'
           questionText='Dezelfde referentiecomponenten voor alle nieuwe applicaties?'
           sameForAllLabel='Ja, dezelfde voor alle'
@@ -250,6 +317,12 @@ const ConFormReferentiecomponentenStage = memo(
                     const refsArray = selectedOptions
                       ? selectedOptions.map((opt) => opt.value)
                       : [];
+                    
+                    // Clear saved state when user manually updates in "same for all" mode
+                    if (sameForAll && isMultiNewApplicatie && savedPerModuleState) {
+                      setSavedPerModuleState(null);
+                    }
+                    
                     if (sameForAll && isMultiNewApplicatie) {
                       applyToAll({ referentieComponenten: refsArray });
                       // Update standards data for all applications using their moduleIndex
@@ -351,6 +424,12 @@ const ConFormReferentiecomponentenStage = memo(
                                     const refsArray = selectedOptions
                                       ? selectedOptions.map((opt) => opt.value)
                                       : [];
+                                    
+                                    // Clear saved state when user manually updates in "per application" mode
+                                    if (!sameForAll && savedPerModuleState) {
+                                      setSavedPerModuleState(null);
+                                    }
+                                    
                                     updateModuleField(
                                       index,
                                       'referentieComponenten',
