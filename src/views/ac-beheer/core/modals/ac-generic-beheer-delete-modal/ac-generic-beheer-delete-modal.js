@@ -300,7 +300,7 @@ const ConGenericBeheerDeleteModal = ({
         {usageCheckComplete && !usageError && !hasUsedObjects && (
           <Alert type='ok'>
             <AcFlex spacing='sm'>
-              <VISUALS.CHECK />
+              <VISUALS.CHECK style={{ minWidth: 'fit-content', marginTop: '0.25rem' }} />
               <Paragraph>
                 {isSingular
                   ? `Dit ${displayNameLower} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
