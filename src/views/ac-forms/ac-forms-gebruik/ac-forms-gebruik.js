@@ -189,17 +189,12 @@ const AcFormsGebruik = ({ store }) => {
     if (gebruikType !== 'eigen-organisatie') return;
     const org = store?.user?.activeOrganization;
     if (!org) return;
-    
+
     // Extract UUID from organization object (following dienst wizard pattern)
-    const orgUuid = String(
-      org?.uuid ||
-      org?.id ||
-      org?.slug ||
-      ''
-    );
-    
+    const orgUuid = String(org?.uuid || org?.id || org?.slug || '');
+
     if (orgUuid) {
-      console.log('Setting afnemer for eigen-organisatie:', { org, orgUuid });
+      console.info('Setting afnemer for eigen-organisatie:', { org, orgUuid });
       setGebruikData('afnemer', orgUuid);
     }
   }, [gebruikType]);
@@ -214,13 +209,13 @@ const AcFormsGebruik = ({ store }) => {
 
   // Deelnemers (organisaties) options
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
-  
+
   // Debug organisatieOptions changes
   useEffect(() => {
-    console.log('📋 organisatieOptions updated:', {
+    console.debug('📋 organisatieOptions updated:', {
       count: organisatieOptions.length,
       firstFew: organisatieOptions.slice(0, 3),
-      allOptions: organisatieOptions
+      allOptions: organisatieOptions,
     });
   }, [organisatieOptions]);
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
@@ -430,17 +425,25 @@ const AcFormsGebruik = ({ store }) => {
         }
       }
 
- // Ensure modules are available; if missing, fetch with relations
- if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
-  try {
-    await store.object.fetchObject('voorzieningen', 'product', String(getIdString(productData?.id || p)), {
-      '_extend[]': '@self.schema,@self.relations',
-    });
-    productData = store.object.getObject('voorzieningen_product', String(getIdString(productData?.id || p)));
-  } catch (_) {
-    // keep existing productData
-  }
-}
+      // Ensure modules are available; if missing, fetch with relations
+      if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
+        try {
+          await store.object.fetchObject(
+            'voorzieningen',
+            'product',
+            String(getIdString(productData?.id || p)),
+            {
+              '_extend[]': '@self.schema,@self.relations',
+            }
+          );
+          productData = store.object.getObject(
+            'voorzieningen_product',
+            String(getIdString(productData?.id || p))
+          );
+        } catch (_) {
+          // keep existing productData
+        }
+      }
 
       const moduleIds = Array.isArray(productData?.modules)
         ? productData.modules
@@ -520,13 +523,22 @@ const AcFormsGebruik = ({ store }) => {
         productData = selectedProduct;
       } else {
         productData =
-          productOptions.find((opt) => String(opt.value) === String(productId))?.data || null;
+          productOptions.find((opt) => String(opt.value) === String(productId))
+            ?.data || null;
         if (!productData) {
           try {
-            await store.object.fetchObject('voorzieningen', 'product', String(productId), {
-              '_extend[]': '@self.schema',
-            });
-            productData = store.object.getObject('voorzieningen_product', String(productId));
+            await store.object.fetchObject(
+              'voorzieningen',
+              'product',
+              String(productId),
+              {
+                '_extend[]': '@self.schema',
+              }
+            );
+            productData = store.object.getObject(
+              'voorzieningen_product',
+              String(productId)
+            );
           } catch (_) {
             productData = null;
           }
@@ -599,7 +611,7 @@ const AcFormsGebruik = ({ store }) => {
   // Server-side search for organisaties
   const searchOrganisaties = useCallback(
     async (query) => {
-      console.log('🔍 searchOrganisaties called with query:', query);
+      console.info('🔍 searchOrganisaties called with query:', query);
       try {
         setOrganisatieLoading(true);
         const q = String(query || '').trim();
@@ -623,12 +635,12 @@ const AcFormsGebruik = ({ store }) => {
             `Organisatie ${index + 1}`;
           // Use same pattern as mapToOption function - @self.id first, then fallbacks
           const value = item?.['@self']?.id || item?.id || item?.slug || label;
-          console.log('Organization option created:', { 
-            item, 
-            extractedValue: value, 
+          console.info('Organization option created:', {
+            item,
+            extractedValue: value,
             selfId: item?.['@self']?.id,
             directId: item?.id,
-            label 
+            label,
           });
           return { value: String(value), label: String(label), data: item };
         });
@@ -820,7 +832,7 @@ const AcFormsGebruik = ({ store }) => {
 
     // Try to get moduleA name - check relations first, then direct properties
     const moduleAId = item?.['@self']?.relations?.moduleA || item?.moduleA;
-    
+
     if (item?.moduleA?.naam) {
       appAName = item.moduleA.naam;
     } else if (Array.isArray(item?.moduleA) && item.moduleA[0]?.naam) {
@@ -839,7 +851,7 @@ const AcFormsGebruik = ({ store }) => {
 
     // Try to get moduleB name - check relations first, then direct properties
     const moduleBId = item?.['@self']?.relations?.moduleB || item?.moduleB;
-    
+
     if (item?.moduleB?.naam) {
       appBName = item.moduleB.naam;
     } else if (Array.isArray(item?.moduleB) && item.moduleB[0]?.naam) {
@@ -857,29 +869,27 @@ const AcFormsGebruik = ({ store }) => {
     }
 
     const direction = item?.gegevensuitwisselingRichting;
-    const arrow =
-      direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
-    
+    const arrow = direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+
     // Get koppeling name
-    const rawKoppelingName = 
-      item?.['@self']?.name || 
-      item?.naam || 
-      item?.name || 
-      item?.title || 
-      item?.label || 
+    const rawKoppelingName =
+      item?.['@self']?.name ||
+      item?.naam ||
+      item?.name ||
+      item?.title ||
+      item?.label ||
       '';
-    
+
     // Only show koppeling name if it's not a UUID
-    const koppelingName = rawKoppelingName && !isUUID(rawKoppelingName) 
-      ? rawKoppelingName 
-      : '';
-    
+    const koppelingName =
+      rawKoppelingName && !isUUID(rawKoppelingName) ? rawKoppelingName : '';
+
     // Create descriptive label
     const moduleConnection = `${appAName} ${arrow} ${appBName}`;
-    const label = koppelingName 
+    const label = koppelingName
       ? `${koppelingName} (${moduleConnection})`
       : moduleConnection;
-    
+
     // Use the koppeling's ID as the value
     const value = item?.id || item?.['@self']?.id || item?.value || String(index);
     return { value: String(value), label: String(label) };
@@ -890,24 +900,27 @@ const AcFormsGebruik = ({ store }) => {
     const fetchKoppelingenByModule = async () => {
       try {
         const moduleId = getIdString(gebruik?.module);
-        
+
         // If no module selected, fetch all koppelingen
         if (!moduleId) {
           try {
             await store.object.fetchCollection('voorzieningen', 'koppeling', {
               _limit: '100',
-              _page: '1'
+              _page: '1',
             });
-            const type = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+            const type = store.object.getTypeFromParams(
+              'voorzieningen',
+              'koppeling'
+            );
             const collection = store.object.getCollection(type);
             const allKoppelingen = collection?.results || collection || [];
-            
+
             const options = await Promise.all(
               allKoppelingen.map(async (item, index) => {
                 return await createKoppelingOption(item, index);
               })
             );
-            
+
             setKoppelingOptions(options);
           } catch (e) {
             setKoppelingOptions([]);
@@ -924,7 +937,7 @@ const AcFormsGebruik = ({ store }) => {
           await store.object.fetchCollection('voorzieningen', 'koppeling', {
             _limit: '100',
             _page: '1',
-            moduleA: moduleId
+            moduleA: moduleId,
           });
           const typeA = store.object.getTypeFromParams('voorzieningen', 'koppeling');
           const collectionA = store.object.getCollection(typeA);
@@ -938,7 +951,7 @@ const AcFormsGebruik = ({ store }) => {
           await store.object.fetchCollection('voorzieningen', 'koppeling', {
             _limit: '100',
             _page: '1',
-            moduleB: moduleId
+            moduleB: moduleId,
           });
           const typeB = store.object.getTypeFromParams('voorzieningen', 'koppeling');
           const collectionB = store.object.getCollection(typeB);
@@ -949,10 +962,12 @@ const AcFormsGebruik = ({ store }) => {
 
         // Merge results and remove duplicates based on ID
         const allKoppelingen = [...moduleAResults, ...moduleBResults];
-        const uniqueKoppelingen = allKoppelingen.filter((item, index, self) => 
-          index === self.findIndex(k => (k?.id || k?.value) === (item?.id || item?.value))
+        const uniqueKoppelingen = allKoppelingen.filter(
+          (item, index, self) =>
+            index ===
+            self.findIndex((k) => (k?.id || k?.value) === (item?.id || item?.value))
         );
-        
+
         // If no koppelingen found for this module, don't search again - just set empty options
         if (uniqueKoppelingen.length === 0) {
           setKoppelingOptions([]);
@@ -1022,11 +1037,12 @@ const AcFormsGebruik = ({ store }) => {
       };
 
       // Debug logging to see what we're submitting
-      console.log('Submitting gebruik data:', {
-        originalAfnemer: gebruik?.afnemer,
-        extractedAfnemer: gebruikData.afnemer,
-        gebruikType: gebruikType,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Submitting gebruik data:', {
+          afnemer: gebruikData.afnemer,
+          gebruikType,
+        });
+      }
 
       // Submit to the gebruik endpoint using the object store
       if (isEditMode) {

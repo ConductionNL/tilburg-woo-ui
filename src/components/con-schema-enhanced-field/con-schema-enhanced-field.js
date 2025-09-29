@@ -363,10 +363,22 @@ const ConSchemaEnhancedField = ({
     onFieldChange: (field, value) => {
       // Handle main field change
       if (field === fieldName) {
-        console.log('ConSchemaEnhancedField onChange:', { field, value, fieldName });
+        if (process.env.NODE_ENV !== 'production') {
+          const safeVal =
+            value && typeof value === 'object'
+              ? value.id ?? value.value ?? '[object]'
+              : value;
+          const redact = ['contactpersoon', 'aanbieder'].includes(fieldName);
+          const logVal = redact ? '[redacted]' : safeVal;
+          console.debug('ConSchemaEnhancedField onChange', {
+            field,
+            value: logVal,
+            fieldName,
+          });
+        }
+
         onChange(value);
-      }
-      // Handle related field changes (like filename for file uploads)
+      } // Handle related field changes (like filename for file uploads)
       else if (onFieldChange) {
         onFieldChange(field, value);
       }

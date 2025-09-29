@@ -185,19 +185,22 @@ export const renderField = ({
 
   // Create field change handler
   const handleChange = handleFieldChange(path, fieldConfig, onFieldChange, formData);
-  
+
   // Debug wrapper for afnemer field
-  const debugHandleChange = path === 'afnemer' ? (value) => {
-    console.log('ReactSelect onChange raw value:', { 
-      path, 
-      value, 
-      type: typeof value,
-      valueProperty: value?.value,
-      labelProperty: value?.label,
-      dataProperty: value?.data
-    });
-    return handleChange(value);
-  } : handleChange;
+  const debugHandleChange =
+    path === 'afnemer'
+      ? (value) => {
+          console.info('ReactSelect onChange raw value:', {
+            path,
+            value,
+            type: typeof value,
+            valueProperty: value?.value,
+            labelProperty: value?.label,
+            dataProperty: value?.data,
+          });
+          return handleChange(value);
+        }
+      : handleChange;
 
   // Extract search handler
   const { handleSearch } = onSearchHandlers;
@@ -546,17 +549,24 @@ export const renderField = ({
     const selectValue = fieldConfig.isMulti
       ? options?.filter((option) => value?.includes(option.value)) || []
       : options?.find((option) => option.value === value);
-    
+
     // Debug logging for afnemer field
-    if (path === 'afnemer') {
-      console.log('ReactSelect selectValue calculation:', {
+    if (process.env.NODE_ENV !== 'production' && path === 'afnemer') {
+      const foundMatch = fieldConfig.isMulti
+        ? Array.isArray(selectValue) && selectValue.length > 0
+        : !!selectValue;
+      console.debug('ReactSelect selectValue (afnemer):', {
         path,
-        value,
         optionsCount: options?.length || 0,
-        selectValue,
-        foundMatch: !!selectValue,
-        firstFewOptions: options?.slice(0, 3),
-        allOptions: options // Show all options to see the structure
+        foundMatch,
+        selectValuePreview: Array.isArray(selectValue)
+          ? selectValue
+              .slice(0, 3)
+              .map((o) => ({ value: o?.value, label: o?.label }))
+          : { value: selectValue?.value, label: selectValue?.label },
+        firstFewOptions: options
+          ?.slice(0, 3)
+          ?.map((o) => ({ value: o?.value, label: o?.label })),
       });
     }
 
