@@ -303,7 +303,8 @@ const AcFormsProductInner = ({
 
   // State to track the "same for all" choice from referentiecomponenten stage
   // This affects how standards are displayed and managed
-  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] = useState(true);
+  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] =
+    useState(true);
 
   // Prefill referentiecomponenten state for edit mode without relying on effects
   // Accepts optional modules/options to avoid stale state during async updates
@@ -447,9 +448,13 @@ const AcFormsProductInner = ({
         if (kpl && kpl.soortKoppeling) {
           nextTypeByRow[rowId] = kpl.soortKoppeling;
         }
+        // ✅ FIXED: Use existing _localId if present (which now includes existing IDs)
         const localId =
-          (kpl && kpl._localId) ||
-          `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+          kpl && kpl._localId
+            ? kpl._localId
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
         nextKoppelingIdByRow[rowId] = localId;
         // Track last persisted module index based on resolved Applicatie A
         nextModuleIndexByRow[rowId] = appAIndex;
@@ -479,6 +484,8 @@ const AcFormsProductInner = ({
     const nextSelectedApplication = {};
     const nextSelectedDienstByRow = {};
     const nextDienstBeschrijvingByRow = {};
+    const nextDienstIdByRow = {}; // ✅ FIXED: Track dienst IDs
+    const nextModuleIndexByRow = {}; // ✅ FIXED: Track module indices
 
     modules.forEach((module, moduleIndex) => {
       if (!module || typeof module !== 'object') return;
@@ -487,7 +494,13 @@ const AcFormsProductInner = ({
         const rowId = rowCounter++;
         nextRows.push(rowId);
         nextSelectedApplication[rowId] = moduleIndex;
+        nextModuleIndexByRow[rowId] = moduleIndex; // ✅ FIXED: Track module index
+
         if (dienst && typeof dienst === 'object') {
+          // ✅ FIXED: Track the dienst ID (either existing or local)
+          if (dienst._localId) {
+            nextDienstIdByRow[rowId] = dienst._localId;
+          }
           if (dienst.type != null)
             nextSelectedDienstByRow[rowId] = String(dienst.type);
           if (dienst.naam != null)
@@ -515,6 +528,16 @@ const AcFormsProductInner = ({
       dienstBeschrijvingByRow: {
         ...prev.dienstBeschrijvingByRow,
         ...nextDienstBeschrijvingByRow,
+      },
+      dienstIdByRow: {
+        // ✅ FIXED: Include dienst ID tracking
+        ...prev.dienstIdByRow,
+        ...nextDienstIdByRow,
+      },
+      moduleIndexByRow: {
+        // ✅ FIXED: Include module index tracking
+        ...prev.moduleIndexByRow,
+        ...nextModuleIndexByRow,
       },
     }));
   };
@@ -1045,10 +1068,23 @@ const AcFormsProductInner = ({
       const markedModules = apiProduct.modules.map((module) => ({
         ...module,
         koppelingen: module.koppelingen.map((kpl) => ({
-          _localId: `kpl_${Date.now().toString(36)}_${Math.random()
-            .toString(36)
-            .slice(2, 8)}`,
+          // ✅ FIXED: Preserve existing ID if present, otherwise generate local ID
+          _localId: kpl.id
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`,
           ...kpl,
+        })),
+        diensten: module.diensten.map((dienst) => ({
+          // ✅ FIXED: Preserve existing dienst ID if present, otherwise generate local ID
+          _localId:
+            typeof dienst === 'object' && dienst.id
+              ? `existing_${dienst.id}`
+              : `dienst_${Date.now().toString(36)}_${Math.random()
+                  .toString(36)
+                  .slice(2, 8)}`,
+          ...(typeof dienst === 'object' ? dienst : { type: dienst }),
         })),
       }));
 
