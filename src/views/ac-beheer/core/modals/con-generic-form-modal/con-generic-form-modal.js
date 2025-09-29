@@ -521,6 +521,7 @@ const ConGenericFormModal = ({
         );
       }
 
+      // @TODO: applicaties and voorzieningversie's technically don't exist anymore, this needs to be fixed or removed
       // Handle specific logic for applicaties (creating initial version)
       if (!isEdit && type === 'applicaties') {
         try {

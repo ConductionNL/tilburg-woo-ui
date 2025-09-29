@@ -786,7 +786,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                   ? '🎉 Dienst succesvol geüpdatet!'
                   : '🎉 Dienst succesvol aangemeld!'}
               </Heading1>
-              <Alert type='success'>
+              <Alert type='ok'>
                 <Paragraph>
                   <strong>
                     {isEditMode
