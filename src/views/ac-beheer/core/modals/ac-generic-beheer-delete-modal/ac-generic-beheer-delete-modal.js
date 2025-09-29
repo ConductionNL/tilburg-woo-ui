@@ -298,7 +298,7 @@ const ConGenericBeheerDeleteModal = ({
 
         {/* Usage Results - No Dependencies (Success) */}
         {usageCheckComplete && !usageError && !hasUsedObjects && (
-          <Alert type='success'>
+          <Alert type='ok'>
             <AcFlex spacing='sm'>
               <VISUALS.CHECK />
               <Paragraph>
