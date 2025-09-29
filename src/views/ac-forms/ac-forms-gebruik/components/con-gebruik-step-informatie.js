@@ -66,7 +66,10 @@ const ConGebruikStepInformatie = ({
                   schemaType='gebruik'
                   schemaProperty='afnemer'
                   value={gebruik?.afnemer || null}
-                  onChange={(value) => setGebruikData('afnemer', value)}
+                  onChange={(value) => {
+                    console.log('Afnemer onChange received:', { value, type: typeof value });
+                    setGebruikData('afnemer', value);
+                  }}
                   isDisabled={loading}
                   width='full'
                   schemas={schemas}

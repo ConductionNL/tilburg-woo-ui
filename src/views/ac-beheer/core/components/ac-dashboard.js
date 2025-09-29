@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
 import { AcTile } from '@molecules';
-import { ConDynamicSidenav, ConOrganizationSelector } from '@components';
+import { ConDynamicSidenav, ConOrganizationSelector, ConAangebodenGebruikTable } from '@components';
 import { getDashboardWizards, getWizardUrl } from '@constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,12 +20,15 @@ const AcDashboard = ({ store }) => {
   const { user, object } = store;
 
   const [orgIsPublished, setOrgIsPublished] = useState(false);
+  const [hasVoorgesteldGebruik, setHasVoorgesteldGebruik] = useState(true); // Start as true, let component set to false if no data
+  const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
 
-  useEffect(() => {
+  const fetchOrganisatieData = useCallback(async () => {
     const activeOrganizationId = user?.activeOrganization?.uuid;
+    if (!activeOrganizationId) return;
 
-    const fetchOrganisatieData = async () => {
-      object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
+    try {
+      await object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
 
       const result = object.getObject(
         'voorzieningen_organisatie',
@@ -34,10 +37,34 @@ const AcDashboard = ({ store }) => {
       if (result) {
         setOrgIsPublished(!!result?.['@self']?.published);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching organization data:', error);
+    }
+  }, [user?.activeOrganization?.uuid, object]);
 
+  // Handle organization switch success
+  const handleOrganizationSwitch = useCallback((updatedUserData) => {
+    console.log('Organization switched successfully:', updatedUserData);
+    
+    // Reset voorgesteld gebruik state to show info box initially
+    setHasVoorgesteldGebruik(true);
+    
+    // Refresh organization data for new organization
     fetchOrganisatieData();
+    
+    // Force refresh of the ConAangebodenGebruikTable component
+    setRefreshKey(prev => prev + 1);
+  }, [fetchOrganisatieData]);
+
+  // Handle organization switch error
+  const handleOrganizationSwitchError = useCallback((error) => {
+    console.error('Organization switch failed:', error);
+    // Could add user notification here if needed
   }, []);
+
+  useEffect(() => {
+    fetchOrganisatieData();
+  }, [fetchOrganisatieData]);
 
   // Get available wizards for this user
   const availableWizards = getDashboardWizards(user, user?.organisation);
@@ -58,24 +85,14 @@ const AcDashboard = ({ store }) => {
                   className='ac-dashboard-wizards-header'
                 >
                   <Heading level={3}>
-                    <AcFlex spacing='xs' alignItems='center'>
-                      <VISUALS.WAND_SPARKLES_SOLID
-                        style={{ width: '24px', height: '24px' }}
-                      />
-                      Wizards
-                    </AcFlex>
+                    Mijn software catalogus
                   </Heading>
 
                   <ConOrganizationSelector
                     store={store}
                     className='ac-dashboard-org-selector'
-                    onSwitchSuccess={() => {
-                      // Refresh the page to update wizards based on new organization
-                      // window.location.reload();
-                    }}
-                    onSwitchError={(error) => {
-                      console.error('Organization switch failed:', error);
-                    }}
+                    onSwitchSuccess={handleOrganizationSwitch}
+                    onSwitchError={handleOrganizationSwitchError}
                   />
                 </AcFlex>
 
@@ -95,18 +112,36 @@ const AcDashboard = ({ store }) => {
               </div>
             )}
 
-            {/* Warning card for unpublished objects */}
+            {/* Warning card for unpublished organization */}
             {!orgIsPublished && (
               <Alert type='warning'>
-                <Heading level={4}>Dit object is nog niet gepubliceerd</Heading>
+                <Heading level={4}>Uw organisatie staat nog niet gepubliceerd in de software catalogus</Heading>
                 <Paragraph>
-                  Deze organisatie is momenteel niet zichtbaar in de zoekfunctie van{' '}
-                  de catalogus. Gebruik de &quot;Publiceren&quot; actie om het object
-                  beschikbaar te maken voor bezoekers.
+                  Dit betekent dat uw organisatie momenteel niet zichtbaar is in de zoekfunctie van de catalogus. 
+                  Bezoekers kunnen uw organisatie en de bijbehorende producten en diensten nog niet vinden. 
+                  Gebruik de &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken voor bezoekers 
+                  en deel te nemen aan de software catalogus.
                 </Paragraph>
                 <AcFlex justifyContent='end'>
                   <Link href='/beheer/my-organisation'>Naar Mijn Organisatie</Link>
                 </AcFlex>
+              </Alert>
+            )}
+
+            {/* Voorgesteld Gebruik Table - Separate info container - Only show if there are suggestions */}
+            {hasVoorgesteldGebruik && (
+              <Alert type='info'>
+                <Heading level={4}>Voorgesteld Gebruik</Heading>
+                <Paragraph>
+                  Hieronder vindt u gebruik suggesties die door andere organisaties voor u zijn aangemaakt. 
+                  U kunt deze overnemen om ze toe te voegen aan uw organisatie of afwijzen als ze niet relevant zijn.
+                </Paragraph>
+                <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
+                  <ConAangebodenGebruikTable 
+                    key={refreshKey} 
+                    onDataChange={setHasVoorgesteldGebruik} 
+                  />
+                </div>
               </Alert>
             )}
 

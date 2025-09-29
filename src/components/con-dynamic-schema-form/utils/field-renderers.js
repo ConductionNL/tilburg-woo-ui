@@ -185,6 +185,19 @@ export const renderField = ({
 
   // Create field change handler
   const handleChange = handleFieldChange(path, fieldConfig, onFieldChange, formData);
+  
+  // Debug wrapper for afnemer field
+  const debugHandleChange = path === 'afnemer' ? (value) => {
+    console.log('ReactSelect onChange raw value:', { 
+      path, 
+      value, 
+      type: typeof value,
+      valueProperty: value?.value,
+      labelProperty: value?.label,
+      dataProperty: value?.data
+    });
+    return handleChange(value);
+  } : handleChange;
 
   // Extract search handler
   const { handleSearch } = onSearchHandlers;
@@ -533,6 +546,19 @@ export const renderField = ({
     const selectValue = fieldConfig.isMulti
       ? options?.filter((option) => value?.includes(option.value)) || []
       : options?.find((option) => option.value === value);
+    
+    // Debug logging for afnemer field
+    if (path === 'afnemer') {
+      console.log('ReactSelect selectValue calculation:', {
+        path,
+        value,
+        optionsCount: options?.length || 0,
+        selectValue,
+        foundMatch: !!selectValue,
+        firstFewOptions: options?.slice(0, 3),
+        allOptions: options // Show all options to see the structure
+      });
+    }
 
     // Automatically enable search for $ref fields
     const isRefField = getFieldRefSchemaSlug(propertySchema) !== null;
@@ -585,7 +611,7 @@ export const renderField = ({
             'ac-beheer-select',
             isDisabled && 'ac-beheer-select--disabled'
           )}
-          onChange={handleChange}
+          onChange={debugHandleChange}
           options={options}
           isLoading={isLoading}
           isDisabled={isDisabled}

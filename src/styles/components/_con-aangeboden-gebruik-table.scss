@@ -1,0 +1,33 @@
+// Aangeboden Gebruik Table Component Styling
+
+.con-gebruik-action-button {
+  min-width: 130px !important;
+  width: 130px !important;
+  min-height: 40px !important;
+  
+  // Ensure consistent button sizing regardless of text length
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  
+  // Override any inherited width styles
+  flex: none !important;
+  
+  // Larger padding for better touch targets
+  padding: 0.5rem 1rem !important;
+  
+  // Ensure icon is visible and properly sized
+  .ac-button__icon {
+    display: inline-block !important;
+    width: 18px !important;
+    height: 18px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  // Ensure text doesn't wrap
+  white-space: nowrap !important;
+  
+  // Slightly larger font size
+  font-size: 0.9rem !important;
+}

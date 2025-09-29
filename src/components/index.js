@@ -104,6 +104,10 @@ const ConOrganizationSelector = loadable(() =>
   import('@src/components/con-organization-selector/con-organization-selector')
 );
 
+const ConAangebodenGebruikTable = loadable(() =>
+  import('@src/components/con-aangeboden-gebruik-table/con-aangeboden-gebruik-table')
+);
+
 export {
   AcAbout,
   AcCNavigation,
@@ -143,4 +147,5 @@ export {
   ConModulesChoiceSwitch,
   ConDebugViewer,
   ConOrganizationSelector,
+  ConAangebodenGebruikTable,
 };

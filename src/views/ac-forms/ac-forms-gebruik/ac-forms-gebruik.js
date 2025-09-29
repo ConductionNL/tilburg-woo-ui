@@ -184,12 +184,24 @@ const AcFormsGebruik = ({ store }) => {
     }
   }, [gebruikType]);
 
-  // When gebruikType is 'eigen-organisatie', ensure afnemer is the active organization
+  // When gebruikType is 'eigen-organisatie', ensure afnemer is the active organization UUID
   useEffect(() => {
     if (gebruikType !== 'eigen-organisatie') return;
     const org = store?.user?.activeOrganization;
     if (!org) return;
-    setGebruikData('afnemer', org);
+    
+    // Extract UUID from organization object (following dienst wizard pattern)
+    const orgUuid = String(
+      org?.uuid ||
+      org?.id ||
+      org?.slug ||
+      ''
+    );
+    
+    if (orgUuid) {
+      console.log('Setting afnemer for eigen-organisatie:', { org, orgUuid });
+      setGebruikData('afnemer', orgUuid);
+    }
   }, [gebruikType]);
 
   // Options state (UI-only)
@@ -202,6 +214,15 @@ const AcFormsGebruik = ({ store }) => {
 
   // Deelnemers (organisaties) options
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
+  
+  // Debug organisatieOptions changes
+  useEffect(() => {
+    console.log('📋 organisatieOptions updated:', {
+      count: organisatieOptions.length,
+      firstFew: organisatieOptions.slice(0, 3),
+      allOptions: organisatieOptions
+    });
+  }, [organisatieOptions]);
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
   // Producten
   const [productLoading, setProductLoading] = useState(false);
@@ -578,6 +599,7 @@ const AcFormsGebruik = ({ store }) => {
   // Server-side search for organisaties
   const searchOrganisaties = useCallback(
     async (query) => {
+      console.log('🔍 searchOrganisaties called with query:', query);
       try {
         setOrganisatieLoading(true);
         const q = String(query || '').trim();
@@ -599,7 +621,15 @@ const AcFormsGebruik = ({ store }) => {
             item?.name ||
             item?.title ||
             `Organisatie ${index + 1}`;
-          const value = item?.id || item?.slug || label;
+          // Use same pattern as mapToOption function - @self.id first, then fallbacks
+          const value = item?.['@self']?.id || item?.id || item?.slug || label;
+          console.log('Organization option created:', { 
+            item, 
+            extractedValue: value, 
+            selfId: item?.['@self']?.id,
+            directId: item?.id,
+            label 
+          });
           return { value: String(value), label: String(label), data: item };
         });
         setOrganisatieOptions(options);
@@ -974,7 +1004,15 @@ const AcFormsGebruik = ({ store }) => {
         ...gebruik,
         // Ensure required fields are properly set
         contactpersoon: gebruik?.contactpersoon,
-        afnemer: gebruik?.afnemer?.uuid || gebruik?.afnemer?.id || gebruik?.afnemer,
+        // Extract UUID from afnemer (should be UUID string for eigen-organisatie, object for andere-organisatie)
+        afnemer: (() => {
+          const afnemer = gebruik?.afnemer;
+          if (!afnemer) return null;
+          // If it's already a string (UUID), return it
+          if (typeof afnemer === 'string') return afnemer;
+          // If it's an object (from ConSchemaEnhancedField), try to extract UUID
+          return afnemer.uuid || afnemer.id || afnemer.value || afnemer;
+        })(),
         product: gebruik?.product,
         module: gebruik?.module,
         moduleVersie: gebruik?.moduleVersie,
@@ -982,6 +1020,13 @@ const AcFormsGebruik = ({ store }) => {
         // Include usage type for processing
         gebruikType: gebruikType,
       };
+
+      // Debug logging to see what we're submitting
+      console.log('Submitting gebruik data:', {
+        originalAfnemer: gebruik?.afnemer,
+        extractedAfnemer: gebruikData.afnemer,
+        gebruikType: gebruikType,
+      });
 
       // Submit to the gebruik endpoint using the object store
       if (isEditMode) {

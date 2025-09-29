@@ -14,6 +14,7 @@ import MenuAPI from '@api/menu.api';
 import AuthenticationAPI from '@api/authentication.api';
 import MijnOmgevingAPI from '@api/mijnOmgeving.api';
 import GemmaAPI from '@api/gemma.api';
+import AangebodenGebruikAPI from '@api/aangebodenGebruik.api';
 
 const onUploadProgress = (event) => {
   console.group('[Axios] => fn.onUploadProgress');
@@ -117,6 +118,7 @@ export class API {
     });
     this.mijnOmgeving = new MijnOmgevingAPI({ Store, Client });
     this.gemma = new GemmaAPI({ Store, Client });
+    this.aangebodenGebruik = new AangebodenGebruikAPI({ Store, Client });
   }
 }
 

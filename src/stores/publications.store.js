@@ -479,7 +479,7 @@ export class PublicationsStore {
       delete baseQuery._page;
       
       const queryString = AcBuildURLSearchParams(baseQuery);
-      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
+      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
 
       console.group('🚀 INDEPENDENT FACETS API CALL');
       console.info('FACETS QUERY:', toJS(baseQuery));
@@ -584,7 +584,7 @@ export class PublicationsStore {
       _relatedNames: true,
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
-    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=database&${queryString}`;
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
 
     console.group('🚀 INDEPENDENT PUBLICATIONS API CALL');
     console.info('SEARCH QUERY:', toJS(baseQuery));
