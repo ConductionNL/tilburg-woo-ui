@@ -1896,7 +1896,7 @@ const AcFormsProductInner = ({
                   : '🎉 Product succesvol aangemeld!'}
               </Heading1>
 
-              <Alert type='success'>
+              <Alert type='ok'>
                 <Paragraph>
                   <strong>
                     {isEditMode
