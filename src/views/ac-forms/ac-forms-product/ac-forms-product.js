@@ -230,6 +230,7 @@ const AcFormsProductInner = ({
       clearTimeout(timeoutId);
     };
   }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
+
   /**
    * Product State Object
    *
@@ -303,7 +304,8 @@ const AcFormsProductInner = ({
 
   // State to track the "same for all" choice from referentiecomponenten stage
   // This affects how standards are displayed and managed
-  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] = useState(true);
+  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] =
+    useState(true);
 
   // Prefill referentiecomponenten state for edit mode without relying on effects
   // Accepts optional modules/options to avoid stale state during async updates
@@ -1051,6 +1053,17 @@ const AcFormsProductInner = ({
           ...kpl,
         })),
       }));
+
+      // a module from the modules could be missing the `naam` and `beschrijvingKort` property.
+      // when that happens gather it from the @self metadata.
+      markedModules.forEach((module) => {
+        if (!('naam' in module)) {
+          module.naam = module['@self'].name;
+        }
+        if (!('beschrijvingKort' in module)) {
+          module.beschrijvingKort = module['@self'].summary;
+        }
+      });
 
       // cloudDienstverleningsmodel comes as array; we use single string (first value) for UI logic
       const cloudModel = Array.isArray(apiProduct.cloudDienstverleningsmodel)
@@ -1907,7 +1920,7 @@ const AcFormsProductInner = ({
                 <Paragraph>
                   Het product {product.naam || 'Onbekend product'} en alle
                   bijbehorende modules, standaarden, koppelingen en diensten zijn
-                  opgeslagen in de software catalogus.
+                  opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
 
@@ -1917,7 +1930,7 @@ const AcFormsProductInner = ({
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    Het product wordt zichtbaar in de software catalogus
+                    Het product wordt zichtbaar in de softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen het product bekijken en beoordelen

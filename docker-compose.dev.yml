@@ -34,7 +34,7 @@ services:
       - NGINX_ROOT_DIR=/app/public_html
       # Site Configuration
       - SITE_TITLE=Environment Config Test ✅
-      - SITE_DESCRIPTION=Development instance of the software catalogus
+      - SITE_DESCRIPTION=Development instance of the softwarecatalogus
       - SITE=localhost
       - MODE=development
       - THEME_VARIANT=vng
