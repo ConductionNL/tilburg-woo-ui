@@ -1,7 +1,8 @@
 import React, { useState, memo, useEffect } from 'react';
-import clsx from 'clsx';
+// import clsx from 'clsx';
 // import { AcButton } from '@src/molecules';
 import { ConExistingModulesInfoBox, ConModulesChoiceSwitch } from '@components';
+import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
 import {
   Paragraph,
   Table,
@@ -9,7 +10,7 @@ import {
   TableCell,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
-import ReactSelect from 'react-select';
+// import ReactSelect from 'react-select';
 import licenses from '@assets/licenses/licenses.json';
 
 /**
@@ -30,7 +31,7 @@ const ConFormLicentieStage = memo(
     setProduct,
     // isMultiApplicatie: _isMultiApplicatie,
     loading,
-    // schemas: _schemas,
+    schemas,
     getNewModulesWithApplicatieData,
     existingModulesLookup,
     // getAllModulesForStages: _getAllModulesForStages,
@@ -52,11 +53,15 @@ const ConFormLicentieStage = memo(
         return newModules.some((otherModule, otherIndex) => {
           if (moduleIndex === otherIndex) return false;
 
-          const otherLicentietype = otherModule.licentietype || otherModule.licentieType || '';
+          const otherLicentietype =
+            otherModule.licentietype || otherModule.licentieType || '';
           const otherLicentie = otherModule.licentie || '';
 
           // Check if license type or specific license is different
-          return currentLicentietype !== otherLicentietype || currentLicentie !== otherLicentie;
+          return (
+            currentLicentietype !== otherLicentietype ||
+            currentLicentie !== otherLicentie
+          );
         });
       });
     // if there is a difference between values set sameForAll to false
@@ -68,12 +73,6 @@ const ConFormLicentieStage = memo(
       licentietype: '',
       licentie: '',
     });
-
-    // Options
-    const licentieTypeOptions = [
-      { value: 'Closed Source', label: 'Closed Source' },
-      { value: 'Open Source', label: 'Open Source' },
-    ];
 
     const licentieOptions = licenses.map((l) => ({
       value: l['SPDX ID'],
@@ -208,84 +207,79 @@ const ConFormLicentieStage = memo(
                 >
                   Licentievorm <span style={{ color: 'red' }}>*</span>
                 </label>
-                <ReactSelect
+                <ConSchemaEnhancedField
+                  schemaType='module'
+                  schemaProperty='licentietype'
                   value={(() => {
-                    const currentValue =
-                      sameForAll && isMultiNewApplicatie
+                    return (
+                      (sameForAll && isMultiNewApplicatie
                         ? sameForAllConfig.licentietype
                         : newModules[0]?.licentietype ||
                           newModules[0]?.licentieType ||
-                          '';
-                    return (
-                      licentieTypeOptions.find(
-                        (opt) => opt.value === currentValue
-                      ) || null
+                          '') || ''
                     );
                   })()}
-                  onChange={(selectedOption) => {
-                    const value = selectedOption?.value || '';
+                  onChange={(value) => {
+                    const nextValue = value || '';
 
-                    // Store as both schema field name and camelCase for compatibility
                     if (sameForAll && isMultiNewApplicatie) {
-                      // Update the dedicated state first for immediate reactivity
                       setSameForAllConfig((prev) => ({
                         ...prev,
-                        licentietype: value,
-                        ...(value !== 'Open Source' ? { licentie: '' } : {}),
+                        licentietype: nextValue,
+                        ...(nextValue !== 'Open source' ? { licentie: '' } : {}),
                       }));
 
-                      // Then update all modules
                       applyToAll({
-                        licentietype: value, // Schema field name
-                        licentieType: value, // Legacy camelCase
-                        ...(value !== 'Open Source' ? { licentie: '' } : {}),
+                        licentietype: nextValue,
+                        licentieType: nextValue,
+                        ...(nextValue !== 'Open source' ? { licentie: '' } : {}),
                       });
-                    } else {
-                      if (typeof firstNewModuleIndex === 'number') {
-                        updateModuleField(
-                          firstNewModuleIndex,
-                          'licentietype',
-                          value
-                        );
-                        updateModuleField(
-                          firstNewModuleIndex,
-                          'licentieType',
-                          value
-                        );
-                        if (value !== 'Open Source')
-                          updateModuleField(firstNewModuleIndex, 'licentie', '');
-                      }
+                    } else if (typeof firstNewModuleIndex === 'number') {
+                      updateModuleField(
+                        firstNewModuleIndex,
+                        'licentietype',
+                        nextValue
+                      );
+                      updateModuleField(
+                        firstNewModuleIndex,
+                        'licentieType',
+                        nextValue
+                      );
+                      if (nextValue !== 'Open Source')
+                        updateModuleField(firstNewModuleIndex, 'licentie', '');
                     }
                   }}
-                  options={licentieTypeOptions}
-                  placeholder='Selecteer licentievorm'
                   isDisabled={loading}
-                  styles={{
+                  inputStyle={{
                     control: (provided) => ({
                       ...provided,
-                      minHeight: '48px',
-                      height: '48px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
+                      minHeight: '48px !important',
+                      height: '48px !important',
+                      border: '1px solid #ccc !important',
+                      borderRadius: '4px !important',
                     }),
                     placeholder: (provided) => ({
                       ...provided,
-                      color: '#666',
+                      color: '#666 !important',
                     }),
                     valueContainer: (provided) => ({
                       ...provided,
-                      height: '46px',
-                      padding: '0 12px',
+                      height: '46px !important',
+                      padding: '0 12px !important',
                     }),
                     input: (provided) => ({
                       ...provided,
-                      margin: 0,
-                      padding: 0,
+                      margin: '0 !important',
+                      padding: '0 !important',
                     }),
                     indicatorSeparator: () => ({
-                      display: 'none',
+                      display: 'none !important',
                     }),
                   }}
+                  width='full'
+                  showLabel={false}
+                  customProps={{ placeholder: 'Selecteer licentievorm' }}
+                  schemas={schemas}
                 />
               </div>
               <div>
@@ -303,63 +297,57 @@ const ConFormLicentieStage = memo(
                         : newModules[0]?.licentietype ||
                           newModules[0]?.licentieType ||
                           '';
-                    const isOpenSource = currentLicenseType === 'Open Source';
+                    const isOpenSource = currentLicenseType === 'Open source';
                     return isOpenSource ? 'Licentie *' : 'Licentie';
                   })()}
                 </label>
-                <ReactSelect
+                <ConSchemaEnhancedField
+                  schemaType='module'
+                  schemaProperty='licentie'
                   value={(() => {
-                    const currentValue =
-                      sameForAll && isMultiNewApplicatie
-                        ? sameForAllConfig.licentie
-                        : newModules[0]?.licentie || '';
                     return (
-                      licentieOptions.find((opt) => opt.value === currentValue) ||
-                      null
+                      (sameForAll && isMultiNewApplicatie
+                        ? sameForAllConfig.licentie
+                        : newModules[0]?.licentie) || ''
                     );
                   })()}
-                  onChange={(selectedOption) => {
-                    const value = selectedOption?.value || '';
-
-                    // Handle license change directly
+                  onChange={(value) => {
+                    const nextValue = value || '';
                     if (sameForAll && isMultiNewApplicatie) {
-                      // Update the dedicated state first for immediate reactivity
-                      setSameForAllConfig((prev) => ({ ...prev, licentie: value }));
-
-                      // Then update all modules
-                      applyToAll({ licentie: value });
-                    } else {
-                      if (typeof firstNewModuleIndex === 'number') {
-                        updateModuleField(firstNewModuleIndex, 'licentie', value);
-                      }
+                      setSameForAllConfig((prev) => ({
+                        ...prev,
+                        licentie: nextValue,
+                      }));
+                      applyToAll({ licentie: nextValue });
+                    } else if (typeof firstNewModuleIndex === 'number') {
+                      updateModuleField(firstNewModuleIndex, 'licentie', nextValue);
                     }
                   }}
-                  options={licentieOptions}
-                  placeholder={(() => {
-                    const currentLicenseType =
-                      sameForAll && isMultiNewApplicatie
-                        ? sameForAllConfig.licentietype
-                        : newModules[0]?.licentietype ||
-                          newModules[0]?.licentieType ||
-                          '';
-                    const isOpenSource = currentLicenseType === 'Open Source';
-                    return isOpenSource
-                      ? 'Selecteer licentie (verplicht)'
-                      : 'Selecteer licentie';
-                  })()}
+                  optionsProvider={licentieOptions}
+                  customProps={{
+                    placeholder: (() => {
+                      const currentLicenseType =
+                        sameForAll && isMultiNewApplicatie
+                          ? sameForAllConfig.licentietype
+                          : newModules[0]?.licentietype ||
+                            newModules[0]?.licentieType ||
+                            '';
+                      const isOpenSource = currentLicenseType === 'Open source';
+                      return isOpenSource
+                        ? 'Selecteer licentie (verplicht)'
+                        : 'Selecteer licentie';
+                    })(),
+                  }}
                   isDisabled={(() => {
-                    // Get current license type dynamically from the appropriate source
                     const currentLicenseType =
                       sameForAll && isMultiNewApplicatie
                         ? sameForAllConfig.licentietype
                         : newModules[0]?.licentietype ||
                           newModules[0]?.licentieType ||
                           '';
-
-                    return loading || currentLicenseType !== 'Open Source';
+                    return loading || currentLicenseType !== 'Open source';
                   })()}
-                  styles={(() => {
-                    // Get current values dynamically for styling
+                  inputStyle={(() => {
                     const currentLicenseType =
                       sameForAll && isMultiNewApplicatie
                         ? sameForAllConfig.licentietype
@@ -370,16 +358,14 @@ const ConFormLicentieStage = memo(
                       sameForAll && isMultiNewApplicatie
                         ? sameForAllConfig.licentie
                         : newModules[0]?.licentie || '';
-
-                    const isOpenSource = currentLicenseType === 'Open Source';
+                    const isOpenSource = currentLicenseType === 'Open source';
                     const hasError = isOpenSource && !currentLicense;
-
                     return {
                       control: (provided) => ({
                         ...provided,
                         minHeight: '48px',
                         height: '48px',
-                        border: hasError ? '1px solid #dc2626' : '1px solid #ccc', // Red border if error
+                        border: hasError ? '1px solid #dc2626' : '1px solid #ccc',
                         borderRadius: '4px',
                         boxShadow: hasError
                           ? '0 0 0 1px #dc2626'
@@ -404,6 +390,9 @@ const ConFormLicentieStage = memo(
                       }),
                     };
                   })()}
+                  width='full'
+                  showLabel={false}
+                  schemas={schemas}
                 />
               </div>
             </div>
@@ -428,13 +417,11 @@ const ConFormLicentieStage = memo(
                 {newModules.map((module, index) => {
                   const app = module;
                   const realIndex = applicatieIndices[index];
-                  const selectedType =
-                    licentieTypeOptions.find(
-                      (o) => o.value === (app.licentietype || app.licentieType)
-                    ) || null;
+                  const licenseTypeValue =
+                    app.licentietype || app.licentieType || '';
                   const selectedLicentie =
                     licentieOptions.find((o) => o.value === app.licentie) || null;
-                  const isOpenSourceSelected = selectedType?.value === 'Open Source';
+                  const isOpenSourceSelected = licenseTypeValue === 'Open source';
                   const isLicenseRequired =
                     isOpenSourceSelected && !selectedLicentie;
                   return (
@@ -443,54 +430,43 @@ const ConFormLicentieStage = memo(
                         <span>{app.naam || `Applicatie ${index + 1}`}</span>
                       </TableCell>
                       <TableCell>
-                        <ReactSelect
-                          className={clsx(
-                            'ac-beheer-select',
-                            loading && 'ac-beheer-select--disabled'
-                          )}
-                          value={selectedType}
-                          onChange={(opt) => {
-                            const value = opt?.value || null;
-                            // Store as both schema field name and camelCase for compatibility
-                            updateModuleField(realIndex, 'licentietype', value);
-                            updateModuleField(realIndex, 'licentieType', value);
-                            // Clear license if not Open Source
-                            if (value !== 'Open Source') {
+                        <ConSchemaEnhancedField
+                          schemaType='module'
+                          schemaProperty='licentietype'
+                          value={licenseTypeValue}
+                          onChange={(value) => {
+                            const nextValue = value || null;
+                            updateModuleField(realIndex, 'licentietype', nextValue);
+                            updateModuleField(realIndex, 'licentieType', nextValue);
+                            if (nextValue !== 'Open Source') {
                               updateModuleField(realIndex, 'licentie', '');
                             }
                           }}
-                          options={licentieTypeOptions}
                           isDisabled={loading}
-                          placeholder='Selecteer type licentie'
+                          width='full'
+                          showLabel={false}
+                          customProps={{ placeholder: 'Selecteer type licentie' }}
+                          schemas={schemas}
                         />
                       </TableCell>
                       <TableCell>
-                        <ReactSelect
-                          className={clsx(
-                            'ac-beheer-select',
-                            (loading || selectedType?.value !== 'Open Source') &&
-                              'ac-beheer-select--disabled',
-                            // Add red border when Open Source is selected but no license is chosen
-                            isLicenseRequired && 'ac-beheer-select--error'
-                          )}
-                          value={selectedLicentie}
-                          onChange={(opt) =>
-                            updateModuleField(
-                              realIndex,
-                              'licentie',
-                              opt?.value || null
-                            )
+                        <ConSchemaEnhancedField
+                          schemaType='module'
+                          schemaProperty='licentie'
+                          value={app.licentie || null}
+                          onChange={(value) =>
+                            updateModuleField(realIndex, 'licentie', value || null)
                           }
-                          options={licentieOptions}
-                          isDisabled={
-                            loading || selectedType?.value !== 'Open Source'
-                          }
-                          placeholder={
-                            isOpenSourceSelected
+                          optionsProvider={licentieOptions}
+                          isDisabled={loading || licenseTypeValue !== 'Open source'}
+                          customProps={{
+                            placeholder: isOpenSourceSelected
                               ? 'Selecteer licentie (verplicht)'
-                              : 'Selecteer licentie'
-                          }
-                          isClearable
+                              : 'Selecteer licentie',
+                          }}
+                          showLabel={false}
+                          width='full'
+                          schemas={schemas}
                         />
                       </TableCell>
                     </TableRow>
