@@ -298,9 +298,9 @@ const ConGenericBeheerDeleteModal = ({
 
         {/* Usage Results - No Dependencies (Success) */}
         {usageCheckComplete && !usageError && !hasUsedObjects && (
-          <Alert type='success'>
+          <Alert type='ok'>
             <AcFlex spacing='sm'>
-              <VISUALS.CHECK />
+              <VISUALS.CHECK style={{ minWidth: 'fit-content', marginTop: '0.25rem' }} />
               <Paragraph>
                 {isSingular
                   ? `Dit ${displayNameLower} wordt niet gebruikt door andere objecten en kan veilig worden verwijderd.`
