@@ -33,7 +33,7 @@ const ConGebruikStepSoort = ({
         Een gebruik kan bestaan uit:
         <br />
         <strong>Voor eigen organisatie:</strong> Selecteer een bestaand product uit
-        de software catalogus en registreer het gebruik door uw organisatie.
+        de softwarecatalogus en registreer het gebruik door uw organisatie.
         <br />
         <strong>Voor andere organisatie:</strong> Registreer het gebruik van uw
         product door een klant. De klant wordt geïnformeerd en moet het gebruik

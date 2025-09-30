@@ -62,7 +62,7 @@ const AcDashboard = ({ store }) => {
                       <VISUALS.WAND_SPARKLES_SOLID
                         style={{ width: '24px', height: '24px' }}
                       />
-                      Mijn software catalogus
+                      Mijn softwarecatalogus
                     </AcFlex>
                   </Heading>
 
@@ -99,7 +99,9 @@ const AcDashboard = ({ store }) => {
             {/* Warning card for unpublished objects */}
             {!orgIsPublished && (
               <Alert type='warning'>
-                <Heading level={4}>Deze organisatie is nog niet gepubliceerd</Heading>
+                <Heading level={4}>
+                  Deze organisatie is nog niet gepubliceerd
+                </Heading>
                 <Paragraph>
                   Deze organisatie is momenteel niet zichtbaar in de zoekfunctie van{' '}
                   de catalogus. Gebruik de &quot;Publiceren&quot; actie om het

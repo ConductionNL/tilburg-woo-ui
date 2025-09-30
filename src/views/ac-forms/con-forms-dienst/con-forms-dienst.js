@@ -806,7 +806,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    De dienst wordt zichtbaar in de software catalogus
+                    De dienst wordt zichtbaar in de softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen de dienst bekijken en beoordelen

@@ -77,7 +77,7 @@ export const getDisabledStatus = (
         return true;
       }
       if (
-        licenseType === 'Open Source' &&
+        licenseType === 'Open source' &&
         (!module.licentie || !String(module.licentie).trim())
       ) {
         return true;
