@@ -1065,6 +1065,37 @@ const AcFormsProductInner = ({
         }
       });
 
+      // Ensure each module has a moduleVersies array with schema-based defaults
+      try {
+        const moduleVersieDefaults = (() => {
+          const defaults = {};
+          const moduleVersieSchema = schemas?.moduleversie;
+          if (moduleVersieSchema?.properties) {
+            Object.entries(moduleVersieSchema.properties).forEach(
+              ([key, property]) => {
+                if (property.default !== undefined) {
+                  defaults[key] = property.default;
+                }
+                if (property.example !== undefined && defaults[key] === undefined) {
+                  defaults[key] = property.example;
+                }
+              }
+            );
+          }
+          return defaults;
+        })();
+
+        markedModules.forEach((module) => {
+          const hasArray = Array.isArray(module.moduleVersies);
+          const hasItems = hasArray && module.moduleVersies.length > 0;
+          if (!hasItems) {
+            module.moduleVersies = [{ ...moduleVersieDefaults }];
+          }
+        });
+      } catch (e) {
+        // TODO: consider logging; keep mapper resilient
+      }
+
       // cloudDienstverleningsmodel comes as array; we use single string (first value) for UI logic
       const cloudModel = Array.isArray(apiProduct.cloudDienstverleningsmodel)
         ? apiProduct.cloudDienstverleningsmodel[0] || ''
@@ -1115,7 +1146,7 @@ const AcFormsProductInner = ({
 
       return mappedProduct;
     },
-    [store]
+    [store, schemas]
   );
 
   // Prefill product data in edit mode
