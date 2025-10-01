@@ -41,7 +41,9 @@ const ConCardGebruik = ({
           )}
         </AcFlex>
       </AcFlex>
-      <Paragraph>{resolvedReferentieComponenten?.join(', ') || '-'}</Paragraph>
+      <Paragraph>
+        Geschikt voor: {resolvedReferentieComponenten?.join(', ') || '-'}
+      </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>
           <AcFlex alignItems='center' spacing='sm'>
