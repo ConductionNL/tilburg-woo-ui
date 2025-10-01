@@ -1,5 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
-import React from 'react';
 import { AcLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
