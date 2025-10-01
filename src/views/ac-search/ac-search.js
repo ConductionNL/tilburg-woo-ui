@@ -20,7 +20,12 @@ import {
   getImageFromPublication,
 } from '@utils';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
-import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
+import {
+  ConCardOrganisationApplication,
+  ConCardDienst,
+  ConCardContactpersoon,
+  ConCardGebruik,
+} from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications, user, object } }) => {
   const location = useLocation();
@@ -167,6 +172,37 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               )}
               summary={extractSummary(publication?.beschrijvingKort)}
               organisationData={publication?.organisatie}
+              key={index}
+            />
+          );
+        case 'contactpersoon':
+          return (
+            <ConCardContactpersoon
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              firstName={publication.voornaam}
+              middleName={publication.tussenvoegsel}
+              lastName={publication.achternaam}
+              functie={publication.functie}
+              image={publication['@self'].image}
+              email={publication['e-mailadres']}
+              telefoon={publication.telefoonnummer}
+              organisation={publication.organisatie}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'gebruik':
+          return (
+            <ConCardGebruik
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              product={publication.product}
+              module={publication.module}
+              organisation={publication['@self'].organisation}
+              referentieComponenten={publication.gebruiktVoorReferentiecomponenten}
+              status={publication.status}
+              objectStore={object}
               key={index}
             />
           );

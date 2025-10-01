@@ -153,6 +153,7 @@ const ConProductDetailsPageContent = ({
               </Heading>
             </div>
           </Heading>
+
           <div className='con-product-details--header--description'>
             <ConEditableDescription
               registerSlug={data['@self'].register.slug}
