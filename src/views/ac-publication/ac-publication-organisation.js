@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
+import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
@@ -14,6 +14,7 @@ import _ from 'lodash';
 import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
 import { AcSearchResult } from '@molecules';
 import { getImageFromPublication } from '@utils';
+import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 
 // Markdown Editor
 import MDEditor from '@uiw/react-md-editor';
@@ -83,65 +84,69 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     setActionMenuItems(items);
   }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
-  // Names cache for UUID resolution
-  const namesMap = useMemo(() => {
-    const map = {};
-    Object.entries(object.namesCache || {}).forEach(([id, cacheEntry]) => {
-      if (cacheEntry.name) {
-        map[id] = cacheEntry.name;
-      }
-    });
-    return map;
-  }, [object?.namesCache]);
-
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
   const [tabIndexUses, setTabIndexUses] = useState(0);
   const [tabIndexUsed, setTabIndexUsed] = useState(0);
 
-  const fetchUses = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const fetchUses = useCallback(async () => {
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
       }
-    );
-    if (!response.ok) {
-      console.error('Error fetching uses:', response.statusText);
-      return;
+      const data = await response.json();
+      setUses(data.results);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+    } finally {
+      setUsesLoading(false);
     }
-    const data = await response.json();
+  }, [id]);
 
-    setUses(data.results);
-  };
-  const fetchUsed = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const fetchUsed = useCallback(async () => {
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
       }
-    );
-    if (!response.ok) {
-      console.error('Error fetching used:', response.statusText);
-      return;
+      const data = await response.json();
+      setUsed(data.results);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+    } finally {
+      setUsedLoading(false);
     }
-    const data = await response.json();
-
-    setUsed(data.results);
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchUses();
     fetchUsed();
-  }, []);
+  }, [fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single || !attachments) {
@@ -279,8 +284,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
 
               <div>
                 <AcTabs selectedIndex={tabIndex} onSelect={(i) => setTabIndex(i)}>
-                  {/* TODO: Implement clsx to verify if the value exceeds 1, which will be addressed with the upcoming relations endpoint */}
-                  <AcTabList className={clsx('ac-organisatie-contactpersonen')}>
+                  <AcTabList className='ac-organisatie-contactpersonen'>
                     <AcTab>Contactpersonen</AcTab>
                   </AcTabList>
                   <AcTabPanel selected={tabIndex === 0}>
@@ -345,12 +349,26 @@ const AcPublication = ({ store: { publications, object, user } }) => {
               </div>
             </AcFlex>
           </AcFlex>
+
+          <AcGenericBeheerDeleteModal
+            objects={get_single ? [get_single] : []}
+            showModal={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            onSuccess={() => navigate('/zoeken')}
+          />
+
           <div>
-            {uses &&
-              uses.filter((use) => use['@self']?.schema?.slug !== 'contactpersoon')
-                .length > 0 && (
-                <>
-                  <Heading level={2}>Maakt gebruik van</Heading>
+            {(usesLoading ||
+              (uses &&
+                uses.filter((use) => use['@self']?.schema?.slug !== 'contactpersoon')
+                  .length > 0)) && (
+              <>
+                {!usesLoading && <Heading level={2}>Maakt gebruik van</Heading>}
+                {usesLoading ? (
+                  <div>
+                    <AcLoader className='con-publication-uses-used-loader' />
+                  </div>
+                ) : (
                   <AcTabs
                     selectedIndex={tabIndexUses}
                     onSelect={(index) => setTabIndexUses(index)}
@@ -496,15 +514,22 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                           );
                         })}
                   </AcTabs>
-                </>
-              )}
+                )}
+              </>
+            )}
           </div>
 
           <div>
-            {used &&
-              used.filter((use) => use['@self']?.schema?.slug !== 'contactpersoon')
-                .length > 0 && (
-                <>
+            {(usedLoading ||
+              (used &&
+                used.filter((use) => use['@self']?.schema?.slug !== 'contactpersoon')
+                  .length > 0)) && (
+              <>
+                {usedLoading ? (
+                  <div>
+                    <AcLoader className='con-publication-uses-used-loader' />
+                  </div>
+                ) : (
                   <AcTabs
                     selectedIndex={tabIndexUsed}
                     onSelect={(index) => setTabIndexUsed(index)}
@@ -650,8 +675,9 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                           );
                         })}
                   </AcTabs>
-                </>
-              )}
+                )}
+              </>
+            )}
           </div>
         </AcFlex>
       </AcContainer>
