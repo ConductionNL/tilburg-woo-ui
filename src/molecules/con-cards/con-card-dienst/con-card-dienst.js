@@ -15,7 +15,6 @@ const ConCardDienst = ({
   skeleton,
   title,
   summary,
-  // published,
   updated,
   category,
   themes,
