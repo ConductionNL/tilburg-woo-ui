@@ -3,7 +3,7 @@ import { AcFlex, AcColumn, AcTabs, AcTabList, AcTab, AcTabPanel } from '@src/ato
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { Alert, Separator } from '@utrecht/component-library-react/dist/css-module';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
@@ -12,6 +12,10 @@ import { commongroundApiUrl } from '@src/config';
 import _ from 'lodash';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { ConDetailsActionsMenu } from '@src/components';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { withStore } from '@src/stores';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 /**
  * Content for the product details page
@@ -22,10 +26,12 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
  */
 const ConProductDetailsPageContent = ({
   loading,
+  config,
   data,
   userStore: user,
   id,
   canEdit = false,
+  actionMenuProps,
 }) => {
   // Tabs
   const [uses, setUses] = useState([]);
@@ -135,8 +141,6 @@ const ConProductDetailsPageContent = ({
 
   return (
     <AcFlex column spacing='xl'>
-      <UnpublishedWarning data={data} />
-
       <div className='con-product-details--header'>
         <div className='con-product-details--header--content'>
           <Heading level={4}>
@@ -171,7 +175,8 @@ const ConProductDetailsPageContent = ({
               canEdit={canEdit}
             />
           </div>
-          <Separator />
+
+          <UnpublishedWarning data={data} />
 
           {/* Short stats grid (2 columns x 3 rows) */}
           {(() => {
@@ -228,86 +233,70 @@ const ConProductDetailsPageContent = ({
           })()}
         </div>
 
-        {contact && (
-          <div className='con-product-details--contact-info'>
-            <div className='ac-register-review__contact-image'>
-              {aanbieder?.logo && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={aanbieder.logo}
-                />
-              )}
-            </div>
+        <div>
+          <AcFlex column alignItems='end' spacing='sm' margin='sm'>
+            <DetailsPageActionsMenu
+              id={id}
+              config={config}
+              data={data}
+              actionMenuProps={actionMenuProps}
+            />
 
-            {/* @TODO: contactpersoon has no logo / image, so its hard to show a contact persoon image */}
-            <i>Contactinformatie:</i>
-            {(() => {
-              // Glitch: sometimes an array with two objects is returned; use the first
-
-              if (contact && typeof contact === 'object') {
-                return (
-                  <div className='con-product-details--contact-info'>
-                    <p>
-                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
-                        .filter(Boolean)
-                        .join(' ')}
-                    </p>
-                    <div>
-                      {contact['e-mailadres'] && (
-                        <Link href={`mailto:${contact['e-mailadres']}`}>
-                          {contact['e-mailadres']}
-                        </Link>
-                      )}
-                    </div>
-                    <div>
-                      {contact.telefoonnummer && (
-                        <Link
-                          href={`tel:${String(contact.telefoonnummer)
-                            .split('')
-                            .filter((i) => i !== ' ')
-                            .join('')}`}
-                        >
-                          {contact.telefoonnummer}
-                        </Link>
-                      )}
-                    </div>
-                    {data?.website && (
-                      <Link
-                        href={`${
-                          data?.website.startsWith('http')
-                            ? data?.website
-                            : `https://${data?.website}`
-                        }`}
-                      >
-                        {data?.website}
-                      </Link>
-                    )}
-                    {aanbieder?.website && (
-                      <Link
-                        href={`${
-                          aanbieder?.website.startsWith('http')
-                            ? aanbieder?.website
-                            : `https://${aanbieder?.website}`
-                        }`}
-                      >
-                        {aanbieder?.website}
+            {contact && typeof contact === 'object' && (
+              <div className='con-product-details--contact-info'>
+                <div>
+                  <p>
+                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </p>
+                  <div>
+                    {contact['e-mailadres'] && (
+                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                        {contact['e-mailadres']}
                       </Link>
                     )}
                   </div>
-                );
-              }
-
-              return (
-                <>
-                  <p>Niet beschikbaar</p>
-                </>
-              );
-            })()}
-          </div>
-        )}
+                  <div>
+                    {contact.telefoonnummer && (
+                      <Link
+                        href={`tel:${String(contact.telefoonnummer)
+                          .split('')
+                          .filter((i) => i !== ' ')
+                          .join('')}`}
+                      >
+                        {contact.telefoonnummer}
+                      </Link>
+                    )}
+                  </div>
+                  {data?.website && (
+                    <Link
+                      href={`${
+                        data?.website.startsWith('http')
+                          ? data?.website
+                          : `https://${data?.website}`
+                      }`}
+                    >
+                      {data?.website}
+                    </Link>
+                  )}
+                  {aanbieder?.website && (
+                    <Link
+                      href={`${
+                        aanbieder?.website.startsWith('http')
+                          ? aanbieder?.website
+                          : `https://${aanbieder?.website}`
+                      }`}
+                    >
+                      {aanbieder?.website}
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </AcFlex>
+        </div>
       </div>
-
-      <Separator />
 
       <div className='con-product-details--content'>
         <AcColumn gap='tiger' className='con-product-details--content-main'>
@@ -334,8 +323,6 @@ const ConProductDetailsPageContent = ({
             canEdit={canEdit}
           />
         </AcColumn>
-
-        <Separator />
 
         {/* Side area next to editable descriptions with mock data */}
         <SuitableForList
@@ -535,6 +522,111 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
     </div>
   );
 });
+
+const DetailsPageActionsMenu = withStore(
+  observer(({ store, id, data, config, actionMenuProps = {} }) => {
+    const navigate = useNavigate();
+
+    const {
+      setDynamicCreateTargetType,
+      setDynamicCreatePreSelected,
+      setDynamicCreateMetadata,
+      setOpenModal,
+    } = actionMenuProps;
+
+    const { user, object } = store;
+
+    const [actionMenuItems, setActionMenuItems] = useState([]);
+
+    const openDynamicCreate = useCallback(
+      (targetType, preSelected, metadata = {}) => {
+        setDynamicCreateTargetType(targetType);
+        setDynamicCreatePreSelected(preSelected);
+        // Store metadata for outgoing relationship handling and optimization
+        // Store all metadata for the modal to use
+        setDynamicCreateMetadata(metadata);
+        setOpenModal('dynamicCreate');
+      },
+      []
+    );
+
+    const { makeActionsForContext } = useRelatedCreateActions({
+      object,
+      user,
+      schemaRef: config?.schemaSlug,
+      currentType: config?.schemaSlug,
+      openDynamicCreate,
+      currentObject: data, // Pass current object for organization permission checks
+      currentObjectRegister: config?.registerSlug, // Pass current object register
+      currentObjectSchema: config?.schemaSlug, // Pass current object schema
+    });
+
+    useEffect(() => {
+      if (!config?.schemaSlug || !data?.id) return;
+      const items = makeActionsForContext(data.id).map(
+        ({ key, label, onClick, schema, icon }) => ({
+          key,
+          label,
+          onClick,
+          schema,
+          icon,
+        })
+      );
+      setActionMenuItems(items);
+    }, [config?.schemaSlug, data?.id, makeActionsForContext]);
+
+    return (
+      <ConDetailsActionsMenu
+        user={user}
+        id={id}
+        schemaSlug={config?.schemaSlug}
+        title={data['@self']?.name || data.id}
+        published={data?.['@self']?.published}
+        object={data}
+        showViewAction={false}
+        showEditAction={true}
+        showPublishActions={true}
+        uniqueActions={[
+          ...(config.uniqueActions
+            ?.filter((action) => action.condition?.(data))
+            .map((action) => ({
+              key: action.key,
+              label: action.label,
+              icon: action.icon,
+              onClick: () =>
+                typeof action.onClick === 'function'
+                  ? action.onClick(data)
+                  : setOpenModal(action.action),
+            })) || []),
+          {
+            key: 'delete',
+            label: 'Verwijderen',
+            icon: VISUALS.TRASHCAN,
+            onClick: () => setOpenModal('delete'),
+          },
+        ]}
+        relatedActions={actionMenuItems}
+        onEdit={() => {
+          // Prefer wizard editing when available; fallback to legacy modal
+          if (config?.schemaSlug) {
+            const wizards = Object.values(DASHBOARD_WIZARDS);
+            const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+            if (wizard) {
+              const baseUrl = getWizardUrl(wizard);
+              const url = new URL(baseUrl, window.location.origin);
+              url.searchParams.set('id', data?.id);
+              navigate(url.pathname + url.search);
+              return;
+            }
+          }
+          setOpenModal('edit');
+        }}
+        onPublish={() => setOpenModal('publish')}
+        onDepublish={() => setOpenModal('depublish')}
+      />
+    );
+  })
+);
 
 // Small helper components for the side area using mock data
 const SuitableForList = ({ modules }) => {
