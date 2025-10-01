@@ -14,21 +14,13 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject, ConFormatDutchNumber } from '@utils';
+import {
+  AcSearchParamsToObject,
+  ConFormatDutchNumber,
+  getImageFromPublication,
+} from '@utils';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
-
-// Helper function to get the image field based on schema configuration
-const getImageFromPublication = (publication) => {
-  const imageField = publication['@self']?.schema?.configuration?.objectImageField;
-  if (imageField && publication['@self']?.[imageField]) {
-    // Use the configured image field from the publication data if it exists
-    return publication['@self']?.[imageField] || publication[imageField];
-  }
-
-  // Fallback to '@self.image' if no objectImageField is configured or filled
-  return publication['@self']?.image || publication['@self']?.logo;
-};
 
 const AcSearch = ({ store: { publications, user, object } }) => {
   const location = useLocation();

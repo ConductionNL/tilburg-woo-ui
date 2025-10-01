@@ -1,4 +1,7 @@
 .ac-organisatie {
+  &-contactpersonen > li {
+    width: 100%;
+  }
   &-contactgegevens {
     &__container {
       position: relative;
