@@ -137,3 +137,4 @@ export {
   getDataUrlDisplayName,
   handleFileClick,
 } from './con-data-url-utils';
+export { getImageFromPublication } from './con-getImageFromPublication';

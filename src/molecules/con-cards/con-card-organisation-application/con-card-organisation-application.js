@@ -1,5 +1,4 @@
-// eslint-disable-next-line import/no-unresolved
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { AcLink } from '@molecules';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
@@ -17,14 +16,11 @@ const ConCardOrganisationApplication = ({
   id,
   logo,
   cardType,
-  type, // Schema type/title
+  type,
   referenceComponents,
-  updated,
   organisation,
-  objectStore, // Add objectStore for names resolution
-  // user,
   published,
-  // ...rest // Capture additional object data
+  objectStore,
 }) => {
   // Use generic UUID resolver for organisation name
   const resolvedOrganisation = useResolvedText(organisation, objectStore);

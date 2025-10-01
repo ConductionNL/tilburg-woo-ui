@@ -14,21 +14,18 @@ import {
   Paragraph,
 } from '@utrecht/component-library-react/dist/css-module';
 import { Pagination } from '@amsterdam/design-system-react';
-import { AcSearchParamsToObject, ConFormatDutchNumber } from '@utils';
+import {
+  AcSearchParamsToObject,
+  ConFormatDutchNumber,
+  getImageFromPublication,
+} from '@utils';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
-import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
-
-// Helper function to get the image field based on schema configuration
-const getImageFromPublication = (publication) => {
-  const imageField = publication['@self']?.schema?.configuration?.objectImageField;
-  if (imageField && publication['@self']?.[imageField]) {
-    // Use the configured image field from the publication data if it exists
-    return publication['@self']?.[imageField] || publication[imageField];
-  }
-
-  // Fallback to '@self.image' if no objectImageField is configured or filled
-  return publication['@self']?.image || publication['@self']?.logo;
-};
+import {
+  ConCardOrganisationApplication,
+  ConCardDienst,
+  ConCardContactpersoon,
+  ConCardGebruik,
+} from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications, user, object } }) => {
   const location = useLocation();
@@ -175,6 +172,37 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               )}
               summary={extractSummary(publication?.beschrijvingKort)}
               organisationData={publication?.organisatie}
+              key={index}
+            />
+          );
+        case 'contactpersoon':
+          return (
+            <ConCardContactpersoon
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              firstName={publication.voornaam}
+              middleName={publication.tussenvoegsel}
+              lastName={publication.achternaam}
+              functie={publication.functie}
+              image={publication['@self'].image}
+              email={publication['e-mailadres']}
+              telefoon={publication.telefoonnummer}
+              organisation={publication.organisatie}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'gebruik':
+          return (
+            <ConCardGebruik
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              product={publication.product}
+              module={publication.module}
+              organisation={publication['@self'].organisation}
+              referentieComponenten={publication.gebruiktVoorReferentiecomponenten}
+              status={publication.status}
+              objectStore={object}
               key={index}
             />
           );

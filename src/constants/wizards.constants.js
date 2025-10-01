@@ -67,6 +67,8 @@ export const DASHBOARD_WIZARDS = {
     params: {},
     color: 'blue',
     schema: 'gebruik',
+    // TODO: Remove disabled when the wizard is implemented
+    disabled: true,
   },
   KOPPELING: {
     id: 'koppeling',
@@ -80,6 +82,8 @@ export const DASHBOARD_WIZARDS = {
     params: {},
     color: 'blue',
     schema: 'koppeling',
+    // TODO: Remove disabled when the wizard is implemented
+    disabled: true,
   },
 };
 
