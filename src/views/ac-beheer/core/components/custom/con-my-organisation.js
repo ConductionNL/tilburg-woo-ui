@@ -5,6 +5,7 @@ import { AcFlex, AcSection, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms'
 import { ConDynamicSidenav } from '@components';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
+import { commongroundApiUrl } from '@config';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcMyAccountModal from '@views/ac-my-account/ac-my-account-modal';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
@@ -20,6 +21,15 @@ import {
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import _ from 'lodash';
+import {
+  ConCardOrganisationApplication,
+  ConCardDienst,
+  ConCardGebruik,
+  ConCardContactpersoon,
+} from '@molecules/con-cards';
+import { AcSearchResult } from '@molecules';
+import { getImageFromPublication, getTabHeaderIcon, getTabHeaderName } from '@utils';
 
 /**
  * My Organisation Page
@@ -40,7 +50,6 @@ const ConMyOrganisationPage = ({ store }) => {
   const [showDeelnamesModal, setShowDeelnamesModal] = useState(false);
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
-  const [contactImageFit, setContactImageFit] = useState('cover');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
@@ -161,55 +170,6 @@ const ConMyOrganisationPage = ({ store }) => {
       fetchFullOrganisationData(v['@self'].id);
     }
   };
-
-  // Detect if contact image looks already round (square with transparent corners)
-  const handleContactImageLoad = useCallback((e) => {
-    try {
-      const img = e?.target;
-      if (!img) return;
-      const width = img.naturalWidth;
-      const height = img.naturalHeight;
-
-      // Default behavior: crop to center
-      let nextFit = 'cover';
-
-      // If not square, we crop to circle center
-      if (width !== height) {
-        setContactImageFit(nextFit);
-        return;
-      }
-
-      // Try to inspect corner transparency to guess if already circular
-      // This may fail on cross-origin images; fall back to 'cover'.
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        setContactImageFit(nextFit);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const corners = [
-        [0, 0],
-        [width - 1, 0],
-        [0, height - 1],
-        [width - 1, height - 1],
-      ];
-      let transparentCorners = 0;
-      for (const [x, y] of corners) {
-        const data = ctx.getImageData(x, y, 1, 1).data;
-        if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
-      }
-      if (transparentCorners >= 3) {
-        nextFit = 'contain';
-      }
-      setContactImageFit(nextFit);
-    } catch (err) {
-      // Likely CORS taint; keep default cropping behavior
-      setContactImageFit('cover');
-    }
-  }, []);
 
   // Refetch logic
   const fetchUserData = async () => {
@@ -339,9 +299,31 @@ const ConMyOrganisationPage = ({ store }) => {
             organisations.available &&
             !!organisations.results?.length && (
               <>
-                <div className='ac-register-review__organisation-header'>
-                  <Heading level={1}>Mijn Organisatie</Heading>
+                <div
+                  className='ac-register-review__organisation-header'
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Heading level={4}>
+                    <div className='con-beheer-details--header-container'>
+                      {fullActiveOrganisation?.['@self']?.image && (
+                        <ConLogoPreview
+                          className='con-beheer-details--logo-container'
+                          logoUrl={fullActiveOrganisation?.['@self']?.image}
+                        />
+                      )}
 
+                      <Heading className='con-beheer-details--title'>
+                        {fullActiveOrganisation?.['@self']?.name ||
+                          fullActiveOrganisation?.id ||
+                          activeOrganisation?.name ||
+                          'Organisatie'}
+                      </Heading>
+                    </div>
+                  </Heading>
                   <div className='ac-register-review__header-controls'>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <ConActionMenu>
@@ -456,211 +438,135 @@ const ConMyOrganisationPage = ({ store }) => {
                     </div>
                   </div>
                 </div>
-                <div className='ac-register-review__section'>
-                  <div className='ac-account-review__header'>
-                    <div style={{ flex: 2 }}>
-                      <Heading level={4}>
-                        <div className='con-beheer-details--header-container'>
-                          {fullActiveOrganisation?.['@self']?.image && (
-                            <ConLogoPreview
-                              className='con-beheer-details--logo-container'
-                              logoUrl={fullActiveOrganisation?.['@self']?.image}
-                            />
-                          )}
-
-                          <Heading className='con-beheer-details--title'>
-                            {fullActiveOrganisation?.['@self']?.name ||
-                              fullActiveOrganisation?.id ||
-                              activeOrganisation?.name ||
-                              'Organisatie'}
-                          </Heading>
-                        </div>
-                      </Heading>
-                      <ConEditableDescription
-                        registerSlug={
-                          fullActiveOrganisation?.['@self']?.register?.slug ||
-                          'voorzieningen'
-                        }
-                        schemaSlug={
-                          fullActiveOrganisation?.['@self']?.schema?.slug ||
-                          'organisatie'
-                        }
-                        objectId={fullActiveOrganisation?.id}
-                        field='beschrijvingKort'
-                        label='Korte beschrijving'
-                        placeholder={shortTooltip('organisatie')}
-                        tooltip={shortTooltip('organisatie')}
-                        maxLength={255}
-                        isMarkdown={false}
-                        value={fullActiveOrganisation?.beschrijvingKort}
-                        isEditingCustomTrigger={editingSummary}
-                        serialize={(v) => v}
-                        deserialize={(v) => v || ''}
-                        onSuccess={(v) => (
-                          setEditingSummary(false),
-                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
-                        )}
-                        onCancel={() => setEditingSummary(false)}
-                      />
-                      <br />
-                      <br />
-                      <br />
-                      <div className='ac-account-review__header-info'>
-                        <div>
-                          Website:
-                          <div>
-                            {fullActiveOrganisation?.website ? (
-                              <Link
-                                href={
-                                  fullActiveOrganisation.website.startsWith('http')
-                                    ? fullActiveOrganisation.website
-                                    : `https://${fullActiveOrganisation.website}`
-                                }
-                                target='_blank'
-                                rel='noreferrer'
-                              >
-                                {fullActiveOrganisation.website}
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          Telefoon:
-                          <div>
-                            {fullActiveOrganisation?.telefoonnummer ? (
-                              <Link
-                                href={`tel:${fullActiveOrganisation.telefoonnummer}`}
-                              >
-                                {fullActiveOrganisation.telefoonnummer}
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          Type:
-                          <div>{fullActiveOrganisation?.type || '-'}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className='ac-register-review__contact'>
-                      <div className='ac-register-review__contact-details'>
-                        <div className='ac-register-review__contact-image'>
-                          {fullActiveOrganisation?.contactpersonen?.[0]?.image ? (
-                            <img
-                              src={fullActiveOrganisation.contactpersonen[0].image}
-                              alt='Contactpersoon'
-                              className='ac-register-review__contact-image--round'
-                              onLoad={handleContactImageLoad}
-                              style={{ objectFit: contactImageFit }}
-                            />
-                          ) : (
-                            <div className='ac-register-review__contact-image--round'>
-                              <VISUALS.USER_CIRCLE />
-                            </div>
-                          )}
-                        </div>
-                        <Heading level={5}>Contactpersoon</Heading>
-                        <div className='ac-register-review__contact-info'>
-                          <div>
-                            {[
-                              fullActiveOrganisation?.contactpersonen?.[0]?.voornaam,
-                              fullActiveOrganisation?.contactpersonen?.[0]
-                                ?.tussenvoegsel,
-                              fullActiveOrganisation?.contactpersonen?.[0]
-                                ?.achternaam,
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </div>
-                          <div>
-                            {fullActiveOrganisation?.contactpersonen?.[0]?.[
-                              'e-mailadres'
-                            ] ? (
-                              <Link
-                                href={`mailto:${fullActiveOrganisation?.contactpersonen?.[0]?.['e-mailadres']}`}
-                              >
-                                {
-                                  fullActiveOrganisation?.contactpersonen?.[0]?.[
-                                    'e-mailadres'
-                                  ]
-                                }
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                          <div>
-                            {fullActiveOrganisation?.contactpersonen?.[0]
-                              ?.telefoonnummer ? (
-                              <Link
-                                href={`tel:${fullActiveOrganisation?.contactpersonen?.[0]?.telefoonnummer}`}
-                              >
-                                {
-                                  fullActiveOrganisation?.contactpersonen?.[0]
-                                    ?.telefoonnummer
-                                }
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {fullActiveOrganisation && (
-                    <div>
-                      <br />
-                      <ConEditableDescription
-                        markdownPreviewClassName='con-my-account-description'
-                        registerSlug={
-                          fullActiveOrganisation?.['@self']?.register?.slug ||
-                          'voorzieningen'
-                        }
-                        schemaSlug={
-                          fullActiveOrganisation?.['@self']?.schema?.slug ||
-                          'organisatie'
-                        }
-                        objectId={fullActiveOrganisation?.id}
-                        field='beschrijvingLang'
-                        label='Lange beschrijving'
-                        placeholder={longTooltip('organisatie')}
-                        tooltip={longTooltip('organisatie')}
-                        maxLength={2000}
-                        isMarkdown={true}
-                        isEditingCustomTrigger={editingDescription}
-                        value={fullActiveOrganisation?.beschrijvingLang}
-                        serialize={(v) => JSON.stringify(v || '')}
-                        deserialize={(v) => {
-                          if (!v) return '';
-                          try {
-                            return JSON.parse(v) || '';
-                          } catch (e) {
-                            return v;
-                          }
-                        }}
-                        onCancel={() => setEditingDescription(false)}
-                        onSuccess={(v) => (
-                          setEditingDescription(false),
-                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
-                        )}
-                      />
-                    </div>
-                  )}
-                  {/* Organisation related tabs (similar to details page) */}
-                  {fullActiveOrganisation?.id && (
-                    <div style={{ marginTop: '1rem' }}>
-                      <AccountOrganisationTabs
-                        store={store}
-                        organisationId={fullActiveOrganisation.id}
-                      />
-                    </div>
-                  )}
+                <div style={{ flex: 2 }}>
+                  <ConEditableDescription
+                    registerSlug={
+                      fullActiveOrganisation?.['@self']?.register?.slug ||
+                      'voorzieningen'
+                    }
+                    schemaSlug={
+                      fullActiveOrganisation?.['@self']?.schema?.slug ||
+                      'organisatie'
+                    }
+                    objectId={fullActiveOrganisation?.id}
+                    field='beschrijvingKort'
+                    label='Korte beschrijving'
+                    placeholder={shortTooltip('organisatie')}
+                    tooltip={shortTooltip('organisatie')}
+                    maxLength={255}
+                    isMarkdown={false}
+                    value={fullActiveOrganisation?.beschrijvingKort}
+                    isEditingCustomTrigger={editingSummary}
+                    serialize={(v) => v}
+                    deserialize={(v) => v || ''}
+                    onSuccess={(v) => (
+                      setEditingSummary(false),
+                      setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                    )}
+                    onCancel={() => setEditingSummary(false)}
+                  />
                 </div>
+                {fullActiveOrganisation && (
+                  <div>
+                    <br />
+                    <ConEditableDescription
+                      markdownPreviewClassName='con-my-account-description'
+                      registerSlug={
+                        fullActiveOrganisation?.['@self']?.register?.slug ||
+                        'voorzieningen'
+                      }
+                      schemaSlug={
+                        fullActiveOrganisation?.['@self']?.schema?.slug ||
+                        'organisatie'
+                      }
+                      objectId={fullActiveOrganisation?.id}
+                      field='beschrijvingLang'
+                      label='Lange beschrijving'
+                      placeholder={longTooltip('organisatie')}
+                      tooltip={longTooltip('organisatie')}
+                      maxLength={2000}
+                      isMarkdown={true}
+                      isEditingCustomTrigger={editingDescription}
+                      value={fullActiveOrganisation?.beschrijvingLang}
+                      serialize={(v) => JSON.stringify(v || '')}
+                      deserialize={(v) => {
+                        if (!v) return '';
+                        try {
+                          return JSON.parse(v) || '';
+                        } catch (e) {
+                          return v;
+                        }
+                      }}
+                      onCancel={() => setEditingDescription(false)}
+                      onSuccess={(v) => (
+                        setEditingDescription(false),
+                        setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                      )}
+                    />
+                  </div>
+                )}
+
+                {/* Contact Information Section */}
+                {fullActiveOrganisation && (
+                  <>
+                    <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+                      Contact informatie
+                    </Heading>
+                    <div className='ac-register-review__section'>
+                      <div style={{ marginTop: '12px' }}>
+                        {fullActiveOrganisation?.['e-mailadres'] && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Email: </strong>
+                            <Link
+                              href={`mailto:${fullActiveOrganisation['e-mailadres']}`}
+                            >
+                              {fullActiveOrganisation['e-mailadres']}
+                            </Link>
+                          </div>
+                        )}
+                        {fullActiveOrganisation?.telefoonnummer && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Telefoon: </strong>
+                            <Link
+                              href={`tel:${fullActiveOrganisation.telefoonnummer.replace(
+                                /\s/g,
+                                ''
+                              )}`}
+                            >
+                              {fullActiveOrganisation.telefoonnummer}
+                            </Link>
+                          </div>
+                        )}
+                        {fullActiveOrganisation?.website && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Website: </strong>
+                            <Link
+                              href={
+                                fullActiveOrganisation.website.startsWith('http')
+                                  ? fullActiveOrganisation.website
+                                  : `https://${fullActiveOrganisation.website}`
+                              }
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {fullActiveOrganisation.website}
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Organisation related tabs (similar to details page) */}
+                {fullActiveOrganisation?.id && (
+                  <div style={{ marginTop: '2rem' }}>
+                    <OrganisationRelatedTabs
+                      store={store}
+                      organisationId={fullActiveOrganisation.id}
+                    />
+                  </div>
+                )}
               </>
             )}
           {/* Modal for editing account info */}
@@ -743,18 +649,76 @@ const ConMyOrganisationPage = ({ store }) => {
   );
 };
 
-const AccountOrganisationTabs = observer(({ store }) => {
+const OrganisationRelatedTabs = observer(({ store, organisationId }) => {
   const { object } = store;
-  const objectType = 'voorzieningen_organisatie';
+  const [uses, setUses] = useState([]);
+  const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
+  const [tabIndexUses, setTabIndexUses] = useState(0);
+  const [tabIndexUsed, setTabIndexUsed] = useState(0);
 
-  // Pull related data for tabs
-  const usesData = object.getRelatedData(objectType, 'uses');
-  const usedData = object.getRelatedData(objectType, 'used');
+  const fetchUses = useCallback(async () => {
+    if (!organisationId) return;
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUses(data.results);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+    } finally {
+      setUsesLoading(false);
+    }
+  }, [organisationId]);
+
+  const fetchUsed = useCallback(async () => {
+    if (!organisationId) return;
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUsed(data.results);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+    } finally {
+      setUsedLoading(false);
+    }
+  }, [organisationId]);
+
+  useEffect(() => {
+    fetchUses();
+    fetchUsed();
+  }, [fetchUses, fetchUsed]);
 
   const uniqueSchemasFrom = useCallback((rel) => {
-    if (!rel?.results) return [];
+    if (!rel?.length) return [];
     const map = new Map();
-    for (const item of rel.results) {
+    for (const item of rel) {
       const schema = item['@self']?.schema;
       if (!schema) continue;
       if (!map.has(schema.id)) map.set(schema.id, schema);
@@ -764,133 +728,379 @@ const AccountOrganisationTabs = observer(({ store }) => {
     );
   }, []);
 
-  // Only show specific categories: producten, diensten, koppelingen, modules
-  const filterWantedSchemas = useCallback((schemas) => {
-    const wanted = new Set(['product', 'dienst', 'koppeling', 'module']);
-    return (schemas || []).filter((s) => wanted.has(s.slug || s.id || s));
-  }, []);
-
   const usesSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usesData)),
-    [usesData, filterWantedSchemas, uniqueSchemasFrom]
+    () => uniqueSchemasFrom(uses),
+    [uses, uniqueSchemasFrom]
   );
   const usedSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usedData)),
-    [usedData, filterWantedSchemas, uniqueSchemasFrom]
+    () => uniqueSchemasFrom(used),
+    [used, uniqueSchemasFrom]
   );
 
-  const [tabIndex, setTabIndex] = useState(0);
-
-  if (!usesSchemas?.length && !usedSchemas?.length) return null;
+  if (!usesSchemas?.length && !usedSchemas?.length && !usesLoading && !usedLoading) {
+    return null;
+  }
 
   return (
-    <div className='ac-account--tabs-container'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(i) => setTabIndex(i)}>
-        <AcTabList>
-          {usesSchemas.map((schema, idx) => {
-            const count = (usesData?.results || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
-            ).length;
-            return (
-              <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx}>
-                {(schema.slug === 'product'
-                  ? 'Producten'
-                  : schema.slug === 'dienst'
-                  ? 'Diensten'
-                  : schema.slug === 'koppeling'
-                  ? 'Koppelingen'
-                  : schema.slug === 'module'
-                  ? 'Applicaties'
-                  : schema.title || schema.id) + (count ? ` (${count})` : '')}
-              </AcTab>
-            );
-          })}
-          {usedSchemas.map((schema, idx) => {
-            const count = (usedData?.results || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
-            ).length;
-            return (
-              <AcTab
-                key={`used-${schema.id}`}
-                selected={tabIndex === idx + usesSchemas.length}
+    <>
+      <div>
+        {(usesLoading || (uses && uses.length > 0)) && (
+          <>
+            {usesLoading ? (
+              <div>
+                <AcLoader className='con-publication-uses-used-loader' />
+              </div>
+            ) : (
+              <AcTabs
+                selectedIndex={tabIndexUses}
+                onSelect={(index) => setTabIndexUses(index)}
               >
-                {(schema.slug === 'product'
-                  ? 'Producten'
-                  : schema.slug === 'dienst'
-                  ? 'Diensten'
-                  : schema.slug === 'koppeling'
-                  ? 'Koppelingen'
-                  : schema.slug === 'module'
-                  ? 'Applicaties'
-                  : schema.title || schema.id) + (count ? ` (${count})` : '')}
-              </AcTab>
-            );
-          })}
-        </AcTabList>
+                <AcTabList>
+                  {uses &&
+                    _.uniqBy(uses, (use) => use['@self'].schema.id).map(
+                      (use, idx) => {
+                        const IconComponent = getTabHeaderIcon(
+                          use['@self'].schema.slug
+                        );
+                        // Count items with this schema
+                        const count = uses.filter(
+                          (u) => u['@self'].schema.id === use['@self'].schema.id
+                        ).length;
+                        return (
+                          <AcTab
+                            key={use['@self'].schema.id}
+                            selected={tabIndexUses === idx}
+                          >
+                            <span
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                              }}
+                            >
+                              <IconComponent />{' '}
+                              {getTabHeaderName(use['@self'].schema.slug)} ({count})
+                            </span>
+                          </AcTab>
+                        );
+                      }
+                    )}
+                </AcTabList>
 
-        {usesSchemas.map((schema, idx) => {
-          const rows = (usesData?.results || []).filter(
-            (r) => r['@self']?.schema?.id === schema.id
-          );
-          return (
-            <AcTabPanel key={`uses-panel-${schema.id}`} selected={tabIndex === idx}>
-              <ul
-                style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
-              >
-                {rows.map((r) => {
-                  const href =
-                    r['@self']?.schema?.slug && r['@self']?.id
-                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
-                      : undefined;
-                  return (
-                    <li key={r.id || r['@self']?.id}>
-                      {href ? (
-                        <Link href={href}>{r['@self']?.name || r.id}</Link>
-                      ) : (
-                        r['@self']?.name || r.id
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </AcTabPanel>
-          );
-        })}
+                {uses &&
+                  _.uniqBy(uses, (use) => use['@self'].schema.id)
+                    .map((use) => use['@self'])
+                    .map((metadata, idx) => {
+                      // Build the items for ALL items with this schema
+                      const itemsWithThisSchema = uses.filter(
+                        (u) => u['@self'].schema.id === metadata.schema.id
+                      );
 
-        {usedSchemas.map((schema, idx) => {
-          const rows = (usedData?.results || []).filter(
-            (r) => r['@self']?.schema?.id === schema.id
-          );
-          const index = idx + usesSchemas.length;
-          return (
-            <AcTabPanel
-              key={`used-panel-${schema.id}`}
-              selected={tabIndex === index}
-            >
-              <ul
-                style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
+                      // Render cards based on schema type
+                      const renderCards = itemsWithThisSchema.map((item) => {
+                        const schemaSlug = item['@self']?.schema?.slug;
+
+                        switch (schemaSlug) {
+                          case 'product':
+                          case 'module':
+                          case 'organisatie':
+                            return (
+                              <ConCardOrganisationApplication
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                logo={getImageFromPublication(item)}
+                                cardType={schemaSlug}
+                                type={item['@self']?.schema?.title}
+                                referenceComponents={item.referentieComponenten}
+                                updated={item['@self']?.updated}
+                                published={item['@self']?.published}
+                                organisation={item['@self']?.organisation}
+                                objectStore={object}
+                              />
+                            );
+                          case 'dienst':
+                            return (
+                              <ConCardDienst
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                updated={item['@self']?.updated}
+                                published={item['@self']?.published}
+                                category={item['@self']?.schema?.title}
+                                themes={item.themes}
+                              />
+                            );
+                          case 'gebruik':
+                            return (
+                              <ConCardGebruik
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                updated={item['@self']?.updated}
+                                published={item['@self']?.published}
+                                category={item['@self']?.schema?.title}
+                                themes={item.themes}
+                              />
+                            );
+                          default:
+                            return (
+                              <AcSearchResult
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                published={item['@self']?.published}
+                                category={item['@self']?.schema?.title}
+                                themes={item.themes}
+                              />
+                            );
+                        }
+                      });
+
+                      return (
+                        <AcTabPanel key={idx} selected={tabIndexUses === idx}>
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns:
+                                'repeat(auto-fit, minmax(300px, 1fr))',
+                              gap: '16px',
+                              marginTop: '16px',
+                            }}
+                          >
+                            {renderCards}
+                          </div>
+                        </AcTabPanel>
+                      );
+                    })}
+              </AcTabs>
+            )}
+          </>
+        )}
+      </div>
+
+      <div>
+        {(usedLoading || (used && used.length > 0)) && (
+          <>
+            {usedLoading ? (
+              <div>
+                <AcLoader className='con-publication-uses-used-loader' />
+              </div>
+            ) : (
+              <AcTabs
+                selectedIndex={tabIndexUsed}
+                onSelect={(index) => setTabIndexUsed(index)}
               >
-                {rows.map((r) => {
-                  const href =
-                    r['@self']?.schema?.slug && r['@self']?.id
-                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
-                      : undefined;
-                  return (
-                    <li key={r.id || r['@self']?.id}>
-                      {href ? (
-                        <Link href={href}>{r['@self']?.name || r.id}</Link>
-                      ) : (
-                        r['@self']?.name || r.id
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </AcTabPanel>
-          );
-        })}
-      </AcTabs>
-    </div>
+                <AcTabList>
+                  {used &&
+                    _.uniqBy(used, (use) => use['@self'].schema.id).map(
+                      (use, idx) => {
+                        const IconComponent = getTabHeaderIcon(
+                          use['@self'].schema.slug
+                        );
+                        // Count items with this schema
+                        const count = used.filter(
+                          (u) => u['@self'].schema.id === use['@self'].schema.id
+                        ).length;
+                        return (
+                          <AcTab
+                            key={use['@self'].schema.id}
+                            selected={tabIndexUsed === idx}
+                          >
+                            <span
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                              }}
+                            >
+                              <IconComponent />{' '}
+                              {getTabHeaderName(use['@self'].schema.slug)} ({count})
+                            </span>
+                          </AcTab>
+                        );
+                      }
+                    )}
+                </AcTabList>
+
+                {used &&
+                  _.uniqBy(used, (use) => use['@self']?.schema.id)
+                    .map((use) => use['@self'])
+                    .map((metadata, idx) => {
+                      // Build the items for ALL items with this schema
+                      const itemsWithThisSchema = used.filter(
+                        (u) => u['@self'].schema.id === metadata.schema.id
+                      );
+
+                      // Render cards based on schema type
+                      const renderCards = itemsWithThisSchema.map((item) => {
+                        const schemaSlug = item['@self']?.schema?.slug;
+
+                        switch (schemaSlug) {
+                          case 'product':
+                          case 'module':
+                          case 'organisatie':
+                            return (
+                              <ConCardOrganisationApplication
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                logo={getImageFromPublication(item)}
+                                cardType={schemaSlug}
+                                type={item['@self']?.schema?.title}
+                                referenceComponents={item.referentieComponenten}
+                                updated={item['@self']?.updated}
+                                published={item['@self']?.published}
+                                organisation={item['@self']?.organisation}
+                                objectStore={object}
+                                navigateTo={`beheer-${schemaSlug}`}
+                              />
+                            );
+                          case 'dienst':
+                            return (
+                              <ConCardDienst
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                updated={item['@self']?.updated}
+                                published={item['@self']?.published}
+                                category={item['@self']?.schema?.title}
+                                themes={item.themes}
+                                navigateTo='beheer'
+                              />
+                            );
+                          case 'gebruik':
+                            return (
+                              <ConCardGebruik
+                                key={item.id}
+                                id={item.id}
+                                product={item.product}
+                                module={item.module}
+                                organisation={item['@self'].organisation}
+                                referentieComponenten={
+                                  item.gebruiktVoorReferentiecomponenten
+                                }
+                                status={item.status}
+                                objectStore={object}
+                                navigateTo='beheer'
+                              />
+                            );
+                          case 'contactpersoon':
+                            return (
+                              <ConCardContactpersoon
+                                key={item.id}
+                                id={item.id}
+                                firstName={item.voornaam}
+                                middleName={item.tussenvoegsel}
+                                lastName={item.achternaam}
+                                functie={item.functie}
+                                image={item['@self'].image}
+                                email={item['e-mailadres']}
+                                telefoon={item.telefoonnummer}
+                                organisation={item.organisatie}
+                                objectStore={object}
+                                navigateTo='beheer'
+                              />
+                            );
+                          default:
+                            return (
+                              <AcSearchResult
+                                key={item.id}
+                                id={item.id}
+                                title={
+                                  item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                                }
+                                summary={
+                                  item.beschrijving ?? item.beschrijvingKort ?? ''
+                                }
+                                published={item['@self']?.published}
+                                category={item['@self']?.schema?.title}
+                                themes={item.themes}
+                              />
+                            );
+                        }
+                      });
+
+                      return (
+                        <AcTabPanel key={idx} selected={tabIndexUsed === idx}>
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns:
+                                'repeat(auto-fit, minmax(300px, 1fr))',
+                              gap: '16px',
+                              marginTop: '16px',
+                            }}
+                          >
+                            {renderCards}
+                          </div>
+                        </AcTabPanel>
+                      );
+                    })}
+              </AcTabs>
+            )}
+          </>
+        )}
+      </div>
+    </>
   );
 });
 
