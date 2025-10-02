@@ -130,6 +130,10 @@
 
   &--side-content {
     width: auto !important;
+
+    &-tabs > li {
+        flex-grow:1;
+    }
   }
 
   &--content {

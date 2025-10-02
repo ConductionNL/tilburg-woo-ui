@@ -11,13 +11,11 @@ import { AcButton } from '@src/molecules';
 import { commongroundApiUrl } from '@src/config';
 import _ from 'lodash';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
-import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 import { ConDetailsActionsMenu } from '@src/components';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { withStore } from '@src/stores';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import {
-  resolveUUIDsInArray,
   useResolvedArray,
 } from '@src/utilities/con-resolve-uuids-in-text';
 
@@ -253,18 +251,12 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
       );
   }, []);
 
-  // Mark schemas that have duplicate titles between uses/used
-  const filterWantedSchemas = useCallback((schemas) => {
-    const wanted = new Set(['standaard', 'koppeling', 'dienst']);
-    return (schemas || []).filter((s) => wanted.has(s.slug || ''));
-  }, []);
-
   const usesSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usesData)),
+    () => uniqueSchemasFrom(usesData),
     [usesData]
   );
   const usedSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usedData)),
+    () => uniqueSchemasFrom(usedData),
     [usedData]
   );
 
@@ -485,7 +477,7 @@ const DetailsPageActionsMenu = withStore(
         showEditAction={true}
         showPublishActions={true}
         uniqueActions={[
-          ...(config.uniqueActions
+          ...(config?.uniqueActions
             ?.filter((action) => action.condition?.(data))
             .map((action) => ({
               key: action.key,
@@ -544,7 +536,7 @@ const SuitableForList = ({ modules, objectStore }) => {
   );
 
   return (
-    <div>
+    <div className='con-product-details--side-content-tabs'>
       <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
         <AcTabList>
           <AcTab selected={tabIndex === 0}>Geschikt voor:</AcTab>
