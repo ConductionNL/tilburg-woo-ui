@@ -16,11 +16,10 @@ export const BREADCRUMB_ITEMS = {
     href: '/beheer/my-account',
     isActive: type === 'my-account',
   }),
-  BEHEER_MY_ORGANISATION: (type) => ({
-    label: 'Mijn organisatie',
+  BEHEER_MY_ORGANISATION: {
+    label: 'Mijn Organisatie',
     href: '/beheer/my-organisation',
-    isActive: type === 'my-organisation',
-  }),
+  },
   BEHEER_LIST: (type) => ({
     label: prettifyPathname(type),
     href: `/beheer/${type}`,
@@ -31,7 +30,7 @@ export const BREADCRUMB_ITEMS = {
   VIEWS_LIST: { label: 'GEMMA weergaven', href: '/views' },
   BEHEER_VIEWS: { label: 'GEMMA weergaven beheer' },
   MY_ACCOUNT: { label: 'Mijn account' },
-  DIRECTORY: { label: 'Directory', href: '/directory' }
+  DIRECTORY: { label: 'Directory', href: '/directory' },
 };
 
 export const BREADCRUMBS = {
@@ -64,6 +63,10 @@ export const BREADCRUMBS = {
     }
     return items;
   },
+  BEHEER_MY_ORGANISATION: [
+    BREADCRUMB_ITEMS.BEHEER,
+    BREADCRUMB_ITEMS.BEHEER_MY_ORGANISATION,
+  ],
   REGISTER: [BREADCRUMB_ITEMS.REGISTER],
   VIEWS: (label) => {
     const items = [BREADCRUMB_ITEMS.VIEWS];
@@ -75,5 +78,5 @@ export const BREADCRUMBS = {
   VIEWS_LIST: [BREADCRUMB_ITEMS.VIEWS_LIST],
   BEHEER_VIEWS: [BREADCRUMB_ITEMS.BEHEER_VIEWS],
   MY_ACCOUNT: [BREADCRUMB_ITEMS.MY_ACCOUNT],
-  DIRECTORY: [BREADCRUMB_ITEMS.DIRECTORY]
+  DIRECTORY: [BREADCRUMB_ITEMS.DIRECTORY],
 };
