@@ -77,62 +77,9 @@ const ConProductDetailsPageContent = ({
     setUsed(data.results);
   };
 
-  // Detect if contact image looks already round (square with transparent corners)
-  const handleContactImageLoad = useCallback((e) => {
-    try {
-      const img = e?.target;
-      if (!img) return;
-      const width = img.naturalWidth;
-      const height = img.naturalHeight;
-
-      // Default behavior: crop to center
-      let nextFit = 'cover';
-
-      // If not square, we crop to circle center
-      if (width !== height) {
-        setContactImageFit(nextFit);
-        return;
-      }
-
-      // Try to inspect corner transparency to guess if already circular
-      // This may fail on cross-origin images; fall back to 'cover'.
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        setContactImageFit(nextFit);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const corners = [
-        [0, 0],
-        [width - 1, 0],
-        [0, height - 1],
-        [width - 1, height - 1],
-      ];
-      let transparentCorners = 0;
-      for (const [x, y] of corners) {
-        const data = ctx.getImageData(x, y, 1, 1).data;
-        if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
-      }
-      if (transparentCorners >= 3) {
-        nextFit = 'contain';
-      }
-      setContactImageFit(nextFit);
-    } catch (err) {
-      // Likely CORS taint; keep default cropping behavior
-      setContactImageFit('cover');
-    }
-  }, []);
-
   const contact = Array.isArray(data.contactpersoon)
     ? data.contactpersoon[0]
     : data.contactpersoon;
-
-  const aanbieder = Array.isArray(data?.aanbieder)
-    ? data?.aanbieder[0]
-    : data?.aanbieder;
 
   useEffect(() => {
     fetchUses();
@@ -179,60 +126,6 @@ const ConProductDetailsPageContent = ({
           </div>
 
           <UnpublishedWarning data={data} />
-
-          {/* Short stats grid (2 columns x 3 rows) */}
-          {(() => {
-            // Prefer extended aanbieder, fallback to aanbiederNaam
-            const leverancierNaam = data?.aanbieder
-              ? Array.isArray(data?.aanbieder)
-                ? data?.aanbieder[0]?.naam || data?.aanbieder[0]?.id
-                : typeof data?.aanbieder === 'object'
-                ? data?.aanbieder.value || data?.aanbieder.id || '-'
-                : data?.aanbieder?.naam ||
-                  data?.aanbieder?.id ||
-                  data?.aanbieder ||
-                  '-'
-              : '-';
-            const hostingLocatie = data?.hostingLocatie || '-';
-            // TODO: If product status uses another key, adjust here
-            const statusLabel =
-              typeof data?.inGebruik === 'boolean'
-                ? data.inGebruik
-                  ? 'In gebruik'
-                  : 'Niet in gebruik'
-                : data?.status || '-'; // @TODO: Confirm correct key for status on product
-            const hostingType =
-              data?.cloudDienstverleningsmodel || data?.hostingType || '-'; // @TODO: Confirm if hostingType maps to cloudDienstverleningsmodel
-            const dataOpslag = data?.hostingJurisdictie || '-';
-
-            const items = [
-              { label: 'Leverancier', value: leverancierNaam },
-              { label: 'De applicatie wordt gehost in', value: hostingLocatie },
-              { label: 'Status', value: statusLabel },
-              { label: 'Hosting type', value: hostingType },
-              { label: 'De data wordt opgeslagen in', value: dataOpslag },
-              {
-                label: 'Aantal afnemers',
-                value: String(Array.isArray(used) ? used.length : 0),
-              },
-            ];
-
-            return (
-              <div className='con-product-details--header-short-stats'>
-                {items.map((item) => (
-                  <p
-                    key={item.label}
-                    className='con-product-details--header-short-stats-item'
-                  >
-                    <span>{item.label}:</span>
-                    <ConUuidResolver style={{ fontWeight: 600 }}>
-                      {item.value || '-'}
-                    </ConUuidResolver>
-                  </p>
-                ))}
-              </div>
-            );
-          })()}
         </div>
 
         <div>
