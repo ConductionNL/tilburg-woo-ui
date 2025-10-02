@@ -128,6 +128,10 @@
     display: block;
   }
 
+  &--side-content {
+    width: auto !important;
+  }
+
   &--content {
     display: flex;
     gap: 20px;
