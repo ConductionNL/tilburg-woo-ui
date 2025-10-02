@@ -2,54 +2,54 @@ import { VISUALS } from '@constants';
 
 export const getTabHeaderIcon = (headerName) => {
   switch (headerName) {
-    case 'Product':
+    case 'product':
       return VISUALS.CUBE;
-    case 'Module':
+    case 'module':
       return VISUALS.CUBE;
-    case 'Dienst':
+    case 'dienst':
       return VISUALS.HAND_HOLDING;
-    case 'Gebruik':
+    case 'gebruik':
       return VISUALS.CLOUD;
-    case 'Versie':
+    case 'versie':
       return VISUALS.INFO;
-    case 'Contract':
+    case 'contract':
       return VISUALS.HAND_SHAKE;
-    case 'Overeenkomst':
+    case 'overeenkomst':
       return VISUALS.HAND_SHAKE;
-    case 'Organisatie':
+    case 'organisatie':
       return VISUALS.BUILDING;
-    case 'Kwetsbaarheid':
+    case 'kwetsbaarheid':
       return VISUALS.TRIANGLE_EXCLAMATION;
-    case 'Koppeling':
+    case 'koppeling':
       return VISUALS.LINK;
-    case 'Contactpersoon':
+    case 'contactpersoon':
       return VISUALS.USERS;
   }
 };
 
 export const getTabHeaderName = (headerName) => {
   switch (headerName) {
-    case 'Product':
+    case 'product':
       return 'Producten';
-    case 'Module':
+    case 'module':
       return 'Applicaties';
-    case 'Dienst':
+    case 'dienst':
       return 'Diensten';
-    case 'Gebruik':
+    case 'gebruik':
       return 'Gebruik';
-    case 'Versie':
+    case 'versie':
       return 'Versie';
-    case 'Contract':
+    case 'contract':
       return 'Contracten';
-    case 'Overeenkomst':
+    case 'overeenkomst':
       return 'Overeenkomsten';
-    case 'Organisatie':
+    case 'organisatie':
       return 'Organisaties';
-    case 'Kwetsbaarheid':
+    case 'kwetsbaarheid':
       return 'Kwetsbaarheden';
-    case 'Koppeling':
+    case 'koppeling':
       return 'Koppelingen';
-    case 'Contactpersoon':
+    case 'contactpersoon':
       return 'Contactpersonen';
   }
 };
