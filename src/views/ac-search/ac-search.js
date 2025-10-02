@@ -238,7 +238,6 @@ const AcSearch = ({ store: { publications, user, object } }) => {
       <AcContainer spacing='lg'>
         <AcCard blue padding='md'>
           <AcSearchBox
-            key={search_query._search || 'empty'} // Force re-render when search changes
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
