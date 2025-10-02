@@ -117,6 +117,10 @@
     }
   }
 
+  &--content-main {
+    flex: 3;
+  }
+
   &--contact-info {
     padding-block: var(--tilburg-space-block-rabbit);
     padding-inline: var(--tilburg-space-block-rabbit);
@@ -129,10 +133,11 @@
   }
 
   &--side-content {
+    flex: 1;
     width: auto !important;
 
     &-tabs li {
-        flex-grow:1;
+        flex-grow: 1;
     }
   }
 
