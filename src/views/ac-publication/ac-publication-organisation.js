@@ -393,10 +393,7 @@ const OrganisationRelatedTabs = observer(
     return (
       <>
         <div>
-          {(usesLoading ||
-            (uses &&
-              uses.filter((use) => use['@self']?.schema?.slug !== 'contactpersoon')
-                .length > 0)) && (
+          {(usesLoading || (uses && uses.length > 0)) && (
             <>
               {!usesLoading && <Heading level={2}>Maakt gebruik van</Heading>}
               {usesLoading ? (
@@ -409,28 +406,19 @@ const OrganisationRelatedTabs = observer(
                   onSelect={(index) => setTabIndexUses(index)}
                 >
                   <AcTabList>
-                    {uses &&
-                      uses.filter(
-                        (use) => use['@self']?.schema?.slug !== 'contactpersoon'
-                      ).length > 0 && (
-                        <>
-                          {uses &&
-                            // show unique headers, excluding contactpersoon schema
-                            _.uniqBy(
-                              uses.filter(
-                                (use) =>
-                                  use['@self']?.schema?.slug !== 'contactpersoon'
-                              ),
-                              (use) => use['@self'].schema.id
-                            ).map((use, idx) => {
+                    {uses && uses.length > 0 && (
+                      <>
+                        {uses &&
+                          // show unique headers
+                          _.uniqBy(uses, (use) => use['@self'].schema.id).map(
+                            (use, idx) => {
                               const IconComponent = getTabHeaderIcon(
-                                use['@self'].schema.title
+                                use['@self'].schema.slug
                               );
                               // Count items with this schema
                               const count = uses.filter(
                                 (u) =>
-                                  u['@self'].schema.id === use['@self'].schema.id &&
-                                  u['@self']?.schema?.slug !== 'contactpersoon'
+                                  u['@self'].schema.id === use['@self'].schema.id
                               ).length;
                               return (
                                 <AcTab
@@ -445,30 +433,24 @@ const OrganisationRelatedTabs = observer(
                                     }}
                                   >
                                     <IconComponent />{' '}
-                                    {getTabHeaderName(use['@self'].schema.title)} (
+                                    {getTabHeaderName(use['@self'].schema.slug)} (
                                     {count})
                                   </span>
                                 </AcTab>
                               );
-                            })}
-                        </>
-                      )}
+                            }
+                          )}
+                      </>
+                    )}
                   </AcTabList>
 
                   {uses &&
-                    _.uniqBy(
-                      uses.filter(
-                        (use) => use['@self']?.schema?.slug !== 'contactpersoon'
-                      ),
-                      (use) => use['@self'].schema.id
-                    )
+                    _.uniqBy(uses, (use) => use['@self'].schema.id)
                       .map((use) => use['@self'])
                       .map((metadata, idx) => {
-                        // Build the items for ALL items with this schema, excluding contactpersoon
+                        // Build the items for ALL items with this schema
                         const itemsWithThisSchema = uses.filter(
-                          (u) =>
-                            u['@self'].schema.id === metadata.schema.id &&
-                            u['@self']?.schema?.slug !== 'contactpersoon'
+                          (u) => u['@self'].schema.id === metadata.schema.id
                         );
 
                         // Render cards based on schema type
@@ -606,11 +588,11 @@ const OrganisationRelatedTabs = observer(
                     {used && used.length > 0 && (
                       <>
                         {used &&
-                          // show unique headers, excluding contactpersoon schema
+                          // show unique headers
                           _.uniqBy(used, (use) => use['@self'].schema.id).map(
                             (use, idx) => {
                               const IconComponent = getTabHeaderIcon(
-                                use['@self'].schema.title
+                                use['@self'].schema.slug
                               );
                               // Count items with this schema
                               const count = used.filter(
@@ -630,7 +612,7 @@ const OrganisationRelatedTabs = observer(
                                     }}
                                   >
                                     <IconComponent />{' '}
-                                    {getTabHeaderName(use['@self'].schema.title)} (
+                                    {getTabHeaderName(use['@self'].schema.slug)} (
                                     {count})
                                   </span>
                                 </AcTab>
@@ -645,7 +627,7 @@ const OrganisationRelatedTabs = observer(
                     _.uniqBy(used, (use) => use['@self']?.schema.id)
                       .map((use) => use['@self'])
                       .map((metadata, idx) => {
-                        // Build the items for ALL items with this schema, excluding contactpersoon
+                        // Build the items for ALL items with this schema
                         const itemsWithThisSchema = used.filter(
                           (u) => u['@self'].schema.id === metadata.schema.id
                         );
