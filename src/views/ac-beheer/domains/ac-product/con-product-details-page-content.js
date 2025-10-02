@@ -2,7 +2,7 @@ import { Heading, Paragraph } from '@amsterdam/design-system-react';
 import { AcFlex, AcColumn, AcTabs, AcTabList, AcTab, AcTabPanel } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
-import { Alert, Separator } from '@utrecht/component-library-react/dist/css-module';
+import { Alert } from '@utrecht/component-library-react/dist/css-module';
 import { Link, useNavigate } from 'react-router-dom';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { observer } from 'mobx-react-lite';
@@ -16,6 +16,7 @@ import { ConDetailsActionsMenu } from '@src/components';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { withStore } from '@src/stores';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { resolveUUIDsInArray, useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * Content for the product details page
@@ -29,6 +30,7 @@ const ConProductDetailsPageContent = ({
   config,
   data,
   userStore: user,
+  objectStore: object,
   id,
   canEdit = false,
   actionMenuProps,
@@ -242,34 +244,15 @@ const ConProductDetailsPageContent = ({
               actionMenuProps={actionMenuProps}
             />
 
-            {contact && typeof contact === 'object' && (
-              <div className='con-product-details--contact-info'>
-                <div>
-                  <p>
-                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </p>
+            {((contact && typeof contact === 'object') || data?.website) && (
+              <AcFlex
+                column
+                spacing='sm'
+                className='con-product-details--contact-info'
+              >
+                {data?.website && (
                   <div>
-                    {contact['e-mailadres'] && (
-                      <Link href={`mailto:${contact['e-mailadres']}`}>
-                        {contact['e-mailadres']}
-                      </Link>
-                    )}
-                  </div>
-                  <div>
-                    {contact.telefoonnummer && (
-                      <Link
-                        href={`tel:${String(contact.telefoonnummer)
-                          .split('')
-                          .filter((i) => i !== ' ')
-                          .join('')}`}
-                      >
-                        {contact.telefoonnummer}
-                      </Link>
-                    )}
-                  </div>
-                  {data?.website && (
+                    <b>Website:</b>
                     <Link
                       href={`${
                         data?.website.startsWith('http')
@@ -279,20 +262,38 @@ const ConProductDetailsPageContent = ({
                     >
                       {data?.website}
                     </Link>
-                  )}
-                  {aanbieder?.website && (
-                    <Link
-                      href={`${
-                        aanbieder?.website.startsWith('http')
-                          ? aanbieder?.website
-                          : `https://${aanbieder?.website}`
-                      }`}
-                    >
-                      {aanbieder?.website}
-                    </Link>
-                  )}
-                </div>
-              </div>
+                  </div>
+                )}
+                {contact && typeof contact === 'object' && (
+                  <AcFlex column spacing='xs'>
+                    <b>Contactpersoon:</b>
+                    <p>
+                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </p>
+                    <div>
+                      {contact['e-mailadres'] && (
+                        <Link href={`mailto:${contact['e-mailadres']}`}>
+                          {contact['e-mailadres']}
+                        </Link>
+                      )}
+                    </div>
+                    <div>
+                      {contact.telefoonnummer && (
+                        <Link
+                          href={`tel:${String(contact.telefoonnummer)
+                            .split('')
+                            .filter((i) => i !== ' ')
+                            .join('')}`}
+                        >
+                          {contact.telefoonnummer}
+                        </Link>
+                      )}
+                    </div>
+                  </AcFlex>
+                )}
+              </AcFlex>
             )}
           </AcFlex>
         </div>
@@ -327,6 +328,7 @@ const ConProductDetailsPageContent = ({
         {/* Side area next to editable descriptions with mock data */}
         <SuitableForList
           modules={data.modules}
+          objectStore={object}
           className='con-product-details--content-side'
         />
       </div>
@@ -629,27 +631,34 @@ const DetailsPageActionsMenu = withStore(
 );
 
 // Small helper components for the side area using mock data
-const SuitableForList = ({ modules }) => {
-  if (!modules) return null;
+const SuitableForList = ({ modules, objectStore }) => {
+  const [tabIndex, setTabIndex] = useState(0);
 
-  // little patch so there is something to show
-  // @TODO: remove this
-  modules = modules.map((m) => (typeof m === 'string' ? { id: m, naam: m } : m));
+  // Combine all referentieComponenten into a unique array
+  const allReferentieComponenten = useMemo(() => {
+    if (!modules?.length) return [];
+    return [
+      ...new Set(modules.flatMap((module) => module.referentieComponenten || [])),
+    ];
+  }, [modules]);
+
+  const resolvedReferentieComponenten = useResolvedArray(allReferentieComponenten, objectStore);
 
   return (
-    <AcFlex column spacing='sm' className='con-product-details--content-side'>
-      <AcFlex spacing='sm'>
-        <p style={{ fontWeight: 'bold' }}>Pakket geschikt voor:</p>
-        <p style={{ fontWeight: 'bold' }}>Ingevuld door:</p>
-      </AcFlex>
-      <ul style={{ marginLeft: '1rem' }}>
-        {modules.map((m) => (
-          <li key={m?.['@self']?.id}>
-            <ConUuidResolver>{m['@self']?.name || m.naam}</ConUuidResolver>
-          </li>
-        ))}
-      </ul>
-    </AcFlex>
+    <div>
+      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+        <AcTabList>
+          <AcTab selected={tabIndex === 0}>Geschikt voor:</AcTab>
+          <AcTab selected={tabIndex === 1}>Ingevuld door:</AcTab>
+        </AcTabList>
+        <AcTabPanel selected={tabIndex === 0}>
+          {resolvedReferentieComponenten.map((id, idx) => (
+            <p key={idx}>{id}</p>
+          ))}
+        </AcTabPanel>
+        <AcTabPanel selected={tabIndex === 1}></AcTabPanel>
+      </AcTabs>
+    </div>
   );
 };
 

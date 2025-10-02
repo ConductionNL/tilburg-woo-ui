@@ -136,6 +136,7 @@ const ConProductDetailsPage = ({ store }) => {
                 config={config}
                 data={data}
                 userStore={user}
+                objectStore={object}
                 id={id}
                 handleDelete={() => setOpenModal('delete')}
                 canEdit={true}

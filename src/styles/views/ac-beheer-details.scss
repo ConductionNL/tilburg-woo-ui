@@ -118,15 +118,14 @@
   }
 
   &--contact-info {
-    padding-block: var(--tilburg-space-block-mouse);
-    padding-inline: var(--tilburg-space-block-mouse);
-    background-color: var(--tilburg-color-gray-100);
+    padding-block: var(--tilburg-space-block-rabbit);
+    padding-inline: var(--tilburg-space-block-rabbit);
+    background-color: var(--tilburg-color-gray-50);
+    min-width: 250px;
+    border-radius: 4px;
   }
   &--contact-info * a {
     display: block;
-  }
-  &--contact-info {
-    text-align: -webkit-right;
   }
 
   &--content {
