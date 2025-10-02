@@ -18,6 +18,7 @@ const ConCardGebruik = ({
   referentieComponenten,
   status,
   objectStore,
+  navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
   const resolvedOrganisation = useResolvedText(organisation, objectStore);
@@ -29,6 +30,19 @@ const ConCardGebruik = ({
     referentieComponenten,
     objectStore
   );
+
+  const onClick = () => {
+    switch (navigateTo) {
+      case 'publication':
+        return NAVIGATE_TO.PUBLICATION(id);
+
+      case 'beheer':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('gebruik', id);
+
+      default:
+        return NAVIGATE_TO.PUBLICATION(id);
+    }
+  };
 
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
@@ -50,7 +64,7 @@ const ConCardGebruik = ({
             {status && <Paragraph small>{status}</Paragraph>}
           </AcFlex>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+        <AcLink to={onClick()}>
           <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT} {resolvedTitle}
           </span>

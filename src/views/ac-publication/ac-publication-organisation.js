@@ -93,7 +93,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [tabIndex, setTabIndex] = useState(0);
   const [tabIndexUses, setTabIndexUses] = useState(0);
   const [tabIndexUsed, setTabIndexUsed] = useState(0);
 
@@ -284,72 +283,6 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div>
-                <AcTabs selectedIndex={tabIndex} onSelect={(i) => setTabIndex(i)}>
-                  <AcTabList className='ac-organisatie-contactpersonen'>
-                    <AcTab>Contactpersonen</AcTab>
-                  </AcTabList>
-                  <AcTabPanel selected={tabIndex === 0}>
-                    {get_single?.contactpersonen &&
-                      get_single.contactpersonen.length > 0 && (
-                        <div>
-                          <div
-                            style={{
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '12px',
-                            }}
-                          >
-                            {get_single.contactpersonen.map((contact, index) => {
-                              const fullName = [
-                                contact.voornaam,
-                                contact.tussenvoegsel,
-                                contact.achternaam,
-                              ]
-                                .filter(Boolean)
-                                .join(' ');
-
-                              return (
-                                <div key={index} style={{ marginBottom: '8px' }}>
-                                  <div
-                                    style={{
-                                      fontWeight: 'bold',
-                                      marginBottom: '4px',
-                                    }}
-                                  >
-                                    {fullName || 'Naamloze contactpersoon'}
-                                  </div>
-                                  {contact['e-mailadres'] && (
-                                    <div style={{ marginBottom: '2px' }}>
-                                      <Link
-                                        href={`mailto:${contact['e-mailadres']}`}
-                                      >
-                                        {contact['e-mailadres']}
-                                      </Link>
-                                    </div>
-                                  )}
-                                  {contact.telefoonnummer && (
-                                    <div>
-                                      <Link
-                                        href={`tel:${contact.telefoonnummer.replace(
-                                          /\s/g,
-                                          ''
-                                        )}`}
-                                      >
-                                        {contact.telefoonnummer}
-                                      </Link>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                  </AcTabPanel>
-                </AcTabs>
               </div>
             </AcFlex>
           </AcFlex>

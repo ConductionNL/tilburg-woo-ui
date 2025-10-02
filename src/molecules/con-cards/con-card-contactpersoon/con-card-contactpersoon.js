@@ -19,11 +19,25 @@ const ConCardContactpersoon = ({
   organisation,
   telefoon,
   objectStore,
+  navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
   const resolvedOrganisation = useResolvedText(organisation, objectStore);
 
   const name = [firstName, middleName, lastName].filter(Boolean).join(' ');
+
+  const onClick = () => {
+    switch (navigateTo) {
+      case 'publication':
+        return NAVIGATE_TO.PUBLICATION(id);
+
+      case 'beheer':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('contactpersoon', id);
+
+      default:
+        return NAVIGATE_TO.PUBLICATION(id);
+    }
+  };
 
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
@@ -56,7 +70,7 @@ const ConCardContactpersoon = ({
             )}
           </AcFlex>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+        <AcLink to={onClick()}>
           <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT} {name}
           </span>
