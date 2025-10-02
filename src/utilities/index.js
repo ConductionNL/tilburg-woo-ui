@@ -138,3 +138,7 @@ export {
   handleFileClick,
 } from './con-data-url-utils';
 export { getImageFromPublication } from './con-getImageFromPublication';
+export {
+  getTabHeaderIcon,
+  getTabHeaderName,
+} from './con-schema-tab-display-helpers';

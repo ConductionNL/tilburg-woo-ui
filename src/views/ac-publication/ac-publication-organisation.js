@@ -11,9 +11,14 @@ import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import _ from 'lodash';
-import { ConCardOrganisationApplication, ConCardDienst } from '@molecules/con-cards';
+import {
+  ConCardOrganisationApplication,
+  ConCardDienst,
+  ConCardGebruik,
+  ConCardContactpersoon,
+} from '@molecules/con-cards';
 import { AcSearchResult } from '@molecules';
-import { getImageFromPublication } from '@utils';
+import { getImageFromPublication, getTabHeaderIcon, getTabHeaderName } from '@utils';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 
 // Markdown Editor
@@ -417,14 +422,35 @@ const OrganisationRelatedTabs = observer(
                                   use['@self']?.schema?.slug !== 'contactpersoon'
                               ),
                               (use) => use['@self'].schema.id
-                            ).map((use, idx) => (
-                              <AcTab
-                                key={use['@self'].schema.id}
-                                selected={tabIndexUses === idx}
-                              >
-                                <span>{use['@self'].schema.title}</span>
-                              </AcTab>
-                            ))}
+                            ).map((use, idx) => {
+                              const IconComponent = getTabHeaderIcon(
+                                use['@self'].schema.title
+                              );
+                              // Count items with this schema
+                              const count = uses.filter(
+                                (u) =>
+                                  u['@self'].schema.id === use['@self'].schema.id &&
+                                  u['@self']?.schema?.slug !== 'contactpersoon'
+                              ).length;
+                              return (
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUses === idx}
+                                >
+                                  <span
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                    }}
+                                  >
+                                    <IconComponent />{' '}
+                                    {getTabHeaderName(use['@self'].schema.title)} (
+                                    {count})
+                                  </span>
+                                </AcTab>
+                              );
+                            })}
                         </>
                       )}
                   </AcTabList>
@@ -498,6 +524,27 @@ const OrganisationRelatedTabs = observer(
                                   themes={item.themes}
                                 />
                               );
+                            case 'gebruik':
+                              return (
+                                <ConCardGebruik
+                                  key={item.id}
+                                  id={item.id}
+                                  title={
+                                    item.title ??
+                                    item.titel ??
+                                    item.name ??
+                                    item.naam ??
+                                    item.id
+                                  }
+                                  summary={
+                                    item.beschrijving ?? item.beschrijvingKort ?? ''
+                                  }
+                                  updated={item['@self']?.updated}
+                                  published={item['@self']?.published}
+                                  category={item['@self']?.schema?.title}
+                                  themes={item.themes}
+                                />
+                              );
                             default:
                               return (
                                 <AcSearchResult
@@ -544,10 +591,7 @@ const OrganisationRelatedTabs = observer(
         </div>
 
         <div>
-          {(usedLoading ||
-            (used &&
-              used.filter((use) => use['@self']?.schema?.slug !== 'contactpersoon')
-                .length > 0)) && (
+          {(usedLoading || (used && used.length > 0)) && (
             <>
               {usedLoading ? (
                 <div>
@@ -559,45 +603,51 @@ const OrganisationRelatedTabs = observer(
                   onSelect={(index) => setTabIndexUsed(index)}
                 >
                   <AcTabList>
-                    {used &&
-                      used.filter(
-                        (use) => use['@self']?.schema?.slug !== 'contactpersoon'
-                      ).length > 0 && (
-                        <>
-                          {used &&
-                            // show unique headers, excluding contactpersoon schema
-                            _.uniqBy(
-                              used.filter(
-                                (use) =>
-                                  use['@self']?.schema?.slug !== 'contactpersoon'
-                              ),
-                              (use) => use['@self'].schema.id
-                            ).map((use, idx) => (
-                              <AcTab
-                                key={use['@self'].schema.id}
-                                selected={tabIndexUsed === idx}
-                              >
-                                <span>{use['@self'].schema.title}</span>
-                              </AcTab>
-                            ))}
-                        </>
-                      )}
+                    {used && used.length > 0 && (
+                      <>
+                        {used &&
+                          // show unique headers, excluding contactpersoon schema
+                          _.uniqBy(used, (use) => use['@self'].schema.id).map(
+                            (use, idx) => {
+                              const IconComponent = getTabHeaderIcon(
+                                use['@self'].schema.title
+                              );
+                              // Count items with this schema
+                              const count = used.filter(
+                                (u) =>
+                                  u['@self'].schema.id === use['@self'].schema.id
+                              ).length;
+                              return (
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUsed === idx}
+                                >
+                                  <span
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px',
+                                    }}
+                                  >
+                                    <IconComponent />{' '}
+                                    {getTabHeaderName(use['@self'].schema.title)} (
+                                    {count})
+                                  </span>
+                                </AcTab>
+                              );
+                            }
+                          )}
+                      </>
+                    )}
                   </AcTabList>
 
                   {used &&
-                    _.uniqBy(
-                      used.filter(
-                        (use) => use['@self']?.schema?.slug !== 'contactpersoon'
-                      ),
-                      (use) => use['@self'].schema.id
-                    )
+                    _.uniqBy(used, (use) => use['@self']?.schema.id)
                       .map((use) => use['@self'])
                       .map((metadata, idx) => {
                         // Build the items for ALL items with this schema, excluding contactpersoon
                         const itemsWithThisSchema = used.filter(
-                          (u) =>
-                            u['@self'].schema.id === metadata.schema.id &&
-                            u['@self']?.schema?.slug !== 'contactpersoon'
+                          (u) => u['@self'].schema.id === metadata.schema.id
                         );
 
                         // Render cards based on schema type
@@ -651,6 +701,37 @@ const OrganisationRelatedTabs = observer(
                                   published={item['@self']?.published}
                                   category={item['@self']?.schema?.title}
                                   themes={item.themes}
+                                />
+                              );
+                            case 'gebruik':
+                              return (
+                                <ConCardGebruik
+                                  key={item.id}
+                                  id={item.id}
+                                  product={item.product}
+                                  module={item.module}
+                                  organisation={item['@self'].organisation}
+                                  referentieComponenten={
+                                    item.gebruiktVoorReferentiecomponenten
+                                  }
+                                  status={item.status}
+                                  objectStore={object}
+                                />
+                              );
+                            case 'contactpersoon':
+                              return (
+                                <ConCardContactpersoon
+                                  key={item.id}
+                                  id={item.id}
+                                  firstName={item.voornaam}
+                                  middleName={item.tussenvoegsel}
+                                  lastName={item.achternaam}
+                                  functie={item.functie}
+                                  image={item['@self'].image}
+                                  email={item['e-mailadres']}
+                                  telefoon={item.telefoonnummer}
+                                  organisation={item.organisatie}
+                                  objectStore={object}
                                 />
                               );
                             default:
