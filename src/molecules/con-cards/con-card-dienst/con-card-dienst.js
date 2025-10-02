@@ -19,7 +19,21 @@ const ConCardDienst = ({
   category,
   themes,
   id,
+  navigateTo = 'publication',
 }) => {
+  const onClick = () => {
+    switch (navigateTo) {
+      case 'publication':
+        return NAVIGATE_TO.PUBLICATION(id);
+
+      case 'beheer':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('dienst', id);
+
+      default:
+        return NAVIGATE_TO.PUBLICATION(id);
+    }
+  };
+
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
@@ -48,7 +62,7 @@ const ConCardDienst = ({
 
           <Paragraph small>{extractText(category)}</Paragraph>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+        <AcLink to={onClick()}>
           <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT}{' '}
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>

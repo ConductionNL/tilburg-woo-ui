@@ -998,6 +998,7 @@ const OrganisationRelatedTabs = observer(({ store, organisationId }) => {
                                 published={item['@self']?.published}
                                 organisation={item['@self']?.organisation}
                                 objectStore={object}
+                                navigateTo={`beheer-${schemaSlug}`}
                               />
                             );
                           case 'dienst':
@@ -1019,6 +1020,7 @@ const OrganisationRelatedTabs = observer(({ store, organisationId }) => {
                                 published={item['@self']?.published}
                                 category={item['@self']?.schema?.title}
                                 themes={item.themes}
+                                navigateTo='beheer'
                               />
                             );
                           case 'gebruik':
@@ -1034,6 +1036,7 @@ const OrganisationRelatedTabs = observer(({ store, organisationId }) => {
                                 }
                                 status={item.status}
                                 objectStore={object}
+                                navigateTo='beheer'
                               />
                             );
                           case 'contactpersoon':
@@ -1050,6 +1053,7 @@ const OrganisationRelatedTabs = observer(({ store, organisationId }) => {
                                 telefoon={item.telefoonnummer}
                                 organisation={item.organisatie}
                                 objectStore={object}
+                                navigateTo='beheer'
                               />
                             );
                           default:

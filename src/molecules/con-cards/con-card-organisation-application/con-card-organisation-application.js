@@ -7,7 +7,10 @@ import { NAVIGATE_TO } from '@constants/routes.constants';
 import { extractTitle, extractSummary } from '@src/utilities/con-extract-text';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import acFormatDate from '@src/utilities/ac-format-date';
-import { useResolvedText, useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
+import {
+  useResolvedText,
+  useResolvedArray,
+} from '@src/utilities/con-resolve-uuids-in-text';
 
 const ConCardOrganisationApplication = ({
   skeleton,
@@ -21,12 +24,16 @@ const ConCardOrganisationApplication = ({
   organisation,
   published,
   objectStore,
+  navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
   const resolvedOrganisation = useResolvedText(organisation, objectStore);
-  
+
   // Use generic UUID resolver for reference components
-  const resolvedReferenceComponents = useResolvedArray(referenceComponents, objectStore);
+  const resolvedReferenceComponents = useResolvedArray(
+    referenceComponents,
+    objectStore
+  );
 
   const icon = useMemo(() => {
     switch (cardType) {
@@ -43,6 +50,21 @@ const ConCardOrganisationApplication = ({
         return null;
     }
   }, [cardType]);
+
+  const onClick = () => {
+    switch (navigateTo) {
+      case 'publication':
+        return NAVIGATE_TO.PUBLICATION(id);
+      case 'beheer-organisatie':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('organisatie', id);
+      case 'beheer-product':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('product', id);
+      case 'beheer-module':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('module', id);
+      default:
+        return NAVIGATE_TO.PUBLICATION(id);
+    }
+  };
 
   return (
     <AcCard organisation padding='md' skeleton={skeleton}>
@@ -75,21 +97,20 @@ const ConCardOrganisationApplication = ({
             </Paragraph>
           )}
           <AcFlex alignItems='center' spacing='sm'>
-           {
-            published && (
-            <Paragraph small>
-              {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-            </Paragraph>
+            {published && (
+              <Paragraph small>
+                {acFormatDate(published, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+              </Paragraph>
             )}
             {type && (
               <>
-               { published && <VISUALS.ELLIPSE />}
+                {published && <VISUALS.ELLIPSE />}
                 <Paragraph small>{type}</Paragraph>
               </>
             )}
           </AcFlex>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+        <AcLink to={onClick()}>
           <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT} {title}
           </span>
