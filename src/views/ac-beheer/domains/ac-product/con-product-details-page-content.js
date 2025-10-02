@@ -2,8 +2,8 @@ import { Heading, Paragraph } from '@amsterdam/design-system-react';
 import { AcFlex, AcColumn, AcTabs, AcTabList, AcTab, AcTabPanel } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
-import { Alert, Separator } from '@utrecht/component-library-react/dist/css-module';
-import { Link } from 'react-router-dom';
+import { Alert } from '@utrecht/component-library-react/dist/css-module';
+import { Link, useNavigate } from 'react-router-dom';
 import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
 import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
@@ -12,6 +12,11 @@ import { commongroundApiUrl } from '@src/config';
 import _ from 'lodash';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import { ConDetailsActionsMenu } from '@src/components';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import { withStore } from '@src/stores';
+import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { resolveUUIDsInArray, useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * Content for the product details page
@@ -22,10 +27,13 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
  */
 const ConProductDetailsPageContent = ({
   loading,
+  config,
   data,
   userStore: user,
+  objectStore: object,
   id,
   canEdit = false,
+  actionMenuProps,
 }) => {
   // Tabs
   const [uses, setUses] = useState([]);
@@ -135,8 +143,6 @@ const ConProductDetailsPageContent = ({
 
   return (
     <AcFlex column spacing='xl'>
-      <UnpublishedWarning data={data} />
-
       <div className='con-product-details--header'>
         <div className='con-product-details--header--content'>
           <Heading level={4}>
@@ -171,7 +177,8 @@ const ConProductDetailsPageContent = ({
               canEdit={canEdit}
             />
           </div>
-          <Separator />
+
+          <UnpublishedWarning data={data} />
 
           {/* Short stats grid (2 columns x 3 rows) */}
           {(() => {
@@ -228,25 +235,38 @@ const ConProductDetailsPageContent = ({
           })()}
         </div>
 
-        {contact && (
-          <div className='con-product-details--contact-info'>
-            <div className='ac-register-review__contact-image'>
-              {aanbieder?.logo && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={aanbieder.logo}
-                />
-              )}
-            </div>
+        <div>
+          <AcFlex column alignItems='end' spacing='sm' margin='sm'>
+            <DetailsPageActionsMenu
+              id={id}
+              config={config}
+              data={data}
+              actionMenuProps={actionMenuProps}
+            />
 
-            {/* @TODO: contactpersoon has no logo / image, so its hard to show a contact persoon image */}
-            <i>Contactinformatie:</i>
-            {(() => {
-              // Glitch: sometimes an array with two objects is returned; use the first
-
-              if (contact && typeof contact === 'object') {
-                return (
-                  <div className='con-product-details--contact-info'>
+            {((contact && typeof contact === 'object') || data?.website) && (
+              <AcFlex
+                column
+                spacing='sm'
+                className='con-product-details--contact-info'
+              >
+                {data?.website && (
+                  <div>
+                    <b>Website:</b>
+                    <Link
+                      href={`${
+                        data?.website.startsWith('http')
+                          ? data?.website
+                          : `https://${data?.website}`
+                      }`}
+                    >
+                      {data?.website}
+                    </Link>
+                  </div>
+                )}
+                {contact && typeof contact === 'object' && (
+                  <AcFlex column spacing='xs'>
+                    <b>Contactpersoon:</b>
                     <p>
                       {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
                         .filter(Boolean)
@@ -271,43 +291,13 @@ const ConProductDetailsPageContent = ({
                         </Link>
                       )}
                     </div>
-                    {data?.website && (
-                      <Link
-                        href={`${
-                          data?.website.startsWith('http')
-                            ? data?.website
-                            : `https://${data?.website}`
-                        }`}
-                      >
-                        {data?.website}
-                      </Link>
-                    )}
-                    {aanbieder?.website && (
-                      <Link
-                        href={`${
-                          aanbieder?.website.startsWith('http')
-                            ? aanbieder?.website
-                            : `https://${aanbieder?.website}`
-                        }`}
-                      >
-                        {aanbieder?.website}
-                      </Link>
-                    )}
-                  </div>
-                );
-              }
-
-              return (
-                <>
-                  <p>Niet beschikbaar</p>
-                </>
-              );
-            })()}
-          </div>
-        )}
+                  </AcFlex>
+                )}
+              </AcFlex>
+            )}
+          </AcFlex>
+        </div>
       </div>
-
-      <Separator />
 
       <div className='con-product-details--content'>
         <AcColumn gap='tiger' className='con-product-details--content-main'>
@@ -335,11 +325,10 @@ const ConProductDetailsPageContent = ({
           />
         </AcColumn>
 
-        <Separator />
-
         {/* Side area next to editable descriptions with mock data */}
         <SuitableForList
           modules={data.modules}
+          objectStore={object}
           className='con-product-details--content-side'
         />
       </div>
@@ -536,28 +525,140 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
   );
 });
 
-// Small helper components for the side area using mock data
-const SuitableForList = ({ modules }) => {
-  if (!modules) return null;
+const DetailsPageActionsMenu = withStore(
+  observer(({ store, id, data, config, actionMenuProps = {} }) => {
+    const navigate = useNavigate();
 
-  // little patch so there is something to show
-  // @TODO: remove this
-  modules = modules.map((m) => (typeof m === 'string' ? { id: m, naam: m } : m));
+    const {
+      setDynamicCreateTargetType,
+      setDynamicCreatePreSelected,
+      setDynamicCreateMetadata,
+      setOpenModal,
+    } = actionMenuProps;
+
+    const { user, object } = store;
+
+    const [actionMenuItems, setActionMenuItems] = useState([]);
+
+    const openDynamicCreate = useCallback(
+      (targetType, preSelected, metadata = {}) => {
+        setDynamicCreateTargetType(targetType);
+        setDynamicCreatePreSelected(preSelected);
+        // Store metadata for outgoing relationship handling and optimization
+        // Store all metadata for the modal to use
+        setDynamicCreateMetadata(metadata);
+        setOpenModal('dynamicCreate');
+      },
+      []
+    );
+
+    const { makeActionsForContext } = useRelatedCreateActions({
+      object,
+      user,
+      schemaRef: config?.schemaSlug,
+      currentType: config?.schemaSlug,
+      openDynamicCreate,
+      currentObject: data, // Pass current object for organization permission checks
+      currentObjectRegister: config?.registerSlug, // Pass current object register
+      currentObjectSchema: config?.schemaSlug, // Pass current object schema
+    });
+
+    useEffect(() => {
+      if (!config?.schemaSlug || !data?.id) return;
+      const items = makeActionsForContext(data.id).map(
+        ({ key, label, onClick, schema, icon }) => ({
+          key,
+          label,
+          onClick,
+          schema,
+          icon,
+        })
+      );
+      setActionMenuItems(items);
+    }, [config?.schemaSlug, data?.id, makeActionsForContext]);
+
+    return (
+      <ConDetailsActionsMenu
+        user={user}
+        id={id}
+        schemaSlug={config?.schemaSlug}
+        title={data['@self']?.name || data.id}
+        published={data?.['@self']?.published}
+        object={data}
+        showViewAction={false}
+        showEditAction={true}
+        showPublishActions={true}
+        uniqueActions={[
+          ...(config.uniqueActions
+            ?.filter((action) => action.condition?.(data))
+            .map((action) => ({
+              key: action.key,
+              label: action.label,
+              icon: action.icon,
+              onClick: () =>
+                typeof action.onClick === 'function'
+                  ? action.onClick(data)
+                  : setOpenModal(action.action),
+            })) || []),
+          {
+            key: 'delete',
+            label: 'Verwijderen',
+            icon: VISUALS.TRASHCAN,
+            onClick: () => setOpenModal('delete'),
+          },
+        ]}
+        relatedActions={actionMenuItems}
+        onEdit={() => {
+          // Prefer wizard editing when available; fallback to legacy modal
+          if (config?.schemaSlug) {
+            const wizards = Object.values(DASHBOARD_WIZARDS);
+            const wizard = wizards.find((w) => w.schema === config.schemaSlug);
+            if (wizard) {
+              const baseUrl = getWizardUrl(wizard);
+              const url = new URL(baseUrl, window.location.origin);
+              url.searchParams.set('id', data?.id);
+              navigate(url.pathname + url.search);
+              return;
+            }
+          }
+          setOpenModal('edit');
+        }}
+        onPublish={() => setOpenModal('publish')}
+        onDepublish={() => setOpenModal('depublish')}
+      />
+    );
+  })
+);
+
+// Small helper components for the side area using mock data
+const SuitableForList = ({ modules, objectStore }) => {
+  const [tabIndex, setTabIndex] = useState(0);
+
+  // Combine all referentieComponenten into a unique array
+  const allReferentieComponenten = useMemo(() => {
+    if (!modules?.length) return [];
+    return [
+      ...new Set(modules.flatMap((module) => module.referentieComponenten || [])),
+    ];
+  }, [modules]);
+
+  const resolvedReferentieComponenten = useResolvedArray(allReferentieComponenten, objectStore);
 
   return (
-    <AcFlex column spacing='sm' className='con-product-details--content-side'>
-      <AcFlex spacing='sm'>
-        <p style={{ fontWeight: 'bold' }}>Pakket geschikt voor:</p>
-        <p style={{ fontWeight: 'bold' }}>Ingevuld door:</p>
-      </AcFlex>
-      <ul style={{ marginLeft: '1rem' }}>
-        {modules.map((m) => (
-          <li key={m?.['@self']?.id}>
-            <ConUuidResolver>{m['@self']?.name || m.naam}</ConUuidResolver>
-          </li>
-        ))}
-      </ul>
-    </AcFlex>
+    <div>
+      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+        <AcTabList>
+          <AcTab selected={tabIndex === 0}>Geschikt voor:</AcTab>
+          <AcTab selected={tabIndex === 1}>Ingevuld door:</AcTab>
+        </AcTabList>
+        <AcTabPanel selected={tabIndex === 0}>
+          {resolvedReferentieComponenten.map((id, idx) => (
+            <p key={idx}>{id}</p>
+          ))}
+        </AcTabPanel>
+        <AcTabPanel selected={tabIndex === 1}></AcTabPanel>
+      </AcTabs>
+    </div>
   );
 };
 
