@@ -485,7 +485,7 @@ const DetailsPageActionsMenu = withStore(
         showEditAction={true}
         showPublishActions={true}
         uniqueActions={[
-          ...(config.uniqueActions
+          ...(config?.uniqueActions
             ?.filter((action) => action.condition?.(data))
             .map((action) => ({
               key: action.key,
