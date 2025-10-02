@@ -24,6 +24,8 @@ export const getTabHeaderIcon = (headerName) => {
       return VISUALS.LINK;
     case 'contactpersoon':
       return VISUALS.USERS;
+    default:
+      return VISUALS.CHART_LINE;
   }
 };
 
@@ -51,5 +53,7 @@ export const getTabHeaderName = (headerName) => {
       return 'Koppelingen';
     case 'contactpersoon':
       return 'Contactpersonen';
+    default:
+      return headerName;
   }
 };
