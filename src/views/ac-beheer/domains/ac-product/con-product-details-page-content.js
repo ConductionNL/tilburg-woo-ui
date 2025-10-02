@@ -16,7 +16,10 @@ import { ConDetailsActionsMenu } from '@src/components';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { withStore } from '@src/stores';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { resolveUUIDsInArray, useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
+import {
+  resolveUUIDsInArray,
+  useResolvedArray,
+} from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * Content for the product details page
@@ -38,7 +41,6 @@ const ConProductDetailsPageContent = ({
   // Tabs
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
-  const [contactImageFit, setContactImageFit] = useState('cover');
 
   const fetchUses = async () => {
     const response = await fetch(
@@ -90,24 +92,41 @@ const ConProductDetailsPageContent = ({
 
   return (
     <AcFlex column spacing='xl'>
-      <div className='con-product-details--header'>
-        <div className='con-product-details--header--content'>
-          <Heading level={4}>
-            <div className='con-beheer-details--header-container'>
-              {(data?.logo || data?.['@self']?.image) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={data?.logo || data?.['@self']?.image}
-                />
-              )}
+      <AcFlex column spacing='sm'>
+        <div className='con-product-details--header'>
+          <div className='con-product-details--header--content'>
+            <Heading level={4}>
+              <div className='con-beheer-details--header-container'>
+                {(data?.logo || data?.['@self']?.image) && (
+                  <ConLogoPreview
+                    className='con-beheer-details--logo-container'
+                    logoUrl={data?.logo || data?.['@self']?.image}
+                  />
+                )}
 
-              <Heading className='con-beheer-details--title'>
-                {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-              </Heading>
-            </div>
-          </Heading>
+                <Heading className='con-beheer-details--title'>
+                  {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+                </Heading>
+              </div>
+            </Heading>
 
-          <div className='con-product-details--header--description'>
+            <UnpublishedWarning data={data} />
+          </div>
+
+          <div>
+            <AcFlex column alignItems='end' spacing='sm' margin='sm'>
+              <DetailsPageActionsMenu
+                id={id}
+                config={config}
+                data={data}
+                actionMenuProps={actionMenuProps}
+              />
+            </AcFlex>
+          </div>
+        </div>
+
+        <div className='con-product-details--content'>
+          <AcColumn gap='tiger' className='con-product-details--content-main'>
             <ConEditableDescription
               registerSlug={data['@self'].register.slug}
               schemaSlug={data['@self'].schema.slug}
@@ -123,20 +142,32 @@ const ConProductDetailsPageContent = ({
               deserialize={(v) => v || ''}
               canEdit={canEdit}
             />
-          </div>
 
-          <UnpublishedWarning data={data} />
-        </div>
-
-        <div>
-          <AcFlex column alignItems='end' spacing='sm' margin='sm'>
-            <DetailsPageActionsMenu
-              id={id}
-              config={config}
-              data={data}
-              actionMenuProps={actionMenuProps}
+            <ConEditableDescription
+              registerSlug={data['@self'].register.slug}
+              schemaSlug={data['@self'].schema.slug}
+              objectId={data?.['@self']?.id}
+              field='beschrijvingLang'
+              label='Lange beschrijving'
+              placeholder='Een uitgebreide beschrijving van de product'
+              tooltip='Een uitgebreide beschrijving van de product'
+              maxLength={2000}
+              isMarkdown={true}
+              value={data.beschrijvingLang}
+              serialize={(v) => JSON.stringify(v || '')}
+              deserialize={(v) => {
+                if (!v) return '';
+                try {
+                  return JSON.parse(v) || '';
+                } catch (e) {
+                  return v;
+                }
+              }}
+              canEdit={canEdit}
             />
+          </AcColumn>
 
+          <AcFlex column spacing='sm' className='con-product-details--side-content'>
             {((contact && typeof contact === 'object') || data?.website) && (
               <AcFlex
                 column
@@ -188,43 +219,15 @@ const ConProductDetailsPageContent = ({
                 )}
               </AcFlex>
             )}
+
+            <SuitableForList
+              modules={data.modules}
+              objectStore={object}
+              className='con-product-details--content-side'
+            />
           </AcFlex>
         </div>
-      </div>
-
-      <div className='con-product-details--content'>
-        <AcColumn gap='tiger' className='con-product-details--content-main'>
-          <ConEditableDescription
-            registerSlug={data['@self'].register.slug}
-            schemaSlug={data['@self'].schema.slug}
-            objectId={data?.['@self']?.id}
-            field='beschrijvingLang'
-            label='Lange beschrijving'
-            placeholder='Een uitgebreide beschrijving van de product'
-            tooltip='Een uitgebreide beschrijving van de product'
-            maxLength={2000}
-            isMarkdown={true}
-            value={data.beschrijvingLang}
-            serialize={(v) => JSON.stringify(v || '')}
-            deserialize={(v) => {
-              if (!v) return '';
-              try {
-                return JSON.parse(v) || '';
-              } catch (e) {
-                return v;
-              }
-            }}
-            canEdit={canEdit}
-          />
-        </AcColumn>
-
-        {/* Side area next to editable descriptions with mock data */}
-        <SuitableForList
-          modules={data.modules}
-          objectStore={object}
-          className='con-product-details--content-side'
-        />
-      </div>
+      </AcFlex>
 
       <DetailsPageTabs uses={uses} used={used} userStore={user} />
     </AcFlex>
@@ -535,7 +538,10 @@ const SuitableForList = ({ modules, objectStore }) => {
     ];
   }, [modules]);
 
-  const resolvedReferentieComponenten = useResolvedArray(allReferentieComponenten, objectStore);
+  const resolvedReferentieComponenten = useResolvedArray(
+    allReferentieComponenten,
+    objectStore
+  );
 
   return (
     <div>
