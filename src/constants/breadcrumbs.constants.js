@@ -11,11 +11,10 @@ export const BREADCRUMB_ITEMS = {
   GEMMA: { label: 'GEMMA', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
   BEHEER: { label: 'Beheer', href: '/beheer' },
-  BEHEER_MY_ACCOUNT: (type) => ({
-    label: 'Mijn account',
+  BEHEER_MY_ACCOUNT: {
+    label: 'Mijn Account',
     href: '/beheer/my-account',
-    isActive: type === 'my-account',
-  }),
+  },
   BEHEER_MY_ORGANISATION: {
     label: 'Mijn Organisatie',
     href: '/beheer/my-organisation',
@@ -63,6 +62,10 @@ export const BREADCRUMBS = {
     }
     return items;
   },
+  BEHEER_MY_ACCOUNT: [
+    BREADCRUMB_ITEMS.BEHEER,
+    BREADCRUMB_ITEMS.BEHEER_MY_ACCOUNT,
+  ],
   BEHEER_MY_ORGANISATION: [
     BREADCRUMB_ITEMS.BEHEER,
     BREADCRUMB_ITEMS.BEHEER_MY_ORGANISATION,

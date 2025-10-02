@@ -60,6 +60,9 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
       return BREADCRUMBS.NEXTCLOUD_LOGIN;
     }
 
+    if (location.pathname.startsWith('/beheer/my-account')) {
+      return BREADCRUMBS.BEHEER_MY_ACCOUNT;
+    }
     if (location.pathname.startsWith('/beheer/my-organisation')) {
       return BREADCRUMBS.BEHEER_MY_ORGANISATION;
     }
