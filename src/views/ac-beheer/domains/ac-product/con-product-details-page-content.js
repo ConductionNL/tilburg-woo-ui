@@ -147,7 +147,7 @@ const ConProductDetailsPageContent = ({
               label='Lange beschrijving'
               placeholder='Een uitgebreide beschrijving van de product'
               tooltip='Een uitgebreide beschrijving van de product'
-              maxLength={2000}
+              maxLength={5000}
               isMarkdown={true}
               value={data.beschrijvingLang}
               serialize={(v) => JSON.stringify(v || '')}

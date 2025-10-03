@@ -94,7 +94,7 @@ import rehypeSlug from 'rehype-slug';
  * @param {string} props.label - The display label for the field.
  * @param {string} [props.placeholder=''] - Placeholder text for the input field.
  * @param {string} [props.tooltip=''] - Tooltip text to display next to the label.
- * @param {number} [props.maxLength=2000] - Maximum character limit for the field.
+ * @param {number} [props.maxLength=5000] - Maximum character limit for the field.
  * @param {boolean} [props.isMarkdown=false] - Whether to enable markdown editing and preview.
  * @param {any} props.value - The current value of the field (will be deserialized for editing).
  * @param {Function} [props.deserialize=(v) => v ?? ''] - Function to transform the value for editing. Receives the raw value and should return a string.
@@ -118,7 +118,7 @@ const ConEditableDescription = ({
   label,
   placeholder = '',
   tooltip = '',
-  maxLength = 2000,
+  maxLength = 5000,
   isMarkdown = false,
   value,
   // serialize = (v) => v,
