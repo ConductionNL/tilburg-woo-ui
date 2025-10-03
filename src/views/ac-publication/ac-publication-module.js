@@ -397,7 +397,12 @@ const TabList = ({
               <TableHeader>
                 <TableRow>
                   <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
+                    style={{
+                      fontWeight: 'bold',
+                      backgroundColor: '#f8f9fa',
+                      paddingLeft:
+                        'var(--utrecht-table-cell-padding-inline-end) !important',
+                    }}
                   >
                     Standaard
                   </TableCell>
