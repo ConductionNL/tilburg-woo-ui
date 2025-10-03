@@ -451,6 +451,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     setOpenModal('delete');
   };
 
+  // Bulk publish/depublish handlers
+  const handleMultiplePublish = () => {
+    setOpenModal('publish');
+  };
+
+  const handleMultipleDepublish = () => {
+    setOpenModal('depublish');
+  };
+
   // Generate action buttons for table rows
   const generateActionButtons = useCallback(
     (row) => {
@@ -494,7 +503,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
       // Add publish/depublish actions as standard options
       const publishActions = [];
-      if (row['@self']?.published === false) {
+      if (!row['@self']?.published) {
         publishActions.push({
           key: 'publish',
           label: 'Publiceren',
@@ -505,7 +514,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           },
         });
       }
-      if (row['@self']?.published === true) {
+      if (row['@self']?.published) {
         publishActions.push({
           key: 'depublish',
           label: 'Depubliceren',
@@ -697,6 +706,31 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                       <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
                         Weergeven als view
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Divider />
+
+                      {/* Bulk publish/depublish actions based on selection */}
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PUBLISH />}
+                        onClick={handleMultiplePublish}
+                        disabled={
+                          selectedRows.length === 0 ||
+                          !selectedRows.some((r) => !r['@self']?.published)
+                        }
+                      >
+                        Publiceren
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PUBLISH_OFF />}
+                        onClick={handleMultipleDepublish}
+                        disabled={
+                          selectedRows.length === 0 ||
+                          !selectedRows.some((r) => !!r['@self']?.published)
+                        }
+                      >
+                        Depubliceren
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Divider />

@@ -542,7 +542,7 @@ const ConMyOrganisationPage = ({ store }) => {
                       label='Lange beschrijving'
                       placeholder={longTooltip('organisatie')}
                       tooltip={longTooltip('organisatie')}
-                      maxLength={2000}
+                      maxLength={5000}
                       isMarkdown={true}
                       isEditingCustomTrigger={editingDescription}
                       value={fullActiveOrganisation?.beschrijvingLang}
