@@ -12,5 +12,8 @@ const ConCardContactpersoon = loadable(() =>
 const ConCardGebruik = loadable(() =>
   import('@molecules/con-cards/con-card-gebruik/con-card-gebruik')
 );
+const ConCardKoppeling = loadable(() =>
+  import('@molecules/con-cards/con-card-koppeling/con-card-koppeling')
+);
 
-export { ConCardOrganisationApplication, ConCardDienst, ConCardContactpersoon, ConCardGebruik };
+export { ConCardOrganisationApplication, ConCardDienst, ConCardContactpersoon, ConCardGebruik, ConCardKoppeling };
