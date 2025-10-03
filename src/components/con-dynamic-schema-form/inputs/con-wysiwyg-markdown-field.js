@@ -25,14 +25,17 @@ const ConWysiwygMarkdownField = ({
   placeholder,
   required,
   disabled,
+  maxLength,
 }) => {
   const [editorValue, setEditorValue] = useState(value || '');
   const [isLoaded, setIsLoaded] = useState(false);
+  const [charCount, setCharCount] = useState((value || '').length);
 
   // Sync external value changes with internal state
   useEffect(() => {
     if (value !== editorValue) {
       setEditorValue(value || '');
+      setCharCount((value || '').length);
     }
   }, [value]);
 
@@ -40,6 +43,7 @@ const ConWysiwygMarkdownField = ({
   const handleEditorChange = (val) => {
     const newValue = val || '';
     setEditorValue(newValue);
+    setCharCount(newValue.length);
     if (onChange) {
       onChange(newValue);
     }
@@ -114,6 +118,7 @@ const ConWysiwygMarkdownField = ({
                 disabled: disabled,
                 required: required,
                 id: path,
+                ...(typeof maxLength === 'number' && { maxLength }),
                 style: {
                   fontSize: '14px',
                   lineHeight: '1.6',
@@ -125,6 +130,11 @@ const ConWysiwygMarkdownField = ({
               // Enable preview by default for better UX
               data-testid={`markdown-editor-${path}`}
             />
+            {typeof maxLength === 'number' && (
+              <span className='character-count'>
+                {maxLength - charCount} karakters over
+              </span>
+            )}
           </React.Suspense>
         ) : (
           // Fallback textarea while loading
@@ -136,6 +146,7 @@ const ConWysiwygMarkdownField = ({
             placeholder={placeholder || 'Schrijf hier je markdown tekst...'}
             disabled={disabled}
             required={required}
+            {...(typeof maxLength === 'number' && { maxLength })}
             rows={8}
           />
         )}

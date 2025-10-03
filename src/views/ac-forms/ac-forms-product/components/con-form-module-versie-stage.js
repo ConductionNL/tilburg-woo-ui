@@ -293,7 +293,7 @@ const ConFormModuleVersieStage = memo(
                 <TableRow key={`${moduleIndex}-${vIdx}`}>
                   <TableCell>
                     <Textbox
-                      value={moduleVersie.versie || schemaDefaults.versie || ''}
+                      value={moduleVersie.versie ?? schemaDefaults.versie ?? ''}
                       onChange={(e) =>
                         updateModuleVersieAt(
                           realModuleIndex,
@@ -445,7 +445,7 @@ const ConFormModuleVersieStage = memo(
                       <TableRow key={`v-${vIdx}`}>
                         <TableCell>
                           <Textbox
-                            value={mv.versie || schemaDefaults.versie || ''}
+                            value={mv.versie ?? schemaDefaults.versie ?? ''}
                             onChange={(e) =>
                               updateAllModulesAt(
                                 appIndex,

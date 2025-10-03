@@ -85,15 +85,25 @@ const ConFormProductInformatieStage = memo(
             />
 
             {/* Short Description - full width */}
-            <ConSchemaEnhancedField
-              schemaType='product'
-              schemaProperty='beschrijvingKort'
-              value={product.beschrijvingKort || ''}
-              onChange={(value) => setProductData('beschrijvingKort', value)}
-              isDisabled={loading}
-              width='full'
-              schemas={schemas}
-            />
+            <div style={{ width: '100%' }}>
+              <ConSchemaEnhancedField
+                schemaType='product'
+                schemaProperty='beschrijvingKort'
+                value={product.beschrijvingKort || ''}
+                onChange={(value) => setProductData('beschrijvingKort', value)}
+                isDisabled={loading}
+                width='full'
+                schemas={schemas}
+              />
+              {typeof schemas?.product?.properties?.beschrijvingKort?.maxLength ===
+                'number' && (
+                <span className='character-count'>
+                  {schemas?.product?.properties?.beschrijvingKort?.maxLength -
+                    (product.beschrijvingKort || '').length}{' '}
+                  karakters over
+                </span>
+              )}
+            </div>
 
             {/* Long Description */}
             <ConSchemaEnhancedField

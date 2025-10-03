@@ -197,7 +197,7 @@ const ConFormAanbiederInformatieStage = memo(
                     // placeholder will come from schema example
                     component: 'AcTextarea',
                     rows: 4,
-                    maxLength: 2000,
+                    maxLength: 5000,
                   }}
                   schemas={schemas}
                 />
