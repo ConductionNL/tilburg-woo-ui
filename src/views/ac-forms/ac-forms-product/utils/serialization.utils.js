@@ -1,7 +1,7 @@
 /**
  * stripLocalIds
  * Recursively removes UI-only fields (like _localId, standaardnaam, bewijsFilename) from a value
- * before sending to the API.
+ * before sending to the API. Preserves existing IDs by converting them back to the 'id' field.
  *
  * @param {any} value - Arbitrary value to sanitize
  * @returns {any} A sanitized deep copy of the input value
@@ -13,7 +13,15 @@ export const stripLocalIds = (value) => {
   if (value && typeof value === 'object') {
     const out = {};
     Object.keys(value).forEach((k) => {
-      if (k === '_localId') return;
+      if (k === '_localId') {
+        // ✅ FIXED: Preserve existing IDs by converting them back to 'id' field
+        if (typeof value[k] === 'string' && value[k].startsWith('existing_')) {
+          const existingId = value[k].replace('existing_', '');
+          out.id = existingId;
+        }
+        // Skip local IDs that don't represent existing objects
+        return;
+      }
       // Remove UI-only fields from compliancy objects
       if (k === 'standaardnaam') return;
       // ✅ NEW: Remove filename field before saving

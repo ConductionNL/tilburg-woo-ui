@@ -116,6 +116,15 @@ const renderCard = (item, object) => {
   }
 };
 
+// Helper function to merge and deduplicate items
+const mergeAndDeduplicateItems = (uses = [], used = []) => {
+  // Combine both arrays
+  const allItems = [...uses, ...used];
+
+  // Remove duplicates based on item ID
+  return _.uniqBy(allItems, 'id');
+};
+
 // Helper function to render tabs for related objects
 const renderRelatedTabs = (items, loading, tabIndex, setTabIndex, object) => {
   if (loading) {
@@ -176,7 +185,8 @@ const renderRelatedTabs = (items, loading, tabIndex, setTabIndex, object) => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                gridTemplateColumns:
+                  renderCards.length === 1 ? '1fr' : 'repeat(2, 1fr)',
                 gap: '16px',
                 marginTop: '16px',
               }}
@@ -191,41 +201,25 @@ const renderRelatedTabs = (items, loading, tabIndex, setTabIndex, object) => {
 };
 
 const RelatedTabs = observer(
-  ({
-    uses,
-    used,
-    usesLoading,
-    usedLoading,
-    tabIndexUses,
-    setTabIndexUses,
-    tabIndexUsed,
-    setTabIndexUsed,
-    object,
-  }) => {
-    const shouldShowUses = usesLoading || (uses && uses.length > 0);
-    const shouldShowUsed = usedLoading || (used && used.length > 0);
+  ({ uses, used, usesLoading, usedLoading, tabIndex, setTabIndex, object }) => {
+    // Merge and deduplicate the data
+    const mergedItems = mergeAndDeduplicateItems(uses, used);
+
+    // Show loading if either is loading
+    const isLoading = usesLoading || usedLoading;
+
+    // Show the tabs if we have data or are loading
+    const shouldShow = isLoading || (mergedItems && mergedItems.length > 0);
 
     return (
       <>
-        {shouldShowUses && (
+        {shouldShow && (
           <div>
             {renderRelatedTabs(
-              uses,
-              usesLoading,
-              tabIndexUses,
-              setTabIndexUses,
-              object
-            )}
-          </div>
-        )}
-
-        {shouldShowUsed && (
-          <div>
-            {renderRelatedTabs(
-              used,
-              usedLoading,
-              tabIndexUsed,
-              setTabIndexUsed,
+              mergedItems,
+              isLoading,
+              tabIndex,
+              setTabIndex,
               object
             )}
           </div>
