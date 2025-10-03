@@ -11,6 +11,7 @@ import AcPublicationDefault from '@views/ac-publication/ac-publication-default';
 import AcPublicationOrganisation from '@views/ac-publication/ac-publication-organisation';
 import AcPublicationFormulier from './ac-publication-formulier';
 import AcPublicationProduct from './ac-publication-product';
+import AcPublicationModule from './ac-publication-module';
 
 const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
@@ -79,6 +80,9 @@ const AcPublication = observer(({ store: { publications } }) => {
         }
         if (get_single?.['@self']?.schema?.slug === 'product') {
           return <AcPublicationProduct />;
+        }
+        if (get_single?.['@self']?.schema?.slug === 'module') {
+          return <AcPublicationModule />;
         }
         return <AcPublicationDefault schema={schema} />;
     }

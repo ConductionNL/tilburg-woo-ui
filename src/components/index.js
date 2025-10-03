@@ -82,6 +82,10 @@ const ConUuidResolver = loadable(() =>
   import('@src/components/con-uuid-resolver/con-uuid-resolver')
 );
 
+const ConStandardsResolver = loadable(() =>
+  import('@src/components/con-standards-resolver/con-standards-resolver')
+);
+
 const ConRelatedObjectsLinks = loadable(() =>
   import('@src/components/con-related-objects-links/con-related-objects-links')
 );
@@ -138,6 +142,7 @@ export {
   ConPublicationActions,
   ConDetailsActionsMenu,
   ConUuidResolver,
+  ConStandardsResolver,
   ConRelatedObjectsLinks,
   ConExistingModulesInfoBox,
   ConModulesChoiceSwitch,

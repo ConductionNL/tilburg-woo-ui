@@ -612,14 +612,18 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   if (error) {
     return (
-      <AcBeheerError title={config.title} error={error.message} store={store} />
+      <AcBeheerError
+        title={config.title === 'Module' ? 'Applicaties' : config.title}
+        error={error.message}
+        store={store}
+      />
     );
   }
 
   if (schemaError) {
     return (
       <AcBeheerError
-        title={config.title}
+        title={config.title === 'Module' ? 'Applicaties' : config.title}
         error={schemaError.message}
         store={store}
       />
@@ -637,7 +641,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>{config.title}</Heading>
+            <Heading>
+              {config.title === 'Module' ? 'Applicaties' : config.title}
+            </Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <AcButton
                 style='button'
