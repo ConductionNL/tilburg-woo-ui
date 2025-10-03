@@ -85,8 +85,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [tabIndexUses, setTabIndexUses] = useState(0);
-  const [tabIndexUsed, setTabIndexUsed] = useState(0);
+  const [tabIndex, setTabIndex] = useState(0);
 
   const fetchUses = useCallback(async () => {
     setUsesLoading(true);
@@ -291,10 +290,8 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             used={used}
             usesLoading={usesLoading}
             usedLoading={usedLoading}
-            tabIndexUses={tabIndexUses}
-            setTabIndexUses={setTabIndexUses}
-            tabIndexUsed={tabIndexUsed}
-            setTabIndexUsed={setTabIndexUsed}
+            tabIndex={tabIndex}
+            setTabIndex={setTabIndex}
             object={object}
           />
         </AcFlex>
