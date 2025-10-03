@@ -28,8 +28,6 @@ const getTabOrder = (schemaSlug) => {
 const renderCard = (item, object, navigateTo) => {
   const schemaSlug = item['@self']?.schema?.slug;
 
-  console.log('navigateTo', navigateTo);
-
   switch (schemaSlug) {
     case 'product':
     case 'module':
@@ -129,8 +127,10 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
   // Combine both arrays
   const allItems = [...uses, ...used];
 
-  // Remove duplicates based on item ID
-  return _.uniqBy(allItems, 'id');
+  // Remove duplicates based on item ID and filter out elements
+  return _.uniqBy(allItems, 'id').filter(
+    (item) => item['@self']?.schema?.slug !== 'element'
+  );
 };
 
 // Helper function to render tabs for related objects
