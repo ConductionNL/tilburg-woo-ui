@@ -12,22 +12,24 @@ import React, { useMemo } from 'react';
  * @param {Object} props
  * @param {string} props.standardId - The UUID of the standard to resolve
  * @param {Array} props.standards - Pre-fetched array of standards from the API
+ * @param {boolean} props.returnStandardData - If true, returns the full standard data object instead of just the name
  * @param {string} props.as - HTML element to render as (default: 'span')
  * @param {Object} props.style - CSS styles to apply
  * @param {string} props.className - CSS class name
- * @returns {React.ReactElement}
+ * @returns {React.ReactElement|Object}
  */
 const ConStandardsResolver = ({
   standardId,
   standards = [],
+  returnStandardData = false,
   as: Component = 'span',
   style,
   className,
   ...props
 }) => {
-  const resolvedName = useMemo(() => {
+  const resolvedData = useMemo(() => {
     if (!standardId || !Array.isArray(standards) || standards.length === 0) {
-      return standardId;
+      return returnStandardData ? { name: standardId, data: null } : standardId;
     }
 
     // Find the standard with matching identifier (not id)
@@ -47,16 +49,21 @@ const ConStandardsResolver = ({
         matchingStandard?.label ||
         standardId;
 
-      return name;
+      return returnStandardData ? { name, data: matchingStandard } : name;
     }
 
     // Return the original ID if no match found
-    return standardId;
-  }, [standardId, standards]);
+    return returnStandardData ? { name: standardId, data: null } : standardId;
+  }, [standardId, standards, returnStandardData]);
+
+  // If returnStandardData is true, return the data object instead of rendering
+  if (returnStandardData) {
+    return resolvedData;
+  }
 
   return (
     <Component style={style} className={className} {...props}>
-      {resolvedName}
+      {resolvedData}
     </Component>
   );
 };

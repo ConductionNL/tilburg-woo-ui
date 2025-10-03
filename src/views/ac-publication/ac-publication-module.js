@@ -8,11 +8,19 @@ import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atom
 import { AcLoader, ConDetailsActionsMenu, ConStandardsResolver } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
-import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
+import { handleFileClick, useResolvedArray } from '@utils';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -381,27 +389,165 @@ const TabList = ({
           <AcTab selected={tabIndex === 0}>Standaarden:</AcTab>
           <AcTab selected={tabIndex === 1}>Geschikt voor:</AcTab>
         </AcTabList>
-        <AcTabPanel selected={tabIndex === 0}>
+        <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
           {standardsLoading ? (
             <p>Standaarden laden...</p>
           ) : (
-            complianceStandards.map((standard, idx) => (
-              <p
-                style={{ display: 'flex', gap: '5px', alignItems: 'center' }}
-                key={idx}
-              >
-                <ConStandardsResolver
-                  standardId={standard.standaardversie}
-                  standards={standards}
-                />
-                -
-                {standard.bewijs ? (
-                  <Link href={standard.bewijs}>bewijs</Link>
-                ) : (
-                  <span>geen bewijs</span>
-                )}
-              </p>
-            ))
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableCell
+                    style={{
+                      fontWeight: 'bold',
+                      backgroundColor: '#f8f9fa',
+                      paddingLeft:
+                        'var(--utrecht-table-cell-padding-inline-end) !important',
+                    }}
+                  >
+                    Standaard
+                  </TableCell>
+                  <TableCell
+                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
+                  >
+                    Status
+                  </TableCell>
+                  <TableCell
+                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
+                  >
+                    Bewijs
+                  </TableCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {complianceStandards.map((standard, idx) => {
+                  // Get the full standard data to determine if it's required or recommended
+                  const standardData = ConStandardsResolver({
+                    standardId: standard.standaardversie,
+                    standards: standards,
+                    returnStandardData: true,
+                  });
+
+                  // Determine if this is a required standard based on available information
+                  // Since we don't have the referentiecomponenten context, we'll use heuristics:
+                  // 1. Check if the standard has evidence (indicates compliance)
+                  // 2. Check standard properties for indicators of requirement level
+                  const hasEvidence = !!standard.bewijs;
+
+                  // Try to determine if it's required based on standard data
+                  const standardInfo = standardData?.data;
+                  const isLikelyRequired =
+                    // If it has evidence, it might be required (organizations tend to provide evidence for required standards)
+                    hasEvidence ||
+                    // Check if the standard name/description contains keywords that suggest it's required
+                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
+                      .toLowerCase()
+                      .includes('verplicht') ||
+                    // Check if it's a security or compliance standard (often required)
+                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
+                      .toLowerCase()
+                      .match(
+                        /(security|beveiliging|privacy|gdpr|iso.*27001|baseline)/
+                      );
+
+                  const standardType = isLikelyRequired ? 'VERPLICHT' : 'AANBEVOLEN';
+                  const typeColor = isLikelyRequired ? '#dc3545' : '#28a745';
+
+                  return (
+                    <TableRow key={idx}>
+                      <TableCell
+                        style={{
+                          alignContent: 'center',
+                          paddingLeft:
+                            'var(--utrecht-table-cell-padding-inline-end) !important',
+                        }}
+                      >
+                        <div>
+                          <Link
+                            href={`https://www.gemmaonline.nl/wiki/GEMMA/${standard.standaardversie}`}
+                            target='_blank'
+                          >
+                            <ConStandardsResolver
+                              standardId={standard.standaardversie}
+                              standards={standards}
+                            />
+                          </Link>
+                          <div style={{ marginTop: '4px' }}>
+                            <span
+                              style={{
+                                fontSize: '0.75rem',
+                                color: '#fff',
+                                backgroundColor: typeColor,
+                                fontWeight: '600',
+                                textTransform: 'uppercase',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                display: 'inline-block',
+                                lineHeight: '1.2',
+                                margin: '0px', // Set block-inline values to 0px
+                                marginBlockStart: '0px',
+                                marginBlockEnd: '0px',
+                                marginInlineStart: '0px',
+                                marginInlineEnd: '0px',
+                              }}
+                            >
+                              {standardType}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell style={{ alignContent: 'center' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: '#fff',
+                            backgroundColor: hasEvidence ? '#28a745' : '#6c757d',
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            display: 'inline-block',
+                            lineHeight: '1.2',
+                            margin: '0px', // Set block-inline values to 0px
+                            marginBlockStart: '0px',
+                            marginBlockEnd: '0px',
+                            marginInlineStart: '0px',
+                            marginInlineEnd: '0px',
+                          }}
+                        >
+                          {hasEvidence ? 'COMPLIANT' : 'NON-COMPLIANT'}
+                        </span>
+                      </TableCell>
+                      <TableCell style={{ alignContent: 'center' }}>
+                        {standard.bewijs ? (
+                          <Link
+                            href='#'
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleFileClick(standard.bewijs);
+                            }}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <VISUALS.DOWNLOAD />
+                          </Link>
+                        ) : (
+                          <span
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            -
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </AcTabPanel>
         <AcTabPanel selected={tabIndex === 1}>
