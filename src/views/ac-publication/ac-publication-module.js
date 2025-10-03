@@ -20,7 +20,7 @@ import {
 import { commongroundApiUrl } from '@config';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { handleFileClick, useResolvedArray } from '@utils';
+import { handleFileClick } from '@utils';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -139,8 +139,7 @@ const AcPublicationProduct = ({
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [tabIndexUses, setTabIndexUses] = useState(0);
-  const [tabIndexUsed, setTabIndexUsed] = useState(0);
+  const [tabIndex, setTabIndex] = useState(0);
 
   const fetchUses = useCallback(async () => {
     setUsesLoading(true);
@@ -356,10 +355,8 @@ const AcPublicationProduct = ({
         used={used}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
-        tabIndexUses={tabIndexUses}
-        setTabIndexUses={setTabIndexUses}
-        tabIndexUsed={tabIndexUsed}
-        setTabIndexUsed={setTabIndexUsed}
+        tabIndex={tabIndex}
+        setTabIndex={setTabIndex}
         object={object}
       />
     </AcContainer>
@@ -375,12 +372,41 @@ const TabList = ({
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
-  // Combine all referentieComponenten into a unique array
-
-  const resolvedReferentieComponenten = useResolvedArray(
-    referentieComponenten,
-    objectStore
+  // Custom hook to resolve UUIDs while keeping original IDs
+  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
+    []
   );
+
+  useEffect(() => {
+    const resolveWithIds = async () => {
+      if (!referentieComponenten?.length || !objectStore) {
+        setResolvedReferentieComponenten([]);
+        return;
+      }
+
+      try {
+        const resolved = await Promise.all(
+          referentieComponenten.map(async (id) => {
+            try {
+              const name = await objectStore.getNamesForSingleId(id);
+              return { id, name };
+            } catch (error) {
+              return { id, name: id }; // Fallback to ID if resolution fails
+            }
+          })
+        );
+        setResolvedReferentieComponenten(resolved);
+      } catch (error) {
+        console.error('Error resolving referentie componenten:', error);
+        // Fallback to just IDs
+        setResolvedReferentieComponenten(
+          referentieComponenten.map((id) => ({ id, name: id }))
+        );
+      }
+    };
+
+    resolveWithIds();
+  }, [referentieComponenten, objectStore]);
 
   return (
     <div className='con-product-details--side-content-tabs'>
@@ -551,8 +577,14 @@ const TabList = ({
           )}
         </AcTabPanel>
         <AcTabPanel selected={tabIndex === 1}>
-          {resolvedReferentieComponenten.map((id, idx) => (
-            <p key={idx}>{id}</p>
+          {resolvedReferentieComponenten.map((item, idx) => (
+            <Link
+              key={idx}
+              href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+              target='_blank'
+            >
+              {item.name}
+            </Link>
           ))}
         </AcTabPanel>
       </AcTabs>
