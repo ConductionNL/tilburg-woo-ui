@@ -19,13 +19,13 @@ const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
   const { user, object } = store;
 
-  const [orgIsPublished, setOrgIsPublished] = useState(false);
+  const [orgIsPublished, setOrgIsPublished] = useState(null);
 
   useEffect(() => {
     const activeOrganizationId = user?.activeOrganization?.uuid;
 
     const fetchOrganisatieData = async () => {
-      object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
+      await object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
 
       const result = object.getObject(
         'voorzieningen_organisatie',
@@ -97,7 +97,7 @@ const AcDashboard = ({ store }) => {
             )}
 
             {/* Warning card for unpublished objects */}
-            {!orgIsPublished && (
+            {orgIsPublished === false && (
               <Alert type='warning'>
                 <Heading level={4}>
                   Deze organisatie is nog niet gepubliceerd
