@@ -109,7 +109,7 @@ const AcPublicationProduct = ({
         _page: '1',
         gemmaType: 'Standaard',
         _extend: ['@self.schema'],
-        _source: 'database',
+        _source: 'index',
       };
 
       console.info('📋 Fetching standards for publication page...');
