@@ -35,6 +35,15 @@ const ConCardOrganisationApplication = ({
     objectStore
   );
 
+  const getTypeLabel = (type) => {
+    switch (type) {
+      case 'Module':
+        return 'Applicatie';
+      default:
+        return type;
+    }
+  };
+
   const icon = useMemo(() => {
     switch (cardType) {
       case 'product':
@@ -105,7 +114,7 @@ const ConCardOrganisationApplication = ({
             {type && (
               <>
                 {published && <VISUALS.ELLIPSE />}
-                <Paragraph small>{type}</Paragraph>
+                <Paragraph small>{getTypeLabel(type)}</Paragraph>
               </>
             )}
           </AcFlex>
