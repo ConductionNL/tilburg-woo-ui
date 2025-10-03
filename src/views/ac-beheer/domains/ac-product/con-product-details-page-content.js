@@ -1,32 +1,31 @@
-import { Heading, Paragraph } from '@amsterdam/design-system-react';
-import { AcFlex, AcColumn, AcTabs, AcTabList, AcTab, AcTabPanel } from '@src/atoms';
+import {
+  Heading,
+  Paragraph,
+  Link,
+} from '@utrecht/component-library-react/dist/css-module';
+import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
-import { Alert } from '@utrecht/component-library-react/dist/css-module';
-import { Link, useNavigate } from 'react-router-dom';
-import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
-import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
-import { AcButton } from '@src/molecules';
 import { commongroundApiUrl } from '@src/config';
-import _ from 'lodash';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
-import { ConDetailsActionsMenu } from '@src/components';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-import { withStore } from '@src/stores';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import RelatedTabs from '@views/ac-publication/con-related-tabs';
+import {
+  checkOrganizationPermissions,
+  getDisabledActionTooltip,
+} from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Content for the product details page
  *
  * note:
- * Does not render the actions menu, this has to be done on the parent component.
- * Editing functionality is disabled by default, but can be enabled by setting canEdit to true.
+ * Restructured to match con-my-organisation layout with vertical content flow
+ * and integrated action menu.
  */
 const ConProductDetailsPageContent = ({
   loading,
-  config,
   data,
   userStore: user,
   objectStore: object,
@@ -34,486 +33,403 @@ const ConProductDetailsPageContent = ({
   canEdit = false,
   actionMenuProps,
 }) => {
-  // Tabs
+  // Related tabs state
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
+  const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
-  const fetchUses = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  // Editing state for inline editing
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+
+  const fetchUses = useCallback(async () => {
+    if (!id) return;
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
       }
-    );
-    if (!response.ok) {
-      console.error('Error fetching uses:', response.statusText);
-      return;
+      const data = await response.json();
+      setUses(data.results || []);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+      setUses([]);
+    } finally {
+      setUsesLoading(false);
     }
-    const data = await response.json();
+  }, [id]);
 
-    setUses(data.results);
-  };
-  const fetchUsed = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const fetchUsed = useCallback(async () => {
+    if (!id) return;
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
       }
-    );
-    if (!response.ok) {
-      console.error('Error fetching used:', response.statusText);
-      return;
+      const data = await response.json();
+      setUsed(data.results || []);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+      setUsed([]);
+    } finally {
+      setUsedLoading(false);
     }
-    const data = await response.json();
-
-    setUsed(data.results);
-  };
+  }, [id]);
 
   const contact = Array.isArray(data.contactpersoon)
     ? data.contactpersoon[0]
     : data.contactpersoon;
 
+  // Check organization permissions for actions
+  const { canEdit: hasEditPermission, reason } = data
+    ? checkOrganizationPermissions(user, data)
+    : {
+        canEdit: false,
+        reason: 'Kan niet bewerken omdat het product niet gevonden is',
+      };
+
+  const actualCanEdit = canEdit && hasEditPermission;
+
   useEffect(() => {
     fetchUses();
     fetchUsed();
-  }, []);
+  }, [fetchUses, fetchUsed]);
 
   if (loading || !data) return null;
 
   return (
-    <AcFlex column spacing='xl'>
-      <AcFlex column spacing='sm'>
-        <div className='con-product-details--header'>
-          <div className='con-product-details--header--content'>
-            <Heading level={4}>
-              <div className='con-beheer-details--header-container'>
-                {(data?.logo || data?.['@self']?.image) && (
-                  <ConLogoPreview
-                    className='con-beheer-details--logo-container'
-                    logoUrl={data?.logo || data?.['@self']?.image}
-                  />
-                )}
-
-                <Heading className='con-beheer-details--title'>
-                  {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-                </Heading>
-              </div>
-            </Heading>
-
-            <UnpublishedWarning data={data} />
-          </div>
-
-          <div>
-            <AcFlex column alignItems='end' spacing='sm' margin='sm'>
-              <DetailsPageActionsMenu
-                id={id}
-                config={config}
-                data={data}
-                actionMenuProps={actionMenuProps}
+    <AcColumn gap='sm' horizontalOverflowWrapper>
+      {/* Header with logo, title and actions */}
+      <div
+        className='ac-register-review__organisation-header'
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Heading level={4}>
+          <div className='con-beheer-details--header-container'>
+            {(data?.logo || data?.['@self']?.image) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={data?.logo || data?.['@self']?.image}
               />
-            </AcFlex>
-          </div>
-        </div>
-
-        <div className='con-product-details--content'>
-          <AcColumn gap='tiger' className='con-product-details--content-main'>
-            <ConEditableDescription
-              registerSlug={data['@self'].register.slug}
-              schemaSlug={data['@self'].schema.slug}
-              objectId={data?.['@self']?.id}
-              field='beschrijvingKort'
-              label='Korte beschrijving'
-              placeholder='Een korte beschrijving van de product'
-              tooltip='Een korte beschrijving van de product'
-              maxLength={255}
-              isMarkdown={false}
-              value={data.beschrijvingKort}
-              serialize={(v) => v}
-              deserialize={(v) => v || ''}
-              canEdit={canEdit}
-            />
-
-            <ConEditableDescription
-              registerSlug={data['@self'].register.slug}
-              schemaSlug={data['@self'].schema.slug}
-              objectId={data?.['@self']?.id}
-              field='beschrijvingLang'
-              label='Lange beschrijving'
-              placeholder='Een uitgebreide beschrijving van de product'
-              tooltip='Een uitgebreide beschrijving van de product'
-              maxLength={5000}
-              isMarkdown={true}
-              value={data.beschrijvingLang}
-              serialize={(v) => JSON.stringify(v || '')}
-              deserialize={(v) => {
-                if (!v) return '';
-                try {
-                  return JSON.parse(v) || '';
-                } catch (e) {
-                  return v;
-                }
-              }}
-              canEdit={canEdit}
-            />
-          </AcColumn>
-
-          <AcFlex column spacing='sm' className='con-product-details--side-content'>
-            {((contact && typeof contact === 'object') || data?.website) && (
-              <AcFlex
-                column
-                spacing='sm'
-                className='con-product-details--contact-info'
-              >
-                {data?.website && (
-                  <div>
-                    <b>Website:</b>
-                    <Link
-                      href={`${
-                        data?.website.startsWith('http')
-                          ? data?.website
-                          : `https://${data?.website}`
-                      }`}
-                    >
-                      {data?.website}
-                    </Link>
-                  </div>
-                )}
-                {contact && typeof contact === 'object' && (
-                  <AcFlex column spacing='xs'>
-                    <b>Contactpersoon:</b>
-                    <p>
-                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
-                        .filter(Boolean)
-                        .join(' ')}
-                    </p>
-                    <div>
-                      {contact['e-mailadres'] && (
-                        <Link href={`mailto:${contact['e-mailadres']}`}>
-                          {contact['e-mailadres']}
-                        </Link>
-                      )}
-                    </div>
-                    <div>
-                      {contact.telefoonnummer && (
-                        <Link
-                          href={`tel:${String(contact.telefoonnummer)
-                            .split('')
-                            .filter((i) => i !== ' ')
-                            .join('')}`}
-                        >
-                          {contact.telefoonnummer}
-                        </Link>
-                      )}
-                    </div>
-                  </AcFlex>
-                )}
-              </AcFlex>
             )}
 
-            <SuitableForList
-              modules={data.modules}
-              objectStore={object}
-              className='con-product-details--content-side'
-            />
-          </AcFlex>
-        </div>
-      </AcFlex>
+            <Heading className='con-beheer-details--title'>
+              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+            </Heading>
+          </div>
+        </Heading>
 
-      <DetailsPageTabs uses={uses} used={used} userStore={user} />
-    </AcFlex>
+        <div className='ac-register-review__header-controls'>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <ConActionMenu>
+              <ConActionMenu.Trigger
+                icon={<VISUALS.ELLIPSIS />}
+                buttonType='primary'
+              >
+                Acties
+              </ConActionMenu.Trigger>
+
+              <ConActionMenu.Menu position='right'>
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => actionMenuProps?.setOpenModal?.('edit')}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
+                >
+                  Bewerken
+                </ConActionMenu.Button>
+
+                {/* TODO: Summary and description editing is not working yet*/}
+                {/* <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingSummary(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
+                      : undefined
+                  }
+                >
+                  Bewerk samenvatting
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingDescription(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
+                      : undefined
+                  }
+                >
+                  Bewerk beschrijving
+                </ConActionMenu.Button> */}
+
+                {data && !data['@self']?.published && (
+                  <ConActionMenu.Button
+                    icon={<VISUALS.PUBLISH />}
+                    onClick={() => actionMenuProps?.setOpenModal?.('publish')}
+                    disabled={!actualCanEdit}
+                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                    data-tooltip-content={
+                      !actualCanEdit
+                        ? getDisabledActionTooltip('publish', reason)
+                        : undefined
+                    }
+                  >
+                    Publiceren
+                  </ConActionMenu.Button>
+                )}
+
+                {data && data['@self']?.published && (
+                  <ConActionMenu.Button
+                    icon={<VISUALS.PUBLISH_OFF />}
+                    onClick={() => actionMenuProps?.setOpenModal?.('depublish')}
+                    disabled={!actualCanEdit}
+                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                    data-tooltip-content={
+                      !actualCanEdit
+                        ? getDisabledActionTooltip('depublish', reason)
+                        : undefined
+                    }
+                  >
+                    Depubliceren
+                  </ConActionMenu.Button>
+                )}
+
+                <ConActionMenu.Button
+                  icon={<VISUALS.TRASHCAN />}
+                  onClick={() => actionMenuProps?.setOpenModal?.('delete')}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('delete', reason)
+                      : undefined
+                  }
+                >
+                  Verwijderen
+                </ConActionMenu.Button>
+              </ConActionMenu.Menu>
+            </ConActionMenu>
+          </div>
+        </div>
+      </div>
+
+      {/* Unpublished warning */}
+      <UnpublishedWarning data={data} />
+
+      {/* Short description */}
+      <div style={{ flex: 2 }}>
+        <ConEditableDescription
+          registerSlug={data['@self'].register.slug}
+          schemaSlug={data['@self'].schema.slug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingKort'
+          label='Korte beschrijving'
+          placeholder='Een korte beschrijving van het product'
+          tooltip='Een korte beschrijving van het product'
+          maxLength={255}
+          isMarkdown={false}
+          value={data.beschrijvingKort}
+          isEditingCustomTrigger={editingSummary}
+          serialize={(v) => v}
+          deserialize={(v) => v || ''}
+          onSuccess={() => setEditingSummary(false)}
+          onCancel={() => setEditingSummary(false)}
+          canEdit={actualCanEdit}
+        />
+      </div>
+
+      {/* Long description */}
+      <div>
+        <br />
+        <ConEditableDescription
+          markdownPreviewClassName='con-my-account-description'
+          registerSlug={data['@self'].register.slug}
+          schemaSlug={data['@self'].schema.slug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingLang'
+          label='Lange beschrijving'
+          placeholder='Een uitgebreide beschrijving van het product'
+          tooltip='Een uitgebreide beschrijving van het product'
+          maxLength={5000}
+          isMarkdown={true}
+          isEditingCustomTrigger={editingDescription}
+          value={data.beschrijvingLang}
+          serialize={(v) => JSON.stringify(v || '')}
+          deserialize={(v) => {
+            if (!v) return '';
+            try {
+              return JSON.parse(v) || '';
+            } catch (e) {
+              return v;
+            }
+          }}
+          onCancel={() => setEditingDescription(false)}
+          onSuccess={() => setEditingDescription(false)}
+          canEdit={actualCanEdit}
+        />
+      </div>
+
+      {/* Contact Information Section */}
+      {((contact && typeof contact === 'object') || data?.website) && (
+        <>
+          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+            Contact informatie
+          </Heading>
+          <div className='ac-register-review__section'>
+            <div style={{ marginTop: '12px' }}>
+              {data?.website && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Website: </strong>
+                  <Link
+                    href={
+                      data?.website.startsWith('http')
+                        ? data?.website
+                        : `https://${data?.website}`
+                    }
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {data?.website}
+                  </Link>
+                </div>
+              )}
+              {contact && typeof contact === 'object' && (
+                <>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Contactpersoon: </strong>
+                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </div>
+                  {contact['e-mailadres'] && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Email: </strong>
+                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                        {contact['e-mailadres']}
+                      </Link>
+                    </div>
+                  )}
+                  {contact.telefoonnummer && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Telefoon: </strong>
+                      <Link
+                        href={`tel:${String(contact.telefoonnummer)
+                          .split('')
+                          .filter((i) => i !== ' ')
+                          .join('')}`}
+                      >
+                        {contact.telefoonnummer}
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Extra Information Section */}
+      {(data?.status ||
+        data?.hostingLocatie ||
+        data?.hostingJurisdictie ||
+        data?.cloudDienstverleningsmodel) && (
+        <>
+          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+            Extra informatie
+          </Heading>
+          <div className='ac-register-review__section'>
+            <div style={{ marginTop: '12px' }}>
+              {data?.status && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Status: </strong>
+                  {data.status}
+                </div>
+              )}
+              {data?.hostingLocatie && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>De applicatie wordt gehost in: </strong>
+                  {data.hostingLocatie}
+                </div>
+              )}
+              {data?.hostingJurisdictie && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>De data wordt opgeslagen in: </strong>
+                  {data.hostingJurisdictie}
+                </div>
+              )}
+              {data?.cloudDienstverleningsmodel && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Hosting type: </strong>
+                  {data.cloudDienstverleningsmodel}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Suitable For Section */}
+      <SuitableForSection modules={data.modules} objectStore={object} />
+
+      {/* Related tabs */}
+      {id && (
+        <div style={{ marginTop: '2rem' }}>
+          <RelatedTabs
+            uses={uses}
+            used={used}
+            usesLoading={usesLoading}
+            usedLoading={usedLoading}
+            tabIndex={relatedTabIndex}
+            setTabIndex={setRelatedTabIndex}
+            object={object}
+            navigateTo='beheer'
+          />
+        </div>
+      )}
+    </AcColumn>
   );
 };
 
-// separate component for tabs
-// @TODO: make generic and use on all details pages
-// @TODO: give smart support for optional files tab (should be able to be disabled hard coded & via configuration)
-const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData }) => {
-  const user = userStore;
-  const [tabIndex, setTabIndex] = useState(0);
-
-  // Uses/Used unique schemas for tabs
-  const uniqueSchemasFrom = useCallback((rel) => {
-    if (!rel) return [];
-    const uniq = _.uniqBy(rel, (item) => item['@self']?.schema?.['@self']?.id);
-    return uniq
-      .map((item) => item['@self']?.schema)
-      .filter(Boolean)
-      .sort((a, b) =>
-        String(a?.['@self']?.id).localeCompare(String(b?.['@self']?.id))
-      );
-  }, []);
-
-  const usesSchemas = useMemo(() => uniqueSchemasFrom(usesData), [usesData]);
-  const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
-
-  const getUsesCount = useCallback(
-    (schema) => {
-      return usesData?.filter(
-        (r) => r['@self']?.schema?.id === schema?.['@self']?.id
-      ).length;
-    },
-    [usesData]
-  );
-  const getUsedCount = useCallback(
-    (schema) => {
-      return usedData?.filter(
-        (r) => r['@self']?.schema?.id === schema?.['@self']?.id
-      ).length;
-    },
-    [usedData]
-  );
-
-  if (!usesSchemas?.length && !usedSchemas?.length) return null;
-
-  return (
-    <div className='ac-beheer-details--tabs-container'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-        <AcTabList>
-          {usesSchemas.length > 0 &&
-            usesSchemas.map((schema, idx) => (
-              <AcTab
-                key={`uses-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1}
-              >
-                {schema.title || schema?.['@self']?.id}{' '}
-                {getUsesCount(schema) ? `(${getUsesCount(schema)})` : ''}
-              </AcTab>
-            ))}
-          {usedSchemas.length > 0 &&
-            usedSchemas.map((schema, idx) => (
-              <AcTab
-                key={`used-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1 + usesSchemas.length}
-              >
-                {schema.title || schema?.['@self']?.id}{' '}
-                {getUsedCount(schema) ? `(${getUsedCount(schema)})` : ''}
-              </AcTab>
-            ))}
-        </AcTabList>
-        {usesSchemas.length > 0 &&
-          usesSchemas.map((schema, idx) => {
-            const metadata = usesData?.find(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            )?.['@self'];
-            const rows = (usesData || []).filter(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            );
-            return (
-              <AcTabPanel
-                key={`uses-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1}
-              >
-                {metadata ? (
-                  <BeheerTable
-                    type={schema.slug}
-                    metadata={metadata}
-                    data={rows}
-                    dataProperties={schema.properties}
-                    headers={[{ id: 'naam', label: 'Naam', key: 'naam' }]}
-                    user={user}
-                    actionButtons={(config) =>
-                      !!config.navigateView && {
-                        id: 'actions',
-                        label: 'Acties',
-                        key: '',
-                        customContent: (row) => (
-                          <AcFlex column spacing='xs'>
-                            <AcButton
-                              style='buttonSlim'
-                              buttonType='secondary'
-                              onClick={() => config.navigateView(row['@self'].id)}
-                            >
-                              <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                            </AcButton>
-                          </AcFlex>
-                        ),
-                      }
-                    }
-                    tableProps={{
-                      renderSelectRowButtons: false,
-                      truncateLines: 1,
-                    }}
-                  />
-                ) : (
-                  <Alert type='error'>
-                    Er is een fout opgetreden bij het laden van deze gegevens.
-                  </Alert>
-                )}
-              </AcTabPanel>
-            );
-          })}
-        {usedSchemas.length > 0 &&
-          usedSchemas.map((schema, idx) => {
-            const metadata = usedData?.find(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            )?.['@self'];
-            const rows = (usedData || []).filter(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            );
-            return (
-              <AcTabPanel
-                key={`used-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1 + usesSchemas.length}
-              >
-                {metadata ? (
-                  <BeheerTable
-                    type={schema.slug}
-                    metadata={metadata}
-                    data={rows}
-                    dataProperties={schema.properties}
-                    headers={[{ id: 'naam', label: 'Naam', key: 'naam' }]}
-                    user={user}
-                    actionButtons={(config) =>
-                      !!config.navigateView && {
-                        id: 'actions',
-                        label: 'Acties',
-                        key: '',
-                        customContent: (row) => (
-                          <AcFlex column spacing='xs'>
-                            <AcButton
-                              style='buttonSlim'
-                              buttonType='secondary'
-                              onClick={() => config.navigateView(row?.['@self']?.id)}
-                            >
-                              <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                            </AcButton>
-                          </AcFlex>
-                        ),
-                      }
-                    }
-                    tableProps={{
-                      renderSelectRowButtons: false,
-                      truncateLines: 1,
-                    }}
-                  />
-                ) : (
-                  <Alert type='error'>
-                    Er is een fout opgetreden bij het laden van deze gegevens.
-                  </Alert>
-                )}
-              </AcTabPanel>
-            );
-          })}
-      </AcTabs>
-    </div>
-  );
-});
-
-const DetailsPageActionsMenu = withStore(
-  observer(({ store, id, data, config, actionMenuProps = {} }) => {
-    const navigate = useNavigate();
-
-    const {
-      setDynamicCreateTargetType,
-      setDynamicCreatePreSelected,
-      setDynamicCreateMetadata,
-      setOpenModal,
-    } = actionMenuProps;
-
-    const { user, object } = store;
-
-    const [actionMenuItems, setActionMenuItems] = useState([]);
-
-    const openDynamicCreate = useCallback(
-      (targetType, preSelected, metadata = {}) => {
-        setDynamicCreateTargetType(targetType);
-        setDynamicCreatePreSelected(preSelected);
-        // Store metadata for outgoing relationship handling and optimization
-        // Store all metadata for the modal to use
-        setDynamicCreateMetadata(metadata);
-        setOpenModal('dynamicCreate');
-      },
-      []
-    );
-
-    const { makeActionsForContext } = useRelatedCreateActions({
-      object,
-      user,
-      schemaRef: config?.schemaSlug,
-      currentType: config?.schemaSlug,
-      openDynamicCreate,
-      currentObject: data, // Pass current object for organization permission checks
-      currentObjectRegister: config?.registerSlug, // Pass current object register
-      currentObjectSchema: config?.schemaSlug, // Pass current object schema
-    });
-
-    useEffect(() => {
-      if (!config?.schemaSlug || !data?.id) return;
-      const items = makeActionsForContext(data.id).map(
-        ({ key, label, onClick, schema, icon }) => ({
-          key,
-          label,
-          onClick,
-          schema,
-          icon,
-        })
-      );
-      setActionMenuItems(items);
-    }, [config?.schemaSlug, data?.id, makeActionsForContext]);
-
-    return (
-      <ConDetailsActionsMenu
-        user={user}
-        id={id}
-        schemaSlug={config?.schemaSlug}
-        title={data['@self']?.name || data.id}
-        published={data?.['@self']?.published}
-        object={data}
-        showViewAction={false}
-        showEditAction={true}
-        showPublishActions={true}
-        uniqueActions={[
-          ...(config?.uniqueActions
-            ?.filter((action) => action.condition?.(data))
-            .map((action) => ({
-              key: action.key,
-              label: action.label,
-              icon: action.icon,
-              onClick: () =>
-                typeof action.onClick === 'function'
-                  ? action.onClick(data)
-                  : setOpenModal(action.action),
-            })) || []),
-          {
-            key: 'delete',
-            label: 'Verwijderen',
-            icon: VISUALS.TRASHCAN,
-            onClick: () => setOpenModal('delete'),
-          },
-        ]}
-        relatedActions={actionMenuItems}
-        onEdit={() => {
-          // Prefer wizard editing when available; fallback to legacy modal
-          if (config?.schemaSlug) {
-            const wizards = Object.values(DASHBOARD_WIZARDS);
-            const wizard = wizards.find((w) => w.schema === config.schemaSlug);
-            if (wizard) {
-              const baseUrl = getWizardUrl(wizard);
-              const url = new URL(baseUrl, window.location.origin);
-              url.searchParams.set('id', data?.id);
-              navigate(url.pathname + url.search);
-              return;
-            }
-          }
-          setOpenModal('edit');
-        }}
-        onPublish={() => setOpenModal('publish')}
-        onDepublish={() => setOpenModal('depublish')}
-      />
-    );
-  })
-);
-
-// Small helper components for the side area using mock data
-const SuitableForList = ({ modules, objectStore }) => {
-  const [tabIndex, setTabIndex] = useState(0);
-
+// Suitable For Section component
+const SuitableForSection = ({ modules, objectStore }) => {
   // Combine all referentieComponenten into a unique array
   const allReferentieComponenten = useMemo(() => {
     if (!modules?.length) return [];
@@ -522,26 +438,65 @@ const SuitableForList = ({ modules, objectStore }) => {
     ];
   }, [modules]);
 
-  const resolvedReferentieComponenten = useResolvedArray(
-    allReferentieComponenten,
-    objectStore
+  // Custom hook to resolve UUIDs while keeping original IDs
+  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
+    []
   );
 
+  useEffect(() => {
+    const resolveWithIds = async () => {
+      if (!allReferentieComponenten.length || !objectStore) {
+        setResolvedReferentieComponenten([]);
+        return;
+      }
+
+      try {
+        const resolved = await Promise.all(
+          allReferentieComponenten.map(async (id) => {
+            try {
+              const name = await objectStore.getNamesForSingleId(id);
+              return { id, name };
+            } catch (error) {
+              return { id, name: id }; // Fallback to ID if resolution fails
+            }
+          })
+        );
+        setResolvedReferentieComponenten(resolved);
+      } catch (error) {
+        console.error('Error resolving referentie componenten:', error);
+        // Fallback to just IDs
+        setResolvedReferentieComponenten(
+          allReferentieComponenten.map((id) => ({ id, name: id }))
+        );
+      }
+    };
+
+    resolveWithIds();
+  }, [allReferentieComponenten, objectStore]);
+
+  if (!resolvedReferentieComponenten?.length) return null;
+
   return (
-    <div className='con-product-details--side-content-tabs'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-        <AcTabList>
-          <AcTab selected={tabIndex === 0}>Geschikt voor:</AcTab>
-          <AcTab selected={tabIndex === 1}>Ingevuld door:</AcTab>
-        </AcTabList>
-        <AcTabPanel selected={tabIndex === 0}>
-          {resolvedReferentieComponenten.map((id, idx) => (
-            <p key={idx}>{id}</p>
+    <>
+      <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+        Geschikt voor
+      </Heading>
+      <div className='ac-register-review__section'>
+        <div style={{ marginTop: '12px' }}>
+          {resolvedReferentieComponenten.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: '4px' }}>
+              <Link
+                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                {item.name}
+              </Link>
+            </div>
           ))}
-        </AcTabPanel>
-        <AcTabPanel selected={tabIndex === 1}></AcTabPanel>
-      </AcTabs>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -553,14 +508,14 @@ const UnpublishedWarning = ({ data }) => {
   const objectName = data?.['@self']?.name;
 
   return (
-    <Alert type='warning'>
+    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
       <Paragraph>
         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
         deze gegevens beschikbaar te maken voor bezoekers.
       </Paragraph>
-    </Alert>
+    </div>
   );
 };
 
