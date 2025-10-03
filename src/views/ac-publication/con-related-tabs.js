@@ -28,8 +28,6 @@ const getTabOrder = (schemaSlug) => {
 const renderCard = (item, object, navigateTo) => {
   const schemaSlug = item['@self']?.schema?.slug;
 
-  console.log('navigateTo', navigateTo);
-
   switch (schemaSlug) {
     case 'product':
     case 'module':
