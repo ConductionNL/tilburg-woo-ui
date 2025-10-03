@@ -442,6 +442,9 @@ export const renderField = ({
           visibleDragBar={false}
           preview='edit'
           hideToolbar={isDisabled}
+          textareaProps={{
+            maxLength: propertySchema?.maxLength ?? undefined,
+          }}
           // Stops the toolbar from being focused when tabbing through the form
           commandsFilter={(cmd) => ({
             ...cmd,
@@ -449,6 +452,11 @@ export const renderField = ({
           })}
           style={inputStyle}
         />
+        {typeof propertySchema?.maxLength === 'number' && (
+          <span className='character-count'>
+            {propertySchema.maxLength - (value || '').length} karakters over
+          </span>
+        )}
       </div>
     );
   }
