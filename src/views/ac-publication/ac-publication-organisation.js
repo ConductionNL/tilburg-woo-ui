@@ -311,6 +311,18 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   );
 };
 
+// Helper function to define the desired tab order
+const getTabOrder = (schemaSlug) => {
+  const order = {
+    product: 1,
+    module: 2,
+    dienst: 3,
+    gebruik: 4,
+    contactpersoon: 5,
+  };
+  return order[schemaSlug] || 999; // Other relations get a high number to appear last
+};
+
 const OrganisationRelatedTabs = observer(
   ({
     uses,
@@ -342,9 +354,14 @@ const OrganisationRelatedTabs = observer(
                     {uses && uses.length > 0 && (
                       <>
                         {uses &&
-                          // show unique headers
-                          _.uniqBy(uses, (use) => use['@self'].schema.id).map(
-                            (use, idx) => {
+                          // show unique headers sorted by desired order
+                          _.uniqBy(uses, (use) => use['@self'].schema.id)
+                            .sort(
+                              (a, b) =>
+                                getTabOrder(a['@self'].schema.slug) -
+                                getTabOrder(b['@self'].schema.slug)
+                            )
+                            .map((use, idx) => {
                               const IconComponent = getTabHeaderIcon(
                                 use['@self'].schema.slug
                               );
@@ -371,14 +388,18 @@ const OrganisationRelatedTabs = observer(
                                   </span>
                                 </AcTab>
                               );
-                            }
-                          )}
+                            })}
                       </>
                     )}
                   </AcTabList>
 
                   {uses &&
                     _.uniqBy(uses, (use) => use['@self'].schema.id)
+                      .sort(
+                        (a, b) =>
+                          getTabOrder(a['@self'].schema.slug) -
+                          getTabOrder(b['@self'].schema.slug)
+                      )
                       .map((use) => use['@self'])
                       .map((metadata, idx) => {
                         // Build the items for ALL items with this schema
@@ -521,9 +542,14 @@ const OrganisationRelatedTabs = observer(
                     {used && used.length > 0 && (
                       <>
                         {used &&
-                          // show unique headers
-                          _.uniqBy(used, (use) => use['@self'].schema.id).map(
-                            (use, idx) => {
+                          // show unique headers sorted by desired order
+                          _.uniqBy(used, (use) => use['@self'].schema.id)
+                            .sort(
+                              (a, b) =>
+                                getTabOrder(a['@self'].schema.slug) -
+                                getTabOrder(b['@self'].schema.slug)
+                            )
+                            .map((use, idx) => {
                               const IconComponent = getTabHeaderIcon(
                                 use['@self'].schema.slug
                               );
@@ -550,14 +576,18 @@ const OrganisationRelatedTabs = observer(
                                   </span>
                                 </AcTab>
                               );
-                            }
-                          )}
+                            })}
                       </>
                     )}
                   </AcTabList>
 
                   {used &&
                     _.uniqBy(used, (use) => use['@self']?.schema.id)
+                      .sort(
+                        (a, b) =>
+                          getTabOrder(a['@self'].schema.slug) -
+                          getTabOrder(b['@self'].schema.slug)
+                      )
                       .map((use) => use['@self'])
                       .map((metadata, idx) => {
                         // Build the items for ALL items with this schema
