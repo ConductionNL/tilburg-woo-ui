@@ -25,8 +25,10 @@ const getTabOrder = (schemaSlug) => {
 };
 
 // Helper function to render a card based on schema type
-const renderCard = (item, object) => {
+const renderCard = (item, object, navigateTo) => {
   const schemaSlug = item['@self']?.schema?.slug;
+
+  console.log('navigateTo', navigateTo);
 
   switch (schemaSlug) {
     case 'product':
@@ -46,6 +48,7 @@ const renderCard = (item, object) => {
           published={item['@self']?.published}
           organisation={item['@self']?.organisation}
           objectStore={object}
+          navigateTo={`${navigateTo}-${schemaSlug}`}
         />
       );
     case 'dienst':
@@ -59,6 +62,7 @@ const renderCard = (item, object) => {
           published={item['@self']?.published}
           category={item['@self']?.schema?.title}
           themes={item.themes}
+          navigateTo={navigateTo}
         />
       );
     case 'gebruik':
@@ -72,6 +76,7 @@ const renderCard = (item, object) => {
           referentieComponenten={item.gebruiktVoorReferentiecomponenten}
           status={item.status}
           objectStore={object}
+          navigateTo={navigateTo}
         />
       );
     case 'contactpersoon':
@@ -88,6 +93,7 @@ const renderCard = (item, object) => {
           telefoon={item.telefoonnummer}
           organisation={item.organisatie}
           objectStore={object}
+          navigateTo={navigateTo}
         />
       );
     case 'koppeling':
@@ -99,6 +105,7 @@ const renderCard = (item, object) => {
           item={item}
           category={item['@self']?.schema?.title}
           themes={item.themes}
+          navigateTo={navigateTo}
         />
       );
     default:
@@ -111,6 +118,7 @@ const renderCard = (item, object) => {
           published={item['@self']?.published}
           category={item['@self']?.schema?.title}
           themes={item.themes}
+          navigateTo={navigateTo}
         />
       );
   }
@@ -126,7 +134,14 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
 };
 
 // Helper function to render tabs for related objects
-const renderRelatedTabs = (items, loading, tabIndex, setTabIndex, object) => {
+const renderRelatedTabs = (
+  items,
+  loading,
+  tabIndex,
+  setTabIndex,
+  object,
+  navigateTo
+) => {
   if (loading) {
     return (
       <div>
@@ -177,7 +192,7 @@ const renderRelatedTabs = (items, loading, tabIndex, setTabIndex, object) => {
         );
 
         const renderCards = itemsWithThisSchema.map((item) =>
-          renderCard(item, object)
+          renderCard(item, object, navigateTo)
         );
 
         return (
@@ -201,7 +216,16 @@ const renderRelatedTabs = (items, loading, tabIndex, setTabIndex, object) => {
 };
 
 const RelatedTabs = observer(
-  ({ uses, used, usesLoading, usedLoading, tabIndex, setTabIndex, object }) => {
+  ({
+    uses,
+    used,
+    usesLoading,
+    usedLoading,
+    tabIndex,
+    setTabIndex,
+    object,
+    navigateTo,
+  }) => {
     // Merge and deduplicate the data
     const mergedItems = mergeAndDeduplicateItems(uses, used);
 
@@ -220,7 +244,8 @@ const RelatedTabs = observer(
               isLoading,
               tabIndex,
               setTabIndex,
-              object
+              object,
+              navigateTo
             )}
           </div>
         )}

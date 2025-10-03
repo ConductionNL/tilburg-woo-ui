@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcFlex, AcSection, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcFlex, AcSection } from '@atoms';
 import { ConDynamicSidenav } from '@components';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
@@ -21,15 +21,7 @@ import {
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
-import _ from 'lodash';
-import {
-  ConCardOrganisationApplication,
-  ConCardDienst,
-  ConCardGebruik,
-  ConCardContactpersoon,
-} from '@molecules/con-cards';
-import { AcSearchResult } from '@molecules';
-import { getImageFromPublication, getTabHeaderIcon, getTabHeaderName } from '@utils';
+import RelatedTabs from '@views/ac-publication/con-related-tabs';
 
 /**
  * My Organisation Page
@@ -52,6 +44,13 @@ const ConMyOrganisationPage = ({ store }) => {
   const [editingDescription, setEditingDescription] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Related tabs state
+  const [uses, setUses] = useState([]);
+  const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
+  const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
@@ -105,6 +104,61 @@ const ConMyOrganisationPage = ({ store }) => {
     setFullActiveOrganisation(fallbackData);
   }, [activeOrganisation]);
 
+  // Fetch related tabs data
+  const fetchUses = useCallback(async (organisationId) => {
+    if (!organisationId) return;
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUses(data.results || []);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+      setUses([]);
+    } finally {
+      setUsesLoading(false);
+    }
+  }, []);
+
+  const fetchUsed = useCallback(async (organisationId) => {
+    if (!organisationId) return;
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUsed(data.results || []);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+      setUsed([]);
+    } finally {
+      setUsedLoading(false);
+    }
+  }, []);
+
   // Function to fetch full organization data
   const fetchFullOrganisationData = useCallback(
     async (organisationId) => {
@@ -136,6 +190,10 @@ const ConMyOrganisationPage = ({ store }) => {
           // If no full data available, create fallback from activeOrganisation
           createFallbackOrganisationData();
         }
+
+        // Fetch related tabs data
+        fetchUses(organisationId);
+        fetchUsed(organisationId);
       } catch (err) {
         console.error('Error fetching full organization data:', err);
 
@@ -155,7 +213,7 @@ const ConMyOrganisationPage = ({ store }) => {
         }
       }
     },
-    [object, createFallbackOrganisationData]
+    [object, createFallbackOrganisationData, fetchUses, fetchUsed]
   );
 
   const setNewFieldDataAndFetch = (v, field) => {
@@ -561,9 +619,15 @@ const ConMyOrganisationPage = ({ store }) => {
                 {/* Organisation related tabs (similar to details page) */}
                 {fullActiveOrganisation?.id && (
                   <div style={{ marginTop: '2rem' }}>
-                    <OrganisationRelatedTabs
-                      store={store}
-                      organisationId={fullActiveOrganisation.id}
+                    <RelatedTabs
+                      uses={uses}
+                      used={used}
+                      usesLoading={usesLoading}
+                      usedLoading={usedLoading}
+                      tabIndex={relatedTabIndex}
+                      setTabIndex={setRelatedTabIndex}
+                      object={object}
+                      navigateTo='beheer'
                     />
                   </div>
                 )}
@@ -648,460 +712,5 @@ const ConMyOrganisationPage = ({ store }) => {
     </AcSection>
   );
 };
-
-const OrganisationRelatedTabs = observer(({ store, organisationId }) => {
-  const { object } = store;
-  const [uses, setUses] = useState([]);
-  const [used, setUsed] = useState([]);
-  const [usesLoading, setUsesLoading] = useState(false);
-  const [usedLoading, setUsedLoading] = useState(false);
-  const [tabIndexUses, setTabIndexUses] = useState(0);
-  const [tabIndexUsed, setTabIndexUsed] = useState(0);
-
-  const fetchUses = useCallback(async () => {
-    if (!organisationId) return;
-    setUsesLoading(true);
-    try {
-      const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        console.error('Error fetching uses:', response.statusText);
-        return;
-      }
-      const data = await response.json();
-      setUses(data.results);
-    } catch (error) {
-      console.error('Error fetching uses:', error);
-    } finally {
-      setUsesLoading(false);
-    }
-  }, [organisationId]);
-
-  const fetchUsed = useCallback(async () => {
-    if (!organisationId) return;
-    setUsedLoading(true);
-    try {
-      const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        console.error('Error fetching used:', response.statusText);
-        return;
-      }
-      const data = await response.json();
-      setUsed(data.results);
-    } catch (error) {
-      console.error('Error fetching used:', error);
-    } finally {
-      setUsedLoading(false);
-    }
-  }, [organisationId]);
-
-  useEffect(() => {
-    fetchUses();
-    fetchUsed();
-  }, [fetchUses, fetchUsed]);
-
-  const uniqueSchemasFrom = useCallback((rel) => {
-    if (!rel?.length) return [];
-    const map = new Map();
-    for (const item of rel) {
-      const schema = item['@self']?.schema;
-      if (!schema) continue;
-      if (!map.has(schema.id)) map.set(schema.id, schema);
-    }
-    return Array.from(map.values()).sort((a, b) =>
-      String(a.id).localeCompare(String(b.id))
-    );
-  }, []);
-
-  const usesSchemas = useMemo(
-    () => uniqueSchemasFrom(uses),
-    [uses, uniqueSchemasFrom]
-  );
-  const usedSchemas = useMemo(
-    () => uniqueSchemasFrom(used),
-    [used, uniqueSchemasFrom]
-  );
-
-  if (!usesSchemas?.length && !usedSchemas?.length && !usesLoading && !usedLoading) {
-    return null;
-  }
-
-  return (
-    <>
-      <div>
-        {(usesLoading || (uses && uses.length > 0)) && (
-          <>
-            {usesLoading ? (
-              <div>
-                <AcLoader className='con-publication-uses-used-loader' />
-              </div>
-            ) : (
-              <AcTabs
-                selectedIndex={tabIndexUses}
-                onSelect={(index) => setTabIndexUses(index)}
-              >
-                <AcTabList>
-                  {uses &&
-                    _.uniqBy(uses, (use) => use['@self'].schema.id).map(
-                      (use, idx) => {
-                        const IconComponent = getTabHeaderIcon(
-                          use['@self'].schema.slug
-                        );
-                        // Count items with this schema
-                        const count = uses.filter(
-                          (u) => u['@self'].schema.id === use['@self'].schema.id
-                        ).length;
-                        return (
-                          <AcTab
-                            key={use['@self'].schema.id}
-                            selected={tabIndexUses === idx}
-                          >
-                            <span
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                              }}
-                            >
-                              <IconComponent />{' '}
-                              {getTabHeaderName(use['@self'].schema.slug)} ({count})
-                            </span>
-                          </AcTab>
-                        );
-                      }
-                    )}
-                </AcTabList>
-
-                {uses &&
-                  _.uniqBy(uses, (use) => use['@self'].schema.id)
-                    .map((use) => use['@self'])
-                    .map((metadata, idx) => {
-                      // Build the items for ALL items with this schema
-                      const itemsWithThisSchema = uses.filter(
-                        (u) => u['@self'].schema.id === metadata.schema.id
-                      );
-
-                      // Render cards based on schema type
-                      const renderCards = itemsWithThisSchema.map((item) => {
-                        const schemaSlug = item['@self']?.schema?.slug;
-
-                        switch (schemaSlug) {
-                          case 'product':
-                          case 'module':
-                          case 'organisatie':
-                            return (
-                              <ConCardOrganisationApplication
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                logo={getImageFromPublication(item)}
-                                cardType={schemaSlug}
-                                type={item['@self']?.schema?.title}
-                                referenceComponents={item.referentieComponenten}
-                                updated={item['@self']?.updated}
-                                published={item['@self']?.published}
-                                organisation={item['@self']?.organisation}
-                                objectStore={object}
-                              />
-                            );
-                          case 'dienst':
-                            return (
-                              <ConCardDienst
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                updated={item['@self']?.updated}
-                                published={item['@self']?.published}
-                                category={item['@self']?.schema?.title}
-                                themes={item.themes}
-                              />
-                            );
-                          case 'gebruik':
-                            return (
-                              <ConCardGebruik
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                updated={item['@self']?.updated}
-                                published={item['@self']?.published}
-                                category={item['@self']?.schema?.title}
-                                themes={item.themes}
-                              />
-                            );
-                          default:
-                            return (
-                              <AcSearchResult
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                published={item['@self']?.published}
-                                category={item['@self']?.schema?.title}
-                                themes={item.themes}
-                              />
-                            );
-                        }
-                      });
-
-                      return (
-                        <AcTabPanel key={idx} selected={tabIndexUses === idx}>
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns:
-                                'repeat(auto-fit, minmax(300px, 1fr))',
-                              gap: '16px',
-                              marginTop: '16px',
-                            }}
-                          >
-                            {renderCards}
-                          </div>
-                        </AcTabPanel>
-                      );
-                    })}
-              </AcTabs>
-            )}
-          </>
-        )}
-      </div>
-
-      <div>
-        {(usedLoading || (used && used.length > 0)) && (
-          <>
-            {usedLoading ? (
-              <div>
-                <AcLoader className='con-publication-uses-used-loader' />
-              </div>
-            ) : (
-              <AcTabs
-                selectedIndex={tabIndexUsed}
-                onSelect={(index) => setTabIndexUsed(index)}
-              >
-                <AcTabList>
-                  {used &&
-                    _.uniqBy(used, (use) => use['@self'].schema.id).map(
-                      (use, idx) => {
-                        const IconComponent = getTabHeaderIcon(
-                          use['@self'].schema.slug
-                        );
-                        // Count items with this schema
-                        const count = used.filter(
-                          (u) => u['@self'].schema.id === use['@self'].schema.id
-                        ).length;
-                        return (
-                          <AcTab
-                            key={use['@self'].schema.id}
-                            selected={tabIndexUsed === idx}
-                          >
-                            <span
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                              }}
-                            >
-                              <IconComponent />{' '}
-                              {getTabHeaderName(use['@self'].schema.slug)} ({count})
-                            </span>
-                          </AcTab>
-                        );
-                      }
-                    )}
-                </AcTabList>
-
-                {used &&
-                  _.uniqBy(used, (use) => use['@self']?.schema.id)
-                    .map((use) => use['@self'])
-                    .map((metadata, idx) => {
-                      // Build the items for ALL items with this schema
-                      const itemsWithThisSchema = used.filter(
-                        (u) => u['@self'].schema.id === metadata.schema.id
-                      );
-
-                      // Render cards based on schema type
-                      const renderCards = itemsWithThisSchema.map((item) => {
-                        const schemaSlug = item['@self']?.schema?.slug;
-
-                        switch (schemaSlug) {
-                          case 'product':
-                          case 'module':
-                          case 'organisatie':
-                            return (
-                              <ConCardOrganisationApplication
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                logo={getImageFromPublication(item)}
-                                cardType={schemaSlug}
-                                type={item['@self']?.schema?.title}
-                                referenceComponents={item.referentieComponenten}
-                                updated={item['@self']?.updated}
-                                published={item['@self']?.published}
-                                organisation={item['@self']?.organisation}
-                                objectStore={object}
-                                navigateTo={`beheer-${schemaSlug}`}
-                              />
-                            );
-                          case 'dienst':
-                            return (
-                              <ConCardDienst
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                updated={item['@self']?.updated}
-                                published={item['@self']?.published}
-                                category={item['@self']?.schema?.title}
-                                themes={item.themes}
-                                navigateTo='beheer'
-                              />
-                            );
-                          case 'gebruik':
-                            return (
-                              <ConCardGebruik
-                                key={item.id}
-                                id={item.id}
-                                product={item.product}
-                                module={item.module}
-                                organisation={item['@self'].organisation}
-                                referentieComponenten={
-                                  item.gebruiktVoorReferentiecomponenten
-                                }
-                                status={item.status}
-                                objectStore={object}
-                                navigateTo='beheer'
-                              />
-                            );
-                          case 'contactpersoon':
-                            return (
-                              <ConCardContactpersoon
-                                key={item.id}
-                                id={item.id}
-                                firstName={item.voornaam}
-                                middleName={item.tussenvoegsel}
-                                lastName={item.achternaam}
-                                functie={item.functie}
-                                image={item['@self'].image}
-                                email={item['e-mailadres']}
-                                telefoon={item.telefoonnummer}
-                                organisation={item.organisatie}
-                                objectStore={object}
-                                navigateTo='beheer'
-                              />
-                            );
-                          default:
-                            return (
-                              <AcSearchResult
-                                key={item.id}
-                                id={item.id}
-                                title={
-                                  item.title ??
-                                  item.titel ??
-                                  item.name ??
-                                  item.naam ??
-                                  item.id
-                                }
-                                summary={
-                                  item.beschrijving ?? item.beschrijvingKort ?? ''
-                                }
-                                published={item['@self']?.published}
-                                category={item['@self']?.schema?.title}
-                                themes={item.themes}
-                              />
-                            );
-                        }
-                      });
-
-                      return (
-                        <AcTabPanel key={idx} selected={tabIndexUsed === idx}>
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns:
-                                'repeat(auto-fit, minmax(300px, 1fr))',
-                              gap: '16px',
-                              marginTop: '16px',
-                            }}
-                          >
-                            {renderCards}
-                          </div>
-                        </AcTabPanel>
-                      );
-                    })}
-              </AcTabs>
-            )}
-          </>
-        )}
-      </div>
-    </>
-  );
-});
 
 export default withStore(observer(ConMyOrganisationPage));
