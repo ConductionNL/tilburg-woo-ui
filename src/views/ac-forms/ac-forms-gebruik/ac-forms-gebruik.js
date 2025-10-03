@@ -430,17 +430,25 @@ const AcFormsGebruik = ({ store }) => {
         }
       }
 
- // Ensure modules are available; if missing, fetch with relations
- if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
-  try {
-    await store.object.fetchObject('voorzieningen', 'product', String(getIdString(productData?.id || p)), {
-      '_extend[]': '@self.schema,@self.relations',
-    });
-    productData = store.object.getObject('voorzieningen_product', String(getIdString(productData?.id || p)));
-  } catch (_) {
-    // keep existing productData
-  }
-}
+      // Ensure modules are available; if missing, fetch with relations
+      if (!Array.isArray(productData?.modules) || productData.modules.length === 0) {
+        try {
+          await store.object.fetchObject(
+            'voorzieningen',
+            'product',
+            String(getIdString(productData?.id || p)),
+            {
+              '_extend[]': '@self.schema,@self.relations',
+            }
+          );
+          productData = store.object.getObject(
+            'voorzieningen_product',
+            String(getIdString(productData?.id || p))
+          );
+        } catch (_) {
+          // keep existing productData
+        }
+      }
 
       const moduleIds = Array.isArray(productData?.modules)
         ? productData.modules
@@ -520,13 +528,22 @@ const AcFormsGebruik = ({ store }) => {
         productData = selectedProduct;
       } else {
         productData =
-          productOptions.find((opt) => String(opt.value) === String(productId))?.data || null;
+          productOptions.find((opt) => String(opt.value) === String(productId))
+            ?.data || null;
         if (!productData) {
           try {
-            await store.object.fetchObject('voorzieningen', 'product', String(productId), {
-              '_extend[]': '@self.schema',
-            });
-            productData = store.object.getObject('voorzieningen_product', String(productId));
+            await store.object.fetchObject(
+              'voorzieningen',
+              'product',
+              String(productId),
+              {
+                '_extend[]': '@self.schema',
+              }
+            );
+            productData = store.object.getObject(
+              'voorzieningen_product',
+              String(productId)
+            );
           } catch (_) {
             productData = null;
           }
@@ -820,7 +837,7 @@ const AcFormsGebruik = ({ store }) => {
 
     // Try to get moduleA name - check relations first, then direct properties
     const moduleAId = item?.['@self']?.relations?.moduleA || item?.moduleA;
-    
+
     if (item?.moduleA?.naam) {
       appAName = item.moduleA.naam;
     } else if (Array.isArray(item?.moduleA) && item.moduleA[0]?.naam) {
@@ -839,7 +856,7 @@ const AcFormsGebruik = ({ store }) => {
 
     // Try to get moduleB name - check relations first, then direct properties
     const moduleBId = item?.['@self']?.relations?.moduleB || item?.moduleB;
-    
+
     if (item?.moduleB?.naam) {
       appBName = item.moduleB.naam;
     } else if (Array.isArray(item?.moduleB) && item.moduleB[0]?.naam) {
@@ -857,29 +874,27 @@ const AcFormsGebruik = ({ store }) => {
     }
 
     const direction = item?.gegevensuitwisselingRichting;
-    const arrow =
-      direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
-    
+    const arrow = direction === 'AnaarB' ? '→' : direction === 'BnaarA' ? '←' : '↔';
+
     // Get koppeling name
-    const rawKoppelingName = 
-      item?.['@self']?.name || 
-      item?.naam || 
-      item?.name || 
-      item?.title || 
-      item?.label || 
+    const rawKoppelingName =
+      item?.['@self']?.name ||
+      item?.naam ||
+      item?.name ||
+      item?.title ||
+      item?.label ||
       '';
-    
+
     // Only show koppeling name if it's not a UUID
-    const koppelingName = rawKoppelingName && !isUUID(rawKoppelingName) 
-      ? rawKoppelingName 
-      : '';
-    
+    const koppelingName =
+      rawKoppelingName && !isUUID(rawKoppelingName) ? rawKoppelingName : '';
+
     // Create descriptive label
     const moduleConnection = `${appAName} ${arrow} ${appBName}`;
-    const label = koppelingName 
+    const label = koppelingName
       ? `${koppelingName} (${moduleConnection})`
       : moduleConnection;
-    
+
     // Use the koppeling's ID as the value
     const value = item?.id || item?.['@self']?.id || item?.value || String(index);
     return { value: String(value), label: String(label) };
@@ -890,24 +905,27 @@ const AcFormsGebruik = ({ store }) => {
     const fetchKoppelingenByModule = async () => {
       try {
         const moduleId = getIdString(gebruik?.module);
-        
+
         // If no module selected, fetch all koppelingen
         if (!moduleId) {
           try {
             await store.object.fetchCollection('voorzieningen', 'koppeling', {
               _limit: '100',
-              _page: '1'
+              _page: '1',
             });
-            const type = store.object.getTypeFromParams('voorzieningen', 'koppeling');
+            const type = store.object.getTypeFromParams(
+              'voorzieningen',
+              'koppeling'
+            );
             const collection = store.object.getCollection(type);
             const allKoppelingen = collection?.results || collection || [];
-            
+
             const options = await Promise.all(
               allKoppelingen.map(async (item, index) => {
                 return await createKoppelingOption(item, index);
               })
             );
-            
+
             setKoppelingOptions(options);
           } catch (e) {
             setKoppelingOptions([]);
@@ -924,7 +942,7 @@ const AcFormsGebruik = ({ store }) => {
           await store.object.fetchCollection('voorzieningen', 'koppeling', {
             _limit: '100',
             _page: '1',
-            moduleA: moduleId
+            moduleA: moduleId,
           });
           const typeA = store.object.getTypeFromParams('voorzieningen', 'koppeling');
           const collectionA = store.object.getCollection(typeA);
@@ -938,7 +956,7 @@ const AcFormsGebruik = ({ store }) => {
           await store.object.fetchCollection('voorzieningen', 'koppeling', {
             _limit: '100',
             _page: '1',
-            moduleB: moduleId
+            moduleB: moduleId,
           });
           const typeB = store.object.getTypeFromParams('voorzieningen', 'koppeling');
           const collectionB = store.object.getCollection(typeB);
@@ -949,10 +967,12 @@ const AcFormsGebruik = ({ store }) => {
 
         // Merge results and remove duplicates based on ID
         const allKoppelingen = [...moduleAResults, ...moduleBResults];
-        const uniqueKoppelingen = allKoppelingen.filter((item, index, self) => 
-          index === self.findIndex(k => (k?.id || k?.value) === (item?.id || item?.value))
+        const uniqueKoppelingen = allKoppelingen.filter(
+          (item, index, self) =>
+            index ===
+            self.findIndex((k) => (k?.id || k?.value) === (item?.id || item?.value))
         );
-        
+
         // If no koppelingen found for this module, don't search again - just set empty options
         if (uniqueKoppelingen.length === 0) {
           setKoppelingOptions([]);
@@ -1416,7 +1436,7 @@ const AcFormsGebruik = ({ store }) => {
                         : ` door ${
                             gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
                           }`}{' '}
-                      is opgeslagen in de software catalogus.
+                      is opgeslagen in de softwarecatalogus.
                     </Paragraph>
                     <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
                       Type registratie:{' '}
@@ -1435,7 +1455,7 @@ const AcFormsGebruik = ({ store }) => {
                 <ul className='utrecht-unordered-list'>
                   {gebruikType === 'eigen-organisatie' ? (
                     <>
-                      <li>Het gebruik wordt zichtbaar in de software catalogus</li>
+                      <li>Het gebruik wordt zichtbaar in de softwarecatalogus</li>
                       <li>
                         Andere organisaties kunnen zien welke producten u gebruikt
                       </li>

@@ -367,7 +367,7 @@ const ConGenericBeheerDetailsPage = ({ store, type, id: propId }) => {
                       label='Lange beschrijving'
                       placeholder={longTooltip(type)}
                       tooltip={longTooltip(type)}
-                      maxLength={2000}
+                      maxLength={5000}
                       isMarkdown={true}
                       value={data.beschrijvingLang}
                       serialize={(v) => JSON.stringify(v || '')}

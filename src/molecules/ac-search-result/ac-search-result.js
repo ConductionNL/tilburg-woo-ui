@@ -21,8 +21,20 @@ const AcSearchResult = ({
   id,
   // user,
   // schemaSlug,
+  navigateTo = 'publication',
   // ...rest // This will capture the full object data
 }) => {
+  const onClick = () => {
+    switch (navigateTo) {
+      case 'publication':
+        return NAVIGATE_TO.PUBLICATION(id);
+      case 'beheer':
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS(category, id);
+      default:
+        return NAVIGATE_TO.PUBLICATION(id);
+    }
+  };
+
   return (
     <AcCard searchResult padding='md' skeleton={skeleton}>
       <Heading level={3}>
@@ -47,7 +59,7 @@ const AcSearchResult = ({
           )}
           <Paragraph small>{extractText(category)}</Paragraph>
         </AcFlex>
-        <AcLink to={NAVIGATE_TO.PUBLICATION(id)}>
+        <AcLink to={onClick()}>
           <span className='sr-only'>
             {LABELS.READ_MORE_ABOUT}{' '}
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>

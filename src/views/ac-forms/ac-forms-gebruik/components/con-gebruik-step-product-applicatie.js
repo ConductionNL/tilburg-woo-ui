@@ -53,7 +53,7 @@ const ConGebruikStepProductApplicatie = ({
                 }}
               >
                 {gebruikType === 'eigen-organisatie'
-                  ? '🏢 Gebruik voor eigen organisatie: Selecteer een product uit de software catalogus dat uw organisatie gebruikt.'
+                  ? '🏢 Gebruik voor eigen organisatie: Selecteer een product uit de softwarecatalogus dat uw organisatie gebruikt.'
                   : '🤝 Gebruik voor andere organisatie: Selecteer een product van uw organisatie dat door een klant wordt gebruikt.'}
               </p>
             </div>
@@ -105,7 +105,10 @@ const ConGebruikStepProductApplicatie = ({
             schemas={schemas}
             optionsProvider={moduleOptions}
             onSearch={(_path, _refSlug, q) => searchModules && searchModules(q)}
-            customProps={{ label: 'Applicatie', placeholder: 'Selecteer een applicatie' }}
+            customProps={{
+              label: 'Applicatie',
+              placeholder: 'Selecteer een applicatie',
+            }}
           />
         </div>
       </div>

@@ -129,6 +129,7 @@ export const renderField = ({
   resetKey = 0,
   forceRenderKey = 0,
   touched = {},
+  inputStyle = {},
 }) => {
   // Generate field configuration
   const fieldConfig = {
@@ -225,6 +226,7 @@ export const renderField = ({
         options={options}
         propertyName={path}
         context={context}
+        style={inputStyle}
       />
     );
   }
@@ -272,6 +274,7 @@ export const renderField = ({
         propertyName={path}
         isDisabled={isDisabled}
         placeholder={fieldConfig.placeholder}
+        style={inputStyle}
       />
     );
   }
@@ -319,6 +322,7 @@ export const renderField = ({
           value={!!value}
           onChange={handleChange}
           disabled={isDisabled}
+          style={inputStyle}
         />
       </div>
     );
@@ -338,6 +342,7 @@ export const renderField = ({
         schema={propertySchema}
         integer={fieldConfig.integer}
         validation={validation}
+        style={inputStyle}
       />
     );
   }
@@ -388,6 +393,7 @@ export const renderField = ({
           disabled={isDisabled}
           required={validation.required}
           colorFormat={fieldConfig.colorFormat}
+          style={inputStyle}
         />
       </div>
     );
@@ -403,6 +409,7 @@ export const renderField = ({
         onChange={handleChange}
         placeholder={fieldConfig.placeholder}
         disabled={isDisabled}
+        style={inputStyle}
       />
     );
   }
@@ -448,12 +455,21 @@ export const renderField = ({
           visibleDragBar={false}
           preview='edit'
           hideToolbar={isDisabled}
+          textareaProps={{
+            maxLength: propertySchema?.maxLength ?? undefined,
+          }}
           // Stops the toolbar from being focused when tabbing through the form
           commandsFilter={(cmd) => ({
             ...cmd,
             buttonProps: { ...(cmd.buttonProps || {}), tabIndex: -1 },
           })}
+          style={inputStyle}
         />
+        {typeof propertySchema?.maxLength === 'number' && (
+          <span className='character-count'>
+            {propertySchema.maxLength - (value || '').length} karakters over
+          </span>
+        )}
       </div>
     );
   }
@@ -485,6 +501,7 @@ export const renderField = ({
         maxLength={propertySchema?.maxLength ?? undefined}
         pattern={propertySchema?.pattern || undefined}
         {...validation}
+        style={inputStyle}
       />
     );
   }
@@ -513,6 +530,7 @@ export const renderField = ({
         touched={touched}
         touchedKey={path}
         {...validation}
+        style={inputStyle}
       />
     );
   }
@@ -537,6 +555,7 @@ export const renderField = ({
           placeholder={fieldConfig.placeholder}
           disabled={isDisabled}
           itemsType={itemsType}
+          style={inputStyle}
         />
       );
     }
@@ -643,6 +662,7 @@ export const renderField = ({
           {...(!validation.required && {
             isClearable: true,
           })}
+          styles={inputStyle}
         />
       </div>
     );

@@ -322,7 +322,7 @@ const ConOrganisatieDetailsPage = ({ store }) => {
             label='Lange beschrijving'
             placeholder={longTooltip(pageType)}
             tooltip={longTooltip(pageType)}
-            maxLength={2000}
+            maxLength={5000}
             isMarkdown={true}
             value={data.beschrijvingLang}
             serialize={(v) => JSON.stringify(v || '')}
