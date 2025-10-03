@@ -97,8 +97,7 @@ const AcPublicationProduct = ({
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
-  const [tabIndexUses, setTabIndexUses] = useState(0);
-  const [tabIndexUsed, setTabIndexUsed] = useState(0);
+  const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
   const fetchUses = useCallback(async () => {
     setUsesLoading(true);
@@ -355,10 +354,8 @@ const AcPublicationProduct = ({
         used={used}
         usesLoading={usesLoading}
         usedLoading={usedLoading}
-        tabIndexUses={tabIndexUses}
-        setTabIndexUses={setTabIndexUses}
-        tabIndexUsed={tabIndexUsed}
-        setTabIndexUsed={setTabIndexUsed}
+        tabIndex={relatedTabIndex}
+        setTabIndex={setRelatedTabIndex}
         object={object}
       />
     </AcContainer>
