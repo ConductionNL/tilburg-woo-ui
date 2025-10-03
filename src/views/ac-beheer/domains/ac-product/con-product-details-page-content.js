@@ -15,9 +15,7 @@ import { ConDetailsActionsMenu } from '@src/components';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { withStore } from '@src/stores';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import {
-  useResolvedArray,
-} from '@src/utilities/con-resolve-uuids-in-text';
+import { useResolvedArray } from '@src/utilities/con-resolve-uuids-in-text';
 
 /**
  * Content for the product details page
@@ -251,14 +249,8 @@ const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData })
       );
   }, []);
 
-  const usesSchemas = useMemo(
-    () => uniqueSchemasFrom(usesData),
-    [usesData]
-  );
-  const usedSchemas = useMemo(
-    () => uniqueSchemasFrom(usedData),
-    [usedData]
-  );
+  const usesSchemas = useMemo(() => uniqueSchemasFrom(usesData), [usesData]);
+  const usedSchemas = useMemo(() => uniqueSchemasFrom(usedData), [usedData]);
 
   const getUsesCount = useCallback(
     (schema) => {
