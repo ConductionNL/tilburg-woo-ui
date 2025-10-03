@@ -32,7 +32,6 @@ const AcSearch = ({ store: { publications, user, object } }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const {
-    search_query,
     pagination,
     updateQuery,
     fetchPublications,
@@ -241,7 +240,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
             page='search'
             onSubmitCallback={onSearchSubmit}
             label={LABELS.SEARCH}
-            defaultValue={search_query._search}
+            defaultValue={searchParams.get('_search') || ''}
           />
         </AcCard>
       </AcContainer>
