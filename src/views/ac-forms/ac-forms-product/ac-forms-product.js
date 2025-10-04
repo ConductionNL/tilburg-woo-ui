@@ -820,6 +820,7 @@ const AcFormsProductInner = ({
     const baseParams = {
       _limit: '500', // Load 500 referentiecomponenten upfront
       _page: '1',
+      _source: 'index',
     };
 
     if (queryParamsString) {
@@ -853,6 +854,7 @@ const AcFormsProductInner = ({
     const baseParams = {
       _limit: '500', // Load 500 standaarden upfront
       _page: '1',
+      _source: 'index',
     };
 
     if (queryParamsString) {

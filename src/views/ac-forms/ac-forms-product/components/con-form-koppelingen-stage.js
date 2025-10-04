@@ -306,7 +306,9 @@ const ConFormKoppelingenStage = memo(
                   U definieert hier de basis koppelingen tussen applicaties. Na het
                   opslaan van uw product kunt u op de detailpagina van elke koppeling
                   aanvullende technische details toevoegen zoals een naam,
-                  beschrijvingen en status.
+                  beschrijvingen en status. Als de applicatie onder het product nog
+                  niet bestaat, dan wordt deze applicatie nog niet getoond in de
+                  applicatie B selectie.
                 </span>
               </div>
             </div>
