@@ -104,6 +104,7 @@ const AcDashboard = ({ store }) => {
                       text={wizard.name}
                       to={getWizardUrl(wizard)}
                       color={wizard.color}
+                      disabled={wizard.disabled}
                       size='medium'
                       className='ac-dashboard-wizard-tile'
                     />

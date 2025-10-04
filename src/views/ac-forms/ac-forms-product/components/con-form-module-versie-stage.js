@@ -46,30 +46,33 @@ const ConFormModuleVersieStage = memo(
       : [];
 
     // Check if any module has different versies from other modules
-    const areValuesDifferent = newModules.length > 1 && newModules.some((module, moduleIndex) => {
-      // Get sorted versies arrays for comparison
-      const currentVersies = [...(module.moduleVersies || [])].sort((a, b) => 
-        `${a.versie}-${a.status}`.localeCompare(`${b.versie}-${b.status}`)
-      );
-      
-      // Compare with all other modules
-      return newModules.some((otherModule, otherIndex) => {
-        if (moduleIndex === otherIndex) return false;
-        
-        const otherVersies = [...(otherModule.moduleVersies || [])].sort((a, b) =>
+    const areValuesDifferent =
+      newModules.length > 1 &&
+      newModules.some((module, moduleIndex) => {
+        // Get sorted versies arrays for comparison
+        const currentVersies = [...(module.moduleVersies || [])].sort((a, b) =>
           `${a.versie}-${a.status}`.localeCompare(`${b.versie}-${b.status}`)
         );
 
-        // Check if arrays have different lengths
-        if (currentVersies.length !== otherVersies.length) return true;
+        // Compare with all other modules
+        return newModules.some((otherModule, otherIndex) => {
+          if (moduleIndex === otherIndex) return false;
 
-        // Compare each versie
-        return currentVersies.some((versie, i) => 
-          versie.versie !== otherVersies[i].versie || 
-          versie.status !== otherVersies[i].status
-        );
+          const otherVersies = [...(otherModule.moduleVersies || [])].sort((a, b) =>
+            `${a.versie}-${a.status}`.localeCompare(`${b.versie}-${b.status}`)
+          );
+
+          // Check if arrays have different lengths
+          if (currentVersies.length !== otherVersies.length) return true;
+
+          // Compare each versie
+          return currentVersies.some(
+            (versie, i) =>
+              versie.versie !== otherVersies[i].versie ||
+              versie.status !== otherVersies[i].status
+          );
+        });
       });
-    });
     // if there is a difference between values set sameForAll to false
     const [sameForAll, setSameForAll] = useState(!areValuesDifferent);
 
@@ -123,7 +126,7 @@ const ConFormModuleVersieStage = memo(
       return null;
     }
 
-    const applicatieIndices = newModules.map((module, index) => index); // Use direct indices
+    const applicatieIndices = newModules.map((module) => module.moduleIndex);
 
     // Check if there are multiple NEW applications that need versie configuration
     const isMultiNewApplicatie = applicatieIndices.length > 1;
@@ -182,8 +185,84 @@ const ConFormModuleVersieStage = memo(
       });
     };
 
+    // ===== Helper functions extracted from JSX =====
+    const getModuleVersions = (module) => {
+      return Array.isArray(module?.moduleVersies) && module.moduleVersies.length > 0
+        ? module.moduleVersies
+        : [{ ...schemaDefaults }];
+    };
+
+    const updateAllModulesAt = (appIndex, versionIndex, field, value) => {
+      if (!sameForAll) {
+        updateModuleVersieAt(appIndex, versionIndex, field, value);
+        return;
+      }
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        applicatieIndices.forEach((realIdx) => {
+          const mod = modules[realIdx];
+          if (typeof mod !== 'object') return;
+          const prevVersions = Array.isArray(mod.moduleVersies)
+            ? [...mod.moduleVersies]
+            : [];
+          if (!prevVersions[versionIndex]) {
+            prevVersions[versionIndex] = { ...schemaDefaults };
+          }
+          prevVersions[versionIndex] = {
+            ...prevVersions[versionIndex],
+            [field]: value,
+          };
+          modules[realIdx] = { ...mod, moduleVersies: prevVersions };
+        });
+        return { ...prev, modules };
+      });
+    };
+
+    const addRowAll = (appIndex) => {
+      if (!sameForAll) {
+        addModuleVersie(appIndex);
+        return;
+      }
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        applicatieIndices.forEach((realIdx) => {
+          const mod = modules[realIdx];
+          if (typeof mod !== 'object') return;
+          const prevVersions = Array.isArray(mod.moduleVersies)
+            ? [...mod.moduleVersies]
+            : [];
+          prevVersions.push({ ...schemaDefaults });
+          modules[realIdx] = { ...mod, moduleVersies: prevVersions };
+        });
+        return { ...prev, modules };
+      });
+    };
+
+    const removeRowAll = (appIndex, versionIndex) => {
+      if (!sameForAll) {
+        removeModuleVersie(appIndex, versionIndex);
+        return;
+      }
+      setProduct((prev) => {
+        const modules = [...(prev.modules || [])];
+        applicatieIndices.forEach((realIdx) => {
+          const mod = modules[realIdx];
+          if (typeof mod !== 'object') return;
+          const prevVersions = Array.isArray(mod.moduleVersies)
+            ? [...mod.moduleVersies]
+            : [];
+          if (prevVersions.length > 1) {
+            prevVersions.splice(versionIndex, 1);
+            modules[realIdx] = { ...mod, moduleVersies: prevVersions };
+          }
+        });
+        return { ...prev, modules };
+      });
+    };
+
     // Render a single module's version table
     const renderModuleVersionTable = (module, moduleIndex) => {
+      const realModuleIndex = module?.moduleIndex ?? moduleIndex;
       const versions =
         Array.isArray(module.moduleVersies) && module.moduleVersies.length > 0
           ? module.moduleVersies
@@ -214,10 +293,10 @@ const ConFormModuleVersieStage = memo(
                 <TableRow key={`${moduleIndex}-${vIdx}`}>
                   <TableCell>
                     <Textbox
-                      value={moduleVersie.versie || schemaDefaults.versie || ''}
+                      value={moduleVersie.versie ?? schemaDefaults.versie ?? ''}
                       onChange={(e) =>
                         updateModuleVersieAt(
-                          moduleIndex,
+                          realModuleIndex,
                           vIdx,
                           'versie',
                           e.target.value
@@ -246,7 +325,7 @@ const ConFormModuleVersieStage = memo(
                       }
                       onChange={(opt) =>
                         updateModuleVersieAt(
-                          moduleIndex,
+                          realModuleIndex,
                           vIdx,
                           'status',
                           opt?.value || null
@@ -264,7 +343,7 @@ const ConFormModuleVersieStage = memo(
                         buttonType='secondary'
                         icon={<VISUALS.TRASHCAN />}
                         disabled={versions.length <= 1 || loading}
-                        onClick={() => removeModuleVersie(moduleIndex, vIdx)}
+                        onClick={() => removeModuleVersie(realModuleIndex, vIdx)}
                         title='Versie verwijderen'
                       />
                     </div>
@@ -278,7 +357,7 @@ const ConFormModuleVersieStage = memo(
             <AcButton
               style='button'
               icon={<VISUALS.PLUS />}
-              onClick={() => addModuleVersie(moduleIndex)}
+              onClick={() => addModuleVersie(realModuleIndex)}
               disabled={loading}
             >
               Rij toevoegen voor {module.naam || `Applicatie ${moduleIndex + 1}`}
@@ -345,9 +424,7 @@ const ConFormModuleVersieStage = memo(
             <h3>Versie informatie</h3>
             {(() => {
               const appIndex = applicatieIndices[0];
-              const versions = Array.isArray(newModules[0]?.moduleVersies)
-                ? newModules[0].moduleVersies
-                : [{ ...schemaDefaults }];
+              const versions = getModuleVersions(newModules[0]);
               return (
                 <Table>
                   <thead>
@@ -368,9 +445,9 @@ const ConFormModuleVersieStage = memo(
                       <TableRow key={`v-${vIdx}`}>
                         <TableCell>
                           <Textbox
-                            value={mv.versie || schemaDefaults.versie || ''}
+                            value={mv.versie ?? schemaDefaults.versie ?? ''}
                             onChange={(e) =>
-                              updateModuleVersieAt(
+                              updateAllModulesAt(
                                 appIndex,
                                 vIdx,
                                 'versie',
@@ -398,7 +475,7 @@ const ConFormModuleVersieStage = memo(
                               ) || null
                             }
                             onChange={(opt) =>
-                              updateModuleVersieAt(
+                              updateAllModulesAt(
                                 appIndex,
                                 vIdx,
                                 'status',
@@ -417,7 +494,7 @@ const ConFormModuleVersieStage = memo(
                               buttonType='secondary'
                               icon={<VISUALS.TRASHCAN />}
                               disabled={versions.length <= 1 || loading}
-                              onClick={() => removeModuleVersie(appIndex, vIdx)}
+                              onClick={() => removeRowAll(appIndex, vIdx)}
                               title='Versie verwijderen'
                             />
                           </div>
@@ -428,7 +505,7 @@ const ConFormModuleVersieStage = memo(
                       <AcButton
                         style='button'
                         icon={<VISUALS.PLUS />}
-                        onClick={() => addModuleVersie(appIndex)}
+                        onClick={() => addRowAll(appIndex)}
                         disabled={loading}
                       >
                         Rij toevoegen

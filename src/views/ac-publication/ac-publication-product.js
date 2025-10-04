@@ -1,16 +1,27 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { withStore } from '@stores';
-import { observer } from 'mobx-react-lite';
-import { useNavigate, useParams } from 'react-router';
-import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
-// Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import RelatedTabs from './con-related-tabs';
+import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
-import ConProductDetailsPageContent from '../ac-beheer/domains/ac-product/con-product-details-page-content';
-import { VISUALS } from '@src/constants';
+import { observer } from 'mobx-react-lite';
+import { useNavigate, useParams } from 'react-router-dom';
+import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { withStore } from '@stores';
+import { VISUALS } from '@constants';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
+import { commongroundApiUrl } from '@config';
+import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+
+// Markdown Editor
+import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
+import { remarkMark } from 'remark-mark-highlight';
+import MDEditor from '@uiw/react-md-editor';
+import remarkGfm from 'remark-gfm';
+import remarkRehype from 'remark-rehype';
+import remarkEmoji from 'remark-emoji';
+import remarkSupersub from 'remark-supersub';
+import rehypeSlug from 'rehype-slug';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -20,23 +31,13 @@ import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constant
  * - Supports unique action menu items and edit/delete via external modals
  */
 const AcPublicationProduct = ({
-  store: { publications, object, user },
+  store: { publications, user, object },
   //   schema,
 }) => {
   const { id } = useParams();
-  const {
-    get_single,
-    loading,
-    // attachmentPagination,
-    // setAttachmentsPage,
-    // getFilteredAttachments,
-    // attachments,
-  } = publications;
+  const { get_single, loading } = publications;
   const navigate = useNavigate();
 
-  const data = get_single || null;
-
-  // Use the same related actions hook as beheer pages
   const openDynamicCreate = useCallback(
     (targetType, preSelected, metadata = {}) => {
       // For publication pages, we'll navigate to the beheer page with modal open
@@ -44,27 +45,29 @@ const AcPublicationProduct = ({
       if (metadata.isOutgoing) {
         // handle outgoing relationship metadata
       }
-      navigate(`/beheer/${targetType}?showCreateModal=true&productId=${id}`);
+      navigate(`/beheer/${targetType}?showCreateModal=true&voorzieningId=${id}`);
     },
     [navigate, id]
   );
 
+  const contact = Array.isArray(get_single.contactpersoon)
+    ? get_single.contactpersoon[0]
+    : get_single.contactpersoon;
+
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
     user,
-    schemaRef: data?.['@self']?.schema?.slug,
-    currentType: data?.['@self']?.schema?.slug, // Use schema slug as current type
+    schemaRef: get_single?.['@self']?.schema?.slug,
+    currentType: get_single?.['@self']?.schema?.slug, // Use schema slug as current type
     openDynamicCreate,
-    currentObject: data, // Pass current object for organization permission checks
+    currentObject: get_single, // Pass current object for organization permission checks
     currentObjectRegister: 'voorzieningen', // Pass current object register (for publication pages)
-    currentObjectSchema: data?.['@self']?.schema?.slug, // Pass current object schema
+    currentObjectSchema: get_single?.['@self']?.schema?.slug, // Pass current object schema
   });
-
-  // Generate action menu items
-  const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Open delete modal from actions menu
   const handleDelete = useCallback(() => {
@@ -86,76 +89,346 @@ const AcPublicationProduct = ({
     );
 
     setActionMenuItems(items);
-  }, [data?.['@self']?.schema?.slug, id, makeActionsForContext]);
+  }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
+
+  // Tabs
+  const [uses, setUses] = useState([]);
+  const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
+  const [relatedTabIndex, setRelatedTabIndex] = useState(0);
+
+  const fetchUses = useCallback(async () => {
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUses(data.results);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+    } finally {
+      setUsesLoading(false);
+    }
+  }, [id]);
+
+  const fetchUsed = useCallback(async () => {
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUsed(data.results);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+    } finally {
+      setUsedLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchUses();
+    fetchUsed();
+  }, [fetchUses, fetchUsed]);
+
+  // Loading
+  if (loading.status || !get_single) {
+    return <AcLoader />;
+  }
 
   return (
     <AcContainer margin='xl'>
-      {loading.status && <AcLoader />}
-      {!loading.status && !data && <Heading>Er is een fout opgetreden</Heading>}
-      {!loading.status && data && (
-        <>
-          {user?.isLoggedIn && (
-            <AcFlex justifyContent='end' className='ac-publication-details--actions'>
-              <ConDetailsActionsMenu
-                user={user}
-                id={id}
-                schemaSlug={data?.['@self']?.schema?.slug}
-                title={data['@self']?.name || data.id}
-                published={data?.['@self']?.published}
-                object={data}
-                showViewAction={false}
-                showEditAction={true}
-                showPublishActions={true}
-                uniqueActions={[
-                  {
-                    key: 'delete',
-                    label: 'Verwijderen',
-                    icon: VISUALS.TRASHCAN,
-                    onClick: handleDelete,
-                  },
-                ]}
-                relatedActions={actionMenuItems}
-                onEdit={() => {
-                  const schemaSlug = data?.['@self']?.schema?.slug;
-                  if (schemaSlug) {
-                    const wizards = Object.values(DASHBOARD_WIZARDS);
-                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+      <AcFlex column spacing='sm'>
+        <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
+          <Heading level={4}>
+            <div className='con-beheer-details--header-container'>
+              {get_single?.['@self']?.image && (
+                <ConLogoPreview
+                  className='con-beheer-details--logo-container'
+                  logoUrl={get_single?.['@self']?.image}
+                />
+              )}
 
-                    if (wizard) {
-                      const baseUrl = getWizardUrl(wizard);
-                      const url = new URL(baseUrl, window.location.origin);
-                      url.searchParams.set('id', id);
-                      navigate(url.pathname + url.search);
-                      return;
-                    }
-                  }
-                  // Fallback to beheer legacy edit page in new tab
-                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                  window.open(beheerUrl, '_blank');
-                }}
-              />
-            </AcFlex>
-          )}
-
-          <ConProductDetailsPageContent
-            loading={loading.status}
-            data={data}
-            userStore={user}
+              <Heading className='con-beheer-details--title'>
+                {get_single?.['@self']?.name ||
+                  get_single?.id ||
+                  get_single?.name ||
+                  'Product'}
+              </Heading>
+            </div>
+          </Heading>
+          <ConDetailsActionsMenu
+            user={user}
             id={id}
-            actionMenuItems={actionMenuItems}
-            handleDelete={handleDelete}
-            canEdit={false}
+            schemaSlug={get_single?.['@self']?.schema?.slug}
+            title={get_single?.['@self']?.name || get_single?.id}
+            published={get_single?.['@self']?.published}
+            object={get_single}
+            showViewAction={false}
+            showEditAction={true}
+            showPublishActions={true}
+            onDelete={handleDelete}
+            onEdit={() => {
+              const schemaSlug = get_single?.['@self']?.schema?.slug;
+              if (schemaSlug) {
+                const wizards = Object.values(DASHBOARD_WIZARDS);
+                const wizard = wizards.find((w) => w.schema === schemaSlug);
+
+                if (wizard) {
+                  const baseUrl = getWizardUrl(wizard);
+                  const url = new URL(baseUrl, window.location.origin);
+                  url.searchParams.set('id', id);
+                  navigate(url.pathname + url.search);
+                  return;
+                }
+              }
+              // Fallback to beheer legacy edit page in new tab
+              const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+              window.open(beheerUrl, '_blank');
+            }}
+            uniqueActions={[
+              {
+                key: 'delete',
+                label: 'Verwijderen',
+                icon: VISUALS.TRASHCAN,
+                onClick: handleDelete,
+              },
+            ]}
+            triggerStyle='button'
+            relatedActions={actionMenuItems}
           />
-        </>
-      )}
+        </AcFlex>
+        <AcFlex spacing='sm' justifyContent='between'>
+          <AcFlex column spacing='md' style={{ flex: 3 }}>
+            {!!get_single?.['@self']?.summary && (
+              <div>{get_single?.['@self']?.summary}</div>
+            )}
+
+            {!!get_single?.beschrijvingLang && (
+              <MDEditor.Markdown
+                wrapperElement={{
+                  'data-color-mode': 'light',
+                }}
+                source={get_single?.beschrijvingLang}
+                remarkPlugins={[
+                  [remarkGfm, { singleTilde: false }],
+                  remarkDefinitionList,
+                  remarkEmoji,
+                  remarkSupersub,
+                  remarkMark,
+                ]}
+                rehypePlugins={[
+                  rehypeSlug,
+                  [remarkRehype, { handlers: { ...defListHastHandlers } }],
+                ]}
+              />
+            )}
+          </AcFlex>
+          <AcFlex column spacing='sm' style={{ flex: 1 }}>
+            {((contact && typeof contact === 'object') || get_single?.website) && (
+              <AcFlex
+                column
+                spacing='sm'
+                className='con-product-details--contact-info'
+              >
+                {get_single?.website && (
+                  <div>
+                    <b>Website:</b>
+                    <Link
+                      href={`${
+                        get_single?.website.startsWith('http')
+                          ? get_single?.website
+                          : `https://${get_single?.website}`
+                      }`}
+                    >
+                      {get_single?.website}
+                    </Link>
+                  </div>
+                )}
+                {contact && typeof contact === 'object' && (
+                  <AcFlex column spacing='xs'>
+                    <b>Contactpersoon:</b>
+                    <p>
+                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                        .filter(Boolean)
+                        .join(' ')}
+                    </p>
+                    <div>
+                      {contact['e-mailadres'] && (
+                        <Link href={`mailto:${contact['e-mailadres']}`}>
+                          {contact['e-mailadres']}
+                        </Link>
+                      )}
+                    </div>
+                    <div>
+                      {contact.telefoonnummer && (
+                        <Link
+                          href={`tel:${String(contact.telefoonnummer)
+                            .split('')
+                            .filter((i) => i !== ' ')
+                            .join('')}`}
+                        >
+                          {contact.telefoonnummer}
+                        </Link>
+                      )}
+                    </div>
+                  </AcFlex>
+                )}
+              </AcFlex>
+            )}
+
+            {
+              <AcFlex
+                column
+                spacing='sm'
+                className='con-product-details--contact-info'
+              >
+                {get_single?.status && (
+                  <div>
+                    <b>Status:</b>
+                    <p>{get_single?.status}</p>
+                  </div>
+                )}
+                {get_single?.hostingLocatie && (
+                  <div>
+                    <b>De applicatie wordt gehost in:</b>
+                    <p>{get_single?.hostingLocatie}</p>
+                  </div>
+                )}
+                {get_single?.hostingJurisdictie && (
+                  <div>
+                    <b>De data wordt opgeslagen in:</b>
+                    <p>{get_single?.hostingJurisdictie}</p>
+                  </div>
+                )}
+                {get_single?.cloudDienstverleningsmodel && (
+                  <div>
+                    <b>Hosting type:</b>
+                    <p>{get_single?.cloudDienstverleningsmodel}</p>
+                  </div>
+                )}
+              </AcFlex>
+            }
+
+            <TabList
+              modules={get_single.modules}
+              objectStore={object}
+              className='con-product-details--content-side'
+            />
+          </AcFlex>
+        </AcFlex>
+      </AcFlex>
 
       <AcGenericBeheerDeleteModal
-        objects={data ? [data] : []}
+        objects={get_single ? [get_single] : []}
         showModal={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onSuccess={() => navigate('/zoeken')}
       />
+
+      <RelatedTabs
+        uses={uses}
+        used={used}
+        usesLoading={usesLoading}
+        usedLoading={usedLoading}
+        tabIndex={relatedTabIndex}
+        setTabIndex={setRelatedTabIndex}
+        object={object}
+      />
     </AcContainer>
+  );
+};
+
+const TabList = ({ modules, objectStore }) => {
+  const [tabIndex, setTabIndex] = useState(0);
+
+  // Combine all referentieComponenten into a unique array
+  const allReferentieComponenten = useMemo(() => {
+    if (!modules?.length) return [];
+    return [
+      ...new Set(modules.flatMap((module) => module.referentieComponenten || [])),
+    ];
+  }, [modules]);
+
+  // Custom hook to resolve UUIDs while keeping original IDs
+  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
+    []
+  );
+
+  useEffect(() => {
+    const resolveWithIds = async () => {
+      if (!allReferentieComponenten.length || !objectStore) {
+        setResolvedReferentieComponenten([]);
+        return;
+      }
+
+      try {
+        const resolved = await Promise.all(
+          allReferentieComponenten.map(async (id) => {
+            try {
+              const name = await objectStore.getNamesForSingleId(id);
+              return { id, name };
+            } catch (error) {
+              return { id, name: id }; // Fallback to ID if resolution fails
+            }
+          })
+        );
+        setResolvedReferentieComponenten(resolved);
+      } catch (error) {
+        console.error('Error resolving referentie componenten:', error);
+        // Fallback to just IDs
+        setResolvedReferentieComponenten(
+          allReferentieComponenten.map((id) => ({ id, name: id }))
+        );
+      }
+    };
+
+    resolveWithIds();
+  }, [allReferentieComponenten, objectStore]);
+
+  return (
+    <div className='con-product-details--side-content-tabs'>
+      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+        <AcTabList>
+          <AcTab selected={tabIndex === 0}>Geschikt voor:</AcTab>
+          <AcTab selected={tabIndex === 1}>Ingevuld door:</AcTab>
+        </AcTabList>
+        <AcTabPanel selected={tabIndex === 0}>
+          {resolvedReferentieComponenten.map((item, idx) => (
+            <Link
+              key={idx}
+              href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+              target='_blank'
+            >
+              {item.name}
+            </Link>
+          ))}
+        </AcTabPanel>
+        <AcTabPanel selected={tabIndex === 1}></AcTabPanel>
+      </AcTabs>
+    </div>
   );
 };
 

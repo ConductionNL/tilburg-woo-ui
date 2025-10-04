@@ -266,6 +266,7 @@
   // Disabled state
   &--disabled {
     opacity: 0.6;
+    background: #9298a0;
     cursor: not-allowed;
 
     &:hover {

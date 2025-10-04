@@ -37,7 +37,7 @@ const AcPublication = observer(({ store: { publications } }) => {
     fetchPublications();
     fetchPublication(id);
     return () => resetPublication();
-  }, []);
+  }, [id, fetchPublication, fetchPublications, resetPublication]);
 
   useEffect(() => {
     document.title =

@@ -53,7 +53,7 @@ graph TD
 
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
-| `SITE_TITLE` | string | `Development Catalogus` | Main site title | `Software Catalogus` |
+| `SITE_TITLE` | string | `Development Catalogus` | Main site title | `Softwarecatalogus` |
 | `SITE_DESCRIPTION` | string | `Local development instance...` | Meta description | `Official software catalog` |
 | `SITE` | string | `localhost` | Site identifier | `production` |
 | `MODE` | string | `development` | Application mode | `production` |
@@ -385,7 +385,7 @@ services:
   app:
     environment:
       # Production configuration
-      - SITE_TITLE=Software Catalogus
+      - SITE_TITLE=Softwarecatalogus
       - SITE_DESCRIPTION=Official government software catalog
       - ENVIRONMENT_NAME=production
       - THEME_VARIANT=dimpact          # Production Dimpact theming

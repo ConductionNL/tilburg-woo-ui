@@ -151,7 +151,13 @@ const ConFormKoppelingenStage = memo(
         // Persist moduleB as its identifier so edit-mode can preselect by id
         const moduleBId = appBId;
 
+        // ✅ FIXED: Find existing koppeling to preserve all its properties
+        const existingKoppeling = list.find((k) => k?._localId === localId);
+
         const fields = {
+          // ✅ FIXED: Preserve existing properties, then override with new values
+          ...(existingKoppeling || {}),
+          _localId: localId, // Ensure local ID is preserved
           moduleA: moduleALabel,
           moduleB: moduleBId,
           richtingDataUitwisseling: richting,
@@ -159,9 +165,9 @@ const ConFormKoppelingenStage = memo(
         };
 
         if (idx >= 0) {
-          list[idx] = { ...list[idx], ...fields };
+          list[idx] = fields;
         } else {
-          list.push({ _localId: localId, ...fields });
+          list.push(fields);
         }
 
         modules[appAId] = { ...sourceModule, koppelingen: list };

@@ -230,6 +230,7 @@ const AcFormsProductInner = ({
       clearTimeout(timeoutId);
     };
   }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
+
   /**
    * Product State Object
    *
@@ -303,7 +304,8 @@ const AcFormsProductInner = ({
 
   // State to track the "same for all" choice from referentiecomponenten stage
   // This affects how standards are displayed and managed
-  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] = useState(true);
+  const [referentieComponentenSameForAll, setReferentieComponentenSameForAll] =
+    useState(true);
 
   // Prefill referentiecomponenten state for edit mode without relying on effects
   // Accepts optional modules/options to avoid stale state during async updates
@@ -447,9 +449,13 @@ const AcFormsProductInner = ({
         if (kpl && kpl.soortKoppeling) {
           nextTypeByRow[rowId] = kpl.soortKoppeling;
         }
+        // ✅ FIXED: Use existing _localId if present (which now includes existing IDs)
         const localId =
-          (kpl && kpl._localId) ||
-          `kpl_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+          kpl && kpl._localId
+            ? kpl._localId
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`;
         nextKoppelingIdByRow[rowId] = localId;
         // Track last persisted module index based on resolved Applicatie A
         nextModuleIndexByRow[rowId] = appAIndex;
@@ -479,6 +485,8 @@ const AcFormsProductInner = ({
     const nextSelectedApplication = {};
     const nextSelectedDienstByRow = {};
     const nextDienstBeschrijvingByRow = {};
+    const nextDienstIdByRow = {}; // ✅ FIXED: Track dienst IDs
+    const nextModuleIndexByRow = {}; // ✅ FIXED: Track module indices
 
     modules.forEach((module, moduleIndex) => {
       if (!module || typeof module !== 'object') return;
@@ -487,7 +495,13 @@ const AcFormsProductInner = ({
         const rowId = rowCounter++;
         nextRows.push(rowId);
         nextSelectedApplication[rowId] = moduleIndex;
+        nextModuleIndexByRow[rowId] = moduleIndex; // ✅ FIXED: Track module index
+
         if (dienst && typeof dienst === 'object') {
+          // ✅ FIXED: Track the dienst ID (either existing or local)
+          if (dienst._localId) {
+            nextDienstIdByRow[rowId] = dienst._localId;
+          }
           if (dienst.type != null)
             nextSelectedDienstByRow[rowId] = String(dienst.type);
           if (dienst.naam != null)
@@ -515,6 +529,16 @@ const AcFormsProductInner = ({
       dienstBeschrijvingByRow: {
         ...prev.dienstBeschrijvingByRow,
         ...nextDienstBeschrijvingByRow,
+      },
+      dienstIdByRow: {
+        // ✅ FIXED: Include dienst ID tracking
+        ...prev.dienstIdByRow,
+        ...nextDienstIdByRow,
+      },
+      moduleIndexByRow: {
+        // ✅ FIXED: Include module index tracking
+        ...prev.moduleIndexByRow,
+        ...nextModuleIndexByRow,
       },
     }));
   };
@@ -1045,12 +1069,67 @@ const AcFormsProductInner = ({
       const markedModules = apiProduct.modules.map((module) => ({
         ...module,
         koppelingen: module.koppelingen.map((kpl) => ({
-          _localId: `kpl_${Date.now().toString(36)}_${Math.random()
-            .toString(36)
-            .slice(2, 8)}`,
+          // ✅ FIXED: Preserve existing ID if present, otherwise generate local ID
+          _localId: kpl.id
+            ? `existing_${kpl.id}`
+            : `kpl_${Date.now().toString(36)}_${Math.random()
+                .toString(36)
+                .slice(2, 8)}`,
           ...kpl,
         })),
+        diensten: module.diensten.map((dienst) => ({
+          // ✅ FIXED: Preserve existing dienst ID if present, otherwise generate local ID
+          _localId:
+            typeof dienst === 'object' && dienst.id
+              ? `existing_${dienst.id}`
+              : `dienst_${Date.now().toString(36)}_${Math.random()
+                  .toString(36)
+                  .slice(2, 8)}`,
+          ...(typeof dienst === 'object' ? dienst : { type: dienst }),
+        })),
       }));
+
+      // a module from the modules could be missing the `naam` and `beschrijvingKort` property.
+      // when that happens gather it from the @self metadata.
+      markedModules.forEach((module) => {
+        if (!('naam' in module)) {
+          module.naam = module['@self'].name;
+        }
+        if (!('beschrijvingKort' in module)) {
+          module.beschrijvingKort = module['@self'].summary;
+        }
+      });
+
+      // Ensure each module has a moduleVersies array with schema-based defaults
+      try {
+        const moduleVersieDefaults = (() => {
+          const defaults = {};
+          const moduleVersieSchema = schemas?.moduleversie;
+          if (moduleVersieSchema?.properties) {
+            Object.entries(moduleVersieSchema.properties).forEach(
+              ([key, property]) => {
+                if (property.default !== undefined) {
+                  defaults[key] = property.default;
+                }
+                if (property.example !== undefined && defaults[key] === undefined) {
+                  defaults[key] = property.example;
+                }
+              }
+            );
+          }
+          return defaults;
+        })();
+
+        markedModules.forEach((module) => {
+          const hasArray = Array.isArray(module.moduleVersies);
+          const hasItems = hasArray && module.moduleVersies.length > 0;
+          if (!hasItems) {
+            module.moduleVersies = [{ ...moduleVersieDefaults }];
+          }
+        });
+      } catch (e) {
+        // TODO: consider logging; keep mapper resilient
+      }
 
       // cloudDienstverleningsmodel comes as array; we use single string (first value) for UI logic
       const cloudModel = Array.isArray(apiProduct.cloudDienstverleningsmodel)
@@ -1102,7 +1181,7 @@ const AcFormsProductInner = ({
 
       return mappedProduct;
     },
-    [store]
+    [store, schemas]
   );
 
   // Prefill product data in edit mode
@@ -1907,7 +1986,7 @@ const AcFormsProductInner = ({
                 <Paragraph>
                   Het product {product.naam || 'Onbekend product'} en alle
                   bijbehorende modules, standaarden, koppelingen en diensten zijn
-                  opgeslagen in de software catalogus.
+                  opgeslagen in de softwarecatalogus.
                 </Paragraph>
               </Alert>
 
@@ -1917,7 +1996,7 @@ const AcFormsProductInner = ({
                 </Paragraph>
                 <UnorderedList>
                   <UnorderedListItem>
-                    Het product wordt zichtbaar in de software catalogus
+                    Het product wordt zichtbaar in de softwarecatalogus
                   </UnorderedListItem>
                   <UnorderedListItem>
                     Organisaties kunnen het product bekijken en beoordelen
