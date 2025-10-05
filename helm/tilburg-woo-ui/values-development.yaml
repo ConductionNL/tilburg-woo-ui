@@ -44,6 +44,7 @@ env:
   NGINX_NEXTCLOUD_DOMAIN: "nextcloud.dev.local"
   NGINX_TARGET_HOST: "nextcloud.dev.local"
   NGINX_ROOT_DIR: "/usr/share/nginx/html"
+  DEFAULT_SEARCH_SCHEMA: "18"  # Schema ID for producten in development
 
 healthCheck:
   enabled: true

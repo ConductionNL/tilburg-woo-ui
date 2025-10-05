@@ -294,6 +294,11 @@ All changes maintain **backward compatibility** - the application works in produ
 | `MENU_POSITION` | `2` | Menu position identifier for navigation |
 | `FOOTER_STYLE` | `vng` | Footer style variant (`vng`, `dimpact`) |
 
+#### Search Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEFAULT_SEARCH_SCHEMA` | `` | Default schema ID for search queries from home page (e.g., `18` for producten) |
+
 ### Using Environment Configuration
 
 #### Testing Your Configuration
