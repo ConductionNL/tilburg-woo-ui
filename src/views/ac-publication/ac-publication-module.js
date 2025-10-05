@@ -100,25 +100,39 @@ const AcPublicationProduct = ({
   const [standards, setStandards] = useState([]);
   const [standardsLoading, setStandardsLoading] = useState(false);
 
-  // Fetch standards once for the entire component
+  // Fetch standards from openconnector endpoint
   const fetchStandards = useCallback(async () => {
     setStandardsLoading(true);
     try {
-      const queryParams = {
+      const queryParams = new URLSearchParams({
         _limit: '500',
         _page: '1',
         gemmaType: 'Standaard',
-        _extend: ['@self.schema'],
-        _source: 'index',
-      };
+      });
 
-      console.info('📋 Fetching standards for publication page...');
+      console.info('📋 Fetching standards from openconnector endpoint...');
 
-      // Fetch standards using the correct endpoint
-      const fetchedStandards = await object.fetchGemmaElementsCacheFirst(
-        'Standaard',
-        queryParams
+      // Fetch standards from openconnector endpoint using normal fetch
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
+
+      if (!response.ok) {
+        console.error(
+          'Error fetching openconnector standards:',
+          response.statusText
+        );
+        return;
+      }
+
+      const data = await response.json();
+      const fetchedStandards = data.results || data;
 
       setStandards(fetchedStandards);
       console.info(
@@ -130,7 +144,55 @@ const AcPublicationProduct = ({
     } finally {
       setStandardsLoading(false);
     }
-  }, [object]);
+  }, []);
+
+  // TODO: Remove this if it's not needed
+  // The code below is a fetch request on the publication endpoint that will fetch all the elements that are published and are of gemmaType Standaard
+  // For now there are no results on this endpoint. This is because of the gemmaType filter not being applied in the backend correctly.
+
+  // Fetch standards from publications endpoint with specific parameters
+  //   const fetchStandards = useCallback(async () => {
+  //     setStandardsLoading(true);
+  //     try {
+  //       const queryParams = new URLSearchParams({
+  //         '@self[schema]': 'element',
+  //         gemmaType: 'Standaard',
+  //       });
+
+  //       console.info('📋 Fetching standards from publications endpoint...');
+
+  //       // Fetch standards from publications endpoint using normal fetch
+  //       const response = await fetch(
+  //         `${commongroundApiUrl()}/opencatalogi/api/publications?${queryParams}`,
+  //         {
+  //           method: 'GET',
+  //           headers: {
+  //             'Content-Type': 'application/json',
+  //           },
+  //         }
+  //       );
+
+  //       if (!response.ok) {
+  //         console.error('Error fetching publications standards:', response.statusText);
+  //         return;
+  //       }
+
+  //       const data = await response.json();
+  //       const fetchedStandards = data.results || data;
+
+  //       console.info(
+  //         `✅ Loaded ${fetchedStandards.length} standards from publications endpoint`
+  //       );
+
+  //       // You can process the fetched standards here if needed
+  //       // For now, we'll just log them
+  //       console.log('Publications standards:', fetchedStandards);
+  //     } catch (error) {
+  //       console.warn('⚠️ Failed to fetch standards from publications:', error);
+  //     } finally {
+  //       setStandardsLoading(false);
+  //     }
+  //   }, []);
 
   useEffect(() => {
     fetchStandards();
