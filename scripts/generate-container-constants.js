@@ -63,6 +63,8 @@ const getEnvConfig = () => {
       'Één plek voor alle publicaties van Gemeente Tilburg',
     // Support Configuration
     SUPPORT_EMAIL_ADDRESS: process.env.SUPPORT_EMAIL_ADDRESS || 'info@conduction.nl',
+    // Search Configuration
+    DEFAULT_SEARCH_SCHEMA: process.env.DEFAULT_SEARCH_SCHEMA || '',
   };
 };
 // Generate the constants file content
@@ -135,6 +137,8 @@ export const getVisualConfig = () => ({
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
+// Search helper functions
+export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
 export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };

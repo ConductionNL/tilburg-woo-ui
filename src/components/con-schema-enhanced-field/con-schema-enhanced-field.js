@@ -364,6 +364,7 @@ const ConSchemaEnhancedField = ({
     onFieldChange: (field, value) => {
       // Handle main field change
       if (field === fieldName) {
+        console.log('ConSchemaEnhancedField onChange:', { field, value, fieldName });
         onChange(value);
       }
       // Handle related field changes (like filename for file uploads)

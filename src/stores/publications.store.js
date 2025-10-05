@@ -16,40 +16,7 @@ const DEFAULT_QUERY = {
   extend: 'themes',
 };
 
-// Optimized: Only request essential facets instead of all available ones
-export const buildEssentialFacetsQueries = () => {
-  // Only request the most important facets for performance
-  return [
-    [['@self', 'register'], 'terms'], // Publication register
-    [['@self', 'schema'], 'terms'], // Publication schema
-    ['cloudDienstverleningsmodel', 'terms'], // Service delivery model
-  ];
-};
-
-// Legacy function for backward compatibility (if needed)
-export const buildFacetsQueries = (availableFacets) => {
-  const queries = [];
-
-  // Handle @self facets
-  if (availableFacets['@self']) {
-    Object.entries(availableFacets['@self']).forEach(([key, config]) => {
-      if (config.facet_types && config.facet_types.includes('terms')) {
-        queries.push([['@self', key], 'terms']);
-      }
-    });
-  }
-
-  // Handle object_fields facets
-  if (availableFacets.object_fields) {
-    Object.entries(availableFacets.object_fields).forEach(([key, config]) => {
-      if (config.facet_types && config.facet_types.includes('terms')) {
-        queries.push([key, 'terms']);
-      }
-    });
-  }
-
-  return queries;
-};
+// Legacy functions removed - facets are now built directly from API response facetable configuration
 
 export const buildPublicationsSearchQuery = (baseQuery) => {
   return {
@@ -125,15 +92,6 @@ export class PublicationsStore {
 
   @observable
   facets = {};
-
-  @observable
-  availableFacets = null;
-
-  @observable
-  facetsConfig = null;
-
-  @observable
-  facetsConfigLoaded = false;
 
   @observable
   pagination = {};
@@ -227,11 +185,6 @@ export class PublicationsStore {
   @computed
   get is_facets_loading() {
     return this.facetsLoading;
-  }
-
-  @computed
-  get is_facets_config_loaded() {
-    return this.facetsConfigLoaded;
   }
 
   @computed
@@ -407,40 +360,8 @@ export class PublicationsStore {
   };
 
   @action
-  setAvailableFacets = (availableFacets) => {
-    this.availableFacets = availableFacets;
-  };
-
-  @action
   setFacetsLoadingStatus = (status) => {
     this.facetsLoading = status;
-  };
-
-  @action
-  setFacetsConfig = (config) => {
-    const configChanged =
-      JSON.stringify(this.facetsConfig) !== JSON.stringify(config);
-    this.facetsConfig = config;
-    this.facetsConfigLoaded = true;
-
-    // If config changed, trigger facets reload
-    if (configChanged && config) {
-      this.triggerFacetsReload();
-    }
-  };
-
-  @action
-  resetFacetsConfig = () => {
-    this.facetsConfig = null;
-    this.facetsConfigLoaded = false;
-    this.facets = {};
-  };
-
-  @action
-  triggerFacetsReload = async () => {
-    if (this.facetsConfig) {
-      await this.fetchFacets();
-    }
   };
 
   @action
@@ -463,6 +384,31 @@ export class PublicationsStore {
 
   // Note: fetchAvailableFacets removed - now handled in fetchPublications
 
+  /**
+   * Fetch facets using the new optimized API structure.
+   * 
+   * The API now returns:
+   * - `facets`: Object where each key is a facet name and value contains both configuration and data
+   * - `facetable`: Configuration object defining all available facets (fallback/reference)
+   * 
+   * Each facet in the `facets` object has the structure:
+   * {
+   *   "name": "_register",
+   *   "type": "terms", 
+   *   "title": "Register",
+   *   "enabled": true,
+   *   "queryParameter": "@self[register]",
+   *   "data": {
+   *     "buckets": [{ "value": 1, "count": 2, "label": "1" }]
+   *   }
+   * }
+   * 
+   * This allows us to:
+   * 1. Only show enabled facets (configured in backend)
+   * 2. Get proper titles and metadata from each facet
+   * 3. Access buckets/counts directly from facet.data
+   * 4. Remove complex custom filtering logic
+   */
   @action
   fetchFacets = async () => {
     this.setFacetsLoadingStatus(true);
@@ -479,7 +425,7 @@ export class PublicationsStore {
       delete baseQuery._page;
       
       const queryString = AcBuildURLSearchParams(baseQuery);
-      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?${queryString}`;
+      const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
 
       console.group('🚀 INDEPENDENT FACETS API CALL');
       console.info('FACETS QUERY:', toJS(baseQuery));
@@ -497,80 +443,78 @@ export class PublicationsStore {
         return res.json();
       });
 
-      // Handle new facets structure - API returns facets with data.buckets
+      // Handle new facets structure - API returns facets as an object where each facet contains both config and data
       const facetsData = response.facets || {};
+      const facetableConfig = response.facetable || {};
+
+      console.info('📊 Processing new facets structure');
+      console.info('Facets data:', Object.keys(facetsData).length, 'facets with data');
+      console.info('Facetable config:', Object.keys(facetableConfig).length, 'available facets');
 
       if (facetsData && Object.keys(facetsData).length > 0) {
-        console.info('📊 Processing facets data:', facetsData);
+        // Build facets from the facets data, only including enabled ones
+        const processedFacets = {};
 
-        // Process facets with new structure
-        const facetsWithTitles = {};
-        for (const [key, facetConfig] of Object.entries(facetsData)) {
+        // Process each facet in the response
+        for (const [facetName, facetInfo] of Object.entries(facetsData)) {
+          // Only include enabled facets
+          if (!facetInfo.enabled) {
+            continue;
+          }
+
+          // Skip date histogram facets for now (different structure)
+          if (facetInfo.type === 'date_histogram') {
+            continue;
+          }
+
+          // Get buckets from the data property
+          const buckets = facetInfo.data?.buckets || [];
+
           // Check if this is a @self facet (starts with _)
-          if (key.startsWith('_')) {
+          if (facetName.startsWith('_')) {
             // Handle @self facets - group them under @self key
-            if (!facetsWithTitles['@self']) {
-              facetsWithTitles['@self'] = {};
+            if (!processedFacets['@self']) {
+              processedFacets['@self'] = {};
             }
             
-            const cleanKey = key.substring(1); // Remove the _ prefix
-            facetsWithTitles['@self'][cleanKey] = {
-              buckets: facetConfig.data?.buckets || [],
-              title: this.getFacetTitle(facetConfig.title || facetConfig.name || cleanKey),
-              type: facetConfig.type,
-              queryParameter: facetConfig.queryParameter,
+            const cleanKey = facetName.substring(1); // Remove the _ prefix
+            processedFacets['@self'][cleanKey] = {
+              buckets: buckets,
+              title: facetInfo.title || facetInfo.name || cleanKey,
+              description: facetInfo.description,
+              type: facetInfo.type,
+              queryParameter: facetInfo.queryParameter,
+              enabled: facetInfo.enabled,
+              order: facetInfo.order || 0,
             };
           } else {
             // Handle regular facets
-            facetsWithTitles[key] = {
-              buckets: facetConfig.data?.buckets || [],
-              title: this.getFacetTitle(facetConfig.title || facetConfig.name || key),
-              type: facetConfig.type,
-              queryParameter: facetConfig.queryParameter,
+            processedFacets[facetName] = {
+              buckets: buckets,
+              title: facetInfo.title || facetInfo.name || facetName,
+              description: facetInfo.description,
+              type: facetInfo.type,
+              queryParameter: facetInfo.queryParameter,
+              enabled: facetInfo.enabled,
+              order: facetInfo.order || 0,
             };
           }
         }
         
-        this.setFacets(facetsWithTitles);
-        console.info('✅ Facets processed and set:', Object.keys(facetsWithTitles));
+        this.setFacets(processedFacets);
+        console.info('✅ Facets processed and set:', Object.keys(processedFacets));
+        console.info('Processed facets structure:', processedFacets);
       } else {
-        console.warn(
-          'No facets in response. Available keys:',
-          Object.keys(response)
-        );
-        console.warn('Facets data structure:', response.facets);
+        console.warn('No facets data in response');
+        console.warn('Available response keys:', Object.keys(response));
+        this.setFacets({});
       }
     } catch (error) {
       console.error('Error fetching facets:', error);
+      this.setFacets({});
     } finally {
       this.setFacetsLoadingStatus(false);
     }
-  };
-
-  // Helper method to get facet titles
-  // Use title first, if no title use name but remove the _ and make it upperfirst
-  getFacetTitle = (titleOrName) => {
-    if (!titleOrName) return '';
-    
-    // If it's already a clean title, return it
-    if (typeof titleOrName === 'string' && !titleOrName.startsWith('_')) {
-      return titleOrName;
-    }
-    
-    // Remove _ prefix and make upperfirst
-    const cleanName = titleOrName.startsWith('_') ? titleOrName.substring(1) : titleOrName;
-    
-    // Special mappings for known keys
-    const titleMap = {
-      register: 'Register',
-      schema: 'Schema',
-      organisation: 'Organisatie',
-      created: 'Aangemaakt',
-      updated: 'Bijgewerkt',
-    };
-    
-    // Return mapped title or upperfirst the clean name
-    return titleMap[cleanName] || cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
   };
 
   @action
@@ -584,7 +528,7 @@ export class PublicationsStore {
       _relatedNames: true,
     };
     const queryString = AcBuildURLSearchParams(baseQuery);
-    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=database&${queryString}`;
+    const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
 
     console.group('🚀 INDEPENDENT PUBLICATIONS API CALL');
     console.info('SEARCH QUERY:', toJS(baseQuery));

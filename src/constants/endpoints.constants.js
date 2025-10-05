@@ -55,6 +55,13 @@ export const ENDPOINTS = AcLockObject({
     INDEX: `/opencatalogi/api/menus?_source=database`, // GET
     SINGLE: (_id) => `/opencatalogi/api/menus/${_id}`, // GET
   },
+  AANGEBODEN_GEBRUIK: {
+    AFNEMER: `/softwarecatalog/api/aangeboden-gebruik/afnemer`, // GET
+    DEELNEMERS: `/softwarecatalog/api/aangeboden-gebruik/deelnemers`, // GET
+    SET_SELF: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/set-self`, // PUT
+    DENY: (_id) => `/softwarecatalog/api/aangeboden-gebruik/${_id}/deny`, // DELETE
+    DOCS: `/softwarecatalog/api/aangeboden-gebruik/docs`, // GET
+  },
 });
 
 export default ENDPOINTS;

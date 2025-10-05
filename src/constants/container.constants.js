@@ -4,11 +4,11 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Environment Config Test ✅',
-  SITE_DESCRIPTION: 'Development instance of the software catalogus',
+  SITE_TITLE: 'Development Catalogus',
+  SITE_DESCRIPTION: 'Local development instance of the softwarecatalogus',
   SITE: 'localhost',
   MODE: 'development',
-  THEME_VARIANT: 'vng',
+  THEME_VARIANT: 'development',
   ENVIRONMENT_NAME: 'development',
   BASE_URL: '/api/apps',
   GRANT_TYPE: 'authorization_code',
@@ -26,7 +26,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   ENABLE_GEMMA: true,
   ENABLE_DIRECTORY: true,
   ENABLE_ROLLBAR: false,
-  ENABLE_MOCK_THEMES: true,
+  ENABLE_MOCK_THEMES: false,
   ENABLE_BREADCRUMBS: false,
   EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
   EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
@@ -34,9 +34,10 @@ export const CONTAINER_CONFIG = AcLockObject({
   EXTERNAL_PROCLAIMER_URL: 'https://www.tilburg.nl/proclaimer/',
   HERO_IMAGE_URL: '/home-hero-background.png',
   FOOTER_STYLE: 'vng',
-  FOOTER_LOGO_TITLE: 'VNG Softwarectalogus',
-  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle software voor en door Gemeenten',
+  FOOTER_LOGO_TITLE: 'Open Tilburg',
+  FOOTER_LOGO_SUBTITLE: 'Één plek voor alle publicaties van Gemeente Tilburg',
   SUPPORT_EMAIL_ADDRESS: 'info@conduction.nl',
+  DEFAULT_SEARCH_SCHEMA: '18',
 });
 // Helper functions to replace hostname-based logic
 export const getTitle = () => CONTAINER_CONFIG.SITE_TITLE;
@@ -85,4 +86,6 @@ export const getVisualConfig = () => ({
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
+// Search helper functions
+export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
 export const getDefaultConfig = () => CONTAINER_CONFIG;
