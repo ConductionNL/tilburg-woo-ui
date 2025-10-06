@@ -75,7 +75,7 @@ const ConExistingModulesInfoBox = ({
       </div>
       <ul style={{ marginTop: '0.25rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
         {existingModules.map((module) => (
-          <li key={module.id}>{module.naam || `Module ${module.id}`}</li>
+          <li key={module.id}>{module.naam || `Applicatie ${module.id}`}</li>
         ))}
       </ul>
     </Alert>

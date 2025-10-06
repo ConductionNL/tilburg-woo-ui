@@ -8,7 +8,7 @@ import { AcFlex } from '@atoms';
 // eslint-disable-next-line import/no-unresolved
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-import { collapseExtendedObjects } from '@src/utilities';
+import { collapseExtendedObjects, normalizeSchemaName } from '@src/utilities';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
 import _ from 'lodash';
@@ -804,8 +804,9 @@ const ConGenericFormModal = ({
   }
 
   // Generate title - prefer custom config name over schema title over type slug
-  const schemaTitle =
+  const baseSchemaTitle =
     config?.title || schema?.title || type.charAt(0).toUpperCase() + type.slice(1);
+  const schemaTitle = normalizeSchemaName(baseSchemaTitle);
   const title = isEdit ? `${schemaTitle} bewerken` : `${schemaTitle} toevoegen`;
 
   return (

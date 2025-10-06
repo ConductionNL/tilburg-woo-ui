@@ -203,7 +203,7 @@ const ConFormDienstenStage = memo(
     const allModules = getAllModulesForStages ? getAllModulesForStages() : [];
     const appOptions = allModules.map((module, index) => ({
       value: module.isExisting ? module.id : module.moduleIndex,
-      label: module.naam || `Module ${index + 1}`,
+      label: module.naam || `Applicatie ${index + 1}`,
       isExisting: !!module.isExisting,
     }));
 
