@@ -711,7 +711,7 @@ const AcMyAccount = ({ store }) => {
                           label='Lange beschrijving'
                           placeholder={longTooltip('organisatie')}
                           tooltip={longTooltip('organisatie')}
-                          maxLength={2000}
+                          maxLength={5000}
                           isMarkdown={true}
                           value={fullActiveOrganisation?.beschrijvingLang}
                           serialize={(v) => JSON.stringify(v || '')}

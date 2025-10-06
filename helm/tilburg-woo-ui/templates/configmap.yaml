@@ -19,6 +19,9 @@ data:
   NGINX_ROOT_DIR: {{ .Values.env.NGINX_ROOT_DIR | quote }}
   # Nginx proxies /api/* calls to external Nextcloud/OpenConnector
   
+  # Search Configuration
+  DEFAULT_SEARCH_SCHEMA: {{ .Values.env.DEFAULT_SEARCH_SCHEMA | quote }}
+  
   {{- if .Values.development.enabled }}
   # Development specific configuration
   FAST_REFRESH: {{ .Values.development.env.FAST_REFRESH | quote }}

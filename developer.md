@@ -229,7 +229,7 @@ All changes maintain **backward compatibility** - the application works in produ
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `SITE_TITLE` | `Development Catalogus` | Main site title displayed in headers |
-| `SITE_DESCRIPTION` | `Local development instance of the software catalogus` | Meta description |
+| `SITE_DESCRIPTION` | `Local development instance of the softwarecatalogus` | Meta description |
 | `SITE` | `localhost` | Site identifier |
 | `MODE` | `development` | Application mode |
 | `THEME_VARIANT` | `development` | Theme variation to use |
@@ -293,6 +293,11 @@ All changes maintain **backward compatibility** - the application works in produ
 |----------|---------|-------------|
 | `MENU_POSITION` | `2` | Menu position identifier for navigation |
 | `FOOTER_STYLE` | `vng` | Footer style variant (`vng`, `dimpact`) |
+
+#### Search Configuration
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEFAULT_SEARCH_SCHEMA` | `` | Default schema ID for search queries from home page (e.g., `18` for producten) |
 
 ### Using Environment Configuration
 
@@ -478,7 +483,7 @@ docker logs tilburg-woo-ui-prod
        environment:
          # Site Configuration
          - SITE_TITLE=Production Catalogus
-         - SITE_DESCRIPTION=Official software catalogus
+         - SITE_DESCRIPTION=Official softwarecatalogus
          - ENVIRONMENT_NAME=production
          
          # API Configuration
@@ -599,7 +604,7 @@ docker run -d -p 81:81 \
 #### Production Server
 ```bash
 docker run -d -p 81:81 \
-  -e SITE_TITLE="Software Catalogus" \
+  -e SITE_TITLE="Softwarecatalogus" \
   -e API_URL="https://api.example.com/apps" \
   -e ENABLE_AUTHENTICATION=true \
   -e ENABLE_ROLLBAR=true \

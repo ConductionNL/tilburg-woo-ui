@@ -153,6 +153,9 @@ env:
   NGINX_NEXTCLOUD_DOMAIN: ""          # REQUIRED: Domain name (e.g. "nextcloud.yourdomain.com")
   NGINX_TARGET_HOST: ""               # REQUIRED: Target host (usually same as NGINX_NEXTCLOUD_DOMAIN)
 
+  # Search Configuration
+  DEFAULT_SEARCH_SCHEMA: ""           # Optional: Default schema ID for search queries (e.g. "63" for producten)
+
 
 # Health check configuration
 healthCheck:

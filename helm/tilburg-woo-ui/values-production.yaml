@@ -65,6 +65,7 @@ env:
   NGINX_NEXTCLOUD_DOMAIN: "nextcloud.production.domain.com"
   NGINX_TARGET_HOST: "nextcloud.production.domain.com"
   NGINX_ROOT_DIR: "/usr/share/nginx/html"
+  DEFAULT_SEARCH_SCHEMA: ""  # Configure per environment - schema ID for producten
 
 healthCheck:
   enabled: true

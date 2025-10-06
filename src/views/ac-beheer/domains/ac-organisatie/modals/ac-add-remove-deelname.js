@@ -48,6 +48,13 @@ const AcAddRemoveDeelnameModal = ({
 
   const handleOpenModal = () => modalRef?.current?.showModal();
 
+  /**
+   * Fetch organizations for deelname selection
+   * 
+   * Note: We use _source: 'index' instead of 'database' because communities and 
+   * samenwerkingsverbanden (collaborations) are owned by different organizations/tenants,
+   * and we need to access the public index to see all available options across tenants.
+   */
   const fetchOrganisations = async () => {
     // Skip fetching if we have a predefined deelname to remove
     if (remove && deelnameToRemove) return;
@@ -57,8 +64,9 @@ const AcAddRemoveDeelnameModal = ({
         'voorzieningen',
         'organisatie',
         {
-          'type[]': ['samenwerking', 'community'],
+          'type[]': ['Samenwerking', 'Community'],
           _limit: 300,
+          _source: 'index' // Use index to get public organizations from all tenants
         },
         false,
         'deelname-opties'
@@ -203,7 +211,7 @@ const AcAddRemoveDeelnameModal = ({
             <Paragraph>
               {remove
                 ? 'Selecteer een deelname om te verlaten:'
-                : 'Selecteer een organisatie van de type samenwerking of community om aan toe te voegen:'}
+                : 'Selecteer een organisatie van de type Samenwerking of Community om aan toe te voegen:'}
             </Paragraph>
             <ReactSelect
               options={deelnameOptions}

@@ -109,7 +109,15 @@ const ConFormDienstenStage = memo(
 
         // Create or update dienst object with proper structure
         const dienstOption = dienstOptions.find((opt) => opt.value === dienstVal);
+
+        // ✅ FIXED: Find existing dienst to preserve all its properties
+        const existingDienst = Array.isArray(targetModule.diensten)
+          ? targetModule.diensten.find((d) => d._localId === localId)
+          : null;
+
         const dienstObject = {
+          // ✅ FIXED: Preserve existing properties, then override with new values
+          ...(existingDienst || {}),
           _localId: localId, // Add local ID for tracking
           type: dienstVal, // The service type (e.g., "Functioneel beheer")
           naam: dienstOption?.label || dienstVal,

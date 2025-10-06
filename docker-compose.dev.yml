@@ -34,7 +34,7 @@ services:
       - NGINX_ROOT_DIR=/app/public_html
       # Site Configuration
       - SITE_TITLE=Environment Config Test ✅
-      - SITE_DESCRIPTION=Development instance of the software catalogus
+      - SITE_DESCRIPTION=Development instance of the softwarecatalogus
       - SITE=localhost
       - MODE=development
       - THEME_VARIANT=vng
@@ -80,6 +80,8 @@ services:
       # Footer Text Configuration
       - FOOTER_LOGO_TITLE=VNG Softwarectalogus
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle software voor en door Gemeenten
+      # Search Configuration
+      - DEFAULT_SEARCH_SCHEMA=18
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:81/api/status.php"]
       interval: 30s
@@ -160,6 +162,8 @@ services:
       # Footer Text Configuration
       - FOOTER_LOGO_TITLE=Open Tilburg
       - FOOTER_LOGO_SUBTITLE=Één plek voor alle publicaties van Gemeente Tilburg
+      # Search Configuration
+      - DEFAULT_SEARCH_SCHEMA=18
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
     healthcheck:

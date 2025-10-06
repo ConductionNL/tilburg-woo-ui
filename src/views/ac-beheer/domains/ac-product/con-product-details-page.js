@@ -3,16 +3,13 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router';
 import { AcFlex, AcSection } from '@atoms';
-import { ConDynamicSidenav, AcLoader, ConDetailsActionsMenu } from '@components';
+import { ConDynamicSidenav, AcLoader } from '@components';
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@constants';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import DetailsPageConfigFactory from '@views/ac-beheer/core/factories/con-details-page-config-factory';
 // Removed direct modal imports; modals are now loaded via BeheerModalFactory for consistency
 import BeheerModalFactory from '@views/ac-beheer/core/factories/con-beheer-modal-factory';
-import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 import ConProductDetailsPageContent from './con-product-details-page-content';
 
 /**
@@ -43,7 +40,6 @@ const ConProductDetailsPage = ({ store }) => {
   const [dynamicCreateTargetType, setDynamicCreateTargetType] = useState(null);
   const [dynamicCreatePreSelected, setDynamicCreatePreSelected] = useState({});
   const [dynamicCreateMetadata, setDynamicCreateMetadata] = useState({});
-  const [actionMenuItems, setActionMenuItems] = useState([]);
 
   // Types
   const objectType = useMemo(() => {
@@ -118,43 +114,6 @@ const ConProductDetailsPage = ({ store }) => {
     };
   }, [pageType, registerSlug, schemaSlug]);
 
-  const openDynamicCreate = React.useCallback(
-    (targetType, preSelected, metadata = {}) => {
-      setDynamicCreateTargetType(targetType);
-      setDynamicCreatePreSelected(preSelected);
-      // Store metadata for outgoing relationship handling and optimization
-      // Store all metadata for the modal to use
-      setDynamicCreateMetadata(metadata);
-      setOpenModal('dynamicCreate');
-    },
-    []
-  );
-
-  const { makeActionsForContext } = useRelatedCreateActions({
-    object,
-    user,
-    schemaRef: config?.schemaSlug,
-    currentType: pageType,
-    openDynamicCreate,
-    currentObject: data, // Pass current object for organization permission checks
-    currentObjectRegister: config?.registerSlug, // Pass current object register
-    currentObjectSchema: config?.schemaSlug, // Pass current object schema
-  });
-
-  useEffect(() => {
-    if (!config?.schemaSlug || !data?.id) return;
-    const items = makeActionsForContext(data.id).map(
-      ({ key, label, onClick, schema, icon }) => ({
-        key,
-        label,
-        onClick,
-        schema,
-        icon,
-      })
-    );
-    setActionMenuItems(items);
-  }, [config?.schemaSlug, data?.id, makeActionsForContext]);
-
   if (!config) {
     return <AcBeheerError error={'Onbekend detailtype'} store={store} />;
   }
@@ -172,70 +131,22 @@ const ConProductDetailsPage = ({ store }) => {
             {loading && <AcLoader />}
             {!loading && !data && <Heading>Er is een fout opgetreden</Heading>}
             {!loading && data && (
-              <>
-                <AcFlex justifyContent='end' className='ac-beheer-details--actions'>
-                  <ConDetailsActionsMenu
-                    user={user}
-                    id={id}
-                    schemaSlug={config?.schemaSlug}
-                    title={data['@self']?.name || data.id}
-                    published={data?.['@self']?.published}
-                    object={data}
-                    showViewAction={false}
-                    showEditAction={true}
-                    showPublishActions={true}
-                    uniqueActions={[
-                      ...(config.uniqueActions
-                        ?.filter((action) => action.condition?.(data))
-                        .map((action) => ({
-                          key: action.key,
-                          label: action.label,
-                          icon: action.icon,
-                          onClick: () =>
-                            typeof action.onClick === 'function'
-                              ? action.onClick(data)
-                              : setOpenModal(action.action),
-                        })) || []),
-                      {
-                        key: 'delete',
-                        label: 'Verwijderen',
-                        icon: VISUALS.TRASHCAN,
-                        onClick: () => setOpenModal('delete'),
-                      },
-                    ]}
-                    relatedActions={actionMenuItems}
-                    onEdit={() => {
-                      // Prefer wizard editing when available; fallback to legacy modal
-                      if (config?.schemaSlug) {
-                        const wizards = Object.values(DASHBOARD_WIZARDS);
-                        const wizard = wizards.find(
-                          (w) => w.schema === config.schemaSlug
-                        );
-                        if (wizard) {
-                          const baseUrl = getWizardUrl(wizard);
-                          const url = new URL(baseUrl, window.location.origin);
-                          url.searchParams.set('id', data?.id);
-                          navigate(url.pathname + url.search);
-                          return;
-                        }
-                      }
-                      setOpenModal('edit');
-                    }}
-                    onPublish={() => setOpenModal('publish')}
-                    onDepublish={() => setOpenModal('depublish')}
-                  />
-                </AcFlex>
-
-                <ConProductDetailsPageContent
-                  loading={loading}
-                  data={data}
-                  userStore={user}
-                  id={id}
-                  actionMenuItems={actionMenuItems}
-                  handleDelete={() => setOpenModal('delete')}
-                  canEdit={true}
-                />
-              </>
+              <ConProductDetailsPageContent
+                loading={loading}
+                config={config}
+                data={data}
+                userStore={user}
+                objectStore={object}
+                id={id}
+                handleDelete={() => setOpenModal('delete')}
+                canEdit={true}
+                actionMenuProps={{
+                  setDynamicCreateTargetType,
+                  setDynamicCreatePreSelected,
+                  setDynamicCreateMetadata,
+                  setOpenModal,
+                }}
+              />
             )}
           </AcColumn>
         </div>

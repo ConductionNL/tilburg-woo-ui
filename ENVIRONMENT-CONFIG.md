@@ -53,7 +53,7 @@ graph TD
 
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
-| `SITE_TITLE` | string | `Development Catalogus` | Main site title | `Software Catalogus` |
+| `SITE_TITLE` | string | `Development Catalogus` | Main site title | `Softwarecatalogus` |
 | `SITE_DESCRIPTION` | string | `Local development instance...` | Meta description | `Official software catalog` |
 | `SITE` | string | `localhost` | Site identifier | `production` |
 | `MODE` | string | `development` | Application mode | `production` |
@@ -119,6 +119,30 @@ graph TD
 | Variable | Type | Default | Description | Example |
 |----------|------|---------|-------------|---------|
 | `HERO_IMAGE_URL` | string | `/home-hero-background.png` | Hero section background image | `/custom-hero.jpg` |
+
+### Search Configuration
+
+| Variable | Type | Default | Description | Example |
+|----------|------|---------|-------------|---------|
+| `DEFAULT_SEARCH_SCHEMA` | string | `` | Default schema ID for search queries from home page | `18` |
+
+#### Search Configuration Usage
+
+The `DEFAULT_SEARCH_SCHEMA` environment variable allows you to configure which schema should be used as the default when users perform searches from the home page. This enables deep linking to specific search contexts (e.g., filtering to only show "producten" results).
+
+**How it works:**
+- When a user searches from the home page hero section, the search will automatically include `@self[schema]={DEFAULT_SEARCH_SCHEMA}` in the URL query parameters
+- If no default schema is configured, searches will work normally without schema filtering
+- Different environments can have different schema IDs based on their data structure
+
+**Example URLs generated:**
+- Without schema: `/zoeken?_page=1&_search=user+query`
+- With schema: `/zoeken?_page=1&_search=user+query&@self[schema]=18`
+
+**Environment-specific values:**
+- **Development**: Schema ID `18` (configured in docker-compose.dev.yml)
+- **Production**: Configure per environment based on your schema structure
+- **Accept environment**: Use the schema ID that corresponds to your "producten" schema
 
 ### Menu Configuration
 
@@ -385,7 +409,7 @@ services:
   app:
     environment:
       # Production configuration
-      - SITE_TITLE=Software Catalogus
+      - SITE_TITLE=Softwarecatalogus
       - SITE_DESCRIPTION=Official government software catalog
       - ENVIRONMENT_NAME=production
       - THEME_VARIANT=dimpact          # Production Dimpact theming

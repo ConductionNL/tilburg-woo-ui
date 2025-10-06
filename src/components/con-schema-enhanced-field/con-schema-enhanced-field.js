@@ -132,6 +132,7 @@ const ConSchemaEnhancedField = ({
   customProps = {},
   className = '',
   style = {},
+  inputStyle = {},
   optionsProvider = [],
   isLoading = false,
   isDisabled = false,
@@ -391,6 +392,7 @@ const ConSchemaEnhancedField = ({
     onSearchHandlers: effectiveOnSearchHandlers,
     resetKey,
     forceRenderKey: 0,
+    inputStyle,
   });
 
   // Render early error/loading states after hooks to maintain order
@@ -448,6 +450,7 @@ ConSchemaEnhancedField.propTypes = {
   customProps: PropTypes.object,
   className: PropTypes.string,
   style: PropTypes.object,
+  inputStyle: PropTypes.object,
   optionsProvider: PropTypes.array,
   isLoading: PropTypes.bool,
   isDisabled: PropTypes.bool,

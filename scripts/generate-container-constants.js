@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Container Constants Generator
- * 
+ *
  * This script generates container.constants.js from environment variables
  * to replace hostname-based configuration logic with environment-based configuration.
  */
@@ -12,7 +12,9 @@ const getEnvConfig = () => {
   return {
     // Site Configuration
     SITE_TITLE: process.env.SITE_TITLE || 'Development Catalogus',
-    SITE_DESCRIPTION: process.env.SITE_DESCRIPTION || 'Local development instance of the software catalogus',
+    SITE_DESCRIPTION:
+      process.env.SITE_DESCRIPTION ||
+      'Local development instance of the softwarecatalogus',
     SITE: process.env.SITE || 'localhost',
     MODE: process.env.MODE || 'development',
     THEME_VARIANT: process.env.THEME_VARIANT || 'development',
@@ -42,19 +44,27 @@ const getEnvConfig = () => {
     ENABLE_MOCK_THEMES: process.env.ENABLE_MOCK_THEMES === 'true' || false,
     ENABLE_BREADCRUMBS: process.env.ENABLE_BREADCRUMBS === 'true' || false,
     // External URLs (for different environments)
-    EXTERNAL_WEBSITE_URL: process.env.EXTERNAL_WEBSITE_URL || 'https://www.tilburg.nl/',
-    EXTERNAL_PRIVACY_URL: process.env.EXTERNAL_PRIVACY_URL || 'https://www.tilburg.nl/privacystatement/',
-    EXTERNAL_COOKIES_URL: process.env.EXTERNAL_COOKIES_URL || 'https://www.tilburg.nl/cookies/',
-    EXTERNAL_PROCLAIMER_URL: process.env.EXTERNAL_PROCLAIMER_URL || 'https://www.tilburg.nl/proclaimer/',
+    EXTERNAL_WEBSITE_URL:
+      process.env.EXTERNAL_WEBSITE_URL || 'https://www.tilburg.nl/',
+    EXTERNAL_PRIVACY_URL:
+      process.env.EXTERNAL_PRIVACY_URL || 'https://www.tilburg.nl/privacystatement/',
+    EXTERNAL_COOKIES_URL:
+      process.env.EXTERNAL_COOKIES_URL || 'https://www.tilburg.nl/cookies/',
+    EXTERNAL_PROCLAIMER_URL:
+      process.env.EXTERNAL_PROCLAIMER_URL || 'https://www.tilburg.nl/proclaimer/',
     // Visual Configuration
     HERO_IMAGE_URL: process.env.HERO_IMAGE_URL || '/home-hero-background.png',
     // Menu Configuration
     FOOTER_STYLE: process.env.FOOTER_STYLE || 'vng', // vng, dimpact, etc.
     // Footer Text Configuration
     FOOTER_LOGO_TITLE: process.env.FOOTER_LOGO_TITLE || 'Open Tilburg',
-    FOOTER_LOGO_SUBTITLE: process.env.FOOTER_LOGO_SUBTITLE || 'Één plek voor alle publicaties van Gemeente Tilburg',
+    FOOTER_LOGO_SUBTITLE:
+      process.env.FOOTER_LOGO_SUBTITLE ||
+      'Één plek voor alle publicaties van Gemeente Tilburg',
     // Support Configuration
     SUPPORT_EMAIL_ADDRESS: process.env.SUPPORT_EMAIL_ADDRESS || 'info@conduction.nl',
+    // Search Configuration
+    DEFAULT_SEARCH_SCHEMA: process.env.DEFAULT_SEARCH_SCHEMA || '',
   };
 };
 // Generate the constants file content
@@ -127,6 +137,8 @@ export const getVisualConfig = () => ({
 export const getFooterLogoTitle = () => CONTAINER_CONFIG.FOOTER_LOGO_TITLE;
 export const getFooterLogoSubtitle = () => CONTAINER_CONFIG.FOOTER_LOGO_SUBTITLE;
 export const getSupportEmailAddress = () => CONTAINER_CONFIG.SUPPORT_EMAIL_ADDRESS;
+// Search helper functions
+export const getDefaultSearchSchema = () => CONTAINER_CONFIG.DEFAULT_SEARCH_SCHEMA;
 export const getDefaultConfig = () => CONTAINER_CONFIG;
 `;
 };
@@ -150,7 +162,9 @@ const main = () => {
     console.log(`�� Base URL: ${config.BASE_URL}`);
     console.log(`🎨 Theme: ${config.THEME_VARIANT}`);
     console.log(`📦 Environment: ${config.ENVIRONMENT_NAME}`);
-    console.log(`🔐 Authentication: ${config.ENABLE_AUTHENTICATION ? 'Enabled' : 'Disabled'}`);
+    console.log(
+      `🔐 Authentication: ${config.ENABLE_AUTHENTICATION ? 'Enabled' : 'Disabled'}`
+    );
     console.log(`📊 GEMMA: ${config.ENABLE_GEMMA ? 'Enabled' : 'Disabled'}`);
     console.log(`📋 Directory: ${config.ENABLE_DIRECTORY ? 'Enabled' : 'Disabled'}`);
   } catch (error) {
@@ -161,4 +175,4 @@ const main = () => {
 if (require.main === module) {
   main();
 }
-module.exports = { getEnvConfig, generateConstantsFile }; 
+module.exports = { getEnvConfig, generateConstantsFile };

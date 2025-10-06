@@ -411,7 +411,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     }
 
     // Debug logging to understand what's happening
-    console.log('🔍 Table.default filtering debug:', {
+    console.info('🔍 Table.default filtering debug:', {
       type,
       dataPropertiesKeys: Object.keys(dataProperties || {}),
       anyTable,
@@ -419,7 +419,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
       defaultTrueIds: Array.from(defaultTrueIds),
       explicitDefaults,
       explicitDefaultIds: Array.from(explicitDefaultIds),
-      headersListIds: headersList.map(h => h.id),
+      headersListIds: headersList.map((h) => h.id),
     });
 
     // 3) Show all headers if no specific configuration found
@@ -449,6 +449,15 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   const handleMultipleDelete = () => {
     setOpenModal('delete');
+  };
+
+  // Bulk publish/depublish handlers
+  const handleMultiplePublish = () => {
+    setOpenModal('publish');
+  };
+
+  const handleMultipleDepublish = () => {
+    setOpenModal('depublish');
   };
 
   // Generate action buttons for table rows
@@ -494,7 +503,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
       // Add publish/depublish actions as standard options
       const publishActions = [];
-      if (row['@self']?.published === false) {
+      if (!row['@self']?.published) {
         publishActions.push({
           key: 'publish',
           label: 'Publiceren',
@@ -505,7 +514,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           },
         });
       }
-      if (row['@self']?.published === true) {
+      if (row['@self']?.published) {
         publishActions.push({
           key: 'depublish',
           label: 'Depubliceren',
@@ -603,14 +612,18 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
   if (error) {
     return (
-      <AcBeheerError title={config.title} error={error.message} store={store} />
+      <AcBeheerError
+        title={config.title === 'Module' ? 'Applicaties' : config.title}
+        error={error.message}
+        store={store}
+      />
     );
   }
 
   if (schemaError) {
     return (
       <AcBeheerError
-        title={config.title}
+        title={config.title === 'Module' ? 'Applicaties' : config.title}
         error={schemaError.message}
         store={store}
       />
@@ -628,7 +641,9 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             spacing='sm'
             justifyContent='between'
           >
-            <Heading>{config.title}</Heading>
+            <Heading>
+              {config.title === 'Module' ? 'Applicaties' : config.title}
+            </Heading>
             <AcFlex spacing='sm' justifyContent='end'>
               <AcButton
                 style='button'
@@ -691,6 +706,31 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
 
                       <ConActionMenu.Button icon={<VISUALS.EYE />} disabled={true}>
                         Weergeven als view
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Divider />
+
+                      {/* Bulk publish/depublish actions based on selection */}
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PUBLISH />}
+                        onClick={handleMultiplePublish}
+                        disabled={
+                          selectedRows.length === 0 ||
+                          !selectedRows.some((r) => !r['@self']?.published)
+                        }
+                      >
+                        Publiceren
+                      </ConActionMenu.Button>
+
+                      <ConActionMenu.Button
+                        icon={<VISUALS.PUBLISH_OFF />}
+                        onClick={handleMultipleDepublish}
+                        disabled={
+                          selectedRows.length === 0 ||
+                          !selectedRows.some((r) => !!r['@self']?.published)
+                        }
+                      >
+                        Depubliceren
                       </ConActionMenu.Button>
 
                       <ConActionMenu.Divider />

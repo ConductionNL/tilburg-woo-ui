@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback, useMemo, Fragment } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { AcFlex, AcSection, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcFlex, AcSection } from '@atoms';
 import { ConDynamicSidenav } from '@components';
-import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link, Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
+import { commongroundApiUrl } from '@config';
 import AcColumn from '@atoms/ac-column/ac-column';
 import AcMyAccountModal from '@views/ac-my-account/ac-my-account-modal';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
@@ -20,6 +21,7 @@ import {
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import RelatedTabs from '@views/ac-publication/con-related-tabs';
 
 /**
  * My Organisation Page
@@ -40,9 +42,15 @@ const ConMyOrganisationPage = ({ store }) => {
   const [showDeelnamesModal, setShowDeelnamesModal] = useState(false);
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
-  const [contactImageFit, setContactImageFit] = useState('cover');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Related tabs state
+  const [uses, setUses] = useState([]);
+  const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
+  const [relatedTabIndex, setRelatedTabIndex] = useState(0);
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
@@ -96,6 +104,61 @@ const ConMyOrganisationPage = ({ store }) => {
     setFullActiveOrganisation(fallbackData);
   }, [activeOrganisation]);
 
+  // Fetch related tabs data
+  const fetchUses = useCallback(async (organisationId) => {
+    if (!organisationId) return;
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUses(data.results || []);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+      setUses([]);
+    } finally {
+      setUsesLoading(false);
+    }
+  }, []);
+
+  const fetchUsed = useCallback(async (organisationId) => {
+    if (!organisationId) return;
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${organisationId}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUsed(data.results || []);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+      setUsed([]);
+    } finally {
+      setUsedLoading(false);
+    }
+  }, []);
+
   // Function to fetch full organization data
   const fetchFullOrganisationData = useCallback(
     async (organisationId) => {
@@ -127,6 +190,10 @@ const ConMyOrganisationPage = ({ store }) => {
           // If no full data available, create fallback from activeOrganisation
           createFallbackOrganisationData();
         }
+
+        // Fetch related tabs data
+        fetchUses(organisationId);
+        fetchUsed(organisationId);
       } catch (err) {
         console.error('Error fetching full organization data:', err);
 
@@ -146,7 +213,7 @@ const ConMyOrganisationPage = ({ store }) => {
         }
       }
     },
-    [object, createFallbackOrganisationData]
+    [object, createFallbackOrganisationData, fetchUses, fetchUsed]
   );
 
   const setNewFieldDataAndFetch = (v, field) => {
@@ -161,55 +228,6 @@ const ConMyOrganisationPage = ({ store }) => {
       fetchFullOrganisationData(v['@self'].id);
     }
   };
-
-  // Detect if contact image looks already round (square with transparent corners)
-  const handleContactImageLoad = useCallback((e) => {
-    try {
-      const img = e?.target;
-      if (!img) return;
-      const width = img.naturalWidth;
-      const height = img.naturalHeight;
-
-      // Default behavior: crop to center
-      let nextFit = 'cover';
-
-      // If not square, we crop to circle center
-      if (width !== height) {
-        setContactImageFit(nextFit);
-        return;
-      }
-
-      // Try to inspect corner transparency to guess if already circular
-      // This may fail on cross-origin images; fall back to 'cover'.
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        setContactImageFit(nextFit);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const corners = [
-        [0, 0],
-        [width - 1, 0],
-        [0, height - 1],
-        [width - 1, height - 1],
-      ];
-      let transparentCorners = 0;
-      for (const [x, y] of corners) {
-        const data = ctx.getImageData(x, y, 1, 1).data;
-        if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
-      }
-      if (transparentCorners >= 3) {
-        nextFit = 'contain';
-      }
-      setContactImageFit(nextFit);
-    } catch (err) {
-      // Likely CORS taint; keep default cropping behavior
-      setContactImageFit('cover');
-    }
-  }, []);
 
   // Refetch logic
   const fetchUserData = async () => {
@@ -339,9 +357,31 @@ const ConMyOrganisationPage = ({ store }) => {
             organisations.available &&
             !!organisations.results?.length && (
               <>
-                <div className='ac-register-review__organisation-header'>
-                  <Heading level={1}>Mijn Organisatie</Heading>
+                <div
+                  className='ac-register-review__organisation-header'
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Heading level={4}>
+                    <div className='con-beheer-details--header-container'>
+                      {fullActiveOrganisation?.['@self']?.image && (
+                        <ConLogoPreview
+                          className='con-beheer-details--logo-container'
+                          logoUrl={fullActiveOrganisation?.['@self']?.image}
+                        />
+                      )}
 
+                      <Heading className='con-beheer-details--title'>
+                        {fullActiveOrganisation?.['@self']?.name ||
+                          fullActiveOrganisation?.id ||
+                          activeOrganisation?.name ||
+                          'Organisatie'}
+                      </Heading>
+                    </div>
+                  </Heading>
                   <div className='ac-register-review__header-controls'>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <ConActionMenu>
@@ -456,211 +496,155 @@ const ConMyOrganisationPage = ({ store }) => {
                     </div>
                   </div>
                 </div>
-                <div className='ac-register-review__section'>
-                  <div className='ac-account-review__header'>
-                    <div style={{ flex: 2 }}>
-                      <Heading level={4}>
-                        <div className='con-beheer-details--header-container'>
-                          {fullActiveOrganisation?.['@self']?.image && (
-                            <ConLogoPreview
-                              className='con-beheer-details--logo-container'
-                              logoUrl={fullActiveOrganisation?.['@self']?.image}
-                            />
-                          )}
 
-                          <Heading className='con-beheer-details--title'>
-                            {fullActiveOrganisation?.['@self']?.name ||
-                              fullActiveOrganisation?.id ||
-                              activeOrganisation?.name ||
-                              'Organisatie'}
-                          </Heading>
-                        </div>
-                      </Heading>
-                      <ConEditableDescription
-                        registerSlug={
-                          fullActiveOrganisation?.['@self']?.register?.slug ||
-                          'voorzieningen'
-                        }
-                        schemaSlug={
-                          fullActiveOrganisation?.['@self']?.schema?.slug ||
-                          'organisatie'
-                        }
-                        objectId={fullActiveOrganisation?.id}
-                        field='beschrijvingKort'
-                        label='Korte beschrijving'
-                        placeholder={shortTooltip('organisatie')}
-                        tooltip={shortTooltip('organisatie')}
-                        maxLength={255}
-                        isMarkdown={false}
-                        value={fullActiveOrganisation?.beschrijvingKort}
-                        isEditingCustomTrigger={editingSummary}
-                        serialize={(v) => v}
-                        deserialize={(v) => v || ''}
-                        onSuccess={(v) => (
-                          setEditingSummary(false),
-                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
-                        )}
-                        onCancel={() => setEditingSummary(false)}
-                      />
-                      <br />
-                      <br />
-                      <br />
-                      <div className='ac-account-review__header-info'>
-                        <div>
-                          Website:
-                          <div>
-                            {fullActiveOrganisation?.website ? (
-                              <Link
-                                href={
-                                  fullActiveOrganisation.website.startsWith('http')
-                                    ? fullActiveOrganisation.website
-                                    : `https://${fullActiveOrganisation.website}`
-                                }
-                                target='_blank'
-                                rel='noreferrer'
-                              >
-                                {fullActiveOrganisation.website}
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          Telefoon:
-                          <div>
-                            {fullActiveOrganisation?.telefoonnummer ? (
-                              <Link
-                                href={`tel:${fullActiveOrganisation.telefoonnummer}`}
-                              >
-                                {fullActiveOrganisation.telefoonnummer}
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                        </div>
-                        <div>
-                          Type:
-                          <div>{fullActiveOrganisation?.type || '-'}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className='ac-register-review__contact'>
-                      <div className='ac-register-review__contact-details'>
-                        <div className='ac-register-review__contact-image'>
-                          {fullActiveOrganisation?.contactpersonen?.[0]?.image ? (
-                            <img
-                              src={fullActiveOrganisation.contactpersonen[0].image}
-                              alt='Contactpersoon'
-                              className='ac-register-review__contact-image--round'
-                              onLoad={handleContactImageLoad}
-                              style={{ objectFit: contactImageFit }}
-                            />
-                          ) : (
-                            <div className='ac-register-review__contact-image--round'>
-                              <VISUALS.USER_CIRCLE />
-                            </div>
-                          )}
-                        </div>
-                        <Heading level={5}>Contactpersoon</Heading>
-                        <div className='ac-register-review__contact-info'>
-                          <div>
-                            {[
-                              fullActiveOrganisation?.contactpersonen?.[0]?.voornaam,
-                              fullActiveOrganisation?.contactpersonen?.[0]
-                                ?.tussenvoegsel,
-                              fullActiveOrganisation?.contactpersonen?.[0]
-                                ?.achternaam,
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </div>
-                          <div>
-                            {fullActiveOrganisation?.contactpersonen?.[0]?.[
-                              'e-mailadres'
-                            ] ? (
-                              <Link
-                                href={`mailto:${fullActiveOrganisation?.contactpersonen?.[0]?.['e-mailadres']}`}
-                              >
-                                {
-                                  fullActiveOrganisation?.contactpersonen?.[0]?.[
-                                    'e-mailadres'
-                                  ]
-                                }
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                          <div>
-                            {fullActiveOrganisation?.contactpersonen?.[0]
-                              ?.telefoonnummer ? (
-                              <Link
-                                href={`tel:${fullActiveOrganisation?.contactpersonen?.[0]?.telefoonnummer}`}
-                              >
-                                {
-                                  fullActiveOrganisation?.contactpersonen?.[0]
-                                    ?.telefoonnummer
-                                }
-                              </Link>
-                            ) : (
-                              '-'
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {fullActiveOrganisation && (
-                    <div>
-                      <br />
-                      <ConEditableDescription
-                        markdownPreviewClassName='con-my-account-description'
-                        registerSlug={
-                          fullActiveOrganisation?.['@self']?.register?.slug ||
-                          'voorzieningen'
-                        }
-                        schemaSlug={
-                          fullActiveOrganisation?.['@self']?.schema?.slug ||
-                          'organisatie'
-                        }
-                        objectId={fullActiveOrganisation?.id}
-                        field='beschrijvingLang'
-                        label='Lange beschrijving'
-                        placeholder={longTooltip('organisatie')}
-                        tooltip={longTooltip('organisatie')}
-                        maxLength={2000}
-                        isMarkdown={true}
-                        isEditingCustomTrigger={editingDescription}
-                        value={fullActiveOrganisation?.beschrijvingLang}
-                        serialize={(v) => JSON.stringify(v || '')}
-                        deserialize={(v) => {
-                          if (!v) return '';
-                          try {
-                            return JSON.parse(v) || '';
-                          } catch (e) {
-                            return v;
-                          }
-                        }}
-                        onCancel={() => setEditingDescription(false)}
-                        onSuccess={(v) => (
-                          setEditingDescription(false),
-                          setNewFieldDataAndFetch(v, 'beschrijvingLang')
-                        )}
-                      />
-                    </div>
-                  )}
-                  {/* Organisation related tabs (similar to details page) */}
-                  {fullActiveOrganisation?.id && (
-                    <div style={{ marginTop: '1rem' }}>
-                      <AccountOrganisationTabs
-                        store={store}
-                        organisationId={fullActiveOrganisation.id}
-                      />
-                    </div>
-                  )}
+                {/* Warning alert for unpublished organization */}
+                {fullActiveOrganisation && !fullActiveOrganisation?.['@self']?.published && (
+                  <Alert type='warning'>
+                    <Heading level={4}>Uw organisatie staat nog niet gepubliceerd in de software catalogus</Heading>
+                    <Paragraph>
+                      Dit betekent dat uw organisatie momenteel niet zichtbaar is in de zoekfunctie van de catalogus. 
+                      Bezoekers kunnen uw organisatie en de bijbehorende producten en diensten nog niet vinden. 
+                      Gebruik de &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken voor bezoekers 
+                      en deel te nemen aan de software catalogus.
+                    </Paragraph>
+                  </Alert>
+                )}
+
+                <div style={{ flex: 2 }}>
+                  <ConEditableDescription
+                    registerSlug={
+                      fullActiveOrganisation?.['@self']?.register?.slug ||
+                      'voorzieningen'
+                    }
+                    schemaSlug={
+                      fullActiveOrganisation?.['@self']?.schema?.slug ||
+                      'organisatie'
+                    }
+                    objectId={fullActiveOrganisation?.id}
+                    field='beschrijvingKort'
+                    label='Korte beschrijving'
+                    placeholder={shortTooltip('organisatie')}
+                    tooltip={shortTooltip('organisatie')}
+                    maxLength={255}
+                    isMarkdown={false}
+                    value={fullActiveOrganisation?.beschrijvingKort}
+                    isEditingCustomTrigger={editingSummary}
+                    serialize={(v) => v}
+                    deserialize={(v) => v || ''}
+                    onSuccess={(v) => (
+                      setEditingSummary(false),
+                      setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                    )}
+                    onCancel={() => setEditingSummary(false)}
+                  />
                 </div>
+                {fullActiveOrganisation && (
+                  <div>
+                    <br />
+                    <ConEditableDescription
+                      markdownPreviewClassName='con-my-account-description'
+                      registerSlug={
+                        fullActiveOrganisation?.['@self']?.register?.slug ||
+                        'voorzieningen'
+                      }
+                      schemaSlug={
+                        fullActiveOrganisation?.['@self']?.schema?.slug ||
+                        'organisatie'
+                      }
+                      objectId={fullActiveOrganisation?.id}
+                      field='beschrijvingLang'
+                      label='Lange beschrijving'
+                      placeholder={longTooltip('organisatie')}
+                      tooltip={longTooltip('organisatie')}
+                      maxLength={5000}
+                      isMarkdown={true}
+                      isEditingCustomTrigger={editingDescription}
+                      value={fullActiveOrganisation?.beschrijvingLang}
+                      serialize={(v) => JSON.stringify(v || '')}
+                      deserialize={(v) => {
+                        if (!v) return '';
+                        try {
+                          return JSON.parse(v) || '';
+                        } catch (e) {
+                          return v;
+                        }
+                      }}
+                      onCancel={() => setEditingDescription(false)}
+                      onSuccess={(v) => (
+                        setEditingDescription(false),
+                        setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                      )}
+                    />
+                  </div>
+                )}
+
+                {/* Contact Information Section */}
+                {fullActiveOrganisation && (
+                  <>
+                    <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+                      Contact informatie
+                    </Heading>
+                    <div className='ac-register-review__section'>
+                      <div style={{ marginTop: '12px' }}>
+                        {fullActiveOrganisation?.['e-mailadres'] && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Email: </strong>
+                            <Link
+                              href={`mailto:${fullActiveOrganisation['e-mailadres']}`}
+                            >
+                              {fullActiveOrganisation['e-mailadres']}
+                            </Link>
+                          </div>
+                        )}
+                        {fullActiveOrganisation?.telefoonnummer && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Telefoon: </strong>
+                            <Link
+                              href={`tel:${fullActiveOrganisation.telefoonnummer.replace(
+                                /\s/g,
+                                ''
+                              )}`}
+                            >
+                              {fullActiveOrganisation.telefoonnummer}
+                            </Link>
+                          </div>
+                        )}
+                        {fullActiveOrganisation?.website && (
+                          <div style={{ marginBottom: '8px' }}>
+                            <strong>Website: </strong>
+                            <Link
+                              href={
+                                fullActiveOrganisation.website.startsWith('http')
+                                  ? fullActiveOrganisation.website
+                                  : `https://${fullActiveOrganisation.website}`
+                              }
+                              target='_blank'
+                              rel='noopener noreferrer'
+                            >
+                              {fullActiveOrganisation.website}
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Organisation related tabs (similar to details page) */}
+                {fullActiveOrganisation?.id && (
+                  <div style={{ marginTop: '2rem' }}>
+                    <RelatedTabs
+                      uses={uses}
+                      used={used}
+                      usesLoading={usesLoading}
+                      usedLoading={usedLoading}
+                      tabIndex={relatedTabIndex}
+                      setTabIndex={setRelatedTabIndex}
+                      object={object}
+                      navigateTo='beheer'
+                    />
+                  </div>
+                )}
               </>
             )}
           {/* Modal for editing account info */}
@@ -742,156 +726,5 @@ const ConMyOrganisationPage = ({ store }) => {
     </AcSection>
   );
 };
-
-const AccountOrganisationTabs = observer(({ store }) => {
-  const { object } = store;
-  const objectType = 'voorzieningen_organisatie';
-
-  // Pull related data for tabs
-  const usesData = object.getRelatedData(objectType, 'uses');
-  const usedData = object.getRelatedData(objectType, 'used');
-
-  const uniqueSchemasFrom = useCallback((rel) => {
-    if (!rel?.results) return [];
-    const map = new Map();
-    for (const item of rel.results) {
-      const schema = item['@self']?.schema;
-      if (!schema) continue;
-      if (!map.has(schema.id)) map.set(schema.id, schema);
-    }
-    return Array.from(map.values()).sort((a, b) =>
-      String(a.id).localeCompare(String(b.id))
-    );
-  }, []);
-
-  // Only show specific categories: producten, diensten, koppelingen, modules
-  const filterWantedSchemas = useCallback((schemas) => {
-    const wanted = new Set(['product', 'dienst', 'koppeling', 'module']);
-    return (schemas || []).filter((s) => wanted.has(s.slug || s.id || s));
-  }, []);
-
-  const usesSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usesData)),
-    [usesData, filterWantedSchemas, uniqueSchemasFrom]
-  );
-  const usedSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usedData)),
-    [usedData, filterWantedSchemas, uniqueSchemasFrom]
-  );
-
-  const [tabIndex, setTabIndex] = useState(0);
-
-  if (!usesSchemas?.length && !usedSchemas?.length) return null;
-
-  return (
-    <div className='ac-account--tabs-container'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(i) => setTabIndex(i)}>
-        <AcTabList>
-          {usesSchemas.map((schema, idx) => {
-            const count = (usesData?.results || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
-            ).length;
-            return (
-              <AcTab key={`uses-${schema.id}`} selected={tabIndex === idx}>
-                {(schema.slug === 'product'
-                  ? 'Producten'
-                  : schema.slug === 'dienst'
-                  ? 'Diensten'
-                  : schema.slug === 'koppeling'
-                  ? 'Koppelingen'
-                  : schema.slug === 'module'
-                  ? 'Applicaties'
-                  : schema.title || schema.id) + (count ? ` (${count})` : '')}
-              </AcTab>
-            );
-          })}
-          {usedSchemas.map((schema, idx) => {
-            const count = (usedData?.results || []).filter(
-              (r) => r['@self']?.schema?.id === schema.id
-            ).length;
-            return (
-              <AcTab
-                key={`used-${schema.id}`}
-                selected={tabIndex === idx + usesSchemas.length}
-              >
-                {(schema.slug === 'product'
-                  ? 'Producten'
-                  : schema.slug === 'dienst'
-                  ? 'Diensten'
-                  : schema.slug === 'koppeling'
-                  ? 'Koppelingen'
-                  : schema.slug === 'module'
-                  ? 'Applicaties'
-                  : schema.title || schema.id) + (count ? ` (${count})` : '')}
-              </AcTab>
-            );
-          })}
-        </AcTabList>
-
-        {usesSchemas.map((schema, idx) => {
-          const rows = (usesData?.results || []).filter(
-            (r) => r['@self']?.schema?.id === schema.id
-          );
-          return (
-            <AcTabPanel key={`uses-panel-${schema.id}`} selected={tabIndex === idx}>
-              <ul
-                style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
-              >
-                {rows.map((r) => {
-                  const href =
-                    r['@self']?.schema?.slug && r['@self']?.id
-                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
-                      : undefined;
-                  return (
-                    <li key={r.id || r['@self']?.id}>
-                      {href ? (
-                        <Link href={href}>{r['@self']?.name || r.id}</Link>
-                      ) : (
-                        r['@self']?.name || r.id
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </AcTabPanel>
-          );
-        })}
-
-        {usedSchemas.map((schema, idx) => {
-          const rows = (usedData?.results || []).filter(
-            (r) => r['@self']?.schema?.id === schema.id
-          );
-          const index = idx + usesSchemas.length;
-          return (
-            <AcTabPanel
-              key={`used-panel-${schema.id}`}
-              selected={tabIndex === index}
-            >
-              <ul
-                style={{ margin: 0, paddingInlineStart: '1rem', textAlign: 'right' }}
-              >
-                {rows.map((r) => {
-                  const href =
-                    r['@self']?.schema?.slug && r['@self']?.id
-                      ? `/beheer/${r['@self']?.schema?.slug}/${r['@self']?.id}`
-                      : undefined;
-                  return (
-                    <li key={r.id || r['@self']?.id}>
-                      {href ? (
-                        <Link href={href}>{r['@self']?.name || r.id}</Link>
-                      ) : (
-                        r['@self']?.name || r.id
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </AcTabPanel>
-          );
-        })}
-      </AcTabs>
-    </div>
-  );
-});
 
 export default withStore(observer(ConMyOrganisationPage));

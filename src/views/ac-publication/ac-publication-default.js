@@ -175,43 +175,58 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   const [tabIndexUsed, setTabIndexUsed] = useState(0);
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
 
-  const fetchUses = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const fetchUses = useCallback(async () => {
+    setUsesLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
+        return;
       }
-    );
-    if (!response.ok) {
-      console.error('Error fetching uses:', response.statusText);
-      return;
+      const data = await response.json();
+      setUses(data.results);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+    } finally {
+      setUsesLoading(false);
     }
-    const data = await response.json();
+  }, [id]);
 
-    setUses(data.results);
-  };
-  const fetchUsed = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+  const fetchUsed = useCallback(async () => {
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
       }
-    );
-    if (!response.ok) {
-      console.error('Error fetching used:', response.statusText);
-      return;
+      const data = await response.json();
+      setUsed(data.results);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+    } finally {
+      setUsedLoading(false);
     }
-    const data = await response.json();
-
-    setUsed(data.results);
-  };
+  }, [id]);
 
   const configuredMetaFields = useMemo(() => {
     // Get configuration from the actual object's schema, not the schema parameter
@@ -229,7 +244,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   useEffect(() => {
     fetchUses();
     fetchUsed();
-  }, []);
+  }, [fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single || !attachments) {
@@ -438,171 +453,183 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
           )}
 
           <div>
-            {uses && uses.length > 0 && (
+            {(usesLoading || (uses && uses.length > 0)) && (
               <>
                 <Heading level={2}>Maakt gebruik van</Heading>
-                <AcTabs
-                  selectedIndex={tabIndexUses}
-                  onSelect={(index) => setTabIndexUses(index)}
-                >
-                  <AcTabList>
-                    {uses && uses.length > 0 && (
-                      <>
-                        {uses &&
-                          // show unique headers
-                          _.uniqBy(uses, (use) => use['@self'].schema.id).map(
-                            (use, idx) => (
-                              <AcTab
-                                key={use['@self'].schema.id}
-                                selected={tabIndexUses === idx}
-                              >
-                                <span>{use['@self'].schema.title}</span>
-                              </AcTab>
-                            )
-                          )}
-                      </>
-                    )}
-                  </AcTabList>
-
-                  {uses &&
-                    _.uniqBy(uses, (use) => use['@self'].schema.id)
-                      .map((use) => use['@self'])
-                      .map((metadata, idx) => {
-                        // 1. Set the headers
-                        const tabHeaders = ['Naam', 'Beschrijving'];
-
-                        // 2. Build the rows for ALL items with this schema
-                        const itemsWithThisSchema = uses.filter(
-                          (u) => u['@self'].schema.id === metadata.schema.id
-                        );
-
-                        // 3. Each row: [Naam, Beschrijving]
-                        const tabRows = itemsWithThisSchema.map((item) => [
-                          // Naam: resolve UUIDs explicitly
-                          <ConUuidResolver key={`uses-name-${item.id}`}>
-                            {String(
-                              item.title ??
-                                item.titel ??
-                                item.name ??
-                                item.naam ??
-                                item.id
+                {usesLoading ? (
+                  <div>
+                    <AcLoader className='con-publication-uses-used-loader' />
+                  </div>
+                ) : (
+                  <AcTabs
+                    selectedIndex={tabIndexUses}
+                    onSelect={(index) => setTabIndexUses(index)}
+                  >
+                    <AcTabList>
+                      {uses && uses.length > 0 && (
+                        <>
+                          {uses &&
+                            // show unique headers
+                            _.uniqBy(uses, (use) => use['@self'].schema.id).map(
+                              (use, idx) => (
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUses === idx}
+                                >
+                                  <span>{use['@self'].schema.title}</span>
+                                </AcTab>
+                              )
                             )}
-                          </ConUuidResolver>,
-                          // Description: use formatBySchema with a basic string schema
-                          formatBySchema(
-                            { type: 'string' },
-                            { value: item.beschrijving ?? '' },
-                            'value',
-                            {
-                              objectStore: object,
-                              namesMap,
-                            }
-                          ),
-                          <button
-                            key={item.id}
-                            className='utrecht-button slim'
-                            // variant='secondary'
-                            onClick={() => {
-                              window.location.href = `/publicatie/${item.id}`;
-                            }}
-                          >
-                            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                          </button>,
-                        ]);
+                        </>
+                      )}
+                    </AcTabList>
 
-                        // 4. Render the table
-                        return (
-                          <AcTabPanel key={idx} selected={tabIndexUses === idx}>
-                            <AcTable header={tabHeaders} rows={tabRows} />
-                          </AcTabPanel>
-                        );
-                      })}
-                </AcTabs>
+                    {uses &&
+                      _.uniqBy(uses, (use) => use['@self'].schema.id)
+                        .map((use) => use['@self'])
+                        .map((metadata, idx) => {
+                          // 1. Set the headers
+                          const tabHeaders = ['Naam', 'Beschrijving'];
+
+                          // 2. Build the rows for ALL items with this schema
+                          const itemsWithThisSchema = uses.filter(
+                            (u) => u['@self'].schema.id === metadata.schema.id
+                          );
+
+                          // 3. Each row: [Naam, Beschrijving]
+                          const tabRows = itemsWithThisSchema.map((item) => [
+                            // Naam: resolve UUIDs explicitly
+                            <ConUuidResolver key={`uses-name-${item.id}`}>
+                              {String(
+                                item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                              )}
+                            </ConUuidResolver>,
+                            // Description: use formatBySchema with a basic string schema
+                            formatBySchema(
+                              { type: 'string' },
+                              { value: item.beschrijving ?? '' },
+                              'value',
+                              {
+                                objectStore: object,
+                                namesMap,
+                              }
+                            ),
+                            <button
+                              key={item.id}
+                              className='utrecht-button slim'
+                              // variant='secondary'
+                              onClick={() => {
+                                window.location.href = `/publicatie/${item.id}`;
+                              }}
+                            >
+                              <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                            </button>,
+                          ]);
+
+                          // 4. Render the table
+                          return (
+                            <AcTabPanel key={idx} selected={tabIndexUses === idx}>
+                              <AcTable header={tabHeaders} rows={tabRows} />
+                            </AcTabPanel>
+                          );
+                        })}
+                  </AcTabs>
+                )}
               </>
             )}
           </div>
 
           <div>
-            {used && used.length > 0 && (
+            {(usedLoading || (used && used.length > 0)) && (
               <>
                 <Heading level={2}>Wordt gebruikt door</Heading>
-                <AcTabs
-                  selectedIndex={tabIndexUsed}
-                  onSelect={(index) => setTabIndexUsed(index)}
-                >
-                  <AcTabList>
-                    {used && used.length > 0 && (
-                      <>
-                        {used &&
-                          // show unique headers
-                          _.uniqBy(used, (use) => use['@self'].schema.id).map(
-                            (use, idx) => (
-                              <AcTab
-                                key={use['@self'].schema.id}
-                                selected={tabIndexUsed === idx}
-                              >
-                                <span>{use['@self'].schema.title}</span>
-                              </AcTab>
-                            )
-                          )}
-                      </>
-                    )}
-                  </AcTabList>
-
-                  {used &&
-                    _.uniqBy(used, (use) => use['@self'].schema.id)
-                      .map((use) => use['@self'])
-                      .map((metadata, idx) => {
-                        // 1. Set the headers
-                        const tabHeaders = ['Naam', 'Beschrijving'];
-
-                        // 2. Build the rows for ALL items with this schema
-                        const itemsWithThisSchema = used.filter(
-                          (u) => u['@self'].schema.id === metadata.schema.id
-                        );
-
-                        // 3. Each row: [Naam, Beschrijving] (second occurrence)
-                        const tabRows = itemsWithThisSchema.map((item) => [
-                          // Naam: resolve UUIDs explicitly
-                          <ConUuidResolver key={`used-name-${item.id}`}>
-                            {String(
-                              item.title ??
-                                item.titel ??
-                                item.name ??
-                                item.naam ??
-                                item.id
+                {usedLoading ? (
+                  <div>
+                    <AcLoader className='con-publication-uses-used-loader' />
+                  </div>
+                ) : (
+                  <AcTabs
+                    selectedIndex={tabIndexUsed}
+                    onSelect={(index) => setTabIndexUsed(index)}
+                  >
+                    <AcTabList>
+                      {used && used.length > 0 && (
+                        <>
+                          {used &&
+                            // show unique headers
+                            _.uniqBy(used, (use) => use['@self'].schema.id).map(
+                              (use, idx) => (
+                                <AcTab
+                                  key={use['@self'].schema.id}
+                                  selected={tabIndexUsed === idx}
+                                >
+                                  <span>{use['@self'].schema.title}</span>
+                                </AcTab>
+                              )
                             )}
-                          </ConUuidResolver>,
-                          // Description: use formatBySchema with a basic string schema
-                          formatBySchema(
-                            { type: 'string' },
-                            { value: item.beschrijving ?? '' },
-                            'value',
-                            {
-                              objectStore: object,
-                              namesMap,
-                            }
-                          ),
-                          <button
-                            key={item.id}
-                            className='utrecht-button slim'
-                            // variant='secondary'
-                            onClick={() => {
-                              window.location.href = `/publicatie/${item.id}`;
-                            }}
-                          >
-                            <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                          </button>,
-                        ]);
+                        </>
+                      )}
+                    </AcTabList>
 
-                        // 4. Render the table
-                        return (
-                          <AcTabPanel key={idx} selected={tabIndexUsed === idx}>
-                            <AcTable header={tabHeaders} rows={tabRows} />
-                          </AcTabPanel>
-                        );
-                      })}
-                </AcTabs>
+                    {used &&
+                      _.uniqBy(used, (use) => use['@self'].schema.id)
+                        .map((use) => use['@self'])
+                        .map((metadata, idx) => {
+                          // 1. Set the headers
+                          const tabHeaders = ['Naam', 'Beschrijving'];
+
+                          // 2. Build the rows for ALL items with this schema
+                          const itemsWithThisSchema = used.filter(
+                            (u) => u['@self'].schema.id === metadata.schema.id
+                          );
+
+                          // 3. Each row: [Naam, Beschrijving] (second occurrence)
+                          const tabRows = itemsWithThisSchema.map((item) => [
+                            // Naam: resolve UUIDs explicitly
+                            <ConUuidResolver key={`used-name-${item.id}`}>
+                              {String(
+                                item.title ??
+                                  item.titel ??
+                                  item.name ??
+                                  item.naam ??
+                                  item.id
+                              )}
+                            </ConUuidResolver>,
+                            // Description: use formatBySchema with a basic string schema
+                            formatBySchema(
+                              { type: 'string' },
+                              { value: item.beschrijving ?? '' },
+                              'value',
+                              {
+                                objectStore: object,
+                                namesMap,
+                              }
+                            ),
+                            <button
+                              key={item.id}
+                              className='utrecht-button slim'
+                              // variant='secondary'
+                              onClick={() => {
+                                window.location.href = `/publicatie/${item.id}`;
+                              }}
+                            >
+                              <VISUALS.EYE className='ac-button__icon' /> Bekijken
+                            </button>,
+                          ]);
+
+                          // 4. Render the table
+                          return (
+                            <AcTabPanel key={idx} selected={tabIndexUsed === idx}>
+                              <AcTable header={tabHeaders} rows={tabRows} />
+                            </AcTabPanel>
+                          );
+                        })}
+                  </AcTabs>
+                )}
               </>
             )}
           </div>

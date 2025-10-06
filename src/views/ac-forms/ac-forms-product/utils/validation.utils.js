@@ -77,7 +77,7 @@ export const getDisabledStatus = (
         return true;
       }
       if (
-        licenseType === 'Open Source' &&
+        licenseType === 'Open source' &&
         (!module.licentie || !String(module.licentie).trim())
       ) {
         return true;
@@ -85,6 +85,21 @@ export const getDisabledStatus = (
       return false;
     });
     return hasIncompleteLicenses;
+  }
+
+  // Versies step: require non-empty versienummer for each new module and each versie row
+  if (logicalStep === 5) {
+    const newModules = getNewModulesFromProduct(product);
+    const hasEmptyVersion = newModules.some((module) => {
+      const versies = Array.isArray(module.moduleVersies)
+        ? module.moduleVersies
+        : [];
+      if (versies.length === 0) return true; // at least one versie required
+      return versies.some(
+        (v) => v?.versie == null || String(v.versie).trim() === ''
+      );
+    });
+    return hasEmptyVersion;
   }
 
   if (logicalStep === 9) {
@@ -211,6 +226,31 @@ export const getDisabledTooltip = (
         'Alle nieuwe applicaties hebben volledige licentie-informatie nodig:'
       );
       messages.push(...incompleteLicenses);
+    }
+    return messages.join('\n');
+  }
+
+  if (logicalStep === 5) {
+    const messages = [];
+    const newModules = getNewModulesFromProduct(product);
+    const incomplete = [];
+    newModules.forEach((module, index) => {
+      const versies = Array.isArray(module.moduleVersies)
+        ? module.moduleVersies
+        : [];
+      const hasMissing =
+        versies.length === 0 ||
+        versies.some((v) => v?.versie == null || String(v.versie).trim() === '');
+      if (hasMissing) {
+        const moduleName =
+          module.naam && String(module.naam).trim()
+            ? String(module.naam).trim()
+            : `Nieuwe applicatie ${index + 1}`;
+        incomplete.push(moduleName);
+      }
+    });
+    if (incomplete.length > 0) {
+      messages.push('Versienummer is verplicht voor alle nieuwe applicaties.');
     }
     return messages.join('\n');
   }

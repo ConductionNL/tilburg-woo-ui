@@ -137,3 +137,16 @@ export {
   getDataUrlDisplayName,
   handleFileClick,
 } from './con-data-url-utils';
+export { getImageFromPublication } from './con-getImageFromPublication';
+export {
+  getTabHeaderIcon,
+  getTabHeaderName,
+} from './con-schema-tab-display-helpers';
+export {
+  extractUUIDs,
+  resolveUUIDsInText,
+  resolveUUIDsInArray,
+  resolveUUIDsInObject,
+  useResolvedText,
+  useResolvedArray,
+} from './con-resolve-uuids-in-text';

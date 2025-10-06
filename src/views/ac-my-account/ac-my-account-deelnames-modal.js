@@ -56,6 +56,10 @@ const AcMyAccountDeelnamesModal = ({
 
   /**
    * Fetch available organisations and prepare selectable lists
+   * 
+   * Note: We use _source: 'index' instead of 'database' because communities and 
+   * samenwerkingsverbanden (collaborations) are owned by different organizations/tenants,
+   * and we need to access the public index to see all available options across tenants.
    */
   const fetchOrganisations = useCallback(async () => {
     if (!orgId) return;
@@ -65,7 +69,11 @@ const AcMyAccountDeelnamesModal = ({
       await object.fetchCollection(
         'voorzieningen',
         'organisatie',
-        { 'type[]': ['samenwerking', 'community'], _limit: 300 },
+        { 
+          'type[]': ['Samenwerking', 'Community'], 
+          _limit: 300,
+          _source: 'index' // Use index to get public organizations from all tenants
+        },
         false,
         'deelnemers-opties'
       );

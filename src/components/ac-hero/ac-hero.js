@@ -21,11 +21,27 @@ const AcHero = (contents) => {
   const navigate = useNavigate();
 
   const submitSearch = (query) => {
-    if (!query) {
-      navigate('/zoeken');
-      return;
+    // Build the base search URL
+    const baseUrl = '/zoeken';
+    const searchParams = new URLSearchParams();
+    
+    // Add the search query if provided
+    if (query && query.trim()) {
+      searchParams.set('_search', query.trim());
     }
-    navigate(`/zoeken?_page=1&_search=${query}`);
+    
+    // Always set page to 1 for new searches
+    searchParams.set('_page', '1');
+    
+    // Add default search schema if configured
+    const defaultSchema = containerConfig?.getDefaultSearchSchema?.();
+    if (defaultSchema) {
+      searchParams.set('@self[schema]', defaultSchema);
+    }
+    
+    // Navigate to the search page with parameters
+    const searchUrl = searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+    navigate(searchUrl);
   };
 
   const getHeroImage = () => {

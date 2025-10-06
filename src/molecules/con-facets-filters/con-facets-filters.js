@@ -4,13 +4,28 @@ import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { AcCheckbox, AcButton } from '@molecules';
 import { withStore } from '@stores';
+import { useFacetNameResolution } from '@hooks';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { AcFlex, AcCard } from '@atoms';
 import _ from 'lodash';
 import { AcBuildURLSearchParams, ConFormatDutchNumber } from '@utils';
 
-const ConFacetsFilters = ({ store: { publications } }) => {
+/**
+ * ConFacetsFilters Component
+ * 
+ * Renders dynamic facets filters with automatic UUID-to-name resolution.
+ * 
+ * Features:
+ * - Uses API-driven facet configuration (title, enabled status, etc.)
+ * - Automatically resolves UUID labels to human-readable names
+ * - Shows loading states during name resolution
+ * - Provides tooltips with original UUIDs for debugging
+ * - Integrates with the existing names cache system for performance
+ * 
+ * @param {Object} store - MobX store containing publications and object stores
+ */
+const ConFacetsFilters = ({ store: { publications, object } }) => {
   const [, setSearchParams] = useSearchParams();
   const {
     toggleSearchArrayValue,
@@ -20,6 +35,9 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     all_facets,
     is_facets_loading,
   } = publications;
+
+  // Use the name resolution hook to resolve UUIDs in facet labels
+  const { resolvedFacets, isResolving } = useFacetNameResolution(all_facets, object);
 
   // Custom function to handle nested facet toggling
   const toggleNestedFacet = (facetKey, value) => {
@@ -192,12 +210,12 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     );
   };
 
-  const facets = all_facets;
+  const facets = resolvedFacets;
 
   // Only show skeleton loading when:
-  // We're loading facets AND don't have existing facets to show
+  // We're loading facets AND don't have existing facets to show, OR we're resolving names
   const shouldShowSkeleton =
-    is_facets_loading && (!facets || Object.keys(facets).length === 0);
+    (is_facets_loading && (!facets || Object.keys(facets).length === 0)) || isResolving;
 
   if (shouldShowSkeleton) {
     return <>{renderSkeletonFacets()}</>;
@@ -251,19 +269,27 @@ const ConFacetsFilters = ({ store: { publications } }) => {
     );
   }
 
-  // Filter out empty facets from the facets object. For '@self' facets, only keep them if they have buckets.
-  // For all other facets, keep them if they have any buckets. This ensures we only show facets that have actual filter options.
+  // Filter out disabled and empty facets from the facets object. 
+  // For '@self' facets, only keep them if they have buckets and are enabled.
+  // For all other facets, keep them if they have buckets and are enabled. 
   // Also skip date histogram facets as they have a different structure
   const filteredFacets = Object.entries(facets).filter(([key, value]) => {
     if (key === '@self') {
-      // Check if any @self sub-facets have buckets
-      return Object.values(value).some((subValue) => subValue.buckets && subValue.buckets.length > 0);
+      // Check if any @self sub-facets have buckets and are enabled
+      return Object.values(value).some((subValue) => 
+        subValue.buckets && 
+        subValue.buckets.length > 0 && 
+        subValue.enabled !== false
+      );
     }
     // Skip date histogram facets (they have data.brackets instead of data.buckets)
     if (value.type === 'date_histogram') {
       return false;
     }
-    return value.buckets && value.buckets.length > 0;
+    // Only show enabled facets with data
+    return value.buckets && 
+           value.buckets.length > 0 && 
+           value.enabled !== false;
   });
 
   return (
@@ -278,19 +304,19 @@ const ConFacetsFilters = ({ store: { publications } }) => {
         >
           Wis alle filters
         </AcButton>
+        {isResolving && (
+          <span style={{ fontSize: '0.8em', color: '#666', alignSelf: 'center' }}>
+            Namen ophalen...
+          </span>
+        )}
       </AcFlex>
       {filteredFacets.map(([key, value]) => {
         return key === '@self' ? (
           <React.Fragment key={key}>
             {Object.entries(value).map(([_key, _value]) => {
               const hasData = _value.buckets && _value.buckets.length > 0;
-              const shouldShowFacet = ![
-                'register',
-                'directory',
-                'catalogs',
-                'organisation',
-                'name',
-              ].includes(_key.toLowerCase());
+              // Only show enabled facets (filtering is now handled by backend configuration)
+              const shouldShowFacet = _value.enabled !== false;
 
               return shouldShowFacet && hasData ? (
                 <AcFlex
@@ -299,8 +325,8 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                   spacing='xs'
                   className='ac-search-filters__subjects'
                 >
-                  <Heading level={4}>
-                    {_key === 'schema' ? 'Type' : _.upperFirst(_value.title ?? _key)}
+                  <Heading level={4} title={_value.description || undefined}>
+                    {_value.title || _.upperFirst(_key)}
                   </Heading>
                   {_value.buckets.map((bucket) => (
                     <AcCheckbox
@@ -313,6 +339,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                       onChange={() => {
                         toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
                       }}
+                      title={bucket.originalLabel ? `Origineel: ${bucket.originalLabel}` : undefined}
                     />
                   ))}
                 </AcFlex>
@@ -326,7 +353,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
             spacing='xs'
             className='ac-search-filters__subjects'
           >
-            <Heading level={4}>{_.upperFirst(value.title ?? key)}</Heading>
+            <Heading level={4} title={value.description || undefined}>{value.title || _.upperFirst(key)}</Heading>
             {value.buckets && value.buckets.length > 0 ? (
               value.buckets.map((bucketValue) => (
                 <AcCheckbox
@@ -347,6 +374,7 @@ const ConFacetsFilters = ({ store: { publications } }) => {
                     
                     // Fetch is triggered by URL change effect in AcSearch
                   }}
+                  title={bucketValue.originalLabel ? `Origineel: ${bucketValue.originalLabel}` : undefined}
                 />
               ))
             ) : (

@@ -25,6 +25,8 @@ services:
       - NGINX_NEXTCLOUD_DOMAIN=nextcloud.local
       - NGINX_TARGET_HOST=nextcloud.local
       - NGINX_ROOT_DIR=/usr/share/nginx/html
+      # Search Configuration
+      - DEFAULT_SEARCH_SCHEMA=18
     networks:
       - tilburg-network
 

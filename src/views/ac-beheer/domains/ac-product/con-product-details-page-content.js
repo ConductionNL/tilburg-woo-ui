@@ -1,562 +1,502 @@
-import { Heading, Paragraph } from '@amsterdam/design-system-react';
-import { AcFlex, AcColumn, AcTabs, AcTabList, AcTab, AcTabPanel } from '@src/atoms';
+import {
+  Heading,
+  Paragraph,
+  Link,
+} from '@utrecht/component-library-react/dist/css-module';
+import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
-import { Alert, Separator } from '@utrecht/component-library-react/dist/css-module';
-import { Link } from 'react-router-dom';
-import BeheerTable from '@views/ac-beheer/shared/components/con-beheer-table/con-beheer-table';
-import { observer } from 'mobx-react-lite';
 import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
-import { AcButton } from '@src/molecules';
 import { commongroundApiUrl } from '@src/config';
-import _ from 'lodash';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
-import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
+import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import RelatedTabs from '@views/ac-publication/con-related-tabs';
+import {
+  checkOrganizationPermissions,
+  getDisabledActionTooltip,
+} from '@utils/organization-permissions';
+import { TOOLTIP_ID } from '@src/index.web';
 
 /**
  * Content for the product details page
  *
  * note:
- * Does not render the actions menu, this has to be done on the parent component.
- * Editing functionality is disabled by default, but can be enabled by setting canEdit to true.
+ * Restructured to match con-my-organisation layout with vertical content flow
+ * and integrated action menu.
  */
 const ConProductDetailsPageContent = ({
   loading,
   data,
   userStore: user,
+  objectStore: object,
   id,
   canEdit = false,
+  actionMenuProps,
 }) => {
-  // Tabs
+  // Related tabs state
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
-  const [contactImageFit, setContactImageFit] = useState('cover');
+  const [usesLoading, setUsesLoading] = useState(false);
+  const [usedLoading, setUsedLoading] = useState(false);
+  const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
-  const fetchUses = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    if (!response.ok) {
-      console.error('Error fetching uses:', response.statusText);
-      return;
-    }
-    const data = await response.json();
+  // Editing state for inline editing
+  const [editingSummary, setEditingSummary] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
 
-    setUses(data.results);
-  };
-  const fetchUsed = async () => {
-    const response = await fetch(
-      `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-    if (!response.ok) {
-      console.error('Error fetching used:', response.statusText);
-      return;
-    }
-    const data = await response.json();
-
-    setUsed(data.results);
-  };
-
-  // Detect if contact image looks already round (square with transparent corners)
-  const handleContactImageLoad = useCallback((e) => {
+  const fetchUses = useCallback(async () => {
+    if (!id) return;
+    setUsesLoading(true);
     try {
-      const img = e?.target;
-      if (!img) return;
-      const width = img.naturalWidth;
-      const height = img.naturalHeight;
-
-      // Default behavior: crop to center
-      let nextFit = 'cover';
-
-      // If not square, we crop to circle center
-      if (width !== height) {
-        setContactImageFit(nextFit);
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching uses:', response.statusText);
         return;
       }
-
-      // Try to inspect corner transparency to guess if already circular
-      // This may fail on cross-origin images; fall back to 'cover'.
-      const canvas = document.createElement('canvas');
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        setContactImageFit(nextFit);
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      const corners = [
-        [0, 0],
-        [width - 1, 0],
-        [0, height - 1],
-        [width - 1, height - 1],
-      ];
-      let transparentCorners = 0;
-      for (const [x, y] of corners) {
-        const data = ctx.getImageData(x, y, 1, 1).data;
-        if (data[3] < 10) transparentCorners += 1; // alpha channel near 0
-      }
-      if (transparentCorners >= 3) {
-        nextFit = 'contain';
-      }
-      setContactImageFit(nextFit);
-    } catch (err) {
-      // Likely CORS taint; keep default cropping behavior
-      setContactImageFit('cover');
+      const data = await response.json();
+      setUses(data.results || []);
+    } catch (error) {
+      console.error('Error fetching uses:', error);
+      setUses([]);
+    } finally {
+      setUsesLoading(false);
     }
-  }, []);
+  }, [id]);
+
+  const fetchUsed = useCallback(async () => {
+    if (!id) return;
+    setUsedLoading(true);
+    try {
+      const response = await fetch(
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!response.ok) {
+        console.error('Error fetching used:', response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setUsed(data.results || []);
+    } catch (error) {
+      console.error('Error fetching used:', error);
+      setUsed([]);
+    } finally {
+      setUsedLoading(false);
+    }
+  }, [id]);
 
   const contact = Array.isArray(data.contactpersoon)
     ? data.contactpersoon[0]
     : data.contactpersoon;
 
-  const aanbieder = Array.isArray(data?.aanbieder)
-    ? data?.aanbieder[0]
-    : data?.aanbieder;
+  // Check organization permissions for actions
+  const { canEdit: hasEditPermission, reason } = data
+    ? checkOrganizationPermissions(user, data)
+    : {
+        canEdit: false,
+        reason: 'Kan niet bewerken omdat het product niet gevonden is',
+      };
+
+  const actualCanEdit = canEdit && hasEditPermission;
 
   useEffect(() => {
     fetchUses();
     fetchUsed();
-  }, []);
+  }, [fetchUses, fetchUsed]);
 
   if (loading || !data) return null;
 
   return (
-    <AcFlex column spacing='xl'>
-      <UnpublishedWarning data={data} />
+    <AcColumn gap='sm' horizontalOverflowWrapper>
+      {/* Header with logo, title and actions */}
+      <div
+        className='ac-register-review__organisation-header'
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Heading level={4}>
+          <div className='con-beheer-details--header-container'>
+            {(data?.logo || data?.['@self']?.image) && (
+              <ConLogoPreview
+                className='con-beheer-details--logo-container'
+                logoUrl={data?.logo || data?.['@self']?.image}
+              />
+            )}
 
-      <div className='con-product-details--header'>
-        <div className='con-product-details--header--content'>
-          <Heading level={4}>
-            <div className='con-beheer-details--header-container'>
-              {(data?.logo || data?.['@self']?.image) && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={data?.logo || data?.['@self']?.image}
-                />
-              )}
-
-              <Heading className='con-beheer-details--title'>
-                {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
-              </Heading>
-            </div>
-          </Heading>
-          <div className='con-product-details--header--description'>
-            <ConEditableDescription
-              registerSlug={data['@self'].register.slug}
-              schemaSlug={data['@self'].schema.slug}
-              objectId={data?.['@self']?.id}
-              field='beschrijvingKort'
-              label='Korte beschrijving'
-              placeholder='Een korte beschrijving van de product'
-              tooltip='Een korte beschrijving van de product'
-              maxLength={255}
-              isMarkdown={false}
-              value={data.beschrijvingKort}
-              serialize={(v) => v}
-              deserialize={(v) => v || ''}
-              canEdit={canEdit}
-            />
+            <Heading className='con-beheer-details--title'>
+              {data?.naam || data?.['@self']?.name || data?.['@self']?.id}
+            </Heading>
           </div>
-          <Separator />
+        </Heading>
 
-          {/* Short stats grid (2 columns x 3 rows) */}
-          {(() => {
-            // Prefer extended aanbieder, fallback to aanbiederNaam
-            const leverancierNaam = data?.aanbieder
-              ? Array.isArray(data?.aanbieder)
-                ? data?.aanbieder[0]?.naam || data?.aanbieder[0]?.id
-                : typeof data?.aanbieder === 'object'
-                ? data?.aanbieder.value || data?.aanbieder.id || '-'
-                : data?.aanbieder?.naam ||
-                  data?.aanbieder?.id ||
-                  data?.aanbieder ||
-                  '-'
-              : '-';
-            const hostingLocatie = data?.hostingLocatie || '-';
-            // TODO: If product status uses another key, adjust here
-            const statusLabel =
-              typeof data?.inGebruik === 'boolean'
-                ? data.inGebruik
-                  ? 'In gebruik'
-                  : 'Niet in gebruik'
-                : data?.status || '-'; // @TODO: Confirm correct key for status on product
-            const hostingType =
-              data?.cloudDienstverleningsmodel || data?.hostingType || '-'; // @TODO: Confirm if hostingType maps to cloudDienstverleningsmodel
-            const dataOpslag = data?.hostingJurisdictie || '-';
+        <div className='ac-register-review__header-controls'>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <ConActionMenu>
+              <ConActionMenu.Trigger
+                icon={<VISUALS.ELLIPSIS />}
+                buttonType='primary'
+              >
+                Acties
+              </ConActionMenu.Trigger>
 
-            const items = [
-              { label: 'Leverancier', value: leverancierNaam },
-              { label: 'De applicatie wordt gehost in', value: hostingLocatie },
-              { label: 'Status', value: statusLabel },
-              { label: 'Hosting type', value: hostingType },
-              { label: 'De data wordt opgeslagen in', value: dataOpslag },
-              {
-                label: 'Aantal afnemers',
-                value: String(Array.isArray(used) ? used.length : 0),
-              },
-            ];
+              <ConActionMenu.Menu position='right'>
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => actionMenuProps?.setOpenModal?.('edit')}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
+                >
+                  Bewerken
+                </ConActionMenu.Button>
 
-            return (
-              <div className='con-product-details--header-short-stats'>
-                {items.map((item) => (
-                  <p
-                    key={item.label}
-                    className='con-product-details--header-short-stats-item'
+                {/* TODO: Summary and description editing is not working yet*/}
+                {/* <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingSummary(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
+                      : undefined
+                  }
+                >
+                  Bewerk samenvatting
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingDescription(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
+                      : undefined
+                  }
+                >
+                  Bewerk beschrijving
+                </ConActionMenu.Button> */}
+
+                {data && !data['@self']?.published && (
+                  <ConActionMenu.Button
+                    icon={<VISUALS.PUBLISH />}
+                    onClick={() => actionMenuProps?.setOpenModal?.('publish')}
+                    disabled={!actualCanEdit}
+                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                    data-tooltip-content={
+                      !actualCanEdit
+                        ? getDisabledActionTooltip('publish', reason)
+                        : undefined
+                    }
                   >
-                    <span>{item.label}:</span>
-                    <ConUuidResolver style={{ fontWeight: 600 }}>
-                      {item.value || '-'}
-                    </ConUuidResolver>
-                  </p>
-                ))}
-              </div>
-            );
-          })()}
-        </div>
+                    Publiceren
+                  </ConActionMenu.Button>
+                )}
 
-        {contact && (
-          <div className='con-product-details--contact-info'>
-            <div className='ac-register-review__contact-image'>
-              {aanbieder?.logo && (
-                <ConLogoPreview
-                  className='con-beheer-details--logo-container'
-                  logoUrl={aanbieder.logo}
-                />
-              )}
-            </div>
+                {data && data['@self']?.published && (
+                  <ConActionMenu.Button
+                    icon={<VISUALS.PUBLISH_OFF />}
+                    onClick={() => actionMenuProps?.setOpenModal?.('depublish')}
+                    disabled={!actualCanEdit}
+                    data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                    data-tooltip-content={
+                      !actualCanEdit
+                        ? getDisabledActionTooltip('depublish', reason)
+                        : undefined
+                    }
+                  >
+                    Depubliceren
+                  </ConActionMenu.Button>
+                )}
 
-            {/* @TODO: contactpersoon has no logo / image, so its hard to show a contact persoon image */}
-            <i>Contactinformatie:</i>
-            {(() => {
-              // Glitch: sometimes an array with two objects is returned; use the first
-
-              if (contact && typeof contact === 'object') {
-                return (
-                  <div className='con-product-details--contact-info'>
-                    <p>
-                      {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
-                        .filter(Boolean)
-                        .join(' ')}
-                    </p>
-                    <div>
-                      {contact['e-mailadres'] && (
-                        <Link href={`mailto:${contact['e-mailadres']}`}>
-                          {contact['e-mailadres']}
-                        </Link>
-                      )}
-                    </div>
-                    <div>
-                      {contact.telefoonnummer && (
-                        <Link
-                          href={`tel:${String(contact.telefoonnummer)
-                            .split('')
-                            .filter((i) => i !== ' ')
-                            .join('')}`}
-                        >
-                          {contact.telefoonnummer}
-                        </Link>
-                      )}
-                    </div>
-                    {data?.website && (
-                      <Link
-                        href={`${
-                          data?.website.startsWith('http')
-                            ? data?.website
-                            : `https://${data?.website}`
-                        }`}
-                      >
-                        {data?.website}
-                      </Link>
-                    )}
-                    {aanbieder?.website && (
-                      <Link
-                        href={`${
-                          aanbieder?.website.startsWith('http')
-                            ? aanbieder?.website
-                            : `https://${aanbieder?.website}`
-                        }`}
-                      >
-                        {aanbieder?.website}
-                      </Link>
-                    )}
-                  </div>
-                );
-              }
-
-              return (
-                <>
-                  <p>Niet beschikbaar</p>
-                </>
-              );
-            })()}
+                <ConActionMenu.Button
+                  icon={<VISUALS.TRASHCAN />}
+                  onClick={() => actionMenuProps?.setOpenModal?.('delete')}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('delete', reason)
+                      : undefined
+                  }
+                >
+                  Verwijderen
+                </ConActionMenu.Button>
+              </ConActionMenu.Menu>
+            </ConActionMenu>
           </div>
-        )}
+        </div>
       </div>
 
-      <Separator />
+      {/* Unpublished warning */}
+      <UnpublishedWarning data={data} />
 
-      <div className='con-product-details--content'>
-        <AcColumn gap='tiger' className='con-product-details--content-main'>
-          <ConEditableDescription
-            registerSlug={data['@self'].register.slug}
-            schemaSlug={data['@self'].schema.slug}
-            objectId={data?.['@self']?.id}
-            field='beschrijvingLang'
-            label='Lange beschrijving'
-            placeholder='Een uitgebreide beschrijving van de product'
-            tooltip='Een uitgebreide beschrijving van de product'
-            maxLength={2000}
-            isMarkdown={true}
-            value={data.beschrijvingLang}
-            serialize={(v) => JSON.stringify(v || '')}
-            deserialize={(v) => {
-              if (!v) return '';
-              try {
-                return JSON.parse(v) || '';
-              } catch (e) {
-                return v;
-              }
-            }}
-            canEdit={canEdit}
-          />
-        </AcColumn>
-
-        <Separator />
-
-        {/* Side area next to editable descriptions with mock data */}
-        <SuitableForList
-          modules={data.modules}
-          className='con-product-details--content-side'
+      {/* Short description */}
+      <div style={{ flex: 2 }}>
+        <ConEditableDescription
+          registerSlug={data['@self'].register.slug}
+          schemaSlug={data['@self'].schema.slug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingKort'
+          label='Korte beschrijving'
+          placeholder='Een korte beschrijving van het product'
+          tooltip='Een korte beschrijving van het product'
+          maxLength={255}
+          isMarkdown={false}
+          value={data.beschrijvingKort}
+          isEditingCustomTrigger={editingSummary}
+          serialize={(v) => v}
+          deserialize={(v) => v || ''}
+          onSuccess={() => setEditingSummary(false)}
+          onCancel={() => setEditingSummary(false)}
+          canEdit={actualCanEdit}
         />
       </div>
 
-      <DetailsPageTabs uses={uses} used={used} userStore={user} />
-    </AcFlex>
+      {/* Long description */}
+      <div>
+        <br />
+        <ConEditableDescription
+          markdownPreviewClassName='con-my-account-description'
+          registerSlug={data['@self'].register.slug}
+          schemaSlug={data['@self'].schema.slug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingLang'
+          label='Lange beschrijving'
+          placeholder='Een uitgebreide beschrijving van het product'
+          tooltip='Een uitgebreide beschrijving van het product'
+          maxLength={5000}
+          isMarkdown={true}
+          isEditingCustomTrigger={editingDescription}
+          value={data.beschrijvingLang}
+          serialize={(v) => JSON.stringify(v || '')}
+          deserialize={(v) => {
+            if (!v) return '';
+            try {
+              return JSON.parse(v) || '';
+            } catch (e) {
+              return v;
+            }
+          }}
+          onCancel={() => setEditingDescription(false)}
+          onSuccess={() => setEditingDescription(false)}
+          canEdit={actualCanEdit}
+        />
+      </div>
+
+      {/* Contact Information Section */}
+      {((contact && typeof contact === 'object') || data?.website) && (
+        <>
+          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+            Contact informatie
+          </Heading>
+          <div className='ac-register-review__section'>
+            <div style={{ marginTop: '12px' }}>
+              {data?.website && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Website: </strong>
+                  <Link
+                    href={
+                      data?.website.startsWith('http')
+                        ? data?.website
+                        : `https://${data?.website}`
+                    }
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {data?.website}
+                  </Link>
+                </div>
+              )}
+              {contact && typeof contact === 'object' && (
+                <>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Contactpersoon: </strong>
+                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </div>
+                  {contact['e-mailadres'] && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Email: </strong>
+                      <Link href={`mailto:${contact['e-mailadres']}`}>
+                        {contact['e-mailadres']}
+                      </Link>
+                    </div>
+                  )}
+                  {contact.telefoonnummer && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Telefoon: </strong>
+                      <Link
+                        href={`tel:${String(contact.telefoonnummer)
+                          .split('')
+                          .filter((i) => i !== ' ')
+                          .join('')}`}
+                      >
+                        {contact.telefoonnummer}
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Extra Information Section */}
+      {(data?.status ||
+        data?.hostingLocatie ||
+        data?.hostingJurisdictie ||
+        data?.cloudDienstverleningsmodel) && (
+        <>
+          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+            Extra informatie
+          </Heading>
+          <div className='ac-register-review__section'>
+            <div style={{ marginTop: '12px' }}>
+              {data?.status && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Status: </strong>
+                  {data.status}
+                </div>
+              )}
+              {data?.hostingLocatie && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>De applicatie wordt gehost in: </strong>
+                  {data.hostingLocatie}
+                </div>
+              )}
+              {data?.hostingJurisdictie && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>De data wordt opgeslagen in: </strong>
+                  {data.hostingJurisdictie}
+                </div>
+              )}
+              {data?.cloudDienstverleningsmodel && (
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>Hosting type: </strong>
+                  {data.cloudDienstverleningsmodel}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Suitable For Section */}
+      <SuitableForSection modules={data.modules} objectStore={object} />
+
+      {/* Related tabs */}
+      {id && (
+        <div style={{ marginTop: '2rem' }}>
+          <RelatedTabs
+            uses={uses}
+            used={used}
+            usesLoading={usesLoading}
+            usedLoading={usedLoading}
+            tabIndex={relatedTabIndex}
+            setTabIndex={setRelatedTabIndex}
+            object={object}
+            navigateTo='beheer'
+          />
+        </div>
+      )}
+    </AcColumn>
   );
 };
 
-// separate component for tabs
-// @TODO: make generic and use on all details pages
-// @TODO: give smart support for optional files tab (should be able to be disabled hard coded & via configuration)
-const DetailsPageTabs = observer(({ userStore, uses: usesData, used: usedData }) => {
-  const user = userStore;
-  const [tabIndex, setTabIndex] = useState(0);
+// Suitable For Section component
+const SuitableForSection = ({ modules, objectStore }) => {
+  // Combine all referentieComponenten into a unique array
+  const allReferentieComponenten = useMemo(() => {
+    if (!modules?.length) return [];
+    return [
+      ...new Set(modules.flatMap((module) => module.referentieComponenten || [])),
+    ];
+  }, [modules]);
 
-  // Uses/Used unique schemas for tabs
-  const uniqueSchemasFrom = useCallback((rel) => {
-    if (!rel) return [];
-    const uniq = _.uniqBy(rel, (item) => item['@self']?.schema?.['@self']?.id);
-    return uniq
-      .map((item) => item['@self']?.schema)
-      .filter(Boolean)
-      .sort((a, b) =>
-        String(a?.['@self']?.id).localeCompare(String(b?.['@self']?.id))
-      );
-  }, []);
-
-  // Mark schemas that have duplicate titles between uses/used
-  const filterWantedSchemas = useCallback((schemas) => {
-    const wanted = new Set(['standaard', 'koppeling', 'dienst']);
-    return (schemas || []).filter((s) => wanted.has(s.slug || ''));
-  }, []);
-
-  const usesSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usesData)),
-    [usesData]
-  );
-  const usedSchemas = useMemo(
-    () => filterWantedSchemas(uniqueSchemasFrom(usedData)),
-    [usedData]
+  // Custom hook to resolve UUIDs while keeping original IDs
+  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
+    []
   );
 
-  const getUsesCount = useCallback(
-    (schema) => {
-      return usesData?.filter(
-        (r) => r['@self']?.schema?.id === schema?.['@self']?.id
-      ).length;
-    },
-    [usesData]
-  );
-  const getUsedCount = useCallback(
-    (schema) => {
-      return usedData?.filter(
-        (r) => r['@self']?.schema?.id === schema?.['@self']?.id
-      ).length;
-    },
-    [usedData]
-  );
+  useEffect(() => {
+    const resolveWithIds = async () => {
+      if (!allReferentieComponenten.length || !objectStore) {
+        setResolvedReferentieComponenten([]);
+        return;
+      }
 
-  if (!usesSchemas?.length && !usedSchemas?.length) return null;
+      try {
+        const resolved = await Promise.all(
+          allReferentieComponenten.map(async (id) => {
+            try {
+              const name = await objectStore.getNamesForSingleId(id);
+              return { id, name };
+            } catch (error) {
+              return { id, name: id }; // Fallback to ID if resolution fails
+            }
+          })
+        );
+        setResolvedReferentieComponenten(resolved);
+      } catch (error) {
+        console.error('Error resolving referentie componenten:', error);
+        // Fallback to just IDs
+        setResolvedReferentieComponenten(
+          allReferentieComponenten.map((id) => ({ id, name: id }))
+        );
+      }
+    };
+
+    resolveWithIds();
+  }, [allReferentieComponenten, objectStore]);
+
+  if (!resolvedReferentieComponenten?.length) return null;
 
   return (
-    <div className='ac-beheer-details--tabs-container'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-        <AcTabList>
-          {usesSchemas.length > 0 &&
-            usesSchemas.map((schema, idx) => (
-              <AcTab
-                key={`uses-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1}
+    <>
+      <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+        Geschikt voor
+      </Heading>
+      <div className='ac-register-review__section'>
+        <div style={{ marginTop: '12px' }}>
+          {resolvedReferentieComponenten.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: '4px' }}>
+              <Link
+                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+                target='_blank'
+                rel='noopener noreferrer'
               >
-                {schema.title || schema?.['@self']?.id}{' '}
-                {getUsesCount(schema) ? `(${getUsesCount(schema)})` : ''}
-              </AcTab>
-            ))}
-          {usedSchemas.length > 0 &&
-            usedSchemas.map((schema, idx) => (
-              <AcTab
-                key={`used-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1 + usesSchemas.length}
-              >
-                {schema.title || schema?.['@self']?.id}{' '}
-                {getUsedCount(schema) ? `(${getUsedCount(schema)})` : ''}
-              </AcTab>
-            ))}
-        </AcTabList>
-        {usesSchemas.length > 0 &&
-          usesSchemas.map((schema, idx) => {
-            const metadata = usesData?.find(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            )?.['@self'];
-            const rows = (usesData || []).filter(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            );
-            return (
-              <AcTabPanel
-                key={`uses-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1}
-              >
-                {metadata ? (
-                  <BeheerTable
-                    type={schema.slug}
-                    metadata={metadata}
-                    data={rows}
-                    dataProperties={schema.properties}
-                    headers={[{ id: 'naam', label: 'Naam', key: 'naam' }]}
-                    user={user}
-                    actionButtons={(config) =>
-                      !!config.navigateView && {
-                        id: 'actions',
-                        label: 'Acties',
-                        key: '',
-                        customContent: (row) => (
-                          <AcFlex column spacing='xs'>
-                            <AcButton
-                              style='buttonSlim'
-                              buttonType='secondary'
-                              onClick={() => config.navigateView(row['@self'].id)}
-                            >
-                              <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                            </AcButton>
-                          </AcFlex>
-                        ),
-                      }
-                    }
-                    tableProps={{
-                      renderSelectRowButtons: false,
-                      truncateLines: 1,
-                    }}
-                  />
-                ) : (
-                  <Alert type='error'>
-                    Er is een fout opgetreden bij het laden van deze gegevens.
-                  </Alert>
-                )}
-              </AcTabPanel>
-            );
-          })}
-        {usedSchemas.length > 0 &&
-          usedSchemas.map((schema, idx) => {
-            const metadata = usedData?.find(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            )?.['@self'];
-            const rows = (usedData || []).filter(
-              (r) => r['@self']?.schema?.['@self']?.id === schema?.['@self']?.id
-            );
-            return (
-              <AcTabPanel
-                key={`used-${schema?.['@self']?.id}`}
-                selected={tabIndex === idx + 1 + usesSchemas.length}
-              >
-                {metadata ? (
-                  <BeheerTable
-                    type={schema.slug}
-                    metadata={metadata}
-                    data={rows}
-                    dataProperties={schema.properties}
-                    headers={[{ id: 'naam', label: 'Naam', key: 'naam' }]}
-                    user={user}
-                    actionButtons={(config) =>
-                      !!config.navigateView && {
-                        id: 'actions',
-                        label: 'Acties',
-                        key: '',
-                        customContent: (row) => (
-                          <AcFlex column spacing='xs'>
-                            <AcButton
-                              style='buttonSlim'
-                              buttonType='secondary'
-                              onClick={() => config.navigateView(row?.['@self']?.id)}
-                            >
-                              <VISUALS.EYE className='ac-button__icon' /> Bekijken
-                            </AcButton>
-                          </AcFlex>
-                        ),
-                      }
-                    }
-                    tableProps={{
-                      renderSelectRowButtons: false,
-                      truncateLines: 1,
-                    }}
-                  />
-                ) : (
-                  <Alert type='error'>
-                    Er is een fout opgetreden bij het laden van deze gegevens.
-                  </Alert>
-                )}
-              </AcTabPanel>
-            );
-          })}
-      </AcTabs>
-    </div>
-  );
-});
-
-// Small helper components for the side area using mock data
-const SuitableForList = ({ modules }) => {
-  if (!modules) return null;
-
-  // little patch so there is something to show
-  // @TODO: remove this
-  modules = modules.map((m) => (typeof m === 'string' ? { id: m, naam: m } : m));
-
-  return (
-    <AcFlex column spacing='sm' className='con-product-details--content-side'>
-      <AcFlex spacing='sm'>
-        <p style={{ fontWeight: 'bold' }}>Pakket geschikt voor:</p>
-        <p style={{ fontWeight: 'bold' }}>Ingevuld door:</p>
-      </AcFlex>
-      <ul style={{ marginLeft: '1rem' }}>
-        {modules.map((m) => (
-          <li key={m?.['@self']?.id}>
-            <ConUuidResolver>{m['@self']?.name || m.naam}</ConUuidResolver>
-          </li>
-        ))}
-      </ul>
-    </AcFlex>
+                {item.name}
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -568,14 +508,14 @@ const UnpublishedWarning = ({ data }) => {
   const objectName = data?.['@self']?.name;
 
   return (
-    <Alert type='warning'>
+    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
       <Paragraph>
         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
         deze gegevens beschikbaar te maken voor bezoekers.
       </Paragraph>
-    </Alert>
+    </div>
   );
 };
 
