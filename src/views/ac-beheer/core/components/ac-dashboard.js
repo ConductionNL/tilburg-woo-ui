@@ -3,7 +3,11 @@ import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
 import { AcTile } from '@molecules';
-import { ConDynamicSidenav, ConOrganizationSelector, ConAangebodenGebruikTable } from '@components';
+import {
+  ConDynamicSidenav,
+  ConOrganizationSelector,
+  ConAangebodenGebruikTable,
+} from '@components';
 import { getDashboardWizards, getWizardUrl } from '@constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,7 +17,6 @@ import {
   Link,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import { VISUALS } from '@src/constants';
 
 const AcDashboard = ({ store }) => {
   const navigate = useNavigate();
@@ -43,18 +46,21 @@ const AcDashboard = ({ store }) => {
   }, [user?.activeOrganization?.uuid, object]);
 
   // Handle organization switch success
-  const handleOrganizationSwitch = useCallback((updatedUserData) => {
-    console.log('Organization switched successfully:', updatedUserData);
-    
-    // Reset voorgesteld gebruik state to show info box initially
-    setHasVoorgesteldGebruik(true);
-    
-    // Refresh organization data for new organization
-    fetchOrganisatieData();
-    
-    // Force refresh of the ConAangebodenGebruikTable component
-    setRefreshKey(prev => prev + 1);
-  }, [fetchOrganisatieData]);
+  const handleOrganizationSwitch = useCallback(
+    (updatedUserData) => {
+      console.info('Organization switched successfully:', updatedUserData);
+
+      // Reset voorgesteld gebruik state to show info box initially
+      setHasVoorgesteldGebruik(true);
+
+      // Refresh organization data for new organization
+      fetchOrganisatieData();
+
+      // Force refresh of the ConAangebodenGebruikTable component
+      setRefreshKey((prev) => prev + 1);
+    },
+    [fetchOrganisatieData]
+  );
 
   // Handle organization switch error
   const handleOrganizationSwitchError = useCallback((error) => {
@@ -84,9 +90,7 @@ const AcDashboard = ({ store }) => {
                   justifyContent='between'
                   className='ac-dashboard-wizards-header'
                 >
-                  <Heading level={3}>
-                    Mijn software catalogus
-                  </Heading>
+                  <Heading level={3}>Mijn software catalogus</Heading>
 
                   <ConOrganizationSelector
                     store={store}
@@ -116,12 +120,15 @@ const AcDashboard = ({ store }) => {
             {/* Warning card for unpublished organization */}
             {!orgIsPublished && (
               <Alert type='warning'>
-                <Heading level={4}>Uw organisatie staat nog niet gepubliceerd in de software catalogus</Heading>
+                <Heading level={4}>
+                  Uw organisatie staat nog niet gepubliceerd in de software catalogus
+                </Heading>
                 <Paragraph>
-                  Dit betekent dat uw organisatie momenteel niet zichtbaar is in de zoekfunctie van de catalogus. 
-                  Bezoekers kunnen uw organisatie en de bijbehorende producten en diensten nog niet vinden. 
-                  Gebruik de &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken voor bezoekers 
-                  en deel te nemen aan de software catalogus.
+                  Dit betekent dat uw organisatie momenteel niet zichtbaar is in de
+                  zoekfunctie van de catalogus. Bezoekers kunnen uw organisatie en de
+                  bijbehorende producten en diensten nog niet vinden. Gebruik de
+                  &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken
+                  voor bezoekers en deel te nemen aan de software catalogus.
                 </Paragraph>
                 <AcFlex justifyContent='end'>
                   <Link href='/beheer/my-organisation'>Naar Mijn Organisatie</Link>
@@ -130,7 +137,8 @@ const AcDashboard = ({ store }) => {
             )}
 
             {/* Voorgesteld Gebruik Table - Separate info container - Only show if there are suggestions */}
-            {hasVoorgesteldGebruik && (
+            {/* TODO: figure out why did doesnt work anymore */}
+            {/* {hasVoorgesteldGebruik && (
               <Alert type='info'>
                 <Heading level={4}>Voorgesteld Gebruik</Heading>
                 <Paragraph>
@@ -144,7 +152,7 @@ const AcDashboard = ({ store }) => {
                   />
                 </div>
               </Alert>
-            )}
+            )} */}
 
             {/* Welcome Section */}
             <div className='ac-register-review__section'>
