@@ -18,12 +18,13 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 
 // Stage components
-import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
 import ConFormProductenStage from './components/con-form-producten-stage';
 import ConFormApplicatiesStage from './components/con-form-applicaties-stage';
-import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 import ConFormControlerenStage from './components/con-form-controleren-stage';
+// Legacy stages
+// import ConFormSoortDienstStage from './components/con-form-soort-dienst-stage';
+// import ConFormKoppelingenStage from './components/con-form-koppelingen-stage';
 
 const ConFormsDienst = ({ store, userStore }) => {
   const [searchParams] = useSearchParams();
@@ -63,8 +64,8 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const [touched, setTouched] = useState({});
 
-  // Service type selection state
-  const [dienstType, setDienstType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
+  // Service type selection state - default to 'eigen-organisatie' since selection stage is disabled
+  const [dienstType, setDienstType] = useState('eigen-organisatie'); // 'eigen-organisatie' or 'andere-organisatie'
 
   const setDienstData = (key, value) => {
     setDienst((prev) => ({ ...prev, [key]: value }));
@@ -97,8 +98,8 @@ const ConFormsDienst = ({ store, userStore }) => {
       setPrefillLoading(true);
       setPrefillError(null);
       try {
-        // Skip first stage in edit mode (start at step 1: Producten)
-        setCurrentStep(1);
+        // Skip to step 0 in edit mode (Dienst informatie)
+        setCurrentStep(0);
         await store.object.fetchObject('voorzieningen', 'dienst', String(dienstId), {
           _extend: ['@self.schema'],
         });
@@ -527,12 +528,17 @@ const ConFormsDienst = ({ store, userStore }) => {
   const handleNextStep = async () => {
     const next = currentStep + 1;
     setCurrentStep(next);
-    if (next === 3) {
+    if (next === 2) {
+      // Load modules when moving to Applicaties step
       await loadModulesForProducts();
     }
-    if (next === 4) {
-      await loadKoppelingenForModules();
-    }
+    // Legacy loading logic (commented out)
+    // if (next === 3) {
+    //   await loadModulesForProducts();
+    // }
+    // if (next === 4) {
+    //   await loadKoppelingenForModules();
+    // }
   };
 
   const getStatus = (active, step) => {
@@ -543,13 +549,26 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   const renderStep = (step) => {
     switch (step) {
+      // Legacy step 0 - ConFormSoortDienstStage (commented out)
+      // case 0:
+      //   return (
+      //     <ConFormSoortDienstStage
+      //       dienstType={dienstType}
+      //       setDienstType={setDienstType}
+      //       loading={schemasLoading}
+      //       dienst={dienst}
+      //     />
+      //   );
       case 0:
         return (
-          <ConFormSoortDienstStage
-            dienstType={dienstType}
-            setDienstType={setDienstType}
-            loading={schemasLoading}
+          <ConFormDienstInformatieStage
             dienst={dienst}
+            setDienstData={setDienstData}
+            loading={schemasLoading}
+            touched={touched}
+            schemas={schemas}
+            userStore={userStore}
+            dienstType={dienstType}
           />
         );
       case 1:
@@ -566,18 +585,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         );
       case 2:
         return (
-          <ConFormDienstInformatieStage
-            dienst={dienst}
-            setDienstData={setDienstData}
-            loading={schemasLoading}
-            touched={touched}
-            schemas={schemas}
-            userStore={userStore}
-            dienstType={dienstType}
-          />
-        );
-      case 3:
-        return (
           <ConFormApplicatiesStage
             productToModulesLookup={productToModulesLookup}
             selectedProductIds={selectedProductIds}
@@ -590,18 +597,19 @@ const ConFormsDienst = ({ store, userStore }) => {
             dienstType={dienstType}
           />
         );
-      case 4:
-        return (
-          <ConFormKoppelingenStage
-            selectedModuleIds={selectedModuleIds}
-            productToModulesLookup={productToModulesLookup}
-            koppelingOptions={koppelingOptions}
-            selectedKoppelingIds={selectedKoppelingIds}
-            setSelectedKoppelingIds={setSelectedKoppelingIds}
-            dienstType={dienstType}
-          />
-        );
-      case 5:
+      // Legacy step - ConFormKoppelingenStage (commented out)
+      // case 4:
+      //   return (
+      //     <ConFormKoppelingenStage
+      //       selectedModuleIds={selectedModuleIds}
+      //       productToModulesLookup={productToModulesLookup}
+      //       koppelingOptions={koppelingOptions}
+      //       selectedKoppelingIds={selectedKoppelingIds}
+      //       setSelectedKoppelingIds={setSelectedKoppelingIds}
+      //       dienstType={dienstType}
+      //     />
+      //   );
+      case 3:
         return (
           <ConFormControlerenStage
             dienst={dienst}
@@ -623,17 +631,16 @@ const ConFormsDienst = ({ store, userStore }) => {
   const currentStepName = (step) => {
     switch (step) {
       case 0:
-        return 'Soort dienst';
+        return 'Dienst informatie';
       case 1:
         return 'Producten';
       case 2:
-        return 'Dienst informatie';
-      case 3:
         return 'Applicaties';
-      case 4:
-        return 'Koppelingen';
-      case 5:
-        return 'Controleren';
+      case 3:
+        return 'Controleer uw gegevens';
+      // Legacy step names (commented out)
+      // case 0: return 'Soort dienst';
+      // case 4: return 'Koppelingen';
       default:
         return '';
     }
@@ -656,15 +663,7 @@ const ConFormsDienst = ({ store, userStore }) => {
   // Validation mirroring product form style
   const getDisabledStatus = (step) => {
     if (step === 0) {
-      // Must select service type
-      return !dienstType;
-    }
-    if (step === 1) {
-      // Producten: at least one product selected
-      return selectedProductIds.length === 0;
-    }
-    if (step === 2) {
-      // Respect schema requiredness
+      // Dienst informatie: Respect schema requiredness
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
 
@@ -680,22 +679,29 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return false;
     }
-    if (step === 3) {
-      // Applicaties: at least one module selected
-      return selectedModuleIds.length === 0;
+    if (step === 1) {
+      // Producten: at least one product selected
+      return selectedProductIds.length === 0;
     }
-    // Koppelingen: no strict validation (optional)
+    if (step === 2) {
+      return false;
+    }
+    // Legacy validation (commented out)
+    // if (step === 0) {
+    //   // Must select service type
+    //   return !dienstType;
+    // }
+    // if (step === 4) {
+    //   // Koppelingen: no strict validation (optional)
+    //   return false;
+    // }
+    // Controleren: no strict validation
     return false;
   };
 
   const getDisabledTooltip = (step) => {
     if (step === 0) {
-      return !dienstType ? 'Selecteer het type dienst' : '';
-    }
-    if (step === 1) {
-      return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
-    }
-    if (step === 2) {
+      // Dienst informatie validation messages
       const messages = [];
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
@@ -715,11 +721,18 @@ const ConFormsDienst = ({ store, userStore }) => {
       }
       return messages.join('\n');
     }
-    if (step === 3) {
+    if (step === 1) {
+      return selectedProductIds.length === 0 ? 'Selecteer minimaal één product' : '';
+    }
+    if (step === 2) {
       return selectedModuleIds.length === 0
         ? 'Selecteer minimaal één applicatie'
         : '';
     }
+    // Legacy tooltips (commented out)
+    // if (step === 0) {
+    //   return !dienstType ? 'Selecteer het type dienst' : '';
+    // }
     return '';
   };
 
@@ -843,62 +856,58 @@ const ConFormsDienst = ({ store, userStore }) => {
               </div>
             </div>
           ) : (
-            <>
-              <h3 className={clsx('utrecht-heading-3', 'ac-register-form-heading')}>
-                {currentStepName(currentStep)}
-              </h3>
+            <div>
+              <div>
+                <h3
+                  className={clsx('utrecht-heading-3', 'ac-register-form-heading')}
+                >
+                  {currentStepName(currentStep)}
+                </h3>
+              </div>
+
               <div className='ac-register-container ac-forms-product'>
                 <div ref={processStepsRef} className='ac-register-process-steps'>
                   <ProcessSteps
-                    steps={[
-                      {
-                        id: 'grp-soort-dienst',
-                        marker: 1,
-                        status:
-                          currentStep >= 0 && currentStep <= 1
-                            ? 'current'
-                            : currentStep < 0
-                            ? 'not-checked'
-                            : 'checked',
-                        title: 'Soort dienst',
-                        steps: [
-                          {
-                            id: 'stg-producten',
-                            status: getStatus(currentStep, 1),
-                            title: 'Producten',
-                          },
-                        ],
-                      },
-                      {
-                        id: 'grp-dienst-informatie',
-                        marker: 2,
-                        status:
-                          currentStep >= 2 && currentStep <= 4
-                            ? 'current'
-                            : currentStep < 2
-                            ? 'not-checked'
-                            : 'checked',
-                        title: 'Dienst informatie',
-                        steps: [
-                          {
-                            id: 'stg-apps',
-                            status: getStatus(currentStep, 3),
-                            title: 'Applicaties',
-                          },
-                          {
-                            id: 'stg-koppelingen',
-                            status: getStatus(currentStep, 4),
-                            title: 'Koppelingen',
-                          },
-                        ],
-                      },
-                      {
-                        id: 'grp-review',
-                        marker: 3,
-                        status: getStatus(currentStep, 5),
-                        title: 'Controleren',
-                      },
-                    ]}
+                    steps={(() => {
+                      const baseSteps = [
+                        {
+                          id: 'd1e2n3s4-t5i6-n7f8-o9r0-m1a2t3i4e5f6',
+                          marker: 1,
+                          status: getStatus(currentStep, 0),
+                          title: 'Dienst informatie',
+                        },
+                        {
+                          id: 'p7r8o9d0-u1c2-t3e4-n5a6-p7p8l9i0c1a2',
+                          marker: 2,
+                          status:
+                            currentStep >= 1 && currentStep <= 2
+                              ? 'current'
+                              : currentStep < 1
+                              ? 'not-checked'
+                              : 'checked',
+                          title: 'Producten en applicaties',
+                          steps: [
+                            {
+                              id: 'p3r4o5d6-u7c8-t9e0-n1s2-t3a4g5e6f7g8',
+                              status: getStatus(currentStep, 1),
+                              title: 'Producten',
+                            },
+                            {
+                              id: 'a9p0p1l2-i3c4-a5t6-i7e8-s9t0a1g2e3f4',
+                              status: getStatus(currentStep, 2),
+                              title: 'Applicaties',
+                            },
+                          ],
+                        },
+                        {
+                          id: 'c5o6n7t8-r9o0-l1e2-r3e4-n5s6t7a8g9e0',
+                          marker: 3,
+                          status: getStatus(currentStep, 3),
+                          title: 'Controleren',
+                        },
+                      ];
+                      return baseSteps;
+                    })()}
                   />
                 </div>
 
@@ -994,7 +1003,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                       </AcButton>
                     )}
 
-                    {currentStep !== 5 && (
+                    {currentStep !== 3 && (
                       <div className='ac-register-button-wrapper'>
                         <AcButton
                           style='button'
@@ -1020,7 +1029,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                       </div>
                     )}
 
-                    {currentStep === 5 && (
+                    {currentStep === 3 && (
                       <AcButton
                         style='button'
                         buttonType='primary'
@@ -1039,7 +1048,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </AcColumn>
       </AcContainer>
