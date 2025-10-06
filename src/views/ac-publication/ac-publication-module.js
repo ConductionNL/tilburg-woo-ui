@@ -100,6 +100,167 @@ const AcPublicationProduct = ({
   const [standards, setStandards] = useState([]);
   const [standardsLoading, setStandardsLoading] = useState(false);
 
+  // State for referentieComponenten data with standards
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
+
+  // Fetch referentieComponenten data with their standards
+  const fetchReferentieComponentenWithStandards = useCallback(async () => {
+    if (!get_single?.referentieComponenten?.length) {
+      setReferentieComponentenWithStandards([]);
+      return;
+    }
+
+    console.info('📋 Fetching referentieComponenten with standards data...');
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch referentieComponenten from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Error fetching referentieComponenten:', response.statusText);
+        return;
+      }
+
+      const data = await response.json();
+      const allReferentieComponenten = data.results || data;
+
+      // Filter to only the referentieComponenten that are used in this product
+      const productReferentieComponenten = get_single.referentieComponenten
+        .map((refId) => {
+          const refData = allReferentieComponenten.find(
+            (ref) =>
+              String(ref.id) === String(refId) ||
+              String(ref.value) === String(refId) ||
+              String(ref.slug) === String(refId)
+          );
+
+          if (refData) {
+            return {
+              id: refId,
+              naam:
+                refData?.xml?.name?._value ||
+                refData?.naam ||
+                refData?.name ||
+                refData?.title ||
+                refData?.label ||
+                refId,
+              moduleId: 0, // For publication view, we don't have specific modules
+              applicatieId: 0,
+              // Extract standards from the API data
+              aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
+              verplichteStandaarden: refData.verplichteStandaarden || [],
+              // Store the full API data for future use
+              fullData: refData,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      setReferentieComponentenWithStandards(productReferentieComponenten);
+      console.info(
+        `✅ Loaded ${productReferentieComponenten?.length} referentieComponenten with standards data`
+      );
+    } catch (error) {
+      console.warn(
+        '⚠️ Failed to fetch referentieComponenten with standards:',
+        error
+      );
+      setReferentieComponentenWithStandards([]);
+    }
+  }, [get_single?.referentieComponenten]);
+
+  // Helper function to determine standard type based on referentieComponenten (similar to form logic)
+  const getStandardTypeFromReferentieComponenten = useCallback(
+    (standardId) => {
+      if (!referentieComponentenWithStandards?.length) {
+        return { type: 'AANBEVOLEN', components: [] }; // Default fallback
+      }
+
+      const verplichteComponents = [];
+      const aanbevolenComponents = [];
+
+      // Check each referentiecomponent for this standard
+      referentieComponentenWithStandards.forEach((refComp) => {
+        const refCompName = refComp.naam || `Component ${refComp.id}`;
+
+        // Check if this standard is in verplichte standaarden
+        if (
+          refComp.verplichteStandaarden &&
+          Array.isArray(refComp.verplichteStandaarden)
+        ) {
+          const isVerplicht = refComp.verplichteStandaarden.some((standard) => {
+            // Handle both string IDs and object formats
+            const id =
+              typeof standard === 'string'
+                ? standard
+                : standard?.id ||
+                  standard?.value ||
+                  standard?.slug ||
+                  standard?.naam ||
+                  standard?.name;
+            return String(id) === String(standardId);
+          });
+
+          if (isVerplicht && !verplichteComponents.includes(refCompName)) {
+            verplichteComponents.push(refCompName);
+          }
+        }
+
+        // Check if this standard is in aanbevolen standaarden
+        if (
+          refComp.aanbevolenStandaarden &&
+          Array.isArray(refComp.aanbevolenStandaarden)
+        ) {
+          const isAanbevolen = refComp.aanbevolenStandaarden.some((standard) => {
+            // Handle both string IDs and object formats
+            const id =
+              typeof standard === 'string'
+                ? standard
+                : standard?.id ||
+                  standard?.value ||
+                  standard?.slug ||
+                  standard?.naam ||
+                  standard?.name;
+            return String(id) === String(standardId);
+          });
+
+          if (isAanbevolen && !aanbevolenComponents.includes(refCompName)) {
+            aanbevolenComponents.push(refCompName);
+          }
+        }
+      });
+
+      // Verplicht takes precedence over aanbevolen (same logic as form)
+      const primaryType =
+        verplichteComponents?.length > 0 ? 'VERPLICHT' : 'AANBEVOLEN';
+
+      return {
+        type: primaryType,
+        verplichteComponents,
+        aanbevolenComponents,
+        allComponents: [...verplichteComponents, ...aanbevolenComponents],
+      };
+    },
+    [referentieComponentenWithStandards]
+  );
+
   // Fetch standards from openconnector endpoint
   const fetchStandards = useCallback(async () => {
     setStandardsLoading(true);
@@ -136,7 +297,7 @@ const AcPublicationProduct = ({
 
       setStandards(fetchedStandards);
       console.info(
-        `✅ Loaded ${fetchedStandards.length} standards for publication page`
+        `✅ Loaded ${fetchedStandards?.length} standards for publication page`
       );
     } catch (error) {
       console.warn('⚠️ Failed to fetch standards:', error);
@@ -196,7 +357,8 @@ const AcPublicationProduct = ({
 
   useEffect(() => {
     fetchStandards();
-  }, [fetchStandards]);
+    fetchReferentieComponentenWithStandards();
+  }, [fetchStandards, fetchReferentieComponentenWithStandards]);
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
@@ -399,6 +561,9 @@ const AcPublicationProduct = ({
               standards={standards}
               standardsLoading={standardsLoading}
               objectStore={object}
+              getStandardTypeFromReferentieComponenten={
+                getStandardTypeFromReferentieComponenten
+              }
               className='con-product-details--content-side'
             />
           </AcFlex>
@@ -431,6 +596,7 @@ const TabList = ({
   standards,
   standardsLoading,
   objectStore,
+  getStandardTypeFromReferentieComponenten,
 }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -508,37 +674,14 @@ const TabList = ({
               </TableHeader>
               <TableBody>
                 {complianceStandards.map((standard, idx) => {
-                  // Get the full standard data to determine if it's required or recommended
-                  const standardData = ConStandardsResolver({
-                    standardId: standard.standaardversie,
-                    standards: standards,
-                    returnStandardData: true,
-                  });
-
-                  // Determine if this is a required standard based on available information
-                  // Since we don't have the referentiecomponenten context, we'll use heuristics:
-                  // 1. Check if the standard has evidence (indicates compliance)
-                  // 2. Check standard properties for indicators of requirement level
+                  // Use the proper logic based on referentieComponenten instead of heuristics
+                  const standardTypeInfo = getStandardTypeFromReferentieComponenten(
+                    standard.standaardversie
+                  );
+                  const standardType = standardTypeInfo.type;
+                  const typeColor =
+                    standardType === 'VERPLICHT' ? '#dc3545' : '#28a745';
                   const hasEvidence = !!standard.bewijs;
-
-                  // Try to determine if it's required based on standard data
-                  const standardInfo = standardData?.data;
-                  const isLikelyRequired =
-                    // If it has evidence, it might be required (organizations tend to provide evidence for required standards)
-                    hasEvidence ||
-                    // Check if the standard name/description contains keywords that suggest it's required
-                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                      .toLowerCase()
-                      .includes('verplicht') ||
-                    // Check if it's a security or compliance standard (often required)
-                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                      .toLowerCase()
-                      .match(
-                        /(security|beveiliging|privacy|gdpr|iso.*27001|baseline)/
-                      );
-
-                  const standardType = isLikelyRequired ? 'VERPLICHT' : 'AANBEVOLEN';
-                  const typeColor = isLikelyRequired ? '#dc3545' : '#28a745';
 
                   return (
                     <TableRow key={idx}>
@@ -581,6 +724,27 @@ const TabList = ({
                               {standardType}
                             </span>
                           </div>
+                          {/* Show component information if available */}
+                          {standardTypeInfo.allComponents?.length > 0 && (
+                            <div
+                              style={{
+                                marginTop: '4px',
+                                fontSize: '0.75rem',
+                                color: '#6c757d',
+                              }}
+                            >
+                              {standardTypeInfo.verplichteComponents?.length > 0 && (
+                                <div>
+                                  {standardTypeInfo.verplichteComponents.join(', ')}
+                                </div>
+                              )}
+                              {standardTypeInfo.aanbevolenComponents?.length > 0 && (
+                                <div>
+                                  {standardTypeInfo.aanbevolenComponents.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell style={{ alignContent: 'center' }}>
