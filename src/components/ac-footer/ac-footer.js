@@ -92,7 +92,7 @@ const AcFooter = ({ store: { menu, user } }) => {
           <div className='ac-footer__logo'>
             <ConLogo variant='footer' />
 
-            {AcCheckIfSpecificHostname() ? (
+            {/* {AcCheckIfSpecificHostname() ? (
               <span className='ac-footer__logo-text'>
                 <span className='ac-footer__logo-title'>{getFooterLogoTitle()}</span>
                 <span className='ac-footer__logo-subtitle'>
@@ -104,7 +104,11 @@ const AcFooter = ({ store: { menu, user } }) => {
                 <span>Open Tilburg</span>
                 <span>Éen plek voor alle publicaties van Gemeente Tilburg</span>
               </span>
-            )}
+              )} */}
+            <span>
+              <span>VNG Softwarecatalogus</span>
+              <span>Één plek voor alle software voor en door Gemeenten</span>
+            </span>
           </div>
         </AcContainer>
       </section>

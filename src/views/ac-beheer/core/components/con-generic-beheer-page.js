@@ -337,7 +337,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
     if (!config) return [];
     if (!dataProperties) return [];
 
-    return Object.entries(dataProperties)
+    const headersWithOrder = Object.entries(dataProperties)
       .filter(
         ([value]) => value.visible !== false && value.hideOnCollection !== true
       )
@@ -359,6 +359,24 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           key: key,
         };
       });
+
+    // Sort headers by order property from customHeaders only, with headers without order at the end
+    return headersWithOrder.sort((a, b) => {
+      // If both have order, sort by order value
+      if (a.order !== undefined && b.order !== undefined) {
+        return a.order - b.order;
+      }
+      // If only a has order, a comes first
+      if (a.order !== undefined && b.order === undefined) {
+        return -1;
+      }
+      // If only b has order, b comes first
+      if (a.order === undefined && b.order !== undefined) {
+        return 1;
+      }
+      // If neither has order, maintain original order (stable sort)
+      return 0;
+    });
   }, [dataProperties, config.customHeaders, user]);
 
   const [tableHeaders, setTableHeaders] = useState([]);
