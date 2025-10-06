@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcColumn, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@src/atoms';
+import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { useCallback, useEffect, useState } from 'preact/hooks';
@@ -299,93 +299,256 @@ const ConModuleDetailsPageContent = ({
       {/* Unpublished warning */}
       <UnpublishedWarning data={data} />
 
-      {/* Two-column content matching publication UI */}
-      <AcFlex spacing='sm' justifyContent='between'>
-        {/* Left column: descriptions */}
-        <AcFlex column spacing='md' style={{ flex: 2 }}>
-          <ConEditableDescription
-            registerSlug={data['@self'].register.slug}
-            schemaSlug={data['@self'].schema.slug}
-            objectId={data?.['@self']?.id}
-            field='beschrijvingKort'
-            label='Korte beschrijving'
-            placeholder='Een korte beschrijving van de module'
-            tooltip='Een korte beschrijving van de module'
-            maxLength={255}
-            isMarkdown={false}
-            value={data.beschrijvingKort}
-            isEditingCustomTrigger={editingSummary}
-            serialize={(v) => v}
-            deserialize={(v) => v || ''}
-            onSuccess={() => setEditingSummary(false)}
-            onCancel={() => setEditingSummary(false)}
-            canEdit={actualCanEdit}
-          />
+      {/* Short description */}
+      <div style={{ flex: 2 }}>
+        <ConEditableDescription
+          registerSlug={data['@self'].register.slug}
+          schemaSlug={data['@self'].schema.slug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingKort'
+          label='Korte beschrijving'
+          placeholder='Een korte beschrijving van de module'
+          tooltip='Een korte beschrijving van de module'
+          maxLength={255}
+          isMarkdown={false}
+          value={data.beschrijvingKort}
+          isEditingCustomTrigger={editingSummary}
+          serialize={(v) => v}
+          deserialize={(v) => v || ''}
+          onSuccess={() => setEditingSummary(false)}
+          onCancel={() => setEditingSummary(false)}
+          canEdit={actualCanEdit}
+        />
+      </div>
 
-          <ConEditableDescription
-            markdownPreviewClassName='con-my-account-description'
-            registerSlug={data['@self'].register.slug}
-            schemaSlug={data['@self'].schema.slug}
-            objectId={data?.['@self']?.id}
-            field='beschrijvingLang'
-            label='Lange beschrijving'
-            placeholder='Een uitgebreide beschrijving van de module'
-            tooltip='Een uitgebreide beschrijving van de module'
-            maxLength={5000}
-            isMarkdown={true}
-            isEditingCustomTrigger={editingDescription}
-            value={data.beschrijvingLang}
-            serialize={(v) => JSON.stringify(v || '')}
-            deserialize={(v) => {
-              if (!v) return '';
-              try {
-                return JSON.parse(v) || '';
-              } catch (e) {
-                return v;
-              }
-            }}
-            onCancel={() => setEditingDescription(false)}
-            onSuccess={() => setEditingDescription(false)}
-            canEdit={actualCanEdit}
-          />
-        </AcFlex>
+      {/* Long description */}
+      <div>
+        <br />
+        <ConEditableDescription
+          markdownPreviewClassName='con-my-account-description'
+          registerSlug={data['@self'].register.slug}
+          schemaSlug={data['@self'].schema.slug}
+          objectId={data?.['@self']?.id}
+          field='beschrijvingLang'
+          label='Lange beschrijving'
+          placeholder='Een uitgebreide beschrijving van de module'
+          tooltip='Een uitgebreide beschrijving van de module'
+          maxLength={5000}
+          isMarkdown={true}
+          isEditingCustomTrigger={editingDescription}
+          value={data.beschrijvingLang}
+          serialize={(v) => JSON.stringify(v || '')}
+          deserialize={(v) => {
+            if (!v) return '';
+            try {
+              return JSON.parse(v) || '';
+            } catch (e) {
+              return v;
+            }
+          }}
+          onCancel={() => setEditingDescription(false)}
+          onSuccess={() => setEditingDescription(false)}
+          canEdit={actualCanEdit}
+        />
+      </div>
 
-        {/* Right column: side details and tabs */}
-        <AcFlex column spacing='sm' style={{ flex: 1 }}>
-          <AcFlex column spacing='sm' className='con-product-details--contact-info'>
-            {data?.licentietype && (
-              <div>
-                <b>Licentietype:</b>
-                <p>{data.licentietype}</p>
-              </div>
-            )}
-            {data?.licentie && (
-              <div>
-                <b>Licentie:</b>
-                <p>{data.licentie}</p>
-              </div>
-            )}
-            {Array.isArray(data?.moduleVersies) && (
-              <div>
-                <b>Huidige versie:</b>
-                <p>
-                  {data.moduleVersies.find((v) => v.status === 'in gebruik')
-                    ?.versie || 'Geen versie in gebruik'}
-                </p>
-              </div>
-            )}
-          </AcFlex>
+      {/* Contact Information Section */}
+      {(data?.licentietype ||
+        data?.licentie ||
+        data?.moduleVersies ||
+        data?.website) && (
+        <>
+          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+            Extra informatie
+          </Heading>
+          <div className='ac-register-review__section'>
+            <AcFlex column spacing='sm'>
+              {data?.licentietype && (
+                <div>
+                  <b>Licentietype:</b>
+                  <p>{data.licentietype}</p>
+                </div>
+              )}
+              {data?.licentie && (
+                <div>
+                  <b>Licentie:</b>
+                  <p>{data.licentie}</p>
+                </div>
+              )}
+              {Array.isArray(data?.moduleVersies) && (
+                <div>
+                  <b>Huidige versie:</b>
+                  <p>
+                    {data.moduleVersies.find((v) => v.status === 'in gebruik')
+                      ?.versie || 'Geen versie in gebruik'}
+                  </p>
+                </div>
+              )}
+            </AcFlex>
+          </div>
+        </>
+      )}
 
-          <TabList
-            referentieComponenten={data.referentieComponenten}
-            complianceStandards={data.compliancy || []}
-            standards={standards}
-            standardsLoading={standardsLoading}
-            objectStore={object}
-            className='con-product-details--content-side'
-          />
-        </AcFlex>
-      </AcFlex>
+      {/* Suitable For Section */}
+      <SuitableForSection
+        referentieComponenten={data.referentieComponenten}
+        objectStore={object}
+      />
+
+      {/* Standaarden Section (replacing Extra informatie) */}
+      <div style={{ marginTop: '1rem' }}>
+        <Heading level={3}>Standaarden</Heading>
+        {standardsLoading ? (
+          <p>Standaarden laden...</p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableCell
+                  style={{
+                    fontWeight: 'bold',
+                    backgroundColor: '#f8f9fa',
+                    paddingLeft:
+                      'var(--utrecht-table-cell-padding-inline-end) !important',
+                  }}
+                >
+                  Standaard
+                </TableCell>
+                <TableCell
+                  style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
+                >
+                  Status
+                </TableCell>
+                <TableCell
+                  style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
+                >
+                  Bewijs
+                </TableCell>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(data?.compliancy || []).map((standard, idx) => {
+                const standardData = ConStandardsResolver({
+                  standardId: standard.standaardversie,
+                  standards: standards,
+                  returnStandardData: true,
+                });
+
+                const hasEvidence = !!standard.bewijs;
+                const standardInfo = standardData?.data;
+                const isLikelyRequired =
+                  hasEvidence ||
+                  (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
+                    .toLowerCase()
+                    .includes('verplicht') ||
+                  (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
+                    .toLowerCase()
+                    .match(
+                      /(security|beveiliging|privacy|gdpr|iso.*27001|baseline)/
+                    );
+
+                const standardType = isLikelyRequired ? 'VERPLICHT' : 'AANBEVOLEN';
+                const typeColor = isLikelyRequired ? '#dc3545' : '#28a745';
+
+                return (
+                  <TableRow key={idx}>
+                    <TableCell
+                      style={{
+                        alignContent: 'center',
+                        paddingLeft:
+                          'var(--utrecht-table-cell-padding-inline-end) !important',
+                      }}
+                    >
+                      <div>
+                        <Link
+                          href={`https://www.gemmaonline.nl/wiki/GEMMA/${standard.standaardversie}`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          <ConStandardsResolver
+                            standardId={standard.standaardversie}
+                            standards={standards}
+                          />
+                        </Link>
+                        <div style={{ marginTop: '4px' }}>
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              color: '#fff',
+                              backgroundColor: typeColor,
+                              fontWeight: '600',
+                              textTransform: 'uppercase',
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              display: 'inline-block',
+                              lineHeight: '1.2',
+                              margin: '0px',
+                              marginBlockStart: '0px',
+                              marginBlockEnd: '0px',
+                              marginInlineStart: '0px',
+                              marginInlineEnd: '0px',
+                            }}
+                          >
+                            {standardType}
+                          </span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '0.75rem',
+                          color: '#fff',
+                          backgroundColor: hasEvidence ? '#28a745' : '#6c757d',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          display: 'inline-block',
+                          lineHeight: '1.2',
+                          margin: '0px',
+                          marginBlockStart: '0px',
+                          marginBlockEnd: '0px',
+                          marginInlineStart: '0px',
+                          marginInlineEnd: '0px',
+                        }}
+                      >
+                        {hasEvidence ? 'COMPLIANT' : 'NON-COMPLIANT'}
+                      </span>
+                    </TableCell>
+                    <TableCell style={{ alignContent: 'center' }}>
+                      {standard.bewijs ? (
+                        <Link
+                          href='#'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleFileClick(standard.bewijs);
+                          }}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <VISUALS.DOWNLOAD />
+                        </Link>
+                      ) : (
+                        <span
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          -
+                        </span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </div>
 
       {/* Related tabs */}
       {id && (
@@ -406,224 +569,61 @@ const ConModuleDetailsPageContent = ({
   );
 };
 
-// Standards and Suitable For tabs (copied/adapted from publication module)
-const TabList = ({
-  referentieComponenten,
-  complianceStandards,
-  standards,
-  standardsLoading,
-  objectStore,
-}) => {
-  const [tabIndex, setTabIndex] = useState(0);
-
-  // Custom hook to resolve UUIDs while keeping original IDs
-  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
-    []
-  );
+// Suitable For Section component for modules
+const SuitableForSection = ({ referentieComponenten, objectStore }) => {
+  const [resolved, setResolved] = useState([]);
 
   useEffect(() => {
     const resolveWithIds = async () => {
-      if (!referentieComponenten?.length || !objectStore) {
-        setResolvedReferentieComponenten([]);
+      if (
+        !Array.isArray(referentieComponenten) ||
+        referentieComponenten.length === 0
+      ) {
+        setResolved([]);
         return;
       }
-
       try {
-        const resolved = await Promise.all(
+        const results = await Promise.all(
           referentieComponenten.map(async (id) => {
             try {
               const name = await objectStore.getNamesForSingleId(id);
               return { id, name };
             } catch (error) {
-              return { id, name: id }; // Fallback to ID if resolution fails
+              return { id, name: id };
             }
           })
         );
-        setResolvedReferentieComponenten(resolved);
-      } catch (error) {
-        console.error('Error resolving referentie componenten:', error);
-        // Fallback to just IDs
-        setResolvedReferentieComponenten(
-          referentieComponenten.map((id) => ({ id, name: id }))
-        );
+        setResolved(results);
+      } catch (e) {
+        setResolved(referentieComponenten.map((id) => ({ id, name: id })));
       }
     };
-
     resolveWithIds();
   }, [referentieComponenten, objectStore]);
 
+  if (!resolved.length) return null;
+
   return (
-    <div className='con-product-details--side-content-tabs'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-        <AcTabList>
-          <AcTab selected={tabIndex === 0}>Standaarden:</AcTab>
-          <AcTab selected={tabIndex === 1}>Geschikt voor:</AcTab>
-        </AcTabList>
-        <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
-          {standardsLoading ? (
-            <p>Standaarden laden...</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell
-                    style={{
-                      fontWeight: 'bold',
-                      backgroundColor: '#f8f9fa',
-                      paddingLeft:
-                        'var(--utrecht-table-cell-padding-inline-end) !important',
-                    }}
-                  >
-                    Standaard
-                  </TableCell>
-                  <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                  >
-                    Status
-                  </TableCell>
-                  <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                  >
-                    Bewijs
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(complianceStandards || []).map((standard, idx) => {
-                  const standardData = ConStandardsResolver({
-                    standardId: standard.standaardversie,
-                    standards: standards,
-                    returnStandardData: true,
-                  });
-
-                  const hasEvidence = !!standard.bewijs;
-                  const standardInfo = standardData?.data;
-                  const isLikelyRequired =
-                    hasEvidence ||
-                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                      .toLowerCase()
-                      .includes('verplicht') ||
-                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                      .toLowerCase()
-                      .match(
-                        /(security|beveiliging|privacy|gdpr|iso.*27001|baseline)/
-                      );
-
-                  const standardType = isLikelyRequired ? 'VERPLICHT' : 'AANBEVOLEN';
-                  const typeColor = isLikelyRequired ? '#dc3545' : '#28a745';
-
-                  return (
-                    <TableRow key={idx}>
-                      <TableCell
-                        style={{
-                          alignContent: 'center',
-                          paddingLeft:
-                            'var(--utrecht-table-cell-padding-inline-end) !important',
-                        }}
-                      >
-                        <div>
-                          <Link
-                            href={`https://www.gemmaonline.nl/wiki/GEMMA/${standard.standaardversie}`}
-                            target='_blank'
-                          >
-                            <ConStandardsResolver
-                              standardId={standard.standaardversie}
-                              standards={standards}
-                            />
-                          </Link>
-                          <div style={{ marginTop: '4px' }}>
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                color: '#fff',
-                                backgroundColor: typeColor,
-                                fontWeight: '600',
-                                textTransform: 'uppercase',
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                display: 'inline-block',
-                                lineHeight: '1.2',
-                                margin: '0px',
-                                marginBlockStart: '0px',
-                                marginBlockEnd: '0px',
-                                marginInlineStart: '0px',
-                                marginInlineEnd: '0px',
-                              }}
-                            >
-                              {standardType}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            color: '#fff',
-                            backgroundColor: hasEvidence ? '#28a745' : '#6c757d',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            lineHeight: '1.2',
-                            margin: '0px',
-                            marginBlockStart: '0px',
-                            marginBlockEnd: '0px',
-                            marginInlineStart: '0px',
-                            marginInlineEnd: '0px',
-                          }}
-                        >
-                          {hasEvidence ? 'COMPLIANT' : 'NON-COMPLIANT'}
-                        </span>
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        {standard.bewijs ? (
-                          <Link
-                            href='#'
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleFileClick(standard.bewijs);
-                            }}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <VISUALS.DOWNLOAD />
-                          </Link>
-                        ) : (
-                          <span
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            -
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
-        </AcTabPanel>
-        <AcTabPanel selected={tabIndex === 1}>
-          {resolvedReferentieComponenten.map((item, idx) => (
-            <Link
-              key={idx}
-              href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              {item.name}
-            </Link>
+    <>
+      <Heading level={3} style={{ marginBlockStart: '1rem' }}>
+        Geschikt voor
+      </Heading>
+      <div className='ac-register-review__section'>
+        <div style={{ marginTop: '12px' }}>
+          {resolved.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: '4px' }}>
+              <Link
+                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+                target='_blank'
+                rel='noopener noreferrer'
+              >
+                {item.name}
+              </Link>
+            </div>
           ))}
-        </AcTabPanel>
-      </AcTabs>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
 
