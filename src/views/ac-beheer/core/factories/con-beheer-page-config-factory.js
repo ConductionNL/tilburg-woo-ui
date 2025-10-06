@@ -518,8 +518,49 @@ const BeheerPageConfigFactory = {
           paginationKey: 'contactpersoon',
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
-          defaultHeaders: ['name', 'isAanspreekpunt', 'functie', 'e-mailadres'],
+          defaultHeaders: [
+            'username',
+            'name',
+            'isAanspreekpunt',
+            'functie',
+            'e-mailadres',
+          ],
           customHeaders: {
+            username: {
+              id: 'username',
+              order: 1,
+              label: 'Is gebruiker',
+              key: 'username',
+              customContent: (row) => {
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {row.username ? (
+                      <VISUALS.USER_CHECK
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          color: 'var(--tilburg-interaction-active-color)',
+                        }}
+                      />
+                    ) : (
+                      <VISUALS.USER_XMARK
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          color: '#9298a0',
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              },
+            },
             voornaam: {
               id: 'name',
               label: 'Naam',
@@ -536,21 +577,21 @@ const BeheerPageConfigFactory = {
           },
           uniqueActions: [
             {
-              key: 'publish',
-              label: 'Publiceren',
-              icon: <VISUALS.PUBLISH />,
-              condition: (row) => !row['@self'].published,
-              action: 'publish',
-            },
-            {
               key: 'depublish',
               label: 'Depubliceren',
               icon: <VISUALS.PUBLISH_OFF />,
               condition: (row) => row['@self'].published,
               action: 'depublish',
             },
+            {
+              key: 'addAccount',
+              label: 'Account toevoegen',
+              icon: <VISUALS.USER_PLUS />,
+              condition: (row) => row.username === null,
+              action: 'addAccount',
+            },
           ],
-          modals: [...baseConfig.modals, 'publish', 'depublish'],
+          modals: [...baseConfig.modals, 'addAccount', 'depublish'],
         };
 
       default:
