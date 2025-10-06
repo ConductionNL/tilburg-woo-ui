@@ -40,6 +40,7 @@ import {
   getPageTitle as utilGetPageTitle,
   getPageDescription as utilGetPageDescription,
 } from './utils/texts.utils';
+import { commongroundApiUrl } from '@config';
 
 // Stage Components
 import ConFormProductopbouwStage from './components/con-form-productopbouw-stage';
@@ -881,6 +882,55 @@ const AcFormsProductInner = ({
 
   // Function to load all referentiecomponenten upfront using object store cache
   // ✅ Uses cache-first strategy for immediate response
+  // const loadReferentieComponenten = useCallback(async () => {
+  //   if (!schemas?.module) return; // Wait for schemas to load
+
+  //   console.info('📋 Loading referentiecomponenten via object store cache...');
+  //   setReferentieComponentenLoading(true);
+
+  //   try {
+  //     const queryParams = getReferentieComponentenQueryParams();
+
+  //     // Use object store cache-first method for immediate response
+  //     const list = await store.object.fetchGemmaElementsCacheFirst(
+  //       'Referentiecomponent',
+  //       queryParams
+  //     );
+
+  //     const mapToOption = (item, index) => {
+  //       const label =
+  //         item?.xml?.name?._value ||
+  //         item?.naam ||
+  //         item?.name ||
+  //         item?.title ||
+  //         item?.label ||
+  //         `Component ${index + 1}`;
+  //       const value = item?.value || item?.id || item?.slug || label;
+  //       return {
+  //         value: String(value),
+  //         label: String(label),
+  //         data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+  //       };
+  //     };
+
+  //     const options = list.map(mapToOption).filter((o) => o.label && o.value);
+  //     setReferentieComponentenOptions(options);
+  //     console.info(
+  //       `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
+  //     );
+  //     // Prefill edit-mode selections as soon as options are available
+  //     if (isEditMode) {
+  //       prefillReferentieComponentenWithStandardsForEdit(product.modules, options);
+  //     }
+  //   } catch (e) {
+  //     console.error('Failed to load referentie componenten:', e);
+  //     setReferentieComponentenOptions([]);
+  //   } finally {
+  //     setReferentieComponentenLoading(false);
+  //   }
+  // }, [schemas, getReferentieComponentenQueryParams, store]);
+
+  // TODO remove this once we have the referentiecomponenten options loaded from the object store cache
   const loadReferentieComponenten = useCallback(async () => {
     if (!schemas?.module) return; // Wait for schemas to load
 
@@ -888,13 +938,26 @@ const AcFormsProductInner = ({
     setReferentieComponentenLoading(true);
 
     try {
-      const queryParams = getReferentieComponentenQueryParams();
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
 
-      // Use object store cache-first method for immediate response
-      const list = await store.object.fetchGemmaElementsCacheFirst(
-        'Referentiecomponent',
-        queryParams
+      console.info('📋 Fetching standards from openconnector endpoint...');
+
+      // Fetch standards from openconnector endpoint using normal fetch
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
+      const list = await response.json();
 
       const mapToOption = (item, index) => {
         const label =
@@ -912,7 +975,10 @@ const AcFormsProductInner = ({
         };
       };
 
-      const options = list.map(mapToOption).filter((o) => o.label && o.value);
+      const options = list.results
+        .map(mapToOption)
+        .filter((o) => o.label && o.value);
+
       setReferentieComponentenOptions(options);
       console.info(
         `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
@@ -931,6 +997,46 @@ const AcFormsProductInner = ({
 
   // Function to load standaarden using object store cache
   // ✅ Uses cache-first strategy for immediate response
+  // const loadStandaarden = useCallback(async () => {
+  //   if (!schemas?.module) return;
+
+  //   console.info('📋 Loading standaarden via object store cache...');
+  //   setStandaardenOptionsLoading(true);
+
+  //   try {
+  //     const queryParams = getStandaardenQueryParams();
+
+  //     // Use object store cache-first method for immediate response
+  //     const list = await store.object.fetchGemmaElementsCacheFirst(
+  //       'standaard',
+  //       queryParams
+  //     );
+
+  //     const options = list
+  //       .map((item, index) => {
+  //         const label =
+  //           item?.xml?.name?._value ||
+  //           item?.naam ||
+  //           item?.name ||
+  //           item?.title ||
+  //           item?.label ||
+  //           `Standaard ${index + 1}`;
+  //         const value = item?.value || item?.id || item?.slug || label;
+  //         return { value: String(value), label: String(label), data: item };
+  //       })
+  //       .filter((o) => o.label && o.value);
+
+  //     setStandaardenOptions(options);
+  //     console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
+  //   } catch (e) {
+  //     console.error('Failed to load standaarden:', e);
+  //     setStandaardenOptions([]);
+  //   } finally {
+  //     setStandaardenOptionsLoading(false);
+  //   }
+  // }, [schemas, getStandaardenQueryParams, store]);
+
+  // TODO remove this once we have the standaarden options loaded from the object store cache
   const loadStandaarden = useCallback(async () => {
     if (!schemas?.module) return;
 
@@ -938,15 +1044,28 @@ const AcFormsProductInner = ({
     setStandaardenOptionsLoading(true);
 
     try {
-      const queryParams = getStandaardenQueryParams();
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaard',
+        '_extend[]': '@self.schema',
+      });
 
-      // Use object store cache-first method for immediate response
-      const list = await store.object.fetchGemmaElementsCacheFirst(
-        'standaard',
-        queryParams
+      console.info('📋 Fetching standards from openconnector endpoint...');
+
+      // Fetch standards from openconnector endpoint using normal fetch
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
+      const list = await response.json();
 
-      const options = list
+      const options = list.results
         .map((item, index) => {
           const label =
             item?.xml?.name?._value ||
