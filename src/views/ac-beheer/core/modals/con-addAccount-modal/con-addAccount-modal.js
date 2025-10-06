@@ -128,11 +128,7 @@ const ConAddAccountModal = ({
         },
         {
           label: isProcessing ? 'Toevoegen...' : 'Toevoegen',
-          icon: isProcessing ? (
-            <VISUALS.SPINNER />
-          ) : (
-            <VISUALS.USER_PLUS className='ac-add-account-icon' />
-          ),
+          icon: isProcessing ? <VISUALS.SPINNER /> : <VISUALS.USER_PLUS />,
           onClick: handleConfirm,
           disabled: isProcessing,
           loading: isProcessing,
