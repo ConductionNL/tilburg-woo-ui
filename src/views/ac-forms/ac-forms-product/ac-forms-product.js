@@ -153,85 +153,6 @@ const AcFormsProductInner = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
 
-  // Ref for ProcessSteps container to add click handlers
-  const processStepsRef = useRef(null);
-
-  /**
-   * Handle step navigation from clickable process steps
-   * Maps visual step indices to actual step numbers accounting for conditional steps
-   * @param {number} visualStepIndex - The index from the visual step representation
-   */
-  const handleStepNavigation = (visualStepIndex) => {
-    // Map visual step indices to actual step numbers
-    // Visual steps structure:
-    // 0: Productopbouw (step 0)
-    // 1: Product informatie (step 1)
-    // 2: Aanbieder informatie (step 2) - conditional
-    // 3: Applicaties (step 2 or 3 depending on aanbieder)
-    // 4: Licentie (step 3 or 4)
-    // 5: Versies (step 4 or 5)
-    // 6: Referentiecomponenten (step 5 or 6)
-    // 7: Standaarden (step 6 or 7)
-    // 8: Koppelingen (step 7 or 8)
-    // 9: Diensten (step 8 or 9)
-    // 10: Controleren (step 9 or 10)
-
-    const showsAanbiederStep = shouldShowAanbiederStep(formType);
-    let targetStep = visualStepIndex;
-
-    // Adjust for the aanbieder step offset
-    if (!showsAanbiederStep && visualStepIndex >= 2) {
-      targetStep = visualStepIndex + 1; // Skip the aanbieder step
-    }
-
-    // Navigate to the target step
-    setCurrentStep(targetStep);
-  };
-
-  // Step accessibility handled via UI click handlers
-
-  // Add click handlers to ProcessSteps after each render
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-    // Disable step clicks while prefill is in progress or when there is a prefill error
-    if (prefillLoading || prefillError) return;
-
-    const addClickHandlers = () => {
-      // Find all step elements in the DOM
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step'
-      );
-
-      stepElements.forEach((stepEl, index) => {
-        // Remove any existing click handlers first
-        stepEl.style.cursor = '';
-        stepEl.onclick = null;
-        stepEl.classList.remove('ac-step-clickable');
-
-        // Only make completed steps clickable (index < currentStep)
-        if (index < currentStep) {
-          stepEl.classList.add('ac-step-clickable');
-
-          stepEl.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleStepNavigation(index);
-          };
-        }
-      });
-    };
-
-    // Add handlers immediately
-    addClickHandlers();
-
-    // Also add handlers after a slight delay to handle async rendering
-    const timeoutId = setTimeout(addClickHandlers, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
-
   /**
    * Product State Object
    *
@@ -280,6 +201,86 @@ const AcFormsProductInner = ({
 
     // No more applicaties property - new modules are stored directly in modules array
   });
+
+  // Ref for ProcessSteps container to add click handlers
+  const processStepsRef = useRef(null);
+
+  /**
+   * Handle step navigation from clickable process steps
+   * Maps visual step indices to actual step numbers accounting for conditional steps
+   * @param {number} visualStepIndex - The index from the visual step representation
+   */
+  const handleStepNavigation = (visualStepIndex) => {
+    // Map visual step indices to actual step numbers
+    // Visual steps structure:
+    // 0: Productopbouw (step 0)
+    // 1: Product informatie (step 1)
+    // 2: Aanbieder informatie (step 2) - conditional
+    // 3: Applicaties (step 2 or 3 depending on aanbieder)
+    // 4: Licentie (step 3 or 4)
+    // 5: Versies (step 4 or 5)
+    // 6: Referentiecomponenten (step 5 or 6)
+    // 7: Standaarden (step 6 or 7)
+    // 8: Koppelingen (step 7 or 8)
+    // 9: Diensten (step 8 or 9)
+    // 10: Controleren (step 9 or 10)
+
+    const showsAanbiederStep = shouldShowAanbiederStep(formType);
+    let targetStep = visualStepIndex;
+
+    // Adjust for the aanbieder step offset
+    if (!showsAanbiederStep && visualStepIndex >= 2) {
+      targetStep = visualStepIndex + 1; // Skip the aanbieder step
+    }
+
+    // Navigate to the target step
+    setCurrentStep(targetStep);
+  };
+
+  // Step accessibility handled via UI click handlers
+
+  // Add click handlers to ProcessSteps after each render
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+    // Disable step clicks while prefill is in progress or when there is a prefill error
+    if (prefillLoading || prefillError) return;
+
+    const addClickHandlers = () => {
+      // Find all step elements in the DOM
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '.denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__sub-step'
+      );
+
+      stepElements.forEach((stepEl, index) => {
+        // Remove any existing click handlers first
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        // Only make completed steps clickable (index < currentStep)
+        if (index < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStepNavigation(index);
+          };
+        }
+      });
+    };
+
+    // Add handlers immediately
+    addClickHandlers();
+
+    // Also add handlers after a slight delay to handle async rendering
+    const timeoutId = setTimeout(addClickHandlers, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
+
   const [touched, setTouched] = useState({
     productName: false,
   });
