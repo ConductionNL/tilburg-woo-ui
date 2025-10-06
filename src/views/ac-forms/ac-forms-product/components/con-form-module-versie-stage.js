@@ -404,7 +404,7 @@ const ConFormModuleVersieStage = memo(
                 <span className='ac-forms-product-info-alert__text'>
                   U definieert hier de basis versie-informatie voor uw applicaties.
                   Na het opslaan van uw product kunt u op de detailpagina van elke
-                  module-versie aanvullende details toevoegen zoals beschrijvingen en
+                  applicatie-versie aanvullende details toevoegen zoals beschrijvingen en
                   andere metadata.
                 </span>
               </div>

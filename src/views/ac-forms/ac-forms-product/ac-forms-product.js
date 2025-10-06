@@ -589,7 +589,7 @@ const AcFormsProductInner = ({
    */
   const getExistingApplications = useCallback(() => {
     return getExistingModulesWithLookupData().map(
-      (module) => module.naam || 'Unnamed Module'
+      (module) => module.naam || 'Unnamed Applicatie'
     );
   }, [existingModulesLookup]);
 
@@ -1143,7 +1143,7 @@ const AcFormsProductInner = ({
             item?.name ||
             item?.title ||
             item?.label ||
-            (item?.id ? String(item.id) : `Module ${index + 1}`);
+            (item?.id ? String(item.id) : `Applicatie ${index + 1}`);
           const value = item?.value || item?.id || item?.slug || label;
           return {
             value: String(value),

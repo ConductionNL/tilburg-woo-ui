@@ -427,7 +427,7 @@ const ConFormStandaardenStage = ({
 
         if (typeof app !== 'object') {
           console.warn(
-            'Cannot update compliancy on existing module:',
+            'Cannot update compliancy on existing applicatie:',
             moduleIndex,
             app
           );
@@ -705,7 +705,7 @@ const ConFormStandaardenStage = ({
 
             if (typeof app !== 'object') {
               console.warn(
-                'Cannot update compliancy on existing module:',
+                'Cannot update compliancy on existing applicatie:',
                 moduleIndex,
                 app
               );
@@ -908,8 +908,6 @@ const ConFormStandaardenStage = ({
 
       // Use the first entry as representative (they should all have same compliance status)
       const representativeEntry = entries[0];
-
-      console.log({ representativeEntry });
 
       tableRows.push(
         <TableRow key={`standard-${representativeEntry.standardId}`}>
@@ -1244,7 +1242,7 @@ const ConFormStandaardenStage = ({
           <thead>
             <TableRow>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
-                Module
+                Applicatie
               </TableCell>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
                 Standaard
@@ -1282,7 +1280,7 @@ const ConFormStandaardenStage = ({
             sameForAll && isMultiNewApplicatie
               ? newModules.length // In "same for all" mode, count actual modules
               : Object.keys(
-                  Object.entries(tableState).reduce((groups, [key, entry]) => {
+                  Object.entries(tableState).reduce((groups, [, entry]) => {
                     groups[entry.moduleId] = true;
                     return groups;
                   }, {})
@@ -1329,7 +1327,7 @@ const ConFormStandaardenStage = ({
 
           return (
             <Paragraph style={{ margin: 0, fontSize: '0.9rem', color: '#6c757d' }}>
-              <strong>Overzicht:</strong> {totalModules} module
+              <strong>Overzicht:</strong> {totalModules} applicatie
               {totalModules !== 1 ? 's' : ''},{' '}
               <span style={{ color: '#dc3545', fontWeight: '600' }}>
                 {verplichteCount} verplichte standaarden (waarvan{' '}

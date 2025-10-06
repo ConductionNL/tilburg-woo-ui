@@ -77,7 +77,7 @@ const ConFormReferentiecomponentenStage = memo(
           );
         });
       });
-    
+
     // Update the parent state if values are detected as different
     React.useEffect(() => {
       if (areValuesDifferent && sameForAll) {
@@ -92,15 +92,15 @@ const ConFormReferentiecomponentenStage = memo(
         // Save current per-module state
         const currentPerModuleState = newModules.map((module, index) => ({
           moduleIndex: index,
-          referentieComponenten: [...(module.referentieComponenten || [])]
+          referentieComponenten: [...(module.referentieComponenten || [])],
         }));
         setSavedPerModuleState(currentPerModuleState);
 
         // Merge all referentiecomponenten from all modules
         const allReferentieComponenten = new Set();
-        newModules.forEach(module => {
+        newModules.forEach((module) => {
           if (Array.isArray(module.referentieComponenten)) {
-            module.referentieComponenten.forEach(ref => {
+            module.referentieComponenten.forEach((ref) => {
               if (ref != null && ref !== '') {
                 allReferentieComponenten.add(ref);
               }
@@ -109,32 +109,37 @@ const ConFormReferentiecomponentenStage = memo(
         });
 
         const mergedReferentieComponenten = Array.from(allReferentieComponenten);
-        
+
         // Apply merged referentiecomponenten to all modules
         applyToAll({ referentieComponenten: mergedReferentieComponenten });
-        
+
         // Update standards data for all applications using their moduleIndex
         newModules.forEach((module) => {
-          updateReferentieComponentenWithStandards(module.moduleIndex, mergedReferentieComponenten);
+          updateReferentieComponentenWithStandards(
+            module.moduleIndex,
+            mergedReferentieComponenten
+          );
         });
-
       } else if (!newSameForAll && sameForAll && savedPerModuleState) {
         // Switching from "same for all" to "per application" - restore saved state
         setProduct((prev) => {
           const modules = [...(prev.modules || [])];
-          
+
           savedPerModuleState.forEach(({ moduleIndex, referentieComponenten }) => {
             if (typeof modules[moduleIndex] === 'object') {
-              modules[moduleIndex] = { 
-                ...modules[moduleIndex], 
-                referentieComponenten: [...referentieComponenten] 
+              modules[moduleIndex] = {
+                ...modules[moduleIndex],
+                referentieComponenten: [...referentieComponenten],
               };
-              
+
               // Update standards data for this specific module
-              updateReferentieComponentenWithStandards(moduleIndex, referentieComponenten);
+              updateReferentieComponentenWithStandards(
+                moduleIndex,
+                referentieComponenten
+              );
             }
           });
-          
+
           return { ...prev, modules };
         });
       }
@@ -230,7 +235,7 @@ const ConFormReferentiecomponentenStage = memo(
       // Trigger updateReferentieComponentenWithStandards for edit mode initialization
       // This ensures standards are populated when referentieComponenten are prefilled
       if (newModules.length > 0 && referentieComponentenOptions.length > 0) {
-        newModules.forEach((module, index) => {
+        newModules.forEach((module) => {
           const currentRefs = module.referentieComponenten || [];
           if (currentRefs.length > 0) {
             // Normalize the refs the same way the onChange handler does
@@ -238,7 +243,10 @@ const ConFormReferentiecomponentenStage = memo(
 
             // Only update if we have valid normalized refs
             if (normalizedRefs.length > 0) {
-              updateReferentieComponentenWithStandards(module.moduleIndex, normalizedRefs);
+              updateReferentieComponentenWithStandards(
+                module.moduleIndex,
+                normalizedRefs
+              );
             }
           }
         });
@@ -317,17 +325,20 @@ const ConFormReferentiecomponentenStage = memo(
                     const refsArray = selectedOptions
                       ? selectedOptions.map((opt) => opt.value)
                       : [];
-                    
+
                     // Clear saved state when user manually updates in "same for all" mode
                     if (sameForAll && isMultiNewApplicatie && savedPerModuleState) {
                       setSavedPerModuleState(null);
                     }
-                    
+
                     if (sameForAll && isMultiNewApplicatie) {
                       applyToAll({ referentieComponenten: refsArray });
                       // Update standards data for all applications using their moduleIndex
                       newModules.forEach((module) => {
-                        updateReferentieComponentenWithStandards(module.moduleIndex, refsArray);
+                        updateReferentieComponentenWithStandards(
+                          module.moduleIndex,
+                          refsArray
+                        );
                       });
                     } else {
                       updateModuleField(0, 'referentieComponenten', refsArray);
@@ -402,44 +413,44 @@ const ConFormReferentiecomponentenStage = memo(
                 </TableRow>
               </thead>
               <TableBody>
-                        {newModules.map((module, index) => {
-                          const app = module;
+                {newModules.map((module, index) => {
+                  const app = module;
 
-                          return (
-                            <TableRow key={index}>
-                              <TableCell>
-                                <strong>{app.naam || `Applicatie ${index + 1}`}</strong>
-                              </TableCell>
-                              <TableCell>
-                                <ReactSelect
-                                  value={(() => {
-                                    const currentRefs = normalizeValues(
-                                      app.referentieComponenten || []
-                                    );
-                                    return referentieComponentenOptions.filter((opt) =>
-                                      currentRefs.includes(String(opt.value))
-                                    );
-                                  })()}
-                                  onChange={(selectedOptions) => {
-                                    const refsArray = selectedOptions
-                                      ? selectedOptions.map((opt) => opt.value)
-                                      : [];
-                                    
-                                    // Clear saved state when user manually updates in "per application" mode
-                                    if (!sameForAll && savedPerModuleState) {
-                                      setSavedPerModuleState(null);
-                                    }
-                                    
-                                    updateModuleField(
-                                      index,
-                                      'referentieComponenten',
-                                      refsArray
-                                    );
-                                    updateReferentieComponentenWithStandards(
-                                      module.moduleIndex,
-                                      refsArray
-                                    );
-                                  }}
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <strong>{app.naam || `Applicatie ${index + 1}`}</strong>
+                      </TableCell>
+                      <TableCell>
+                        <ReactSelect
+                          value={(() => {
+                            const currentRefs = normalizeValues(
+                              app.referentieComponenten || []
+                            );
+                            return referentieComponentenOptions.filter((opt) =>
+                              currentRefs.includes(String(opt.value))
+                            );
+                          })()}
+                          onChange={(selectedOptions) => {
+                            const refsArray = selectedOptions
+                              ? selectedOptions.map((opt) => opt.value)
+                              : [];
+
+                            // Clear saved state when user manually updates in "per application" mode
+                            if (!sameForAll && savedPerModuleState) {
+                              setSavedPerModuleState(null);
+                            }
+
+                            updateModuleField(
+                              index,
+                              'referentieComponenten',
+                              refsArray
+                            );
+                            updateReferentieComponentenWithStandards(
+                              module.moduleIndex,
+                              refsArray
+                            );
+                          }}
                           options={referentieComponentenOptions}
                           placeholder={
                             referentieComponentenLoading

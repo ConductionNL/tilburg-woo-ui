@@ -355,7 +355,7 @@ const ConFormApplicatieStage = memo(
             key: `existing-${module}`,
             moduleId: module,
             moduleIndex: index,
-            data: lookupData || { id: module, naam: `Module ${module}` },
+            data: lookupData || { id: module, naam: `Applicatie ${module}` },
           });
         } else {
           // New module (object with data)
