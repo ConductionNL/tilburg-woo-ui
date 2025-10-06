@@ -11,6 +11,7 @@ import ConOrganisatieDetailsPage from '@views/ac-beheer/domains/ac-organisatie/c
 import ConProductDetailsPage from '../../domains/ac-product/con-product-details-page';
 import ConMyAccountPage from './custom/con-my-account';
 import ConMyOrganisationPage from './custom/con-my-organisation';
+import ConModuleDetailsPage from '../../domains/ac-module/con-module-details-page';
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
@@ -64,6 +65,9 @@ const AcBeheer = ({ store }) => {
   }
   if (type === 'product') {
     return <ConProductDetailsPage />;
+  }
+  if (type === 'module') {
+    return <ConModuleDetailsPage />;
   }
 
   if (type) {
