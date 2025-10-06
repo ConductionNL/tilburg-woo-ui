@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -137,10 +137,14 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     }
   }, [id]);
 
+  const hasFetched = useRef(false);
+
   useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     fetchUses();
     fetchUsed();
-  }, [fetchUses, fetchUsed]);
+  }, []);
 
   // Loading
   if (loading.status || !get_single || !attachments) {

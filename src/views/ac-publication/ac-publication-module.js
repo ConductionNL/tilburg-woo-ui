@@ -416,9 +416,14 @@ const AcPublicationProduct = ({
   }, [id]);
 
   useEffect(() => {
+    // Only fetch when we have the required publication data
+    if (!id || !get_single?.id) {
+      return;
+    }
+
     fetchUses();
     fetchUsed();
-  }, [fetchUses, fetchUsed]);
+  }, [id, get_single?.id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single) {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 import { AcLoader } from '@components';
@@ -34,6 +34,9 @@ const AcPublication = observer(({ store: { publications } }) => {
   );
   const schema = currentPublicationFromList?.['@self']?.schema;
 
+  // Add a state to track if all initial data is loaded
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+
   useEffect(() => {
     fetchPublications();
     fetchPublication(id);
@@ -50,16 +53,27 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, [get_single]);
 
   useEffect(() => {
-    get_single?.uri && fetchRelations(get_single.uri);
+    if (get_single?.uri) {
+      fetchRelations(get_single.uri);
+    }
     return () => resetRelations();
-  }, [get_single]);
+  }, [get_single?.uri, fetchRelations, resetRelations]);
 
   useEffect(() => {
-    get_single?.id && fetchAttachments(get_single.id);
+    if (get_single?.id) {
+      fetchAttachments(get_single.id);
+    }
     return () => resetAttachments();
-  }, [get_single]);
+  }, [get_single?.id, fetchAttachments, resetAttachments]);
 
-  if (loading.status || !get_single || !all_attachments) {
+  // Only set initialDataLoaded when ALL required data is available
+  useEffect(() => {
+    if (get_single && all_attachments && !loading.status) {
+      setInitialDataLoaded(true);
+    }
+  }, [get_single, all_attachments, loading.status]);
+
+  if (!initialDataLoaded) {
     return <AcLoader />;
   }
 
