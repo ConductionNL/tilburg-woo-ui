@@ -2,11 +2,6 @@ import {
   Heading,
   Paragraph,
   Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
@@ -16,8 +11,7 @@ import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
-import { ConStandardsResolver } from '@components';
-import { handleFileClick } from '@utils';
+import { ConStandardsTable } from '@components';
 import {
   checkOrganizationPermissions,
   getDisabledActionTooltip,
@@ -51,9 +45,12 @@ const ConModuleDetailsPageContent = ({
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
 
-  // Standards state for resolving compliance standards
-  const [standards, setStandards] = useState([]);
-  const [standardsLoading, setStandardsLoading] = useState(false);
+  // Standards count state
+  const [standardsCount, setStandardsCount] = useState(0);
+
+  // ReferentieComponenten data state
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -109,42 +106,6 @@ const ConModuleDetailsPageContent = ({
     }
   }, [id]);
 
-  // Fetch standards from openconnector endpoint
-  const fetchStandards = useCallback(async () => {
-    setStandardsLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        _limit: '500',
-        _page: '1',
-        gemmaType: 'Standaard',
-      });
-      const response = await fetch(
-        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      if (!response.ok) {
-        console.error(
-          'Error fetching openconnector standards:',
-          response.statusText
-        );
-        return;
-      }
-      const data = await response.json();
-      const fetchedStandards = data.results || data;
-      setStandards(fetchedStandards);
-    } catch (error) {
-      console.warn('Failed to fetch standards:', error);
-      setStandards([]);
-    } finally {
-      setStandardsLoading(false);
-    }
-  }, []);
-
   // Note: Modules currently have no dedicated contact block on this page
 
   // Check organization permissions for actions
@@ -160,8 +121,7 @@ const ConModuleDetailsPageContent = ({
   useEffect(() => {
     fetchUses();
     fetchUsed();
-    fetchStandards();
-  }, [fetchUses, fetchUsed, fetchStandards]);
+  }, [fetchUses, fetchUsed]);
 
   if (loading || !data) return null;
 
@@ -392,162 +352,20 @@ const ConModuleDetailsPageContent = ({
       {/* Suitable For Section */}
       <SuitableForSection
         referentieComponenten={data.referentieComponenten}
+        referentieComponentenWithStandards={referentieComponentenWithStandards}
         objectStore={object}
       />
 
-      {/* Standaarden Section (replacing Extra informatie) */}
+      {/* Standaarden Section */}
       <div style={{ marginTop: '1rem' }}>
-        <Heading level={3}>Standaarden</Heading>
-        {standardsLoading ? (
-          <p>Standaarden laden...</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell
-                  style={{
-                    fontWeight: 'bold',
-                    backgroundColor: '#f8f9fa',
-                    paddingLeft:
-                      'var(--utrecht-table-cell-padding-inline-end) !important',
-                  }}
-                >
-                  Standaard
-                </TableCell>
-                <TableCell
-                  style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                >
-                  Status
-                </TableCell>
-                <TableCell
-                  style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                >
-                  Bewijs
-                </TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(data?.compliancy || []).map((standard, idx) => {
-                const standardData = ConStandardsResolver({
-                  standardId: standard.standaardversie,
-                  standards: standards,
-                  returnStandardData: true,
-                });
-
-                const hasEvidence = !!standard.bewijs;
-                const standardInfo = standardData?.data;
-                const isLikelyRequired =
-                  hasEvidence ||
-                  (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                    .toLowerCase()
-                    .includes('verplicht') ||
-                  (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                    .toLowerCase()
-                    .match(
-                      /(security|beveiliging|privacy|gdpr|iso.*27001|baseline)/
-                    );
-
-                const standardType = isLikelyRequired ? 'VERPLICHT' : 'AANBEVOLEN';
-                const typeColor = isLikelyRequired ? '#dc3545' : '#28a745';
-
-                return (
-                  <TableRow key={idx}>
-                    <TableCell
-                      style={{
-                        alignContent: 'center',
-                        paddingLeft:
-                          'var(--utrecht-table-cell-padding-inline-end) !important',
-                      }}
-                    >
-                      <div>
-                        <Link
-                          href={`https://www.gemmaonline.nl/wiki/GEMMA/${standard.standaardversie}`}
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          <ConStandardsResolver
-                            standardId={standard.standaardversie}
-                            standards={standards}
-                          />
-                        </Link>
-                        <div style={{ marginTop: '4px' }}>
-                          <span
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#fff',
-                              backgroundColor: typeColor,
-                              fontWeight: '600',
-                              textTransform: 'uppercase',
-                              padding: '3px 8px',
-                              borderRadius: '4px',
-                              display: 'inline-block',
-                              lineHeight: '1.2',
-                              margin: '0px',
-                              marginBlockStart: '0px',
-                              marginBlockEnd: '0px',
-                              marginInlineStart: '0px',
-                              marginInlineEnd: '0px',
-                            }}
-                          >
-                            {standardType}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell style={{ alignContent: 'center' }}>
-                      <span
-                        style={{
-                          fontSize: '0.75rem',
-                          color: '#fff',
-                          backgroundColor: hasEvidence ? '#28a745' : '#6c757d',
-                          fontWeight: '600',
-                          textTransform: 'uppercase',
-                          padding: '3px 8px',
-                          borderRadius: '4px',
-                          display: 'inline-block',
-                          lineHeight: '1.2',
-                          margin: '0px',
-                          marginBlockStart: '0px',
-                          marginBlockEnd: '0px',
-                          marginInlineStart: '0px',
-                          marginInlineEnd: '0px',
-                        }}
-                      >
-                        {hasEvidence ? 'COMPLIANT' : 'NON-COMPLIANT'}
-                      </span>
-                    </TableCell>
-                    <TableCell style={{ alignContent: 'center' }}>
-                      {standard.bewijs ? (
-                        <Link
-                          href='#'
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleFileClick(standard.bewijs);
-                          }}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <VISUALS.DOWNLOAD />
-                        </Link>
-                      ) : (
-                        <span
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          -
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
+        <Heading level={3}>Standaarden ({standardsCount})</Heading>
+        <ConStandardsTable
+          referentieComponenten={data.referentieComponenten}
+          complianceStandards={data.compliancy}
+          enableScrolling={false}
+          onStandardsCountChange={setStandardsCount}
+          onReferentieComponentenChange={setReferentieComponentenWithStandards}
+        />
       </div>
 
       {/* Related tabs */}
@@ -570,7 +388,11 @@ const ConModuleDetailsPageContent = ({
 };
 
 // Suitable For Section component for modules
-const SuitableForSection = ({ referentieComponenten, objectStore }) => {
+const SuitableForSection = ({
+  referentieComponenten,
+  referentieComponentenWithStandards,
+  objectStore,
+}) => {
   const [resolved, setResolved] = useState([]);
 
   useEffect(() => {
@@ -582,6 +404,24 @@ const SuitableForSection = ({ referentieComponenten, objectStore }) => {
         setResolved([]);
         return;
       }
+
+      // If we have referentieComponentenWithStandards data, use it to get the actual object IDs
+      if (referentieComponentenWithStandards?.length > 0) {
+        const resolvedWithObjectIds = referentieComponenten.map((id) => {
+          const refCompData = referentieComponentenWithStandards.find(
+            (refComp) => refComp.id === id
+          );
+
+          return {
+            id: refCompData?.fullData?.id || id, // Use actual object ID if available
+            name: refCompData?.naam || id,
+          };
+        });
+        setResolved(resolvedWithObjectIds);
+        return;
+      }
+
+      // Fallback to the original resolution method
       try {
         const results = await Promise.all(
           referentieComponenten.map(async (id) => {
@@ -599,7 +439,7 @@ const SuitableForSection = ({ referentieComponenten, objectStore }) => {
       }
     };
     resolveWithIds();
-  }, [referentieComponenten, objectStore]);
+  }, [referentieComponenten, referentieComponentenWithStandards, objectStore]);
 
   if (!resolved.length) return null;
 
