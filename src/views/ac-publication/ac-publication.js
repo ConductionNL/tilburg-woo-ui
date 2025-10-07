@@ -60,15 +60,36 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, [get_single?.uri, fetchRelations, resetRelations]);
 
   useEffect(() => {
-    if (get_single?.id) {
+    // Only fetch attachments for schemas that actually use them
+    // Skip for Organisation/Product/Module as they don't display attachments
+    const schemaSlug = get_single?.['@self']?.schema?.slug;
+    const shouldFetchAttachments =
+      schemaSlug && !['organisatie', 'product', 'module'].includes(schemaSlug);
+
+    if (get_single?.id && shouldFetchAttachments) {
       fetchAttachments(get_single.id);
     }
     return () => resetAttachments();
-  }, [get_single?.id, fetchAttachments, resetAttachments]);
+  }, [
+    get_single?.id,
+    get_single?.['@self']?.schema?.slug,
+    fetchAttachments,
+    resetAttachments,
+  ]);
 
   // Only set initialDataLoaded when ALL required data is available
   useEffect(() => {
-    if (get_single && all_attachments && !loading.status) {
+    const schemaSlug = get_single?.['@self']?.schema?.slug;
+    const needsAttachments =
+      schemaSlug && !['organisatie', 'product', 'module'].includes(schemaSlug);
+
+    // For schemas that don't need attachments, only wait for get_single and loading to complete
+    // For schemas that do need attachments, also wait for all_attachments
+    const dataReady = needsAttachments
+      ? get_single && all_attachments && !loading.status
+      : get_single && !loading.status;
+
+    if (dataReady) {
       setInitialDataLoaded(true);
     }
   }, [get_single, all_attachments, loading.status]);

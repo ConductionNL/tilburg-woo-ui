@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
@@ -365,7 +365,11 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Track which IDs we've already fetched to prevent duplicate calls
+  const fetchedIds = useRef(new Set());
+
   const fetchUses = useCallback(async () => {
+    if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
@@ -388,9 +392,10 @@ const AcPublicationProduct = ({
     } finally {
       setUsesLoading(false);
     }
-  }, [id]);
+  }, []);
 
   const fetchUsed = useCallback(async () => {
+    if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
@@ -413,17 +418,20 @@ const AcPublicationProduct = ({
     } finally {
       setUsedLoading(false);
     }
-  }, [id]);
+  }, []);
 
   useEffect(() => {
-    // Only fetch when we have the required publication data
-    if (!id || !get_single?.id) {
+    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
+    if (!id || fetchedIds.current.has(id)) {
       return;
     }
 
+    // Mark this ID as fetched
+    fetchedIds.current.add(id);
+
     fetchUses();
     fetchUsed();
-  }, [id, get_single?.id, fetchUses, fetchUsed]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -588,6 +596,7 @@ const AcPublicationProduct = ({
         tabIndex={tabIndex}
         setTabIndex={setTabIndex}
         object={object}
+        navigateTo='publication'
       />
     </AcContainer>
   );
