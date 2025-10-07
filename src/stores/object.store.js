@@ -70,6 +70,8 @@ nextcloudApi.interceptors.response.use(
     // Handle 401 Unauthorized errors by redirecting to login
     if (error.response?.status === 401) {
       const currentPath = window.location.pathname + window.location.search;
+      // NOTE: Using window.location.href here is appropriate since this is a global
+      // axios interceptor outside React component context and handles auth failures
       window.location.href = `/login?redirect_url=${encodeURIComponent(
         currentPath
       )}`;
@@ -958,7 +960,7 @@ export class ObjectStore {
     const queryParams = {
       _limit: params._limit || params.limit || 20,
       _page: params._page || params.page || 1,
-      '_extend[]':  '@self.schema',
+      '_extend[]': '@self.schema',
       _source: 'database', // Always use database as source
       ...params,
     };
@@ -3473,14 +3475,20 @@ export class ObjectStore {
         return name;
       } else if (response.ok) {
         // API responded OK but no name found - cache the UUID to prevent future calls
-        console.info(`📝 No name found for ${id}, caching UUID to prevent future API calls`);
+        console.info(
+          `📝 No name found for ${id}, caching UUID to prevent future API calls`
+        );
         this.setNamesInCache({ [id]: id });
         return id;
       }
     } catch (error) {
       // Handle 404 and other HTTP errors by caching the UUID to prevent repeated calls
       if (error.response?.status === 404 || error.response?.status >= 400) {
-        console.info(`🚫 Name not found (${error.response?.status || 'error'}) for ${id}, caching UUID to prevent future API calls`);
+        console.info(
+          `🚫 Name not found (${
+            error.response?.status || 'error'
+          }) for ${id}, caching UUID to prevent future API calls`
+        );
         this.setNamesInCache({ [id]: id });
         return id;
       }
@@ -3556,12 +3564,16 @@ export class ObjectStore {
         }
       } catch (error) {
         console.warn(`⚠️ Failed to fetch names for IDs:`, error.message);
-        
+
         // Cache failed lookups to prevent repeated API calls
         if (error.response?.status === 404 || error.response?.status >= 400) {
-          console.info(`🚫 Bulk names request failed (${error.response?.status || 'error'}), caching UUIDs to prevent future API calls`);
+          console.info(
+            `🚫 Bulk names request failed (${
+              error.response?.status || 'error'
+            }), caching UUIDs to prevent future API calls`
+          );
           const failedLookups = {};
-          missingIds.forEach(id => {
+          missingIds.forEach((id) => {
             failedLookups[id] = id;
           });
           this.setNamesInCache(failedLookups);
@@ -3577,10 +3589,14 @@ export class ObjectStore {
         uncachedFallbacks[id] = id;
       }
     });
-    
+
     // Cache the fallback UUIDs to prevent future API calls
     if (Object.keys(uncachedFallbacks).length > 0) {
-      console.info(`📝 Caching ${Object.keys(uncachedFallbacks).length} UUID fallbacks to prevent future API calls`);
+      console.info(
+        `📝 Caching ${
+          Object.keys(uncachedFallbacks).length
+        } UUID fallbacks to prevent future API calls`
+      );
       this.setNamesInCache(uncachedFallbacks);
     }
 

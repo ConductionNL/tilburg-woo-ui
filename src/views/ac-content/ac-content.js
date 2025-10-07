@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { Heading } from '@utrecht/component-library-react/dist/css-module';
 
@@ -12,6 +12,7 @@ const AcContent = ({ store: { pages, user } }) => {
   const { fetchPage, get_single, loading, resetPage, shouldShowPage } = pages;
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPage(location?.pathname);
@@ -27,7 +28,7 @@ const AcContent = ({ store: { pages, user } }) => {
     // Page exists but user doesn't have permission to see it
     // Redirect to login if not authenticated, or show 403 if authenticated but no access
     if (!user.isAuthenticated) {
-      window.location.href = `/login?redirect_url=${encodeURIComponent(location.pathname)}`;
+      navigate(`/login?redirect_url=${encodeURIComponent(location.pathname)}`);
       return <AcLoader />;
     } else {
       return (

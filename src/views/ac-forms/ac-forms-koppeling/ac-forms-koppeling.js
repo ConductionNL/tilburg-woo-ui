@@ -638,6 +638,36 @@ const AcFormsKoppeling = () => {
       .filter(Boolean);
   };
 
+  // Reset functions for form state
+  const handleRetryForm = () => {
+    setSaveResult(null);
+    setSaveErrors([]);
+  };
+
+  const handleResetForm = () => {
+    // Reset all form state to initial values
+    setCurrentStep(0);
+    setKoppelingsType(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    setResolvedModulesFromResults([]);
+    setOwnApp(null);
+    setOwnAppInput('');
+    setRows([0]);
+    setNextRowId(1);
+    setSelectedAppAByRow({});
+    setSelectedAppBByRow({});
+    setDirectionByRow({});
+    setTypeByRow({});
+    setBeschrijvingByRow({});
+    setStatusByRow({});
+    setNameByRow({});
+    setSelectedModuleLabels({});
+    setKoppelingIdByRow({});
+    setSaveResult(null);
+    setSaveErrors([]);
+  };
+
   const handleSave = async () => {
     const payloads = serializeRowsToPayload();
     if (!payloads.length) return;
@@ -789,6 +819,8 @@ const AcFormsKoppeling = () => {
             saveErrors={saveErrors}
             redirectCountdown={redirectCountdown}
             isEditMode={isEditMode}
+            onRetryForm={handleRetryForm}
+            onResetForm={handleResetForm}
           />
         );
 
