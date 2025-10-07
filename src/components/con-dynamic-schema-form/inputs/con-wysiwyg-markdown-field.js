@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@src/constants';
 import clsx from 'clsx';
+import rehypeSanitize from 'rehype-sanitize';
 
 // Lazy load the markdown editor to avoid SSR issues
 const MDEditor = React.lazy(() => import('@uiw/react-md-editor'));
@@ -124,6 +125,9 @@ const ConWysiwygMarkdownField = ({
                   lineHeight: '1.6',
                   fontFamily: 'inherit',
                 },
+              }}
+              previewOptions={{
+                rehypePlugins: [[rehypeSanitize]],
               }}
               // Custom toolbar configuration for user-friendly editing
               toolbarHeight={40}

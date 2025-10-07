@@ -22,6 +22,7 @@ import remarkRehype from 'remark-rehype';
 import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -244,6 +245,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                   ]}
                   rehypePlugins={[
                     rehypeSlug,
+                    [rehypeSanitize],
                     [remarkRehype, { handlers: { ...defListHastHandlers } }],
                   ]}
                 />
