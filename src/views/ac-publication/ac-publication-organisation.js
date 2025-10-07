@@ -87,7 +87,11 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Track which IDs we've already fetched to prevent duplicate calls
+  const fetchedIds = useRef(new Set());
+
   const fetchUses = useCallback(async () => {
+    if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
@@ -110,9 +114,10 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     } finally {
       setUsesLoading(false);
     }
-  }, [id]);
+  }, []);
 
   const fetchUsed = useCallback(async () => {
+    if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
@@ -135,16 +140,20 @@ const AcPublication = ({ store: { publications, object, user } }) => {
     } finally {
       setUsedLoading(false);
     }
-  }, [id]);
-
-  const hasFetched = useRef(false);
+  }, []);
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
+    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
+    if (!id || fetchedIds.current.has(id)) {
+      return;
+    }
+
+    // Mark this ID as fetched
+    fetchedIds.current.add(id);
+
     fetchUses();
     fetchUsed();
-  }, []);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single || !attachments) {
@@ -297,6 +306,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             tabIndex={tabIndex}
             setTabIndex={setTabIndex}
             object={object}
+            navigateTo='publication'
           />
         </AcFlex>
       </AcContainer>
