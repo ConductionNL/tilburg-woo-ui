@@ -5,22 +5,13 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConStandardsResolver } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConStandardsTable } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
-import {
-  Heading,
-  Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { handleFileClick } from '@utils';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -74,6 +65,14 @@ const AcPublicationProduct = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
+  // Standards state for resolving compliance standards
+  const [standards, setStandards] = useState([]);
+  const [standardsLoading, setStandardsLoading] = useState(false);
+
+  // State for referentieComponenten data with standards
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
+
   // Open delete modal from actions menu
   const handleDelete = useCallback(() => {
     setShowDeleteModal(true);
@@ -95,14 +94,6 @@ const AcPublicationProduct = ({
 
     setActionMenuItems(items);
   }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
-
-  // Standards state for resolving compliance standards
-  const [standards, setStandards] = useState([]);
-  const [standardsLoading, setStandardsLoading] = useState(false);
-
-  // State for referentieComponenten data with standards
-  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
-    useState([]);
 
   // Fetch referentieComponenten data with their standards
   const fetchReferentieComponentenWithStandards = useCallback(async () => {
@@ -186,81 +177,6 @@ const AcPublicationProduct = ({
     }
   }, [get_single?.referentieComponenten]);
 
-  // Helper function to determine standard type based on referentieComponenten (similar to form logic)
-  const getStandardTypeFromReferentieComponenten = useCallback(
-    (standardId) => {
-      if (!referentieComponentenWithStandards?.length) {
-        return { type: 'AANBEVOLEN', components: [] }; // Default fallback
-      }
-
-      const verplichteComponents = [];
-      const aanbevolenComponents = [];
-
-      // Check each referentiecomponent for this standard
-      referentieComponentenWithStandards.forEach((refComp) => {
-        const refCompName = refComp.naam || `Component ${refComp.id}`;
-
-        // Check if this standard is in verplichte standaarden
-        if (
-          refComp.verplichteStandaarden &&
-          Array.isArray(refComp.verplichteStandaarden)
-        ) {
-          const isVerplicht = refComp.verplichteStandaarden.some((standard) => {
-            // Handle both string IDs and object formats
-            const id =
-              typeof standard === 'string'
-                ? standard
-                : standard?.id ||
-                  standard?.value ||
-                  standard?.slug ||
-                  standard?.naam ||
-                  standard?.name;
-            return String(id) === String(standardId);
-          });
-
-          if (isVerplicht && !verplichteComponents.includes(refCompName)) {
-            verplichteComponents.push(refCompName);
-          }
-        }
-
-        // Check if this standard is in aanbevolen standaarden
-        if (
-          refComp.aanbevolenStandaarden &&
-          Array.isArray(refComp.aanbevolenStandaarden)
-        ) {
-          const isAanbevolen = refComp.aanbevolenStandaarden.some((standard) => {
-            // Handle both string IDs and object formats
-            const id =
-              typeof standard === 'string'
-                ? standard
-                : standard?.id ||
-                  standard?.value ||
-                  standard?.slug ||
-                  standard?.naam ||
-                  standard?.name;
-            return String(id) === String(standardId);
-          });
-
-          if (isAanbevolen && !aanbevolenComponents.includes(refCompName)) {
-            aanbevolenComponents.push(refCompName);
-          }
-        }
-      });
-
-      // Verplicht takes precedence over aanbevolen (same logic as form)
-      const primaryType =
-        verplichteComponents?.length > 0 ? 'VERPLICHT' : 'AANBEVOLEN';
-
-      return {
-        type: primaryType,
-        verplichteComponents,
-        aanbevolenComponents,
-        allComponents: [...verplichteComponents, ...aanbevolenComponents],
-      };
-    },
-    [referentieComponentenWithStandards]
-  );
-
   // Fetch standards from openconnector endpoint
   const fetchStandards = useCallback(async () => {
     setStandardsLoading(true);
@@ -307,58 +223,11 @@ const AcPublicationProduct = ({
     }
   }, []);
 
-  // TODO: Remove this if it's not needed
-  // The code below is a fetch request on the publication endpoint that will fetch all the elements that are published and are of gemmaType Standaard
-  // For now there are no results on this endpoint. This is because of the gemmaType filter not being applied in the backend correctly.
-
-  // Fetch standards from publications endpoint with specific parameters
-  //   const fetchStandards = useCallback(async () => {
-  //     setStandardsLoading(true);
-  //     try {
-  //       const queryParams = new URLSearchParams({
-  //         '@self[schema]': 'element',
-  //         gemmaType: 'Standaard',
-  //       });
-
-  //       console.info('📋 Fetching standards from publications endpoint...');
-
-  //       // Fetch standards from publications endpoint using normal fetch
-  //       const response = await fetch(
-  //         `${commongroundApiUrl()}/opencatalogi/api/publications?${queryParams}`,
-  //         {
-  //           method: 'GET',
-  //           headers: {
-  //             'Content-Type': 'application/json',
-  //           },
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         console.error('Error fetching publications standards:', response.statusText);
-  //         return;
-  //       }
-
-  //       const data = await response.json();
-  //       const fetchedStandards = data.results || data;
-
-  //       console.info(
-  //         `✅ Loaded ${fetchedStandards.length} standards from publications endpoint`
-  //       );
-
-  //       // You can process the fetched standards here if needed
-  //       // For now, we'll just log them
-  //       console.log('Publications standards:', fetchedStandards);
-  //     } catch (error) {
-  //       console.warn('⚠️ Failed to fetch standards from publications:', error);
-  //     } finally {
-  //       setStandardsLoading(false);
-  //     }
-  //   }, []);
-
   useEffect(() => {
     fetchStandards();
     fetchReferentieComponentenWithStandards();
   }, [fetchStandards, fetchReferentieComponentenWithStandards]);
+
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
@@ -571,9 +440,9 @@ const AcPublicationProduct = ({
             <TabList
               referentieComponenten={get_single.referentieComponenten}
               complianceStandards={get_single.compliancy}
+              objectStore={object}
               standards={standards}
               standardsLoading={standardsLoading}
-              objectStore={object}
               referentieComponentenWithStandards={referentieComponentenWithStandards}
               className='con-product-details--content-side'
             />
@@ -676,9 +545,9 @@ const getAllStandardsFromReferentieComponenten = (
 const TabList = ({
   referentieComponenten,
   complianceStandards,
+  objectStore,
   standards,
   standardsLoading,
-  objectStore,
   referentieComponentenWithStandards,
 }) => {
   // Get all standards from referentieComponenten using the helper function
@@ -747,216 +616,38 @@ const TabList = ({
           >{`Geschikt voor (${referentieComponenten.length})`}</AcTab>
         </AcTabList>
         <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
-          {standardsLoading ? (
-            <p>Standaarden laden...</p>
-          ) : allReferentieStandards && allReferentieStandards.length > 0 ? (
-            <div
-              style={{
-                maxHeight: allReferentieStandards.length > 5 ? '500px' : 'auto',
-                overflowY: allReferentieStandards.length > 5 ? 'auto' : 'visible',
-                overflowX: 'hidden',
-                border:
-                  allReferentieStandards.length > 5 ? '1px solid #e9ecef' : 'none',
-                borderRadius: allReferentieStandards.length > 5 ? '4px' : '0',
-                width: '100%',
-              }}
-            >
-              <Table style={{ width: '100%', tableLayout: 'fixed' }}>
-                <TableHeader>
-                  <TableRow>
-                    <TableCell
-                      style={{
-                        fontWeight: 'bold',
-                        backgroundColor: '#f8f9fa',
-                        paddingLeft:
-                          'var(--utrecht-table-cell-padding-inline-end) !important',
-                        position:
-                          allReferentieStandards.length > 5 ? 'sticky' : 'static',
-                        top: allReferentieStandards.length > 5 ? '0' : 'auto',
-                        zIndex: allReferentieStandards.length > 5 ? '10' : 'auto',
-                        width: '50%',
-                      }}
-                    >
-                      Standaard
-                    </TableCell>
-                    <TableCell
-                      style={{
-                        fontWeight: 'bold',
-                        backgroundColor: '#f8f9fa',
-                        position:
-                          allReferentieStandards.length > 5 ? 'sticky' : 'static',
-                        top: allReferentieStandards.length > 5 ? '0' : 'auto',
-                        zIndex: allReferentieStandards.length > 5 ? '10' : 'auto',
-                        width: '25%',
-                      }}
-                    >
-                      Status
-                    </TableCell>
-                    <TableCell
-                      style={{
-                        fontWeight: 'bold',
-                        backgroundColor: '#f8f9fa',
-                        position:
-                          allReferentieStandards.length > 5 ? 'sticky' : 'static',
-                        top: allReferentieStandards.length > 5 ? '0' : 'auto',
-                        zIndex: allReferentieStandards.length > 5 ? '10' : 'auto',
-                        width: '25%',
-                      }}
-                    >
-                      Bewijs
-                    </TableCell>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allReferentieStandards.map((refStandard, idx) => {
-                    // Check if this standard is in the complianceStandards array
-                    const complianceStandard = complianceStandards?.find(
-                      (cs) => cs.standaardversie === refStandard.id
-                    );
-                    const isCompliant = !!complianceStandard;
-                    const hasEvidence = !!complianceStandard?.bewijs;
-
-                    const typeColor =
-                      refStandard.type === 'VERPLICHT' ? '#dc3545' : '#28a745';
-
-                    return (
-                      <TableRow key={idx}>
-                        <TableCell
-                          style={{
-                            alignContent: 'center',
-                            paddingLeft:
-                              'var(--utrecht-table-cell-padding-inline-end) !important',
-                            width: '50%',
-                            wordWrap: 'break-word',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <div>
-                            <Link
-                              href={`https://www.gemmaonline.nl/wiki/GEMMA/${refStandard.id}`}
-                              target='_blank'
-                            >
-                              <ConStandardsResolver
-                                standardId={refStandard.id}
-                                standards={standards}
-                              />
-                            </Link>
-                            <div style={{ marginTop: '4px' }}>
-                              <span
-                                style={{
-                                  fontSize: '0.75rem',
-                                  color: '#fff',
-                                  backgroundColor: typeColor,
-                                  fontWeight: '600',
-                                  textTransform: 'uppercase',
-                                  padding: '3px 8px',
-                                  borderRadius: '4px',
-                                  display: 'inline-block',
-                                  lineHeight: '1.2',
-                                  margin: '0px',
-                                  marginBlockStart: '0px',
-                                  marginBlockEnd: '0px',
-                                  marginInlineStart: '0px',
-                                  marginInlineEnd: '0px',
-                                }}
-                              >
-                                {refStandard.type}
-                              </span>
-                            </div>
-                            <div
-                              style={{
-                                marginTop: '4px',
-                                fontSize: '0.75rem',
-                                color: '#6c757d',
-                                wordWrap: 'break-word',
-                              }}
-                            >
-                              {refStandard.referentieComponent}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            alignContent: 'center',
-                            width: '25%',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: '0.75rem',
-                              color: '#fff',
-                              backgroundColor: isCompliant ? '#28a745' : '#6c757d',
-                              fontWeight: '600',
-                              textTransform: 'uppercase',
-                              padding: '3px 8px',
-                              borderRadius: '4px',
-                              display: 'inline-block',
-                              lineHeight: '1.2',
-                              margin: '0px',
-                              marginBlockStart: '0px',
-                              marginBlockEnd: '0px',
-                              marginInlineStart: '0px',
-                              marginInlineEnd: '0px',
-                            }}
-                          >
-                            {isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
-                          </span>
-                        </TableCell>
-                        <TableCell
-                          style={{
-                            alignContent: 'center',
-                            width: '25%',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {hasEvidence ? (
-                            <Link
-                              href='#'
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleFileClick(complianceStandard.bewijs);
-                              }}
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              <VISUALS.DOWNLOAD />
-                            </Link>
-                          ) : (
-                            <span
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'center',
-                              }}
-                            >
-                              -
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p style={{ padding: '16px', color: '#6c757d', fontStyle: 'italic' }}>
-              Geen standaarden gevonden voor de gekoppelde referentiecomponenten.
-            </p>
-          )}
+          <ConStandardsTable
+            referentieComponenten={referentieComponenten}
+            complianceStandards={complianceStandards}
+            enableScrolling={true}
+            standards={standards}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            loading={standardsLoading}
+          />
         </AcTabPanel>
         <AcTabPanel selected={tabIndex === 1}>
-          {resolvedReferentieComponenten.map((item, idx) => (
-            <Link
-              key={idx}
-              href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
-              target='_blank'
-            >
-              {item.name}
-            </Link>
-          ))}
+          {resolvedReferentieComponenten.map((item, idx) => {
+            // Find the actual referentieComponent object to get its real ID
+            const actualRefComponent = referentieComponentenWithStandards?.find(
+              (refComp) =>
+                refComp.id === item.id ||
+                refComp.fullData?.identifier === item.id ||
+                refComp.fullData?.id === item.id
+            );
+
+            // Use the actual referentieComponent's ID, fallback to item.id if not found
+            const refComponentObjectId = actualRefComponent?.fullData?.id || item.id;
+
+            return (
+              <Link
+                key={idx}
+                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${refComponentObjectId}`}
+                target='_blank'
+              >
+                {item.name}
+              </Link>
+            );
+          })}
         </AcTabPanel>
       </AcTabs>
     </div>
