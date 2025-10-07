@@ -19,6 +19,7 @@ import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
 
 import { handleFileClick } from '@utils';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Controleren Stage Component
@@ -180,6 +181,7 @@ const ConFormControlerenStage = memo(
                     ]}
                     rehypePlugins={[
                       rehypeSlug,
+                      [rehypeSanitize],
                       [remarkRehype, { handlers: { ...defListHastHandlers } }],
                     ]}
                   />
@@ -263,6 +265,7 @@ const ConFormControlerenStage = memo(
                             ]}
                             rehypePlugins={[
                               rehypeSlug,
+                              [rehypeSanitize],
                               [
                                 remarkRehype,
                                 { handlers: { ...defListHastHandlers } },
@@ -580,6 +583,7 @@ const ConFormControlerenStage = memo(
                             ]}
                             rehypePlugins={[
                               rehypeSlug,
+                              [rehypeSanitize],
                               [
                                 remarkRehype,
                                 { handlers: { ...defListHastHandlers } },

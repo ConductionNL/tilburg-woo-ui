@@ -143,7 +143,10 @@ export const getFieldConfig = (
       type: 'boolean',
       component: 'Boolean',
     };
-  } else if (propertySchema?.type === 'number' || propertySchema?.type === 'integer') {
+  } else if (
+    propertySchema?.type === 'number' ||
+    propertySchema?.type === 'integer'
+  ) {
     schemaConfig = {
       ...baseConfig,
       type: 'number',
@@ -298,7 +301,12 @@ export const getFieldVisibility = (
   user,
   isCreateMode
 ) => {
-  // First check traditional visibility rules
+  // Apply hideOnForm unless config explicitly forces show
+  if (propertySchema?.hideOnForm === true) {
+    return false;
+  }
+
+  // Then check traditional visibility rules
   const isVisibleByConfig = shouldShowFormField(
     fieldConfig,
     formData,
@@ -473,7 +481,6 @@ export const getFieldValidation = (
       );
     }
   }
-
 
   return {
     hasError: errors.length > 0,

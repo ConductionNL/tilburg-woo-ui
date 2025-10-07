@@ -22,6 +22,7 @@ import remarkRehype from 'remark-rehype';
 import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -265,6 +266,7 @@ const AcPublicationProduct = ({
                 ]}
                 rehypePlugins={[
                   rehypeSlug,
+                  [rehypeSanitize],
                   [remarkRehype, { handlers: { ...defListHastHandlers } }],
                 ]}
               />
