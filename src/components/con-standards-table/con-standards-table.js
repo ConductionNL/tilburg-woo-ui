@@ -7,6 +7,8 @@ import {
   TableHeader,
   TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
+import { AcCheckbox } from '@src/molecules';
+import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { ConStandardsResolver } from '@components';
 import { VISUALS } from '@constants';
 import { handleFileClick } from '@utils';
@@ -41,6 +43,9 @@ const ConStandardsTable = ({
   referentieComponentenWithStandards: externalReferentieComponentenWithStandards,
   loading: externalLoading = false,
   onReferentieComponentenChange,
+  isEditing = false,
+  onComplianceChange,
+  disabled = false, // New prop for disabling interactions during save
 }) => {
   // Standards state for resolving compliance standards
   const [standards, setStandards] = useState([]);
@@ -288,6 +293,103 @@ const ConStandardsTable = ({
     }
   }, [effectiveReferentieComponentenWithStandards, onReferentieComponentenChange]);
 
+  // Functions for editing mode
+  const toggleCompliance = useCallback(
+    (standardId, isCompliant) => {
+      if (!isEditing || !onComplianceChange) return;
+
+      const currentCompliancy = complianceStandards || [];
+      let newCompliancy;
+
+      if (isCompliant) {
+        // Add or update compliancy
+        const existingIndex = currentCompliancy.findIndex(
+          (c) => c.standaardversie === standardId
+        );
+
+        // Find the standard name for display
+        const standard = allReferentieStandards.find((s) => s.id === standardId);
+        const standardName = standard
+          ? effectiveStandards?.find(
+              (s) => s.id === standardId || s.identifier === standardId
+            )?.name || standard.id
+          : standardId;
+
+        const compliancyObject = {
+          standaardversie: standardId,
+          standaardnaam: standardName,
+          bewijs: null,
+          bewijsFilename: null,
+        };
+
+        if (existingIndex >= 0) {
+          newCompliancy = [...currentCompliancy];
+          newCompliancy[existingIndex] = compliancyObject;
+        } else {
+          newCompliancy = [...currentCompliancy, compliancyObject];
+        }
+      } else {
+        // Remove compliancy
+        newCompliancy = currentCompliancy.filter(
+          (c) => c.standaardversie !== standardId
+        );
+      }
+
+      onComplianceChange(newCompliancy);
+    },
+    [
+      isEditing,
+      onComplianceChange,
+      complianceStandards,
+      allReferentieStandards,
+      effectiveStandards,
+    ]
+  );
+
+  const updateBewijs = useCallback(
+    (standardId, bewijs) => {
+      if (!isEditing || !onComplianceChange) return;
+
+      const currentCompliancy = complianceStandards || [];
+      const newCompliancy = currentCompliancy.map((c) =>
+        c.standaardversie === standardId ? { ...c, bewijs } : c
+      );
+
+      onComplianceChange(newCompliancy);
+    },
+    [isEditing, onComplianceChange, complianceStandards]
+  );
+
+  const updateBewijsFilename = useCallback(
+    (standardId, filename) => {
+      if (!isEditing || !onComplianceChange) return;
+
+      const currentCompliancy = complianceStandards || [];
+      const newCompliancy = currentCompliancy.map((c) =>
+        c.standaardversie === standardId ? { ...c, bewijsFilename: filename } : c
+      );
+
+      onComplianceChange(newCompliancy);
+    },
+    [isEditing, onComplianceChange, complianceStandards]
+  );
+
+  const clearBewijs = useCallback(
+    (standardId) => {
+      if (!isEditing || !onComplianceChange) return;
+
+      const currentCompliancy = complianceStandards || [];
+      const newCompliancy = currentCompliancy.map((c) =>
+        c.standaardversie === standardId
+          ? { ...c, bewijs: null, bewijsFilename: null }
+          : c
+      );
+
+      onComplianceChange(newCompliancy);
+    },
+    [isEditing, onComplianceChange, complianceStandards]
+  );
+
   if (effectiveLoading) {
     return <p>Standaarden laden...</p>;
   }
@@ -341,7 +443,7 @@ const ConStandardsTable = ({
                 width: '25%',
               }}
             >
-              Status
+              {isEditing ? 'Compliant' : 'Status'}
             </TableCell>
             <TableCell
               style={{
@@ -443,26 +545,39 @@ const ConStandardsTable = ({
                     overflow: 'hidden',
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      color: '#fff',
-                      backgroundColor: isCompliant ? '#28a745' : '#6c757d',
-                      fontWeight: '600',
-                      textTransform: 'uppercase',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      display: 'inline-block',
-                      lineHeight: '1.2',
-                      margin: '0px',
-                      marginBlockStart: '0px',
-                      marginBlockEnd: '0px',
-                      marginInlineStart: '0px',
-                      marginInlineEnd: '0px',
-                    }}
-                  >
-                    {isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
-                  </span>
+                  {isEditing ? (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <AcCheckbox
+                        checked={isCompliant}
+                        onChange={(checked) =>
+                          toggleCompliance(refStandard.id, checked)
+                        }
+                        disabled={disabled}
+                        label=''
+                      />
+                    </div>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        color: '#fff',
+                        backgroundColor: isCompliant ? '#28a745' : '#6c757d',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        display: 'inline-block',
+                        lineHeight: '1.2',
+                        margin: '0px',
+                        marginBlockStart: '0px',
+                        marginBlockEnd: '0px',
+                        marginInlineStart: '0px',
+                        marginInlineEnd: '0px',
+                      }}
+                    >
+                      {isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell
                   style={{
@@ -471,7 +586,41 @@ const ConStandardsTable = ({
                     overflow: 'hidden',
                   }}
                 >
-                  {hasEvidence ? (
+                  {isEditing ? (
+                    // Show file upload field when editing and compliant
+                    isCompliant ? (
+                      <LogoUploadField
+                        fieldConfig={{
+                          label: '',
+                          filename: complianceStandard?.bewijs
+                            ? 'Bestand geüpload'
+                            : '',
+                        }}
+                        _value={complianceStandard?.bewijs || ''}
+                        onChange={(dataUrl) => updateBewijs(refStandard.id, dataUrl)}
+                        onChangeFileName={(filename) =>
+                          updateBewijsFilename(refStandard.id, filename)
+                        }
+                        onClear={() => clearBewijs(refStandard.id)}
+                        accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                        showPreview={false}
+                        validation={{ required: false }}
+                        propertyName={`bewijs-${refStandard.id}`}
+                        size='small'
+                        isDisabled={disabled}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        -
+                      </span>
+                    )
+                  ) : // Show download link or dash when not editing
+                  hasEvidence ? (
                     <Link
                       href='#'
                       onClick={(e) => {

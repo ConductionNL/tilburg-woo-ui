@@ -533,7 +533,7 @@ const ConMyOrganisationPage = ({ store }) => {
                     deserialize={(v) => v || ''}
                     onSuccess={(v) => (
                       setEditingSummary(false),
-                      setNewFieldDataAndFetch(v, 'beschrijvingLang')
+                      setNewFieldDataAndFetch(v, 'beschrijvingKort')
                     )}
                     onCancel={() => setEditingSummary(false)}
                   />

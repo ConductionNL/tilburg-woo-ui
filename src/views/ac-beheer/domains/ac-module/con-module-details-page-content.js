@@ -2,14 +2,22 @@ import {
   Heading,
   Paragraph,
   Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
+import { AcCheckbox, AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
+import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import ConEditableStandards from '../../shared/components/con-editable-standards/con-editable-standards';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import { ConStandardsTable } from '@components';
 import {
@@ -27,6 +35,7 @@ import { TOOLTIP_ID } from '@src/index.web';
  */
 const ConModuleDetailsPageContent = ({
   loading,
+  config,
   data,
   userStore: user,
   objectStore: object,
@@ -44,6 +53,7 @@ const ConModuleDetailsPageContent = ({
   // Editing state for inline editing
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+  const [editingStandards, setEditingStandards] = useState(false);
 
   // Standards count state
   const [standardsCount, setStandardsCount] = useState(0);
@@ -51,6 +61,8 @@ const ConModuleDetailsPageContent = ({
   // ReferentieComponenten data state
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
+
+  // Standards editing state
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -106,7 +118,38 @@ const ConModuleDetailsPageContent = ({
     }
   }, [id]);
 
-  // Note: Modules currently have no dedicated contact block on this page
+  // Custom fetch function (matching con-my-organisation pattern)
+  const fetchFullModuleData = useCallback(
+    async (moduleId) => {
+      if (!moduleId || !config) return;
+
+      try {
+        // Fetch the full module data using the object store
+        await object.fetchObject(config.registerSlug, config.schemaSlug, moduleId, {
+          _extend: config.extend,
+          _related: true,
+          _relatedNames: true,
+        });
+        // Ensure active object is set so related data selectors work
+        object.setActiveObject(config.registerSlug, config.schemaSlug, {
+          id: moduleId,
+        });
+        // Also fetch schema if not yet loaded
+        object.fetchSchema(config.schemaSlug);
+      } catch (error) {
+        console.error('Error fetching full module data:', error);
+      }
+    },
+    [object, config]
+  );
+
+  // Helper function to update field data and refresh (matching con-my-organisation pattern exactly)
+  const setNewFieldDataAndFetch = (v, field) => {
+    if (data) {
+      data[field] = v;
+      fetchFullModuleData(data?.['@self']?.id);
+    }
+  };
 
   // Check organization permissions for actions
   const { canEdit: hasEditPermission, reason } = data
@@ -176,15 +219,14 @@ const ConModuleDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* TODO: Summary and description editing is not working yet*/}
-                {/* <ConActionMenu.Button
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingSummary(true)}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
                     !actualCanEdit
-                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
+                      ? getDisabledActionTooltip('edit', reason)
                       : undefined
                   }
                 >
@@ -198,12 +240,26 @@ const ConModuleDetailsPageContent = ({
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
                     !actualCanEdit
-                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
+                      ? getDisabledActionTooltip('edit', reason)
                       : undefined
                   }
                 >
                   Bewerk beschrijving
-                </ConActionMenu.Button> */}
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingStandards(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
+                >
+                  Bewerk standaarden
+                </ConActionMenu.Button>
 
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -262,8 +318,8 @@ const ConModuleDetailsPageContent = ({
       {/* Short description */}
       <div style={{ flex: 2 }}>
         <ConEditableDescription
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingKort'
           label='Korte beschrijving'
@@ -275,9 +331,12 @@ const ConModuleDetailsPageContent = ({
           isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
-          onSuccess={() => setEditingSummary(false)}
+          onSuccess={(v) => {
+            setEditingSummary(false);
+            data.beschrijvingKort = v;
+            // No data refresh needed - data already updated locally
+          }}
           onCancel={() => setEditingSummary(false)}
-          canEdit={actualCanEdit}
         />
       </div>
 
@@ -286,8 +345,8 @@ const ConModuleDetailsPageContent = ({
         <br />
         <ConEditableDescription
           markdownPreviewClassName='con-my-account-description'
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingLang'
           label='Lange beschrijving'
@@ -307,8 +366,11 @@ const ConModuleDetailsPageContent = ({
             }
           }}
           onCancel={() => setEditingDescription(false)}
-          onSuccess={() => setEditingDescription(false)}
-          canEdit={actualCanEdit}
+          onSuccess={(v) => {
+            setEditingDescription(false);
+            data.beschrijvingLang = v;
+            // No data refresh needed - data already updated locally
+          }}
         />
       </div>
 
@@ -359,12 +421,28 @@ const ConModuleDetailsPageContent = ({
       {/* Standaarden Section */}
       <div style={{ marginTop: '1rem' }}>
         <Heading level={3}>Standaarden ({standardsCount})</Heading>
-        <ConStandardsTable
+        <ConEditableStandards
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
+          objectId={data?.['@self']?.id}
           referentieComponenten={data.referentieComponenten}
           complianceStandards={data.compliancy}
-          enableScrolling={false}
+          referentieComponentenWithStandards={
+            referentieComponentenWithStandards?.length > 0
+              ? referentieComponentenWithStandards
+              : undefined
+          }
           onStandardsCountChange={setStandardsCount}
           onReferentieComponentenChange={setReferentieComponentenWithStandards}
+          isEditingCustomTrigger={editingStandards}
+          onSuccess={(newCompliancy) => {
+            // Only exit editing mode - don't update data.compliancy to prevent unnecessary re-renders
+            setEditingStandards(false);
+            // The ConEditableStandards component already sent the PATCH request
+            // so the server data is correct and will be consistent
+          }}
+          onCancel={() => setEditingStandards(false)}
+          canEdit={actualCanEdit}
         />
       </div>
 

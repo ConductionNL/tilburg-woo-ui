@@ -167,6 +167,12 @@ const ConEditableDescription = ({
       setIsEditing(true);
       setTempValue(v || '');
       setCharCount((v || '').length);
+    } else if (isEditingCustomTrigger === false) {
+      // Handle when custom trigger becomes false - exit editing mode
+      setIsEditing(false);
+      const v = deserialize(value);
+      setTempValue(v || '');
+      setCharCount((v || '').length);
     }
   }, [isEditingCustomTrigger, value, deserialize]);
 
