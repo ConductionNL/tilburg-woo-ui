@@ -49,7 +49,7 @@ const AcCheckbox = ({
             })}
           >
             <div>
-              <ConUuidResolver> {label} </ConUuidResolver>
+              <ConUuidResolver>{label}</ConUuidResolver>
               {required && (
                 <>
                   <span className='required-indicator' aria-hidden='true'>
