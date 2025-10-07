@@ -8,6 +8,8 @@ import {
   Checkbox,
 } from '@utrecht/component-library-react/dist/css-module';
 import clsx from 'clsx';
+import { ConUuidResolver } from '@src/components';
+
 const AcCheckbox = ({
   label,
   value,
@@ -18,6 +20,7 @@ const AcCheckbox = ({
   tooltip,
   required,
   customLabelPart,
+  disabled = false,
 }) => {
   const memoizedId = useMemo(() => `${label}_${value}`, [label, value]);
   const _id = id || memoizedId;
@@ -37,6 +40,7 @@ const AcCheckbox = ({
             name={label}
             value={value}
             onChange={onChangeHandler}
+            disabled={disabled}
           />
           <div
             className={clsx({
@@ -45,7 +49,7 @@ const AcCheckbox = ({
             })}
           >
             <div>
-              {label}
+              <ConUuidResolver> {label} </ConUuidResolver>
               {required && (
                 <>
                   <span className='required-indicator' aria-hidden='true'>

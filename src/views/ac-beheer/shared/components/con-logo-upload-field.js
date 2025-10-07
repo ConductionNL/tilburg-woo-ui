@@ -343,6 +343,7 @@ export const LogoUploadField = ({
             <AcButton
               style='buttonSlim'
               buttonType='secondary'
+              disabled={isDisabled}
               onClick={() => {
                 if (inputRef.current) inputRef.current.value = null;
                 onChange('');

@@ -45,6 +45,7 @@ const ConStandardsTable = ({
   onReferentieComponentenChange,
   isEditing = false,
   onComplianceChange,
+  disabled = false, // New prop for disabling interactions during save
 }) => {
   // Standards state for resolving compliance standards
   const [standards, setStandards] = useState([]);
@@ -551,6 +552,7 @@ const ConStandardsTable = ({
                         onChange={(checked) =>
                           toggleCompliance(refStandard.id, checked)
                         }
+                        disabled={disabled}
                         label=''
                       />
                     </div>
@@ -605,6 +607,7 @@ const ConStandardsTable = ({
                         validation={{ required: false }}
                         propertyName={`bewijs-${refStandard.id}`}
                         size='small'
+                        isDisabled={disabled}
                       />
                     ) : (
                       <span
