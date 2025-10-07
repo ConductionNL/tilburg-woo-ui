@@ -1,5 +1,5 @@
 import { useState, useEffect, memo, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { createDefaultFormObject } from '@src/utilities/schema-object-factory';
@@ -37,6 +37,7 @@ const mapToOption = (item, index) => {
 
 const AcFormsGebruik = ({ store }) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const gebruikId = searchParams.get('id') || '';
   const isEditMode = !!gebruikId;
   const [currentStep, setCurrentStep] = useState(0);
@@ -189,15 +190,10 @@ const AcFormsGebruik = ({ store }) => {
     if (gebruikType !== 'eigen-organisatie') return;
     const org = store?.user?.activeOrganization;
     if (!org) return;
-    
+
     // Extract UUID from organization object (following dienst wizard pattern)
-    const orgUuid = String(
-      org?.uuid ||
-      org?.id ||
-      org?.slug ||
-      ''
-    );
-    
+    const orgUuid = String(org?.uuid || org?.id || org?.slug || '');
+
     if (orgUuid) {
       console.log('Setting afnemer for eigen-organisatie:', { org, orgUuid });
       setGebruikData('afnemer', orgUuid);
@@ -214,13 +210,13 @@ const AcFormsGebruik = ({ store }) => {
 
   // Deelnemers (organisaties) options
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
-  
+
   // Debug organisatieOptions changes
   useEffect(() => {
     console.log('📋 organisatieOptions updated:', {
       count: organisatieOptions.length,
       firstFew: organisatieOptions.slice(0, 3),
-      allOptions: organisatieOptions
+      allOptions: organisatieOptions,
     });
   }, [organisatieOptions]);
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
@@ -640,12 +636,12 @@ const AcFormsGebruik = ({ store }) => {
             `Organisatie ${index + 1}`;
           // Use same pattern as mapToOption function - @self.id first, then fallbacks
           const value = item?.['@self']?.id || item?.id || item?.slug || label;
-          console.log('Organization option created:', { 
-            item, 
-            extractedValue: value, 
+          console.log('Organization option created:', {
+            item,
+            extractedValue: value,
             selfId: item?.['@self']?.id,
             directId: item?.id,
-            label 
+            label,
           });
           return { value: String(value), label: String(label), data: item };
         });
@@ -1487,7 +1483,7 @@ const AcFormsGebruik = ({ store }) => {
                 <AcButton
                   style='button'
                   icon={<VISUALS.HOUSE />}
-                  onClick={() => (window.location.href = '/beheer')}
+                  onClick={() => navigate('/beheer')}
                 >
                   Terug naar beheer dashboard
                 </AcButton>
@@ -1499,8 +1495,26 @@ const AcFormsGebruik = ({ store }) => {
                   onClick={() => {
                     setRegisterCallBack(null);
                     setCurrentStep(0);
-                    // Reset form for new registration
-                    window.location.reload();
+                    setGebruik({
+                      id: '',
+                      status: 'Verwerving',
+                      contactpersoon: '',
+                      afnemer: null,
+                      product: null,
+                      module: '',
+                      moduleVersie: '',
+                      gebruiktVoorReferentiecomponenten: [],
+                      deelnemers: [],
+                      koppelingen: [],
+                      diensten: [],
+                      startDatumVerwerving: '',
+                      startDatumGepland: '',
+                      startDatumInProductie: '',
+                      startDatumUitTeFaseren: '',
+                      startDatumUitGefaseerd: '',
+                    });
+                    setGebruikType(null);
+                    setError({ message: null, errors: null });
                   }}
                 >
                   Nieuw gebruik registreren

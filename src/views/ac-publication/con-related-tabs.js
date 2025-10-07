@@ -160,7 +160,11 @@ const renderRelatedTabs = (
   );
 
   return (
-    <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+    <AcTabs
+      style={{ marginBlockStart: 'var(--tilburg-space-block-mouse)' }}
+      selectedIndex={tabIndex}
+      onSelect={(index) => setTabIndex(index)}
+    >
       <AcTabList>
         {uniqueSchemas.map((item, idx) => {
           const IconComponent = getTabHeaderIcon(item['@self'].schema.slug);

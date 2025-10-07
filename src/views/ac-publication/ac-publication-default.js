@@ -523,7 +523,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                               className='utrecht-button slim'
                               // variant='secondary'
                               onClick={() => {
-                                window.location.href = `/publicatie/${item.id}`;
+                                navigate(`/publicatie/${item.id}`);
                               }}
                             >
                               <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -614,7 +614,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                               className='utrecht-button slim'
                               // variant='secondary'
                               onClick={() => {
-                                window.location.href = `/publicatie/${item.id}`;
+                                navigate(`/publicatie/${item.id}`);
                               }}
                             >
                               <VISUALS.EYE className='ac-button__icon' /> Bekijken

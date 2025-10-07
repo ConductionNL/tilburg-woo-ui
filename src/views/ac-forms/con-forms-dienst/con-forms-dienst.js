@@ -1,6 +1,6 @@
 import { useState, useEffect, memo, useRef, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { withStore } from '@stores';
 import clsx from 'clsx';
 import { AcSection, AcContainer, AcColumn } from '@src/atoms';
@@ -28,6 +28,7 @@ import ConFormControlerenStage from './components/con-form-controleren-stage';
 
 const ConFormsDienst = ({ store, userStore }) => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const dienstId = searchParams.get('id') || '';
   const isEditMode = !!dienstId;
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,7 +50,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Dienst object (schema-compliant)
   const [dienst, setDienst] = useState({
-    naam: '',
+    naam: '', 
     beschrijvingKort: '',
     beschrijvingLang: '',
     website: '',
@@ -457,6 +458,8 @@ const ConFormsDienst = ({ store, userStore }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedKoppelingIds]);
 
+  // TODO: remove eslint-disable if koppelingen are needed
+  // eslint-disable-next-line no-unused-vars
   const loadKoppelingenForModules = async () => {
     try {
       if (!selectedModuleIds || selectedModuleIds.length === 0) {
@@ -836,7 +839,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                 <AcButton
                   style='button'
                   icon={<VISUALS.HOUSE />}
-                  onClick={() => (window.location.href = '/beheer')}
+                  onClick={() => navigate('/beheer')}
                 >
                   Terug naar beheer dashboard
                 </AcButton>
@@ -847,7 +850,19 @@ const ConFormsDienst = ({ store, userStore }) => {
                   onClick={() => {
                     setSaveResult(null);
                     setCurrentStep(0);
-                    window.location.reload();
+                    setDienst({
+                      naam: '',
+                      beschrijvingKort: '',
+                      beschrijvingLang: '',
+                      website: '',
+                      logo: '',
+                      contactpersoon: null,
+                      aanbieder: '',
+                      type: '',
+                      producten: [],
+                      modules: [],
+                      koppelingen: [],
+                    });
                   }}
                   sx={{ marginLeft: '1rem' }}
                 >

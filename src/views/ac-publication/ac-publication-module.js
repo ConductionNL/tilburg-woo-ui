@@ -566,9 +566,7 @@ const AcPublicationProduct = ({
               standards={standards}
               standardsLoading={standardsLoading}
               objectStore={object}
-              getStandardTypeFromReferentieComponenten={
-                getStandardTypeFromReferentieComponenten
-              }
+              referentieComponentenWithStandards={referentieComponentenWithStandards}
               className='con-product-details--content-side'
             />
           </AcFlex>
@@ -595,15 +593,102 @@ const AcPublicationProduct = ({
   );
 };
 
+// Helper function to get all standards from referentieComponenten data
+const getAllStandardsFromReferentieComponenten = (
+  referentieComponentenWithStandards
+) => {
+  if (!referentieComponentenWithStandards?.length) return [];
+
+  const allStandards = [];
+
+  referentieComponentenWithStandards.forEach((refComp) => {
+    // Add verplichte standaarden
+    if (
+      refComp.verplichteStandaarden &&
+      Array.isArray(refComp.verplichteStandaarden)
+    ) {
+      refComp.verplichteStandaarden.forEach((standard) => {
+        const standardId =
+          typeof standard === 'string'
+            ? standard
+            : standard?.id ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+
+        if (standardId && !allStandards.find((s) => s.id === standardId)) {
+          allStandards.push({
+            id: standardId,
+            type: 'VERPLICHT',
+            referentieComponent: refComp.naam || `Component ${refComp.id}`,
+          });
+        }
+      });
+    }
+
+    // Add aanbevolen standaarden
+    if (
+      refComp.aanbevolenStandaarden &&
+      Array.isArray(refComp.aanbevolenStandaarden)
+    ) {
+      refComp.aanbevolenStandaarden.forEach((standard) => {
+        const standardId =
+          typeof standard === 'string'
+            ? standard
+            : standard?.id ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+
+        if (standardId) {
+          const existingStandard = allStandards.find((s) => s.id === standardId);
+          if (existingStandard) {
+            // If already exists as VERPLICHT, keep it as VERPLICHT
+            if (existingStandard.type !== 'VERPLICHT') {
+              existingStandard.type = 'AANBEVOLEN';
+            }
+          } else {
+            allStandards.push({
+              id: standardId,
+              type: 'AANBEVOLEN',
+              referentieComponent: refComp.naam || `Component ${refComp.id}`,
+            });
+          }
+        }
+      });
+    }
+  });
+
+  return allStandards;
+};
+
 const TabList = ({
   referentieComponenten,
   complianceStandards,
   standards,
   standardsLoading,
   objectStore,
-  getStandardTypeFromReferentieComponenten,
+  referentieComponentenWithStandards,
 }) => {
+  // Get all standards from referentieComponenten using the helper function
+  const allReferentieStandards = getAllStandardsFromReferentieComponenten(
+    referentieComponentenWithStandards
+  );
+
+  // Set default tab index based on whether we have standards from referentieComponenten
+  const hasStandards = allReferentieStandards && allReferentieStandards.length > 0;
   const [tabIndex, setTabIndex] = useState(0);
+
+  // Update tab index when standards data becomes available
+  useEffect(() => {
+    if (hasStandards) {
+      setTabIndex(0); // Show standards tab
+    } else {
+      setTabIndex(1); // Show "Geschikt voor" tab
+    }
+  }, [hasStandards]);
 
   // Custom hook to resolve UUIDs while keeping original IDs
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
@@ -645,166 +730,212 @@ const TabList = ({
     <div className='con-product-details--side-content-tabs'>
       <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
         <AcTabList>
-          <AcTab selected={tabIndex === 0}>Standaarden:</AcTab>
-          <AcTab selected={tabIndex === 1}>Geschikt voor:</AcTab>
+          <AcTab
+            selected={tabIndex === 0}
+          >{`Standaarden (${allReferentieStandards.length})`}</AcTab>
+          <AcTab
+            selected={tabIndex === 1}
+          >{`Geschikt voor (${referentieComponenten.length})`}</AcTab>
         </AcTabList>
         <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
           {standardsLoading ? (
             <p>Standaarden laden...</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell
-                    style={{
-                      fontWeight: 'bold',
-                      backgroundColor: '#f8f9fa',
-                      paddingLeft:
-                        'var(--utrecht-table-cell-padding-inline-end) !important',
-                    }}
-                  >
-                    Standaard
-                  </TableCell>
-                  <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                  >
-                    Status
-                  </TableCell>
-                  <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                  >
-                    Bewijs
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {complianceStandards.map((standard, idx) => {
-                  // Use the proper logic based on referentieComponenten instead of heuristics
-                  const standardTypeInfo = getStandardTypeFromReferentieComponenten(
-                    standard.standaardversie
-                  );
-                  const standardType = standardTypeInfo.type;
-                  const typeColor =
-                    standardType === 'VERPLICHT' ? '#dc3545' : '#28a745';
-                  const hasEvidence = !!standard.bewijs;
+          ) : allReferentieStandards && allReferentieStandards.length > 0 ? (
+            <div
+              style={{
+                maxHeight: allReferentieStandards.length > 5 ? '500px' : 'auto',
+                overflowY: allReferentieStandards.length > 5 ? 'auto' : 'visible',
+                overflowX: 'hidden',
+                border:
+                  allReferentieStandards.length > 5 ? '1px solid #e9ecef' : 'none',
+                borderRadius: allReferentieStandards.length > 5 ? '4px' : '0',
+                width: '100%',
+              }}
+            >
+              <Table style={{ width: '100%', tableLayout: 'fixed' }}>
+                <TableHeader>
+                  <TableRow>
+                    <TableCell
+                      style={{
+                        fontWeight: 'bold',
+                        backgroundColor: '#f8f9fa',
+                        paddingLeft:
+                          'var(--utrecht-table-cell-padding-inline-end) !important',
+                        position:
+                          allReferentieStandards.length > 5 ? 'sticky' : 'static',
+                        top: allReferentieStandards.length > 5 ? '0' : 'auto',
+                        zIndex: allReferentieStandards.length > 5 ? '10' : 'auto',
+                        width: '50%',
+                      }}
+                    >
+                      Standaard
+                    </TableCell>
+                    <TableCell
+                      style={{
+                        fontWeight: 'bold',
+                        backgroundColor: '#f8f9fa',
+                        position:
+                          allReferentieStandards.length > 5 ? 'sticky' : 'static',
+                        top: allReferentieStandards.length > 5 ? '0' : 'auto',
+                        zIndex: allReferentieStandards.length > 5 ? '10' : 'auto',
+                        width: '25%',
+                      }}
+                    >
+                      Status
+                    </TableCell>
+                    <TableCell
+                      style={{
+                        fontWeight: 'bold',
+                        backgroundColor: '#f8f9fa',
+                        position:
+                          allReferentieStandards.length > 5 ? 'sticky' : 'static',
+                        top: allReferentieStandards.length > 5 ? '0' : 'auto',
+                        zIndex: allReferentieStandards.length > 5 ? '10' : 'auto',
+                        width: '25%',
+                      }}
+                    >
+                      Bewijs
+                    </TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {allReferentieStandards.map((refStandard, idx) => {
+                    // Check if this standard is in the complianceStandards array
+                    const complianceStandard = complianceStandards?.find(
+                      (cs) => cs.standaardversie === refStandard.id
+                    );
+                    const isCompliant = !!complianceStandard;
+                    const hasEvidence = !!complianceStandard?.bewijs;
 
-                  return (
-                    <TableRow key={idx}>
-                      <TableCell
-                        style={{
-                          alignContent: 'center',
-                          paddingLeft:
-                            'var(--utrecht-table-cell-padding-inline-end) !important',
-                        }}
-                      >
-                        <div>
-                          <Link
-                            href={`https://www.gemmaonline.nl/wiki/GEMMA/${standard.standaardversie}`}
-                            target='_blank'
-                          >
-                            <ConStandardsResolver
-                              standardId={standard.standaardversie}
-                              standards={standards}
-                            />
-                          </Link>
-                          <div style={{ marginTop: '4px' }}>
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                color: '#fff',
-                                backgroundColor: typeColor,
-                                fontWeight: '600',
-                                textTransform: 'uppercase',
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                display: 'inline-block',
-                                lineHeight: '1.2',
-                                margin: '0px', // Set block-inline values to 0px
-                                marginBlockStart: '0px',
-                                marginBlockEnd: '0px',
-                                marginInlineStart: '0px',
-                                marginInlineEnd: '0px',
-                              }}
+                    const typeColor =
+                      refStandard.type === 'VERPLICHT' ? '#dc3545' : '#28a745';
+
+                    return (
+                      <TableRow key={idx}>
+                        <TableCell
+                          style={{
+                            alignContent: 'center',
+                            paddingLeft:
+                              'var(--utrecht-table-cell-padding-inline-end) !important',
+                            width: '50%',
+                            wordWrap: 'break-word',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div>
+                            <Link
+                              href={`https://www.gemmaonline.nl/wiki/GEMMA/${refStandard.id}`}
+                              target='_blank'
                             >
-                              {standardType}
-                            </span>
-                          </div>
-                          {/* Show component information if available */}
-                          {standardTypeInfo.allComponents?.length > 0 && (
+                              <ConStandardsResolver
+                                standardId={refStandard.id}
+                                standards={standards}
+                              />
+                            </Link>
+                            <div style={{ marginTop: '4px' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.75rem',
+                                  color: '#fff',
+                                  backgroundColor: typeColor,
+                                  fontWeight: '600',
+                                  textTransform: 'uppercase',
+                                  padding: '3px 8px',
+                                  borderRadius: '4px',
+                                  display: 'inline-block',
+                                  lineHeight: '1.2',
+                                  margin: '0px',
+                                  marginBlockStart: '0px',
+                                  marginBlockEnd: '0px',
+                                  marginInlineStart: '0px',
+                                  marginInlineEnd: '0px',
+                                }}
+                              >
+                                {refStandard.type}
+                              </span>
+                            </div>
                             <div
                               style={{
                                 marginTop: '4px',
                                 fontSize: '0.75rem',
                                 color: '#6c757d',
+                                wordWrap: 'break-word',
                               }}
                             >
-                              {standardTypeInfo.verplichteComponents?.length > 0 && (
-                                <div>
-                                  {standardTypeInfo.verplichteComponents.join(', ')}
-                                </div>
-                              )}
-                              {standardTypeInfo.aanbevolenComponents?.length > 0 && (
-                                <div>
-                                  {standardTypeInfo.aanbevolenComponents.join(', ')}
-                                </div>
-                              )}
+                              {refStandard.referentieComponent}
                             </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <span
+                          </div>
+                        </TableCell>
+                        <TableCell
                           style={{
-                            fontSize: '0.75rem',
-                            color: '#fff',
-                            backgroundColor: hasEvidence ? '#28a745' : '#6c757d',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            lineHeight: '1.2',
-                            margin: '0px', // Set block-inline values to 0px
-                            marginBlockStart: '0px',
-                            marginBlockEnd: '0px',
-                            marginInlineStart: '0px',
-                            marginInlineEnd: '0px',
+                            alignContent: 'center',
+                            width: '25%',
+                            overflow: 'hidden',
                           }}
                         >
-                          {hasEvidence ? 'COMPLIANT' : 'NON-COMPLIANT'}
-                        </span>
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        {standard.bewijs ? (
-                          <Link
-                            href='#'
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleFileClick(standard.bewijs);
-                            }}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <VISUALS.DOWNLOAD />
-                          </Link>
-                        ) : (
                           <span
                             style={{
-                              display: 'flex',
-                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              color: '#fff',
+                              backgroundColor: isCompliant ? '#28a745' : '#6c757d',
+                              fontWeight: '600',
+                              textTransform: 'uppercase',
+                              padding: '3px 8px',
+                              borderRadius: '4px',
+                              display: 'inline-block',
+                              lineHeight: '1.2',
+                              margin: '0px',
+                              marginBlockStart: '0px',
+                              marginBlockEnd: '0px',
+                              marginInlineStart: '0px',
+                              marginInlineEnd: '0px',
                             }}
                           >
-                            -
+                            {isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
                           </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell
+                          style={{
+                            alignContent: 'center',
+                            width: '25%',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {hasEvidence ? (
+                            <Link
+                              href='#'
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleFileClick(complianceStandard.bewijs);
+                              }}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <VISUALS.DOWNLOAD />
+                            </Link>
+                          ) : (
+                            <span
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              -
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <p style={{ padding: '16px', color: '#6c757d', fontStyle: 'italic' }}>
+              Geen standaarden gevonden voor de gekoppelde referentiecomponenten.
+            </p>
           )}
         </AcTabPanel>
         <AcTabPanel selected={tabIndex === 1}>

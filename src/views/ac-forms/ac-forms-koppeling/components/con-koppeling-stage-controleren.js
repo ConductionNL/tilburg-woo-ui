@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import {
@@ -29,7 +30,11 @@ const ConKoppelingStageControleren = ({
   saveErrors,
   // redirectCountdown,
   isEditMode,
+  onRetryForm,
+  onResetForm,
 }) => {
+  const navigate = useNavigate();
+
   if (saveResult === 'error') {
     return (
       <div className='ac-register-form-section'>
@@ -57,7 +62,7 @@ const ConKoppelingStageControleren = ({
           <AcButton
             style='button'
             icon={<VISUALS.HOUSE />}
-            onClick={() => (window.location.href = '/beheer')}
+            onClick={() => navigate('/beheer')}
           >
             Terug naar beheer dashboard
           </AcButton>
@@ -66,7 +71,7 @@ const ConKoppelingStageControleren = ({
             style='button'
             buttonType='secondary'
             icon={<VISUALS.RELOAD />}
-            onClick={() => window.location.reload()}
+            onClick={onRetryForm}
           >
             Opnieuw proberen
           </AcButton>
@@ -117,7 +122,7 @@ const ConKoppelingStageControleren = ({
           <AcButton
             style='button'
             icon={<VISUALS.HOUSE />}
-            onClick={() => (window.location.href = '/beheer')}
+            onClick={() => navigate('/beheer')}
           >
             Terug naar beheer dashboard
           </AcButton>
@@ -126,7 +131,7 @@ const ConKoppelingStageControleren = ({
             style='button'
             buttonType='secondary'
             icon={<VISUALS.LINK />}
-            onClick={() => window.location.reload()}
+            onClick={onResetForm}
           >
             Nieuwe koppeling registreren
           </AcButton>
