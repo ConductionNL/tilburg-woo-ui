@@ -144,6 +144,14 @@ const ConModuleDetailsPage = ({ store }) => {
                   setDynamicCreatePreSelected,
                   setDynamicCreateMetadata,
                   setOpenModal,
+                  onDataUpdate: (updatedData) => {
+                    // Refresh the object in the store when data is updated
+                    object.fetchObject(registerSlug, schemaSlug, id, {
+                      _extend: config.extend,
+                      _related: true,
+                      _relatedNames: true,
+                    });
+                  },
                 }}
               />
             )}

@@ -2,13 +2,20 @@ import {
   Heading,
   Paragraph,
   Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn, AcFlex } from '@src/atoms';
+import { AcCheckbox } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
+import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import { ConStandardsTable } from '@components';
@@ -44,6 +51,7 @@ const ConModuleDetailsPageContent = ({
   // Editing state for inline editing
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+  const [editingStandards, setEditingStandards] = useState(false);
 
   // Standards count state
   const [standardsCount, setStandardsCount] = useState(0);
@@ -51,6 +59,8 @@ const ConModuleDetailsPageContent = ({
   // ReferentieComponenten data state
   const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
     useState([]);
+
+  // Standards editing state
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -106,7 +116,17 @@ const ConModuleDetailsPageContent = ({
     }
   }, [id]);
 
-  // Note: Modules currently have no dedicated contact block on this page
+  // Helper function to update field data and refresh
+  const setNewFieldDataAndFetch = (value, field) => {
+    if (data) {
+      // Update the local data object
+      data[field] = value;
+      // If there's a refresh callback from parent, call it
+      if (actionMenuProps?.onDataUpdate) {
+        actionMenuProps.onDataUpdate(data);
+      }
+    }
+  };
 
   // Check organization permissions for actions
   const { canEdit: hasEditPermission, reason } = data
@@ -176,15 +196,14 @@ const ConModuleDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* TODO: Summary and description editing is not working yet*/}
-                {/* <ConActionMenu.Button
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingSummary(true)}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
                     !actualCanEdit
-                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
+                      ? getDisabledActionTooltip('edit', reason)
                       : undefined
                   }
                 >
@@ -198,12 +217,26 @@ const ConModuleDetailsPageContent = ({
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
                     !actualCanEdit
-                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
+                      ? getDisabledActionTooltip('edit', reason)
                       : undefined
                   }
                 >
                   Bewerk beschrijving
-                </ConActionMenu.Button> */}
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingStandards(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
+                >
+                  Bewerk standaarden
+                </ConActionMenu.Button>
 
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -275,7 +308,10 @@ const ConModuleDetailsPageContent = ({
           isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
-          onSuccess={() => setEditingSummary(false)}
+          onSuccess={(v) => {
+            setEditingSummary(false);
+            setNewFieldDataAndFetch(v, 'beschrijvingKort');
+          }}
           onCancel={() => setEditingSummary(false)}
           canEdit={actualCanEdit}
         />
@@ -307,7 +343,10 @@ const ConModuleDetailsPageContent = ({
             }
           }}
           onCancel={() => setEditingDescription(false)}
-          onSuccess={() => setEditingDescription(false)}
+          onSuccess={(v) => {
+            setEditingDescription(false);
+            setNewFieldDataAndFetch(v, 'beschrijvingLang');
+          }}
           canEdit={actualCanEdit}
         />
       </div>
@@ -358,13 +397,51 @@ const ConModuleDetailsPageContent = ({
 
       {/* Standaarden Section */}
       <div style={{ marginTop: '1rem' }}>
-        <Heading level={3}>Standaarden ({standardsCount})</Heading>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem',
+          }}
+        >
+          <Heading level={3}>Standaarden ({standardsCount})</Heading>
+          {editingStandards && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                type='button'
+                onClick={() => setEditingStandards(false)}
+                className='utrecht-button utrecht-button--primary-action'
+                style={{ fontSize: '0.875rem' }}
+              >
+                Opslaan
+              </button>
+              <button
+                type='button'
+                onClick={() => setEditingStandards(false)}
+                className='utrecht-button utrecht-button--secondary-action'
+                style={{ fontSize: '0.875rem' }}
+              >
+                Annuleren
+              </button>
+            </div>
+          )}
+        </div>
         <ConStandardsTable
           referentieComponenten={data.referentieComponenten}
           complianceStandards={data.compliancy}
           enableScrolling={false}
           onStandardsCountChange={setStandardsCount}
           onReferentieComponentenChange={setReferentieComponentenWithStandards}
+          isEditing={editingStandards}
+          onComplianceChange={(newCompliancy) => {
+            // Update the data object
+            data.compliancy = newCompliancy;
+            // Call parent update if available
+            if (actionMenuProps?.onDataUpdate) {
+              actionMenuProps.onDataUpdate(data);
+            }
+          }}
         />
       </div>
 
