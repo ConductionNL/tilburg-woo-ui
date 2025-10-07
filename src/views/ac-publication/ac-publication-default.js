@@ -35,6 +35,7 @@ import remarkSupersub from 'remark-supersub';
 import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
+import rehypeSanitize from 'rehype-sanitize';
 
 const AcPublication = ({ store: { publications, object, user }, schema }) => {
   const { id } = useParams();
@@ -343,6 +344,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
               ]}
               rehypePlugins={[
                 rehypeSlug,
+                [rehypeSanitize],
                 [remarkRehype, { handlers: { ...defListHastHandlers } }],
               ]}
             />

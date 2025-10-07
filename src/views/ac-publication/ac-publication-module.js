@@ -31,6 +31,7 @@ import remarkRehype from 'remark-rehype';
 import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -185,81 +186,6 @@ const AcPublicationProduct = ({
       setReferentieComponentenWithStandards([]);
     }
   }, [get_single?.referentieComponenten]);
-
-  // Helper function to determine standard type based on referentieComponenten (similar to form logic)
-  const getStandardTypeFromReferentieComponenten = useCallback(
-    (standardId) => {
-      if (!referentieComponentenWithStandards?.length) {
-        return { type: 'AANBEVOLEN', components: [] }; // Default fallback
-      }
-
-      const verplichteComponents = [];
-      const aanbevolenComponents = [];
-
-      // Check each referentiecomponent for this standard
-      referentieComponentenWithStandards.forEach((refComp) => {
-        const refCompName = refComp.naam || `Component ${refComp.id}`;
-
-        // Check if this standard is in verplichte standaarden
-        if (
-          refComp.verplichteStandaarden &&
-          Array.isArray(refComp.verplichteStandaarden)
-        ) {
-          const isVerplicht = refComp.verplichteStandaarden.some((standard) => {
-            // Handle both string IDs and object formats
-            const id =
-              typeof standard === 'string'
-                ? standard
-                : standard?.id ||
-                  standard?.value ||
-                  standard?.slug ||
-                  standard?.naam ||
-                  standard?.name;
-            return String(id) === String(standardId);
-          });
-
-          if (isVerplicht && !verplichteComponents.includes(refCompName)) {
-            verplichteComponents.push(refCompName);
-          }
-        }
-
-        // Check if this standard is in aanbevolen standaarden
-        if (
-          refComp.aanbevolenStandaarden &&
-          Array.isArray(refComp.aanbevolenStandaarden)
-        ) {
-          const isAanbevolen = refComp.aanbevolenStandaarden.some((standard) => {
-            // Handle both string IDs and object formats
-            const id =
-              typeof standard === 'string'
-                ? standard
-                : standard?.id ||
-                  standard?.value ||
-                  standard?.slug ||
-                  standard?.naam ||
-                  standard?.name;
-            return String(id) === String(standardId);
-          });
-
-          if (isAanbevolen && !aanbevolenComponents.includes(refCompName)) {
-            aanbevolenComponents.push(refCompName);
-          }
-        }
-      });
-
-      // Verplicht takes precedence over aanbevolen (same logic as form)
-      const primaryType =
-        verplichteComponents?.length > 0 ? 'VERPLICHT' : 'AANBEVOLEN';
-
-      return {
-        type: primaryType,
-        verplichteComponents,
-        aanbevolenComponents,
-        allComponents: [...verplichteComponents, ...aanbevolenComponents],
-      };
-    },
-    [referentieComponentenWithStandards]
-  );
 
   // Fetch standards from openconnector endpoint
   const fetchStandards = useCallback(async () => {
@@ -521,6 +447,7 @@ const AcPublicationProduct = ({
                 ]}
                 rehypePlugins={[
                   rehypeSlug,
+                  [rehypeSanitize],
                   [remarkRehype, { handlers: { ...defListHastHandlers } }],
                 ]}
               />
