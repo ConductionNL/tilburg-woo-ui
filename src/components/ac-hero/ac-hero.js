@@ -24,23 +24,25 @@ const AcHero = (contents) => {
     // Build the base search URL
     const baseUrl = '/zoeken';
     const searchParams = new URLSearchParams();
-    
+
     // Add the search query if provided
     if (query && query.trim()) {
       searchParams.set('_search', query.trim());
     }
-    
+
     // Always set page to 1 for new searches
     searchParams.set('_page', '1');
-    
+
     // Add default search schema if configured
-    const defaultSchema = containerConfig?.getDefaultSearchSchema?.();
+    const defaultSchema = 'module';
     if (defaultSchema) {
       searchParams.set('@self[schema]', defaultSchema);
     }
-    
+
     // Navigate to the search page with parameters
-    const searchUrl = searchParams.toString() ? `${baseUrl}?${searchParams.toString()}` : baseUrl;
+    const searchUrl = searchParams.toString()
+      ? `${baseUrl}?${searchParams.toString()}`
+      : baseUrl;
     navigate(searchUrl);
   };
 

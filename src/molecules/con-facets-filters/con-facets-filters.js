@@ -13,16 +13,16 @@ import { AcBuildURLSearchParams, ConFormatDutchNumber } from '@utils';
 
 /**
  * ConFacetsFilters Component
- * 
+ *
  * Renders dynamic facets filters with automatic UUID-to-name resolution.
- * 
+ *
  * Features:
  * - Uses API-driven facet configuration (title, enabled status, etc.)
  * - Automatically resolves UUID labels to human-readable names
  * - Shows loading states during name resolution
  * - Provides tooltips with original UUIDs for debugging
  * - Integrates with the existing names cache system for performance
- * 
+ *
  * @param {Object} store - MobX store containing publications and object stores
  */
 const ConFacetsFilters = ({ store: { publications, object } }) => {
@@ -60,8 +60,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       let newArray;
       // Convert both to strings for comparison since URL params are strings
       const valueStr = String(value);
-      const hasValue = arrayToCheck.some(item => String(item) === valueStr);
-      
+      const hasValue = arrayToCheck.some((item) => String(item) === valueStr);
+
       if (hasValue) {
         // Remove the value (keep original type in array)
         newArray = arrayToCheck.filter((item) => String(item) !== valueStr);
@@ -128,7 +128,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       // Check if the nested structure exists and contains the value
       const nestedValue = query[mainKey]?.[cleanSubKey];
       if (Array.isArray(nestedValue)) {
-        return nestedValue.some(v => String(v) === valueStr);
+        return nestedValue.some((v) => String(v) === valueStr);
       } else if (nestedValue !== undefined) {
         return String(nestedValue) === valueStr;
       }
@@ -138,7 +138,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     // Handle regular keys
     const queryValue = query[facetKey];
     if (Array.isArray(queryValue)) {
-      return queryValue.some(v => String(v) === valueStr);
+      return queryValue.some((v) => String(v) === valueStr);
     } else if (queryValue !== undefined) {
       return String(queryValue) === valueStr;
     }
@@ -173,6 +173,12 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
     const newParams = new URLSearchParams();
     newParams.set('_page', '1');
+
+    // Keep the default schema
+    const defaultSchema = 'module';
+    if (defaultSchema) {
+      newParams.set('@self[schema]', defaultSchema);
+    }
 
     // Keep the search term if it exists
     if (currentSearch && currentSearch.trim()) {
@@ -215,7 +221,8 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
   // Only show skeleton loading when:
   // We're loading facets AND don't have existing facets to show, OR we're resolving names
   const shouldShowSkeleton =
-    (is_facets_loading && (!facets || Object.keys(facets).length === 0)) || isResolving;
+    (is_facets_loading && (!facets || Object.keys(facets).length === 0)) ||
+    isResolving;
 
   if (shouldShowSkeleton) {
     return <>{renderSkeletonFacets()}</>;
@@ -269,17 +276,18 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     );
   }
 
-  // Filter out disabled and empty facets from the facets object. 
+  // Filter out disabled and empty facets from the facets object.
   // For '@self' facets, only keep them if they have buckets and are enabled.
-  // For all other facets, keep them if they have buckets and are enabled. 
+  // For all other facets, keep them if they have buckets and are enabled.
   // Also skip date histogram facets as they have a different structure
   const filteredFacets = Object.entries(facets).filter(([key, value]) => {
     if (key === '@self') {
       // Check if any @self sub-facets have buckets and are enabled
-      return Object.values(value).some((subValue) => 
-        subValue.buckets && 
-        subValue.buckets.length > 0 && 
-        subValue.enabled !== false
+      return Object.values(value).some(
+        (subValue) =>
+          subValue.buckets &&
+          subValue.buckets.length > 0 &&
+          subValue.enabled !== false
       );
     }
     // Skip date histogram facets (they have data.brackets instead of data.buckets)
@@ -287,9 +295,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       return false;
     }
     // Only show enabled facets with data
-    return value.buckets && 
-           value.buckets.length > 0 && 
-           value.enabled !== false;
+    return value.buckets && value.buckets.length > 0 && value.enabled !== false;
   });
 
   return (
@@ -335,11 +341,21 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                         bucket.label ?? bucket.value ?? bucket.key
                       } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
                       value={bucket.value || bucket.key}
-                      checked={isFacetChecked(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key)}
+                      checked={isFacetChecked(
+                        _value.queryParameter || `${key}[${_key}]`,
+                        bucket.value || bucket.key
+                      )}
                       onChange={() => {
-                        toggleNestedFacet(_value.queryParameter || `${key}[${_key}]`, bucket.value || bucket.key);
+                        toggleNestedFacet(
+                          _value.queryParameter || `${key}[${_key}]`,
+                          bucket.value || bucket.key
+                        );
                       }}
-                      title={bucket.originalLabel ? `Origineel: ${bucket.originalLabel}` : undefined}
+                      title={
+                        bucket.originalLabel
+                          ? `Origineel: ${bucket.originalLabel}`
+                          : undefined
+                      }
                     />
                   ))}
                 </AcFlex>
@@ -353,28 +369,40 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
             spacing='xs'
             className='ac-search-filters__subjects'
           >
-            <Heading level={4} title={value.description || undefined}>{value.title || _.upperFirst(key)}</Heading>
+            <Heading level={4} title={value.description || undefined}>
+              {value.title || _.upperFirst(key)}
+            </Heading>
             {value.buckets && value.buckets.length > 0 ? (
               value.buckets.map((bucketValue) => (
                 <AcCheckbox
                   key={bucketValue.value || bucketValue.key}
-                  label={`${bucketValue.label ?? bucketValue.value ?? bucketValue.key} (${
-                    bucketValue.count || bucketValue.results
-                  })`}
+                  label={`${
+                    bucketValue.label ?? bucketValue.value ?? bucketValue.key
+                  } (${bucketValue.count || bucketValue.results})`}
                   value={bucketValue.value || bucketValue.key}
-                  checked={isFacetChecked(value.queryParameter || key, bucketValue.value || bucketValue.key)}
+                  checked={isFacetChecked(
+                    value.queryParameter || key,
+                    bucketValue.value || bucketValue.key
+                  )}
                   onChange={() => {
-                    toggleSearchArrayValue(value.queryParameter || key, bucketValue.value || bucketValue.key);
+                    toggleSearchArrayValue(
+                      value.queryParameter || key,
+                      bucketValue.value || bucketValue.key
+                    );
                     const nextQuery = { ...publications.query, _page: 1 };
                     const paramsString = AcBuildURLSearchParams(nextQuery);
                     setSearchParams(new URLSearchParams(paramsString));
-                    
+
                     // Trigger facets fetch to update counts with new filters
                     publications.fetchFacets();
-                    
+
                     // Fetch is triggered by URL change effect in AcSearch
                   }}
-                  title={bucketValue.originalLabel ? `Origineel: ${bucketValue.originalLabel}` : undefined}
+                  title={
+                    bucketValue.originalLabel
+                      ? `Origineel: ${bucketValue.originalLabel}`
+                      : undefined
+                  }
                 />
               ))
             ) : (
