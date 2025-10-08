@@ -338,12 +338,17 @@ const ConFormStandaardenStage = ({
             : [];
 
           if (isCompliant) {
+            // Find the standard data to get the objectId
+            const standardData = findMatchingStandardData({ id: standardId });
+            const objectId = standardData?.id || standardData?.objectId || null;
+
             // Add or update compliancy object
             const existingIndex = compliancy.findIndex(
               (c) => c.standaardversie === standardId
             );
             const compliancyObject = {
               standaardversie: standardId,
+              standaardGemma: objectId,
               standaardnaam: standardName,
               bewijs: bewijs || null,
               bewijsFilename: bewijsFilename || null,
@@ -359,9 +364,39 @@ const ConFormStandaardenStage = ({
             compliancy = compliancy.filter((c) => c.standaardversie !== standardId);
           }
 
+          // Update standaarden and standaardenGemma arrays
+          const currentStandaarden = Array.isArray(module.standaarden) ? [...module.standaarden] : [];
+          const currentStandaardenGemma = Array.isArray(module.standaardenGemma) ? [...module.standaardenGemma] : [];
+
+          if (isCompliant) {
+            // Add to arrays if not already present
+            if (!currentStandaarden.includes(standardId)) {
+              currentStandaarden.push(standardId);
+            }
+            const objectId = findMatchingStandardData({ id: standardId })?.id || null;
+            if (objectId && !currentStandaardenGemma.includes(objectId)) {
+              currentStandaardenGemma.push(objectId);
+            }
+          } else {
+            // Remove from arrays
+            const standardIndex = currentStandaarden.indexOf(standardId);
+            if (standardIndex > -1) {
+              currentStandaarden.splice(standardIndex, 1);
+            }
+            const objectId = findMatchingStandardData({ id: standardId })?.id || null;
+            if (objectId) {
+              const objectIndex = currentStandaardenGemma.indexOf(objectId);
+              if (objectIndex > -1) {
+                currentStandaardenGemma.splice(objectIndex, 1);
+              }
+            }
+          }
+
           modules[index] = {
             ...module,
             compliancy,
+            standaarden: currentStandaarden,
+            standaardenGemma: currentStandaardenGemma,
           };
         }
       });
@@ -437,12 +472,17 @@ const ConFormStandaardenStage = ({
         let compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
 
         if (isCompliant) {
+          // Find the standard data to get the objectId
+          const standardData = findMatchingStandardData({ id: currentEntry.standardId });
+          const objectId = standardData?.id || standardData?.objectId || null;
+
           // Add or update compliancy object
           const existingIndex = compliancy.findIndex(
             (c) => c.standaardversie === currentEntry.standardId
           );
           const compliancyObject = {
             standaardversie: currentEntry.standardId,
+            standaardGemma: objectId,
             standaardnaam: currentEntry.standardName,
             bewijs: currentEntry.bewijs || null,
             bewijsFilename: currentEntry.bewijsFilename || null,
@@ -460,9 +500,39 @@ const ConFormStandaardenStage = ({
           );
         }
 
+        // Update standaarden and standaardenGemma arrays
+        const currentStandaarden = Array.isArray(app.standaarden) ? [...app.standaarden] : [];
+        const currentStandaardenGemma = Array.isArray(app.standaardenGemma) ? [...app.standaardenGemma] : [];
+
+        if (isCompliant) {
+          // Add to arrays if not already present
+          if (!currentStandaarden.includes(currentEntry.standardId)) {
+            currentStandaarden.push(currentEntry.standardId);
+          }
+          const objectId = findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
+          if (objectId && !currentStandaardenGemma.includes(objectId)) {
+            currentStandaardenGemma.push(objectId);
+          }
+        } else {
+          // Remove from arrays
+          const standardIndex = currentStandaarden.indexOf(currentEntry.standardId);
+          if (standardIndex > -1) {
+            currentStandaarden.splice(standardIndex, 1);
+          }
+          const objectId = findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
+          if (objectId) {
+            const objectIndex = currentStandaardenGemma.indexOf(objectId);
+            if (objectIndex > -1) {
+              currentStandaardenGemma.splice(objectIndex, 1);
+            }
+          }
+        }
+
         modules[moduleIndex] = {
           ...app,
           compliancy,
+          standaarden: currentStandaarden,
+          standaardenGemma: currentStandaardenGemma,
         };
 
         return { ...prev, modules };

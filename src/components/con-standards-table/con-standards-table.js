@@ -307,16 +307,23 @@ const ConStandardsTable = ({
           (c) => c.standaardversie === standardId
         );
 
-        // Find the standard name for display
+        // Find the standard name and objectId for display
         const standard = allReferentieStandards.find((s) => s.id === standardId);
         const standardName = standard
           ? effectiveStandards?.find(
               (s) => s.id === standardId || s.identifier === standardId
             )?.name || standard.id
           : standardId;
+        
+        // Find the objectId from the effectiveStandards data
+        const standardData = effectiveStandards?.find(
+          (s) => s.id === standardId || s.identifier === standardId
+        );
+        const objectId = standardData?.id || standardData?.objectId || null;
 
         const compliancyObject = {
           standaardversie: standardId,
+          standaardGemma: objectId,
           standaardnaam: standardName,
           bewijs: null,
           bewijsFilename: null,
