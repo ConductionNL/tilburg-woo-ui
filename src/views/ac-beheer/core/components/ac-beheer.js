@@ -12,6 +12,7 @@ import ConProductDetailsPage from '../../domains/ac-product/con-product-details-
 import ConMyAccountPage from './custom/con-my-account';
 import ConMyOrganisationPage from './custom/con-my-organisation';
 import ConModuleDetailsPage from '../../domains/ac-module/con-module-details-page';
+import ConContactpersoonDetailsPage from '../../domains/ac-contactpersoon/con-contactpersoon-details-page';
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
@@ -68,6 +69,9 @@ const AcBeheer = ({ store }) => {
   }
   if (type === 'module') {
     return <ConModuleDetailsPage />;
+  }
+  if (type === 'contactpersoon') {
+    return <ConContactpersoonDetailsPage />;
   }
 
   if (type) {
