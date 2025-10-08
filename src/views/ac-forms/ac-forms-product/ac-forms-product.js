@@ -1454,6 +1454,7 @@ const AcFormsProductInner = ({
         hostingLocatie: '',
         hostingJurisdictie: '',
         standaarden: [],
+        standaardenGemma: [], // New array for objectIds
         referentieComponenten: [],
         diensten: [],
         koppelingen: [],

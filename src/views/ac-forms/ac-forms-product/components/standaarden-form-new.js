@@ -189,6 +189,7 @@ const StandaardenFormNew = ({
             aanbevolenComponents: standard.aanbevolenComponents,
             isCompliant: !!existingCompliancy,
             bewijs: existingCompliancy?.bewijs || null,
+            standardData: standard, // Store the full standard data for objectId access
           };
         }
       });
@@ -220,12 +221,17 @@ const StandaardenFormNew = ({
       let compliancy = Array.isArray(app.compliancy) ? [...app.compliancy] : [];
 
       if (isCompliant) {
+        // Find the standard data to get the objectId
+        const standardData = tableState[key]?.standardData || {};
+        const objectId = standardData?.id || standardData?.objectId || null;
+
         // Add or update compliancy object
         const existingIndex = compliancy.findIndex(
           (c) => c.standaardversie === entry.standardId
         );
         const compliancyObject = {
           standaardversie: entry.standardId,
+          standaardGemma: objectId,
           // ✅ REMOVED: module property - backend handles this with inversedBy logic
           bewijs: entry.bewijs || null,
         };
@@ -242,10 +248,40 @@ const StandaardenFormNew = ({
         );
       }
 
+      // Update standaarden and standaardenGemma arrays
+      const currentStandaarden = Array.isArray(app.standaarden) ? [...app.standaarden] : [];
+      const currentStandaardenGemma = Array.isArray(app.standaardenGemma) ? [...app.standaardenGemma] : [];
+
+      if (isCompliant) {
+        // Add to arrays if not already present
+        if (!currentStandaarden.includes(entry.standardId)) {
+          currentStandaarden.push(entry.standardId);
+        }
+        const objectId = tableState[key]?.standardData?.id || null;
+        if (objectId && !currentStandaardenGemma.includes(objectId)) {
+          currentStandaardenGemma.push(objectId);
+        }
+      } else {
+        // Remove from arrays
+        const standardIndex = currentStandaarden.indexOf(entry.standardId);
+        if (standardIndex > -1) {
+          currentStandaarden.splice(standardIndex, 1);
+        }
+        const objectId = tableState[key]?.standardData?.id || null;
+        if (objectId) {
+          const objectIndex = currentStandaardenGemma.indexOf(objectId);
+          if (objectIndex > -1) {
+            currentStandaardenGemma.splice(objectIndex, 1);
+          }
+        }
+      }
+
       if (typeof app === 'object') {
         modules[moduleIndex] = {
           ...app,
           compliancy,
+          standaarden: currentStandaarden,
+          standaardenGemma: currentStandaardenGemma,
         };
         return { ...prev, modules };
       }
