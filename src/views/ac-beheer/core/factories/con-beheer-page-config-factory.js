@@ -537,7 +537,7 @@ const BeheerPageConfigFactory = {
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      paddingInlineStart: '4px',
                     }}
                   >
                     {row.username ? (
