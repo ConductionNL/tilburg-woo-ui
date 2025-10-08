@@ -150,3 +150,4 @@ export {
   useResolvedText,
   useResolvedArray,
 } from './con-resolve-uuids-in-text';
+export { normalizeSchemaName } from './con-normalize-schema-name';

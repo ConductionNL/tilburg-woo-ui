@@ -549,7 +549,7 @@ const StandaardenFormNew = ({
           <thead>
             <TableRow>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
-                Module
+                Applicatie
               </TableCell>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
                 Standaard
@@ -602,7 +602,7 @@ const StandaardenFormNew = ({
 
           return (
             <Paragraph style={{ margin: 0, fontSize: '0.9rem', color: '#6c757d' }}>
-              <strong>Overzicht:</strong> {totalModules} module
+              <strong>Overzicht:</strong> {totalModules} applicatie
               {totalModules !== 1 ? 's' : ''},{' '}
               <span style={{ color: '#dc3545', fontWeight: '600' }}>
                 {verplichteEntries.length} verplichte standaarden (waarvan{' '}

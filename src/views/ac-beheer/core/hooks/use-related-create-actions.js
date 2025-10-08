@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { VISUALS } from '@constants';
 import { checkOrganizationPermissions } from '@utils/organization-permissions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@constants/wizards.constants';
+import { normalizeSchemaName } from '@src/utilities';
 
 /**
  * Hook to build dynamic related-create actions based on schema relations and user groups
@@ -262,7 +263,8 @@ export const useRelatedCreateActions = ({
           // Use the schema slug directly as the target type (no more BEHEER_RENAMES dependency)
           const targetType = slug;
 
-          const label = `${rs?.title ?? _.startCase(slug)} toevoegen`;
+          const baseName = rs?.title ?? _.startCase(slug);
+          const label = `${normalizeSchemaName(baseName)} toevoegen`;
 
           const isOutgoing = outgoingSchemas.has(slug);
           const wizards = Object.values(DASHBOARD_WIZARDS);

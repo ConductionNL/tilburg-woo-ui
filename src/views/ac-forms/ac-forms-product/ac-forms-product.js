@@ -40,6 +40,7 @@ import {
   getPageTitle as utilGetPageTitle,
   getPageDescription as utilGetPageDescription,
 } from './utils/texts.utils';
+import { commongroundApiUrl } from '@config';
 
 // Stage Components
 import ConFormProductopbouwStage from './components/con-form-productopbouw-stage';
@@ -152,85 +153,6 @@ const AcFormsProductInner = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isMultiApplicatie, setIsMultiApplicatie] = useState(false); // shows wether the product has multiple applicaties, used to dictate how to render the form
 
-  // Ref for ProcessSteps container to add click handlers
-  const processStepsRef = useRef(null);
-
-  /**
-   * Handle step navigation from clickable process steps
-   * Maps visual step indices to actual step numbers accounting for conditional steps
-   * @param {number} visualStepIndex - The index from the visual step representation
-   */
-  const handleStepNavigation = (visualStepIndex) => {
-    // Map visual step indices to actual step numbers
-    // Visual steps structure:
-    // 0: Productopbouw (step 0)
-    // 1: Product informatie (step 1)
-    // 2: Aanbieder informatie (step 2) - conditional
-    // 3: Applicaties (step 2 or 3 depending on aanbieder)
-    // 4: Licentie (step 3 or 4)
-    // 5: Versies (step 4 or 5)
-    // 6: Referentiecomponenten (step 5 or 6)
-    // 7: Standaarden (step 6 or 7)
-    // 8: Koppelingen (step 7 or 8)
-    // 9: Diensten (step 8 or 9)
-    // 10: Controleren (step 9 or 10)
-
-    const showsAanbiederStep = shouldShowAanbiederStep(formType);
-    let targetStep = visualStepIndex;
-
-    // Adjust for the aanbieder step offset
-    if (!showsAanbiederStep && visualStepIndex >= 2) {
-      targetStep = visualStepIndex + 1; // Skip the aanbieder step
-    }
-
-    // Navigate to the target step
-    setCurrentStep(targetStep);
-  };
-
-  // Step accessibility handled via UI click handlers
-
-  // Add click handlers to ProcessSteps after each render
-  useEffect(() => {
-    if (!processStepsRef.current) return;
-    // Disable step clicks while prefill is in progress or when there is a prefill error
-    if (prefillLoading || prefillError) return;
-
-    const addClickHandlers = () => {
-      // Find all step elements in the DOM
-      const stepElements = processStepsRef.current.querySelectorAll(
-        '.denhaag-process-steps .denhaag-process-steps__step'
-      );
-
-      stepElements.forEach((stepEl, index) => {
-        // Remove any existing click handlers first
-        stepEl.style.cursor = '';
-        stepEl.onclick = null;
-        stepEl.classList.remove('ac-step-clickable');
-
-        // Only make completed steps clickable (index < currentStep)
-        if (index < currentStep) {
-          stepEl.classList.add('ac-step-clickable');
-
-          stepEl.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleStepNavigation(index);
-          };
-        }
-      });
-    };
-
-    // Add handlers immediately
-    addClickHandlers();
-
-    // Also add handlers after a slight delay to handle async rendering
-    const timeoutId = setTimeout(addClickHandlers, 100);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
-
   /**
    * Product State Object
    *
@@ -279,6 +201,86 @@ const AcFormsProductInner = ({
 
     // No more applicaties property - new modules are stored directly in modules array
   });
+
+  // Ref for ProcessSteps container to add click handlers
+  const processStepsRef = useRef(null);
+
+  /**
+   * Handle step navigation from clickable process steps
+   * Maps visual step indices to actual step numbers accounting for conditional steps
+   * @param {number} visualStepIndex - The index from the visual step representation
+   */
+  const handleStepNavigation = (visualStepIndex) => {
+    // Map visual step indices to actual step numbers
+    // Visual steps structure:
+    // 0: Productopbouw (step 0)
+    // 1: Product informatie (step 1)
+    // 2: Aanbieder informatie (step 2) - conditional
+    // 3: Applicaties (step 2 or 3 depending on aanbieder)
+    // 4: Licentie (step 3 or 4)
+    // 5: Versies (step 4 or 5)
+    // 6: Referentiecomponenten (step 5 or 6)
+    // 7: Standaarden (step 6 or 7)
+    // 8: Koppelingen (step 7 or 8)
+    // 9: Diensten (step 8 or 9)
+    // 10: Controleren (step 9 or 10)
+
+    const showsAanbiederStep = shouldShowAanbiederStep(formType);
+    let targetStep = visualStepIndex;
+
+    // Adjust for the aanbieder step offset
+    if (!showsAanbiederStep && visualStepIndex >= 2) {
+      targetStep = visualStepIndex + 1; // Skip the aanbieder step
+    }
+
+    // Navigate to the target step
+    setCurrentStep(targetStep);
+  };
+
+  // Step accessibility handled via UI click handlers
+
+  // Add click handlers to ProcessSteps after each render
+  useEffect(() => {
+    if (!processStepsRef.current) return;
+    // Disable step clicks while prefill is in progress or when there is a prefill error
+    if (prefillLoading || prefillError) return;
+
+    const addClickHandlers = () => {
+      // Find all step elements in the DOM
+      const stepElements = processStepsRef.current.querySelectorAll(
+        '.denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__sub-step'
+      );
+
+      stepElements.forEach((stepEl, index) => {
+        // Remove any existing click handlers first
+        stepEl.style.cursor = '';
+        stepEl.onclick = null;
+        stepEl.classList.remove('ac-step-clickable');
+
+        // Only make completed steps clickable (index < currentStep)
+        if (index < currentStep) {
+          stepEl.classList.add('ac-step-clickable');
+
+          stepEl.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleStepNavigation(index);
+          };
+        }
+      });
+    };
+
+    // Add handlers immediately
+    addClickHandlers();
+
+    // Also add handlers after a slight delay to handle async rendering
+    const timeoutId = setTimeout(addClickHandlers, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
+
   const [touched, setTouched] = useState({
     productName: false,
   });
@@ -587,7 +589,7 @@ const AcFormsProductInner = ({
    */
   const getExistingApplications = useCallback(() => {
     return getExistingModulesWithLookupData().map(
-      (module) => module.naam || 'Unnamed Module'
+      (module) => module.naam || 'Unnamed Applicatie'
     );
   }, [existingModulesLookup]);
 
@@ -881,6 +883,55 @@ const AcFormsProductInner = ({
 
   // Function to load all referentiecomponenten upfront using object store cache
   // ✅ Uses cache-first strategy for immediate response
+  // const loadReferentieComponenten = useCallback(async () => {
+  //   if (!schemas?.module) return; // Wait for schemas to load
+
+  //   console.info('📋 Loading referentiecomponenten via object store cache...');
+  //   setReferentieComponentenLoading(true);
+
+  //   try {
+  //     const queryParams = getReferentieComponentenQueryParams();
+
+  //     // Use object store cache-first method for immediate response
+  //     const list = await store.object.fetchGemmaElementsCacheFirst(
+  //       'Referentiecomponent',
+  //       queryParams
+  //     );
+
+  //     const mapToOption = (item, index) => {
+  //       const label =
+  //         item?.xml?.name?._value ||
+  //         item?.naam ||
+  //         item?.name ||
+  //         item?.title ||
+  //         item?.label ||
+  //         `Component ${index + 1}`;
+  //       const value = item?.value || item?.id || item?.slug || label;
+  //       return {
+  //         value: String(value),
+  //         label: String(label),
+  //         data: item, // Store the full API data for access to aanbevolenStandaarden, verplichteStandaarden
+  //       };
+  //     };
+
+  //     const options = list.map(mapToOption).filter((o) => o.label && o.value);
+  //     setReferentieComponentenOptions(options);
+  //     console.info(
+  //       `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
+  //     );
+  //     // Prefill edit-mode selections as soon as options are available
+  //     if (isEditMode) {
+  //       prefillReferentieComponentenWithStandardsForEdit(product.modules, options);
+  //     }
+  //   } catch (e) {
+  //     console.error('Failed to load referentie componenten:', e);
+  //     setReferentieComponentenOptions([]);
+  //   } finally {
+  //     setReferentieComponentenLoading(false);
+  //   }
+  // }, [schemas, getReferentieComponentenQueryParams, store]);
+
+  // TODO remove this once we have the referentiecomponenten options loaded from the object store cache
   const loadReferentieComponenten = useCallback(async () => {
     if (!schemas?.module) return; // Wait for schemas to load
 
@@ -888,13 +939,26 @@ const AcFormsProductInner = ({
     setReferentieComponentenLoading(true);
 
     try {
-      const queryParams = getReferentieComponentenQueryParams();
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
 
-      // Use object store cache-first method for immediate response
-      const list = await store.object.fetchGemmaElementsCacheFirst(
-        'Referentiecomponent',
-        queryParams
+      console.info('📋 Fetching standards from openconnector endpoint...');
+
+      // Fetch standards from openconnector endpoint using normal fetch
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
+      const list = await response.json();
 
       const mapToOption = (item, index) => {
         const label =
@@ -912,7 +976,10 @@ const AcFormsProductInner = ({
         };
       };
 
-      const options = list.map(mapToOption).filter((o) => o.label && o.value);
+      const options = list.results
+        .map(mapToOption)
+        .filter((o) => o.label && o.value);
+
       setReferentieComponentenOptions(options);
       console.info(
         `✅ Loaded ${options.length} referentiecomponenten (cache-first)`
@@ -931,6 +998,46 @@ const AcFormsProductInner = ({
 
   // Function to load standaarden using object store cache
   // ✅ Uses cache-first strategy for immediate response
+  // const loadStandaarden = useCallback(async () => {
+  //   if (!schemas?.module) return;
+
+  //   console.info('📋 Loading standaarden via object store cache...');
+  //   setStandaardenOptionsLoading(true);
+
+  //   try {
+  //     const queryParams = getStandaardenQueryParams();
+
+  //     // Use object store cache-first method for immediate response
+  //     const list = await store.object.fetchGemmaElementsCacheFirst(
+  //       'standaard',
+  //       queryParams
+  //     );
+
+  //     const options = list
+  //       .map((item, index) => {
+  //         const label =
+  //           item?.xml?.name?._value ||
+  //           item?.naam ||
+  //           item?.name ||
+  //           item?.title ||
+  //           item?.label ||
+  //           `Standaard ${index + 1}`;
+  //         const value = item?.value || item?.id || item?.slug || label;
+  //         return { value: String(value), label: String(label), data: item };
+  //       })
+  //       .filter((o) => o.label && o.value);
+
+  //     setStandaardenOptions(options);
+  //     console.info(`✅ Loaded ${options.length} standaarden (cache-first)`);
+  //   } catch (e) {
+  //     console.error('Failed to load standaarden:', e);
+  //     setStandaardenOptions([]);
+  //   } finally {
+  //     setStandaardenOptionsLoading(false);
+  //   }
+  // }, [schemas, getStandaardenQueryParams, store]);
+
+  // TODO remove this once we have the standaarden options loaded from the object store cache
   const loadStandaarden = useCallback(async () => {
     if (!schemas?.module) return;
 
@@ -938,15 +1045,28 @@ const AcFormsProductInner = ({
     setStandaardenOptionsLoading(true);
 
     try {
-      const queryParams = getStandaardenQueryParams();
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Standaard',
+        '_extend[]': '@self.schema',
+      });
 
-      // Use object store cache-first method for immediate response
-      const list = await store.object.fetchGemmaElementsCacheFirst(
-        'standaard',
-        queryParams
+      console.info('📋 Fetching standards from openconnector endpoint...');
+
+      // Fetch standards from openconnector endpoint using normal fetch
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
       );
+      const list = await response.json();
 
-      const options = list
+      const options = list.results
         .map((item, index) => {
           const label =
             item?.xml?.name?._value ||
@@ -1023,7 +1143,7 @@ const AcFormsProductInner = ({
             item?.name ||
             item?.title ||
             item?.label ||
-            (item?.id ? String(item.id) : `Module ${index + 1}`);
+            (item?.id ? String(item.id) : `Applicatie ${index + 1}`);
           const value = item?.value || item?.id || item?.slug || label;
           return {
             value: String(value),

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useParams } from 'react-router-dom';
 import { AcLoader } from '@components';
@@ -34,6 +34,9 @@ const AcPublication = observer(({ store: { publications } }) => {
   );
   const schema = currentPublicationFromList?.['@self']?.schema;
 
+  // Add a state to track if all initial data is loaded
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
+
   useEffect(() => {
     fetchPublications();
     fetchPublication(id);
@@ -50,16 +53,48 @@ const AcPublication = observer(({ store: { publications } }) => {
   }, [get_single]);
 
   useEffect(() => {
-    get_single?.uri && fetchRelations(get_single.uri);
+    if (get_single?.uri) {
+      fetchRelations(get_single.uri);
+    }
     return () => resetRelations();
-  }, [get_single]);
+  }, [get_single?.uri, fetchRelations, resetRelations]);
 
   useEffect(() => {
-    get_single?.id && fetchAttachments(get_single.id);
-    return () => resetAttachments();
-  }, [get_single]);
+    // Only fetch attachments for schemas that actually use them
+    // Skip for Organisation/Product/Module as they don't display attachments
+    const schemaSlug = get_single?.['@self']?.schema?.slug;
+    const shouldFetchAttachments =
+      schemaSlug && !['organisatie', 'product', 'module'].includes(schemaSlug);
 
-  if (loading.status || !get_single || !all_attachments) {
+    if (get_single?.id && shouldFetchAttachments) {
+      fetchAttachments(get_single.id);
+    }
+    return () => resetAttachments();
+  }, [
+    get_single?.id,
+    get_single?.['@self']?.schema?.slug,
+    fetchAttachments,
+    resetAttachments,
+  ]);
+
+  // Only set initialDataLoaded when ALL required data is available
+  useEffect(() => {
+    const schemaSlug = get_single?.['@self']?.schema?.slug;
+    const needsAttachments =
+      schemaSlug && !['organisatie', 'product', 'module'].includes(schemaSlug);
+
+    // For schemas that don't need attachments, only wait for get_single and loading to complete
+    // For schemas that do need attachments, also wait for all_attachments
+    const dataReady = needsAttachments
+      ? get_single && all_attachments && !loading.status
+      : get_single && !loading.status;
+
+    if (dataReady) {
+      setInitialDataLoaded(true);
+    }
+  }, [get_single, all_attachments, loading.status]);
+
+  if (!initialDataLoaded) {
     return <AcLoader />;
   }
 

@@ -1,3 +1,5 @@
+import { normalizeSchemaName } from '@utils';
+
 // pretify a pathname part
 const prettifyPathname = (name) =>
   name && name.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
@@ -15,12 +17,16 @@ export const BREADCRUMB_ITEMS = {
     label: 'Mijn Account',
     href: '/beheer/my-account',
   },
+  BEHEER_MODULE: {
+    label: 'Applicatie',
+    href: '/beheer/module',
+  },
   BEHEER_MY_ORGANISATION: {
     label: 'Mijn Organisatie',
     href: '/beheer/my-organisation',
   },
   BEHEER_LIST: (type) => ({
-    label: prettifyPathname(type),
+    label: type === 'module' ? 'Applicatie' : prettifyPathname(type),
     href: `/beheer/${type}`,
     isActive: type !== 'my-account' && type !== 'my-organisation',
   }),
@@ -30,6 +36,7 @@ export const BREADCRUMB_ITEMS = {
   BEHEER_VIEWS: { label: 'GEMMA weergaven beheer' },
   MY_ACCOUNT: { label: 'Mijn account' },
   DIRECTORY: { label: 'Directory', href: '/directory' },
+  PUBLICATIE: { label: 'Publicatie' },
 };
 
 export const BREADCRUMBS = {
@@ -47,7 +54,27 @@ export const BREADCRUMBS = {
   MIJN_OMGEVING: [BREADCRUMB_ITEMS.MIJN_OMGEVING],
   GEMMA: [BREADCRUMB_ITEMS.GEMMA],
   NEXTCLOUD_LOGIN: [BREADCRUMB_ITEMS.NEXTCLOUD_LOGIN],
-  PUBLICATION: (label) => [BREADCRUMB_ITEMS.SEARCH, { label }],
+  PUBLICATION: (label, schema) => {
+    const items = [BREADCRUMB_ITEMS.SEARCH];
+
+    // If we have a schema, use the schema name from normalizeSchemaName
+    // Otherwise, use "Publicatie" as fallback
+    if (schema?.slug) {
+      const schemaName = normalizeSchemaName(schema.slug);
+      // If normalizeSchemaName returns the original slug (no mapping found), use "Publicatie"
+      const displayName = schemaName === schema.slug ? 'Publicatie' : schemaName;
+      items.push({ label: displayName });
+    } else {
+      items.push(BREADCRUMB_ITEMS.PUBLICATIE);
+    }
+
+    // If we have a specific label (publication title), add it as the final breadcrumb
+    if (label) {
+      items.push({ label });
+    }
+
+    return items;
+  },
   BEHEER: (label) => {
     const items = [BREADCRUMB_ITEMS.BEHEER];
     if (label) {
@@ -62,14 +89,12 @@ export const BREADCRUMBS = {
     }
     return items;
   },
-  BEHEER_MY_ACCOUNT: [
-    BREADCRUMB_ITEMS.BEHEER,
-    BREADCRUMB_ITEMS.BEHEER_MY_ACCOUNT,
-  ],
+  BEHEER_MY_ACCOUNT: [BREADCRUMB_ITEMS.BEHEER, BREADCRUMB_ITEMS.BEHEER_MY_ACCOUNT],
   BEHEER_MY_ORGANISATION: [
     BREADCRUMB_ITEMS.BEHEER,
     BREADCRUMB_ITEMS.BEHEER_MY_ORGANISATION,
   ],
+  BEHEER_MODULE: [BREADCRUMB_ITEMS.BEHEER, BREADCRUMB_ITEMS.BEHEER_MODULE],
   REGISTER: [BREADCRUMB_ITEMS.REGISTER],
   VIEWS: (label) => {
     const items = [BREADCRUMB_ITEMS.VIEWS];

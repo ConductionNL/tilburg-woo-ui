@@ -31,6 +31,7 @@ import {
   getFieldValidation,
   handleFieldChange,
 } from './field-utilities';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * HACK: Wrapper component for ReactSelect that listens to global options updates
@@ -186,19 +187,22 @@ export const renderField = ({
 
   // Create field change handler
   const handleChange = handleFieldChange(path, fieldConfig, onFieldChange, formData);
-  
+
   // Debug wrapper for afnemer field
-  const debugHandleChange = path === 'afnemer' ? (value) => {
-    console.log('ReactSelect onChange raw value:', { 
-      path, 
-      value, 
-      type: typeof value,
-      valueProperty: value?.value,
-      labelProperty: value?.label,
-      dataProperty: value?.data
-    });
-    return handleChange(value);
-  } : handleChange;
+  const debugHandleChange =
+    path === 'afnemer'
+      ? (value) => {
+          console.info('ReactSelect onChange raw value:', {
+            path,
+            value,
+            type: typeof value,
+            valueProperty: value?.value,
+            labelProperty: value?.label,
+            dataProperty: value?.data,
+          });
+          return handleChange(value);
+        }
+      : handleChange;
 
   // Extract search handler
   const { handleSearch } = onSearchHandlers;
@@ -464,6 +468,9 @@ export const renderField = ({
             buttonProps: { ...(cmd.buttonProps || {}), tabIndex: -1 },
           })}
           style={inputStyle}
+          previewOptions={{
+            rehypePlugins: [[rehypeSanitize]],
+          }}
         />
         {typeof propertySchema?.maxLength === 'number' && (
           <span className='character-count'>
@@ -565,17 +572,17 @@ export const renderField = ({
     const selectValue = fieldConfig.isMulti
       ? options?.filter((option) => value?.includes(option.value)) || []
       : options?.find((option) => option.value === value);
-    
+
     // Debug logging for afnemer field
     if (path === 'afnemer') {
-      console.log('ReactSelect selectValue calculation:', {
+      console.info('ReactSelect selectValue calculation:', {
         path,
         value,
         optionsCount: options?.length || 0,
         selectValue,
         foundMatch: !!selectValue,
         firstFewOptions: options?.slice(0, 3),
-        allOptions: options // Show all options to see the structure
+        allOptions: options, // Show all options to see the structure
       });
     }
 

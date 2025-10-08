@@ -105,6 +105,7 @@ const ConFormStandaardenStage = ({
     }
 
     // Try name-based matching as fallback
+
     const standardName =
       standard?.name || standard?.naam || standard?.title || standard?.label;
     if (standardName && standaardenMap.byName[String(standardName).toLowerCase()]) {
@@ -158,7 +159,7 @@ const ConFormStandaardenStage = ({
   // Get all standards from referentieComponentenWithStandards with component tracking
   const getAllStandards = () => {
     const standardsMap = new Map();
-    
+
     referentieComponentenWithStandards.forEach((refComp) => {
       const refCompName = refComp.naam || `Component ${refComp.id}`;
 
@@ -316,19 +317,26 @@ const ConFormStandaardenStage = ({
   }, [newModules, referentieComponentenWithStandards, standaardenMap]);
 
   // Apply compliance to all modules for a specific standard
-  const applyComplianceToAll = (standardId, isCompliant, bewijs = null, bewijsFilename = null) => {
+  const applyComplianceToAll = (
+    standardId,
+    isCompliant,
+    bewijs = null,
+    bewijsFilename = null
+  ) => {
     setProduct((prev) => {
       const modules = [...(prev.modules || [])];
-      
+
       // Find the standard info from allStandards
-      const standardInfo = allStandards.find(s => s.id === standardId);
+      const standardInfo = allStandards.find((s) => s.id === standardId);
       const standardName = standardInfo?.naam || standardId;
-      
+
       // Apply to all new modules (objects, not strings)
       modules.forEach((module, index) => {
         if (typeof module === 'object') {
-          let compliancy = Array.isArray(module.compliancy) ? [...module.compliancy] : [];
-          
+          let compliancy = Array.isArray(module.compliancy)
+            ? [...module.compliancy]
+            : [];
+
           if (isCompliant) {
             // Add or update compliancy object
             const existingIndex = compliancy.findIndex(
@@ -348,9 +356,7 @@ const ConFormStandaardenStage = ({
             }
           } else {
             // Remove compliancy object
-            compliancy = compliancy.filter(
-              (c) => c.standaardversie !== standardId
-            );
+            compliancy = compliancy.filter((c) => c.standaardversie !== standardId);
           }
 
           modules[index] = {
@@ -377,14 +383,16 @@ const ConFormStandaardenStage = ({
       // Update all entries for this standard in tableState
       setTableState((prev) => {
         const updated = { ...prev };
-        Object.keys(updated).forEach(entryKey => {
+        Object.keys(updated).forEach((entryKey) => {
           if (updated[entryKey].standardId === currentEntry.standardId) {
             updated[entryKey] = {
               ...updated[entryKey],
               isCompliant,
               // Clear bewijs and filename if not compliant
               bewijs: isCompliant ? updated[entryKey]?.bewijs || null : null,
-              bewijsFilename: isCompliant ? updated[entryKey]?.bewijsFilename || null : null,
+              bewijsFilename: isCompliant
+                ? updated[entryKey]?.bewijsFilename || null
+                : null,
             };
           }
         });
@@ -393,8 +401,8 @@ const ConFormStandaardenStage = ({
 
       // Apply to all modules
       applyComplianceToAll(
-        currentEntry.standardId, 
-        isCompliant, 
+        currentEntry.standardId,
+        isCompliant,
         isCompliant ? currentEntry.bewijs : null,
         isCompliant ? currentEntry.bewijsFilename : null
       );
@@ -419,7 +427,7 @@ const ConFormStandaardenStage = ({
 
         if (typeof app !== 'object') {
           console.warn(
-            'Cannot update compliancy on existing module:',
+            'Cannot update compliancy on existing applicatie:',
             moduleIndex,
             app
           );
@@ -471,7 +479,7 @@ const ConFormStandaardenStage = ({
       // Update all entries for this standard in tableState
       setTableState((prev) => {
         const updated = { ...prev };
-        Object.keys(updated).forEach(entryKey => {
+        Object.keys(updated).forEach((entryKey) => {
           if (updated[entryKey].standardId === entry.standardId) {
             updated[entryKey] = {
               ...updated[entryKey],
@@ -533,7 +541,7 @@ const ConFormStandaardenStage = ({
       // Update all entries for this standard in tableState
       setTableState((prev) => {
         const updated = { ...prev };
-        Object.keys(updated).forEach(entryKey => {
+        Object.keys(updated).forEach((entryKey) => {
           if (updated[entryKey].standardId === entry.standardId) {
             updated[entryKey] = {
               ...updated[entryKey],
@@ -595,7 +603,7 @@ const ConFormStandaardenStage = ({
       // Update all entries for this standard in tableState
       setTableState((prev) => {
         const updated = { ...prev };
-        Object.keys(updated).forEach(entryKey => {
+        Object.keys(updated).forEach((entryKey) => {
           if (updated[entryKey].standardId === entry.standardId) {
             updated[entryKey] = {
               ...updated[entryKey],
@@ -697,7 +705,7 @@ const ConFormStandaardenStage = ({
 
             if (typeof app !== 'object') {
               console.warn(
-                'Cannot update compliancy on existing module:',
+                'Cannot update compliancy on existing applicatie:',
                 moduleIndex,
                 app
               );
@@ -882,7 +890,9 @@ const ConFormStandaardenStage = ({
     });
 
     // Get all unique module names for the header
-    const allUniqueModuleNames = [...new Set(Object.values(tableState).map(entry => entry.moduleName))].join(', ');
+    const allUniqueModuleNames = [
+      ...new Set(Object.values(tableState).map((entry) => entry.moduleName)),
+    ].join(', ');
     let isFirstRow = true;
 
     // Generate table rows grouped by standard
@@ -951,44 +961,48 @@ const ConFormStandaardenStage = ({
               }}
             >
               {/* Render individual badges for verplichte components */}
-              {representativeEntry.verplichteComponents.map((componentName, index) => (
-                <span
-                  key={`verplicht-${index}`}
-                  style={{
-                    fontSize: '0.75rem',
-                    color: '#fff',
-                    backgroundColor: '#dc3545',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    display: 'inline-block',
-                    lineHeight: '1.2',
-                  }}
-                >
-                  VERPLICHT - {componentName}
-                </span>
-              ))}
+              {representativeEntry.verplichteComponents.map(
+                (componentName, index) => (
+                  <span
+                    key={`verplicht-${index}`}
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#fff',
+                      backgroundColor: '#dc3545',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    VERPLICHT - {componentName}
+                  </span>
+                )
+              )}
 
               {/* Render individual badges for aanbevolen components */}
-              {representativeEntry.aanbevolenComponents.map((componentName, index) => (
-                <span
-                  key={`aanbevolen-${index}`}
-                  style={{
-                    fontSize: '0.75rem',
-                    color: '#fff',
-                    backgroundColor: '#28a745',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    padding: '3px 8px',
-                    borderRadius: '4px',
-                    display: 'inline-block',
-                    lineHeight: '1.2',
-                  }}
-                >
-                  AANBEVOLEN - {componentName}
-                </span>
-              ))}
+              {representativeEntry.aanbevolenComponents.map(
+                (componentName, index) => (
+                  <span
+                    key={`aanbevolen-${index}`}
+                    style={{
+                      fontSize: '0.75rem',
+                      color: '#fff',
+                      backgroundColor: '#28a745',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                      lineHeight: '1.2',
+                    }}
+                  >
+                    AANBEVOLEN - {componentName}
+                  </span>
+                )
+              )}
             </div>
           </TableCell>
 
@@ -1003,7 +1017,9 @@ const ConFormStandaardenStage = ({
           >
             <AcCheckbox
               checked={representativeEntry.isCompliant || false}
-              onChange={(checked) => toggleCompliance(representativeEntry.key, checked)}
+              onChange={(checked) =>
+                toggleCompliance(representativeEntry.key, checked)
+              }
               label=''
             />
           </TableCell>
@@ -1023,7 +1039,9 @@ const ConFormStandaardenStage = ({
                   filename: representativeEntry.bewijs ? 'Bestand geüpload' : '',
                 }}
                 _value={representativeEntry.bewijs || ''}
-                onChange={(dataUrl) => updateBewijs(representativeEntry.key, dataUrl)}
+                onChange={(dataUrl) =>
+                  updateBewijs(representativeEntry.key, dataUrl)
+                }
                 onChangeFileName={(filename) =>
                   updateBewijsFilename(representativeEntry.key, filename)
                 }
@@ -1038,7 +1056,7 @@ const ConFormStandaardenStage = ({
           </TableCell>
         </TableRow>
       );
-      
+
       // After first row, don't show module column anymore
       isFirstRow = false;
     });
@@ -1224,7 +1242,7 @@ const ConFormStandaardenStage = ({
           <thead>
             <TableRow>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
-                Module
+                Applicatie
               </TableCell>
               <TableCell style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}>
                 Standaard
@@ -1258,13 +1276,16 @@ const ConFormStandaardenStage = ({
       >
         {(() => {
           // Calculate total modules based on the current display mode
-          const totalModules = sameForAll && isMultiNewApplicatie 
-            ? newModules.length // In "same for all" mode, count actual modules
-            : Object.keys(Object.entries(tableState).reduce((groups, [key, entry]) => {
-                groups[entry.moduleId] = true;
-                return groups;
-              }, {})).length; // In "per application" mode, count unique module IDs
-          
+          const totalModules =
+            sameForAll && isMultiNewApplicatie
+              ? newModules.length // In "same for all" mode, count actual modules
+              : Object.keys(
+                  Object.entries(tableState).reduce((groups, [, entry]) => {
+                    groups[entry.moduleId] = true;
+                    return groups;
+                  }, {})
+                ).length; // In "per application" mode, count unique module IDs
+
           const allEntries = Object.values(tableState);
 
           // Calculate statistics by type
@@ -1276,25 +1297,37 @@ const ConFormStandaardenStage = ({
           );
 
           // In "same for all" mode, count unique standards, not per-module entries
-          const verplichteCount = sameForAll && isMultiNewApplicatie
-            ? new Set(verplichteEntries.map(entry => entry.standardId)).size
-            : verplichteEntries.length;
-          
-          const aanbevolenCount = sameForAll && isMultiNewApplicatie
-            ? new Set(aanbevolenEntries.map(entry => entry.standardId)).size
-            : aanbevolenEntries.length;
+          const verplichteCount =
+            sameForAll && isMultiNewApplicatie
+              ? new Set(verplichteEntries.map((entry) => entry.standardId)).size
+              : verplichteEntries.length;
 
-          const verplichteCompliant = sameForAll && isMultiNewApplicatie
-            ? new Set(verplichteEntries.filter(entry => entry.isCompliant).map(entry => entry.standardId)).size
-            : verplichteEntries.filter(entry => entry.isCompliant).length;
-          
-          const aanbevolenCompliant = sameForAll && isMultiNewApplicatie
-            ? new Set(aanbevolenEntries.filter(entry => entry.isCompliant).map(entry => entry.standardId)).size
-            : aanbevolenEntries.filter(entry => entry.isCompliant).length;
+          const aanbevolenCount =
+            sameForAll && isMultiNewApplicatie
+              ? new Set(aanbevolenEntries.map((entry) => entry.standardId)).size
+              : aanbevolenEntries.length;
+
+          const verplichteCompliant =
+            sameForAll && isMultiNewApplicatie
+              ? new Set(
+                  verplichteEntries
+                    .filter((entry) => entry.isCompliant)
+                    .map((entry) => entry.standardId)
+                ).size
+              : verplichteEntries.filter((entry) => entry.isCompliant).length;
+
+          const aanbevolenCompliant =
+            sameForAll && isMultiNewApplicatie
+              ? new Set(
+                  aanbevolenEntries
+                    .filter((entry) => entry.isCompliant)
+                    .map((entry) => entry.standardId)
+                ).size
+              : aanbevolenEntries.filter((entry) => entry.isCompliant).length;
 
           return (
             <Paragraph style={{ margin: 0, fontSize: '0.9rem', color: '#6c757d' }}>
-              <strong>Overzicht:</strong> {totalModules} module
+              <strong>Overzicht:</strong> {totalModules} applicatie
               {totalModules !== 1 ? 's' : ''},{' '}
               <span style={{ color: '#dc3545', fontWeight: '600' }}>
                 {verplichteCount} verplichte standaarden (waarvan{' '}

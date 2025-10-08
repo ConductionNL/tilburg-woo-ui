@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
@@ -35,6 +35,7 @@ import remarkSupersub from 'remark-supersub';
 import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
+import rehypeSanitize from 'rehype-sanitize';
 
 const AcPublication = ({ store: { publications, object, user }, schema }) => {
   const { id } = useParams();
@@ -178,7 +179,11 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
 
+  // Track which IDs we've already fetched to prevent duplicate calls
+  const fetchedIds = useRef(new Set());
+
   const fetchUses = useCallback(async () => {
+    if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
@@ -201,9 +206,10 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     } finally {
       setUsesLoading(false);
     }
-  }, [id]);
+  }, []);
 
   const fetchUsed = useCallback(async () => {
+    if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
@@ -226,7 +232,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
     } finally {
       setUsedLoading(false);
     }
-  }, [id]);
+  }, []);
 
   const configuredMetaFields = useMemo(() => {
     // Get configuration from the actual object's schema, not the schema parameter
@@ -242,9 +248,17 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
   }, [get_single?.['@self']?.schema?.configuration]);
 
   useEffect(() => {
+    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
+    if (!id || fetchedIds.current.has(id)) {
+      return;
+    }
+
+    // Mark this ID as fetched
+    fetchedIds.current.add(id);
+
     fetchUses();
     fetchUsed();
-  }, [fetchUses, fetchUsed]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single || !attachments) {
@@ -330,6 +344,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
               ]}
               rehypePlugins={[
                 rehypeSlug,
+                [rehypeSanitize],
                 [remarkRehype, { handlers: { ...defListHastHandlers } }],
               ]}
             />
@@ -523,7 +538,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                               className='utrecht-button slim'
                               // variant='secondary'
                               onClick={() => {
-                                window.location.href = `/publicatie/${item.id}`;
+                                navigate(`/publicatie/${item.id}`);
                               }}
                             >
                               <VISUALS.EYE className='ac-button__icon' /> Bekijken
@@ -614,7 +629,7 @@ const AcPublication = ({ store: { publications, object, user }, schema }) => {
                               className='utrecht-button slim'
                               // variant='secondary'
                               onClick={() => {
-                                window.location.href = `/publicatie/${item.id}`;
+                                navigate(`/publicatie/${item.id}`);
                               }}
                             >
                               <VISUALS.EYE className='ac-button__icon' /> Bekijken

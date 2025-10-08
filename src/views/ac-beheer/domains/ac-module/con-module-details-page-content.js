@@ -2,41 +2,47 @@ import {
   Heading,
   Paragraph,
   Link,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableRow,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcColumn } from '@src/atoms';
+import { AcColumn, AcFlex } from '@src/atoms';
+import { AcCheckbox, AcButton } from '@src/molecules';
 import { VISUALS } from '@src/constants';
 import ConLogoPreview from '@src/views/ac-register/con-logo-preview';
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { commongroundApiUrl } from '@src/config';
 import ConEditableDescription from '../../shared/components/con-editable-description/con-editable-description';
+import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
+import ConEditableStandards from '../../shared/components/con-editable-standards/con-editable-standards';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
+import { ConStandardsTable } from '@components';
 import {
   checkOrganizationPermissions,
   getDisabledActionTooltip,
 } from '@utils/organization-permissions';
 import { TOOLTIP_ID } from '@src/index.web';
-import { useNavigate } from 'react-router-dom';
-import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
 
 /**
- * Content for the product details page
+ * Content for the module details page
  *
  * note:
  * Restructured to match con-my-organisation layout with vertical content flow
  * and integrated action menu.
  */
-const ConProductDetailsPageContent = ({
+const ConModuleDetailsPageContent = ({
   loading,
-  data,
   config,
+  data,
   userStore: user,
   objectStore: object,
   id,
   canEdit = false,
   actionMenuProps,
 }) => {
-  const navigate = useNavigate();
   // Related tabs state
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
@@ -47,6 +53,16 @@ const ConProductDetailsPageContent = ({
   // Editing state for inline editing
   const [editingSummary, setEditingSummary] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
+  const [editingStandards, setEditingStandards] = useState(false);
+
+  // Standards count state
+  const [standardsCount, setStandardsCount] = useState(0);
+
+  // ReferentieComponenten data state
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
+
+  // Standards editing state
 
   const fetchUses = useCallback(async () => {
     if (!id) return;
@@ -102,9 +118,38 @@ const ConProductDetailsPageContent = ({
     }
   }, [id]);
 
-  const contact = Array.isArray(data.contactpersoon)
-    ? data.contactpersoon[0]
-    : data.contactpersoon;
+  // Custom fetch function (matching con-my-organisation pattern)
+  const fetchFullModuleData = useCallback(
+    async (moduleId) => {
+      if (!moduleId || !config) return;
+
+      try {
+        // Fetch the full module data using the object store
+        await object.fetchObject(config.registerSlug, config.schemaSlug, moduleId, {
+          _extend: config.extend,
+          _related: true,
+          _relatedNames: true,
+        });
+        // Ensure active object is set so related data selectors work
+        object.setActiveObject(config.registerSlug, config.schemaSlug, {
+          id: moduleId,
+        });
+        // Also fetch schema if not yet loaded
+        object.fetchSchema(config.schemaSlug);
+      } catch (error) {
+        console.error('Error fetching full module data:', error);
+      }
+    },
+    [object, config]
+  );
+
+  // Helper function to update field data and refresh (matching con-my-organisation pattern exactly)
+  const setNewFieldDataAndFetch = (v, field) => {
+    if (data) {
+      data[field] = v;
+      fetchFullModuleData(data?.['@self']?.id);
+    }
+  };
 
   // Check organization permissions for actions
   const { canEdit: hasEditPermission, reason } = data
@@ -162,26 +207,7 @@ const ConProductDetailsPageContent = ({
               <ConActionMenu.Menu position='right'>
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
-                  onClick={() => {
-                    // Prefer wizard editing when available; fallback to legacy modal
-                    if (config?.schemaSlug) {
-                      const wizards = Object.values(DASHBOARD_WIZARDS);
-                      const wizard = wizards.find(
-                        (w) => w.schema === config.schemaSlug
-                      );
-
-                      if (wizard) {
-                        const baseUrl = getWizardUrl(wizard);
-                        const url = new URL(baseUrl, window.location.origin);
-                        url.searchParams.set('id', id);
-                        navigate(url.pathname + url.search);
-                        return;
-                      }
-                    }
-
-                    // Fallback to modal
-                    actionMenuProps?.setOpenModal?.('edit');
-                  }}
+                  onClick={() => actionMenuProps?.setOpenModal?.('edit')}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
@@ -193,15 +219,14 @@ const ConProductDetailsPageContent = ({
                   Bewerken
                 </ConActionMenu.Button>
 
-                {/* TODO: Summary and description editing is not working yet*/}
-                {/* <ConActionMenu.Button
+                <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingSummary(true)}
                   disabled={!actualCanEdit}
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
                     !actualCanEdit
-                      ? 'Kan niet bewerken omdat de samenvatting niet bewerkt kan worden'
+                      ? getDisabledActionTooltip('edit', reason)
                       : undefined
                   }
                 >
@@ -215,12 +240,26 @@ const ConProductDetailsPageContent = ({
                   data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
                   data-tooltip-content={
                     !actualCanEdit
-                      ? 'Kan niet bewerken omdat de beschrijving niet bewerkt kan worden'
+                      ? getDisabledActionTooltip('edit', reason)
                       : undefined
                   }
                 >
                   Bewerk beschrijving
-                </ConActionMenu.Button> */}
+                </ConActionMenu.Button>
+
+                <ConActionMenu.Button
+                  icon={<VISUALS.PENCIL />}
+                  onClick={() => setEditingStandards(true)}
+                  disabled={!actualCanEdit}
+                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  data-tooltip-content={
+                    !actualCanEdit
+                      ? getDisabledActionTooltip('edit', reason)
+                      : undefined
+                  }
+                >
+                  Bewerk standaarden
+                </ConActionMenu.Button>
 
                 {data && !data['@self']?.published && (
                   <ConActionMenu.Button
@@ -279,22 +318,25 @@ const ConProductDetailsPageContent = ({
       {/* Short description */}
       <div style={{ flex: 2 }}>
         <ConEditableDescription
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingKort'
           label='Korte beschrijving'
-          placeholder='Een korte beschrijving van het product'
-          tooltip='Een korte beschrijving van het product'
+          placeholder='Een korte beschrijving van de applicatie'
+          tooltip='Een korte beschrijving van de applicatie'
           maxLength={255}
           isMarkdown={false}
           value={data.beschrijvingKort}
           isEditingCustomTrigger={editingSummary}
           serialize={(v) => v}
           deserialize={(v) => v || ''}
-          onSuccess={() => setEditingSummary(false)}
+          onSuccess={(v) => {
+            setEditingSummary(false);
+            data.beschrijvingKort = v;
+            // No data refresh needed - data already updated locally
+          }}
           onCancel={() => setEditingSummary(false)}
-          canEdit={actualCanEdit}
         />
       </div>
 
@@ -303,13 +345,13 @@ const ConProductDetailsPageContent = ({
         <br />
         <ConEditableDescription
           markdownPreviewClassName='con-my-account-description'
-          registerSlug={data['@self'].register.slug}
-          schemaSlug={data['@self'].schema.slug}
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
           objectId={data?.['@self']?.id}
           field='beschrijvingLang'
           label='Lange beschrijving'
-          placeholder='Een uitgebreide beschrijving van het product'
-          tooltip='Een uitgebreide beschrijving van het product'
+          placeholder='Een uitgebreide beschrijving van de applicatie'
+          tooltip='Een uitgebreide beschrijving van de applicatie'
           maxLength={5000}
           isMarkdown={true}
           isEditingCustomTrigger={editingDescription}
@@ -324,113 +366,85 @@ const ConProductDetailsPageContent = ({
             }
           }}
           onCancel={() => setEditingDescription(false)}
-          onSuccess={() => setEditingDescription(false)}
-          canEdit={actualCanEdit}
+          onSuccess={(v) => {
+            setEditingDescription(false);
+            data.beschrijvingLang = v;
+            // No data refresh needed - data already updated locally
+          }}
         />
       </div>
 
       {/* Contact Information Section */}
-      {((contact && typeof contact === 'object') || data?.website) && (
-        <>
-          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
-            Contact informatie
-          </Heading>
-          <div className='ac-register-review__section'>
-            <div style={{ marginTop: '12px' }}>
-              {data?.website && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Website: </strong>
-                  <Link
-                    href={
-                      data?.website.startsWith('http')
-                        ? data?.website
-                        : `https://${data?.website}`
-                    }
-                    target='_blank'
-                    rel='noopener noreferrer'
-                  >
-                    {data?.website}
-                  </Link>
-                </div>
-              )}
-              {contact && typeof contact === 'object' && (
-                <>
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Contactpersoon: </strong>
-                    {[contact.voornaam, contact.tussenvoegsel, contact.achternaam]
-                      .filter(Boolean)
-                      .join(' ')}
-                  </div>
-                  {contact['e-mailadres'] && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Email: </strong>
-                      <Link href={`mailto:${contact['e-mailadres']}`}>
-                        {contact['e-mailadres']}
-                      </Link>
-                    </div>
-                  )}
-                  {contact.telefoonnummer && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Telefoon: </strong>
-                      <Link
-                        href={`tel:${String(contact.telefoonnummer)
-                          .split('')
-                          .filter((i) => i !== ' ')
-                          .join('')}`}
-                      >
-                        {contact.telefoonnummer}
-                      </Link>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Extra Information Section */}
-      {(data?.status ||
-        data?.hostingLocatie ||
-        data?.hostingJurisdictie ||
-        data?.cloudDienstverleningsmodel) && (
+      {(data?.licentietype ||
+        data?.licentie ||
+        data?.moduleVersies ||
+        data?.website) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Extra informatie
           </Heading>
           <div className='ac-register-review__section'>
-            <div style={{ marginTop: '12px' }}>
-              {data?.status && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Status: </strong>
-                  {data.status}
+            <AcFlex column spacing='sm'>
+              {data?.licentietype && (
+                <div>
+                  <b>Licentietype:</b>
+                  <p>{data.licentietype}</p>
                 </div>
               )}
-              {data?.hostingLocatie && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>De applicatie wordt gehost in: </strong>
-                  {data.hostingLocatie}
+              {data?.licentie && (
+                <div>
+                  <b>Licentie:</b>
+                  <p>{data.licentie}</p>
                 </div>
               )}
-              {data?.hostingJurisdictie && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>De data wordt opgeslagen in: </strong>
-                  {data.hostingJurisdictie}
+              {Array.isArray(data?.moduleVersies) && (
+                <div>
+                  <b>Huidige versie:</b>
+                  <p>
+                    {data.moduleVersies.find((v) => v.status === 'in gebruik')
+                      ?.versie || 'Geen versie in gebruik'}
+                  </p>
                 </div>
               )}
-              {data?.cloudDienstverleningsmodel && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Hosting type: </strong>
-                  {data.cloudDienstverleningsmodel}
-                </div>
-              )}
-            </div>
+            </AcFlex>
           </div>
         </>
       )}
 
       {/* Suitable For Section */}
-      <SuitableForSection modules={data.modules} objectStore={object} />
+      <SuitableForSection
+        referentieComponenten={data.referentieComponenten}
+        referentieComponentenWithStandards={referentieComponentenWithStandards}
+        objectStore={object}
+      />
+
+      {/* Standaarden Section */}
+      <div style={{ marginTop: '1rem' }}>
+        <Heading level={3}>Standaarden ({standardsCount})</Heading>
+        <ConEditableStandards
+          registerSlug={config?.registerSlug}
+          schemaSlug={config?.schemaSlug}
+          objectId={data?.['@self']?.id}
+          referentieComponenten={data.referentieComponenten}
+          complianceStandards={data.compliancy}
+          referentieComponentenWithStandards={
+            referentieComponentenWithStandards?.length > 0
+              ? referentieComponentenWithStandards
+              : undefined
+          }
+          onStandardsCountChange={setStandardsCount}
+          onReferentieComponentenChange={setReferentieComponentenWithStandards}
+          isEditingCustomTrigger={editingStandards}
+          onSuccess={(newCompliancy) => {
+            // Only exit editing mode - don't update data.compliancy to prevent unnecessary re-renders
+            setEditingStandards(false);
+            // The ConEditableStandards component already sent the PATCH request
+            // so the server data is correct and will be consistent
+          }}
+          onCancel={() => setEditingStandards(false)}
+          canEdit={actualCanEdit}
+        />
+      </div>
 
       {/* Related tabs */}
       {id && (
@@ -451,53 +465,61 @@ const ConProductDetailsPageContent = ({
   );
 };
 
-// Suitable For Section component
-const SuitableForSection = ({ modules, objectStore }) => {
-  // Combine all referentieComponenten into a unique array
-  const allReferentieComponenten = useMemo(() => {
-    if (!modules?.length) return [];
-    return [
-      ...new Set(modules.flatMap((module) => module.referentieComponenten || [])),
-    ];
-  }, [modules]);
-
-  // Custom hook to resolve UUIDs while keeping original IDs
-  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
-    []
-  );
+// Suitable For Section component for modules
+const SuitableForSection = ({
+  referentieComponenten,
+  referentieComponentenWithStandards,
+  objectStore,
+}) => {
+  const [resolved, setResolved] = useState([]);
 
   useEffect(() => {
     const resolveWithIds = async () => {
-      if (!allReferentieComponenten.length || !objectStore) {
-        setResolvedReferentieComponenten([]);
+      if (
+        !Array.isArray(referentieComponenten) ||
+        referentieComponenten.length === 0
+      ) {
+        setResolved([]);
         return;
       }
 
+      // If we have referentieComponentenWithStandards data, use it to get the actual object IDs
+      if (referentieComponentenWithStandards?.length > 0) {
+        const resolvedWithObjectIds = referentieComponenten.map((id) => {
+          const refCompData = referentieComponentenWithStandards.find(
+            (refComp) => refComp.id === id
+          );
+
+          return {
+            id: refCompData?.fullData?.id || id, // Use actual object ID if available
+            name: refCompData?.naam || id,
+          };
+        });
+        setResolved(resolvedWithObjectIds);
+        return;
+      }
+
+      // Fallback to the original resolution method
       try {
-        const resolved = await Promise.all(
-          allReferentieComponenten.map(async (id) => {
+        const results = await Promise.all(
+          referentieComponenten.map(async (id) => {
             try {
               const name = await objectStore.getNamesForSingleId(id);
               return { id, name };
             } catch (error) {
-              return { id, name: id }; // Fallback to ID if resolution fails
+              return { id, name: id };
             }
           })
         );
-        setResolvedReferentieComponenten(resolved);
-      } catch (error) {
-        console.error('Error resolving referentie componenten:', error);
-        // Fallback to just IDs
-        setResolvedReferentieComponenten(
-          allReferentieComponenten.map((id) => ({ id, name: id }))
-        );
+        setResolved(results);
+      } catch (e) {
+        setResolved(referentieComponenten.map((id) => ({ id, name: id })));
       }
     };
-
     resolveWithIds();
-  }, [allReferentieComponenten, objectStore]);
+  }, [referentieComponenten, referentieComponentenWithStandards, objectStore]);
 
-  if (!resolvedReferentieComponenten?.length) return null;
+  if (!resolved.length) return null;
 
   return (
     <>
@@ -506,7 +528,7 @@ const SuitableForSection = ({ modules, objectStore }) => {
       </Heading>
       <div className='ac-register-review__section'>
         <div style={{ marginTop: '12px' }}>
-          {resolvedReferentieComponenten.map((item, idx) => (
+          {resolved.map((item, idx) => (
             <div key={idx} style={{ marginBottom: '4px' }}>
               <Link
                 href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
@@ -542,4 +564,4 @@ const UnpublishedWarning = ({ data }) => {
   );
 };
 
-export default ConProductDetailsPageContent;
+export default ConModuleDetailsPageContent;

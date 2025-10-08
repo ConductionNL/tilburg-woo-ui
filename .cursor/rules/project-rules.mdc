@@ -39,6 +39,7 @@ alwaysApply: true
 - Follow the established SCSS structure in src/styles/
 - Use BEM methodology for CSS class naming
 - Consider responsive design patterns
+- The use of `eslint-disable` or `@ts-ignore` is strictly prohibited.
 
 ## State Management Patterns
 - Use MobX stores for global state

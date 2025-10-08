@@ -17,6 +17,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * ConEditableDescription - A versatile inline editable text/markdown field component for object properties.
@@ -166,6 +167,12 @@ const ConEditableDescription = ({
       setIsEditing(true);
       setTempValue(v || '');
       setCharCount((v || '').length);
+    } else if (isEditingCustomTrigger === false) {
+      // Handle when custom trigger becomes false - exit editing mode
+      setIsEditing(false);
+      const v = deserialize(value);
+      setTempValue(v || '');
+      setCharCount((v || '').length);
     }
   }, [isEditingCustomTrigger, value, deserialize]);
 
@@ -225,6 +232,7 @@ const ConEditableDescription = ({
                     ],
                     rehypePlugins: [
                       rehypeSlug,
+                      [rehypeSanitize],
                       [remarkRehype, { handlers: { ...defListHastHandlers } }],
                     ],
                   }}
@@ -317,6 +325,7 @@ const ConEditableDescription = ({
                   ]}
                   rehypePlugins={[
                     rehypeSlug,
+                    [rehypeSanitize],
                     [remarkRehype, { handlers: { ...defListHastHandlers } }],
                   ]}
                 />

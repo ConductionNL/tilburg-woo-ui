@@ -92,6 +92,19 @@ const BeheerModalFactory = {
     },
     contactpersonen: {
       ...baseModalConfig,
+      addAccount: loadable(() =>
+        import(
+          '@views/ac-beheer/core/modals/con-addAccount-modal/con-addAccount-modal'
+        )
+      ),
+    },
+    contactpersoon: {
+      ...baseModalConfig,
+      addAccount: loadable(() =>
+        import(
+          '@views/ac-beheer/core/modals/con-addAccount-modal/con-addAccount-modal'
+        )
+      ),
     },
   },
 
@@ -107,7 +120,7 @@ const BeheerModalFactory = {
     if (specificComponent) {
       return specificComponent;
     }
-    
+
     // For unknown types, fall back to base modal config if the modal type exists there
     return baseModalConfig[modalType] || null;
   },
@@ -140,7 +153,7 @@ const BeheerModalFactory = {
       },
       onSuccess: async () => {
         tableRef.current?.resetSelectedRows();
-        
+
         // Call fetchData with a small delay to ensure ObjectStore state has been updated
         if (typeof fetchData === 'function') {
           try {
@@ -194,8 +207,8 @@ const BeheerModalFactory = {
 
       // For known types, use the explicit list
       // For unknown types, assume they can use the generic form modal
-      const useGenericForm = genericFormTypes.includes(type) || 
-        !BeheerModalFactory.modalComponents[type];
+      const useGenericForm =
+        genericFormTypes.includes(type) || !BeheerModalFactory.modalComponents[type];
 
       if (useGenericForm) {
         // Build preSelected values from params
@@ -278,26 +291,41 @@ const BeheerModalFactory = {
               onSuccess: async () => {
                 tableRef.current?.resetSelectedRows();
                 setOpenModal(null);
-                
+
                 // Refresh the contactpersonen collection since that's what was modified
                 try {
                   if (store?.object) {
-                    console.info('🔄 Refreshing contactpersonen collection after creation...');
-                    
+                    console.info(
+                      '🔄 Refreshing contactpersonen collection after creation...'
+                    );
+
                     // Use the correct register: voorzieningen (same as organisaties)
-                    await store.object.fetchCollection('voorzieningen', 'contactpersoon');
-                    console.info('✅ Refreshed contactpersonen collection after creation');
-                    
+                    await store.object.fetchCollection(
+                      'voorzieningen',
+                      'contactpersoon'
+                    );
+                    console.info(
+                      '✅ Refreshed contactpersonen collection after creation'
+                    );
+
                     // Also force a re-render by updating the success state
-                    const contactpersonenType = store.object.getTypeFromParams('voorzieningen', 'contactpersoon');
+                    const contactpersonenType = store.object.getTypeFromParams(
+                      'voorzieningen',
+                      'contactpersoon'
+                    );
                     store.object.setSuccess(contactpersonenType, true);
                   } else {
-                    console.warn('⚠️ Store not available for refreshing contactpersonen collection');
+                    console.warn(
+                      '⚠️ Store not available for refreshing contactpersonen collection'
+                    );
                   }
                 } catch (error) {
-                  console.error('❌ Failed to refresh contactpersonen collection:', error);
+                  console.error(
+                    '❌ Failed to refresh contactpersonen collection:',
+                    error
+                  );
                 }
-                
+
                 // Also call the original fetchData in case we're in a context that needs it
                 if (typeof fetchData === 'function') fetchData();
               },
@@ -339,7 +367,21 @@ const BeheerModalFactory = {
         }
 
       case 'contactpersonen':
+      case 'contactpersoon':
         switch (modalType) {
+          case 'add':
+          case 'edit':
+            return {
+              ...baseProps,
+              type: 'contactpersoon',
+              data: singleSelectedRow,
+              isEdit: modalType === 'edit',
+            };
+          case 'addAccount':
+            return {
+              ...baseProps,
+              contactpersoon: singleSelectedRow,
+            };
           case 'publish':
           case 'depublish':
             return {

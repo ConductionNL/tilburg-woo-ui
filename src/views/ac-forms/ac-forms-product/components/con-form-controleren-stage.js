@@ -19,6 +19,7 @@ import { remarkMark } from 'remark-mark-highlight';
 import rehypeSlug from 'rehype-slug';
 
 import { handleFileClick } from '@utils';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Controleren Stage Component
@@ -100,7 +101,7 @@ const ConFormControlerenStage = memo(
           module.naam ||
           module?.['@self']?.name ||
           module?.fullData?.['@self']?.name ||
-          (module.id ? String(module.id) : `Module ${moduleValue}`);
+          (module.id ? String(module.id) : `Applicatie ${moduleValue}`);
 
         moduleLookup[String(moduleValue)] = displayName;
         moduleLookup[moduleValue] = displayName;
@@ -180,6 +181,7 @@ const ConFormControlerenStage = memo(
                     ]}
                     rehypePlugins={[
                       rehypeSlug,
+                      [rehypeSanitize],
                       [remarkRehype, { handlers: { ...defListHastHandlers } }],
                     ]}
                   />
@@ -263,6 +265,7 @@ const ConFormControlerenStage = memo(
                             ]}
                             rehypePlugins={[
                               rehypeSlug,
+                              [rehypeSanitize],
                               [
                                 remarkRehype,
                                 { handlers: { ...defListHastHandlers } },
@@ -533,7 +536,7 @@ const ConFormControlerenStage = memo(
                             fontSize: '0.875rem',
                           }}
                         >
-                          (bestaande module)
+                          (bestaande applicatie)
                         </small>
                       </h4>
                     </div>
@@ -580,6 +583,7 @@ const ConFormControlerenStage = memo(
                             ]}
                             rehypePlugins={[
                               rehypeSlug,
+                              [rehypeSanitize],
                               [
                                 remarkRehype,
                                 { handlers: { ...defListHastHandlers } },
@@ -669,7 +673,7 @@ const ConFormControlerenStage = memo(
                       style={{ color: '#666', fontStyle: 'italic' }}
                     >
                       <Paragraph style={{ margin: 0, fontSize: '0.875rem' }}>
-                        📋 Bestaande module uit de catalogus - bovenstaande
+                        📋 Bestaande applicatie uit de catalogus - bovenstaande
                         informatie is al geregistreerd
                       </Paragraph>
                     </div>

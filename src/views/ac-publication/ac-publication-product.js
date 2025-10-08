@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import { AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -22,6 +22,7 @@ import remarkRehype from 'remark-rehype';
 import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -49,10 +50,6 @@ const AcPublicationProduct = ({
     },
     [navigate, id]
   );
-
-  const contact = Array.isArray(get_single.contactpersoon)
-    ? get_single.contactpersoon[0]
-    : get_single.contactpersoon;
 
   const { makeActionsForContext } = useRelatedCreateActions({
     object,
@@ -98,11 +95,30 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
 
+  // Track which IDs we've already fetched to prevent duplicate calls
+  const fetchedIds = useRef(new Set());
+
+  // Extract contactpersoon from uses data instead of get_single
+  const contact = useMemo(() => {
+    if (!uses?.length) return null;
+
+    // Find the first contactpersoon object in the uses array
+    // (if multiple contactpersonen exist, we take the first one)
+    const contactpersoonObject = uses.find(
+      (use) => use?.['@self']?.schema?.slug === 'contactpersoon'
+    );
+
+    if (!contactpersoonObject) return null;
+
+    return contactpersoonObject;
+  }, [uses]);
+
   const fetchUses = useCallback(async () => {
+    if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/uses?_extend[]=@self.schema&_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -121,13 +137,14 @@ const AcPublicationProduct = ({
     } finally {
       setUsesLoading(false);
     }
-  }, [id]);
+  }, []);
 
   const fetchUsed = useCallback(async () => {
+    if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
-        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema`,
+        `${commongroundApiUrl()}/opencatalogi/api/publications/${id}/used?_extend[]=@self.schema&_limit=100`,
         {
           method: 'GET',
           headers: {
@@ -146,12 +163,20 @@ const AcPublicationProduct = ({
     } finally {
       setUsedLoading(false);
     }
-  }, [id]);
+  }, []);
 
   useEffect(() => {
+    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
+    if (!id || fetchedIds.current.has(id)) {
+      return;
+    }
+
+    // Mark this ID as fetched
+    fetchedIds.current.add(id);
+
     fetchUses();
     fetchUsed();
-  }, [fetchUses, fetchUsed]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -241,13 +266,16 @@ const AcPublicationProduct = ({
                 ]}
                 rehypePlugins={[
                   rehypeSlug,
+                  [rehypeSanitize],
                   [remarkRehype, { handlers: { ...defListHastHandlers } }],
                 ]}
               />
             )}
           </AcFlex>
           <AcFlex column spacing='sm' style={{ flex: 1 }}>
-            {((contact && typeof contact === 'object') || get_single?.website) && (
+            {(usesLoading ||
+              (contact && typeof contact === 'object') ||
+              get_single?.website) && (
               <AcFlex
                 column
                 spacing='sm'
@@ -267,7 +295,15 @@ const AcPublicationProduct = ({
                     </Link>
                   </div>
                 )}
-                {contact && typeof contact === 'object' && (
+                {/* Show loading state while fetching uses data */}
+                {usesLoading && (
+                  <AcFlex column spacing='xs'>
+                    <b>Contactpersoon:</b>
+                    <p>Laden...</p>
+                  </AcFlex>
+                )}
+                {/* Show contact info when available and not loading */}
+                {!usesLoading && contact && typeof contact === 'object' && (
                   <AcFlex column spacing='xs'>
                     <b>Contactpersoon:</b>
                     <p>
@@ -294,6 +330,13 @@ const AcPublicationProduct = ({
                         </Link>
                       )}
                     </div>
+                  </AcFlex>
+                )}
+                {/* Show message when no contact found after loading */}
+                {!usesLoading && !contact && (
+                  <AcFlex column spacing='xs'>
+                    <b>Contactpersoon:</b>
+                    <p>Geen contactpersoon gevonden</p>
                   </AcFlex>
                 )}
               </AcFlex>
@@ -331,12 +374,6 @@ const AcPublicationProduct = ({
                 )}
               </AcFlex>
             }
-
-            <TabList
-              modules={get_single.modules}
-              objectStore={object}
-              className='con-product-details--content-side'
-            />
           </AcFlex>
         </AcFlex>
       </AcFlex>
@@ -356,79 +393,9 @@ const AcPublicationProduct = ({
         tabIndex={relatedTabIndex}
         setTabIndex={setRelatedTabIndex}
         object={object}
+        navigateTo='publication'
       />
     </AcContainer>
-  );
-};
-
-const TabList = ({ modules, objectStore }) => {
-  const [tabIndex, setTabIndex] = useState(0);
-
-  // Combine all referentieComponenten into a unique array
-  const allReferentieComponenten = useMemo(() => {
-    if (!modules?.length) return [];
-    return [
-      ...new Set(modules.flatMap((module) => module.referentieComponenten || [])),
-    ];
-  }, [modules]);
-
-  // Custom hook to resolve UUIDs while keeping original IDs
-  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
-    []
-  );
-
-  useEffect(() => {
-    const resolveWithIds = async () => {
-      if (!allReferentieComponenten.length || !objectStore) {
-        setResolvedReferentieComponenten([]);
-        return;
-      }
-
-      try {
-        const resolved = await Promise.all(
-          allReferentieComponenten.map(async (id) => {
-            try {
-              const name = await objectStore.getNamesForSingleId(id);
-              return { id, name };
-            } catch (error) {
-              return { id, name: id }; // Fallback to ID if resolution fails
-            }
-          })
-        );
-        setResolvedReferentieComponenten(resolved);
-      } catch (error) {
-        console.error('Error resolving referentie componenten:', error);
-        // Fallback to just IDs
-        setResolvedReferentieComponenten(
-          allReferentieComponenten.map((id) => ({ id, name: id }))
-        );
-      }
-    };
-
-    resolveWithIds();
-  }, [allReferentieComponenten, objectStore]);
-
-  return (
-    <div className='con-product-details--side-content-tabs'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-        <AcTabList>
-          <AcTab selected={tabIndex === 0}>Geschikt voor:</AcTab>
-          <AcTab selected={tabIndex === 1}>Ingevuld door:</AcTab>
-        </AcTabList>
-        <AcTabPanel selected={tabIndex === 0}>
-          {resolvedReferentieComponenten.map((item, idx) => (
-            <Link
-              key={idx}
-              href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
-              target='_blank'
-            >
-              {item.name}
-            </Link>
-          ))}
-        </AcTabPanel>
-        <AcTabPanel selected={tabIndex === 1}></AcTabPanel>
-      </AcTabs>
-    </div>
   );
 };
 

@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 
 import { withStore } from '@stores';
 import { BREADCRUMBS, VISUALS } from '@constants';
@@ -17,6 +17,18 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
   const { view: single_view } = gemma;
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Handle breadcrumb navigation
+  const handleBreadcrumbClick = (event, href, disabled = false) => {
+    if (href && !disabled) {
+      event.preventDefault();
+      navigate(href);
+    } else if (disabled) {
+      // Prevent navigation for disabled/current breadcrumb
+      event.preventDefault();
+    }
+  };
 
   // split up the pathname into an array
   const pathnames = location.pathname.split('/');
@@ -33,7 +45,8 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
     }
 
     if (location.pathname.startsWith('/publicatie/')) {
-      return BREADCRUMBS.PUBLICATION(get_single_document?.title);
+      const schema = get_single_document?.['@self']?.schema;
+      return BREADCRUMBS.PUBLICATION(get_single_document?.title, schema);
     }
 
     if (location.pathname.startsWith('/onderwerpen')) {
@@ -110,11 +123,16 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
 
   return (
     <BreadcrumbNav>
-      <BreadcrumbNavLink href='/' rel='home' index={0}>
+      <BreadcrumbNavLink
+        href='/'
+        rel='home'
+        index={0}
+        onClick={(event) => handleBreadcrumbClick(event, '/')}
+      >
         Home
       </BreadcrumbNavLink>
       {getBreadcrumbs.map((breadcrumb, index) => (
-        <>
+        <React.Fragment key={index}>
           <BreadcrumbNavSeparator>
             <VISUALS.CHEVRON_RIGHT />
           </BreadcrumbNavSeparator>
@@ -122,10 +140,17 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
             href={breadcrumb?.href}
             disabled={index + 1 === getBreadcrumbs.length}
             current={index + 1 === getBreadcrumbs.length}
+            onClick={(event) =>
+              handleBreadcrumbClick(
+                event,
+                breadcrumb?.href,
+                index + 1 === getBreadcrumbs.length
+              )
+            }
           >
             {breadcrumb?.label}
           </BreadcrumbNavLink>
-        </>
+        </React.Fragment>
       ))}
     </BreadcrumbNav>
   );

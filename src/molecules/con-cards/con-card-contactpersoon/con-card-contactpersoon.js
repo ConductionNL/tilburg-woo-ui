@@ -22,7 +22,10 @@ const ConCardContactpersoon = ({
   navigateTo = 'publication',
 }) => {
   // Use generic UUID resolver for organisation name
-  const resolvedOrganisation = useResolvedText(organisation, objectStore);
+  const resolvedOrganisation = useResolvedText(
+    typeof organisation === 'object' ? organisation.value : organisation,
+    objectStore
+  );
 
   const name = [firstName, middleName, lastName].filter(Boolean).join(' ');
 

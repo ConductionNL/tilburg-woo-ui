@@ -109,7 +109,7 @@ const ConGebruikStepReview = ({
             </div>
           </div>
           <div className='ac-register-review__field'>
-            <strong>Module versie:</strong>
+            <strong>Applicatie versie:</strong>
             <div>
               {(
                 (versionOptions || []).find(

@@ -189,6 +189,32 @@ const ConFormDienstInformatieStage = memo(
               isDisabled={loading}
               width='half'
               schemas={schemas}
+              customProps={{
+                getOptionLabel: (opt) => {
+                  const c = opt?.data ?? opt;
+                  // Try different name combinations for contactpersoon
+                  const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+                    .filter(Boolean)
+                    .join(' ');
+
+                  // Fallback to other name properties if voornaam/achternaam not available
+                  if (fullName.trim()) {
+                    return fullName;
+                  }
+
+                  // Try alternative name properties
+                  return (
+                    c?.['@self']?.name ||
+                    c?.naam ||
+                    c?.name ||
+                    c?.displayName ||
+                    c?.label ||
+                    c?.id ||
+                    'Onbekende contactpersoon'
+                  );
+                },
+                isClearable: true,
+              }}
             />
 
             {/* Aanbieder field removed from UI */}

@@ -1,26 +1,17 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import RelatedTabs from './con-related-tabs';
 import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConStandardsResolver } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConStandardsTable } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
-import {
-  Heading,
-  Link,
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
-import { handleFileClick } from '@utils';
 
 // Markdown Editor
 import remarkDefinitionList, { defListHastHandlers } from 'remark-definition-list';
@@ -31,6 +22,7 @@ import remarkRehype from 'remark-rehype';
 import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
+import rehypeSanitize from 'rehype-sanitize';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -74,6 +66,14 @@ const AcPublicationProduct = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionMenuItems, setActionMenuItems] = useState([]);
 
+  // Standards state for resolving compliance standards
+  const [standards, setStandards] = useState([]);
+  const [standardsLoading, setStandardsLoading] = useState(false);
+
+  // State for referentieComponenten data with standards
+  const [referentieComponentenWithStandards, setReferentieComponentenWithStandards] =
+    useState([]);
+
   // Open delete modal from actions menu
   const handleDelete = useCallback(() => {
     setShowDeleteModal(true);
@@ -96,9 +96,87 @@ const AcPublicationProduct = ({
     setActionMenuItems(items);
   }, [get_single?.['@self']?.schema?.slug, id, makeActionsForContext]);
 
-  // Standards state for resolving compliance standards
-  const [standards, setStandards] = useState([]);
-  const [standardsLoading, setStandardsLoading] = useState(false);
+  // Fetch referentieComponenten data with their standards
+  const fetchReferentieComponentenWithStandards = useCallback(async () => {
+    if (!get_single?.referentieComponenten?.length) {
+      setReferentieComponentenWithStandards([]);
+      return;
+    }
+
+    console.info('📋 Fetching referentieComponenten with standards data...');
+
+    try {
+      const queryParams = new URLSearchParams({
+        _limit: '500',
+        _page: '1',
+        gemmaType: 'Referentiecomponent',
+        '_extend[]': '@self.schema',
+      });
+
+      // Fetch referentieComponenten from openconnector endpoint
+      const response = await fetch(
+        `${commongroundApiUrl()}/openconnector/api/endpoint/elements?${queryParams}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Error fetching referentieComponenten:', response.statusText);
+        return;
+      }
+
+      const data = await response.json();
+      const allReferentieComponenten = data.results || data;
+
+      // Filter to only the referentieComponenten that are used in this product
+      const productReferentieComponenten = get_single.referentieComponenten
+        .map((refId) => {
+          const refData = allReferentieComponenten.find(
+            (ref) =>
+              String(ref.id) === String(refId) ||
+              String(ref.value) === String(refId) ||
+              String(ref.slug) === String(refId)
+          );
+
+          if (refData) {
+            return {
+              id: refId,
+              naam:
+                refData?.xml?.name?._value ||
+                refData?.naam ||
+                refData?.name ||
+                refData?.title ||
+                refData?.label ||
+                refId,
+              moduleId: 0, // For publication view, we don't have specific modules
+              applicatieId: 0,
+              // Extract standards from the API data
+              aanbevolenStandaarden: refData.aanbevolenStandaarden || [],
+              verplichteStandaarden: refData.verplichteStandaarden || [],
+              // Store the full API data for future use
+              fullData: refData,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      setReferentieComponentenWithStandards(productReferentieComponenten);
+      console.info(
+        `✅ Loaded ${productReferentieComponenten?.length} referentieComponenten with standards data`
+      );
+    } catch (error) {
+      console.warn(
+        '⚠️ Failed to fetch referentieComponenten with standards:',
+        error
+      );
+      setReferentieComponentenWithStandards([]);
+    }
+  }, [get_single?.referentieComponenten]);
 
   // Fetch standards from openconnector endpoint
   const fetchStandards = useCallback(async () => {
@@ -136,7 +214,7 @@ const AcPublicationProduct = ({
 
       setStandards(fetchedStandards);
       console.info(
-        `✅ Loaded ${fetchedStandards.length} standards for publication page`
+        `✅ Loaded ${fetchedStandards?.length} standards for publication page`
       );
     } catch (error) {
       console.warn('⚠️ Failed to fetch standards:', error);
@@ -146,64 +224,22 @@ const AcPublicationProduct = ({
     }
   }, []);
 
-  // TODO: Remove this if it's not needed
-  // The code below is a fetch request on the publication endpoint that will fetch all the elements that are published and are of gemmaType Standaard
-  // For now there are no results on this endpoint. This is because of the gemmaType filter not being applied in the backend correctly.
-
-  // Fetch standards from publications endpoint with specific parameters
-  //   const fetchStandards = useCallback(async () => {
-  //     setStandardsLoading(true);
-  //     try {
-  //       const queryParams = new URLSearchParams({
-  //         '@self[schema]': 'element',
-  //         gemmaType: 'Standaard',
-  //       });
-
-  //       console.info('📋 Fetching standards from publications endpoint...');
-
-  //       // Fetch standards from publications endpoint using normal fetch
-  //       const response = await fetch(
-  //         `${commongroundApiUrl()}/opencatalogi/api/publications?${queryParams}`,
-  //         {
-  //           method: 'GET',
-  //           headers: {
-  //             'Content-Type': 'application/json',
-  //           },
-  //         }
-  //       );
-
-  //       if (!response.ok) {
-  //         console.error('Error fetching publications standards:', response.statusText);
-  //         return;
-  //       }
-
-  //       const data = await response.json();
-  //       const fetchedStandards = data.results || data;
-
-  //       console.info(
-  //         `✅ Loaded ${fetchedStandards.length} standards from publications endpoint`
-  //       );
-
-  //       // You can process the fetched standards here if needed
-  //       // For now, we'll just log them
-  //       console.log('Publications standards:', fetchedStandards);
-  //     } catch (error) {
-  //       console.warn('⚠️ Failed to fetch standards from publications:', error);
-  //     } finally {
-  //       setStandardsLoading(false);
-  //     }
-  //   }, []);
-
   useEffect(() => {
     fetchStandards();
-  }, [fetchStandards]);
+    fetchReferentieComponentenWithStandards();
+  }, [fetchStandards, fetchReferentieComponentenWithStandards]);
+
   const [uses, setUses] = useState([]);
   const [used, setUsed] = useState([]);
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Track which IDs we've already fetched to prevent duplicate calls
+  const fetchedIds = useRef(new Set());
+
   const fetchUses = useCallback(async () => {
+    if (!id) return;
     setUsesLoading(true);
     try {
       const response = await fetch(
@@ -226,9 +262,10 @@ const AcPublicationProduct = ({
     } finally {
       setUsesLoading(false);
     }
-  }, [id]);
+  }, []);
 
   const fetchUsed = useCallback(async () => {
+    if (!id) return;
     setUsedLoading(true);
     try {
       const response = await fetch(
@@ -251,12 +288,20 @@ const AcPublicationProduct = ({
     } finally {
       setUsedLoading(false);
     }
-  }, [id]);
+  }, []);
 
   useEffect(() => {
+    // Only fetch when the ID in the URL changes and we haven't fetched for this ID before
+    if (!id || fetchedIds.current.has(id)) {
+      return;
+    }
+
+    // Mark this ID as fetched
+    fetchedIds.current.add(id);
+
     fetchUses();
     fetchUsed();
-  }, [fetchUses, fetchUsed]);
+  }, [id, fetchUses, fetchUsed]);
 
   // Loading
   if (loading.status || !get_single) {
@@ -346,6 +391,7 @@ const AcPublicationProduct = ({
                 ]}
                 rehypePlugins={[
                   rehypeSlug,
+                  [rehypeSanitize],
                   [remarkRehype, { handlers: { ...defListHastHandlers } }],
                 ]}
               />
@@ -396,9 +442,10 @@ const AcPublicationProduct = ({
             <TabList
               referentieComponenten={get_single.referentieComponenten}
               complianceStandards={get_single.compliancy}
+              objectStore={object}
               standards={standards}
               standardsLoading={standardsLoading}
-              objectStore={object}
+              referentieComponentenWithStandards={referentieComponentenWithStandards}
               className='con-product-details--content-side'
             />
           </AcFlex>
@@ -420,19 +467,108 @@ const AcPublicationProduct = ({
         tabIndex={tabIndex}
         setTabIndex={setTabIndex}
         object={object}
+        navigateTo='publication'
       />
     </AcContainer>
   );
 };
 
+// Helper function to get all standards from referentieComponenten data
+const getAllStandardsFromReferentieComponenten = (
+  referentieComponentenWithStandards
+) => {
+  if (!referentieComponentenWithStandards?.length) return [];
+
+  const allStandards = [];
+
+  referentieComponentenWithStandards.forEach((refComp) => {
+    // Add verplichte standaarden
+    if (
+      refComp.verplichteStandaarden &&
+      Array.isArray(refComp.verplichteStandaarden)
+    ) {
+      refComp.verplichteStandaarden.forEach((standard) => {
+        const standardId =
+          typeof standard === 'string'
+            ? standard
+            : standard?.id ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+
+        if (standardId && !allStandards.find((s) => s.id === standardId)) {
+          allStandards.push({
+            id: standardId,
+            type: 'VERPLICHT',
+            referentieComponent: refComp.naam || `Component ${refComp.id}`,
+          });
+        }
+      });
+    }
+
+    // Add aanbevolen standaarden
+    if (
+      refComp.aanbevolenStandaarden &&
+      Array.isArray(refComp.aanbevolenStandaarden)
+    ) {
+      refComp.aanbevolenStandaarden.forEach((standard) => {
+        const standardId =
+          typeof standard === 'string'
+            ? standard
+            : standard?.id ||
+              standard?.value ||
+              standard?.slug ||
+              standard?.naam ||
+              standard?.name;
+
+        if (standardId) {
+          const existingStandard = allStandards.find((s) => s.id === standardId);
+          if (existingStandard) {
+            // If already exists as VERPLICHT, keep it as VERPLICHT
+            if (existingStandard.type !== 'VERPLICHT') {
+              existingStandard.type = 'AANBEVOLEN';
+            }
+          } else {
+            allStandards.push({
+              id: standardId,
+              type: 'AANBEVOLEN',
+              referentieComponent: refComp.naam || `Component ${refComp.id}`,
+            });
+          }
+        }
+      });
+    }
+  });
+
+  return allStandards;
+};
+
 const TabList = ({
   referentieComponenten,
   complianceStandards,
+  objectStore,
   standards,
   standardsLoading,
-  objectStore,
+  referentieComponentenWithStandards,
 }) => {
+  // Get all standards from referentieComponenten using the helper function
+  const allReferentieStandards = getAllStandardsFromReferentieComponenten(
+    referentieComponentenWithStandards
+  );
+
+  // Set default tab index based on whether we have standards from referentieComponenten
+  const hasStandards = allReferentieStandards && allReferentieStandards.length > 0;
   const [tabIndex, setTabIndex] = useState(0);
+
+  // Update tab index when standards data becomes available
+  useEffect(() => {
+    if (hasStandards) {
+      setTabIndex(0); // Show standards tab
+    } else {
+      setTabIndex(1); // Show "Geschikt voor" tab
+    }
+  }, [hasStandards]);
 
   // Custom hook to resolve UUIDs while keeping original IDs
   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
@@ -474,180 +610,46 @@ const TabList = ({
     <div className='con-product-details--side-content-tabs'>
       <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
         <AcTabList>
-          <AcTab selected={tabIndex === 0}>Standaarden:</AcTab>
-          <AcTab selected={tabIndex === 1}>Geschikt voor:</AcTab>
+          <AcTab
+            selected={tabIndex === 0}
+          >{`Standaarden (${allReferentieStandards.length})`}</AcTab>
+          <AcTab
+            selected={tabIndex === 1}
+          >{`Geschikt voor (${referentieComponenten.length})`}</AcTab>
         </AcTabList>
         <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
-          {standardsLoading ? (
-            <p>Standaarden laden...</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableCell
-                    style={{
-                      fontWeight: 'bold',
-                      backgroundColor: '#f8f9fa',
-                      paddingLeft:
-                        'var(--utrecht-table-cell-padding-inline-end) !important',
-                    }}
-                  >
-                    Standaard
-                  </TableCell>
-                  <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                  >
-                    Status
-                  </TableCell>
-                  <TableCell
-                    style={{ fontWeight: 'bold', backgroundColor: '#f8f9fa' }}
-                  >
-                    Bewijs
-                  </TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {complianceStandards.map((standard, idx) => {
-                  // Get the full standard data to determine if it's required or recommended
-                  const standardData = ConStandardsResolver({
-                    standardId: standard.standaardversie,
-                    standards: standards,
-                    returnStandardData: true,
-                  });
-
-                  // Determine if this is a required standard based on available information
-                  // Since we don't have the referentiecomponenten context, we'll use heuristics:
-                  // 1. Check if the standard has evidence (indicates compliance)
-                  // 2. Check standard properties for indicators of requirement level
-                  const hasEvidence = !!standard.bewijs;
-
-                  // Try to determine if it's required based on standard data
-                  const standardInfo = standardData?.data;
-                  const isLikelyRequired =
-                    // If it has evidence, it might be required (organizations tend to provide evidence for required standards)
-                    hasEvidence ||
-                    // Check if the standard name/description contains keywords that suggest it's required
-                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                      .toLowerCase()
-                      .includes('verplicht') ||
-                    // Check if it's a security or compliance standard (often required)
-                    (standardInfo?.xml?.name?._value || standardInfo?.naam || '')
-                      .toLowerCase()
-                      .match(
-                        /(security|beveiliging|privacy|gdpr|iso.*27001|baseline)/
-                      );
-
-                  const standardType = isLikelyRequired ? 'VERPLICHT' : 'AANBEVOLEN';
-                  const typeColor = isLikelyRequired ? '#dc3545' : '#28a745';
-
-                  return (
-                    <TableRow key={idx}>
-                      <TableCell
-                        style={{
-                          alignContent: 'center',
-                          paddingLeft:
-                            'var(--utrecht-table-cell-padding-inline-end) !important',
-                        }}
-                      >
-                        <div>
-                          <Link
-                            href={`https://www.gemmaonline.nl/wiki/GEMMA/${standard.standaardversie}`}
-                            target='_blank'
-                          >
-                            <ConStandardsResolver
-                              standardId={standard.standaardversie}
-                              standards={standards}
-                            />
-                          </Link>
-                          <div style={{ marginTop: '4px' }}>
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                color: '#fff',
-                                backgroundColor: typeColor,
-                                fontWeight: '600',
-                                textTransform: 'uppercase',
-                                padding: '3px 8px',
-                                borderRadius: '4px',
-                                display: 'inline-block',
-                                lineHeight: '1.2',
-                                margin: '0px', // Set block-inline values to 0px
-                                marginBlockStart: '0px',
-                                marginBlockEnd: '0px',
-                                marginInlineStart: '0px',
-                                marginInlineEnd: '0px',
-                              }}
-                            >
-                              {standardType}
-                            </span>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            color: '#fff',
-                            backgroundColor: hasEvidence ? '#28a745' : '#6c757d',
-                            fontWeight: '600',
-                            textTransform: 'uppercase',
-                            padding: '3px 8px',
-                            borderRadius: '4px',
-                            display: 'inline-block',
-                            lineHeight: '1.2',
-                            margin: '0px', // Set block-inline values to 0px
-                            marginBlockStart: '0px',
-                            marginBlockEnd: '0px',
-                            marginInlineStart: '0px',
-                            marginInlineEnd: '0px',
-                          }}
-                        >
-                          {hasEvidence ? 'COMPLIANT' : 'NON-COMPLIANT'}
-                        </span>
-                      </TableCell>
-                      <TableCell style={{ alignContent: 'center' }}>
-                        {standard.bewijs ? (
-                          <Link
-                            href='#'
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handleFileClick(standard.bewijs);
-                            }}
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <VISUALS.DOWNLOAD />
-                          </Link>
-                        ) : (
-                          <span
-                            style={{
-                              display: 'flex',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            -
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          )}
+          <ConStandardsTable
+            referentieComponenten={referentieComponenten}
+            complianceStandards={complianceStandards}
+            enableScrolling={true}
+            standards={standards}
+            referentieComponentenWithStandards={referentieComponentenWithStandards}
+            loading={standardsLoading}
+          />
         </AcTabPanel>
         <AcTabPanel selected={tabIndex === 1}>
-          {resolvedReferentieComponenten.map((item, idx) => (
-            <Link
-              key={idx}
-              href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
-              target='_blank'
-            >
-              {item.name}
-            </Link>
-          ))}
+          {resolvedReferentieComponenten.map((item, idx) => {
+            // Find the actual referentieComponent object to get its real ID
+            const actualRefComponent = referentieComponentenWithStandards?.find(
+              (refComp) =>
+                refComp.id === item.id ||
+                refComp.fullData?.identifier === item.id ||
+                refComp.fullData?.id === item.id
+            );
+
+            // Use the actual referentieComponent's ID, fallback to item.id if not found
+            const refComponentObjectId = actualRefComponent?.fullData?.id || item.id;
+
+            return (
+              <Link
+                key={idx}
+                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${refComponentObjectId}`}
+                target='_blank'
+              >
+                {item.name}
+              </Link>
+            );
+          })}
         </AcTabPanel>
       </AcTabs>
     </div>

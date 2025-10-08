@@ -86,6 +86,10 @@ const ConStandardsResolver = loadable(() =>
   import('@src/components/con-standards-resolver/con-standards-resolver')
 );
 
+const ConStandardsTable = loadable(() =>
+  import('@src/components/con-standards-table/con-standards-table')
+);
+
 const ConRelatedObjectsLinks = loadable(() =>
   import('@src/components/con-related-objects-links/con-related-objects-links')
 );
@@ -147,6 +151,7 @@ export {
   ConDetailsActionsMenu,
   ConUuidResolver,
   ConStandardsResolver,
+  ConStandardsTable,
   ConRelatedObjectsLinks,
   ConExistingModulesInfoBox,
   ConModulesChoiceSwitch,

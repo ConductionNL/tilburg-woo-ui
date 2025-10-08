@@ -83,6 +83,15 @@ const PERSON_ADD = loadable(() =>
 const WORLD = loadable(() => import('-!svg-react-loader!@assets/images/world.svg'));
 const USER = loadable(() => import('-!svg-react-loader!@assets/images/user.svg'));
 const USERS = loadable(() => import('-!svg-react-loader!@assets/images/users.svg'));
+const USER_PLUS = loadable(() =>
+  import('-!svg-react-loader!@assets/images/user-plus.svg')
+);
+const USER_XMARK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/user-xmark.svg')
+);
+const USER_CHECK = loadable(() =>
+  import('-!svg-react-loader!@assets/images/user-check.svg')
+);
 const BUILDING = loadable(() =>
   import('-!svg-react-loader!@assets/images/building.svg')
 );
@@ -245,6 +254,9 @@ export const VISUALS = {
   WORLD,
   USER,
   USERS,
+  USER_PLUS,
+  USER_XMARK,
+  USER_CHECK,
   BUILDING,
   TRUCK,
   CUBE,
