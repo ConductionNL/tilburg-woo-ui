@@ -5601,15 +5601,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@utrecht/components@npm:^3.0.1-alpha.42":
-  version: 3.0.1-alpha.42
-  resolution: "@utrecht/components@npm:3.0.1-alpha.42"
-  dependencies:
-    clsx: "npm:1.2.1"
-  checksum: 10c0/4a7f3e9163ee2ef391105a2bcbc090234c761ed68b71d7f99e6f1d2b4f19d7cb8745e237c76c036a4c5dfed873ebdaf7ba0d0937695dc5e3a12e0d88dd1477c1
-  languageName: node
-  linkType: hard
-
 "@utrecht/currency-data-css@npm:1.3.0":
   version: 1.3.0
   resolution: "@utrecht/currency-data-css@npm:1.3.0"
@@ -5838,10 +5829,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@utrecht/heading-1-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/heading-1-css@npm:1.5.1"
+  checksum: 10c0/d1bd0ce2feb8065240fe07004d70282be3d049d9af157d8b6b08c344d4fc2e5cd41f0025d7c00191b22a7a9c994cef2576ae7189164c0ce1eebe0aa2b5433695
+  languageName: node
+  linkType: hard
+
 "@utrecht/heading-2-css@npm:1.5.0":
   version: 1.5.0
   resolution: "@utrecht/heading-2-css@npm:1.5.0"
   checksum: 10c0/25fa566142f7bb7c5b39ce11e6f88c78aee14d3e7f6f9a6c51a413cb6a0370e458499d77eeeba92dbcbef0fccf5ea256252cb88bd4e988210bbb0d554963277c
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-2-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/heading-2-css@npm:1.5.1"
+  checksum: 10c0/20a1d741c110d8df1b4fdade353101437ae33b96970289ee6f3504d4456630110914ca64d313ddf5536fd4faf3b53059736baf88439036cdf34ea63571ba3cd6
   languageName: node
   linkType: hard
 
@@ -5852,10 +5857,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@utrecht/heading-3-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/heading-3-css@npm:1.5.1"
+  checksum: 10c0/1673f06fc66924f99921bddf76169de8dd8333e209bf97ed66abc09445bf9e5aca1991088a26926d98affd5eb90fdfc32181d23df22877038abf20cd38fedc76
+  languageName: node
+  linkType: hard
+
 "@utrecht/heading-4-css@npm:1.5.0":
   version: 1.5.0
   resolution: "@utrecht/heading-4-css@npm:1.5.0"
   checksum: 10c0/adf91fff2d9629a08fd6ba8b35519b414c062d08130c376b48895b33b3b6557f8aa35c268152735b833160076a4571a29fb0ec174f98fe77e0946e2bc481708c
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-4-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/heading-4-css@npm:1.5.1"
+  checksum: 10c0/ec414f14ababe2b1ed7f2439585bee784c531f8f2fca7a6cfd3c949f4740ee528a1652b82c270bd7fca4da92495f78f56c3c395ef463a41180efbb2aeea58166
   languageName: node
   linkType: hard
 
@@ -5866,10 +5885,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@utrecht/heading-5-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/heading-5-css@npm:1.5.1"
+  checksum: 10c0/ba41b528da686a521d253772de381a823e1bbe5f3ea788d4a7b8d43c0e78e10411b5b6111b786b91ea4f079203ea4a3f10b6fe8114f5e527e10b4e06dfcc6bfb
+  languageName: node
+  linkType: hard
+
 "@utrecht/heading-6-css@npm:1.5.0":
   version: 1.5.0
   resolution: "@utrecht/heading-6-css@npm:1.5.0"
   checksum: 10c0/c6052fb7cb1acd0d165697db6df6f26542632cf708bb55ef191801f77f720311b6a6532277786ef4f07b8f80d9e0de31212826bba13f78242a39b7b85a65984a
+  languageName: node
+  linkType: hard
+
+"@utrecht/heading-6-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/heading-6-css@npm:1.5.1"
+  checksum: 10c0/be20e1b56f6c394026ef9264b94ca8135e627579c518d4dc0d3afeeeb1478a497592bbb1e10c99a12468beec5172419efe6456259d551a03bac69e31df85165d
   languageName: node
   linkType: hard
 
@@ -5926,6 +5959,13 @@ __metadata:
   version: 1.6.0
   resolution: "@utrecht/link-css@npm:1.6.0"
   checksum: 10c0/548c735bb438762ebf96da8560aedfa6dc7c4b83181feed8bde42de45a83ef4fb16bb73beb0740aa8203b2f6ebcac5fb1b0c680e7c8c8a77f899404f16bbba61
+  languageName: node
+  linkType: hard
+
+"@utrecht/link-css@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "@utrecht/link-css@npm:1.6.1"
+  checksum: 10c0/9cda04f300d05322797161bad54e65409291625b5adb2a63d3e60f90fb4eb47a053d4ebbe75640d4fea7ea0ecbb17844e7a85f5ea682ba6815c886033c04008a
   languageName: node
   linkType: hard
 
@@ -6076,6 +6116,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@utrecht/ordered-list-css@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@utrecht/ordered-list-css@npm:2.0.0"
+  checksum: 10c0/5ea12da0cf746e7c4ccd2ac20ba4cf38d9ac15fa835e023b48af1b04ebd1a17325873ad56373a9bf0b5dd99001d156cde5c0abf9c6f09bfc9a9e525a5f426fb1
+  languageName: node
+  linkType: hard
+
 "@utrecht/page-content-css@npm:1.4.0":
   version: 1.4.0
   resolution: "@utrecht/page-content-css@npm:1.4.0"
@@ -6115,6 +6162,13 @@ __metadata:
   version: 2.3.0
   resolution: "@utrecht/paragraph-css@npm:2.3.0"
   checksum: 10c0/ae4b5a6f22c5e31acb02d9e4e12d859dfe887a69a52fe50901cacd0db2964dfa67c1db81e20324ee799de34233e6594050331e3c430b0eb46faf306ae4388881
+  languageName: node
+  linkType: hard
+
+"@utrecht/paragraph-css@npm:^2.3.1":
+  version: 2.3.1
+  resolution: "@utrecht/paragraph-css@npm:2.3.1"
+  checksum: 10c0/882dea99e305e53c60952bcf503efe1ca2828f542dacac078b8874d7bc82e21d8596229cc429744ffc43f0bab02ae5137b8e98d9b29fa4191e98bcaaa00b4ee8
   languageName: node
   linkType: hard
 
@@ -6276,6 +6330,13 @@ __metadata:
   version: 1.5.0
   resolution: "@utrecht/unordered-list-css@npm:1.5.0"
   checksum: 10c0/573bb5e2808e954ef2d2e300b991bfdc8ba495d2898e9a38083392d206996b95525d9a49380a7f3a690348ed7d180257c80d13aee8a9fab4ac71e40f1b1d1c98
+  languageName: node
+  linkType: hard
+
+"@utrecht/unordered-list-css@npm:^1.5.1":
+  version: 1.5.1
+  resolution: "@utrecht/unordered-list-css@npm:1.5.1"
+  checksum: 10c0/e89e8d21e54919b8341e84868305ac2e7f2547ec2a4f69440bb4bc7999d343a51ad15225633a1cac5f424a536a8981a55a5feee02ec645235f2765a5ae306210
   languageName: node
   linkType: hard
 
@@ -8120,17 +8181,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"clsx@npm:1.2.1, clsx@npm:^1.2.1":
-  version: 1.2.1
-  resolution: "clsx@npm:1.2.1"
-  checksum: 10c0/34dead8bee24f5e96f6e7937d711978380647e936a22e76380290e35486afd8634966ce300fc4b74a32f3762c7d4c0303f442c3e259f4ce02374eb0c82834f27
-  languageName: node
-  linkType: hard
-
 "clsx@npm:2.1.1, clsx@npm:^2.0.0":
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
+  languageName: node
+  linkType: hard
+
+"clsx@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "clsx@npm:1.2.1"
+  checksum: 10c0/34dead8bee24f5e96f6e7937d711978380647e936a22e76380290e35486afd8634966ce300fc4b74a32f3762c7d4c0303f442c3e259f4ce02374eb0c82834f27
   languageName: node
   linkType: hard
 
@@ -16012,7 +16073,16 @@ __metadata:
     "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.128"
     "@uiw/react-md-editor": "npm:^4.0.8"
     "@utrecht/component-library-react": "npm:9.0.3"
-    "@utrecht/components": "npm:^3.0.1-alpha.42"
+    "@utrecht/heading-1-css": "npm:^1.5.1"
+    "@utrecht/heading-2-css": "npm:^1.5.1"
+    "@utrecht/heading-3-css": "npm:^1.5.1"
+    "@utrecht/heading-4-css": "npm:^1.5.1"
+    "@utrecht/heading-5-css": "npm:^1.5.1"
+    "@utrecht/heading-6-css": "npm:^1.5.1"
+    "@utrecht/link-css": "npm:^1.6.1"
+    "@utrecht/ordered-list-css": "npm:^2.0.0"
+    "@utrecht/paragraph-css": "npm:^2.3.1"
+    "@utrecht/unordered-list-css": "npm:^1.5.1"
     axios: "npm:^1.6.7"
     babel-loader: "npm:9.1.2"
     babel-preset-mobx: "npm:^2.0.0"
