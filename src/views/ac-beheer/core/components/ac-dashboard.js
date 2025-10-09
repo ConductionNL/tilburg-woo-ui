@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { AcFlex, AcSection, AcGrid, AcContainer } from '@atoms';
@@ -7,6 +7,7 @@ import {
   ConDynamicSidenav,
   ConOrganizationSelector,
   ConAangebodenGebruikTable,
+  ConSpinLoader,
 } from '@components';
 import { getDashboardWizards, getWizardUrl } from '@constants/wizards.constants';
 import { useNavigate } from 'react-router-dom';
@@ -23,13 +24,34 @@ const AcDashboard = ({ store }) => {
   const { user, object } = store;
 
   const [orgIsPublished, setOrgIsPublished] = useState(false);
+  const [userOrganization, setUserOrganization] = useState(null);
   const [hasVoorgesteldGebruik, setHasVoorgesteldGebruik] = useState(true); // Start as true, let component set to false if no data
   const [refreshKey, setRefreshKey] = useState(0); // Key to force component refresh
+  const [isLoadingOrganization, setIsLoadingOrganization] = useState(true);
 
   const fetchOrganisatieData = useCallback(async () => {
     const activeOrganizationId = user?.activeOrganization?.uuid;
-    if (!activeOrganizationId) return;
+    if (!activeOrganizationId) {
+      setIsLoadingOrganization(false);
+      return;
+    }
 
+    // Check if organization data is already cached
+    const cachedOrganization = object.getObject(
+      'voorzieningen_organisatie',
+      activeOrganizationId
+    );
+
+    if (cachedOrganization) {
+      // Use cached data immediately
+      setOrgIsPublished(!!cachedOrganization?.['@self']?.published);
+      setUserOrganization(cachedOrganization);
+      setIsLoadingOrganization(false);
+      return;
+    }
+
+    // Fetch if not cached
+    setIsLoadingOrganization(true);
     try {
       await object.fetchObject('voorzieningen', 'organisatie', activeOrganizationId);
 
@@ -39,9 +61,12 @@ const AcDashboard = ({ store }) => {
       );
       if (result) {
         setOrgIsPublished(!!result?.['@self']?.published);
+        setUserOrganization(result);
       }
     } catch (error) {
       console.error('Error fetching organization data:', error);
+    } finally {
+      setIsLoadingOrganization(false);
     }
   }, [user?.activeOrganization?.uuid, object]);
 
@@ -72,8 +97,11 @@ const AcDashboard = ({ store }) => {
     fetchOrganisatieData();
   }, [fetchOrganisatieData]);
 
-  // Get available wizards for this user
-  const availableWizards = getDashboardWizards(user, user?.organisation);
+  // Get available wizards for this user - only calculate when userOrganization is loaded
+  const availableWizards = useMemo(() => {
+    if (!userOrganization) return [];
+    return getDashboardWizards(user, userOrganization);
+  }, [user, userOrganization]);
 
   return (
     <AcSection spacing className='ac-mijn-omgeving-section'>
@@ -83,23 +111,30 @@ const AcDashboard = ({ store }) => {
 
           <AcFlex column spacing='lg' className='ac-dashboard-content'>
             {/* Wizard Tiles */}
-            {availableWizards.length > 0 && (
-              <div className='ac-dashboard-wizards'>
+            <div className='ac-dashboard-wizards'>
+              <AcFlex
+                alignItems='center'
+                justifyContent='between'
+                className='ac-dashboard-wizards-header'
+              >
+                <Heading level={3}>Mijn software catalogus</Heading>
+
+                <ConOrganizationSelector
+                  store={store}
+                  className='ac-dashboard-org-selector'
+                  onSwitchSuccess={handleOrganizationSwitch}
+                  onSwitchError={handleOrganizationSwitchError}
+                />
+              </AcFlex>
+
+              {isLoadingOrganization ? (
                 <AcFlex
-                  alignItems='center'
-                  justifyContent='between'
-                  className='ac-dashboard-wizards-header'
+                  justifyContent='center'
+                  style={{ padding: 'var(--tilburg-space-block-xl)' }}
                 >
-                  <Heading level={3}>Mijn software catalogus</Heading>
-
-                  <ConOrganizationSelector
-                    store={store}
-                    className='ac-dashboard-org-selector'
-                    onSwitchSuccess={handleOrganizationSwitch}
-                    onSwitchError={handleOrganizationSwitchError}
-                  />
+                  <ConSpinLoader />
                 </AcFlex>
-
+              ) : availableWizards.length > 0 ? (
                 <AcGrid columns={5} gap='xl' className='ac-dashboard-wizard-grid'>
                   {availableWizards.map((wizard) => (
                     <AcTile
@@ -114,8 +149,12 @@ const AcDashboard = ({ store }) => {
                     />
                   ))}
                 </AcGrid>
-              </div>
-            )}
+              ) : (
+                <Paragraph>
+                  Geen wizards beschikbaar voor deze organisatie.
+                </Paragraph>
+              )}
+            </div>
 
             {/* Warning card for unpublished organization */}
             {!orgIsPublished && (
@@ -138,21 +177,22 @@ const AcDashboard = ({ store }) => {
 
             {/* Voorgesteld Gebruik Table - Separate info container - Only show if there are suggestions */}
             {/* TODO: figure out why did doesnt work anymore */}
-            {/* {hasVoorgesteldGebruik && (
+            {hasVoorgesteldGebruik && (
               <Alert type='info'>
                 <Heading level={4}>Voorgesteld Gebruik</Heading>
                 <Paragraph>
-                  Hieronder vindt u gebruik suggesties die door andere organisaties voor u zijn aangemaakt. 
-                  U kunt deze overnemen om ze toe te voegen aan uw organisatie of afwijzen als ze niet relevant zijn.
+                  Hieronder vindt u gebruik suggesties die door andere organisaties
+                  voor u zijn aangemaakt. U kunt deze overnemen om ze toe te voegen
+                  aan uw organisatie of afwijzen als ze niet relevant zijn.
                 </Paragraph>
                 <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
-                  <ConAangebodenGebruikTable 
-                    key={refreshKey} 
-                    onDataChange={setHasVoorgesteldGebruik} 
+                  <ConAangebodenGebruikTable
+                    key={refreshKey}
+                    onDataChange={setHasVoorgesteldGebruik}
                   />
                 </div>
               </Alert>
-            )} */}
+            )}
 
             {/* Welcome Section */}
             <div className='ac-register-review__section'>
@@ -202,16 +242,27 @@ const AcDashboard = ({ store }) => {
               </div>
 
               <Paragraph className='ac-dashboard-link-container'>
-                Voor account- en organisatiedetails gaat u naar
+                Voor accountdetails gaat u naar
                 <Link
                   className='ac-dashboard-link'
-                  href='/account'
+                  href='/beheer/my-account'
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/account');
+                    navigate('/beheer/my-account');
                   }}
                 >
                   Mijn Account
+                </Link>
+                . Voor organisatiedetails gaat u naar
+                <Link
+                  className='ac-dashboard-link'
+                  href='/beheer/my-organisation'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/beheer/my-organisation');
+                  }}
+                >
+                  Mijn Organisatie
                 </Link>
                 .
               </Paragraph>
