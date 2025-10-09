@@ -50,7 +50,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
   // Dienst object (schema-compliant)
   const [dienst, setDienst] = useState({
-    naam: '', 
+    naam: '',
     beschrijvingKort: '',
     beschrijvingLang: '',
     website: '',
@@ -302,7 +302,9 @@ const ConFormsDienst = ({ store, userStore }) => {
         ? data.results
         : [];
       const mapped = list.map((item, index) => ({
-        value: String(item?.id || item?.value || item?.slug || index),
+        value: String(
+          item?.id || item?.['@self']?.id || item?.value || item?.slug || index
+        ),
         label: String(
           item?.naam || item?.name || item?.title || `Product ${index + 1}`
         ),
@@ -386,12 +388,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                   return m.trim();
                 } else if (typeof m === 'object' && m !== null) {
                   return String(
-                    m?.id ||
-                      m?.value ||
-                      m?.uuid ||
-                      m?.slug ||
-                      m?.['@self']?.id ||
-                      ''
+                    m?.id || m?.value || m?.uuid || m?.slug || m?.['@self']?.id || ''
                   );
                 }
                 return '';
