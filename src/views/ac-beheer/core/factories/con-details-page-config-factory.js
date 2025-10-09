@@ -92,6 +92,17 @@ const DetailsPageConfigFactory = {
           ],
         };
 
+      case 'koppeling':
+        return {
+          ...baseDetailsConfig,
+          // Ensure relations are present to compensate for backend bug (moduleA null)
+          extend: [...detailsExtend],
+          excludedProperties: ['id'],
+          formatBySchemaOptions: {
+            includeUnknown: true,
+          },
+        };
+
       case 'product':
         return {
           ...baseDetailsConfig,

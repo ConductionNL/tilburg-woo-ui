@@ -14,6 +14,7 @@ import ConMyOrganisationPage from './custom/con-my-organisation';
 import ConModuleDetailsPage from '../../domains/ac-module/con-module-details-page';
 import ConContactpersoonDetailsPage from '../../domains/ac-contactpersoon/con-contactpersoon-details-page';
 import ConDienstDetailsPage from '../../domains/ac-dienst/con-dienst-details-page';
+import ConKoppelingDetailsPage from '../../domains/ac-koppeling/con-koppeling-details-page';
 
 const AcBeheer = ({ store }) => {
   const navigate = useNavigate();
@@ -73,6 +74,9 @@ const AcBeheer = ({ store }) => {
   }
   if (type === 'dienst') {
     return <ConDienstDetailsPage />;
+  }
+  if (type === 'koppeling') {
+    return <ConKoppelingDetailsPage />;
   }
   if (type === 'contactpersoon') {
     return <ConContactpersoonDetailsPage />;
