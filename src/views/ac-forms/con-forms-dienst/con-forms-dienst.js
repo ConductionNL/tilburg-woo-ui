@@ -377,20 +377,25 @@ const ConFormsDienst = ({ store, userStore }) => {
         const label = fromDetail || fromSelected || fromOptions || String(prodId);
 
         // Use modules array on product to fetch each module individually
+        // The modules array contains UUID strings directly, not objects
         const moduleIds = Array.isArray(productItem?.modules)
           ? productItem.modules
-              .map((m) =>
-                String(
-                  typeof m === 'object'
-                    ? m?.id ||
-                        m?.value ||
-                        m?.uuid ||
-                        m?.slug ||
-                        m?.['@self']?.id ||
-                        ''
-                    : m || ''
-                )
-              )
+              .map((m) => {
+                // Handle both string UUIDs and object formats
+                if (typeof m === 'string' && m.trim()) {
+                  return m.trim();
+                } else if (typeof m === 'object' && m !== null) {
+                  return String(
+                    m?.id ||
+                      m?.value ||
+                      m?.uuid ||
+                      m?.slug ||
+                      m?.['@self']?.id ||
+                      ''
+                  );
+                }
+                return '';
+              })
               .filter(Boolean)
           : [];
 
@@ -483,11 +488,15 @@ const ConFormsDienst = ({ store, userStore }) => {
         const mod = res.status === 'fulfilled' ? res.value : null;
         const ids = Array.isArray(mod?.koppelingen) ? mod.koppelingen : [];
         ids.forEach((k) => {
-          const id = String(
-            typeof k === 'object'
-              ? k?.id || k?.value || k?.uuid || k?.slug || k?.['@self']?.id || ''
-              : k || ''
-          );
+          // Handle both string UUIDs and object formats
+          let id = '';
+          if (typeof k === 'string' && k.trim()) {
+            id = k.trim();
+          } else if (typeof k === 'object' && k !== null) {
+            id = String(
+              k?.id || k?.value || k?.uuid || k?.slug || k?.['@self']?.id || ''
+            );
+          }
           if (id) collectedKoppelingIds.push(id);
         });
       });
