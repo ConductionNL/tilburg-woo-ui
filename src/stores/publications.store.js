@@ -125,6 +125,9 @@ export class PublicationsStore {
   @observable
   attachmentSearch = '';
 
+  @observable
+  error = null;
+
   @computed
   get all_categories() {
     return this.categories;
@@ -215,6 +218,11 @@ export class PublicationsStore {
   @computed
   get all_facets() {
     return toJS(this.facets);
+  }
+
+  @computed
+  get get_error() {
+    return toJS(this.error);
   }
 
   @action
@@ -311,8 +319,8 @@ export class PublicationsStore {
 
     // Convert to string for comparison since URL params are strings
     const valueStr = String(value);
-    const hasValue = this.query[key].some(item => String(item) === valueStr);
-    
+    const hasValue = this.query[key].some((item) => String(item) === valueStr);
+
     // Remove item if we find it in the array.
     if (hasValue) {
       console.info('REMOVING VALUE:', value);
@@ -332,6 +340,11 @@ export class PublicationsStore {
   @action
   setLoadingStatus = (status) => {
     this.loading.status = status;
+  };
+
+  @action
+  setError = (error) => {
+    this.error = error;
   };
 
   @action
@@ -386,15 +399,15 @@ export class PublicationsStore {
 
   /**
    * Fetch facets using the new optimized API structure.
-   * 
+   *
    * The API now returns:
    * - `facets`: Object where each key is a facet name and value contains both configuration and data
    * - `facetable`: Configuration object defining all available facets (fallback/reference)
-   * 
+   *
    * Each facet in the `facets` object has the structure:
    * {
    *   "name": "_register",
-   *   "type": "terms", 
+   *   "type": "terms",
    *   "title": "Register",
    *   "enabled": true,
    *   "queryParameter": "@self[register]",
@@ -402,7 +415,7 @@ export class PublicationsStore {
    *     "buckets": [{ "value": 1, "count": 2, "label": "1" }]
    *   }
    * }
-   * 
+   *
    * This allows us to:
    * 1. Only show enabled facets (configured in backend)
    * 2. Get proper titles and metadata from each facet
@@ -420,10 +433,10 @@ export class PublicationsStore {
         _limit: 0, // We only want facets, not results
         _facets: 'extend', // Request extended facets
       };
-      
+
       // Remove pagination parameters since we're not fetching results
       delete baseQuery._page;
-      
+
       const queryString = AcBuildURLSearchParams(baseQuery);
       const fullUrl = `${commongroundApiUrl()}/opencatalogi/api/publications?_source=index&${queryString}`;
 
@@ -448,8 +461,16 @@ export class PublicationsStore {
       const facetableConfig = response.facetable || {};
 
       console.info('📊 Processing new facets structure');
-      console.info('Facets data:', Object.keys(facetsData).length, 'facets with data');
-      console.info('Facetable config:', Object.keys(facetableConfig).length, 'available facets');
+      console.info(
+        'Facets data:',
+        Object.keys(facetsData).length,
+        'facets with data'
+      );
+      console.info(
+        'Facetable config:',
+        Object.keys(facetableConfig).length,
+        'available facets'
+      );
 
       if (facetsData && Object.keys(facetsData).length > 0) {
         // Build facets from the facets data, only including enabled ones
@@ -476,7 +497,7 @@ export class PublicationsStore {
             if (!processedFacets['@self']) {
               processedFacets['@self'] = {};
             }
-            
+
             const cleanKey = facetName.substring(1); // Remove the _ prefix
             processedFacets['@self'][cleanKey] = {
               buckets: buckets,
@@ -500,7 +521,7 @@ export class PublicationsStore {
             };
           }
         }
-        
+
         this.setFacets(processedFacets);
         console.info('✅ Facets processed and set:', Object.keys(processedFacets));
         console.info('Processed facets structure:', processedFacets);
@@ -649,6 +670,8 @@ export class PublicationsStore {
   @action
   fetchPublication = async (_id) => {
     this.loading.status = true;
+    // Clear any previous error when starting a new fetch
+    this.setError(null);
 
     console.group('📄 FETCHING SINGLE PUBLICATION WITH NAMES');
     console.info('Publication ID:', _id);
@@ -690,8 +713,39 @@ export class PublicationsStore {
         console.groupEnd();
 
         this.setPublication(response);
+        this.setError(null);
       })
-      .catch((e) => console.error(e))
+      .catch((e) => {
+        console.error(e);
+        // Normalize Axios error shape
+        const status = e?.response?.status;
+        const statusText = e?.response?.statusText;
+        const data = e?.response?.data;
+        const messageFromApi =
+          (typeof data === 'string' && data) ||
+          data?.message ||
+          data?.detail ||
+          data?.title;
+
+        const normalizedError = {
+          status: status || null,
+          statusText: statusText || null,
+          code: e?.code || null,
+          message:
+            messageFromApi ||
+            (status === 404
+              ? 'Publicatie niet gevonden.'
+              : status === 401
+              ? 'Niet geautoriseerd om deze publicatie te bekijken.'
+              : status === 403
+              ? 'Toegang geweigerd voor deze publicatie.'
+              : status === 500
+              ? 'Er is een fout opgetreden op de server.'
+              : 'Er is een fout opgetreden bij het ophalen van de publicatie.'),
+          raw: toJS(e?.response) || null,
+        };
+        this.setError(normalizedError);
+      })
       .finally(() => {
         this.setLoadingStatus(false);
       });
@@ -715,6 +769,7 @@ export class PublicationsStore {
   @action
   resetPublication = () => {
     this.single = null;
+    this.setError(null);
   };
 
   @action
