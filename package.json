@@ -153,7 +153,7 @@
     "import-glob-loader": "^1.1.0",
     "mini-css-extract-plugin": "2.7.6",
     "node-polyfill-webpack-plugin": "^2.0.1",
-    "postcss": "8.4.24",
+    "postcss": "^8.5.6",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-loader": "7.3.3",
     "postcss-normalize": "^10.0.1",
