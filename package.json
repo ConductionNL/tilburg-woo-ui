@@ -194,7 +194,8 @@
     ]
   },
   "resolutions": {
-    "react-error-overlay": "6.0.9"
+    "react-error-overlay": "6.0.9",
+    "@babel/runtime": "^7.28.4"
   },
   "packageManager": "yarn@4.1.1"
 }
