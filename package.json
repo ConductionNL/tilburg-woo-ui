@@ -149,7 +149,6 @@
     "eslint-plugin-import": "^2.29.0",
     "eslint-plugin-react": "^7.34.0",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "extract-text-webpack-plugin": "^3.0.2",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.3",
     "import-glob-loader": "^1.1.0",
