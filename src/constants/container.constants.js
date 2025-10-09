@@ -4,11 +4,11 @@
 import { AcLockObject } from '@utils/ac-lock-object';
 // Container configuration
 export const CONTAINER_CONFIG = AcLockObject({
-  SITE_TITLE: 'Development Catalogus',
-  SITE_DESCRIPTION: 'Local development instance of the softwarecatalogus',
+  SITE_TITLE: 'Hot Reload Development 🔥',
+  SITE_DESCRIPTION: 'Hot reload development instance',
   SITE: 'localhost',
   MODE: 'development',
-  THEME_VARIANT: 'development',
+  THEME_VARIANT: 'vng',
   ENVIRONMENT_NAME: 'development',
   BASE_URL: '/api/apps',
   GRANT_TYPE: 'authorization_code',
@@ -26,7 +26,7 @@ export const CONTAINER_CONFIG = AcLockObject({
   ENABLE_GEMMA: true,
   ENABLE_DIRECTORY: true,
   ENABLE_ROLLBAR: false,
-  ENABLE_MOCK_THEMES: false,
+  ENABLE_MOCK_THEMES: true,
   ENABLE_BREADCRUMBS: false,
   EXTERNAL_WEBSITE_URL: 'https://www.tilburg.nl/',
   EXTERNAL_PRIVACY_URL: 'https://www.tilburg.nl/privacystatement/',
