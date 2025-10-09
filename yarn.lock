@@ -640,7 +640,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-proposal-private-property-in-object@npm:^7.16.7, @babel/plugin-proposal-private-property-in-object@npm:^7.21.11":
+"@babel/plugin-proposal-private-property-in-object@npm:^7.16.7":
   version: 7.21.11
   resolution: "@babel/plugin-proposal-private-property-in-object@npm:7.21.11"
   dependencies:
@@ -16027,9 +16027,9 @@ __metadata:
     "@babel/helper-module-imports": "npm:^7.22.5"
     "@babel/helper-module-transforms": "npm:7.22.5"
     "@babel/plugin-proposal-decorators": "npm:7.22.5"
-    "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
     "@babel/plugin-transform-class-properties": "npm:^7.27.1"
     "@babel/plugin-transform-private-methods": "npm:^7.27.1"
+    "@babel/plugin-transform-private-property-in-object": "npm:^7.27.1"
     "@babel/plugin-transform-react-jsx": "npm:7.22.5"
     "@babel/plugin-transform-runtime": "npm:^7.22.5"
     "@babel/polyfill": "npm:^7.12.1"
