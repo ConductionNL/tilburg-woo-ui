@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { useEffect, useState } from 'react';
 import { AcLoader } from '@components';
 import { observer } from 'mobx-react-lite';
 import { AcSearchResult } from '@molecules';
@@ -238,6 +239,45 @@ const RelatedTabs = observer(
 
     // Show the tabs if we have data or are loading
     const shouldShow = isLoading || (mergedItems && mergedItems.length > 0);
+
+    // Prepare: fetch ambtenaar gebruik for upcoming "gebruik" tab (endpoint WIP)
+    const [, setAmbtenaarData] = useState(null);
+    const [, setAmbtenaarLoading] = useState(false);
+    const [, setAmbtenaarError] = useState(null);
+
+    useEffect(() => {
+      let isMounted = true;
+      const abortController = new AbortController();
+
+      const fetchAmbtenaarGebruik = async () => {
+        setAmbtenaarLoading(true);
+        setAmbtenaarError(null);
+        try {
+          const response = await fetch(
+            '/api/apps/softwarecatalog/api/aangeboden-gebruik/ambtenaar',
+            {
+              method: 'GET',
+              signal: abortController.signal,
+              headers: { Accept: 'application/json' },
+            }
+          );
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          if (isMounted) setAmbtenaarData(data);
+        } catch (err) {
+          if (isMounted && err.name !== 'AbortError') setAmbtenaarError(err);
+        } finally {
+          if (isMounted) setAmbtenaarLoading(false);
+        }
+      };
+
+      fetchAmbtenaarGebruik();
+
+      return () => {
+        isMounted = false;
+        abortController.abort();
+      };
+    }, []);
 
     return (
       <>
