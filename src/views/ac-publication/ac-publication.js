@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AcLoader } from '@components';
 import { withStore } from '@stores';
 import { getTitle } from '@services/con-get-title';
@@ -12,14 +12,20 @@ import AcPublicationOrganisation from '@views/ac-publication/ac-publication-orga
 import AcPublicationFormulier from './ac-publication-formulier';
 import AcPublicationProduct from './ac-publication-product';
 import AcPublicationModule from './ac-publication-module';
+import { AcContainer, AcFlex } from '@src/atoms';
+import { AcButton } from '@molecules';
+import { VISUALS } from '@constants';
+import { Alert, Heading2 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const {
     fetchPublication,
     resetPublication,
     get_single,
     loading,
+    get_error,
     fetchRelations,
     resetRelations,
     fetchAttachments,
@@ -93,6 +99,38 @@ const AcPublication = observer(({ store: { publications } }) => {
       setInitialDataLoaded(true);
     }
   }, [get_single, all_attachments, loading.status]);
+
+  // Show error state immediately if fetching the publication failed
+  if (get_error) {
+    return (
+      <AcContainer compact margin='xl' className='ac-publication-container'>
+        <AcFlex column spacing='lg'>
+          <h2 style={{ margin: 0 }}>Kon publicatie niet laden</h2>
+
+          <p style={{ fontWeight: 500, color: 'black' }}>
+            Er ging iets mis bij het laden van deze publicatie. Dit kan komen doordat
+            de publicatie niet (meer) bestaat of door een tijdelijke storing. Probeer
+            het later opnieuw of ga terug naar de vorige pagina.
+          </p>
+
+          <small>
+            {get_error.status ? `Foutcode ${get_error.status}` : 'Onbekende fout'}
+            {get_error.message ? `: ${get_error.message}` : ''}
+          </small>
+
+          <div>
+            <AcButton
+              style='button'
+              buttonType='primary'
+              onClick={() => navigate(-1)}
+            >
+              <VISUALS.ARROW_LEFT className='ac-button__icon' /> Ga terug
+            </AcButton>
+          </div>
+        </AcFlex>
+      </AcContainer>
+    );
+  }
 
   if (!initialDataLoaded) {
     return <AcLoader />;
