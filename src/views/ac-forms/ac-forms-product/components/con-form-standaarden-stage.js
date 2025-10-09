@@ -365,15 +365,20 @@ const ConFormStandaardenStage = ({
           }
 
           // Update standaarden and standaardenGemma arrays
-          const currentStandaarden = Array.isArray(module.standaarden) ? [...module.standaarden] : [];
-          const currentStandaardenGemma = Array.isArray(module.standaardenGemma) ? [...module.standaardenGemma] : [];
+          const currentStandaarden = Array.isArray(module.standaarden)
+            ? [...module.standaarden]
+            : [];
+          const currentStandaardenGemma = Array.isArray(module.standaardenGemma)
+            ? [...module.standaardenGemma]
+            : [];
 
           if (isCompliant) {
             // Add to arrays if not already present
             if (!currentStandaarden.includes(standardId)) {
               currentStandaarden.push(standardId);
             }
-            const objectId = findMatchingStandardData({ id: standardId })?.id || null;
+            const objectId =
+              findMatchingStandardData({ id: standardId })?.id || null;
             if (objectId && !currentStandaardenGemma.includes(objectId)) {
               currentStandaardenGemma.push(objectId);
             }
@@ -383,7 +388,8 @@ const ConFormStandaardenStage = ({
             if (standardIndex > -1) {
               currentStandaarden.splice(standardIndex, 1);
             }
-            const objectId = findMatchingStandardData({ id: standardId })?.id || null;
+            const objectId =
+              findMatchingStandardData({ id: standardId })?.id || null;
             if (objectId) {
               const objectIndex = currentStandaardenGemma.indexOf(objectId);
               if (objectIndex > -1) {
@@ -473,7 +479,9 @@ const ConFormStandaardenStage = ({
 
         if (isCompliant) {
           // Find the standard data to get the objectId
-          const standardData = findMatchingStandardData({ id: currentEntry.standardId });
+          const standardData = findMatchingStandardData({
+            id: currentEntry.standardId,
+          });
           const objectId = standardData?.id || standardData?.objectId || null;
 
           // Add or update compliancy object
@@ -501,15 +509,20 @@ const ConFormStandaardenStage = ({
         }
 
         // Update standaarden and standaardenGemma arrays
-        const currentStandaarden = Array.isArray(app.standaarden) ? [...app.standaarden] : [];
-        const currentStandaardenGemma = Array.isArray(app.standaardenGemma) ? [...app.standaardenGemma] : [];
+        const currentStandaarden = Array.isArray(app.standaarden)
+          ? [...app.standaarden]
+          : [];
+        const currentStandaardenGemma = Array.isArray(app.standaardenGemma)
+          ? [...app.standaardenGemma]
+          : [];
 
         if (isCompliant) {
           // Add to arrays if not already present
           if (!currentStandaarden.includes(currentEntry.standardId)) {
             currentStandaarden.push(currentEntry.standardId);
           }
-          const objectId = findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
+          const objectId =
+            findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
           if (objectId && !currentStandaardenGemma.includes(objectId)) {
             currentStandaardenGemma.push(objectId);
           }
@@ -519,7 +532,8 @@ const ConFormStandaardenStage = ({
           if (standardIndex > -1) {
             currentStandaarden.splice(standardIndex, 1);
           }
-          const objectId = findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
+          const objectId =
+            findMatchingStandardData({ id: currentEntry.standardId })?.id || null;
           if (objectId) {
             const objectIndex = currentStandaardenGemma.indexOf(objectId);
             if (objectIndex > -1) {
@@ -838,6 +852,77 @@ const ConFormStandaardenStage = ({
         }))
     ),
   ]);
+
+  // Ensure standaardGemma, standaarden, and standaardenGemma arrays are properly synchronized
+  // This fixes cases where compliance data exists but the arrays are not in sync
+  useEffect(() => {
+    if (Object.keys(tableState).length === 0) return;
+
+    setProduct((prev) => {
+      const modules = [...(prev.modules || [])];
+      let hasChanges = false;
+
+      modules.forEach((module, moduleIndex) => {
+        if (typeof module !== 'object') return;
+
+        const compliancy = Array.isArray(module.compliancy)
+          ? [...module.compliancy]
+          : [];
+        if (compliancy.length === 0) return;
+
+        let currentStandaarden = Array.isArray(module.standaarden)
+          ? [...module.standaarden]
+          : [];
+        let currentStandaardenGemma = Array.isArray(module.standaardenGemma)
+          ? [...module.standaardenGemma]
+          : [];
+        let updatedCompliancy = [...compliancy];
+        let moduleChanged = false;
+
+        compliancy.forEach((comp, compIndex) => {
+          const standardId = comp.standaardversie;
+          if (!standardId) return;
+
+          // Find the standard data to get the objectId
+          const standardData = findMatchingStandardData({ id: standardId });
+          const objectId = standardData?.id || standardData?.objectId || null;
+
+          // Check if standaardGemma is missing and needs to be filled
+          if (!comp.standaardGemma && objectId) {
+            updatedCompliancy[compIndex] = {
+              ...comp,
+              standaardGemma: objectId,
+            };
+            moduleChanged = true;
+          }
+
+          // Check if standard is missing from standaarden array
+          if (!currentStandaarden.includes(standardId)) {
+            currentStandaarden.push(standardId);
+            moduleChanged = true;
+          }
+
+          // Check if objectId is missing from standaardenGemma array
+          if (objectId && !currentStandaardenGemma.includes(objectId)) {
+            currentStandaardenGemma.push(objectId);
+            moduleChanged = true;
+          }
+        });
+
+        if (moduleChanged) {
+          modules[moduleIndex] = {
+            ...module,
+            compliancy: updatedCompliancy,
+            standaarden: currentStandaarden,
+            standaardenGemma: currentStandaardenGemma,
+          };
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? { ...prev, modules } : prev;
+    });
+  }, [tableState, standaardenMap]);
 
   // If no new modules exist, show a message
   if (newModules.length === 0) {
