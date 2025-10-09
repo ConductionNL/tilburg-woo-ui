@@ -7,7 +7,7 @@ import { withStore } from '@stores';
 import { AcLoader, ConDynamicSidenav } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
-import { dia, shapes } from 'jointjs';
+import { dia, shapes } from '@joint/core';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import svgPanZoom from 'svg-pan-zoom';
 import { AcCheckbox } from '@molecules';
@@ -622,28 +622,38 @@ const ConBeheerViews = ({ store }) => {
                         try {
                           const response = await fetch(
                             '/api/apps/softwarecatalog/api/archimate/export',
-                            { 
+                            {
                               method: 'POST',
                               headers: {
-                                'Accept': 'application/xml',
+                                Accept: 'application/xml',
                               },
                             }
                           );
 
                           if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
+                            throw new Error(
+                              `HTTP error! status: ${response.status}`
+                            );
                           }
 
                           // Get the XML content
                           const xmlData = await response.text();
 
                           // Extract filename from Content-Disposition header if available
-                          const disposition = response.headers.get('content-disposition');
-                          const filenameMatch = disposition?.match(/filename="?([^";]+)"?/i);
-                          const filename = filenameMatch?.[1] || `${getViewName(gemma.get_view).replace(/[^a-z0-9]/gi, '_').toLowerCase()}_amef.xml`;
+                          const disposition =
+                            response.headers.get('content-disposition');
+                          const filenameMatch =
+                            disposition?.match(/filename="?([^";]+)"?/i);
+                          const filename =
+                            filenameMatch?.[1] ||
+                            `${getViewName(gemma.get_view)
+                              .replace(/[^a-z0-9]/gi, '_')
+                              .toLowerCase()}_amef.xml`;
 
                           // Create blob and download
-                          const blob = new Blob([xmlData], { type: 'application/xml;charset=utf-8' });
+                          const blob = new Blob([xmlData], {
+                            type: 'application/xml;charset=utf-8',
+                          });
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement('a');
                           a.href = url;
@@ -651,7 +661,7 @@ const ConBeheerViews = ({ store }) => {
                           document.body.appendChild(a);
                           a.click();
                           document.body.removeChild(a);
-                          
+
                           // Cleanup
                           URL.revokeObjectURL(url);
                         } catch (error) {

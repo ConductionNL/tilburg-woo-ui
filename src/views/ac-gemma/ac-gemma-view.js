@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { AcContainer } from '@atoms';
 import { AcCheckbox } from '@molecules';
 import { withStore } from '@stores';
-import { dia, shapes } from 'jointjs';
+import { dia, shapes } from '@joint/core';
 // import { ViewRenderer, ViewSettings } from '@arktect-co/archimate-diagram-engine';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';

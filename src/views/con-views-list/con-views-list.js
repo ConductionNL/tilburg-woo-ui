@@ -8,7 +8,7 @@ import { AcLoader } from '@components';
 import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import ReactSelect from 'react-select';
-import { dia, shapes } from 'jointjs';
+import { dia, shapes } from '@joint/core';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import svgPanZoom from 'svg-pan-zoom';
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AcContainer } from '@atoms';
 import { withStore } from '@stores';
-import { dia, shapes } from 'jointjs';
+import { dia, shapes } from '@joint/core';
 import { ViewRenderer, ViewSettings } from '@conduction/archimate-diagram-engine';
 import { PrimaryActionButton } from '@utrecht/component-library-react/dist/css-module';
 import { AcLoader } from '@components';
