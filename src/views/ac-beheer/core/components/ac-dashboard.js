@@ -177,7 +177,7 @@ const AcDashboard = ({ store }) => {
 
             {/* Voorgesteld Gebruik Table - Separate info container - Only show if there are suggestions */}
             {/* TODO: figure out why did doesnt work anymore */}
-            {/* {hasVoorgesteldGebruik && (
+            {hasVoorgesteldGebruik && (
               <Alert type='info'>
                 <Heading level={4}>Voorgesteld Gebruik</Heading>
                 <Paragraph>
@@ -191,7 +191,7 @@ const AcDashboard = ({ store }) => {
                   />
                 </div>
               </Alert>
-            )} */}
+            )}
 
             {/* Welcome Section */}
             <div className='ac-register-review__section'>
