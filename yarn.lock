@@ -3891,7 +3891,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nl-design-system-unstable/rotterdam-design-tokens@npm:^1.0.0-alpha.100":
+"@nl-design-system-unstable/rotterdam-design-tokens@npm:^1.0.0-alpha.100, @nl-design-system-unstable/rotterdam-design-tokens@npm:^1.0.0-alpha.128":
   version: 1.0.0-alpha.128
   resolution: "@nl-design-system-unstable/rotterdam-design-tokens@npm:1.0.0-alpha.128"
   checksum: 10c0/cd5ea15c41651abedf5b0da7b666ed50f5e75224055d565b6f6793652b1f7fb1e6bb0f5f25b196ff484b4af5825856ca0f1ad90933397df51f310e12d85d180e
@@ -16009,7 +16009,7 @@ __metadata:
     "@joint/core": "npm:^4.1.2"
     "@loadable/component": "npm:^5.15.3"
     "@lottiefiles/react-lottie-player": "npm:^3.5.3"
-    "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.100"
+    "@nl-design-system-unstable/rotterdam-design-tokens": "npm:^1.0.0-alpha.128"
     "@uiw/react-md-editor": "npm:^4.0.8"
     "@utrecht/component-library-react": "npm:9.0.3"
     "@utrecht/components": "npm:^3.0.1-alpha.42"
