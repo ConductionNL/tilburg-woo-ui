@@ -1639,16 +1639,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/polyfill@npm:^7.12.1":
-  version: 7.12.1
-  resolution: "@babel/polyfill@npm:7.12.1"
-  dependencies:
-    core-js: "npm:^2.6.5"
-    regenerator-runtime: "npm:^0.13.4"
-  checksum: 10c0/f5d233d2958582e8678838c32c42ba780965119ebb3771d9b9735f85efabc7b8b49161e7d908477486e0aaf8508410e957be764c27a6a828714fb9d1b7f80bc3
-  languageName: node
-  linkType: hard
-
 "@babel/preset-env@npm:7.22.5":
   version: 7.22.5
   resolution: "@babel/preset-env@npm:7.22.5"
@@ -16032,7 +16022,6 @@ __metadata:
     "@babel/plugin-transform-private-property-in-object": "npm:^7.27.1"
     "@babel/plugin-transform-react-jsx": "npm:7.22.5"
     "@babel/plugin-transform-runtime": "npm:^7.22.5"
-    "@babel/polyfill": "npm:^7.12.1"
     "@babel/preset-env": "npm:7.22.5"
     "@babel/preset-react": "npm:^7.22.5"
     "@babel/runtime": "npm:7.22.5"
