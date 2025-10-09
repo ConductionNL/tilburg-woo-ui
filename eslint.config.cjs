@@ -98,7 +98,6 @@ module.exports = defineConfig([
     },
 
     plugins: {
-      react,
       'react-hooks': fixupPluginRules(reactHooks),
       import: fixupPluginRules(_import),
     },
@@ -185,27 +184,28 @@ module.exports = defineConfig([
     },
   },
   globalIgnores([
+    // Dependencies
     '**/node_modules/',
-    '**/build/',
+    // Build output
     '**/public_html/',
-    '**/coverage/',
+    '**/build/',
     '**/dist/',
+    '**/coverage/',
     '**/*.min.js',
-  ]),
-  globalIgnores([
-    '**/node_modules/',
-    '**/public_html/',
-    '**/build/',
-    '**/dist/',
-    '**/coverage/',
+    // Config files
     '**/webpack.config.js',
     '**/*.config.js',
+    // Service worker
     '**/registerServiceWorker.js',
+    // Generated constants
     'src/constants/container.constants.js',
+    // External libraries
     'src/assets/licenses/',
+    // Caches
     '**/.eslintcache',
     '**/.cache/',
     '**/.tmp/',
+    // Yarn Berry
     '**/.yarn/',
     '**/.pnp.cjs',
     '**/.pnp.loader.mjs',
