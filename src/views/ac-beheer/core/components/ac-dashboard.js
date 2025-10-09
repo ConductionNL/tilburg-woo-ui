@@ -181,13 +181,14 @@ const AcDashboard = ({ store }) => {
               <Alert type='info'>
                 <Heading level={4}>Voorgesteld Gebruik</Heading>
                 <Paragraph>
-                  Hieronder vindt u gebruik suggesties die door andere organisaties voor u zijn aangemaakt. 
-                  U kunt deze overnemen om ze toe te voegen aan uw organisatie of afwijzen als ze niet relevant zijn.
+                  Hieronder vindt u gebruik suggesties die door andere organisaties
+                  voor u zijn aangemaakt. U kunt deze overnemen om ze toe te voegen
+                  aan uw organisatie of afwijzen als ze niet relevant zijn.
                 </Paragraph>
                 <div style={{ marginTop: 'var(--tilburg-space-block-md)' }}>
-                  <ConAangebodenGebruikTable 
-                    key={refreshKey} 
-                    onDataChange={setHasVoorgesteldGebruik} 
+                  <ConAangebodenGebruikTable
+                    key={refreshKey}
+                    onDataChange={setHasVoorgesteldGebruik}
                   />
                 </div>
               </Alert>
@@ -241,16 +242,27 @@ const AcDashboard = ({ store }) => {
               </div>
 
               <Paragraph className='ac-dashboard-link-container'>
-                Voor account- en organisatiedetails gaat u naar
+                Voor accountdetails gaat u naar
                 <Link
                   className='ac-dashboard-link'
-                  href='/account'
+                  href='/beheer/my-account'
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/account');
+                    navigate('/beheer/my-account');
                   }}
                 >
                   Mijn Account
+                </Link>
+                . Voor organisatiedetails gaat u naar
+                <Link
+                  className='ac-dashboard-link'
+                  href='/beheer/my-organisation'
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/beheer/my-organisation');
+                  }}
+                >
+                  Mijn Organisatie
                 </Link>
                 .
               </Paragraph>
