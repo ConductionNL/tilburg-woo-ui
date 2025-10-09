@@ -12,6 +12,7 @@ import {
   ConCardContactpersoon,
   ConCardKoppeling,
 } from '@molecules/con-cards';
+import { commongroundApiUrl } from '@src/config';
 
 // Helper function to define the desired tab order
 const getTabOrder = (schemaSlug) => {
@@ -254,7 +255,7 @@ const RelatedTabs = observer(
         setAmbtenaarError(null);
         try {
           const response = await fetch(
-            '/api/apps/softwarecatalog/api/aangeboden-gebruik/ambtenaar',
+            `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar`,
             {
               method: 'GET',
               signal: abortController.signal,
