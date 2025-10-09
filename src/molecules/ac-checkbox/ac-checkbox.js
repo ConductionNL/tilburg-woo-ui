@@ -31,7 +31,7 @@ const AcCheckbox = ({
 
   return (
     <FormField type='checkbox' className={className}>
-      <Paragraph className='utrecht-form-field__label utrecht-form-field__label--checkbox'>
+      <Paragraph className='utrecht-form-field__label utrecht-form-field__label--checkbox ac-checkbox-label-paragraph'>
         <FormLabel type='checkbox' for={_id} className='ac-checkbox-label'>
           <Checkbox
             id={_id}
