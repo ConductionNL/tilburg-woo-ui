@@ -2,6 +2,7 @@ import {
   Heading,
   Paragraph,
   Link,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import { VISUALS } from '@src/constants';
@@ -303,7 +304,7 @@ const ConContactpersoonDetailsPageContent = ({
             </div>
           )}
           {typeof data?.['e-mailadres'] === 'string' && data['e-mailadres'] && (
-            <div style={{ marginBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
               <strong>E‑mail: </strong>
               <Link href={`mailto:${data['e-mailadres']}`}>
                 {data['e-mailadres']}
@@ -311,7 +312,7 @@ const ConContactpersoonDetailsPageContent = ({
             </div>
           )}
           {data?.telefoonnummer && (
-            <div style={{ marginBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
               <strong>Telefoon: </strong>
               <Link
                 href={`tel:${String(data.telefoonnummer)
@@ -357,14 +358,14 @@ const UnpublishedWarning = ({ data }) => {
   const objectName = data?.['@self']?.name;
 
   return (
-    <div className='ac-alert ac-alert--warning' style={{ marginBottom: '1rem' }}>
+    <Alert type='warning' style={{ marginBottom: '1rem' }}>
       <Heading level={4}>{title} is nog niet gepubliceerd</Heading>
       <Paragraph>
         {objectName} is momenteel niet zichtbaar in de zoekfunctie van{' '}
         {schemaName || 'de catalogus'}. Gebruik de &quot;Publiceren&quot; actie om
         deze gegevens beschikbaar te maken voor bezoekers.
       </Paragraph>
-    </div>
+    </Alert>
   );
 };
 
