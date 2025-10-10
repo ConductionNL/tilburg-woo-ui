@@ -3,7 +3,7 @@ import {
   Paragraph,
   Alert,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcColumn } from '@src/atoms';
+import { AcColumn, AcFlex } from '@src/atoms';
 import { VISUALS } from '@src/constants';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
@@ -200,8 +200,23 @@ const ConKoppelingDetailsPageContent = ({
       </Heading>
       <div className='ac-register-review__section'>
         <div style={{ marginTop: '12px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            {(() => {
+              const richtingIcon =
+                richting === 'AnaarB' ? '→' : richting === 'BnaarA' ? '←' : '↔';
+
+              return (
+                <AcFlex spacing='xs'>
+                  <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>
+                  {richtingIcon}
+                  <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
+                </AcFlex>
+              );
+            })()}
+          </div>
+
           <div style={{ marginBottom: '8px' }}>
-            <strong>Module A: </strong>
+            <strong>Applicatie A: </strong>
             {moduleAId ? (
               <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>
             ) : (
@@ -209,7 +224,7 @@ const ConKoppelingDetailsPageContent = ({
             )}
           </div>
           <div style={{ marginBottom: '8px' }}>
-            <strong>Module B: </strong>
+            <strong>Applicatie B: </strong>
             {moduleBId ? (
               <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>
             ) : (
@@ -218,7 +233,7 @@ const ConKoppelingDetailsPageContent = ({
           </div>
           <div style={{ marginBottom: '8px' }}>
             <strong>Richting: </strong>
-            {richting}
+            {richting} ({richting === 'AnaarB' ? '→' : richting === 'BnaarA' ? '←' : '↔'})
           </div>
           {data?.soortKoppeling && (
             <div style={{ marginBottom: '8px' }}>

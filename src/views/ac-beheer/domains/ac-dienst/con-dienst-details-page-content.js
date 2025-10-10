@@ -349,19 +349,6 @@ const ConDienstDetailsPageContent = ({
                 </div>
               )}
 
-              {Array.isArray(data?.producten) && data.producten.length > 0 && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Producten: </strong>
-                  <div>
-                    {data.producten.map((pid, idx) => (
-                      <div key={`${pid}-${idx}`}>
-                        <ConUuidResolver>{String(pid)}</ConUuidResolver>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {Array.isArray(data?.koppelingen) && data.koppelingen.length > 0 && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Koppelingen: </strong>
