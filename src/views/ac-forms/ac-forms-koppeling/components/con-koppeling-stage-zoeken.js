@@ -134,8 +134,20 @@ const ConKoppelingStageZoeken = ({
 
       <div style={{ marginTop: '1rem' }}>
         <h3 className='utrecht-heading-4' style={{ marginBottom: '0.5rem' }}>
-          {isEditMode ? 'Bestaande koppelingen' : 'Zoekresultaten'}
+          {isEditMode
+            ? 'Bestaande koppelingen'
+            : ownApp?.value
+            ? `Reeds bestaande koppelingen voor ${ownApp.label}`
+            : 'Bestaande koppelingen'}
         </h3>
+        {ownApp?.value && !isEditMode && (
+          <Paragraph
+            style={{ marginBottom: '1rem', fontSize: '0.9rem', color: '#666' }}
+          >
+            Hieronder ziet u alle koppelingen die al zijn geregistreerd voor de
+            geselecteerde applicatie.
+          </Paragraph>
+        )}
         {!resultsLoading && searchResults.length ? (
           <div className='ac-register-review'>
             <div className='ac-register-review__section'>
@@ -228,8 +240,8 @@ const ConKoppelingStageZoeken = ({
         ) : (
           <Paragraph>
             {ownApp?.value
-              ? 'Geen bestaande koppeling gevonden voor de applicatie uit uw applicatielandschap. U kunt deze zelf toevoegen in de volgende stap.'
-              : 'Geen applicatie geselecteerd.'}
+              ? `Geen bestaande koppelingen gevonden voor ${ownApp.label}. U kunt deze zelf toevoegen in de volgende stap.`
+              : 'Selecteer eerst een applicatie om bestaande koppelingen te bekijken.'}
           </Paragraph>
         )}
       </div>
