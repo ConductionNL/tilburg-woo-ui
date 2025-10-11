@@ -19,21 +19,25 @@ const ConGebruikStepVersie = ({
       aria-labelledby='version-title'
     >
       <h2 id='version-title' className='sr-only'>
-        Versie
+        Applicatie versie
       </h2>
 
       <div style={{ maxWidth: '640px' }}>
         <ConSchemaEnhancedField
           schemaType='gebruik'
           schemaProperty='moduleVersie'
-          value={gebruik?.moduleversie || null}
-          onChange={(value) => setGebruikData('moduleversie', value)}
+          value={gebruik?.moduleVersie || null}
+          onChange={(value) => setGebruikData('moduleVersie', value)}
           isDisabled={versionsLoading}
           isLoading={versionsLoading}
           schemas={schemas}
           optionsProvider={versionOptions}
           onSearch={() => {}}
           width='full'
+          customProps={{
+            label: 'Applicatie versie',
+            placeholder: 'Selecteer een applicatie versie',
+          }}
         />
       </div>
     </div>

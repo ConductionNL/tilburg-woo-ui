@@ -18,6 +18,9 @@ const ConGebruikStepInformatie = ({
   organisatieOptions,
   organisatieLoading,
   searchOrganisaties,
+  contactpersoonOptions,
+  contactpersoonLoading,
+  searchContactpersonen,
   schemas,
   // schemasLoading,
   gebruikType,
@@ -39,14 +42,26 @@ const ConGebruikStepInformatie = ({
             <ConSchemaEnhancedField
               schemaType='gebruik'
               schemaProperty='contactpersoon'
-              value={gebruik?.contactpersoon || ''}
-              onChange={(value) => setGebruikData('contactpersoon', value)}
+              value={
+                typeof gebruik?.contactpersoon === 'object' &&
+                gebruik.contactpersoon !== null
+                  ? gebruik.contactpersoon.id
+                  : gebruik?.contactpersoon || ''
+              }
+              onChange={(value) => {
+                setGebruikData('contactpersoon', {
+                  id: value,
+                  _displayName: contactpersoonOptions.find(
+                    (opt) => opt.value === value
+                  )?.label,
+                });
+              }}
               isDisabled={loading}
               width='full'
               schemas={schemas}
-              // Avoid internal $ref search churn for contactpersoon on this step
-              // by providing an empty, stable optionsProvider (store-driven options may be prefilled elsewhere)
-              optionsProvider={[]}
+              optionsProvider={contactpersoonOptions}
+              isLoading={contactpersoonLoading}
+              onSearch={(_path, _refSlug, q) => searchContactpersonen(q)}
               customProps={{
                 getOptionLabel: (opt) => {
                   const c = opt?.data ?? opt;
@@ -65,9 +80,14 @@ const ConGebruikStepInformatie = ({
                 <ConSchemaEnhancedField
                   schemaType='gebruik'
                   schemaProperty='afnemer'
-                  value={gebruik?.afnemer || null}
+                  value={
+                    typeof gebruik?.afnemer === 'object' && gebruik.afnemer !== null
+                      ? gebruik.afnemer.id ||
+                        gebruik.afnemer['@self']?.id ||
+                        gebruik.afnemer.value
+                      : gebruik?.afnemer || null
+                  }
                   onChange={(value) => {
-                    console.log('Afnemer onChange received:', { value, type: typeof value });
                     setGebruikData('afnemer', value);
                   }}
                   isDisabled={loading}
