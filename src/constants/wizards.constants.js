@@ -70,20 +70,31 @@ export const DASHBOARD_WIZARDS = {
     // TODO: Remove disabled when the wizard is implemented
     disabled: true,
   },
-  KOPPELING: {
-    id: 'koppeling',
-    name: 'Koppeling registreren',
+  KOPPELING_AANBIEDEN: {
+    id: 'koppeling-aanbieden',
+    name: 'Koppeling Aanbieden',
     description: 'Registreer een koppeling tussen een product en een dienst',
     icon: VISUALS.LINK,
     path: PATHS.FORMS_KOPPELING,
     requiresAuth: true,
     requiresOrganization: true,
     groupTypes: ['gemeente', 'samenwerking', 'community'],
-    params: {},
+    params: { type: 'aanbieden-koppeling' },
     color: 'blue',
     schema: 'koppeling',
-    // TODO: Remove disabled when the wizard is implemented
-    disabled: true,
+  },
+  KOPPELING_EIGEN_ORGANISATIE: {
+    id: 'koppeling-eigen-organisatie',
+    name: 'Koppeling Eigen Organisatie',
+    description: 'Registreer een koppeling tussen een product en een dienst',
+    icon: VISUALS.LINK,
+    path: PATHS.FORMS_KOPPELING,
+    requiresAuth: true,
+    requiresOrganization: true,
+    groupTypes: ['gemeente', 'samenwerking', 'community'],
+    params: { type: 'eigen-organisatie' },
+    color: 'blue',
+    schema: 'koppeling',
   },
 };
 
@@ -94,7 +105,28 @@ export const DASHBOARD_WIZARDS = {
 // eslint-disable-next-line no-unused-vars -- it'll get used... eventually
 export const getDashboardWizards = (user = null, userOrganization = null) => {
   // Always show all wizards - no filtering
-  return Object.values(DASHBOARD_WIZARDS);
+
+  const wizards = Object.values(DASHBOARD_WIZARDS);
+
+  if (
+    userOrganization.type === 'Gemeente' ||
+    userOrganization.type === 'Samenwerking'
+  ) {
+    return wizards.filter(
+      (wizard) => wizard !== DASHBOARD_WIZARDS.KOPPELING_AANBIEDEN
+    );
+  }
+
+  if (
+    userOrganization.type === 'Leverancier' ||
+    userOrganization.type === 'Community'
+  ) {
+    return wizards.filter(
+      (wizard) => wizard !== DASHBOARD_WIZARDS.KOPPELING_EIGEN_ORGANISATIE
+    );
+  }
+
+  return wizards;
 };
 
 /**
