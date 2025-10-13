@@ -174,7 +174,7 @@ const ConGebruikStepReview = ({
                     );
                     return (
                       <UnorderedListItem key={v}>
-                        {opt ? opt.label : v}
+                        {opt ? opt.label : <ConUuidResolver>{v}</ConUuidResolver>}
                       </UnorderedListItem>
                     );
                   })}

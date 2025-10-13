@@ -411,8 +411,9 @@ const AcFormsGebruik = ({ store }) => {
             item?.title ||
             item?.label ||
             `Component ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label) };
+          // Prioritize ID over value and never use label as value
+          const value = item?.['@self']?.id || item?.id || item?.value || item?.slug;
+          return { value: String(value), label: String(label), data: item };
         });
         if (isMounted) setRefCompOptions(options);
       } catch (e) {
@@ -1210,16 +1211,6 @@ const AcFormsGebruik = ({ store }) => {
         gebruikType: gebruikType,
       };
 
-      // Debug logging to see what we're submitting
-      if (process.env.NODE_ENV === 'development') {
-        // eslint-disable-next-line no-console
-        console.log('Submitting gebruik data:', {
-          originalAfnemer: gebruik?.afnemer,
-          extractedAfnemer: gebruikData.afnemer,
-          gebruikType: gebruikType,
-        });
-      }
-
       // Submit to the gebruik endpoint using the object store
       if (isEditMode) {
         await store.object.updateObject(
@@ -1240,9 +1231,6 @@ const AcFormsGebruik = ({ store }) => {
         message: 'Er is een fout opgetreden bij het registreren van het gebruik.',
         errors: null,
       });
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Gebruik registration failed:', err);
-      }
     } finally {
       setLoading(false);
     }
