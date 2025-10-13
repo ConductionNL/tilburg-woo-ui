@@ -335,19 +335,6 @@ const AcFormsGebruik = ({ store }) => {
         );
         const mapped = mapFetchedGebruikToLocalState(apiObj);
 
-        // Temporary debug to see afnemer mapping
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 API afnemer:', apiObj?.afnemer);
-          console.log(
-            '🔍 API @self.relations.afnemer:',
-            apiObj?.['@self']?.relations?.afnemer
-          );
-          console.log('🔍 Mapped afnemer:', mapped.afnemer);
-          console.log('🔍 Mapped gebruikType:', mapped.gebruikType);
-          console.log('🔍 API diensten:', apiObj?.diensten);
-          console.log('🔍 Mapped diensten:', mapped.diensten);
-        }
-
         setGebruik(mapped);
         setGebruikType(mapped.gebruikType || null);
         // Mark initial load as complete after a brief delay to allow useEffects to run with the flag still true
@@ -981,10 +968,13 @@ const AcFormsGebruik = ({ store }) => {
 
         // Prune selected diensten to those still available for current product
         // But don't prune during initial load in edit mode to preserve existing selections
+        // IMPORTANT: For "andere-organisatie" types, don't prune diensten as the user may not have
+        // permission to see all available diensten, but should preserve existing ones
         if (
           Array.isArray(gebruik?.diensten) &&
           gebruik.diensten.length &&
-          !(isEditMode && isInitialLoad)
+          !(isEditMode && isInitialLoad) &&
+          !(isEditMode && gebruikType === 'andere-organisatie') // Don't prune for andere-organisatie in edit mode
         ) {
           const allowed = new Set(options.map((o) => String(o.value)));
           const next = gebruik.diensten
@@ -1007,7 +997,7 @@ const AcFormsGebruik = ({ store }) => {
       cancelled = true;
     };
     // React to product changes and edit mode state
-  }, [gebruik?.product, isEditMode, isInitialLoad]);
+  }, [gebruik?.product, isEditMode, isInitialLoad, gebruikType]);
 
   // Helper function to create koppeling option with proper labels
   const createKoppelingOption = async (item, index) => {
