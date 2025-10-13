@@ -67,8 +67,6 @@ export const DASHBOARD_WIZARDS = {
     params: {},
     color: 'blue',
     schema: 'gebruik',
-    // TODO: Remove disabled when the wizard is implemented
-    disabled: true,
   },
   KOPPELING_AANBIEDEN: {
     id: 'koppeling-aanbieden',

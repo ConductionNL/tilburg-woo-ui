@@ -44,6 +44,7 @@ const AcFormsGebruik = ({ store }) => {
   const [loading, setLoading] = useState(false);
   const [prefillLoading, setPrefillLoading] = useState(false);
   const [prefillError, setPrefillError] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(isEditMode); // Track if we're in initial load phase for edit mode
 
   // Submission state management (following product wizard pattern)
   const [registerCallBack, setRegisterCallBack] = useState(null);
@@ -97,21 +98,75 @@ const AcFormsGebruik = ({ store }) => {
     (api) => {
       if (!api || typeof api !== 'object') return {};
 
+      // Helper function to create contactpersoon object with display name
+      const createContactpersoonObject = (contactpersoonData) => {
+        if (!contactpersoonData) return '';
+
+        // If it's already a string (ID), we'll return it as is for now
+        // The component will handle resolving the display name when contactpersoonOptions are available
+        if (typeof contactpersoonData === 'string') {
+          return {
+            id: contactpersoonData,
+            _displayName: null, // Will be resolved later when options are loaded
+          };
+        }
+
+        // If it's an object, extract ID and create display name
+        const id = getIdString(contactpersoonData);
+        if (!id) return '';
+
+        // Try to build display name from available properties
+        let displayName = '';
+        if (contactpersoonData.voornaam || contactpersoonData.achternaam) {
+          displayName = [
+            contactpersoonData.voornaam,
+            contactpersoonData.tussenvoegsel,
+            contactpersoonData.achternaam,
+          ]
+            .filter(Boolean)
+            .join(' ');
+        } else {
+          // Fallback to other name properties
+          displayName =
+            contactpersoonData?.['@self']?.name ||
+            contactpersoonData?.naam ||
+            contactpersoonData?.name ||
+            contactpersoonData?.displayName ||
+            contactpersoonData?.label ||
+            id;
+        }
+
+        return {
+          id: id,
+          _displayName: displayName,
+        };
+      };
+
       const mapped = {
         id: api.id || api?.['@self']?.id || '',
         status: api.status || 'Verwerving',
-        contactpersoon:
-          getIdString(
-            api.contactpersoon || api?.['@self']?.relations?.contactpersoon
-          ) || '',
+        contactpersoon: createContactpersoonObject(
+          api.contactpersoon || api?.['@self']?.relations?.contactpersoon
+        ),
         // Keep full objects for entities used for labels in UI
-        afnemer: api.afnemer || api?.['@self']?.relations?.afnemer || null,
+        afnemer: (() => {
+          const afnemerRef = api.afnemer || api?.['@self']?.relations?.afnemer;
+
+          // If afnemer is already a string (UUID), return it directly
+          if (typeof afnemerRef === 'string' && afnemerRef) {
+            return afnemerRef;
+          }
+
+          // If afnemer is an object, extract the ID
+          if (afnemerRef && typeof afnemerRef === 'object') {
+            return getIdString(afnemerRef) || null;
+          }
+
+          return null;
+        })(),
         product: api.product || api?.['@self']?.relations?.product || null,
         // Use string ids for fields used as identifiers in requests
-        module:
-          getIdString(
-            api.module || api.moduleId || api?.['@self']?.relations?.module
-          ) || '',
+        module: api.module || api?.['@self']?.relations?.module || null,
         moduleVersie:
           getIdString(
             api.moduleVersie ||
@@ -182,8 +237,12 @@ const AcFormsGebruik = ({ store }) => {
       // We wissen deze velden om verwarring te voorkomen
       setGebruikData('contactpersoon', '');
       setGebruikData('gebruiktVoorReferentiecomponenten', []);
+      // Only clear afnemer if not during initial load in edit mode AND afnemer is not already set from API
+      if (!(isEditMode && isInitialLoad) && !gebruik?.afnemer) {
+        setGebruikData('afnemer', null);
+      }
     }
-  }, [gebruikType]);
+  }, [gebruikType, isEditMode, isInitialLoad]);
 
   // When gebruikType is 'eigen-organisatie', ensure afnemer is the active organization UUID
   useEffect(() => {
@@ -194,11 +253,11 @@ const AcFormsGebruik = ({ store }) => {
     // Extract UUID from organization object (following dienst wizard pattern)
     const orgUuid = String(org?.uuid || org?.id || org?.slug || '');
 
-    if (orgUuid) {
-      console.log('Setting afnemer for eigen-organisatie:', { org, orgUuid });
+    // Only set afnemer if it's not already set (to avoid overwriting in edit mode) or if it's not during initial load
+    if (orgUuid && (!(isEditMode && isInitialLoad) || !gebruik?.afnemer)) {
       setGebruikData('afnemer', orgUuid);
     }
-  }, [gebruikType]);
+  }, [gebruikType, isEditMode, isInitialLoad]);
 
   // Options state (UI-only)
   const [productOptions, setProductOptions] = useState([]);
@@ -212,24 +271,19 @@ const AcFormsGebruik = ({ store }) => {
   const [organisatieOptions, setOrganisatieOptions] = useState([]);
 
   // Debug organisatieOptions changes
-  useEffect(() => {
-    console.log('📋 organisatieOptions updated:', {
-      count: organisatieOptions.length,
-      firstFew: organisatieOptions.slice(0, 3),
-      allOptions: organisatieOptions,
-    });
-  }, [organisatieOptions]);
   const [organisatieLoading, setOrganisatieLoading] = useState(false);
   // Producten
   const [productLoading, setProductLoading] = useState(false);
   // Versies
   const [versionOptions, setVersionOptions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
-  // Resolved selected module object (for consistent downstream usage)
-  const [selectedModule, setSelectedModule] = useState(null);
 
   // Referentiecomponenten
   const [refCompOptions, setRefCompOptions] = useState([]);
+
+  // Contactpersonen (filtered by organization for eigen-organisatie)
+  const [contactpersoonOptions, setContactpersoonOptions] = useState([]);
+  const [contactpersoonLoading, setContactpersoonLoading] = useState(false);
 
   // Fetch schemas on component mount
   useEffect(() => {
@@ -280,8 +334,13 @@ const AcFormsGebruik = ({ store }) => {
           String(gebruikId)
         );
         const mapped = mapFetchedGebruikToLocalState(apiObj);
+
         setGebruik(mapped);
         setGebruikType(mapped.gebruikType || null);
+        // Mark initial load as complete after a brief delay to allow useEffects to run with the flag still true
+        setTimeout(() => {
+          setIsInitialLoad(false);
+        }, 100);
       } catch (e) {
         if (!cancelled) {
           setPrefillError(
@@ -323,25 +382,10 @@ const AcFormsGebruik = ({ store }) => {
 
     const fetchOrganisaties = async () => {
       try {
-        // Use authenticated API client instead of raw fetch
-        await store.object.fetchCollection('voorzieningen', 'organisatie', {
-          _limit: '50',
-          _page: '1',
-          '_extend[]': '@self.schema',
-        });
-        const collection = store.object.getCollection('voorzieningen_organisatie');
-        const list = collection?.results || collection || [];
-        const options = list.map((item, index) => {
-          const label =
-            item?.['@self']?.name ||
-            item?.naam ||
-            item?.name ||
-            item?.title ||
-            `Organisatie ${index + 1}`;
-          const value = item?.id || item?.slug || label;
-          return { value: String(value), label: String(label), data: item };
-        });
-        if (isMounted) setOrganisatieOptions(options);
+        // For andere organisatie usage, we don't preload organizations
+        // Instead, we rely on search-based loading to allow users to find any organization
+        // This prevents loading too many organizations upfront and allows better search functionality
+        if (isMounted) setOrganisatieOptions([]);
       } catch (e) {
         if (isMounted) setOrganisatieOptions([]);
       }
@@ -353,7 +397,9 @@ const AcFormsGebruik = ({ store }) => {
         await store.object.fetchCollection('vng-gemma', 'element', {
           _limit: '500',
           _page: '1',
+          _source: 'index',
           gemmaType: 'Referentiecomponent',
+          '_extend[]': '@self.schema',
         });
         const collection = store.object.getCollection('vng-gemma_element');
         const list = collection?.results || collection || [];
@@ -365,8 +411,9 @@ const AcFormsGebruik = ({ store }) => {
             item?.title ||
             item?.label ||
             `Component ${index + 1}`;
-          const value = item?.value || item?.id || item?.slug || label;
-          return { value: String(value), label: String(label) };
+          // Prioritize ID over value and never use label as value
+          const value = item?.['@self']?.id || item?.id || item?.value || item?.slug;
+          return { value: String(value), label: String(label), data: item };
         });
         if (isMounted) setRefCompOptions(options);
       } catch (e) {
@@ -392,13 +439,17 @@ const AcFormsGebruik = ({ store }) => {
       if (p === null || p === undefined || (typeof p === 'string' && p === '')) {
         if (!cancelled) {
           setModulesOptions([]);
-          if (gebruik?.module != null) setGebruikData('module', null);
+          // Don't clear module in edit mode during initial load
+          if (gebruik?.module != null && !(isEditMode && isInitialLoad)) {
+            setGebruikData('module', null);
+          }
         }
         return;
       }
 
       // Product changed to a valid value: clear dependent selections and options immediately
-      if (!cancelled) {
+      // But don't clear in edit mode during initial load to preserve existing selections
+      if (!cancelled && !(isEditMode && isInitialLoad)) {
         setGebruikData('module', null);
         setGebruikData('moduleVersie', null);
         setModulesOptions([]);
@@ -453,7 +504,10 @@ const AcFormsGebruik = ({ store }) => {
       if (moduleIds.length === 0) {
         if (!cancelled) {
           setModulesOptions([]);
-          if (gebruik?.module != null) setGebruikData('module', null);
+          // Don't clear module in edit mode during initial load
+          if (gebruik?.module != null && !(isEditMode && isInitialLoad)) {
+            setGebruikData('module', null);
+          }
         }
         return;
       }
@@ -477,7 +531,10 @@ const AcFormsGebruik = ({ store }) => {
 
         const currentModule = String(gebruik?.module || '');
         if (!options.some((o) => String(o.value) === currentModule)) {
-          setGebruikData('module', null);
+          // Don't clear module in edit mode during initial load
+          if (!(isEditMode && isInitialLoad)) {
+            setGebruikData('module', null);
+          }
         }
 
         if (options.length === 1) {
@@ -489,7 +546,10 @@ const AcFormsGebruik = ({ store }) => {
       } catch (_) {
         if (!cancelled) {
           setModulesOptions([]);
-          if (gebruik?.module != null) setGebruikData('module', null);
+          // Don't clear module in edit mode during initial load
+          if (gebruik?.module != null && !(isEditMode && isInitialLoad)) {
+            setGebruikData('module', null);
+          }
         }
       } finally {
         if (!cancelled) setModulesLoading(false);
@@ -612,22 +672,39 @@ const AcFormsGebruik = ({ store }) => {
   // Server-side search for organisaties
   const searchOrganisaties = useCallback(
     async (query) => {
-      console.log('🔍 searchOrganisaties called with query:', query);
       try {
         setOrganisatieLoading(true);
         const q = String(query || '').trim();
-        if (!q) {
-          setOrganisatieOptions([]);
-          return;
-        }
-        await store.object.fetchCollection('voorzieningen', 'organisatie', {
+
+        // Always fetch organizations - either with search query or initial load
+        const params = {
           _limit: '50',
           _page: '1',
-          _search: q,
-        });
+          _source: 'index',
+          '_extend[]': '@self.schema',
+        };
+
+        // Add search parameter if query is provided
+        if (q) {
+          params._search = q;
+        }
+
+        await store.object.fetchCollection('voorzieningen', 'organisatie', params);
         const collection = store.object.getCollection('voorzieningen_organisatie');
         const list = collection?.results || collection || [];
-        const options = list.map((item, index) => {
+
+        // Filter out the user's own organization for "andere organisatie" selection
+        const currentOrgId = String(
+          store?.user?.activeOrganization?.uuid ||
+            store?.user?.activeOrganization?.id ||
+            ''
+        );
+        const filteredList = list.filter((item) => {
+          const orgId = String(item?.['@self']?.id || item?.id || '');
+          return orgId !== currentOrgId;
+        });
+
+        const options = filteredList.map((item, index) => {
           const label =
             item?.['@self']?.name ||
             item?.naam ||
@@ -636,13 +713,6 @@ const AcFormsGebruik = ({ store }) => {
             `Organisatie ${index + 1}`;
           // Use same pattern as mapToOption function - @self.id first, then fallbacks
           const value = item?.['@self']?.id || item?.id || item?.slug || label;
-          console.log('Organization option created:', {
-            item,
-            extractedValue: value,
-            selfId: item?.['@self']?.id,
-            directId: item?.id,
-            label,
-          });
           return { value: String(value), label: String(label), data: item };
         });
         setOrganisatieOptions(options);
@@ -655,6 +725,60 @@ const AcFormsGebruik = ({ store }) => {
     [store]
   );
 
+  // Trigger initial organization search when switching to 'andere-organisatie'
+  useEffect(() => {
+    if (gebruikType === 'andere-organisatie') {
+      // Load initial organizations when switching to andere-organisatie mode
+      searchOrganisaties('');
+    }
+  }, [gebruikType, searchOrganisaties]);
+
+  // Server-side search for contactpersonen (filtered by organization for eigen-organisatie)
+  const searchContactpersonen = useCallback(
+    async (query) => {
+      try {
+        setContactpersoonLoading(true);
+        const q = String(query || '').trim();
+
+        // Always fetch contactpersonen - either with search query or initial load
+        const params = {
+          _limit: '50',
+          _page: '1',
+          _source: 'database',
+        };
+
+        // Add search parameter if query is provided
+        if (q) {
+          params._search = q;
+        }
+
+        await store.object.fetchCollection(
+          'voorzieningen',
+          'contactpersoon',
+          params
+        );
+        const collection = store.object.getCollection(
+          'voorzieningen_contactpersoon'
+        );
+        const list = collection?.results || collection || [];
+        const options = list.map((item, index) => {
+          const label =
+            [item?.voornaam, item?.tussenvoegsel, item?.achternaam]
+              .filter(Boolean)
+              .join(' ') || `Contactpersoon ${index + 1}`;
+          const value = item?.['@self']?.id || item?.id || item?.slug || label;
+          return { value: String(value), label: String(label), data: item };
+        });
+        setContactpersoonOptions(options);
+      } catch (e) {
+        setContactpersoonOptions([]);
+      } finally {
+        setContactpersoonLoading(false);
+      }
+    },
+    [store, gebruikType]
+  );
+
   // Debounced search functions (500ms)
   const debouncedSearchProducts = useDebouncedInput(searchProducts, 500, {
     disableInstantValidation: true,
@@ -662,6 +786,42 @@ const AcFormsGebruik = ({ store }) => {
   const debouncedSearchOrganisaties = useDebouncedInput(searchOrganisaties, 500, {
     disableInstantValidation: true,
   });
+  const debouncedSearchContactpersonen = useDebouncedInput(
+    searchContactpersonen,
+    500,
+    {
+      disableInstantValidation: true,
+    }
+  );
+
+  // Trigger initial contactperson search when switching to 'eigen-organisatie'
+  useEffect(() => {
+    if (gebruikType === 'eigen-organisatie') {
+      // Load initial contactpersons when switching to eigen-organisatie mode
+      searchContactpersonen('');
+    }
+  }, [gebruikType, searchContactpersonen]);
+
+  // Resolve contactpersoon display name when options become available
+  useEffect(() => {
+    if (
+      contactpersoonOptions.length > 0 &&
+      typeof gebruik?.contactpersoon === 'object' &&
+      gebruik.contactpersoon !== null &&
+      gebruik.contactpersoon.id &&
+      !gebruik.contactpersoon._displayName
+    ) {
+      const option = contactpersoonOptions.find(
+        (opt) => opt.value === gebruik.contactpersoon.id
+      );
+      if (option) {
+        setGebruikData('contactpersoon', {
+          id: gebruik.contactpersoon.id,
+          _displayName: option.label,
+        });
+      }
+    }
+  }, [contactpersoonOptions, gebruik?.contactpersoon]);
 
   // Resolve selected module object whenever selection changes
   useEffect(() => {
@@ -669,7 +829,6 @@ const AcFormsGebruik = ({ store }) => {
     const run = async () => {
       const mod = gebruik?.module;
       if (!mod) {
-        if (!cancelled) setSelectedModule(null);
         return;
       }
 
@@ -689,12 +848,9 @@ const AcFormsGebruik = ({ store }) => {
           if (cancelled) return;
           modData = store.object.getObject('voorzieningen_module', String(mod));
         } catch (e) {
-          if (!cancelled) setSelectedModule(null);
           return;
         }
       }
-
-      if (!cancelled) setSelectedModule(modData || null);
     };
 
     run();
@@ -711,7 +867,10 @@ const AcFormsGebruik = ({ store }) => {
     const mod = gebruik?.module;
     const moduleId = getIdString(mod);
     if (!moduleId) {
-      if (gebruik?.moduleVersie != null) setGebruikData('moduleVersie', null);
+      // Don't clear moduleVersie in edit mode during initial load
+      if (gebruik?.moduleVersie != null && !(isEditMode && isInitialLoad)) {
+        setGebruikData('moduleVersie', null);
+      }
       return;
     }
 
@@ -739,7 +898,10 @@ const AcFormsGebruik = ({ store }) => {
 
         const current = String(gebruik?.moduleVersie || '');
         if (current && !options.some((o) => o.value === current)) {
-          setGebruikData('moduleVersie', null);
+          // Don't clear moduleVersie in edit mode during initial load
+          if (!(isEditMode && isInitialLoad)) {
+            setGebruikData('moduleVersie', null);
+          }
         }
         if (options.length === 1 && current !== options[0].value) {
           setGebruikData('moduleVersie', options[0].value);
@@ -767,7 +929,12 @@ const AcFormsGebruik = ({ store }) => {
       if (!productId) {
         if (!cancelled) {
           setDienstOptions([]);
-          if (Array.isArray(gebruik?.diensten) && gebruik.diensten.length) {
+          // Don't clear diensten during initial load in edit mode
+          if (
+            Array.isArray(gebruik?.diensten) &&
+            gebruik.diensten.length &&
+            !(isEditMode && isInitialLoad)
+          ) {
             setGebruikData('diensten', []);
           }
         }
@@ -801,7 +968,15 @@ const AcFormsGebruik = ({ store }) => {
         setDienstOptions(options);
 
         // Prune selected diensten to those still available for current product
-        if (Array.isArray(gebruik?.diensten) && gebruik.diensten.length) {
+        // But don't prune during initial load in edit mode to preserve existing selections
+        // IMPORTANT: For "andere-organisatie" types, don't prune diensten as the user may not have
+        // permission to see all available diensten, but should preserve existing ones
+        if (
+          Array.isArray(gebruik?.diensten) &&
+          gebruik.diensten.length &&
+          !(isEditMode && isInitialLoad) &&
+          !(isEditMode && gebruikType === 'andere-organisatie') // Don't prune for andere-organisatie in edit mode
+        ) {
           const allowed = new Set(options.map((o) => String(o.value)));
           const next = gebruik.diensten
             .map((d) => String(d))
@@ -822,9 +997,8 @@ const AcFormsGebruik = ({ store }) => {
     return () => {
       cancelled = true;
     };
-    // Only react to product changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gebruik?.product]);
+    // React to product changes and edit mode state
+  }, [gebruik?.product, isEditMode, isInitialLoad, gebruikType]);
 
   // Helper function to create koppeling option with proper labels
   const createKoppelingOption = async (item, index) => {
@@ -1019,7 +1193,7 @@ const AcFormsGebruik = ({ store }) => {
       const gebruikData = {
         ...gebruik,
         // Ensure required fields are properly set
-        contactpersoon: gebruik?.contactpersoon,
+        contactpersoon: gebruik?.contactpersoon?.id,
         // Extract UUID from afnemer (should be UUID string for eigen-organisatie, object for andere-organisatie)
         afnemer: (() => {
           const afnemer = gebruik?.afnemer;
@@ -1036,13 +1210,6 @@ const AcFormsGebruik = ({ store }) => {
         // Include usage type for processing
         gebruikType: gebruikType,
       };
-
-      // Debug logging to see what we're submitting
-      console.log('Submitting gebruik data:', {
-        originalAfnemer: gebruik?.afnemer,
-        extractedAfnemer: gebruikData.afnemer,
-        gebruikType: gebruikType,
-      });
 
       // Submit to the gebruik endpoint using the object store
       if (isEditMode) {
@@ -1064,7 +1231,6 @@ const AcFormsGebruik = ({ store }) => {
         message: 'Er is een fout opgetreden bij het registreren van het gebruik.',
         errors: null,
       });
-      console.error('Gebruik registration failed:', err);
     } finally {
       setLoading(false);
     }
@@ -1075,7 +1241,7 @@ const AcFormsGebruik = ({ store }) => {
       'Soort gebruik',
       'Gebruik informatie',
       'Product en applicatie',
-      'Versie',
+      'Applicatie versie',
       'Koppelingen',
       'Diensten',
     ];
@@ -1138,6 +1304,9 @@ const AcFormsGebruik = ({ store }) => {
             organisatieOptions={organisatieOptions}
             organisatieLoading={organisatieLoading}
             searchOrganisaties={debouncedSearchOrganisaties}
+            contactpersoonOptions={contactpersoonOptions}
+            contactpersoonLoading={contactpersoonLoading}
+            searchContactpersonen={debouncedSearchContactpersonen}
             schemas={schemas}
             schemasLoading={schemasLoading}
             gebruikType={gebruikType}
@@ -1210,6 +1379,7 @@ const AcFormsGebruik = ({ store }) => {
             organisatieOptions={organisatieOptions}
             productOptions={productOptions}
             moduleOptions={modulesOptions}
+            contactpersoonOptions={contactpersoonOptions}
           />
         );
     }

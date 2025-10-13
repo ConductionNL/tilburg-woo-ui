@@ -20,6 +20,70 @@ const ConGebruikStepReview = ({
   productOptions,
   moduleOptions,
 }) => {
+  // Helper function to get the correct afnemer display name
+  const getAfnemerDisplayName = () => {
+    const afnemer = gebruik?.afnemer;
+    if (!afnemer) return '-';
+
+    // If afnemer is an object (from ConSchemaEnhancedField), use its name
+    if (typeof afnemer === 'object') {
+      return (
+        afnemer?.['@self']?.name ||
+        afnemer?.naam ||
+        afnemer?.name ||
+        afnemer?.title ||
+        '-'
+      );
+    }
+
+    // If afnemer is a string (UUID), try to find it in organisatieOptions
+    const orgOption = (organisatieOptions || []).find(
+      (opt) => String(opt.value) === String(afnemer)
+    );
+    if (orgOption) {
+      return orgOption.label;
+    }
+
+    // Fallback: use ConUuidResolver for UUID strings
+    return <ConUuidResolver>{afnemer}</ConUuidResolver>;
+  };
+
+  // Helper function to get the relevant start date based on status
+  const getRelevantStartDate = () => {
+    const status = gebruik?.status;
+    switch (status) {
+      case 'Verwerving':
+        return {
+          label: 'Startdatum Verwerving',
+          value: gebruik?.startDatumVerwerving,
+        };
+      case 'Gepland':
+        return {
+          label: 'Geplande Startdatum',
+          value: gebruik?.startDatumGepland,
+        };
+      case 'In productie':
+        return {
+          label: 'Startdatum In Productie',
+          value: gebruik?.startDatumInProductie,
+        };
+      case 'Uit te faseren':
+        return {
+          label: 'Startdatum Uit Te Faseren',
+          value: gebruik?.startDatumUitTeFaseren,
+        };
+      case 'Uitgefaseerd':
+        return {
+          label: 'Startdatum Uit Gefaseerd',
+          value: gebruik?.startDatumUitGefaseerd,
+        };
+      default:
+        return null;
+    }
+  };
+
+  const relevantStartDate = getRelevantStartDate();
+
   return (
     <div
       className='ac-register-form-section'
@@ -37,41 +101,67 @@ const ConGebruikStepReview = ({
           </div>
           <Separator className='con-form-wizard-review-header__separator' />
 
-          <div className='ac-register-review__field'>
-            <strong>Contactpersoon:</strong>
-            <div>
-              <ConUuidResolver>{gebruik?.contactpersoon || '-'}</ConUuidResolver>
+          {/* Only show contactpersoon if it has a value */}
+          {gebruik?.contactpersoon && (
+            <div className='ac-register-review__field'>
+              <strong>Contactpersoon:</strong>
+              <div>
+                {typeof gebruik.contactpersoon === 'object' ? (
+                  // Handle contactpersoon as object with name properties
+                  (() => {
+                    const c = gebruik.contactpersoon;
+
+                    // First, try to use the saved display name
+                    if (c._displayName) {
+                      return c._displayName;
+                    }
+
+                    // Try different name combinations for contactpersoon
+                    const fullName = [c?.voornaam, c?.tussenvoegsel, c?.achternaam]
+                      .filter(Boolean)
+                      .join(' ');
+
+                    // Fallback to other name properties if voornaam/achternaam not available
+                    if (fullName.trim()) {
+                      return fullName;
+                    }
+
+                    // Try alternative name properties
+                    return (
+                      c?.['@self']?.name ||
+                      c?.naam ||
+                      c?.name ||
+                      c?.displayName ||
+                      c?.label ||
+                      c?.id ||
+                      'Onbekende contactpersoon'
+                    );
+                  })()
+                ) : (
+                  // Handle contactpersoon as UUID string - resolve with ConUuidResolver
+                  <ConUuidResolver>{gebruik.contactpersoon}</ConUuidResolver>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
           <div className='ac-register-review__field'>
             <strong>Afnemer:</strong>
-            <div>{gebruik?.afnemer?.naam || '-'}</div>
+            <div>{getAfnemerDisplayName()}</div>
           </div>
+
           <div className='ac-register-review__field'>
             <strong>Status:</strong>
             <div>{gebruik?.status || '-'}</div>
           </div>
 
-          <div className='ac-register-review__field'>
-            <strong>Startdatum Verwerving:</strong>
-            <div>{gebruik?.startDatumVerwerving || '-'}</div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Geplande Startdatum:</strong>
-            <div>{gebruik?.startDatumGepland || '-'}</div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Startdatum In Productie:</strong>
-            <div>{gebruik?.startDatumInProductie || '-'}</div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Startdatum Uit Te Faseren:</strong>
-            <div>{gebruik?.startDatumUitTeFaseren || '-'}</div>
-          </div>
-          <div className='ac-register-review__field'>
-            <strong>Startdatum Uit Gefaseerd:</strong>
-            <div>{gebruik?.startDatumUitGefaseerd || '-'}</div>
-          </div>
+          {/* Only show the relevant start date based on selected status */}
+          {relevantStartDate && relevantStartDate.value && (
+            <div className='ac-register-review__field'>
+              <strong>{relevantStartDate.label}:</strong>
+              <div>{relevantStartDate.value}</div>
+            </div>
+          )}
 
           <div className='ac-register-review__field'>
             <strong>Referentiecomponenten:</strong>
@@ -84,7 +174,7 @@ const ConGebruikStepReview = ({
                     );
                     return (
                       <UnorderedListItem key={v}>
-                        {opt ? opt.label : v}
+                        {opt ? opt.label : <ConUuidResolver>{v}</ConUuidResolver>}
                       </UnorderedListItem>
                     );
                   })}
@@ -129,7 +219,7 @@ const ConGebruikStepReview = ({
                     );
                     return (
                       <UnorderedListItem key={v}>
-                        {opt ? opt.label : v}
+                        {opt ? opt.label : <ConUuidResolver>{v}</ConUuidResolver>}
                       </UnorderedListItem>
                     );
                   })}
