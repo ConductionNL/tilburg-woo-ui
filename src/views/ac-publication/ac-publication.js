@@ -12,6 +12,9 @@ import AcPublicationOrganisation from '@views/ac-publication/ac-publication-orga
 import AcPublicationFormulier from './ac-publication-formulier';
 import AcPublicationProduct from './ac-publication-product';
 import AcPublicationModule from './ac-publication-module';
+import AcPublicationKoppeling from './ac-publication-koppeling';
+import AcPublicationGebruik from './ac-publication-gebruik';
+import AcPublicationDienst from './ac-publication-dienst';
 import { AcContainer, AcFlex } from '@src/atoms';
 import { AcButton } from '@molecules';
 import { VISUALS } from '@constants';
@@ -67,10 +70,18 @@ const AcPublication = observer(({ store: { publications } }) => {
 
   useEffect(() => {
     // Only fetch attachments for schemas that actually use them
-    // Skip for Organisation/Product/Module as they don't display attachments
+    // Skip for Organisation/Product/Module/Koppeling/Gebruik/Dienst as they don't display attachments
     const schemaSlug = get_single?.['@self']?.schema?.slug;
     const shouldFetchAttachments =
-      schemaSlug && !['organisatie', 'product', 'module'].includes(schemaSlug);
+      schemaSlug &&
+      ![
+        'organisatie',
+        'product',
+        'module',
+        'koppeling',
+        'gebruik',
+        'dienst',
+      ].includes(schemaSlug);
 
     if (get_single?.id && shouldFetchAttachments) {
       fetchAttachments(get_single.id);
@@ -87,7 +98,15 @@ const AcPublication = observer(({ store: { publications } }) => {
   useEffect(() => {
     const schemaSlug = get_single?.['@self']?.schema?.slug;
     const needsAttachments =
-      schemaSlug && !['organisatie', 'product', 'module'].includes(schemaSlug);
+      schemaSlug &&
+      ![
+        'organisatie',
+        'product',
+        'module',
+        'koppeling',
+        'gebruik',
+        'dienst',
+      ].includes(schemaSlug);
 
     // For schemas that don't need attachments, only wait for get_single and loading to complete
     // For schemas that do need attachments, also wait for all_attachments
@@ -156,6 +175,15 @@ const AcPublication = observer(({ store: { publications } }) => {
         }
         if (get_single?.['@self']?.schema?.slug === 'module') {
           return <AcPublicationModule />;
+        }
+        if (get_single?.['@self']?.schema?.slug === 'koppeling') {
+          return <AcPublicationKoppeling />;
+        }
+        if (get_single?.['@self']?.schema?.slug === 'gebruik') {
+          return <AcPublicationGebruik />;
+        }
+        if (get_single?.['@self']?.schema?.slug === 'dienst') {
+          return <AcPublicationDienst />;
         }
         return <AcPublicationDefault schema={schema} />;
     }

@@ -13,18 +13,50 @@ import {
 } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@src/constants';
 import { useDebounce } from '@src/hooks/use-debounce.hook';
-import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
+// LEGACY: ConKoppelingStepSoort component no longer used - type selection removed
+// Type is now determined via URL parameter (?type=eigen-organisatie or ?type=aanbieden-koppeling)
+// import ConKoppelingStepSoort from './components/con-koppeling-step-soort';
 import ConKoppelingStageZoeken from './components/con-koppeling-stage-zoeken';
 import ConKoppelingStageToevoegen from './components/con-koppeling-stage-toevoegen';
 import ConKoppelingStageControleren from './components/con-koppeling-stage-controleren';
 
-const AcFormsKoppeling = () => {
+/**
+ * Koppeling Wizard (AcFormsKoppeling)
+ *
+ * This wizard allows users to register or edit koppelingen (connections) between applications.
+ *
+ * LEGACY NOTE: The initial "Soort koppeling" (type selection) step has been removed.
+ * The koppeling type is now determined via URL parameter:
+ * - ?type=eigen-organisatie - For registering connections within own organization
+ * - ?type=aanbieden-koppeling - For offering connections to other organizations
+ *   → Automatically sets the user's organization as 'aanbieder'
+ *
+ * If no type is provided, defaults to 'eigen-organisatie'.
+ *
+ * Current steps:
+ * - Step 0: Koppeling zoeken (Search for existing connections)
+ * - Step 1: Toevoegen/Bewerken (Add/Edit connection details)
+ * - Step 2: Controleren (Review and submit)
+ */
+const AcFormsKoppeling = ({ store }) => {
   const [searchParams] = useSearchParams();
   const koppelingId = searchParams.get('id') || '';
+  const typeFromUrl = searchParams.get('type') || '';
   const isEditMode = !!koppelingId;
-  const [currentStep, setCurrentStep] = useState(0);
+
+  // Validate type from URL and use it if valid
+  const validTypes = ['eigen-organisatie', 'aanbieden-koppeling'];
+  const initialType = validTypes.includes(typeFromUrl) ? typeFromUrl : null;
+
+  // LEGACY: Type selection step removed - type is now required via URL parameter
+  // If type is not provided, default to 'eigen-organisatie'
+  const initialStep = isEditMode ? 1 : 0; // Edit mode starts at step 1 (Toevoegen), otherwise step 0 (Zoeken)
+
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [loading, setLoading] = useState(false);
-  const [koppelingsType, setKoppelingsType] = useState(null); // 'eigen-organisatie' or 'aanbieden-koppeling'
+  const [koppelingsType, setKoppelingsType] = useState(
+    initialType || 'eigen-organisatie'
+  ); // Default to 'eigen-organisatie' if not specified
 
   // Ref for ProcessSteps to add click handlers
   const processStepsRef = useRef(null);
@@ -229,8 +261,8 @@ const AcFormsKoppeling = () => {
     let cancelled = false;
     const run = async () => {
       if (!isEditMode) return;
-      // Jump to edit step
-      setCurrentStep(2);
+      // Jump to edit step (was step 2, now step 1 after removing type selection)
+      setCurrentStep(1);
       setPrefillLoading(true);
       try {
         const url = `/api/apps/openregister/api/objects/voorzieningen/koppeling/${encodeURIComponent(
@@ -469,6 +501,7 @@ const AcFormsKoppeling = () => {
   }, [searchResults, modulesOptions]);
 
   // Search koppelingen by selected module id (auto when ownApp changes)
+  // Searches for koppelingen where the selected module is either moduleA or moduleB
   useEffect(() => {
     const moduleId = ownApp?.value ? String(ownApp.value) : '';
     let cancelled = false;
@@ -482,28 +515,66 @@ const AcFormsKoppeling = () => {
       setLoading(true);
       setResultsLoading(true);
       try {
-        const params = new URLSearchParams({ _limit: '20', _page: '1' });
-        // Server-side search by id; backend supports multiple _search[] keys, we use one
-        params.append('_search[]', moduleId);
-        // Ensure relations are included for label rendering
-        params.append('_extend[]', '@self.schema');
-        params.append('_extend[]', '@self.relations');
-        const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${params}`;
-        const res = await fetch(endpoint, {
-          headers: { Accept: 'application/json' },
-        });
-        if (!res.ok) {
-          if (!cancelled) setSearchResults([]);
-          return;
+        // Fetch koppelingen where moduleA = moduleId
+        const paramsA = new URLSearchParams({ _limit: '20', _page: '1' });
+        paramsA.append('moduleA', moduleId);
+        paramsA.append('_source', 'database');
+        const endpointA = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsA}`;
+
+        // Fetch koppelingen where moduleB = moduleId
+        const paramsB = new URLSearchParams({ _limit: '20', _page: '1' });
+        paramsB.append('moduleB', moduleId);
+        paramsB.append('_source', 'database');
+        const endpointB = `${BASE_URL}/openregister/api/objects/voorzieningen/koppeling?${paramsB}`;
+
+        // Execute both fetches in parallel
+        const [resA, resB] = await Promise.all([
+          fetch(endpointA, { headers: { Accept: 'application/json' } }),
+          fetch(endpointB, { headers: { Accept: 'application/json' } }),
+        ]);
+
+        // Process results from moduleA search
+        const listA = [];
+        if (resA.ok) {
+          const dataA = await resA.json();
+          const extractedA = Array.isArray(dataA)
+            ? dataA
+            : Array.isArray(dataA?.results)
+            ? dataA.results
+            : [];
+          listA.push(...extractedA);
         }
-        const data = await res.json();
-        const list = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.results)
-          ? data.results
-          : [];
+
+        // Process results from moduleB search
+        const listB = [];
+        if (resB.ok) {
+          const dataB = await resB.json();
+          const extractedB = Array.isArray(dataB)
+            ? dataB
+            : Array.isArray(dataB?.results)
+            ? dataB.results
+            : [];
+          listB.push(...extractedB);
+        }
+
+        // Merge results and remove duplicates based on koppeling id
+        const allResults = [...listA, ...listB];
+        const uniqueResults = [];
+        const seenIds = new Set();
+
+        for (const item of allResults) {
+          const itemId = item?.id || item?.['@self']?.id;
+          if (itemId && !seenIds.has(itemId)) {
+            seenIds.add(itemId);
+            uniqueResults.push(item);
+          } else if (!itemId) {
+            // Include items without IDs (shouldn't happen but handle gracefully)
+            uniqueResults.push(item);
+          }
+        }
+
         // Safety filter: ensure selected module is moduleA or moduleB
-        const filtered = list.filter((k) => {
+        const filtered = uniqueResults.filter((k) => {
           const rels = k?.['@self']?.relations || {};
           const aRel =
             rels.moduleA ?? k.moduleA ?? k.applicatie1 ?? k.applicatieA ?? k.appA;
@@ -513,6 +584,7 @@ const AcFormsKoppeling = () => {
           const bId = String(extractRelationId(bRel));
           return aId === moduleId || bId === moduleId;
         });
+
         if (!cancelled) setSearchResults(filtered);
       } catch {
         if (!cancelled) setSearchResults([]);
@@ -540,7 +612,7 @@ const AcFormsKoppeling = () => {
 
   // Build a detailed tooltip similar to ac-register when Next is disabled
   const getNextDisabledTooltip = () => {
-    if (currentStep !== 2) return '';
+    if (currentStep !== 1) return ''; // Updated: step 1 is now Toevoegen (was step 2)
     const messages = [];
     const missing = [];
     let missingA = false;
@@ -565,9 +637,11 @@ const AcFormsKoppeling = () => {
   };
 
   const canGoNext = () => {
-    if (currentStep === 0) return koppelingsType !== null; // type must be selected
-    if (currentStep === 1) return true; // search is optional to proceed
-    if (currentStep === 2) {
+    // LEGACY: Step 0 (type selection) removed - type now comes from URL
+    // if (currentStep === 0) return koppelingsType !== null; // type must be selected
+    if (currentStep === 0) return true; // search is optional to proceed (was step 1)
+    if (currentStep === 1) {
+      // Toevoegen step (was step 2)
       if (!rows.length) return false;
       // Require Applicatie A, Applicatie B and Richting for all rows
       for (const rowId of rows) {
@@ -625,7 +699,8 @@ const AcFormsKoppeling = () => {
         const soort = typeByRow[rowId] || '';
         const beschrijving = beschrijvingByRow[rowId] || '';
         const status = statusByRow[rowId] || '';
-        return {
+
+        const payload = {
           naam,
           moduleA: appAId,
           moduleB: appBId,
@@ -634,6 +709,16 @@ const AcFormsKoppeling = () => {
           beschrijvingKort: beschrijving,
           status,
         };
+
+        // For 'aanbieden-koppeling' type, automatically set the user's organization as aanbieder
+        if (
+          koppelingsType === 'aanbieden-koppeling' &&
+          store?.user?.activeOrganization
+        ) {
+          payload.aanbieder = store.user.activeOrganization.uuid;
+        }
+
+        return payload;
       })
       .filter(Boolean);
   };
@@ -646,8 +731,9 @@ const AcFormsKoppeling = () => {
 
   const handleResetForm = () => {
     // Reset all form state to initial values
-    setCurrentStep(0);
-    setKoppelingsType(null);
+    setCurrentStep(0); // Step 0 is now Koppeling zoeken (was step 1)
+    // LEGACY: setKoppelingsType(null); - Type now comes from URL, reset to default
+    setKoppelingsType(typeFromUrl || 'eigen-organisatie');
     setSearchQuery('');
     setSearchResults([]);
     setResolvedModulesFromResults([]);
@@ -739,15 +825,16 @@ const AcFormsKoppeling = () => {
 
   const renderStep = (step) => {
     switch (step) {
-      case 0:
-        return (
-          <ConKoppelingStepSoort
-            koppelingsType={koppelingsType}
-            setKoppelingsType={setKoppelingsType}
-            isEditMode={isEditMode}
-          />
-        );
-      case 1:
+      // LEGACY: Step 0 (Soort koppeling) - Type selection removed, now comes from URL parameter
+      // case 0:
+      //   return (
+      //     <ConKoppelingStepSoort
+      //       koppelingsType={koppelingsType}
+      //       setKoppelingsType={setKoppelingsType}
+      //       isEditMode={isEditMode}
+      //     />
+      //   );
+      case 0: // Koppeling zoeken (was step 1)
         return (
           <ConKoppelingStageZoeken
             loading={loading}
@@ -766,7 +853,7 @@ const AcFormsKoppeling = () => {
           />
         );
 
-      case 2:
+      case 1: // Toevoegen (was step 2)
         return (
           <ConKoppelingStageToevoegen
             rows={rows}
@@ -798,7 +885,7 @@ const AcFormsKoppeling = () => {
           />
         );
 
-      case 3:
+      case 2: // Controleren (was step 3)
         return (
           <ConKoppelingStageControleren
             rows={rows}
@@ -831,13 +918,14 @@ const AcFormsKoppeling = () => {
 
   const currentStepName = (step) => {
     switch (step) {
-      case 0:
-        return 'Soort koppeling';
-      case 1:
+      // LEGACY: Step 0 was 'Soort koppeling' - now removed
+      // case 0:
+      //   return 'Soort koppeling';
+      case 0: // Was step 1
         return 'Koppeling zoeken';
-      case 2:
+      case 1: // Was step 2
         return isEditMode ? 'Bewerken' : 'Toevoegen';
-      case 3:
+      case 2: // Was step 3
         return 'Controleren';
       default:
         return '';
@@ -855,11 +943,12 @@ const AcFormsKoppeling = () => {
     return true;
   };
 
-  // Determine page title based on koppelings type
+  // Determine page title based on koppelings type (from URL parameter)
   const getPageTitle = () => {
     if (isEditMode) {
       return 'Koppeling bewerken';
     }
+    // koppelingsType is now set from URL parameter or defaults to 'eigen-organisatie'
     if (koppelingsType === 'eigen-organisatie') {
       return 'Koppeling registreren voor eigen organisatie';
     }
@@ -894,29 +983,30 @@ const AcFormsKoppeling = () => {
                   <ProcessSteps
                     steps={(() => {
                       const steps = [
-                        {
-                          id: 'grp-soort',
-                          marker: 1,
-                          status: getStatus(currentStep, 0),
-                          title: 'Soort koppeling',
-                        },
+                        // LEGACY: Step 1 (Soort koppeling) - Type selection removed, now comes from URL
+                        // {
+                        //   id: 'grp-soort',
+                        //   marker: 1,
+                        //   status: getStatus(currentStep, 0),
+                        //   title: 'Soort koppeling',
+                        // },
                         {
                           id: 'grp-koppeling',
-                          marker: 2,
-                          status: getStatusMulti(currentStep, 1, 2),
+                          marker: 1, // Was marker 2
+                          status: getStatusMulti(currentStep, 0, 1), // Was (1, 2)
                           title: 'Koppeling zoeken',
                           steps: [
                             {
                               id: 'sub-toevoegen',
-                              status: getStatus(currentStep, 2),
+                              status: getStatus(currentStep, 1), // Was step 2
                               title: isEditMode ? 'Bewerken' : 'Toevoegen',
                             },
                           ],
                         },
                         {
                           id: 'grp-review',
-                          marker: 3,
-                          status: getStatus(currentStep, 3),
+                          marker: 2, // Was marker 3
+                          status: getStatus(currentStep, 2), // Was step 3
                           title: 'Controleren',
                         },
                       ];
@@ -1010,7 +1100,7 @@ const AcFormsKoppeling = () => {
                       </AcButton>
                     )}
 
-                    {currentStep !== 3 && (
+                    {currentStep !== 2 && ( // Was step 3
                       <div className='ac-register-button-wrapper'>
                         <AcButton
                           style='button'
@@ -1029,7 +1119,7 @@ const AcFormsKoppeling = () => {
                       </div>
                     )}
 
-                    {currentStep === 3 && (
+                    {currentStep === 2 && ( // Was step 3
                       <AcButton
                         style='button'
                         buttonType='primary'
