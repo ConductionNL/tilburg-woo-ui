@@ -189,7 +189,7 @@ const renderRelatedTabs = (
                 const Icon = getTabHeaderIcon('gebruik');
                 return <Icon />;
               })()}{' '}
-              Aangeboden gebruik ({ambtenaarItems.length})
+              Gebruik ({ambtenaarItems.length})
             </span>
           </AcTab>
         )}
