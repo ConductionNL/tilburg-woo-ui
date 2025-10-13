@@ -16,8 +16,8 @@ const AcForgotPassword = () => {
 
   return (
     <AcFlex className='ac-forgot-password-container'>
-      <AcFlex column spacing='md' className='ac-forgot-password-container-inner'>
-        <AcFlex justifyContent='center' className='ac-forgot-password-heading'>
+      <AcFlex column className='ac-forgot-password-container-inner'>
+        <AcFlex className='ac-forgot-password-heading'>
           <Heading level={3}>Wachtwoord vergeten?</Heading>
         </AcFlex>
 
