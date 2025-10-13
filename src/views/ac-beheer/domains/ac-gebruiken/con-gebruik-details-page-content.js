@@ -315,6 +315,7 @@ const ConGebruikDetailsPageContent = ({
       {id && (
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
+            id={id}
             uses={uses}
             used={used}
             usesLoading={usesLoading}

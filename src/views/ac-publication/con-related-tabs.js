@@ -303,13 +303,15 @@ const RelatedTabs = observer(
     const [ambtenaarData, setAmbtenaarData] = useState(null);
 
     useEffect(() => {
+      if (!activeObjectId) return;
+
       let isMounted = true;
       const abortController = new AbortController();
 
       const fetchAmbtenaarGebruik = async () => {
         try {
           const response = await fetch(
-            `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar`,
+            `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar/${activeObjectId}`,
             {
               method: 'GET',
               signal: abortController.signal,
@@ -318,10 +320,7 @@ const RelatedTabs = observer(
           );
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-          const data = (await response.json()).results
-            // filter out the active object if its in the data.
-            // the usecase of the ambtenaar data is not clear yet, so this is a assumption.
-            .filter((item) => item.id !== activeObjectId);
+          const data = (await response.json()).results;
 
           if (isMounted) setAmbtenaarData(data);
         } catch (err) {

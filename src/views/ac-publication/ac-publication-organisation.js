@@ -301,6 +301,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           />
 
           <RelatedTabs
+            id={id}
             uses={uses}
             used={used}
             usesLoading={usesLoading}
