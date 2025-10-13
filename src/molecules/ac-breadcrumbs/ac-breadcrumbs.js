@@ -61,6 +61,10 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
       return BREADCRUMBS.LOGIN;
     }
 
+    if (location.pathname.startsWith('/wachtwoord-vergeten')) {
+      return BREADCRUMBS.FORGOT_PASSWORD;
+    }
+
     if (location.pathname.startsWith('/mijn-omgeving')) {
       return BREADCRUMBS.MIJN_OMGEVING;
     }

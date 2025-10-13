@@ -22,3 +22,27 @@
 .ac-form-field-textarea--full-width > textarea {
   max-inline-size: 100% !important;
 }
+
+// Icon inside input wrapper
+.ac-form-field__icon-wrapper {
+  position: relative;
+}
+
+.ac-form-field__icon {
+  position: absolute;
+//   inset-inline-start: var(--tilburg-space-inline-snail);
+  inset-inline-start: var(--tilburg-space-inline-snail);
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  pointer-events: none;
+  color: var(--tilburg-form-control-placeholder-color);
+}
+
+// Add start padding so text doesn't overlap the icon
+.ac-form-field__icon-wrapper .utrecht-textbox {
+  padding-inline-start: calc(
+    var(--utrecht-textbox-padding-inline-start) + var(--tilburg-size-icon-sm) + var(--tilburg-space-inline-mouse)
+  );
+}

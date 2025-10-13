@@ -84,6 +84,9 @@ export const LABELS = {
 
   // Directory labels
   DIRECTORY: 'Directory',
+
+  // Forgot password labels
+  FORGOT_PASSWORD: 'Wachtwoord vergeten',
 };
 
 export const LABELS_DYNAMIC = {
