@@ -221,6 +221,9 @@ const ROTATE_RIGHT = loadable(() =>
 const USER_CIRCLE = loadable(() =>
   import('-!svg-react-loader!@assets/images/user-circle.svg')
 );
+const ENVELOPE_OUTLINE = loadable(() =>
+  import('-!svg-react-loader!@assets/images/envelope-outline.svg')
+);
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -301,6 +304,9 @@ export const VISUALS = {
   ROTATE_RIGHT,
   RELOAD: ROTATE_RIGHT,
   USER_CIRCLE,
+  ENVELOPE_OUTLINE,
+  EMAIL: ENVELOPE,
+  EMAIL_OUTLINE: ENVELOPE_OUTLINE,
 };
 
 export default {};
