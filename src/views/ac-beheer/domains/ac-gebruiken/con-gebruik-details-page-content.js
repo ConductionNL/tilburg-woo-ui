@@ -1,4 +1,4 @@
-import { Heading, Alert } from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { AcColumn } from '@src/atoms';
 import ConActionMenu from '@views/ac-beheer/shared/components/con-action-menu';
 import { VISUALS } from '@src/constants';
@@ -18,7 +18,7 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 const ConGebruikDetailsPageContent = ({
   loading,
   data,
-  config,
+
   userStore: user,
   objectStore: object,
   id,
@@ -76,16 +76,6 @@ const ConGebruikDetailsPageContent = ({
     fetchUsed();
   }, [fetchUses, fetchUsed]);
 
-  if (loading || !data) return null;
-
-  // Resolve UUID fields and optional fields
-  const contactId = Array.isArray(data?.contactpersoon)
-    ? data.contactpersoon[0]
-    : data?.contactpersoon;
-  const afnemerId = data?.afnemer || data?.organisatieId || null;
-  const productId = data?.product || data?.voorzieningId || null;
-  const moduleId = data?.module || data?.moduleversie || data?.moduleVersie || null;
-
   // Determine date field based on status
   const status = data?.status || '-';
   const statusDateKey = useMemo(() => {
@@ -95,7 +85,10 @@ const ConGebruikDetailsPageContent = ({
     if (status === 'Uit gefaseerd') return 'startDatumUitGefaseerd';
     return 'startDatumVerwerving';
   }, [status]);
+
   const statusDate = data?.[statusDateKey] || null;
+
+  if (loading || !data) return null;
 
   return (
     <AcColumn gap='sm' horizontalOverflowWrapper>
@@ -109,7 +102,9 @@ const ConGebruikDetailsPageContent = ({
       >
         <Heading level={4}>
           <div className='con-beheer-details--header-container'>
-            <Heading className='con-beheer-details--title'>{data?.id}</Heading>
+            <ConUuidResolver>
+              <Heading className='con-beheer-details--title'>{data?.id}</Heading>
+            </ConUuidResolver>
           </div>
         </Heading>
         <div className='ac-register-review__header-controls'>
@@ -201,116 +196,28 @@ const ConGebruikDetailsPageContent = ({
             <strong>Datum ({status}): </strong>
             {statusDate || '-'}
           </div>
-          {Array.isArray(data?.diensten) && data.diensten.length > 0 && (
+        </div>
+
+        {Array.isArray(data?.gebruiktVoorReferentiecomponenten) &&
+          data.gebruiktVoorReferentiecomponenten.length > 0 && (
             <div style={{ marginBottom: '8px' }}>
-              <strong>Diensten: </strong>
+              <strong>Referentiecomponenten: </strong>
               <div>
-                {data.diensten.map((did, idx) => (
-                  <div key={`${String(did)}-${idx}`}>
-                    {/* Some datasets use names here, others UUIDs */}
-                    {typeof did === 'string' && did.match(/^[0-9a-fA-F-]{36}$/) ? (
-                      <ConUuidResolver>{String(did)}</ConUuidResolver>
-                    ) : (
-                      String(did)
-                    )}
+                {data.gebruiktVoorReferentiecomponenten.map((rid, idx) => (
+                  <div key={idx} style={{ marginBottom: '4px' }}>
+                    <Link
+                      href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${rid}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                    >
+                      <ConUuidResolver>{String(rid)}</ConUuidResolver>
+                    </Link>
                   </div>
                 ))}
               </div>
             </div>
           )}
-        </div>
       </div>
-
-      {/* Relaties */}
-      {(contactId ||
-        afnemerId ||
-        productId ||
-        moduleId ||
-        (Array.isArray(data?.gebruiktVoorReferentiecomponenten) &&
-          data.gebruiktVoorReferentiecomponenten.length > 0) ||
-        (Array.isArray(data?.koppelingen) && data.koppelingen.length > 0) ||
-        Array.isArray(data?.deelnemers)) && (
-        <>
-          <Heading level={3} style={{ marginBlockStart: '1rem' }}>
-            Relaties
-          </Heading>
-          <div className='ac-register-review__section'>
-            <div style={{ marginTop: '12px' }}>
-              {contactId && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Contactpersoon: </strong>
-                  <ConUuidResolver>{String(contactId)}</ConUuidResolver>
-                </div>
-              )}
-
-              {afnemerId && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Afnemer: </strong>
-                  <ConUuidResolver>{String(afnemerId)}</ConUuidResolver>
-                </div>
-              )}
-
-              {productId && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Product: </strong>
-                  <ConUuidResolver>{String(productId)}</ConUuidResolver>
-                </div>
-              )}
-
-              {moduleId && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Module/versie: </strong>
-                  <ConUuidResolver>{String(moduleId)}</ConUuidResolver>
-                </div>
-              )}
-
-              {Array.isArray(data?.gebruiktVoorReferentiecomponenten) &&
-                data.gebruiktVoorReferentiecomponenten.length > 0 && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Referentiecomponenten: </strong>
-                    <div>
-                      {data.gebruiktVoorReferentiecomponenten.map((rid, idx) => (
-                        <div key={`${rid}-${idx}`}>
-                          <ConUuidResolver>{String(rid)}</ConUuidResolver>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-              {/* Koppelingen */}
-              {Array.isArray(data?.koppelingen) && data.koppelingen.length > 0 && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Koppelingen: </strong>
-                  <div>
-                    {data.koppelingen.map((kid, idx) => (
-                      <div key={`${kid}-${idx}`}>
-                        <ConUuidResolver>{String(kid)}</ConUuidResolver>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Deelnemers (show even when empty) */}
-              <div style={{ marginBottom: '8px' }}>
-                <strong>Deelnemers: </strong>
-                {Array.isArray(data?.deelnemers) && data.deelnemers.length > 0 ? (
-                  <div>
-                    {data.deelnemers.map((pid, idx) => (
-                      <div key={`${String(pid)}-${idx}`}>
-                        <ConUuidResolver>{String(pid)}</ConUuidResolver>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  '-'
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
       {id && (
         <div style={{ marginTop: '2rem' }}>
