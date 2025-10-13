@@ -135,6 +135,42 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
   );
 };
 
+// Helper function to merge ambtenaar gebruik items into the combined list so there's a single 'gebruik' tab
+const mergeGebruiksIntoItems = (items = [], ambtenaarItems = []) => {
+  if (!Array.isArray(ambtenaarItems) || ambtenaarItems.length === 0) return items;
+
+  // Normalize ambtenaar items so generic renderers can handle them
+  const normalizedAmbtenaar = ambtenaarItems.map((it) => {
+    const self = it['@self'] || {};
+    const normalized = {
+      ...it,
+      ['@self']: {
+        ...self,
+        organisation: self.organisation || it.organisation,
+      },
+    };
+
+    if (
+      !normalized.gebruiktVoorReferentiecomponenten &&
+      normalized.referentieComponenten
+    ) {
+      normalized.gebruiktVoorReferentiecomponenten =
+        normalized.referentieComponenten;
+    }
+
+    return normalized;
+  });
+
+  const nonGebruikItems = items.filter(
+    (i) => i?.['@self']?.schema?.slug !== 'gebruik'
+  );
+  const gebruikItems = items.filter((i) => i?.['@self']?.schema?.slug === 'gebruik');
+
+  const mergedGebruik = _.uniqBy([...gebruikItems, ...normalizedAmbtenaar], 'id');
+
+  return [...nonGebruikItems, ...mergedGebruik];
+};
+
 // Helper function to render tabs for related objects
 const renderRelatedTabs = (
   items,
@@ -142,11 +178,8 @@ const renderRelatedTabs = (
   tabIndex,
   setTabIndex,
   object,
-  navigateTo,
-  ambtenaarItems = []
+  navigateTo
 ) => {
-  const hasAmbtenaar = Array.isArray(ambtenaarItems) && ambtenaarItems.length > 0;
-
   if (loading && (!items || items.length === 0)) {
     return (
       <div>
@@ -155,7 +188,7 @@ const renderRelatedTabs = (
     );
   }
 
-  if ((!items || items.length === 0) && !hasAmbtenaar) {
+  if (!items || items.length === 0) {
     return null;
   }
 
@@ -166,8 +199,6 @@ const renderRelatedTabs = (
       )
     : [];
 
-  const baseCount = uniqueSchemas.length;
-
   return (
     <AcTabs
       style={{ marginBlockStart: 'var(--tilburg-space-block-mouse)' }}
@@ -175,25 +206,6 @@ const renderRelatedTabs = (
       onSelect={(index) => setTabIndex(index)}
     >
       <AcTabList>
-        {hasAmbtenaar && (
-          <AcTab key={'aangeboden-gebruik'} selected={tabIndex === baseCount}>
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-              }}
-            >
-              {/** Reuse the gebruik icon for consistency */}
-              {(() => {
-                const Icon = getTabHeaderIcon('gebruik');
-                return <Icon />;
-              })()}{' '}
-              Gebruik ({ambtenaarItems.length})
-            </span>
-          </AcTab>
-        )}
-
         {uniqueSchemas.map((item, idx) => {
           const IconComponent = getTabHeaderIcon(item['@self'].schema.slug);
           // Count items with this schema
@@ -217,40 +229,6 @@ const renderRelatedTabs = (
           );
         })}
       </AcTabList>
-
-      {hasAmbtenaar && (
-        <AcTabPanel
-          key={'aangeboden-gebruik-panel'}
-          selected={tabIndex === baseCount}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns:
-                ambtenaarItems.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-              gap: '16px',
-              marginTop: '16px',
-            }}
-          >
-            {ambtenaarItems.map((item) => (
-              <ConCardGebruik
-                key={item.id}
-                id={item.id}
-                product={item.product}
-                module={item.module}
-                organisation={item?.['@self']?.organisation || item.organisation}
-                referentieComponenten={
-                  item.gebruiktVoorReferentiecomponenten ||
-                  item.referentieComponenten
-                }
-                status={item.status}
-                objectStore={object}
-                navigateTo={navigateTo}
-              />
-            ))}
-          </div>
-        </AcTabPanel>
-      )}
 
       {uniqueSchemas.map((schemaItem, idx) => {
         const itemsWithThisSchema = items.filter(
@@ -337,24 +315,28 @@ const RelatedTabs = observer(
       };
     }, []);
 
+    // Combine ambtenaar gebruik into the main items so there's a single 'gebruik' tab
+    const itemsWithAmbtenaarGebruik = mergeGebruiksIntoItems(
+      mergedItems,
+      ambtenaarData || []
+    );
+
     // Show the tabs if we have data or are loading
     const shouldShow =
       isLoading ||
-      (mergedItems && mergedItems.length > 0) ||
-      (ambtenaarData && ambtenaarData.length > 0);
+      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0);
 
     return (
       <>
         {shouldShow && (
           <div>
             {renderRelatedTabs(
-              mergedItems,
+              itemsWithAmbtenaarGebruik,
               isLoading,
               tabIndex,
               setTabIndex,
               object,
               navigateTo,
-              ambtenaarData || []
             )}
           </div>
         )}
