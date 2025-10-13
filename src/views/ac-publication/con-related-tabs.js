@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { useEffect, useState } from 'react';
 import { AcLoader } from '@components';
 import { observer } from 'mobx-react-lite';
 import { AcSearchResult } from '@molecules';
@@ -11,6 +12,7 @@ import {
   ConCardContactpersoon,
   ConCardKoppeling,
 } from '@molecules/con-cards';
+import { commongroundApiUrl } from '@src/config';
 
 // Helper function to define the desired tab order
 const getTabOrder = (schemaSlug) => {
@@ -133,6 +135,42 @@ const mergeAndDeduplicateItems = (uses = [], used = []) => {
   );
 };
 
+// Helper function to merge ambtenaar gebruik items into the combined list so there's a single 'gebruik' tab
+const mergeGebruiksIntoItems = (items = [], ambtenaarItems = []) => {
+  if (!Array.isArray(ambtenaarItems) || ambtenaarItems.length === 0) return items;
+
+  // Normalize ambtenaar items so generic renderers can handle them
+  const normalizedAmbtenaar = ambtenaarItems.map((it) => {
+    const self = it['@self'] || {};
+    const normalized = {
+      ...it,
+      ['@self']: {
+        ...self,
+        organisation: self.organisation || it.organisation,
+      },
+    };
+
+    if (
+      !normalized.gebruiktVoorReferentiecomponenten &&
+      normalized.referentieComponenten
+    ) {
+      normalized.gebruiktVoorReferentiecomponenten =
+        normalized.referentieComponenten;
+    }
+
+    return normalized;
+  });
+
+  const nonGebruikItems = items.filter(
+    (i) => i?.['@self']?.schema?.slug !== 'gebruik'
+  );
+  const gebruikItems = items.filter((i) => i?.['@self']?.schema?.slug === 'gebruik');
+
+  const mergedGebruik = _.uniqBy([...gebruikItems, ...normalizedAmbtenaar], 'id');
+
+  return [...nonGebruikItems, ...mergedGebruik];
+};
+
 // Helper function to render tabs for related objects
 const renderRelatedTabs = (
   items,
@@ -142,7 +180,7 @@ const renderRelatedTabs = (
   object,
   navigateTo
 ) => {
-  if (loading) {
+  if (loading && (!items || items.length === 0)) {
     return (
       <div>
         <AcLoader className='con-publication-uses-used-loader' />
@@ -154,10 +192,12 @@ const renderRelatedTabs = (
     return null;
   }
 
-  const uniqueSchemas = _.uniqBy(items, (item) => item['@self'].schema.id).sort(
-    (a, b) =>
-      getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
-  );
+  const uniqueSchemas = (items || []).length
+    ? _.uniqBy(items, (item) => item['@self'].schema.id).sort(
+        (a, b) =>
+          getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
+      )
+    : [];
 
   return (
     <AcTabs
@@ -221,6 +261,7 @@ const renderRelatedTabs = (
 
 const RelatedTabs = observer(
   ({
+    id: activeObjectId,
     uses,
     used,
     usesLoading,
@@ -236,20 +277,66 @@ const RelatedTabs = observer(
     // Show loading if either is loading
     const isLoading = usesLoading || usedLoading;
 
+    // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
+    const [ambtenaarData, setAmbtenaarData] = useState(null);
+
+    useEffect(() => {
+      if (!activeObjectId) return;
+
+      let isMounted = true;
+      const abortController = new AbortController();
+
+      const fetchAmbtenaarGebruik = async () => {
+        try {
+          const response = await fetch(
+            `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar/${activeObjectId}`,
+            {
+              method: 'GET',
+              signal: abortController.signal,
+              headers: { Accept: 'application/json' },
+            }
+          );
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const data = (await response.json()).results;
+
+          if (isMounted) setAmbtenaarData(data);
+        } catch (err) {
+          // Permission errors or fetch failures are non-blocking; omit the tab
+          if (isMounted && err.name === 'AbortError') return;
+        }
+      };
+
+      fetchAmbtenaarGebruik();
+
+      return () => {
+        isMounted = false;
+        abortController.abort();
+      };
+    }, []);
+
+    // Combine ambtenaar gebruik into the main items so there's a single 'gebruik' tab
+    const itemsWithAmbtenaarGebruik = mergeGebruiksIntoItems(
+      mergedItems,
+      ambtenaarData || []
+    );
+
     // Show the tabs if we have data or are loading
-    const shouldShow = isLoading || (mergedItems && mergedItems.length > 0);
+    const shouldShow =
+      isLoading ||
+      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0);
 
     return (
       <>
         {shouldShow && (
           <div>
             {renderRelatedTabs(
-              mergedItems,
+              itemsWithAmbtenaarGebruik,
               isLoading,
               tabIndex,
               setTabIndex,
               object,
-              navigateTo
+              navigateTo,
             )}
           </div>
         )}

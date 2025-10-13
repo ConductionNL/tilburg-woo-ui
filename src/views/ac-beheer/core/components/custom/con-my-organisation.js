@@ -3,7 +3,12 @@ import { withStore } from '@stores';
 import { observer } from 'mobx-react-lite';
 import { AcFlex, AcSection } from '@atoms';
 import { ConDynamicSidenav } from '@components';
-import { Heading, Link, Paragraph, Alert } from '@utrecht/component-library-react/dist/css-module';
+import {
+  Heading,
+  Link,
+  Paragraph,
+  Alert,
+} from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 import { commongroundApiUrl } from '@config';
 import AcColumn from '@atoms/ac-column/ac-column';
@@ -498,17 +503,23 @@ const ConMyOrganisationPage = ({ store }) => {
                 </div>
 
                 {/* Warning alert for unpublished organization */}
-                {fullActiveOrganisation && !fullActiveOrganisation?.['@self']?.published && (
-                  <Alert type='warning'>
-                    <Heading level={4}>Uw organisatie staat nog niet gepubliceerd in de software catalogus</Heading>
-                    <Paragraph>
-                      Dit betekent dat uw organisatie momenteel niet zichtbaar is in de zoekfunctie van de catalogus. 
-                      Bezoekers kunnen uw organisatie en de bijbehorende producten en diensten nog niet vinden. 
-                      Gebruik de &quot;Publiceren&quot; actie om uw organisatie beschikbaar te maken voor bezoekers 
-                      en deel te nemen aan de software catalogus.
-                    </Paragraph>
-                  </Alert>
-                )}
+                {fullActiveOrganisation &&
+                  !fullActiveOrganisation?.['@self']?.published && (
+                    <Alert type='warning'>
+                      <Heading level={4}>
+                        Uw organisatie staat nog niet gepubliceerd in de software
+                        catalogus
+                      </Heading>
+                      <Paragraph>
+                        Dit betekent dat uw organisatie momenteel niet zichtbaar is
+                        in de zoekfunctie van de catalogus. Bezoekers kunnen uw
+                        organisatie en de bijbehorende producten en diensten nog niet
+                        vinden. Gebruik de &quot;Publiceren&quot; actie om uw
+                        organisatie beschikbaar te maken voor bezoekers en deel te
+                        nemen aan de software catalogus.
+                      </Paragraph>
+                    </Alert>
+                  )}
 
                 <div style={{ flex: 2 }}>
                   <ConEditableDescription
@@ -634,6 +645,7 @@ const ConMyOrganisationPage = ({ store }) => {
                 {fullActiveOrganisation?.id && (
                   <div style={{ marginTop: '2rem' }}>
                     <RelatedTabs
+                      id={fullActiveOrganisation?.id}
                       uses={uses}
                       used={used}
                       usesLoading={usesLoading}
