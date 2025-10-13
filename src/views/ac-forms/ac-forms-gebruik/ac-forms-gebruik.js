@@ -10,6 +10,7 @@ import { ProcessSteps } from '@gemeente-denhaag/components-react';
 import {
   Heading1,
   Paragraph,
+  Alert,
 } from '@utrecht/component-library-react/dist/css-module';
 import ConGebruikStepSoort from './components/con-gebruik-step-soort';
 import ConGebruikStepInformatie from './components/con-gebruik-step-informatie';
@@ -88,10 +89,37 @@ const AcFormsGebruik = ({ store }) => {
     if (typeof ref === 'string' || typeof ref === 'number') return String(ref);
     return (
       String(
-        ref.id || ref.value || ref?.['@self']?.id || ref?.['@self']?.value || ''
+        ref.uuid ||
+          ref.id ||
+          ref.value ||
+          ref?.['@self']?.id ||
+          ref?.['@self']?.value ||
+          ref.slug ||
+          ''
       ) || ''
     );
   }, []);
+
+  // Helper to determine gebruikType based on afnemer and current organization
+  const determineGebruikType = useCallback(
+    (afnemer, currentOrg) => {
+      const currentOrgId = getIdString(currentOrg);
+      const afnemerId = getIdString(afnemer);
+
+      // If no afnemer or afnemer equals current organization, it's eigen-organisatie
+      if (!afnemerId || (currentOrgId && afnemerId === currentOrgId)) {
+        const result = 'eigen-organisatie';
+
+        return result;
+      }
+
+      // If afnemer exists and is different from current organization, it's andere-organisatie
+      const result = 'andere-organisatie';
+
+      return result;
+    },
+    [getIdString]
+  );
 
   // Map fetched gebruik object into the local state shape expected by this form
   const mapFetchedGebruikToLocalState = useCallback(
@@ -189,18 +217,11 @@ const AcFormsGebruik = ({ store }) => {
           : [],
       };
 
-      // Determine gebruikType from API or infer based on afnemer vs active org
-      const apiGebruikType = api.gebruikType || api.type || api.soortGebruik;
-      if (apiGebruikType) {
-        mapped.gebruikType = apiGebruikType;
-      } else {
-        const activeOrgId = getIdString(store?.user?.activeOrganization);
-        const afnemerId = getIdString(mapped.afnemer);
-        mapped.gebruikType =
-          activeOrgId && afnemerId && activeOrgId !== afnemerId
-            ? 'andere-organisatie'
-            : 'eigen-organisatie';
-      }
+      // Determine gebruikType based on afnemer vs current organization
+      mapped.gebruikType = determineGebruikType(
+        mapped.afnemer,
+        store?.user?.activeOrganization
+      );
 
       // map the date dependent on the status (it comes from the API as a string like `2025-09-10`)
       mapped.startDatumVerwerving = api.startDatumVerwerving || '';
@@ -211,7 +232,7 @@ const AcFormsGebruik = ({ store }) => {
 
       return mapped;
     },
-    [getIdString, store?.user?.activeOrganization]
+    [getIdString, store?.user?.activeOrganization, determineGebruikType]
   );
 
   // Schema management
@@ -225,10 +246,7 @@ const AcFormsGebruik = ({ store }) => {
     setGebruik((prev) => ({ ...prev, [key]: value }));
 
   // Usage type selection state
-  const [gebruikType, setGebruikType] = useState(
-    // default to eigen-organisatie for edit mode since you should only be able to edit gebruik from your organization
-    isEditMode ? 'eigen-organisatie' : null
-  ); // 'eigen-organisatie' or 'andere-organisatie'
+  const [gebruikType, setGebruikType] = useState(null); // 'eigen-organisatie' or 'andere-organisatie'
 
   // Clear certain fields when gebruikType changes to 'andere-organisatie'
   useEffect(() => {
@@ -368,6 +386,7 @@ const AcFormsGebruik = ({ store }) => {
           _limit: '50',
           _page: '1',
           '_extend[]': '@self.schema',
+          _source: 'index',
         });
         const collection = store.object.getCollection('voorzieningen_product');
         const list = collection?.results || collection || [];
@@ -641,33 +660,60 @@ const AcFormsGebruik = ({ store }) => {
     }
   };
 
-  // Server-side search for producten
+  // Server-side search for producten with cache-first strategy
   const searchProducts = useCallback(
     async (query) => {
       try {
         setProductLoading(true);
         const q = String(query || '').trim();
-        if (!q) {
-          setProductOptions([]);
-          return;
-        }
-        await store.object.fetchCollection('voorzieningen', 'product', {
+
+        const queryParams = {
           _limit: '50',
           _page: '1',
-          _search: q,
-        });
+          _source: 'index',
+        };
+
+        // Add search parameter if provided
+        if (q) {
+          queryParams._search = q;
+        }
+
+        await store.object.fetchCollection('voorzieningen', 'product', queryParams);
         const collection = store.object.getCollection('voorzieningen_product');
         const list = collection?.results || collection || [];
         const options = list.map(mapToOption);
-        setProductOptions(options);
+
+        // Merge with existing options to preserve selected items
+        setProductOptions((prevOptions) => {
+          const newOptionsMap = new Map(options.map((opt) => [opt.value, opt]));
+
+          // Combine existing and new options, preferring new data for existing items
+          const mergedOptions = [...newOptionsMap.values()];
+
+          // Add any existing options that aren't in the new results
+          // This preserves previously selected items that might not match the current search
+          prevOptions.forEach((opt) => {
+            if (!newOptionsMap.has(opt.value)) {
+              mergedOptions.push(opt);
+            }
+          });
+
+          return mergedOptions;
+        });
       } catch (e) {
-        setProductOptions([]);
+        // Don't clear options on error to preserve existing selections
+        console.error('Product search failed:', e);
       } finally {
         setProductLoading(false);
       }
     },
     [store]
   );
+
+  // Trigger initial product search to populate dropdown
+  useEffect(() => {
+    searchProducts('');
+  }, [searchProducts]);
 
   // Server-side search for organisaties
   const searchOrganisaties = useCallback(
@@ -1207,8 +1253,6 @@ const AcFormsGebruik = ({ store }) => {
         module: gebruik?.module,
         moduleVersie: gebruik?.moduleVersie,
         status: gebruik?.status || 'Verwerving',
-        // Include usage type for processing
-        gebruikType: gebruikType,
       };
 
       // Submit to the gebruik endpoint using the object store
@@ -1495,6 +1539,7 @@ const AcFormsGebruik = ({ store }) => {
                         <AcButton
                           style='button'
                           buttonType='secondary'
+                          icon={<VISUALS.ARROW_LEFT />}
                           onClick={() => setCurrentStep(currentStep - 1)}
                           disabled={loading || prefillLoading || !!prefillError}
                         >
@@ -1509,6 +1554,7 @@ const AcFormsGebruik = ({ store }) => {
                             className={clsx(
                               currentStep === 0 && 'ac-register-form-next-button'
                             )}
+                            icon={<VISUALS.ARROW_RIGHT />}
                             onClick={() => setCurrentStep(currentStep + 1)}
                             disabled={
                               !canGoNext() ||
@@ -1526,6 +1572,13 @@ const AcFormsGebruik = ({ store }) => {
                         <AcButton
                           style='button'
                           buttonType='primary'
+                          icon={
+                            isEditMode ? (
+                              <VISUALS.SAVE />
+                            ) : (
+                              <VISUALS.CLIPBOARD_CHECK />
+                            )
+                          }
                           onClick={handleRegister}
                           loading={loading}
                           disabled={loading || prefillLoading}
@@ -1582,37 +1635,33 @@ const AcFormsGebruik = ({ store }) => {
                   : '🎉 Gebruik succesvol geregistreerd!'}
               </Heading1>
 
-              <div style={{ marginTop: '1rem' }}>
-                <div className='utrecht-alert utrecht-alert--success'>
-                  <div className='utrecht-alert__content'>
-                    <Paragraph>
-                      <strong>
-                        {isEditMode
-                          ? 'Uw gebruik is succesvol bijgewerkt!'
-                          : 'Uw gebruik is succesvol geregistreerd!'}
-                      </strong>
-                    </Paragraph>
-                    <Paragraph>
-                      Het gebruik van{' '}
-                      {gebruik?.product?.naam ||
-                        gebruik?.module?.naam ||
-                        'het geselecteerde product'}
-                      {gebruikType === 'eigen-organisatie'
-                        ? ` door uw organisatie`
-                        : ` door ${
-                            gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
-                          }`}{' '}
-                      is opgeslagen in de softwarecatalogus.
-                    </Paragraph>
-                    <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
-                      Type registratie:{' '}
-                      {gebruikType === 'eigen-organisatie'
-                        ? 'Gebruik voor eigen organisatie'
-                        : 'Gebruik voor andere organisatie (klant)'}
-                    </Paragraph>
-                  </div>
-                </div>
-              </div>
+              <Alert type='ok'>
+                <Paragraph>
+                  <strong>
+                    {isEditMode
+                      ? 'Uw gebruik is succesvol bijgewerkt!'
+                      : 'Uw gebruik is succesvol geregistreerd!'}
+                  </strong>
+                </Paragraph>
+                <Paragraph>
+                  Het gebruik van{' '}
+                  {gebruik?.product?.naam ||
+                    gebruik?.module?.naam ||
+                    'het geselecteerde product'}
+                  {gebruikType === 'eigen-organisatie'
+                    ? ` door uw organisatie`
+                    : ` door ${
+                        gebruik?.afnemer?.naam || 'de geselecteerde organisatie'
+                      }`}{' '}
+                  is opgeslagen in de softwarecatalogus.
+                </Paragraph>
+                <Paragraph style={{ fontSize: '0.9rem', color: '#666' }}>
+                  Type registratie:{' '}
+                  {gebruikType === 'eigen-organisatie'
+                    ? 'Gebruik voor eigen organisatie'
+                    : 'Gebruik voor andere organisatie (klant)'}
+                </Paragraph>
+              </Alert>
 
               <div style={{ marginTop: '2rem' }}>
                 <Paragraph>
