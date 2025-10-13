@@ -142,9 +142,12 @@ const renderRelatedTabs = (
   tabIndex,
   setTabIndex,
   object,
-  navigateTo
+  navigateTo,
+  ambtenaarItems = []
 ) => {
-  if (loading) {
+  const hasAmbtenaar = Array.isArray(ambtenaarItems) && ambtenaarItems.length > 0;
+
+  if (loading && (!items || items.length === 0)) {
     return (
       <div>
         <AcLoader className='con-publication-uses-used-loader' />
@@ -152,14 +155,18 @@ const renderRelatedTabs = (
     );
   }
 
-  if (!items || items.length === 0) {
+  if ((!items || items.length === 0) && !hasAmbtenaar) {
     return null;
   }
 
-  const uniqueSchemas = _.uniqBy(items, (item) => item['@self'].schema.id).sort(
-    (a, b) =>
-      getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
-  );
+  const uniqueSchemas = (items || []).length
+    ? _.uniqBy(items, (item) => item['@self'].schema.id).sort(
+        (a, b) =>
+          getTabOrder(a['@self'].schema.slug) - getTabOrder(b['@self'].schema.slug)
+      )
+    : [];
+
+  const baseCount = uniqueSchemas.length;
 
   return (
     <AcTabs
@@ -168,6 +175,25 @@ const renderRelatedTabs = (
       onSelect={(index) => setTabIndex(index)}
     >
       <AcTabList>
+        {hasAmbtenaar && (
+          <AcTab key={'aangeboden-gebruik'} selected={tabIndex === baseCount}>
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              {/** Reuse the gebruik icon for consistency */}
+              {(() => {
+                const Icon = getTabHeaderIcon('gebruik');
+                return <Icon />;
+              })()}{' '}
+              Aangeboden gebruik ({ambtenaarItems.length})
+            </span>
+          </AcTab>
+        )}
+
         {uniqueSchemas.map((item, idx) => {
           const IconComponent = getTabHeaderIcon(item['@self'].schema.slug);
           // Count items with this schema
@@ -191,6 +217,40 @@ const renderRelatedTabs = (
           );
         })}
       </AcTabList>
+
+      {hasAmbtenaar && (
+        <AcTabPanel
+          key={'aangeboden-gebruik-panel'}
+          selected={tabIndex === baseCount}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                ambtenaarItems.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+              gap: '16px',
+              marginTop: '16px',
+            }}
+          >
+            {ambtenaarItems.map((item) => (
+              <ConCardGebruik
+                key={item.id}
+                id={item.id}
+                product={item.product}
+                module={item.module}
+                organisation={item?.['@self']?.organisation || item.organisation}
+                referentieComponenten={
+                  item.gebruiktVoorReferentiecomponenten ||
+                  item.referentieComponenten
+                }
+                status={item.status}
+                objectStore={object}
+                navigateTo={navigateTo}
+              />
+            ))}
+          </div>
+        </AcTabPanel>
+      )}
 
       {uniqueSchemas.map((schemaItem, idx) => {
         const itemsWithThisSchema = items.filter(
@@ -223,6 +283,7 @@ const renderRelatedTabs = (
 
 const RelatedTabs = observer(
   ({
+    id: activeObjectId,
     uses,
     used,
     usesLoading,
@@ -238,21 +299,14 @@ const RelatedTabs = observer(
     // Show loading if either is loading
     const isLoading = usesLoading || usedLoading;
 
-    // Show the tabs if we have data or are loading
-    const shouldShow = isLoading || (mergedItems && mergedItems.length > 0);
-
-    // Prepare: fetch ambtenaar gebruik for upcoming "gebruik" tab (endpoint WIP)
-    const [, setAmbtenaarData] = useState(null);
-    const [, setAmbtenaarLoading] = useState(false);
-    const [, setAmbtenaarError] = useState(null);
+    // Fetch ambtenaar gebruik for "Aangeboden gebruik" tab (optional, permission-based)
+    const [ambtenaarData, setAmbtenaarData] = useState(null);
 
     useEffect(() => {
       let isMounted = true;
       const abortController = new AbortController();
 
       const fetchAmbtenaarGebruik = async () => {
-        setAmbtenaarLoading(true);
-        setAmbtenaarError(null);
         try {
           const response = await fetch(
             `${commongroundApiUrl()}/softwarecatalog/api/aangeboden-gebruik/ambtenaar`,
@@ -263,12 +317,16 @@ const RelatedTabs = observer(
             }
           );
           if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
+
+          const data = (await response.json()).results
+            // filter out the active object if its in the data.
+            // the usecase of the ambtenaar data is not clear yet, so this is a assumption.
+            .filter((item) => item.id !== activeObjectId);
+
           if (isMounted) setAmbtenaarData(data);
         } catch (err) {
-          if (isMounted && err.name !== 'AbortError') setAmbtenaarError(err);
-        } finally {
-          if (isMounted) setAmbtenaarLoading(false);
+          // Permission errors or fetch failures are non-blocking; omit the tab
+          if (isMounted && err.name === 'AbortError') return;
         }
       };
 
@@ -280,6 +338,12 @@ const RelatedTabs = observer(
       };
     }, []);
 
+    // Show the tabs if we have data or are loading
+    const shouldShow =
+      isLoading ||
+      (mergedItems && mergedItems.length > 0) ||
+      (ambtenaarData && ambtenaarData.length > 0);
+
     return (
       <>
         {shouldShow && (
@@ -290,7 +354,8 @@ const RelatedTabs = observer(
               tabIndex,
               setTabIndex,
               object,
-              navigateTo
+              navigateTo,
+              ambtenaarData || []
             )}
           </div>
         )}

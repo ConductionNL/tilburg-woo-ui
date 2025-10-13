@@ -326,6 +326,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
 
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
+            id={id}
             uses={uses}
             used={used}
             usesLoading={usesLoading}
