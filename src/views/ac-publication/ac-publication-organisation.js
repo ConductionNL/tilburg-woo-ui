@@ -251,46 +251,53 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                 />
               )}
             </AcFlex>
-            <AcFlex column spacing='sm' style={{ flex: 1 }}>
-              <div className='ac-register-review__section'>
-                <div style={{ marginTop: '12px' }}>
-                  {get_single?.['e-mailadres'] && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Email: </strong>
-                      <Link href={`mailto:${get_single['e-mailadres']}`}>
-                        {get_single['e-mailadres']}
-                      </Link>
-                    </div>
-                  )}
-                  {get_single?.telefoonnummer && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Telefoon: </strong>
-                      <Link
-                        href={`tel:${get_single.telefoonnummer.replace(/\s/g, '')}`}
-                      >
-                        {get_single.telefoonnummer}
-                      </Link>
-                    </div>
-                  )}
-                  {get_single?.website && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Website: </strong>
-                      <Link
-                        href={
-                          get_single.website.startsWith('http')
-                            ? get_single.website
-                            : `https://${get_single.website}`
-                        }
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        {get_single.website}
-                      </Link>
-                    </div>
-                  )}
+            {(get_single?.['e-mailadres'] ||
+              get_single?.telefoonnummer ||
+              get_single?.website) && (
+              <AcFlex column spacing='sm' style={{ flex: 1 }}>
+                <div className='ac-register-review__section'>
+                  <div style={{ marginTop: '12px' }}>
+                    {get_single?.['e-mailadres'] && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Email: </strong>
+                        <Link href={`mailto:${get_single['e-mailadres']}`}>
+                          {get_single['e-mailadres']}
+                        </Link>
+                      </div>
+                    )}
+                    {get_single?.telefoonnummer && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Telefoon: </strong>
+                        <Link
+                          href={`tel:${get_single.telefoonnummer.replace(
+                            /\s/g,
+                            ''
+                          )}`}
+                        >
+                          {get_single.telefoonnummer}
+                        </Link>
+                      </div>
+                    )}
+                    {get_single?.website && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Website: </strong>
+                        <Link
+                          href={
+                            get_single.website.startsWith('http')
+                              ? get_single.website
+                              : `https://${get_single.website}`
+                          }
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {get_single.website}
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </AcFlex>
+              </AcFlex>
+            )}
           </AcFlex>
 
           <AcGenericBeheerDeleteModal

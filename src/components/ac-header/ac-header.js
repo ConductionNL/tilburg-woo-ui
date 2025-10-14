@@ -35,7 +35,7 @@ const AcHeader = ({ store: { menu, user } }) => {
     const iconMap = {
       Dashboard: VISUALS.CHART_LINE,
       Producten: VISUALS.CUBE,
-      Applicaties: VISUALS.CUBE,
+      Applicaties: VISUALS.CUBES,
       Diensten: VISUALS.HAND_HOLDING,
       Gebruik: VISUALS.CLOUD,
       Versie: VISUALS.INFO,
@@ -52,7 +52,7 @@ const AcHeader = ({ store: { menu, user } }) => {
     }
 
     const linkPath = menuItem.link || '';
-    if (linkPath.includes('/applicaties')) return VISUALS.CUBE;
+    if (linkPath.includes('/applicaties')) return VISUALS.CUBES;
     if (linkPath.includes('/diensten')) return VISUALS.HAND_HOLDING;
     if (linkPath.includes('/gebruik')) return VISUALS.CLOUD;
     if (linkPath.includes('/versie')) return VISUALS.INFO;
