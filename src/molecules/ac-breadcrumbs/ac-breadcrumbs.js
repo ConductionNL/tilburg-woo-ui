@@ -61,7 +61,7 @@ const AcBreadcrumbs = ({ store: { pages, publications, gemma } }) => {
       return BREADCRUMBS.LOGIN;
     }
 
-    if (location.pathname.startsWith('/wachtwoord-vergeten')) {
+    if (location.pathname.startsWith('/reminder')) {
       return BREADCRUMBS.FORGOT_PASSWORD;
     }
 

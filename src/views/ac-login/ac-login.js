@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AcFormField } from '@molecules';
 import {
   Heading,
@@ -207,13 +207,6 @@ const AcLogin = ({ store }) => {
                 error={errors.password}
               />
             </div>
-
-            <Link
-              className='utrecht-link utrecht-link--html-a'
-              to='/wachtwoord-vergeten'
-            >
-              Wachtwoord vergeten?
-            </Link>
           </div>
 
           <AcButton

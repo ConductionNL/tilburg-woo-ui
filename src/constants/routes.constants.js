@@ -21,7 +21,6 @@ import {
   AcObjects,
   AcMyAccount,
   AcLogin,
-  AcForgotPassword,
   ConDirectory,
   AcFormsGebruik,
   AcFormsProduct,
@@ -54,7 +53,6 @@ export const PATHS = AcLockObject({
   OBJECTS: '/objects/:register/:schema',
   REGISTER: '/register',
   AANMELDEN: '/aanmelden',
-  FORGOT_PASSWORD: '/wachtwoord-vergeten',
   FORMS: '/forms',
   FORMS_REGISTER: '/forms/register',
   FORMS_GEBRUIK: '/forms/gebruik',
@@ -274,16 +272,6 @@ export const ROUTES = {
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Aanmelden`,
     component: AcRegister,
-  },
-  FORGOT_PASSWORD: {
-    id: AcUUID(),
-    name: 'Wachtwoord vergeten',
-    label: LABELS.FORGOT_PASSWORD,
-    path: PATHS.FORGOT_PASSWORD,
-    title: `${
-      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
-    } | Wachtwoord vergeten`,
-    component: AcForgotPassword,
   },
   FORMS_INDEX: {
     id: AcUUID(),

@@ -9,7 +9,7 @@ export const BREADCRUMB_ITEMS = {
   SEARCH: { label: 'Zoeken', href: '/zoeken' },
   THEMES: { label: 'Onderwerpen', href: '/onderwerpen' },
   LOGIN: { label: 'Inloggen', href: '/login' },
-  FORGOT_PASSWORD: { label: 'Wachtwoord vergeten', href: '/wachtwoord-vergeten' },
+  FORGOT_PASSWORD: { label: 'Wachtwoord vergeten', href: '/reminder' },
   MIJN_OMGEVING: { label: 'Mijn omgeving', href: '/mijn-omgeving' },
   GEMMA: { label: 'GEMMA', href: '/gemma' },
   NEXTCLOUD_LOGIN: { label: 'Nextcloud Login', href: '/login' },
