@@ -342,7 +342,10 @@ const AcPublicationProduct = ({
               </AcFlex>
             )}
 
-            {
+            {(get_single?.status ||
+              get_single?.hostingLocatie ||
+              get_single?.hostingJurisdictie ||
+              get_single?.cloudDienstverleningsmodel) && (
               <AcFlex
                 column
                 spacing='sm'
@@ -373,7 +376,7 @@ const AcPublicationProduct = ({
                   </div>
                 )}
               </AcFlex>
-            }
+            )}
           </AcFlex>
         </AcFlex>
       </AcFlex>

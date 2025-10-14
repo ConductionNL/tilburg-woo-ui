@@ -5,7 +5,7 @@ export const getTabHeaderIcon = (headerName) => {
     case 'product':
       return VISUALS.CUBE;
     case 'module':
-      return VISUALS.CUBE;
+      return VISUALS.CUBES;
     case 'dienst':
       return VISUALS.HAND_HOLDING;
     case 'gebruik':
