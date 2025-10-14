@@ -195,6 +195,12 @@ const mergeGebruiksIntoItems = (items = [], ambtenaarItems = []) => {
   return [...nonGebruikItems, ...mergedGebruik];
 };
 
+const isVisible = (v) => {
+  if (typeof v === 'function') return !!v();
+  if (typeof v === 'boolean') return v;
+  return true; // default visible
+};
+
 // Helper function to render tabs for related objects (and optional custom tabs)
 /**
  * @typedef {Object} CustomTab
@@ -228,11 +234,6 @@ const renderRelatedTabs = (
 
   // Small helpers for custom tabs
   const resolveMaybeFn = (val) => (typeof val === 'function' ? val() : val);
-  const isVisible = (v) => {
-    if (typeof v === 'function') return !!v();
-    if (typeof v === 'boolean') return v;
-    return true; // default visible
-  };
   const resolveCount = (tab) => {
     const provided = resolveMaybeFn(tab?.count);
     if (typeof provided === 'number') return provided;
@@ -455,11 +456,6 @@ const RelatedTabs = observer(
     );
 
     // Determine if there are any visible custom tabs
-    const isVisible = (v) => {
-      if (typeof v === 'function') return !!v();
-      if (typeof v === 'boolean') return v;
-      return true;
-    };
     const anyVisibleCustomTabs = [
       ...(customTabsBefore || []),
       ...(customTabsAfter || []),
