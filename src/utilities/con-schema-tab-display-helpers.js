@@ -12,6 +12,8 @@ export const getTabHeaderIcon = (headerName) => {
       return VISUALS.CLOUD;
     case 'versie':
       return VISUALS.INFO;
+    case 'moduleversie':
+      return VISUALS.INFO;
     case 'contract':
       return VISUALS.HAND_SHAKE;
     case 'overeenkomst':
@@ -53,6 +55,9 @@ export const getTabHeaderName = (headerName) => {
       return 'Koppelingen';
     case 'contactpersoon':
       return 'Contactpersonen';
+    case 'moduleversie':
+    case 'Moduleversie':
+      return 'Applicatie versies';
     default:
       return headerName;
   }

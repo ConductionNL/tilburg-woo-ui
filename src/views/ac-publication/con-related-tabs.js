@@ -11,6 +11,7 @@ import {
   ConCardGebruik,
   ConCardContactpersoon,
   ConCardKoppeling,
+  ConCardModuleVersie,
 } from '@molecules/con-cards';
 import { commongroundApiUrl } from '@src/config';
 
@@ -51,6 +52,25 @@ const renderCard = (item, object, navigateTo) => {
           navigateTo={`${navigateTo}-${schemaSlug}`}
         />
       );
+    case 'moduleversie':
+      return (
+        <ConCardModuleVersie
+          key={item.id}
+          id={item.id}
+          versie={item.versie || item['@self']?.name}
+          beschrijvingKort={item.beschrijvingKort}
+          beschrijvingLang={item.beschrijvingLang || item['@self']?.summary}
+          status={item.status}
+          datumInOntwikkeling={item.datumInOntwikkeling}
+          datumInGebruik={item.datumInGebruik}
+          datumEindeOndersteuning={item.datumEindeOndersteuning}
+          datumTeruggetrokken={item.datumTeruggetrokken}
+          organisation={item['@self']?.organisation}
+          moduleUuid={item['@self']?.relations?.module || item.module}
+          objectStore={object}
+          navigateTo={navigateTo}
+        />
+      );
     case 'dienst':
       return (
         <ConCardDienst
@@ -62,6 +82,10 @@ const renderCard = (item, object, navigateTo) => {
           published={item['@self']?.published}
           category={item['@self']?.schema?.title}
           themes={item.themes}
+          aanbieder={item['@self']?.relations?.aanbieder || item.aanbieder}
+          status={item.status}
+          type={item.type}
+          objectStore={object}
           navigateTo={navigateTo}
         />
       );
@@ -337,7 +361,7 @@ const RelatedTabs = observer(
               tabIndex,
               setTabIndex,
               object,
-              navigateTo,
+              navigateTo
             )}
           </div>
         )}

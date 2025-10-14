@@ -10,6 +10,7 @@ import {
   extractSummary,
 } from '@src/utilities/con-extract-text';
 import { NAVIGATE_TO } from '@constants/routes.constants';
+import { useResolvedText } from '@src/utilities/con-resolve-uuids-in-text';
 
 const ConCardDienst = ({
   skeleton,
@@ -19,8 +20,18 @@ const ConCardDienst = ({
   category,
   themes,
   id,
+  aanbieder,
+  status,
+  type,
+  objectStore,
   navigateTo = 'publication',
 }) => {
+  // Resolve aanbieder (organisatie) name if UUID provided
+  const resolvedAanbieder = useResolvedText(
+    typeof aanbieder === 'object' ? aanbieder?.value : aanbieder,
+    objectStore
+  );
+
   const onClick = () => {
     switch (navigateTo) {
       case 'publication':
@@ -44,11 +55,16 @@ const ConCardDienst = ({
           <Heading level={3}>
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
           </Heading>
+          {aanbieder && (
+            <Paragraph small>(Aangeboden door {resolvedAanbieder})</Paragraph>
+          )}
         </AcFlex>
-        <Paragraph className='organisation-card__updated'>
-          Laatst bijgewerkt:{' '}
-          {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
-        </Paragraph>
+        {updated && (
+          <Paragraph className='organisation-card__updated'>
+            Laatst bijgewerkt:{' '}
+            {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
+          </Paragraph>
+        )}
       </AcFlex>
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>
@@ -59,8 +75,19 @@ const ConCardDienst = ({
               <VISUALS.ELLIPSE />
             </>
           )}
-
-          <Paragraph small>{extractText(category)}</Paragraph>
+          {category && <Paragraph small>{extractText(category)}</Paragraph>}
+          {type && (
+            <>
+              <VISUALS.ELLIPSE />
+              <Paragraph small>{extractText(type)}</Paragraph>
+            </>
+          )}
+          {status && (
+            <>
+              <VISUALS.ELLIPSE />
+              <Paragraph small>{extractText(status)}</Paragraph>
+            </>
+          )}
         </AcFlex>
         <AcLink to={onClick()}>
           <span className='sr-only'>
