@@ -42,6 +42,9 @@ const ConViewsList = loadable(() => import('@views/con-views-list/con-views-list
 const ConBeheerViews = loadable(() =>
   import('@views/con-beheer-views/con-beheer-views')
 );
+const ConPasswordReminder = loadable(() =>
+  import('@views/ac-password-reminder/ac-password-reminder')
+);
 
 export {
   AcHome,
@@ -66,4 +69,5 @@ export {
   ConFormsIndex,
   ConViewsList,
   ConBeheerViews,
+  ConPasswordReminder,
 };

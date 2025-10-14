@@ -237,6 +237,16 @@ const AcLogin = ({ store }) => {
             Aanmelden
           </AcButton>
 
+          <AcButton
+            style='button'
+            buttonType='secondary'
+            onClick={() => navigate('/reminder')}
+            className='ac-login-form-button'
+            disabled={isLoading || user.loading.status}
+          >
+            Wachtwoord vergeten?
+          </AcButton>
+
           {(user.error || errors.general) && (
             <span className='ac-login-form-field-error' role='alert'>
               {user.error || errors.general}

@@ -29,6 +29,7 @@ import {
   ConViewsList,
   ConBeheerViews,
   ConFormsIndex,
+  ConPasswordReminder,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -40,6 +41,7 @@ export const PATHS = AcLockObject({
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   AUTHENTICATION_STATIC: '/login',
+  PASSWORD_REMINDER_STATIC: '/reminder',
   MIJN_OMGEVING_STATIC: '/mijn-omgeving',
   GEMMA_STATIC: '/gemma',
   THEMES: '/onderwerpen',
@@ -172,6 +174,14 @@ export const ROUTES = {
     path: PATHS.AUTHENTICATION_STATIC,
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
     component: AcLogin,
+  },
+  PASSWORD_REMINDER: {
+    id: AcUUID(),
+    name: 'Password Reminder',
+    label: 'Wachtwoord vergeten',
+    path: PATHS.PASSWORD_REMINDER_STATIC,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Wachtwoord vergeten`,
+    component: ConPasswordReminder,
   },
   MIJN_OMGEVING: {
     id: AcUUID(),
