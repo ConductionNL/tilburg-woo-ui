@@ -25,6 +25,7 @@ import {
   ConCardDienst,
   ConCardContactpersoon,
   ConCardGebruik,
+  ConCardModuleVersie,
 } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications, user, object } }) => {
@@ -154,6 +155,29 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               key={index}
             />
           );
+        case 'moduleversie':
+          return (
+            <ConCardModuleVersie
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              versie={publication.versie || publication['@self']?.name}
+              beschrijvingKort={publication.beschrijvingKort}
+              beschrijvingLang={
+                publication.beschrijvingLang || publication['@self']?.summary
+              }
+              status={publication.status}
+              datumInOntwikkeling={publication.datumInOntwikkeling}
+              datumInGebruik={publication.datumInGebruik}
+              datumEindeOndersteuning={publication.datumEindeOndersteuning}
+              datumTeruggetrokken={publication.datumTeruggetrokken}
+              organisation={publication['@self']?.organisation}
+              moduleUuid={
+                publication['@self']?.relations?.module || publication.module
+              }
+              objectStore={object}
+              key={index}
+            />
+          );
         case 'dienst':
           return (
             <ConCardDienst
@@ -170,7 +194,12 @@ const AcSearch = ({ store: { publications, user, object } }) => {
                   publication.id
               )}
               summary={extractSummary(publication?.beschrijvingKort)}
-              organisationData={publication?.organisatie}
+              aanbieder={
+                publication['@self']?.relations?.aanbieder || publication.aanbieder
+              }
+              status={publication.status}
+              type={publication.type}
+              objectStore={object}
               key={index}
             />
           );
