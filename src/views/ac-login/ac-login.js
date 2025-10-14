@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { AcFormField } from '@molecules';
 import {
   Heading,
@@ -24,10 +24,10 @@ const AcLogin = ({ store }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = store;
-  
+
   // Ref to store flush functions from debounced inputs
   const flushFunctionsRef = useRef([]);
-  
+
   // Ref to store the latest form values (updated immediately, not debounced)
   const latestFormDataRef = useRef({
     username: '',
@@ -100,7 +100,7 @@ const AcLogin = ({ store }) => {
     e.preventDefault();
 
     // Flush all pending debounced values before submitting
-    flushFunctionsRef.current.forEach(flush => flush());
+    flushFunctionsRef.current.forEach((flush) => flush());
 
     // Use the latest values from the ref for validation and submission
     const latestData = latestFormDataRef.current;
@@ -111,7 +111,6 @@ const AcLogin = ({ store }) => {
 
     setIsLoading(true);
     setErrors({});
-
 
     const result = await user.sessionLogin(latestData.username, latestData.password);
 
@@ -127,17 +126,15 @@ const AcLogin = ({ store }) => {
     setIsLoading(false);
   };
 
-  const { debouncedCallback: debouncedSetUsername, flush: flushUsername } = useDebouncedInput(
-    (value) => handleInputChange('username', value),
-    500,
-    { returnFlushFunction: true }
-  );
+  const { debouncedCallback: debouncedSetUsername, flush: flushUsername } =
+    useDebouncedInput((value) => handleInputChange('username', value), 500, {
+      returnFlushFunction: true,
+    });
 
-  const { debouncedCallback: debouncedSetPassword, flush: flushPassword } = useDebouncedInput(
-    (value) => handleInputChange('password', value),
-    500,
-    { returnFlushFunction: true }
-  );
+  const { debouncedCallback: debouncedSetPassword, flush: flushPassword } =
+    useDebouncedInput((value) => handleInputChange('password', value), 500, {
+      returnFlushFunction: true,
+    });
 
   // Register flush functions
   useEffect(() => {
@@ -145,7 +142,7 @@ const AcLogin = ({ store }) => {
     return () => {
       // Clean up flush functions on unmount
       flushFunctionsRef.current = flushFunctionsRef.current.filter(
-        fn => fn !== flushUsername && fn !== flushPassword
+        (fn) => fn !== flushUsername && fn !== flushPassword
       );
     };
   }, [flushUsername, flushPassword]);
@@ -175,41 +172,49 @@ const AcLogin = ({ store }) => {
         </div>
 
         <form className='ac-login-form' onSubmit={handleSubmit}>
-          <div>
-            <AcFormField
-              id='username'
-              label='Gebruikersnaam'
-              type='text'
-              inputType='text'
-              value={formData.username}
-              onChange={(value) => {
-                handleImmediateInputChange('username', value);
-                debouncedSetUsername(value);
-              }}
-              placeholder='Uw gebruikersnaam'
-              required
-              disabled={isLoading || user.loading.status}
-              error={errors.username}
-            />
-          </div>
-          <div>
-            <AcFormField
-              id='password'
-              label='Wachtwoord'
-              type='password'
-              inputType='password'
-              value={formData.password}
-              onChange={(value) => {
-                handleImmediateInputChange('password', value);
-                debouncedSetPassword(value);
-              }}
-              placeholder='Uw wachtwoord'
-              required
-              disabled={isLoading || user.loading.status}
-              error={errors.password}
-            />
-          </div>
+          <div className='ac-login-form-fields'>
+            <div>
+              <AcFormField
+                id='username'
+                label='Gebruikersnaam'
+                type='text'
+                inputType='text'
+                value={formData.username}
+                onChange={(value) => {
+                  handleImmediateInputChange('username', value);
+                  debouncedSetUsername(value);
+                }}
+                placeholder='Uw gebruikersnaam'
+                required
+                disabled={isLoading || user.loading.status}
+                error={errors.username}
+              />
+            </div>
+            <div>
+              <AcFormField
+                id='password'
+                label='Wachtwoord'
+                type='password'
+                inputType='password'
+                value={formData.password}
+                onChange={(value) => {
+                  handleImmediateInputChange('password', value);
+                  debouncedSetPassword(value);
+                }}
+                placeholder='Uw wachtwoord'
+                required
+                disabled={isLoading || user.loading.status}
+                error={errors.password}
+              />
+            </div>
 
+            <Link
+              className='utrecht-link utrecht-link--html-a'
+              to='/wachtwoord-vergeten'
+            >
+              Wachtwoord vergeten?
+            </Link>
+          </div>
 
           <AcButton
             style='button'

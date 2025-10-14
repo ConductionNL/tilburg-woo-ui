@@ -31,6 +31,7 @@ const AcFormField = ({
   touched,
   touchedKey,
   customInput,
+  icon,
   tooltip,
   ...restProps
 }) => {
@@ -47,7 +48,7 @@ const AcFormField = ({
   };
 
   const getInput = (inputType, props) => {
-    const { customInput, ...inputProps } = props;
+    const { customInput, icon, ...inputProps } = props;
 
     if (customInput) {
       return customInput;
@@ -58,6 +59,18 @@ const AcFormField = ({
         </div>
       );
     } else {
+      // Render an icon inside the input when provided
+      if (icon) {
+        return (
+          <div className='ac-form-field__icon-wrapper'>
+            <span className='ac-form-field__icon' aria-hidden='true'>
+              {icon}
+            </span>
+            <Textbox {...inputProps} type={inputType} />
+          </div>
+        );
+      }
+
       // Pass the correct HTML input type to the Textbox component
       return <Textbox {...inputProps} type={inputType} />;
     }
@@ -124,16 +137,17 @@ const AcFormField = ({
           maxLength: maxLength,
           // Do not pass a type prop to Textarea
           ...(inputType !== 'textarea' ? { type: inputType } : {}),
+          icon: icon,
           ...restProps,
         })}
       </FormField>
       {touched ? (
-        touched[touchedKey] && hasError ? (
+        touched[touchedKey] && hasError && !!restProps.errorMessage ? (
           <span className='ac-register-form-field-error'>
             {restProps.errorMessage}
           </span>
         ) : null
-      ) : hasError ? (
+      ) : hasError && !!restProps.errorMessage ? (
         <span className='ac-register-form-field-error'>
           {restProps.errorMessage}
         </span>

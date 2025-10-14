@@ -233,7 +233,8 @@ const ConKoppelingDetailsPageContent = ({
           </div>
           <div style={{ marginBottom: '8px' }}>
             <strong>Richting: </strong>
-            {richting} ({richting === 'AnaarB' ? '→' : richting === 'BnaarA' ? '←' : '↔'})
+            {richting} (
+            {richting === 'AnaarB' ? '→' : richting === 'BnaarA' ? '←' : '↔'})
           </div>
           {data?.soortKoppeling && (
             <div style={{ marginBottom: '8px' }}>
@@ -265,6 +266,7 @@ const ConKoppelingDetailsPageContent = ({
       {id && (
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
+            id={id}
             uses={uses}
             used={used}
             usesLoading={usesLoading}

@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AcColumn, AcContainer, AcFlex } from '@atoms';
 import { AcLoader, ConDetailsActionsMenu } from '@components';
 import { VISUALS } from '@constants';
-import { Heading } from '@utrecht/component-library-react/dist/css-module';
+import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
 import { commongroundApiUrl } from '@config';
 import RelatedTabs from '@views/ac-publication/con-related-tabs';
 import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
@@ -111,30 +111,6 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
     fetchUsed();
   }, [id, fetchUses, fetchUsed]);
 
-  // Derived data / field mapping
-  const contactId = useMemo(() => {
-    if (Array.isArray(get_single?.contactpersoon))
-      return get_single.contactpersoon[0];
-    return get_single?.contactpersoon;
-  }, [get_single]);
-
-  const afnemerId = useMemo(() => {
-    return get_single?.afnemer || get_single?.organisatieId || null;
-  }, [get_single]);
-
-  const productId = useMemo(() => {
-    return get_single?.product || get_single?.voorzieningId || null;
-  }, [get_single]);
-
-  const moduleId = useMemo(() => {
-    return (
-      get_single?.module ||
-      get_single?.moduleversie ||
-      get_single?.moduleVersie ||
-      null
-    );
-  }, [get_single]);
-
   const status = get_single?.status || '-';
   const statusDateKey = useMemo(() => {
     if (status === 'In productie') return 'startDatumInProductie';
@@ -210,19 +186,20 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
               <strong>Datum ({status}): </strong>
               {statusDate || '-'}
             </div>
-            {Array.isArray(get_single?.diensten) &&
-              get_single.diensten.length > 0 && (
+            {Array.isArray(get_single?.gebruiktVoorReferentiecomponenten) &&
+              get_single.gebruiktVoorReferentiecomponenten.length > 0 && (
                 <div style={{ marginBottom: '8px' }}>
-                  <strong>Diensten: </strong>
+                  <strong>Referentiecomponenten: </strong>
                   <div>
-                    {get_single.diensten.map((did, idx) => (
-                      <div key={`${String(did)}-${idx}`}>
-                        {typeof did === 'string' &&
-                        did.match(/^[0-9a-fA-F-]{36}$/) ? (
-                          <ConUuidResolver>{String(did)}</ConUuidResolver>
-                        ) : (
-                          String(did)
-                        )}
+                    {get_single.gebruiktVoorReferentiecomponenten.map((rid, idx) => (
+                      <div key={idx} style={{ marginBottom: '4px' }}>
+                        <Link
+                          href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${rid}`}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          <ConUuidResolver>{String(rid)}</ConUuidResolver>
+                        </Link>
                       </div>
                     ))}
                   </div>
@@ -231,101 +208,9 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
           </div>
         </div>
 
-        {(contactId ||
-          afnemerId ||
-          productId ||
-          moduleId ||
-          (Array.isArray(get_single?.gebruiktVoorReferentiecomponenten) &&
-            get_single.gebruiktVoorReferentiecomponenten.length > 0) ||
-          (Array.isArray(get_single?.koppelingen) &&
-            get_single.koppelingen.length > 0) ||
-          Array.isArray(get_single?.deelnemers)) && (
-          <>
-            <Heading level={3} style={{ marginBlockStart: '1rem' }}>
-              Relaties
-            </Heading>
-            <div className='ac-register-review__section'>
-              <div style={{ marginTop: '12px' }}>
-                {contactId && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Contactpersoon: </strong>
-                    <ConUuidResolver>{String(contactId)}</ConUuidResolver>
-                  </div>
-                )}
-
-                {afnemerId && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Afnemer: </strong>
-                    <ConUuidResolver>{String(afnemerId)}</ConUuidResolver>
-                  </div>
-                )}
-
-                {productId && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Product: </strong>
-                    <ConUuidResolver>{String(productId)}</ConUuidResolver>
-                  </div>
-                )}
-
-                {moduleId && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Module/versie: </strong>
-                    <ConUuidResolver>{String(moduleId)}</ConUuidResolver>
-                  </div>
-                )}
-
-                {Array.isArray(get_single?.gebruiktVoorReferentiecomponenten) &&
-                  get_single.gebruiktVoorReferentiecomponenten.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Referentiecomponenten: </strong>
-                      <div>
-                        {get_single.gebruiktVoorReferentiecomponenten.map(
-                          (rid, idx) => (
-                            <div key={`${rid}-${idx}`}>
-                              <ConUuidResolver>{String(rid)}</ConUuidResolver>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                {Array.isArray(get_single?.koppelingen) &&
-                  get_single.koppelingen.length > 0 && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Koppelingen: </strong>
-                      <div>
-                        {get_single.koppelingen.map((kid, idx) => (
-                          <div key={`${kid}-${idx}`}>
-                            <ConUuidResolver>{String(kid)}</ConUuidResolver>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Deelnemers: </strong>
-                  {Array.isArray(get_single?.deelnemers) &&
-                  get_single.deelnemers.length > 0 ? (
-                    <div>
-                      {get_single.deelnemers.map((pid, idx) => (
-                        <div key={`${String(pid)}-${idx}`}>
-                          <ConUuidResolver>{String(pid)}</ConUuidResolver>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    '-'
-                  )}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
         <div style={{ marginTop: '2rem' }}>
           <RelatedTabs
+            id={id}
             uses={uses}
             used={used}
             usesLoading={usesLoading}

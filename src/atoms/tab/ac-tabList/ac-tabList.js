@@ -41,7 +41,7 @@ const AcTabList = ({ children, ...otherProps }) => {
         wrapperRef.current.scrollWidth > wrapperRef.current.clientWidth
       ); // initiate scroll
     }
-  }, []);
+  }, [children]);
 
   return (
     <div className='ac-tab-container'>

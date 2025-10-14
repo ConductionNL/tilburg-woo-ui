@@ -386,6 +386,7 @@ const AcPublicationProduct = ({
       />
 
       <RelatedTabs
+        id={id}
         uses={uses}
         used={used}
         usesLoading={usesLoading}
