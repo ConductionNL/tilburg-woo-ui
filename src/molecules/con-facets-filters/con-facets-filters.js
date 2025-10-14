@@ -174,12 +174,6 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     const newParams = new URLSearchParams();
     newParams.set('_page', '1');
 
-    // Keep the default schema
-    const defaultSchema = 'module';
-    if (defaultSchema) {
-      newParams.set('@self[schema]', defaultSchema);
-    }
-
     // Keep the search term if it exists
     if (currentSearch && currentSearch.trim()) {
       newParams.set('_search', currentSearch.trim());
