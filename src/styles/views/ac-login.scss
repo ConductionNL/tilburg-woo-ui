@@ -20,6 +20,13 @@
   gap: 10px;
 }
 
+.ac-login-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-block-end: var(--tilburg-space-block-mouse);
+}
+
 .ac-login-form-button {
   min-width: -webkit-fill-available !important;
 }
@@ -28,7 +35,7 @@
   display: flex;
   align-items: center;
   gap: var(--tilburg-space-block-mouse, 8px);
-  margin: var(--tilburg-space-block-mouse) 0;
+  margin: var(--tilburg-space-block-snail) 0;
 }
 
 .ac-login-separator {
