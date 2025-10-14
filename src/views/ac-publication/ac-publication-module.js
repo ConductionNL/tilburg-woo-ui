@@ -4,7 +4,10 @@ import ConLogoPreview from '../ac-register/con-logo-preview';
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AcContainer, AcFlex, AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
+import {
+  AcContainer,
+  AcFlex /*AcTab, AcTabList, AcTabPanel, AcTabs*/,
+} from '@atoms';
 import { AcLoader, ConDetailsActionsMenu, ConStandardsTable } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
@@ -23,6 +26,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -235,6 +239,47 @@ const AcPublicationProduct = ({
   const [usedLoading, setUsedLoading] = useState(false);
   const [tabIndex, setTabIndex] = useState(0);
 
+  // Resolved referentieComponenten names for custom tab rendering
+  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
+    []
+  );
+
+  // Actual count of visible standards (as rendered by ConStandardsTable)
+  const [standardsCount, setStandardsCount] = useState(0);
+
+  // Resolve referentieComponenten display names
+  useEffect(() => {
+    const resolveWithIds = async () => {
+      if (!get_single?.referentieComponenten?.length || !object) {
+        setResolvedReferentieComponenten([]);
+        return;
+      }
+
+      try {
+        const resolved = await Promise.all(
+          get_single.referentieComponenten.map(async (refId) => {
+            try {
+              const name = await object.getNamesForSingleId(refId);
+              return { id: refId, name };
+            } catch (e) {
+              return { id: refId, name: refId };
+            }
+          })
+        );
+        setResolvedReferentieComponenten(resolved);
+      } catch (e) {
+        setResolvedReferentieComponenten(
+          get_single.referentieComponenten.map((refId) => ({
+            id: refId,
+            name: refId,
+          }))
+        );
+      }
+    };
+
+    resolveWithIds();
+  }, [get_single?.referentieComponenten, object]);
+
   // Track which IDs we've already fetched to prevent duplicate calls
   const fetchedIds = useRef(new Set());
 
@@ -329,46 +374,53 @@ const AcPublicationProduct = ({
               </Heading>
             </div>
           </Heading>
-          <ConDetailsActionsMenu
-            user={user}
-            id={id}
-            schemaSlug={get_single?.['@self']?.schema?.slug}
-            title={get_single?.['@self']?.name || get_single?.id}
-            published={get_single?.['@self']?.published}
-            object={get_single}
-            showViewAction={false}
-            showEditAction={true}
-            showPublishActions={true}
-            onDelete={handleDelete}
-            onEdit={() => {
-              const schemaSlug = get_single?.['@self']?.schema?.slug;
-              if (schemaSlug) {
-                const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === schemaSlug);
+          <AcFlex justifyContent='end' alignItems='center' spacing='sm'>
+            {(() => {
+              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+              return <Icon />;
+            })()}
+            {getTabHeaderName(get_single?.['@self'].schema.slug)}
+            <ConDetailsActionsMenu
+              user={user}
+              id={id}
+              schemaSlug={get_single?.['@self']?.schema?.slug}
+              title={get_single?.['@self']?.name || get_single?.id}
+              published={get_single?.['@self']?.published}
+              object={get_single}
+              showViewAction={false}
+              showEditAction={true}
+              showPublishActions={true}
+              onDelete={handleDelete}
+              onEdit={() => {
+                const schemaSlug = get_single?.['@self']?.schema?.slug;
+                if (schemaSlug) {
+                  const wizards = Object.values(DASHBOARD_WIZARDS);
+                  const wizard = wizards.find((w) => w.schema === schemaSlug);
 
-                if (wizard) {
-                  const baseUrl = getWizardUrl(wizard);
-                  const url = new URL(baseUrl, window.location.origin);
-                  url.searchParams.set('id', id);
-                  navigate(url.pathname + url.search);
-                  return;
+                  if (wizard) {
+                    const baseUrl = getWizardUrl(wizard);
+                    const url = new URL(baseUrl, window.location.origin);
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                    return;
+                  }
                 }
-              }
-              // Fallback to beheer legacy edit page in new tab
-              const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-              window.open(beheerUrl, '_blank');
-            }}
-            uniqueActions={[
-              {
-                key: 'delete',
-                label: 'Verwijderen',
-                icon: VISUALS.TRASHCAN,
-                onClick: handleDelete,
-              },
-            ]}
-            triggerStyle='button'
-            relatedActions={actionMenuItems}
-          />
+                // Fallback to beheer legacy edit page in new tab
+                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                window.open(beheerUrl, '_blank');
+              }}
+              uniqueActions={[
+                {
+                  key: 'delete',
+                  label: 'Verwijderen',
+                  icon: VISUALS.TRASHCAN,
+                  onClick: handleDelete,
+                },
+              ]}
+              triggerStyle='button'
+              relatedActions={actionMenuItems}
+            />
+          </AcFlex>
         </AcFlex>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 2 }}>
@@ -439,7 +491,7 @@ const AcPublicationProduct = ({
               )}
             </AcFlex>
 
-            <TabList
+            {/* <TabList
               referentieComponenten={get_single.referentieComponenten}
               complianceStandards={get_single.compliancy}
               objectStore={object}
@@ -447,7 +499,7 @@ const AcPublicationProduct = ({
               standardsLoading={standardsLoading}
               referentieComponentenWithStandards={referentieComponentenWithStandards}
               className='con-product-details--content-side'
-            />
+            /> */}
           </AcFlex>
         </AcFlex>
       </AcFlex>
@@ -469,192 +521,242 @@ const AcPublicationProduct = ({
         setTabIndex={setTabIndex}
         object={object}
         navigateTo='publication'
+        customTabsBefore={[
+          {
+            id: 'standaarden',
+            label: `Standaarden`,
+            // Use dynamic count from the table to match visible rows
+            count: standardsCount,
+            render: () => (
+              <ConStandardsTable
+                referentieComponenten={get_single.referentieComponenten}
+                complianceStandards={get_single.compliancy}
+                enableScrolling={true}
+                standards={standards}
+                referentieComponentenWithStandards={
+                  referentieComponentenWithStandards
+                }
+                loading={standardsLoading}
+                onStandardsCountChange={(n) => setStandardsCount(n)}
+              />
+            ),
+          },
+          {
+            id: 'geschikt-voor',
+            label: 'Geschikt voor',
+            items: resolvedReferentieComponenten,
+            render: () => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {resolvedReferentieComponenten.map((item, idx) => {
+                  const actualRefComponent =
+                    referentieComponentenWithStandards?.find(
+                      (refComp) =>
+                        refComp.id === item.id ||
+                        refComp.fullData?.identifier === item.id ||
+                        refComp.fullData?.id === item.id
+                    );
+                  const refComponentObjectId =
+                    actualRefComponent?.fullData?.id || item.id;
+                  return (
+                    <Link
+                      key={idx}
+                      href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${refComponentObjectId}`}
+                      target='_blank'
+                    >
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            ),
+          },
+        ]}
       />
     </AcContainer>
   );
 };
 
-// Helper function to get all standards from referentieComponenten data
-const getAllStandardsFromReferentieComponenten = (
-  referentieComponentenWithStandards
-) => {
-  if (!referentieComponentenWithStandards?.length) return [];
+// // Helper function to get all standards from referentieComponenten data
+// const getAllStandardsFromReferentieComponenten = (
+//   referentieComponentenWithStandards
+// ) => {
+//   if (!referentieComponentenWithStandards?.length) return [];
 
-  const allStandards = [];
+//   const allStandards = [];
 
-  referentieComponentenWithStandards.forEach((refComp) => {
-    // Add verplichte standaarden
-    if (
-      refComp.verplichteStandaarden &&
-      Array.isArray(refComp.verplichteStandaarden)
-    ) {
-      refComp.verplichteStandaarden.forEach((standard) => {
-        const standardId =
-          typeof standard === 'string'
-            ? standard
-            : standard?.id ||
-              standard?.value ||
-              standard?.slug ||
-              standard?.naam ||
-              standard?.name;
+//   referentieComponentenWithStandards.forEach((refComp) => {
+//     // Add verplichte standaarden
+//     if (
+//       refComp.verplichteStandaarden &&
+//       Array.isArray(refComp.verplichteStandaarden)
+//     ) {
+//       refComp.verplichteStandaarden.forEach((standard) => {
+//         const standardId =
+//           typeof standard === 'string'
+//             ? standard
+//             : standard?.id ||
+//               standard?.value ||
+//               standard?.slug ||
+//               standard?.naam ||
+//               standard?.name;
 
-        if (standardId && !allStandards.find((s) => s.id === standardId)) {
-          allStandards.push({
-            id: standardId,
-            type: 'VERPLICHT',
-            referentieComponent: refComp.naam || `Component ${refComp.id}`,
-          });
-        }
-      });
-    }
+//         if (standardId && !allStandards.find((s) => s.id === standardId)) {
+//           allStandards.push({
+//             id: standardId,
+//             type: 'VERPLICHT',
+//             referentieComponent: refComp.naam || `Component ${refComp.id}`,
+//           });
+//         }
+//       });
+//     }
 
-    // Add aanbevolen standaarden
-    if (
-      refComp.aanbevolenStandaarden &&
-      Array.isArray(refComp.aanbevolenStandaarden)
-    ) {
-      refComp.aanbevolenStandaarden.forEach((standard) => {
-        const standardId =
-          typeof standard === 'string'
-            ? standard
-            : standard?.id ||
-              standard?.value ||
-              standard?.slug ||
-              standard?.naam ||
-              standard?.name;
+//     // Add aanbevolen standaarden
+//     if (
+//       refComp.aanbevolenStandaarden &&
+//       Array.isArray(refComp.aanbevolenStandaarden)
+//     ) {
+//       refComp.aanbevolenStandaarden.forEach((standard) => {
+//         const standardId =
+//           typeof standard === 'string'
+//             ? standard
+//             : standard?.id ||
+//               standard?.value ||
+//               standard?.slug ||
+//               standard?.naam ||
+//               standard?.name;
 
-        if (standardId) {
-          const existingStandard = allStandards.find((s) => s.id === standardId);
-          if (existingStandard) {
-            // If already exists as VERPLICHT, keep it as VERPLICHT
-            if (existingStandard.type !== 'VERPLICHT') {
-              existingStandard.type = 'AANBEVOLEN';
-            }
-          } else {
-            allStandards.push({
-              id: standardId,
-              type: 'AANBEVOLEN',
-              referentieComponent: refComp.naam || `Component ${refComp.id}`,
-            });
-          }
-        }
-      });
-    }
-  });
+//         if (standardId) {
+//           const existingStandard = allStandards.find((s) => s.id === standardId);
+//           if (existingStandard) {
+//             // If already exists as VERPLICHT, keep it as VERPLICHT
+//             if (existingStandard.type !== 'VERPLICHT') {
+//               existingStandard.type = 'AANBEVOLEN';
+//             }
+//           } else {
+//             allStandards.push({
+//               id: standardId,
+//               type: 'AANBEVOLEN',
+//               referentieComponent: refComp.naam || `Component ${refComp.id}`,
+//             });
+//           }
+//         }
+//       });
+//     }
+//   });
 
-  return allStandards;
-};
+//   return allStandards;
+// };
 
-const TabList = ({
-  referentieComponenten,
-  complianceStandards,
-  objectStore,
-  standards,
-  standardsLoading,
-  referentieComponentenWithStandards,
-}) => {
-  // Get all standards from referentieComponenten using the helper function
-  const allReferentieStandards = getAllStandardsFromReferentieComponenten(
-    referentieComponentenWithStandards
-  );
+// const TabList = ({
+//   referentieComponenten,
+//   complianceStandards,
+//   objectStore,
+//   standards,
+//   standardsLoading,
+//   referentieComponentenWithStandards,
+// }) => {
+//   // Get all standards from referentieComponenten using the helper function
+//   const allReferentieStandards = getAllStandardsFromReferentieComponenten(
+//     referentieComponentenWithStandards
+//   );
 
-  // Set default tab index based on whether we have standards from referentieComponenten
-  const hasStandards = allReferentieStandards && allReferentieStandards.length > 0;
-  const [tabIndex, setTabIndex] = useState(0);
+//   // Set default tab index based on whether we have standards from referentieComponenten
+//   const hasStandards = allReferentieStandards && allReferentieStandards.length > 0;
+//   const [tabIndex, setTabIndex] = useState(0);
 
-  // Update tab index when standards data becomes available
-  useEffect(() => {
-    if (hasStandards) {
-      setTabIndex(0); // Show standards tab
-    } else {
-      setTabIndex(1); // Show "Geschikt voor" tab
-    }
-  }, [hasStandards]);
+//   // Update tab index when standards data becomes available
+//   useEffect(() => {
+//     if (hasStandards) {
+//       setTabIndex(0); // Show standards tab
+//     } else {
+//       setTabIndex(1); // Show "Geschikt voor" tab
+//     }
+//   }, [hasStandards]);
 
-  // Custom hook to resolve UUIDs while keeping original IDs
-  const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
-    []
-  );
+//   // Custom hook to resolve UUIDs while keeping original IDs
+//   const [resolvedReferentieComponenten, setResolvedReferentieComponenten] = useState(
+//     []
+//   );
 
-  useEffect(() => {
-    const resolveWithIds = async () => {
-      if (!referentieComponenten?.length || !objectStore) {
-        setResolvedReferentieComponenten([]);
-        return;
-      }
+//   useEffect(() => {
+//     const resolveWithIds = async () => {
+//       if (!referentieComponenten?.length || !objectStore) {
+//         setResolvedReferentieComponenten([]);
+//         return;
+//       }
 
-      try {
-        const resolved = await Promise.all(
-          referentieComponenten.map(async (id) => {
-            try {
-              const name = await objectStore.getNamesForSingleId(id);
-              return { id, name };
-            } catch (error) {
-              return { id, name: id }; // Fallback to ID if resolution fails
-            }
-          })
-        );
-        setResolvedReferentieComponenten(resolved);
-      } catch (error) {
-        console.error('Error resolving referentie componenten:', error);
-        // Fallback to just IDs
-        setResolvedReferentieComponenten(
-          referentieComponenten.map((id) => ({ id, name: id }))
-        );
-      }
-    };
+//       try {
+//         const resolved = await Promise.all(
+//           referentieComponenten.map(async (id) => {
+//             try {
+//               const name = await objectStore.getNamesForSingleId(id);
+//               return { id, name };
+//             } catch (error) {
+//               return { id, name: id }; // Fallback to ID if resolution fails
+//             }
+//           })
+//         );
+//         setResolvedReferentieComponenten(resolved);
+//       } catch (error) {
+//         console.error('Error resolving referentie componenten:', error);
+//         // Fallback to just IDs
+//         setResolvedReferentieComponenten(
+//           referentieComponenten.map((id) => ({ id, name: id }))
+//         );
+//       }
+//     };
 
-    resolveWithIds();
-  }, [referentieComponenten, objectStore]);
+//     resolveWithIds();
+//   }, [referentieComponenten, objectStore]);
 
-  return (
-    <div className='con-product-details--side-content-tabs'>
-      <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
-        <AcTabList>
-          <AcTab
-            selected={tabIndex === 0}
-          >{`Standaarden (${allReferentieStandards.length})`}</AcTab>
-          <AcTab
-            selected={tabIndex === 1}
-          >{`Geschikt voor (${referentieComponenten.length})`}</AcTab>
-        </AcTabList>
-        <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
-          <ConStandardsTable
-            referentieComponenten={referentieComponenten}
-            complianceStandards={complianceStandards}
-            enableScrolling={true}
-            standards={standards}
-            referentieComponentenWithStandards={referentieComponentenWithStandards}
-            loading={standardsLoading}
-          />
-        </AcTabPanel>
-        <AcTabPanel selected={tabIndex === 1}>
-          {resolvedReferentieComponenten.map((item, idx) => {
-            // Find the actual referentieComponent object to get its real ID
-            const actualRefComponent = referentieComponentenWithStandards?.find(
-              (refComp) =>
-                refComp.id === item.id ||
-                refComp.fullData?.identifier === item.id ||
-                refComp.fullData?.id === item.id
-            );
+//   return (
+//     <div className='con-product-details--side-content-tabs'>
+//       <AcTabs selectedIndex={tabIndex} onSelect={(index) => setTabIndex(index)}>
+//         <AcTabList>
+//           <AcTab
+//             selected={tabIndex === 0}
+//           >{`Standaarden (${allReferentieStandards.length})`}</AcTab>
+//           <AcTab
+//             selected={tabIndex === 1}
+//           >{`Geschikt voor (${referentieComponenten.length})`}</AcTab>
+//         </AcTabList>
+//         <AcTabPanel selected={tabIndex === 0} style={{ paddingInline: '0px' }}>
+//           <ConStandardsTable
+//             referentieComponenten={referentieComponenten}
+//             complianceStandards={complianceStandards}
+//             enableScrolling={true}
+//             standards={standards}
+//             referentieComponentenWithStandards={referentieComponentenWithStandards}
+//             loading={standardsLoading}
+//           />
+//         </AcTabPanel>
+//         <AcTabPanel selected={tabIndex === 1}>
+//           {resolvedReferentieComponenten.map((item, idx) => {
+//             // Find the actual referentieComponent object to get its real ID
+//             const actualRefComponent = referentieComponentenWithStandards?.find(
+//               (refComp) =>
+//                 refComp.id === item.id ||
+//                 refComp.fullData?.identifier === item.id ||
+//                 refComp.fullData?.id === item.id
+//             );
 
-            // Use the actual referentieComponent's ID, fallback to item.id if not found
-            const refComponentObjectId = actualRefComponent?.fullData?.id || item.id;
+//             // Use the actual referentieComponent's ID, fallback to item.id if not found
+//             const refComponentObjectId = actualRefComponent?.fullData?.id || item.id;
 
-            return (
-              <Link
-                key={idx}
-                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${refComponentObjectId}`}
-                target='_blank'
-              >
-                {item.name}
-              </Link>
-            );
-          })}
-        </AcTabPanel>
-      </AcTabs>
-    </div>
-  );
-};
+//             return (
+//               <Link
+//                 key={idx}
+//                 href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${refComponentObjectId}`}
+//                 target='_blank'
+//               >
+//                 {item.name}
+//               </Link>
+//             );
+//           })}
+//         </AcTabPanel>
+//       </AcTabs>
+//     </div>
+//   );
+// };
 
 export default withStore(observer(AcPublicationProduct));
