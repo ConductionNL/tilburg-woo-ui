@@ -1,34 +1,31 @@
 // eslint-disable-next-line import/no-unresolved
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { withStore } from '@stores';
 import { useNavigate } from 'react-router';
 import { AcFormField } from '@molecules';
-import {
-  Heading,
-} from '@utrecht/component-library-react/dist/css-module';
+import { Heading } from '@utrecht/component-library-react/dist/css-module';
 import { VISUALS } from '@constants';
 import AcButton from '@molecules/ac-button/ac-button';
 
 /**
  * ConPasswordReminder Component
- * 
+ *
  * Handles password reset flow with two steps:
  * 1. Email input to request a one-time login code
  * 2. 6-digit code input with dashes between 3rd and 4th digit
- * 
+ *
  * @param {Object} store - MobX store containing user store
  */
-const ConPasswordReminder = ({ store }) => {
+const ConPasswordReminder = () => {
   const [step, setStep] = useState('email'); // 'email' | 'code'
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [email, setEmail] = useState('');
   const [code, setCode] = useState(['', '', '', '', '', '']);
-  
+
   const navigate = useNavigate();
-  const { user } = store;
-  
+
   // Refs for the 6 code input fields
   const codeInputRefs = useRef([]);
 
@@ -54,9 +51,23 @@ const ConPasswordReminder = ({ store }) => {
     return null;
   };
 
+  const handleEmailKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleEmailSubmit();
+    }
+  };
+
   const handleEmailSubmit = async (e) => {
-    e.preventDefault();
-    
+    if (e) {
+      e.preventDefault();
+    }
+
+    // Only proceed if we're actually on the email step
+    if (step !== 'email') {
+      return;
+    }
+
     const emailError = validateEmail(email);
     if (emailError) {
       setErrors({ email: emailError });
@@ -90,7 +101,7 @@ const ConPasswordReminder = ({ store }) => {
 
     // Clear errors when user starts typing
     if (errors.code) {
-      setErrors(prev => ({ ...prev, code: '' }));
+      setErrors((prev) => ({ ...prev, code: '' }));
     }
 
     // Auto-focus next input
@@ -107,8 +118,10 @@ const ConPasswordReminder = ({ store }) => {
   };
 
   const handleCodeSubmit = async (e) => {
-    e.preventDefault();
-    
+    if (e) {
+      e.preventDefault();
+    }
+
     const codeError = validateCode(code);
     if (codeError) {
       setErrors({ code: codeError });
@@ -123,8 +136,14 @@ const ConPasswordReminder = ({ store }) => {
     setTimeout(() => {
       setIsLoading(false);
       // Would typically redirect to login or dashboard after successful code verification
-      console.log('Code submitted:', code.join(''));
     }, 1000);
+  };
+
+  const handleBackToEmail = () => {
+    setStep('email');
+    setIsLoading(false);
+    setErrors({});
+    setCode(['', '', '', '', '', '']);
   };
 
   const renderEmailStep = () => (
@@ -136,24 +155,28 @@ const ConPasswordReminder = ({ store }) => {
         </p>
       </div>
 
-      <form className='ac-password-reminder-form' onSubmit={handleEmailSubmit}>
-        <div>
-          <AcFormField
-            id='email'
-            label='E-mailadres'
-            type='email'
-            inputType='email'
-            value={email}
-            onChange={setEmail}
-            placeholder='uw.email@voorbeeld.nl'
-            required
-            disabled={isLoading}
-            error={errors.email}
-          />
+      <div className='ac-password-reminder-form'>
+        <div className='ac-password-reminder-form-fields'>
+          <div>
+            <AcFormField
+              id='email'
+              label='E-mailadres'
+              type='email'
+              inputType='email'
+              value={email}
+              onChange={setEmail}
+              onKeyDown={handleEmailKeyDown}
+              placeholder='uw.email@voorbeeld.nl'
+              required
+              disabled={isLoading}
+              error={errors.email}
+            />
+          </div>
         </div>
 
         <AcButton
           style='button'
+          type='button'
           icon={<VISUALS.ARROW_RIGHT />}
           onClick={handleEmailSubmit}
           className='ac-password-reminder-form-button'
@@ -177,7 +200,7 @@ const ConPasswordReminder = ({ store }) => {
             {errors.general}
           </span>
         )}
-      </form>
+      </div>
     </div>
   );
 
@@ -190,25 +213,29 @@ const ConPasswordReminder = ({ store }) => {
         </p>
       </div>
 
-      <form className='ac-password-reminder-form' onSubmit={handleCodeSubmit}>
+      <div className='ac-password-reminder-form'>
         <div className='ac-code-input-container'>
           <label className='ac-code-input-label'>Verificatiecode</label>
           <div className='ac-code-input-group'>
             {code.map((digit, index) => (
-              <div key={index} className='ac-code-input-wrapper'>
-                <input
-                  ref={(el) => (codeInputRefs.current[index] = el)}
-                  type='text'
-                  inputMode='numeric'
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => handleCodeKeyDown(index, e)}
-                  className={`ac-code-input ${errors.code ? 'ac-code-input-error' : ''}`}
-                  disabled={isLoading}
-                />
+              <>
+                <div key={index} className='ac-code-input-wrapper'>
+                  <input
+                    ref={(el) => (codeInputRefs.current[index] = el)}
+                    type='text'
+                    inputMode='numeric'
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                    className={`ac-code-input ${
+                      errors.code ? 'ac-code-input-error' : ''
+                    }`}
+                    disabled={isLoading}
+                  />
+                </div>
                 {index === 2 && <span className='ac-code-dash'>-</span>}
-              </div>
+              </>
             ))}
           </div>
           {errors.code && (
@@ -220,6 +247,7 @@ const ConPasswordReminder = ({ store }) => {
 
         <AcButton
           style='button'
+          type='button'
           icon={<VISUALS.ARROW_RIGHT />}
           onClick={handleCodeSubmit}
           className='ac-password-reminder-form-button'
@@ -231,7 +259,7 @@ const ConPasswordReminder = ({ store }) => {
         <AcButton
           style='button'
           buttonType='secondary'
-          onClick={() => setStep('email')}
+          onClick={() => handleBackToEmail()}
           className='ac-password-reminder-form-button'
           disabled={isLoading}
         >
@@ -243,7 +271,7 @@ const ConPasswordReminder = ({ store }) => {
             {errors.general}
           </span>
         )}
-      </form>
+      </div>
     </div>
   );
 
