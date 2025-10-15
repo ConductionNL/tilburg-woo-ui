@@ -23,6 +23,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -183,6 +184,15 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                 </Heading>
               </div>
             </Heading>
+
+            <Heading className='con-module-publication--header-type'>
+              {(() => {
+                const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+                return <Icon />;
+              })()}
+              {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            </Heading>
+
             <ConDetailsActionsMenu
               user={user}
               id={id}

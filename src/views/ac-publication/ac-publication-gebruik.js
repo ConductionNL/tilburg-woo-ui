@@ -12,6 +12,7 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Publication page for schema slug 'gebruik'.
@@ -133,6 +134,13 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             {get_single?.['@self']?.name || get_single?.id}
           </Heading>
 
+          <Heading className='con-module-publication--header-type'>
+            {(() => {
+              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+              return <Icon />;
+            })()}
+            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+          </Heading>
           <ConDetailsActionsMenu
             user={user}
             id={id}

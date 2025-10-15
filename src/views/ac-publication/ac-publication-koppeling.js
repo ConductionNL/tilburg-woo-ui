@@ -16,6 +16,7 @@ import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver
 import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-beheer-delete-modal/ac-generic-beheer-delete-modal';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Publication page for schema slug 'koppeling'.
@@ -149,6 +150,14 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
           <Heading className='con-beheer-details--title'>{title}</Heading>
 
+          <Heading className='con-module-publication--header-type'>
+            {(() => {
+              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+              return <Icon />;
+            })()}
+            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+          </Heading>
+
           <ConDetailsActionsMenu
             user={user}
             id={id}
@@ -194,7 +203,7 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
             <Heading level={4}>Koppeling is nog niet gepubliceerd</Heading>
             <Paragraph>
               Deze koppeling is momenteel niet zichtbaar in de zoekfunctie. Gebruik
-              de "Publiceren" actie om deze gegevens zichtbaar te maken.
+              de &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
             </Paragraph>
           </Alert>
         )}

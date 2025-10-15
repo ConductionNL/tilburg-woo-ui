@@ -25,3 +25,24 @@
     }
   }
 }
+
+.con-product-publication {
+  &--header-container {
+    flex: 3;
+  }
+
+  &--header-actions {
+    flex: 1;
+  }
+
+  &--header-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    & > svg {
+      height: var(--utrecht-heading-1-font-size);
+      width: var(--utrecht-heading-1-font-size);
+    }
+  }
+}
