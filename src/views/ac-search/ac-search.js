@@ -142,7 +142,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               {...publication}
               id={publication.id || publication['@self']?.id}
               title={extractTitle(publication['@self'].name)}
-              summary={extractSummary(publication['@self'].summary)}
+              summary={extractSummary(publication['@self']?.summary || publication?.beschrijvingKort)}
               logo={getImageFromPublication(publication)}
               cardType={publication['@self'].schema.slug}
               type={publication['@self'].schema.title}
