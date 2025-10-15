@@ -20,7 +20,7 @@ export const DASHBOARD_WIZARDS = {
     id: 'eigen-product',
     name: 'Product aanbieden',
     description: 'Voeg een product van uw eigen organisatie toe aan de catalogus',
-    icon: VISUALS.CUBE,
+    icon: VISUALS.CUBES,
     path: PATHS.FORMS_PRODUCT,
     requiresAuth: true,
     requiresOrganization: true,

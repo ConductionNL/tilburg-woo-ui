@@ -47,6 +47,9 @@ const ConCardOrganisationApplication = ({
   const icon = useMemo(() => {
     switch (cardType) {
       case 'product':
+        return (
+          <VISUALS.CUBES style={{ color: 'var(--tilburg-interaction-color)' }} />
+        );
       case 'module':
         return (
           <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />

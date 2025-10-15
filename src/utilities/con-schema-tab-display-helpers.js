@@ -3,9 +3,9 @@ import { VISUALS } from '@constants';
 export const getTabHeaderIcon = (headerName) => {
   switch (headerName) {
     case 'product':
-      return VISUALS.CUBE;
-    case 'module':
       return VISUALS.CUBES;
+    case 'module':
+      return VISUALS.CUBE;
     case 'dienst':
       return VISUALS.HAND_HOLDING;
     case 'gebruik':

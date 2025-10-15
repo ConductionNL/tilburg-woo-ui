@@ -30,7 +30,7 @@ const AcSideNav = () => {
               onClick={() => navigate('/beheer/applicaties')}
               current={window.location.pathname.startsWith('/beheer/applicaties')}
             >
-              <VISUALS.CUBES />
+              <VISUALS.CUBE />
               Applicaties
             </SidenavLink>
           </SidenavItem>

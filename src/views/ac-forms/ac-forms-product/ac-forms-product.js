@@ -2070,7 +2070,7 @@ const AcFormsProductInner = ({
                             <AcButton
                               style='button'
                               buttonType='secondary'
-                              icon={<VISUALS.CUBE />}
+                              icon={<VISUALS.CUBES />}
                               onClick={() => {
                                 // Explicitly start a new product instead of editing
                                 onClearProductId?.();
@@ -2145,7 +2145,7 @@ const AcFormsProductInner = ({
                 <AcButton
                   style='button'
                   variant='secondary'
-                  icon={<VISUALS.CUBE />}
+                  icon={<VISUALS.CUBES />}
                   onClick={() => {
                     // Navigate to a clean product form without any query parameters
                     navigate(window.location.pathname, { replace: true });
