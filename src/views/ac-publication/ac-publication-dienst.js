@@ -29,6 +29,7 @@ import rehypeSanitize from 'rehype-sanitize';
 import remarkRehype from 'remark-rehype';
 import { useRelatedCreateActions } from '@views/ac-beheer/core/hooks/use-related-create-actions';
 import { DASHBOARD_WIZARDS, getWizardUrl } from '@src/constants/wizards.constants';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Publication page for schema slug 'dienst'.
@@ -156,6 +157,13 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             </Heading>
           </div>
 
+          <Heading className='con-module-publication--header-type'>
+            {(() => {
+              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+              return <Icon />;
+            })()}
+            {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+          </Heading>
           <ConDetailsActionsMenu
             user={user}
             id={id}
@@ -201,7 +209,7 @@ const AcPublicationDienst = ({ store: { publications, user, object } }) => {
             <Heading level={4}>Dienst is nog niet gepubliceerd</Heading>
             <Paragraph>
               Deze dienst is momenteel niet zichtbaar in de zoekfunctie. Gebruik de
-              "Publiceren" actie om deze gegevens zichtbaar te maken.
+              &quot;Publiceren&quot; actie om deze gegevens zichtbaar te maken.
             </Paragraph>
           </Alert>
         )}

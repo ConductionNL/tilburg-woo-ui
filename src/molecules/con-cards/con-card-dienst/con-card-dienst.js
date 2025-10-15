@@ -3,7 +3,7 @@ import { ConUuidResolver } from '@components';
 import { LABELS, VISUALS } from '@constants';
 import { AcCard, AcFlex } from '@atoms';
 import { Heading, Paragraph, StatusBadge } from '@utrecht/component-library-react';
-import acFormatDate from '@src/utilities/ac-format-date';
+// import acFormatDate from '@src/utilities/ac-format-date';
 import {
   extractText,
   extractTitle,
@@ -16,7 +16,7 @@ const ConCardDienst = ({
   skeleton,
   title,
   summary,
-  updated,
+  // updated,
   category,
   themes,
   id,
@@ -50,7 +50,12 @@ const ConCardDienst = ({
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           <VISUALS.HAND_HOLDING
-            style={{ color: 'var(--tilburg-interaction-color)' }}
+            style={{
+              height: 'var(--utrecht-heading-3-font-size)',
+              width: 'var(--utrecht-heading-3-font-size)',
+              flexShrink: 0,
+              color: 'inherit',
+            }}
           />
           <Heading level={3}>
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
@@ -59,12 +64,13 @@ const ConCardDienst = ({
             <Paragraph small>(Aangeboden door {resolvedAanbieder})</Paragraph>
           )}
         </AcFlex>
-        {updated && (
+        {/* Turned off for now */}
+        {/* {updated && (
           <Paragraph className='organisation-card__updated'>
             Laatst bijgewerkt:{' '}
             {acFormatDate(updated, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')}
           </Paragraph>
-        )}
+        )} */}
       </AcFlex>
       <Paragraph>{extractSummary(summary)}</Paragraph>
       <AcFlex justifyContent='between' className='meta'>

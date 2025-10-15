@@ -48,7 +48,14 @@ const ConCardGebruik = ({
     <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
-          <VISUALS.CLOUD style={{ color: 'var(--tilburg-interaction-color)' }} />
+          <VISUALS.CLOUD
+            style={{
+              height: 'var(--utrecht-heading-3-font-size)',
+              width: 'var(--utrecht-heading-3-font-size)',
+              flexShrink: 0,
+              color: 'inherit',
+            }}
+          />
           <Heading level={3}>{extractTitle(resolvedTitle)}</Heading>
           {organisation && (
             <Paragraph small>(Gebruikt door {resolvedOrganisation})</Paragraph>

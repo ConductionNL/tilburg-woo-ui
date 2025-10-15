@@ -53,7 +53,14 @@ const ConCardModuleVersie = ({
     <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
-          <VISUALS.INFO style={{ color: 'var(--tilburg-interaction-color)' }} />
+          <VISUALS.INFO
+            style={{
+              height: 'var(--utrecht-heading-3-font-size)',
+              width: 'var(--utrecht-heading-3-font-size)',
+              flexShrink: 0,
+              color: 'inherit',
+            }}
+          />
           <Heading level={3}>{extractTitle(title)}</Heading>
           {resolvedModule && (
             <Paragraph small>(Behoort tot {resolvedModule})</Paragraph>

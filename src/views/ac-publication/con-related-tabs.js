@@ -360,6 +360,7 @@ const renderRelatedTabs = (
                     renderCards.length === 1 ? '1fr' : 'repeat(2, 1fr)',
                   gap: '16px',
                   marginTop: '16px',
+                  wordBreak: 'break-word',
                 }}
               >
                 {renderCards}

@@ -34,8 +34,8 @@ const AcHeader = ({ store: { menu, user } }) => {
   const getIconForMenuItem = (menuItem) => {
     const iconMap = {
       Dashboard: VISUALS.CHART_LINE,
-      Producten: VISUALS.CUBE,
-      Applicaties: VISUALS.CUBES,
+      Producten: VISUALS.CUBES,
+      Applicaties: VISUALS.CUBE,
       Diensten: VISUALS.HAND_HOLDING,
       Gebruik: VISUALS.CLOUD,
       Versie: VISUALS.INFO,
@@ -52,7 +52,7 @@ const AcHeader = ({ store: { menu, user } }) => {
     }
 
     const linkPath = menuItem.link || '';
-    if (linkPath.includes('/applicaties')) return VISUALS.CUBES;
+    if (linkPath.includes('/applicaties')) return VISUALS.CUBE;
     if (linkPath.includes('/diensten')) return VISUALS.HAND_HOLDING;
     if (linkPath.includes('/gebruik')) return VISUALS.CLOUD;
     if (linkPath.includes('/versie')) return VISUALS.INFO;
@@ -61,7 +61,7 @@ const AcHeader = ({ store: { menu, user } }) => {
     if (linkPath.includes('/organisaties')) return VISUALS.BUILDING;
     if (linkPath.includes('/kwetsbaarheden')) return VISUALS.TRIANGLE_EXCLAMATION;
     if (linkPath.includes('/contactpersonen')) return VISUALS.USERS;
-    if (linkPath.includes('/voorzieningen')) return VISUALS.CUBE;
+    if (linkPath.includes('/voorzieningen')) return VISUALS.CUBES;
     if (linkPath.includes('/koppelingen')) return VISUALS.LINK;
     if (linkPath === '/beheer') return VISUALS.CHART_LINE;
     if (linkPath === '/beheer/my-account') return VISUALS.USER;
