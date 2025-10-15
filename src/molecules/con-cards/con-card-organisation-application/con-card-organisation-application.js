@@ -12,6 +12,7 @@ import {
   useResolvedArray,
 } from '@src/utilities/con-resolve-uuids-in-text';
 
+// card for products, modules and organisations
 const ConCardOrganisationApplication = ({
   skeleton,
   title,

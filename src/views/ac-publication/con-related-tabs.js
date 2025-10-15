@@ -4,7 +4,13 @@ import { AcLoader } from '@components';
 import { observer } from 'mobx-react-lite';
 import { AcSearchResult } from '@molecules';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { getTabHeaderIcon, getTabHeaderName, getImageFromPublication } from '@utils';
+import {
+  getTabHeaderIcon,
+  getTabHeaderName,
+  getImageFromPublication,
+  extractSummary,
+  extractTitle,
+} from '@utils';
 import {
   ConCardOrganisationApplication,
   ConCardDienst,
@@ -37,19 +43,20 @@ const renderCard = (item, object, navigateTo) => {
     case 'organisatie':
       return (
         <ConCardOrganisationApplication
-          key={item.id}
-          id={item.id}
-          title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id}
-          summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
+          {...item}
+          id={item.id || item['@self']?.id}
+          title={extractTitle(item['@self'].name)}
+          summary={extractSummary(item['@self']?.summary || item?.beschrijvingKort)}
           logo={getImageFromPublication(item)}
           cardType={schemaSlug}
-          type={item['@self']?.schema?.title}
+          type={item['@self'].schema.title}
           referenceComponents={item.referentieComponenten}
-          updated={item['@self']?.updated}
-          published={item['@self']?.published}
-          organisation={item['@self']?.organisation}
+          updated={item['@self'].updated}
+          published={item['@self'].published}
+          organisation={item['@self'].organisation}
           objectStore={object}
           navigateTo={`${navigateTo}-${schemaSlug}`}
+          key={item.id}
         />
       );
     case 'moduleversie':
