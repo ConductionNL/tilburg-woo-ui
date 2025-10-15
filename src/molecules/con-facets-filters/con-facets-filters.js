@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import { AcCheckbox, AcButton } from '@molecules';
+import { AcCheckbox, AcButton, ConAccordion } from '@molecules';
 import { withStore } from '@stores';
 import { useFacetNameResolution } from '@hooks';
 
@@ -325,33 +325,40 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                   spacing='xs'
                   className='ac-search-filters__subjects'
                 >
-                  <Heading level={4} title={_value.description || undefined}>
-                    {_value.title || _.upperFirst(_key)}
-                  </Heading>
-                  {_value.buckets.map((bucket) => (
-                    <AcCheckbox
-                      key={bucket.value || bucket.key}
-                      label={`${
-                        bucket.label ?? bucket.value ?? bucket.key
-                      } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
-                      value={bucket.value || bucket.key}
-                      checked={isFacetChecked(
-                        _value.queryParameter || `${key}[${_key}]`,
-                        bucket.value || bucket.key
-                      )}
-                      onChange={() => {
-                        toggleNestedFacet(
+                  <ConAccordion.Item
+                    header={
+                      <Heading level={4} title={_value.description || undefined}>
+                        {_value.title || _.upperFirst(_key)} ({_value.buckets.length}
+                        )
+                      </Heading>
+                    }
+                    defaultOpen
+                  >
+                    {_value.buckets.map((bucket) => (
+                      <AcCheckbox
+                        key={bucket.value || bucket.key}
+                        label={`${
+                          bucket.label ?? bucket.value ?? bucket.key
+                        } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
+                        value={bucket.value || bucket.key}
+                        checked={isFacetChecked(
                           _value.queryParameter || `${key}[${_key}]`,
                           bucket.value || bucket.key
-                        );
-                      }}
-                      title={
-                        bucket.originalLabel
-                          ? `Origineel: ${bucket.originalLabel}`
-                          : undefined
-                      }
-                    />
-                  ))}
+                        )}
+                        onChange={() => {
+                          toggleNestedFacet(
+                            _value.queryParameter || `${key}[${_key}]`,
+                            bucket.value || bucket.key
+                          );
+                        }}
+                        title={
+                          bucket.originalLabel
+                            ? `Origineel: ${bucket.originalLabel}`
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </ConAccordion.Item>
                 </AcFlex>
               ) : null;
             })}
@@ -363,47 +370,54 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
             spacing='xs'
             className='ac-search-filters__subjects'
           >
-            <Heading level={4} title={value.description || undefined}>
-              {value.title || _.upperFirst(key)}
-            </Heading>
-            {value.buckets && value.buckets.length > 0 ? (
-              value.buckets.map((bucketValue) => (
-                <AcCheckbox
-                  key={bucketValue.value || bucketValue.key}
-                  label={`${
-                    bucketValue.label ?? bucketValue.value ?? bucketValue.key
-                  } (${bucketValue.count || bucketValue.results})`}
-                  value={bucketValue.value || bucketValue.key}
-                  checked={isFacetChecked(
-                    value.queryParameter || key,
-                    bucketValue.value || bucketValue.key
-                  )}
-                  onChange={() => {
-                    toggleSearchArrayValue(
+            <ConAccordion.Item
+              header={
+                <Heading level={4} title={value.description || undefined}>
+                  {value.title || _.upperFirst(key)} ({value.buckets.length})
+                </Heading>
+              }
+              defaultOpen
+              chevronStyle={{}}
+            >
+              {value.buckets && value.buckets.length > 0 ? (
+                value.buckets.map((bucketValue) => (
+                  <AcCheckbox
+                    key={bucketValue.value || bucketValue.key}
+                    label={`${
+                      bucketValue.label ?? bucketValue.value ?? bucketValue.key
+                    } (${bucketValue.count || bucketValue.results})`}
+                    value={bucketValue.value || bucketValue.key}
+                    checked={isFacetChecked(
                       value.queryParameter || key,
                       bucketValue.value || bucketValue.key
-                    );
-                    const nextQuery = { ...publications.query, _page: 1 };
-                    const paramsString = AcBuildURLSearchParams(nextQuery);
-                    setSearchParams(new URLSearchParams(paramsString));
+                    )}
+                    onChange={() => {
+                      toggleSearchArrayValue(
+                        value.queryParameter || key,
+                        bucketValue.value || bucketValue.key
+                      );
+                      const nextQuery = { ...publications.query, _page: 1 };
+                      const paramsString = AcBuildURLSearchParams(nextQuery);
+                      setSearchParams(new URLSearchParams(paramsString));
 
-                    // Trigger facets fetch to update counts with new filters
-                    publications.fetchFacets();
+                      // Trigger facets fetch to update counts with new filters
+                      publications.fetchFacets();
 
-                    // Fetch is triggered by URL change effect in AcSearch
-                  }}
-                  title={
-                    bucketValue.originalLabel
-                      ? `Origineel: ${bucketValue.originalLabel}`
-                      : undefined
-                  }
-                />
-              ))
-            ) : (
-              <p style={{ color: '#666', fontStyle: 'italic', fontSize: '0.9em' }}>
-                No options available
-              </p>
-            )}
+                      // Fetch is triggered by URL change effect in AcSearch
+                    }}
+                    title={
+                      bucketValue.originalLabel
+                        ? `Origineel: ${bucketValue.originalLabel}`
+                        : undefined
+                    }
+                  />
+                ))
+              ) : (
+                <p style={{ color: '#666', fontStyle: 'italic', fontSize: '0.9em' }}>
+                  No options available
+                </p>
+              )}
+            </ConAccordion.Item>
           </AcFlex>
         );
       })}
