@@ -50,7 +50,12 @@ const ConCardDienst = ({
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
           <VISUALS.HAND_HOLDING
-            style={{ color: 'var(--tilburg-interaction-color)' }}
+            style={{
+              height: 'var(--utrecht-heading-3-font-size)',
+              width: 'var(--utrecht-heading-3-font-size)',
+              flexShrink: 0,
+              color: 'inherit',
+            }}
           />
           <Heading level={3}>
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>

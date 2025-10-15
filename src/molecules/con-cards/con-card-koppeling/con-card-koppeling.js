@@ -41,7 +41,14 @@ const ConCardKoppeling = ({
     <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
-          <VISUALS.LINK style={{ color: 'var(--tilburg-interaction-color)' }} />
+          <VISUALS.LINK
+            style={{
+              height: 'var(--utrecht-heading-3-font-size)',
+              width: 'var(--utrecht-heading-3-font-size)',
+              flexShrink: 0,
+              color: 'inherit',
+            }}
+          />
           <Heading level={3}>
             <ConUuidResolver>{extractTitle(title)}</ConUuidResolver>
           </Heading>
