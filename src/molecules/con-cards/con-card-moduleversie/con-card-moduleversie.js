@@ -56,7 +56,7 @@ const ConCardModuleVersie = ({
           <VISUALS.INFO style={{ color: 'var(--tilburg-interaction-color)' }} />
           <Heading level={3}>{extractTitle(title)}</Heading>
           {resolvedModule && (
-            <Paragraph small>(Behoort bij {resolvedModule})</Paragraph>
+            <Paragraph small>(Behoort tot {resolvedModule})</Paragraph>
           )}
         </AcFlex>
       </AcFlex>

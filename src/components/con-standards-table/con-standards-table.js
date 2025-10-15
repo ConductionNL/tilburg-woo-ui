@@ -314,7 +314,7 @@ const ConStandardsTable = ({
               (s) => s.id === standardId || s.identifier === standardId
             )?.name || standard.id
           : standardId;
-        
+
         // Find the objectId from the effectiveStandards data
         const standardData = effectiveStandards?.find(
           (s) => s.id === standardId || s.identifier === standardId
@@ -620,7 +620,7 @@ const ConStandardsTable = ({
                       <span
                         style={{
                           display: 'flex',
-                          justifyContent: 'center',
+                          justifyContent: 'left',
                         }}
                       >
                         -
@@ -636,7 +636,7 @@ const ConStandardsTable = ({
                       }}
                       style={{
                         display: 'flex',
-                        justifyContent: 'center',
+                        justifyContent: 'left',
                       }}
                     >
                       <VISUALS.DOWNLOAD />
@@ -645,7 +645,7 @@ const ConStandardsTable = ({
                     <span
                       style={{
                         display: 'flex',
-                        justifyContent: 'center',
+                        justifyContent: 'left',
                       }}
                     >
                       -
