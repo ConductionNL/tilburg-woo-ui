@@ -225,6 +225,14 @@ const ENVELOPE_OUTLINE = loadable(() =>
   import('-!svg-react-loader!@assets/images/envelope-outline.svg')
 );
 
+const SCROLL = loadable(() =>
+  import('-!svg-react-loader!@assets/images/scroll.svg')
+);
+
+const NETWORK_STRENGTH_4_COG = loadable(() =>
+  import('-!svg-react-loader!@assets/images/network-strength-4-cog.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -307,6 +315,8 @@ export const VISUALS = {
   ENVELOPE_OUTLINE,
   EMAIL: ENVELOPE,
   EMAIL_OUTLINE: ENVELOPE_OUTLINE,
+  SCROLL,
+  NETWORK_STRENGTH_4_COG,
 };
 
 export default {};

@@ -357,7 +357,7 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading level={4}>
+          <Heading level={4} className='con-module-publication--header-container'>
             <div className='con-beheer-details--header-container'>
               {get_single?.['@self']?.image && (
                 <ConLogoPreview
@@ -374,12 +374,19 @@ const AcPublicationProduct = ({
               </Heading>
             </div>
           </Heading>
-          <AcFlex justifyContent='end' alignItems='center' spacing='sm'>
-            {(() => {
-              const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
-              return <Icon />;
-            })()}
-            {getTabHeaderName(get_single?.['@self'].schema.slug)}
+          <AcFlex
+            justifyContent='between'
+            alignItems='center'
+            spacing='sm'
+            className='con-module-publication--header-actions'
+          >
+            <Heading className='con-module-publication--header-type'>
+              {(() => {
+                const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+                return <Icon />;
+              })()}
+              {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            </Heading>
             <ConDetailsActionsMenu
               user={user}
               id={id}
@@ -525,6 +532,7 @@ const AcPublicationProduct = ({
           {
             id: 'standaarden',
             label: `Standaarden`,
+            icon: VISUALS.SCROLL,
             // Use dynamic count from the table to match visible rows
             count: standardsCount,
             render: () => (
@@ -544,6 +552,7 @@ const AcPublicationProduct = ({
           {
             id: 'geschikt-voor',
             label: 'Geschikt voor',
+            icon: VISUALS.NETWORK_STRENGTH_4_COG,
             items: resolvedReferentieComponenten,
             render: () => (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
