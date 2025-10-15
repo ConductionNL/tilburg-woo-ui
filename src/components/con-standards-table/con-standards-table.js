@@ -23,7 +23,7 @@ import { commongroundApiUrl } from '@config';
  * @param {Object} props
  * @param {Array} props.referentieComponenten - Array of referentieComponent IDs
  * @param {Array} props.complianceStandards - Array of compliance standards with evidence
- * @param {boolean} props.enableScrolling - Whether to enable scrolling for 5+ standards (default: true)
+ * // @param {boolean} props.enableScrolling - Whether to enable scrolling for 5+ standards (default: true)
  * @param {string} props.noStandardsMessage - Custom message when no standards found
  * @param {Object} props.containerStyle - Additional styles for the container
  * @param {Function} props.onStandardsCountChange - Callback when standards count changes
@@ -35,7 +35,7 @@ import { commongroundApiUrl } from '@config';
 const ConStandardsTable = ({
   referentieComponenten = [],
   complianceStandards = [],
-  enableScrolling = true,
+  // enableScrolling = true,
   noStandardsMessage = 'Geen standaarden gevonden voor de gekoppelde referentiecomponenten.',
   containerStyle = {},
   onStandardsCountChange,
@@ -409,16 +409,16 @@ const ConStandardsTable = ({
     );
   }
 
-  const shouldScroll = enableScrolling && allReferentieStandards.length > 5;
+  // const shouldScroll = enableScrolling && allReferentieStandards.length > 5;
 
   return (
     <div
       style={{
-        maxHeight: shouldScroll ? '500px' : 'auto',
-        overflowY: shouldScroll ? 'auto' : 'visible',
-        overflowX: 'hidden',
-        border: shouldScroll ? '1px solid #e9ecef' : 'none',
-        borderRadius: shouldScroll ? '4px' : '0',
+        // maxHeight: shouldScroll ? '500px' : 'auto',
+        // overflowY: shouldScroll ? 'auto' : 'visible',
+        // overflowX: 'hidden',
+        // border: shouldScroll ? '1px solid #e9ecef' : 'none',
+        // borderRadius: shouldScroll ? '4px' : '0',
         width: '100%',
         ...containerStyle,
       }}
@@ -432,9 +432,9 @@ const ConStandardsTable = ({
                 backgroundColor: '#f8f9fa',
                 paddingLeft:
                   'var(--utrecht-table-cell-padding-inline-end) !important',
-                position: shouldScroll ? 'sticky' : 'static',
-                top: shouldScroll ? '0' : 'auto',
-                zIndex: shouldScroll ? '10' : 'auto',
+                // position: shouldScroll ? 'sticky' : 'static',
+                // top: shouldScroll ? '0' : 'auto',
+                // zIndex: shouldScroll ? '10' : 'auto',
                 width: '50%',
               }}
             >
@@ -444,9 +444,9 @@ const ConStandardsTable = ({
               style={{
                 fontWeight: 'bold',
                 backgroundColor: '#f8f9fa',
-                position: shouldScroll ? 'sticky' : 'static',
-                top: shouldScroll ? '0' : 'auto',
-                zIndex: shouldScroll ? '10' : 'auto',
+                // position: shouldScroll ? 'sticky' : 'static',
+                // top: shouldScroll ? '0' : 'auto',
+                // zIndex: shouldScroll ? '10' : 'auto',
                 width: '25%',
               }}
             >
@@ -456,9 +456,9 @@ const ConStandardsTable = ({
               style={{
                 fontWeight: 'bold',
                 backgroundColor: '#f8f9fa',
-                position: shouldScroll ? 'sticky' : 'static',
-                top: shouldScroll ? '0' : 'auto',
-                zIndex: shouldScroll ? '10' : 'auto',
+                // position: shouldScroll ? 'sticky' : 'static',
+                // top: shouldScroll ? '0' : 'auto',
+                // zIndex: shouldScroll ? '10' : 'auto',
                 width: '25%',
               }}
             >
