@@ -31,34 +31,25 @@ export const getTabHeaderIcon = (headerName) => {
   }
 };
 
-export const getTabHeaderName = (headerName) => {
-  switch (headerName) {
-    case 'product':
-      return 'Producten';
-    case 'module':
-      return 'Applicaties';
-    case 'dienst':
-      return 'Diensten';
-    case 'gebruik':
-      return 'Gebruik';
-    case 'versie':
-      return 'Versie';
-    case 'contract':
-      return 'Contracten';
-    case 'overeenkomst':
-      return 'Overeenkomsten';
-    case 'organisatie':
-      return 'Organisaties';
-    case 'kwetsbaarheid':
-      return 'Kwetsbaarheden';
-    case 'koppeling':
-      return 'Koppelingen';
-    case 'contactpersoon':
-      return 'Contactpersonen';
-    case 'moduleversie':
-    case 'Moduleversie':
-      return 'Applicatie versies';
-    default:
-      return headerName;
-  }
+export const getTabHeaderName = (headerName, singular = false) => {
+  const translations = {
+    product: ['Product', 'Producten'],
+    module: ['Applicatie', 'Applicaties'], 
+    dienst: ['Dienst', 'Diensten'],
+    gebruik: ['Gebruik', 'Gebruik'],
+    versie: ['Versie', 'Versies'],
+    contract: ['Contract', 'Contracten'],
+    overeenkomst: ['Overeenkomst', 'Overeenkomsten'],
+    organisatie: ['Organisatie', 'Organisaties'],
+    kwetsbaarheid: ['Kwetsbaarheid', 'Kwetsbaarheden'],
+    koppeling: ['Koppeling', 'Koppelingen'],
+    contactpersoon: ['Contactpersoon', 'Contactpersonen'],
+    moduleversie: ['Applicatie versie', 'Applicatie versies'],
+    Moduleversie: ['Applicatie versie', 'Applicatie versies']
+  };
+
+  const translation = translations[headerName];
+  if (!translation) return headerName;
+
+  return singular ? translation[0] : translation[1];
 };
