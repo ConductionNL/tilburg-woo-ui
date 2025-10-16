@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import { AcCheckbox, AcButton, ConAccordion } from '@molecules';
+import { AcCheckbox, AcButton, ConAccordion, ConActiveFilters } from '@molecules';
 import { withStore } from '@stores';
 import { useFacetNameResolution } from '@hooks';
 
@@ -238,6 +238,69 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     setSearchParams(newParams, { replace: true });
   };
 
+  // Helper to get bucket label
+  const getBucketLabel = (facetKey, value) => {
+    const facets = resolvedFacets || {};
+
+    // Handle nested facets like @self[schema]
+    if (facetKey.includes('[') && facetKey.includes(']')) {
+      const [mainKey, subKey] = facetKey.split('[');
+      const cleanSubKey = subKey.replace(']', '');
+      const bucket = facets[mainKey]?.[cleanSubKey]?.buckets?.find(
+        (b) => String(b.value || b.key) === String(value)
+      );
+      return bucket?.label || value;
+    }
+
+    // Handle regular facets
+    const bucket = facets[facetKey]?.buckets?.find(
+      (b) => String(b.value || b.key) === String(value)
+    );
+    return bucket?.label || value;
+  };
+
+  // Simple active filters - just label and id, with remove callback
+  const activeFilters = Object.entries(publications.query)
+    .filter(([key]) => !['extend', '_limit', '_page', '_search'].includes(key))
+    .flatMap(([key, value]) => {
+      if (Array.isArray(value)) {
+        return value.map((val) => {
+          const label = getBucketLabel(key, val);
+          return {
+            id: `${key}-${val}`,
+            label,
+            onRemove: () => toggleNestedFacet(key, val),
+          };
+        });
+      }
+      if (value && typeof value === 'object') {
+        // Handle nested like @self[schema]
+        return Object.entries(value).flatMap(([subKey, subVal]) => {
+          const vals = Array.isArray(subVal) ? subVal : [subVal];
+          return vals.filter(Boolean).map((val) => {
+            const facetKey = `${key}[${subKey}]`;
+            const label = getBucketLabel(facetKey, val);
+            return {
+              id: `${facetKey}-${val}`,
+              label,
+              onRemove: () => toggleNestedFacet(facetKey, val),
+            };
+          });
+        });
+      }
+      if (value) {
+        const label = getBucketLabel(key, value);
+        return [
+          {
+            id: `${key}-${value}`,
+            label,
+            onRemove: () => toggleNestedFacet(key, value),
+          },
+        ];
+      }
+      return [];
+    });
+
   useEffect(() => {
     // Trigger initial facets fetch when component mounts
     // Subsequent facets fetches are triggered by facet selection changes
@@ -390,7 +453,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
   return (
     <>
-      <AcFlex spacing='sm' style={{ marginBottom: '1rem' }}>
+      {/* <AcFlex spacing='sm' style={{ marginBottom: '1rem' }}>
         <AcButton
           style='buttonSlim'
           buttonType='primary'
@@ -400,12 +463,17 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
         >
           Wis alle filters
         </AcButton>
+        
         {isResolving && (
           <span style={{ fontSize: '0.8em', color: '#666', alignSelf: 'center' }}>
             Namen ophalen...
           </span>
         )}
-      </AcFlex>
+      </AcFlex> */}
+      <ConActiveFilters
+        activeFilters={activeFilters}
+        onClearAllFilters={clearAllFilters}
+      />
       {filteredFacets.map(([key, value]) => {
         return key === '@self' ? (
           <React.Fragment key={key}>

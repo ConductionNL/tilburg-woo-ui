@@ -24,6 +24,9 @@ const AcTable = loadable(() => import('@molecules/ac-table/ac-table'));
 const ConFacetsFilters = loadable(() =>
   import('@molecules/con-facets-filters/con-facets-filters')
 );
+const ConActiveFilters = loadable(() =>
+  import('@molecules/con-active-filters/con-active-filters')
+);
 const AcTile = loadable(() => import('@molecules/ac-tile/ac-tile'));
 
 // ConAccordion: keep compound API under lazy loading
@@ -52,6 +55,7 @@ export {
   AcFormField,
   AcTable,
   ConFacetsFilters,
+  ConActiveFilters,
   AcTile,
   ConAccordion,
 };

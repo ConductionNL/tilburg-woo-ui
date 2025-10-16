@@ -16,7 +16,7 @@
   }
 
   &__wrapper {
-    inline-size: 265px;
+    inline-size: 360px;
 
     @include respond-max($screen-md) {
       position: relative;
