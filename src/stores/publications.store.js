@@ -507,6 +507,7 @@ export class PublicationsStore {
               queryParameter: facetInfo.queryParameter,
               enabled: facetInfo.enabled,
               order: facetInfo.order || 0,
+              toggle: facetInfo.toggle,
             };
           } else {
             // Handle regular facets
@@ -518,6 +519,7 @@ export class PublicationsStore {
               queryParameter: facetInfo.queryParameter,
               enabled: facetInfo.enabled,
               order: facetInfo.order || 0,
+              toggle: facetInfo.toggle,
             };
           }
         }
