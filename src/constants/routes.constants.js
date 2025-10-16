@@ -21,7 +21,6 @@ import {
   AcObjects,
   AcMyAccount,
   AcLogin,
-  AcForgotPassword,
   ConDirectory,
   AcFormsGebruik,
   AcFormsProduct,
@@ -30,6 +29,7 @@ import {
   ConViewsList,
   ConBeheerViews,
   ConFormsIndex,
+  ConPasswordReminder,
 } from '@views';
 import { LABELS } from '@constants/labels.constants';
 import { AcCheckIfSpecificHostname } from '@src/services/ac-check-if-specific-hostname';
@@ -41,6 +41,7 @@ export const PATHS = AcLockObject({
   SEARCH: '/zoeken/:query?',
   SEARCH_STATIC: '/zoeken',
   AUTHENTICATION_STATIC: '/login',
+  PASSWORD_REMINDER_STATIC: '/reminder',
   MIJN_OMGEVING_STATIC: '/mijn-omgeving',
   GEMMA_STATIC: '/gemma',
   THEMES: '/onderwerpen',
@@ -52,7 +53,6 @@ export const PATHS = AcLockObject({
   OBJECTS: '/objects/:register/:schema',
   REGISTER: '/register',
   AANMELDEN: '/aanmelden',
-  FORGOT_PASSWORD: '/wachtwoord-vergeten',
   FORMS: '/forms',
   FORMS_REGISTER: '/forms/register',
   FORMS_GEBRUIK: '/forms/gebruik',
@@ -175,6 +175,14 @@ export const ROUTES = {
     title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Login`,
     component: AcLogin,
   },
+  PASSWORD_REMINDER: {
+    id: AcUUID(),
+    name: 'Password Reminder',
+    label: 'Wachtwoord vergeten',
+    path: PATHS.PASSWORD_REMINDER_STATIC,
+    title: `${AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'} | Wachtwoord vergeten`,
+    component: ConPasswordReminder,
+  },
   MIJN_OMGEVING: {
     id: AcUUID(),
     name: 'Mijn omgeving',
@@ -264,16 +272,6 @@ export const ROUTES = {
       AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
     } | Aanmelden`,
     component: AcRegister,
-  },
-  FORGOT_PASSWORD: {
-    id: AcUUID(),
-    name: 'Wachtwoord vergeten',
-    label: LABELS.FORGOT_PASSWORD,
-    path: PATHS.FORGOT_PASSWORD,
-    title: `${
-      AcCheckIfSpecificHostname() ? getTitle() : 'Open Tilburg'
-    } | Wachtwoord vergeten`,
-    component: AcForgotPassword,
   },
   FORMS_INDEX: {
     id: AcUUID(),
