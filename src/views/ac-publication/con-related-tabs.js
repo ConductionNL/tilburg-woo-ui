@@ -132,7 +132,9 @@ const renderCard = (item, object, navigateTo) => {
         <ConCardKoppeling
           key={item.id}
           id={item.id}
-          title={item.title}
+          title={extractTitle(
+            item.title ?? item.titel ?? item.name ?? item.naam ?? item.id
+          )}
           item={item}
           category={item['@self']?.schema?.title}
           themes={item.themes}
