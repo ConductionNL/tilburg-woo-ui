@@ -84,7 +84,7 @@ const renderCard = (item, object, navigateTo, user) => {
         <ConCardDienst
           key={item.id}
           id={item.id}
-          title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id}
+          title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id ?? item['@self']?.name}
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
           updated={item['@self']?.updated}
           published={item['@self']?.published}
@@ -134,7 +134,7 @@ const renderCard = (item, object, navigateTo, user) => {
           key={item.id}
           id={item.id}
           title={extractTitle(
-            item.title ?? item.titel ?? item.name ?? item.naam ?? item.id
+            item.title ?? item.titel ?? item.name ?? item.naam ?? item.id ?? item['@self']?.name
           )}
           item={item}
           category={item['@self']?.schema?.title}
