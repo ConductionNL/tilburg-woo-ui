@@ -233,6 +233,10 @@ const NETWORK_STRENGTH_4_COG = loadable(() =>
   import('-!svg-react-loader!@assets/images/network-strength-4-cog.svg')
 );
 
+const GEAR = loadable(() =>
+  import('-!svg-react-loader!@assets/images/gear.svg')
+);
+
 export const VISUALS = {
   ARROW_RIGHT,
   ARROW_LEFT,
@@ -317,6 +321,7 @@ export const VISUALS = {
   EMAIL_OUTLINE: ENVELOPE_OUTLINE,
   SCROLL,
   NETWORK_STRENGTH_4_COG,
+  GEAR,
 };
 
 export default {};
