@@ -15,10 +15,10 @@ import AcPublicationModule from './ac-publication-module';
 import AcPublicationKoppeling from './ac-publication-koppeling';
 import AcPublicationGebruik from './ac-publication-gebruik';
 import AcPublicationDienst from './ac-publication-dienst';
+import AcPublicationContactperson from './ac-publication-contactperson';
 import { AcContainer, AcFlex } from '@src/atoms';
 import { AcButton } from '@molecules';
 import { VISUALS } from '@constants';
-import { Alert, Heading2 } from '@utrecht/component-library-react/dist/css-module';
 
 const AcPublication = observer(({ store: { publications } }) => {
   const { id } = useParams();
@@ -184,6 +184,9 @@ const AcPublication = observer(({ store: { publications } }) => {
         }
         if (get_single?.['@self']?.schema?.slug === 'dienst') {
           return <AcPublicationDienst />;
+        }
+        if (get_single?.['@self']?.schema?.slug === 'contactpersoon') {
+          return <AcPublicationContactperson />;
         }
         return <AcPublicationDefault schema={schema} />;
     }

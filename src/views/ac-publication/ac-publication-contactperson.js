@@ -24,8 +24,9 @@ import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
 import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
+import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
-const AcPublication = ({ store: { publications, object, user } }) => {
+const AcPublicationContactperson = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
   const { get_single, loading, attachments } = publications;
 
@@ -169,18 +170,17 @@ const AcPublication = ({ store: { publications, object, user } }) => {
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
             <Heading level={4} className='con-product-publication--header-container'>
               <div className='con-beheer-details--header-container'>
-                {get_single?.['@self']?.image && (
+                {(get_single?.['@self']?.image || get_single?.image) && (
                   <ConLogoPreview
                     className='con-beheer-details--logo-container'
-                    logoUrl={get_single?.['@self']?.image}
+                    logoUrl={get_single?.['@self']?.image || get_single?.image}
                   />
                 )}
 
                 <Heading className='con-beheer-details--title'>
-                  {get_single?.['@self']?.name ||
-                    get_single?.id ||
-                    get_single?.name ||
-                    'Organisatie'}
+                  {`${get_single?.voornaam} ${get_single?.tussenvoegsel || ''} ${
+                    get_single?.achternaam
+                  }` || 'Contactpersoon'}
                 </Heading>
               </div>
             </Heading>
@@ -274,43 +274,47 @@ const AcPublication = ({ store: { publications, object, user } }) => {
               <AcFlex column spacing='sm' style={{ flex: 1 }}>
                 <div className='ac-register-review__section'>
                   <div style={{ marginTop: '12px' }}>
-                    {get_single?.['e-mailadres'] && (
+                    {get_single?.functie && (
                       <div style={{ marginBottom: '8px' }}>
-                        <strong>Email: </strong>
-                        <Link href={`mailto:${get_single['e-mailadres']}`}>
-                          {get_single['e-mailadres']}
-                        </Link>
+                        <strong>Functie: </strong>
+                        {get_single?.functie}
                       </div>
                     )}
+
+                    {typeof get_single?.['e-mailadres'] === 'string' &&
+                      get_single?.['e-mailadres'] && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '4px',
+                            marginBottom: '8px',
+                          }}
+                        >
+                          <strong>E‑mail: </strong>
+                          <Link href={`mailto:${get_single?.['e-mailadres']}`}>
+                            {get_single?.['e-mailadres']}
+                          </Link>
+                        </div>
+                      )}
                     {get_single?.telefoonnummer && (
-                      <div style={{ marginBottom: '8px' }}>
+                      <div
+                        style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}
+                      >
                         <strong>Telefoon: </strong>
                         <Link
-                          href={`tel:${get_single.telefoonnummer.replace(
-                            /\s/g,
-                            ''
-                          )}`}
+                          href={`tel:${String(get_single?.telefoonnummer)
+                            .split('')
+                            .filter((i) => i !== ' ')
+                            .join('')}`}
                         >
-                          {get_single.telefoonnummer}
+                          {get_single?.telefoonnummer}
                         </Link>
                       </div>
                     )}
-                    {get_single?.website && (
-                      <div style={{ marginBottom: '8px' }}>
-                        <strong>Website: </strong>
-                        <Link
-                          href={
-                            get_single.website.startsWith('http')
-                              ? get_single.website
-                              : `https://${get_single.website}`
-                          }
-                          target='_blank'
-                          rel='noopener noreferrer'
-                        >
-                          {get_single.website}
-                        </Link>
-                      </div>
-                    )}
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Organisatie: </strong>
+                      <ConUuidResolver>{get_single?.organisatie}</ConUuidResolver>
+                    </div>
                   </div>
                 </div>
               </AcFlex>
@@ -342,4 +346,4 @@ const AcPublication = ({ store: { publications, object, user } }) => {
   );
 };
 
-export default withStore(observer(AcPublication));
+export default withStore(observer(AcPublicationContactperson));

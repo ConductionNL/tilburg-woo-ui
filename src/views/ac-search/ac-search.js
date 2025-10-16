@@ -26,6 +26,7 @@ import {
   ConCardContactpersoon,
   ConCardGebruik,
   ConCardModuleVersie,
+  ConCardKoppeling,
 } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications, user, object } }) => {
@@ -142,7 +143,9 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               {...publication}
               id={publication.id || publication['@self']?.id}
               title={extractTitle(publication['@self'].name)}
-              summary={extractSummary(publication['@self']?.summary || publication?.beschrijvingKort)}
+              summary={extractSummary(
+                publication['@self']?.summary || publication?.beschrijvingKort
+              )}
               logo={getImageFromPublication(publication)}
               cardType={publication['@self'].schema.slug}
               type={publication['@self'].schema.title}
@@ -232,6 +235,25 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               status={publication.status}
               objectStore={object}
               key={index}
+            />
+          );
+        case 'koppeling':
+          return (
+            <ConCardKoppeling
+              {...publication}
+              key={index}
+              id={publication.id || publication['@self']?.id}
+              title={extractTitle(
+                publication.title ??
+                  publication.titel ??
+                  publication.name ??
+                  publication.naam ??
+                  publication.id
+              )}
+              item={publication}
+              category={publication['@self']?.schema?.title}
+              themes={publication.themes}
+              navigateTo='publication'
             />
           );
         default:

@@ -394,6 +394,7 @@ const ConDienstDetailsPageContent = ({
             setTabIndex={setRelatedTabIndex}
             object={object}
             navigateTo='beheer'
+            user={user}
           />
         </div>
       )}
