@@ -1,4 +1,5 @@
 import loadable from '@loadable/component';
+import { createElement } from 'preact/compat';
 
 const AcCardCategory = loadable(() =>
   import('@molecules/ac-card-category/ac-card-category')
@@ -25,6 +26,18 @@ const ConFacetsFilters = loadable(() =>
 );
 const AcTile = loadable(() => import('@molecules/ac-tile/ac-tile'));
 
+// ConAccordion: keep compound API under lazy loading
+const ConAccordionLoadable = loadable(() =>
+  import('@molecules/con-accordion/con-accordion')
+);
+const ConAccordionItemLoadable = loadable(() =>
+  import('@molecules/con-accordion/con-accordion').then((m) => ({
+    default: m.default.Item,
+  }))
+);
+const ConAccordion = (props) => createElement(ConAccordionLoadable, props);
+ConAccordion.Item = (props) => createElement(ConAccordionItemLoadable, props);
+
 export {
   AcBreadcrumbs,
   AcCardCategory,
@@ -40,4 +53,5 @@ export {
   AcTable,
   ConFacetsFilters,
   AcTile,
+  ConAccordion,
 };
