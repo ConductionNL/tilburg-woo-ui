@@ -49,8 +49,20 @@ const AcBeheer = ({ store }) => {
 
   const { type, id } = useParams();
 
+  // Redirect organisatie routes to my-organisation
+  useEffect(() => {
+    if (type === 'organisatie' || type === 'organisaties') {
+      navigate('/beheer/my-organisation', { replace: true });
+    }
+  }, [type, navigate]);
+
   if (window.location.pathname === '/beheer') {
     return <AcDashboard store={store} />;
+  }
+
+  // Early return for organisatie routes to prevent any data loading
+  if (type === 'organisatie' || type === 'organisaties') {
+    return null; // Will redirect via useEffect above
   }
 
   if (type === 'my-organisation') {
