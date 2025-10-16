@@ -34,7 +34,7 @@ const getTabOrder = (schemaSlug) => {
 };
 
 // Helper function to render a card based on schema type
-const renderCard = (item, object, navigateTo) => {
+const renderCard = (item, object, navigateTo, user) => {
   const schemaSlug = item['@self']?.schema?.slug;
 
   switch (schemaSlug) {
@@ -56,6 +56,7 @@ const renderCard = (item, object, navigateTo) => {
           organisation={item['@self'].organisation}
           objectStore={object}
           navigateTo={`${navigateTo}-${schemaSlug}`}
+          user={user}
           key={item.id}
         />
       );
@@ -231,7 +232,8 @@ const renderRelatedTabs = (
   object,
   navigateTo,
   customTabsBefore = [],
-  customTabsAfter = []
+  customTabsAfter = [],
+  user
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -350,7 +352,7 @@ const renderRelatedTabs = (
       {allTabs.map((entry, idx) => {
         if (entry.kind === 'schema') {
           const renderCards = entry.items.map((item) =>
-            renderCard(item, object, navigateTo)
+            renderCard(item, object, navigateTo, user)
           );
 
           return (
@@ -391,7 +393,9 @@ const renderRelatedTabs = (
                   wordBreak: 'break-word',
                 }}
               >
-                {maybeItems.map((item) => renderCard(item, object, navigateTo))}
+                {maybeItems.map((item) =>
+                  renderCard(item, object, navigateTo, user)
+                )}
               </div>
             ) : null}
           </AcTabPanel>
@@ -414,6 +418,7 @@ const RelatedTabs = observer(
     navigateTo,
     customTabsBefore = [],
     customTabsAfter = [],
+    user,
   }) => {
     // Merge and deduplicate the data
     const mergedItems = mergeAndDeduplicateItems(uses, used);
@@ -489,7 +494,8 @@ const RelatedTabs = observer(
               object,
               navigateTo,
               customTabsBefore,
-              customTabsAfter
+              customTabsAfter,
+              user
             )}
           </div>
         )}

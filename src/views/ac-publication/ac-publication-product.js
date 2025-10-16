@@ -413,6 +413,7 @@ const AcPublicationProduct = ({
         setTabIndex={setRelatedTabIndex}
         object={object}
         navigateTo='publication'
+        user={user}
       />
     </AcContainer>
   );

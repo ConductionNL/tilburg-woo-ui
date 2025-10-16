@@ -11,6 +11,7 @@ import {
   useResolvedText,
   useResolvedArray,
 } from '@src/utilities/con-resolve-uuids-in-text';
+import { checkOrganizationPermissions } from '@src/utilities/organization-permissions';
 
 // card for products, modules and organisations
 const ConCardOrganisationApplication = ({
@@ -26,6 +27,7 @@ const ConCardOrganisationApplication = ({
   published,
   objectStore,
   navigateTo = 'publication',
+  user,
 }) => {
   // Use generic UUID resolver for organisation name
   const resolvedOrganisation = useResolvedText(organisation, objectStore);
@@ -65,6 +67,23 @@ const ConCardOrganisationApplication = ({
   }, [cardType]);
 
   const onClick = () => {
+    // For organization cards in beheer context, check if it's the user's own organization
+    if (navigateTo === 'beheer-organisatie' && cardType === 'organisatie' && user) {
+      // Create a mock object with the organization data to check permissions
+      const mockObject = {
+        '@self': {
+          organisation: id, // The organization ID we're checking
+        },
+      };
+
+      const { canEdit } = checkOrganizationPermissions(user, mockObject);
+
+      // If user can edit this organization, it's their own organization
+      if (canEdit) {
+        return '/beheer/my-organisation';
+      }
+    }
+
     switch (navigateTo) {
       case 'publication':
         return NAVIGATE_TO.PUBLICATION(id);

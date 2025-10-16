@@ -189,7 +189,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
               justifyContent='between'
               alignItems='center'
               spacing='sm'
-                className='con-product-publication--header-actions'
+              className='con-product-publication--header-actions'
             >
               <Heading className='con-product-publication--header-type'>
                 {(() => {
@@ -334,6 +334,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
             setTabIndex={setTabIndex}
             object={object}
             navigateTo='publication'
+            user={user}
           />
         </AcFlex>
       </AcContainer>

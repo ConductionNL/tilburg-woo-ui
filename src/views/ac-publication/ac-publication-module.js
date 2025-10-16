@@ -528,6 +528,7 @@ const AcPublicationProduct = ({
         setTabIndex={setTabIndex}
         object={object}
         navigateTo='publication'
+        user={user}
         customTabsBefore={[
           {
             id: 'standaarden',

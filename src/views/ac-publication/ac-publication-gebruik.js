@@ -227,6 +227,7 @@ const AcPublicationGebruik = ({ store: { publications, user, object } }) => {
             setTabIndex={setRelatedTabIndex}
             object={object}
             navigateTo='publication'
+            user={user}
           />
         </div>
 
