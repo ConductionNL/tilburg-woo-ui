@@ -25,6 +25,7 @@ import {
   ConCardDienst,
   ConCardContactpersoon,
   ConCardGebruik,
+  ConCardModuleVersie,
 } from '@molecules/con-cards';
 
 const AcSearch = ({ store: { publications, user, object } }) => {
@@ -141,7 +142,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               {...publication}
               id={publication.id || publication['@self']?.id}
               title={extractTitle(publication['@self'].name)}
-              summary={extractSummary(publication['@self'].summary)}
+              summary={extractSummary(publication['@self']?.summary || publication?.beschrijvingKort)}
               logo={getImageFromPublication(publication)}
               cardType={publication['@self'].schema.slug}
               type={publication['@self'].schema.title}
@@ -150,6 +151,29 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               updated={publication['@self'].updated}
               published={publication['@self'].published}
               organisation={publication['@self'].organisation}
+              objectStore={object}
+              key={index}
+            />
+          );
+        case 'moduleversie':
+          return (
+            <ConCardModuleVersie
+              {...publication}
+              id={publication.id || publication['@self']?.id}
+              versie={publication.versie || publication['@self']?.name}
+              beschrijvingKort={publication.beschrijvingKort}
+              beschrijvingLang={
+                publication.beschrijvingLang || publication['@self']?.summary
+              }
+              status={publication.status}
+              datumInOntwikkeling={publication.datumInOntwikkeling}
+              datumInGebruik={publication.datumInGebruik}
+              datumEindeOndersteuning={publication.datumEindeOndersteuning}
+              datumTeruggetrokken={publication.datumTeruggetrokken}
+              organisation={publication['@self']?.organisation}
+              moduleUuid={
+                publication['@self']?.relations?.module || publication.module
+              }
               objectStore={object}
               key={index}
             />
@@ -170,7 +194,12 @@ const AcSearch = ({ store: { publications, user, object } }) => {
                   publication.id
               )}
               summary={extractSummary(publication?.beschrijvingKort)}
-              organisationData={publication?.organisatie}
+              aanbieder={
+                publication['@self']?.relations?.aanbieder || publication.aanbieder
+              }
+              status={publication.status}
+              type={publication.type}
+              objectStore={object}
               key={index}
             />
           );

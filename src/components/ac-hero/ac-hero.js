@@ -33,12 +33,6 @@ const AcHero = (contents) => {
     // Always set page to 1 for new searches
     searchParams.set('_page', '1');
 
-    // Add default search schema if configured
-    const defaultSchema = 'module';
-    if (defaultSchema) {
-      searchParams.set('@self[schema]', defaultSchema);
-    }
-
     // Navigate to the search page with parameters
     const searchUrl = searchParams.toString()
       ? `${baseUrl}?${searchParams.toString()}`

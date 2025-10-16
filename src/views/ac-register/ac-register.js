@@ -1089,9 +1089,10 @@ const ContactInformationForm = memo(
                   <AcFlex column spacing='xs'>
                     <Heading level={3}>Contactpersoon</Heading>
                     <Paragraph>
-                      Het contactpersoon dat wordt ingevuld wordt het eerste
-                      aanspreekpunt van de organisatie. Dit kan op een later moment
-                      nog gewijzigd worden.
+                      De geregistreerde contactpersoon is het eerste aanspreekpunt
+                      van de organisatie en hoofdbeheerder van de gebruikers van
+                      Softwarecatalogus namens uw organisatie. Dit kan op een later
+                      moment nog gewijzigd worden.
                     </Paragraph>
                   </AcFlex>
                 </AcFlex>

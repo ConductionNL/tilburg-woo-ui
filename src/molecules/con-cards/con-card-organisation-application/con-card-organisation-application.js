@@ -12,6 +12,7 @@ import {
   useResolvedArray,
 } from '@src/utilities/con-resolve-uuids-in-text';
 
+// card for products, modules and organisations
 const ConCardOrganisationApplication = ({
   skeleton,
   title,
@@ -45,16 +46,19 @@ const ConCardOrganisationApplication = ({
   };
 
   const icon = useMemo(() => {
+    const iconStyle = {
+      height: 'var(--utrecht-heading-3-font-size)',
+      width: 'var(--utrecht-heading-3-font-size)',
+      flexShrink: 0,
+      color: 'inherit',
+    };
     switch (cardType) {
       case 'product':
+        return <VISUALS.CUBES style={iconStyle} />;
       case 'module':
-        return (
-          <VISUALS.CUBE style={{ color: 'var(--tilburg-interaction-color)' }} />
-        );
+        return <VISUALS.CUBE style={iconStyle} />;
       case 'organisatie':
-        return (
-          <VISUALS.BUILDING style={{ color: 'var(--tilburg-interaction-color)' }} />
-        );
+        return <VISUALS.BUILDING style={iconStyle} />;
       default:
         return null;
     }

@@ -46,7 +46,14 @@ const ConCardContactpersoon = ({
     <AcCard organisation padding='md' skeleton={skeleton}>
       <AcFlex alignItems='center' justifyContent='space-between'>
         <AcFlex alignItems='center' spacing='xs'>
-          <VISUALS.USER style={{ color: 'var(--tilburg-interaction-color)' }} />
+          <VISUALS.USER
+            style={{
+              height: 'var(--utrecht-heading-3-font-size)',
+              width: 'var(--utrecht-heading-3-font-size)',
+              flexShrink: 0,
+              color: 'inherit',
+            }}
+          />
           <Heading level={3}>{extractTitle(name)}</Heading>
           {organisation && (
             <Paragraph small>(Werkzaam bij {resolvedOrganisation})</Paragraph>

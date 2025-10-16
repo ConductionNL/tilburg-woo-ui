@@ -23,6 +23,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -187,7 +188,7 @@ const AcPublicationProduct = ({
     <AcContainer margin='xl'>
       <AcFlex column spacing='sm'>
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-          <Heading level={4}>
+          <Heading level={4} className='con-product-publication--header-container'>
             <div className='con-beheer-details--header-container'>
               {get_single?.['@self']?.image && (
                 <ConLogoPreview
@@ -204,46 +205,60 @@ const AcPublicationProduct = ({
               </Heading>
             </div>
           </Heading>
-          <ConDetailsActionsMenu
-            user={user}
-            id={id}
-            schemaSlug={get_single?.['@self']?.schema?.slug}
-            title={get_single?.['@self']?.name || get_single?.id}
-            published={get_single?.['@self']?.published}
-            object={get_single}
-            showViewAction={false}
-            showEditAction={true}
-            showPublishActions={true}
-            onDelete={handleDelete}
-            onEdit={() => {
-              const schemaSlug = get_single?.['@self']?.schema?.slug;
-              if (schemaSlug) {
-                const wizards = Object.values(DASHBOARD_WIZARDS);
-                const wizard = wizards.find((w) => w.schema === schemaSlug);
+          <AcFlex
+            justifyContent='between'
+            alignItems='center'
+            spacing='sm'
+            className='con-product-publication--header-actions'
+          >
+            <Heading className='con-product-publication--header-type'>
+              {(() => {
+                const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+                return <Icon />;
+              })()}
+              {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+            </Heading>
+            <ConDetailsActionsMenu
+              user={user}
+              id={id}
+              schemaSlug={get_single?.['@self']?.schema?.slug}
+              title={get_single?.['@self']?.name || get_single?.id}
+              published={get_single?.['@self']?.published}
+              object={get_single}
+              showViewAction={false}
+              showEditAction={true}
+              showPublishActions={true}
+              onDelete={handleDelete}
+              onEdit={() => {
+                const schemaSlug = get_single?.['@self']?.schema?.slug;
+                if (schemaSlug) {
+                  const wizards = Object.values(DASHBOARD_WIZARDS);
+                  const wizard = wizards.find((w) => w.schema === schemaSlug);
 
-                if (wizard) {
-                  const baseUrl = getWizardUrl(wizard);
-                  const url = new URL(baseUrl, window.location.origin);
-                  url.searchParams.set('id', id);
-                  navigate(url.pathname + url.search);
-                  return;
+                  if (wizard) {
+                    const baseUrl = getWizardUrl(wizard);
+                    const url = new URL(baseUrl, window.location.origin);
+                    url.searchParams.set('id', id);
+                    navigate(url.pathname + url.search);
+                    return;
+                  }
                 }
-              }
-              // Fallback to beheer legacy edit page in new tab
-              const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-              window.open(beheerUrl, '_blank');
-            }}
-            uniqueActions={[
-              {
-                key: 'delete',
-                label: 'Verwijderen',
-                icon: VISUALS.TRASHCAN,
-                onClick: handleDelete,
-              },
-            ]}
-            triggerStyle='button'
-            relatedActions={actionMenuItems}
-          />
+                // Fallback to beheer legacy edit page in new tab
+                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                window.open(beheerUrl, '_blank');
+              }}
+              uniqueActions={[
+                {
+                  key: 'delete',
+                  label: 'Verwijderen',
+                  icon: VISUALS.TRASHCAN,
+                  onClick: handleDelete,
+                },
+              ]}
+              triggerStyle='button'
+              relatedActions={actionMenuItems}
+            />
+          </AcFlex>
         </AcFlex>
         <AcFlex spacing='sm' justifyContent='between'>
           <AcFlex column spacing='md' style={{ flex: 3 }}>
@@ -342,7 +357,10 @@ const AcPublicationProduct = ({
               </AcFlex>
             )}
 
-            {
+            {(get_single?.status ||
+              get_single?.hostingLocatie ||
+              get_single?.hostingJurisdictie ||
+              get_single?.cloudDienstverleningsmodel) && (
               <AcFlex
                 column
                 spacing='sm'
@@ -373,7 +391,7 @@ const AcPublicationProduct = ({
                   </div>
                 )}
               </AcFlex>
-            }
+            )}
           </AcFlex>
         </AcFlex>
       </AcFlex>

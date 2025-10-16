@@ -118,64 +118,67 @@ const ConDetailsActionsMenu = ({
   return (
     <ConActionMenu>
       <ConActionMenu.Trigger
-        icon={<VISUALS.ELLIPSIS />}
+        icon={canEdit ? <VISUALS.GEAR /> : <VISUALS.PLUS />}
         buttonType={triggerStyle === 'buttonSlim' ? 'secondary' : 'primary'}
         style={triggerStyle}
-      >
-        Acties
-      </ConActionMenu.Trigger>
+      ></ConActionMenu.Trigger>
 
       <ConActionMenu.Menu position='right'>
-        {/* Standard actions */}
-        {showViewAction && (
-          <ConActionMenu.Button icon={<VISUALS.EYE />} onClick={handleView}>
-            Bekijken
-          </ConActionMenu.Button>
-        )}
+        {canEdit && (
+          <>
+            {/* Standard actions */}
+            {showViewAction && (
+              <ConActionMenu.Button icon={<VISUALS.EYE />} onClick={handleView}>
+                Bekijken
+              </ConActionMenu.Button>
+            )}
 
-        {showEditAction && (
-          <ConActionMenu.Button
-            icon={<VISUALS.PENCIL />}
-            onClick={canEdit ? handleEdit : undefined}
-            disabled={!canEdit}
-            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('edit', reason) : undefined
-            }
-          >
-            Bewerken
-          </ConActionMenu.Button>
-        )}
+            {showEditAction && (
+              <ConActionMenu.Button
+                icon={<VISUALS.PENCIL />}
+                onClick={canEdit ? handleEdit : undefined}
+                disabled={!canEdit}
+                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                data-tooltip-content={
+                  !canEdit ? getDisabledActionTooltip('edit', reason) : undefined
+                }
+              >
+                Bewerken
+              </ConActionMenu.Button>
+            )}
 
-        {/* Publish/Depublish actions */}
-        {showPublishActions && !published && (
-          <ConActionMenu.Button
-            icon={<VISUALS.PUBLISH />}
-            onClick={canEdit ? handlePublish : undefined}
-            disabled={!canEdit}
-            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('publish', reason) : undefined
-            }
-          >
-            Publiceren
-          </ConActionMenu.Button>
-        )}
+            {/* Publish/Depublish actions */}
+            {showPublishActions && !published && (
+              <ConActionMenu.Button
+                icon={<VISUALS.PUBLISH />}
+                onClick={canEdit ? handlePublish : undefined}
+                disabled={!canEdit}
+                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                data-tooltip-content={
+                  !canEdit ? getDisabledActionTooltip('publish', reason) : undefined
+                }
+              >
+                Publiceren
+              </ConActionMenu.Button>
+            )}
 
-        {showPublishActions && published && (
-          <ConActionMenu.Button
-            icon={<VISUALS.PUBLISH_OFF />}
-            onClick={canEdit ? handleDepublish : undefined}
-            disabled={!canEdit}
-            data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
-            data-tooltip-content={
-              !canEdit ? getDisabledActionTooltip('depublish', reason) : undefined
-            }
-          >
-            Depubliceren
-          </ConActionMenu.Button>
+            {showPublishActions && published && (
+              <ConActionMenu.Button
+                icon={<VISUALS.PUBLISH_OFF />}
+                onClick={canEdit ? handleDepublish : undefined}
+                disabled={!canEdit}
+                data-tooltip-id={!canEdit ? TOOLTIP_ID : undefined}
+                data-tooltip-content={
+                  !canEdit
+                    ? getDisabledActionTooltip('depublish', reason)
+                    : undefined
+                }
+              >
+                Depubliceren
+              </ConActionMenu.Button>
+            )}
+          </>
         )}
-
         {/* Unique actions (type-specific) */}
         {uniqueActions.map((action) => {
           // Apply permission check for destructive actions (delete)
@@ -183,6 +186,11 @@ const ConDetailsActionsMenu = ({
             action.key === 'delete' ||
             action.label?.toLowerCase().includes('verwijder');
           const actionDisabled = isDestructiveAction && !canEdit;
+
+          // Hide delete actions if user cannot edit
+          if (isDestructiveAction && !canEdit) {
+            return null;
+          }
 
           return (
             <ConActionMenu.Button
@@ -217,7 +225,7 @@ const ConDetailsActionsMenu = ({
         })}
 
         {/* Divider before related actions */}
-        {relatedActions.length > 0 && <ConActionMenu.Divider />}
+        {relatedActions.length > 0 && canEdit && <ConActionMenu.Divider />}
 
         {/* Related schema actions */}
         {relatedActions.map((action) => {

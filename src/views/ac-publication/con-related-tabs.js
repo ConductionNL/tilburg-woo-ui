@@ -4,13 +4,20 @@ import { AcLoader } from '@components';
 import { observer } from 'mobx-react-lite';
 import { AcSearchResult } from '@molecules';
 import { AcTabs, AcTabList, AcTab, AcTabPanel } from '@atoms';
-import { getTabHeaderIcon, getTabHeaderName, getImageFromPublication } from '@utils';
+import {
+  getTabHeaderIcon,
+  getTabHeaderName,
+  getImageFromPublication,
+  extractSummary,
+  extractTitle,
+} from '@utils';
 import {
   ConCardOrganisationApplication,
   ConCardDienst,
   ConCardGebruik,
   ConCardContactpersoon,
   ConCardKoppeling,
+  ConCardModuleVersie,
 } from '@molecules/con-cards';
 import { commongroundApiUrl } from '@src/config';
 
@@ -36,19 +43,39 @@ const renderCard = (item, object, navigateTo) => {
     case 'organisatie':
       return (
         <ConCardOrganisationApplication
-          key={item.id}
-          id={item.id}
-          title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id}
-          summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
+          {...item}
+          id={item.id || item['@self']?.id}
+          title={extractTitle(item['@self'].name)}
+          summary={extractSummary(item['@self']?.summary || item?.beschrijvingKort)}
           logo={getImageFromPublication(item)}
           cardType={schemaSlug}
-          type={item['@self']?.schema?.title}
+          type={item['@self'].schema.title}
           referenceComponents={item.referentieComponenten}
-          updated={item['@self']?.updated}
-          published={item['@self']?.published}
-          organisation={item['@self']?.organisation}
+          updated={item['@self'].updated}
+          published={item['@self'].published}
+          organisation={item['@self'].organisation}
           objectStore={object}
           navigateTo={`${navigateTo}-${schemaSlug}`}
+          key={item.id}
+        />
+      );
+    case 'moduleversie':
+      return (
+        <ConCardModuleVersie
+          key={item.id}
+          id={item.id}
+          versie={item.versie || item['@self']?.name}
+          beschrijvingKort={item.beschrijvingKort}
+          beschrijvingLang={item.beschrijvingLang || item['@self']?.summary}
+          status={item.status}
+          datumInOntwikkeling={item.datumInOntwikkeling}
+          datumInGebruik={item.datumInGebruik}
+          datumEindeOndersteuning={item.datumEindeOndersteuning}
+          datumTeruggetrokken={item.datumTeruggetrokken}
+          organisation={item['@self']?.organisation}
+          moduleUuid={item['@self']?.relations?.module || item.module}
+          objectStore={object}
+          navigateTo={navigateTo}
         />
       );
     case 'dienst':
@@ -62,6 +89,10 @@ const renderCard = (item, object, navigateTo) => {
           published={item['@self']?.published}
           category={item['@self']?.schema?.title}
           themes={item.themes}
+          aanbieder={item['@self']?.relations?.aanbieder || item.aanbieder}
+          status={item.status}
+          type={item.type}
+          objectStore={object}
           navigateTo={navigateTo}
         />
       );
@@ -171,14 +202,34 @@ const mergeGebruiksIntoItems = (items = [], ambtenaarItems = []) => {
   return [...nonGebruikItems, ...mergedGebruik];
 };
 
-// Helper function to render tabs for related objects
+const isVisible = (v) => {
+  if (typeof v === 'function') return !!v();
+  if (typeof v === 'boolean') return v;
+  return true; // default visible
+};
+
+// Helper function to render tabs for related objects (and optional custom tabs)
+/**
+ * @typedef {Object} CustomTab
+ * @property {string} id
+ * @property {string | import('react').ReactNode} [label]
+ * @property {import('react').ReactNode} [header]
+ * @property {import('react').ComponentType} [icon]
+ * @property {any[] | (() => any[])} [items]
+ * @property {number | (() => number)} [count]
+ * @property {boolean | (() => boolean)} [visible]
+ * @property {boolean} [disabled]
+ * @property {(ctx: { object: any, navigateTo: string }) => import('react').ReactNode} [render]
+ */
 const renderRelatedTabs = (
   items,
   loading,
   tabIndex,
   setTabIndex,
   object,
-  navigateTo
+  navigateTo,
+  customTabsBefore = [],
+  customTabsAfter = []
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -188,9 +239,15 @@ const renderRelatedTabs = (
     );
   }
 
-  if (!items || items.length === 0) {
-    return null;
-  }
+  // Small helpers for custom tabs
+  const resolveMaybeFn = (val) => (typeof val === 'function' ? val() : val);
+  const resolveCount = (tab) => {
+    const provided = resolveMaybeFn(tab?.count);
+    if (typeof provided === 'number') return provided;
+    const itemsArr = resolveMaybeFn(tab?.items);
+    if (Array.isArray(itemsArr)) return itemsArr.length;
+    return undefined;
+  };
 
   const uniqueSchemas = (items || []).length
     ? _.uniqBy(items, (item) => item['@self'].schema.id).sort(
@@ -199,6 +256,38 @@ const renderRelatedTabs = (
       )
     : [];
 
+  // Build schema-derived tabs
+  const schemaTabs = uniqueSchemas.map((schemaItem) => {
+    const schemaId = schemaItem['@self'].schema.id;
+    const schemaSlug = schemaItem['@self'].schema.slug;
+    const itemsWithThisSchema = (items || []).filter(
+      (u) => u['@self'].schema.id === schemaId
+    );
+    return {
+      kind: 'schema',
+      id: `schema-${schemaId}`,
+      schemaId,
+      schemaSlug,
+      items: itemsWithThisSchema,
+      count: itemsWithThisSchema.length,
+    };
+  });
+
+  // Normalize and filter custom tabs by visibility
+  const normalizeCustomTabs = (tabs = []) =>
+    (tabs || [])
+      .filter((t) => isVisible(t?.visible))
+      .map((t) => ({ kind: 'custom', tab: t }));
+
+  const beforeCustom = normalizeCustomTabs(customTabsBefore);
+  const afterCustom = normalizeCustomTabs(customTabsAfter);
+
+  const allTabs = [...beforeCustom, ...schemaTabs, ...afterCustom];
+
+  if (allTabs.length === 0) {
+    return null;
+  }
+
   return (
     <AcTabs
       style={{ marginBlockStart: 'var(--tilburg-space-block-mouse)' }}
@@ -206,52 +295,103 @@ const renderRelatedTabs = (
       onSelect={(index) => setTabIndex(index)}
     >
       <AcTabList>
-        {uniqueSchemas.map((item, idx) => {
-          const IconComponent = getTabHeaderIcon(item['@self'].schema.slug);
-          // Count items with this schema
-          const count = items.filter(
-            (u) => u['@self'].schema.id === item['@self'].schema.id
-          ).length;
+        {allTabs.map((entry, idx) => {
+          if (entry.kind === 'schema') {
+            const IconComponent = getTabHeaderIcon(entry.schemaSlug);
+            return (
+              <AcTab key={entry.id} selected={tabIndex === idx}>
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <IconComponent /> {getTabHeaderName(entry.schemaSlug)} (
+                  {entry.count})
+                </span>
+              </AcTab>
+            );
+          }
+
+          // Custom tab header
+          const { tab } = entry;
+          const Icon = tab?.icon;
+          const headerNode = tab?.header;
+          const count = resolveCount(tab);
 
           return (
-            <AcTab key={item['@self'].schema.id} selected={tabIndex === idx}>
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <IconComponent /> {getTabHeaderName(item['@self'].schema.slug)} (
-                {count})
-              </span>
+            <AcTab
+              key={tab.id}
+              selected={tabIndex === idx}
+              disabled={!!tab.disabled}
+            >
+              {headerNode ? (
+                headerNode
+              ) : (
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  {Icon ? <Icon /> : null} {tab.label}
+                  {typeof count === 'number' ? ` (${count})` : ''}
+                </span>
+              )}
             </AcTab>
           );
         })}
       </AcTabList>
 
-      {uniqueSchemas.map((schemaItem, idx) => {
-        const itemsWithThisSchema = items.filter(
-          (u) => u['@self'].schema.id === schemaItem['@self'].schema.id
-        );
+      {allTabs.map((entry, idx) => {
+        if (entry.kind === 'schema') {
+          const renderCards = entry.items.map((item) =>
+            renderCard(item, object, navigateTo)
+          );
 
-        const renderCards = itemsWithThisSchema.map((item) =>
-          renderCard(item, object, navigateTo)
-        );
+          return (
+            <AcTabPanel key={idx} selected={tabIndex === idx}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    renderCards.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+                  gap: '16px',
+                  marginTop: '16px',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {renderCards}
+              </div>
+            </AcTabPanel>
+          );
+        }
+
+        // Custom tab panel
+        const { tab } = entry;
+        const maybeItems = resolveMaybeFn(tab?.items);
+        const hasItems = Array.isArray(maybeItems) && maybeItems.length > 0;
 
         return (
           <AcTabPanel key={idx} selected={tabIndex === idx}>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns:
-                  renderCards.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-                gap: '16px',
-                marginTop: '16px',
-              }}
-            >
-              {renderCards}
-            </div>
+            {typeof tab.render === 'function' ? (
+              tab.render({ object, navigateTo })
+            ) : hasItems ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns:
+                    maybeItems.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+                  gap: '16px',
+                  marginTop: '16px',
+                  wordBreak: 'break-word',
+                }}
+              >
+                {maybeItems.map((item) => renderCard(item, object, navigateTo))}
+              </div>
+            ) : null}
           </AcTabPanel>
         );
       })}
@@ -270,6 +410,8 @@ const RelatedTabs = observer(
     setTabIndex,
     object,
     navigateTo,
+    customTabsBefore = [],
+    customTabsAfter = [],
   }) => {
     // Merge and deduplicate the data
     const mergedItems = mergeAndDeduplicateItems(uses, used);
@@ -321,10 +463,17 @@ const RelatedTabs = observer(
       ambtenaarData || []
     );
 
-    // Show the tabs if we have data or are loading
+    // Determine if there are any visible custom tabs
+    const anyVisibleCustomTabs = [
+      ...(customTabsBefore || []),
+      ...(customTabsAfter || []),
+    ].some((t) => isVisible(t?.visible));
+
+    // Show the tabs if we have data, custom tabs, or are loading
     const shouldShow =
       isLoading ||
-      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0);
+      (itemsWithAmbtenaarGebruik && itemsWithAmbtenaarGebruik.length > 0) ||
+      anyVisibleCustomTabs;
 
     return (
       <>
@@ -337,6 +486,8 @@ const RelatedTabs = observer(
               setTabIndex,
               object,
               navigateTo,
+              customTabsBefore,
+              customTabsAfter
             )}
           </div>
         )}

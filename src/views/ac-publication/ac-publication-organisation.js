@@ -23,6 +23,7 @@ import remarkEmoji from 'remark-emoji';
 import remarkSupersub from 'remark-supersub';
 import rehypeSlug from 'rehype-slug';
 import rehypeSanitize from 'rehype-sanitize';
+import { getTabHeaderIcon, getTabHeaderName } from '@src/utilities';
 
 const AcPublication = ({ store: { publications, object, user } }) => {
   const { id } = useParams();
@@ -166,7 +167,7 @@ const AcPublication = ({ store: { publications, object, user } }) => {
       <AcContainer margin='xl'>
         <AcFlex column spacing='sm'>
           <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
-            <Heading level={4}>
+            <Heading level={4} className='con-product-publication--header-container'>
               <div className='con-beheer-details--header-container'>
                 {get_single?.['@self']?.image && (
                   <ConLogoPreview
@@ -183,46 +184,62 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                 </Heading>
               </div>
             </Heading>
-            <ConDetailsActionsMenu
-              user={user}
-              id={id}
-              schemaSlug={get_single?.['@self']?.schema?.slug}
-              title={get_single?.['@self']?.name || get_single?.id}
-              published={get_single?.['@self']?.published}
-              object={get_single}
-              showViewAction={false}
-              showEditAction={true}
-              showPublishActions={true}
-              onDelete={handleDelete}
-              onEdit={() => {
-                const schemaSlug = get_single?.['@self']?.schema?.slug;
-                if (schemaSlug) {
-                  const wizards = Object.values(DASHBOARD_WIZARDS);
-                  const wizard = wizards.find((w) => w.schema === schemaSlug);
 
-                  if (wizard) {
-                    const baseUrl = getWizardUrl(wizard);
-                    const url = new URL(baseUrl, window.location.origin);
-                    url.searchParams.set('id', id);
-                    navigate(url.pathname + url.search);
-                    return;
+            <AcFlex
+              justifyContent='between'
+              alignItems='center'
+              spacing='sm'
+                className='con-product-publication--header-actions'
+            >
+              <Heading className='con-product-publication--header-type'>
+                {(() => {
+                  const Icon = getTabHeaderIcon(get_single?.['@self'].schema.slug);
+                  return <Icon />;
+                })()}
+                {getTabHeaderName(get_single?.['@self'].schema.slug, true)}
+              </Heading>
+
+              <ConDetailsActionsMenu
+                user={user}
+                id={id}
+                schemaSlug={get_single?.['@self']?.schema?.slug}
+                title={get_single?.['@self']?.name || get_single?.id}
+                published={get_single?.['@self']?.published}
+                object={get_single}
+                showViewAction={false}
+                showEditAction={true}
+                showPublishActions={true}
+                onDelete={handleDelete}
+                onEdit={() => {
+                  const schemaSlug = get_single?.['@self']?.schema?.slug;
+                  if (schemaSlug) {
+                    const wizards = Object.values(DASHBOARD_WIZARDS);
+                    const wizard = wizards.find((w) => w.schema === schemaSlug);
+
+                    if (wizard) {
+                      const baseUrl = getWizardUrl(wizard);
+                      const url = new URL(baseUrl, window.location.origin);
+                      url.searchParams.set('id', id);
+                      navigate(url.pathname + url.search);
+                      return;
+                    }
                   }
-                }
-                // Fallback to beheer legacy edit page in new tab
-                const beheerUrl = `/beheer/${schemaSlug}/${id}`;
-                window.open(beheerUrl, '_blank');
-              }}
-              uniqueActions={[
-                {
-                  key: 'delete',
-                  label: 'Verwijderen',
-                  icon: VISUALS.TRASHCAN,
-                  onClick: handleDelete,
-                },
-              ]}
-              triggerStyle='button'
-              relatedActions={actionMenuItems}
-            />
+                  // Fallback to beheer legacy edit page in new tab
+                  const beheerUrl = `/beheer/${schemaSlug}/${id}`;
+                  window.open(beheerUrl, '_blank');
+                }}
+                uniqueActions={[
+                  {
+                    key: 'delete',
+                    label: 'Verwijderen',
+                    icon: VISUALS.TRASHCAN,
+                    onClick: handleDelete,
+                  },
+                ]}
+                triggerStyle='button'
+                relatedActions={actionMenuItems}
+              />
+            </AcFlex>
           </AcFlex>
           <AcFlex spacing='sm' justifyContent='between'>
             <AcFlex column spacing='md' style={{ flex: 3 }}>
@@ -251,46 +268,53 @@ const AcPublication = ({ store: { publications, object, user } }) => {
                 />
               )}
             </AcFlex>
-            <AcFlex column spacing='sm' style={{ flex: 1 }}>
-              <div className='ac-register-review__section'>
-                <div style={{ marginTop: '12px' }}>
-                  {get_single?.['e-mailadres'] && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Email: </strong>
-                      <Link href={`mailto:${get_single['e-mailadres']}`}>
-                        {get_single['e-mailadres']}
-                      </Link>
-                    </div>
-                  )}
-                  {get_single?.telefoonnummer && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Telefoon: </strong>
-                      <Link
-                        href={`tel:${get_single.telefoonnummer.replace(/\s/g, '')}`}
-                      >
-                        {get_single.telefoonnummer}
-                      </Link>
-                    </div>
-                  )}
-                  {get_single?.website && (
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Website: </strong>
-                      <Link
-                        href={
-                          get_single.website.startsWith('http')
-                            ? get_single.website
-                            : `https://${get_single.website}`
-                        }
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        {get_single.website}
-                      </Link>
-                    </div>
-                  )}
+            {(get_single?.['e-mailadres'] ||
+              get_single?.telefoonnummer ||
+              get_single?.website) && (
+              <AcFlex column spacing='sm' style={{ flex: 1 }}>
+                <div className='ac-register-review__section'>
+                  <div style={{ marginTop: '12px' }}>
+                    {get_single?.['e-mailadres'] && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Email: </strong>
+                        <Link href={`mailto:${get_single['e-mailadres']}`}>
+                          {get_single['e-mailadres']}
+                        </Link>
+                      </div>
+                    )}
+                    {get_single?.telefoonnummer && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Telefoon: </strong>
+                        <Link
+                          href={`tel:${get_single.telefoonnummer.replace(
+                            /\s/g,
+                            ''
+                          )}`}
+                        >
+                          {get_single.telefoonnummer}
+                        </Link>
+                      </div>
+                    )}
+                    {get_single?.website && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong>Website: </strong>
+                        <Link
+                          href={
+                            get_single.website.startsWith('http')
+                              ? get_single.website
+                              : `https://${get_single.website}`
+                          }
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {get_single.website}
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </AcFlex>
+              </AcFlex>
+            )}
           </AcFlex>
 
           <AcGenericBeheerDeleteModal
