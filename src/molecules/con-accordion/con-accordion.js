@@ -110,7 +110,7 @@ const Item = ({
           className={clsx('con-accordion__icon', chevronClassName)}
           style={chevronStyle}
         >
-          <VISUALS.CHEVRON_RIGHT />
+          <VISUALS.CHEVRON_RIGHT style={{ width: '16px', height: '16px' }} />
         </span>
       </button>
 
