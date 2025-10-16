@@ -332,7 +332,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                         )
                       </Heading>
                     }
-                    defaultOpen
+                    defaultOpen={_value.toggle ?? true}
                   >
                     {_value.buckets.map((bucket) => (
                       <AcCheckbox
@@ -376,8 +376,7 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                   {value.title || _.upperFirst(key)} ({value.buckets.length})
                 </Heading>
               }
-              defaultOpen
-              chevronStyle={{}}
+              defaultOpen={value.toggle ?? true}
             >
               {value.buckets && value.buckets.length > 0 ? (
                 value.buckets.map((bucketValue) => (
