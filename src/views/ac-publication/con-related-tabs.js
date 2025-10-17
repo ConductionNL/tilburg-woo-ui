@@ -233,7 +233,8 @@ const renderRelatedTabs = (
   navigateTo,
   customTabsBefore = [],
   customTabsAfter = [],
-  user
+  user,
+  tabNameOverride = { schemaName: null, newTabName: null },
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -302,6 +303,8 @@ const renderRelatedTabs = (
         {allTabs.map((entry, idx) => {
           if (entry.kind === 'schema') {
             const IconComponent = getTabHeaderIcon(entry.schemaSlug);
+
+            const tabName = tabNameOverride.schemaName === entry.schemaSlug ? tabNameOverride.newTabName : getTabHeaderName(entry.schemaSlug);
             return (
               <AcTab key={entry.id} selected={tabIndex === idx}>
                 <span
@@ -311,7 +314,7 @@ const renderRelatedTabs = (
                     gap: '8px',
                   }}
                 >
-                  <IconComponent /> {getTabHeaderName(entry.schemaSlug)} (
+                  <IconComponent /> {tabName} (
                   {entry.count})
                 </span>
               </AcTab>
@@ -412,6 +415,7 @@ const RelatedTabs = observer(
     used,
     usesLoading,
     usedLoading,
+    tabNameOverride = { schemaName: null, newTabName: null },
     tabIndex,
     setTabIndex,
     object,
@@ -495,7 +499,8 @@ const RelatedTabs = observer(
               navigateTo,
               customTabsBefore,
               customTabsAfter,
-              user
+              user,
+              tabNameOverride
             )}
           </div>
         )}

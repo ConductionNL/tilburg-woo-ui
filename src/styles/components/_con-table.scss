@@ -1,4 +1,8 @@
 .con-table {
+  &-cell {
+    vertical-align: inherit !important;
+  }
+
   &-header {
     &-content {
       display: flex;
@@ -70,10 +74,10 @@
   border-left: 1px solid var(--utrecht-table-border-color, #d1d5db) !important;
   z-index: 10 !important;
   min-width: 120px !important;
-  
+
   // Add shadow to indicate sticky column
   box-shadow: -2px 0 4px rgba(0, 0, 0, 0.1) !important;
-  
+
   // Ensure content doesn't overflow
   overflow: visible !important;
 }

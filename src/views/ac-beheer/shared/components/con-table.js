@@ -636,6 +636,7 @@ const ConTable = (
       return (
         <TableRow>
           <TableCell
+            className='con-table-cell'
             colSpan={tableHeaders.length + Number(!!renderSelectRowButtons)}
           >
             Loading...
@@ -648,6 +649,7 @@ const ConTable = (
       return (
         <TableRow>
           <TableCell
+            className='con-table-cell'
             colSpan={tableHeaders.length + Number(!!renderSelectRowButtons)}
           >
             Geen data gevonden
@@ -659,7 +661,7 @@ const ConTable = (
     return sortedData.map((row, index) => (
       <TableRow key={index}>
         {renderSelectRowButtons && (
-          <TableCell className='con-table-checkbox-cell'>
+          <TableCell className={clsx('con-table-cell', 'con-table-checkbox-cell')}>
             <div className='con-table-checkbox'>
               <AcCheckbox
                 id={`select-row-${row[uniqueSymbol]}`}
@@ -690,7 +692,10 @@ const ConTable = (
                   : null
               }
               key={header.id}
-              className={header.static ? 'con-table-actions-column' : undefined}
+              className={clsx(
+                'con-table-cell',
+                header.static ? 'con-table-actions-column' : undefined
+              )}
             >
               <div
                 id={`table-cell-${headerIndex}`}
