@@ -84,7 +84,14 @@ const renderCard = (item, object, navigateTo, user) => {
         <ConCardDienst
           key={item.id}
           id={item.id}
-          title={item.title ?? item.titel ?? item.name ?? item.naam ?? item.id ?? item['@self']?.name}
+          title={
+            item.title ??
+            item.titel ??
+            item.name ??
+            item.naam ??
+            item.id ??
+            item['@self']?.name
+          }
           summary={item.beschrijving ?? item.beschrijvingKort ?? ''}
           updated={item['@self']?.updated}
           published={item['@self']?.published}
@@ -134,7 +141,12 @@ const renderCard = (item, object, navigateTo, user) => {
           key={item.id}
           id={item.id}
           title={extractTitle(
-            item.title ?? item.titel ?? item.name ?? item.naam ?? item.id ?? item['@self']?.name
+            item.title ??
+              item.titel ??
+              item.name ??
+              item.naam ??
+              item.id ??
+              item['@self']?.name
           )}
           item={item}
           category={item['@self']?.schema?.title}
@@ -234,7 +246,7 @@ const renderRelatedTabs = (
   customTabsBefore = [],
   customTabsAfter = [],
   user,
-  tabNameOverride = { schemaName: null, newTabName: null },
+  tabNameOverride = { schemaName: null, newTabName: null }
 ) => {
   if (loading && (!items || items.length === 0)) {
     return (
@@ -304,7 +316,10 @@ const renderRelatedTabs = (
           if (entry.kind === 'schema') {
             const IconComponent = getTabHeaderIcon(entry.schemaSlug);
 
-            const tabName = tabNameOverride.schemaName === entry.schemaSlug ? tabNameOverride.newTabName : getTabHeaderName(entry.schemaSlug);
+            const tabName =
+              tabNameOverride.schemaName === entry.schemaSlug
+                ? tabNameOverride.newTabName
+                : getTabHeaderName(entry.schemaSlug);
             return (
               <AcTab key={entry.id} selected={tabIndex === idx}>
                 <span
@@ -314,8 +329,7 @@ const renderRelatedTabs = (
                     gap: '8px',
                   }}
                 >
-                  <IconComponent /> {tabName} (
-                  {entry.count})
+                  <IconComponent /> {tabName} ({entry.count})
                 </span>
               </AcTab>
             );

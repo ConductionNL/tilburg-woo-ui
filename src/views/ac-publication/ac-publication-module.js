@@ -537,7 +537,10 @@ const AcPublicationProduct = ({
         object={object}
         navigateTo='publication'
         user={user}
-        tabNameOverride={{ schemaName: 'product', newTabName: 'Onderdeel van product(en)' }}
+        tabNameOverride={{
+          schemaName: 'product',
+          newTabName: 'Onderdeel van product(en)',
+        }}
         customTabsBefore={[
           {
             id: 'standaarden',

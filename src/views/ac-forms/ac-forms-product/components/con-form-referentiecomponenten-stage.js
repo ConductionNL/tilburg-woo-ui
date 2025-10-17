@@ -348,7 +348,9 @@ const ConFormReferentiecomponentenStage = memo(
                       );
                     }
                   }}
-                  options={referentieComponentenOptions.sort((a, b) => a.label.localeCompare(b.label))}
+                  options={referentieComponentenOptions.sort((a, b) =>
+                    a.label.localeCompare(b.label)
+                  )}
                   placeholder={
                     referentieComponentenLoading
                       ? 'Laden...'

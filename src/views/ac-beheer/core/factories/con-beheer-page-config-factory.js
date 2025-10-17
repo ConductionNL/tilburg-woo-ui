@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 import React from 'react';
 import { AcColumn } from '@atoms';
 import { AcLink } from '@src/molecules';

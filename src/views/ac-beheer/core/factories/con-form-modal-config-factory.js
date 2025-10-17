@@ -73,8 +73,6 @@ const FormModalConfigFactory = {
       title: null,
     };
 
-    console.log('type', type);
-
     switch (type) {
       case 'module':
         return {
@@ -161,8 +159,7 @@ const FormModalConfigFactory = {
             const licentietype = String(data.licentietype || '').toLowerCase();
             if (licentietype !== 'open source' && data.licentie) {
               // Remove licentie field if not Open Source
-              // eslint-disable-next-line no-unused-vars
-              const { licentie, ...rest } = data;
+              const { ...rest } = data;
               return rest;
             }
             return data;
