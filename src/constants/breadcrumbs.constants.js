@@ -27,7 +27,12 @@ export const BREADCRUMB_ITEMS = {
     href: '/beheer/my-organisation',
   },
   BEHEER_LIST: (type) => ({
-    label: type === 'module' ? 'Applicatie' : prettifyPathname(type),
+    label:
+      type === 'module'
+        ? 'Applicatie'
+        : type === 'moduleversion' || type === 'moduleversie'
+        ? 'Applicatie versie'
+        : prettifyPathname(type),
     href: `/beheer/${type}`,
     isActive: type !== 'my-account' && type !== 'my-organisation',
   }),

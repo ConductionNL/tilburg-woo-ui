@@ -1,7 +1,7 @@
 // Lightweight format validators used by ConDynamicSchemaForm
 // Keep implementations simple and dependency-light; prefer native APIs and minimal regexes
 
-import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 
 export const isValidUrl = (value) => {
   try {
@@ -48,8 +48,19 @@ export const isValidIPv6 = (value) => {
 };
 
 export const isValidTelephone = (value) => {
-  const phone = parsePhoneNumberFromString(value || '', 'NL');
-  return !!(phone && phone.isValid());
+  if (!value) return false;
+  // Remove all spaces to match register form validation
+  const trimmed = value.replace(/\s+/g, '');
+  // Check if starts with international code (+)
+  if (trimmed.startsWith('+')) {
+    return isValidPhoneNumber(trimmed);
+  }
+  // Check if starts with Dutch mobile prefix (06)
+  if (trimmed.startsWith('06')) {
+    return isValidPhoneNumber(trimmed, 'NL');
+  }
+  // Invalid format
+  return false;
 };
 
 export const isValidDuration = (value) => {
@@ -146,4 +157,3 @@ export const validateByFormat = (format, value) => {
       return true;
   }
 };
-

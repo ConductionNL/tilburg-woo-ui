@@ -559,7 +559,10 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
           })) || [];
 
       // Map related schemas user can create → dynamic create actions
-      const dynamicCreateActions = makeActionsForContext(row.id);
+      // Only include if not explicitly disabled in config
+      const dynamicCreateActions = config.disableRelatedCreateActions
+        ? []
+        : makeActionsForContext(row.id);
 
       const deleteAction = {
         key: 'delete',
@@ -580,10 +583,17 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         ...publishActions,
         ...uniqueActions,
         ...dynamicCreateActions,
-        deleteAction,
+        ...(config.disableDeleteAction ? [] : [deleteAction]),
       ];
     },
-    [config.routeType, config.uniqueActions, navigate, makeActionsForContext]
+    [
+      config.routeType,
+      config.uniqueActions,
+      config.disableRelatedCreateActions,
+      config.disableDeleteAction,
+      navigate,
+      makeActionsForContext,
+    ]
   );
 
   // Build table headers with status icon if configured

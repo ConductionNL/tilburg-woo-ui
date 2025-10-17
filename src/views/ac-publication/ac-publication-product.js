@@ -5,7 +5,7 @@ import AcGenericBeheerDeleteModal from '../ac-beheer/core/modals/ac-generic-behe
 import { observer } from 'mobx-react-lite';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AcContainer, AcFlex } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu } from '@components';
+import { AcLoader, ConDetailsActionsMenu, ConUuidResolver } from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
@@ -201,7 +201,10 @@ const AcPublicationProduct = ({
                 {get_single?.['@self']?.name ||
                   get_single?.id ||
                   get_single?.name ||
-                  'Product'}
+                  'Product'}{' '}
+                {'('}
+                <ConUuidResolver>{get_single.aanbieder}</ConUuidResolver>
+                {')'}
               </Heading>
             </div>
           </Heading>

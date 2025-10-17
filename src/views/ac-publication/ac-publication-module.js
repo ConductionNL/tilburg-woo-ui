@@ -8,7 +8,12 @@ import {
   AcContainer,
   AcFlex /*AcTab, AcTabList, AcTabPanel, AcTabs*/,
 } from '@atoms';
-import { AcLoader, ConDetailsActionsMenu, ConStandardsTable } from '@components';
+import {
+  AcLoader,
+  ConDetailsActionsMenu,
+  ConStandardsTable,
+  ConUuidResolver,
+} from '@components';
 import { withStore } from '@stores';
 import { VISUALS } from '@constants';
 import { Heading, Link } from '@utrecht/component-library-react/dist/css-module';
@@ -370,7 +375,10 @@ const AcPublicationProduct = ({
                 {get_single?.['@self']?.name ||
                   get_single?.id ||
                   get_single?.name ||
-                  'Product'}
+                  'Applicatie'}{' '}
+                {'('}
+                <ConUuidResolver>{get_single['@self'].organisation}</ConUuidResolver>
+                {')'}
               </Heading>
             </div>
           </Heading>
@@ -529,6 +537,10 @@ const AcPublicationProduct = ({
         object={object}
         navigateTo='publication'
         user={user}
+        tabNameOverride={{
+          schemaName: 'product',
+          newTabName: 'Onderdeel van product(en)',
+        }}
         customTabsBefore={[
           {
             id: 'standaarden',

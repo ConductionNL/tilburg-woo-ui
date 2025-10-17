@@ -167,6 +167,9 @@ const CIRCLE_XMARK = loadable(() =>
 );
 
 const EYE = loadable(() => import('-!svg-react-loader!@assets/images/eye.svg'));
+const EYE_SLASH = loadable(() =>
+  import('-!svg-react-loader!@assets/images/eye-slash.svg')
+);
 
 const ELLIPSIS = loadable(() =>
   import('-!svg-react-loader!@assets/images/ellipsis.svg')
@@ -233,9 +236,7 @@ const NETWORK_STRENGTH_4_COG = loadable(() =>
   import('-!svg-react-loader!@assets/images/network-strength-4-cog.svg')
 );
 
-const GEAR = loadable(() =>
-  import('-!svg-react-loader!@assets/images/gear.svg')
-);
+const GEAR = loadable(() => import('-!svg-react-loader!@assets/images/gear.svg'));
 
 export const VISUALS = {
   ARROW_RIGHT,
@@ -299,6 +300,7 @@ export const VISUALS = {
   SPINNER,
   CIRCLE_XMARK,
   EYE,
+  EYE_SLASH,
   ELLIPSIS,
   SORT,
   SORT_UP,

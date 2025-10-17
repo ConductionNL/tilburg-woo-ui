@@ -210,7 +210,7 @@ const ConGebruikStepInformatie = ({
               isMulti
               className='ac-beheer-select'
               closeMenuOnSelect={false}
-              options={refCompOptions}
+              options={refCompOptions.sort((a, b) => a.label.localeCompare(b.label))}
               value={(gebruik?.gebruiktVoorReferentiecomponenten || [])
                 .map((v) =>
                   refCompOptions.find((o) => String(o.value) === String(v))
