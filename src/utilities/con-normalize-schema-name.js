@@ -12,6 +12,9 @@ export const normalizeSchemaName = (name) => {
     case 'module':
     case 'applicaties':
       return 'Applicatie';
+    case 'moduleversion':
+    case 'moduleversie':
+      return 'Applicatie versie';
     case 'dienst':
     case 'diensten':
       return 'Dienst';

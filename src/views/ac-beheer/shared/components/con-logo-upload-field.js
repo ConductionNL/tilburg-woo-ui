@@ -13,6 +13,7 @@ import { AcButton } from '@src/molecules';
 export const LogoUploadField = ({
   fieldConfig,
   _value,
+  value, // Support both value (from ConDynamicSchemaForm) and _value (legacy)
   onChange,
   onChangeFileName,
   onClear,
@@ -27,6 +28,9 @@ export const LogoUploadField = ({
   const inputRef = useRef(null);
   const [selectedFileName, setSelectedFileName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Use value if provided (from ConDynamicSchemaForm), otherwise fall back to _value
+  const logoValue = value !== undefined ? value : _value;
 
   const defaultAccept = [
     'image/png',
@@ -175,8 +179,31 @@ export const LogoUploadField = ({
   const validSizes = ['normal', 'small'];
   const componentSize = validSizes.includes(size) ? size : 'normal';
 
-  // Get the display filename
-  const displayFileName = selectedFileName || fieldConfig?.filename;
+  // Get the display filename - auto-detect from URL if needed
+  const displayFileName = useMemo(() => {
+    if (selectedFileName) return selectedFileName;
+    if (fieldConfig?.filename) return fieldConfig.filename;
+
+    // Auto-detect filename from URL if logoValue is a URL
+    if (logoValue && typeof logoValue === 'string') {
+      if (logoValue.startsWith('http')) {
+        const urlParts = logoValue.split('/');
+        const lastPart = urlParts[urlParts.length - 1];
+        // Decode URI component in case filename has special characters
+        try {
+          return decodeURIComponent(lastPart) || 'Bestaand logo';
+        } catch {
+          return lastPart || 'Bestaand logo';
+        }
+      }
+      // If it's base64 or other data, show generic label
+      if (logoValue.length > 0) {
+        return 'Bestaand logo';
+      }
+    }
+
+    return '';
+  }, [selectedFileName, fieldConfig?.filename, logoValue]);
 
   return (
     <AcFlex column>
@@ -320,7 +347,7 @@ export const LogoUploadField = ({
         </small>
       )}
 
-      {(_value || displayFileName) && (
+      {(logoValue || displayFileName) && (
         <div
           style={{
             marginTop: '0.5rem',
@@ -341,14 +368,14 @@ export const LogoUploadField = ({
               )}
             </span>
           )}
-          {(_value || displayFileName) && (
+          {(logoValue || displayFileName) && (
             <AcButton
               style='buttonSlim'
               buttonType='secondary'
               disabled={isDisabled}
               onClick={() => {
                 if (inputRef.current) inputRef.current.value = null;
-                onChange('');
+                onChange(null); // Send null to backend when deleting
                 setSelectedFileName('');
                 if (onChangeFileName) onChangeFileName('');
                 if (onClear) onClear();
@@ -361,7 +388,7 @@ export const LogoUploadField = ({
         </div>
       )}
 
-      {showPreview && _value ? (
+      {showPreview && logoValue ? (
         <div
           style={{
             marginTop: '0.75rem',
@@ -371,7 +398,7 @@ export const LogoUploadField = ({
           }}
         >
           <img
-            src={_value}
+            src={logoValue}
             alt='Logo preview'
             style={{
               display: 'block',

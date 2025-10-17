@@ -583,13 +583,14 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
         ...publishActions,
         ...uniqueActions,
         ...dynamicCreateActions,
-        deleteAction,
+        ...(config.disableDeleteAction ? [] : [deleteAction]),
       ];
     },
     [
       config.routeType,
       config.uniqueActions,
       config.disableRelatedCreateActions,
+      config.disableDeleteAction,
       navigate,
       makeActionsForContext,
     ]

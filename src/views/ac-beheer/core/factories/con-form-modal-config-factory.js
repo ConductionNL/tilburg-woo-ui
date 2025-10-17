@@ -73,8 +73,10 @@ const FormModalConfigFactory = {
       title: null,
     };
 
+    console.log('type', type);
+
     switch (type) {
-      case 'applicaties':
+      case 'module':
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
@@ -137,15 +139,34 @@ const FormModalConfigFactory = {
               ].map((service) => ({ value: service, label: service })),
           },
           fieldConfigs: {
+            type: { visible: false }, // Hide the type field in applicaties modal
+            licentietype: {
+              // Ensure no default value is set for licentietype
+              defaultValue: '',
+            },
             licentie: {
-              visible: (formData) => formData.licentietype === 'Open Source',
+              visible: (formData) => {
+                const licentietype = String(
+                  formData.licentietype || ''
+                ).toLowerCase();
+                return licentietype === 'open source';
+              },
             },
           },
           customComponents: {
             logo: LogoUploadField,
           },
-          // No field transformation needed - use API field names directly
-          transformSubmitData: (data) => data,
+          // Transform data before submission - remove licentie if not Open Source
+          transformSubmitData: (data) => {
+            const licentietype = String(data.licentietype || '').toLowerCase();
+            if (licentietype !== 'open source' && data.licentie) {
+              // Remove licentie field if not Open Source
+              // eslint-disable-next-line no-unused-vars
+              const { licentie, ...rest } = data;
+              return rest;
+            }
+            return data;
+          },
           additionalEffects: [
             {
               dependencies: ['referentieComponenten'],
@@ -237,6 +258,36 @@ const FormModalConfigFactory = {
               },
             },
           ],
+        };
+
+      case 'moduleversion':
+      case 'moduleversie':
+        return {
+          ...baseConfig,
+          title: 'Applicatie versie', // Override the title to show "Applicatie versie"
+          initialData: {},
+          optionsProviders: {
+            module: {
+              type: 'collection',
+              register: 'voorzieningen',
+              schema: 'voorziening',
+              labelField: 'naam',
+              valueField: 'id',
+            },
+          },
+          fieldConfigs: {
+            module: {
+              label: 'Applicatie',
+              placeholder: 'Selecteer applicatie',
+            },
+            gebruiken: {
+              visible: false,
+            },
+            // Make description/notes fields full width
+            beschrijvingKort: {
+              size: 'full',
+            },
+          },
         };
 
       case 'diensten':

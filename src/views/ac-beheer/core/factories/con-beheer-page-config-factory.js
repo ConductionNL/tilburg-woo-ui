@@ -71,6 +71,8 @@ const BeheerPageConfigFactory = {
           paginationKey: 'applicaties',
           title: 'Beheer Applicaties',
           routeType: 'applicaties',
+          disableRelatedCreateActions: true, // Only show basic actions for applicaties
+          disableDeleteAction: true, // No delete action for applicaties
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -95,6 +97,16 @@ const BeheerPageConfigFactory = {
               },
             },
           },
+          // Commented out: Versie toevoegen action (not reliable yet)
+          // uniqueActions: [
+          //   {
+          //     key: 'addVersion',
+          //     label: 'Versie toevoegen',
+          //     icon: <VISUALS.PLUS />,
+          //     condition: (row) => true,
+          //     action: 'addModuleVersion',
+          //   },
+          // ],
           modals: [...baseConfig.modals],
         };
 
