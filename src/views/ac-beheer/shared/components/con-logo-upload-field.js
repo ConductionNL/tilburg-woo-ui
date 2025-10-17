@@ -22,7 +22,7 @@ export const LogoUploadField = ({
   accept,
   showPreview = true,
   size = 'normal',
-  maxFileSize = 2048, // in KB (default 2 MB)
+  maxFileSize = 1024, // in KB (default 1 MB)
 }) => {
   const inputRef = useRef(null);
   const [selectedFileName, setSelectedFileName] = useState('');

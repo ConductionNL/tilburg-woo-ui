@@ -513,17 +513,19 @@ const SuitableForSection = ({ modules, objectStore }) => {
       </Heading>
       <div className='ac-register-review__section'>
         <div style={{ marginTop: '12px' }}>
-          {resolvedReferentieComponenten.map((item, idx) => (
-            <div key={idx} style={{ marginBottom: '4px' }}>
-              <Link
-                href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                {item.name}
-              </Link>
-            </div>
-          ))}
+          {resolvedReferentieComponenten
+            .sort((a, b) => a.label.localeCompare(b.label))
+            .map((item, idx) => (
+              <div key={idx} style={{ marginBottom: '4px' }}>
+                <Link
+                  href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  {item.name}
+                </Link>
+              </div>
+            ))}
         </div>
       </div>
     </>

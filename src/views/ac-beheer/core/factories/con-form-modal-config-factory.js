@@ -335,14 +335,14 @@ const FormModalConfigFactory = {
             links: { visible: false },
             oin: { visible: false },
             rol: { visible: false },
-            cbs: {
-              visible: (formData) => formData.type?.toLowerCase() !== 'leverancier',
+            cbsCode: {
+              visible: (formData) => formData.type?.toLowerCase() === 'gemeente',
             },
             samenwerkingen: { visible: false },
             deelnames: { visible: false },
             deelnemers: { visible: false },
             kvkNummer: {
-              visible: (formData) => !['gemeente', 'samenwerking'].includes(formData.type?.toLowerCase()),
+              visible: false,
             },
             contactpersonen: { visible: false },
             verklaringen: { visible: false },
@@ -397,6 +397,7 @@ const FormModalConfigFactory = {
             aanmaakdatum: { visible: false },
             wijzigingsdatum: { visible: false },
             voorkeuren: { visible: false },
+            notificaties: { visible: false },
             // Disable organisatie field since you can only edit for your own organisation anyway
             organisatie: { visible: false },
             // Make telefoonnummer required when aanspreekPunt is true

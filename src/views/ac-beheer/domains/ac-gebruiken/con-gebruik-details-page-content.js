@@ -30,6 +30,7 @@ const ConGebruikDetailsPageContent = ({
   const [usesLoading, setUsesLoading] = useState(false);
   const [usedLoading, setUsedLoading] = useState(false);
   const [relatedTabIndex, setRelatedTabIndex] = useState(0);
+  const [sortedReferentiecomponenten, setSortedReferentiecomponenten] = useState([]);
 
   const { canEdit: hasEditPermission, reason } = data
     ? checkOrganizationPermissions(user, data)
@@ -75,6 +76,36 @@ const ConGebruikDetailsPageContent = ({
     fetchUses();
     fetchUsed();
   }, [fetchUses, fetchUsed]);
+
+  // Resolve and sort referentiecomponenten alphabetically
+  useEffect(() => {
+    const resolveAndSortReferentiecomponenten = async () => {
+      if (
+        !data?.gebruiktVoorReferentiecomponenten ||
+        !Array.isArray(data.gebruiktVoorReferentiecomponenten) ||
+        data.gebruiktVoorReferentiecomponenten.length === 0
+      ) {
+        setSortedReferentiecomponenten([]);
+        return;
+      }
+
+      // Get names for all IDs
+      const ids = data.gebruiktVoorReferentiecomponenten.map((id) => String(id));
+      const namesMap = await object.getNamesForMultipleIds(ids);
+
+      // Create array with ID and label, then sort
+      const withNames = ids
+        .map((id) => ({
+          id,
+          label: namesMap[id] || id,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      setSortedReferentiecomponenten(withNames);
+    };
+
+    resolveAndSortReferentiecomponenten();
+  }, [data?.gebruiktVoorReferentiecomponenten, object]);
 
   // Determine date field based on status
   const status = data?.status || '-';
@@ -198,25 +229,24 @@ const ConGebruikDetailsPageContent = ({
           </div>
         </div>
 
-        {Array.isArray(data?.gebruiktVoorReferentiecomponenten) &&
-          data.gebruiktVoorReferentiecomponenten.length > 0 && (
-            <div style={{ marginBottom: '8px' }}>
-              <strong>Referentiecomponenten: </strong>
-              <div>
-                {data.gebruiktVoorReferentiecomponenten.map((rid, idx) => (
-                  <div key={idx} style={{ marginBottom: '4px' }}>
-                    <Link
-                      href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${rid}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                    >
-                      <ConUuidResolver>{String(rid)}</ConUuidResolver>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+        {sortedReferentiecomponenten.length > 0 && (
+          <div style={{ marginBottom: '8px' }}>
+            <strong>Referentiecomponenten: </strong>
+            <div>
+              {sortedReferentiecomponenten.map((item) => (
+                <div key={item.id} style={{ marginBottom: '4px' }}>
+                  <Link
+                    href={`https://www.gemmaonline.nl/wiki/GEMMA/id-${item.id}`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                  >
+                    {item.label}
+                  </Link>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
       </div>
 
       {id && (

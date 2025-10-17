@@ -518,6 +518,7 @@ const BeheerPageConfigFactory = {
           paginationKey: 'contactpersoon',
           title: 'Contactpersoon',
           routeType: 'contactpersoon',
+          disableRelatedCreateActions: true, // Only show basic actions for contactpersonen
           defaultHeaders: [
             'username',
             'name',

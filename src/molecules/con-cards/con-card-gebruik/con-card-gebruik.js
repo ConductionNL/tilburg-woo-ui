@@ -63,7 +63,7 @@ const ConCardGebruik = ({
         </AcFlex>
       </AcFlex>
       <Paragraph>
-        Geschikt voor: {resolvedReferentieComponenten?.join(', ') || '-'}
+        Geschikt voor: {resolvedReferentieComponenten.sort((a, b) => a.label.localeCompare(b.label))?.join(', ') || '-'}
       </Paragraph>
       <AcFlex justifyContent='between' className='meta'>
         <AcFlex column>

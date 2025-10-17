@@ -411,7 +411,7 @@ const ConMyOrganisationPage = ({ store }) => {
                                 : undefined
                             }
                           >
-                            Bewerken
+                            Bewerk contactgegevens
                           </ConActionMenu.Button>
                           <ConActionMenu.Button
                             icon={<VISUALS.PENCIL />}
@@ -426,7 +426,7 @@ const ConMyOrganisationPage = ({ store }) => {
                                 : undefined
                             }
                           >
-                            Bewerk samenvatting
+                            Bewerk korte beschrijving
                           </ConActionMenu.Button>
                           <ConActionMenu.Button
                             icon={<VISUALS.PENCIL />}
@@ -441,7 +441,7 @@ const ConMyOrganisationPage = ({ store }) => {
                                 : undefined
                             }
                           >
-                            Bewerk beschrijving
+                            Bewerk lange beschrijving
                           </ConActionMenu.Button>
 
                           <ConActionMenu.Button
