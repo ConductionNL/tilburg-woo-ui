@@ -300,6 +300,8 @@ export const LogoUploadField = ({
           }}
         >
           Toegestane bestandstypen: {readableAccept.join(', ')}
+          <br />
+          Bestand mag maximaal {readableMaxFileSize} groot zijn.
         </small>
       )}
 

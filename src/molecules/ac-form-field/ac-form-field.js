@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { VISUALS } from '@src/constants';
 import { TOOLTIP_ID } from '@src/index.web';
 import {
@@ -35,6 +36,7 @@ const AcFormField = ({
   tooltip,
   ...restProps
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
   const onBlurHandler = (e) => {
     if (!(onBlur instanceof Function)) {
       return;
@@ -49,6 +51,10 @@ const AcFormField = ({
 
   const getInput = (inputType, props) => {
     const { customInput, icon, ...inputProps } = props;
+
+    // Determine the actual input type (for password toggle)
+    const isPasswordField = inputType === 'password';
+    const actualInputType = isPasswordField && showPassword ? 'text' : inputType;
 
     if (customInput) {
       return customInput;
@@ -66,13 +72,32 @@ const AcFormField = ({
             <span className='ac-form-field__icon' aria-hidden='true'>
               {icon}
             </span>
-            <Textbox {...inputProps} type={inputType} />
+            <Textbox {...inputProps} type={actualInputType} />
+          </div>
+        );
+      }
+
+      // For password fields, wrap in a container with toggle button
+      if (isPasswordField) {
+        return (
+          <div className='ac-form-field__password-wrapper'>
+            <Textbox {...inputProps} type={actualInputType} />
+            <button
+              type='button'
+              className='ac-form-field__password-toggle'
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Wachtwoord verbergen' : 'Wachtwoord tonen'}
+              disabled={disabled}
+              tabIndex={-1}
+            >
+              {showPassword ? <VISUALS.EYE_SLASH /> : <VISUALS.EYE />}
+            </button>
           </div>
         );
       }
 
       // Pass the correct HTML input type to the Textbox component
-      return <Textbox {...inputProps} type={inputType} />;
+      return <Textbox {...inputProps} type={actualInputType} />;
     }
   };
 

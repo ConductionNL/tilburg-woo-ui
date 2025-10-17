@@ -30,7 +30,7 @@
 
 .ac-form-field__icon {
   position: absolute;
-//   inset-inline-start: var(--tilburg-space-inline-snail);
+  //   inset-inline-start: var(--tilburg-space-inline-snail);
   inset-inline-start: var(--tilburg-space-inline-snail);
   inset-block-start: 50%;
   transform: translateY(-50%);
@@ -43,6 +43,57 @@
 // Add start padding so text doesn't overlap the icon
 .ac-form-field__icon-wrapper .utrecht-textbox {
   padding-inline-start: calc(
-    var(--utrecht-textbox-padding-inline-start) + var(--tilburg-size-icon-sm) + var(--tilburg-space-inline-mouse)
+    var(--utrecht-textbox-padding-inline-start) + var(--tilburg-size-icon-sm) +
+      var(--tilburg-space-inline-mouse)
   );
+}
+
+// Password field wrapper with toggle button
+.ac-form-field__password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ac-form-field__password-toggle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--utrecht-document-color, #000);
+  transition: opacity 0.2s ease;
+  z-index: 1;
+
+  &:hover:not(:disabled) {
+    opacity: 0.7;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--utrecht-focus-outline-color, #0000ff);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}
+
+// Add end padding to password input so text doesn't overlap the toggle button
+.ac-form-field__password-wrapper .utrecht-textbox {
+  padding-inline-end: calc(var(--utrecht-textbox-padding-inline-end, 12px) + 36px);
 }
