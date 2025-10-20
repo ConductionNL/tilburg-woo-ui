@@ -522,9 +522,9 @@ const ConFormsDienst = ({ store, userStore }) => {
           item?.id || item?.['@self']?.id || uniqueKoppelingIds[idx] || ''
         );
         if (!id || seen.has(id)) return;
-        const label = String(
-          item?.naam || `${item?.moduleA || '-'} ↔ ${item?.moduleB || '-'}`
-        );
+        const moduleA = item?.['@self']?.relations?.moduleA || item?.moduleA || '-';
+        const moduleB = item?.['@self']?.relations?.moduleB || item?.moduleB || '-';
+        const label = String(item?.naam || `${moduleA} ↔ ${moduleB}`);
         seen.set(id, { value: id, label, data: item });
       });
 

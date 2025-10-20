@@ -15,7 +15,7 @@ import ConKoppelingDetailsPageContent from './con-koppeling-details-page-content
  * Koppeling Details Page (fixed type 'koppeling')
  */
 const ConKoppelingDetailsPage = ({ store }) => {
-  const { object, user } = store;
+  const { user } = store;
   const navigate = useNavigate();
   const params = useParams();
   const id = params?.id;

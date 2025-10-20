@@ -273,8 +273,8 @@ const AcFormsKoppeling = ({ store }) => {
         const data = await res.json();
 
         const rels = data?.['@self']?.relations || {};
-        const moduleAIdRaw = data?.moduleA ?? rels?.moduleA;
-        const moduleBIdRaw = data?.moduleB ?? rels?.moduleB;
+        const moduleAIdRaw = rels?.moduleA ?? data?.moduleA;
+        const moduleBIdRaw = rels?.moduleB ?? data?.moduleB;
         const moduleAId = String(extractRelationId(moduleAIdRaw) || '');
         const moduleBId = String(extractRelationId(moduleBIdRaw) || '');
 
