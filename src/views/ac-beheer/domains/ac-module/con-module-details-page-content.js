@@ -250,11 +250,15 @@ const ConModuleDetailsPageContent = ({
                 <ConActionMenu.Button
                   icon={<VISUALS.PENCIL />}
                   onClick={() => setEditingStandards(true)}
-                  disabled={!actualCanEdit}
-                  data-tooltip-id={!actualCanEdit ? TOOLTIP_ID : undefined}
+                  disabled={!actualCanEdit || !standardsCount}
+                  data-tooltip-id={
+                    !actualCanEdit || !standardsCount ? TOOLTIP_ID : undefined
+                  }
                   data-tooltip-content={
-                    !actualCanEdit
-                      ? getDisabledActionTooltip('edit', reason)
+                    !actualCanEdit || !standardsCount
+                      ? !actualCanEdit
+                        ? getDisabledActionTooltip('edit', reason)
+                        : 'Kan niet bewerken want er zijn geen standaarden beschikbaar.'
                       : undefined
                   }
                 >

@@ -433,6 +433,9 @@ const AcFormsProductInner = ({
         // Try to prefill Applicatie B by id when present in API data
         const moduleBId = (() => {
           if (!kpl) return null;
+          // Check @self.relations first, then fall back to direct properties
+          const relationsModuleB = kpl?.['@self']?.relations?.moduleB;
+          if (relationsModuleB != null) return String(relationsModuleB);
           if (kpl.moduleBId != null) return String(kpl.moduleBId);
           if (kpl.moduleB != null) {
             // Accept both object reference and primitive id

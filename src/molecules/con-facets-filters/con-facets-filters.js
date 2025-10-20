@@ -1,8 +1,7 @@
-// eslint-disable-next-line import/no-unresolved
 import React, { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import { AcCheckbox, AcButton, ConAccordion, ConActiveFilters } from '@molecules';
+import { AcCheckbox, ConAccordion, ConActiveFilters } from '@molecules';
 import { withStore } from '@stores';
 import { useFacetNameResolution } from '@hooks';
 
@@ -143,28 +142,6 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
       return String(queryValue) === valueStr;
     }
     return false;
-  };
-
-  const hasActiveFilters = () => {
-    const { query } = publications;
-
-    // Check for other filters (excluding default query params and search)
-    const filterKeys = Object.keys(query).filter(
-      (key) => !['extend', '_limit', '_page', '_search'].includes(key)
-    );
-
-    return filterKeys.some((key) => {
-      const value = query[key];
-      if (Array.isArray(value)) {
-        return value.length > 0;
-      }
-      if (typeof value === 'object' && value !== null) {
-        return Object.values(value).some((v) =>
-          Array.isArray(v) ? v.length > 0 : Boolean(v)
-        );
-      }
-      return Boolean(value);
-    });
   };
 
   // Helper function to ensure active buckets are included even if not in API response (count 0)
@@ -453,23 +430,6 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
   return (
     <>
-      {/* <AcFlex spacing='sm' style={{ marginBottom: '1rem' }}>
-        <AcButton
-          style='buttonSlim'
-          buttonType='primary'
-          onClick={clearAllFilters}
-          disabled={!hasActiveFilters()}
-          aria-label='Wis alle filters'
-        >
-          Wis alle filters
-        </AcButton>
-        
-        {isResolving && (
-          <span style={{ fontSize: '0.8em', color: '#666', alignSelf: 'center' }}>
-            Namen ophalen...
-          </span>
-        )}
-      </AcFlex> */}
       <ConActiveFilters
         activeFilters={activeFilters}
         onClearAllFilters={clearAllFilters}

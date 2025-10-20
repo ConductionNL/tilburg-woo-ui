@@ -124,11 +124,11 @@ const AcPublicationKoppeling = ({ store: { publications, user, object } }) => {
   }, [get_single]);
 
   const moduleAId = useMemo(() => {
-    return get_single?.moduleA || get_single?.['@self']?.relations?.moduleA || null;
+    return get_single?.['@self']?.relations?.moduleA || get_single?.moduleA || null;
   }, [get_single]);
 
   const moduleBId = useMemo(() => {
-    return get_single?.moduleB || get_single?.['@self']?.relations?.moduleB || null;
+    return get_single?.['@self']?.relations?.moduleB || get_single?.moduleB || null;
   }, [get_single]);
 
   const richting = useMemo(() => {
