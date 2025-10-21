@@ -83,6 +83,7 @@ export async function uploadFileToObject(
           path: firstFile.path,
           fullUrl: `${BASE_URL}${firstFile.path}`,
           id: firstFile.id,
+          accessUrl: firstFile.accessUrl || null,
           fileData: firstFile,
         };
       } else {

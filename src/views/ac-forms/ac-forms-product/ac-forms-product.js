@@ -1270,6 +1270,7 @@ const AcFormsProductInner = ({
         website: apiProduct.website || '',
         logo: apiProduct.logo || '',
         logoFilename: '',
+        logoAccessUrl: null,
         hostingLocatie: apiProduct.hostingLocatie || '',
         hostingJurisdictie: apiProduct.hostingJurisdictie || '',
         contactpersoon: apiProduct.contactpersoon || '',
@@ -1348,6 +1349,34 @@ const AcFormsProductInner = ({
             referentieComponentenOptions
           );
           setProduct({ ...mapped, modules: mapped.modules || [] });
+
+          // Fetch logo file metadata if logo exists and is not a data URL
+          if (mapped.logo && !isDataUrlNeedingUpload(mapped.logo)) {
+            try {
+              const filesResponse = await fetch(
+                `${commongroundApiUrl()}/openregister/api/objects/voorzieningen/product/${productId}/files`
+              );
+              if (filesResponse.ok) {
+                const filesData = await filesResponse.json();
+                const files = filesData.results || [];
+                // Find the logo file (usually named 'logo.png' or similar)
+                const logoFile = files.find(
+                  (f) =>
+                    f.title?.toLowerCase().includes('logo') ||
+                    f.name?.toLowerCase().includes('logo')
+                );
+                if (logoFile) {
+                  setProduct((prev) => ({
+                    ...prev,
+                    logoFilename: logoFile.title || logoFile.name || 'logo.png',
+                    logoAccessUrl: logoFile.accessUrl || null,
+                  }));
+                }
+              }
+            } catch (error) {
+              console.warn('Failed to fetch logo metadata:', error);
+            }
+          }
         }
       } catch (e) {
         setPrefillError(
@@ -1549,6 +1578,7 @@ const AcFormsProductInner = ({
           delete updatePayload.logo;
         }
         delete updatePayload.logoFilename;
+        delete updatePayload.logoAccessUrl;
 
         response = await store.object.updateObject(
           'voorzieningen',
@@ -1564,6 +1594,7 @@ const AcFormsProductInner = ({
           createPayload.logo = undefined;
         }
         delete createPayload.logoFilename;
+        delete createPayload.logoAccessUrl;
 
         // Remove bewijs data URLs from compliancy before creation
         if (createPayload.modules) {

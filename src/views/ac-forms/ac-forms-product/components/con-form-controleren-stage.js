@@ -133,10 +133,26 @@ const ConFormControlerenStage = memo(
             <div className='ac-register-review__header'>
               <h4 className='utrecht-heading-4'>{product.naam}</h4>
               {product.logo && (
-                <ConLogoPreview
-                  logoUrl={product.logo}
-                  className='ac-register-review__logo'
-                />
+                <>
+                  {product.logoAccessUrl ? (
+                    <a
+                      href={product.logoAccessUrl}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      title='Logo bekijken/downloaden'
+                    >
+                      <ConLogoPreview
+                        logoUrl={product.logo}
+                        className='ac-register-review__logo'
+                      />
+                    </a>
+                  ) : (
+                    <ConLogoPreview
+                      logoUrl={product.logo}
+                      className='ac-register-review__logo'
+                    />
+                  )}
+                </>
               )}
             </div>
             <Separator className='con-form-wizard-review-header__separator' />

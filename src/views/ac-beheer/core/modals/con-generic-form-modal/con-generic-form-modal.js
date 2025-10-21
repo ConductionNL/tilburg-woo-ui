@@ -8,7 +8,12 @@ import { AcFlex } from '@atoms';
 // eslint-disable-next-line import/no-unresolved
 import { Alert, Paragraph } from '@utrecht/component-library-react/dist/css-module';
 
-import { collapseExtendedObjects, normalizeSchemaName } from '@src/utilities';
+import {
+  collapseExtendedObjects,
+  normalizeSchemaName,
+  uploadFileToObject,
+  isDataUrlNeedingUpload,
+} from '@src/utilities';
 import FormModalConfigFactory from '@views/ac-beheer/core/factories/con-form-modal-config-factory.js';
 import { useRefOptions } from '@src/hooks/use-ref-options';
 import _ from 'lodash';
@@ -353,6 +358,36 @@ const ConGenericFormModal = ({
 
     setFormData(initialFormData);
     hasInitializedRef.current = true;
+
+    // Fetch logo file metadata if editing and logo exists
+    if (isEdit && data?.logo && data?.id && !isDataUrlNeedingUpload(data.logo)) {
+      (async () => {
+        try {
+          const filesResponse = await fetch(
+            `${window.location.origin}/api/apps/openregister/api/objects/${config.beheerConfig.registerSlug}/${config.beheerConfig.schemaSlug}/${data.id}/files`
+          );
+          if (filesResponse.ok) {
+            const filesData = await filesResponse.json();
+            const files = filesData.results || [];
+            // Find the logo file
+            const logoFile = files.find(
+              (f) =>
+                f.title?.toLowerCase().includes('logo') ||
+                f.name?.toLowerCase().includes('logo')
+            );
+            if (logoFile) {
+              setFormData((prev) => ({
+                ...prev,
+                logoFilename: logoFile.title || logoFile.name || 'logo.png',
+                logoAccessUrl: logoFile.accessUrl || null,
+              }));
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to fetch logo metadata:', error);
+        }
+      })();
+    }
   }, [
     showModal,
     config?.initialData,
@@ -498,27 +533,75 @@ const ConGenericFormModal = ({
 
     try {
       // Transform data before submission (if needed)
-      const submitData = config.transformSubmitData
+      let submitData = config.transformSubmitData
         ? config.transformSubmitData(formData)
         : formData;
+
+      // Check if logo field contains a data URL (base64) that needs to be uploaded
+      const hasLogoDataUrl = isDataUrlNeedingUpload(submitData.logo);
 
       let response;
 
       if (isEdit) {
-        // Update existing object using object store
+        // If logo is a data URL, upload it first via filesMultipart
+        // The backend will automatically link the file to the logo field
+        if (hasLogoDataUrl) {
+          await uploadFileToObject(
+            submitData.logo,
+            config.beheerConfig.registerSlug,
+            config.beheerConfig.schemaSlug,
+            data.id,
+            'logo',
+            submitData.logoFilename || 'logo.png'
+          );
+
+          // Wait a moment for backend to finish linking the file
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Prepare update payload with all form data (excluding logo and UI-only fields if uploaded)
+        const updatePayload = { ...submitData };
+        if (hasLogoDataUrl) {
+          delete updatePayload.logo;
+        }
+        // Always strip UI-only fields
+        delete updatePayload.logoFilename;
+        delete updatePayload.logoAccessUrl;
+
         response = await object.updateObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
           data.id,
-          submitData
+          updatePayload
         );
       } else {
-        // Create new object using object store
+        // Step 1: Create new object without logo
+        const createData = hasLogoDataUrl
+          ? { ...submitData, logo: undefined }
+          : submitData;
+
+        // Always strip UI-only fields
+        delete createData.logoFilename;
+        delete createData.logoAccessUrl;
+
         response = await object.createObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
-          submitData
+          createData
         );
+
+        // Step 2: Upload logo if it's a data URL and we got a response with an ID
+        // The backend will automatically link the file to the logo field
+        if (hasLogoDataUrl && response?.id) {
+          await uploadFileToObject(
+            submitData.logo,
+            config.beheerConfig.registerSlug,
+            config.beheerConfig.schemaSlug,
+            response.id,
+            'logo',
+            submitData.logoFilename || 'logo.png'
+          );
+        }
       }
 
       // @TODO: applicaties and voorzieningversie's technically don't exist anymore, this needs to be fixed or removed

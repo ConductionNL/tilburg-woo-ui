@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDebouncedInput } from '@src/hooks/index';
 import { ConMarkdown } from '@src/components';
 import LogoUploadField from '@views/ac-beheer/shared/components/con-logo-upload-field';
+import { uploadFileToObject } from '@src/utilities';
 
 const organizationTypes = [
   { value: 'Leverancier', label: 'Leverancier' },
@@ -40,9 +41,9 @@ const AcRegister = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
-    name: '',
+    name: 'Test huisman 2',
     contactInformation: {},
-    website: '',
+    website: 'https://test.nl',
     links: '',
     oin: '',
     logo: '',
@@ -52,18 +53,19 @@ const AcRegister = () => {
     summary: '',
     contactPersons: [
       {
-        firstName: '',
+        firstName: 'Test',
         middleName: '',
-        lastName: '',
-        phone: '',
-        email: '',
-        function: '',
+        lastName: 'Test',
+        phone: '0612345678',
+        email: 'test@test.nl',
+        function: 'Tester',
       },
     ],
     organizationType: 'Leverancier',
     email: '',
   });
   const [logoDataUrl, setLogoDataUrl] = useState(null);
+  const [logoFilename, setLogoFilename] = useState(null);
   const [touched, setTouched] = useState({
     name: false,
     contactPersons: {
@@ -146,7 +148,7 @@ const AcRegister = () => {
   const handleRegister = async () => {
     setLoading(true);
     try {
-      // Create a copy of the organization data
+      // Step 1: Create organization first (without logo)
       const organizationData = {
         naam: organization.name,
         website: organization.website,
@@ -154,9 +156,9 @@ const AcRegister = () => {
         oin: organization.oin,
         cbs: organization.cbs,
         telefoonnummer: organization.phone,
+        status: 'Deactief',
         rol: organization.role,
         beschrijvingKort: organization.summary,
-        logo: logoDataUrl,
         contactpersonen: [
           {
             voornaam: organization.contactPersons[0].firstName,
@@ -182,21 +184,39 @@ const AcRegister = () => {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-
-        if (data.status === 'error') {
-          setRegisterCallBack('error');
-          setError({ message: data.message, errors: data.errors });
-        } else {
-          setRegisterCallBack('success');
-        }
-      } else {
+      if (!response.ok) {
         const data = await response.json();
         setRegisterCallBack('error');
         setError({ message: data.message, errors: data.errors });
         throw new Error('Aanmelden mislukt');
       }
+
+      const data = await response.json();
+
+      if (data.status === 'error') {
+        setRegisterCallBack('error');
+        setError({ message: data.message, errors: data.errors });
+        return;
+      }
+
+      // Step 2: Upload logo file if it exists
+      if (logoDataUrl && data.id) {
+        try {
+          await uploadFileToObject(
+            logoDataUrl,
+            'voorzieningen',
+            'organisatie',
+            data.id,
+            'logo',
+            logoFilename || 'logo.png'
+          );
+        } catch (uploadError) {
+          console.error('Error uploading logo:', uploadError);
+          // Organization is already created, just without logo
+        }
+      }
+
+      setRegisterCallBack('success');
     } catch (error) {
       setRegisterCallBack('error');
       console.error(error);
@@ -265,6 +285,7 @@ const AcRegister = () => {
               touched,
               logoDataUrl,
               setLogoDataUrl,
+              setLogoFilename,
             }}
           />
         );
@@ -892,6 +913,7 @@ const OrganizationOptionalForm = memo(
     validatePhone,
     logoDataUrl,
     setLogoDataUrl,
+    setLogoFilename,
   }) => {
     const dimensions = { width: '100%', height: '234px' };
     const counterRef = useRef(null);
@@ -1007,8 +1029,11 @@ const OrganizationOptionalForm = memo(
               fieldConfig={{ label: 'Logo', filename: undefined }}
               _value={logoDataUrl || ''}
               onChange={(dataUrl) => setLogoDataUrl(dataUrl || null)}
-              onChangeFileName={() => {}}
-              onClear={() => setLogoDataUrl(null)}
+              onChangeFileName={(filename) => setLogoFilename(filename)}
+              onClear={() => {
+                setLogoDataUrl(null);
+                setLogoFilename(null);
+              }}
               validation={{ required: false }}
               propertyName={'logo'}
               isDisabled={loading}

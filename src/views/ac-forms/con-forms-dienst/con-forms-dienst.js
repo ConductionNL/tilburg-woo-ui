@@ -17,6 +17,8 @@ import {
   UnorderedListItem,
 } from '@utrecht/component-library-react/dist/css-module';
 
+import { uploadFileToObject, isDataUrlNeedingUpload } from '@src/utilities';
+
 // Stage components
 import ConFormDienstInformatieStage from './components/con-form-dienst-informatie-stage';
 import ConFormProductenStage from './components/con-form-producten-stage';
@@ -55,6 +57,7 @@ const ConFormsDienst = ({ store, userStore }) => {
     beschrijvingLang: '',
     website: '',
     logo: '',
+    logoFilename: '',
     contactpersoon: null,
     aanbieder: '',
     type: '',
@@ -768,16 +771,70 @@ const ConFormsDienst = ({ store, userStore }) => {
         // Include service type for processing
         dienstType: dienstType,
       };
+
+      // Check if logo needs to be uploaded separately
+      const hasLogoDataUrl = isDataUrlNeedingUpload(payload.logo);
+
+      let response;
+
       if (isEditMode) {
-        await store.object.updateObject(
+        // Edit mode: upload logo first if it's a data URL
+        if (hasLogoDataUrl) {
+          await uploadFileToObject(
+            payload.logo,
+            'voorzieningen',
+            'dienst',
+            String(dienstId),
+            'logo',
+            payload.logoFilename || 'logo.png'
+          );
+
+          // Wait a moment for backend to finish linking the file
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+
+        // Update dienst without logo field (backend has already linked it)
+        const updatePayload = { ...payload };
+        if (hasLogoDataUrl) {
+          delete updatePayload.logo;
+        }
+        // Always strip UI-only fields
+        delete updatePayload.logoFilename;
+
+        response = await store.object.updateObject(
           'voorzieningen',
           'dienst',
           String(dienstId),
-          payload
+          updatePayload
         );
       } else {
-        await store.object.createObject('voorzieningen', 'dienst', payload);
+        // Create mode: create dienst without logo first
+        const createPayload = { ...payload };
+        if (hasLogoDataUrl) {
+          createPayload.logo = undefined;
+        }
+        // Always strip UI-only fields
+        delete createPayload.logoFilename;
+
+        response = await store.object.createObject(
+          'voorzieningen',
+          'dienst',
+          createPayload
+        );
+
+        // Upload logo after creation if it's a data URL
+        if (hasLogoDataUrl && response?.id) {
+          await uploadFileToObject(
+            payload.logo,
+            'voorzieningen',
+            'dienst',
+            String(response.id),
+            'logo',
+            payload.logoFilename || 'logo.png'
+          );
+        }
       }
+
       setSaveResult('success');
     } catch (e) {
       setSaveResult('error');
