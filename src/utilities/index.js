@@ -137,6 +137,12 @@ export {
   getDataUrlDisplayName,
   handleFileClick,
 } from './con-data-url-utils';
+export {
+  uploadFileToObject,
+  uploadMultipleFilesToObject,
+  fetchFileFromObject,
+  isDataUrlNeedingUpload,
+} from './con-file-upload-utils';
 export { getImageFromPublication } from './con-getImageFromPublication';
 export {
   getTabHeaderIcon,

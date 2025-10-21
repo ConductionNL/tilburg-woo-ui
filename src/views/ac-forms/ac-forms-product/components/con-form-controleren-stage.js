@@ -414,10 +414,20 @@ const ConFormControlerenStage = memo(
                                         <>
                                           <span>- bewijs:</span>
                                           <AcLink
-                                            href='#'
+                                            href={comp.bewijsAccessUrl || '#'}
                                             onClick={(e) => {
-                                              e.preventDefault();
-                                              handleFileClick(comp.bewijs);
+                                              // If we have accessUrl, open it directly
+                                              if (comp.bewijsAccessUrl) {
+                                                window.open(
+                                                  comp.bewijsAccessUrl,
+                                                  '_blank'
+                                                );
+                                                e.preventDefault();
+                                              } else {
+                                                // Otherwise use handleFileClick for data URLs
+                                                e.preventDefault();
+                                                handleFileClick(comp.bewijs);
+                                              }
                                             }}
                                             title={comp.bewijsFilename || 'bewijs'}
                                           >
