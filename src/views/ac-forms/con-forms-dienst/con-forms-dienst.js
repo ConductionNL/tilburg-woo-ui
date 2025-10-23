@@ -778,9 +778,10 @@ const ConFormsDienst = ({ store, userStore }) => {
       let response;
 
       if (isEditMode) {
-        // Edit mode: upload logo first if it's a data URL
+        // Edit mode: upload logo first if it's a data URL and get the downloadUrl
+        let logoDownloadUrl = null;
         if (hasLogoDataUrl) {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             payload.logo,
             'voorzieningen',
             'dienst',
@@ -789,11 +790,16 @@ const ConFormsDienst = ({ store, userStore }) => {
             payload.logoFilename || 'logo.png'
           );
 
+          // Capture the downloadUrl for separate update
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+
           // Wait a moment for backend to finish linking the file
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
-        // Update dienst without logo field (backend has already linked it)
+        // Update dienst without logo (don't send base64)
         const updatePayload = { ...payload };
         if (hasLogoDataUrl) {
           delete updatePayload.logo;
@@ -807,6 +813,16 @@ const ConFormsDienst = ({ store, userStore }) => {
           String(dienstId),
           updatePayload
         );
+
+        // Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await store.object.updateObject(
+            'voorzieningen',
+            'dienst',
+            String(dienstId),
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
         // Create mode: create dienst without logo first
         const createPayload = { ...payload };
@@ -824,7 +840,7 @@ const ConFormsDienst = ({ store, userStore }) => {
 
         // Upload logo after creation if it's a data URL
         if (hasLogoDataUrl && response?.id) {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             payload.logo,
             'voorzieningen',
             'dienst',
@@ -832,6 +848,16 @@ const ConFormsDienst = ({ store, userStore }) => {
             'logo',
             payload.logoFilename || 'logo.png'
           );
+
+          // If we got a downloadUrl, update the dienst with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await store.object.updateObject(
+              'voorzieningen',
+              'dienst',
+              String(response.id),
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
         }
       }
 

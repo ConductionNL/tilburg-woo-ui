@@ -1544,9 +1544,10 @@ const AcFormsProductInner = ({
 
       if (productId) {
         // === EDIT MODE ===
-        // Step 1: Upload logo if it's a data URL
+        // Step 1: Upload logo if it's a data URL and get the downloadUrl
+        let logoDownloadUrl = null;
         if (hasLogoDataUrl) {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             sanitized.logo,
             'voorzieningen',
             'product',
@@ -1554,6 +1555,12 @@ const AcFormsProductInner = ({
             'logo',
             sanitized.logoFilename || 'logo.png'
           );
+
+          // Capture the downloadUrl for separate update
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
+
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
 
@@ -1574,9 +1581,13 @@ const AcFormsProductInner = ({
           ...sanitized,
           modules: stripBewijsFilenamesForAPI(modulesWithFileIds),
         };
+
+        // Remove logo if it was uploaded (don't send base64)
         if (hasLogoDataUrl) {
           delete updatePayload.logo;
         }
+
+        // Always strip UI-only fields
         delete updatePayload.logoFilename;
         delete updatePayload.logoAccessUrl;
 
@@ -1586,6 +1597,16 @@ const AcFormsProductInner = ({
           String(productId),
           updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await store.object.updateObject(
+            'voorzieningen',
+            'product',
+            String(productId),
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
         // === CREATE MODE ===
         // Step 1: Create product without logo and without evidence files
@@ -1626,7 +1647,7 @@ const AcFormsProductInner = ({
 
         // Step 2: Upload logo after creation if it's a data URL
         if (hasLogoDataUrl && response?.id) {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             sanitized.logo,
             'voorzieningen',
             'product',
@@ -1634,6 +1655,16 @@ const AcFormsProductInner = ({
             'logo',
             sanitized.logoFilename || 'logo.png'
           );
+
+          // If we got a downloadUrl, update the product with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await store.object.updateObject(
+              'voorzieningen',
+              'product',
+              String(response.id),
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
         }
 
         // Step 3: Upload evidence files for newly created modules and update with file IDs

@@ -79,7 +79,9 @@ const FormModalConfigFactory = {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
           // Only specify custom defaults or overrides here
-          initialData: {},
+          initialData: {
+            logoFilename: '', // Add logoFilename as UI-only field for file tracking
+          },
           optionsProviders: {
             voorzieningstype: () => [
               { value: 'Toepassing', label: 'Toepassing' },
@@ -138,6 +140,8 @@ const FormModalConfigFactory = {
           },
           fieldConfigs: {
             type: { visible: false }, // Hide the type field in applicaties modal
+            logoFilename: { visible: false }, // Hide UI-only field from form
+            logoAccessUrl: { visible: false }, // Hide UI-only field from form
             licentietype: {
               // Ensure no default value is set for licentietype
               defaultValue: '',
@@ -361,7 +365,9 @@ const FormModalConfigFactory = {
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
-          initialData: {},
+          initialData: {
+            logoFilename: '', // Add logoFilename as UI-only field for file tracking
+          },
           optionsProviders: {
             samenwerkingen: {
               type: 'collection',
@@ -377,6 +383,8 @@ const FormModalConfigFactory = {
           fieldConfigs: {
             // Only hide the fields we don't want to show
             id: { visible: false },
+            logoFilename: { visible: false }, // Hide UI-only field from form
+            logoAccessUrl: { visible: false }, // Hide UI-only field from form,
             beschrijvingKort: { visible: false },
             beschrijvingLang: { visible: false },
             type: { visible: (formData, isEdit) => !isEdit }, // Only show type field when adding new organisation

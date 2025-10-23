@@ -210,6 +210,9 @@ export const renderField = ({
   // Check for custom component first
   const CustomComponent = customFieldComponents[path];
   if (CustomComponent) {
+    // Extract filename field from path (assume fieldname + "Filename") for file upload components
+    const filenamePath = path + 'Filename';
+
     return (
       <CustomComponent
         // Password manager prevention attributes
@@ -224,6 +227,18 @@ export const renderField = ({
         fieldConfig={fieldConfig}
         value={value}
         onChange={handleChange}
+        onChangeFileName={(filename) => {
+          // Update filename field for file upload components
+          if (onFieldChange) {
+            onFieldChange(filenamePath, filename);
+          }
+        }}
+        onClear={() => {
+          handleChange('');
+          if (onFieldChange) {
+            onFieldChange(filenamePath, '');
+          }
+        }}
         validation={validation}
         isLoading={isLoading}
         isDisabled={isDisabled}

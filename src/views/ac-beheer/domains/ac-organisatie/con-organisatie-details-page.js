@@ -262,10 +262,10 @@ const ConOrganisatieDetailsPage = ({ store }) => {
         <AcFlex spacing='sm' justifyContent='between' alignItems='center'>
           <AcFlex column spacing='sm'>
             <div className='con-beheer-details--header-container'>
-              {data?.['@self']?.image && (
+              {data?.['@self']?.image || data?.logo && (
                 <ConLogoPreview
                   className='con-beheer-details--logo-container'
-                  logoUrl={data?.['@self']?.image}
+                  logoUrl={data?.['@self']?.image || data?.logo}
                 />
               )}
 

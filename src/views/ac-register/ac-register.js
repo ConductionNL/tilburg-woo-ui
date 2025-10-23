@@ -199,10 +199,10 @@ const AcRegister = () => {
         return;
       }
 
-      // Step 2: Upload logo file if it exists
+      // Step 2: Upload logo file if it exists and update organization with downloadUrl
       if (logoDataUrl && data.id) {
         try {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             logoDataUrl,
             'voorzieningen',
             'organisatie',
@@ -210,6 +210,22 @@ const AcRegister = () => {
             'logo',
             logoFilename || 'logo.png'
           );
+
+          // If we got a downloadUrl, update the organization with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await fetch(
+              `${BASE_URL}/openregister/api/objects/voorzieningen/organisatie/${data.id}`,
+              {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  logo: uploadResult.fileData.downloadUrl,
+                }),
+              }
+            );
+          }
         } catch (uploadError) {
           console.error('Error uploading logo:', uploadError);
           // Organization is already created, just without logo

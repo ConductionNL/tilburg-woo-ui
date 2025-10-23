@@ -63,6 +63,8 @@ export async function uploadFileToObject(
     const formData = new FormData();
     formData.append('files', file);
     formData.append('fieldName', fieldName);
+    // Add title parameter to explicitly set the file title in the backend
+    formData.append('title', fileWithExtension);
 
     const uploadResponse = await fetch(
       `${BASE_URL}/openregister/api/objects/${registerSlug}/${schemaSlug}/${objectId}/filesMultipart`,
@@ -84,6 +86,7 @@ export async function uploadFileToObject(
           fullUrl: `${BASE_URL}${firstFile.path}`,
           id: firstFile.id,
           accessUrl: firstFile.accessUrl || null,
+          downloadUrl: firstFile.downloadUrl || null,
           fileData: firstFile,
         };
       } else {

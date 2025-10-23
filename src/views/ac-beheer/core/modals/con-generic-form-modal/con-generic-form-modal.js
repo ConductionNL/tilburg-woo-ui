@@ -354,6 +354,12 @@ const ConGenericFormModal = ({
 
           return mappedData;
         })()),
+      // Ensure UI-only fields are preserved (logoFilename, logoAccessUrl, etc.)
+      // These might be overwritten by server data which doesn't have them
+      ...(isEdit && {
+        logoFilename: data?.logoFilename || '',
+        logoAccessUrl: data?.logoAccessUrl || '',
+      }),
     };
 
     setFormData(initialFormData);
@@ -543,10 +549,10 @@ const ConGenericFormModal = ({
       let response;
 
       if (isEdit) {
-        // If logo is a data URL, upload it first via filesMultipart
-        // The backend will automatically link the file to the logo field
+        // Step 1: If logo is a data URL, upload it first via filesMultipart
+        let logoDownloadUrl = null;
         if (hasLogoDataUrl) {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             submitData.logo,
             config.beheerConfig.registerSlug,
             config.beheerConfig.schemaSlug,
@@ -555,25 +561,41 @@ const ConGenericFormModal = ({
             submitData.logoFilename || 'logo.png'
           );
 
-          // Wait a moment for backend to finish linking the file
-          await new Promise((resolve) => setTimeout(resolve, 500));
+          // Get the download URL from the upload response (use downloadUrl for images)
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            logoDownloadUrl = uploadResult.fileData.downloadUrl;
+          }
         }
 
-        // Prepare update payload with all form data (excluding logo and UI-only fields if uploaded)
+        // Step 2: Prepare update payload with all form data
         const updatePayload = { ...submitData };
+
+        // Remove logo from payload if it was uploaded (don't send base64)
         if (hasLogoDataUrl) {
           delete updatePayload.logo;
         }
+
         // Always strip UI-only fields
         delete updatePayload.logoFilename;
         delete updatePayload.logoAccessUrl;
 
+        // Step 3: Send the PATCH to update the object
         response = await object.updateObject(
           config.beheerConfig.registerSlug,
           config.beheerConfig.schemaSlug,
           data.id,
           updatePayload
         );
+
+        // Step 4: Update with downloadUrl if logo was uploaded
+        if (logoDownloadUrl) {
+          await object.updateObject(
+            config.beheerConfig.registerSlug,
+            config.beheerConfig.schemaSlug,
+            data.id,
+            { logo: logoDownloadUrl }
+          );
+        }
       } else {
         // Step 1: Create new object without logo
         const createData = hasLogoDataUrl
@@ -593,7 +615,7 @@ const ConGenericFormModal = ({
         // Step 2: Upload logo if it's a data URL and we got a response with an ID
         // The backend will automatically link the file to the logo field
         if (hasLogoDataUrl && response?.id) {
-          await uploadFileToObject(
+          const uploadResult = await uploadFileToObject(
             submitData.logo,
             config.beheerConfig.registerSlug,
             config.beheerConfig.schemaSlug,
@@ -601,6 +623,16 @@ const ConGenericFormModal = ({
             'logo',
             submitData.logoFilename || 'logo.png'
           );
+
+          // If we got a downloadUrl, update the object with the logo URL
+          if (uploadResult && uploadResult.fileData?.downloadUrl) {
+            await object.updateObject(
+              config.beheerConfig.registerSlug,
+              config.beheerConfig.schemaSlug,
+              response.id,
+              { logo: uploadResult.fileData.downloadUrl }
+            );
+          }
         }
       }
 

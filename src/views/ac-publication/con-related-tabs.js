@@ -127,7 +127,7 @@ const renderCard = (item, object, navigateTo, user) => {
           middleName={item.tussenvoegsel}
           lastName={item.achternaam}
           functie={item.functie}
-          image={item['@self'].image}
+          image={item['@self']?.image || item?.image}
           email={item['e-mailadres']}
           telefoon={item.telefoonnummer}
           organisation={item.organisatie}

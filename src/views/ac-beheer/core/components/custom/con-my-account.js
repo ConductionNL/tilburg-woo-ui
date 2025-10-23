@@ -91,9 +91,7 @@ const ConMyAccountPage = ({ store }) => {
     <AcSection spacing className='ac-mijn-omgeving-section'>
       <AcFlex spacing='xl'>
         <ConDynamicSidenav store={store} />
-
-       
-          <AcColumn gap='sm' horizontalOverflowWrapper>
+        <AcColumn gap='sm' horizontalOverflowWrapper>
           {loading ? (
             <AcLoader />
           ) : (
@@ -149,7 +147,7 @@ const ConMyAccountPage = ({ store }) => {
               />
             </>
           )}
-          </AcColumn>
+        </AcColumn>
       </AcFlex>
     </AcSection>
   );
