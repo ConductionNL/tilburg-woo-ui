@@ -41,9 +41,9 @@ const AcRegister = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showAlert, setShowAlert] = useState(true);
   const [organization, setOrganization] = useState({
-    name: 'Test huisman 2',
+    name: '',
     contactInformation: {},
-    website: 'https://test.nl',
+    website: '',
     links: '',
     oin: '',
     logo: '',
@@ -53,12 +53,12 @@ const AcRegister = () => {
     summary: '',
     contactPersons: [
       {
-        firstName: 'Test',
+        firstName: '',
         middleName: '',
-        lastName: 'Test',
-        phone: '0612345678',
-        email: 'test@test.nl',
-        function: 'Tester',
+        lastName: '',
+        phone: '',
+        email: '',
+        function: '',
       },
     ],
     organizationType: 'Leverancier',
