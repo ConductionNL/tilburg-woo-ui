@@ -1063,7 +1063,7 @@ const ConFormsDienst = ({ store, userStore }) => {
                           ? 'Bezig met opslaan...'
                           : isEditMode
                           ? 'Dienst updaten'
-                          : 'Dienst aanmelden'}
+                          : 'Dienst registreren'}
                       </AcButton>
                     )}
                   </div>
