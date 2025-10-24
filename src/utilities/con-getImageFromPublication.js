@@ -6,5 +6,5 @@ export const getImageFromPublication = (publication) => {
   }
 
   // Fallback to '@self.image' if no objectImageField is configured or filled
-  return publication['@self']?.image || publication['@self']?.logo;
+  return publication['@self']?.image || publication?.image || publication?.logo;
 };

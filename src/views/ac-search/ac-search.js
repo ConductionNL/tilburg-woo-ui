@@ -215,7 +215,7 @@ const AcSearch = ({ store: { publications, user, object } }) => {
               middleName={publication.tussenvoegsel}
               lastName={publication.achternaam}
               functie={publication.functie}
-              image={publication['@self'].image}
+              image={publication['@self'].image || publication.image}
               email={publication['e-mailadres']}
               telefoon={publication.telefoonnummer}
               organisation={publication.organisatie}
