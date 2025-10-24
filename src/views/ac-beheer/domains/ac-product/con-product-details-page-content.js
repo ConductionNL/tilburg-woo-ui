@@ -512,8 +512,6 @@ const SuitableForSection = ({ modules, objectStore }) => {
 
   if (!resolvedReferentieComponenten?.length) return null;
 
-  console.log({ resolvedReferentieComponenten });
-
   return (
     <>
       <Heading level={3} style={{ marginBlockStart: '1rem' }}>

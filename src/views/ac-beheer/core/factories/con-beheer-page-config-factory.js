@@ -21,8 +21,6 @@ const BeheerPageConfigFactory = {
   createConfig: (type) => {
     // Removed extend: ['all'] for performance reasons - use specific extends when needed
 
-    console.log('type', type);
-
     const baseConfig = {
       registerSlug: 'voorzieningen',
       extend: [],
