@@ -42,6 +42,7 @@ const AcFormsKoppeling = ({ store }) => {
   const [searchParams] = useSearchParams();
   const koppelingId = searchParams.get('id') || '';
   const typeFromUrl = searchParams.get('type') || '';
+  const applicatieFromUrl = searchParams.get('applicatie') || ''; // Read applicatie parameter from URL
   const isEditMode = !!koppelingId;
 
   // Validate type from URL and use it if valid
@@ -217,6 +218,54 @@ const AcFormsKoppeling = ({ store }) => {
       isMounted = false;
     };
   }, []);
+
+  // Pre-select applicatie from URL parameter
+  useEffect(() => {
+    if (!applicatieFromUrl || isEditMode) return; // Skip if editing or no applicatie in URL
+
+    const preSelectApplicatie = async () => {
+      try {
+        // Wait for modules to be loaded first
+        if (modulesOptions.length === 0) return;
+
+        // Check if the applicatie exists in options
+        const applicatieOption = modulesOptions.find(
+          (opt) => String(opt.value) === String(applicatieFromUrl)
+        );
+
+        if (applicatieOption) {
+          // Pre-select the applicatie as "own app" (needs to be an object with value and label)
+          setOwnApp({
+            value: applicatieOption.value,
+            label: applicatieOption.label,
+          });
+          setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieOption.value }));
+          setSelectedModuleLabels((prev) => ({
+            ...prev,
+            [applicatieOption.value]: applicatieOption.label,
+          }));
+        } else {
+          // If applicatie not in initial list, fetch it directly
+          const label = await ensureModuleOptionAndGetLabel(applicatieFromUrl);
+          if (label) {
+            setOwnApp({
+              value: String(applicatieFromUrl),
+              label: String(label),
+            });
+            setSelectedAppAByRow((prev) => ({ ...prev, [0]: applicatieFromUrl }));
+            setSelectedModuleLabels((prev) => ({
+              ...prev,
+              [applicatieFromUrl]: label,
+            }));
+          }
+        }
+      } catch (error) {
+        console.error('Error pre-selecting applicatie from URL:', error);
+      }
+    };
+
+    preSelectApplicatie();
+  }, [applicatieFromUrl, modulesOptions, isEditMode]);
 
   // Helper to ensure a module option exists and return its label
   const ensureModuleOptionAndGetLabel = async (id) => {
@@ -446,7 +495,7 @@ const AcFormsKoppeling = ({ store }) => {
         if (missingIds.length) {
           try {
             const params = new URLSearchParams({ _limit: '100', _page: '1' });
-            for (const id of missingIds) params.append('_search[]', id);
+            for (const id of missingIds) params.append('_search', id);
             const endpoint = `${BASE_URL}/openregister/api/objects/voorzieningen/module?${params}`;
             const res = await fetch(endpoint, {
               headers: { Accept: 'application/json' },

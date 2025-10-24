@@ -9,9 +9,28 @@
     min-width: 200px;
   }
 
+  &__label-text {
+    min-width: 150px;
+    font-size: 0.9rem;
+    color: #666;
+  }
+
   &__input-container {
     flex: auto;
     min-width: 250px;
+
+    &--full-width {
+      flex-grow: 1;
+      max-width: -webkit-fill-available;
+      max-width: -moz-available;
+      max-width: stretch;
+
+      input {
+        max-width: -webkit-fill-available;
+        max-width: -moz-available;
+        max-width: stretch;
+      }
+    }
   }
 
   &__tag {
@@ -100,6 +119,10 @@
       min-width: 150px;
     }
 
+    &__label-text {
+      min-width: 120px;
+    }
+
     &__input-container {
       min-width: 200px;
     }
@@ -109,6 +132,7 @@
 @media (max-width: 480px) {
   .con-table-search {
     &__field-select,
+    &__label-text,
     &__input-container {
       min-width: 100%;
       width: 100%;
