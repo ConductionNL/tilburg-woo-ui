@@ -70,7 +70,7 @@ const ConFormProductopbouwStage = memo(
             <AcTile
               key={'multi'}
               icon={VISUALS.CUBES}
-              text={'Een verzameling van applicaties of modules (suite)'}
+              text={'Een verzameling van applicaties (suite)'}
               to={''}
               color={'blue'}
               size='medium'

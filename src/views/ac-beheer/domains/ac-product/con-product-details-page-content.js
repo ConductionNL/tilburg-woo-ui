@@ -426,7 +426,13 @@ const ConProductDetailsPageContent = ({
               {data?.cloudDienstverleningsmodel && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Hosting type: </strong>
-                  {data.cloudDienstverleningsmodel}
+                  {data.cloudDienstverleningsmodel
+                    ?.map((model, index) =>
+                      index === data.cloudDienstverleningsmodel.length - 1
+                        ? model
+                        : `${model}, `
+                    )
+                    .join('')}
                 </div>
               )}
             </div>
@@ -506,6 +512,8 @@ const SuitableForSection = ({ modules, objectStore }) => {
 
   if (!resolvedReferentieComponenten?.length) return null;
 
+  console.log({ resolvedReferentieComponenten });
+
   return (
     <>
       <Heading level={3} style={{ marginBlockStart: '1rem' }}>
@@ -514,7 +522,7 @@ const SuitableForSection = ({ modules, objectStore }) => {
       <div className='ac-register-review__section'>
         <div style={{ marginTop: '12px' }}>
           {resolvedReferentieComponenten
-            .sort((a, b) => a.label.localeCompare(b.label))
+            .sort((a, b) => a.name.localeCompare(b.name))
             .map((item, idx) => (
               <div key={idx} style={{ marginBottom: '4px' }}>
                 <Link
