@@ -159,7 +159,7 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
   let makeActionsForContext; // will be assigned below
 
   const fetchData = useCallback(
-    async (searchParams = {}) => {
+    async () => {
       if (!objectType || !config) {
         return;
       }

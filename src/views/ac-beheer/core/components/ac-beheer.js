@@ -61,7 +61,7 @@ const AcBeheer = ({ store }) => {
   }
 
   // Early return for organisatie routes to prevent any data loading
-  if (type === 'organisatie' || type === 'organisaties') {
+  if (type === 'organisatie' || type === 'organisaties' || type === 'element') {
     return null; // Will redirect via useEffect above
   }
 
@@ -82,7 +82,7 @@ const AcBeheer = ({ store }) => {
   if (type === 'product') {
     return <ConProductDetailsPage />;
   }
-  if (type === 'module') {
+  if (type === 'module' || type === 'applicaties') {
     return <ConModuleDetailsPage />;
   }
   if (type === 'dienst') {
