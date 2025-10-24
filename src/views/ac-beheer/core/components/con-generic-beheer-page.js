@@ -553,8 +553,20 @@ const ConGenericBeheerPage = ({ store, type, configOverrides = {} }) => {
             label: action.label,
             icon: action.icon,
             onClick: () => {
-              setSingleSelectedRow(row);
-              setOpenModal(action.action);
+              // Check if this is a wizard action
+              if (action.action === 'wizard' && action.wizardPath) {
+                // Navigate to wizard with params if provided
+                const params = action.wizardParams ? action.wizardParams(row) : {};
+                const searchParams = new URLSearchParams(params);
+                const queryString = searchParams.toString();
+                navigate(
+                  `${action.wizardPath}${queryString ? '?' + queryString : ''}`
+                );
+              } else {
+                // Open modal for regular actions
+                setSingleSelectedRow(row);
+                setOpenModal(action.action);
+              }
             },
           })) || [];
 

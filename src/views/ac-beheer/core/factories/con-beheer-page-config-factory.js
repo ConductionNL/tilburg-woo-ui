@@ -20,6 +20,9 @@ const BeheerPageConfigFactory = {
    */
   createConfig: (type) => {
     // Removed extend: ['all'] for performance reasons - use specific extends when needed
+
+    console.log('type', type);
+
     const baseConfig = {
       registerSlug: 'voorzieningen',
       extend: [],
@@ -64,14 +67,15 @@ const BeheerPageConfigFactory = {
 
       // removed plural alias 'extendviews'
       case 'applicaties':
+      case 'modules':
         return {
           ...baseConfig,
-          schemaSlug: 'voorziening',
+          schemaSlug: 'module',
           paginationKey: 'applicaties',
-          title: 'Beheer Applicaties',
+          title: 'Applicaties',
           routeType: 'applicaties',
-          disableRelatedCreateActions: true, // Only show basic actions for applicaties
-          disableDeleteAction: true, // No delete action for applicaties
+          disableRelatedCreateActions: true, // Enable koppeling toevoegen for applicaties
+          disableDeleteAction: false, // Enable delete action for applicaties
           defaultHeaders: [
             'naam',
             'referentieComponenten',
@@ -96,16 +100,28 @@ const BeheerPageConfigFactory = {
               },
             },
           },
-          // Commented out: Versie toevoegen action (not reliable yet)
-          // uniqueActions: [
-          //   {
-          //     key: 'addVersion',
-          //     label: 'Versie toevoegen',
-          //     icon: <VISUALS.PLUS />,
-          //     condition: (row) => true,
-          //     action: 'addModuleVersion',
-          //   },
-          // ],
+          uniqueActions: [
+            // Commented out: Versie toevoegen action (not reliable yet)
+            //   {
+            //     key: 'addVersion',
+            //     label: 'Versie toevoegen',
+            //     icon: <VISUALS.PLUS />,
+            //     condition: (row) => true,
+            //     action: 'addModuleVersion',
+            //   },
+            {
+              key: 'addKoppeling',
+              label: 'Koppeling toevoegen',
+              icon: <VISUALS.WAND_SPARKLES_SOLID />,
+              condition: (row) => row?.id,
+              action: 'wizard', // Special action type to indicate wizard navigation
+              wizardPath: '/forms/koppeling',
+              wizardParams: (row) => ({
+                type: 'aanbieden-koppeling',
+                applicatie: row.id,
+              }),
+            },
+          ],
           modals: [...baseConfig.modals],
         };
 
