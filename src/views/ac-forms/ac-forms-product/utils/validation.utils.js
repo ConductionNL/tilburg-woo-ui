@@ -23,6 +23,7 @@ export const getNewModulesFromProduct = (product) => {
  * @param {Object} dienstenFormState
  * @param {boolean} isMultiApplicatie
  * @param {string} formType
+ * @param {string} aanbiederkeuze - Choice between 'bestaand' or 'nieuw' for aanbieder
  * @returns {boolean}
  */
 export const getDisabledStatus = (
@@ -30,7 +31,8 @@ export const getDisabledStatus = (
   product,
   dienstenFormState,
   isMultiApplicatie,
-  formType
+  formType,
+  aanbiederkeuze = 'bestaand'
 ) => {
   const logicalStep = getLogicalStepFromIndex(currentStep, formType, product);
 
@@ -50,6 +52,34 @@ export const getDisabledStatus = (
       }
     }
     return missingFields.length > 0;
+  }
+
+  // Aanbieder informatie step (logical step 2) - only for 'ontbrekend' type
+  if (logicalStep === 2) {
+    // If user selected "bestaand", check if aanbieder is selected
+    if (aanbiederkeuze === 'bestaand') {
+      return !product.aanbieder || !String(product.aanbieder).trim();
+    }
+
+    // If user selected "nieuw", check if all required fields are filled
+    const requiredNewOrgFields = [
+      'aanbiederNaam',
+      'aanbiederType',
+      'aanbiederWebsite',
+    ];
+    const missingNewOrgFields = requiredNewOrgFields.filter(
+      (field) => !product[field] || !String(product[field]).trim()
+    );
+
+    // Validate aanbiederWebsite format if provided
+    if (product.aanbiederWebsite && String(product.aanbiederWebsite).trim()) {
+      const website = String(product.aanbiederWebsite).trim();
+      if (!validateWebsite(website)) {
+        return true;
+      }
+    }
+
+    return missingNewOrgFields.length > 0;
   }
 
   if (logicalStep === 3) {
@@ -130,6 +160,7 @@ export const getDisabledStatus = (
  * @param {Object} dienstenFormState
  * @param {boolean} isMultiApplicatie
  * @param {string} formType
+ * @param {string} aanbiederkeuze - Choice between 'bestaand' or 'nieuw' for aanbieder
  * @returns {string}
  */
 export const getDisabledTooltip = (
@@ -137,7 +168,8 @@ export const getDisabledTooltip = (
   product,
   dienstenFormState,
   isMultiApplicatie,
-  formType
+  formType,
+  aanbiederkeuze = 'bestaand'
 ) => {
   const logicalStep = getLogicalStepFromIndex(currentStep, formType, product);
 
@@ -151,14 +183,48 @@ export const getDisabledTooltip = (
     }
     if (product.website && String(product.website).trim()) {
       const website = String(product.website).trim();
-      const domainRegex =
-        /^(https?:\/\/)?(www\.)?[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}(\/.*)?$/;
-      if (!domainRegex.test(website)) {
+      if (!validateWebsite(website)) {
         messages.push(
           'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)'
         );
       }
     }
+    return messages.join('\n');
+  }
+
+  // Aanbieder informatie step (logical step 2) - only for 'ontbrekend' type
+  if (logicalStep === 2) {
+    const messages = [];
+
+    // If user selected "bestaand", check if aanbieder is selected
+    if (aanbiederkeuze === 'bestaand') {
+      if (!product.aanbieder || !String(product.aanbieder).trim()) {
+        messages.push('Selecteer een bestaande organisatie');
+      }
+      return messages.join('\n');
+    }
+
+    // If user selected "nieuw", check if all required fields are filled
+    if (!product.aanbiederNaam || !String(product.aanbiederNaam).trim()) {
+      messages.push('Organisatienaam is verplicht');
+    }
+    if (!product.aanbiederType || !String(product.aanbiederType).trim()) {
+      messages.push('Organisatietype is verplicht');
+    }
+    if (!product.aanbiederWebsite || !String(product.aanbiederWebsite).trim()) {
+      messages.push('Website is verplicht');
+    }
+
+    // Validate website format if provided
+    if (product.aanbiederWebsite && String(product.aanbiederWebsite).trim()) {
+      const website = String(product.aanbiederWebsite).trim();
+      if (!validateWebsite(website)) {
+        messages.push(
+          'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)'
+        );
+      }
+    }
+
     return messages.join('\n');
   }
 

@@ -198,11 +198,20 @@ export const getPrevStepIndex = (
   isMultiApplicatie
 ) => {
   const logical = getLogicalStepFromIndex(stepIndex, formType, product);
+
+  // When going back from Applicatie (logical 3) in single-app mode
   if (!isMultiApplicatie && logical === 4) {
+    // If aanbieder step exists, go to aanbieder (logical 2), otherwise go to product info (logical 1)
+    if (shouldShowAanbiederStep(formType)) {
+      return getAdjustedStepIndex(2, formType, product);
+    }
     return getAdjustedStepIndex(1, formType, product);
   }
+
+  // When going back from Referentiecomponenten (logical 6) and versies step is hidden
   if (!shouldShowVersiesStep(product) && logical === 6) {
     return getAdjustedStepIndex(4, formType, product);
   }
+
   return stepIndex - 1;
 };
