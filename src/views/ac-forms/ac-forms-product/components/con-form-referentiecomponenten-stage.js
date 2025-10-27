@@ -9,6 +9,7 @@ import {
   TableBody,
   TableCell,
   TableRow,
+  Link,
 } from '@utrecht/component-library-react/dist/css-module';
 
 /**
@@ -272,8 +273,20 @@ const ConFormReferentiecomponentenStage = memo(
           gemeentelijke functies weergeven die uw software ondersteunt. Dit helpt
           gemeenten te zien hoe uw software past in hun architectuur en
           vergemakkelijkt integraties. Voor een overzicht van alle
-          referentiecomponenten(https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten)
-          kunt u terecht op GEMMA Online.
+          referentiecomponenten(
+          <Link
+            href={
+              'https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten'
+            }
+            target='_blank'
+            rel='noopener noreferrer'
+            style={{
+              display: 'inline-block',
+            }}
+          >
+            https://www.gemmaonline.nl/wiki/Overzicht_alle_referentiecomponenten
+          </Link>
+          ) kunt u terecht op GEMMA Online.
         </Paragraph>
 
         {newModules.length === 0 && (
