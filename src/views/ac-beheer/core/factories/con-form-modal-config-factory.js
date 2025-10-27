@@ -119,6 +119,7 @@ const FormModalConfigFactory = {
 
     switch (type) {
       case 'module':
+      case 'applicaties':
         return {
           ...baseConfig,
           // Initial data is now automatically generated from schema properties
