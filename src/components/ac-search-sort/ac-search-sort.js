@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useSearchParams } from 'react-router-dom';
 import { withStore } from '@stores';
 
 import {
@@ -15,6 +16,7 @@ import { LABELS } from '@constants';
 
 const AcSearchSort = ({ store: { publications }, type }) => {
   const { setSort, resetSort, get_order } = publications;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const label = useMemo(() => {
     if (type === 'alt') {
@@ -25,12 +27,28 @@ const AcSearchSort = ({ store: { publications }, type }) => {
 
   const onChangeCallback = (e) => {
     const value = e.target.value.split('|');
+    const params = new URLSearchParams(searchParams);
+
     if (value.length !== 2) {
       resetSort();
+      // Remove all _order parameters from URL
+      params.delete('_order[@self.published]');
+      params.delete('_order[@self.name]');
+      setSearchParams(params);
       return;
     }
 
-    setSort(...value);
+    const [key, order] = value;
+    setSort(key, order);
+
+    // Remove any existing _order parameters before setting the new one
+    params.delete('_order[@self.published]');
+    params.delete('_order[@self.name]');
+
+    // Update URL with new _order parameter
+    params.set(`_order[@self.${key}]`, order);
+    params.set('_page', '1'); // Reset to first page when sorting changes
+    setSearchParams(params);
   };
 
   return (
@@ -44,16 +62,22 @@ const AcSearchSort = ({ store: { publications }, type }) => {
         <Select id='sorting' onChange={onChangeCallback}>
           <SelectOption value='default'>Meest relevant</SelectOption>
           <SelectOption
-            selected={get_order?.published === 'asc'}
+            selected={get_order?.published === 'ASC'}
             value='published|asc'
           >
             Datum - oud naar nieuw
           </SelectOption>
           <SelectOption
-            selected={get_order?.published === 'desc'}
+            selected={get_order?.published === 'DESC'}
             value='published|desc'
           >
             Datum - nieuw naar oud
+          </SelectOption>
+          <SelectOption selected={get_order?.name === 'ASC'} value='name|asc'>
+            Naam - A naar Z
+          </SelectOption>
+          <SelectOption selected={get_order?.name === 'DESC'} value='name|desc'>
+            Naam - Z naar A
           </SelectOption>
         </Select>
       </AcFlex>

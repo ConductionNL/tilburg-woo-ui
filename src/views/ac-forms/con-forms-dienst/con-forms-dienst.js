@@ -675,11 +675,13 @@ const ConFormsDienst = ({ store, userStore }) => {
       // Dienst informatie: Respect schema requiredness
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
+      const soortRequired = isSchemaFieldRequired('dienst', 'type');
+      const missingSoort = soortRequired && (!dienst.type || !dienst.type.trim());
 
       const missingNaam = naamRequired && (!dienst.naam || !dienst.naam.trim());
       const missingWebsite =
         websiteRequired && (!dienst.website || !dienst.website.trim());
-      if (missingNaam || missingWebsite) return true;
+      if (missingNaam || missingWebsite || missingSoort) return true;
 
       // If website is provided, validate its format; if empty and not required, it's allowed
       if (dienst.website && dienst.website.trim()) {
@@ -696,10 +698,7 @@ const ConFormsDienst = ({ store, userStore }) => {
       return false;
     }
     // Legacy validation (commented out)
-    // if (step === 0) {
-    //   // Must select service type
-    //   return !dienstType;
-    // }
+
     // if (step === 4) {
     //   // Koppelingen: no strict validation (optional)
     //   return false;
@@ -714,9 +713,13 @@ const ConFormsDienst = ({ store, userStore }) => {
       const messages = [];
       const naamRequired = isSchemaFieldRequired('dienst', 'naam');
       const websiteRequired = isSchemaFieldRequired('dienst', 'website');
+      const soortRequired = isSchemaFieldRequired('dienst', 'type');
 
       if (naamRequired && (!dienst.naam || !dienst.naam.trim())) {
         messages.push('Dienstnaam is verplicht');
+      }
+      if (soortRequired && (!dienst.type || !dienst.type.trim())) {
+        messages.push('Soort dienst is verplicht');
       }
       if (websiteRequired && (!dienst.website || !dienst.website.trim())) {
         messages.push('Website is verplicht');
@@ -739,9 +742,6 @@ const ConFormsDienst = ({ store, userStore }) => {
         : '';
     }
     // Legacy tooltips (commented out)
-    // if (step === 0) {
-    //   return !dienstType ? 'Selecteer het type dienst' : '';
-    // }
     return '';
   };
 

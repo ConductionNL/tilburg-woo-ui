@@ -330,36 +330,85 @@ export const getFieldVisibility = (
 
 /**
  * Gets the options array for select/multi-select fields
+ *
+ * Priority Order:
+ * 1. Schema enum (highest priority) - Always use if available
+ * 2. Apply enumFilter to schema enum if configured
+ * 3. Custom optionsProviders only if NO schema enum exists
+ *
+ * Enum Filtering (only works when schema has enum):
+ * - Include mode: { enumFilter: 'include', values: ['value1', 'value2'] } - Only show these enum values
+ * - Exclude mode: { enumFilter: 'exclude', values: ['value1', 'value2'] } - Hide these enum values
+ * - Values can be an array or a function that returns an array: values: (formData, context) => [...]
  */
 export const getFieldOptions = (
   propertyPath,
   propertySchema,
   optionsProviders = {},
-  formData = {}
+  formData = {},
+  context = {}
 ) => {
-  // Priority 1: Schema enum takes highest priority
+  // Priority 1: Check if we have enum options from schema (ALWAYS FIRST)
+  let baseEnumOptions = null;
   if (propertySchema?.enum) {
-    return propertySchema.enum.map((option) => ({
+    baseEnumOptions = propertySchema.enum.map((option) => ({
+      value: option,
+      label: option,
+    }));
+  } else if (propertySchema?.type === 'array' && propertySchema?.items?.enum) {
+    baseEnumOptions = propertySchema.items.enum.map((option) => ({
       value: option,
       label: option,
     }));
   }
 
-  // Arrays of primitives may have items.enum
-  if (propertySchema?.type === 'array' && propertySchema?.items?.enum) {
-    return propertySchema.items.enum.map((option) => ({
-      value: option,
-      label: option,
-    }));
+  // If we have enum from schema, optionally apply filter
+  if (baseEnumOptions) {
+    const optionConfig = optionsProviders[propertyPath];
+
+    // Check if there's an enum filter configuration
+    if (optionConfig?.enumFilter) {
+      // Support both static arrays and dynamic functions for filter values
+      let filterValues = optionConfig.values || [];
+      if (typeof filterValues === 'function') {
+        filterValues = filterValues(formData, context);
+      }
+
+      // If filterValues is null or undefined, show all enum values (no filter)
+      if (filterValues === null || filterValues === undefined) {
+        return baseEnumOptions;
+      }
+
+      if (optionConfig.enumFilter === 'include') {
+        // Include mode: Only show enum options that are in the filter values
+        return baseEnumOptions.filter((option) =>
+          filterValues.includes(option.value)
+        );
+      } else if (optionConfig.enumFilter === 'exclude') {
+        // Exclude mode: Show all enum options except those in the filter values
+        return baseEnumOptions.filter(
+          (option) => !filterValues.includes(option.value)
+        );
+      }
+    }
+
+    // No filter configured, return all enum options
+    return baseEnumOptions;
   }
 
-  // Priority 2: $ref-based options from optionsProviders
-  if (optionsProviders[propertyPath]) {
-    const provided = optionsProviders[propertyPath];
-    return typeof provided === 'function' ? provided(formData) : provided;
+  // Priority 2: Only use custom optionsProviders if NO enum exists in schema
+  const optionConfig = optionsProviders[propertyPath];
+  if (optionConfig) {
+    const provided =
+      typeof optionConfig === 'function' ? optionConfig(formData) : optionConfig;
+
+    // If it's an array, return it directly
+    if (Array.isArray(provided)) {
+      return provided;
+    }
   }
 
-  // Priority 3: No options
+  // Priority 3: No options available
   return [];
 };
 
