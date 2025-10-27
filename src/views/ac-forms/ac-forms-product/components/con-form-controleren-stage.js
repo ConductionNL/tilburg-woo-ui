@@ -426,6 +426,17 @@ const ConFormControlerenStage = memo(
                                             )}
                                           </AcLink>
                                         </>
+                                      ) : comp.url ? (
+                                        <>
+                                          <span>- bewijs:</span>
+                                          <AcLink
+                                            href={comp.url}
+                                            target='_blank'
+                                            rel='noopener noreferrer'
+                                          >
+                                            {comp.url}
+                                          </AcLink>
+                                        </>
                                       ) : (
                                         <span style={{ color: '#666' }}>
                                           (geen bewijs)

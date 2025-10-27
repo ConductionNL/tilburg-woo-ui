@@ -27,6 +27,50 @@ import BeheerPageConfigFactory from './con-beheer-page-config-factory';
  * - No field mappings needed - eliminates complexity and maintenance
  * - Form data, validation, and submission all use consistent field names
  * - ConDynamicSchemaForm automatically handles Dutch field labels
+ *
+ * Enum Filtering & Options Priority:
+ *
+ * Priority Order:
+ * 1. Schema enum is ALWAYS used if it exists (highest priority)
+ * 2. enumFilter can be used to filter the schema enum
+ * 3. Custom optionsProviders only apply when NO schema enum exists
+ *
+ * Enum Filter Modes (only work when schema has enum):
+ *
+ * 1. Include Mode (Static) - Only show specific enum values:
+ *    optionsProviders: {
+ *      status: { enumFilter: 'include', values: ['active', 'pending'] }
+ *    }
+ *    // If schema has enum: ['active', 'pending', 'inactive', 'archived']
+ *    // Result will be: ['active', 'pending']
+ *
+ * 2. Include Mode (Dynamic) - Filter based on context (e.g., user organization):
+ *    optionsProviders: {
+ *      rollen: {
+ *        enumFilter: 'include',
+ *        values: (formData, context) => {
+ *          if (context?.user?.activeOrganization?.type === 'Leverancier') {
+ *            return ['aanbod-beheerder'];
+ *          }
+ *          return ['aanbod-beheerder', 'gebruik-beheerder', ...];
+ *        }
+ *      }
+ *    }
+ *
+ * 3. Exclude Mode - Hide specific enum values:
+ *    optionsProviders: {
+ *      status: { enumFilter: 'exclude', values: ['deprecated', 'legacy'] }
+ *    }
+ *    // If schema has enum: ['active', 'deprecated', 'legacy', 'inactive']
+ *    // Result will be: ['active', 'inactive']
+ *
+ * 4. Custom Options (only when NO enum in schema):
+ *    optionsProviders: {
+ *      customField: () => [
+ *        { value: 'optie1', label: 'Optie 1' },
+ *        { value: 'optie2', label: 'Optie 2' }
+ *      ]
+ *    }
  */
 const FormModalConfigFactory = {
   /**
@@ -429,14 +473,22 @@ const FormModalConfigFactory = {
             };
           },
           optionsProviders: {
-            rollen: () => [
-              { label: 'Aanbod-beheerder', value: 'aanbod-beheerder' },
-              { label: 'Gebruik-beheerder', value: 'gebruik-beheerder' },
-              { label: 'Gebruik-raadpleger', value: 'gebruik-raadpleger' },
-              { label: 'Functioneel beheerder', value: 'functioneel beheerder' },
-              { label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
-              { label: 'Bezoeker', value: 'Bezoeker' },
-            ],
+            // Use enumFilter to dynamically filter rollen based on organization type
+            // If org type is 'Leverancier', only show 'aanbod-beheerder'
+            rollen: {
+              enumFilter: 'include',
+              values: (formData, context) => {
+                const orgType = context?.user?.activeOrganization?.type;
+
+                // If organization type is 'Leverancier', only allow 'Aanbod-beheerder'
+                if (orgType === 'Leverancier') {
+                  return ['Aanbod-beheerder'];
+                }
+
+                // Otherwise, return null to show all enum values from schema
+                return null;
+              },
+            },
           },
           fieldConfigs: {
             // Hide fields that are not in the current form
@@ -690,6 +742,15 @@ const FormModalConfigFactory = {
               { label: 'Hoog', value: 'hoog' },
               { label: 'Kritiek', value: 'kritiek' },
             ],
+            // Example: Filter enum to only show specific values
+            // If schema has enum: ['status1', 'status2', 'status3', 'status4']
+            // This would show only: ['status1', 'status2']
+            // status: { enumFilter: 'include', values: ['status1', 'status2'] },
+
+            // Example: Filter enum to exclude specific values
+            // If schema has enum: ['option1', 'option2', 'option3']
+            // This would show: ['option1', 'option3'] (excluding 'option2')
+            // someField: { enumFilter: 'exclude', values: ['option2'] },
           },
           fieldConfigs: {
             // Hide fields that are not in the current form

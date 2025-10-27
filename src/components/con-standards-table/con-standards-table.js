@@ -6,6 +6,7 @@ import {
   TableCell,
   TableHeader,
   TableRow,
+  Separator,
 } from '@utrecht/component-library-react/dist/css-module';
 import { AcCheckbox } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
@@ -327,6 +328,7 @@ const ConStandardsTable = ({
           standaardnaam: standardName,
           bewijs: null,
           bewijsFilename: null,
+          url: null,
         };
 
         if (existingIndex >= 0) {
@@ -359,7 +361,25 @@ const ConStandardsTable = ({
 
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
-        c.standaardversie === standardId ? { ...c, bewijs } : c
+        c.standaardversie === standardId
+          ? { ...c, bewijs, url: null, bewijsFilename: c.bewijsFilename } // Clear URL when file is uploaded (mutually exclusive)
+          : c
+      );
+
+      onComplianceChange(newCompliancy);
+    },
+    [isEditing, onComplianceChange, complianceStandards]
+  );
+
+  const updateUrl = useCallback(
+    (standardId, url) => {
+      if (!isEditing || !onComplianceChange) return;
+
+      const currentCompliancy = complianceStandards || [];
+      const newCompliancy = currentCompliancy.map((c) =>
+        c.standaardversie === standardId
+          ? { ...c, url, bewijs: null, bewijsFilename: null } // Clear file when URL is set (mutually exclusive)
+          : c
       );
 
       onComplianceChange(newCompliancy);
@@ -388,7 +408,7 @@ const ConStandardsTable = ({
       const currentCompliancy = complianceStandards || [];
       const newCompliancy = currentCompliancy.map((c) =>
         c.standaardversie === standardId
-          ? { ...c, bewijs: null, bewijsFilename: null }
+          ? { ...c, bewijs: null, bewijsFilename: null, url: null }
           : c
       );
 
@@ -450,7 +470,7 @@ const ConStandardsTable = ({
                 width: '25%',
               }}
             >
-              {isEditing ? 'Compliant' : 'Status'}
+              {isEditing ? 'Ondersteund' : 'Status'}
             </TableCell>
             <TableCell
               style={{
@@ -472,8 +492,10 @@ const ConStandardsTable = ({
             const complianceStandard = complianceStandards?.find(
               (cs) => cs.standaardversie === refStandard.id
             );
-            const isCompliant = !!complianceStandard;
-            const hasEvidence = !!complianceStandard?.bewijs;
+            const hasBewijs = !!complianceStandard?.bewijs;
+            const hasUrl = !!complianceStandard?.url;
+            const isCompliant = hasBewijs || hasUrl;
+            const isOndersteund = !!complianceStandard && !hasBewijs && !hasUrl;
 
             // Find the actual standard object to get its real ID
             const actualStandard = effectiveStandards?.find(
@@ -568,7 +590,11 @@ const ConStandardsTable = ({
                       style={{
                         fontSize: '0.75rem',
                         color: '#fff',
-                        backgroundColor: isCompliant ? '#28a745' : '#6c757d',
+                        backgroundColor: isCompliant
+                          ? '#28a745'
+                          : isOndersteund
+                          ? '#ffc107'
+                          : '#6c757d',
                         fontWeight: '600',
                         textTransform: 'uppercase',
                         padding: '3px 8px',
@@ -582,7 +608,11 @@ const ConStandardsTable = ({
                         marginInlineEnd: '0px',
                       }}
                     >
-                      {isCompliant ? 'COMPLIANT' : 'NON-COMPLIANT'}
+                      {isCompliant
+                        ? 'COMPLIANT'
+                        : isOndersteund
+                        ? 'ONDERSTEUND'
+                        : 'NON-COMPLIANT'}
                     </span>
                   )}
                 </TableCell>
@@ -594,28 +624,52 @@ const ConStandardsTable = ({
                   }}
                 >
                   {isEditing ? (
-                    // Show file upload field when editing and compliant
-                    isCompliant ? (
-                      <LogoUploadField
-                        fieldConfig={{
-                          label: '',
-                          filename: complianceStandard?.bewijs
-                            ? 'Bestand geüpload'
-                            : '',
+                    // Show file upload or URL input when editing and compliant/ondersteund
+                    isCompliant || isOndersteund ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
                         }}
-                        _value={complianceStandard?.bewijs || ''}
-                        onChange={(dataUrl) => updateBewijs(refStandard.id, dataUrl)}
-                        onChangeFileName={(filename) =>
-                          updateBewijsFilename(refStandard.id, filename)
-                        }
-                        onClear={() => clearBewijs(refStandard.id)}
-                        accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
-                        showPreview={false}
-                        validation={{ required: false }}
-                        propertyName={`bewijs-${refStandard.id}`}
-                        size='small'
-                        isDisabled={disabled}
-                      />
+                      >
+                        <LogoUploadField
+                          fieldConfig={{
+                            label: '',
+                            filename: complianceStandard?.bewijs
+                              ? 'Bestand geüpload'
+                              : '',
+                          }}
+                          _value={complianceStandard?.bewijs || ''}
+                          onChange={(dataUrl) =>
+                            updateBewijs(refStandard.id, dataUrl)
+                          }
+                          onChangeFileName={(filename) =>
+                            updateBewijsFilename(refStandard.id, filename)
+                          }
+                          onClear={() => clearBewijs(refStandard.id)}
+                          accept={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                          showPreview={false}
+                          validation={{ required: false }}
+                          propertyName={`bewijs-${refStandard.id}`}
+                          size='small'
+                          isDisabled={disabled || !!complianceStandard?.url}
+                        />
+                        <Separator />
+                        <input
+                          type='url'
+                          className='utrecht-textbox utrecht-textbox--html-input'
+                          value={complianceStandard?.url || ''}
+                          onChange={(e) => updateUrl(refStandard.id, e.target.value)}
+                          placeholder='https://...'
+                          disabled={disabled || !!complianceStandard?.bewijs}
+                          style={{
+                            width: '100%',
+                            padding: '8px',
+                            fontSize: '14px',
+                          }}
+                        />
+                      </div>
                     ) : (
                       <span
                         style={{
@@ -626,8 +680,8 @@ const ConStandardsTable = ({
                         -
                       </span>
                     )
-                  ) : // Show download link or dash when not editing
-                  hasEvidence ? (
+                  ) : // Always show download button when not editing
+                  hasBewijs ? (
                     <Link
                       href='#'
                       onClick={(e) => {
@@ -637,7 +691,23 @@ const ConStandardsTable = ({
                       style={{
                         display: 'flex',
                         justifyContent: 'left',
+                        cursor: 'pointer',
                       }}
+                      title='Download bewijs bestand'
+                    >
+                      <VISUALS.DOWNLOAD />
+                    </Link>
+                  ) : hasUrl ? (
+                    <Link
+                      href={complianceStandard.url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'left',
+                        cursor: 'pointer',
+                      }}
+                      title={`Open bewijs URL: ${complianceStandard.url}`}
                     >
                       <VISUALS.DOWNLOAD />
                     </Link>

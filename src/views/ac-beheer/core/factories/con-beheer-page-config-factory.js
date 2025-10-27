@@ -603,13 +603,6 @@ const BeheerPageConfigFactory = {
           },
           uniqueActions: [
             {
-              key: 'depublish',
-              label: 'Depubliceren',
-              icon: <VISUALS.PUBLISH_OFF />,
-              condition: (row) => row['@self'].published,
-              action: 'depublish',
-            },
-            {
               key: 'addAccount',
               label: 'Account toevoegen',
               icon: <VISUALS.USER_PLUS />,
@@ -617,7 +610,7 @@ const BeheerPageConfigFactory = {
               action: 'addAccount',
             },
           ],
-          modals: [...baseConfig.modals, 'addAccount', 'depublish'],
+          modals: [...baseConfig.modals, 'addAccount'],
         };
 
       default:
