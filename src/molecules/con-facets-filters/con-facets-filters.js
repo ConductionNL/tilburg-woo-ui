@@ -238,7 +238,9 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
 
   // Simple active filters - just label and id, with remove callback
   const activeFilters = Object.entries(publications.query)
-    .filter(([key]) => !['extend', '_limit', '_page', '_search'].includes(key))
+    .filter(
+      ([key]) => !['extend', '_limit', '_page', '_search', '_order'].includes(key)
+    )
     .flatMap(([key, value]) => {
       if (Array.isArray(value)) {
         return value.map((val) => {
@@ -428,71 +430,98 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
     return hasActiveBucket;
   });
 
+  // Sort facets alphabetically by title or key
+  const sortedFacets = [...filteredFacets].sort(([keyA, valueA], [keyB, valueB]) => {
+    const titleA = (valueA.title || keyA).toLowerCase();
+    const titleB = (valueB.title || keyB).toLowerCase();
+    return titleA.localeCompare(titleB);
+  });
+
   return (
     <>
       <ConActiveFilters
         activeFilters={activeFilters}
         onClearAllFilters={clearAllFilters}
       />
-      {filteredFacets.map(([key, value]) => {
+      {sortedFacets.map(([key, value]) => {
         return key === '@self' ? (
           <React.Fragment key={key}>
-            {Object.entries(value).map(([_key, _value]) => {
-              const hasData = _value.buckets && _value.buckets.length > 0;
-              // Only show enabled facets (filtering is now handled by backend configuration)
-              const shouldShowFacet = _value.enabled !== false;
+            {Object.entries(value)
+              .sort(([_keyA, _valueA], [_keyB, _valueB]) => {
+                // Sort @self sub-facets alphabetically by title or key
+                const titleA = (_valueA.title || _keyA).toLowerCase();
+                const titleB = (_valueB.title || _keyB).toLowerCase();
+                return titleA.localeCompare(titleB);
+              })
+              .map(([_key, _value]) => {
+                const hasData = _value.buckets && _value.buckets.length > 0;
+                // Only show enabled facets (filtering is now handled by backend configuration)
+                const shouldShowFacet = _value.enabled !== false;
 
-              return shouldShowFacet && hasData ? (
-                <AcFlex
-                  key={`${key}-${_key}`}
-                  column
-                  spacing='xs'
-                  className='ac-search-filters__subjects'
-                >
-                  <ConAccordion.Item
-                    header={
-                      <Heading level={4} title={_value.description || undefined}>
-                        {_value.title || _.upperFirst(_key)} ({_value.buckets.length}
-                        )
-                      </Heading>
-                    }
-                    defaultOpen={_value.toggle ?? true}
+                return shouldShowFacet && hasData ? (
+                  <AcFlex
+                    key={`${key}-${_key}`}
+                    column
+                    spacing='xs'
+                    className='ac-search-filters__subjects'
                   >
-                    {ensureActiveBucketsIncluded(
-                      _value.buckets,
-                      _value.queryParameter || `${key}[${_key}]`
-                    ).map((bucket) => (
-                      <AcCheckbox
-                        key={bucket.value || bucket.key}
-                        label={`${
-                          bucket.label ?? bucket.value ?? bucket.key
-                        } (${ConFormatDutchNumber(bucket.count || bucket.results)})`}
-                        value={bucket.value || bucket.key}
-                        checked={isFacetChecked(
-                          _value.queryParameter || `${key}[${_key}]`,
-                          bucket.value || bucket.key
-                        )}
-                        onChange={() => {
-                          toggleNestedFacet(
-                            _value.queryParameter || `${key}[${_key}]`,
-                            bucket.value || bucket.key
-                          );
-                        }}
-                        title={
-                          bucket.originalLabel
-                            ? `Origineel: ${bucket.originalLabel}`
-                            : bucket._isActiveSynthetic
-                            ? `Actieve filter (${
-                                bucket.count || bucket.results
-                              } resultaten)`
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </ConAccordion.Item>
-                </AcFlex>
-              ) : null;
-            })}
+                    <ConAccordion.Item
+                      header={
+                        <Heading level={4} title={_value.description || undefined}>
+                          {_value.title || _.upperFirst(_key)} (
+                          {_value.buckets.length})
+                        </Heading>
+                      }
+                      defaultOpen={_value.toggle ?? true}
+                    >
+                      {ensureActiveBucketsIncluded(
+                        _value.buckets,
+                        _value.queryParameter || `${key}[${_key}]`
+                      )
+                        .sort((a, b) => {
+                          // Sort buckets alphabetically by label
+                          const labelA = (a.label ?? a.value ?? a.key ?? '')
+                            .toString()
+                            .toLowerCase();
+                          const labelB = (b.label ?? b.value ?? b.key ?? '')
+                            .toString()
+                            .toLowerCase();
+                          return labelA.localeCompare(labelB);
+                        })
+                        .map((bucket) => (
+                          <AcCheckbox
+                            key={bucket.value || bucket.key}
+                            label={`${
+                              bucket.label ?? bucket.value ?? bucket.key
+                            } (${ConFormatDutchNumber(
+                              bucket.count || bucket.results
+                            )})`}
+                            value={bucket.value || bucket.key}
+                            checked={isFacetChecked(
+                              _value.queryParameter || `${key}[${_key}]`,
+                              bucket.value || bucket.key
+                            )}
+                            onChange={() => {
+                              toggleNestedFacet(
+                                _value.queryParameter || `${key}[${_key}]`,
+                                bucket.value || bucket.key
+                              );
+                            }}
+                            title={
+                              bucket.originalLabel
+                                ? `Origineel: ${bucket.originalLabel}`
+                                : bucket._isActiveSynthetic
+                                ? `Actieve filter (${
+                                    bucket.count || bucket.results
+                                  } resultaten)`
+                                : undefined
+                            }
+                          />
+                        ))}
+                    </ConAccordion.Item>
+                  </AcFlex>
+                ) : null;
+              })}
           </React.Fragment>
         ) : (
           <AcFlex
@@ -513,42 +542,53 @@ const ConFacetsFilters = ({ store: { publications, object } }) => {
                 ensureActiveBucketsIncluded(
                   value.buckets,
                   value.queryParameter || key
-                ).map((bucketValue) => (
-                  <AcCheckbox
-                    key={bucketValue.value || bucketValue.key}
-                    label={`${
-                      bucketValue.label ?? bucketValue.value ?? bucketValue.key
-                    } (${bucketValue.count || bucketValue.results})`}
-                    value={bucketValue.value || bucketValue.key}
-                    checked={isFacetChecked(
-                      value.queryParameter || key,
-                      bucketValue.value || bucketValue.key
-                    )}
-                    onChange={() => {
-                      toggleSearchArrayValue(
+                )
+                  .sort((a, b) => {
+                    // Sort buckets alphabetically by label
+                    const labelA = (a.label ?? a.value ?? a.key ?? '')
+                      .toString()
+                      .toLowerCase();
+                    const labelB = (b.label ?? b.value ?? b.key ?? '')
+                      .toString()
+                      .toLowerCase();
+                    return labelA.localeCompare(labelB);
+                  })
+                  .map((bucketValue) => (
+                    <AcCheckbox
+                      key={bucketValue.value || bucketValue.key}
+                      label={`${
+                        bucketValue.label ?? bucketValue.value ?? bucketValue.key
+                      } (${bucketValue.count || bucketValue.results})`}
+                      value={bucketValue.value || bucketValue.key}
+                      checked={isFacetChecked(
                         value.queryParameter || key,
                         bucketValue.value || bucketValue.key
-                      );
-                      const nextQuery = { ...publications.query, _page: 1 };
-                      const paramsString = AcBuildURLSearchParams(nextQuery);
-                      setSearchParams(new URLSearchParams(paramsString));
+                      )}
+                      onChange={() => {
+                        toggleSearchArrayValue(
+                          value.queryParameter || key,
+                          bucketValue.value || bucketValue.key
+                        );
+                        const nextQuery = { ...publications.query, _page: 1 };
+                        const paramsString = AcBuildURLSearchParams(nextQuery);
+                        setSearchParams(new URLSearchParams(paramsString));
 
-                      // Trigger facets fetch to update counts with new filters
-                      publications.fetchFacets();
+                        // Trigger facets fetch to update counts with new filters
+                        publications.fetchFacets();
 
-                      // Fetch is triggered by URL change effect in AcSearch
-                    }}
-                    title={
-                      bucketValue.originalLabel
-                        ? `Origineel: ${bucketValue.originalLabel}`
-                        : bucketValue._isActiveSynthetic
-                        ? `Actieve filter (${
-                            bucketValue.count || bucketValue.results
-                          } resultaten)`
-                        : undefined
-                    }
-                  />
-                ))
+                        // Fetch is triggered by URL change effect in AcSearch
+                      }}
+                      title={
+                        bucketValue.originalLabel
+                          ? `Origineel: ${bucketValue.originalLabel}`
+                          : bucketValue._isActiveSynthetic
+                          ? `Actieve filter (${
+                              bucketValue.count || bucketValue.results
+                            } resultaten)`
+                          : undefined
+                      }
+                    />
+                  ))
               ) : (
                 <p style={{ color: '#666', fontStyle: 'italic', fontSize: '0.9em' }}>
                   No options available
