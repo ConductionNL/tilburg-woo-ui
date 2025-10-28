@@ -363,7 +363,11 @@ const AcPublicationProduct = ({
             {(get_single?.status ||
               get_single?.hostingLocatie ||
               get_single?.hostingJurisdictie ||
-              get_single?.cloudDienstverleningsmodel) && (
+              (get_single?.cloudDienstverleningsmodel &&
+                ((Array.isArray(get_single?.cloudDienstverleningsmodel) &&
+                  get_single?.cloudDienstverleningsmodel.length > 0) ||
+                  (typeof get_single?.cloudDienstverleningsmodel === 'string' &&
+                    get_single?.cloudDienstverleningsmodel.length > 0)))) && (
               <AcFlex
                 column
                 spacing='sm'
@@ -387,12 +391,18 @@ const AcPublicationProduct = ({
                     <p>{get_single?.hostingJurisdictie}</p>
                   </div>
                 )}
-                {get_single?.cloudDienstverleningsmodel && (
-                  <div>
-                    <b>Hosting type:</b>
-                    <p>{get_single?.cloudDienstverleningsmodel}</p>
-                  </div>
-                )}
+                {get_single?.cloudDienstverleningsmodel &&
+                  ((Array.isArray(get_single?.cloudDienstverleningsmodel) &&
+                    get_single?.cloudDienstverleningsmodel.length > 0) ||
+                    (typeof get_single?.cloudDienstverleningsmodel === 'string' &&
+                      get_single?.cloudDienstverleningsmodel.length > 0)) && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <strong>Hosting type: </strong>
+                      {Array.isArray(get_single?.cloudDienstverleningsmodel)
+                        ? get_single?.cloudDienstverleningsmodel.join(', ')
+                        : get_single?.cloudDienstverleningsmodel}
+                    </div>
+                  )}
               </AcFlex>
             )}
           </AcFlex>
