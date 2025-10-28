@@ -17,6 +17,7 @@ const ConCardModuleVersie = ({
   beschrijvingKort,
   beschrijvingLang,
   status,
+  datumInOntwikkeling,
   datumInGebruik,
   datumEindeOndersteuning,
   datumTeruggetrokken,
@@ -39,6 +40,9 @@ const ConCardModuleVersie = ({
     }
   };
 
+  const formattedInOntwikkeling = datumInOntwikkeling
+    ? acFormatDate(datumInOntwikkeling, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')
+    : null;
   const formattedInGebruik = datumInGebruik
     ? acFormatDate(datumInGebruik, 'YYYY-MM-DD', 'DD MMMM YYYY', 'nl-NL')
     : null;
@@ -78,10 +82,15 @@ const ConCardModuleVersie = ({
             {status && <Paragraph small>{status}</Paragraph>}
           </AcFlex>
           <AcFlex alignItems='center' spacing='sm'>
-            {formattedInGebruik && (
+            {formattedInOntwikkeling && (
+              <Paragraph small>
+                In ontwikkeling sinds {formattedInOntwikkeling}
+              </Paragraph>
+            )}
+            {!formattedInOntwikkeling && formattedInGebruik && (
               <Paragraph small>In gebruik sinds {formattedInGebruik}</Paragraph>
             )}
-            {formattedInGebruik &&
+            {(formattedInOntwikkeling || formattedInGebruik) &&
               (formattedEindeOndersteuning || formattedTeruggetrokken) && (
                 <VISUALS.ELLIPSE />
               )}
