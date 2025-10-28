@@ -33,7 +33,7 @@ const ConCardModuleVersie = ({
       case 'publication':
         return NAVIGATE_TO.PUBLICATION(id);
       case 'beheer':
-        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('moduleversie', id);
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicatieversie', id);
       default:
         return NAVIGATE_TO.PUBLICATION(id);
     }

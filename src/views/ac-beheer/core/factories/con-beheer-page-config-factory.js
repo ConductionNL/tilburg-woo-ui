@@ -7,6 +7,7 @@ import { TOOLTIP_ID } from '@src/index.web';
 import { VISUALS } from '@constants';
 import _ from 'lodash';
 import { byNested } from '../utils/sorters';
+import ConUuidResolver from '@src/components/con-uuid-resolver/con-uuid-resolver';
 
 /**
  * Beheer Page Configuration Factory
@@ -201,6 +202,20 @@ const BeheerPageConfigFactory = {
               sortComparator: byNested((r) => r?.voorziening?.naam),
             },
           },
+          modals: [...baseConfig.modals],
+        };
+
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseConfig,
+          schemaSlug: 'moduleversie',
+          paginationKey: 'applicatiesversie',
+          title: 'Applicatie Versies',
+          routeType: 'applicatiesversie',
+          defaultHeaders: ['naam', 'versie', 'status', 'releaseDatum'],
+          customHeaders: {},
           modals: [...baseConfig.modals],
         };
 
@@ -530,6 +545,64 @@ const BeheerPageConfigFactory = {
                 return row.contactpersoonGebruiker.naam;
               },
               sortComparator: byNested((r) => r?.contactpersoonGebruiker?.naam),
+            },
+          },
+          modals: [...baseConfig.modals],
+        };
+
+      case 'koppeling':
+      case 'koppelingen':
+        return {
+          ...baseConfig,
+          schemaSlug: 'koppeling',
+          paginationKey: 'koppeling',
+          title: 'Koppelingen',
+          routeType: 'koppeling',
+          // Ensure relations are present to compensate for backend bug (moduleA/moduleB null)
+          extend: ['@self.relations'],
+          defaultHeaders: [
+            'naam',
+            'moduleA',
+            'moduleB',
+            'gegevensuitwisselingRichting',
+            'type',
+          ],
+          customHeaders: {
+            moduleA: {
+              id: 'moduleA',
+              label: 'Applicatie A',
+              key: 'moduleA',
+              customContent: (row) => {
+                // Use @self.relations.moduleA instead of direct moduleA property
+                const moduleAId = row?.['@self']?.relations?.moduleA || null;
+                if (!moduleAId) return '-';
+                // Use ConUuidResolver to display the application name
+                return <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>;
+              },
+              sortComparator: (a, b, direction) => {
+                if (direction === null) return 0;
+                const aId = a?.['@self']?.relations?.moduleA || '';
+                const bId = b?.['@self']?.relations?.moduleA || '';
+                return ConSorterLogic(String(aId), String(bId), direction);
+              },
+            },
+            moduleB: {
+              id: 'moduleB',
+              label: 'Applicatie B',
+              key: 'moduleB',
+              customContent: (row) => {
+                // Use @self.relations.moduleB instead of direct moduleB property
+                const moduleBId = row?.['@self']?.relations?.moduleB || null;
+                if (!moduleBId) return '-';
+                // Use ConUuidResolver to display the application name
+                return <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>;
+              },
+              sortComparator: (a, b, direction) => {
+                if (direction === null) return 0;
+                const aId = a?.['@self']?.relations?.moduleB || '';
+                const bId = b?.['@self']?.relations?.moduleB || '';
+                return ConSorterLogic(String(aId), String(bId), direction);
+              },
             },
           },
           modals: [...baseConfig.modals],

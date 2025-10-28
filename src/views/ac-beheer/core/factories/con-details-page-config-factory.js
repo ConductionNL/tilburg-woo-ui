@@ -259,6 +259,30 @@ const DetailsPageConfigFactory = {
           },
         };
 
+      case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
+        return {
+          ...baseDetailsConfig,
+          excludedProperties: [
+            'id',
+            'naam',
+            'beschrijvingKort',
+            'beschrijvingLang',
+            'versie',
+            'status',
+            'releaseDatum',
+            'datumInOntwikkeling',
+            'datumInGebruik',
+            'datumEindeOndersteuning',
+            'datumTeruggetrokken',
+          ],
+          getTitle: (data) => data?.naam || data?.versie || data?.id,
+          formatBySchemaOptions: {
+            includeUnknown: true,
+          },
+        };
+
       default:
         // Generic fallback configuration for dynamic types
         // This will use the beheer config and apply generic detail settings

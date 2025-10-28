@@ -304,6 +304,8 @@ const FormModalConfigFactory = {
 
       case 'moduleversion':
       case 'moduleversie':
+      case 'applicatieversie':
+      case 'applicatiesversie':
         return {
           ...baseConfig,
           title: 'Applicatie versie', // Override the title to show "Applicatie versie"
@@ -325,9 +327,12 @@ const FormModalConfigFactory = {
             gebruiken: {
               visible: false,
             },
-            // Make description/notes fields full width
+            // Hide description fields - they are edited inline via action menu
             beschrijvingKort: {
-              size: 'full',
+              visible: false,
+            },
+            beschrijvingLang: {
+              visible: false,
             },
           },
         };
