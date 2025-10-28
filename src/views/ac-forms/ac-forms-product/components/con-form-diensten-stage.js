@@ -308,29 +308,6 @@ const ConFormDienstenStage = memo(
                           : null
                       }
                       isDisabled={selectedApplication[rowId] == null}
-                      isOptionDisabled={(opt) => {
-                        const appId = selectedApplication[rowId];
-                        if (appId == null) return true;
-
-                        // Check if this dienst is already selected for this module (excluding current row)
-                        const targetModule = (product.modules || [])[appId];
-                        if (
-                          typeof targetModule === 'object' &&
-                          Array.isArray(targetModule.diensten)
-                        ) {
-                          const optVal = String(opt.value);
-                          const currentLocalId = dienstIdByRow?.[rowId];
-                          return targetModule.diensten.some((d) => {
-                            if (typeof d === 'object') {
-                              return (
-                                d.type === optVal && d._localId !== currentLocalId
-                              );
-                            }
-                            return d === optVal;
-                          });
-                        }
-                        return false;
-                      }}
                       onChange={(selectedOption) => {
                         const appId = selectedApplication[rowId];
                         if (appId == null) return;

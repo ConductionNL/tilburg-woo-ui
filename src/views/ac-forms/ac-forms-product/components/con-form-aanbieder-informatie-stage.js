@@ -1,6 +1,7 @@
 import React, { memo, useEffect } from 'react';
 import { AcCheckbox } from '@src/molecules';
 import ConSchemaEnhancedField from '@components/con-schema-enhanced-field/con-schema-enhanced-field';
+import { validateWebsite } from '@views/ac-forms/validation/form-validations';
 
 /**
  * Aanbieder Informatie Form Component
@@ -31,20 +32,12 @@ const ConFormAanbiederInformatieStage = memo(
     loading,
     // touched,
     schemas,
-    store,
+    userStore,
     aanbiederkeuze,
     setAanbiederKeuze,
   }) => {
-    // Set default aanbieder to user's active organization when switching to 'bestaand'
-    useEffect(() => {
-      if (
-        aanbiederkeuze === 'bestaand' &&
-        store.user.activeOrganization &&
-        !product.aanbieder
-      ) {
-        setProductData('aanbieder', store.user.activeOrganization.uuid);
-      }
-    }, [aanbiederkeuze, store.user.activeOrganization, product.aanbieder]);
+    // Don't auto-set aanbieder - let user explicitly select
+    // This ensures the validation works correctly
 
     // Handle choice change between existing and new
     const handleChoiceChange = (choice) => {
@@ -60,10 +53,8 @@ const ConFormAanbiederInformatieStage = memo(
         setProductData('aanbiederTelefoonnummer', '');
         setProductData('aanbiederKvkNummer', '');
         setProductData('aanbiederLogo', '');
-        // Set to default organization (user's active organization)
-        if (store.user.activeOrganization) {
-          setProductData('aanbieder', store.user.activeOrganization.uuid);
-        }
+        // Don't auto-set aanbieder - let user explicitly select from dropdown
+        setProductData('aanbieder', null);
       } else {
         // Clear existing organization selection
         setProductData('aanbieder', null);
@@ -162,7 +153,19 @@ const ConFormAanbiederInformatieStage = memo(
                   onChange={(value) => setProductData('aanbiederWebsite', value)}
                   isDisabled={loading}
                   width='half'
-                  // placeholder will come from schema example
+                  customProps={{
+                    inputType: 'text',
+                    required: true,
+                    validation: {
+                      custom: (value) => {
+                        if (!value || value.trim() === '') return true;
+                        const website = value.trim();
+                        return validateWebsite(website);
+                      },
+                      customErrorMessage:
+                        'Website heeft een ongeldig formaat (bijv. conduction.nl, www.conduction.nl of https://conduction.nl)',
+                    },
+                  }}
                   schemas={schemas}
                 />
 

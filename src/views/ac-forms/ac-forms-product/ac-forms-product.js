@@ -186,7 +186,7 @@ const AcFormsProductInner = ({
     modules: [], // Array of module IDs for existing modules + new module objects
 
     // Aanbieder/Organization reference (for all types)
-    aanbieder: null, // Organization object reference - auto-set to user's active organization
+    aanbieder: null, // Organization object reference - must be explicitly selected by user
 
     // Aanbieder/Organization information (only used for type=ontbrekend when creating new organization)
     aanbiederNaam: '', // Organization name (required)
@@ -206,36 +206,59 @@ const AcFormsProductInner = ({
   const processStepsRef = useRef(null);
 
   /**
+   * Generate a mapping of visual step indices to actual step indices
+   * This must match the order in which ProcessSteps renders clickable elements
+   * @returns {number[]} Array where index is visual position, value is actual step index
+   */
+  const generateStepIndexMapping = useCallback(() => {
+    const mapping = [];
+    const showsAanbiederStep = shouldShowAanbiederStep(formType);
+    const showsVersiesStep = shouldShowVersiesStep(product);
+
+    // First main step: Productopbouw (header)
+    mapping.push(getAdjustedStepIndex(0));
+
+    // Sub-steps under Productopbouw:
+    mapping.push(getAdjustedStepIndex(1)); // Product informatie
+    if (showsAanbiederStep) {
+      mapping.push(getAdjustedStepIndex(2)); // Aanbieder informatie (conditional)
+    }
+
+    // Second main step: Applicatie configuratie (header)
+    mapping.push(getAdjustedStepIndex(3)); // Applicaties
+
+    // Sub-steps under Applicatie configuratie:
+    mapping.push(getAdjustedStepIndex(4)); // Licentie
+    if (showsVersiesStep) {
+      mapping.push(getAdjustedStepIndex(5)); // Versies (conditional)
+    }
+    mapping.push(getAdjustedStepIndex(6)); // Referentiecomponenten
+    mapping.push(getAdjustedStepIndex(7)); // Standaarden
+    mapping.push(getAdjustedStepIndex(8)); // Koppelingen
+    mapping.push(getAdjustedStepIndex(9)); // Diensten
+
+    // Third main step: Controleren (header)
+    mapping.push(getAdjustedStepIndex(10));
+
+    return mapping;
+  }, [formType, product]);
+
+  /**
    * Handle step navigation from clickable process steps
    * Maps visual step indices to actual step numbers accounting for conditional steps
    * @param {number} visualStepIndex - The index from the visual step representation
    */
-  const handleStepNavigation = (visualStepIndex) => {
-    // Map visual step indices to actual step numbers
-    // Visual steps structure:
-    // 0: Productopbouw (step 0)
-    // 1: Product informatie (step 1)
-    // 2: Aanbieder informatie (step 2) - conditional
-    // 3: Applicaties (step 2 or 3 depending on aanbieder)
-    // 4: Licentie (step 3 or 4)
-    // 5: Versies (step 4 or 5)
-    // 6: Referentiecomponenten (step 5 or 6)
-    // 7: Standaarden (step 6 or 7)
-    // 8: Koppelingen (step 7 or 8)
-    // 9: Diensten (step 8 or 9)
-    // 10: Controleren (step 9 or 10)
+  const handleStepNavigation = useCallback(
+    (visualStepIndex) => {
+      const mapping = generateStepIndexMapping();
+      const targetStep = mapping[visualStepIndex];
 
-    const showsAanbiederStep = shouldShowAanbiederStep(formType);
-    let targetStep = visualStepIndex;
-
-    // Adjust for the aanbieder step offset
-    if (!showsAanbiederStep && visualStepIndex >= 2) {
-      targetStep = visualStepIndex + 1; // Skip the aanbieder step
-    }
-
-    // Navigate to the target step
-    setCurrentStep(targetStep);
-  };
+      if (targetStep !== undefined) {
+        setCurrentStep(targetStep);
+      }
+    },
+    [generateStepIndexMapping]
+  );
 
   // Step accessibility handled via UI click handlers
 
@@ -251,14 +274,18 @@ const AcFormsProductInner = ({
         '.denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__step-header, .denhaag-process-steps .denhaag-process-steps__step .denhaag-process-steps__sub-step'
       );
 
+      // Generate the current mapping to know which visual steps are valid
+      const mapping = generateStepIndexMapping();
+
       stepElements.forEach((stepEl, index) => {
         // Remove any existing click handlers first
         stepEl.style.cursor = '';
         stepEl.onclick = null;
         stepEl.classList.remove('ac-step-clickable');
 
-        // Only make completed steps clickable (index < currentStep)
-        if (index < currentStep) {
+        // Only make completed steps clickable if they have a valid mapping
+        const targetStep = mapping[index];
+        if (targetStep !== undefined && targetStep < currentStep) {
           stepEl.classList.add('ac-step-clickable');
 
           stepEl.onclick = (e) => {
@@ -279,7 +306,14 @@ const AcFormsProductInner = ({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [currentStep, handleStepNavigation, prefillLoading, prefillError]); // Re-run when currentStep changes
+  }, [
+    currentStep,
+    handleStepNavigation,
+    generateStepIndexMapping,
+    prefillLoading,
+    prefillError,
+    product.cloudDienstverleningsmodel, // Re-run when versies visibility changes
+  ]); // Re-run when currentStep changes
 
   const [touched, setTouched] = useState({
     productName: false,
@@ -1362,13 +1396,6 @@ const AcFormsProductInner = ({
     };
   }, [isEditMode, productId, mapFetchedProductToLocalState, store, prefillRetry]);
 
-  // Auto-set aanbieder to user's active organization
-  useEffect(() => {
-    if (store.user.activeOrganization && !product.aanbieder) {
-      setProductData('aanbieder', store.user.activeOrganization.uuid);
-    }
-  }, [store.user.activeOrganization, product.aanbieder]);
-
   // State for aanbieder selection
   const [aanbiederkeuze, setAanbiederKeuze] = useState('bestaand'); // 'bestaand' or 'nieuw'
 
@@ -1734,7 +1761,8 @@ const AcFormsProductInner = ({
       product,
       dienstenFormState,
       isMultiApplicatie,
-      formType
+      formType,
+      aanbiederkeuze
     );
 
   // Tooltip text for disabled Next button - util wrapper
@@ -1744,7 +1772,8 @@ const AcFormsProductInner = ({
       product,
       dienstenFormState,
       isMultiApplicatie,
-      formType
+      formType,
+      aanbiederkeuze
     );
 
   return (
