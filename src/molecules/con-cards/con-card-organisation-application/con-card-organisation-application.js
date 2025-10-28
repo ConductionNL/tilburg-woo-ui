@@ -92,7 +92,7 @@ const ConCardOrganisationApplication = ({
       case 'beheer-product':
         return NAVIGATE_TO.BEHEER_TYPE_DETAILS('product', id);
       case 'beheer-module':
-        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('module', id);
+        return NAVIGATE_TO.BEHEER_TYPE_DETAILS('applicaties', id);
       default:
         return NAVIGATE_TO.PUBLICATION(id);
     }
