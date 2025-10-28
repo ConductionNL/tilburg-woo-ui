@@ -398,7 +398,11 @@ const ConProductDetailsPageContent = ({
       {(data?.status ||
         data?.hostingLocatie ||
         data?.hostingJurisdictie ||
-        data?.cloudDienstverleningsmodel) && (
+        (data?.cloudDienstverleningsmodel &&
+          ((Array.isArray(data?.cloudDienstverleningsmodel) &&
+            data?.cloudDienstverleningsmodel.length > 0) ||
+            (typeof data?.cloudDienstverleningsmodel === 'string' &&
+              data?.cloudDienstverleningsmodel.length > 0)))) && (
         <>
           <Heading level={3} style={{ marginBlockStart: '1rem' }}>
             Extra informatie
@@ -423,20 +427,18 @@ const ConProductDetailsPageContent = ({
                   {data.hostingJurisdictie}
                 </div>
               )}
-              {data?.cloudDienstverleningsmodel && (
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Hosting type: </strong>
-                  {Array.isArray(data?.cloudDienstverleningsmodel)
-                    ? data?.cloudDienstverleningsmodel
-                        ?.map((model, index) =>
-                          index === data?.cloudDienstverleningsmodel.length - 1
-                            ? model
-                            : `${model}, `
-                        )
-                        .join('')
-                    : data?.cloudDienstverleningsmodel}
-                </div>
-              )}
+              {data?.cloudDienstverleningsmodel &&
+                ((Array.isArray(data?.cloudDienstverleningsmodel) &&
+                  data?.cloudDienstverleningsmodel.length > 0) ||
+                  (typeof data?.cloudDienstverleningsmodel === 'string' &&
+                    data?.cloudDienstverleningsmodel.length > 0)) && (
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Hosting type: </strong>
+                    {Array.isArray(data?.cloudDienstverleningsmodel)
+                      ? data?.cloudDienstverleningsmodel.join(', ')
+                      : data?.cloudDienstverleningsmodel}
+                  </div>
+                )}
             </div>
           </div>
         </>

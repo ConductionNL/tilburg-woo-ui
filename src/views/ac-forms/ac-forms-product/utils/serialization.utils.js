@@ -28,8 +28,6 @@ export const stripLocalIds = (value) => {
       if (k === 'bewijsFilename') return;
       // ✅ NEW: Remove aanbieder* fields (only used for creating new organization)
       if (
-        k.startsWith('aanbieder') &&
-        k !== 'aanbieder' &&
         [
           'aanbiederNaam',
           'aanbiederType',
