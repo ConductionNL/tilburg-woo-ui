@@ -579,12 +579,7 @@ const BeheerPageConfigFactory = {
                 // Use ConUuidResolver to display the application name
                 return <ConUuidResolver>{String(moduleAId)}</ConUuidResolver>;
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aId = a?.['@self']?.relations?.moduleA || '';
-                const bId = b?.['@self']?.relations?.moduleA || '';
-                return ConSorterLogic(String(aId), String(bId), direction);
-              },
+              sortComparator: byNested((r) => r?.['@self']?.relations?.moduleA),
             },
             moduleB: {
               id: 'moduleB',
@@ -597,12 +592,7 @@ const BeheerPageConfigFactory = {
                 // Use ConUuidResolver to display the application name
                 return <ConUuidResolver>{String(moduleBId)}</ConUuidResolver>;
               },
-              sortComparator: (a, b, direction) => {
-                if (direction === null) return 0;
-                const aId = a?.['@self']?.relations?.moduleB || '';
-                const bId = b?.['@self']?.relations?.moduleB || '';
-                return ConSorterLogic(String(aId), String(bId), direction);
-              },
+              sortComparator: byNested((r) => r?.['@self']?.relations?.moduleA),
             },
           },
           modals: [...baseConfig.modals],
