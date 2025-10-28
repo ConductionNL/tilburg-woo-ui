@@ -388,9 +388,18 @@ const AcPublicationProduct = ({
                   </div>
                 )}
                 {get_single?.cloudDienstverleningsmodel && (
-                  <div>
-                    <b>Hosting type:</b>
-                    <p>{get_single?.cloudDienstverleningsmodel}</p>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Hosting type: </strong>
+                    {Array.isArray(get_single?.cloudDienstverleningsmodel)
+                      ? get_single?.cloudDienstverleningsmodel
+                          ?.map((model, index) =>
+                            index ===
+                            get_single?.cloudDienstverleningsmodel.length - 1
+                              ? model
+                              : `${model}, `
+                          )
+                          .join('')
+                      : get_single?.cloudDienstverleningsmodel}
                   </div>
                 )}
               </AcFlex>

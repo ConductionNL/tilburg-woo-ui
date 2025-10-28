@@ -709,7 +709,7 @@ const ConStandardsTable = ({
                       }}
                       title={`Open bewijs URL: ${complianceStandard.url}`}
                     >
-                      <VISUALS.DOWNLOAD />
+                      <VISUALS.EXTERNAL_LINK />
                     </Link>
                   ) : (
                     <span

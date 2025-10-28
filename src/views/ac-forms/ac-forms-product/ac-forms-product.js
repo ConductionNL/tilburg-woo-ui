@@ -757,6 +757,51 @@ const AcFormsProductInner = ({
     fetchSchemas();
   }, [createDefaultProductFromSchema]);
 
+  // ✅ Set aanbieder after schemas are loaded to avoid race condition
+  useEffect(() => {
+    if (schemasLoading) return; // Wait for schemas to finish loading
+    if (isEditMode) return; // Don't override aanbieder in edit mode
+    if (formType !== 'eigen') return; // Only for eigen type
+
+    // Fetch current user's active organization from /me endpoint
+    const fetchUserOrganization = async () => {
+      try {
+        const response = await fetch(
+          `${commongroundApiUrl()}/openconnector/api/user/me`,
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include', // Include cookies for authentication
+          }
+        );
+
+        if (response.ok) {
+          const userData = await response.json();
+
+          const activeOrgId =
+            userData?.organisations?.active?.uuid || userData?.organisations?.active?.id;
+
+          if (activeOrgId) {
+            setProduct((prev) => ({
+              ...prev,
+              aanbieder: activeOrgId,
+            }));
+          } else {
+            console.warn('No active organization found for current user');
+          }
+        } else {
+          console.error('Failed to fetch user profile:', response.status);
+        }
+      } catch (error) {
+        console.error('Error fetching user organization:', error);
+      }
+    };
+
+    fetchUserOrganization();
+  }, [formType, schemasLoading, isEditMode]);
+
   /**
    * Helper methods for module management
    * These methods help other stages filter and work with the modules array
@@ -1402,10 +1447,55 @@ const AcFormsProductInner = ({
   const handleRegister = async () => {
     setLoading(true);
     try {
+      let finalAanbieder = product.aanbieder;
+
+      // ✅ For type=ontbrekend with new organization, create the organization first
+      if (formType === 'ontbrekend' && aanbiederkeuze === 'nieuw') {
+        try {
+          const newOrganizationData = {
+            naam: product.aanbiederNaam,
+            type: product.aanbiederType,
+            website: product.aanbiederWebsite,
+            beschrijvingKort: product.aanbiederBeschrijvingKort,
+            beschrijvingLang: product.aanbiederBeschrijvingLang,
+            'e-mailadres': product.aanbiederEmail,
+            telefoonnummer: product.aanbiederTelefoonnummer,
+            kvkNummer: product.aanbiederKvkNummer,
+            logo: product.aanbiederLogo,
+          };
+
+          // Create the organization and get its ID
+          const createdOrganization = await store.object.createObject(
+            'voorzieningen',
+            'organisatie',
+            newOrganizationData
+          );
+
+          // Use the newly created organization ID as aanbieder
+          finalAanbieder =
+            createdOrganization?.id || createdOrganization?.['@self']?.id;
+
+          if (!finalAanbieder) {
+            throw new Error('Organisatie aangemaakt maar geen ID ontvangen');
+          }
+        } catch (orgError) {
+          console.error('Failed to create organization:', orgError);
+          setRegisterCallBack('error');
+          setError({
+            message:
+              'Er is een fout opgetreden bij het aanmaken van de organisatie. Probeer het opnieuw.',
+            errors: null,
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       // Submit the complete product object to the voorzieningen register
       const productData = {
         ...product,
         naam: product.naam || product.productName, // Ensure naam is properly set
+        aanbieder: finalAanbieder, // ✅ Always include the aanbieder
       };
       const sanitized = stripLocalIds(productData);
 

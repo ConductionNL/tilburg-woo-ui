@@ -426,13 +426,15 @@ const ConProductDetailsPageContent = ({
               {data?.cloudDienstverleningsmodel && (
                 <div style={{ marginBottom: '8px' }}>
                   <strong>Hosting type: </strong>
-                  {data.cloudDienstverleningsmodel
-                    ?.map((model, index) =>
-                      index === data.cloudDienstverleningsmodel.length - 1
-                        ? model
-                        : `${model}, `
-                    )
-                    .join('')}
+                  {Array.isArray(data?.cloudDienstverleningsmodel)
+                    ? data?.cloudDienstverleningsmodel
+                        ?.map((model, index) =>
+                          index === data?.cloudDienstverleningsmodel.length - 1
+                            ? model
+                            : `${model}, `
+                        )
+                        .join('')
+                    : data?.cloudDienstverleningsmodel}
                 </div>
               )}
             </div>
