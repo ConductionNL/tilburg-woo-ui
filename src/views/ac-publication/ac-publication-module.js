@@ -419,6 +419,11 @@ const AcPublicationProduct = ({
                     navigate(url.pathname + url.search);
                     return;
                   }
+                  
+                  if (schemaSlug === 'module') {
+                    const beheerUrl = `/beheer/applicaties/${id}`;
+                    window.open(beheerUrl, '_blank');
+                  }
                 }
                 // Fallback to beheer legacy edit page in new tab
                 const beheerUrl = `/beheer/${schemaSlug}/${id}`;
