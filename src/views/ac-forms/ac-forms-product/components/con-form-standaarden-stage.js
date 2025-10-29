@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AcCheckbox } from '@src/molecules';
+import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { ConExistingModulesInfoBox } from '@components';
 import {
@@ -11,6 +11,7 @@ import {
   TableRow,
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
+import { validateWebsite } from '../../validation/form-validations';
 
 /**
  * Standaarden Form - Simple Table View
@@ -1491,19 +1492,24 @@ const ConFormStandaardenStage = ({
                     isDisabled={!!entry.url}
                   />
                   <Separator />
-                  <input
-                    type='url'
-                    className='utrecht-textbox utrecht-textbox--html-input'
-                    value={entry.url || ''}
-                    onChange={(e) => updateUrl(entry.key, e.target.value)}
-                    placeholder='https://...'
-                    disabled={!!entry.bewijs}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      fontSize: '14px',
-                    }}
-                  />
+                  <div>
+                    <AcFormField
+                      placeholder='https://...'
+                      value={entry.url || ''}
+                      type='url'
+                      onChange={(e) => updateUrl(entry.key, e)}
+                      disabled={!!entry.bewijs}
+                      className='ac-register-form-field__no-width-limit'
+                      hasError={validateWebsite(entry.url)}
+                    />
+                    {entry.url && (!entry.url || !validateWebsite(entry.url)) && (
+                      <span className='ac-register-form-field-error'>
+                        {entry.url &&
+                          !validateWebsite(entry.url) &&
+                          'URL heeft een ongeldig formaat'}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
             </TableCell>
