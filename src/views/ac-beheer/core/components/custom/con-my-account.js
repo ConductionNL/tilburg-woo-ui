@@ -28,11 +28,11 @@ const ConMyAccountPage = ({ store }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    displayName: '',
     email: '',
     firstName: '',
     middleName: '',
     lastName: '',
+    functie: '',
   });
   const { user } = store;
 
@@ -49,11 +49,11 @@ const ConMyAccountPage = ({ store }) => {
         // Extract organization data
 
         setFormData({
-          displayName: userData.displayName || '',
           email: userData.email || '',
           firstName: userData.firstName || '',
           middleName: userData.middleName || '',
           lastName: userData.lastName || '',
+          functie: userData.functie || '',
         });
       }
     } catch (err) {
@@ -137,6 +137,10 @@ const ConMyAccountPage = ({ store }) => {
                     >
                       <span>{userData.organisations.active.name || '-'}</span>
                     </Link>
+                  </div>
+                  <div className='ac-register-review__field'>
+                    <strong>Functie:</strong>
+                    <span>{userData.functie || '-'}</span>
                   </div>
                 </div>
               )}

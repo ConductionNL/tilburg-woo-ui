@@ -38,11 +38,11 @@ import { TOOLTIP_ID } from '@src/index.web';
 const AcMyAccount = ({ store }) => {
   const [userData, setUserData] = useState(null);
   const [formData, setFormData] = useState({
-    displayName: '',
     email: '',
     firstName: '',
     middleName: '',
     lastName: '',
+    functie: '',
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -241,11 +241,11 @@ const AcMyAccount = ({ store }) => {
         }
 
         setFormData({
-          displayName: userData.displayName || '',
           email: userData.email || '',
           firstName: userData.firstName || '',
           middleName: userData.middleName || '',
           lastName: userData.lastName || '',
+          functie: userData.functie || '',
         });
       }
     } catch (err) {
@@ -314,11 +314,11 @@ const AcMyAccount = ({ store }) => {
 
       // Update form data with new user data
       setFormData({
-        displayName: updatedUser.displayName || '',
         email: updatedUser.email || '',
         firstName: updatedUser.firstName || '',
         middleName: updatedUser.middleName || '',
         lastName: updatedUser.lastName || '',
+        functie: updatedUser.functie || '',
       });
     } catch (err) {
       console.error('Error switching organization:', err);
@@ -780,6 +780,10 @@ const AcMyAccount = ({ store }) => {
                   >
                     <span>{userData.organisations.active.name || '-'}</span>
                   </RouterLink>
+                </div>
+                <div className='ac-register-review__field'>
+                  <strong>Functie:</strong>
+                  <span>{userData.functie || '-'}</span>
                 </div>
               </div>
             )}
