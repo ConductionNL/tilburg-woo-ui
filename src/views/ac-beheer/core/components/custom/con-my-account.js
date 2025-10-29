@@ -13,6 +13,7 @@ import AcMyAccountModal from '@views/ac-my-account/ac-my-account-modal';
 import AcButton from '@molecules/ac-button/ac-button';
 import AcBeheerError from '@views/ac-beheer/core/components/ac-standard-pages/ac-beheer-error';
 import AcLoader from '@components/ac-loader/ac-loader';
+import { Link } from 'react-router-dom';
 
 /**
  * Product Details Page (simplified for fixed type)
@@ -27,11 +28,11 @@ const ConMyAccountPage = ({ store }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    displayName: '',
     email: '',
     firstName: '',
     middleName: '',
     lastName: '',
+    functie: '',
   });
   const { user } = store;
 
@@ -48,11 +49,11 @@ const ConMyAccountPage = ({ store }) => {
         // Extract organization data
 
         setFormData({
-          displayName: userData.displayName || '',
           email: userData.email || '',
           firstName: userData.firstName || '',
           middleName: userData.middleName || '',
           lastName: userData.lastName || '',
+          functie: userData.functie || '',
         });
       }
     } catch (err) {
@@ -92,8 +93,7 @@ const ConMyAccountPage = ({ store }) => {
       <AcFlex spacing='xl'>
         <ConDynamicSidenav store={store} />
 
-       
-          <AcColumn gap='sm' horizontalOverflowWrapper>
+        <AcColumn gap='sm' horizontalOverflowWrapper>
           {loading ? (
             <AcLoader />
           ) : (
@@ -111,19 +111,11 @@ const ConMyAccountPage = ({ store }) => {
                       Bewerken
                     </AcButton>
                   </div>
-                  <Separator className='ac-register-review-header__separator' />
+                  <Separator className='ac-my-account__separator' />
 
-                  <div className='ac-register-review__field'>
-                    <strong>Weergavenaam:</strong>
-                    <span>{userData.displayName || '-'}</span>
-                  </div>
                   <div className='ac-register-review__field'>
                     <strong>E-mailadres:</strong>
                     <span>{userData.email || '-'}</span>
-                  </div>
-                  <div className='ac-register-review__field'>
-                    <strong>E-mail geverifieerd:</strong>
-                    <span>{userData.emailVerified ? 'Ja' : 'Nee'}</span>
                   </div>
                   <div className='ac-register-review__field'>
                     <strong>Voornaam:</strong>
@@ -137,6 +129,19 @@ const ConMyAccountPage = ({ store }) => {
                     <strong>Achternaam:</strong>
                     <span>{userData.lastName || '-'}</span>
                   </div>
+                  <div className='ac-register-review__field'>
+                    <strong>Organisatie:</strong>
+                    <Link // Link from react-router combined with Utrecht styling since that works better
+                      to='/beheer/my-organisation'
+                      className='utrecht-link utrecht-link--html-a'
+                    >
+                      <span>{userData.organisations.active.name || '-'}</span>
+                    </Link>
+                  </div>
+                  <div className='ac-register-review__field'>
+                    <strong>Functie:</strong>
+                    <span>{userData.functie || '-'}</span>
+                  </div>
                 </div>
               )}
               {/* Modal for editing account info */}
@@ -149,7 +154,7 @@ const ConMyAccountPage = ({ store }) => {
               />
             </>
           )}
-          </AcColumn>
+        </AcColumn>
       </AcFlex>
     </AcSection>
   );
