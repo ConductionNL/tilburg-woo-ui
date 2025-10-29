@@ -781,7 +781,8 @@ const AcFormsProductInner = ({
           const userData = await response.json();
 
           const activeOrgId =
-            userData?.organisations?.active?.uuid || userData?.organisations?.active?.id;
+            userData?.organisations?.active?.uuid ||
+            userData?.organisations?.active?.id;
 
           if (activeOrgId) {
             setProduct((prev) => ({

@@ -8,12 +8,13 @@ import {
   TableRow,
   Separator,
 } from '@utrecht/component-library-react/dist/css-module';
-import { AcCheckbox } from '@src/molecules';
+import { AcCheckbox, AcFormField } from '@src/molecules';
 import { LogoUploadField } from '@views/ac-beheer/shared/components/con-logo-upload-field';
 import { ConStandardsResolver } from '@components';
 import { VISUALS } from '@constants';
 import { handleFileClick } from '@utils';
 import { commongroundApiUrl } from '@config';
+import { validateWebsite } from '@src/views/ac-forms/validation/form-validations';
 
 /**
  * Reusable Standards Table Component
@@ -656,19 +657,28 @@ const ConStandardsTable = ({
                           isDisabled={disabled || !!complianceStandard?.url}
                         />
                         <Separator />
-                        <input
-                          type='url'
-                          className='utrecht-textbox utrecht-textbox--html-input'
-                          value={complianceStandard?.url || ''}
-                          onChange={(e) => updateUrl(refStandard.id, e.target.value)}
-                          placeholder='https://...'
-                          disabled={disabled || !!complianceStandard?.bewijs}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            fontSize: '14px',
-                          }}
-                        />
+                        <div>
+                          <AcFormField
+                            placeholder='https://...'
+                            value={complianceStandard?.url || ''}
+                            type='url'
+                            onChange={(e) =>
+                              updateUrl(refStandard.id, e)
+                            }
+                            disabled={disabled || !!complianceStandard?.bewijs}
+                            className='ac-register-form-field__no-width-limit'
+                            hasError={validateWebsite(complianceStandard?.url)}
+                          />
+                          {complianceStandard?.url &&
+                            (!complianceStandard?.url ||
+                              !validateWebsite(complianceStandard?.url)) && (
+                              <span className='ac-register-form-field-error'>
+                                {complianceStandard?.url &&
+                                  !validateWebsite(complianceStandard?.url) &&
+                                  'URL heeft een ongeldig formaat'}
+                              </span>
+                            )}
+                        </div>
                       </div>
                     ) : (
                       <span
