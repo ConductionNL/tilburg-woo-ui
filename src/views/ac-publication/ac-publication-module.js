@@ -419,9 +419,13 @@ const AcPublicationProduct = ({
                     navigate(url.pathname + url.search);
                     return;
                   }
-                  
+
                   if (schemaSlug === 'module') {
                     const beheerUrl = `/beheer/applicaties/${id}`;
+                    window.open(beheerUrl, '_blank');
+                  }
+                  if (schemaSlug === 'moduleversie') {
+                    const beheerUrl = `/beheer/applicatieversie/${id}`;
                     window.open(beheerUrl, '_blank');
                   }
                 }
